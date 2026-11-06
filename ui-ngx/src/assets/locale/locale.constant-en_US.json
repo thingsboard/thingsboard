@@ -11733,6 +11733,18 @@
         "select-recaptcha-enterprise-service-account-file": "Drag and drop your account credentials file"
     },
     "solution-creator": {
+        "what-should-it-do": "What should the solution do?",
+        "what-it-becomes": "A description becomes profiles, roles, calculated fields, alarm rules and dashboards, on simulated devices.",
+        "example-tip": "Puts the example in the composer",
+        "limits": "Nothing is created in your tenant until you approve the design and install it.",
+        "say-what-to-change": "Say what to change in the design…",
+        "ask-about-solution": "Ask about the solution…",
+        "next-dashboards": "Next: dashboards",
+        "closing-installed": "The solution is installed in your tenant.",
+        "closing-created": "The solution is created. Install it to make its entities in your tenant.",
+        "closing-simulated": "Simulated data runs for seven days. A real device takes over a simulated one when it connects.",
+        "work-reading": "Reading your description",
+        "work-thinking": "Working on the design",
         "ai-solution-creator": "AI solution creator",
         "describe-solution-you-want": "Describe a solution you want to make",
         "enter-your-prompt": "Enter your prompt",

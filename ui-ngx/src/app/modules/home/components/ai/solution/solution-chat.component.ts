@@ -40,9 +40,8 @@ import {
 } from '@home/components/ai/solution/solution-info/solution-info-dialog.component';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
-import { AiLoadingModalComponent } from '@home/components/ai/ai-loading-modal.component';
-import { DynamicMatDialog } from '@shared/components/dialog/dynamic/dynamic-dialog';
-import { generatedStateImages } from '@home/components/ai/ai.models';
+import { AiRenameDialogComponent, AiRenameDialogData } from '@home/components/ai/ai-rename-dialog.component';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-solution-chat',
@@ -56,6 +55,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   @ViewChild(AiChatMessagesComponent) chatMessages: AiChatMessagesComponent;
   @Output() loaded = new EventEmitter<string>();
 
+  get hostElement(): HTMLElement {
+    return this.elementRef.nativeElement;
+  }
+
   isReadyStep = signal<boolean>(false);
   skipInterviewAllowed = signal<boolean>(false);
   solutionStep = signal<SolutionStep>(SolutionStep.INITIAL_CONFIGURATION);
@@ -64,8 +67,25 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   messages = signal<ChatMessage[]>([]);
 
   loading = signal<boolean>(false);
-  loadingLongTime = signal<boolean>(false);
   isGenerating = signal<boolean>(false);
+
+  work = signal<{words: string; kind: 'think' | 'gen' | 'install'; since: number} | null>(null);
+
+  fullscreen = signal<boolean>(false);
+
+  title = signal<string>('');
+
+  built = signal<boolean>(false);
+
+  installed = signal<boolean>(false);
+
+  mainDashboard = signal<EntityId[]>([]);
+
+  level = computed<'running' | 'needs' | null>(() => this.loading() || this.isGenerating()
+    ? 'running'
+    : this.isReadyStep() && this.creatorStep() === 'chat' && !this.built() ? 'needs' : null);
+
+  showPane = computed(() => this.creatorStep() === 'result' || (this.isReadyStep() && !this.isGenerating()));
 
   showMoreExamples = signal(false);
 
@@ -76,9 +96,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     !this.loading()
   );
 
-  activePlaceholder = computed(() =>
-    this.isInitialEmpty() ? 'solution-creator.describe-solution-you-want' : 'solution-creator.enter-your-prompt'
-  );
+  activePlaceholder = computed(() => this.isInitialEmpty()
+    ? 'solution-creator.describe-solution-you-want'
+    : this.creatorStep() === 'result' ? 'solution-creator.ask-about-solution' : 'solution-creator.say-what-to-change');
 
   activeStepIndex = computed(() => {
     if (!this.creatorStep()) {
@@ -147,7 +167,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     {
       key: 'coffeeMonitor',
       labelKey: 'solution-creator.coffee-machine-monitoring',
-      icon: 'local_cafe',
+      icon: 'coffee',
       message: 'I want to monitor my coffee machine. It brews espresso, cappuccino, latte, and americano.\n\n' +
         'I need to track stock levels (beans, milk, water, cups), waste fullness, and temperatures. ' +
         'I also want to calculate daily totals for each drink type and daily revenue.\n\n' +
@@ -156,7 +176,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     {
       key: 'lorawanTracker',
       labelKey: 'solution-creator.lorawan-tracking',
-      icon: 'sensors',
+      icon: 'cell_tower',
       message: 'I need a simple device management dashboard for monitoring my LoRaWAN tracker devices and connectivity.\n' +
         'I want to assign a label to device and see them on the map.\n' +
         'I also want to browse the device telemetry related to signal strength and raise alerts when device is offline, low battery or low signal strength.'
@@ -187,7 +207,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     {
       key: 'weatherMonitoring',
       labelKey: 'solution-creator.weather-monitoring',
-      icon: 'wb_cloudy',
+      icon: 'thermostat',
       message: 'I want to monitor outdoor weather conditions across multiple locations using weather stations. ' +
         'Each station reports standard atmospheric data — temperature, humidity, pressure, wind speed and direction, and rainfall.\n\n' +
         'Show all stations on a map. Alert when conditions reach extreme levels such as frost, strong wind, or heavy rainfall.'
@@ -195,7 +215,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     {
       key: 'fleetGeofencing',
       labelKey: 'solution-creator.fleet-geofencing',
-      icon: 'directions_car',
+      icon: 'local_shipping',
       message: 'I want to build a fleet tracking solution for transport companies. Vehicles are tracked by GPS in real time and must operate within designated allowed zones while avoiding restricted areas.\n\n' +
         'Raise an alarm when a vehicle enters a restricted zone or leaves an allowed zone.'
     },
@@ -206,7 +226,6 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   dashboardsOverview: DashboardsOverview[];
   solutionName: string;
 
-  loadingImage: string;
 
   private solutionId: string;
   private _solutionInfo: SolutionCreatorInfo;
@@ -217,13 +236,18 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private set solutionInfo(value: SolutionCreatorInfo) {
     this._solutionInfo = value;
+    this.title.set(value?.data?.solutionTitle ?? '');
+    this.built.set(!!value?.metadata?.built);
+    this.installed.set(!!value?.metadata?.installed);
+    const main = value?.metadata?.installResult?.mainDashboardId;
+    this.mainDashboard.set(value?.metadata?.installed && main ? [main] : []);
     this.updateStepStatuses();
   }
   private messages$ = toObservable(this.messages);
   private forceScroll = false;
 
   private cancelPending$ = new Subject<void>();
-  private loadingTimer: NodeJS.Timeout;
+  private workTimers: NodeJS.Timeout[] = [];
 
   constructor(private route: ActivatedRoute,
               private solutionCreator: SolutionsCreatorService,
@@ -233,7 +257,6 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
               private dialogService: DialogService,
               private translate: TranslateService,
               private sanitizer: DomSanitizer,
-              private dynamicMatDialog: DynamicMatDialog,
               private aiSolutions: AiSolutionsService) {
     super();
 
@@ -250,17 +273,17 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           const animationPanel: Element = this.elementRef.nativeElement.querySelector('.overview');
           if (animationPanel) {
             animationPanel.addEventListener('animationend', () => {
-              this.chatMessages?.scrollToBottom('instant');
+              this.scrollLogToEnd();
             }, { once: true });
           } else {
-            this.chatMessages?.scrollToBottom('instant');
+            this.scrollLogToEnd();
           }
         }, 0);
         this.forceScroll = false;
       } else if (lastMsg?.from === 'USER') {
-        setTimeout(() => this.chatMessages?.scrollToBottom('smooth'), 0);
+        setTimeout(() => this.scrollLogToEnd(true), 0);
       } else if (lastMsg?.from === 'AI') {
-        setTimeout(() => this.chatMessages?.scrollToLastUserMessage(), 0);
+        setTimeout(() => this.scrollLastQuestionToTop(), 0);
       }
     })
   }
@@ -299,12 +322,61 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       this.forceScroll = true;
       this.initPredefinedSolution();
       this.loaded.emit(solution.id);
+      setTimeout(() => this.scrollLogToEnd(), 300);
     });
   }
 
   ngOnDestroy(): void {
+    this.clearWork();
     this.cancelPending$.next();
     this.cancelPending$.complete();
+  }
+
+  toggleFullscreen(): void {
+    this.fullscreen.update(value => !value);
+  }
+
+  renameSolution(): void {
+    if (!this.solutionId) {
+      return;
+    }
+    this.dialogService.dialog.open<AiRenameDialogComponent, AiRenameDialogData, string>(AiRenameDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        title: this.translate.instant('solution-creator.rename-solution-title'),
+        value: this.title() || this.translate.instant('solution-creator.new-solution')
+      }
+    }).afterClosed().subscribe(newTitle => {
+      const title = newTitle?.trim();
+      if (title && title !== this.title()) {
+        this.aiSolutions.rename(this.aiSolutions.find(this.solutionId) ?? {id: this.solutionId}, title).subscribe({
+          next: value => this.updatedSolution(value),
+          error: err => this.showErrorMessage(err)
+        });
+      }
+    });
+  }
+
+  deleteSolution(): void {
+    if (!this.solutionId) {
+      return;
+    }
+    this.aiSolutions.confirmAndDelete(this.aiSolutions.find(this.solutionId) ?? {id: this.solutionId, solutionTitle: this.title()}).subscribe({
+      next: deleted => {
+        if (deleted) {
+          this.router.navigate([], {relativeTo: this.route, queryParams: {solutionId: NEW_SOLUTION_ID}, queryParamsHandling: 'merge'});
+        }
+      },
+      error: err => this.showErrorMessage(err)
+    });
+  }
+
+  fillExample(key: string): void {
+    const example = this.solutionExamples.find(ex => ex.key === key);
+    if (example) {
+      this.promptInput?.setValue(example.message);
+    }
   }
 
   nextStep() {
@@ -396,6 +468,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           }
           Object.assign(this.solutionInfo.metadata.installResult, value);
           this.solutionInfo.metadata.installed = true;
+          this.solutionInfo = this.solutionInfo;
           this.aiSolutions.update(this.solutionId, {installed: true});
           progressSubject.next();
           progressSubject.complete();
@@ -588,6 +661,21 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     );
   }
 
+  private scrollLogToEnd(smooth = false): void {
+    const log = this.elementRef.nativeElement.querySelector('.sol-log') as HTMLElement;
+    log?.scrollTo({top: log.scrollHeight, behavior: smooth ? 'smooth' : 'auto'});
+  }
+
+  private scrollLastQuestionToTop(): void {
+    const log = this.elementRef.nativeElement.querySelector('.sol-log') as HTMLElement;
+    const questions = log?.querySelectorAll<HTMLElement>('tb-ai-chat-messages .user');
+    const last = questions?.length ? questions[questions.length - 1] : null;
+    if (log && last) {
+      const top = log.scrollTop + last.getBoundingClientRect().top - log.getBoundingClientRect().top - 12;
+      log.scrollTo({top, behavior: 'smooth'});
+    }
+  }
+
   private rememberSolution(): void {
     if (this.solutionInfo) {
       this.aiSolutions.upsert(this.solutionInfo);
@@ -605,7 +693,11 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private updatedCurrentMsg() {
-    this.messages.set(this.solutionInfo.states[this.solutionStep()]?.messages?.filter(msg => msg.from === 'AI' || msg.from === 'USER') ?? []);
+    const steps = this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION
+      ? [SolutionStep.INITIAL_CONFIGURATION, SolutionStep.DASHBOARDS_CONFIGURATION]
+      : [SolutionStep.INITIAL_CONFIGURATION];
+    this.messages.set(steps.flatMap(step => this.solutionInfo.states[step]?.messages ?? [])
+      .filter(msg => msg.from === 'AI' || (msg.from === 'USER' && !/^<[a-z-]+\/>$/.test((msg.content ?? '').trim()))));
     const stepState = this.solutionInfo.states[this.solutionStep()];
     if (stepState?.status === SolutionStepStatus.READY) {
       this.solutionName = this.solutionInfo.data?.solutionTitle;
@@ -639,6 +731,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private resetSolution(): void {
+    this.clearWork();
     this.cancelPending$.next();
     this.isReadyStep.set(false);
     this.skipInterviewAllowed.set(false);
@@ -656,6 +749,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private initPredefinedSolution(): void {
     if (this.solutionInfo.metadata?.built) {
+      if (this.solutionInfo.states[SolutionStep.DASHBOARDS_CONFIGURATION]) {
+        this.solutionStep.set(SolutionStep.DASHBOARDS_CONFIGURATION);
+      }
+      this.updatedCurrentMsg();
       this.creatorStep.set('result');
       return;
     }
@@ -716,16 +813,25 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       }
     }
 
-    return this.dynamicMatDialog.open(AiLoadingModalComponent, {
-      containerElement: this.elementRef.nativeElement,
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      backdropClass: 'ai-backdrop-filter',
-      data: {
-        messages,
-        estimateWaitTime,
-      }
+    const creating = messages[0]?.text === 'solution-creator.step-loading-creating-entities';
+    return this.startWork(messages, creating ? 'install' : 'gen', estimateWaitTime);
+  }
+
+  private startWork(messages: Array<{text: string; delay: number}>, kind: 'think' | 'gen' | 'install', _estimate?: number): {close: () => void} {
+    this.clearWork();
+    const since = Date.now();
+    let at = 0;
+    messages.forEach(message => {
+      at += message.delay;
+      this.workTimers.push(setTimeout(() => this.work.set({words: this.translate.instant(message.text), kind, since}), at));
     });
+    return {close: () => this.clearWork()};
+  }
+
+  private clearWork(): void {
+    this.workTimers.forEach(timer => clearTimeout(timer));
+    this.workTimers = [];
+    this.work.set(null);
   }
 
   toggleMoreExamples(): void {
@@ -745,15 +851,15 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private initLoadingState(): void {
     this.loading.set(true);
-    this.loadingImage = generatedStateImages[Math.floor(Math.random() * generatedStateImages.length)];
-    this.loadingTimer = setTimeout(() => {
-      this.loadingLongTime.set(true);
-    }, 5000);
+    if (!this.workTimers.length) {
+      this.startWork([{text: this.messages().length ? 'solution-creator.work-thinking' : 'solution-creator.work-reading', delay: 0}], 'think');
+    }
   }
 
   private stopLoadingState(): void {
     this.loading.set(false);
-    this.loadingLongTime.set(false);
-    clearTimeout(this.loadingTimer);
+    if (!this.isGenerating()) {
+      this.clearWork();
+    }
   }
 }

@@ -55,6 +55,9 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
   ],
   exports: [
     AiAssistantButtonComponent,
+    AiWorkLineComponent,
+    AiRunSummaryComponent,
+    AiSparkComponent,
     AiPromptInputComponent,
     AiAssistantPanelComponent,
     AiChatComponent,
