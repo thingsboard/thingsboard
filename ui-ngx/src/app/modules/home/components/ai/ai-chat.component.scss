@@ -156,6 +156,10 @@
   color: var(--tb-ink-54);
   white-space: nowrap;
 
+  &.error {
+    color: var(--tb-crit);
+  }
+
   .tb-ai-status-mark {
     width: 10px;
     height: 10px;

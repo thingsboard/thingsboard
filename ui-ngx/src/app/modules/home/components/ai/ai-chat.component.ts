@@ -11,7 +11,6 @@ import {
   model,
   OnDestroy,
   OnInit,
-  SecurityContext,
   signal,
   untracked,
   ViewChild
@@ -194,6 +193,11 @@ export class AiChatComponent implements OnInit, OnDestroy {
     return chat ? this.chats.levelOf(chat) : null;
   });
 
+  statusTip = computed(() => {
+    const chat = this.chat();
+    return chat ? this.chats.tipOf(chat) : '';
+  });
+
   private openChatEffect = effect(onCleanup => {
     const chatId = this.chatId();
     untracked(() => this.chats.setOpen(chatId, true));
@@ -367,6 +371,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
       ? {from: 'USER', content: prompt.message, resources: prompt.resources, time: Date.now()}
       : {from: 'USER', content: prompt.message, time: Date.now()};
     this.messages.update(list => [...list, userMessage]);
+    if (this.loading() && this.chatId()) {
+      this.sendWhileWorking(prompt, userMessage);
+      return;
+    }
     this.sendMessage(prompt).subscribe({
       error: err => {
         if (this.isConnectionLost(err) && this.chatId()) {
@@ -399,6 +407,50 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
   }
 
+  resume(): void {
+    this.sendMsgFromUser({message: this.translate.instant('ai-assistant.resume'), resources: []});
+  }
+
+  private sendWhileWorking(prompt: AiPromptMessage, userMessage: ChatMessage): void {
+    const chatId = this.chatId();
+    let ownTurn = false;
+    this.aiChat.sendChatMessage(chatId, this.chatRequest(prompt), {ignoreLoading: true, ignoreErrors: true}).pipe(
+      takeUntil(this.cancelMessage$),
+      concatMap(event => {
+        if (event.event === 'messageQueued') {
+          return of(event);
+        }
+        if (!ownTurn && !this.loading()) {
+          ownTurn = true;
+          this.chats.clearFailure(chatId);
+          this.startLoading();
+        }
+        return this.handleChatEvent(event);
+      }),
+      finalize(() => {
+        if (ownTurn) {
+          this.stopLoading();
+        }
+      })
+    ).subscribe({
+      error: err => {
+        this.messages.update(list => list.filter(message => message !== userMessage));
+        setTimeout(() => this.showErrorMessage(err), 0);
+      }
+    });
+  }
+
+  private chatRequest(prompt: AiPromptMessage): SendChatMessageRequest {
+    const request: SendChatMessageRequest = {message: prompt.message};
+    if (prompt.resources.length) {
+      request.resources = prompt.resources.map(resource => resource.id);
+    }
+    if (this.clientContext()) {
+      request.clientContext = this.clientContext();
+    }
+    return request;
+  }
+
   private sendMessage(prompt: AiPromptMessage): Observable<ChatEvent> {
     this.messageCancelled = false;
     const startOrContinue$ = this.chatId()
@@ -412,17 +464,14 @@ export class AiChatComponent implements OnInit, OnDestroy {
           this.chatId.set(chat.id);
         })
       );
-    const request: SendChatMessageRequest = {message: prompt.message};
-    if (prompt.resources.length) {
-      request.resources = prompt.resources.map(resource => resource.id);
-    }
-    if (this.clientContext()) {
-      request.clientContext = this.clientContext();
-    }
+    const request = this.chatRequest(prompt);
     this.setWork('reading-request', true);
     this.loading.set(true);
     return startOrContinue$.pipe(
-      tap(() => this.startLoading()),
+      tap(() => {
+        this.chats.clearFailure(this.chatId());
+        this.startLoading();
+      }),
       switchMap(() => this.aiChat.sendChatMessage(this.chatId(), request, {ignoreLoading: true, ignoreErrors: true})),
       takeUntil(this.cancelMessage$),
       concatMap(event => this.handleChatEvent(event)),
@@ -506,7 +555,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
         this.finishAction(event.data);
         break;
       case 'turnStopped':
-        this.messages.update(list => [...list, {from: 'AI', content: this.translate.instant('ai-assistant.stopped'), status: 'INCOMPLETE', time: Date.now()}]);
+        this.messages.update(list => [...list, {from: 'AI', content: this.translate.instant('ai-assistant.stopped'), status: 'STOPPED', time: Date.now()}]);
         break;
       case 'chatTitleGenerated':
         if (this.chatId() && event.data.title) {
@@ -515,7 +564,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
         break;
       default:
         if (event.event === 'error') {
-          this.showErrorToast(this.sanitizer.sanitize(SecurityContext.HTML, event.data?.message) ?? event.data?.message);
+          const message = event.data?.message || this.translate.instant('ai-assistant.run-failed');
+          this.chats.setFailed(this.chatId(), message);
+          this.messages.update(list => [...list, {from: 'AI', content: message, status: 'INCOMPLETE', time: Date.now()}]);
         }
     }
     return of(event);

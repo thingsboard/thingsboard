@@ -93,14 +93,20 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   @Input() stopping = false;
 
+  @Input() sendWhileWorking = false;
+
   @Output() stopped = new EventEmitter<void>();
 
-  get canStop(): boolean {
+  get working(): boolean {
     return this.loading && this.stoppable;
   }
 
+  get canStop(): boolean {
+    return this.working && !(this.sendWhileWorking && this.hasContent());
+  }
+
   stop(): void {
-    if (this.canStop && !this.stopping) {
+    if (this.working && !this.stopping) {
       this.stopped.emit();
     }
   }
@@ -139,7 +145,11 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   get canSend(): boolean {
     const ready = this.attachments().some(attachment => attachment.status === 'ready');
-    return !this.loading && !this.uploading() && (!!this.message.value?.trim() || ready);
+    return (!this.loading || this.sendWhileWorking) && !this.uploading() && (!!this.message.value?.trim() || ready);
+  }
+
+  private hasContent(): boolean {
+    return this.hasText() || this.attachments().some(attachment => attachment.status === 'ready');
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -182,7 +192,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   }
 
   onKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && this.canStop) {
+    if (event.key === 'Escape' && this.working) {
       event.preventDefault();
       this.stop();
       return;
@@ -201,7 +211,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   send(): void {
     const msg = this.message.value?.trim() ?? '';
     const ready = this.attachments().filter(attachment => attachment.status === 'ready');
-    if (this.loading || this.uploading() || (!msg && !ready.length)) {
+    if ((this.loading && !this.sendWhileWorking) || this.uploading() || (!msg && !ready.length)) {
       return;
     }
     this.fly();

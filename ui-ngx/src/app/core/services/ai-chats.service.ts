@@ -30,6 +30,8 @@ export class AiChatsService {
 
   private _open = signal<ReadonlySet<string>>(new Set());
 
+  private _failed = signal<ReadonlyMap<string, string>>(new Map());
+
   levelOf(chat: ChatInfo): ChatLevel | null {
     if (this._waiting().has(chat.id)) {
       return 'needs';
@@ -37,10 +39,50 @@ export class AiChatsService {
     if (this._replying().has(chat.id)) {
       return 'running';
     }
-    if (this._open().has(chat.id)) {
-      return null;
+    if (this._failed().has(chat.id)) {
+      return 'error';
     }
-    return chat.status === 'NEEDS_YOU' ? 'needs' : chat.status === 'RUNNING' ? 'running' : null;
+    if (this._open().has(chat.id)) {
+      return chat.status === 'FAILED' ? 'error' : null;
+    }
+    return chat.status === 'NEEDS_YOU' ? 'needs' : chat.status === 'RUNNING' ? 'running' : chat.status === 'FAILED' ? 'error' : null;
+  }
+
+  needsAttention(chat: ChatInfo): boolean {
+    const level = this.levelOf(chat);
+    return level === 'needs' || level === 'error';
+  }
+
+  tipOf(chat: ChatInfo): string {
+    const level = this.levelOf(chat);
+    if (!level) {
+      return '';
+    }
+    const reason = level === 'error' ? this._failed().get(chat.id) ?? chat.statusReason : undefined;
+    return reason || this.translate.instant('ai-assistant.status-tip-' + level);
+  }
+
+  setFailed(chatId: string | undefined, reason: string): void {
+    if (chatId) {
+      this._failed.update(map => new Map(map).set(chatId, reason));
+    }
+  }
+
+  clearFailure(chatId: string | undefined): void {
+    if (!chatId) {
+      return;
+    }
+    if (untracked(this._failed).has(chatId)) {
+      this._failed.update(map => {
+        const next = new Map(map);
+        next.delete(chatId);
+        return next;
+      });
+    }
+    if (untracked(this._chats).some(chat => chat.id === chatId && chat.status === 'FAILED')) {
+      this._chats.update(list => list.map(chat => chat.id === chatId && chat.status === 'FAILED'
+        ? {...chat, status: undefined, statusReason: undefined} : chat));
+    }
   }
 
   setWaiting(chatId: string | undefined, waiting: boolean): void {

@@ -30,6 +30,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
   @Output() askAgain = new EventEmitter<void>();
   @Output() editMessage = new EventEmitter<string>();
+  @Output() resume = new EventEmitter<void>();
   @Output() resourceError = new EventEmitter<any>();
 
   waitApproval = false;
@@ -264,7 +265,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   private findLastAnswerIndex(): number {
     for (let i = this.messages.length - 1; i >= 0; i--) {
       const message = this.messages[i];
-      if (message.from === 'AI' && message.status !== 'INCOMPLETE') {
+      if (message.from === 'AI' && !message.status) {
         return i;
       }
     }

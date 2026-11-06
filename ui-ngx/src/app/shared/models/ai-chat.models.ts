@@ -16,11 +16,12 @@ export interface ChatInfo extends ChatConfiguration {
   createdTime: number;
   pinned?: boolean;
   status?: ChatStatus;
+  statusReason?: string;
 }
 
-export type ChatStatus = 'RUNNING' | 'NEEDS_YOU';
+export type ChatStatus = 'RUNNING' | 'NEEDS_YOU' | 'FAILED';
 
-export type ChatLevel = 'needs' | 'running';
+export type ChatLevel = 'needs' | 'running' | 'error';
 
 export interface BaseChatEvent {
   event: string;
@@ -175,8 +176,13 @@ export enum ToolApprovalResult {
   TIMEOUT = 'TIMEOUT'
 }
 
+export interface MessageQueuedEvent extends BaseChatEvent {
+  event: 'messageQueued';
+  data: Record<string, never>;
+}
+
 export type ChatEvent = AssistantChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
-  | TurnResumedEvent | TurnStoppedEvent | ToolStartedEvent | ToolFinishedEvent;
+  | TurnResumedEvent | TurnStoppedEvent | MessageQueuedEvent | ToolStartedEvent | ToolFinishedEvent;
 
 export enum AiAssistantViewType {
   DASHBOARD = 'DASHBOARD',

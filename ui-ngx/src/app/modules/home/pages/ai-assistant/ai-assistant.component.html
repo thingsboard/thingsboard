@@ -52,14 +52,14 @@
                          (keydown)="onRenameKeydown($event)" (blur)="finishRename(chat, rowTitle.value)">
                 </div>
               } @else {
-                <div class="ai-row" role="link" tabindex="0" [class.active]="chat.id === chatId()" [class.attn]="aiChats.levelOf(chat) === 'needs'"
+                <div class="ai-row" role="link" tabindex="0" [class.active]="chat.id === chatId()" [class.attn]="aiChats.needsAttention(chat)"
                      [attr.aria-current]="chat.id === chatId() ? 'page' : null"
                      (click)="selectChat(chat)" (keydown.enter)="selectChat(chat)">
                   <span class="ai-row-title" [matTooltip]="'ai-assistant.double-click-to-rename' | translate" matTooltipPosition="after"
                         matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
                         (dblclick)="$event.stopPropagation(); startRename(chat)">{{ chat.title }}</span>
                   @if (aiChats.levelOf(chat); as level) {
-                    <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="('ai-assistant.status-tip-' + level) | translate" matTooltipPosition="above"></span>
+                    <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="aiChats.tipOf(chat)" matTooltipPosition="above"></span>
                   }
                   <button type="button" class="ai-row-menu" [matMenuTriggerFor]="chatMenu"
                           [matMenuTriggerData]="{chat: chat}" (click)="$event.stopPropagation()"
@@ -86,6 +86,12 @@
               [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.open-chats' | translate">
         <ng-container *ngTemplateOutlet="panelIcon; context: {open: true}"></ng-container>
       </button>
+      @if (waitItem(); as wait) {
+        <button type="button" class="ai-ib ai-wait-btn" (click)="openWaiting()"
+                [matTooltip]="wait.tip" matTooltipPosition="right" [attr.aria-label]="wait.label">
+          <i class="ai-wait-n">{{ wait.count }}</i>
+        </button>
+      }
       <button type="button" class="ai-ib" (click)="newChat()"
               [matTooltip]="'ai-assistant.new-chat' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.new-chat' | translate">
         <mat-icon fontSet="material-icons-round">add</mat-icon>
@@ -105,6 +111,9 @@
     <button aiChatLead type="button" class="ai-ib ai-bar-chats" (click)="toggleRail()"
             [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.open-chats' | translate">
       <ng-container *ngTemplateOutlet="panelIcon; context: {open: true}"></ng-container>
+      @if (waiting().length; as count) {
+        <i class="ai-badge" aria-hidden="true">{{ count }}</i>
+      }
     </button>
   }
 </tb-ai-chat>

@@ -85,9 +85,33 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       const index = chat.pinned ? 0 : chat.createdTime >= today ? 1 : chat.createdTime >= today - DAY ? 2 : chat.createdTime >= today - WEEK ? 3 : 4;
       groups[index].chats.push(chat);
     }
-    const needsFirst = (chat: ChatInfo) => this.aiChats.levelOf(chat) === 'needs' ? 0 : 1;
+    const needsFirst = (chat: ChatInfo) => this.aiChats.needsAttention(chat) ? 0 : 1;
     groups.forEach(group => group.chats.sort((a, b) => needsFirst(a) - needsFirst(b)));
     return groups.filter(group => group.chats.length);
+  });
+
+  waiting = computed<ChatInfo[]>(() => {
+    const rank = (chat: ChatInfo) => this.aiChats.levelOf(chat) === 'needs' ? 0 : 1;
+    return this.aiChats.chats()
+      .filter(chat => this.aiChats.needsAttention(chat))
+      .sort((a, b) => rank(a) - rank(b) || b.createdTime - a.createdTime);
+  });
+
+  waitItem = computed<{count: number; tip: string; label: string} | null>(() => {
+    const waiting = this.waiting();
+    if (!waiting.length || (waiting.length === 1 && waiting[0].id === this.chatId())) {
+      return null;
+    }
+    if (waiting.length === 1) {
+      const title = waiting[0].title || this.translate.instant('ai-assistant.new-chat');
+      return {
+        count: 1,
+        tip: this.translate.instant('ai-assistant.waiting-one-tip', {title, status: this.aiChats.tipOf(waiting[0])}),
+        label: this.translate.instant('ai-assistant.waiting-one', {title})
+      };
+    }
+    const text = this.translate.instant('ai-assistant.waiting-many', {count: waiting.length});
+    return {count: waiting.length, tip: text, label: text};
   });
 
   private translate = inject(TranslateService);
@@ -177,6 +201,16 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     this.browsing = !!this.chatId();
     this.chatId.set(undefined);
     setTimeout(() => this.chat?.focus());
+  }
+
+  openWaiting(): void {
+    const waiting = this.waiting();
+    if (waiting.length === 1) {
+      this.selectChat(waiting[0]);
+      return;
+    }
+    this.setRailOpen(true);
+    setTimeout(() => this.host.nativeElement.querySelector('.ai-row.attn')?.scrollIntoView({block: 'nearest'}));
   }
 
   selectChat(chat: ChatInfo): void {

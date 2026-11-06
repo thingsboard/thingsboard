@@ -60,13 +60,20 @@
           (approvalAction)="approval($event)"
           (askAgain)="askAgain.emit()">
         </tb-ai-approval-card>
-      } @else if (msg.status === 'INCOMPLETE') {
+      } @else if (msg.status === 'INCOMPLETE' || msg.status === 'STOPPED') {
         <div class="incomplete flex" role="status">
           <mat-icon class="incomplete-icon">warning_amber</mat-icon>
           <span>{{ msg.content }}</span>
         </div>
         @if (summaries[$index]; as entities) {
           <tb-ai-run-summary class="summary" [entities]="entities"></tb-ai-run-summary>
+        }
+        @if (msg.status === 'STOPPED' && $last && !loading) {
+          <div class="k-chips">
+            <button type="button" class="ob-chip" (click)="resume.emit()">
+              <mat-icon aria-hidden="true">play_arrow</mat-icon>{{ 'ai-assistant.resume' | translate }}
+            </button>
+          </div>
         }
       } @else {
         <div class="agent" #answer>

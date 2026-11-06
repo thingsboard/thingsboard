@@ -177,7 +177,7 @@ export type ChatMessage = GeneralChatMessage | ApprovalChatMessage | ActionChatM
 export interface GeneralChatMessage {
   from: 'USER' | 'AI' | 'SYSTEM' | 'GENERATE';
   content: string;
-  status?: 'INCOMPLETE';
+  status?: 'INCOMPLETE' | 'STOPPED';
   resources?: AiResourceInfo[];
   time?: number;
 }

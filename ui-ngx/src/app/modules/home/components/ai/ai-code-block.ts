@@ -289,7 +289,7 @@ function shellLine(line: string, state: ShellState): Piece[] {
     return [token('com', line)];
   }
   const out: Piece[] = [];
-  (line.match(/"(?:\\.|[^"\\])*"?|'[^']*'?|\s+|&&|\|\||[|;]|[^\s|;&]+|&/g) || []).forEach(word => {
+  matches(line, /"(?:\\.|[^"\\])*"?|'[^']*'?|\s+|&&|\|\||[|;]|[^\s|;&]+|&/g).forEach(word => {
     if (/^\s+$/.test(word)) {
       out.push(word);
       return;
@@ -345,7 +345,7 @@ function codeLine(lang: string, line: string): Piece[] {
   }
   const words = new RegExp('"(?:\\\\.|[^"\\\\])*"?|\'(?:\\\\.|[^\'\\\\])*\'?|`[^`]*`?|'
     + (lang === 'python' ? '#.*' : '\\/\\/.*') + '|\\d+(?:\\.\\d+)?|[A-Za-z_$][\\w$]*|\\s+|.', 'g');
-  return (line.match(words) || []).map((word, i, all) => {
+  return matches(line, words).map((word, i, all) => {
     if (/^(#|\/\/)/.test(word)) {
       return token('com', word);
     }
@@ -369,7 +369,7 @@ function codeLine(lang: string, line: string): Piece[] {
 }
 
 function jsonLine(line: string): Piece[] {
-  return (line.match(/"(?:\\.|[^"\\])*"(\s*:)?|-?\d+(?:\.\d+)?|true|false|null|\s+|./g) || []).flatMap(word => {
+  return matches(line, /"(?:\\.|[^"\\])*"(\s*:)?|-?\d+(?:\.\d+)?|true|false|null|\s+|./g).flatMap(word => {
     if (/^".*:$/.test(word.replace(/\s/g, ''))) {
       return [token('key', word.replace(/\s*:$/, '')), token('op', word.match(/\s*:$/)[0])];
     }
@@ -411,4 +411,8 @@ function logLine(line: string): Piece[] {
   const level = match[2];
   const kind = !level ? null : level === 'INFO' ? 'lvl' : level === 'DEBUG' ? 'com' : /^WARN/.test(level) ? 'warn' : 'err';
   return [match[1] ? token('com', match[1]) : null, level ? token(kind, level) : null, match[3]];
+}
+
+function matches(line: string, pattern: RegExp): string[] {
+  return line.match(pattern) ?? [];
 }

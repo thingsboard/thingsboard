@@ -40,7 +40,8 @@
         </button>
       </span>
       @if (level(); as level) {
-        <span class="ai-chat-status" [class]="'ai-chat-status ' + level">
+        <span class="ai-chat-status" [class]="'ai-chat-status ' + level"
+              [matTooltip]="statusTip()" matTooltipPosition="below">
           <span class="tb-ai-status-mark" [class]="'tb-ai-status-mark ' + level"></span>
           <span>{{ ('ai-assistant.status-' + level) | translate }}</span>
         </span>
@@ -82,6 +83,7 @@
       [work]="work()"
       (approvalAction)="onApprovalAction($event)"
       (askAgain)="onAskAgain()"
+      (resume)="resume()"
       (editMessage)="promptInput?.setValue($event)">
     </tb-ai-chat-messages>
   } @else if (!chatId()) {
@@ -108,6 +110,7 @@
       [dropZone]="chatArea"
       [pinned]="!!messages().length || loading()"
       [showAutoApprove]="true"
+      [sendWhileWorking]="true"
       [autoApprove]="autoApprove()"
       [autoApproveInChat]="!!chatId()"
       [stoppable]="!!chatId()"

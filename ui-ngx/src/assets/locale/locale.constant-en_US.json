@@ -998,6 +998,8 @@
             "result": "Result"
         },
         "go-to-end": "Go to the end",
+        "resume": "Resume",
+        "run-failed": "The run stopped with an error.",
         "new-count": "{{ count }} new",
         "start-a-task": "Start a task",
         "code": {
@@ -1134,8 +1136,13 @@
         "deny-placeholder": "Or say what should be different…",
         "status-needs": "Needs you",
         "status-running": "Running",
+        "status-error": "Failed",
         "status-tip-needs": "An approval waits for you",
         "status-tip-running": "In progress",
+        "status-tip-error": "The run stopped",
+        "waiting-one": "Open {{ title }}, it needs you",
+        "waiting-one-tip": "{{ title }}: {{ status }}",
+        "waiting-many": "{ count, plural, =1 {1 chat needs you} other {# chats need you} }",
         "stop": "Stop",
         "stopped": "You stopped this reply. Nothing more was done.",
         "auto-approve": "Auto-approve",
