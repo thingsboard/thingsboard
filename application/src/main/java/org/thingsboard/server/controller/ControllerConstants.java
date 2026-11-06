@@ -2094,26 +2094,19 @@ public class ControllerConstants {
             "}";
 
     static final String DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE = "{\n" +
-            "  \"device_id\": \"3G7H1j-9zF\",\n" +
-            "  \"timestamp\": \"2023-06-10T12:00:00Z\",\n" +
-            "  \"sensor_data\": {\n" +
-            "    \"temperature\": 25.3,\n" +
-            "    \"humidity\": 62.8,\n" +
-            "    \"pressure\": 1012.5\n" +
-            "  },\n" +
+            "  \"ts\": 1791901200000,\n" +
+            "  \"temperature\": 25.3,\n" +
+            "  \"humidity\": 62.8,\n" +
+            "  \"battery\": 78.5,\n" +
+            "  \"fwVersion\": \"1.4.2\",\n" +
             "  \"location\": {\n" +
             "    \"latitude\": 37.7749,\n" +
             "    \"longitude\": -122.4194\n" +
-            "  },\n" +
-            "  \"status\": \"active\",\n" +
-            "  \"power_status\": \"on\",\n" +
-            "  \"vibration\": {\n" +
-            "    \"x\": 0.02,\n" +
-            "    \"y\": 0.03,\n" +
-            "    \"z\": 0.01\n" +
-            "  },\n" +
-            "  \"fault_codes\": [100, 204, 301],\n" +
-            "  \"battery_level\": 78.5\n" +
+            "  }\n" +
+            "}\n";
+
+    static final String DEFAULT_AWS_IOT_UPLINK_CONVERTER_METADATA = "{\n" +
+            "  \"topic\": \"tb/aws/iot/telemetry/thermostat/Thermostat-01\"\n" +
             "}\n";
 
     static final String DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE = "{\n" +

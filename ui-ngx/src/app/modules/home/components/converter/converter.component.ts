@@ -660,6 +660,12 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
       };
       if (this.integrationName) {
         parameters.integrationName = this.integrationName;
+      } else {
+        // Use the display name of the integration type, for example "Test AWS IoT" instead of "Test AWS_IOT".
+        const integrationTypeName = integrationTypeInfoMap.get(parameters.integrationType)?.name;
+        if (integrationTypeName) {
+          parameters.integrationName = `Test ${this.translate.instant(integrationTypeName)}`;
+        }
       }
 
       request = this.converterService.getLatestConverterDebugInput(NULL_UUID, parameters);

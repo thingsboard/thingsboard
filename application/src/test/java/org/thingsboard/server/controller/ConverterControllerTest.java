@@ -43,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,6 +79,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
             .put("encoder", "return {deviceName: 'Device A', deviceType: 'thermostat'};");
 
     private static final String DEFAULT_AWS_IOT_UPLINK_DECODER = "converters/tbel-aws-iot-decoder.raw";
+    private static final String DEFAULT_AWS_IOT_UPLINK_JS_DECODER = "converters/js-aws-iot-decoder.raw";
     private static final String DEFAULT_AZURE_UPLINK_DECODER = "converters/tbel-azure-decoder.raw";
     private static final String DEFAULT_CHIRPSTACK_UPLINK_DECODER = "converters/tbel-chirpstack-decoder.raw";
     private static final String CHIRPSTACK_UPLINK_DECODER = "converter/chirpstack_uplink_decoder.raw";
@@ -831,13 +833,56 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAwsIotDefaultDecoder() throws IOException {
-        String expectedDecodedMessage = "{\"deviceName\":\"Production 1 - 3G7H1j-9zF\",\"deviceType\":\"default\"," +
-                "\"groupName\":\"Production\",\"attributes\":{\"deviceId\":\"3G7H1j-9zF\"},\"telemetry\":{\"ts\":1686398400000,\"values\":" +
-                "{\"temperature\":25.3,\"humidity\":62.8,\"pressure\":1012.5,\"latitude\":37.7749,\"longitude\":-122.4194," +
-                "\"status\":\"active\",\"power_status\":\"on\",\"x\":0.02,\"y\":0.03,\"z\":0.01,\"fault_codes.0\":100,\"fault_codes.1\":204," +
-                "\"fault_codes.2\":301,\"battery_level\":78.5}}}";
-        testDecoder(DEFAULT_AWS_IOT_UPLINK_DECODER, DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage);
+    public void testAwsIotDefaultDecoder() throws Exception {
+        String expectedDecodedMessage = "{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"thermostat\"," +
+                "\"attributes\":{\"fwVersion\":\"1.4.2\",\"latitude\":37.7749,\"longitude\":-122.4194}," +
+                "\"telemetry\":{\"ts\":1791901200000,\"values\":{\"temperature\":25.3,\"humidity\":62.8,\"battery\":78.5}}}";
+
+        // The default test input of a new AWS IoT uplink converter has the sample payload and a sample topic.
+        String urlTemplate = "/api/converter/{converterId}/debugIn?integrationType={integrationType}&converterType={converterType}";
+        ObjectNode debugIn = doGet(urlTemplate, ObjectNode.class, EntityId.NULL_UUID, IntegrationType.AWS_IOT.name(), ConverterType.UPLINK.name());
+        assertThat(debugIn.get("inContent").asText()).isEqualTo(DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE);
+        ObjectNode metadata = JacksonUtil.fromString(debugIn.get("inMetadata").asText(), ObjectNode.class);
+        assertThat(metadata.get("topic").asText()).isEqualTo("tb/aws/iot/telemetry/thermostat/Thermostat-01");
+
+        // The default TBEL and JS templates give the same output for this input.
+        for (String[] template : new String[][]{{"TBEL", DEFAULT_AWS_IOT_UPLINK_DECODER}, {"JS", DEFAULT_AWS_IOT_UPLINK_JS_DECODER}}) {
+            JsonNode response = testAwsIotDecoder(template[0], template[1], metadata);
+            assertThat(response.get("error").asText()).as(template[0]).isEmpty();
+            assertThat(response.get("output").asText()).as(template[0]).isEqualTo(expectedDecodedMessage);
+        }
+    }
+
+    @Test
+    public void testAwsIotDefaultDecoderRejectsInvalidTopic() throws Exception {
+        Map<String, String> expectedErrors = new LinkedHashMap<>();
+        expectedErrors.put(null, "MQTT topic is missing or empty");
+        expectedErrors.put("", "MQTT topic is missing or empty");
+        expectedErrors.put("thermostat", "MQTT topic must contain device type and device name: thermostat");
+        expectedErrors.put("tb/aws/iot/telemetry/thermostat/", "MQTT topic must contain device type and device name: tb/aws/iot/telemetry/thermostat/");
+        expectedErrors.put("tb/aws/iot/telemetry//Thermostat-01", "MQTT topic must contain device type and device name: tb/aws/iot/telemetry//Thermostat-01");
+
+        for (String[] template : new String[][]{{"TBEL", DEFAULT_AWS_IOT_UPLINK_DECODER}, {"JS", DEFAULT_AWS_IOT_UPLINK_JS_DECODER}}) {
+            for (Map.Entry<String, String> entry : expectedErrors.entrySet()) {
+                ObjectNode metadata = JacksonUtil.newObjectNode();
+                if (entry.getKey() != null) {
+                    metadata.put("topic", entry.getKey());
+                }
+                JsonNode response = testAwsIotDecoder(template[0], template[1], metadata);
+                String description = template[0] + ", topic: " + entry.getKey();
+                assertThat(response.get("output").asText()).as(description).isEmpty();
+                assertThat(response.get("error").asText()).as(description).contains(entry.getValue());
+            }
+        }
+    }
+
+    private JsonNode testAwsIotDecoder(String scriptLang, String decoderFileName, ObjectNode metadata) throws Exception {
+        byte[] bytes = IOUtils.toByteArray(ConverterControllerTest.class.getClassLoader().getResourceAsStream(decoderFileName));
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.set("decoder", new TextNode(new String(bytes, StandardCharsets.UTF_8)));
+        inputParams.set("metadata", metadata);
+        inputParams.put("payload", Base64.getEncoder().encodeToString(DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE.getBytes(StandardCharsets.UTF_8)));
+        return doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
     }
 
     @Test

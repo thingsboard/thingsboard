@@ -1,84 +1,62 @@
+/** Decoder **/
+
+// AWS IoT devices publish messages to MQTT topics provided in metadata.
+// This example uses the last two topic segments to identify the device:
+//
+//   tb/aws/iot/telemetry/thermostat/Thermostat-01
+//                        ^^^^^^^^^^ ^^^^^^^^^^^^^
+//                        type       name
+
+// Get the MQTT topic and reject messages if it is missing or empty.
+var topic = metadata.topic;
+if (topic == null || topic.trim().isEmpty()) {
+    raiseError("MQTT topic is missing or empty");
+}
+
+// Split the topic into segments, preserving empty trailing segments.
+var topicParts = topic.split("/", -1);
+var n = topicParts.length;
+
+// Reject topics without valid device type and device name segments.
+if (n < 2 || topicParts[n - 1].trim().isEmpty() || topicParts[n - 2].trim().isEmpty()) {
+    raiseError("MQTT topic must contain device type and device name: " + topic);
+}
+
+// Extract the device name and type from the last two topic segments.
+var deviceName = topicParts[n - 1];
+var deviceType = topicParts[n - 2];
+
+// Decode the incoming payload to a JSON object.
 var data = decodeToJson(payload);
 
-var deviceName = data.device_id != null ? "Production 1 - " + data.device_id : "Device A";
-var deviceType = data.device_type != null ? data.device_type : "default";
-var groupName = "Production";
-// var customerName = 'Customer A';
-// use assetName and assetType instead of deviceName and deviceType
-// to automatically create assets instead of devices.
-// var assetName = 'Asset A';
-// var assetType = 'building';
-var dateString = data.timestamp != null ? data.timestamp : "";
+// Use the device timestamp if provided; otherwise, use the current server time.
+var ts = data.ts != null ? data.ts : Date.now();
 
-// --- attributes and telemetry objects ---
-var telemetry = {};
-var attributes = {};
-// --- attributes and telemetry objects ---
+// Map device properties to ThingsBoard attributes.
+var attributes = {
+    fwVersion: data.fwVersion
+};
 
-// --- Timestamp parsing
-var timestamp = -1;
-if (dateString != null) {
-  timestamp = new Date(dateString).getTime();
-  if (timestamp == -1) {
-      var secondsSeparatorIndex = dateString.lastIndexOf('.') + 1;
-      var millisecondsEndIndex = dateString.lastIndexOf('+');
-      if (millisecondsEndIndex == -1) {
-          millisecondsEndIndex = dateString.lastIndexOf('Z');
-      }
-      if (millisecondsEndIndex == -1) {
-          millisecondsEndIndex = dateString.lastIndexOf('-');
-      }
-      if (millisecondsEndIndex == -1) {
-          if (dateString.length >= secondsSeparatorIndex + 3) {
-              dateString = dateString.substring(0, secondsSeparatorIndex + 3);
-          }
-      } else {
-          dateString = dateString.substring(0, secondsSeparatorIndex + 3) +
-              dateString.substring(millisecondsEndIndex, dateString.length);
-      }
-      timestamp = new Date(dateString).getTime();
-  }
-}
-// If we cannot parse timestamp - we will use the current timestamp
-if (timestamp == -1) {
-    timestamp = Date.now();
-}
-// --- Timestamp parsing
-
-// You can add some keys manually to attributes, telemetry
-attributes.deviceId = data.device_id;
-
-// You can exclude some keys from the result
-var excludeFromTelemetryList = ["device_id", "timestamp", ];
-// var excludeFromAttributesList = ["device_id", "timestamp", ];
-
-// Message parsing
-var telemetryData = {};
-var attributesData = {};
-// To avoid paths in the decoded objects we passing false value to function as "pathInKey" argument.
-// Warning: pathInKey can cause already found fields to be overwritten with the last value found, e.g. receive_at from uplink_message will be written receive_at in the root.
-telemetryData.putAll(toFlatMap(data, excludeFromTelemetryList, false));
-// attributesData.putAll(toFlatMap(data, excludeFromAttributesList, false));
-
-if (!telemetryData.isEmpty()) {
-    telemetry.putAll(telemetryData);
-}
-if (!attributesData.isEmpty()) {
-    attributes.putAll(attributesData);
+// Add location attributes if available.
+if (data.location != null) {
+    attributes.latitude = data.location.latitude;
+    attributes.longitude = data.location.longitude;
 }
 
-var result = {
+// Map device measurements to ThingsBoard telemetry.
+var telemetry = {
+    temperature: data.temperature,
+    humidity: data.humidity,
+    battery: data.battery
+};
+
+// Return the converted uplink message.
+return {
     deviceName: deviceName,
     deviceType: deviceType,
-//  assetName: assetName,
-//  assetType: assetType,
-//  customerName: customerName,
-    groupName: groupName,
     attributes: attributes,
     telemetry: {
-        ts: timestamp,
+        ts: ts,
         values: telemetry
     }
 };
-
-return result;
