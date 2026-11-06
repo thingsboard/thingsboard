@@ -110,10 +110,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   isDetailsOpen = false;
   detailsPanelOpened = new EventEmitter<boolean>();
 
-  get isAiAssistantOpen() { return this.panelService.open(); }
   aiEnabled = getCurrentAuthState(this.store).aiEnabled;
 
-  configureWithAiButton: HeaderActionDescriptor;
 
   replaceComponent: Type<any>;
 
@@ -224,12 +222,6 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     if (aiConfig) {
       this.panelService.setEnabled(true);
       this.panelService.setConfig(aiConfig);
-      this.configureWithAiButton = {
-        name: this.translate.instant('ai-assistant.configure-with-ai'),
-        icon: 'mdi:creation',
-        isEnabled: () => this.aiEnabled && aiConfig.showButton !== false && !this.isAiAssistantOpen,
-        onAction: ($event) => this.toggleAiAssistant($event)
-      };
       this.updateAiClientContext();
       this.aiUpdatedData$?.unsubscribe();
       if (entitiesTableConfig.entityType) {

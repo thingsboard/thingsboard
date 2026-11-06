@@ -4,6 +4,9 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
+@if (handedOver) {
+  <tb-ai-action-line [action]="handedOver" [outcomeText]="outcomeText" [autoApproved]="state === 'auto'"></tb-ai-action-line>
+} @else {
 <div class="k-review"
      [class.done]="state === 'approved'"
      [class.auto]="state === 'auto'"
@@ -13,7 +16,7 @@
   <div class="k-head"><mat-icon aria-hidden="true">{{ headIcon }}</mat-icon>{{ headText }}</div>
   @if (review) {
     <tb-ai-record [entityType]="review.entityType" [alarmRule]="alarmRule" [name]="review.name" [meta]="meta"
-                  [class.closed]="recordClosed"></tb-ai-record>
+                  [class.closed]="recordClosed" [class.planned]="planned"></tb-ai-record>
   }
   @switch (state) {
     @case ('pending') {
@@ -67,7 +70,7 @@
       <div class="k-actions">
         <button mat-flat-button type="button" [class.warn]="isDestructive" (click)="approve()">
           <mat-icon>{{ isDestructive ? 'delete' : 'check' }}</mat-icon>
-          {{ (isDestructive ? 'ai-assistant.review.delete' : 'ai-assistant.approve') | translate }}
+          {{ approveLabel | translate }}
         </button>
         <button mat-button type="button" (click)="deny()">
           <mat-icon>close</mat-icon>
@@ -101,9 +104,4 @@
     <time class="k-time" [attr.datetime]="data.time | date:'yyyy-MM-ddTHH:mm:ss'">{{ data.time | date:'HH:mm' }}</time>
   }
 </div>
-@if (outcome; as result) {
-  <div class="k-out" [class.fail]="result.failed">
-    <mat-icon class="k-out-mark" aria-hidden="true">{{ result.failed ? 'error_outline' : 'check' }}</mat-icon>
-    <span class="k-out-say">{{ result.text }}</span>
-  </div>
 }

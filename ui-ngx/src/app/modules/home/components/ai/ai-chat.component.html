@@ -58,7 +58,25 @@
         <mat-icon fontSet="material-icons-round">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
       </button>
     }
-    @if (chat() && !renaming()) {
+    @if (variant() === 'panel') {
+      @if (!renaming()) {
+        <button type="button" class="ai-ib more" [matMenuTriggerFor]="panelMenu"
+                [matTooltip]="'ai-assistant.chats-menu' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.chats-menu' | translate">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <button type="button" class="ai-ib" (click)="toggleFullscreen()"
+                [matTooltip]="(fullscreen() ? 'fullscreen.exit' : 'ai-assistant.open-full-screen') | translate" matTooltipPosition="above"
+                [attr.aria-label]="(fullscreen() ? 'fullscreen.exit' : 'ai-assistant.open-full-screen') | translate">
+          <mat-icon fontSet="material-icons-round">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+        @if (!fullscreen()) {
+          <button type="button" class="ai-ib" (click)="closed.emit()"
+                  [matTooltip]="'action.close' | translate" matTooltipPosition="above" [attr.aria-label]="'action.close' | translate">
+            <mat-icon fontSet="material-icons-round">close</mat-icon>
+          </button>
+        }
+      }
+    } @else if (chat() && !renaming()) {
       <button type="button" class="ai-ib more" [matMenuTriggerFor]="chatMenu"
               [matTooltip]="'action.more' | translate" matTooltipPosition="above" [attr.aria-label]="'action.more' | translate">
         <mat-icon>more_vert</mat-icon>
@@ -83,13 +101,38 @@
       [work]="work()"
       (approvalAction)="onApprovalAction($event)"
       (askAgain)="onAskAgain()"
+      [feedback]="!!chatId()"
+      (rate)="onRate($event)"
+      (report)="onReport($event)"
       (resume)="resume()"
       (editMessage)="promptInput?.setValue($event)">
     </tb-ai-chat-messages>
+  } @else if (!chatId() && docked()) {
+    <div class="k-newchat">
+      <span class="tb-ai-mark m44" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
+      <h3>{{ startTitle() || ('ai-assistant.panel-title' | translate) }}</h3>
+      <p>{{ startLine() || ('ai-assistant.panel-line' | translate) }}</p>
+      @if (prompts().length) {
+        <div class="prompts" role="list">
+          @for (example of prompts(); track example.message) {
+            <button type="button" class="prompt" role="listitem" (click)="ask(example.message)">
+              <mat-icon fontSet="material-icons-round" aria-hidden="true">chat_bubble_outline</mat-icon>
+              <span>{{ example.label }}</span>
+              <mat-icon fontSet="material-icons-round" class="go" aria-hidden="true">arrow_upward</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
   } @else if (!chatId()) {
     <div class="ai-chat-start">
-      <span class="tb-ai-mark" [class.m64]="variant() === 'page'" [class.m44]="variant() === 'panel'" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
-      <h1 class="ai-chat-start-title">{{ 'ai-assistant.what-to-work-on' | translate }}</h1>
+      <span class="tb-ai-mark m64" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
+      @if (variant() === 'panel') {
+        <h1 class="ai-chat-start-title">{{ startTitle() || ('ai-assistant.panel-title' | translate) }}</h1>
+        <p class="ai-chat-start-line">{{ startLine() || ('ai-assistant.panel-line' | translate) }}</p>
+      } @else {
+        <h1 class="ai-chat-start-title">{{ 'ai-assistant.what-to-work-on' | translate }}</h1>
+      }
     </div>
   }
   <div class="ai-chat-composer">
@@ -105,6 +148,7 @@
       </button>
     }
     <tb-ai-prompt-input
+      [docked]="docked()"
       [placeholder]="placeholder()"
       [loading]="loading() && !waitingApproval()"
       [dropZone]="chatArea"
@@ -120,7 +164,20 @@
       (messageSent)="sendMsgFromUser($event)">
     </tb-ai-prompt-input>
   </div>
-  @if (!chatId() && !messages().length && !loading()) {
+  @if (variant() === 'panel' && !docked() && !chatId() && !messages().length && !loading() && prompts().length) {
+    <section class="ai-sec k-prompts" [attr.aria-label]="'ai-assistant.start-a-task' | translate">
+      <div class="prompts" role="list">
+        @for (example of prompts(); track example.message) {
+          <button type="button" class="prompt" role="listitem" (click)="ask(example.message)">
+            <mat-icon fontSet="material-icons-round" aria-hidden="true">chat_bubble_outline</mat-icon>
+            <span>{{ example.label }}</span>
+            <mat-icon fontSet="material-icons-round" class="go" aria-hidden="true">arrow_upward</mat-icon>
+          </button>
+        }
+      </div>
+    </section>
+  }
+  @if (variant() === 'page' && !chatId() && !messages().length && !loading()) {
     <section class="ai-sec" aria-labelledby="ai-sec-tasks">
       <div class="ai-sec-head"><h2 id="ai-sec-tasks">{{ 'ai-assistant.start-a-task' | translate }}</h2></div>
       <div class="ai-tasks">
@@ -135,6 +192,43 @@
     </section>
   }
 </div>
+
+<mat-menu #panelMenu="matMenu" xPosition="before" class="tb-ai-chat-menu">
+  @if (chat()) {
+    <button mat-menu-item (click)="startRename()">
+      <mat-icon fontSet="material-icons-round">edit</mat-icon>
+      <span>{{ 'action.rename' | translate }}</span>
+    </button>
+    <button mat-menu-item (click)="newChat()">
+      <mat-icon fontSet="material-icons-round">add</mat-icon>
+      <span>{{ 'ai-assistant.new-chat' | translate }}</span>
+    </button>
+  }
+  @if (recentChats().length) {
+    <div class="tb-ai-menu-h">{{ 'ai-assistant.recent-chats' | translate }}</div>
+    @for (other of recentChats(); track other.id) {
+      <button mat-menu-item class="chat" (click)="chatId.set(other.id)">
+        <mat-icon fontSet="material-icons-round">chat_bubble_outline</mat-icon>
+        <span class="tb-ai-menu-chat">
+          <span class="t">{{ other.title }}</span>
+          @if (levelOf(other); as level) {
+            <span class="tb-ai-status-mark" [class]="'tb-ai-status-mark ' + level"></span>
+          }
+        </span>
+      </button>
+    }
+  }
+  <button mat-menu-item (click)="openAllChats()">
+    <mat-icon fontSet="material-icons-round">forum</mat-icon>
+    <span>{{ 'ai-assistant.all-chats' | translate }}</span>
+  </button>
+  @if (chat()) {
+    <button mat-menu-item class="danger" (click)="deleteChat()">
+      <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>
+      <span>{{ 'action.delete' | translate }}</span>
+    </button>
+  }
+</mat-menu>
 
 <mat-menu #chatMenu="matMenu" xPosition="before" class="tb-ai-chat-menu">
   <button mat-menu-item (click)="startRename()">

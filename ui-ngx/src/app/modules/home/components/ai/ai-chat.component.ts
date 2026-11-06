@@ -11,10 +11,12 @@ import {
   model,
   OnDestroy,
   OnInit,
+  output,
   signal,
   untracked,
   ViewChild
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
@@ -28,10 +30,13 @@ import { AiChatsService } from '@core/services/ai-chats.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
-import { ActionChatMessage, ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
+import { ActionChatMessage, AiStartedFrom, ApprovalChatMessage, ChatMessage, GeneralChatMessage } from '@shared/models/solution-creator.models';
 import {
+  AiAssistantPromptExample,
   AiChatClientContext,
   AiPromptMessage,
+  ChatInfo,
+  ChatLevel,
   ApprovalResult,
   ChatEvent,
   SendChatMessageRequest,
@@ -42,6 +47,7 @@ import {
   ToolStarted
 } from '@shared/models/ai-chat.models';
 import { aiActionWords, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction } from '@home/components/ai/ai-action.models';
+import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
 
@@ -54,11 +60,11 @@ export type AiChatVariant = 'page' | 'panel';
   standalone: false,
   host: {
     'data-ai': '',
-    '[attr.data-type]': 'variant() === "panel" ? "compact" : null',
-    '[attr.data-space]': 'variant() === "panel" ? "compact" : null',
+    '[attr.data-type]': 'docked() ? "compact" : null',
+    '[attr.data-space]': 'docked() ? "compact" : null',
     'class': 'tb-ai-chat',
-    '[class.v-page]': 'variant() === "page"',
-    '[class.v-panel]': 'variant() === "panel"'
+    '[class.v-page]': '!docked()',
+    '[class.v-panel]': 'docked()'
   }
 })
 export class AiChatComponent implements OnInit, OnDestroy {
@@ -66,6 +72,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private static readonly RESUME_ATTEMPTS = 4;
   private static readonly RESUME_DELAY_MS = 2000;
   private static readonly END_IN_VIEW = 160;
+  private static readonly RECENT_CHATS = 5;
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
 
@@ -79,7 +86,24 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   fullscreenEnabled = input<boolean>(true);
 
+  prompts = input<AiAssistantPromptExample[]>([]);
+
+  startTitle = input<string>();
+
+  startLine = input<string>();
+
+  startPlaceholder = input<string>();
+
+  closed = output<void>();
+
+  recentChats = computed(() => this.chats.chats()
+    .filter(chat => chat.id !== this.chatId())
+    .sort((a, b) => b.createdTime - a.createdTime)
+    .slice(0, AiChatComponent.RECENT_CHATS));
+
   fullscreen = signal<boolean>(false);
+
+  docked = computed(() => this.variant() === 'panel' && !this.fullscreen());
 
   readonly markdownStyles = [
     '.tb-markdown-view p, .tb-markdown-view h2, .tb-markdown-view h3, .tb-markdown-view h4, .tb-markdown-view h5, ' +
@@ -153,11 +177,13 @@ export class AiChatComponent implements OnInit, OnDestroy {
       .find(message => !completed[message.data.executionId] && !answered.has(message.data.executionId) && message.data.needsApproval);
   });
 
-  placeholder = computed(() => this.translate.instant(this.waitingApproval()
-    ? 'ai-assistant.deny-placeholder'
-    : this.messages().length
-      ? 'ai-assistant.follow-up-prompt-placeholder'
-      : 'ai-assistant.prompt-placeholder'));
+  placeholder = computed(() => !this.waitingApproval() && !this.messages().length && this.startPlaceholder()
+    ? this.startPlaceholder()
+    : this.translate.instant(this.waitingApproval()
+      ? 'ai-assistant.deny-placeholder'
+      : this.messages().length
+        ? 'ai-assistant.follow-up-prompt-placeholder'
+        : 'ai-assistant.prompt-placeholder'));
 
   private aiChat = inject(AiChatService);
   private chats = inject(AiChatsService);
@@ -167,6 +193,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private destroyRef = inject(DestroyRef);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private router = inject(Router);
 
   readonly hostElement = this.host.nativeElement;
 
@@ -258,6 +285,24 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   focus(): void {
     this.promptInput?.focus();
+  }
+
+  levelOf(chat: ChatInfo): ChatLevel | null {
+    return this.chats.levelOf(chat);
+  }
+
+  newChat(): void {
+    this.chatId.set(undefined);
+    setTimeout(() => this.focus());
+  }
+
+  ask(message: string): void {
+    this.sendMsgFromUser({message, resources: []});
+  }
+
+  openAllChats(): void {
+    this.router.navigate(['/ai-assistant']);
+    this.closed.emit();
   }
 
   startRename(): void {
@@ -353,6 +398,47 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.promptInput?.setValue(this.translate.instant('ai-assistant.task.' + task + '.prompt'));
   }
 
+  onRate(event: AnswerRatingEvent): void {
+    const answer = this.answerAt(event.index);
+    if (!answer) {
+      return;
+    }
+    const before = answer.rating;
+    const rating = event.rating === 'NONE' ? undefined : event.rating;
+    this.patchAnswer(answer, {rating});
+    this.chats.sendFeedback(this.chatId(), {answer: answer.content, rating: event.rating}).subscribe({
+      error: () => {
+        this.patchAnswer(answer, {rating: before});
+        this.showErrorToast(this.translate.instant('ai-assistant.feedback.failed'));
+      }
+    });
+  }
+
+  onReport(event: AnswerReportEvent): void {
+    const answer = this.answerAt(event.index);
+    if (!answer) {
+      return;
+    }
+    this.patchAnswer(answer, {reported: true});
+    this.chats.sendFeedback(this.chatId(), {answer: answer.content, problem: event.problem, comment: event.comment}).subscribe({
+      next: () => this.showToast(this.translate.instant('ai-assistant.feedback.thanks'), 'success'),
+      error: () => {
+        this.patchAnswer(answer, {reported: false});
+        this.showErrorToast(this.translate.instant('ai-assistant.feedback.failed'));
+      }
+    });
+  }
+
+  private answerAt(index: number): GeneralChatMessage | null {
+    const message = this.messages()[index];
+    return this.chatId() && message?.from === 'AI' && message.content ? message : null;
+  }
+
+  private patchAnswer(answer: GeneralChatMessage, patch: Partial<GeneralChatMessage>): void {
+    this.messages.update(list => list.map(message => message === answer || (message.from === 'AI' && message.content === answer.content
+      && message.time === answer.time) ? {...message, ...patch} as GeneralChatMessage : message));
+  }
+
   onAskAgain(): void {
     if (!this.loading()) {
       this.sendMsgFromUser({message: this.translate.instant('ai-assistant.review.ask-again-message'), resources: []});
@@ -367,9 +453,13 @@ export class AiChatComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    const userMessage: ChatMessage = prompt.resources.length
+    const userMessage: GeneralChatMessage = prompt.resources.length
       ? {from: 'USER', content: prompt.message, resources: prompt.resources, time: Date.now()}
       : {from: 'USER', content: prompt.message, time: Date.now()};
+    const startedFrom = this.messages().length ? undefined : this.startingPage();
+    if (startedFrom) {
+      userMessage.startedFrom = startedFrom;
+    }
     this.messages.update(list => [...list, userMessage]);
     if (this.loading() && this.chatId()) {
       this.sendWhileWorking(prompt, userMessage);
@@ -386,6 +476,17 @@ export class AiChatComponent implements OnInit, OnDestroy {
         setTimeout(() => this.showErrorMessage(err), 0);
       }
     });
+  }
+
+  private startingPage(): AiStartedFrom | undefined {
+    const view = this.clientContext()?.view;
+    if (!view?.type || this.variant() !== 'panel') {
+      return undefined;
+    }
+    if (view.entityId) {
+      return {type: view.type, entityId: view.entityId};
+    }
+    return view.type.endsWith('_LIST') || view.type === 'NOTIFICATION_INBOX' ? {type: view.type} : undefined;
   }
 
   private show(chatId: string | undefined): void {
@@ -724,11 +825,15 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   private showErrorToast(message: string): void {
+    this.showToast(message, 'error');
+  }
+
+  private showToast(message: string, type: 'error' | 'success'): void {
     this.store.dispatch(new ActionNotificationShow({
       message,
       target: this.toastTarget(),
       modern: true,
-      type: 'error',
+      type,
       verticalPosition: 'bottom',
       horizontalPosition: 'center'
     }));

@@ -21,6 +21,7 @@ import {
   ToolExecutionRequested,
   ToolExecutionResult
 } from '@shared/models/ai-chat.models';
+import { AiAction } from '@home/components/ai/ai-action.models';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 
 export type ApprovalCardState = 'pending' | 'approved' | 'auto' | 'denied' | 'expired';
@@ -76,6 +77,8 @@ export class AiApprovalCardComponent implements OnChanges {
 
   state: ApprovalCardState = 'pending';
 
+  handedOver: AiAction | null = null;
+
   private autoApproved = false;
 
   private readonly cd = inject(ChangeDetectorRef);
@@ -98,6 +101,12 @@ export class AiApprovalCardComponent implements OnChanges {
         this.state = 'denied';
       } else {
         this.state = this.autoApproved ? 'auto' : 'approved';
+        this.handedOver = {
+          executionId: result.executionId,
+          tool: '',
+          status: result.executionStatus,
+          startedAt: this.data.time ?? Date.now()
+        };
       }
       this.cd.detectChanges();
     }
@@ -130,13 +139,28 @@ export class AiApprovalCardComponent implements OnChanges {
     return this.translate.instant('ai-assistant.review.head.' + this.state);
   }
 
-  get outcome(): {failed: boolean; text: string} | null {
+  get outcomeText(): string {
     const result = this.completedExecution;
-    if (!result || result.approvalStatus !== ToolApprovalResult.APPROVED) {
-      return null;
+    const failed = result?.executionStatus !== 'SUCCESS';
+    return result?.message || this.translate.instant(failed ? 'ai-assistant.error' : 'ai-assistant.approved');
+  }
+
+  get planned(): boolean {
+    return this.review?.change === 'CREATE';
+  }
+
+  get approveLabel(): string {
+    if (this.isDestructive) {
+      return 'ai-assistant.review.delete';
     }
-    const failed = result.executionStatus !== 'SUCCESS';
-    return {failed, text: result.message || this.translate.instant(failed ? 'ai-assistant.error' : 'ai-assistant.approved')};
+    switch (this.review?.change) {
+      case 'CREATE':
+        return 'ai-assistant.review.create';
+      case 'UPDATE':
+        return 'ai-assistant.review.update';
+      default:
+        return 'ai-assistant.approve';
+    }
   }
 
   get alarmRule(): boolean {

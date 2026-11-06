@@ -175,16 +175,17 @@
   .tb-main-content {
     overflow: auto;
     position: relative;
-    // Panel space is reserved at once: animating margin-right relayouts the whole page every frame.
+  }
 
-    &.openAiAssistant {
-      margin-right: 480px;
-    }
+  .tb-site-content {
+    position: relative;
+  }
+
+  .tb-site-main.openAiAssistant {
+    margin-right: var(--tb-ai-panel-w, 364px);
 
     @media #{$mat-lt-lg} {
-      &.openAiAssistant {
-        margin-right: 0;
-      }
+      margin-right: 0;
     }
   }
 }

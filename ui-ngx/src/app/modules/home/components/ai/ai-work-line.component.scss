@@ -10,7 +10,7 @@
   color: var(--tb-ink);
 
   tb-ai-spin {
-    margin-block: calc((var(--chat-line-lh) - 24px) / 2);
+    margin-block: calc((var(--chat-line-lh) - var(--spin)) / 2);
   }
 }
 

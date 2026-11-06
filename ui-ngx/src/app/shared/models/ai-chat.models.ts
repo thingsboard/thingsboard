@@ -6,9 +6,23 @@ export interface ChatConfiguration {
   title: string;
 }
 
+export type AnswerRating = 'UP' | 'DOWN' | 'NONE';
+
+export type AnswerProblem = 'WRONG' | 'NOT_WHAT_I_ASKED' | 'WRONG_CHANGE' | 'TOO_SLOW' | 'OTHER';
+
+export const ANSWER_PROBLEMS: AnswerProblem[] = ['WRONG', 'NOT_WHAT_I_ASKED', 'WRONG_CHANGE', 'TOO_SLOW', 'OTHER'];
+
+export interface AnswerFeedback {
+  answer: string;
+  rating?: AnswerRating;
+  problem?: AnswerProblem;
+  comment?: string;
+}
+
 export interface ChatUpdate {
   title?: string;
   pinned?: boolean;
+  feedback?: AnswerFeedback;
 }
 
 export interface ChatInfo extends ChatConfiguration {
@@ -68,6 +82,7 @@ export interface AiApprovalReview {
   detail?: string;
   target?: string;
   fields: AiReviewField[];
+  change?: 'CREATE' | 'UPDATE' | 'DELETE';
 }
 
 export interface AiAssistantPromptExample {
@@ -79,6 +94,7 @@ export interface AiAssistantPanelConfig {
   view?: AiAssistantViewConfig;
   initialPromptPlaceholder: string;
   followUpPromptPlaceholder?: string;
+  title?: string;
   subTitle?: string;
   pageUrl?: string;
   showButton?: boolean;

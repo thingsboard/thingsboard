@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { computed, DestroyRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Subject } from 'rxjs';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { NavigationStart, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AiAssistantPanelConfig,
@@ -21,8 +22,13 @@ import { selectAuthUser } from '@core/auth/auth.selectors';
 @Injectable({ providedIn: 'root' })
 export class AiAssistantPanelService implements OnDestroy {
 
+  private static readonly WITHOUT_PANEL = ['/home', '/ai-assistant'];
+
   private _open = signal(false);
   readonly open = this._open.asReadonly();
+
+  private _suppressed = signal(false);
+  readonly suppressed = this._suppressed.asReadonly();
 
   private _enabled = signal(false);
   readonly enabled = this._enabled.asReadonly();
@@ -48,6 +54,26 @@ export class AiAssistantPanelService implements OnDestroy {
   private localStorage = inject(LocalStorageService);
   private store = inject(Store<AppState>);
   private destroyRef = inject(DestroyRef);
+  private router = inject(Router);
+
+  private routeWatch = (() => {
+    this._suppressed.set(AiAssistantPanelService.withoutPanel(this.router.url));
+    this.router.events.pipe(
+      filter((event): event is NavigationStart => event instanceof NavigationStart),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(event => {
+      const suppressed = AiAssistantPanelService.withoutPanel(event.url);
+      this._suppressed.set(suppressed);
+      if (suppressed) {
+        this._open.set(false);
+      }
+    });
+  })();
+
+  private static withoutPanel(url: string): boolean {
+    const path = (url || '/').split(/[?#]/)[0];
+    return path === '/' || AiAssistantPanelService.WITHOUT_PANEL.some(page => path === page || path.startsWith(page + '/'));
+  }
 
   private _autoApproveUserId: string | null = null;
   private _autoApproveChats = signal<Set<string>>(new Set());
@@ -67,9 +93,6 @@ export class AiAssistantPanelService implements OnDestroy {
   private _teardownTimer: NodeJS.Timeout;
 
   toggle(): void {
-    if (!this._enabled()) {
-      return;
-    }
     this._open.update(open => !open);
   }
 
@@ -252,7 +275,6 @@ export class AiAssistantPanelService implements OnDestroy {
     this._chats.set(null);
     this._teardownTimer = setTimeout(() => {
       this._config.set(null);
-      this._open.set(false);
     });
   }
 }

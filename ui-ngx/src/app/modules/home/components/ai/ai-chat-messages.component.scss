@@ -168,6 +168,50 @@
     &.done {
       color: var(--tb-ok);
     }
+
+    &[aria-pressed="true"] {
+      color: var(--ai-selected);
+    }
+
+    &.muted:not([aria-pressed="true"]) {
+      color: var(--tb-ink-38);
+    }
+
+    &:disabled {
+      cursor: default;
+      background: none;
+    }
+  }
+
+  .k-report {
+    display: grid;
+    gap: 10px;
+    max-width: 560px;
+    margin-top: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--tb-line);
+    border-radius: 12px;
+    background: var(--tb-surface);
+
+    .k-report-t {
+      font: 500 var(--chat-line)/var(--chat-line-lh) var(--tb-font);
+      color: var(--tb-ink);
+    }
+
+    .k-chips {
+      gap: 6px;
+    }
+
+    .k-report-note {
+      margin: 0;
+      font-size: var(--chat-meta);
+      line-height: var(--chat-meta-lh);
+      color: var(--k-faint);
+    }
+
+    .k-actions {
+      margin-top: 0;
+    }
   }
 
   .agent {

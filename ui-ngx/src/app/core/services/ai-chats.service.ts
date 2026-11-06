@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AiChatService } from '@core/http/ai-chat.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { DialogService } from '@core/services/dialog.service';
-import { ChatInfo, ChatLevel } from '@shared/models/ai-chat.models';
+import { AnswerFeedback, ChatInfo, ChatLevel } from '@shared/models/ai-chat.models';
 
 @Injectable({ providedIn: 'root' })
 export class AiChatsService {
@@ -132,6 +132,10 @@ export class AiChatsService {
     return this.aiChat.updatedChat(chatId, {title}, {ignoreLoading: true, ignoreErrors: true}).pipe(
       tap(() => this.setTitle(chatId, title))
     );
+  }
+
+  sendFeedback(chatId: string, feedback: AnswerFeedback): Observable<void> {
+    return this.aiChat.updatedChat(chatId, {feedback}, {ignoreLoading: true});
   }
 
   setPinned(chatId: string, pinned: boolean): Observable<void> {

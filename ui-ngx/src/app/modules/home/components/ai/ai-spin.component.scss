@@ -1,32 +1,37 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 :host {
+  --spin: 22px;
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 24px;
-  color: var(--ai-teal-500);
+  width: var(--spin);
+  height: var(--spin);
+  line-height: 0;
+  vertical-align: middle;
+  color: var(--spin-color, var(--ai-teal-500));
 
+  &[data-kind="wait"],
   &[data-kind="listen"] {
-    color: var(--tb-caution);
+    color: var(--spin-color, var(--tb-caution));
   }
 
   &[data-kind="stop"] {
-    color: var(--tb-ink-38);
+    color: var(--spin-color, var(--tb-ink-38));
   }
 }
 
 .cell {
-  display: grid;
-  grid-template-columns: repeat(2, 3.68px);
-  grid-template-rows: repeat(3, 3.68px);
-  gap: 2.4px 2.56px;
+  display: inline-grid;
+  font-size: calc(var(--spin) * 1.5);
+  grid-template-columns: repeat(2, 0.115em);
+  grid-auto-rows: 0.115em;
+  gap: 0.075em 0.08em;
+  line-height: 0;
+  vertical-align: middle;
 
   i {
-    width: 3.68px;
-    height: 3.68px;
     border-radius: 50%;
     background: currentColor;
     visibility: hidden;

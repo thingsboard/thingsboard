@@ -31,6 +31,10 @@ export class AiActionLineComponent {
 
   more = input(0);
 
+  outcomeText = input<string>();
+
+  autoApproved = input(false);
+
   private runWords = computed(() => this.translate.instant(this.words().key + '.run', this.words().params));
 
   running = computed(() => this.more() > 0
@@ -38,13 +42,21 @@ export class AiActionLineComponent {
     : this.runWords());
 
   outcome = computed(() => {
+    const words = this.outcomeWords();
+    return this.autoApproved() ? this.translate.instant('ai-assistant.action.auto-approved', {words}) : words;
+  });
+
+  private outcomeWords(): string {
     const action = this.action();
-    const words = this.words();
+    if (this.outcomeText()) {
+      return this.outcomeText();
+    }
     if (action.status === 'FAILURE') {
       return this.reason(action.result) ?? this.translate.instant('ai-assistant.action.failed', {words: this.lowerFirst(this.runWords())});
     }
+    const words = this.words();
     return this.translate.instant(words.key + '.done', words.params);
-  });
+  }
 
   duration = computed(() => this.action().durationMs !== undefined ? aiActionDuration(this.action().durationMs) : '');
 

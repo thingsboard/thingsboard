@@ -174,10 +174,18 @@ export interface SolutionStepState {
 
 export type ChatMessage = GeneralChatMessage | ApprovalChatMessage | ActionChatMessage;
 
+export interface AiStartedFrom {
+  type: string;
+  entityId?: EntityId;
+}
+
 export interface GeneralChatMessage {
   from: 'USER' | 'AI' | 'SYSTEM' | 'GENERATE';
   content: string;
   status?: 'INCOMPLETE' | 'STOPPED';
+  rating?: 'UP' | 'DOWN';
+  reported?: boolean;
+  startedFrom?: AiStartedFrom;
   resources?: AiResourceInfo[];
   time?: number;
 }

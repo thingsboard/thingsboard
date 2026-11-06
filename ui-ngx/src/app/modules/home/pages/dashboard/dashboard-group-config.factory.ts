@@ -22,7 +22,6 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { DashboardFormComponent } from '@home/pages/dashboard/dashboard-form.component';
 import { Operation, Resource } from '@shared/models/security.models';
 import { ImportExportService } from '@shared/import-export/import-export.service';
@@ -143,17 +142,6 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
           onAction: ($event) => this.importDashboard($event, config)
         }
       );
-      if (getCurrentAuthState(this.store).aiEnabled &&
-        this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)) {
-        config.headerButtonDescriptors.push(
-          {
-            name: this.translate.instant('ai-assistant.configure-with-ai'),
-            icon: 'mdi:creation',
-            isEnabled: () => true,
-            onAction: ($event) => this.generateWithAi($event, config, params)
-          }
-        );
-      }
     }
     return this.groupConfigTableConfigService.prepareConfiguration(params, config);
   }
@@ -179,18 +167,6 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
       const url = this.router.createUrlTree([dashboard.id.id], {relativeTo: config.getActivatedRoute(), queryParams});
       this.router.navigateByUrl(url);
     }
-  }
-
-  generateWithAi($event: Event, config: GroupEntityTableConfig<DashboardInfo>, params: EntityGroupParams) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    const dashboard = this.dashboardUtils.validateAndUpdateDashboard({title: 'New Dashboard'} as Dashboard);
-    const entityGroup = config.entityGroup;
-    const entityGroupId = !entityGroup.groupAll ? entityGroup.id.id : null;
-    this.dashboardService.saveDashboard(dashboard, entityGroupId).subscribe((savedDashboard) => {
-      this.openDashboard(null, savedDashboard, config, params, {action: 'aiAssistant'});
-    });
   }
 
   exportDashboard($event: Event, dashboard: ShortEntityView | DashboardInfo) {

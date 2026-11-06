@@ -4,9 +4,27 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Outpu
 import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
 import { ClipboardService } from 'ngx-clipboard';
 import { TranslateService } from '@ngx-translate/core';
-import { ApprovalResult, ToolExecutionRequested, ToolExecutionResult } from '@shared/models/ai-chat.models';
+import {
+  ANSWER_PROBLEMS,
+  AnswerProblem,
+  AnswerRating,
+  ApprovalResult,
+  ToolExecutionRequested,
+  ToolExecutionResult
+} from '@shared/models/ai-chat.models';
 import { AiWorkState } from '@home/components/ai/ai-action.models';
 import { EntityId } from '@shared/models/id/entity-id';
+
+export interface AnswerRatingEvent {
+  index: number;
+  rating: AnswerRating;
+}
+
+export interface AnswerReportEvent {
+  index: number;
+  problem: AnswerProblem;
+  comment?: string;
+}
 import { decorateCodeBlocks } from '@home/components/ai/ai-code-block';
 
 @Component({
@@ -27,6 +45,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() initialScroll: 'lastUserMessage' | 'bottom' = 'lastUserMessage';
   @Input() denyReasons: Record<string, string> = {};
   @Input() work: AiWorkState | undefined;
+  @Input() feedback = false;
+  @Output() rate = new EventEmitter<AnswerRatingEvent>();
+  @Output() report = new EventEmitter<AnswerReportEvent>();
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
   @Output() askAgain = new EventEmitter<void>();
   @Output() editMessage = new EventEmitter<string>();
@@ -57,6 +78,12 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   private releaseBottom: () => void;
 
   lastAnswerIndex = -1;
+
+  readonly problems = ANSWER_PROBLEMS;
+
+  reportingIndex = -1;
+
+  reportProblem: AnswerProblem | null = null;
 
   copiedIndex = -1;
 
@@ -93,6 +120,29 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       clearTimeout(this.copiedTimeout);
       this.copiedTimeout = setTimeout(() => this.copiedIndex = -1, AiChatMessagesComponent.COPIED_MS);
     }
+  }
+
+  toggleRating(index: number, current: string | undefined, rating: 'UP' | 'DOWN'): void {
+    this.rate.emit({index, rating: current === rating ? 'NONE' : rating});
+  }
+
+  openReport(index: number): void {
+    this.reportingIndex = index;
+    this.reportProblem = null;
+  }
+
+  closeReport(): void {
+    this.reportingIndex = -1;
+    this.reportProblem = null;
+  }
+
+  sendReport(index: number, comment: string): void {
+    if (!this.reportProblem) {
+      return;
+    }
+    const words = comment.trim();
+    this.report.emit(words ? {index, problem: this.reportProblem, comment: words} : {index, problem: this.reportProblem});
+    this.closeReport();
   }
 
   fullTime(time: number): string {

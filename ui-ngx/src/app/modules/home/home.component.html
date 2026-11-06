@@ -58,7 +58,7 @@
     </mat-toolbar>
   </mat-sidenav>
   <mat-sidenav-content class="tb-site-content" [class.tb-force-fullscreen]="forceFullscreen">
-    <div class="flex flex-col" role="main" style="height: 100%;">
+    <div class="tb-site-main flex flex-col" role="main" style="height: 100%;" [class.openAiAssistant]="panelService.open()">
       @if ((homeService.hideMainToolbar$ | async) === false) {
         <mat-toolbar color="tb-primary" class="tb-primary-toolbar tb-bottom-border flex flex-row">
           <button mat-icon-button id="main"
@@ -101,6 +101,7 @@
             </button>
           }
           <tb-notification-bell></tb-notification-bell>
+          <tb-ai-assistant-button></tb-ai-assistant-button>
           @if (forceFullscreen) {
             <tb-user-menu></tb-user-menu>
           }
@@ -112,14 +113,13 @@
         }
       }
       <div class="tb-main-content-wrapper">
-        <div #mainContent tb-toast class="tb-main-content flex flex-1 flex-col"
-             [class.openAiAssistant]="panelService.open()">
+        <div #mainContent tb-toast class="tb-main-content flex flex-1 flex-col">
           <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>
         </div>
-        @if (authState.aiEnabled) {
-          <tb-ai-assistant-panel></tb-ai-assistant-panel>
-        }
       </div>
     </div>
+    @if (authState.aiEnabled) {
+      <tb-ai-assistant-panel></tb-ai-assistant-panel>
+    }
   </mat-sidenav-content>
 </mat-sidenav-container>

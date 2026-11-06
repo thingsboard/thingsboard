@@ -9,6 +9,9 @@
     <div class="k-day" role="separator"><span>{{ day }}</span></div>
   }
   @if (msg.from === 'USER') {
+    @if (msg.startedFrom) {
+      <tb-ai-started-from [from]="msg.startedFrom"></tb-ai-started-from>
+    }
     <div class="user">
       <div class="turn">
         @if (msg.content) {
@@ -50,7 +53,7 @@
       </div>
     }
   } @else {
-    <div class="ai">
+    <div class="ai" [class.action]="msg.from === 'APPROVAL' && getCompletedExecution(msg)?.approvalStatus === 'APPROVED'">
       @if (msg.from === 'APPROVAL') {
         <tb-ai-approval-card
           [data]="getApprovalData(msg)"
@@ -96,8 +99,49 @@
                     (click)="copyAnswer(answer, $index)">
               <mat-icon class="tb-mat-16">{{ copiedIndex === $index ? 'check' : 'content_copy' }}</mat-icon>
             </button>
+            @if (feedback) {
+              <button type="button" class="foot-tool" [attr.aria-pressed]="msg.rating === 'UP'" [class.muted]="!!msg.rating && msg.rating !== 'UP'"
+                      [matTooltip]="'ai-assistant.feedback.helpful' | translate" matTooltipPosition="above"
+                      [attr.aria-label]="'ai-assistant.feedback.helpful' | translate" (click)="toggleRating($index, msg.rating, 'UP')">
+                <mat-icon class="tb-mat-16">{{ msg.rating === 'UP' ? 'thumb_up' : 'thumb_up_off_alt' }}</mat-icon>
+              </button>
+              <button type="button" class="foot-tool" [attr.aria-pressed]="msg.rating === 'DOWN'" [class.muted]="!!msg.rating && msg.rating !== 'DOWN'"
+                      [matTooltip]="'ai-assistant.feedback.not-helpful' | translate" matTooltipPosition="above"
+                      [attr.aria-label]="'ai-assistant.feedback.not-helpful' | translate" (click)="toggleRating($index, msg.rating, 'DOWN')">
+                <mat-icon class="tb-mat-16">{{ msg.rating === 'DOWN' ? 'thumb_down' : 'thumb_down_off_alt' }}</mat-icon>
+              </button>
+              <button type="button" class="foot-tool" [class.done]="msg.reported" [disabled]="msg.reported"
+                      [matTooltip]="(msg.reported ? 'ai-assistant.feedback.reported' : 'ai-assistant.feedback.report') | translate" matTooltipPosition="above"
+                      [attr.aria-label]="(msg.reported ? 'ai-assistant.feedback.reported' : 'ai-assistant.feedback.report') | translate"
+                      [attr.aria-expanded]="reportingIndex === $index" (click)="openReport($index)">
+                <mat-icon class="tb-mat-16">{{ msg.reported ? 'flag' : 'outlined_flag' }}</mat-icon>
+              </button>
+            }
           </span>
         </div>
+        @if (reportingIndex === $index) {
+          <div class="k-report" role="group" [attr.aria-label]="'ai-assistant.feedback.report' | translate">
+            <div class="k-report-t">{{ 'ai-assistant.feedback.what-went-wrong' | translate }}</div>
+            <div class="k-chips">
+              @for (problem of problems; track problem) {
+                <button type="button" class="ob-chip" [attr.aria-pressed]="reportProblem === problem" (click)="reportProblem = problem">
+                  {{ 'ai-assistant.feedback.problem.' + problem | translate }}
+                </button>
+              }
+            </div>
+            <input #reportComment class="k-deny-in" type="text" maxlength="2000" spellcheck="false"
+                   [placeholder]="'ai-assistant.feedback.comment' | translate" [attr.aria-label]="'ai-assistant.feedback.comment' | translate"
+                   (keydown.enter)="$event.preventDefault(); sendReport($index, reportComment.value)"
+                   (keydown.escape)="$event.stopPropagation(); closeReport()">
+            <p class="k-report-note">{{ 'ai-assistant.feedback.sent-with' | translate }}</p>
+            <div class="k-actions">
+              <button mat-flat-button type="button" [disabled]="!reportProblem" (click)="sendReport($index, reportComment.value)">
+                <mat-icon>send</mat-icon>{{ 'ai-assistant.feedback.send' | translate }}
+              </button>
+              <button mat-button type="button" (click)="closeReport()">{{ 'action.cancel' | translate }}</button>
+            </div>
+          </div>
+        }
       }
     </div>
     @if (msg.from === 'APPROVAL' && denyReasonOf(msg); as reason) {

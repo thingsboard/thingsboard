@@ -589,6 +589,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.aiAssistantPanelEnabled) {
       this.panelService.setEnabled(true);
       this.panelService.setConfig({
+        title: this.translate.instant('dashboard.ai-assistant-title'),
         initialPromptPlaceholder: this.translate.instant('dashboard.ai-assistant-initial-prompt-placeholder'),
         fill: true,
         promptExamples: [
@@ -1011,18 +1012,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     return this.aiAssistantPanelEnabled
       && !this.readonly
       && this.dashboard?.configuration?.settings?.showConfigureWithAi !== false;
-  }
-
-  get showConfigureWithAi(): boolean {
-    return this.aiConfigurableForDashboard
-      && !this.isEdit
-      && !this.isFullscreen
-      && !this.panelService.open();
-  }
-
-  public toggleAiAssistant($event: Event) {
-    $event?.stopPropagation();
-    this.panelService.toggle();
   }
 
   public configureWithAi($event: Event) {

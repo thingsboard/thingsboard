@@ -20,6 +20,8 @@ import { AiSpinComponent } from '@home/components/ai/ai-spin.component';
 import { AiWorkLineComponent } from '@home/components/ai/ai-work-line.component';
 import { AiActionLineComponent } from '@home/components/ai/ai-action-line.component';
 import { AiRunSummaryComponent } from '@home/components/ai/ai-run-summary.component';
+import { AiStartedFromComponent } from '@home/components/ai/ai-started-from.component';
+import { AiAssistantButtonComponent } from '@home/components/ai/ai-assistant-button.component';
 import { AiRecordComponent } from '@home/components/ai/ai-record.component';
 import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
 
@@ -42,6 +44,8 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiWorkLineComponent,
     AiActionLineComponent,
     AiRunSummaryComponent,
+    AiStartedFromComponent,
+    AiAssistantButtonComponent,
     AiRecordComponent,
     AiSparkComponent
   ],
@@ -50,6 +54,7 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     SharedModule
   ],
   exports: [
+    AiAssistantButtonComponent,
     AiPromptInputComponent,
     AiAssistantPanelComponent,
     AiChatComponent,

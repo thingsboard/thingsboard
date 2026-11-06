@@ -15,10 +15,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
-import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { AuthUser } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
-import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 
 @Component({
     selector: 'tb-send-notification-button',
@@ -29,24 +28,10 @@ export class SendNotificationButtonComponent {
 
   private authUser: AuthUser = getCurrentAuthUser(this.store);
 
-  private hasAiPermission: boolean = getCurrentAuthState(this.store).aiEnabled &&
-    this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL) &&
-    this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE);
-
   constructor(private dialog: MatDialog,
               private store: Store<AppState>,
               private activeComponentService: ActiveComponentService,
-              private userPermissionsService: UserPermissionsService,
-              private panelService: AiAssistantPanelService) {
-  }
-
-  showAiAssistant(): boolean {
-    return this.hasAiPermission && !this.panelService.open();
-  }
-
-  toggleAiAssistant($event: Event): void {
-    $event?.stopPropagation();
-    this.panelService.toggle();
+              private userPermissionsService: UserPermissionsService) {
   }
 
   sendNotification($event: Event) {

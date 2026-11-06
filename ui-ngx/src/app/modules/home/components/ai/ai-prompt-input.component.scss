@@ -511,7 +511,11 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
 
     .composer-chevron {
       --chevron: 17px;
-      height: 22px;
+      height: var(--chat-text-lh, 22px);
+    }
+
+    .composer-foot .composer-auto {
+      height: 28px;
     }
 
     textarea {

@@ -19,6 +19,7 @@ import { WidgetConfigComponentsModule } from '@home/components/widget/config/wid
 import { GithubBadgeModule } from '@home/components/github-badge/github-badge.module';
 import { NotificationBellModule } from '@home/components/notification/notification-bell.module';
 
+import { AiModule } from '@home/components/ai/ai.module';
 @NgModule({
   declarations: [
     WidgetTypeComponent,
@@ -36,6 +37,7 @@ import { NotificationBellModule } from '@home/components/notification/notificati
     CommonModule,
     SharedModule,
     HomeComponentsModule,
+    AiModule,
     GithubBadgeModule,
     NotificationBellModule,
     WidgetConfigComponentsModule,
