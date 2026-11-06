@@ -83,6 +83,7 @@ import static org.thingsboard.server.controller.ControllerConstants.CONVERTER_TE
 import static org.thingsboard.server.controller.ControllerConstants.CONVERTER_TYPE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEDICATED_CONVERTER_DEFINITION;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE;
+import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_AWS_IOT_UPLINK_CONVERTER_METADATA;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_AZURE_UPLINK_CONVERTER_MESSAGE;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_CHIRPSTACK_UPLINK_CONVERTER_MESSAGE;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE;
@@ -139,7 +140,8 @@ public class ConverterController extends AutoCommitController {
             .build();
 
     private final static Map<IntegrationType, String> converterDefaultMetadatas = Map.of(
-            IntegrationType.SIGFOX, DEFAULT_SIGFOX_UPLINK_CONVERTER_METADATA
+            IntegrationType.SIGFOX, DEFAULT_SIGFOX_UPLINK_CONVERTER_METADATA,
+            IntegrationType.AWS_IOT, DEFAULT_AWS_IOT_UPLINK_CONVERTER_METADATA
     );
 
     public static final String CONVERTER_ID = "converterId";

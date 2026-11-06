@@ -38,6 +38,7 @@ export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.TTN, '/assets/converters/js-ttn-decoder.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/js-thingpark-decoder.raw'],
   [IntegrationType.TPE, '/assets/converters/js-tpe-decoder.raw'],
+  [IntegrationType.AWS_IOT, '/assets/converters/js-aws-iot-decoder.raw'],
   [IntegrationType.MQTT, '/assets/converters/js-mqtt-decoder.raw']
 ]);
 
