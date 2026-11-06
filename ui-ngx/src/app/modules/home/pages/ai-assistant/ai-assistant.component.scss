@@ -339,6 +339,20 @@
   color: var(--tb-ink);
 }
 
+.ai-row-ic {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+  line-height: 15px;
+  vertical-align: -2px;
+  margin-right: 5px;
+  color: var(--tb-ink-54);
+}
+
+.ai-row.active .ai-row-ic {
+  color: var(--ai-action);
+}
+
 .ai-row-menu {
   position: absolute;
   top: 50%;
@@ -401,6 +415,12 @@
   border-radius: 12px;
   box-shadow: var(--tb-soft-shadow);
   overflow: hidden;
+}
+
+.ai-canvas.ai-solution {
+  width: auto;
+  min-width: 0;
+  background: var(--tb-surface, #fff);
 }
 
 .ai-canvas .ai-bar-chats {

@@ -14,6 +14,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
@@ -24,10 +26,22 @@ import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { ChatInfo } from '@shared/models/ai-chat.models';
 import { DAY, WEEK } from '@shared/models/time/time.models';
 import { AiChatComponent } from '@home/components/ai/ai-chat.component';
+import { AiSolutionsService } from '@core/services/ai-solutions.service';
+import { NEW_SOLUTION_ID, SolutionInfo } from '@shared/models/solution-creator.models';
+import { SolutionChatComponent } from '@home/components/ai/solution/solution-chat.component';
+
+export interface AiRailRow {
+  id: string;
+  title: string;
+  createdTime: number;
+  pinned: boolean;
+  chat?: ChatInfo;
+  solution?: SolutionInfo;
+}
 
 export interface AiChatsGroup {
   label: string;
-  chats: ChatInfo[];
+  chats: AiRailRow[];
 }
 
 @Component({
@@ -47,9 +61,12 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   private static readonly REFRESH_MS = 20000;
 
   @ViewChild(AiChatComponent) chat: AiChatComponent;
+  @ViewChild(SolutionChatComponent) solutionChat: SolutionChatComponent;
   @ViewChild('searchInput') searchInput: ElementRef<HTMLInputElement>;
 
   readonly toastTarget = 'aiAssistantPage';
+
+  readonly newSolutionId = NEW_SOLUTION_ID;
 
   readonly shortcutModifier = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl ';
 
@@ -61,11 +78,24 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   chatId = signal<string | undefined>(undefined);
 
+  solutionId = signal<string | undefined>(undefined);
+
   aiChats = inject(AiChatsService);
+
+  aiSolutions = inject(AiSolutionsService);
+
+  rows = computed<AiRailRow[]>(() => [
+    ...this.aiChats.chats().map(chat => ({
+      id: chat.id, title: chat.title, createdTime: chat.createdTime, pinned: !!chat.pinned, chat
+    })),
+    ...this.aiSolutions.solutions().map(solution => ({
+      id: solution.id, title: this.aiSolutions.titleOf(solution), createdTime: solution.createdTime ?? 0, pinned: false, solution
+    }))
+  ].sort((a, b) => b.createdTime - a.createdTime));
 
   groups = computed<AiChatsGroup[]>(() => {
     const query = this.query().trim().toLowerCase();
-    const chats = this.aiChats.chats();
+    const chats = this.rows();
     if (query) {
       const found = chats.filter(chat => (chat.title ?? '').toLowerCase().includes(query));
       return found.length
@@ -85,7 +115,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       const index = chat.pinned ? 0 : chat.createdTime >= today ? 1 : chat.createdTime >= today - DAY ? 2 : chat.createdTime >= today - WEEK ? 3 : 4;
       groups[index].chats.push(chat);
     }
-    const needsFirst = (chat: ChatInfo) => this.aiChats.needsAttention(chat) ? 0 : 1;
+    const needsFirst = (row: AiRailRow) => row.chat && this.aiChats.needsAttention(row.chat) ? 0 : 1;
     groups.forEach(group => group.chats.sort((a, b) => needsFirst(a) - needsFirst(b)));
     return groups.filter(group => group.chats.length);
   });
@@ -123,14 +153,20 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private browsing = false;
 
+  private pendingEdit: string | null = null;
+
+  private ready = signal(false);
+
   private urlEffect = effect(() => {
     const chatId = this.chatId() ?? null;
-    if (this.route.snapshot.queryParamMap.get('chatId') !== chatId && this.aiChats.loaded()) {
+    const solutionId = this.solutionId() ?? null;
+    const params = this.route.snapshot.queryParamMap;
+    if ((params.get('chatId') !== chatId || params.get('solutionId') !== solutionId) && this.ready()) {
       const browsing = this.browsing;
       this.browsing = false;
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: {chatId},
+        queryParams: {chatId, solutionId},
         queryParamsHandling: 'merge',
         replaceUrl: !browsing
       });
@@ -138,8 +174,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   });
 
   private urlSubscription = this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
-    if (this.aiChats.loaded()) {
-      this.openFromUrl(params.get('chatId'));
+    if (this.ready()) {
+      this.openFromUrl(params.get('chatId'), params.get('solutionId'));
     }
   });
 
@@ -154,11 +190,22 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.aiChats.load().subscribe({
-      next: chats => {
-        this.openFromUrl(this.route.snapshot.queryParamMap.get('chatId'), chats);
+    forkJoin([
+      this.aiSolutions.load().pipe(catchError(err => {
+        this.showErrorMessage(err);
+        return of([]);
+      })),
+      this.aiChats.load()
+    ]).subscribe({
+      next: ([, chats]) => {
+        const params = this.route.snapshot.queryParamMap;
+        this.openFromUrl(params.get('chatId'), params.get('solutionId'), chats);
+        this.ready.set(true);
       },
-      error: err => this.showErrorMessage(err)
+      error: err => {
+        this.ready.set(true);
+        this.showErrorMessage(err);
+      }
     });
   }
 
@@ -198,9 +245,72 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   newChat(): void {
     this.settleRail();
-    this.browsing = !!this.chatId();
+    this.browsing = !!this.chatId() || !!this.solutionId();
+    this.solutionId.set(undefined);
     this.chatId.set(undefined);
     setTimeout(() => this.chat?.focus());
+  }
+
+  newSolution(): void {
+    this.settleRail();
+    this.openSolution(NEW_SOLUTION_ID);
+  }
+
+  selectRow(row: AiRailRow): void {
+    if (row.solution) {
+      this.settleRail();
+      this.openSolution(row.solution.id);
+    } else if (row.chat) {
+      this.selectChat(row.chat);
+    }
+  }
+
+  isActive(row: AiRailRow): boolean {
+    return row.solution ? row.id === this.solutionId() : row.id === this.chatId() && !this.solutionId();
+  }
+
+  editDesign(solution: SolutionInfo): void {
+    if (this.solutionId() === solution.id && this.solutionChat) {
+      this.solutionChat.editDesign();
+      return;
+    }
+    this.pendingEdit = solution.id;
+    this.openSolution(solution.id);
+  }
+
+  onSolutionLoaded(solutionId: string): void {
+    if (this.pendingEdit === solutionId) {
+      this.pendingEdit = null;
+      this.solutionChat?.editDesign();
+    }
+  }
+
+  uninstallSolution(solution: SolutionInfo): void {
+    this.aiSolutions.confirmAndUninstall(solution).subscribe({
+      next: info => {
+        if (info && this.solutionId() === solution.id) {
+          this.solutionChat?.updatedSolution(info);
+        }
+      },
+      error: err => this.showErrorMessage(err)
+    });
+  }
+
+  deleteSolution(solution: SolutionInfo): void {
+    this.aiSolutions.confirmAndDelete(solution).subscribe({
+      next: deleted => {
+        if (deleted && this.solutionId() === solution.id) {
+          this.solutionId.set(undefined);
+        }
+      },
+      error: err => this.showErrorMessage(err)
+    });
+  }
+
+  private openSolution(solutionId: string): void {
+    this.browsing = solutionId !== this.solutionId();
+    this.chatId.set(undefined);
+    this.solutionId.set(solutionId);
   }
 
   openWaiting(): void {
@@ -215,11 +325,12 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   selectChat(chat: ChatInfo): void {
     this.settleRail();
-    this.browsing = chat.id !== this.chatId();
+    this.browsing = chat.id !== this.chatId() || !!this.solutionId();
+    this.solutionId.set(undefined);
     this.chatId.set(chat.id);
   }
 
-  startRename(chat: ChatInfo): void {
+  startRename(chat: {id: string}): void {
     this.setRailOpen(true);
     this.renamingId.set(chat.id);
     setTimeout(() => {
@@ -240,14 +351,26 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     }
   }
 
-  finishRename(chat: ChatInfo, value: string): void {
-    if (this.renamingId() !== chat.id) {
+  finishRename(row: AiRailRow, value: string): void {
+    if (this.renamingId() !== row.id) {
       return;
     }
     this.renamingId.set(null);
     const title = value.trim();
-    if (title && title !== chat.title) {
-      this.aiChats.rename(chat.id, title).subscribe({error: err => this.showErrorMessage(err)});
+    if (!title || title === row.title) {
+      return;
+    }
+    if (row.solution) {
+      this.aiSolutions.rename(row.solution, title).subscribe({
+        next: info => {
+          if (this.solutionId() === row.id) {
+            this.solutionChat?.updatedSolution(info);
+          }
+        },
+        error: err => this.showErrorMessage(err)
+      });
+    } else {
+      this.aiChats.rename(row.id, title).subscribe({error: err => this.showErrorMessage(err)});
     }
   }
 
@@ -259,8 +382,22 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     this.aiChats.confirmAndDelete(chat).subscribe({error: err => this.showErrorMessage(err)});
   }
 
-  private openFromUrl(chatId: string | null, chats = this.aiChats.chats()): void {
-    const known = !!chatId && chats.some(chat => chat.id === chatId);
+  private openFromUrl(chatId: string | null, solutionId: string | null, chats = this.aiChats.chats()): void {
+    const knownSolution = !solutionId || solutionId === NEW_SOLUTION_ID || !this.aiSolutions.loaded() || !!this.aiSolutions.find(solutionId);
+    if (!knownSolution) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {chatId: null, solutionId: NEW_SOLUTION_ID},
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+      return;
+    }
+    const nextSolution = solutionId || undefined;
+    if (nextSolution !== this.solutionId()) {
+      this.solutionId.set(nextSolution);
+    }
+    const known = !nextSolution && !!chatId && chats.some(chat => chat.id === chatId);
     const next = known ? chatId : undefined;
     if (next !== this.chatId()) {
       this.chatId.set(next);

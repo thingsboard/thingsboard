@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, computed, DestroyRef, ElementRef, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, EventEmitter, OnDestroy, OnInit, Output, signal, ViewChild } from '@angular/core';
 import { AiChatMessagesComponent } from '@home/components/ai/ai-chat-messages.component';
 import { PageComponent } from '@shared/components/page.component';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
   ChatMessage,
   DashboardsOverview,
+  NEW_SOLUTION_ID,
   SolutionCreatorInfo,
   SolutionDescriptor,
   SolutionInstallResult,
@@ -32,11 +33,11 @@ import { EMPTY, Observable, of, Subject } from 'rxjs';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { SolutionSideBarComponent } from '@home/pages/ai-solution-creator/side-bar/solution-side-bar.component';
+import { AiSolutionsService } from '@core/services/ai-solutions.service';
 import {
   SolutionInfoDialogComponent,
   SolutionInfoDialogData
-} from '@home/pages/ai-solution-creator/solution-info/solution-info-dialog.component';
+} from '@home/components/ai/solution/solution-info/solution-info-dialog.component';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { AiLoadingModalComponent } from '@home/components/ai/ai-loading-modal.component';
@@ -44,16 +45,16 @@ import { DynamicMatDialog } from '@shared/components/dialog/dynamic/dynamic-dial
 import { generatedStateImages } from '@home/components/ai/ai.models';
 
 @Component({
-  selector: 'tb-solution-creator',
-  templateUrl: './solution-creator.component.html',
-  styleUrls: ['./solution-creator.component.scss'],
+  selector: 'tb-solution-chat',
+  templateUrl: './solution-chat.component.html',
+  styleUrls: ['./solution-chat.component.scss'],
   standalone: false
 })
-export class SolutionCreatorComponent extends PageComponent implements OnInit, OnDestroy {
+export class SolutionChatComponent extends PageComponent implements OnInit, OnDestroy {
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
   @ViewChild(AiChatMessagesComponent) chatMessages: AiChatMessagesComponent;
-  @ViewChild(SolutionSideBarComponent, {static: true}) solutionSideBar: SolutionSideBarComponent;
+  @Output() loaded = new EventEmitter<string>();
 
   isReadyStep = signal<boolean>(false);
   skipInterviewAllowed = signal<boolean>(false);
@@ -232,7 +233,8 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
               private dialogService: DialogService,
               private translate: TranslateService,
               private sanitizer: DomSanitizer,
-              private dynamicMatDialog: DynamicMatDialog) {
+              private dynamicMatDialog: DynamicMatDialog,
+              private aiSolutions: AiSolutionsService) {
     super();
 
     toObservable(this.activeStepIndex).pipe(
@@ -268,11 +270,20 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
       filter(data => this.solutionId !== data.solutionId),
       tap(() => this.resetSolution()),
       switchMap(data => {
-        if (data.solutionId) {
+        if (data.solutionId && data.solutionId !== NEW_SOLUTION_ID) {
           return this.solutionCreator.getSolutionById(data.solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(
             catchError(err => {
               this.creatorStep.set('chat');
-              this.showErrorMessage(err);
+              if (err?.status === 400 || err?.status === 404) {
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: {solutionId: NEW_SOLUTION_ID},
+                  queryParamsHandling: 'merge',
+                  replaceUrl: true
+                });
+              } else {
+                this.showErrorMessage(err);
+              }
               return EMPTY;
             })
           );
@@ -287,6 +298,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
       this.solutionInfo = solution;
       this.forceScroll = true;
       this.initPredefinedSolution();
+      this.loaded.emit(solution.id);
     });
   }
 
@@ -353,6 +365,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
             .subscribe({
               next: (value) => {
                 this.solutionInfo = value;
+                this.aiSolutions.upsert(value);
                 if (value.metadata.installResult.mainDashboardId) {
                   this.gotoMainDashboard(true);
                 } else {
@@ -383,7 +396,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
           }
           Object.assign(this.solutionInfo.metadata.installResult, value);
           this.solutionInfo.metadata.installed = true;
-          this.solutionSideBar.updateSolutionField({id: this.solutionId}, {installed: true});
+          this.aiSolutions.update(this.solutionId, {installed: true});
           progressSubject.next();
           progressSubject.complete();
           if (value.mainDashboardId) {
@@ -412,7 +425,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
           takeUntil(this.cancelPending$)
         ).subscribe((value) => {
           this.solutionInfo = value;
-          this.solutionSideBar.updateSolutionField({id: this.solutionId}, {installed: false});
+          this.aiSolutions.update(this.solutionId, {installed: false});
         });
       }
     })
@@ -440,6 +453,12 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
         this.stopLoadingState();
       }
     })
+  }
+
+  editDesign(): void {
+    if (this.creatorStep() === 'result') {
+      this.back();
+    }
   }
 
   back(): void {
@@ -541,6 +560,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
         tap(solution => {
           this.solutionId = solution.id;
           this.solutionInfo = solution;
+          this.rememberSolution();
           this.router.navigate([], {
             relativeTo: this.route,
             queryParams: { solutionId: this.solutionId },
@@ -555,17 +575,23 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
       ),
       tap(solution => {
         this.solutionInfo = solution;
-        this.solutionSideBar.addNewSolutionTemplate({id: this.solutionId, solutionTitle: this.solutionInfo?.data?.solutionTitle ?? '', built: this.solutionInfo?.metadata?.built, installed: this.solutionInfo?.metadata?.installed});
+        this.rememberSolution();
         this.updatedCurrentMsg();
       }),
       catchError(err => {
         this.showErrorMessage(err);
-        this.solutionSideBar.addNewSolutionTemplate({id: this.solutionId, solutionTitle: this.solutionInfo?.data?.solutionTitle ?? '', built: this.solutionInfo?.metadata?.built, installed: this.solutionInfo?.metadata?.installed});
+        this.rememberSolution();
         return EMPTY;
       }),
       takeUntil(this.cancelPending$),
       finalize(() => this.stopLoadingState())
     );
+  }
+
+  private rememberSolution(): void {
+    if (this.solutionInfo) {
+      this.aiSolutions.upsert(this.solutionInfo);
+    }
   }
 
   private sendDashboardConfigurationMsg(message: string): void {

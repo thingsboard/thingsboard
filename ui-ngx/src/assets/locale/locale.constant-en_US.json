@@ -1134,6 +1134,8 @@
         "pin": "Pin to the top",
         "unpin": "Unpin",
         "double-click-to-rename": "Double-click to rename",
+        "new-solution": "New solution",
+        "edit-design": "Edit the design",
         "chats-menu": "Chats and this chat",
         "resize-panel": "Resize the AI Assistant panel",
         "resize-panel-hint": "Drag to resize; double-click to reset",

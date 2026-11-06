@@ -29,7 +29,6 @@ import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { EdgeModule } from '@home/pages/edge/edge.module';
 import { OtaUpdateModule } from '@home/pages/ota-update/ota-update.module';
-import { SolutionCreatorModule } from '@home/pages/ai-solution-creator/solution-creator.module';
 import { VcModule } from '@home/pages/vc/vc.module';
 import { TaskManagerModule } from '@home/pages/task-manager/task-manager.module';
 import { AssetProfileModule } from '@home/pages/asset-profile/asset-profile.module';
@@ -95,7 +94,6 @@ import { AiAssistantModule } from '@home/pages/ai-assistant/ai-assistant.module'
     IFrameViewModule,
     SchedulerModule,
     OtaUpdateModule,
-    SolutionCreatorModule,
     VcModule,
     TaskManagerModule,
     AccountModule,

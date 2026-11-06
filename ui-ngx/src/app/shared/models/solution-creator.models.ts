@@ -9,8 +9,11 @@ import { CalculatedFieldType } from '@shared/models/calculated-field.models';
 import { AlarmSeverity } from '@shared/models/alarm.models';
 import { AiAction, ToolExecutionRequested, ToolExecutionResult, AiResourceInfo } from '@shared/models/ai-chat.models';
 
+export const NEW_SOLUTION_ID = 'new';
+
 export interface SolutionInfo {
   id: string;
+  createdTime?: number;
   solutionTitle?: string;
   installed?: boolean;
   built?: boolean;

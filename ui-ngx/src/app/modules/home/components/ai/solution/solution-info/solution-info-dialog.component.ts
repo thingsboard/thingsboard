@@ -17,9 +17,9 @@ import {
   AggregatedEntityResult,
   issuesCountSummary,
   IssueStatus
-} from '@home/pages/ai-solution-creator/solution-info/issues-aggregation';
+} from '@home/components/ai/solution/solution-info/issues-aggregation';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { IssuesPopoverComponent } from '@home/pages/ai-solution-creator/solution-info/issues-popover.component';
+import { IssuesPopoverComponent } from '@home/components/ai/solution/solution-info/issues-popover.component';
 
 export interface SolutionInfoDialogData {
   solution: SolutionCreatorInfo;
@@ -28,7 +28,7 @@ export interface SolutionInfoDialogData {
 @Component({
   selector: 'tb-solution-info-dialog',
   templateUrl: './solution-info-dialog.component.html',
-  styleUrls: ['../../../../../shared/components/markdown.component.scss', './solution-info-dialog.component.scss'],
+  styleUrls: ['../../../../../../shared/components/markdown.component.scss', './solution-info-dialog.component.scss'],
   standalone: false
 })
 export class SolutionInfoDialogComponent extends DialogComponent<SolutionInfoDialogData, void> {

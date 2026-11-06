@@ -21,10 +21,15 @@
           <ng-container *ngTemplateOutlet="panelIcon; context: {open: false}"></ng-container>
         </button>
       </div>
-      <button type="button" class="ai-nav" [class.active]="!chatId()" [attr.aria-current]="!chatId() ? 'page' : null"
-              (click)="newChat()">
+      <button type="button" class="ai-nav" [class.active]="!chatId() && !solutionId()"
+              [attr.aria-current]="!chatId() && !solutionId() ? 'page' : null" (click)="newChat()">
         <mat-icon fontSet="material-icons-round">add</mat-icon>
         <span>{{ 'ai-assistant.new-chat' | translate }}</span>
+      </button>
+      <button type="button" class="ai-nav" [class.active]="solutionId() === newSolutionId"
+              [attr.aria-current]="solutionId() === newSolutionId ? 'page' : null" (click)="newSolution()">
+        <mat-icon fontSet="material-icons-round">layers</mat-icon>
+        <span>{{ 'ai-assistant.new-solution' | translate }}</span>
       </button>
       <label class="ai-find" [class.on]="!!query()">
         <mat-icon fontSet="material-icons-round">search</mat-icon>
@@ -52,17 +57,21 @@
                          (keydown)="onRenameKeydown($event)" (blur)="finishRename(chat, rowTitle.value)">
                 </div>
               } @else {
-                <div class="ai-row" role="link" tabindex="0" [class.active]="chat.id === chatId()" [class.attn]="aiChats.needsAttention(chat)"
-                     [attr.aria-current]="chat.id === chatId() ? 'page' : null"
-                     (click)="selectChat(chat)" (keydown.enter)="selectChat(chat)">
+                <div class="ai-row" role="link" tabindex="0" [class.active]="isActive(chat)"
+                     [class.attn]="!!chat.chat && aiChats.needsAttention(chat.chat)"
+                     [attr.aria-current]="isActive(chat) ? 'page' : null"
+                     (click)="selectRow(chat)" (keydown.enter)="selectRow(chat)">
                   <span class="ai-row-title" [matTooltip]="'ai-assistant.double-click-to-rename' | translate" matTooltipPosition="after"
                         matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
-                        (dblclick)="$event.stopPropagation(); startRename(chat)">{{ chat.title }}</span>
-                  @if (aiChats.levelOf(chat); as level) {
-                    <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="aiChats.tipOf(chat)" matTooltipPosition="above"></span>
+                        (dblclick)="$event.stopPropagation(); startRename(chat)">
+                    @if (chat.solution) {
+                      <mat-icon class="ai-row-ic" fontSet="material-icons-round" aria-hidden="true">layers</mat-icon>
+                    }{{ chat.title }}</span>
+                  @if (chat.chat && aiChats.levelOf(chat.chat); as level) {
+                    <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="aiChats.tipOf(chat.chat)" matTooltipPosition="above"></span>
                   }
-                  <button type="button" class="ai-row-menu" [matMenuTriggerFor]="chatMenu"
-                          [matMenuTriggerData]="{chat: chat}" (click)="$event.stopPropagation()"
+                  <button type="button" class="ai-row-menu" [matMenuTriggerFor]="chat.solution ? solutionMenu : chatMenu"
+                          [matMenuTriggerData]="{chat: chat.chat, solution: chat.solution, row: chat}" (click)="$event.stopPropagation()"
                           [matTooltip]="'ai-assistant.chat-actions' | translate" matTooltipPosition="above"
                           [attr.aria-label]="'ai-assistant.chat-actions' | translate">
                     <mat-icon>more_vert</mat-icon>
@@ -96,6 +105,10 @@
               [matTooltip]="'ai-assistant.new-chat' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.new-chat' | translate">
         <mat-icon fontSet="material-icons-round">add</mat-icon>
       </button>
+      <button type="button" class="ai-ib" (click)="newSolution()"
+              [matTooltip]="'ai-assistant.new-solution' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.new-solution' | translate">
+        <mat-icon fontSet="material-icons-round">layers</mat-icon>
+      </button>
       <button type="button" class="ai-ib" (click)="openSearch()"
               [matTooltip]="('ai-assistant.search-chats' | translate) + ' (' + shortcutModifier + 'K)'" matTooltipPosition="right"
               [attr.aria-label]="'ai-assistant.search-chats' | translate">
@@ -105,6 +118,9 @@
   }
 </aside>
 
+@if (solutionId()) {
+<tb-solution-chat class="ai-canvas ai-solution" (loaded)="onSolutionLoaded($event)" (click)="onChatClick($event)"></tb-solution-chat>
+} @else {
 <tb-ai-chat class="ai-canvas" variant="page" [toastTarget]="toastTarget" [(chatId)]="chatId"
             (click)="onChatClick($event)">
   @if (!railOpen()) {
@@ -117,6 +133,32 @@
     </button>
   }
 </tb-ai-chat>
+}
+
+<mat-menu #solutionMenu="matMenu" class="tb-ai-chat-menu">
+  <ng-template matMenuContent let-solution="solution" let-row="row">
+    <button mat-menu-item (click)="startRename(row)">
+      <mat-icon fontSet="material-icons-round">edit</mat-icon>
+      <span>{{ 'action.rename' | translate }}</span>
+    </button>
+    @if (solution.built) {
+      <button mat-menu-item (click)="editDesign(solution)">
+        <mat-icon fontSet="material-icons-round">design_services</mat-icon>
+        <span>{{ 'ai-assistant.edit-design' | translate }}</span>
+      </button>
+    }
+    @if (solution.installed) {
+      <button mat-menu-item (click)="uninstallSolution(solution)">
+        <mat-icon fontSet="material-icons-round">delete_sweep</mat-icon>
+        <span>{{ 'solution-creator.uninstall-solution' | translate }}</span>
+      </button>
+    }
+    <button mat-menu-item class="danger" (click)="deleteSolution(solution)">
+      <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>
+      <span>{{ 'action.delete' | translate }}</span>
+    </button>
+  </ng-template>
+</mat-menu>
 
 <mat-menu #chatMenu="matMenu" class="tb-ai-chat-menu">
   <ng-template matMenuContent let-chat="chat">

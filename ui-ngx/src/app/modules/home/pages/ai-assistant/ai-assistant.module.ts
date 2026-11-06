@@ -6,6 +6,7 @@ import { SharedModule } from '@shared/shared.module';
 import { AiAssistantComponent } from '@home/pages/ai-assistant/ai-assistant.component';
 import { AiModule } from '@home/components/ai/ai.module';
 import { AiAssistantRoutingModule } from '@home/pages/ai-assistant/ai-assistant-routing.module';
+import { SolutionChatModule } from '@home/components/ai/solution/solution-chat.module';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { AiAssistantRoutingModule } from '@home/pages/ai-assistant/ai-assistant-
     CommonModule,
     SharedModule,
     AiModule,
+    SolutionChatModule,
     AiAssistantRoutingModule
   ]
 })

@@ -36,8 +36,8 @@ import { EntityInfoPanelComponent } from './entity-info-panel.component';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ClusterNode, Edge, GraphComponent, Node } from '@swimlane/ngx-graph';
-import { MetricInfoPanelComponent } from '@home/pages/ai-solution-creator/overview/metric-info-panel.component';
-import { IamInfoPanelComponent } from '@home/pages/ai-solution-creator/overview/iam-info-panel.component';
+import { MetricInfoPanelComponent } from '@home/components/ai/solution/overview/metric-info-panel.component';
+import { IamInfoPanelComponent } from '@home/components/ai/solution/overview/iam-info-panel.component';
 import { StrictPopoverPlacements } from '@shared/components/popover.models';
 
 @Component({

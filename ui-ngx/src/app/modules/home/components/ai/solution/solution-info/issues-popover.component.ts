@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { Component, Input } from '@angular/core';
-import { AggregatedEntityResult, issuesCountSummary } from '@home/pages/ai-solution-creator/solution-info/issues-aggregation';
+import { AggregatedEntityResult, issuesCountSummary } from '@home/components/ai/solution/solution-info/issues-aggregation';
 import { EntityResult } from '@shared/models/solution-creator.models';
 import { TranslateService } from '@ngx-translate/core';
 
