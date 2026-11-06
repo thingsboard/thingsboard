@@ -20,7 +20,7 @@ import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { Observable, of } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { map, mergeMap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { Authority } from '@app/shared/models/authority.enum';
@@ -50,7 +50,7 @@ import {
   ImportDashboardFileDialogComponent
 } from "@home/pages/dashboard/import-dashboard-file-dialog.component";
 import { UserPermissionsService } from '@core/http/user-permissions.service';
-import { Resource } from '@shared/models/security.models';
+import { Operation, Resource } from '@shared/models/security.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Injectable()
@@ -198,7 +198,7 @@ export class DashboardsTableConfigResolver {
   }
 
   configureAddActions(config: EntityTableConfig<DashboardInfo>): Array<HeaderActionDescriptor> {
-    return [
+    const actions: Array<HeaderActionDescriptor> = [
       {
         name: this.translate.instant('dashboard.create-new-dashboard'),
         icon: 'insert_drive_file',
@@ -212,6 +212,30 @@ export class DashboardsTableConfigResolver {
         onAction: ($event) => this.importDashboard($event, config)
       }
     ];
+    if (getCurrentAuthState(this.store).aiEnabled &&
+      this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)) {
+      actions.push({
+        name: this.translate.instant('ai-assistant.configure-with-ai'),
+        icon: 'mdi:creation',
+        isEnabled: () => true,
+        onAction: ($event) => this.generateWithAi($event, config)
+      });
+    }
+    return actions;
+  }
+
+  generateWithAi($event: Event, config: EntityTableConfig<DashboardInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const dashboard = this.dashboardUtils.validateAndUpdateDashboard({title: 'New Dashboard'} as Dashboard);
+    this.dashboardService.saveDashboard(dashboard).subscribe((savedDashboard) => {
+      const url = this.router.createUrlTree([savedDashboard.id.id], {
+        relativeTo: config.getTable().route,
+        queryParams: {action: 'aiAssistant'}
+      });
+      this.router.navigateByUrl(url);
+    });
   }
 
   openDashboard($event: Event, dashboard: DashboardInfo, config: EntityTableConfig<DashboardInfo>) {
