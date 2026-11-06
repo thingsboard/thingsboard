@@ -113,6 +113,10 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     this.unfolded.add(index);
   }
 
+  withoutDoneMark(content: string): string {
+    return (content ?? '').replace(/^\s*(✅|🛠️|🛠|🤔|💡|🛑)\s*/u, '');
+  }
+
   copyAnswer(answer: HTMLElement, index: number): void {
     const text = (answer.querySelector<HTMLElement>('tb-markdown') ?? answer).innerText.trim();
     if (this.clipboard.copyFromContent(text)) {

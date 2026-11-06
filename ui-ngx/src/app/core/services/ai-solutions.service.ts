@@ -4,9 +4,16 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { ChatLevel } from '@shared/models/ai-chat.models';
 import { SolutionsCreatorService } from '@core/http/solutions-creator.service';
 import { DialogService } from '@core/services/dialog.service';
-import { SolutionCreatorInfo, SolutionInfo } from '@shared/models/solution-creator.models';
+import {
+  SolutionCreatorInfo,
+  SolutionInfo,
+  SolutionInstallProgress,
+  SolutionStep,
+  SolutionUpdateRequest
+} from '@shared/models/solution-creator.models';
 
 @Injectable({providedIn: 'root'})
 export class AiSolutionsService {
@@ -19,6 +26,7 @@ export class AiSolutionsService {
 
   private _running = signal<ReadonlySet<string>>(new Set());
   readonly running = this._running.asReadonly();
+  private _failed = signal<ReadonlyMap<string, string>>(new Map());
 
   private api = inject(SolutionsCreatorService);
   private dialog = inject(DialogService);
@@ -40,6 +48,9 @@ export class AiSolutionsService {
     if (!solutionId || this._running().has(solutionId) === running) {
       return;
     }
+    if (running) {
+      this.update(solutionId, {status: undefined, statusReason: undefined});
+    }
     this._running.update(set => {
       const next = new Set(set);
       if (running) {
@@ -53,6 +64,43 @@ export class AiSolutionsService {
 
   isRunning(solutionId: string): boolean {
     return this._running().has(solutionId);
+  }
+
+  setFailed(solutionId: string | undefined, reason: string | null): void {
+    if (!solutionId || this._failed().get(solutionId) === (reason ?? undefined)) {
+      return;
+    }
+    this._failed.update(map => {
+      const next = new Map(map);
+      if (reason) {
+        next.set(solutionId, reason);
+      } else {
+        next.delete(solutionId);
+      }
+      return next;
+    });
+  }
+
+  levelOf(solution: SolutionInfo, open = false): ChatLevel | null {
+    if (this._running().has(solution.id)) {
+      return 'running';
+    }
+    if (this._failed().has(solution.id)) {
+      return 'error';
+    }
+    if (open) {
+      return solution.status === 'FAILED' ? 'error' : null;
+    }
+    return solution.status === 'NEEDS_YOU' ? 'needs' : solution.status === 'RUNNING' ? 'running' : solution.status === 'FAILED' ? 'error' : null;
+  }
+
+  tipOf(solution: SolutionInfo, open = false): string {
+    const level = this.levelOf(solution, open);
+    if (!level) {
+      return '';
+    }
+    const reason = level === 'error' ? this._failed().get(solution.id) ?? solution.statusReason : undefined;
+    return reason || this.translate.instant('ai-assistant.status-tip-' + level);
   }
 
   find(solutionId: string | undefined): SolutionInfo | undefined {
@@ -84,6 +132,20 @@ export class AiSolutionsService {
     return this.api.updateSolutionData(solution.id, 'solutionTitle', JSON.stringify(title), {ignoreLoading: true, ignoreErrors: true}).pipe(
       tap(() => this.update(solution.id, {solutionTitle: title}))
     );
+  }
+
+  setPinned(solution: SolutionInfo, pinned: boolean): Observable<void> {
+    return this.api.updateSolution(solution.id, {pinned}, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap(() => this.update(solution.id, {pinned}))
+    );
+  }
+
+  sendFeedback(solutionId: string, step: SolutionStep, feedback: SolutionUpdateRequest['feedback']): Observable<void> {
+    return this.api.updateSolution(solutionId, {step, feedback}, {ignoreLoading: true});
+  }
+
+  installProgress(solutionId: string): Observable<SolutionInstallProgress> {
+    return this.api.getInstallProgress(solutionId, {ignoreLoading: true, ignoreErrors: true});
   }
 
   confirmAndUninstall(solution: SolutionInfo): Observable<SolutionCreatorInfo | null> {

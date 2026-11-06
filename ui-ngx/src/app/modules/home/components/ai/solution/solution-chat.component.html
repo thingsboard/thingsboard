@@ -85,13 +85,21 @@
       <div #chatArea class="sol-log">
         <div class="sol-log-in">
           <tb-ai-chat-messages
-            [messages]="messages()"
+            [messages]="viewMessages()"
             [loading]="false"
             [scrollContainer]="chatArea"
+            [feedback]="!!info()?.id"
             initialScroll="bottom"
+            (rate)="onRate($event)"
+            (report)="onReport($event)"
             (resourceError)="showErrorMessage($event)">
           </tb-ai-chat-messages>
-          @if (skipInterviewAllowed() && !loading() && !isGenerating()) {
+          @if (pendingQuestions(); as questions) {
+            @if (questions.length) {
+              <tb-ai-question class="sol-ask" [questions]="questions" (done)="answerQuestions($event)" (skip)="skipQuestions($event)"></tb-ai-question>
+            }
+          }
+          @if (skipInterviewAllowed() && !loading() && !isGenerating() && !pendingQuestions().length) {
             <div class="k-chips sol-chips">
               <button type="button" class="ob-chip" (click)="skipInterview()">
                 <mat-icon fontSet="material-icons-round" aria-hidden="true">fast_forward</mat-icon>
@@ -231,12 +239,14 @@
           }
         </div>
         <div #paneBody class="sol-pane-body" [class.dark]="json()" (scroll)="onPaneScroll(paneBody)">
-          @if (making() && currentView() === making()) {
+          @if (making() === 'solution' && currentView() === 'solution' && progressInfo(); as progress) {
+            <tb-solution-installed [solution]="progress" [creating]="true"></tb-solution-installed>
+          } @else if (making() && currentView() === making()) {
             <div class="sol-loading">
               <span class="sol-loading-glow" aria-hidden="true"></span>
               <span class="tb-ai-mark m64" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
               <p class="sol-loading-line">{{ work()?.words }}</p>
-              <p class="sol-loading-est">{{ ('solution-creator.pane.estimate-' + making()) | translate }}</p>
+              <p class="sol-loading-est">{{ estimateOf(making()) }}</p>
             </div>
           } @else if (json()) {
             <tb-solution-json #jsonView class="sol-json" [value]="jsonValue()"
@@ -289,12 +299,12 @@
               </button>
             }
           } @else if (currentView() === 'overview') {
-            <span class="sol-foot-note">{{ 'solution-creator.pane.estimate-dashboards' | translate }}</span>
+            <span class="sol-foot-note">{{ estimateOf('dashboards') }}</span>
             <button mat-flat-button type="button" [disabled]="loading()" (click)="nextStep()">
               {{ 'solution-creator.next-dashboards' | translate }}
             </button>
           } @else {
-            <span class="sol-foot-note">{{ 'solution-creator.pane.estimate-solution' | translate }}</span>
+            <span class="sol-foot-note">{{ estimateOf('solution') }}</span>
             <button mat-button type="button" [disabled]="loading()" (click)="back()">
               <mat-icon fontSet="material-icons-round">arrow_back</mat-icon>{{ 'action.back' | translate }}
             </button>

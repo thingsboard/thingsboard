@@ -220,6 +220,43 @@
     .agent-body {
       min-width: 0;
     }
+
+    &.done {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+
+      > .done-mark {
+        flex: none;
+        margin-top: 2px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        color: var(--tb-ok-text);
+      }
+
+      > .agent-body {
+        flex: 1;
+      }
+    }
+
+    .lead {
+      margin: 0 0 14px;
+      font-size: var(--chat-text);
+      line-height: var(--chat-text-lh);
+      letter-spacing: var(--chat-text-ls);
+      font-weight: 500;
+      color: var(--tb-ink);
+    }
+  }
+
+  .agent-note {
+    margin: 14px 0 4px;
+    letter-spacing: .25px;
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
+    color: var(--k-grey);
   }
 
   .incomplete {
@@ -309,6 +346,14 @@
 
   .user .msg-foot time {
     margin: 0 0 0 6px;
+  }
+
+  &::ng-deep .ai .agent-body:has(> .lead) .tb-markdown-view [class*="tb-markdown-view-"] ol {
+    padding-left: 20px;
+
+    li + li {
+      margin-top: 6px;
+    }
   }
 
   &::ng-deep .ai .agent-body .tb-markdown-view {

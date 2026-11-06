@@ -16,6 +16,7 @@ import org.thingsboard.ai.common.channel.SolutionChatRequest;
 import org.thingsboard.ai.common.channel.SolutionDataRequest;
 import org.thingsboard.ai.common.channel.SolutionOperationRequest;
 import org.thingsboard.ai.common.channel.SolutionStepRequest;
+import org.thingsboard.ai.common.channel.SolutionUpdateRequest;
 import org.thingsboard.server.service.ai.TbAiService;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
@@ -98,6 +99,18 @@ public class DefaultAiSolutionService implements AiSolutionService {
     public void deleteSolution(UUID solutionId, SecurityUser user) {
         tbAiService.process(tokenProvider -> operations.execute(
                 new TbAiOperation(ChannelProtocol.SOLUTION_DELETE, new SolutionOperationRequest(solutionId)), user, tokenProvider), user, false);
+    }
+
+    @Override
+    public void updateSolution(UUID solutionId, JsonNode request, SecurityUser user) {
+        tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.SOLUTION_UPDATE, new SolutionUpdateRequest(solutionId, request)), user, tokenProvider), user, false);
+    }
+
+    @Override
+    public JsonNode getInstallProgress(UUID solutionId, SecurityUser user) {
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.SOLUTION_PROGRESS, new SolutionOperationRequest(solutionId)), user, tokenProvider), user, false);
     }
 
 }

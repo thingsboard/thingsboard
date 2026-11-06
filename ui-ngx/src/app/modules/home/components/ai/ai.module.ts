@@ -23,6 +23,7 @@ import { AiRunSummaryComponent } from '@home/components/ai/ai-run-summary.compon
 import { AiStartedFromComponent } from '@home/components/ai/ai-started-from.component';
 import { AiAssistantButtonComponent } from '@home/components/ai/ai-assistant-button.component';
 import { AiRecordComponent } from '@home/components/ai/ai-record.component';
+import { AiQuestionComponent } from '@home/components/ai/ai-question.component';
 import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
 
 @NgModule({
@@ -47,7 +48,8 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiStartedFromComponent,
     AiAssistantButtonComponent,
     AiRecordComponent,
-    AiSparkComponent
+    AiSparkComponent,
+    AiQuestionComponent
   ],
   imports: [
     CommonModule,
@@ -67,7 +69,8 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiCreditsComponent,
     AiLoadingModalComponent,
     AiNoTelemetryModalComponent,
-    AiAttachmentsComponent
+    AiAttachmentsComponent,
+    AiQuestionComponent
   ]
 })
 export class AiModule {}

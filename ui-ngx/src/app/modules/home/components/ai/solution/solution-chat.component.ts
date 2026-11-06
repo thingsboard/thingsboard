@@ -15,13 +15,22 @@ import {
   untracked,
   ViewChild
 } from '@angular/core';
-import { AiChatMessagesComponent } from '@home/components/ai/ai-chat-messages.component';
+import {
+  AiChatMessagesComponent,
+  AnswerRatingEvent,
+  AnswerReportEvent
+} from '@home/components/ai/ai-chat-messages.component';
 import { PageComponent } from '@shared/components/page.component';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
+  AiQuestion,
+  AiQuestionAnswer,
   ChatMessage,
   DashboardsOverview,
+  GeneralChatMessage,
+  SolutionEstimate,
+  SolutionInstallProgress,
   NEW_SOLUTION_ID,
   SolutionCreatorInfo,
   SolutionDescriptor,
@@ -43,7 +52,7 @@ import {
   tap
 } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { EMPTY, Observable, of, Subject } from 'rxjs';
+import { EMPTY, Observable, of, Subject, timer } from 'rxjs';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -60,6 +69,30 @@ import { AiRenameDialogComponent, AiRenameDialogData } from '@home/components/ai
 import { EntityId } from '@shared/models/id/entity-id';
 
 export type SolutionView = 'overview' | 'dashboards' | 'solution';
+
+function answersOf(content: string | undefined, questions: AiQuestion[] | undefined): AiQuestionAnswer[] | null {
+  if (!content || !questions?.length) {
+    return null;
+  }
+  const lines = content.split('\n').map(line => line.trim()).filter(Boolean);
+  const answers: AiQuestionAnswer[] = [];
+  for (const line of lines) {
+    const question = questions.find(item => line.startsWith(item.question.trim() + ' '));
+    if (!question) {
+      return null;
+    }
+    answers.push({question, answer: line.slice(question.question.trim().length).trim()});
+  }
+  return answers.length ? answers : null;
+}
+
+function formatCredits(credits: number): string {
+  if (credits >= 1000) {
+    const thousands = credits / 1000;
+    return (thousands >= 10 ? Math.round(thousands) : Math.round(thousands * 10) / 10) + 'k';
+  }
+  return String(credits);
+}
 
 @Component({
   selector: 'tb-solution-chat',
@@ -105,9 +138,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   mainDashboard = signal<EntityId[]>([]);
 
-  level = computed<'running' | 'needs' | null>(() => this.loading() || this.isGenerating()
+  level = computed<'running' | 'needs' | 'error' | null>(() => this.loading() || this.isGenerating()
     ? 'running'
-    : this.isReadyStep() && this.creatorStep() === 'chat' && !this.built() ? 'needs' : null);
+    : this.failure() ? 'error'
+      : this.pendingQuestions().length || (this.isReadyStep() && this.creatorStep() === 'chat' && !this.built()) ? 'needs' : null);
 
   info = signal<SolutionCreatorInfo | null>(null);
 
@@ -122,6 +156,57 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   uninstalledAt = signal<number | null>(null);
 
   failure = signal<string | null>(null);
+  installProgress = signal<SolutionInstallProgress | null>(null);
+  private messageSteps: SolutionStep[] = [];
+
+  progressInfo = computed<SolutionCreatorInfo | null>(() => {
+    const progress = this.installProgress();
+    const info = this.info();
+    if (!progress || !info || !Object.values(progress.entityResults ?? {}).some(results => results?.length)) {
+      return null;
+    }
+    return {...info, metadata: {built: true, installed: false, installResult: {createdEntities: [], entityResults: progress.entityResults as any}}};
+  });
+
+  viewMessages = computed<ChatMessage[]>(() => {
+    const messages = this.messages();
+    const lastAi = messages.map(message => message.from).lastIndexOf('AI');
+    const waiting = this.isReadyStep() && this.creatorStep() === 'chat' && !this.built() && !this.loading() && !this.isGenerating();
+    return messages.map((message, index) => {
+      if (message.from === 'AI') {
+        const general = message as GeneralChatMessage;
+        const patch: Partial<GeneralChatMessage> = {};
+        if (/^\s*(✅|🛠️|🛠)/u.test(general.content ?? '')) {
+          patch.done = true;
+        } else if (/^\s*(🤔|💡|🛑)/u.test(general.content ?? '')) {
+          patch.done = false;
+        }
+        if (general.questions?.length) {
+          patch.lead = this.translate.instant('solution-creator.assumptions');
+        }
+        if (waiting && index === lastAi) {
+          patch.note = this.translate.instant(this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION
+            ? 'solution-creator.next-create' : 'solution-creator.next-dashboards-note');
+        }
+        return Object.keys(patch).length ? {...general, ...patch} : message;
+      }
+      if (message.from === 'USER') {
+        const previous = messages[index - 1] as GeneralChatMessage;
+        const answers = previous?.from === 'AI' ? answersOf((message as GeneralChatMessage).content, previous.questions) : null;
+        return answers ? {...message, answers} as GeneralChatMessage : message;
+      }
+      return message;
+    });
+  });
+
+  pendingQuestions = computed<AiQuestion[]>(() => {
+    const last = this.messages()[this.messages().length - 1] as GeneralChatMessage;
+    if (!last || last.from !== 'AI' || !last.questions?.length || this.loading() || this.isGenerating() || this.isReadyStep()
+      || this.solutionStep() !== SolutionStep.INITIAL_CONFIGURATION) {
+      return [];
+    }
+    return last.questions;
+  });
 
   readonly aboutFeatures = [
     {icon: 'account_tree', title: 'solution-creator.about-design-title', line: 'solution-creator.about-design'},
@@ -156,6 +241,12 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         this.onPaneScroll(body);
       }
     }, 50));
+  });
+
+  private failureEffect = effect(() => {
+    const id = this.info()?.id;
+    const failure = this.failure();
+    untracked(() => this.aiSolutions.setFailed(id, failure));
   });
 
   private runningEffect = effect(() => {
@@ -245,7 +336,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   activePlaceholder = computed(() => this.isInitialEmpty()
     ? 'solution-creator.describe-solution-you-want'
-    : this.creatorStep() === 'result' ? 'solution-creator.ask-about-solution' : 'solution-creator.say-what-to-change');
+    : this.pendingQuestions().length ? 'solution-creator.type-the-answer'
+      : this.creatorStep() === 'result' ? 'solution-creator.ask-about-solution' : 'solution-creator.say-what-to-change');
 
   activeStepIndex = computed(() => {
     if (!this.creatorStep()) {
@@ -603,7 +695,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
             })),
             tap(() => this.creatorStep.set('result')),
             switchMap((solution) =>
-              this.solutionCreator.installSolution(this.solutionId, {ignoreLoading: true, ignoreErrors: true})
+              this.installWithProgress()
                 .pipe(map((installData) => {
                   if (!solution.metadata) {
                     solution.metadata = {} as SolutionMetadata;
@@ -642,10 +734,15 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   installSolution() {
-    const progressSubject = new Subject<void>();
-    this.dialogService.progress(progressSubject.asObservable(), this.translate.instant('solution-creator.installing'));
-    this.solutionCreator.installSolution(this.solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(
-      takeUntil(this.cancelPending$)
+    this.failure.set(null);
+    if (window.innerWidth >= SolutionChatComponent.NARROW_WIDTH) {
+      this.paneOpen.set(true);
+    }
+    const work = this.startWork([{text: 'solution-creator.step-loading-creating-entities', delay: 0}], 'install');
+    this.making.set('solution');
+    this.installWithProgress().pipe(
+      takeUntil(this.cancelPending$),
+      finalize(() => work.close())
     ).subscribe({
         next: (value) => {
           if (!this.solutionInfo.metadata) {
@@ -658,8 +755,6 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           this.solutionInfo.metadata.installed = true;
           this.solutionInfo = this.solutionInfo;
           this.aiSolutions.update(this.solutionId, {installed: true});
-          progressSubject.next();
-          progressSubject.complete();
           if (value.mainDashboardId) {
             this.gotoMainDashboard(true);
           } else {
@@ -667,11 +762,109 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           }
         },
         error: (err) => {
-          progressSubject.next();
-          progressSubject.complete();
           this.reportFailure(err);
         }
       });
+  }
+
+  private installWithProgress(): Observable<SolutionInstallResult> {
+    const solutionId = this.solutionId;
+    const finished$ = new Subject<void>();
+    this.installProgress.set(null);
+    timer(800, 1200).pipe(
+      switchMap(() => this.aiSolutions.installProgress(solutionId).pipe(catchError(() => of(null)))),
+      takeUntil(finished$),
+      takeUntil(this.cancelPending$)
+    ).subscribe(progress => {
+      if (progress?.running) {
+        this.installProgress.set(progress);
+      }
+    });
+    return this.solutionCreator.installSolution(solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      finalize(() => {
+        finished$.next();
+        finished$.complete();
+        this.installProgress.set(null);
+      })
+    );
+  }
+
+  estimateOf(view: SolutionView): string {
+    const estimates = this.info()?.estimates;
+    const operations: Record<SolutionView, Array<keyof NonNullable<SolutionCreatorInfo['estimates']>>> = {
+      overview: ['INITIAL_CONFIGURATION'],
+      dashboards: ['DASHBOARDS_CONFIGURATION'],
+      solution: ['CREATE', 'INSTALL']
+    };
+    const known = operations[view].map(operation => estimates?.[operation]).filter((estimate): estimate is SolutionEstimate => !!estimate);
+    if (!known.length || known.length < operations[view].length) {
+      return this.translate.instant('solution-creator.pane.estimate-' + view);
+    }
+    const seconds = known.reduce((sum, estimate) => sum + estimate.seconds, 0);
+    const credits = known.reduce((sum, estimate) => sum + estimate.credits, 0);
+    const time = seconds < 50
+      ? this.translate.instant('solution-creator.pane.about-seconds', {count: Math.max(10, Math.round(seconds / 10) * 10)})
+      : seconds < 90
+        ? this.translate.instant('solution-creator.pane.estimate-solution')
+        : this.translate.instant('solution-creator.pane.about-minutes', {count: Math.round(seconds / 60)});
+    return credits > 0 ? time + ' · ' + this.translate.instant('solution-creator.pane.credits', {credits: formatCredits(credits)}) : time;
+  }
+
+  answerQuestions(answers: AiQuestionAnswer[]): void {
+    this.sendMsgFromUser({message: answers.map(item => item.question.question.trim() + ' ' + item.answer.trim()).join('\n'), resources: []});
+  }
+
+  skipQuestions(answers: AiQuestionAnswer[]): void {
+    if (this.skipInterviewAllowed()) {
+      this.skipInterview();
+    } else {
+      this.answerQuestions(answers);
+    }
+  }
+
+  onRate(event: AnswerRatingEvent): void {
+    const target = this.answerAt(event.index);
+    if (!target) {
+      return;
+    }
+    const before = target.answer.rating;
+    this.patchAnswer(event.index, {rating: event.rating === 'NONE' ? undefined : event.rating});
+    this.aiSolutions.sendFeedback(this.solutionId, target.step, {answer: target.answer.content, rating: event.rating}).subscribe({
+      error: () => {
+        this.patchAnswer(event.index, {rating: before});
+        this.showErrorMessage(this.translate.instant('ai-assistant.feedback.failed'));
+      }
+    });
+  }
+
+  onReport(event: AnswerReportEvent): void {
+    const target = this.answerAt(event.index);
+    if (!target) {
+      return;
+    }
+    this.patchAnswer(event.index, {reported: true});
+    this.aiSolutions.sendFeedback(this.solutionId, target.step, {answer: target.answer.content, problem: event.problem, comment: event.comment}).subscribe({
+      next: () => this.store.dispatch(new ActionNotificationShow({
+        message: this.translate.instant('ai-assistant.feedback.thanks'), type: 'success', modern: true,
+        target: 'solution-creator-chat', verticalPosition: 'bottom', horizontalPosition: 'center'
+      })),
+      error: () => {
+        this.patchAnswer(event.index, {reported: false});
+        this.showErrorMessage(this.translate.instant('ai-assistant.feedback.failed'));
+      }
+    });
+  }
+
+  private answerAt(index: number): {answer: GeneralChatMessage; step: SolutionStep} | null {
+    const message = this.messages()[index] as GeneralChatMessage;
+    if (!this.solutionId || message?.from !== 'AI' || !message.content) {
+      return null;
+    }
+    return {answer: message, step: this.messageSteps[index] ?? this.solutionStep()};
+  }
+
+  private patchAnswer(index: number, patch: Partial<GeneralChatMessage>): void {
+    this.messages.update(list => list.map((message, at) => at === index ? {...message, ...patch} as GeneralChatMessage : message));
   }
 
   uninstallSolution() {
@@ -703,6 +896,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     ).subscribe({
       next: () => {
         this.messages.set([]);
+        this.messageSteps = [];
         this.isReadyStep.set(false);
         if (this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION) {
           this.sendDashboardConfigurationMsg('<start/>');
@@ -891,8 +1085,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     const steps = this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION
       ? [SolutionStep.INITIAL_CONFIGURATION, SolutionStep.DASHBOARDS_CONFIGURATION]
       : [SolutionStep.INITIAL_CONFIGURATION];
-    this.messages.set(steps.flatMap(step => this.solutionInfo.states[step]?.messages ?? [])
-      .filter(msg => msg.from === 'AI' || (msg.from === 'USER' && !/^<[a-z-]+\/>$/.test((msg.content ?? '').trim()))));
+    const visible = (msg: ChatMessage) => msg.from === 'AI' || (msg.from === 'USER' && !/^<[a-z-]+\/>$/.test(((msg as GeneralChatMessage).content ?? '').trim()));
+    const tagged = steps.flatMap(step => (this.solutionInfo.states[step]?.messages ?? []).filter(visible).map(message => ({message, step})));
+    this.messageSteps = tagged.map(item => item.step);
+    this.messages.set(tagged.map(item => item.message));
     const stepState = this.solutionInfo.states[this.solutionStep()];
     if (stepState?.status === SolutionStepStatus.READY) {
       this.solutionName = this.solutionInfo.data?.solutionTitle;
@@ -933,6 +1129,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.skipInterviewAllowed.set(false);
     this.solutionStep.set(SolutionStep.INITIAL_CONFIGURATION);
     this.messages.set([]);
+    this.messageSteps = [];
     this.stopLoadingState();
     this.creatorStep.set(null);
     this.promptInput?.reset();
@@ -944,7 +1141,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private initPredefinedSolution(): void {
-    this.failure.set(null);
+    const listed = this.aiSolutions.find(this.solutionInfo?.id);
+    this.failure.set(listed?.status === 'FAILED' ? listed.statusReason ?? null : null);
     if (this.solutionInfo.metadata?.built) {
       if (this.solutionInfo.states[SolutionStep.DASHBOARDS_CONFIGURATION]) {
         this.solutionStep.set(SolutionStep.DASHBOARDS_CONFIGURATION);
@@ -1165,9 +1363,11 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   sendMsgFromUser(prompt: AiPromptMessage): void {
+    const time = Date.now();
+    this.messageSteps = [...this.messageSteps, this.solutionStep()];
     this.messages.update(list => [...list, prompt.resources.length
-      ? {from: 'USER', content: prompt.message, resources: prompt.resources}
-      : {from: 'USER', content: prompt.message}]);
+      ? {from: 'USER', content: prompt.message, resources: prompt.resources, time}
+      : {from: 'USER', content: prompt.message, time}]);
     this.sendMessage(prompt.message, prompt.resources.map(resource => resource.id)).subscribe(() => {});
   }
 

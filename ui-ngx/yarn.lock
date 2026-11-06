@@ -835,6 +835,16 @@
   dependencies:
     tslib "^2.3.0"
 
+"@fontsource-variable/roboto-mono@^5.3.0":
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/roboto-mono/-/roboto-mono-5.3.0.tgz#10c0f1c0c283a61fa1e0f24381a1e62ed6ad45fa"
+  integrity sha512-h5r+KY/6qy8JEOj33JgcrFO81YAnvrc1EAwMpl/EPJLb2OIvOy0/jmB5M7qs7x/uXk5JUP5Ux4LrkeOK7faHkQ==
+
+"@fontsource-variable/roboto@^5.3.0":
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/roboto/-/roboto-5.3.0.tgz#3ddf845c018b0ea9d15b36e06515d0ebdb02f49e"
+  integrity sha512-BoaaZiQf8fgtxv07KXkTwx1bKz/EoqIlTXq2OOKKXINxp6qXWdnlChqV+hSaDANS49yyUASFl3OVBMMDTCIHFA==
+
 "@fullcalendar/angular@^6.1.20":
   version "6.1.22"
   resolved "https://registry.yarnpkg.com/@fullcalendar/angular/-/angular-6.1.22.tgz#0820b2cd38154418b30278acd359f7be91206fc2"
@@ -8443,16 +8453,6 @@ typed-array-length@^1.0.7:
     is-typed-array "^1.1.13"
     possible-typed-array-names "^1.0.0"
     reflect.getprototypeof "^1.0.6"
-
-typeface-roboto-mono@^1.1.13:
-  version "1.1.13"
-  resolved "https://registry.yarnpkg.com/typeface-roboto-mono/-/typeface-roboto-mono-1.1.13.tgz#2af8662db8f9119c00efd55d6ed8877d2a69ec94"
-  integrity sha512-pnzDc70b7ywJHin/BUFL7HZX8DyOTBLT2qxlJ92eH1UJOFcENIBXa9IZrxsJX/gEKjbEDKhW5vz/TKRBNk/ufQ==
-
-typeface-roboto@^1.1.13:
-  version "1.1.13"
-  resolved "https://registry.yarnpkg.com/typeface-roboto/-/typeface-roboto-1.1.13.tgz#9c4517cb91e311706c74823e857b4bac9a764ae5"
-  integrity sha512-YXvbd3a1QTREoD+FJoEkl0VQNJoEjewR2H11IjVv4bp6ahuIcw0yyw/3udC4vJkHw3T3cUh85FTg8eWef3pSaw==
 
 typescript-eslint@^8.72.0:
   version "8.72.0"

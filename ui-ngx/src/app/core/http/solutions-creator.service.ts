@@ -9,8 +9,10 @@ import {
   SolutionDataKey,
   SolutionDataValues,
   SolutionInfo,
+  SolutionInstallProgress,
   SolutionInstallResult,
-  SolutionStep
+  SolutionStep,
+  SolutionUpdateRequest
 } from '@shared/models/solution-creator.models';
 
 @Injectable({
@@ -63,5 +65,13 @@ export class SolutionsCreatorService {
 
   public deleteSolution(solutionId: string, config?: RequestConfig): Observable<void> {
     return this.http.delete<void>(`/api/ai/solution/${solutionId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public updateSolution(solutionId: string, request: SolutionUpdateRequest, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/ai/solution/${solutionId}/update`, request, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getInstallProgress(solutionId: string, config?: RequestConfig): Observable<SolutionInstallProgress> {
+    return this.http.get<SolutionInstallProgress>(`/api/ai/solution/${solutionId}/progress`, defaultHttpOptionsFromConfig(config));
   }
 }

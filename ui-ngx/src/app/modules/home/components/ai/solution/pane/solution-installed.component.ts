@@ -50,6 +50,7 @@ const SECTIONS: EntityType[] = [
 export class SolutionInstalledComponent {
 
   solution = input.required<SolutionCreatorInfo>();
+  creating = input(false);
 
   @Output() openMain = new EventEmitter<void>();
 

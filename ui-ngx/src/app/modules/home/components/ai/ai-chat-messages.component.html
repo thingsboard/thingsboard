@@ -8,7 +8,9 @@
   @if (dayLines[$index]; as day) {
     <div class="k-day" role="separator"><span>{{ day }}</span></div>
   }
-  @if (msg.from === 'USER') {
+  @if (msg.from === 'USER' && msg.answers?.length) {
+    <tb-ai-question class="answers" [questions]="[]" [answered]="msg.answers" [time]="msg.time"></tb-ai-question>
+  } @else if (msg.from === 'USER') {
     @if (msg.startedFrom) {
       <tb-ai-started-from [from]="msg.startedFrom"></tb-ai-started-from>
     }
@@ -79,14 +81,23 @@
           </div>
         }
       } @else {
-        <div class="agent" #answer>
+        <div class="agent" [class.done]="msg.done" #answer>
+          @if (msg.done) {
+            <mat-icon class="done-mark" aria-hidden="true">check</mat-icon>
+          }
           <div class="agent-body">
-            <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)" (ready)="decorateCode(answer)"></tb-markdown>
+            @if (msg.lead) {
+              <p class="lead">{{ msg.lead }}</p>
+            }
+            <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.done !== undefined ? withoutDoneMark(msg.content) : msg.content)" (ready)="decorateCode(answer)"></tb-markdown>
             @if (summaries[$index]; as entities) {
               <tb-ai-run-summary [entities]="entities"></tb-ai-run-summary>
             }
           </div>
         </div>
+        @if (msg.note) {
+          <p class="agent-note">{{ msg.note }}</p>
+        }
         <div class="msg-foot agent-foot">
           @if (msg.time) {
             <time [matTooltip]="fullTime(msg.time)" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>

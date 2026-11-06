@@ -111,6 +111,22 @@ public class AiSolutionController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping(value = "/{solutionId}/update", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void updateSolution(@PathVariable UUID solutionId, @RequestBody JsonNode request) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
+        aiSolutionService.updateSolution(solutionId, request, user);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/{solutionId}/progress")
+    public JsonNode getInstallProgress(@PathVariable UUID solutionId) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI, Operation.READ);
+        return aiSolutionService.getInstallProgress(solutionId, user);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/{solutionId}/install")
     public JsonNode installSolution(@PathVariable UUID solutionId,
                                     @RequestHeader(AUTHORIZATION_HEADER) String tbAccessToken,

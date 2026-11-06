@@ -31,4 +31,8 @@ public interface AiSolutionService {
 
     void deleteSolution(UUID solutionId, SecurityUser user);
 
+    void updateSolution(UUID solutionId, JsonNode request, SecurityUser user);
+
+    JsonNode getInstallProgress(UUID solutionId, SecurityUser user);
+
 }

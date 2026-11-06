@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 import { AiChatsService } from '@core/services/ai-chats.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
-import { ChatInfo } from '@shared/models/ai-chat.models';
+import { ChatInfo, ChatLevel } from '@shared/models/ai-chat.models';
 import { DAY, WEEK } from '@shared/models/time/time.models';
 import { AiChatComponent } from '@home/components/ai/ai-chat.component';
 import { AiSolutionsService } from '@core/services/ai-solutions.service';
@@ -89,7 +89,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       id: chat.id, title: chat.title, createdTime: chat.createdTime, pinned: !!chat.pinned, chat
     })),
     ...this.aiSolutions.solutions().map(solution => ({
-      id: solution.id, title: this.aiSolutions.titleOf(solution), createdTime: solution.createdTime ?? 0, pinned: false, solution
+      id: solution.id, title: this.aiSolutions.titleOf(solution), createdTime: solution.createdTime ?? 0, pinned: !!solution.pinned, solution
     }))
   ].sort((a, b) => b.createdTime - a.createdTime));
 
@@ -115,28 +115,28 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       const index = chat.pinned ? 0 : chat.createdTime >= today ? 1 : chat.createdTime >= today - DAY ? 2 : chat.createdTime >= today - WEEK ? 3 : 4;
       groups[index].chats.push(chat);
     }
-    const needsFirst = (row: AiRailRow) => row.chat && this.aiChats.needsAttention(row.chat) ? 0 : 1;
+    const needsFirst = (row: AiRailRow) => this.needsAttention(row) ? 0 : 1;
     groups.forEach(group => group.chats.sort((a, b) => needsFirst(a) - needsFirst(b)));
     return groups.filter(group => group.chats.length);
   });
 
-  waiting = computed<ChatInfo[]>(() => {
-    const rank = (chat: ChatInfo) => this.aiChats.levelOf(chat) === 'needs' ? 0 : 1;
-    return this.aiChats.chats()
-      .filter(chat => this.aiChats.needsAttention(chat))
+  waiting = computed<AiRailRow[]>(() => {
+    const rank = (row: AiRailRow) => this.levelOf(row) === 'needs' ? 0 : 1;
+    return this.rows()
+      .filter(row => this.needsAttention(row))
       .sort((a, b) => rank(a) - rank(b) || b.createdTime - a.createdTime);
   });
 
   waitItem = computed<{count: number; tip: string; label: string} | null>(() => {
     const waiting = this.waiting();
-    if (!waiting.length || (waiting.length === 1 && waiting[0].id === this.chatId())) {
+    if (!waiting.length || (waiting.length === 1 && this.isActive(waiting[0]))) {
       return null;
     }
     if (waiting.length === 1) {
       const title = waiting[0].title || this.translate.instant('ai-assistant.new-chat');
       return {
         count: 1,
-        tip: this.translate.instant('ai-assistant.waiting-one-tip', {title, status: this.aiChats.tipOf(waiting[0])}),
+        tip: this.translate.instant('ai-assistant.waiting-one-tip', {title, status: this.tipOf(waiting[0])}),
         label: this.translate.instant('ai-assistant.waiting-one', {title})
       };
     }
@@ -313,10 +313,27 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     this.solutionId.set(solutionId);
   }
 
+  levelOf(row: AiRailRow): ChatLevel | null {
+    return row.chat ? this.aiChats.levelOf(row.chat) : this.aiSolutions.levelOf(row.solution, this.isActive(row));
+  }
+
+  tipOf(row: AiRailRow): string {
+    return row.chat ? this.aiChats.tipOf(row.chat) : this.aiSolutions.tipOf(row.solution, this.isActive(row));
+  }
+
+  needsAttention(row: AiRailRow): boolean {
+    const level = this.levelOf(row);
+    return level === 'needs' || level === 'error';
+  }
+
+  togglePinnedSolution(solution: SolutionInfo): void {
+    this.aiSolutions.setPinned(solution, !solution.pinned).subscribe({error: err => this.showErrorMessage(err)});
+  }
+
   openWaiting(): void {
     const waiting = this.waiting();
     if (waiting.length === 1) {
-      this.selectChat(waiting[0]);
+      this.selectRow(waiting[0]);
       return;
     }
     this.setRailOpen(true);

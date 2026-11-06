@@ -4,7 +4,8 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-@if (installed() && !bannerClosed()) {
+@if (creating()) {
+} @else if (installed() && !bannerClosed()) {
   <div class="sol-done" role="status">
     <span class="tb-ai-mark m44 sol-done-mark" aria-hidden="true"><mat-icon>check</mat-icon></span>
     <div class="sol-done-t">
@@ -24,7 +25,7 @@
 } @else if (!installed()) {
   <p class="sol-not-installed">{{ 'solution-creator.pane.not-installed' | translate }}</p>
 }
-<div class="sol-infos">
+<div class="sol-infos" [class.creating]="creating()">
   @for (section of sections(); track section.type) {
     <div class="sol-sec-head"><h3>{{ section.title | translate }}</h3></div>
     <table class="sol-table sol-installed-table">

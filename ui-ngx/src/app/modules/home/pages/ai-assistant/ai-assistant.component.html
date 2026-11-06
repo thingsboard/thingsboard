@@ -58,7 +58,7 @@
                 </div>
               } @else {
                 <div class="ai-row" role="link" tabindex="0" [class.active]="isActive(chat)"
-                     [class.attn]="!!chat.chat && aiChats.needsAttention(chat.chat)"
+                     [class.attn]="needsAttention(chat)"
                      [attr.aria-current]="isActive(chat) ? 'page' : null"
                      (click)="selectRow(chat)" (keydown.enter)="selectRow(chat)">
                   <span class="ai-row-title" [matTooltip]="'ai-assistant.double-click-to-rename' | translate" matTooltipPosition="after"
@@ -67,10 +67,8 @@
                     @if (chat.solution) {
                       <mat-icon class="ai-row-ic" fontSet="material-icons-round" aria-hidden="true">layers</mat-icon>
                     }{{ chat.title }}</span>
-                  @if (chat.chat && aiChats.levelOf(chat.chat); as level) {
-                    <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="aiChats.tipOf(chat.chat)" matTooltipPosition="above"></span>
-                  } @else if (chat.solution && aiSolutions.isRunning(chat.solution.id)) {
-                    <span class="tb-ai-status-mark running" [matTooltip]="'ai-assistant.status-tip-running' | translate" matTooltipPosition="above"></span>
+                  @if (levelOf(chat); as level) {
+                    <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="tipOf(chat)" matTooltipPosition="above"></span>
                   }
                   <button type="button" class="ai-row-menu" [matMenuTriggerFor]="chat.solution ? solutionMenu : chatMenu"
                           [matMenuTriggerData]="{chat: chat.chat, solution: chat.solution, row: chat}" (click)="$event.stopPropagation()"
@@ -142,6 +140,10 @@
     <button mat-menu-item (click)="startRename(row)">
       <mat-icon fontSet="material-icons-round">edit</mat-icon>
       <span>{{ 'action.rename' | translate }}</span>
+    </button>
+    <button mat-menu-item (click)="togglePinnedSolution(solution)">
+      <mat-icon fontSet="material-icons-round">push_pin</mat-icon>
+      <span>{{ (solution.pinned ? 'ai-assistant.unpin' : 'ai-assistant.pin') | translate }}</span>
     </button>
     @if (solution.built) {
       <button mat-menu-item (click)="editDesign(solution)">

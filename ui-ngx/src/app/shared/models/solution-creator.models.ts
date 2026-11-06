@@ -17,6 +17,16 @@ export interface SolutionInfo {
   solutionTitle?: string;
   installed?: boolean;
   built?: boolean;
+  pinned?: boolean;
+  status?: 'RUNNING' | 'NEEDS_YOU' | 'FAILED';
+  statusReason?: string;
+}
+
+export type SolutionOperation = 'INITIAL_CONFIGURATION' | 'DASHBOARDS_CONFIGURATION' | 'CREATE' | 'INSTALL';
+
+export interface SolutionEstimate {
+  credits: number;
+  seconds: number;
 }
 
 export interface SolutionCreatorInfo {
@@ -25,6 +35,39 @@ export interface SolutionCreatorInfo {
   states: Record<SolutionStep, SolutionStepState>;
   data: SolutionData;
   metadata?: SolutionMetadata;
+  estimates?: Partial<Record<SolutionOperation, SolutionEstimate>>;
+}
+
+export interface SolutionInstallProgress {
+  running: boolean;
+  phase?: string;
+  entityResults: Partial<Record<EntityType, EntityResult[]>>;
+}
+
+export interface SolutionUpdateRequest {
+  title?: string;
+  pinned?: boolean;
+  step?: SolutionStep;
+  feedback?: {answer: string; rating?: 'UP' | 'DOWN' | 'NONE'; problem?: string; comment?: string};
+}
+
+export interface AiQuestionOption {
+  label: string;
+  hint?: string;
+}
+
+export interface AiQuestion {
+  id: string;
+  label?: string;
+  question: string;
+  why?: string;
+  options: AiQuestionOption[];
+  recommended?: string;
+}
+
+export interface AiQuestionAnswer {
+  question: AiQuestion;
+  answer: string;
 }
 
 export interface DashboardsOverview {
@@ -192,6 +235,11 @@ export interface GeneralChatMessage {
   startedFrom?: AiStartedFrom;
   resources?: AiResourceInfo[];
   time?: number;
+  questions?: AiQuestion[];
+  answers?: AiQuestionAnswer[];
+  done?: boolean;
+  lead?: string;
+  note?: string;
 }
 
 export interface ActionChatMessage {

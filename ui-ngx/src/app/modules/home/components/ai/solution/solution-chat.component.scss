@@ -1081,3 +1081,16 @@
     color: var(--k-grey);
   }
 }
+
+.sol-ask {
+  display: block;
+  margin-top: var(--chat-turn-gap, 28px);
+}
+
+@media (min-width: 1100px) {
+  .sol-cols.with-pane {
+    .sol-log-in, .sol-composer {
+      max-width: none;
+    }
+  }
+}

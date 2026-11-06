@@ -1,0 +1,76 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (answered(); as answers) {
+  <div class="k-ask answered">
+    <div class="k-head">
+      <mat-icon class="tb-mat-18" aria-hidden="true">help_outline</mat-icon>{{ 'ai-assistant.question.you-said' | translate }}
+    </div>
+    @if (time()) {
+      <time class="k-time">{{ time() | date:'HH:mm' }}</time>
+    }
+    @for (item of answers; track item.question.id) {
+      <div class="k-q">
+        <span class="k-qt">{{ item.question.question }}</span>
+        <span class="k-opts"><button type="button" class="ob-chip" aria-pressed="true" disabled>{{ item.answer }}</button></span>
+      </div>
+    }
+  </div>
+} @else if (current(); as question) {
+  <div class="k-ask stepped">
+    <div class="k-head">
+      <mat-icon class="tb-mat-18" aria-hidden="true">help_outline</mat-icon>{{ 'ai-assistant.question.needs-answer' | translate }}
+      @if (questions().length > 1) {
+        <span class="k-sub k-count">{{ 'ai-assistant.question.count' | translate: {at: at() + 1, of: questions().length} }}</span>
+      }
+    </div>
+    @for (step of [question]; track step.id) {
+      <div class="k-step" [class.in-next]="move() === 'next'" [class.in-back]="move() === 'back'">
+        <div class="k-ask-q">
+          <b>{{ step.question }}</b>
+          @if (step.why) {
+            <span class="k-why">{{ step.why }}</span>
+          }
+        </div>
+        <div class="k-ask-a">
+          <div class="k-optcards" [class.list]="step.options.length >= 5" role="radiogroup" [attr.aria-label]="step.question"
+               [style.--n]="step.options.length">
+            @for (option of step.options; track option.label) {
+              <button type="button" role="radio" class="k-optcard" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
+                      [disabled]="disabled()" (click)="pick(step, option.label)">
+                <span class="k-optdot"></span>
+                <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
+              </button>
+            }
+            <div class="k-optcard other" role="radio" [attr.aria-checked]="isOther(step)" (click)="otherArea.focus()">
+              <span class="k-optdot"></span>
+              <span class="k-optbody">
+                <b>{{ 'ai-assistant.question.other' | translate }}</b>
+                <textarea #otherArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
+                          [value]="otherText(step)"
+                          [placeholder]="'ai-assistant.question.other-hint' | translate"
+                          [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
+                          (focus)="pickOther(step)" (input)="type(step, otherArea)" (keydown.enter)="onEnter($event)"></textarea>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+    <div class="k-actions">
+      @if (at() > 0) {
+        <button mat-button type="button" (click)="back()">
+          <mat-icon>arrow_back</mat-icon>{{ 'action.back' | translate }}
+        </button>
+      }
+      <button mat-flat-button type="button" color="primary" [disabled]="disabled() || !ready(question)" (click)="next()">
+        <mat-icon>{{ last() ? 'check' : 'arrow_forward' }}</mat-icon>{{ (last() ? 'ai-assistant.question.done' : 'ai-assistant.question.next') | translate }}
+      </button>
+      <span class="tb-spacer"></span>
+      <button mat-button type="button" [disabled]="disabled()" (click)="skipAll()">{{ 'ai-assistant.question.skip' | translate }}</button>
+    </div>
+  </div>
+}
