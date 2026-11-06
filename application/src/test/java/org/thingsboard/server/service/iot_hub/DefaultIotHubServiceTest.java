@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -691,6 +692,32 @@ class DefaultIotHubServiceTest {
         assertThat(descriptor.getCreatedEntityIds()).containsExactly(dashboard.getId());
         assertThat(descriptor.getDashboardId()).isEqualTo(dashboard.getId());
         assertThat(item.getVersion()).isEqualTo("1.0.1");
+    }
+
+    @Test
+    void removeDevicePackageEntities_saveFailsAfterRemoving_notARefusal() throws Exception {
+        mockTenant();
+        Device device = new Device(new DeviceId(UUID.randomUUID()));
+        device.setTenantId(tenantId);
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.<EntityId>of(device.getId()));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setVersion("1.0.1");
+        item.setItemId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        String newVersionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(newVersionId))
+                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
+        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
+        doThrow(new DataValidationException("invalid item")).when(iotHubInstalledItemService).save(tenantId, item);
+
+        // The device is already removed: the failure must not look like a refusal (a 400) to the wizard.
+        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("invalid item");
+        verify(tbDeviceService).delete(device, user);
     }
 
     @Test
