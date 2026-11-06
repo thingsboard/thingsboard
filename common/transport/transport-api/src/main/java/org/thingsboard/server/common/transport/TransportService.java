@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport;
 
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -17,6 +18,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceIdsByTransportTypeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
@@ -61,7 +63,13 @@ public interface TransportService {
 
     GetResourceResponseMsg getResource(GetResourceRequestMsg msg);
 
+    /**
+     * @deprecated use {@link #getDeviceIdsByTransportType(DeviceTransportType, int, int)}
+     */
+    @Deprecated
     GetSnmpDevicesResponseMsg getSnmpDevicesIds(GetSnmpDevicesRequestMsg requestMsg);
+
+    GetDeviceIdsByTransportTypeResponseMsg getDeviceIdsByTransportType(DeviceTransportType transportType, int page, int pageSize);
 
     GetDeviceResponseMsg getDevice(GetDeviceRequestMsg requestMsg);
 

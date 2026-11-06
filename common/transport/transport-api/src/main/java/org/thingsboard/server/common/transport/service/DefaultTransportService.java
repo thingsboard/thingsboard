@@ -73,6 +73,8 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceIdsByTransportTypeRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceIdsByTransportTypeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRequestMsg;
@@ -286,6 +288,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     @Override
+    @Deprecated
     public GetSnmpDevicesResponseMsg getSnmpDevicesIds(GetSnmpDevicesRequestMsg requestMsg) {
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(
                 UUID.randomUUID(), TransportApiRequestMsg.newBuilder()
@@ -296,6 +299,25 @@ public class DefaultTransportService extends TransportActivityManager implements
         try {
             TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
             return response.getValue().getSnmpDevicesResponseMsg();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public GetDeviceIdsByTransportTypeResponseMsg getDeviceIdsByTransportType(DeviceTransportType transportType, int page, int pageSize) {
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(
+                UUID.randomUUID(), TransportApiRequestMsg.newBuilder()
+                .setDeviceIdsByTransportTypeRequestMsg(GetDeviceIdsByTransportTypeRequestMsg.newBuilder()
+                        .setTransportType(transportType.name())
+                        .setPage(page)
+                        .setPageSize(pageSize))
+                .build()
+        );
+
+        try {
+            TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
+            return response.getValue().getDeviceIdsByTransportTypeResponseMsg();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
