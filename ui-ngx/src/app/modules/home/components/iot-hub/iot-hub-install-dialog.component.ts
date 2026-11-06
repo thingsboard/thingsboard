@@ -30,6 +30,7 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import { iotHubErrorMessage } from './iot-hub-utils';
 
 interface SelectEntityConfig {
   allowed: EntityType[];
@@ -317,7 +318,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
 
   private handleApiError(err: any): void {
     this.state = 'error';
-    this.errorMessage = err?.error?.message || err?.message || '';
+    this.errorMessage = iotHubErrorMessage(err, this.translate);
   }
 
   private handlePlanResult(result: InstallPlanResult): void {
