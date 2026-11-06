@@ -682,6 +682,7 @@
 }
 
 .sol-pane-foot {
+  position: relative;
   flex: none;
   display: flex;
   align-items: center;
@@ -854,5 +855,229 @@
         display: inline-block;
       }
     }
+  }
+}
+
+.sol-pane-head::after, .sol-pane-foot::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.sol-pane-head::after {
+  top: 100%;
+  opacity: .45;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--tb-ink) 9%, transparent), transparent);
+}
+
+.sol-pane-foot::before {
+  bottom: 100%;
+  background: linear-gradient(to top, color-mix(in srgb, var(--tb-ink) 9%, transparent), transparent);
+}
+
+.sol-pane.scrolled .sol-pane-head::after, .sol-pane.more .sol-pane-foot::before {
+  opacity: 1;
+}
+
+.sol-failure {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: var(--chat-line);
+  line-height: var(--chat-line-lh);
+  color: var(--tb-crit);
+
+  .mat-icon {
+    flex: none;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    margin-top: 1px;
+  }
+}
+
+.sol-issues {
+  ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
+    color: var(--tb-ink-76);
+  }
+
+  b {
+    font-weight: 500;
+    color: var(--tb-ink);
+  }
+}
+
+.sol-learn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px auto 0;
+  padding: 4px 10px 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: var(--chat-line);
+  line-height: var(--chat-line-lh);
+  font-weight: 500;
+  color: var(--tb-ink-60);
+  cursor: pointer;
+
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+  }
+
+  &:hover {
+    color: var(--tb-ink);
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 1px;
+  }
+}
+
+.sol-about {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 12px 24px 18px;
+  background: var(--tb-surface);
+  border-top: 1px solid var(--k-stroke, rgba(0, 0, 0, 0.1));
+  transform: translateY(100%);
+  opacity: 0;
+  visibility: hidden;
+  will-change: transform;
+  transition: transform .26s cubic-bezier(.2, 0, 0, 1), opacity .2s ease, visibility 0s linear .26s;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 18px;
+    background: linear-gradient(to top, color-mix(in srgb, var(--tb-ink) 5%, transparent), transparent);
+    pointer-events: none;
+  }
+
+  &.open {
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s, 0s, 0s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.sol-about-in {
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.sol-about-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  b {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
+    font-weight: 500;
+    color: var(--ai-action);
+
+    .mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+  }
+
+  .sol-ib {
+    width: 32px;
+    height: 32px;
+    margin: -4px -8px -4px 0;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--tb-ink-60);
+  }
+}
+
+.sol-feats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 24px;
+  align-items: start;
+
+  @media (max-width: 860px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sol-feat {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+
+  > .mat-icon {
+    flex: none;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    line-height: 16px;
+    margin-top: 1px;
+    color: var(--k-grey);
+  }
+
+  > div {
+    display: grid;
+    gap: 2px;
+    align-content: start;
+    min-width: 0;
+  }
+
+  b {
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
+    font-weight: 500;
+    color: var(--tb-ink);
+  }
+
+  span {
+    font-size: var(--chat-meta);
+    line-height: var(--chat-meta-lh);
+    color: var(--k-grey);
   }
 }

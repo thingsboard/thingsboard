@@ -69,6 +69,8 @@
                     }{{ chat.title }}</span>
                   @if (chat.chat && aiChats.levelOf(chat.chat); as level) {
                     <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="aiChats.tipOf(chat.chat)" matTooltipPosition="above"></span>
+                  } @else if (chat.solution && aiSolutions.isRunning(chat.solution.id)) {
+                    <span class="tb-ai-status-mark running" [matTooltip]="'ai-assistant.status-tip-running' | translate" matTooltipPosition="above"></span>
                   }
                   <button type="button" class="ai-row-menu" [matMenuTriggerFor]="chat.solution ? solutionMenu : chatMenu"
                           [matMenuTriggerData]="{chat: chat.chat, solution: chat.solution, row: chat}" (click)="$event.stopPropagation()"

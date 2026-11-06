@@ -17,6 +17,9 @@ export class AiSolutionsService {
   private _loaded = signal(false);
   readonly loaded = this._loaded.asReadonly();
 
+  private _running = signal<ReadonlySet<string>>(new Set());
+  readonly running = this._running.asReadonly();
+
   private api = inject(SolutionsCreatorService);
   private dialog = inject(DialogService);
   private translate = inject(TranslateService);
@@ -31,6 +34,25 @@ export class AiSolutionsService {
         error: () => this._loaded.set(true)
       })
     );
+  }
+
+  setRunning(solutionId: string | undefined, running: boolean): void {
+    if (!solutionId || this._running().has(solutionId) === running) {
+      return;
+    }
+    this._running.update(set => {
+      const next = new Set(set);
+      if (running) {
+        next.add(solutionId);
+      } else {
+        next.delete(solutionId);
+      }
+      return next;
+    });
+  }
+
+  isRunning(solutionId: string): boolean {
+    return this._running().has(solutionId);
   }
 
   find(solutionId: string | undefined): SolutionInfo | undefined {

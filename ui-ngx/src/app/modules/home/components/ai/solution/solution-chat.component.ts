@@ -1,6 +1,20 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, computed, DestroyRef, ElementRef, EventEmitter, OnDestroy, OnInit, Output, signal, ViewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  Output,
+  signal,
+  untracked,
+  ViewChild
+} from '@angular/core';
 import { AiChatMessagesComponent } from '@home/components/ai/ai-chat-messages.component';
 import { PageComponent } from '@shared/components/page.component';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -106,6 +120,49 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   jsonEditing = signal(false);
 
   uninstalledAt = signal<number | null>(null);
+
+  failure = signal<string | null>(null);
+
+  readonly aboutFeatures = [
+    {icon: 'account_tree', title: 'solution-creator.about-design-title', line: 'solution-creator.about-design'},
+    {icon: 'fact_check', title: 'solution-creator.about-approve-title', line: 'solution-creator.about-approve'},
+    {icon: 'dashboard', title: 'solution-creator.about-dashboards-title', line: 'solution-creator.about-dashboards'},
+    {icon: 'layers', title: 'solution-creator.about-installed-title', line: 'solution-creator.about-installed'}
+  ];
+
+  aboutOpen = signal(false);
+
+  paneScrolled = signal(false);
+
+  paneMore = signal(false);
+
+  issues = computed<Array<{name: string; status: string}>>(() => {
+    const results = this.info()?.metadata?.installResult?.entityResults;
+    if (!results || !this.info()?.metadata?.installed) {
+      return [];
+    }
+    return Object.values(results).flat()
+      .filter(entry => entry?.status === 'ERROR' || entry?.status === 'WARN')
+      .map(entry => ({name: entry.additionalData?.name ?? '', status: entry.status}));
+  });
+
+  private paneEdgeEffect = effect(() => {
+    this.currentView();
+    this.json();
+    this.paneOpen();
+    untracked(() => setTimeout(() => {
+      const body = this.elementRef.nativeElement.querySelector('.sol-pane-body') as HTMLElement;
+      if (body) {
+        this.onPaneScroll(body);
+      }
+    }, 50));
+  });
+
+  private runningEffect = effect(() => {
+    const id = this.info()?.id;
+    const running = this.loading() || this.isGenerating();
+    untracked(() => this.aiSolutions.setRunning(id, running));
+  });
 
   mainUser = computed<{id: string; name: string} | null>(() => {
     const result = this.info()?.metadata?.installResult;
@@ -464,6 +521,29 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     });
   }
 
+  @HostListener('keydown.escape')
+  closeAbout(): void {
+    this.aboutOpen.set(false);
+  }
+
+  onPaneScroll(body: HTMLElement): void {
+    this.paneScrolled.set(body.scrollTop > 0);
+    this.paneMore.set(body.scrollTop + body.clientHeight < body.scrollHeight - 1);
+  }
+
+  private reportFailure(err: any): void {
+    const responseType = isNotEmptyStr(err?.error) ? 'text' : undefined;
+    this.failure.set(parseHttpErrorMessage(err, this.translate, responseType, this.sanitizer).message);
+    this.paneOpen.set(true);
+    setTimeout(() => this.scrollLogToEnd(true));
+  }
+
+  private openPaneForStep(): void {
+    if (window.innerWidth >= SolutionChatComponent.NARROW_WIDTH) {
+      this.paneOpen.set(true);
+    }
+  }
+
   viewAsMainUser(): void {
     const user = this.mainUser();
     const main = this.info()?.metadata?.installResult?.mainDashboardId?.id;
@@ -553,7 +633,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
                 }
               },
               error: (err) => {
-                this.showErrorMessage(err);
+                this.reportFailure(err);
               }
             });
         }
@@ -589,7 +669,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         error: (err) => {
           progressSubject.next();
           progressSubject.complete();
-          this.showErrorMessage(err);
+          this.reportFailure(err);
         }
       });
   }
@@ -762,6 +842,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         this.solutionInfo = solution;
         this.rememberSolution();
         this.updatedCurrentMsg();
+        if (this.isReadyStep()) {
+          this.openPaneForStep();
+        }
       }),
       catchError(err => {
         this.showErrorMessage(err);
@@ -861,6 +944,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private initPredefinedSolution(): void {
+    this.failure.set(null);
     if (this.solutionInfo.metadata?.built) {
       if (this.solutionInfo.states[SolutionStep.DASHBOARDS_CONFIGURATION]) {
         this.solutionStep.set(SolutionStep.DASHBOARDS_CONFIGURATION);
@@ -876,12 +960,16 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       this.solutionStep.set(SolutionStep.DASHBOARDS_CONFIGURATION);
     }
     this.updatedCurrentMsg();
+    if (this.isReadyStep()) {
+      this.paneOpen.set(true);
+    }
     if (this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION && dashboardState?.pendingChanges?.length) {
       this.sendDashboardConfigurationMsg('<sync/>');
     }
   }
 
   private initGenerateState() {
+    this.failure.set(null);
     this.isGenerating.set(true);
     let messages: Array<{text: string; delay: number}>;
     let estimateWaitTime: number;
@@ -1084,6 +1172,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private initLoadingState(): void {
+    this.failure.set(null);
     this.loading.set(true);
     if (!this.workTimers.length) {
       this.startWork([{text: this.messages().length ? 'solution-creator.work-thinking' : 'solution-creator.work-reading', delay: 0}], 'think');

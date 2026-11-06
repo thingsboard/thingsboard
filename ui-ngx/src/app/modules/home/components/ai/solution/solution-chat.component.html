@@ -53,7 +53,30 @@
         }
       </div>
       <p class="sol-hero-foot">{{ 'solution-creator.limits' | translate }}</p>
+      <button type="button" class="sol-learn" [attr.aria-expanded]="aboutOpen()" (click)="aboutOpen.set(true)">
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">info_outline</mat-icon>{{ 'solution-creator.what-is-solution' | translate }}
+      </button>
     </div>
+    </div>
+    <div class="sol-about" [class.open]="aboutOpen()" role="region" [attr.aria-hidden]="!aboutOpen()"
+         [attr.aria-label]="'solution-creator.what-is-solution' | translate">
+      <div class="sol-about-in">
+        <div class="sol-about-head">
+          <b><mat-icon fontSet="material-icons-round" aria-hidden="true">layers</mat-icon>{{ 'solution-creator.about-title' | translate }}</b>
+          <button type="button" class="sol-ib" (click)="aboutOpen.set(false)" [attr.tabindex]="aboutOpen() ? 0 : -1"
+                  [matTooltip]="'action.close' | translate" matTooltipPosition="above" [attr.aria-label]="'action.close' | translate">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="sol-feats" role="list">
+          @for (feature of aboutFeatures; track feature.icon) {
+            <div class="sol-feat" role="listitem">
+              <mat-icon aria-hidden="true">{{ feature.icon }}</mat-icon>
+              <div><b>{{ feature.title | translate }}</b><span>{{ feature.line | translate }}</span></div>
+            </div>
+          }
+        </div>
+      </div>
     </div>
   </div>
 } @else if (creatorStep()) {
@@ -119,6 +142,26 @@
                 {{ 'solution-creator.installed-already-note' | translate }}</span>
             </div>
           }
+          @if (creatorStep() === 'result' && issues().length) {
+            <div class="sol-closing sol-issues">
+              <p>{{ 'solution-creator.issues-lead' | translate: {count: issues().length} }}</p>
+              <ul>
+                @for (issue of issues().slice(0, 6); track $index) {
+                  <li><b>{{ issue.name }}</b> · {{ (issue.status === 'ERROR' ? 'solution-creator.pane.status-error' : 'solution-creator.pane.status-warn') | translate }}</li>
+                }
+              </ul>
+              <div class="k-hint tip sol-hint">
+                <mat-icon fontSet="material-icons-round" aria-hidden="true">lightbulb_outline</mat-icon>
+                <span><b>{{ 'solution-creator.issues-tip-lead' | translate }}</b> {{ 'solution-creator.issues-tip' | translate }}</span>
+              </div>
+            </div>
+          }
+          @if (failure(); as message) {
+            <div class="sol-failure" role="status">
+              <mat-icon fontSet="material-icons-round" aria-hidden="true">error_outline</mat-icon>
+              <span>{{ message }}</span>
+            </div>
+          }
           @if (work(); as current) {
             <tb-ai-work-line class="sol-work" [words]="current.words" [kind]="current.kind" [since]="current.since"></tb-ai-work-line>
           }
@@ -152,7 +195,8 @@
       </div>
     </div>
     @if (showPane() && paneOpen()) {
-      <aside class="sol-pane" [style.flex-basis]="paneWidth() ? paneWidth() + 'px' : null">
+      <aside class="sol-pane" [style.flex-basis]="paneWidth() ? paneWidth() + 'px' : null"
+             [class.scrolled]="paneScrolled()" [class.more]="paneMore()">
         <div class="sol-pane-edge" role="separator" tabindex="0" aria-orientation="vertical"
              [attr.aria-label]="'solution-creator.pane.resize' | translate"
              [matTooltip]="'solution-creator.pane.resize-hint' | translate" matTooltipPosition="left" matTooltipShowDelay="600"
@@ -186,7 +230,7 @@
             </button>
           }
         </div>
-        <div class="sol-pane-body" [class.dark]="json()">
+        <div #paneBody class="sol-pane-body" [class.dark]="json()" (scroll)="onPaneScroll(paneBody)">
           @if (making() && currentView() === making()) {
             <div class="sol-loading">
               <span class="sol-loading-glow" aria-hidden="true"></span>
