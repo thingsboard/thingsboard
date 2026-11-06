@@ -4,6 +4,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Streams;
@@ -40,6 +41,8 @@ import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -98,6 +101,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
     private static final String DEFAULT_V2_CONFIGURATION = "converters/default-converters-v2-configuration.json";
     private static final String THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD = "payload/things_stack_repository_device_payload.json";
     private static final String THINGS_STACK_MANUAL_DEVICE_PAYLOAD = "payload/things_stack_manual_device_payload.json";
+    private static final String THINGS_STACK_LANSITEC_UPLINKS = "payload/things_stack_lansitec_uplinks.json";
 
     @Before
     public void beforeTest() throws Exception {
@@ -730,6 +734,173 @@ public class ConverterControllerTest extends AbstractControllerTest {
                         .isEqualTo(JacksonUtil.toJsonNode(expectedResult));
             }
         }
+    }
+
+    // Uplinks of Lansitec devices registered from the LoRaWAN Device Repository, as The Things Stack sent them
+    // (Simulate uplink), and the keys the default converters decode from them. The keys the integration adds to
+    // every uplink (rssi, fCnt, eui...) are not listed. TBEL gives integers as doubles, so numbers are compared by value.
+    private static final Set<String> THINGS_STACK_UPLINK_KEYS = Set.of("fCnt", "data", "rssi", "snr", "channel", "consumedAirtime");
+    private static final Set<String> THINGS_STACK_ATTRIBUTE_KEYS = Set.of("eui", "joinEui", "devAddr", "deviceId", "applicationId", "fPort",
+            "bandwidth", "spreadingFactor", "codeRate", "frequency", "brandId", "modelId", "hardwareVersion", "firmwareVersion", "bandId",
+            "netId", "tenantId", "clusterId", "clusterAddress");
+
+    @Test
+    public void testThingsStackDefaultConvertersDecodeLansitecDevices() throws IOException {
+        JsonNode cases = JacksonUtil.toJsonNode(readResource(THINGS_STACK_LANSITEC_UPLINKS));
+        forEachThingsStackDefaultConverter((description, decoder) -> {
+            for (JsonNode testCase : cases) {
+                String caseDescription = description + " " + testCase.get("name").asText();
+                JsonNode result = decoder.apply(testCase.get("uplink"));
+                JsonNode decoded = testCase.get("decoded");
+                assertThat(result.get("profile")).as(caseDescription).isEqualTo(decoded.get("profile"));
+                assertThat(numbersByValue(withoutKeys(telemetryValues(result), THINGS_STACK_UPLINK_KEYS))).as(caseDescription + " telemetry")
+                        .isEqualTo(numbersByValue(decoded.has("telemetry") ? decoded.get("telemetry") : JacksonUtil.newObjectNode()));
+                assertThat(numbersByValue(withoutKeys(result.get("attributes"), THINGS_STACK_ATTRIBUTE_KEYS))).as(caseDescription + " attributes")
+                        .isEqualTo(numbersByValue(decoded.has("attributes") ? decoded.get("attributes") : JacksonUtil.newObjectNode()));
+
+                // The integration's own keys keep their values: the Lansitec keys must not overwrite them
+                JsonNode uplinkMessage = testCase.get("uplink").get("uplink_message");
+                JsonNode gateway = null;
+                for (JsonNode rx : uplinkMessage.get("rx_metadata")) {
+                    if (gateway == null || rx.get("rssi").asDouble() > gateway.get("rssi").asDouble()) {
+                        gateway = rx;
+                    }
+                }
+                JsonNode values = telemetryValues(result);
+                assertThat(sameValue(values.get("rssi"), gateway.get("rssi"))).as(caseDescription + " rssi " + values.get("rssi")).isTrue();
+                assertThat(sameValue(values.get("snr"), gateway.get("snr"))).as(caseDescription + " snr " + values.get("snr")).isTrue();
+                JsonNode firmwareVersion = result.get("attributes").get("firmwareVersion");
+                assertThat(sameValue(firmwareVersion, uplinkMessage.get("version_ids").get("firmware_version")))
+                        .as(caseDescription + " firmwareVersion " + firmwareVersion).isTrue();
+            }
+        });
+    }
+
+    // Equal as numbers when both are numbers or number texts (the integration may write "1.0" as 1), else as texts
+    private static boolean sameValue(JsonNode actual, JsonNode expected) {
+        if (actual == null || expected == null) {
+            return actual == expected;
+        }
+        try {
+            return new BigDecimal(actual.asText()).compareTo(new BigDecimal(expected.asText())) == 0;
+        } catch (NumberFormatException e) {
+            return actual.asText().equals(expected.asText());
+        }
+    }
+
+    // The script body limit is 50000 characters (tbel and js max_script_body_size), comments included: the default
+    // TTN/TTI converters stay well under it, so that a user can add decoding of their own devices
+    @Test
+    public void testThingsStackDefaultConvertersStayWellUnderScriptSizeLimit() throws IOException {
+        for (String decoder : List.of("tbel-ttn", "tbel-tti", "js-ttn", "js-tti")) {
+            assertThat(readResource("converters/" + decoder + "-decoder.raw").length()).as(decoder).isLessThan(30000);
+        }
+    }
+
+    // A frame too short for its message type, and bytes that are not an object: the uplink is still converted
+    @Test
+    public void testThingsStackDefaultConvertersKeepMalformedLansitecUplinks() throws IOException {
+        JsonNode temperatureHumidity = null;
+        JsonNode contactBadge = null;
+        for (JsonNode testCase : JacksonUtil.toJsonNode(readResource(THINGS_STACK_LANSITEC_UPLINKS))) {
+            if (testCase.get("name").asText().startsWith("temp-hum VER1")) {
+                temperatureHumidity = testCase.get("uplink");
+            } else if (testCase.get("name").asText().startsWith("contact badge 80s Periodic Report 4.5.5 example 1")) {
+                contactBadge = testCase.get("uplink");
+            }
+        }
+        ObjectNode shortFrame = temperatureHumidity.deepCopy();
+        ((ObjectNode) shortFrame.get("uplink_message")).put("frm_payload", "IQ==");
+        ObjectNode bytesList = temperatureHumidity.deepCopy();
+        ((ObjectNode) bytesList.get("uplink_message").get("decoded_payload")).set("bytes", JacksonUtil.toJsonNode("[33, 100]"));
+        // Periodic Report with 2 badges, cut in the middle of the first one, and Instant Report with 3 beacons and 1 byte
+        ObjectNode shortPeriodicReport = contactBadge.deepCopy();
+        ((ObjectNode) shortPeriodicReport.get("uplink_message")).put("frm_payload", "wtAR");
+        ObjectNode shortInstantReport = contactBadge.deepCopy();
+        ((ObjectNode) shortInstantReport.get("uplink_message")).put("frm_payload", "g9M=");
+
+        forEachThingsStackDefaultConverter((description, decoder) -> {
+            JsonNode result = decoder.apply(shortFrame);
+            assertThat(result.get("profile").asText()).as(description + " short frame").isEqualTo("lansitec-temperature-humidity-sensor");
+            assertThat(telemetryValues(result).has("loraSnr")).as(description + " short frame").isFalse();
+
+            result = decoder.apply(bytesList);
+            assertThat(result.get("profile").asText()).as(description + " bytes list").isEqualTo("lansitec-temperature-humidity-sensor");
+            assertThat(numbersByValue(telemetryValues(result).get("bytes"))).as(description + " bytes list")
+                    .isEqualTo(numbersByValue(JacksonUtil.toJsonNode("[33, 100]")));
+
+            for (ObjectNode shortReport : List.of(shortPeriodicReport, shortInstantReport)) {
+                result = decoder.apply(shortReport);
+                String reportDescription = description + " short report " + shortReport.get("uplink_message").get("frm_payload").asText();
+                assertThat(result.get("profile").asText()).as(reportDescription).isEqualTo("lansitec-contact-tracing-badge");
+                assertThat(withoutKeys(telemetryValues(result), THINGS_STACK_UPLINK_KEYS).isEmpty()).as(reportDescription).isTrue();
+            }
+        });
+    }
+
+    private interface ThingsStackDecoderCheck {
+        void check(String description, java.util.function.Function<JsonNode, JsonNode> decoder) throws IOException;
+    }
+
+    private void forEachThingsStackDefaultConverter(ThingsStackDecoderCheck check) throws IOException {
+        JsonNode defaultConfigurations = JacksonUtil.toJsonNode(readResource(DEFAULT_V2_CONFIGURATION));
+        for (IntegrationType integrationType : List.of(IntegrationType.TTN, IntegrationType.TTI)) {
+            Converter converter = createConverter(defaultConfigurations.get(integrationType.name()), integrationType, 2);
+            for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+                String decoderFileName = "converters/" + scriptLang.name().toLowerCase() + "-" + integrationType.name().toLowerCase() + "-decoder.raw";
+                check.check(integrationType + " " + scriptLang, uplink -> {
+                    try {
+                        return JacksonUtil.toJsonNode(decode(decoderFileName, uplink.toString(), converter, scriptLang, Map.of()));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+        }
+    }
+
+    private static JsonNode telemetryValues(JsonNode result) {
+        JsonNode telemetry = result.get("telemetry");
+        if (telemetry != null && telemetry.isArray()) {
+            telemetry = telemetry.get(telemetry.size() - 1);
+        }
+        if (telemetry == null) {
+            return JacksonUtil.newObjectNode();
+        }
+        // {ts, values}, or only the integration's keys when the script gave attributes and no telemetry
+        return telemetry.has("values") ? telemetry.get("values") : telemetry;
+    }
+
+    private static ObjectNode withoutKeys(JsonNode node, Set<String> keys) {
+        ObjectNode copy = JacksonUtil.newObjectNode();
+        if (node != null) {
+            node.fields().forEachRemaining(e -> {
+                if (!keys.contains(e.getKey())) {
+                    copy.set(e.getKey(), e.getValue());
+                }
+            });
+        }
+        return copy;
+    }
+
+    private static JsonNode numbersByValue(JsonNode node) {
+        if (node == null) {
+            return null;
+        }
+        if (node.isNumber()) {
+            return JacksonUtil.toJsonNode(node.decimalValue().setScale(6, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString());
+        }
+        if (node.isObject()) {
+            ObjectNode copy = JacksonUtil.newObjectNode();
+            node.fields().forEachRemaining(e -> copy.set(e.getKey(), numbersByValue(e.getValue())));
+            return copy;
+        }
+        if (node.isArray()) {
+            ArrayNode copy = JacksonUtil.newArrayNode();
+            node.forEach(item -> copy.add(numbersByValue(item)));
+            return copy;
+        }
+        return node;
     }
 
     private String readResource(String name) throws IOException {
