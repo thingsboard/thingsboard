@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.ModbusDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -324,6 +325,9 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
                     break;
                 case SNMP:
                     deviceData.setTransportConfiguration(new SnmpDeviceTransportConfiguration());
+                    break;
+                case MODBUS:
+                    deviceData.setTransportConfiguration(new ModbusDeviceTransportConfiguration());
                     break;
             }
         }
