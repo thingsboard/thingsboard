@@ -75,7 +75,7 @@ export class SolutionInstalledComponent {
     }
     return SECTIONS
       .map(type => {
-        const kind = aiEntityKind(type === EntityType.ALARM ? 'ALARM_RULE' : type);
+        const kind = aiEntityKind(type === EntityType.ALARM ? 'ALARM_RULE' : type === EntityType.ROLE ? EntityType.USER : type);
         return {
           type,
           title: entityTypeTranslations.get(type)?.typePlural ?? type,
@@ -98,7 +98,7 @@ export class SolutionInstalledComponent {
   private plannedSections(items: SolutionProgressItem[], results: Partial<Record<EntityType, EntityResult[]>>): InstalledSection[] {
     return SECTIONS
       .map(type => {
-        const kind = aiEntityKind(type === EntityType.ALARM ? 'ALARM_RULE' : type);
+        const kind = aiEntityKind(type === EntityType.ALARM ? 'ALARM_RULE' : type === EntityType.ROLE ? EntityType.USER : type);
         const created = aggregateByName(type, results[type]);
         const rows: InstalledRow[] = items.filter(item => item.type === type).map(item => {
           const result = created.find(row => row.primary?.additionalData?.name === item.name);
