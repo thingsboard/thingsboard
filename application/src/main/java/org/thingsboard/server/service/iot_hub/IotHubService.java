@@ -29,7 +29,7 @@ public interface IotHubService {
      * when its entities are gone and the new version is never registered (the wizard was closed): Update installs it
      * again. An entity that could not be removed stays tracked and the call fails, so repeating it removes the rest.
      * Refused with an {@link IllegalArgumentException} (a 400), before anything is removed, when the item is not a device
-     * package or {@code versionId} (the version to install) is not a version of that item. A failure once removing started is an
+     * package, {@code versionId} (the version to install) is not a version of that item, or IoT Hub does not answer. A failure once removing started is an
      * {@link IllegalStateException}: entities may already be removed.
      */
     void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId);

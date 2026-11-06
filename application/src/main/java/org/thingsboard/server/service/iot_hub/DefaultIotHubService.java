@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
@@ -717,7 +718,12 @@ public class DefaultIotHubService implements IotHubService {
         TenantId tenantId = user.getTenantId();
         IotHubInstalledItem installedItem = findDevicePackage(tenantId, installedItemId);
         // Checked before anything is removed: the registration of the new version checks the same and would fail.
-        JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
+        JsonNode versionInfo;
+        try {
+            versionInfo = iotHubRestClient.getVersionInfo(versionId);
+        } catch (RestClientException e) {
+            throw new IllegalArgumentException("Failed to get version info from IoT Hub: " + e.getMessage(), e);
+        }
         if (versionInfo == null) {
             throw new IllegalArgumentException("Failed to get version info from IoT Hub");
         }

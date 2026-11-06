@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.client.ResourceAccessException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -783,6 +784,26 @@ class DefaultIotHubServiceTest {
 
         // The registration of that version would be refused: nothing may be removed for it.
         assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), otherVersionId))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(tbDeviceService, never()).delete(any(Device.class), any());
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void removeDevicePackageEntities_iotHubUnavailable_refusedBeforeRemoving() {
+        mockTenant();
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.<EntityId>of(new DeviceId(UUID.randomUUID())));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setItemId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        String newVersionId = UUID.randomUUID().toString();
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        when(iotHubRestClient.getVersionInfo(newVersionId)).thenThrow(new ResourceAccessException("Connection refused"));
+
+        // A 400: nothing was removed, so the wizard does not warn that entities are gone.
+        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
                 .isInstanceOf(IllegalArgumentException.class);
         verify(tbDeviceService, never()).delete(any(Device.class), any());
         verify(iotHubInstalledItemService, never()).save(any(), any());
