@@ -684,7 +684,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         if (this.solutionInfo.metadata?.built) {
           this.creatorStep.set('result');
         } else {
-          const dialogRef = this.initGenerateState();
+          const dialogRef = this.initGenerateState('create');
           const uninstallOrContinue$ = !this.solutionInfo.metadata?.installed
             ? of(null)
             : this.solutionCreator.uninstallSolution(this.solutionId, {ignoreLoading: true, ignoreErrors: true});
@@ -1073,7 +1073,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private sendDashboardConfigurationMsg(message: string): void {
-    const dialogRef = this.initGenerateState();
+    const dialogRef = this.initGenerateState(message === '<sync/>' ? 'sync' : 'design');
     this.sendMessage(message).pipe(
       finalize(() => {
         this.isGenerating.set(false);
@@ -1167,7 +1167,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  private initGenerateState() {
+  private initGenerateState(kind: 'design' | 'sync' | 'create') {
     this.failure.set(null);
     this.isGenerating.set(true);
     let messages: Array<{text: string; delay: number}>;
@@ -1182,7 +1182,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         { text: 'solution-creator.step-loading-updating-solution', delay: 10000 },
       ];
     } else if (this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION) {
-      if (!this.messages().length) {
+      if (kind === 'design') {
         estimateWaitTime = 30000;
         messages = [
           { text: 'solution-creator.step-loading-designing-dashboards-structure', delay: 0 },
@@ -1190,7 +1190,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           { text: 'solution-creator.step-loading-designing-widgets', delay: 10000 },
           { text: 'solution-creator.step-loading-adding-finishing-touches', delay: 10000 },
         ];
-      } else if (this.solutionInfo.states[SolutionStep.DASHBOARDS_CONFIGURATION]?.pendingChanges?.length) {
+      } else if (kind === 'sync') {
         estimateWaitTime = 20000;
         messages = [
           { text: 'solution-creator.step-loading-evaluating-solution-changes', delay: 0 },
