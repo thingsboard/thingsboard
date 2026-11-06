@@ -139,7 +139,12 @@ public class CalculateDeltaNode implements TbNode {
         ListenableFuture<ValueWithTs> latestValueFuture = getLatestFromCacheOrFetchFromDb(ctx, msg);
         return Futures.transform(latestValueFuture, previousData -> {
             ObjectNode json = (ObjectNode) JacksonUtil.toJsonNode(msg.getData());
-            double currentValue = json.get(config.getInputValueKey()).asDouble();
+            JsonNode currentValueNode = json.get(config.getInputValueKey());
+            double currentValue = currentValueNode.isNumber() || currentValueNode.isTextual()
+                    ? currentValueNode.asDouble(Double.NaN) : Double.NaN;
+            if (!Double.isFinite(currentValue)) {
+                throw new IllegalArgumentException("Calculation failed. Value of telemetry [" + config.getInputValueKey() + "] must be a finite number!");
+            }
             if (config.isUseCache()) {
                 cache.put(msg.getOriginator(), new ValueWithTs(msg.getMetaDataTs(), currentValue));
             }
