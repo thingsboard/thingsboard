@@ -142,6 +142,7 @@
   --ai-action-hover: var(--ai-deep-hover);
   --ai-action-pressed: var(--ai-deep-pressed);
   --ai-on-action: #ffffff;
+  --ai-mark-ink-dark: var(--ai-teal-100);
   --ai-focus: var(--ai-teal-600);
   --ai-selected: var(--ai-teal-500);
   --ai-selected-wash: var(--ai-teal-50);
@@ -1322,9 +1323,9 @@ body.tb-ai-resizing, body.tb-ai-resizing * {
   align-items: flex-start;
   font-size: 14px;
   line-height: 20px;
-  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+  color: var(--k-grey);
 
-  > .mat-icon {
+  > .mat-icon.mat-icon {
     flex: none;
     font-size: 18px;
     width: 18px;
@@ -1336,7 +1337,7 @@ body.tb-ai-resizing, body.tb-ai-resizing * {
 
   b {
     font-weight: 500;
-    color: var(--tb-ink-76);
+    color: var(--tb-ink);
   }
 }
 

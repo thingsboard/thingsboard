@@ -3,7 +3,7 @@
 import { Component, computed, EventEmitter, inject, input, Output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
-import { EntityResult, SolutionCreatorInfo } from '@shared/models/solution-creator.models';
+import { EntityResult, SolutionCreatorInfo, SolutionProgressItem } from '@shared/models/solution-creator.models';
 import {
   baseDetailsPageByEntityType,
   EntityType,
@@ -23,8 +23,10 @@ interface InstalledSection {
   title: string;
   icon: string;
   palette: string;
-  rows: AggregatedEntityResult[];
+  rows: InstalledRow[];
 }
+
+type InstalledRow = AggregatedEntityResult & {progress?: 'wait' | 'now'};
 
 const SECTIONS: EntityType[] = [
   EntityType.DASHBOARD,
@@ -51,6 +53,7 @@ export class SolutionInstalledComponent {
 
   solution = input.required<SolutionCreatorInfo>();
   creating = input(false);
+  items = input<SolutionProgressItem[] | null>(null);
 
   @Output() openMain = new EventEmitter<void>();
 
@@ -63,6 +66,10 @@ export class SolutionInstalledComponent {
 
   sections = computed<InstalledSection[]>(() => {
     const results = this.solution()?.metadata?.installResult?.entityResults;
+    const items = this.items();
+    if (items?.length) {
+      return this.plannedSections(items, results ?? {});
+    }
     if (!results) {
       return [];
     }
@@ -87,6 +94,30 @@ export class SolutionInstalledComponent {
   dashboardCount = computed(() => this.sections().find(section => section.type === EntityType.DASHBOARD)?.rows.length ?? 0);
 
   hasMain = computed(() => !!this.solution()?.metadata?.installResult?.mainDashboardId);
+
+  private plannedSections(items: SolutionProgressItem[], results: Partial<Record<EntityType, EntityResult[]>>): InstalledSection[] {
+    return SECTIONS
+      .map(type => {
+        const kind = aiEntityKind(type === EntityType.ALARM ? 'ALARM_RULE' : type);
+        const created = aggregateByName(type, results[type]);
+        const rows: InstalledRow[] = items.filter(item => item.type === type).map(item => {
+          const result = created.find(row => row.primary?.additionalData?.name === item.name);
+          if (result && item.state === 'DONE') {
+            return result;
+          }
+          return {
+            key: `${type}:${item.name}`,
+            primary: {additionalData: {name: item.name}} as EntityResult,
+            status: IssueStatus.OK,
+            errors: [],
+            warnings: [],
+            progress: item.state === 'WORKING' ? 'now' : 'wait'
+          };
+        });
+        return {type, title: entityTypeTranslations.get(type)?.typePlural ?? type, icon: kind.icon, palette: kind.palette, rows};
+      })
+      .filter(section => section.rows.length);
+  }
 
   link(type: EntityType, row: AggregatedEntityResult): string | null {
     const entity = row.primary;

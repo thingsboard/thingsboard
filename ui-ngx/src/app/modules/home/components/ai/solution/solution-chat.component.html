@@ -92,6 +92,7 @@
             initialScroll="bottom"
             (rate)="onRate($event)"
             (report)="onReport($event)"
+            (chip)="onChip($event)"
             (resourceError)="showErrorMessage($event)">
           </tb-ai-chat-messages>
           @if (pendingQuestions(); as questions) {
@@ -107,45 +108,15 @@
               </button>
             </div>
           }
-          @if (creatorStep() === 'result' && built()) {
-            <div class="sol-closing">
-              <p>{{ (installed() ? 'solution-creator.closing-installed' : 'solution-creator.closing-created') | translate }}</p>
-              @if (mainDashboard().length) {
-                <tb-ai-run-summary [entities]="mainDashboard()"></tb-ai-run-summary>
-              }
-              @if (installed()) {
-                <p class="sol-note">{{ 'solution-creator.closing-simulated' | translate }}</p>
-              }
-              <div class="k-chips sol-chips">
-                @if (installed() && mainUser(); as user) {
-                  <button type="button" class="ob-chip" (click)="viewAsMainUser()">
-                    <mat-icon fontSet="material-icons-round" aria-hidden="true">person</mat-icon>
-                    {{ 'solution-creator.view-as-name' | translate: {name: user.name} }}
-                  </button>
-                }
-                <button type="button" class="ob-chip" (click)="editDesign()">
-                  <mat-icon fontSet="material-icons-round" aria-hidden="true">edit</mat-icon>{{ 'ai-assistant.edit-design' | translate }}
-                </button>
-                @if (installed()) {
-                  <button type="button" class="ob-chip" (click)="connectDevices()">
-                    <mat-icon fontSet="material-icons-round" aria-hidden="true">memory</mat-icon>{{ 'solution-creator.connect-devices' | translate }}
-                  </button>
-                  <button type="button" class="ob-chip" (click)="uninstallSolution()">
-                    <mat-icon fontSet="material-icons-round" aria-hidden="true">delete_sweep</mat-icon>{{ 'solution-creator.uninstall-solution' | translate }}
-                  </button>
-                }
-              </div>
-            </div>
-          }
           @if (creatorStep() === 'chat' && uninstalledAt(); as at) {
             <div class="k-hint note sol-hint">
-              <mat-icon fontSet="material-icons-round" aria-hidden="true">info_outline</mat-icon>
+              <mat-icon aria-hidden="true">info_outline</mat-icon>
               <span><b>{{ 'solution-creator.uninstalled-at' | translate: {time: (at | date:'HH:mm')} }}</b>
                 {{ 'solution-creator.uninstalled-note' | translate }}</span>
             </div>
           } @else if (creatorStep() === 'chat' && installed()) {
             <div class="k-hint heads-up sol-hint">
-              <mat-icon fontSet="material-icons-round" aria-hidden="true">outlined_flag</mat-icon>
+              <mat-icon aria-hidden="true">outlined_flag</mat-icon>
               <span><b>{{ 'solution-creator.installed-already' | translate }}</b>
                 {{ 'solution-creator.installed-already-note' | translate }}</span>
             </div>
@@ -159,7 +130,7 @@
                 }
               </ul>
               <div class="k-hint tip sol-hint">
-                <mat-icon fontSet="material-icons-round" aria-hidden="true">lightbulb_outline</mat-icon>
+                <mat-icon aria-hidden="true">lightbulb_outline</mat-icon>
                 <span><b>{{ 'solution-creator.issues-tip-lead' | translate }}</b> {{ 'solution-creator.issues-tip' | translate }}</span>
               </div>
             </div>
@@ -183,7 +154,7 @@
             <b>{{ 'solution-creator.pane.solution' | translate }}</b>
             <span class="sol-tray-note" [class.working]="!!making()">
               @if (making()) {
-                <span class="sol-ring" aria-hidden="true"></span>
+                <tb-ai-spin [kind]="making() === 'solution' ? 'install' : 'gen'"></tb-ai-spin>
               }
               {{ trayNote() }}
             </span>
@@ -223,7 +194,7 @@
                       [matTooltip]="('solution-creator.pane.view-' + view.id) | translate" matTooltipPosition="below"
                       [attr.aria-label]="('solution-creator.pane.view-' + view.id) | translate">
                 @if (view.state === 'working') {
-                  <span class="sol-ring" aria-hidden="true"></span>
+                  <tb-ai-spin [kind]="view.id === 'solution' ? 'install' : 'gen'"></tb-ai-spin>
                 } @else {
                   <mat-icon aria-hidden="true">{{ view.icon }}</mat-icon>
                 }
@@ -240,7 +211,7 @@
         </div>
         <div #paneBody class="sol-pane-body" [class.dark]="json()" (scroll)="onPaneScroll(paneBody)">
           @if (making() === 'solution' && currentView() === 'solution' && progressInfo(); as progress) {
-            <tb-solution-installed [solution]="progress" [creating]="true"></tb-solution-installed>
+            <tb-solution-installed [solution]="progress" [creating]="true" [items]="installProgress()?.items ?? null"></tb-solution-installed>
           } @else if (making() && currentView() === making()) {
             <div class="sol-loading">
               <span class="sol-loading-glow" aria-hidden="true"></span>

@@ -31,7 +31,7 @@
     <table class="sol-table sol-installed-table">
       <tbody>
         @for (row of section.rows; track row.key) {
-          <tr>
+          <tr [class.waiting]="row.progress === 'wait'">
             <td class="wrap sol-installed-name">
               <span class="sol-name" [attr.data-pal]="section.palette">
                 <mat-icon aria-hidden="true">{{ section.icon }}</mat-icon>
@@ -68,10 +68,20 @@
               </td>
             }
             <td class="stc">
-              <span class="sol-st" [class]="'sol-st ' + statusTone(row)" tabindex="0"
-                    [matTooltip]="statusTip(row)" matTooltipPosition="left" [attr.aria-label]="statusTip(row)">
-                <mat-icon>{{ statusIcon(row) }}</mat-icon>
-              </span>
+              @if (row.progress === 'wait') {
+                <span class="sol-st wait" tabindex="0" [matTooltip]="'solution-creator.pane.status-wait' | translate" matTooltipPosition="left"
+                      [attr.aria-label]="'solution-creator.pane.status-wait' | translate"></span>
+              } @else if (row.progress === 'now') {
+                <span class="sol-st now" tabindex="0" [matTooltip]="'solution-creator.pane.status-now' | translate" matTooltipPosition="left"
+                      [attr.aria-label]="'solution-creator.pane.status-now' | translate">
+                  <tb-ai-spin kind="install"></tb-ai-spin>
+                </span>
+              } @else {
+                <span class="sol-st" [class]="'sol-st ' + statusTone(row)" tabindex="0"
+                      [matTooltip]="statusTip(row)" matTooltipPosition="left" [attr.aria-label]="statusTip(row)">
+                  <mat-icon>{{ statusIcon(row) }}</mat-icon>
+                </span>
+              }
             </td>
           </tr>
         }

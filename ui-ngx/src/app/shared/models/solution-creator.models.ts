@@ -38,10 +38,18 @@ export interface SolutionCreatorInfo {
   estimates?: Partial<Record<SolutionOperation, SolutionEstimate>>;
 }
 
+export interface SolutionProgressItem {
+  type: EntityType;
+  name: string;
+  state: 'WAIT' | 'WORKING' | 'DONE';
+}
+
 export interface SolutionInstallProgress {
   running: boolean;
   phase?: string;
   entityResults: Partial<Record<EntityType, EntityResult[]>>;
+  stage?: 'CREATE' | 'INSTALL';
+  items?: SolutionProgressItem[];
 }
 
 export interface SolutionUpdateRequest {
@@ -96,6 +104,7 @@ export interface SolutionInstallResult {
   mainDashboardId?: DashboardId;
   createdEntities: Array<BaseData<EntityId>>;
   entityResults?: Record<EntityType, Array<EntityResult>>;
+  installedTime?: number;
 }
 
 export interface EntityResult {
@@ -240,6 +249,10 @@ export interface GeneralChatMessage {
   done?: boolean;
   lead?: string;
   note?: string;
+  entities?: EntityId[];
+  entitiesMeta?: string;
+  hint?: {lead: string; text: string};
+  chips?: Array<{id: string; icon: string; label: string}>;
 }
 
 export interface ActionChatMessage {

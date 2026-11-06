@@ -85,7 +85,7 @@ const PROFILE_TYPES = new Set<string>([EntityType.DEVICE_PROFILE, EntityType.ASS
           </span>
           <div class="tb-rec-body">
             <a class="tb-rec-title" [routerLink]="card.url">{{ card.name }}</a>
-            <span class="tb-rec-meta">{{ card.meta }}</span>
+            <span class="tb-rec-meta">{{ leadMeta() || card.meta }}</span>
           </div>
           <span class="tb-rec-side">
             <a mat-flat-button class="tb-open-btn" [routerLink]="card.url">
@@ -110,6 +110,7 @@ const PROFILE_TYPES = new Set<string>([EntityType.DEVICE_PROFILE, EntityType.ASS
 export class AiRunSummaryComponent {
 
   entities = input.required<EntityId[]>();
+  leadMeta = input<string | null>(null);
 
   rows = signal<AiSummaryRow[]>([]);
 

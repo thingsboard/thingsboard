@@ -93,6 +93,15 @@
             @if (summaries[$index]; as entities) {
               <tb-ai-run-summary [entities]="entities"></tb-ai-run-summary>
             }
+            @if (msg.entities?.length) {
+              <tb-ai-run-summary class="agent-card" [entities]="msg.entities" [leadMeta]="msg.entitiesMeta ?? null"></tb-ai-run-summary>
+            }
+            @if (msg.hint; as hint) {
+              <div class="k-hint note agent-hint">
+                <mat-icon aria-hidden="true">info_outline</mat-icon>
+                <span><b>{{ hint.lead }}</b> {{ hint.text }}</span>
+              </div>
+            }
           </div>
         </div>
         @if (msg.note) {
@@ -130,6 +139,15 @@
             }
           </span>
         </div>
+        @if (msg.chips?.length) {
+          <div class="k-chips agent-chips">
+            @for (option of msg.chips; track option.id) {
+              <button type="button" class="ob-chip" (click)="chip.emit(option.id)">
+                <mat-icon aria-hidden="true">{{ option.icon }}</mat-icon>{{ option.label }}
+              </button>
+            }
+          </div>
+        }
         @if (reportingIndex === $index) {
           <div class="k-report" role="group" [attr.aria-label]="'ai-assistant.feedback.report' | translate">
             <div class="k-report-t">{{ 'ai-assistant.feedback.what-went-wrong' | translate }}</div>

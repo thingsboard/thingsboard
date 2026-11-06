@@ -146,6 +146,8 @@
     font-weight: 500;
   }
 
+  &.wait { border: 1.5px solid var(--tb-ink-38); }
+  &.now { color: var(--ai-teal-500); }
   &.ok { background: var(--tb-ok); }
   &.warn { background: var(--tb-caution); }
   &.error { background: var(--tb-crit); }
@@ -174,4 +176,12 @@
   .sol-infos.creating tbody tr {
     animation: none;
   }
+}
+
+.sol-st.now tb-ai-spin {
+  --spin: 18px;
+}
+
+tr.waiting > td:not(.stc) {
+  opacity: .42;
 }

@@ -326,13 +326,6 @@
     line-height: var(--chat-text-lh);
     letter-spacing: var(--chat-text-ls);
   }
-
-  .sol-note {
-    margin-top: 12px;
-    font-size: var(--chat-line);
-    line-height: var(--chat-line-lh);
-    color: var(--tb-ink-54);
-  }
 }
 
 .sol-hint {
@@ -341,6 +334,14 @@
 
 .sol-closing .sol-chips {
   margin-top: 14px;
+}
+
+.sol-closing > .sol-hint {
+  margin-top: 12px;
+
+  + .sol-chips {
+    margin-top: 36px;
+  }
 }
 
 .sol-work {
@@ -508,7 +509,19 @@
   }
 }
 
+.sol-views button.working {
+  padding-left: 9px;
+}
+
 @container pane (min-width: 660px) {
+  .sol-views button tb-ai-spin {
+    --spin: 24px;
+  }
+
+  .sol-views button.working {
+    padding-left: 10px;
+  }
+
   .sol-views button {
     height: 34px;
     padding: 0 16px 0 12px;
@@ -529,21 +542,6 @@
     .sol-views-l {
       display: none;
     }
-  }
-}
-
-.sol-ring {
-  flex: none;
-  width: 14px;
-  height: 14px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
-  border-top-color: currentColor;
-  animation: sol-ring .8s linear infinite;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
   }
 }
 
@@ -626,7 +624,10 @@
 }
 
 .sol-json {
+  width: 100%;
+  max-width: 760px;
   min-height: 0;
+  margin: 0 auto;
 }
 
 .sol-loading {
@@ -688,7 +689,7 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 10px 16px;
+  padding: 10px max(16px, calc((100% - 760px) / 2));
   border-top: 1px solid var(--tb-line);
   background: var(--tb-surface);
 
@@ -754,10 +755,9 @@
     color: color-mix(in srgb, var(--tb-surface) 55%, transparent);
   }
 
-  .sol-ring {
-    width: 12px;
-    height: 12px;
-    color: var(--ai-dark-accent);
+  tb-ai-spin {
+    --spin: 20px;
+    --spin-color: var(--ai-mark-ink-dark);
   }
 }
 
@@ -1093,4 +1093,13 @@
       max-width: none;
     }
   }
+}
+
+.sol-views tb-ai-spin {
+  --spin: 20px;
+  --spin-color: var(--ai-action);
+}
+
+.sol-views button[aria-pressed="true"] tb-ai-spin {
+  --spin-color: var(--ai-on-action);
 }

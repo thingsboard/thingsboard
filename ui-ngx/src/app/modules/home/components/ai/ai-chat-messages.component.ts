@@ -47,6 +47,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() work: AiWorkState | undefined;
   @Input() feedback = false;
   @Output() rate = new EventEmitter<AnswerRatingEvent>();
+  @Output() chip = new EventEmitter<string>();
   @Output() report = new EventEmitter<AnswerReportEvent>();
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
   @Output() askAgain = new EventEmitter<void>();

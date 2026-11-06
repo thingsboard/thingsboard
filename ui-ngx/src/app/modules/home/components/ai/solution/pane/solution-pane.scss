@@ -44,6 +44,18 @@
   }
 }
 
+:host > .sol-infos, :host > .sol-paged {
+  width: 100%;
+  max-width: var(--art-max, 760px);
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+:host > .sol-paged.wide {
+  max-width: calc(var(--art-max, 760px) + 168px);
+}
+
 .sol-paged {
   display: flex;
   flex-direction: column;

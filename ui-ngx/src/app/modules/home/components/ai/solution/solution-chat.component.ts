@@ -27,6 +27,7 @@ import {
   AiQuestion,
   AiQuestionAnswer,
   ChatMessage,
+  EntityResult,
   DashboardsOverview,
   GeneralChatMessage,
   SolutionEstimate,
@@ -64,6 +65,7 @@ import {
 } from '@home/components/ai/solution/solution-info/solution-info-dialog.component';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+import { aggregateByName, IssueStatus } from '@home/components/ai/solution/solution-info/issues-aggregation';
 import { SolutionJsonComponent } from '@home/components/ai/solution/pane/solution-json.component';
 import { AiRenameDialogComponent, AiRenameDialogData } from '@home/components/ai/ai-rename-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -162,10 +164,44 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   progressInfo = computed<SolutionCreatorInfo | null>(() => {
     const progress = this.installProgress();
     const info = this.info();
-    if (!progress || !info || !Object.values(progress.entityResults ?? {}).some(results => results?.length)) {
+    if (!progress || !info || (!progress.items?.length && !Object.values(progress.entityResults ?? {}).some(results => results?.length))) {
       return null;
     }
     return {...info, metadata: {built: true, installed: false, installResult: {createdEntities: [], entityResults: progress.entityResults as any}}};
+  });
+
+  private closingPatch = signal<Partial<GeneralChatMessage>>({});
+
+  closing = computed<GeneralChatMessage | null>(() => {
+    const info = this.info();
+    if (this.creatorStep() !== 'result' || !this.built() || !info) {
+      return null;
+    }
+    const installed = this.installed();
+    const result = info.metadata?.installResult;
+    const user = this.mainUser();
+    const chips: GeneralChatMessage['chips'] = [];
+    if (installed && user) {
+      chips.push({id: 'view-as', icon: 'person', label: this.translate.instant('solution-creator.view-as-name', {name: user.name})});
+    }
+    chips.push({id: 'edit', icon: 'edit', label: this.translate.instant('ai-assistant.edit-design')});
+    if (installed) {
+      chips.push({id: 'connect', icon: 'memory', label: this.translate.instant('solution-creator.connect-devices')});
+      chips.push({id: 'uninstall', icon: 'delete_sweep', label: this.translate.instant('solution-creator.uninstall-solution')});
+    }
+    return {
+      from: 'AI',
+      content: installed ? this.installedSummary(result?.entityResults) : this.translate.instant('solution-creator.closing-created'),
+      time: installed ? result?.installedTime : undefined,
+      entities: installed && this.mainDashboard().length ? this.mainDashboard() : undefined,
+      entitiesMeta: installed ? this.mainDashboardMeta() : undefined,
+      hint: installed ? {
+        lead: this.translate.instant('solution-creator.closing-simulated-lead'),
+        text: this.translate.instant('solution-creator.closing-simulated')
+      } : undefined,
+      chips,
+      ...this.closingPatch()
+    };
   });
 
   viewMessages = computed<ChatMessage[]>(() => {
@@ -196,8 +232,63 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         return answers ? {...message, answers} as GeneralChatMessage : message;
       }
       return message;
-    });
+    }).concat(this.closing() ? [this.closing()] : []);
   });
+
+  onChip(id: string): void {
+    switch (id) {
+      case 'view-as':
+        this.viewAsMainUser();
+        break;
+      case 'edit':
+        this.editDesign();
+        break;
+      case 'connect':
+        this.connectDevices();
+        break;
+      case 'uninstall':
+        this.uninstallSolution();
+        break;
+    }
+  }
+
+  private installedSummary(results: Partial<Record<EntityType, EntityResult[]>> | undefined): string {
+    const count = (...types: EntityType[]) => types.reduce((sum, type) =>
+      sum + aggregateByName(type, results?.[type]).filter(row => row.status !== IssueStatus.ERROR).length, 0);
+    const parts = [
+      ['device', count(EntityType.DEVICE)],
+      ['asset', count(EntityType.ASSET)],
+      ['profile', count(EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE)],
+      ['calculated-field', count(EntityType.CALCULATED_FIELD)],
+      ['alarm-rule', count(EntityType.ALARM)],
+      ['role', count(EntityType.ROLE)],
+      ['user', count(EntityType.USER)],
+      ['dashboard', count(EntityType.DASHBOARD)]
+    ].filter(([, n]) => (n as number) > 0)
+      .map(([key, n]) => this.translate.instant('solution-creator.installed-made.' + key, {count: n}));
+    if (!parts.length) {
+      return this.translate.instant('solution-creator.closing-installed');
+    }
+    const items = parts.length === 1 ? parts[0]
+      : parts.slice(0, -1).join(', ') + ' ' + this.translate.instant('solution-creator.installed-and') + ' ' + parts[parts.length - 1];
+    return this.translate.instant('solution-creator.installed-summary', {items});
+  }
+
+  private mainDashboardMeta(): string | undefined {
+    const result = this.info()?.metadata?.installResult;
+    const main = result?.mainDashboardId?.id;
+    const dashboard = main ? result?.entityResults?.[EntityType.DASHBOARD]?.find(entry => entry.id?.id === main) : undefined;
+    if (!dashboard) {
+      return undefined;
+    }
+    const role = this.info()?.data?.dashboardsOverview?.find(overview => overview.name === dashboard.additionalData?.name)?.assignedTo;
+    const user = this.mainUser();
+    return [
+      this.translate.instant('entity.type-dashboard'),
+      role,
+      user ? this.translate.instant('solution-creator.shared-with', {name: user.name}) : null
+    ].filter(Boolean).join(' · ');
+  }
 
   pendingQuestions = computed<AiQuestion[]>(() => {
     const last = this.messages()[this.messages().length - 1] as GeneralChatMessage;
@@ -684,15 +775,16 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         if (this.solutionInfo.metadata?.built) {
           this.creatorStep.set('result');
         } else {
+          this.installProgress.set(null);
           const dialogRef = this.initGenerateState('create');
           const uninstallOrContinue$ = !this.solutionInfo.metadata?.installed
             ? of(null)
             : this.solutionCreator.uninstallSolution(this.solutionId, {ignoreLoading: true, ignoreErrors: true});
           uninstallOrContinue$.pipe(
-            switchMap(() => this.solutionCreator.createSolution(this.solutionId, {
+            switchMap(() => this.withProgress(this.solutionCreator.createSolution(this.solutionId, {
               ignoreLoading: true,
               ignoreErrors: true
-            })),
+            }))),
             tap(() => this.creatorStep.set('result')),
             switchMap((solution) =>
               this.installWithProgress()
@@ -731,6 +823,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   installSolution() {
     this.failure.set(null);
+    this.installProgress.set(null);
     if (window.innerWidth >= SolutionChatComponent.NARROW_WIDTH) {
       this.paneOpen.set(true);
     }
@@ -760,9 +853,12 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private installWithProgress(): Observable<SolutionInstallResult> {
+    return this.withProgress(this.solutionCreator.installSolution(this.solutionId, {ignoreLoading: true, ignoreErrors: true}));
+  }
+
+  private withProgress<T>(operation: Observable<T>): Observable<T> {
     const solutionId = this.solutionId;
     const finished$ = new Subject<void>();
-    this.installProgress.set(null);
     timer(800, 1200).pipe(
       switchMap(() => this.aiSolutions.installProgress(solutionId).pipe(catchError(() => of(null)))),
       takeUntil(finished$),
@@ -772,11 +868,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         this.installProgress.set(progress);
       }
     });
-    return this.solutionCreator.installSolution(solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(
+    return operation.pipe(
       finalize(() => {
         finished$.next();
         finished$.complete();
-        this.installProgress.set(null);
       })
     );
   }
@@ -848,7 +943,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private answerAt(index: number): {answer: GeneralChatMessage; step: SolutionStep} | null {
-    const message = this.messages()[index] as GeneralChatMessage;
+    const message = this.viewMessages()[index] as GeneralChatMessage;
     if (!this.solutionId || message?.from !== 'AI' || !message.content) {
       return null;
     }
@@ -856,6 +951,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private patchAnswer(index: number, patch: Partial<GeneralChatMessage>): void {
+    if (index >= this.messages().length) {
+      this.closingPatch.update(current => ({...current, ...patch}));
+      return;
+    }
     this.messages.update(list => list.map((message, at) => at === index ? {...message, ...patch} as GeneralChatMessage : message));
   }
 
@@ -1131,6 +1230,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.solutionStep.set(SolutionStep.INITIAL_CONFIGURATION);
     this.messages.set([]);
     this.messageSteps = [];
+    this.closingPatch.set({});
     this.stopLoadingState();
     this.creatorStep.set(null);
     this.promptInput?.reset();
