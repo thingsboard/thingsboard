@@ -27,4 +27,6 @@ public interface WebSocketService {
 
     void cleanupIfStale(TenantId tenantId, String sessionId);
 
+    boolean hasSession(String sessionId);
+
 }

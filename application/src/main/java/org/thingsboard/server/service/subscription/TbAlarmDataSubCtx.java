@@ -86,6 +86,9 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     public void fetchAlarms() {
+        if (stopped) {
+            return;
+        }
         alarmInvocationAttempts++;
         log.trace("[{}] Fetching alarms: {}", cmdId, alarmInvocationAttempts);
         if (alarmInvocationAttempts <= maxAlarmQueriesPerRefreshInterval) {
@@ -169,7 +172,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                 .updateProcessor((sub, update) -> sendWsMsg(sub.getSessionId(), update))
                 .ts(startTs)
                 .build();
-        localSubscriptionService.addSubscription(subscription, sessionRef);
+        registerSubscription(subscription);
     }
 
     @Override
@@ -333,7 +336,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             newSubsList.forEach(entity -> createAlarmSubscriptionForEntity(query.getPageLink(), startTs, entity));
         }
         subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getTenantId(), getSessionId(), subId));
-        subsToAdd.forEach(subscription -> localSubscriptionService.addSubscription(subscription, sessionRef));
+        subsToAdd.forEach(this::registerSubscription);
     }
 
     private void resetInvocationCounter() {

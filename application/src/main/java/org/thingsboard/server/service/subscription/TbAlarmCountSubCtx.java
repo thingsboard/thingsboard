@@ -142,7 +142,7 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
                 .entityId(entityId)
                 .updateProcessor((sub, update) -> fetchAlarmCount())
                 .build();
-        localSubscriptionService.addSubscription(subscription, sessionRef);
+        registerSubscription(subscription);
     }
 
     public void clearAlarmSubscriptions() {
