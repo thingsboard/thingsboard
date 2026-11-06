@@ -78,8 +78,6 @@ public class ConverterControllerTest extends AbstractControllerTest {
             .put("encoder", "return {deviceName: 'Device A', deviceType: 'thermostat'};");
 
     private static final String DEFAULT_AWS_IOT_UPLINK_DECODER = "converters/tbel-aws-iot-decoder.raw";
-    private static final String DEFAULT_AWS_IOT_DOWNLINK_ENCODER = "converters/tbel-aws-iot-encoder.raw";
-    private static final String DEFAULT_AWS_IOT_DOWNLINK_JS_ENCODER = "converters/js-aws-iot-encoder.raw";
     private static final String DEFAULT_AZURE_UPLINK_DECODER = "converters/tbel-azure-decoder.raw";
     private static final String DEFAULT_CHIRPSTACK_UPLINK_DECODER = "converters/tbel-chirpstack-decoder.raw";
     private static final String CHIRPSTACK_UPLINK_DECODER = "converter/chirpstack_uplink_decoder.raw";
@@ -866,6 +864,9 @@ public class ConverterControllerTest extends AbstractControllerTest {
         String expectedDecodedMessage = "{\"deviceName\":\"Device A\",\"deviceType\":\"thermostat\",\"customerName\":\"customer\",\"groupName\":\"thermostat devices\",\"attributes\":{\"model\":\"Model A\",\"serialNumber\":\"SN111\"},\"telemetry\":{\"temperature\":42,\"humidity\":80}}";
         testDecoder(DEFAULT_KPN_UPLINK_DECODER, DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage);
     }
+
+    private static final String DEFAULT_AWS_IOT_DOWNLINK_ENCODER = "converters/tbel-aws-iot-encoder.raw";
+    private static final String DEFAULT_AWS_IOT_DOWNLINK_JS_ENCODER = "converters/js-aws-iot-encoder.raw";
 
     @Test
     public void testAwsIotDefaultEncoder() throws Exception {
