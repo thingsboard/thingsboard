@@ -51,6 +51,11 @@ public abstract class TbAbstractSubCtx {
 
     @Getter
     protected final Lock wsLock = new ReentrantLock(true);
+    /**
+     * Serializes context stop with subscription registration, so a subscription is either registered before
+     * {@link #stop()} (and cancelled by it) or never registered.
+     */
+    protected final ReentrantLock lifecycleLock = new ReentrantLock();
     protected final String serviceId;
     protected final SubscriptionServiceStatistics stats;
     private final WebSocketService wsService;
@@ -77,7 +82,33 @@ public abstract class TbAbstractSubCtx {
     public abstract boolean isDynamic();
 
     public void stop() {
-        stopped = true;
+        lifecycleLock.lock();
+        try {
+            stopped = true;
+        } finally {
+            lifecycleLock.unlock();
+        }
+    }
+
+    /**
+     * Registers a subscription owned by this context. Refused when the context is stopped or when its websocket
+     * session is no longer registered, so that a subscription cannot outlive the session that created it.
+     */
+    protected void registerSubscription(TbSubscription<?> subscription) {
+        lifecycleLock.lock();
+        try {
+            if (stopped) {
+                log.debug("[{}][{}] Skipping subscription registration for stopped context: {}", getSessionId(), cmdId, subscription);
+                return;
+            }
+            if (!wsService.hasSession(getSessionId())) {
+                log.debug("[{}][{}] Skipping subscription registration for closed session: {}", getSessionId(), cmdId, subscription);
+                return;
+            }
+            localSubscriptionService.addSubscription(subscription, sessionRef);
+        } finally {
+            lifecycleLock.unlock();
+        }
     }
 
     public String getSessionId() {

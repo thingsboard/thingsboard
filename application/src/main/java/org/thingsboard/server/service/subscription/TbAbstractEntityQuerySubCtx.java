@@ -74,9 +74,14 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
     }
 
     public void stop() {
-        super.stop();
-        cancelTasks();
-        clearSubscriptions();
+        lifecycleLock.lock();
+        try {
+            super.stop();
+            cancelTasks();
+            clearSubscriptions();
+        } finally {
+            lifecycleLock.unlock();
+        }
     }
 
     public void setAndResolveQuery(T query) {
@@ -137,7 +142,7 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
                         .scope(TbAttributeSubscriptionScope.SERVER_SCOPE)
                         .build();
                 subToDynamicValueKeySet.add(subIdx);
-                localSubscriptionService.addSubscription(sub, sessionRef);
+                registerSubscription(sub);
             }
         } catch (InterruptedException | ExecutionException e) {
             log.info("[{}][{}][{}] Failed to resolve dynamic values: {}", tenantId, customerId, userId, dynamicValues.keySet());
