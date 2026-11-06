@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
@@ -42,18 +42,15 @@ import {
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 import { mergeMap } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { iotHubErrorMessage } from '../iot-hub-utils';
 
 export interface DeviceInstallDialogData {
   item: MpItemVersionView;
   reviewMode?: boolean;
   selectedInstallMethod?: string;
   installState?: Record<string, any>;
-  /**
-   * Update of an installed device package: the installed item of the current version. Its entities are removed
-   * right before the wizard creates the new version's entities, not earlier, so closing the wizard before that
-   * leaves the package as it was; the item takes the new version when the wizard registers it. The forms start
-   * from installState and the connection method from selectedInstallMethod, as the user filled them before.
-   */
+  /** Update: the installed item whose entities are replaced by this version's. */
   replaceInstalledItemId?: string;
 }
 
@@ -73,8 +70,8 @@ export interface WizardStep {
   entitySteps?: EntityStepProgress[];
   progressError?: string;
   progressDone?: boolean;
-  /** Update only: the entities of the replaced version are being removed. */
-  removingReplaced?: boolean;
+  /** An error of the whole step (removal of the replaced entities, registration), not of one entity. */
+  stepError?: string;
 }
 
 const ENTITY_STEP_MIN_DELAY = 2000;
@@ -112,23 +109,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * has to report 'installed', or the caller keeps showing pre-install counts and badges.
    */
   private installRegistered = false;
-  /** Update only: whether the removal of the replaced version's entities was sent, and whether it is done. */
-  private replaceStarted = false;
+  readonly removingReplaced = signal(false);
   private replacedEntitiesRemoved = false;
-  /**
-   * The installed item this wizard registers: the wizard registers again after each group of entities, and each
-   * registration updates that item. On an update it is the replaced item from the start.
-   */
+  private replacedEntitiesMayBeGone = false;
   private registeredItemId: string | undefined;
-  /**
-   * Every entity this wizard created or chose, kept as soon as it exists: each registration sends them all, so none is
-   * left untracked when the user goes back from a group of steps (to change a form or the connection method) or a
-   * step or a registration failed.
-   */
+  // Kept as soon as an entity exists: going back resets a progress step, but every registration must still track it.
   private packageEntityIds: { entityType: string; id: string }[] = [];
-  /** Update only: the connection method of the installed version, preselected until the user confirms it. */
+  private createdInThisWizard = new Set<string>();
   private methodPreselected = false;
-  /** The dialog is closed: a run of the entity steps that is still waiting must not create anything. */
   private closed = false;
 
   // Variable resolution state
@@ -147,7 +135,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     protected router: Router,
     protected dialogRef: MatDialogRef<TbDeviceInstallDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DeviceInstallDialogData,
-    private cdr: ChangeDetectorRef,
+    private cd: ChangeDetectorRef,
     private deviceProfileService: DeviceProfileService,
     private deviceService: DeviceService,
     private dashboardService: DashboardService,
@@ -229,7 +217,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
     }
     this.loading = false;
-    this.cdr.detectChanges();
+    this.cd.detectChanges();
   }
 
   ngOnDestroy() {
@@ -250,8 +238,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return;
     }
     if (this.selectedInstallMethod === ct && this.methodPreselected) {
-      // Update: the card of the installed version's method is preselected; clicking it confirms it.
-      this.methodPreselected = false;
       this.confirmConnectivity();
       return;
     }
@@ -304,7 +290,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.wizardSteps.length = 1;
       this.appendInstallSteps();
       connectivityStep.completed = true;
-      this.cdr.detectChanges();
+      this.cd.detectChanges();
       // Wait for new mat-step children to register before advancing.
       setTimeout(() => this.stepper?.next(), 0);
       return;
@@ -366,7 +352,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return;
     }
     step.completed = true;
-    this.cdr.detectChanges();
+    this.cd.detectChanges();
     this.stepper.next();
   }
 
@@ -416,17 +402,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.dialogRef.close('installed');
   }
 
-  get removingReplaced(): boolean {
-    return this.wizardSteps.some(ws => ws.removingReplaced);
-  }
-
   async cancel(): Promise<void> {
-    if (this.removingReplaced) {
-      // The removal is irreversible and already running: closing now would leave the outcome unknown.
+    if (this.removingReplaced()) {
       return;
     }
-    if (this.replaceStarted && !this.installRegistered) {
-      // The installed version may already be gone while the new one is not installed: the user has to know before leaving.
+    if (this.replacedEntitiesMayBeGone && !this.installRegistered) {
       const close = await firstValueFrom(this.dialogService.confirm(
         this.translate.instant('iot-hub.device-update-close-title'),
         this.translate.instant('iot-hub.device-update-close-text'),
@@ -437,19 +417,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
     }
     this.closed = true;
-    // Once the replaced version's entities may be gone, the caller has to reload its installed items as well.
-    this.dialogRef.close(this.installRegistered || this.replaceStarted ? 'installed' : false);
+    this.dialogRef.close(this.installRegistered || this.replacedEntitiesMayBeGone ? 'installed' : false);
   }
 
   retryEntitySteps(step: WizardStep): void {
     step.progressError = null;
+    step.stepError = null;
     void this.runEntitySteps(step);
   }
 
   async resolveConflict(ws: WizardStep, ep: EntityStepProgress, resolution: string): Promise<void> {
     ep.status = 'running';
     ep.errorMessage = null;
-    this.cdr.detectChanges();
+    this.cd.detectChanges();
     try {
       let output: EntityStepOutput;
       if (resolution === 'use-existing') {
@@ -471,14 +451,16 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       await this.saveStepAttributes(ep.step, output);
       ep.existingEntity = null;
       ep.conflictType = null;
-      this.markEntityStepSuccess(ws, ep, output, resolution);
+      // An entity this wizard created a moment ago (the user went back and ran the step again) stays the package's own.
+      const recorded = resolution === 'use-existing' && this.createdInThisWizard.has(output.id) ? 'created' : resolution;
+      this.markEntityStepSuccess(ws, ep, output, recorded);
       // Resume running remaining steps
       await this.runEntitySteps(ws);
     } catch (err: any) {
       ep.status = 'error';
-      ep.errorMessage = this.errorText(err);
+      ep.errorMessage = iotHubErrorMessage(err, this.translate);
       ws.progressError = ep.errorMessage;
-      this.cdr.detectChanges();
+      this.cd.detectChanges();
     }
   }
 
@@ -491,6 +473,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         const progressStep = this.wizardSteps[currentIdx];
         progressStep.entitySteps = null;
         progressStep.progressError = null;
+        progressStep.stepError = null;
         progressStep.progressDone = false;
         progressStep.completed = false;
         // Allow navigation back by making intermediate steps editable
@@ -821,6 +804,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       resolvedName: this.resolveVariables(s.name)
     }));
     ws.progressError = null;
+    ws.stepError = null;
     ws.progressDone = false;
     void this.runEntitySteps(ws);
   }
@@ -830,7 +814,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ep.entityOutput = output;
     ep.resolution = resolution;
     ep.status = 'success';
-    // Kept from the moment it exists: going back resets the step, and the entity must still be registered.
+    if (resolution !== 'use-existing') {
+      this.createdInThisWizard.add(output.id);
+    }
     const entityType = this.stepTypeToEntityType(ep.step.type);
     if (entityType && !this.packageEntityIds.some(known => known.id === output.id)) {
       this.packageEntityIds.push({ entityType, id: output.id });
@@ -844,12 +830,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         remaining.resolvedName = this.resolveVariables(remaining.step.name);
       }
     }
-    this.cdr.detectChanges();
+    this.cd.detectChanges();
   }
 
   private async runEntitySteps(ws: WizardStep): Promise<void> {
     if (!await this.removeReplacedEntities(ws) || this.closed) {
-      // The dialog was closed meanwhile (navigating away): create nothing.
       return;
     }
     for (const ep of ws.entitySteps) {
@@ -858,7 +843,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       ep.status = 'running';
       ep.errorMessage = null;
-      this.cdr.detectChanges();
+      this.cd.detectChanges();
       try {
         // Pre-check for existing entity
         const existing = await this.preCheckEntity(ep.step);
@@ -866,7 +851,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           ep.status = 'conflict';
           ep.existingEntity = existing;
           ep.conflictType = this.getConflictType(ep.step.type);
-          this.cdr.detectChanges();
+          this.cd.detectChanges();
           return; // Pause — user must choose a resolution
         }
         const startTime = Date.now();
@@ -881,15 +866,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         this.markEntityStepSuccess(ws, ep, output, 'created');
       } catch (err: any) {
         ep.status = 'error';
-        ep.errorMessage = this.errorText(err);
+        ep.errorMessage = iotHubErrorMessage(err, this.translate);
         ws.progressError = ep.errorMessage;
-        this.cdr.detectChanges();
+        this.cd.detectChanges();
         return;
       }
     }
 
-    // All done — register install with created entity IDs. The step is done only then: until it is registered,
-    // nothing tracks the entities, so the package could be neither updated nor removed from IoT Hub.
+    // All done — register install with created entity IDs. Until then nothing tracks them, so the step is not done.
     try {
       const createdEntityIds = [...this.packageEntityIds];
       const dashboardId = this.findCreatedDashboardId();
@@ -907,9 +891,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.installRegistered = true;
       this.registeredItemId = result.installedItemId ?? this.registeredItemId;
     } catch (err: any) {
-      // The entities stay as they are: Retry registers them again.
-      ws.progressError = this.translate.instant('iot-hub.device-install-register-error', { error: this.errorText(err) });
-      this.cdr.detectChanges();
+      ws.stepError = this.translate.instant('iot-hub.device-install-register-error', { error: iotHubErrorMessage(err, this.translate) });
       return;
     }
     ws.progressDone = true;
@@ -919,43 +901,33 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!this.isLastWizardStep) {
       await this.delay(500);
       this.stepper.next();
-      this.cdr.detectChanges();
+      this.cd.detectChanges();
     }
   }
 
-  /**
-   * Update of a device package: remove the entities of the current version before the new version's entities are
-   * created, or they would conflict by name. The installed item keeps its version until the new one is registered,
-   * and removing again is safe, so Retry simply repeats it.
-   */
+  /** Update: the replaced version's entities are removed right before the new ones are created, or their names conflict. */
   private async removeReplacedEntities(ws: WizardStep): Promise<boolean> {
     if (!this.data.replaceInstalledItemId || this.replacedEntitiesRemoved) {
       return true;
     }
-    this.replaceStarted = true;
-    ws.removingReplaced = true;
-    this.cdr.detectChanges();
+    this.removingReplaced.set(true);
     try {
       await firstValueFrom(this.iotHubApiService.removeDevicePackageEntities(this.data.replaceInstalledItemId,
         this.data.item.id as string, { ignoreLoading: true, ignoreErrors: true }));
       this.replacedEntitiesRemoved = true;
+      this.replacedEntitiesMayBeGone = true;
       return true;
     } catch (err: any) {
-      ws.progressError = this.translate.instant('iot-hub.device-update-remove-error', { error: this.errorText(err) });
+      const error = iotHubErrorMessage(err, this.translate);
+      // Refused before removing anything, unless some entities could not be removed or the answer was lost.
+      if (error.includes('not removed:') || (err instanceof HttpErrorResponse && err.status === 0)) {
+        this.replacedEntitiesMayBeGone = true;
+      }
+      ws.stepError = this.translate.instant('iot-hub.device-update-remove-error', { error });
       return false;
     } finally {
-      ws.removingReplaced = false;
-      this.cdr.detectChanges();
+      this.removingReplaced.set(false);
     }
-  }
-
-  /** An error of the step that is not one entity's (removing the replaced entities, registering), shown below them. */
-  stepLevelError(ws: WizardStep): string | null {
-    return ws.progressError && !ws.entitySteps?.some(ep => ep.status === 'error') ? ws.progressError : null;
-  }
-
-  private errorText(err: any): string {
-    return err?.error?.message || err?.message || 'Unknown error';
   }
 
   private fitsField(field: FormFieldDefinition, value: any): boolean {

@@ -133,24 +133,25 @@
                   {{ ('iot-hub.device-install-step-type-' + ep.step.type | translate) + ' — ' + (ep.resolvedName || ep.step.name) }}
                 </span>
                 <span class="tb-progress-status">
-                  @if (ep.status === 'success') {
-                    <span class="tb-progress-status-done">{{ 'iot-hub.done' | translate }}</span>
-                  }
-                  @if (ep.status === 'running') {
-                    <span class="tb-progress-status-progress">{{ 'iot-hub.in-progress' | translate }}</span>
+                  @switch (ep.status) {
+                    @case ('success') {
+                      <span class="tb-progress-status-done">{{ 'iot-hub.done' | translate }}</span>
+                    }
+                    @case ('running') {
+                      <span class="tb-progress-status-progress">{{ 'iot-hub.in-progress' | translate }}</span>
+                    }
                   }
                 </span>
               </div>
             }
           }
-          @if (ws.removingReplaced) {
+          @if (removingReplaced()) {
             <div class="mt-4 flex items-center gap-2">
               <mat-spinner diameter="18"></mat-spinner>
               <span class="tb-progress-status">{{ 'iot-hub.device-update-removing' | translate }}</span>
             </div>
-          }
-          @if (stepLevelError(ws); as error) {
-            <span class="tb-progress-alert-msg tb-progress-alert-msg-error mt-4">{{ error }}</span>
+          } @else if (ws.stepError) {
+            <span class="tb-progress-alert-msg tb-progress-alert-msg-error mt-4">{{ ws.stepError }}</span>
           }
         </div>
       }
@@ -166,7 +167,7 @@
 } @else {
   <div class="tb-device-install-header flex items-center gap-3 py-2 pl-6 pr-2">
     <h2 class="tb-device-install-title">{{ 'iot-hub.device-install-title' | translate:{ name: packageInfo?.name || data.item.name } }}</h2>
-    <button mat-icon-button [disabled]="removingReplaced" (click)="cancel()" tabindex="-1">
+    <button mat-icon-button [disabled]="removingReplaced()" (click)="cancel()" tabindex="-1">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -206,7 +207,7 @@
         </ng-template>
 
         @for (ws of wizardSteps; track ws.label) {
-          <mat-step [editable]="!removingReplaced"
+          <mat-step [editable]="!removingReplaced()"
                     [completed]="ws.completed"
                     [stepControl]="ws.type === 'form' ? ws.formGroup : null">
             <ng-template matStepLabel>{{ ws.label }}</ng-template>
@@ -220,13 +221,13 @@
       @if (allProgressDone) {
         <button mat-button (click)="done()">{{ 'action.close' | translate }}</button>
       } @else {
-        <button mat-button [disabled]="removingReplaced" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+        <button mat-button [disabled]="removingReplaced()" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
       }
     </ng-template>
 
     <mat-dialog-actions>
       @if (!isFirstWizardStep) {
-        <button mat-stroked-button [disabled]="removingReplaced" (click)="previousStep()">{{ 'action.back' | translate }}</button>
+        <button mat-stroked-button [disabled]="removingReplaced()" (click)="previousStep()">{{ 'action.back' | translate }}</button>
       }
       <span class="flex-1"></span>
       @if (currentWizardStep; as step) {
@@ -261,7 +262,7 @@
             </button>
           }
           @case ('progress') {
-            @if (step.progressError) {
+            @if (step.progressError || step.stepError) {
               <ng-container *ngTemplateOutlet="closeOrCancel"></ng-container>
               <button mat-flat-button color="primary" (click)="retryEntitySteps(step)">
                 {{ 'action.retry' | translate }}
@@ -273,7 +274,7 @@
                   {{ action.label }}
                 </button>
               }
-            } @else if (!step.progressError) {
+            } @else {
               <ng-container *ngTemplateOutlet="closeOrCancel"></ng-container>
               <button mat-stroked-button color="primary" [disabled]="!step.progressDone" (click)="nextStep()">
                 {{ 'action.next' | translate }}@if (nextWizardStepLabel) {: {{ nextWizardStepLabel }}}
