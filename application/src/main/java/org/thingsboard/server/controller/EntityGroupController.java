@@ -330,9 +330,9 @@ public class EntityGroupController extends AutoCommitController {
             @PathVariable("groupType") String strGroupType,
             @Parameter(description = ENTITY_GROUP_INCLUDE_SHARED_DESCRIPTION)
             @RequestParam(required = false) Boolean includeShared,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -373,9 +373,9 @@ public class EntityGroupController extends AutoCommitController {
             @PathVariable("groupType") String strGroupType,
             @Parameter(description = ENTITY_GROUP_INCLUDE_SHARED_DESCRIPTION)
             @RequestParam(required = false) Boolean includeShared,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -442,9 +442,9 @@ public class EntityGroupController extends AutoCommitController {
     public PageData<EntityGroupInfo> getSharedEntityGroupsByTypeAndPageLink(
             @Parameter(description = ENTITY_GROUP_TYPE_PARAMETER_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"CUSTOMER", "ASSET", "DEVICE", "USER", "ENTITY_VIEW", "DASHBOARD", "EDGE"}))
             @PathVariable("groupType") String strGroupType,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -472,9 +472,9 @@ public class EntityGroupController extends AutoCommitController {
     public PageData<EntityInfo> getSharedEntityGroupEntityInfosByTypeAndPageLink(
             @Parameter(description = ENTITY_GROUP_TYPE_PARAMETER_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"CUSTOMER", "ASSET", "DEVICE", "USER", "ENTITY_VIEW", "DASHBOARD", "EDGE"}))
             @PathVariable("groupType") String strGroupType,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -544,9 +544,9 @@ public class EntityGroupController extends AutoCommitController {
             @PathVariable("ownerId") String strOwnerId,
             @Parameter(description = ENTITY_GROUP_TYPE_PARAMETER_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"CUSTOMER", "ASSET", "DEVICE", "USER", "ENTITY_VIEW", "DASHBOARD", "EDGE"}))
             @PathVariable("groupType") String strGroupType,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -582,9 +582,9 @@ public class EntityGroupController extends AutoCommitController {
             @PathVariable("ownerId") String strOwnerId,
             @Parameter(description = ENTITY_GROUP_TYPE_PARAMETER_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"CUSTOMER", "ASSET", "DEVICE", "USER", "ENTITY_VIEW", "DASHBOARD", "EDGE"}))
             @PathVariable("groupType") String strGroupType,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -620,9 +620,9 @@ public class EntityGroupController extends AutoCommitController {
             @PathVariable("ownerId") String strOwnerId,
             @Parameter(description = ENTITY_GROUP_TYPE_PARAMETER_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"CUSTOMER", "ASSET", "DEVICE", "USER", "ENTITY_VIEW", "DASHBOARD", "EDGE"}))
             @PathVariable("groupType") String strGroupType,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -662,9 +662,9 @@ public class EntityGroupController extends AutoCommitController {
             @PathVariable("ownerId") String strOwnerId,
             @Parameter(description = ENTITY_GROUP_TYPE_PARAMETER_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"CUSTOMER", "ASSET", "DEVICE", "USER", "ENTITY_VIEW", "DASHBOARD", "EDGE"}))
             @PathVariable("groupType") String strGroupType,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -880,9 +880,9 @@ public class EntityGroupController extends AutoCommitController {
     public PageData<ShortEntityView> getEntities(
             @Parameter(description = ENTITY_GROUP_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_GROUP_ID) String strEntityGroupId,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -979,9 +979,9 @@ public class EntityGroupController extends AutoCommitController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/owners", params = {"pageSize", "page"})
     public PageData<ContactBased<?>> getOwners(
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -1025,9 +1025,9 @@ public class EntityGroupController extends AutoCommitController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/ownerInfos", params = {"pageSize", "page"})
     public PageData<EntityInfo> getOwnerInfos(
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -1481,9 +1481,9 @@ public class EntityGroupController extends AutoCommitController {
             @PathVariable(EDGE_ID) String strEdgeId,
             @Parameter(description = "EntityGroup type", required = true, schema = @Schema(allowableValues = {"ASSET", "DEVICE", "USER", "ENTITY_VIEW", "DASHBOARD"}))
             @PathVariable("groupType") String strGroupType,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = ENTITY_GROUP_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,

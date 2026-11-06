@@ -195,9 +195,9 @@ public class RoleController extends AutoCommitController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/roles", params = {"pageSize", "page"})
     public PageData<Role> getRoles(
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = "Type of the role", schema = @Schema(allowableValues = {"GENERIC", "GROUP"}))
             @RequestParam(required = false) String type,

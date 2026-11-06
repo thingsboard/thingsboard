@@ -325,9 +325,9 @@ public class SchedulerEventController extends BaseController {
             @RequestParam(required = false) UUID userId,
             @Parameter(description = INCLUDE_CUSTOMERS_OR_SUB_CUSTOMERS)
             @RequestParam(required = false) Boolean includeCustomers,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = "The case insensitive 'substring' filter based on the scheduler event name or customer title.")
             @RequestParam(required = false) String textSearch,
@@ -455,9 +455,9 @@ public class SchedulerEventController extends BaseController {
     public PageData<SchedulerEventInfo> getEdgeSchedulerEvents(
             @Parameter(description = EDGE_ID_PARAM_DESCRIPTION)
             @PathVariable(EDGE_ID) String strEdgeId,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = "The case insensitive 'startsWith' filter based on the scheduler event name.")
             @RequestParam(required = false) String textSearch,

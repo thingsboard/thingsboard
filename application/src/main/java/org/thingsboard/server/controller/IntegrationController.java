@@ -177,9 +177,9 @@ public class IntegrationController extends AutoCommitController {
     public PageData<Integration> getIntegrations(
             @Parameter(description = "Fetch edge template integrations")
             @RequestParam(value = "isEdgeTemplate", required = false, defaultValue = "false") boolean isEdgeTemplate,
-            @Parameter(required = true, description = PAGE_SIZE_DESCRIPTION, schema = @Schema(minimum = "1"))
+            @Parameter(required = true, description = PAGE_SIZE_DESCRIPTION, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(required = true, description = PAGE_NUMBER_DESCRIPTION, schema = @Schema(minimum = "0"))
+            @Parameter(required = true, description = PAGE_NUMBER_DESCRIPTION, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = INTEGRATION_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -205,9 +205,9 @@ public class IntegrationController extends AutoCommitController {
     public PageData<IntegrationInfo> getIntegrationInfos(
             @Parameter(description = "Fetch edge template integrations")
             @RequestParam(value = "isEdgeTemplate", required = false, defaultValue = "false") boolean isEdgeTemplate,
-            @Parameter(required = true, description = PAGE_SIZE_DESCRIPTION, schema = @Schema(minimum = "1"))
+            @Parameter(required = true, description = PAGE_SIZE_DESCRIPTION, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(required = true, description = PAGE_NUMBER_DESCRIPTION, schema = @Schema(minimum = "0"))
+            @Parameter(required = true, description = PAGE_NUMBER_DESCRIPTION, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = INTEGRATION_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
