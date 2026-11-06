@@ -180,11 +180,7 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
-  /**
-   * A device package is updated by installing the new version through the install wizard: it needs the user's
-   * input, so the server cannot install it alone. The wizard removes the installed version's entities only when it starts
-   * creating the new ones, so closing it before that leaves the package as it was.
-   */
+  /** The install wizard of the new version updates a device package: it needs the user's input. */
   private reinstallDevice(installedItem: IotHubInstalledItem, versionId: string): Observable<string | boolean> {
     const descriptor = installedItem.descriptor as DeviceInstalledItemDescriptor;
     return this.iotHubApiService.getVersionInfo(versionId).pipe(

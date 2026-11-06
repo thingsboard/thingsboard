@@ -183,20 +183,18 @@ export class IotHubApiService {
     replaceInstalledItemId?: string,
     config?: IotHubRequestConfig
   ): Observable<InstallItemVersionResult> {
-    // In the URL: HttpParams.set() would drop the interceptor config (ignoreLoading, ignoreErrors) of buildParams.
-    const replace = replaceInstalledItemId ? `&replaceInstalledItemId=${replaceInstalledItemId}` : '';
     return this.http.post<InstallItemVersionResult>(
-      `/api/iot-hub/device/register?versionId=${versionId}${replace}`,
+      `/api/iot-hub/device/register`,
       { type: 'DEVICE', ...descriptor },
-      { params: this.buildParams(config) }
+      { params: this.buildParams(config, { versionId, replaceInstalledItemId }) }
     );
   }
 
   public removeDevicePackageEntities(installedItemId: string, versionId: string, config?: IotHubRequestConfig): Observable<void> {
     return this.http.post<void>(
-      `/api/iot-hub/installedItems/${installedItemId}/device/removeEntities?versionId=${versionId}`,
+      `/api/iot-hub/installedItems/${installedItemId}/device/removeEntities`,
       null,
-      { params: this.buildParams(config) }
+      { params: this.buildParams(config, { versionId }) }
     );
   }
 
@@ -224,10 +222,7 @@ export class IotHubApiService {
   }
 
   public updateItemVersion(installedItemId: string, versionId: string, config?: IotHubRequestConfig, force?: boolean): Observable<UpdateItemVersionResult> {
-    let params = this.buildParams(config);
-    if (force) {
-      params = params.set('force', 'true');
-    }
+    const params = this.buildParams(config, { force: force ? 'true' : undefined });
     return this.http.post<UpdateItemVersionResult>(
       `/api/iot-hub/installedItems/${installedItemId}/update/${versionId}`,
       null,
@@ -295,9 +290,11 @@ export class IotHubApiService {
     );
   }
 
-  private buildParams(config?: IotHubRequestConfig): HttpParams {
+  private buildParams(config?: IotHubRequestConfig, params?: Record<string, string | undefined>): HttpParams {
+    const defined = Object.fromEntries(Object.entries(params ?? {}).filter(([, value]) => value != null));
     return new InterceptorHttpParams(
-      new InterceptorConfig(config?.ignoreLoading ?? false, config?.ignoreErrors ?? false)
+      new InterceptorConfig(config?.ignoreLoading ?? false, config?.ignoreErrors ?? false),
+      defined
     );
   }
 }
