@@ -362,9 +362,11 @@ public class SwaggerConfiguration {
         };
     }
 
+    // The document is OpenAPI 3.1 (see springDocProperties above), which serializes
+    // Schema.types; a schema built with Schema.type(...) is written without a type.
     private void addDefaultSchemas(OpenAPI openAPI) {
         Schema<?> errorCodeSchema = new Schema<>()
-                .type("integer")
+                .types(Set.of("integer"))
                 .description("Platform error code")
                 ._enum(Arrays.stream(ThingsboardErrorCode.values())
                         .map(ThingsboardErrorCode::getErrorCode)
