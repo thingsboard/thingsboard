@@ -788,6 +788,15 @@ public class ConverterControllerTest extends AbstractControllerTest {
         }
     }
 
+    // The script body limit is 50000 characters (tbel and js max_script_body_size), comments included: the default
+    // TTN/TTI converters stay well under it, so that a user can add decoding of their own devices
+    @Test
+    public void testThingsStackDefaultConvertersStayWellUnderScriptSizeLimit() throws IOException {
+        for (String decoder : List.of("tbel-ttn", "tbel-tti", "js-ttn", "js-tti")) {
+            assertThat(readResource("converters/" + decoder + "-decoder.raw").length()).as(decoder).isLessThan(30000);
+        }
+    }
+
     // A frame too short for its message type, and bytes that are not an object: the uplink is still converted
     @Test
     public void testThingsStackDefaultConvertersKeepMalformedLansitecUplinks() throws IOException {

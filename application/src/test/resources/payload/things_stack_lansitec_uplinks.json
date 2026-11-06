@@ -141,7 +141,7 @@
       "profile": "lansitec-macro-bluetooth-gateway",
       "telemetry": {
         "loraRssi": -62.0,
-        "deviceFirmwareVersion": "VER108",
+        "deviceFirmwareVersion": "V1.08",
         "batteryVoltage": 3.53,
         "loraSnr": 8.3
       }
@@ -210,7 +210,7 @@
       "profile": "lansitec-compact-bluetooth-gateway",
       "telemetry": {
         "loraRssi": -62.0,
-        "deviceFirmwareVersion": "VER108",
+        "deviceFirmwareVersion": "V1.08",
         "batteryLevel": 100,
         "loraSnr": 8.3,
         "chargeState": "Charging"
@@ -280,7 +280,7 @@
       "profile": "lansitec-solar-bluetooth-gateway",
       "telemetry": {
         "loraRssi": -62.0,
-        "deviceFirmwareVersion": "VER108",
+        "deviceFirmwareVersion": "V1.08",
         "batteryLevel": 100,
         "loraSnr": -5.0,
         "chargeState": "Charging completed"
@@ -1366,7 +1366,7 @@
         "gpsState": "gps location success",
         "latitude": 31.975675579986046,
         "longitude": 118.77103314054408,
-        "pressure": 100000,
+        "pressure": 10000.0,
         "gnssTime": 1702029480000,
         "wearState": "wear"
       }
@@ -2367,6 +2367,305 @@
       "telemetry": {
         "result": "Success",
         "msgid": 7
+      }
+    }
+  },
+  {
+    "name": "badge Heartbeat 5.2 without SNR, firmware before 0x0501 (built)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-badge-tracker",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0007",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6DX1KWZBE1ANRSZWHFSKQ89",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:29eb6310-c010-4972-897c-d743a41f1d8d"
+      ],
+      "received_at": "2026-11-02T10:31:55.550797518Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "IGQ+NWAAAA==",
+        "decoded_payload": {
+          "bytes": {
+            "Message type": "Heartbeat",
+            "Battery level": "100%",
+            "RSSI": "-62dBm",
+            "SNR": "136.64000000000001dB",
+            "GPS state": "GPS OFF",
+            "Move state": "No Move",
+            "Charge state": "Power cable disconnected"
+          }
+        },
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "badge-tracker",
+          "hardware_version": "1.0",
+          "firmware_version": "5.25",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-badge-tracker",
+      "telemetry": {
+        "batteryLevel": 100.0,
+        "loraRssi": -62.0,
+        "gnssState": "GPS located",
+        "chargeState": "Charge complete",
+        "movingState": 5
+      }
+    }
+  },
+  {
+    "name": "container Offline Cache Position 5.7, BLE GNSS BLE (built from the codec)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-container-tracker",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0008",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6DX2TBAJT5T5EE3615Y9MAW",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:b64cce74-6708-4423-aa37-eca108e9f585"
+      ],
+      "received_at": "2026-11-02T10:32:34.922307414Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "s0AAAQACs0LtisRB/84uZXLoqAADAAS0",
+        "decoded_payload": {
+          "bytes": {
+            "type": "OfflineCachePosition",
+            "length": 3,
+            "flag": "010",
+            "flag1": "1 is Bluetooth position data",
+            "flag2": "2 is GNSS position data",
+            "flag3": "3 is Bluetooth position data",
+            "dev1major": "0001",
+            "dev1minor": "0002",
+            "dev1rssi": "-77dBm",
+            "longitude2": 118.77103314054408,
+            "latitude2": 31.975675579986046,
+            "time2": "\"2023-12-08T17:58:00.000Z\"",
+            "dev3major": "0003",
+            "dev3minor": "0004",
+            "dev3rssi": "-76dBm"
+          }
+        },
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "container-tracker",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-container-tracker",
+      "telemetry": {
+        "length": 3,
+        "flag": "010",
+        "flag1": "1 is Bluetooth position data",
+        "flag2": "2 is GNSS position data",
+        "flag3": "3 is Bluetooth position data",
+        "longitude2": 118.77103314054408,
+        "latitude2": 31.975675579986046,
+        "gnssTime2": 1702029480000,
+        "beacons": [
+          {
+            "major": "0001",
+            "minor": "0002",
+            "rssi": -77
+          },
+          {
+            "major": "0003",
+            "minor": "0004",
+            "rssi": -76
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "socketsync Beacon 5.3, UUID tail 0x05 (built from DataSheet 1.5)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-socket-sync-bluetooth-gateway",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0004",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6DX3DFWNQE3WSG9JNFTAG7B",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:ec26c3c1-e861-4d65-b6e7-1206e538a5c7"
+      ],
+      "received_at": "2026-11-02T10:32:54.523762899Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "YQUAAQACsA==",
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "socket-sync-bluetooth-gateway",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-socket-sync-bluetooth-gateway",
+      "telemetry": {
+        "beacons": [
+          {
+            "uuid": "5C38DBDE567C4CCAB1DA40A8AD465705",
+            "major": 1,
+            "minor": 2,
+            "rssi": -80
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "contact badge 10s Instant Report 4.5.3, 2 beacons (built from DataSheet 2.78)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-contact-tracing-badge",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0005",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6NJ5EMKTH1Q7R7AD5WA4HB6",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:e9a53f5b-bd3b-478b-8ff9-4c3424e1337f"
+      ],
+      "received_at": "2026-11-05T09:55:42.353804675Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "gtMQAj7T0BEALqsk",
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "contact-tracing-badge",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-contact-tracing-badge",
+      "telemetry": {
+        "beacons": [
+          {
+            "major": "D310",
+            "minor": "023E",
+            "type": "Bluetooth beacon",
+            "rssi": -45,
+            "timeOffset": 2
+          },
+          {
+            "major": "D011",
+            "minor": "002E",
+            "type": "Bluetooth beacon",
+            "rssi": -85,
+            "timeOffset": 4
+          }
+        ]
       }
     }
   }
