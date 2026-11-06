@@ -718,11 +718,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
               next: (value) => {
                 this.solutionInfo = value;
                 this.aiSolutions.upsert(value);
-                if (value.metadata.installResult.mainDashboardId) {
-                  this.gotoMainDashboard(true);
-                } else {
-                  this.openInfo();
-                }
+                this.showInstalled();
               },
               error: (err) => {
                 this.reportFailure(err);
@@ -753,13 +749,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           }
           Object.assign(this.solutionInfo.metadata.installResult, value);
           this.solutionInfo.metadata.installed = true;
-          this.solutionInfo = this.solutionInfo;
+          this.solutionInfo = {...this.solutionInfo};
           this.aiSolutions.update(this.solutionId, {installed: true});
-          if (value.mainDashboardId) {
-            this.gotoMainDashboard(true);
-          } else {
-            this.openInfo();
-          }
+          this.showInstalled();
         },
         error: (err) => {
           this.reportFailure(err);
@@ -987,6 +979,15 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     const example = this.solutionExamples.find(ex => ex.key === key);
     if (example) {
       this.sendMsgFromUser({message: example.message, resources: []});
+    }
+  }
+
+  private showInstalled(): void {
+    this.creatorStep.set('result');
+    this.json.set(false);
+    this.pickedView.set({view: 'solution', phase: this.phase()});
+    if (window.innerWidth >= SolutionChatComponent.NARROW_WIDTH) {
+      this.paneOpen.set(true);
     }
   }
 
@@ -1222,7 +1223,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   private startWork(messages: Array<{text: string; delay: number}>, kind: 'think' | 'gen' | 'install', _estimate?: number): {close: () => void} {
+    const making = this.making();
     this.clearWork();
+    this.making.set(making);
     const since = Date.now();
     let at = 0;
     messages.forEach(message => {

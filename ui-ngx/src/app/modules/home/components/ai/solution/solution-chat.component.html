@@ -267,6 +267,7 @@
             }
           }
         </div>
+        @if (making() !== 'solution') {
         <footer class="sol-pane-foot">
           @if (making()) {
             <span class="sol-foot-note">{{ work()?.words }}</span>
@@ -316,6 +317,7 @@
             </button>
           }
         </footer>
+        }
       </aside>
     }
   </div>
