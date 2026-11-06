@@ -950,12 +950,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.replacedEntitiesMayBeGone = true;
       return true;
     } catch (err: any) {
-      const error = iotHubErrorMessage(err, this.translate);
-      // Refused before removing anything, unless some entities could not be removed or the answer was lost.
-      if (error.includes('not removed:') || (err instanceof HttpErrorResponse && err.status === 0)) {
+      // Only a 400 is a refusal before anything was removed; any other failure (a proxy timeout too) may follow removals.
+      if (!(err instanceof HttpErrorResponse && err.status === 400)) {
         this.replacedEntitiesMayBeGone = true;
       }
-      ws.stepError = this.translate.instant('iot-hub.device-update-remove-error', { error });
+      ws.stepError = this.translate.instant('iot-hub.device-update-remove-error', { error: iotHubErrorMessage(err, this.translate) });
       return false;
     } finally {
       this.removingReplaced.set(false);

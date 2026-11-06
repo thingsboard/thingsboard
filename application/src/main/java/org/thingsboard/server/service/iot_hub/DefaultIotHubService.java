@@ -726,20 +726,27 @@ public class DefaultIotHubService implements IotHubService {
             throw new IllegalArgumentException("IoT Hub returned the version without its item");
         }
         checkSameItem(installedItem, UUID.fromString(itemId));
+        // Refusals above are a 400 and remove nothing. Any failure from here on is not a 400, so the wizard knows that
+        // entities may already be gone (each delete is committed on its own).
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        Map<EntityId, String> failed = deleteDevicePackageEntities(tenantId, packageOwnedEntityIds(descriptor), user);
-        // An entity that could not be removed stays tracked, so that Retry, a later update or Delete removes it. The ones
-        // the user chose to use as they were are neither removed nor tracked any more.
-        descriptor.setCreatedEntityIds(failed.isEmpty() ? null : new ArrayList<>(failed.keySet()));
-        if (descriptor.getDashboardId() != null && !failed.containsKey(descriptor.getDashboardId())) {
-            descriptor.setDashboardId(null);
+        Map<EntityId, String> failed;
+        try {
+            failed = deleteDevicePackageEntities(tenantId, packageOwnedEntityIds(descriptor), user);
+            // An entity that could not be removed stays tracked, so that Retry, a later update or Delete removes it. The ones
+            // the user chose to use as they were are neither removed nor tracked any more.
+            descriptor.setCreatedEntityIds(failed.isEmpty() ? null : new ArrayList<>(failed.keySet()));
+            if (descriptor.getDashboardId() != null && !failed.containsKey(descriptor.getDashboardId())) {
+                descriptor.setDashboardId(null);
+            }
+            // Keep what the user entered in the forms (the wizard of the new version starts from it), drop the outputs of
+            // the removed entities: their ids, links and tokens no longer exist.
+            if (descriptor.getInstallState() != null) {
+                descriptor.setInstallState(stripEntityOutputs(descriptor.getInstallState()));
+            }
+            iotHubInstalledItemService.save(tenantId, installedItem);
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("Removing the entities failed: " + e.getMessage(), e);
         }
-        // Keep what the user entered in the forms (the wizard of the new version starts from it), drop the outputs of
-        // the removed entities: their ids, links and tokens no longer exist.
-        if (descriptor.getInstallState() != null) {
-            descriptor.setInstallState(stripEntityOutputs(descriptor.getInstallState()));
-        }
-        iotHubInstalledItemService.save(tenantId, installedItem);
         if (!failed.isEmpty()) {
             // The wizard must not create the new version's entities next to the ones left: it shows this and Retry.
             throw new IllegalStateException("not removed: " + String.join(", ", failed.values()));
