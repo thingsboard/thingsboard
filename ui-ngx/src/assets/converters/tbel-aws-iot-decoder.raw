@@ -1,6 +1,6 @@
 /** Decoder **/
 
-// AWS IoT devices publish messages to MQTT topics provided in metadata.
+// ThingsBoard passes the MQTT topic of each AWS IoT message in metadata.topic.
 // This example uses the last two topic segments to identify the device:
 //
 //   tb/aws/iot/telemetry/thermostat/Thermostat-01
