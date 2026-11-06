@@ -78,6 +78,8 @@ public class ConverterControllerTest extends AbstractControllerTest {
             .put("encoder", "return {deviceName: 'Device A', deviceType: 'thermostat'};");
 
     private static final String DEFAULT_AWS_IOT_UPLINK_DECODER = "converters/tbel-aws-iot-decoder.raw";
+    private static final String DEFAULT_AWS_IOT_DOWNLINK_ENCODER = "converters/tbel-aws-iot-encoder.raw";
+    private static final String DEFAULT_AWS_IOT_DOWNLINK_JS_ENCODER = "converters/js-aws-iot-encoder.raw";
     private static final String DEFAULT_AZURE_UPLINK_DECODER = "converters/tbel-azure-decoder.raw";
     private static final String DEFAULT_CHIRPSTACK_UPLINK_DECODER = "converters/tbel-chirpstack-decoder.raw";
     private static final String CHIRPSTACK_UPLINK_DECODER = "converter/chirpstack_uplink_decoder.raw";
@@ -863,6 +865,60 @@ public class ConverterControllerTest extends AbstractControllerTest {
     public void testKpnDefaultConverter() throws IOException {
         String expectedDecodedMessage = "{\"deviceName\":\"Device A\",\"deviceType\":\"thermostat\",\"customerName\":\"customer\",\"groupName\":\"thermostat devices\",\"attributes\":{\"model\":\"Model A\",\"serialNumber\":\"SN111\"},\"telemetry\":{\"temperature\":42,\"humidity\":80}}";
         testDecoder(DEFAULT_KPN_UPLINK_DECODER, DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage);
+    }
+
+    @Test
+    public void testAwsIotDefaultEncoder() throws Exception {
+        ObjectNode metadata = JacksonUtil.newObjectNode().put("deviceName", "Thermostat-01");
+        for (String[] template : new String[][]{{"TBEL", DEFAULT_AWS_IOT_DOWNLINK_ENCODER}, {"JS", DEFAULT_AWS_IOT_DOWNLINK_JS_ENCODER}}) {
+            // Attribute update: the message is published as is to the device command topic.
+            JsonNode response = testAwsIotEncoder(template[0], template[1],
+                    "{\"temperatureUploadFrequency\":60,\"humidityUploadFrequency\":30}", "ATTRIBUTES_UPDATED", metadata);
+            assertThat(response.get("error").asText()).as(template[0]).isEmpty();
+            assertThat(response.get("output").asText()).as(template[0]).isEqualTo("{\"contentType\":\"JSON\"," +
+                    "\"data\":\"{\\\"temperatureUploadFrequency\\\":60,\\\"humidityUploadFrequency\\\":30}\"," +
+                    "\"metadata\":{\"topic\":\"tb/aws/iot/commands/Thermostat-01\"}}");
+
+            // RPC command: the method and params are kept.
+            response = testAwsIotEncoder(template[0], template[1],
+                    "{\"method\":\"setInterval\",\"params\":\"60\"}", "RPC_CALL_FROM_SERVER_TO_DEVICE", metadata);
+            assertThat(response.get("error").asText()).as(template[0]).isEmpty();
+            assertThat(response.get("output").asText()).as(template[0]).isEqualTo("{\"contentType\":\"JSON\"," +
+                    "\"data\":\"{\\\"method\\\":\\\"setInterval\\\",\\\"params\\\":\\\"60\\\"}\"," +
+                    "\"metadata\":{\"topic\":\"tb/aws/iot/commands/Thermostat-01\"}}");
+
+            // Spaces around the device name are not part of the command topic.
+            response = testAwsIotEncoder(template[0], template[1], "{\"temperatureUploadFrequency\":60}", "ATTRIBUTES_UPDATED",
+                    JacksonUtil.newObjectNode().put("deviceName", " Thermostat-01 "));
+            assertThat(response.get("error").asText()).as(template[0]).isEmpty();
+            assertThat(JacksonUtil.toJsonNode(response.get("output").asText()).get("metadata").get("topic").asText())
+                    .as(template[0]).isEqualTo("tb/aws/iot/commands/Thermostat-01");
+        }
+    }
+
+    @Test
+    public void testAwsIotDefaultEncoderRejectsMissingDeviceName() throws Exception {
+        for (String[] template : new String[][]{{"TBEL", DEFAULT_AWS_IOT_DOWNLINK_ENCODER}, {"JS", DEFAULT_AWS_IOT_DOWNLINK_JS_ENCODER}}) {
+            for (ObjectNode metadata : List.of(JacksonUtil.newObjectNode(), JacksonUtil.newObjectNode().put("deviceName", " "))) {
+                JsonNode response = testAwsIotEncoder(template[0], template[1],
+                        "{\"temperatureUploadFrequency\":60}", "ATTRIBUTES_UPDATED", metadata);
+                String description = template[0] + ", metadata: " + metadata;
+                JsonNode output = response.get("output");
+                assertThat(output == null || output.isNull() ? "" : output.asText()).as(description).isEmpty();
+                assertThat(response.get("error").asText()).as(description).contains("Message metadata has no deviceName");
+            }
+        }
+    }
+
+    private JsonNode testAwsIotEncoder(String scriptLang, String encoderFileName, String msg, String msgType, ObjectNode metadata) throws Exception {
+        byte[] bytes = IOUtils.toByteArray(ConverterControllerTest.class.getClassLoader().getResourceAsStream(encoderFileName));
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("encoder", new String(bytes, StandardCharsets.UTF_8));
+        inputParams.put("msg", msg);
+        inputParams.put("msgType", msgType);
+        inputParams.set("metadata", metadata);
+        inputParams.set("integrationMetadata", JacksonUtil.newObjectNode().put("integrationName", "Test integration"));
+        return doPost("/api/converter/testDownLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
     }
 
     public void testDecoder(String decoderFileName, String payloadExample, String expectedResult) throws IOException {

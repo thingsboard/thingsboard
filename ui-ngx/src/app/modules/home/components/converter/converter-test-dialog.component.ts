@@ -36,6 +36,7 @@ import {
   getConverterFunctionHeldPopupStyle,
   getConverterFunctionName,
   getConverterTestFunctionName,
+  IntegrationDefaultDownlinkTestMetadata,
   TestConverterInputParams,
   TestConverterResult
 } from '@shared/models/converter.models';
@@ -191,7 +192,8 @@ export class ConverterTestDialogComponent extends DialogComponent<ConverterTestD
       }
     } else {
       if (!metadata) {
-        metadata = {
+        const integrationMetadataDefaults = IntegrationDefaultDownlinkTestMetadata.get(this.data.converter.integrationType);
+        metadata = integrationMetadataDefaults ? {...integrationMetadataDefaults} : {
           deviceName: 'sensorA',
           deviceType: 'temp-sensor',
           ss_serialNumber: 'SN111'

@@ -47,7 +47,8 @@ export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string
   [IntegrationType.TTN, '/assets/converters/tbel-ttn-tti-encoder.raw'],
   [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-encoder.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/tbel-chirpstack-encoder.raw'],
-  [IntegrationType.LORIOT, '/assets/converters/tbel-loriot-encoder.raw']
+  [IntegrationType.LORIOT, '/assets/converters/tbel-loriot-encoder.raw'],
+  [IntegrationType.AWS_IOT, '/assets/converters/tbel-aws-iot-encoder.raw']
 ])
 
 export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
@@ -55,8 +56,15 @@ export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.TTN, '/assets/converters/js-ttn-tti-encoder.raw'],
   [IntegrationType.MQTT, '/assets/converters/js-mqtt-encoder.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/js-chirpstack-encoder.raw'],
-  [IntegrationType.LORIOT, '/assets/converters/js-loriot-encoder.raw']
+  [IntegrationType.LORIOT, '/assets/converters/js-loriot-encoder.raw'],
+  [IntegrationType.AWS_IOT, '/assets/converters/js-aws-iot-encoder.raw']
 ])
+
+// Default message metadata of the downlink "Test encoder function" dialog, by integration type.
+// Other types use the generic defaults of the dialog.
+export const IntegrationDefaultDownlinkTestMetadata = new Map<IntegrationType, Record<string, string>>([
+  [IntegrationType.AWS_IOT, {deviceName: 'Thermostat-01'}]
+]);
 
 export const jsDefaultConvertersUrl = new Map<ConverterType, string>([
   [ConverterType.UPLINK, '/assets/converters/js-decoder.raw' ],

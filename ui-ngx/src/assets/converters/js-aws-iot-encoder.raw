@@ -1,0 +1,25 @@
+/** Encoder **/
+// Publish the ThingsBoard message as JSON to the device command topic.
+// metadata.topic is read by the integration when Downlink topic pattern is ${topic}.
+
+// Get the device name without surrounding spaces and reject the message if it is missing or empty.
+// The rule chain adds deviceName to the metadata, for example with an originator fields node.
+var deviceName = typeof metadata.deviceName === "string" ? metadata.deviceName.trim() : "";
+if (!deviceName) {
+    throw new Error("Message metadata has no deviceName");
+}
+
+var result = {
+    // Specify the downlink payload format: JSON, TEXT, or BINARY.
+    contentType: "JSON",
+
+    // Serialize the incoming message and use it as the MQTT payload.
+    data: JSON.stringify(msg),
+
+    // Build a per-device command topic in the same namespace as the uplink.
+    metadata: {
+        topic: "tb/aws/iot/commands/" + deviceName
+    }
+};
+
+return result;
