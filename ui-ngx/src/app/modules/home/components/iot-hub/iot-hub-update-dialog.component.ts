@@ -15,6 +15,7 @@ import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
+import { iotHubErrorMessage } from './iot-hub-utils';
 
 export interface IotHubUpdateDialogData {
   installedItemId: string;
@@ -40,6 +41,14 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
   state: UpdateState = 'confirm';
   errorMessage = '';
   entityDetailsUrl: string | null = null;
+  /** A device package is reinstalled: its entities and their data are removed, as on Remove. */
+  readonly reinstalls: boolean;
+  /**
+   * Updating a solution template is a delete + reinstall of every entity it created, and unlike the other item
+   * types it is not stopped by the modified-entity check, so the tenant's own edits to those dashboards, devices
+   * and rule chains are lost. Say that instead of the generic "replace the current version" wording.
+   */
+  readonly updateDescKey: string;
 
   constructor(
     protected store: Store<AppState>,
@@ -52,6 +61,9 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
     private iotHubApiService: IotHubApiService
   ) {
     super(store, router, dialogRef);
+    this.reinstalls = data.itemType === ItemType.DEVICE;
+    this.updateDescKey = data.itemType === ItemType.SOLUTION_TEMPLATE ? 'iot-hub.update-desc-solution-template'
+      : this.reinstalls ? 'iot-hub.update-desc-device' : 'iot-hub.update-desc';
   }
 
   getTypeLabel(): string {
@@ -59,29 +71,8 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
     return key ? this.translate.instant(key) : '';
   }
 
-  /** A device package is reinstalled: its entities and their data are removed, as on Remove. */
-  get reinstalls(): boolean {
-    return this.data?.itemType === ItemType.DEVICE;
-  }
-
-  /**
-   * Updating a solution template is a delete + reinstall of every entity it created, and unlike the other item
-   * types it is not stopped by the modified-entity check, so the tenant's own edits to those dashboards, devices
-   * and rule chains are lost. Say that instead of the generic "replace the current version" wording.
-   */
-  get updateDescKey(): string {
-    switch (this.data?.itemType) {
-      case ItemType.SOLUTION_TEMPLATE:
-        return 'iot-hub.update-desc-solution-template';
-      case ItemType.DEVICE:
-        return 'iot-hub.update-desc-device';
-      default:
-        return 'iot-hub.update-desc';
-    }
-  }
-
   update(force = false): void {
-    if (this.data.itemType === ItemType.DEVICE) {
+    if (this.reinstalls) {
       // The install wizard of the new version does the update: it needs the user's input.
       this.dialogRef.close('reinstall');
       return;
@@ -121,7 +112,7 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
       },
       error: (err) => {
         this.state = 'error';
-        this.errorMessage = err?.error?.message || err?.message || this.translate.instant('iot-hub.update-error', { name: this.data.itemName });
+        this.errorMessage = iotHubErrorMessage(err, this.translate, this.translate.instant('iot-hub.update-error', { name: this.data.itemName }));
       }
     });
   }
