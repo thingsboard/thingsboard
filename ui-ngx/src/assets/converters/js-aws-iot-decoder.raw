@@ -22,9 +22,9 @@ if (n < 2 || !topicParts[n - 1].trim() || !topicParts[n - 2].trim()) {
     throw new Error("MQTT topic must contain device type and device name: " + topic);
 }
 
-// Extract the device name and type from the last two topic segments.
-var deviceName = topicParts[n - 1];
-var deviceType = topicParts[n - 2];
+// Extract the device name and type from the last two topic segments, without surrounding spaces.
+var deviceName = topicParts[n - 1].trim();
+var deviceType = topicParts[n - 2].trim();
 
 // Decode the incoming payload to a JSON object.
 var data = decodeToJson(payload);

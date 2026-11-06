@@ -850,6 +850,12 @@ public class ConverterControllerTest extends AbstractControllerTest {
             JsonNode response = testAwsIotDecoder(template[0], template[1], metadata);
             assertThat(response.get("error").asText()).as(template[0]).isEmpty();
             assertThat(response.get("output").asText()).as(template[0]).isEqualTo(expectedDecodedMessage);
+
+            // Spaces around the device type and name segments are not part of the device type and name.
+            ObjectNode metadataWithSpaces = JacksonUtil.newObjectNode().put("topic", "tb/aws/iot/telemetry/ thermostat / Thermostat-01 ");
+            response = testAwsIotDecoder(template[0], template[1], metadataWithSpaces);
+            assertThat(response.get("error").asText()).as(template[0]).isEmpty();
+            assertThat(response.get("output").asText()).as(template[0]).isEqualTo(expectedDecodedMessage);
         }
     }
 
