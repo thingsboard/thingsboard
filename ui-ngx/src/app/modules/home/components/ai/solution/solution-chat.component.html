@@ -34,6 +34,7 @@
 
 @if (isInitialEmpty()) {
   <div class="sol-hero">
+    <div class="sol-hero-scroll">
     <div class="sol-hero-in">
       <span class="tb-ai-mark m64 sol-mark" aria-hidden="true"><mat-icon>layers</mat-icon></span>
       <h1 class="sol-title">{{ 'solution-creator.what-should-it-do' | translate }}</h1>
@@ -52,6 +53,7 @@
         }
       </div>
       <p class="sol-hero-foot">{{ 'solution-creator.limits' | translate }}</p>
+    </div>
     </div>
   </div>
 } @else if (creatorStep()) {

@@ -134,11 +134,7 @@
   flex: 1;
   min-height: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px 56px;
-  box-sizing: border-box;
-  overflow: auto;
+  overflow: hidden;
   contain: paint;
   background: var(--ai-field-wash);
 
@@ -188,6 +184,19 @@
 @keyframes sol-dots {
   from { transform: translate(-5px, -3px); }
   to { transform: translate(5px, 4px); }
+}
+
+.sol-hero-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  padding: 48px 24px 56px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sol-hero-in {
