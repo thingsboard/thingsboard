@@ -1,0 +1,28 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="sol-json-block">
+  <div class="sol-json-head">
+    <span class="sol-json-label">{{ fileName() }}</span>
+    <button type="button" class="sol-json-tool" [class.done]="copied()" (click)="copy()"
+            [matTooltip]="(copied() ? 'ai-assistant.copied' : 'ai-assistant.copy') | translate" matTooltipPosition="above"
+            [attr.aria-label]="'ai-assistant.copy' | translate">
+      <mat-icon>{{ copied() ? 'check' : 'content_copy' }}</mat-icon>
+    </button>
+    <button type="button" class="sol-json-tool labeled" (click)="download()"
+            [attr.aria-label]="'solution-creator.pane.download-file' | translate: {name: fileName()}">
+      <mat-icon>download</mat-icon>{{ 'solution-creator.pane.download' | translate }}
+    </button>
+    <button type="button" class="sol-json-tool labeled" [attr.aria-pressed]="editing()" (click)="toggleEdit()">
+      <mat-icon>{{ editing() ? 'visibility' : 'edit' }}</mat-icon>{{ (editing() ? 'solution-creator.pane.view-json' : 'action.edit') | translate }}
+    </button>
+  </div>
+  @if (editing()) {
+    <tb-json-object-edit class="sol-json-editor" [fillHeight]="true" [formControl]="control"></tb-json-object-edit>
+  } @else {
+    <pre class="sol-json-code"><code #code class="lang-json"></code></pre>
+  }
+</div>

@@ -34,13 +34,14 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AiSolutionsService } from '@core/services/ai-solutions.service';
+import { AuthService } from '@core/auth/auth.service';
 import {
   SolutionInfoDialogComponent,
   SolutionInfoDialogData
 } from '@home/components/ai/solution/solution-info/solution-info-dialog.component';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
-import { deepClone, isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
-import { FormControl } from '@angular/forms';
+import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+import { SolutionJsonComponent } from '@home/components/ai/solution/pane/solution-json.component';
 import { AiRenameDialogComponent, AiRenameDialogData } from '@home/components/ai/ai-rename-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -58,6 +59,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   private static readonly PANE_MIN = 360;
   private static readonly CHAT_MIN = 420;
   private static readonly PANE_WIDTH_KEY = 'tbSolutionPaneWidth';
+  private static readonly CONNECTIVITY_GUIDE = 'https://thingsboard.io/docs/getting-started-guides/connectivity/';
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
   @ViewChild(AiChatMessagesComponent) chatMessages: AiChatMessagesComponent;
@@ -101,7 +103,27 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   json = signal(false);
 
-  jsonControl = new FormControl<unknown>(null);
+  jsonEditing = signal(false);
+
+  uninstalledAt = signal<number | null>(null);
+
+  mainUser = computed<{id: string; name: string} | null>(() => {
+    const result = this.info()?.metadata?.installResult;
+    const main = result?.mainDashboardId?.id;
+    const dashboard = main ? result?.entityResults?.[EntityType.DASHBOARD]?.find(entry => entry.id?.id === main) : undefined;
+    const userId = dashboard?.additionalData?.userId;
+    if (!userId) {
+      return null;
+    }
+    const user = result.entityResults?.[EntityType.USER]?.find(entry => entry.id?.id === userId);
+    return {id: userId, name: user?.additionalData?.name ?? ''};
+  });
+
+  jsonValue = computed(() => this.currentView() === 'dashboards'
+    ? this.info()?.data?.dashboardsOverview
+    : this.info()?.data?.solutionDescriptor);
+
+  @ViewChild('jsonView') jsonView: SolutionJsonComponent;
 
   paneOpen = signal(typeof window === 'undefined' || window.innerWidth >= SolutionChatComponent.NARROW_WIDTH);
 
@@ -326,7 +348,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
               private dialogService: DialogService,
               private translate: TranslateService,
               private sanitizer: DomSanitizer,
-              private aiSolutions: AiSolutionsService) {
+              private aiSolutions: AiSolutionsService,
+              private authService: AuthService) {
     super();
 
     toObservable(this.activeStepIndex).pipe(
@@ -439,6 +462,22 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       },
       error: err => this.showErrorMessage(err)
     });
+  }
+
+  viewAsMainUser(): void {
+    const user = this.mainUser();
+    const main = this.info()?.metadata?.installResult?.mainDashboardId?.id;
+    if (!user || !main) {
+      return;
+    }
+    const tenantUser = !this.info()?.metadata?.installResult?.entityResults?.[EntityType.USER]
+      ?.find(entry => entry.id?.id === user.id)?.additionalData?.customer;
+    this.authService.redirectUrl = tenantUser ? `/dashboards/all/${main}` : `/dashboards/${main}`;
+    this.authService.loginAsUser(user.id).subscribe(() => {});
+  }
+
+  connectDevices(): void {
+    window.open(SolutionChatComponent.CONNECTIVITY_GUIDE, '_blank', 'noopener');
   }
 
   fillExample(key: string): void {
@@ -568,6 +607,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         ).subscribe((value) => {
           this.solutionInfo = value;
           this.aiSolutions.update(this.solutionId, {installed: false});
+          this.uninstalledAt.set(Date.now());
+          if (this.creatorStep() === 'result') {
+            this.back();
+          }
         });
       }
     })
@@ -801,6 +844,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private resetSolution(): void {
     this.clearWork();
+    this.uninstalledAt.set(null);
     this.cancelPending$.next();
     this.isReadyStep.set(false);
     this.skipInterviewAllowed.set(false);
@@ -915,18 +959,13 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   toggleJson(): void {
-    const on = !this.json();
-    if (on) {
-      const data = this.currentView() === 'dashboards' ? this.info()?.data?.dashboardsOverview : this.info()?.data?.solutionDescriptor;
-      this.jsonControl.setValue(deepClone(data));
-      this.jsonControl.markAsPristine();
-    }
-    this.json.set(on);
+    this.jsonEditing.set(false);
+    this.json.set(!this.json());
   }
 
   applyJson(): void {
-    const value = this.jsonControl.value;
-    this.jsonControl.markAsPristine();
+    const value = this.jsonView?.edited();
+    this.jsonView?.done();
     if (this.currentView() === 'dashboards') {
       this.updatedDashboardOverview(value as DashboardsOverview[]);
     } else {
@@ -941,6 +980,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   closePane(): void {
     this.paneOpen.set(false);
     this.json.set(false);
+    this.jsonEditing.set(false);
   }
 
   startResize(event: PointerEvent): void {

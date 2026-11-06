@@ -15,6 +15,7 @@ import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { SolutionOverviewComponent } from '@home/components/ai/solution/pane/solution-overview.component';
 import { SolutionDashboardsComponent } from '@home/components/ai/solution/pane/solution-dashboards.component';
 import { SolutionInstalledComponent } from '@home/components/ai/solution/pane/solution-installed.component';
+import { SolutionJsonComponent } from '@home/components/ai/solution/pane/solution-json.component';
 import { AiModule } from '@home/components/ai/ai.module';
 
 @NgModule({
@@ -23,6 +24,7 @@ import { AiModule } from '@home/components/ai/ai.module';
     SolutionOverviewComponent,
     SolutionDashboardsComponent,
     SolutionInstalledComponent,
+    SolutionJsonComponent,
     SolutionInfoDialogComponent,
     IssuesPopoverComponent
   ],

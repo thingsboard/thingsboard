@@ -226,6 +226,10 @@ function openQuoteAfter(line: string, quote: string | null): string | null {
   return quote;
 }
 
+export function highlightCode(lang: string, text: string): HTMLElement[] {
+  return lines(lang, text);
+}
+
 function lines(lang: string, text: string): HTMLElement[] {
   const state: ShellState = {command: true, quote: null};
   const highlight = lineHighlighter(lang, state);

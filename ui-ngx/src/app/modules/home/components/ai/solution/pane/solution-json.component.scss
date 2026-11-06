@@ -1,0 +1,124 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sol-json-block {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--tb-code-bg);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.sol-json-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 4px 0 12px;
+  border-bottom: 1px solid var(--tb-code-line);
+  font: 500 12px/16px var(--tb-font);
+  letter-spacing: .2px;
+  color: var(--tb-code-head-fg);
+}
+
+.sol-json-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.sol-json-tool {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: rgba(255, 255, 255, 0.72);
+  font: 500 12px/16px var(--tb-font);
+  cursor: pointer;
+
+  &.labeled {
+    padding: 0 8px 0 6px;
+  }
+
+  .mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: inherit;
+  }
+
+  &:hover, &[aria-pressed="true"] {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+
+  &.done {
+    color: var(--hl-cmd);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 1px;
+  }
+}
+
+.sol-json-code {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 12px 16px 14px;
+  overflow: auto;
+  font: 13px/20px var(--tb-mono);
+  color: var(--tb-code-fg);
+  white-space: pre;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+
+  code {
+    font: inherit;
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  ::ng-deep {
+    .tb-line {
+      display: block;
+      min-height: 20px;
+    }
+
+    .hl-str { color: var(--hl-str); }
+    .hl-num, .hl-kw { color: var(--hl-num); }
+    .hl-key { color: var(--hl-key); }
+    .hl-op, .hl-com { color: var(--hl-com); }
+    .hl-bool { color: var(--hl-bool); }
+    .hl-val { color: var(--tb-code-fg); }
+  }
+}
+
+.sol-json-editor {
+  flex: 1;
+  min-height: 0;
+  display: block;
+  padding: 8px;
+  background: var(--tb-surface);
+}

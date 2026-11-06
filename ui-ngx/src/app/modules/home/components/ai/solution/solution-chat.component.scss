@@ -335,6 +335,14 @@
   }
 }
 
+.sol-hint {
+  margin-top: 14px;
+}
+
+.sol-closing .sol-chips {
+  margin-top: 14px;
+}
+
 .sol-work {
   margin-top: var(--chat-turn-gap, 28px);
 }
@@ -618,10 +626,7 @@
 }
 
 .sol-json {
-  display: block;
   min-height: 0;
-  padding: 8px 12px;
-  box-sizing: border-box;
 }
 
 .sol-loading {
@@ -695,6 +700,9 @@
 .sol-foot-note {
   flex: 1;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: var(--chat-caption);
   line-height: var(--chat-caption-lh);
   color: var(--k-faint);

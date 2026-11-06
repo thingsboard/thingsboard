@@ -1316,6 +1316,30 @@ body.tb-ai-resizing, body.tb-ai-resizing * {
   user-select: none;
 }
 
+.k-hint {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+
+  > .mat-icon {
+    flex: none;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    margin-top: 1px;
+    color: var(--tb-ink-54);
+  }
+
+  b {
+    font-weight: 500;
+    color: var(--tb-ink-76);
+  }
+}
+
 .k-start {
   display: flex;
   align-items: center;

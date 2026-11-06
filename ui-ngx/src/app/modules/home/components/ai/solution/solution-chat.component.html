@@ -85,6 +85,38 @@
               @if (installed()) {
                 <p class="sol-note">{{ 'solution-creator.closing-simulated' | translate }}</p>
               }
+              <div class="k-chips sol-chips">
+                @if (installed() && mainUser(); as user) {
+                  <button type="button" class="ob-chip" (click)="viewAsMainUser()">
+                    <mat-icon fontSet="material-icons-round" aria-hidden="true">person</mat-icon>
+                    {{ 'solution-creator.view-as-name' | translate: {name: user.name} }}
+                  </button>
+                }
+                <button type="button" class="ob-chip" (click)="editDesign()">
+                  <mat-icon fontSet="material-icons-round" aria-hidden="true">edit</mat-icon>{{ 'ai-assistant.edit-design' | translate }}
+                </button>
+                @if (installed()) {
+                  <button type="button" class="ob-chip" (click)="connectDevices()">
+                    <mat-icon fontSet="material-icons-round" aria-hidden="true">memory</mat-icon>{{ 'solution-creator.connect-devices' | translate }}
+                  </button>
+                  <button type="button" class="ob-chip" (click)="uninstallSolution()">
+                    <mat-icon fontSet="material-icons-round" aria-hidden="true">delete_sweep</mat-icon>{{ 'solution-creator.uninstall-solution' | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          @if (creatorStep() === 'chat' && uninstalledAt(); as at) {
+            <div class="k-hint note sol-hint">
+              <mat-icon fontSet="material-icons-round" aria-hidden="true">info_outline</mat-icon>
+              <span><b>{{ 'solution-creator.uninstalled-at' | translate: {time: (at | date:'HH:mm')} }}</b>
+                {{ 'solution-creator.uninstalled-note' | translate }}</span>
+            </div>
+          } @else if (creatorStep() === 'chat' && installed()) {
+            <div class="k-hint heads-up sol-hint">
+              <mat-icon fontSet="material-icons-round" aria-hidden="true">outlined_flag</mat-icon>
+              <span><b>{{ 'solution-creator.installed-already' | translate }}</b>
+                {{ 'solution-creator.installed-already-note' | translate }}</span>
             </div>
           }
           @if (work(); as current) {
@@ -163,7 +195,9 @@
               <p class="sol-loading-est">{{ ('solution-creator.pane.estimate-' + making()) | translate }}</p>
             </div>
           } @else if (json()) {
-            <tb-json-object-edit class="sol-json" [fillHeight]="true" [formControl]="jsonControl"></tb-json-object-edit>
+            <tb-solution-json #jsonView class="sol-json" [value]="jsonValue()"
+                              [fileName]="currentView() === 'dashboards' ? 'dashboards.json' : 'solution.json'"
+                              (editingChange)="jsonEditing.set($event)"></tb-solution-json>
           } @else {
             @switch (currentView()) {
               @case ('overview') {
@@ -182,9 +216,10 @@
         <footer class="sol-pane-foot">
           @if (making()) {
             <span class="sol-foot-note">{{ work()?.words }}</span>
-          } @else if (json()) {
+          } @else if (json() && jsonEditing()) {
             <span class="sol-foot-note">{{ 'solution-creator.pane.json-note' | translate }}</span>
-            <button mat-flat-button type="button" [disabled]="jsonControl.pristine" (click)="applyJson()">{{ 'action.apply' | translate }}</button>
+            <button mat-button type="button" (click)="jsonView?.done()">{{ 'action.cancel' | translate }}</button>
+            <button mat-flat-button type="button" [disabled]="!jsonView?.dirty" (click)="applyJson()">{{ 'action.apply' | translate }}</button>
           } @else if (currentView() === 'solution' || creatorStep() === 'result') {
             @if (installed()) {
               <button mat-button type="button" class="warn" (click)="uninstallSolution()">
@@ -210,15 +245,15 @@
               </button>
             }
           } @else if (currentView() === 'overview') {
-            <span class="sol-spacer"></span>
+            <span class="sol-foot-note">{{ 'solution-creator.pane.estimate-dashboards' | translate }}</span>
             <button mat-flat-button type="button" [disabled]="loading()" (click)="nextStep()">
               {{ 'solution-creator.next-dashboards' | translate }}
             </button>
           } @else {
+            <span class="sol-foot-note">{{ 'solution-creator.pane.estimate-solution' | translate }}</span>
             <button mat-button type="button" [disabled]="loading()" (click)="back()">
               <mat-icon fontSet="material-icons-round">arrow_back</mat-icon>{{ 'action.back' | translate }}
             </button>
-            <span class="sol-spacer"></span>
             <button mat-button type="button" [disabled]="loading() || !messages().length" (click)="startOver()">
               <mat-icon fontSet="material-icons-round">refresh</mat-icon>{{ 'solution-creator.generate-again' | translate }}
             </button>
