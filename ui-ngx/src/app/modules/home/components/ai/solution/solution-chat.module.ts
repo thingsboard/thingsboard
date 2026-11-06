@@ -6,33 +6,23 @@ import { HomeComponentsModule } from '@home/components/home-components.module';
 import { NgModule } from '@angular/core';
 import { SolutionChatComponent } from '@home/components/ai/solution/solution-chat.component';
 import {
-  SolutionCreatorOverviewEntitiesComponent
-} from '@home/components/ai/solution/overview/solution-creator-overview-entities.component';
-import { AlarmInfoPanelComponent } from '@home/components/ai/solution/overview/alarm-info-panel.component';
-import { EntityInfoPanelComponent } from '@home/components/ai/solution/overview/entity-info-panel.component';
-import { IamInfoPanelComponent } from '@home/components/ai/solution/overview/iam-info-panel.component';
-import { MetricInfoPanelComponent } from '@home/components/ai/solution/overview/metric-info-panel.component';
-import {
-  SolutionCreatorOverviewDashboardComponent
-} from '@home/components/ai/solution/overview/solution-creator-overview-dashboard.component';
-import {
   SolutionInfoDialogComponent
 } from '@home/components/ai/solution/solution-info/solution-info-dialog.component';
 import {
   IssuesPopoverComponent
 } from '@home/components/ai/solution/solution-info/issues-popover.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
+import { SolutionOverviewComponent } from '@home/components/ai/solution/pane/solution-overview.component';
+import { SolutionDashboardsComponent } from '@home/components/ai/solution/pane/solution-dashboards.component';
+import { SolutionInstalledComponent } from '@home/components/ai/solution/pane/solution-installed.component';
 import { AiModule } from '@home/components/ai/ai.module';
 
 @NgModule({
   declarations: [
     SolutionChatComponent,
-    SolutionCreatorOverviewEntitiesComponent,
-    AlarmInfoPanelComponent,
-    EntityInfoPanelComponent,
-    MetricInfoPanelComponent,
-    IamInfoPanelComponent,
-    SolutionCreatorOverviewDashboardComponent,
+    SolutionOverviewComponent,
+    SolutionDashboardsComponent,
+    SolutionInstalledComponent,
     SolutionInfoDialogComponent,
     IssuesPopoverComponent
   ],

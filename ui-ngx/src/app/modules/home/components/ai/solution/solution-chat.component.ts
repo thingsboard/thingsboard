@@ -39,9 +39,12 @@ import {
   SolutionInfoDialogData
 } from '@home/components/ai/solution/solution-info/solution-info-dialog.component';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
-import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+import { deepClone, isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+import { FormControl } from '@angular/forms';
 import { AiRenameDialogComponent, AiRenameDialogData } from '@home/components/ai/ai-rename-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';
+
+export type SolutionView = 'overview' | 'dashboards' | 'solution';
 
 @Component({
   selector: 'tb-solution-chat',
@@ -50,6 +53,11 @@ import { EntityId } from '@shared/models/id/entity-id';
   standalone: false
 })
 export class SolutionChatComponent extends PageComponent implements OnInit, OnDestroy {
+
+  private static readonly NARROW_WIDTH = 1100;
+  private static readonly PANE_MIN = 360;
+  private static readonly CHAT_MIN = 420;
+  private static readonly PANE_WIDTH_KEY = 'tbSolutionPaneWidth';
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
   @ViewChild(AiChatMessagesComponent) chatMessages: AiChatMessagesComponent;
@@ -85,7 +93,67 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     ? 'running'
     : this.isReadyStep() && this.creatorStep() === 'chat' && !this.built() ? 'needs' : null);
 
-  showPane = computed(() => this.creatorStep() === 'result' || (this.isReadyStep() && !this.isGenerating()));
+  info = signal<SolutionCreatorInfo | null>(null);
+
+  making = signal<SolutionView | null>(null);
+
+  pickedView = signal<{view: SolutionView; phase: string} | null>(null);
+
+  json = signal(false);
+
+  jsonControl = new FormControl<unknown>(null);
+
+  paneOpen = signal(typeof window === 'undefined' || window.innerWidth >= SolutionChatComponent.NARROW_WIDTH);
+
+  paneWidth = signal<number | null>(this.storedPaneWidth());
+
+  phase = computed(() => `${this.creatorStep()}:${this.solutionStep()}`);
+
+  views = computed<Array<{id: SolutionView; icon: string; state: 'have' | 'working' | 'next'}>>(() => {
+    const info = this.info();
+    const states = info?.states;
+    const have: Record<SolutionView, boolean> = {
+      overview: !!info?.data?.solutionDescriptor && states?.[SolutionStep.INITIAL_CONFIGURATION]?.status === SolutionStepStatus.READY,
+      dashboards: !!info?.data?.dashboardsOverview?.length,
+      solution: !!info?.metadata?.built
+    };
+    const icons: Record<SolutionView, string> = {overview: 'account_tree', dashboards: 'dashboard', solution: 'layers'};
+    return (['overview', 'dashboards', 'solution'] as SolutionView[]).map(id => ({
+      id,
+      icon: icons[id],
+      state: this.making() === id ? 'working' : have[id] ? 'have' : 'next'
+    }));
+  });
+
+  currentView = computed<SolutionView | null>(() => {
+    const views = this.views();
+    const usable = (view: SolutionView) => views.find(item => item.id === view)?.state !== 'next';
+    const picked = this.pickedView();
+    if (picked && picked.phase === this.phase() && usable(picked.view)) {
+      return picked.view;
+    }
+    if (this.making()) {
+      return this.making();
+    }
+    const preferred: SolutionView = this.creatorStep() === 'result' ? 'solution'
+      : this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION ? 'dashboards' : 'overview';
+    if (usable(preferred)) {
+      return preferred;
+    }
+    return [...views].reverse().find(item => item.state !== 'next')?.id ?? null;
+  });
+
+  showPane = computed(() => !!this.currentView());
+
+  jsonAvailable = computed(() => !this.making() && (this.currentView() === 'overview' || this.currentView() === 'dashboards'));
+
+  trayNote = computed(() => {
+    const making = this.making();
+    if (making) {
+      return this.translate.instant(making === 'solution' ? 'solution-creator.pane.creating' : 'solution-creator.pane.designing');
+    }
+    return this.translate.instant('solution-creator.pane.view-' + this.currentView());
+  });
 
   showMoreExamples = signal(false);
 
@@ -236,6 +304,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private set solutionInfo(value: SolutionCreatorInfo) {
     this._solutionInfo = value;
+    this.info.set(value ? {...value} : null);
     this.title.set(value?.data?.solutionTitle ?? '');
     this.built.set(!!value?.metadata?.built);
     this.installed.set(!!value?.metadata?.installed);
@@ -814,6 +883,11 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     }
 
     const creating = messages[0]?.text === 'solution-creator.step-loading-creating-entities';
+    this.making.set(creating ? 'solution' : this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION ? 'dashboards' : 'overview');
+    this.json.set(false);
+    if (window.innerWidth >= SolutionChatComponent.NARROW_WIDTH) {
+      this.paneOpen.set(true);
+    }
     return this.startWork(messages, creating ? 'install' : 'gen', estimateWaitTime);
   }
 
@@ -832,6 +906,126 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.workTimers.forEach(timer => clearTimeout(timer));
     this.workTimers = [];
     this.work.set(null);
+    this.making.set(null);
+  }
+
+  pickView(view: SolutionView): void {
+    this.pickedView.set({view, phase: this.phase()});
+    this.json.set(false);
+  }
+
+  toggleJson(): void {
+    const on = !this.json();
+    if (on) {
+      const data = this.currentView() === 'dashboards' ? this.info()?.data?.dashboardsOverview : this.info()?.data?.solutionDescriptor;
+      this.jsonControl.setValue(deepClone(data));
+      this.jsonControl.markAsPristine();
+    }
+    this.json.set(on);
+  }
+
+  applyJson(): void {
+    const value = this.jsonControl.value;
+    this.jsonControl.markAsPristine();
+    if (this.currentView() === 'dashboards') {
+      this.updatedDashboardOverview(value as DashboardsOverview[]);
+    } else {
+      this.updatedSolutionDescriptor(value as SolutionDescriptor);
+    }
+  }
+
+  openPane(): void {
+    this.paneOpen.set(true);
+  }
+
+  closePane(): void {
+    this.paneOpen.set(false);
+    this.json.set(false);
+  }
+
+  startResize(event: PointerEvent): void {
+    event.preventDefault();
+    const edge = event.target as HTMLElement;
+    const cols = this.elementRef.nativeElement.querySelector('.sol-cols') as HTMLElement;
+    const pane = this.elementRef.nativeElement.querySelector('.sol-pane') as HTMLElement;
+    if (!cols || !pane) {
+      return;
+    }
+    const startX = event.clientX;
+    const startWidth = pane.getBoundingClientRect().width;
+    const max = cols.getBoundingClientRect().width - SolutionChatComponent.CHAT_MIN;
+    edge.setPointerCapture(event.pointerId);
+    edge.classList.add('held');
+    let closing = false;
+    const move = (e: PointerEvent) => {
+      const width = startWidth + (startX - e.clientX);
+      closing = width < SolutionChatComponent.PANE_MIN - 72;
+      pane.classList.toggle('closing', closing);
+      this.paneWidth.set(Math.round(Math.min(max, Math.max(SolutionChatComponent.PANE_MIN, width))));
+    };
+    const up = () => {
+      edge.removeEventListener('pointermove', move);
+      edge.removeEventListener('pointerup', up);
+      edge.removeEventListener('pointercancel', up);
+      edge.classList.remove('held');
+      pane.classList.remove('closing');
+      if (closing) {
+        this.paneWidth.set(startWidth);
+        this.closePane();
+      } else {
+        this.storePaneWidth();
+      }
+    };
+    edge.addEventListener('pointermove', move);
+    edge.addEventListener('pointerup', up);
+    edge.addEventListener('pointercancel', up);
+  }
+
+  resetPaneWidth(): void {
+    this.paneWidth.set(null);
+    this.storePaneWidth();
+  }
+
+  onEdgeKey(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      this.resetPaneWidth();
+      return;
+    }
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
+    event.preventDefault();
+    const pane = this.elementRef.nativeElement.querySelector('.sol-pane') as HTMLElement;
+    const cols = this.elementRef.nativeElement.querySelector('.sol-cols') as HTMLElement;
+    if (!pane || !cols) {
+      return;
+    }
+    const step = event.shiftKey ? 64 : 16;
+    const width = pane.getBoundingClientRect().width + (event.key === 'ArrowLeft' ? step : -step);
+    const max = cols.getBoundingClientRect().width - SolutionChatComponent.CHAT_MIN;
+    this.paneWidth.set(Math.round(Math.min(max, Math.max(SolutionChatComponent.PANE_MIN, width))));
+    this.storePaneWidth();
+  }
+
+  private storedPaneWidth(): number | null {
+    try {
+      return Number(localStorage.getItem(SolutionChatComponent.PANE_WIDTH_KEY)) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private storePaneWidth(): void {
+    try {
+      const width = this.paneWidth();
+      if (width) {
+        localStorage.setItem(SolutionChatComponent.PANE_WIDTH_KEY, String(width));
+      } else {
+        localStorage.removeItem(SolutionChatComponent.PANE_WIDTH_KEY);
+      }
+    } catch {
+      return;
+    }
   }
 
   toggleMoreExamples(): void {

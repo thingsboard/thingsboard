@@ -1,0 +1,268 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="sol-paged" [class.wide]="wide()">
+  <div class="sol-tabs" role="tablist" [attr.aria-label]="'solution-creator.pane.sections' | translate">
+    @for (section of sections(); track section.id) {
+      <button type="button" role="tab" [attr.aria-selected]="active() === section.id" (click)="goTo(section.id)">
+        {{ section.title | translate }}
+      </button>
+    }
+  </div>
+  <div class="sol-infos">
+    <div class="sol-sec-head" data-sec="profiles">
+      <h3>{{ 'solution-creator.pane.profiles' | translate }}</h3>
+      <div class="art-seg" role="group" [attr.aria-label]="'solution-creator.pane.list-or-schema' | translate">
+        <button type="button" [attr.aria-pressed]="mode() === 'list'" (click)="setMode('list')">{{ 'solution-creator.pane.list' | translate }}</button>
+        <button type="button" [attr.aria-pressed]="mode() === 'schema'" (click)="setMode('schema')">{{ 'solution-creator.pane.schema' | translate }}</button>
+      </div>
+    </div>
+    @if (mode() === 'list') {
+      <table class="sol-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'solution-creator.pane.name' | translate }}</th>
+            <th scope="col">{{ 'solution-creator.pane.type' | translate }}</th>
+            <th scope="col">{{ 'solution-creator.pane.data' | translate }}</th>
+            <th scope="col" class="chev"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (profile of profiles; track profile.name + profile.entityType) {
+            @let key = 'profile:' + profile.entityType + ':' + profile.name;
+            <tr class="clickable" [class.on]="open() === key" (click)="toggle(key)" [attr.aria-expanded]="open() === key">
+              <td class="wrap">
+                <span class="sol-name" [attr.data-pal]="kind(profile).palette">
+                  <mat-icon aria-hidden="true">{{ kind(profile).icon }}</mat-icon><b>{{ profile.name }}</b>
+                </span>
+              </td>
+              <td class="secondary nowrap">{{ typeLabel(profile) }}</td>
+              <td class="secondary nowrap">{{ dataOf(profile) }}</td>
+              <td class="chev"><mat-icon class="sol-chev" [class.open]="open() === key">expand_more</mat-icon></td>
+            </tr>
+            @if (open() === key) {
+              <tr class="sol-exp">
+                <td colspan="4">
+                  <ng-container *ngTemplateOutlet="profileDetail; context: {$implicit: profile}"></ng-container>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div #graphContainer class="sol-schema">
+        <ngx-graph
+          class="sol-graph"
+          [links]="links"
+          [nodes]="nodes"
+          [clusters]="clusters"
+          layout="dagreCluster"
+          [layoutSettings]="{ orientation: 'TB', nodePadding: 32, edgePadding: 80, rankPadding: 72 }"
+          [draggingEnabled]="false"
+          [panningEnabled]="true"
+          [enableZoom]="true"
+          [autoCenter]="true"
+          [minZoomLevel]="0.5">
+          <ng-template #defsTemplate>
+            <svg:marker id="sol-arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+              <svg:path d="M0,-5L10,0L0,5" class="sol-arrow-head" />
+            </svg:marker>
+          </ng-template>
+          <ng-template #clusterTemplate let-cluster>
+            <svg:g class="sol-band" [class.tenant]="cluster.data?.tone === 'tenant'" style="pointer-events: none">
+              <svg:rect rx="10" ry="10" [attr.width]="cluster.dimension.width" [attr.height]="cluster.dimension.height" />
+              <svg:text x="12" y="18" class="sol-band-title">{{ cluster.label }}</svg:text>
+            </svg:g>
+          </ng-template>
+          <ng-template #nodeTemplate let-node>
+            <svg:foreignObject [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" style="overflow: hidden">
+              <button xmlns="http://www.w3.org/1999/xhtml" type="button" class="sol-box"
+                      [attr.data-pal]="kind(node.data?.entity).palette"
+                      [class.on]="open() === 'schema:' + node.label"
+                      [style.width.px]="node.dimension.width" [style.height.px]="node.dimension.height"
+                      (click)="openFromSchema(node)">
+                <b>{{ node.label }}</b>
+                <span>{{ typeLabel(node.data?.entity) }}</span>
+              </button>
+            </svg:foreignObject>
+          </ng-template>
+          <ng-template #linkTemplate let-link>
+            <svg:g class="sol-edge">
+              <svg:path class="line" stroke-width="1.5" marker-end="url(#sol-arrow)"></svg:path>
+              @if (link.label) {
+                <svg:foreignObject width="120" height="24" [attr.x]="(link.midPoint?.x - 60)" [attr.y]="(link.midPoint?.y - 12)">
+                  <div xmlns="http://www.w3.org/1999/xhtml" class="sol-edge-label">{{ link.label }}</div>
+                </svg:foreignObject>
+              }
+            </svg:g>
+          </ng-template>
+        </ngx-graph>
+      </div>
+      @if (schemaEntity(); as entity) {
+        <div class="sol-schema-detail">
+          <div class="sol-name" [attr.data-pal]="kind(entity).palette">
+            <mat-icon aria-hidden="true">{{ kind(entity).icon }}</mat-icon><b>{{ entity.name }}</b>
+          </div>
+          <ng-container *ngTemplateOutlet="profileDetail; context: {$implicit: entity}"></ng-container>
+        </div>
+      }
+    }
+
+    <div class="sol-sec-head" data-sec="roles"><h3>{{ 'solution-creator.pane.roles' | translate }}</h3></div>
+    @if (descriptor?.iam?.length) {
+      <table class="sol-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'solution-creator.pane.role' | translate }}</th>
+            <th scope="col">{{ 'solution-creator.pane.operations' | translate }}</th>
+            <th scope="col">{{ 'solution-creator.pane.on' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (iam of descriptor.iam; track iam.name) {
+            <tr>
+              <td class="wrap">
+                <span class="sol-name" data-pal="people"><mat-icon aria-hidden="true">account_circle</mat-icon><b>{{ iam.name }}</b></span>
+              </td>
+              <td>
+                @for (operation of operations(iam); track operation) {
+                  <span class="sol-op">{{ ('solution-creator.pane.op-' + operation) | translate }}</span>
+                } @empty {
+                  <span class="faint">{{ iam.permissions || '—' }}</span>
+                }
+              </td>
+              <td class="secondary wrap">{{ iam.description }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="sol-empty">{{ 'solution-creator.pane.no-roles' | translate }}</p>
+    }
+
+    <div class="sol-sec-head" data-sec="metrics"><h3>{{ 'solution-creator.pane.calculated-fields' | translate }}</h3></div>
+    @if (descriptor?.metrics?.length) {
+      <table class="sol-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'solution-creator.pane.name' | translate }}</th>
+            <th scope="col">{{ 'solution-creator.pane.calculates' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (metric of descriptor.metrics; track metric.calculatedFieldName) {
+            <tr>
+              <td class="wrap">
+                <span class="sol-name" data-pal="path">
+                  <mat-icon aria-hidden="true">functions</mat-icon>
+                  <span><b>{{ metric.calculatedFieldName }}</b><small>{{ metric.profileName }}</small></span>
+                </span>
+              </td>
+              <td class="secondary wrap">{{ metric.calculation }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="sol-empty">{{ 'solution-creator.pane.no-calculated-fields' | translate }}</p>
+    }
+
+    <div class="sol-sec-head" data-sec="alarms"><h3>{{ 'solution-creator.pane.alarms' | translate }}</h3></div>
+    @if (descriptor?.alarms?.length) {
+      <table class="sol-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'solution-creator.pane.name' | translate }}</th>
+            <th scope="col">{{ 'solution-creator.pane.severity' | translate }}</th>
+            <th scope="col" class="chev"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (alarm of descriptor.alarms; track alarm.alarmName) {
+            @let key = alarmKey(alarm);
+            <tr class="clickable" [class.on]="open() === key" (click)="toggle(key)" [attr.aria-expanded]="open() === key">
+              <td class="wrap">
+                <span class="sol-name" data-pal="rule">
+                  <mat-icon aria-hidden="true">rule</mat-icon>
+                  <span><b>{{ alarm.alarmName }}</b><small>{{ alarm.condition }}</small></span>
+                </span>
+              </td>
+              <td class="nowrap">
+                @for (severity of alarm.severities; track severity) {
+                  <span class="sol-sev" [style.color]="severityColor(severity)"><i></i>{{ severityLabel(severity) | translate }}</span>
+                }
+              </td>
+              <td class="chev"><mat-icon class="sol-chev" [class.open]="open() === key">expand_more</mat-icon></td>
+            </tr>
+            @if (open() === key) {
+              <tr class="sol-exp">
+                <td colspan="3">
+                  <dl class="sol-facts">
+                    <dt>{{ 'solution-creator.pane.profiles' | translate }}</dt>
+                    <dd>{{ alarm.profileNames?.join(', ') }}</dd>
+                    <dt>{{ 'solution-creator.pane.condition' | translate }}</dt>
+                    <dd>{{ alarm.condition }}</dd>
+                  </dl>
+                  <button mat-button type="button" class="sol-remove" (click)="removeAlarm(alarm)">
+                    <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>{{ 'solution-creator.pane.remove' | translate }}
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="sol-empty">{{ 'solution-creator.pane.no-alarms' | translate }}</p>
+    }
+  </div>
+</div>
+
+<ng-template #profileDetail let-profile>
+  <dl class="sol-facts">
+    @if (profile.scope) {
+      <dt>{{ 'solution-creator.pane.scope' | translate }}</dt>
+      <dd>{{ profile.scope }}</dd>
+    }
+    @if (profile.description) {
+      <dt>{{ 'solution-creator.pane.description' | translate }}</dt>
+      <dd>{{ profile.description }}</dd>
+    }
+  </dl>
+  <div class="art-seg sol-keys-seg" role="group">
+    <button type="button" [attr.aria-pressed]="keysOf() === 'telemetry'" (click)="keysOf.set('telemetry')">{{ 'solution-creator.pane.telemetry' | translate }}</button>
+    <button type="button" [attr.aria-pressed]="keysOf() === 'relations'" (click)="keysOf.set('relations')">{{ 'solution-creator.pane.relations-tab' | translate }}</button>
+  </div>
+  @if (keysOf() === 'telemetry') {
+    <ul class="sol-keys">
+      @for (item of profile.telemetry ?? []; track item.key) {
+        <li>
+          <code class="sol-key">{{ item.key }}</code>
+          <span class="sol-key-type">{{ (item.telemetryType === 'ATTRIBUTE' ? 'solution-creator.pane.attribute' : 'solution-creator.pane.time-series') | translate }}</span>
+          @if (item.calculatedFieldName) {
+            <span class="sol-key-fx" [matTooltip]="item.calculatedFieldName">ƒx</span>
+          }
+          <span class="sol-key-dt">{{ item.dataType }}{{ item.units ? ' · ' + item.units : '' }}</span>
+        </li>
+      } @empty {
+        <li class="sol-key-type">{{ 'solution-creator.pane.no-keys' | translate }}</li>
+      }
+    </ul>
+  } @else {
+    <ul class="sol-keys">
+      @for (relation of relationsOf(profile); track $index) {
+        <li>
+          <span>{{ relation.parent }}</span>
+          <span class="sol-key-type">{{ relation.type }}{{ relation.cardinality ? ' (' + relation.cardinality + ')' : '' }}</span>
+          <span>{{ relation.child }}</span>
+        </li>
+      } @empty {
+        <li class="sol-key-type">{{ 'solution-creator.pane.no-relations' | translate }}</li>
+      }
+    </ul>
+  }
+</ng-template>

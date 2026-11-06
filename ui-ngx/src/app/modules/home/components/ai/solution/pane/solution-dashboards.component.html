@@ -1,0 +1,34 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="sol-paged" [class.wide]="wide()">
+  @if (dashboards.length > 1) {
+    <div class="sol-tabs" role="tablist" [attr.aria-label]="'solution-creator.pane.dashboards' | translate">
+      @for (dashboard of dashboards; track dashboard.name; let index = $index) {
+        <button type="button" role="tab" [attr.aria-selected]="active() === index" (click)="goTo(index)">{{ dashboard.name }}</button>
+      }
+    </div>
+  }
+  <div class="sol-infos">
+    @for (dashboard of dashboards; track dashboard.name; let index = $index) {
+      <section class="sol-dash" [attr.data-dash]="index">
+        <div class="sol-dash-head">
+          <mat-icon aria-hidden="true">dashboard</mat-icon>
+          <div>
+            <h3>{{ dashboard.name }}</h3>
+            <small>{{ dashboard.assignedTo }}</small>
+          </div>
+        </div>
+        @if (dashboard.overview) {
+          <p class="sol-dash-lead">{{ dashboard.overview }}</p>
+        }
+        <tb-markdown class="sol-dash-doc" usePlainMarkdown [additionalStyles]="markdownStyles" [data]="dashboard.description"></tb-markdown>
+      </section>
+    } @empty {
+      <p class="sol-empty">{{ 'solution-creator.pane.no-dashboards' | translate }}</p>
+    }
+  </div>
+</div>

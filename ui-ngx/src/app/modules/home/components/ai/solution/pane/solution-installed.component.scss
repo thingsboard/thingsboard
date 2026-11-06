@@ -1,0 +1,157 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.sol-done {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px calc(var(--art-x) + 36px) 22px var(--art-x);
+  background: linear-gradient(90deg in oklab,
+    color-mix(in oklab, var(--ai-light-teal) 42%, var(--tb-surface)) 0%,
+    color-mix(in oklab, var(--ai-light-aqua) 26%, var(--tb-surface)) 48%,
+    var(--tb-surface) 100%);
+}
+
+.sol-done-mark {
+  --ai-mark-fill: linear-gradient(var(--tb-surface), var(--tb-surface));
+  --ai-mark-edge: inset 0 0 0 1px color-mix(in srgb, var(--tb-ink) 10%, transparent), 0 1px 2px rgb(16 24 40 / 0.06);
+  --ai-mark-ink: var(--tb-ok);
+  --ai-mark-ink-fill: linear-gradient(var(--tb-ok), var(--tb-ok));
+  animation: none;
+}
+
+.sol-done-t {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+
+  b {
+    font: 500 var(--chat-head)/var(--chat-head-lh) var(--tb-font);
+    color: var(--tb-ink);
+  }
+
+  span {
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
+    color: var(--tb-ink-76);
+  }
+}
+
+.sol-done-go {
+  flex: none;
+  --mat-button-filled-container-color: var(--ai-action);
+  --mdc-filled-button-container-color: var(--ai-action);
+  --mat-button-filled-label-text-color: var(--ai-on-action);
+  --mdc-filled-button-label-text-color: var(--ai-on-action);
+}
+
+.sol-done-x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--tb-ink-54);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--tb-ink);
+  }
+}
+
+.sol-not-installed {
+  margin: 0;
+  padding: 16px var(--art-x) 0;
+  font-size: var(--chat-line);
+  line-height: var(--chat-line-lh);
+  color: var(--tb-ink-76);
+}
+
+.sol-installed-table {
+  table-layout: fixed;
+
+  td.sol-installed-name {
+    width: 44%;
+  }
+
+  td.act {
+    width: 76px;
+  }
+
+  td.stc {
+    width: 44px;
+  }
+}
+
+.sol-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -6px 0 -6px 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--tb-ink-60);
+  cursor: pointer;
+  vertical-align: top;
+
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--tb-ink);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 1px;
+  }
+}
+
+.sol-st {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  color: var(--tb-surface);
+  cursor: default;
+
+  .mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+    line-height: 13px;
+    font-weight: 500;
+  }
+
+  &.ok { background: var(--tb-ok); }
+  &.warn { background: var(--tb-caution); }
+  &.error { background: var(--tb-crit); }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 1px;
+  }
+}

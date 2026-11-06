@@ -1,0 +1,104 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.sol-schema {
+  height: 380px;
+  margin: 0 var(--art-x);
+  overflow: hidden;
+
+  .sol-graph {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  ::ng-deep {
+    .sol-band rect {
+      fill: color-mix(in oklab, var(--ai-light-lilac) 34%, var(--tb-surface));
+    }
+
+    .sol-band.tenant rect {
+      fill: color-mix(in oklab, var(--ai-light-peach) 40%, var(--tb-surface));
+    }
+
+    .sol-band-title {
+      font: 400 12px var(--tb-font);
+      fill: var(--tb-ink-60);
+    }
+
+    .sol-edge .line {
+      stroke: var(--tb-ink-38);
+      fill: none;
+    }
+
+    .sol-arrow-head {
+      fill: var(--tb-ink-38);
+    }
+
+    .sol-edge-label {
+      width: fit-content;
+      max-width: 120px;
+      margin: 0 auto;
+      padding: 1px 6px;
+      border: 1px solid var(--tb-line);
+      border-radius: 4px;
+      background: var(--tb-surface);
+      font: 400 12px/18px var(--tb-font);
+      color: var(--tb-ink-76);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+
+    .sol-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      padding: 8px 12px;
+      box-sizing: border-box;
+      border: 1px solid var(--tb-line);
+      border-left: 3px solid var(--tb-ink-38);
+      border-radius: 8px;
+      background: var(--tb-surface);
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+      text-align: left;
+      cursor: pointer;
+      font-family: var(--tb-font);
+
+      b {
+        font: 500 14px/18px var(--tb-font);
+        color: var(--tb-ink);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      span {
+        font: 400 12px/16px var(--tb-font);
+        color: var(--tb-ink-60);
+      }
+
+      &[data-pal="device"] { border-left-color: var(--entity-device-fg); }
+      &[data-pal="people"] { border-left-color: var(--entity-people-fg); }
+      &[data-pal="solution"] { border-left-color: var(--entity-solution-fg); }
+      &[data-pal="path"] { border-left-color: var(--entity-path-fg); }
+
+      &:hover, &.on {
+        border-color: var(--tb-ink-38);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--ai-focus);
+        outline-offset: 1px;
+      }
+    }
+  }
+}
+
+.sol-schema-detail {
+  margin: 12px var(--art-x) 0;
+  padding: 12px 14px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tb-ink) 4%, transparent);
+}

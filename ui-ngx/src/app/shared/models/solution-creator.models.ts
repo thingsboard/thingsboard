@@ -30,6 +30,7 @@ export interface SolutionCreatorInfo {
 export interface DashboardsOverview {
   name: string;
   assignedTo: string;
+  overview?: string;
   description: string;
 }
 
