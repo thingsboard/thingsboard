@@ -9,7 +9,7 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { MenuService } from '@core/services/menu.service';
 import { distinctUntilChanged, filter, map, mergeMap, startWith, take } from 'rxjs/operators';
 import { merge, Observable } from 'rxjs';
-import { MenuSection } from '@core/services/menu.models';
+import { MenuSection, menuSectionMap } from '@core/services/menu.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -130,13 +130,18 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
       }
     });
     if (children.length) {
-      return children.map(tab => ({
-        id: tab.component?.name ?? tab.path,
-        type: 'link',
-        name: tab.data?.breadcrumb?.label ?? '',
-        icon: tab.data?.breadcrumb?.icon ?? '',
-        path: `${sectionPath}/${tab.path}`
-      }));
+      return children.map(tab => {
+        const breadcrumb = tab.data?.breadcrumb;
+        const section = breadcrumb?.menuId ? menuSectionMap.get(breadcrumb.menuId) : null;
+        return {
+          id: tab.component?.name ?? tab.path,
+          type: 'link',
+          name: section?.name ?? breadcrumb?.label ?? '',
+          icon: section?.icon ?? breadcrumb?.icon ?? '',
+          outlinedIcon: section?.outlinedIcon ?? breadcrumb?.icon ?? '',
+          path: `${sectionPath}/${tab.path}`
+        };
+      });
     }
     return [];
   }
