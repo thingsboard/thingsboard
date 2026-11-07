@@ -47,7 +47,9 @@ export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string
   [IntegrationType.TTN, '/assets/converters/tbel-ttn-tti-encoder.raw'],
   [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-encoder.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/tbel-chirpstack-encoder.raw'],
-  [IntegrationType.LORIOT, '/assets/converters/tbel-loriot-encoder.raw']
+  [IntegrationType.LORIOT, '/assets/converters/tbel-loriot-encoder.raw'],
+  [IntegrationType.TPE, '/assets/converters/tbel-tpe-encoder.raw'],
+  [IntegrationType.THINGPARK, '/assets/converters/tbel-thingpark-encoder.raw']
 ])
 
 export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
@@ -55,7 +57,9 @@ export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.TTN, '/assets/converters/js-ttn-tti-encoder.raw'],
   [IntegrationType.MQTT, '/assets/converters/js-mqtt-encoder.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/js-chirpstack-encoder.raw'],
-  [IntegrationType.LORIOT, '/assets/converters/js-loriot-encoder.raw']
+  [IntegrationType.LORIOT, '/assets/converters/js-loriot-encoder.raw'],
+  [IntegrationType.TPE, '/assets/converters/js-tpe-encoder.raw'],
+  [IntegrationType.THINGPARK, '/assets/converters/js-thingpark-encoder.raw']
 ])
 
 export const jsDefaultConvertersUrl = new Map<ConverterType, string>([

@@ -1,0 +1,44 @@
+// Encode downlink data from incoming Rule Engine message.
+// msg      - JSON message payload (e.g. { "state": "on" })
+// msgType  - message type, e.g. 'ATTRIBUTES_UPDATED'
+// metadata - enriched by the Originator attributes node with device client attributes.
+//            ThingsBoard prefixes client-scope attributes with "cs_":
+//            metadata.cs_eui   — ThingPark device EUI stored on first uplink (e.g. "466ECD510CF7B021")
+//            metadata.cs_fPort — LoRaWAN frame port stored on first uplink (e.g. "1")
+
+var eui = metadata.cs_eui;
+
+// Default port to 1 when the device fPort attribute is missing or empty.
+var port = (metadata.cs_fPort != null && metadata.cs_fPort != '')
+    ? parseInt(metadata.cs_fPort)
+    : 1;
+
+// EXAMPLE — replace this: it sends a single field ('powerState') from the downlink message.
+// Swap 'powerState' (and the 'unspecified' fallback) for the field your device expects;
+// as written, any downlink without a 'powerState' field sends the constant value 'unspecified'.
+var payload = (msg.powerState != null)
+    ? '' + msg.powerState
+    : 'unspecified';
+
+// ThingPark expects the downlink payload as a hex string.
+var payloadBytes = stringToBytes(payload);
+var payloadHex = bytesToHex(payloadBytes);
+
+var result = {
+  // Downlink data content type: JSON, TEXT, or BINARY (base64 format).
+  contentType: "JSON",
+
+  // Downlink data — ThingPark Enterprise looks the device up by DevEUI and sends 'payload' as hex.
+  data: JSON.stringify({
+    "DevEUI": eui,
+    "payload": payloadHex
+  }),
+
+  // Metadata required by ThingPark Enterprise for downlink delivery.
+  metadata: {
+    "DevEUI": eui,
+    "FPort": port
+  }
+};
+
+return result;
