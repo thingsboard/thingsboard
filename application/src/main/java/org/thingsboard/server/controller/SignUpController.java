@@ -340,7 +340,7 @@ public class SignUpController extends BaseController {
 
     @ApiOperation(value = "Mobile Login redirect (mobileLogin)",
             notes = "This method generates redirect to the special link that is handled by mobile application. Useful for email verification flow on mobile app.")
-    @GetMapping(value = "/noauth/login", params = {"pkgName, platform"})
+    @GetMapping(value = "/noauth/login", params = {"pkgName", "platform"})
     public ResponseEntity<String> mobileLogin(
             @Parameter(description = "Mobile app package name. Used to identify the application and build the redirect link.", required = true)
             @RequestParam(value = "pkgName") String pkgName,
