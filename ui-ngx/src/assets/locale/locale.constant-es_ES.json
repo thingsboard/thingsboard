@@ -2125,7 +2125,7 @@
     "update-raw-payload": "Payload RAW actualizado"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "Texto",
     "binary": "Binario (Base64)",
     "hex": "Binario (Hex)"
@@ -3079,7 +3079,7 @@
     "mqtt-device-payload-type-proto": "Protobuf",
     "mqtt-enable-compatibility-with-json-payload-format": "Habilitar compatibilidad con otros formatos de carga útil.",
     "mqtt-enable-compatibility-with-json-payload-format-hint": "Cuando está habilitado, la plataforma utilizará el formato de carga útil Protobuf por defecto. Si falla el análisis, intentará usar el formato JSON. Útil para compatibilidad con versiones anteriores durante actualizaciones de firmware. Por ejemplo, si la versión inicial del firmware usa JSON y la nueva usa Protobuf, durante la actualización será necesario soportar ambos formatos simultáneamente. Este modo introduce una ligera degradación en el rendimiento, por lo que se recomienda desactivarlo una vez que todos los dispositivos hayan sido actualizados.",
-    "mqtt-use-json-format-for-default-downlink-topics": "Usar formato Json para los temas downlink por defecto",
+    "mqtt-use-json-format-for-default-downlink-topics": "Usar formato JSON para los temas downlink por defecto",
     "mqtt-use-json-format-for-default-downlink-topics-hint": "Cuando está habilitado, la plataforma usará formato JSON para enviar atributos y RPC a través de los siguientes temas: <b>v1/devices/me/attributes/response/$request_id</b>, <b>v1/devices/me/attributes</b>, <b>v1/devices/me/rpc/request/$request_id</b>, <b>v1/devices/me/rpc/response/$request_id</b>. Esta configuración no afecta las suscripciones a atributos y RPC usando los nuevos temas (v2): <b>v2/a/res/$request_id</b>, <b>v2/a</b>, <b>v2/r/req/$request_id</b>, <b>v2/r/res/$request_id</b>. Donde <b>$request_id</b> es un identificador de solicitud entero.",
     "mqtt-send-ack-on-validation-exception": "Enviar PUBACK al fallar la validación del mensaje PUBLISH",
     "mqtt-send-ack-on-validation-exception-hint": "Por defecto, la plataforma cerrará la sesión MQTT al fallar la validación del mensaje. Cuando está habilitado, enviará una confirmación de publicación en lugar de cerrar la sesión.",
@@ -3369,7 +3369,7 @@
       "fw-update-resource-required": "Se requiere el recurso CoAP para actualización de firmware.",
       "sw-update-resource": "Recurso CoAP para actualización de software",
       "sw-update-resource-required": "Se requiere el recurso CoAP para actualización de software.",
-      "config-json-tab": "Configuración Json del perfil del dispositivo",
+      "config-json-tab": "Configuración JSON del perfil del dispositivo",
       "attributes-name": {
         "min-period": "Período mínimo",
         "max-period": "Período máximo",
@@ -5016,7 +5016,7 @@
     "mapping": "Mapeo",
     "topic-filter": "Filtro de tema",
     "converter-type": "Tipo de convertidor",
-    "converter-json": "Json",
+    "converter-json": "JSON",
     "json-name-expression": "Expresión JSON del nombre del dispositivo",
     "topic-name-expression": "Expresión del tema del nombre del dispositivo",
     "json-type-expression": "Expresión JSON del tipo de dispositivo",

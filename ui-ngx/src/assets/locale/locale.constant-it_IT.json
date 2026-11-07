@@ -2125,7 +2125,7 @@
     "update-raw-payload": "Payload RAW aggiornato"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "Testo",
     "binary": "Binario (Base64)",
     "hex": "Binario (Hex)"
@@ -5016,7 +5016,7 @@
     "mapping": "Mappatura",
     "topic-filter": "Filtro topic",
     "converter-type": "Tipo convertitore",
-    "converter-json": "Json",
+    "converter-json": "JSON",
     "json-name-expression": "Espressione nome dispositivo JSON",
     "topic-name-expression": "Espressione nome dispositivo topic",
     "json-type-expression": "Espressione tipo dispositivo JSON",
