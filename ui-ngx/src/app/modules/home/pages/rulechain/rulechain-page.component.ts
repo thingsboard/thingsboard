@@ -184,6 +184,9 @@ export class RuleChainPageComponent extends PageComponent
   };
   selectedObjects = [];
 
+  // Deep link support: rule node ID from URL query parameter
+  private pendingRuleNodeId: string = null;
+
   editCallbacks: UserCallbacks = {
     edgeDoubleClick: (_event, edge) => {
       this.openLinkDetails(edge);
@@ -330,6 +333,12 @@ export class RuleChainPageComponent extends PageComponent
       connectorElements.attr('draggable', 'false');
     }
     this.ruleChainCanvas.adjustCanvasSize(true);
+    
+    // Handle deep link to specific rule node after canvas initialization
+    if (this.pendingRuleNodeId) {
+      this.openNodeByRuleNodeId(this.pendingRuleNodeId);
+      this.pendingRuleNodeId = null;
+    }
   }
 
   ngOnDestroy() {
@@ -355,6 +364,13 @@ export class RuleChainPageComponent extends PageComponent
     this.initHotKeys();
     this.isImport = this.route.snapshot.data.import;
     this.ruleChainType = this.route.snapshot.data.ruleChainType;
+    
+    // Check for ruleNodeId query parameter for deep linking
+    const ruleNodeId = this.route.snapshot.queryParams.ruleNodeId;
+    if (ruleNodeId) {
+      this.pendingRuleNodeId = ruleNodeId;
+    }
+    
     if (this.isImport) {
       const ruleChainImport: RuleChainImport = this.itembuffer.getRuleChainImport();
       this.ruleChain = ruleChainImport.ruleChain;
@@ -1185,6 +1201,43 @@ export class RuleChainPageComponent extends PageComponent
         this.ruleNodeComponent.ruleNodeFormGroup.markAsPristine();
       }, 0);
     }
+  }
+
+  /**
+   * Opens a rule node by its ruleNodeId (from URL query parameter).
+   * Supports deep linking to specific nodes from external sources.
+   * @param ruleNodeId The backend rule node ID to open (string UUID)
+   */
+  private openNodeByRuleNodeId(ruleNodeId: string) {
+    // Give the canvas time to fully initialize
+    setTimeout(() => {
+      // Find the node by ruleNodeId - compare with the id property of RuleNodeId object
+      const node = this.ruleChainModel.nodes.find(n => n.ruleNodeId?.id === ruleNodeId);
+      
+      if (node) {
+        // Ignore INPUT node type (not editable)
+        if (node.component.type === RuleNodeType.INPUT) {
+          return;
+        }
+        
+        // Select the node on the canvas
+        this.ruleChainCanvas.modelService.deselectAll();
+        this.ruleChainCanvas.modelService.nodes.select(node);
+        
+        // Scroll the node into view if needed
+        const canvas = $(this.ruleChainCanvas.modelService.canvasHtmlElement);
+        const nodeElement = $(`#${node.id}`, canvas);
+        if (nodeElement.length) {
+          nodeElement[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Open the details drawer after ensuring the node is visible
+        setTimeout(() => {
+          this.openNodeDetails(node);
+        }, 300);
+      }
+      // If node not found, silently continue - no error displayed to user
+    }, 500);
   }
 
   openLinkDetails(edge: FcRuleEdge) {

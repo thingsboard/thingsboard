@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -14,6 +16,7 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrateg
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -24,8 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class TbMsgPackProcessingContext {
 
+    @Getter
     private final String queueName;
     private final TbRuleEngineSubmitStrategy submitStrategy;
+    @Getter
     private final boolean skipTimeoutMsgsPossible;
     @Getter
     private final boolean profilerEnabled;
@@ -41,6 +46,17 @@ public class TbMsgPackProcessingContext {
     private final ConcurrentMap<TenantId, RuleEngineException> exceptionsMap = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<UUID, RuleNodeInfo> lastRuleNodeMap = new ConcurrentHashMap<>();
+
+    @Setter
+    @Getter
+    private ConcurrentMap<UUID, TraceRetryMetadata> msgIdAndTraceIdMap;
+
+    @Setter
+    private volatile Set<UUID> traceCoverageSelectedMsgIds;
+
+    @Setter
+    @Getter
+    private boolean hasRetry;
 
     private volatile boolean canceled = false;
 
@@ -120,6 +136,16 @@ public class TbMsgPackProcessingContext {
         return lastRuleNodeMap.get(id);
     }
 
+    public UUID getMsgTenantId(UUID msgId) {
+        TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg> msg = pendingMap.getOrDefault(msgId,
+                successMap.getOrDefault(msgId, failedMap.get(msgId)));
+        if (msg == null) {
+            return null;
+        }
+        TransportProtos.ToRuleEngineMsg proto = msg.getValue();
+        return new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB());
+    }
+
     public void printProfilerStats() {
         if (profilerEnabled) {
             log.debug("Top Rule Nodes by max execution time:");
@@ -149,4 +175,25 @@ public class TbMsgPackProcessingContext {
     public boolean isCanceled() {
         return skipTimeoutMsgsPossible && canceled;
     }
+
+    public void registerTraceMetadata(UUID msgId, TraceRetryMetadata traceRetryMetadata) {
+        if (msgIdAndTraceIdMap != null) {
+            msgIdAndTraceIdMap.put(msgId, traceRetryMetadata);
+        }
+    }
+
+    public TraceRetryMetadata getTraceMetadata(UUID msgId) {
+        if (msgIdAndTraceIdMap == null) {
+            return null;
+        }
+        return msgIdAndTraceIdMap.get(msgId);
+    }
+
+    public boolean isTraceCoverageSelected(UUID msgId) {
+        if (traceCoverageSelectedMsgIds == null) {
+            return false;
+        }
+        return traceCoverageSelectedMsgIds.contains(msgId);
+    }
+
 }

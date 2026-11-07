@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue.ruleengine;
 
 import com.google.common.util.concurrent.MoreExecutors;
@@ -46,6 +47,7 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStr
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategyFactory;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
+import org.thingsboard.server.service.trace.TraceMessageService;
 
 import java.time.Duration;
 import java.util.List;
@@ -61,6 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -68,6 +71,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,6 +102,8 @@ class RuleEngineConsumerLoopTest {
     TbMsgPackProcessingContextFactory packProcessingContextFactory;
     @Mock
     TbMsgPackProcessingContext packCtx;
+    @Mock
+    TraceMessageService traceMessageService;
 
     Queue mainQueue;
 
@@ -158,7 +164,7 @@ class RuleEngineConsumerLoopTest {
         given(packProcessingContextFactory.create(
                 eq(mainQueue.getName()),
                 any(TbRuleEngineSubmitStrategy.class),
-                eq(false)
+                anyBoolean()
         )).willAnswer(invocation -> {
             TbRuleEngineSubmitStrategy realStrategy = invocation.getArgument(1);
             when(packCtx.getPendingMap()).thenAnswer(i -> realStrategy.getPendingMap());
@@ -263,6 +269,57 @@ class RuleEngineConsumerLoopTest {
             inOrder.verify(packCtx).await(mainQueue.getPackProcessingTimeout(), TimeUnit.MILLISECONDS);
             inOrder.verify(consumer).commit();
         }
+    }
+
+    @Test
+    void givenTimedOutPack_whenRetried_thenRetryAttemptIsFlaggedSoTracesAreNotResampled() {
+        var processingStrategy = mainQueue.getProcessingStrategy();
+        processingStrategy.setType(ProcessingStrategyType.RETRY_ALL);
+        processingStrategy.setRetries(1);
+        processingStrategy.setPauseBetweenRetries(0);
+        processingStrategy.setMaxPauseBetweenRetries(0);
+        given(packCtx.getSuccessMap()).willReturn(new ConcurrentHashMap<>());
+        var partition = TopicPartitionInfo.builder()
+                .tenantId(TenantId.SYS_TENANT_ID)
+                .topic(mainQueue.getTopic())
+                .partition(0)
+                .myPartition(true)
+                .useInternalPartition(false)
+                .build();
+        var tbMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .data("{\"temperature\":123}")
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+        storage.put(partition.getFullTopicName(), new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
+                .addAllRelationTypes(Set.of("Success"))
+                .build(), new DefaultTbQueueMsgHeaders()));
+        var manager = TbRuleEngineQueueConsumerManager.create()
+                .ctx(ruleEngineConsumerContext)
+                .queueKey(new QueueKey(ServiceType.TB_RULE_ENGINE, mainQueue))
+                .consumerExecutor(consumersExecutor)
+                .scheduler(scheduler)
+                .taskExecutor(mgmtExecutor)
+                .packProcessingContextFactory(packProcessingContextFactory)
+                .traceMessageService(traceMessageService)
+                .build();
+
+        manager.init(mainQueue);
+        manager.update(Set.of(partition));
+        // Every attempt times out: one retry, then the pack is committed.
+        await().atMost(Duration.ofSeconds(10L)).untilAsserted(() -> verify(consumer).commit());
+        manager.stop();
+        manager.awaitStop();
+
+        InOrder inOrder = inOrder(packCtx, traceMessageService);
+        inOrder.verify(packCtx).setHasRetry(false);
+        inOrder.verify(traceMessageService).onMessagePack(TenantId.SYS_TENANT_ID, packCtx);
+        inOrder.verify(packCtx).setHasRetry(true);
+        inOrder.verify(traceMessageService).onMessagePack(TenantId.SYS_TENANT_ID, packCtx);
     }
 
 }

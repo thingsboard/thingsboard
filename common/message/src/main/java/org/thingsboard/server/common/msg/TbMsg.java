@@ -280,6 +280,66 @@ public final class TbMsg implements Serializable {
         return TbMsgType.NA;
     }
 
+    public String getTraceId() {
+        return ctx.getTraceId();
+    }
+
+    @JsonIgnore
+    public void setTraceId(String traceId) {
+        ctx.setTraceId(traceId);
+    }
+
+    public String getTraceParent() {
+        return ctx.getTraceParent();
+    }
+
+    @JsonIgnore
+    public void setTraceParent(String traceParent) {
+        ctx.setTraceParent(traceParent);
+    }
+
+    @JsonIgnore
+    public String getSpanOnRetry() {
+        return ctx.getSpanOnRetry();
+    }
+
+    @JsonIgnore
+    public void setSpanOnRetry(String spanOnRetry) {
+        ctx.setSpanOnRetry(spanOnRetry);
+    }
+
+    @JsonIgnore
+    public boolean isRecordMsgPayload() {
+        return ctx.isRecordMsgPayload();
+    }
+
+    @JsonIgnore
+    public void setRecordMsgPayload(boolean recordMsgPayload) {
+        ctx.setRecordMsgPayload(recordMsgPayload);
+    }
+
+    /**
+     * Ends tracing of this message: drops its trace state and authorization.
+     */
+    @JsonIgnore
+    public void clearTrace() {
+        ctx.clearTrace();
+    }
+
+    public boolean isTraced() {
+        return getTraceId() != null;
+    }
+
+    @JsonIgnore
+    public boolean isTraceAuthorized() {
+        return ctx.isTraceAuthorized();
+    }
+
+    @JsonIgnore
+    public void setTraceAuthorized(boolean traceAuthorized) {
+        ctx.setTraceAuthorized(traceAuthorized);
+    }
+
     public boolean isTypeOf(TbMsgType tbMsgType) {
         return internalType.equals(tbMsgType);
     }

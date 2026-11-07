@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.kafka;
 
 import jakarta.annotation.PreDestroy;
@@ -123,32 +124,50 @@ public class KafkaAdmin {
         return result;
     }
 
+    /**
+     * Like {@link #getTotalLagForGroupsBulk}, but a group whose lag can't be read is left out instead of reported as 0.
+     */
+    public Map<String, Long> findTotalLagForGroups(Set<String> groupIds) {
+        Map<String, Long> result = new HashMap<>();
+        for (String groupId : groupIds) {
+            try {
+                result.put(groupId, computeTotalConsumerGroupLag(groupId));
+            } catch (Exception e) {
+                log.warn("Failed to get total lag for consumer group: {}", groupId, e);
+            }
+        }
+        return result;
+    }
+
     public long getTotalConsumerGroupLag(String groupId) {
         try {
-            Map<TopicPartition, OffsetAndMetadata> committedOffsets = getConsumerGroupOffsets(groupId);
-            if (committedOffsets.isEmpty()) {
-                return 0L;
-            }
-
-            Map<TopicPartition, OffsetSpec> latestOffsetsSpec = committedOffsets.keySet().stream()
-                    .collect(Collectors.toMap(tp -> tp, tp -> OffsetSpec.latest()));
-
-            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets =
-                    getClient().listOffsets(latestOffsetsSpec).all().get(settings.getRequestTimeoutMs(), TimeUnit.MILLISECONDS);
-
-            return committedOffsets.entrySet().stream()
-                    .mapToLong(entry -> {
-                        TopicPartition tp = entry.getKey();
-                        long committed = entry.getValue().offset();
-                        long end = endOffsets.getOrDefault(tp,
-                                new ListOffsetsResult.ListOffsetsResultInfo(0L, 0L, Optional.empty())).offset();
-                        return end - committed;
-                    }).sum();
-
+            return computeTotalConsumerGroupLag(groupId);
         } catch (Exception e) {
             log.error("Failed to get total lag for consumer group: {}", groupId, e);
             return 0L;
         }
+    }
+
+    private long computeTotalConsumerGroupLag(String groupId) throws Exception {
+        Map<TopicPartition, OffsetAndMetadata> committedOffsets = getConsumerGroupOffsets(groupId);
+        if (committedOffsets.isEmpty()) {
+            return 0L;
+        }
+
+        Map<TopicPartition, OffsetSpec> latestOffsetsSpec = committedOffsets.keySet().stream()
+                .collect(Collectors.toMap(tp -> tp, tp -> OffsetSpec.latest()));
+
+        Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets =
+                getClient().listOffsets(latestOffsetsSpec).all().get(settings.getRequestTimeoutMs(), TimeUnit.MILLISECONDS);
+
+        return committedOffsets.entrySet().stream()
+                .mapToLong(entry -> {
+                    TopicPartition tp = entry.getKey();
+                    long committed = entry.getValue().offset();
+                    long end = endOffsets.getOrDefault(tp,
+                            new ListOffsetsResult.ListOffsetsResultInfo(0L, 0L, Optional.empty())).offset();
+                    return end - committed;
+                }).sum();
     }
 
     @SneakyThrows

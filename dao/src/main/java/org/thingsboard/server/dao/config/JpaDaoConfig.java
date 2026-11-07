@@ -26,6 +26,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.dao.sql.citus.CitusConnectionInitSqlPostProcessor;
 import org.thingsboard.server.dao.sql.audit.AuditLogRepository;
 import org.thingsboard.server.dao.sql.event.EventRepository;
+import org.thingsboard.server.dao.sql.trace.SpanRepository;
 import org.thingsboard.server.dao.util.TbAutoConfiguration;
 
 import javax.sql.DataSource;
@@ -37,7 +38,7 @@ import java.util.Objects;
 @TbAutoConfiguration
 @ComponentScan({"org.thingsboard.server.dao.sql", "org.thingsboard.server.dao.attributes", "org.thingsboard.server.dao.sqlts.dictionary", "org.thingsboard.server.dao.cache", "org.thingsboard.server.cache"})
 @EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql", "org.thingsboard.server.dao.sqlts.dictionary"},
-        excludeFilters = @Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {EventRepository.class, AuditLogRepository.class}),
+        excludeFilters = @Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {EventRepository.class, AuditLogRepository.class, SpanRepository.class}),
         bootstrapMode = BootstrapMode.LAZY)
 public class JpaDaoConfig {
 

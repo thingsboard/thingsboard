@@ -18,6 +18,7 @@
             <package name="org.thingsboard.server.msa.report" />
             <package name="org.thingsboard.server.msa.security"/>
             <package name="org.thingsboard.server.msa.trendz" />
+            <package name="org.thingsboard.server.msa.monitoring" />
         </packages>
     </test>
 </suite>
