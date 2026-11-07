@@ -1,0 +1,304 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "npm",
+          "version": "10.9.3"
+        },
+        {
+          "type": "library",
+          "name": "cyclonedx-library",
+          "group": "@cyclonedx",
+          "version": "10.3.0",
+          "author": "Jan Kowalleck",
+          "description": "Core functionality of CycloneDX for JavaScript (Node.js or WebBrowser).",
+          "licenses": [
+            {
+              "license": {
+                "id": "Apache-2.0"
+              }
+            }
+          ],
+          "externalReferences": [
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-javascript-library/issues",
+              "type": "issue-tracker",
+              "comment": "as detected from PackageJson property \"bugs.url\""
+            },
+            {
+              "url": "git+https://github.com/CycloneDX/cyclonedx-javascript-library.git",
+              "type": "vcs",
+              "comment": "as detected from PackageJson property \"repository.url\""
+            },
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-javascript-library#readme",
+              "type": "website",
+              "comment": "as detected from PackageJson property \"homepage\""
+            }
+          ],
+          "properties": [
+            {
+              "name": "cdx:npm:package:constraint:engine:node",
+              "value": ">=20.18.0"
+            }
+          ]
+        },
+        {
+          "type": "application",
+          "name": "cyclonedx-npm",
+          "group": "@cyclonedx",
+          "version": "6.0.1",
+          "author": "Jan Kowalleck",
+          "description": "Create CycloneDX Software Bill of Materials (SBOM) from NPM projects.",
+          "licenses": [
+            {
+              "license": {
+                "id": "Apache-2.0"
+              }
+            }
+          ],
+          "externalReferences": [
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-node-npm/issues",
+              "type": "issue-tracker",
+              "comment": "as detected from PackageJson property \"bugs.url\""
+            },
+            {
+              "url": "git+https://github.com/CycloneDX/cyclonedx-node-npm.git",
+              "type": "vcs",
+              "comment": "as detected from PackageJson property \"repository.url\""
+            },
+            {
+              "url": "https://github.com/CycloneDX/cyclonedx-node-npm#readme",
+              "type": "website",
+              "comment": "as detected from PackageJson property \"homepage\""
+            }
+          ],
+          "properties": [
+            {
+              "name": "cdx:npm:package:constraint:engine:node",
+              "value": ">=20.18.0"
+            },
+            {
+              "name": "cdx:npm:package:constraint:engine:npm",
+              "value": ">=9"
+            }
+          ]
+        }
+      ]
+    },
+    "component": {
+      "type": "library",
+      "bom-ref": "pkg:github/thingsboard/gateway-management-extensions@a12065d71896d3da95d4d1001c8269bf31d90f24",
+      "supplier": {
+        "name": "ThingsBoard, Inc.",
+        "url": [
+          "https://thingsboard.io"
+        ]
+      },
+      "name": "gateway-management-extension",
+      "version": "a12065d71896d3da95d4d1001c8269bf31d90f24",
+      "description": "ThingsBoard Gateway Management Extension",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "93a6ff12bd47df919f24bca66cb6bdbc54eb8204958753f946817aef78208175"
+        },
+        {
+          "alg": "SHA-512",
+          "content": "98aa801bdb31b1dfe0a9b22a602ec43286bf6db0548a1abbdf7922872baa169f671aa82e1f024a23f6d704b863048939e77bc67f2b97cd872a1f6a8b4d9068fe"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "purl": "pkg:github/thingsboard/gateway-management-extensions@a12065d71896d3da95d4d1001c8269bf31d90f24",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/thingsboard/gateway-management-extensions/tree/a12065d71896d3da95d4d1001c8269bf31d90f24"
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "cdx:reproducible",
+        "value": "true"
+      }
+    ],
+    "supplier": {
+      "name": "ThingsBoard, Inc.",
+      "url": [
+        "https://thingsboard.io"
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "core",
+      "group": "@angular",
+      "version": "18.2.6",
+      "bom-ref": "gateway-management-extension@4.0.0|@angular/core@18.2.6",
+      "author": "angular",
+      "description": "Angular - the core framework",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "acknowledgement": "declared"
+          }
+        }
+      ],
+      "purl": "pkg:npm/%40angular/core@18.2.6",
+      "externalReferences": [
+        {
+          "url": "https://registry.npmjs.org/@angular/core/-/core-18.2.6.tgz",
+          "type": "distribution",
+          "comment": "as detected from npm-ls property \"resolved\""
+        },
+        {
+          "url": "https://github.com/angular/angular/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "git+https://github.com/angular/angular.git#packages/core",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\" and \"repository.directory\""
+        },
+        {
+          "url": "https://github.com/angular/angular#readme",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:constraint:engine:node",
+          "value": "^18.19.1 || ^20.11.1 || >=22.0.0"
+        },
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/@angular/core"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "echarts",
+      "version": "5.5.0-TB",
+      "bom-ref": "gateway-management-extension@4.0.0|echarts@5.5.0-TB",
+      "description": "Apache ECharts is a powerful, interactive charting and data visualization library for browser",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0",
+            "acknowledgement": "declared"
+          }
+        }
+      ],
+      "purl": "pkg:npm/echarts@5.5.0-TB",
+      "externalReferences": [
+        {
+          "url": "https://github.com/apache/echarts/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "git+https://github.com/apache/echarts.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://echarts.apache.org",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/echarts"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "zrender",
+      "version": "5.5.0",
+      "bom-ref": "gateway-management-extension@4.0.0|zrender@5.5.0",
+      "description": "A lightweight graphic library providing 2d draw for Apache ECharts",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause",
+            "acknowledgement": "declared"
+          }
+        }
+      ],
+      "purl": "pkg:npm/zrender@5.5.0",
+      "externalReferences": [
+        {
+          "url": "https://registry.npmjs.org/zrender/-/zrender-5.5.0.tgz",
+          "type": "distribution",
+          "comment": "as detected from npm-ls property \"resolved\""
+        },
+        {
+          "url": "https://github.com/ecomfe/zrender/issues",
+          "type": "issue-tracker",
+          "comment": "as detected from PackageJson property \"bugs.url\""
+        },
+        {
+          "url": "git+https://github.com/ecomfe/zrender.git",
+          "type": "vcs",
+          "comment": "as detected from PackageJson property \"repository.url\""
+        },
+        {
+          "url": "https://github.com/ecomfe/zrender#readme",
+          "type": "website",
+          "comment": "as detected from PackageJson property \"homepage\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/zrender"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:github/thingsboard/gateway-management-extensions@a12065d71896d3da95d4d1001c8269bf31d90f24",
+      "dependsOn": [
+        "gateway-management-extension@4.0.0|@angular/core@18.2.6",
+        "gateway-management-extension@4.0.0|echarts@5.5.0-TB"
+      ]
+    },
+    {
+      "ref": "gateway-management-extension@4.0.0|@angular/core@18.2.6",
+      "dependsOn": []
+    },
+    {
+      "ref": "gateway-management-extension@4.0.0|echarts@5.5.0-TB",
+      "dependsOn": [
+        "gateway-management-extension@4.0.0|zrender@5.5.0"
+      ]
+    },
+    {
+      "ref": "gateway-management-extension@4.0.0|zrender@5.5.0",
+      "dependsOn": []
+    }
+  ]
+}
