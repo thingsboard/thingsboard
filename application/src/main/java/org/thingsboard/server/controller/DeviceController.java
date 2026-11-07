@@ -389,9 +389,9 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/user/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Device> getUserDevices(
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
@@ -534,9 +534,9 @@ public class DeviceController extends BaseController {
     public PageData<Device> getDevicesByEntityGroupId(
             @Parameter(description = ENTITY_GROUP_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_GROUP_ID) String strEntityGroupId,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,

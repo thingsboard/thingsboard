@@ -184,9 +184,9 @@ public class ConverterController extends AutoCommitController {
     public PageData<Converter> getConverters(
             @Parameter(description = "Fetch edge template converters")
             @RequestParam(value = "isEdgeTemplate", required = false, defaultValue = "false") boolean isEdgeTemplate,
-            @Parameter(required = true, description = PAGE_SIZE_DESCRIPTION, schema = @Schema(minimum = "1"))
+            @Parameter(required = true, description = PAGE_SIZE_DESCRIPTION, schema = @Schema(type = "integer", format = "int32", minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(required = true, description = PAGE_NUMBER_DESCRIPTION, schema = @Schema(minimum = "0"))
+            @Parameter(required = true, description = PAGE_NUMBER_DESCRIPTION, schema = @Schema(type = "integer", format = "int32", minimum = "0"))
             @RequestParam int page,
             @Parameter(description = CONVERTER_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,

@@ -191,10 +191,10 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/alarm/{alarmId}/assign/{assigneeId}")
     @ResponseStatus(value = HttpStatus.OK)
-    public Alarm assignAlarm(@Parameter(description = ALARM_ID_PARAM_DESCRIPTION)
-                             @PathVariable(ALARM_ID) String strAlarmId,
-                             @Parameter(description = ASSIGN_ID_PARAM_DESCRIPTION)
-                             @PathVariable(ASSIGNEE_ID) String strAssigneeId
+    public AlarmInfo assignAlarm(@Parameter(description = ALARM_ID_PARAM_DESCRIPTION)
+                                 @PathVariable(ALARM_ID) String strAlarmId,
+                                 @Parameter(description = ASSIGN_ID_PARAM_DESCRIPTION)
+                                 @PathVariable(ASSIGNEE_ID) String strAssigneeId
     ) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         checkParameter(ASSIGNEE_ID, strAssigneeId);
@@ -212,8 +212,8 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/alarm/{alarmId}/assign")
     @ResponseStatus(value = HttpStatus.OK)
-    public Alarm unassignAlarm(@Parameter(description = ALARM_ID_PARAM_DESCRIPTION)
-                               @PathVariable(ALARM_ID) String strAlarmId
+    public AlarmInfo unassignAlarm(@Parameter(description = ALARM_ID_PARAM_DESCRIPTION)
+                                   @PathVariable(ALARM_ID) String strAlarmId
     ) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));

@@ -54,6 +54,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.query.AliasEntityType;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -361,9 +362,11 @@ public class SwaggerConfiguration {
         };
     }
 
+    // The document is OpenAPI 3.1 (see springDocProperties above), which serializes
+    // Schema.types; a schema built with Schema.type(...) is written without a type.
     private void addDefaultSchemas(OpenAPI openAPI) {
         Schema<?> errorCodeSchema = new Schema<>()
-                .type("integer")
+                .types(Set.of("integer"))
                 .description("Platform error code")
                 ._enum(Arrays.stream(ThingsboardErrorCode.values())
                         .map(ThingsboardErrorCode::getErrorCode)
@@ -374,6 +377,12 @@ public class SwaggerConfiguration {
         registerSchema(components, "ThingsboardErrorResponse", ThingsboardErrorResponse.class);
         registerSchema(components, "ThingsboardCredentialsExpiredResponse", ThingsboardCredentialsExpiredResponse.class);
         components.addSchemas("ThingsboardErrorCode", errorCodeSchema);
+        // AliasEntityId.entityType is a plain string, so no schema references AliasEntityType;
+        // register it to keep the alias names in the spec and in generated clients.
+        components.addSchemas("AliasEntityType", new Schema<String>()
+                .types(Set.of("string"))
+                .description("Alias for an entity of the current user, used as AliasEntityId.entityType")
+                ._enum(Arrays.stream(AliasEntityType.values()).map(Enum::name).toList()));
         registerSchema(components, "AiChatModelConfig", AiChatModelConfig.class);
     }
 
