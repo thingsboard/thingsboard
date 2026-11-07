@@ -1049,6 +1049,9 @@ cache:
     secrets:
       timeToLiveInMinutes: "${CACHE_SPECS_SECRETS_SETTINGS_TTL:1440}" # Secrets cache TTL
       maxSize: "${CACHE_SPECS_SECRETS_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    transportTokenValidation:
+      timeToLiveInMinutes: "${CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_TTL:5}" # Transport token-validation cache TTL (positive entries and revoked markers)
+      maxSize: "${CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_MAX_SIZE:100000}" # 0 means the cache is disabled
 
   # deliberately placed outside the 'specs' group above
   notificationRules:
@@ -1465,6 +1468,38 @@ transport:
   api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   # Size of the thread pool that executes transport API callbacks (session registration, telemetry/attribute and RPC responses, entity update notifications, and the tenant profile fetch on a cache miss). Bounds how many such callbacks - including those that block on a backend round-trip - can run concurrently.
   callback_thread_pool_size: "${TB_TRANSPORT_CALLBACK_THREAD_POOL_SIZE:20}"
+  # Device token validation cache parameters. Caches validation results on the transport
+  # (shared Redis or local Caffeine per 'cache.type') to avoid a queue round-trip to tb-core
+  # per request. Positive-entry TTL is cache.specs.transportTokenValidation.timeToLiveInMinutes.
+  # With cache.type 'caffeine' in a microservices setup, core-side eviction cannot reach the
+  # per-pod cache and staleness is bounded by the TTL only.
+  # tb-core and the transports must share cache.type, the Redis instance and CACHE_KEY_PREFIX;
+  # otherwise core-side eviction on credential changes does not reach the transport cache.
+  # Fail-open: enabled without a reachable Redis, the cache is a no-op apart from rate-limited
+  # warnings, and every request falls back to tb-core.
+  # Cache reads and writes run on a small dedicated bounded executor; a saturated executor
+  # degrades to cache misses. When enabling, lower REDIS_CLIENT_READ_TIMEOUT on the transports
+  # (Redis client defaults are 30-60 s) so that a slow Redis turns into fast misses.
+  # Do not use CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_TTL=0 with this cache enabled: 0 means
+  # never-expiring entries. CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_MAX_SIZE=0 disables the cache
+  # entirely. tb-core writes to this cache on every device credentials change (a revoked marker,
+  # or a short-lived tombstone that blocks in-flight stores) regardless of the transport flags below.
+  validation_cache:
+    # Enable transport-side caching of device token validation results
+    enabled: "${TRANSPORT_VALIDATION_CACHE_ENABLED:false}"
+    # TTL for cached failed validations, in seconds (enforced as the Redis expiry of negative entries,
+    # so unauthenticated junk-token traffic cannot fill the shared Redis). 0 disables negative caching
+    negative_ttl_sec: "${TRANSPORT_VALIDATION_CACHE_NEGATIVE_TTL_SEC:30}"
+    # TTL for the in-process L1 cache in front of Redis, in seconds. 0 disables L1.
+    # Bounds credential-revocation staleness on a transport pod.
+    local_ttl_sec: "${TRANSPORT_VALIDATION_CACHE_LOCAL_TTL_SEC:20}"
+  # Device credentials validation parameters (independent of the validation cache above)
+  validation:
+    # Ask tb-core to omit the device profile from credentials validation responses (all validation flows,
+    # cached or not); the transport resolves the profile from its local profile cache instead. Slims
+    # validation responses. Requires an upgraded tb-core that supports profile negotiation; older cores
+    # ignore the flag.
+    profile_negotiation_enabled: "${TRANSPORT_VALIDATION_PROFILE_NEGOTIATION_ENABLED:false}"
   log:
     # Enable/Disable log of transport messages to telemetry. For example, logging of LwM2M registration update
     enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
