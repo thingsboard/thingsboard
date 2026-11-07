@@ -139,6 +139,9 @@
         Here is the source to track https://github.com/apache/kafka/tree/trunk/clients/src/main/java/org/apache/kafka/common/network -->
         <kafka.version>3.9.2</kafka.version> <!-- to fix CVE-2026-35554 -->
         <bucket4j.version>8.10.1</bucket4j.version>
+        <fabric8.version>7.7.0</fabric8.version>
+        <docker-java.version>3.7.0</docker-java.version>
+
         <antlr.version>3.5.3</antlr.version>
         <amazon-kinesis-producer>0.15.12</amazon-kinesis-producer>
         <org.json.version>20250517</org.json.version> <!-- Transitive dependency by amazon-kinesis-producer 0.15.10, 0.15.12 to address CVE-2023-5072 -->
@@ -1267,6 +1270,43 @@
                         <artifactId>jackson-dataformat-xml</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <!-- Extensions feature: Kubernetes client -->
+            <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>kubernetes-client</artifactId>
+                <version>${fabric8.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>kubernetes-server-mock</artifactId>
+                <version>${fabric8.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- Extensions feature: Docker Engine client (docker-compose deployment backend).
+                 All four artifacts pinned to one version so the version testcontainers pulls
+                 transitively (test scope) cannot clash with the compile-scope client. -->
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-api</artifactId>
+                <version>${docker-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-core</artifactId>
+                <version>${docker-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-transport</artifactId>
+                <version>${docker-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-transport-zerodep</artifactId>
+                <version>${docker-java.version}</version>
             </dependency>
 
             <dependency>

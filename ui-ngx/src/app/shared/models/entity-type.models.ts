@@ -59,6 +59,7 @@ export enum EntityType {
   AGENT_APP_UNIT = 'AGENT_APP_UNIT',
   AGENT_APP_PROFILE = 'AGENT_APP_PROFILE',
   AGENT_BULK_ACTION = 'AGENT_BULK_ACTION',
+  EXTENSION = 'EXTENSION',
 }
 
 export enum AliasEntityType {
@@ -710,6 +711,19 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.EXTENSION,
+      {
+        type: 'entity.type-extension',
+        typePlural: 'entity.type-extensions',
+        list: 'extension.list',
+        details: 'extension.extension-details',
+        add: 'extension.add',
+        noEntities: 'extension.no-found',
+        search: 'extension.search',
+        selectedEntities: 'extension.selected-extensions'
+      }
+    ],
+    [
       EntityType.AGENT,
       {
         type: 'entity.type-agent',
@@ -978,6 +992,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       }
     ],
     [
+      EntityType.EXTENSION,
+      {
+        helpLinkId: 'extensions'
+      }
+    ],
+    [
       EntityType.AGENT,
       {
         helpLinkId: 'agents'
@@ -1033,6 +1053,7 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.AGENT_PROFILE, '/edgeManagement/profiles/agent'],
   [EntityType.AGENT_APP_PROFILE, '/edgeManagement/profiles/application'],
   [EntityType.CALCULATED_FIELD, '/calculatedFields'],
+  [EntityType.EXTENSION, '/extensions'],
 ]);
 
 export const groupUrlPrefixByEntityType = new Map<EntityType, string>([

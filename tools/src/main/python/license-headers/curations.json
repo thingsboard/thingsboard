@@ -392,6 +392,12 @@
       "contentHash": "sha256:05abfcc7a496011ddbceaa4f3de74be4c3ee2501ea58c00415be583ed3150dd3"
     },
     {
+      "path": "common/data/src/main/java/org/thingsboard/server/common/data/id/ExtensionId.java",
+      "header": "busl",
+      "reason": "New file of the PE Extensions feature (EntityType.EXTENSION); this path has never existed in CE. Flagged only for its 64% similarity to common/data/src/main/java/org/thingsboard/server/common/data/id/AlarmId.java at 5954190c32f, which is the boilerplate shared by every file of that kind and which still exists in CE at its own path, so this is a new PE file written to that pattern, not a relocation or rename of it.",
+      "contentHash": "sha256:17bde1fd25bb860b77dccfc202829becf4731f09ae9a8969cfbd24abac520f1a"
+    },
+    {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/id/GroupPermissionId.java",
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate common/data/src/main/java/org/thingsboard/server/common/data/id/DeviceId.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 7dd840815b540966a1dc57440cf5108a35119552).",
@@ -485,7 +491,7 @@
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/permission/Resource.java",
       "header": "ce-modified",
       "reason": "Reviewed relocation from application/src/main/java/org/thingsboard/server/service/security/permission/Resource.java in PE commit d97b2f71224e96c27fbdf287f592a08b6fa0407b. The source exists in shared CE ancestry 4c2aa4a60368318eafc2dea155b93721668654c4. The relocated CE permission enum has PE permission/group extensions. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob d8b4dd8f4ef95df06ba22fd584813f437a8b453a); a move alone does not imply PE authorship.",
-      "contentHash": "sha256:635cb50f3945d1bca662a7100a6129bea1270755bf4fe7cd6bc9849f228a4f08"
+      "contentHash": "sha256:d6c84f6b3c12f44d5d6d73794837ff710691542de171396ace8190d13d00dcbb"
     },
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/EntityGroupNameFilter.java",
@@ -1250,6 +1256,12 @@
       "contentHash": "sha256:0d83f8ec2da9c911f51d8e5eebe7da1b5db1f3100c483aa24769dc58ea75c3ad"
     },
     {
+      "path": "ui-ngx/src/app/modules/home/components/entity/entity-table-footer.component.ts",
+      "header": "busl",
+      "reason": "New file of the PE Extensions feature (EntityType.EXTENSION); this path has never existed in CE. Flagged only for its 73% similarity to ui-ngx/src/app/modules/home/components/entity/entity-table-header.component.ts at 5954190c32f, which is the boilerplate shared by every file of that kind and which still exists in CE at its own path, so this is a new PE file written to that pattern, not a relocation or rename of it.",
+      "contentHash": "sha256:fb8449811856d9141e054729c8df9c611fa7c250409148d44e271fdc7320c6d6"
+    },
+    {
       "path": "ui-ngx/src/app/modules/home/components/group/add-group-entity-dialog.component.scss",
       "header": "busl",
       "reason": "New PE stylesheet for the PE group feature. At authoring it was a verbatim copy of CE ui-ngx/src/app/modules/home/components/entity/add-entity-dialog.component.scss, which PE still carries; CE later reduced its own file. Copying a CE stylesheet into a new PE-feature file does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
@@ -1446,6 +1458,12 @@
       "header": "ce-modified",
       "reason": "Retained CE file subsequently deleted on the CE mainline in d81add6fd73 (Angular 15 migration). PE keeps the entity views table header stylesheet and updated it for the MDC slide toggle. Reviewed against last CE path version 80430897422ae13b600ee9c9dbc57f7d558a3b4b^1 (blob 66a9d55fb35).",
       "contentHash": "sha256:6c7ddc99037190175a49c49f17e30954e2e46d03f7e91cb02ae5e40381a4850b"
+    },
+    {
+      "path": "ui-ngx/src/app/modules/home/pages/extension/extension-routing.module.ts",
+      "header": "busl",
+      "reason": "New file of the PE Extensions feature (EntityType.EXTENSION); this path has never existed in CE. Flagged only for its 63% similarity to ui-ngx/src/app/modules/home/pages/ota-update/ota-update-routing.module.ts at 269bc8dc73a, which is the boilerplate shared by every file of that kind and which still exists in CE at its own path, so this is a new PE file written to that pattern, not a relocation or rename of it.",
+      "contentHash": "sha256:2c60b8b9dcaa80f7e9c1dbc1e528b9a74caf23807935659df36768a0a1fb04ae"
     },
     {
       "path": "ui-ngx/src/app/modules/home/pages/iframe/iframe-view.module.ts",
@@ -1662,6 +1680,12 @@
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate ui-ngx/src/app/shared/models/id/asset-id.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 86ca874a92346a950b6912d78116f1f7ee6bb654).",
       "contentHash": "sha256:67845a93ddf3538fcfa441462dcee91323a919ba7ddc1976893d990c5c7f75a2"
+    },
+    {
+      "path": "ui-ngx/src/app/shared/models/id/extension-id.ts",
+      "header": "busl",
+      "reason": "New file of the PE Extensions feature (EntityType.EXTENSION); this path has never existed in CE. Flagged only for its 69% similarity to ui-ngx/src/app/shared/models/id/domain-id.ts at 269bc8dc73a, which is the boilerplate shared by every file of that kind and which still exists in CE at its own path, so this is a new PE file written to that pattern, not a relocation or rename of it.",
+      "contentHash": "sha256:5d66483f77a505c74c08cc6048a771a6f84f5e0b00783b03f007a01b0f68c120"
     },
     {
       "path": "ui-ngx/src/app/shared/models/id/group-permission-id.ts",

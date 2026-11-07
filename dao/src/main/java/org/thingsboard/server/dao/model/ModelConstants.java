@@ -1087,6 +1087,18 @@ public class ModelConstants {
     public static final String AI_MODEL_CONFIGURATION_COLUMN_NAME = "configuration";
 
     /**
+     * Extension constants.
+     */
+    public static final String EXTENSION_TABLE_NAME = "extension";
+    public static final String EXTENSION_TENANT_ID_PROPERTY = TENANT_ID_COLUMN;
+    public static final String EXTENSION_NAME_PROPERTY = NAME_PROPERTY;
+    public static final String EXTENSION_SLUG_PROPERTY = "slug";
+    public static final String EXTENSION_STATE_PROPERTY = "state";
+    public static final String EXTENSION_CONTAINER_SPEC_PROPERTY = "container_spec";
+    public static final String EXTENSION_LAST_ERROR_PROPERTY = "last_error";
+    public static final String EXTENSION_LAST_ERROR_AT_PROPERTY = "last_error_at";
+
+    /**
      * Api Key constants.
      */
     public static final String API_KEY_TABLE_NAME = "api_key";

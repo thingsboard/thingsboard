@@ -260,6 +260,7 @@ export const HelpLinks = {
     calculatedField: `${docsBase}/user-guide/calculated-fields/`,
     aiModels: `${docsBase}/user-guide/ai-models/`,
     apiKeys: `${docsBase}/user-guide/security/api-keys/`,
+    extensions: `${docsBase}/user-guide/extensions/`,
     timewindowSettings: `${docsBase}/user-guide/dashboards/#time-window`,
     converters: `${integrationsBase}/`,
     uplinkConverters: `${integrationsBase}/uplink-data-converter`,

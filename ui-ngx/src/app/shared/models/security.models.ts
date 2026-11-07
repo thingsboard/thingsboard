@@ -103,6 +103,7 @@ export enum Resource {
   AGENT_APP_PROFILE = 'AGENT_APP_PROFILE',
   AGENT_PROFILE = 'AGENT_PROFILE',
   AGENT_GROUP = 'AGENT_GROUP',
+  EXTENSION = 'EXTENSION',
 }
 
 const resourceTypeTranslations = new Map<Resource, string>();
@@ -154,6 +155,7 @@ export const resourceByEntityType = new Map<EntityType, Resource>(
     [EntityType.AGENT, Resource.AGENT],
     [EntityType.AGENT_APP_PROFILE, Resource.AGENT_APP_PROFILE],
     [EntityType.AGENT_PROFILE, Resource.AGENT_PROFILE],
+    [EntityType.EXTENSION, Resource.EXTENSION],
   ]
 );
 

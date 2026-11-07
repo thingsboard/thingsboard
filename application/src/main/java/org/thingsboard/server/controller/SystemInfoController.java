@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.extension.ExtensionMode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.qrCodeSettings.QRCodeConfig;
@@ -82,6 +83,11 @@ public class SystemInfoController extends BaseController {
 
     @Value("${iot-hub.base-url:https://iot-hub.thingsboard.io}")
     private String iotHubBaseUrl;
+
+    // The Extensions REST surface only exists when the mode is not 'disabled' (see ExtensionMode.WHEN_ENABLED),
+    // so the UI needs the same switch to keep the menu entry and route off a stock install.
+    @Value("${extensions.mode:disabled}")
+    private String extensionsMode;
 
     private static final Set<String> ACCEPTED_NULLS_ORDER_STRATEGIES = Set.of("default", "nulls_first", "nulls_last");
 
@@ -220,7 +226,18 @@ public class SystemInfoController extends BaseController {
         systemParams.setSchedulerEnabled(subscriptionService.isFeatureEnabled(tenantId, PlatformFeature.SCHEDULER));
         systemParams.setReportingEnabled(subscriptionService.isFeatureEnabled(tenantId, PlatformFeature.REPORTING));
         systemParams.setCommunityGrantLicense(subscriptionService.isCommunityGrantLicense());
+        systemParams.setExtensionsEnabled(isExtensionsEnabled());
         return systemParams;
+    }
+
+    // Mirrors ExtensionMode.WHEN_ENABLED: anything but 'disabled' (trimmed, case-insensitive) turns the
+    // feature on. A malformed value must not read as enabled — the beans would not exist either.
+    private boolean isExtensionsEnabled() {
+        try {
+            return ExtensionMode.fromKey(extensionsMode) != ExtensionMode.DISABLED;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     private boolean isForceFullscreen(SecurityUser currentUser) {
