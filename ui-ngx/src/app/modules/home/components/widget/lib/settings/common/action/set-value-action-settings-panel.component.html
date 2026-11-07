@@ -1,12 +1,13 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-action-settings-panel" [formGroup]="setValueSettingsFormGroup">
   <div class="tb-action-settings-title">{{ panelTitle }}</div>
-  <div class="tb-action-settings-panel-content">
+  <div class="tb-action-settings-panel-content" tbPopoverContentResize>
     <div class="tb-form-row">
       <div class="fixed-title-width" >{{ 'widgets.value-action.action' | translate }}</div>
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
