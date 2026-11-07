@@ -771,8 +771,9 @@ public abstract class BaseController {
         if (groupType == null) {
             throw new ThingsboardException("EntityGroup type is required!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        if (!Arrays.stream(EntityGroup.sharableGroupTypes).anyMatch(type -> type.equals(groupType))) {
-            throw new ThingsboardException("Invalid entityGroup type '" + groupType + "'! Only entity groups of types 'CUSTOMER', 'ASSET', 'DEVICE', 'ENTITY_VIEW' or 'DASHBOARD' can be shared.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        if (Arrays.stream(EntityGroup.sharableGroupTypes).noneMatch(type -> type.equals(groupType))) {
+            String sharableTypes = Arrays.stream(EntityGroup.sharableGroupTypes).map(type -> "'" + type + "'").collect(Collectors.joining(", "));
+            throw new ThingsboardException("Invalid entityGroup type '" + groupType + "'! Only entity groups of types " + sharableTypes + " can be shared.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         return groupType;
     }

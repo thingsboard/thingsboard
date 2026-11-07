@@ -37,6 +37,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -575,10 +576,19 @@ public class SignUpController extends BaseController {
             permission.setUserGroupId(usersEntityGroup.getId());
             if (permission.getEntityGroupId() != null) {
                 EntityGroup entityGroup = entityGroupService.findEntityGroupById(tenantId, permission.getEntityGroupId());
-                if (entityGroup != null) {
-                    permission.setEntityGroupType(entityGroup.getType());
-                    groupPermissionService.saveGroupPermission(tenantId, permission);
+                if (entityGroup == null) {
+                    continue;
                 }
+                if (entityGroup.getType() == EntityType.USER) {
+                    // A new self-registered customer's user group can't be granted access to user groups outside its
+                    // own customer, so such permissions are invalid. They may still exist in configs saved before this
+                    // was validated; we skip them instead of failing, since this flow isn't transactional and a failure
+                    // would leave a half-created customer behind.
+                    log.warn("[{}] Skipping self-registration permission targeting user group [{}]", tenantId, entityGroup.getId());
+                    continue;
+                }
+                permission.setEntityGroupType(entityGroup.getType());
+                groupPermissionService.saveGroupPermission(tenantId, permission);
             } else {
                 groupPermissionService.saveGroupPermission(tenantId, permission);
             }

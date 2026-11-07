@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -17,6 +18,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.permission.AllowedPermissionsInfo;
 import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.permission.GroupPermissionInfo;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.ShareGroupRequest;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
@@ -28,9 +31,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR;
 
 @DaoSqlTest
 public class GroupPermissionControllerTest extends AbstractControllerTest {
@@ -276,6 +281,180 @@ public class GroupPermissionControllerTest extends AbstractControllerTest {
                 new TypeReference<>() {});
         assertEquals(1, loadedGroupPermissionsInfo.size());
         checkPermissionOwners(loadedGroupPermissionsInfo, List.of(subCustomerId));
+    }
+
+    @Test
+    public void testShouldNotSaveUserGroupPermissionFromCustomerToTenantUserGroup() throws Exception {
+        loginTenantAdmin();
+        Role role = saveReadWriteGroupRole();
+
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(customerId), role, createUserGroup(tenantId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+    }
+
+    @Test
+    public void testShouldNotSaveUserGroupPermissionFromSubCustomerToParentCustomerUserGroup() throws Exception {
+        loginTenantAdmin();
+        Role role = saveReadWriteGroupRole();
+
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(subCustomerId), role, createUserGroup(customerId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+    }
+
+    @Test
+    public void testShouldNotSaveUserGroupPermissionFromCustomerToSiblingCustomerUserGroup() throws Exception {
+        createDifferentCustomer();
+        loginTenantAdmin();
+        Role role = saveReadWriteGroupRole();
+
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(customerId), role, createUserGroup(differentCustomerId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+    }
+
+    @Test
+    public void testShouldSaveUserGroupPermissionWithinGranteeOwnerHierarchy() throws Exception {
+        loginTenantAdmin();
+        Role role = saveReadWriteGroupRole();
+
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(customerId), role, createUserGroup(customerId)))
+                .andExpect(status().isOk());
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(customerId), role, createUserGroup(subCustomerId)))
+                .andExpect(status().isOk());
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(tenantId), role, createUserGroup(customerId)))
+                .andExpect(status().isOk());
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(tenantId), role, createUserGroup(tenantId)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testShouldSaveNonUserGroupPermissionFromCustomerToTenantEntityGroup() throws Exception {
+        loginTenantAdmin();
+        Role role = saveReadWriteGroupRole();
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(customerId), role, createGroup(EntityType.DEVICE, tenantId)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testShouldNotShareTenantUserGroupToCustomerUserGroup() throws Exception {
+        loginTenantAdmin();
+        Role role = saveReadWriteGroupRole();
+        EntityGroup tenantUserGroup = createUserGroup(tenantId);
+        EntityGroup customerUserGroup = createUserGroup(customerId);
+
+        doPost("/api/entityGroup/" + tenantUserGroup.getId() + "/" + customerUserGroup.getId() + "/" + role.getId() + "/share")
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+    }
+
+    @Test
+    public void testShouldShareOwnAndSubCustomerUserGroupsToCustomerUserGroupAsCustomerAdmin() throws Exception {
+        loginCustomerAdminUser();
+        Role role = saveReadWriteGroupRole();
+        EntityGroup granteeGroup = createUserGroup(customerId);
+        EntityGroup sameLevelGroup = createUserGroup(customerId);
+        EntityGroup subCustomerGroup = createUserGroup(subCustomerId);
+
+        for (EntityGroup targetGroup : List.of(sameLevelGroup, subCustomerGroup)) {
+            doPost("/api/entityGroup/" + targetGroup.getId() + "/" + granteeGroup.getId() + "/" + role.getId() + "/share")
+                    .andExpect(status().isOk());
+
+            List<GroupPermissionInfo> permissions = doGetTyped("/api/entityGroup/" + targetGroup.getId() + "/groupPermissions", new TypeReference<>() {});
+            assertThat(permissions).extracting(GroupPermissionInfo::getUserGroupId).containsExactly(granteeGroup.getId());
+        }
+    }
+
+    @Test
+    public void testShouldShareUserGroupWithSameOwnerUserGroupViaShareRequest() throws Exception {
+        loginCustomerAdminUser();
+        Role role = saveReadWriteGroupRole();
+        EntityGroup viewersGroup = createUserGroup(customerId);
+        EntityGroup managersGroup = createUserGroup(customerId);
+
+        doPost("/api/entityGroup/" + viewersGroup.getId() + "/share",
+                new ShareGroupRequest(customerId, false, managersGroup.getId(), false, List.of(role.getId())))
+                .andExpect(status().isOk());
+
+        List<GroupPermissionInfo> permissions = doGetTyped("/api/entityGroup/" + viewersGroup.getId() + "/groupPermissions", new TypeReference<>() {});
+        assertThat(permissions).extracting(GroupPermissionInfo::getUserGroupId).containsExactly(managersGroup.getId());
+    }
+
+    @Test
+    public void testShouldNotShareUserGroupWithSubCustomerUserGroupViaShareRequest() throws Exception {
+        loginCustomerAdminUser();
+        Role role = saveReadWriteGroupRole();
+        EntityGroup customerGroup = createUserGroup(customerId);
+        EntityGroup subCustomerGroup = createUserGroup(subCustomerId);
+
+        doPost("/api/entityGroup/" + customerGroup.getId() + "/share",
+                new ShareGroupRequest(subCustomerId, false, subCustomerGroup.getId(), false, List.of(role.getId())))
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+    }
+
+    @Test
+    public void testShouldSaveUserGroupPermissionWithinGranteeOwnerHierarchyAsCustomerAdmin() throws Exception {
+        loginCustomerAdminUser();
+        Role role = saveReadWriteGroupRole();
+        EntityGroup granteeGroup = createUserGroup(customerId);
+
+        doPost("/api/groupPermission", newGroupPermission(granteeGroup, role, createUserGroup(customerId)))
+                .andExpect(status().isOk());
+        doPost("/api/groupPermission", newGroupPermission(granteeGroup, role, createUserGroup(subCustomerId)))
+                .andExpect(status().isOk());
+        doPost("/api/groupPermission", newGroupPermission(createUserGroup(subCustomerId), role, createUserGroup(customerId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+    }
+
+    @Test
+    public void testShouldValidateUserGroupPermissionOwnerHierarchyOnUpdate() throws Exception {
+        loginTenantAdmin();
+        Role role = saveReadWriteGroupRole();
+        GroupPermission permission = doPost("/api/groupPermission",
+                newGroupPermission(createUserGroup(customerId), role, createUserGroup(customerId)), GroupPermission.class);
+
+        EntityGroup subCustomerGroup = createUserGroup(subCustomerId);
+        permission.setEntityGroupId(subCustomerGroup.getId());
+        permission = doPost("/api/groupPermission", permission, GroupPermission.class);
+        assertThat(permission.getEntityGroupId()).isEqualTo(subCustomerGroup.getId());
+
+        permission.setEntityGroupId(createUserGroup(tenantId).getId());
+        doPost("/api/groupPermission", permission)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+    }
+
+    private EntityGroup createUserGroup(EntityId ownerId) {
+        return createGroup(EntityType.USER, ownerId);
+    }
+
+    private EntityGroup createGroup(EntityType groupType, EntityId ownerId) {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setType(groupType);
+        entityGroup.setName("Group" + RandomStringUtils.randomAlphabetic(10));
+        entityGroup.setOwnerId(ownerId);
+        return doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+    }
+
+    private Role saveReadWriteGroupRole() {
+        Role role = new Role();
+        role.setTenantId(tenantId);
+        role.setName("Role" + RandomStringUtils.randomAlphabetic(10));
+        role.setType(RoleType.GROUP);
+        role.setPermissions(JacksonUtil.valueToTree(List.of(Operation.READ, Operation.WRITE)));
+        return doPost("/api/role", role, Role.class);
+    }
+
+    private GroupPermission newGroupPermission(EntityGroup userGroup, Role role, EntityGroup entityGroup) {
+        GroupPermission groupPermission = new GroupPermission();
+        groupPermission.setUserGroupId(userGroup.getId());
+        groupPermission.setRoleId(role.getId());
+        groupPermission.setEntityGroupId(entityGroup.getId());
+        groupPermission.setEntityGroupType(entityGroup.getType());
+        return groupPermission;
     }
 
     private void checkPermissionOwners(List<GroupPermissionInfo> groupPermissionsInfos, List<? extends EntityId> ownerIds) {

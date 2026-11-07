@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.CustomerInfo;
 import org.thingsboard.server.common.data.Dashboard;
@@ -34,6 +35,10 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.selfregistration.DefaultDashboardParams;
 import org.thingsboard.server.common.data.selfregistration.HomeDashboardParams;
 import org.thingsboard.server.common.data.selfregistration.MobileRedirectParams;
@@ -44,13 +49,17 @@ import org.thingsboard.server.common.data.selfregistration.V2CaptchaParams;
 import org.thingsboard.server.common.data.selfregistration.WebSelfRegistrationParams;
 import org.thingsboard.server.common.data.signup.SignUpRequest;
 import org.thingsboard.server.common.data.signup.SignUpResult;
+import org.thingsboard.server.common.data.wl.WhiteLabeling;
+import org.thingsboard.server.common.data.wl.WhiteLabelingType;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.menu.CustomMenuDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.wl.WhiteLabelingDao;
 import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 
@@ -63,11 +72,14 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.SELF_REGISTRATION_USER_GROUP_ERROR;
 
 @DaoSqlTest
 public class SignUpControllerSqlTest extends AbstractControllerTest {
@@ -109,6 +121,12 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
 
     @Autowired
     protected WhiteLabelingService whiteLabelingService;
+
+    @Autowired
+    protected GroupPermissionService groupPermissionService;
+
+    @Autowired
+    protected WhiteLabelingDao whiteLabelingDao;
 
     @Before
     public void beforeTest() throws Exception {
@@ -286,6 +304,90 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         removeCreatedUser(user);
     }
 
+    @Test
+    public void testShouldNotSaveWebSelfRegistrationParamsWithUserGroupPermission() throws Exception {
+        Role role = saveReadGroupRole();
+        EntityGroup tenantUserGroup = saveTenantGroup(EntityType.USER);
+
+        doPost("/api/selfRegistration/selfRegistrationParams",
+                createWebSelfRegistrationParams(List.of(newGroupPermission(role, tenantUserGroup))))
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(SELF_REGISTRATION_USER_GROUP_ERROR)));
+    }
+
+    @Test
+    public void testShouldNotSaveMobileAppBundleWithUserGroupPermission() throws Exception {
+        Role role = saveReadGroupRole();
+        EntityGroup tenantUserGroup = saveTenantGroup(EntityType.USER);
+        MobileApp mobileApp = doPost("/api/mobile/app", validMobileApp("my.test.android.app.invalid", StringUtils.randomAlphanumeric(24), PlatformType.ANDROID), MobileApp.class);
+
+        MobileAppBundle mobileAppBundle = new MobileAppBundle();
+        mobileAppBundle.setTitle("Test bundle");
+        mobileAppBundle.setAndroidAppId(mobileApp.getId());
+        MobileSelfRegistrationParams selfRegistrationParams = createMobileSelfRegistrationParams(createDashboard(), createDashboard());
+        selfRegistrationParams.setPermissions(List.of(newGroupPermission(role, tenantUserGroup)));
+        mobileAppBundle.setSelfRegistrationParams(selfRegistrationParams);
+
+        doPost("/api/mobile/bundle", mobileAppBundle)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(SELF_REGISTRATION_USER_GROUP_ERROR)));
+    }
+
+    @Test
+    public void testSelfRegisterUserSkipsUserGroupPermission() throws Exception {
+        Role role = saveReadGroupRole();
+        EntityGroup tenantUserGroup = saveTenantGroup(EntityType.USER);
+        EntityGroup tenantDeviceGroup = saveTenantGroup(EntityType.DEVICE);
+        WebSelfRegistrationParams selfRegistrationParams = createWebSelfRegistrationParams(List.of(
+                newGroupPermission(role, tenantUserGroup),
+                newGroupPermission(role, tenantDeviceGroup)));
+        whiteLabelingDao.save(tenantId, WhiteLabeling.builder()
+                .tenantId(tenantId)
+                .type(WhiteLabelingType.SELF_REGISTRATION)
+                .domainId(selfRegistrationParams.getDomainId())
+                .settings(JacksonUtil.valueToTree(selfRegistrationParams))
+                .build());
+        createSignUpNotificationTemplates();
+
+        doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+
+        User user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
+        assertThat(user).isNotNull();
+        EntityGroup selfRegistrationUsers = entityGroupService.findOrCreateUserGroup(
+                tenantId, user.getCustomerId(), "Self Registration Users", "Autogenerated Self Registration group");
+        List<GroupPermission> permissions = groupPermissionService.findGroupPermissionListByTenantIdAndUserGroupId(tenantId, selfRegistrationUsers.getId());
+        assertThat(permissions).singleElement().satisfies(permission -> {
+            assertThat(permission.getEntityGroupId()).isEqualTo(tenantDeviceGroup.getId());
+            assertThat(permission.getRoleId()).isEqualTo(role.getId());
+        });
+
+        removeCreatedUser(user);
+    }
+
+    private Role saveReadGroupRole() {
+        Role role = new Role();
+        role.setTenantId(tenantId);
+        role.setName("Role" + RandomStringUtils.randomAlphabetic(10));
+        role.setType(RoleType.GROUP);
+        role.setPermissions(JacksonUtil.valueToTree(List.of(Operation.READ)));
+        return doPost("/api/role", role, Role.class);
+    }
+
+    private EntityGroup saveTenantGroup(EntityType groupType) {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setType(groupType);
+        entityGroup.setName("Group" + RandomStringUtils.randomAlphabetic(10));
+        return doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+    }
+
+    private GroupPermission newGroupPermission(Role role, EntityGroup entityGroup) {
+        GroupPermission permission = new GroupPermission();
+        permission.setRoleId(role.getId());
+        permission.setEntityGroupId(entityGroup.getId());
+        permission.setEntityGroupType(entityGroup.getType());
+        return permission;
+    }
+
     protected SignUpRequest createWebSignUpRequest(String email) {
         var signUpRequest = new SignUpRequest();
         signUpRequest.setFields(Map.of(SignUpFieldId.EMAIL, email,
@@ -355,6 +457,17 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
     }
 
     private void createWebSelfRegistrationSettings() {
+        doPost("/api/selfRegistration/selfRegistrationParams",
+                createWebSelfRegistrationParams(Collections.emptyList()), JsonNode.class);
+        createSignUpNotificationTemplates();
+    }
+
+    private void createSignUpNotificationTemplates() {
+        createNotificationTemplate(NotificationType.USER_ACTIVATED, "User activated", "User ${userEmail} was activated", NotificationDeliveryMethod.WEB);
+        createNotificationTemplate(NotificationType.USER_REGISTERED, "User registered", "User ${userEmail} was registered", NotificationDeliveryMethod.WEB);
+    }
+
+    private WebSelfRegistrationParams createWebSelfRegistrationParams(List<GroupPermission> permissions) {
         Domain domain = constructDomain("localhost");
         Domain savedDomain = doPost("/api/domain", domain, Domain.class);
 
@@ -368,13 +481,8 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         selfRegistrationParams.setShowPrivacyPolicy(true);
         selfRegistrationParams.setDomainId(savedDomain.getId());
         selfRegistrationParams.setNotificationRecipient(createNotificationTarget(currentUserId).getId());
-        selfRegistrationParams.setPermissions(Collections.emptyList());
-
-        doPost("/api/selfRegistration/selfRegistrationParams",
-                selfRegistrationParams, JsonNode.class);
-
-        createNotificationTemplate(NotificationType.USER_ACTIVATED, "User activated", "User ${userEmail} was activated", NotificationDeliveryMethod.WEB);
-        createNotificationTemplate(NotificationType.USER_REGISTERED, "User registered", "User ${userEmail} was registered", NotificationDeliveryMethod.WEB);
+        selfRegistrationParams.setPermissions(permissions);
+        return selfRegistrationParams;
     }
 
     private void createMobileSelfRegistrationSettings(String mobilePkgName, String appSecret, PlatformType platformType,
@@ -394,8 +502,7 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         mobileAppBundle.setSelfRegistrationParams(selfRegistrationParams);
         MobileAppBundle createdMobileAppBundle = doPost("/api/mobile/bundle", mobileAppBundle, MobileAppBundle.class);
 
-        createNotificationTemplate(NotificationType.USER_ACTIVATED, "User activated", "User ${userEmail} was activated", NotificationDeliveryMethod.WEB);
-        createNotificationTemplate(NotificationType.USER_REGISTERED, "User registered", "User ${userEmail} was registered", NotificationDeliveryMethod.WEB);
+        createSignUpNotificationTemplates();
     }
 
     private MobileSelfRegistrationParams createMobileSelfRegistrationParams(DashboardId homeDashboardId, DashboardId defaultDashboardId) {
