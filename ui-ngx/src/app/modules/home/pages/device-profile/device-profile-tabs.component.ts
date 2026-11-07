@@ -51,7 +51,7 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
 
   resolveTabIndex(tab: string): number {
     if (tab === 'cf') {
-      return 2;
+      return 3;
     } else {
       return super.resolveTabIndex(tab);
     }
