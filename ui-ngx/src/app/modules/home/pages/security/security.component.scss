@@ -4,14 +4,6 @@
 @import "constants";
 
 :host {
-  .profile-container {
-    margin: 8px;
-    @media #{$mat-gt-sm} {
-      width: 700px;
-      margin: 8px auto;
-    }
-  }
-
   .mat-mdc-card.profile-card {
     padding: 24px;
 

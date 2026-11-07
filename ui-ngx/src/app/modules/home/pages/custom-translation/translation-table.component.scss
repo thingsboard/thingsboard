@@ -4,14 +4,10 @@
 
 :host {
   position: relative;
-  height: 100%;
+  height: auto;
   width: auto;
-  margin: 8px;
-
-  @media #{$mat-gt-sm} {
-    width: 700px;
-    margin: 8px auto;
-  }
+  flex: 1;
+  min-height: 0;
 
   .tb-entity-table {
     .tb-entity-table-content {
