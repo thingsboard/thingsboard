@@ -3,6 +3,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +60,7 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -80,6 +82,7 @@ public class AgentApplicationController extends BaseController {
     private static final String AGENT_APP_EVENT_ID = "agentAppEventId";
     private static final String AGENT_APP_EVENT_ID_PARAM_DESCRIPTION = "A string value representing the agent app event id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     private static final String AGENT_ID = "agentId";
+    private static final int MAX_RELATED_ENTITY_IDS = 100;
     private static final String AGENT_ID_PARAM_DESCRIPTION = "A string value representing the agent id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
 
     private final TbAgentApplicationService tbAgentApplicationService;
@@ -403,6 +406,31 @@ public class AgentApplicationController extends BaseController {
         accessControlService.checkPermission(getCurrentUser(), Resource.AGENT, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         return agentAppService.findManagedRelatedEntityIds(tenantId, resolvedType);
+    }
+
+    @ApiOperation(value = "Get Agent Application Infos by Related Entities (getAgentApplicationInfosByRelatedEntities)",
+            notes = "Returns the agent applications linked to the given entities, one per managed entity, with the agent name and the related entity id. "
+                    + "Entities that are not linked to an agent application are not included. At most " + MAX_RELATED_ENTITY_IDS + " ids per request."
+                    + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/agent/appInfos/{entityType}", params = {"entityIds"})
+    @ResponseBody
+    public List<AgentApplicationInfo> getAgentApplicationInfosByRelatedEntities(
+            @Parameter(description = "Related entity type (EDGE or DEVICE)", required = true)
+            @PathVariable String entityType,
+            @Parameter(description = "A list of related entity ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("entityIds") String[] strEntityIds) throws ThingsboardException {
+        EntityType resolvedType = resolveRelatedEntityType(entityType);
+        checkArrayParameter("entityIds", strEntityIds);
+        if (strEntityIds.length > MAX_RELATED_ENTITY_IDS) {
+            throw new ThingsboardException("At most " + MAX_RELATED_ENTITY_IDS + " entity ids are allowed", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.AGENT, Operation.READ);
+        List<EntityId> entityIds = new ArrayList<>();
+        for (String strEntityId : strEntityIds) {
+            entityIds.add(EntityIdFactory.getByTypeAndUuid(resolvedType, toUUID(strEntityId)));
+        }
+        return agentAppService.findInfosByRelatedEntityIds(getCurrentUser().getTenantId(), resolvedType, entityIds);
     }
 
     @ApiOperation(value = "Get Related Entity Candidates (getRelatedEntityCandidates)",

@@ -49,6 +49,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -285,10 +287,33 @@ public class AgentApplicationControllerTest extends AbstractControllerTest {
         List<EntityId> managed = doGetTyped("/api/agent/app/managedRelatedEntities/DEVICE", new TypeReference<>() {});
         Assert.assertTrue(managed.stream().anyMatch(id -> id.getId().equals(device.getId().getId())));
 
+        // bulk lookup: unmanaged ids are left out of the result
+        String bulkUrl = "/api/agent/appInfos/DEVICE?entityIds=" + device.getId().getId() + "," + UUID.randomUUID();
+        List<AgentApplicationInfo> infos = doGetTyped(bulkUrl, new TypeReference<>() {});
+        Assert.assertEquals(1, infos.size());
+        AgentApplicationInfo info = infos.get(0);
+        Assert.assertEquals(gatewayApp.getId(), info.getId());
+        Assert.assertEquals("Related Entity Gateway App", info.getName());
+        Assert.assertEquals(application.getAgentId(), info.getAgentId());
+        Assert.assertNotNull(info.getAgentName());
+        Assert.assertEquals(device.getId(), info.getRelatedEntityId());
+
         doDelete("/api/agent/app/" + gatewayApp.getId().getId() + "/relatedEntity", AgentApplication.class);
         AgentApplicationInfo unassignedInfo = doGet("/api/agent/app/" + gatewayApp.getId().getId(), AgentApplicationInfo.class);
         Assert.assertNull(unassignedInfo.getRelatedEntityId());
         doGet("/api/agent/apps/DEVICE/" + device.getId().getId()).andExpect(status().isNotFound());
+        List<AgentApplicationInfo> infosAfterUnassign = doGetTyped(bulkUrl, new TypeReference<>() {});
+        Assert.assertTrue(infosAfterUnassign.isEmpty());
+    }
+
+    @Test
+    public void testGetAgentApplicationInfosByRelatedEntities_invalidRequest() throws Exception {
+        loginTenantAdmin();
+        doGet("/api/agent/appInfos/NOT_AN_ENTITY_TYPE?entityIds=" + UUID.randomUUID()).andExpect(status().isBadRequest());
+        String tooManyIds = IntStream.range(0, 101).mapToObj(i -> UUID.randomUUID().toString()).collect(Collectors.joining(","));
+        doGet("/api/agent/appInfos/EDGE?entityIds=" + tooManyIds).andExpect(status().isBadRequest());
+        List<AgentApplicationInfo> none = doGetTyped("/api/agent/appInfos/EDGE?entityIds=" + UUID.randomUUID(), new TypeReference<>() {});
+        Assert.assertTrue(none.isEmpty());
     }
 
     @Test

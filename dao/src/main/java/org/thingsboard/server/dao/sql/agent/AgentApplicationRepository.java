@@ -31,6 +31,11 @@ public interface AgentApplicationRepository extends JpaRepository<AgentApplicati
             "AND (:textSearch IS NULL OR d.name ILIKE CONCAT('%', :textSearch, '%')) " +
             "AND (d.id = :currentEntityId OR d.id NOT IN (" + MANAGED_RELATED_ENTITY_IDS + " AND re.from_type = 'DEVICE'))";
 
+    String INFO_WITH_AGENT_NAME_QUERY = "SELECT new org.thingsboard.server.dao.model.sql.AgentApplicationInfoEntity(a, p.version, p.name, p.templateVersion, ag.name, re.fromId, re.fromType) " +
+            "FROM AgentApplicationEntity a " +
+            "JOIN AgentEntity ag ON a.agentId = ag.id " +
+            "LEFT JOIN AgentAppProfileEntity p ON a.applicationProfileId = p.id ";
+
     @Query(value = "SELECT e.id AS id, e.name AS name " + EDGE_CANDIDATES_WHERE,
             countQuery = "SELECT count(*) " + EDGE_CANDIDATES_WHERE,
             nativeQuery = true)
@@ -101,10 +106,7 @@ public interface AgentApplicationRepository extends JpaRepository<AgentApplicati
                                                         @Param("textSearch") String textSearch,
                                                         Pageable pageable);
 
-    @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AgentApplicationInfoEntity(a, p.version, p.name, p.templateVersion, ag.name, re.fromId, re.fromType) " +
-            "FROM AgentApplicationEntity a " +
-            "JOIN AgentEntity ag ON a.agentId = ag.id " +
-            "LEFT JOIN AgentAppProfileEntity p ON a.applicationProfileId = p.id " +
+    @Query(value = INFO_WITH_AGENT_NAME_QUERY +
             "LEFT JOIN RelationEntity re ON re.toId = a.id AND re.toType = 'AGENT_APPLICATION' " +
             "    AND re.relationTypeGroup = 'AGENT' AND re.relationType = 'ManagedByAgentApp' " +
             "WHERE a.tenantId = :tenantId AND a.applicationProfileId = :applicationProfileId AND ag.agentProfileId = :agentProfileId",
@@ -130,6 +132,14 @@ public interface AgentApplicationRepository extends JpaRepository<AgentApplicati
             "AND re.fromType = :relatedEntityType AND a.tenantId = :tenantId")
     List<UUID> findManagedRelatedEntityIds(@Param("tenantId") UUID tenantId,
                                            @Param("relatedEntityType") String relatedEntityType);
+
+    @Query(INFO_WITH_AGENT_NAME_QUERY +
+            "JOIN RelationEntity re ON re.toId = a.id AND re.toType = 'AGENT_APPLICATION' " +
+            "    AND re.relationTypeGroup = 'AGENT' AND re.relationType = 'ManagedByAgentApp' " +
+            "WHERE a.tenantId = :tenantId AND re.fromType = :relatedEntityType AND re.fromId IN :relatedEntityIds")
+    List<AgentApplicationInfoEntity> findInfosByRelatedEntityIds(@Param("tenantId") UUID tenantId,
+                                                                 @Param("relatedEntityType") String relatedEntityType,
+                                                                 @Param("relatedEntityIds") List<UUID> relatedEntityIds);
 
     @Query("SELECT a FROM AgentApplicationEntity a, RelationEntity re " +
             "WHERE a.id = re.toId AND re.toType = 'AGENT_APPLICATION' " +

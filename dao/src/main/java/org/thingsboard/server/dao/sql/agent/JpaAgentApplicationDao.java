@@ -139,6 +139,13 @@ public class JpaAgentApplicationDao extends JpaAbstractDao<AgentApplicationEntit
     }
 
     @Override
+    public List<AgentApplicationInfo> findInfosByRelatedEntityIds(TenantId tenantId, String relatedEntityType, List<UUID> relatedEntityIds) {
+        return agentApplicationRepository.findInfosByRelatedEntityIds(tenantId.getId(), relatedEntityType, relatedEntityIds).stream()
+                .map(this::toInfo)
+                .toList();
+    }
+
+    @Override
     public PageData<EntityInfo> findRelatedEntityCandidates(TenantId tenantId, EntityType relatedEntityType, UUID currentEntityId, PageLink pageLink) {
         Page<Tuple> candidates = switch (relatedEntityType) {
             case EDGE -> agentApplicationRepository.findEdgeCandidates(

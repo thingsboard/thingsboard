@@ -139,6 +139,11 @@ public class ContainerTestSuite {
             replaceInFile(targetDir + "tb-node.env", "TB_LICENSE_SECRET=YOUR_LICENSE_KEY_HERE",
                     "TB_LICENSE_SECRET=", "YOUR_LICENSE_KEY_HERE");
             addToFile(targetDir, "tb-node.env", Map.of("NON_PRODUCTION_USE", "true"));
+            // Edge downlink stats are reported to and saved by the edge partition owner every 10 min / 1 min by default,
+            // too slow for EdgeStatsClusterTest
+            addToFile(targetDir, "tb-node.env", Map.of(
+                    "EDGES_STATS_REPORT_INTERVAL_MS", "10000",
+                    "EDGES_STATS_FLUSH_INTERVAL_MS", "5000"));
 
             if (IS_HYBRID_MODE) {
                 composeFiles.add(new File(targetDir + "advanced/docker-compose.cassandra.volumes.yml"));

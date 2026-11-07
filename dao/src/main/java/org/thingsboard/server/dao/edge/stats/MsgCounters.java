@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.edge.stats;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Data
@@ -16,6 +18,10 @@ public class MsgCounters {
     private final AtomicLong msgsPermanentlyFailed = new AtomicLong();
     private final AtomicLong msgsTmpFailed = new AtomicLong();
     private final AtomicLong msgsLag = new AtomicLong();
+    // true once a live session measured the lag in the current report interval
+    private final AtomicBoolean msgsLagMeasured = new AtomicBoolean();
+    // when the lag was measured, so the newest measurement wins when several nodes report it
+    private final AtomicLong msgsLagTs = new AtomicLong();
 
     public void clear() {
         msgsAdded.set(0);
@@ -23,6 +29,8 @@ public class MsgCounters {
         msgsPermanentlyFailed.set(0);
         msgsTmpFailed.set(0);
         msgsLag.set(0);
+        msgsLagMeasured.set(false);
+        msgsLagTs.set(0);
     }
 
 }

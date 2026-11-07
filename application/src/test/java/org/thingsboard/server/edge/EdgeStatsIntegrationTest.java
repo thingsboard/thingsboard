@@ -21,6 +21,7 @@ import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsKey;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.edge.stats.EdgeStatsAggregationService;
 import org.thingsboard.server.service.edge.stats.EdgeStatsService;
 
 import java.time.Duration;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_LAG;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
@@ -51,6 +53,8 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
     private EdgeStatsService edgeStatsService;
     @Autowired
     private EdgeStatsCounterService statsCounterService;
+    @Autowired
+    private EdgeStatsAggregationService edgeStatsAggregationService;
 
     @Test
     public void testReportStats() throws Exception {
@@ -64,18 +68,38 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
             assertEquals(EXPECTED_MSGS_PUSHED, counters.getMsgsPushed().get());
             assertEquals(EXPECTED_MSGS_PERMANENTLY_FAILED, counters.getMsgsPermanentlyFailed().get());
             assertEquals(EXPECTED_MSGS_TMP_FAILED, counters.getMsgsTmpFailed().get());
+            // all events are delivered, so the lag measured by the session is reset to 0 after the last page
+            assertEquals(0L, counters.getMsgsLag().get());
         });
 
         // WHEN
         edgeStatsService.reportStats();
 
         // THEN
+        // stats are sent to the edge partition owner (this node) through the core queue and saved on its flush
         await().atMost(10, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            edgeStatsAggregationService.flush();
             List<TsKvEntry> actualStats = fetchLatestStats();
             assertEquals(EXPECTED_MSGS_ADDED, getStatsLongValue(actualStats, DOWNLINK_MSGS_ADDED));
             assertEquals(EXPECTED_MSGS_PUSHED, getStatsLongValue(actualStats, DOWNLINK_MSGS_PUSHED));
             assertEquals(EXPECTED_MSGS_PERMANENTLY_FAILED, getStatsLongValue(actualStats, DOWNLINK_MSGS_PERMANENTLY_FAILED));
             assertEquals(EXPECTED_MSGS_TMP_FAILED, getStatsLongValue(actualStats, DOWNLINK_MSGS_TMP_FAILED));
+            assertEquals(0L, getStatsLongValue(actualStats, DOWNLINK_MSGS_LAG));
+        });
+    }
+
+    @Test
+    public void testSyncMsgsCountedAsAdded() throws Exception {
+        statsCounterService.clear(edge.getId());
+
+        doPost("/api/edge/sync/" + edge.getId());
+
+        // sync messages never go through the edge queue, yet every pushed one must also be counted as added
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            MsgCounters counters = statsCounterService.getMsgCountersByEdge().get(edge.getId());
+            Assert.assertNotNull(counters);
+            Assert.assertTrue(counters.getMsgsPushed().get() > 0);
+            assertEquals(counters.getMsgsAdded().get(), counters.getMsgsPushed().get());
         });
     }
 

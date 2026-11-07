@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.edge;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,11 @@ public abstract class BaseEdgeEventService implements EdgeEventService {
     @Override
     public PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink) {
         return edgeEventDao.findEdgeEvents(tenantId.getId(), edgeId, seqIdStart, seqIdEnd, pageLink);
+    }
+
+    @Override
+    public long countEdgeEvents(TenantId tenantId, EdgeId edgeId, long seqIdStart, long startTime, int limit) {
+        return edgeEventDao.countEdgeEvents(tenantId.getId(), edgeId, seqIdStart, startTime, limit);
     }
 
     @Override

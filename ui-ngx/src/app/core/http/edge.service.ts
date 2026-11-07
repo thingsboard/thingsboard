@@ -10,6 +10,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { Edge, EdgeEvent, EdgeInfo, EdgeInstructions, EdgeSearchQuery } from '@shared/models/edge.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { NotificationRequestInfo } from '@shared/models/notification.models';
 import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 
 @Injectable({
@@ -160,5 +161,15 @@ export class EdgeService {
 
   public isEdgeUpgradeAvailable(edgeId: string, config?: RequestConfig): Observable<boolean> {
     return this.http.get<boolean>(`/api/edge/${edgeId}/upgrade/available`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeNotificationRequests(edgeId: string, pageLink: TimePageLink,
+                                     config?: RequestConfig): Observable<PageData<NotificationRequestInfo>> {
+    return this.http.get<PageData<NotificationRequestInfo>>(`/api/edge/${edgeId}/notificationRequests${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getLatestEdgeVersion(config?: RequestConfig): Observable<string> {
+    return this.http.get(`/api/edge/upgrade/latest`, {...{responseType: 'text'}, ...defaultHttpOptionsFromConfig(config)});
   }
 }

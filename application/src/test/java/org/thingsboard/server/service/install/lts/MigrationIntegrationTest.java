@@ -471,6 +471,26 @@ public class MigrationIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
+    public void appliesSchemaForV4410CreatesNotificationRequestEdgeOriginatorIndex() {
+        // Same approach as the calculated field index: drop, migrate, assert the exact partial definition, restore.
+        try {
+            jdbcTemplate.execute("DROP INDEX IF EXISTS idx_notification_request_edge_originator_created_time");
+            assertFalse(indexExists("idx_notification_request_edge_originator_created_time"));
+
+            migrationService.applyMigrations("4.4.0.0", "4.4.1.0", false, () -> {});
+
+            assertTrue(indexExists("idx_notification_request_edge_originator_created_time"));
+            assertEquals("CREATE INDEX idx_notification_request_edge_originator_created_time ON public.notification_request " +
+                            "USING btree (originator_entity_id, created_time DESC) WHERE ((originator_entity_type)::text = 'EDGE'::text)",
+                    jdbcTemplate.queryForObject("SELECT indexdef FROM pg_indexes WHERE indexname = ?", String.class,
+                            "idx_notification_request_edge_originator_created_time"));
+        } finally {
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_notification_request_edge_originator_created_time " +
+                    "ON notification_request(originator_entity_id, created_time DESC) WHERE originator_entity_type = 'EDGE'");
+        }
+    }
+
+    @Test
     public void everyTbClusterDdlCopyIsConsistentWithSchemaEntities() {
         String schemaEntities = readResource("sql/schema-entities.sql");
 

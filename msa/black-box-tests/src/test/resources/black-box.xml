@@ -13,6 +13,7 @@
             <package name="org.thingsboard.server.msa.connectivity"/>
             <package name="org.thingsboard.server.msa.integration"/>
             <package name="org.thingsboard.server.msa.edqs"/>
+            <package name="org.thingsboard.server.msa.edge"/>
             <package name="org.thingsboard.server.msa.cf" />
             <package name="org.thingsboard.server.msa.rule.node" />
             <package name="org.thingsboard.server.msa.report" />

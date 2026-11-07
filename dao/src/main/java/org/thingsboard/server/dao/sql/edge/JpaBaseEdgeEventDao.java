@@ -178,6 +178,11 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
     }
 
     @Override
+    public long countEdgeEvents(UUID tenantId, EdgeId edgeId, long seqIdStart, long startTime, int limit) {
+        return edgeEventRepository.countEdgeEvents(tenantId, edgeId.getId(), seqIdStart, startTime, limit);
+    }
+
+    @Override
     public void cleanupEvents(long ttl) {
         partitioningRepository.dropPartitionsBefore(TABLE_NAME, ttl, TimeUnit.HOURS.toMillis(partitionSizeInHours));
     }

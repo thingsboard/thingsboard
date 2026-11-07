@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.notification;
 
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -19,6 +21,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.NotificationRequestEntity;
 import org.thingsboard.server.dao.model.sql.NotificationRequestInfoEntity;
@@ -48,6 +51,15 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     public PageData<NotificationRequestInfo> findInfosByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
         return DaoUtil.pageToPageData(notificationRequestRepository.findInfosByTenantIdAndOriginatorEntityTypeAndSearchText(tenantId.getId(),
                         originatorType, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink, Map.of(
+                                "templateName", "t.name"
+                        ))))
+                .mapData(NotificationRequestInfoEntity::toData);
+    }
+
+    @Override
+    public PageData<NotificationRequestInfo> findInfosByTenantIdAndEdgeIdAndPageLink(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+        return DaoUtil.pageToPageData(notificationRequestRepository.findInfosByTenantIdAndEdgeIdAndCreatedTimeBetween(tenantId.getId(),
+                        edgeId.getId(), pageLink.getStartTime(), pageLink.getEndTime(), DaoUtil.toPageable(pageLink, Map.of(
                                 "templateName", "t.name"
                         ))))
                 .mapData(NotificationRequestInfoEntity::toData);

@@ -19,6 +19,10 @@ public interface EdgeUpgradeInstructionsService {
 
     void setPlatformEdgeVersion(String version);
 
+    String getLatestEdgeVersion();
+
     boolean isUpgradeAvailable(TenantId tenantId, EdgeId edgeId) throws Exception;
+
+    boolean isUpgradeAvailable(String edgeVersion);
 
 }

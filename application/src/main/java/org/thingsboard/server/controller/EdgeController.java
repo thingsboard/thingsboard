@@ -40,8 +40,10 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
@@ -51,6 +53,7 @@ import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportReques
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeBulkImportService;
@@ -98,6 +101,7 @@ public class EdgeController extends BaseController {
     private final Optional<EdgeRpcService> edgeRpcServiceOpt;
     private final Optional<EdgeInstallInstructionsService> edgeInstallServiceOpt;
     private final Optional<EdgeUpgradeInstructionsService> edgeUpgradeServiceOpt;
+    private final NotificationRequestService notificationRequestService;
 
     public static final String EDGE_ID = "edgeId";
     public static final String EDGE_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the edge is owned by the same tenant. " +
@@ -757,6 +761,53 @@ public class EdgeController extends BaseController {
             edgeId = checkNotNull(edgeId);
             Edge edge = checkEdgeId(edgeId, Operation.READ);
             return edgeUpgradeServiceOpt.get().isUpgradeAvailable(edge.getTenantId(), edge.getId());
+        } else {
+            throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+        }
+    }
+
+    @ApiOperation(value = "Get edge notification requests (getEdgeNotificationRequests)",
+            notes = "Returns a page of notification requests originated by the edge, e.g. edge connection and edge communication failure notifications. " +
+                    "Requests are sorted by creation time descending unless another sort order is requested." +
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/edge/{edgeId}/notificationRequests", params = {"pageSize", "page"})
+    public PageData<NotificationRequestInfo> getEdgeNotificationRequests(
+            @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable(EDGE_ID) String strEdgeId,
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "templateName"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder,
+            @Parameter(description = "Timestamp. Notification requests with creation time before it won't be queried")
+            @RequestParam(required = false) Long startTime,
+            @Parameter(description = "Timestamp. Notification requests with creation time after it won't be queried")
+            @RequestParam(required = false) Long endTime) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+        Edge edge = checkEdgeId(edgeId, Operation.READ);
+        accessControlService.checkPermission(getCurrentUser(), Resource.NOTIFICATION, Operation.READ);
+        if (sortProperty == null) {
+            sortProperty = "createdTime";
+            sortOrder = "DESC";
+        }
+        TimePageLink pageLink = createTimePageLink(pageSize, page, null, sortProperty, sortOrder, startTime, endTime);
+        return checkNotNull(notificationRequestService.findNotificationRequestInfosByTenantIdAndEdgeId(edge.getTenantId(), edgeId, pageLink));
+    }
+
+    @ApiOperation(value = "Get latest edge version (getLatestEdgeVersion)",
+            notes = "Returns the newest edge version supported by the platform, e.g. '4.4.0'. " +
+                    "An edge is upgradable when its 'edgeVersion' is 3.6.0 or newer and older than this version. " +
+                    "Lets a list of edges decide locally which rows are upgradable without asking per row." + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/edge/upgrade/latest")
+    public String getLatestEdgeVersion() throws Exception {
+        if (isEdgesEnabled() && edgeUpgradeServiceOpt.isPresent()) {
+            return edgeUpgradeServiceOpt.get().getLatestEdgeVersion();
         } else {
             throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }

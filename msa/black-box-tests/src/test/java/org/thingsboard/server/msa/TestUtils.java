@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class TestUtils {
 
@@ -21,7 +22,8 @@ public class TestUtils {
         Path composeFilePath = composeFile.toPath();
         String data = Files.readString(composeFilePath);
         String versionString = "version: '" + version + "'";
-        if (!data.contains(versionString)) {
+        // a file that already declares any version (e.g. version: '3') must not get a second key: newer docker compose rejects duplicate keys
+        if (!data.contains(versionString) && !Pattern.compile("^version:", Pattern.MULTILINE).matcher(data).find()) {
             data += "\n" + versionString + "\n";
         }
         Files.writeString(composeFilePath, data);

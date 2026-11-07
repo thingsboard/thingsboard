@@ -241,6 +241,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
                 scheduleDisconnectNotification(edge);
             }
+            // lag measured by this session is stale once it is gone, so the next stats report counts the backlog instead
+            ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.resetLagMeasured(edgeId));
             toRemove.onEdgeDisconnect();
             // keep the slow teardown last, after the state transition is fully recorded
             toRemove.destroyAndMarkAsZombieIfFailed();

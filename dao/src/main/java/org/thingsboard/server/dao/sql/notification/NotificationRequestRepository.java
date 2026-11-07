@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.notification;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,6 +34,17 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
                                                                                                 @Param("originatorType") EntityType originatorType,
                                                                                                 @Param("searchText") String searchText,
                                                                                                 Pageable pageable);
+
+    // originator type is a literal so the query can use the partial index on EDGE originators
+    @Query(REQUEST_INFO_QUERY + " WHERE r.tenantId = :tenantId AND r.originatorEntityId = :edgeId " +
+            "AND r.originatorEntityType = org.thingsboard.server.common.data.EntityType.EDGE " +
+            "AND (:startTime IS NULL OR r.createdTime >= :startTime) " +
+            "AND (:endTime IS NULL OR r.createdTime <= :endTime)")
+    Page<NotificationRequestInfoEntity> findInfosByTenantIdAndEdgeIdAndCreatedTimeBetween(@Param("tenantId") UUID tenantId,
+                                                                                          @Param("edgeId") UUID edgeId,
+                                                                                          @Param("startTime") Long startTime,
+                                                                                          @Param("endTime") Long endTime,
+                                                                                          Pageable pageable);
 
     @Query(REQUEST_INFO_QUERY + " WHERE r.id = :id")
     NotificationRequestInfoEntity findInfoById(@Param("id") UUID id);
