@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.report.ReportInfo;
 import org.thingsboard.server.common.data.report.ReportInfoQuery;
 import org.thingsboard.server.common.data.report.ReportRequest;
 import org.thingsboard.server.common.data.report.configuration.ReportTemplateConfig;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.subscription.PlatformFeature;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -105,7 +106,12 @@ public class ReportController extends BaseController {
         // REPORT/CREATE reaches it. What the guards stop is user-initiated generation, upstream in
         // requestReport and testReportAndDownload.
         Report report = JacksonUtil.fromString(info, Report.class);
-        accessControlService.checkPermission(getCurrentUser(), Resource.REPORT, Operation.CREATE, null, report);
+        SecurityUser currentUser = getCurrentUser();
+        report.setTenantId(currentUser.getTenantId());
+        if (Authority.CUSTOMER_USER.equals(currentUser.getAuthority())) {
+            report.setCustomerId(currentUser.getCustomerId());
+        }
+        accessControlService.checkPermission(currentUser, Resource.REPORT, Operation.CREATE, null, report);
         return reportService.createReport(report, file.getBytes());
     }
 
