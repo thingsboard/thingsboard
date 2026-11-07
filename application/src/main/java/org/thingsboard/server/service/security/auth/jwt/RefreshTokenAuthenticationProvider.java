@@ -13,6 +13,9 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.service.security.auth.AbstractAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.RefreshAuthenticationToken;
 import org.thingsboard.server.service.security.auth.TokenOutdatingService;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
+import org.thingsboard.server.service.security.exception.IpNotAllowedException;
+import org.thingsboard.server.service.security.ip.SysAdminIpPolicy;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -25,13 +28,15 @@ public class RefreshTokenAuthenticationProvider extends AbstractAuthenticationPr
 
     private final JwtTokenFactory tokenFactory;
     private final TokenOutdatingService tokenOutdatingService;
+    private final SysAdminIpPolicy sysAdminIpPolicy;
 
     public RefreshTokenAuthenticationProvider(JwtTokenFactory jwtTokenFactory, UserAuthDetailsCache userAuthDetailsCache,
                                               UserPermissionsService userPermissionsService, CustomerService customerService,
-                                              TokenOutdatingService tokenOutdatingService) {
+                                              TokenOutdatingService tokenOutdatingService, SysAdminIpPolicy sysAdminIpPolicy) {
         super(customerService, userAuthDetailsCache, userPermissionsService);
         this.tokenFactory = jwtTokenFactory;
         this.tokenOutdatingService = tokenOutdatingService;
+        this.sysAdminIpPolicy = sysAdminIpPolicy;
     }
 
     @Override
@@ -50,6 +55,18 @@ public class RefreshTokenAuthenticationProvider extends AbstractAuthenticationPr
         securityUser.setSessionId(unsafeUser.getSessionId());
         if (tokenOutdatingService.isOutdated(rawAccessToken.token(), securityUser.getId())) {
             throw new CredentialsExpiredException("Token is outdated");
+        }
+
+        // the refresh success handler responds directly, bypassing post-auth filters, so the
+        // sysadmin IP allowlist is enforced here, after the user's real authority is re-loaded
+        if (authentication.getDetails() instanceof RestAuthenticationDetails details) {
+            if (sysAdminIpPolicy.isBlocked(securityUser.getAuthority(), securityUser.getTenantId(), securityUser.getId(),
+                    details.getResolvedAddress(), details.getRawSocketAddress(), "refresh")) {
+                throw new IpNotAllowedException();
+            }
+        } else if (sysAdminIpPolicy.isEnforced() && sysAdminIpPolicy.isSysAdminScoped(securityUser)) {
+            // no request context to judge the address by: fail closed for sysadmin-scoped principals
+            throw new IpNotAllowedException();
         }
 
         return new RefreshAuthenticationToken(securityUser);

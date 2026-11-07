@@ -48,7 +48,8 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
             throw new RuntimeException("TbWebSocketHandler expected but " + wsHandler + " provided");
         }
         registry.addHandler(wsHandler, WS_API_MAPPING)
-                .setAllowedOriginPatterns("*");
+                .setAllowedOriginPatterns("*")
+                .addInterceptors(new ClientAddressHandshakeInterceptor());
     }
 
 }

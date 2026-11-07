@@ -31,6 +31,10 @@ public class SecurityUser extends User {
     private String sessionId = UUID.randomUUID().toString();
     @Getter @Setter
     private String clientAddress;
+    // the credential that authenticated this principal is owned by a system administrator
+    // (e.g. an internal API key impersonating another user via X-User-Id / X-Customer-Id)
+    @Getter @Setter
+    private boolean sysAdminOwnedCredential;
 
     public SecurityUser() {
         super();

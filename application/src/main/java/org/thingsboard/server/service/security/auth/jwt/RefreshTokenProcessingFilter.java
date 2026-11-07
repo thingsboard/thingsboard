@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.service.security.auth.RefreshAuthenticationToken;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 
@@ -59,7 +60,9 @@ public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessi
 
         RawAccessJwtToken token = new RawAccessJwtToken(refreshTokenRequest.refreshToken());
 
-        return this.getAuthenticationManager().authenticate(new RefreshAuthenticationToken(token));
+        RefreshAuthenticationToken authToken = new RefreshAuthenticationToken(token);
+        authToken.setDetails(new RestAuthenticationDetails(request));
+        return this.getAuthenticationManager().authenticate(authToken);
     }
 
     @Override

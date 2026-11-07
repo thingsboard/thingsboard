@@ -69,6 +69,12 @@ public class ApiKeyAuthenticationProvider extends AbstractAuthenticationProvider
             securityUser = authenticateByUserId(resolvedUser.tenantId(), resolvedUser.userId(), apiKey.isInternal() ? apiKey.getPermissions() : null, apiKey.isInternal());
         }
 
+        // a key owned by the system tenant stays sysadmin-scoped for the IP allowlist, even when
+        // it impersonates another user - the credential itself is the sysadmin's
+        if (TenantId.SYS_TENANT_ID.equals(apiKey.getTenantId())) {
+            securityUser.setSysAdminOwnedCredential(true);
+        }
+
         return securityUser;
     }
 

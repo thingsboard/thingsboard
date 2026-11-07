@@ -29,9 +29,9 @@ public class SsrfProtectionValidator {
 
     // Well-known cloud metadata endpoints not covered by the JDK checks (isLoopback, isSiteLocal, isLinkLocal)
     private static final List<CidrRange> CLOUD_METADATA_RANGES = List.of(
-            CidrRange.of("100.64.0.0", 10),   // Carrier-Grade NAT (RFC 6598); Alibaba Cloud and Tencent Cloud metadata
-            CidrRange.of("192.0.0.0", 24),     // IANA reserved (RFC 6890); Oracle Cloud alternate metadata endpoint
-            CidrRange.of("168.63.129.16", 32)  // Azure WireServer
+            CidrRange.parseLiteral("100.64.0.0/10"),   // Carrier-Grade NAT (RFC 6598); Alibaba Cloud and Tencent Cloud metadata
+            CidrRange.parseLiteral("192.0.0.0/24"),     // IANA reserved (RFC 6890); Oracle Cloud alternate metadata endpoint
+            CidrRange.parseLiteral("168.63.129.16/32")  // Azure WireServer
     );
 
     public static void validateUri(URI uri) {
@@ -186,7 +186,7 @@ public class SsrfProtectionValidator {
             }
             if (trimmed.contains("/") || isIpLiteral(trimmed)) {
                 try {
-                    cidrRanges.add(CidrRange.parse(trimmed));
+                    cidrRanges.add(CidrRange.parseLiteral(trimmed));
                 } catch (Exception e) {
                     log.warn("Failed to parse CIDR/IP entry '{}': {}", trimmed, e.getMessage());
                 }
@@ -216,65 +216,5 @@ public class SsrfProtectionValidator {
         static final AllowedHosts EMPTY = new AllowedHosts(Collections.emptyList(), Collections.emptySet());
     }
 
-    record CidrRange(byte[] network, int prefixLength) {
-
-        static CidrRange of(String ip, int prefixLength) {
-            try {
-                byte[] addr = InetAddress.getByName(ip).getAddress();
-                if (prefixLength < 0 || prefixLength > addr.length * 8) {
-                    throw new IllegalArgumentException("Invalid prefix length: " + prefixLength + " for " + ip);
-                }
-                return new CidrRange(addr, prefixLength);
-            } catch (UnknownHostException e) {
-                throw new IllegalArgumentException("Invalid IP: " + ip, e);
-            }
-        }
-
-        static CidrRange parse(String entry) throws UnknownHostException {
-            int slashIndex = entry.indexOf('/');
-            if (slashIndex >= 0) {
-                String ip = entry.substring(0, slashIndex);
-                int prefix = Integer.parseInt(entry.substring(slashIndex + 1));
-                byte[] addr = InetAddress.getByName(ip).getAddress();
-                if (prefix < 0 || prefix > addr.length * 8) {
-                    throw new IllegalArgumentException("Invalid prefix length: " + prefix + " for " + entry);
-                }
-                return new CidrRange(addr, prefix);
-            } else {
-                byte[] addr = InetAddress.getByName(entry).getAddress();
-                return new CidrRange(addr, addr.length * 8);
-            }
-        }
-
-        boolean contains(InetAddress address) {
-            byte[] addr = address.getAddress();
-            if (addr.length != network.length) {
-                return false;
-            }
-            int fullBytes = prefixLength / 8;
-            int remainingBits = prefixLength % 8;
-            for (int i = 0; i < fullBytes; i++) {
-                if (addr[i] != network[i]) {
-                    return false;
-                }
-            }
-            if (remainingBits > 0 && fullBytes < addr.length) {
-                int mask = 0xFF << (8 - remainingBits);
-                if ((addr[fullBytes] & mask) != (network[fullBytes] & mask)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            try {
-                return InetAddress.getByAddress(network).getHostAddress() + "/" + prefixLength;
-            } catch (UnknownHostException e) {
-                return "invalid/" + prefixLength;
-            }
-        }
-    }
 
 }

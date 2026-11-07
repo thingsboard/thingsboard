@@ -241,6 +241,9 @@ public class ThingsboardSecurityConfiguration {
     private RateLimitProcessingFilter rateLimitProcessingFilter;
 
     @Autowired
+    private SysAdminIpFilter sysAdminIpFilter;
+
+    @Autowired
     private SystemSetupFilter systemSetupFilter;
 
     @Autowired
@@ -265,6 +268,16 @@ public class ThingsboardSecurityConfiguration {
                 = new FilterRegistrationBean<>(etagFilter);
         filterRegistrationBean.addUrlPatterns("*.js", "*.css", "*.ico", "/assets/*", "/static/*");
         filterRegistrationBean.setName("etagFilter");
+        return filterRegistrationBean;
+    }
+
+    @Bean
+    protected FilterRegistrationBean<ClientAddressCaptureFilter> clientAddressCaptureFilter(org.thingsboard.server.service.security.ip.ClientAddressResolver clientAddressResolver) {
+        FilterRegistrationBean<ClientAddressCaptureFilter> filterRegistrationBean
+                = new FilterRegistrationBean<>(new ClientAddressCaptureFilter(clientAddressResolver));
+        filterRegistrationBean.setDispatcherTypes(jakarta.servlet.DispatcherType.REQUEST, jakarta.servlet.DispatcherType.ASYNC, jakarta.servlet.DispatcherType.ERROR);
+        filterRegistrationBean.setOrder(org.springframework.core.Ordered.HIGHEST_PRECEDENCE);
+        filterRegistrationBean.setName("clientAddressCaptureFilter");
         return filterRegistrationBean;
     }
 
@@ -394,6 +407,7 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterBefore(buildApiKeyTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(payloadSizeFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(sysAdminIpFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(authExceptionHandler, buildRestLoginProcessingFilter().getClass());
         if (oauth2Configuration != null) {

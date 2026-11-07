@@ -47,6 +47,7 @@ import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
+import org.thingsboard.server.service.security.exception.IpNotAllowedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
@@ -82,6 +83,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         errorCodeToStatusMap.put(ThingsboardErrorCode.GENERAL, HttpStatus.INTERNAL_SERVER_ERROR);
         errorCodeToStatusMap.put(ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED);
         errorCodeToStatusMap.put(ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
+        errorCodeToStatusMap.put(ThingsboardErrorCode.IP_NOT_ALLOWED, HttpStatus.UNAUTHORIZED);
         errorCodeToStatusMap.put(ThingsboardErrorCode.CREDENTIALS_EXPIRED, HttpStatus.UNAUTHORIZED);
         errorCodeToStatusMap.put(ThingsboardErrorCode.PERMISSION_DENIED, HttpStatus.FORBIDDEN);
         errorCodeToStatusMap.put(ThingsboardErrorCode.INVALID_ARGUMENTS, HttpStatus.BAD_REQUEST);
@@ -292,6 +294,8 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
             JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof JwtExpiredTokenException) {
             JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED));
+        } else if (authenticationException instanceof IpNotAllowedException) {
+            JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(IpNotAllowedException.MESSAGE, ThingsboardErrorCode.IP_NOT_ALLOWED, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof AuthMethodNotSupportedException) {
             JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(authenticationException.getMessage(), ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof UserPasswordExpiredException expiredException) {
