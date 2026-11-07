@@ -116,6 +116,12 @@ import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.event.EventType;
+import org.thingsboard.server.common.data.extension.Extension;
+import org.thingsboard.server.common.data.extension.ExtensionInfo;
+import org.thingsboard.server.common.data.extension.ExtensionQuota;
+import org.thingsboard.server.common.data.extension.ExtensionResourceSizeInfo;
+import org.thingsboard.server.common.data.extension.ExtensionSlugInfo;
+import org.thingsboard.server.common.data.extension.ExtensionStatus;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AgentAppEventId;
@@ -142,6 +148,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.ExtensionId;
 import org.thingsboard.server.common.data.id.GroupPermissionId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.JobId;
@@ -6539,6 +6546,92 @@ public class RestClient implements Closeable {
 
     public void deleteJob(JobId jobId) {
         restTemplate.delete(baseURL + "/api/job/{id}", jobId.getId());
+    }
+
+    public Extension saveExtension(Extension extension) {
+        return restTemplate.postForEntity(baseURL + "/api/extension", extension, Extension.class).getBody();
+    }
+
+    public Optional<Extension> getExtensionById(ExtensionId extensionId) {
+        try {
+            ResponseEntity<Extension> extension = restTemplate.getForEntity(baseURL + "/api/extension/{extensionId}", Extension.class, extensionId.getId());
+            return Optional.ofNullable(extension.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<ExtensionInfo> getExtensions(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/tenant/extensions?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<ExtensionInfo>>() {
+                }, params).getBody();
+    }
+
+    public ExtensionQuota getExtensionQuota() {
+        return restTemplate.getForEntity(baseURL + "/api/tenant/extensions/quota", ExtensionQuota.class).getBody();
+    }
+
+    public List<ExtensionResourceSizeInfo> getExtensionResourceSizes() {
+        return restTemplate.exchange(
+                baseURL + "/api/extension/resourceSizes",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<ExtensionResourceSizeInfo>>() {
+                }).getBody();
+    }
+
+    public void deleteExtension(ExtensionId extensionId) {
+        restTemplate.delete(baseURL + "/api/extension/{extensionId}", extensionId.getId());
+    }
+
+    public ExtensionStatus getExtensionStatus(ExtensionId extensionId) {
+        return restTemplate.getForEntity(baseURL + "/api/extension/{extensionId}/status", ExtensionStatus.class, extensionId.getId()).getBody();
+    }
+
+    public void restartExtension(ExtensionId extensionId) {
+        restTemplate.postForObject(baseURL + "/api/extension/{extensionId}/restart", null, Void.class, extensionId.getId());
+    }
+
+    public void stopExtension(ExtensionId extensionId) {
+        restTemplate.postForObject(baseURL + "/api/extension/{extensionId}/stop", null, Void.class, extensionId.getId());
+    }
+
+    public void startExtension(ExtensionId extensionId) {
+        restTemplate.postForObject(baseURL + "/api/extension/{extensionId}/start", null, Void.class, extensionId.getId());
+    }
+
+    public String getExtensionLogs(ExtensionId extensionId) {
+        return getExtensionLogs(extensionId, 200);
+    }
+
+    public String getExtensionLogs(ExtensionId extensionId, int lines) {
+        return restTemplate.getForEntity(baseURL + "/api/extension/{extensionId}/logs?lines={lines}", String.class, extensionId.getId(), lines).getBody();
+    }
+
+    public JsonNode getExtensionApiDocs(ExtensionId extensionId) {
+        return restTemplate.getForEntity(baseURL + "/api/extension/{extensionId}/api-docs", JsonNode.class, extensionId.getId()).getBody();
+    }
+
+    public Optional<ExtensionSlugInfo> getExtensionSlugByName(String name) {
+        try {
+            ResponseEntity<ExtensionSlugInfo> slugInfo = restTemplate.getForEntity(baseURL + "/api/extension/slug?name={name}", ExtensionSlugInfo.class, name);
+            return Optional.ofNullable(slugInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
     }
 
     @SneakyThrows
