@@ -97,6 +97,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
               public pageMode: boolean = false,
   ) {
     super();
+    this.outlinedBorder = pageMode;
     if (this.pageMode) {
       this.headerComponent = AlarmRuleTableHeaderComponent;
       this.entityComponent = AlarmRulesComponent;
@@ -107,7 +108,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
     } else {
       this.addAsTextButton = false;
     }
-    this.tableTitle = this.pageMode ? '' : this.translate.instant('alarm-rule.alarm-rules');
+    this.tableTitle = '';
     this.detailsPanelEnabled = this.pageMode;
     this.entityResources = {
       helpLinkId: 'alarmRules'

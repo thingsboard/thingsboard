@@ -209,6 +209,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;
   tableTitle = '';
+  outlinedBorder = true;
   selectionEnabled = true;
   searchEnabled = true;
   addEnabled = true;

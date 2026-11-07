@@ -40,6 +40,40 @@ export const directionTypeTranslations = new Map<EntitySearchDirection, string>(
   ]
 );
 
+export const ALL_RELATIONS_DIRECTION = 'ALL';
+
+export type RelationsTableDirection = EntitySearchDirection | typeof ALL_RELATIONS_DIRECTION;
+
+export const relationDirectionTranslations = new Map<EntitySearchDirection, string>(
+  [
+    [EntitySearchDirection.FROM, 'relation.outbound'],
+    [EntitySearchDirection.TO, 'relation.inbound'],
+  ]
+);
+
+export const relationsTableDirectionTranslations = new Map<RelationsTableDirection, string>(
+  [
+    [ALL_RELATIONS_DIRECTION, 'relation.all'],
+    ...relationDirectionTranslations
+  ]
+);
+
+export const relationsTableEntityTypeHeaderTranslations = new Map<RelationsTableDirection, string>(
+  [
+    [ALL_RELATIONS_DIRECTION, 'relation.entity-type'],
+    [EntitySearchDirection.FROM, 'relation.to-entity-type'],
+    [EntitySearchDirection.TO, 'relation.from-entity-type'],
+  ]
+);
+
+export const relationsTableEntityNameHeaderTranslations = new Map<RelationsTableDirection, string>(
+  [
+    [ALL_RELATIONS_DIRECTION, 'relation.entity-name'],
+    [EntitySearchDirection.FROM, 'relation.to-entity-name'],
+    [EntitySearchDirection.TO, 'relation.from-entity-name'],
+  ]
+);
+
 export interface RelationEntityTypeFilter {
   relationType: string;
   entityTypes: Array<EntityType>;
@@ -75,8 +109,10 @@ export interface EntityRelation {
 
 export interface EntityRelationInfo extends EntityRelation {
   fromName: string;
-  toEntityTypeName?: string;
   toName: string;
-  fromEntityTypeName?: string;
   entityURL?: string;
+  direction?: EntitySearchDirection;
+  directionName?: string;
+  entityTypeName?: string;
+  entityName?: string;
 }

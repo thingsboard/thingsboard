@@ -27,6 +27,7 @@ import { Subscription } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-event-table',
@@ -53,6 +54,10 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input()
   hideClearEventAction: boolean = false;
+
+  @Input()
+  @coerceBoolean()
+  outlinedBorder = false;
 
   private disableDebugEventActionValue = false;
 
@@ -161,7 +166,8 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.functionTestButtonLabel,
       this.debugEventSelected,
       this.hideClearEventAction,
-      this.disableDebugEventAction
+      this.disableDebugEventAction,
+      this.outlinedBorder
     );
   }
 

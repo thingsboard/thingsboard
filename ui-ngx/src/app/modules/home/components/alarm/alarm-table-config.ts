@@ -87,6 +87,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     this.useTimePageLink = true;
     this.forAllTimeEnabled = true;
     this.pageMode = pageMode;
+    this.outlinedBorder = pageMode;
     this.defaultTimewindowInterval = forAllTimeInterval();
     this.detailsPanelEnabled = false;
     this.selectionEnabled = true;
