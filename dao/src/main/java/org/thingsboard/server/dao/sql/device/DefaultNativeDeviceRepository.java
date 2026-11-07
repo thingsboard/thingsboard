@@ -16,24 +16,56 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.dao.sql.KeysetPages;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
+import org.thingsboard.server.dao.sql.citus.CitusShardKeysetPages;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @Repository
 @Slf4j
 public class DefaultNativeDeviceRepository extends AbstractNativeRepository implements NativeDeviceRepository {
 
     private final String COUNT_QUERY = "SELECT count(id) FROM device;";
+    // keyset pages over the primary key and the (tenant_id, id) index, see KeysetPages
+    private static final String DEVICE_ID_INFO_COLUMNS = "tenant_id as tenantId, customer_id as customerId, id as id";
+    private static final String DEVICE_ID_INFO_SELECT = "SELECT " + DEVICE_ID_INFO_COLUMNS + " FROM device ";
+    private static final String PROFILE_DEVICE_ID_INFO_SELECT =
+            "SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = :tenantId ";
 
-    public DefaultNativeDeviceRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
+    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final CitusSettings citusSettings;
+
+    public DefaultNativeDeviceRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate,
+                                         CitusSettings citusSettings) {
         super(jdbcTemplate, transactionTemplate);
+        this.jdbcTemplate = jdbcTemplate;
+        this.citusSettings = citusSettings;
     }
 
     @Override
     public PageData<DeviceIdInfo> findDeviceIdInfos(Pageable pageable) {
         String DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
         return find(COUNT_QUERY, DEVICE_ID_INFO_QUERY, pageable, this::mapDeviceIdInfo);
+    }
+
+    @Override
+    public void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer) {
+        if (citusSettings.isEnabled()) {
+            // on Citus plain keyset pages fan out to every shard; page one shard's hash range at a time instead
+            List<int[]> shardRanges = CitusShardKeysetPages.shardHashRanges(jdbcTemplate, "device");
+            if (!shardRanges.isEmpty()) {
+                CitusShardKeysetPages.forEachPage(jdbcTemplate, DEVICE_ID_INFO_COLUMNS, "device", shardRanges, pageSize,
+                        this::mapDeviceIdInfo, pageConsumer);
+                return;
+            }
+        }
+        KeysetPages.forEachPage(jdbcTemplate, DEVICE_ID_INFO_SELECT + "ORDER BY id LIMIT :limit",
+                DEVICE_ID_INFO_SELECT + "WHERE id > :lastId ORDER BY id LIMIT :limit",
+                Map.of(), pageSize, this::mapDeviceIdInfo, pageConsumer);
     }
 
     private DeviceIdInfo mapDeviceIdInfo(Map<String, Object> row) {
@@ -54,6 +86,13 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
         String PROFILE_DEVICE_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
         String COUNT_QUERY_BY_TENANT = String.format("SELECT count(id) FROM device WHERE tenant_id = '%s';", tenantId);
         return find(COUNT_QUERY_BY_TENANT, PROFILE_DEVICE_ID_INFO_QUERY, pageable, DefaultNativeDeviceRepository::toInfo);
+    }
+
+    @Override
+    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer) {
+        KeysetPages.forEachPage(jdbcTemplate, PROFILE_DEVICE_ID_INFO_SELECT + "ORDER BY id LIMIT :limit",
+                PROFILE_DEVICE_ID_INFO_SELECT + "AND id > :lastId ORDER BY id LIMIT :limit",
+                Map.of("tenantId", tenantId), pageSize, DefaultNativeDeviceRepository::toInfo, pageConsumer);
     }
 
     private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {

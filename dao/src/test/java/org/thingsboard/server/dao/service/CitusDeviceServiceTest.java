@@ -4,14 +4,22 @@ package org.thingsboard.server.dao.service;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 @CitusDaoSqlTest
 public class CitusDeviceServiceTest extends DeviceServiceTest {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     /**
      * Citus cross-node FK-visibility regression guard for implicit device profiles.
@@ -59,4 +67,33 @@ public class CitusDeviceServiceTest extends DeviceServiceTest {
 
         deviceService.deleteDevice(tenantId, saved[0].getId());
     }
+
+    /**
+     * Guards the assumption behind the shard-aware device scan (CitusShardKeysetPages): PostgreSQL's uuid_hash(id) is the
+     * hash Citus places device rows by, so a uuid_hash range bounded to pg_dist_shard's shardminvalue..shardmaxvalue holds
+     * exactly that shard's rows. The scan stays correct without it (the ranges cover the whole hash space), but every page
+     * would fan out again; this test fails first if a Citus version changed its hashing.
+     */
+    @Test
+    public void testUuidHashMatchesCitusDevicePlacement() {
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            devices.add(saveDevice(tenantId, "Placement device " + i));
+        }
+        List<long[]> shards = jdbcTemplate.query("SELECT shardid, shardminvalue::int AS smin, shardmaxvalue::int AS smax " +
+                        "FROM pg_dist_shard WHERE logicalrelid = 'device'::regclass",
+                (rs, rowNum) -> new long[]{rs.getLong("shardid"), rs.getInt("smin"), rs.getInt("smax")});
+        Assert.assertFalse(shards.isEmpty());
+        for (Device device : devices) {
+            int hash = jdbcTemplate.queryForObject("SELECT uuid_hash(?::uuid)", Integer.class, device.getUuidId().toString());
+            long placedShard = jdbcTemplate.queryForObject("SELECT get_shard_id_for_distribution_column('device', ?::uuid)",
+                    Long.class, device.getUuidId().toString());
+            long rangeShard = shards.stream().filter(shard -> hash >= shard[1] && hash <= shard[2]).findFirst().orElseThrow()[0];
+            Assert.assertEquals("shard of device " + device.getId(), placedShard, rangeShard);
+        }
+        Long indexes = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM pg_indexes WHERE tablename = 'device' AND indexname = 'idx_device_uuid_hash_id'", Long.class);
+        Assert.assertEquals(Long.valueOf(1), indexes);
+    }
+
 }

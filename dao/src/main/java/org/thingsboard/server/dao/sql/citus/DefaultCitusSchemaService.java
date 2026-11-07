@@ -389,6 +389,10 @@ public class DefaultCitusSchemaService implements CitusSchemaService {
         // PostgreSQL serves this page from a single node without the fan-out that makes the partial index matter.
         jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_alarm_tenant_created_time_active " +
                 "ON alarm (tenant_id, created_time DESC) WHERE cleared = false");
+        // Shard-aware keyset scan over all devices on startup and partition rebalance (CitusShardKeysetPages): a page bounded
+        // to one shard's hash range of uuid_hash(id), the hash Citus places rows by. Every other shard answers from an empty
+        // probe of this index instead of returning a full page to the coordinator. Not needed on plain PostgreSQL.
+        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_device_uuid_hash_id ON device ((uuid_hash(id)), id)");
     }
 
     /**
