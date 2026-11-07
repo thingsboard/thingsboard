@@ -25,6 +25,9 @@ import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings
 import {
   ScadaSymbolMetadataTagFunctionPanelComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag-function-panel.component';
+import {
+  ScadaSymbolTagActionButtonDirective
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-tag-action-button.directive';
 
 @NgModule({
   declarations:
@@ -32,6 +35,7 @@ import {
       ScadaSymbolMetadataComponent,
       ScadaSymbolMetadataTagComponent,
       ScadaSymbolMetadataTagsComponent,
+      ScadaSymbolTagActionButtonDirective,
       ScadaSymbolMetadataTagFunctionPanelComponent,
       ScadaSymbolBehaviorsComponent,
       ScadaSymbolBehaviorRowComponent,

@@ -5,8 +5,10 @@ import {
   forwardRef,
   Input,
   OnInit,
+  QueryList,
   Renderer2,
   ViewChild,
+  ViewChildren,
   ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
@@ -20,13 +22,22 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { ScadaSymbolTag } from '@home/components/widget/lib/scada/scada-symbol.models';
+import {
+  ScadaSymbolActionTrigger,
+  scadaSymbolActionTriggerInfo,
+  scadaSymbolActionTriggers,
+  ScadaSymbolTag
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { MatButton } from '@angular/material/button';
+import {
+  ScadaSymbolTagActionButtonDirective
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-tag-action-button.directive';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   ScadaSymbolMetadataTagFunctionPanelComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag-function-panel.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'tb-scada-symbol-metadata-tag',
@@ -52,8 +63,8 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   @ViewChild('editStateRenderFunctionButton')
   editStateRenderFunctionButton: MatButton;
 
-  @ViewChild('editClickActionButton')
-  editClickActionButton: MatButton;
+  @ViewChildren(ScadaSymbolTagActionButtonDirective)
+  editActionButtons: QueryList<ScadaSymbolTagActionButtonDirective>;
 
   @Input()
   disabled: boolean;
@@ -62,7 +73,9 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   elementStateRenderFunctionCompleter: TbEditorCompleter;
 
   @Input()
-  clickActionFunctionCompleter: TbEditorCompleter;
+  actionFunctionCompleter: TbEditorCompleter;
+
+  actionTriggers = scadaSymbolActionTriggers;
 
   tagFormGroup: UntypedFormGroup;
 
@@ -73,15 +86,19 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   constructor(private fb: UntypedFormBuilder,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
+              private translate: TranslateService,
               private viewContainerRef: ViewContainerRef) {
   }
 
   ngOnInit() {
-    this.tagFormGroup = this.fb.group({
+    const controls: {[key: string]: any} = {
       tag: [null, []],
-      stateRenderFunction: [null, []],
-      clickAction: [null, []]
-    });
+      stateRenderFunction: [null, []]
+    };
+    for (const trigger of this.actionTriggers) {
+      controls[this.actionControlName(trigger)] = [null, []];
+    }
+    this.tagFormGroup = this.fb.group(controls);
   }
 
   registerOnChange(fn: any): void {
@@ -102,14 +119,14 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
 
   writeValue(value: ScadaSymbolTag): void {
     this.modelValue = value;
-    const clickAction = value?.actions?.click?.actionFunction;
-    this.tagFormGroup.patchValue(
-      {
-        tag: value?.tag,
-        stateRenderFunction: value?.stateRenderFunction,
-        clickAction
-      }, {emitEvent: false}
-    );
+    const patch: {[key: string]: any} = {
+      tag: value?.tag,
+      stateRenderFunction: value?.stateRenderFunction
+    };
+    for (const trigger of this.actionTriggers) {
+      patch[this.actionControlName(trigger)] = value?.actions?.[trigger]?.actionFunction;
+    }
+    this.tagFormGroup.patchValue(patch, {emitEvent: false});
   }
 
   public validate(_c: UntypedFormControl) {
@@ -121,15 +138,46 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
     };
   }
 
+  actionControlName(trigger: ScadaSymbolActionTrigger): string {
+    return trigger + 'Action';
+  }
+
+  isStateRenderFunctionVisible(): boolean {
+    return !this.disabled || !!this.tagFormGroup.get('stateRenderFunction').value;
+  }
+
+  isActionVisible(trigger: ScadaSymbolActionTrigger): boolean {
+    return !this.disabled || !!this.tagFormGroup.get(this.actionControlName(trigger)).value;
+  }
+
+  stateRenderFunctionButtonAriaLabel(): string {
+    return this.buttonAriaLabel('scada.state-render-function', this.tagFormGroup.get('stateRenderFunction').value);
+  }
+
+  actionButtonAriaLabel(trigger: ScadaSymbolActionTrigger): string {
+    return this.buttonAriaLabel(scadaSymbolActionTriggerInfo[trigger].name,
+      this.tagFormGroup.get(this.actionControlName(trigger)).value);
+  }
+
   editTagStateRenderFunction(): void {
     this.openTagFunction('renderFunction', this.editStateRenderFunctionButton);
   }
 
-  editClickAction(): void {
-    this.openTagFunction('clickAction', this.editClickActionButton);
+  editAction(trigger: ScadaSymbolActionTrigger): void {
+    const actionButton = this.editActionButtons.find(b => b.trigger === trigger);
+    if (actionButton) {
+      this.openTagFunction(trigger, actionButton.button);
+    }
   }
 
-  private openTagFunction(tagFunctionType: 'renderFunction' | 'clickAction',
+  private buttonAriaLabel(tagFunctionNameKey: string, tagFunction: string): string {
+    const action = this.disabled ? 'action.view' : (tagFunction ? 'action.edit' : 'action.add');
+    const label = `${this.translate.instant(action)} ${this.translate.instant(tagFunctionNameKey)}`;
+    const tag = this.tagFormGroup.get('tag').value;
+    return tag ? `${label}: ${tag}` : label;
+  }
+
+  private openTagFunction(tagFunctionType: 'renderFunction' | ScadaSymbolActionTrigger,
                           button: MatButton) {
     const trigger = button._elementRef.nativeElement;
     trigger.scrollIntoView();
@@ -141,9 +189,9 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
       if (tagFunctionType === 'renderFunction') {
         tagFunctionControl = this.tagFormGroup.get('stateRenderFunction');
         completer = this.elementStateRenderFunctionCompleter;
-      } else if (tagFunctionType === 'clickAction') {
-        tagFunctionControl = this.tagFormGroup.get('clickAction');
-        completer = this.clickActionFunctionCompleter;
+      } else {
+        tagFunctionControl = this.tagFormGroup.get(this.actionControlName(tagFunctionType));
+        completer = this.actionFunctionCompleter;
       }
       const scadaSymbolTagFunctionPanelPopover =  this.popoverService.displayPopover({
         trigger,
@@ -175,15 +223,17 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
       tag: value.tag,
       stateRenderFunction: value.stateRenderFunction
     };
-    if (value.clickAction) {
-      this.modelValue.actions = {
-        click: {
-          actionFunction: value.clickAction
-        }
-      };
-    } else {
-      this.modelValue.actions = null;
+    let actions: ScadaSymbolTag['actions'] = null;
+    for (const trigger of this.actionTriggers) {
+      const actionFunction = value[this.actionControlName(trigger)];
+      if (actionFunction) {
+        actions = actions || {};
+        actions[trigger] = {
+          actionFunction
+        };
+      }
     }
+    this.modelValue.actions = actions;
     this.propagateChange(this.modelValue);
   }
 }
