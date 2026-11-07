@@ -9,6 +9,7 @@ import {
   mapDataLayerTypes,
   MapScale,
   MapType,
+  markersPaneZIndex,
   mergeMapDatasources,
   parseCenterPosition,
   TbCircleData,
@@ -262,7 +263,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.latestDataLayers = [];
     this.tripDataLayers = [];
     if (this.settings.markers) {
-      const markersDataLayers = this.settings.markers.map(settings => new TbMarkersDataLayer(this, settings));
+      const markersDataLayers = this.settings.markers.map((settings, i) => new TbMarkersDataLayer(this, settings, i));
       this.dataLayers.push(...markersDataLayers);
       this.latestDataLayers.push(...markersDataLayers);
     }
@@ -1202,6 +1203,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
         }
       }
     }
+  }
+
+  public getMarkersPane(markersLayerIndex: number): string {
+    const name = `tb-markers-pane-${markersLayerIndex}`;
+    if (!this.map.getPane(name)) {
+      this.map.createPane(name).style.zIndex = String(markersPaneZIndex(markersLayerIndex));
+    }
+    return name;
   }
 
   public storeShapePattern(patternId: string, pattern: L.TB.Pattern): void {
