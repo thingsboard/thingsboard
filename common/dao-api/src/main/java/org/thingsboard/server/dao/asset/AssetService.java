@@ -23,6 +23,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public interface AssetService extends EntityDaoService {
 
@@ -52,9 +53,26 @@ public interface AssetService extends EntityDaoService {
 
     PageData<Asset> findAssetsByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink);
 
+    /**
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
+     * use {@link #findProfileEntityIdInfosByTenantId(TenantId, int, Consumer)} instead. Scheduled for removal in the next major release.
+     */
+    @Deprecated(since = "4.4", forRemoval = true)
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);
 
+    /**
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
+     * use {@link #findProfileEntityIdInfosByTenantId(TenantId, int, Consumer)} instead. Scheduled for removal in the next major release.
+     */
+    @Deprecated(since = "4.4", forRemoval = true)
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink);
+
+    /**
+     * Passes all assets of the tenant to {@code pageConsumer} page by page: keyset pages of up to {@code pageSize} rows over the
+     * {@code (tenant_id, id)} index, with no OFFSET and no count. A page is handed over after its query has finished, so no
+     * database connection or transaction is held while the consumer runs.
+     */
+    void findProfileEntityIdInfosByTenantId(TenantId tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer);
 
     PageData<AssetId> findAssetIdsByTenantIdAndAssetProfileId(TenantId tenantId, AssetProfileId assetProfileId, PageLink pageLink);
 

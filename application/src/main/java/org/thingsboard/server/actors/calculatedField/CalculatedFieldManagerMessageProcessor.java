@@ -788,8 +788,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void initCalculatedFields() {
-        PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(pageLink -> cfDaoService.findCalculatedFieldsByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
-        cfs.forEach(cf -> {
+        cfDaoService.findCalculatedFieldsByTenantId(tenantId, cfSettings.getInitTenantFetchPackSize(), page -> page.forEach(cf -> {
             log.trace("Processing calculated field record: {}", cf);
             try {
                 initCalculatedField(cf);
@@ -797,7 +796,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             } catch (CalculatedFieldException e) {
                 log.error("Failed to process calculated field record: {}", cf, e);
             }
-        });
+        }));
     }
 
     private void initCalculatedField(CalculatedField cf) throws CalculatedFieldException {
@@ -824,33 +823,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void initEntitiesCache() {
-        PageDataIterable<ProfileEntityIdInfo> deviceIdInfos = new PageDataIterable<>(pageLink -> deviceService.findProfileEntityIdInfosByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
-        for (ProfileEntityIdInfo idInfo : deviceIdInfos) {
-            log.trace("Processing device record: {}", idInfo);
-            try {
-                entityProfileCache.add(idInfo.getProfileId(), idInfo.getEntityId());
-                EntityId ownerId = idInfo.getOwnerId();
-                if (ownerId != null) {
-                    ownerEntities.computeIfAbsent(ownerId, __ -> new HashSet<>()).add(idInfo.getEntityId());
-                }
-            } catch (Exception e) {
-                log.error("Failed to process device record: {}", idInfo, e);
-            }
-        }
-
-        PageDataIterable<ProfileEntityIdInfo> assetIdInfos = new PageDataIterable<>(pageLink -> assetService.findProfileEntityIdInfosByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
-        for (ProfileEntityIdInfo idInfo : assetIdInfos) {
-            log.trace("Processing asset record: {}", idInfo);
-            try {
-                entityProfileCache.add(idInfo.getProfileId(), idInfo.getEntityId());
-                EntityId ownerId = idInfo.getOwnerId();
-                if (ownerId != null) {
-                    ownerEntities.computeIfAbsent(ownerId, __ -> new HashSet<>()).add(idInfo.getEntityId());
-                }
-            } catch (Exception e) {
-                log.error("Failed to process asset record: {}", idInfo, e);
-            }
-        }
+        deviceService.findProfileEntityIdInfosByTenantId(tenantId, cfSettings.getInitTenantFetchPackSize(), page -> page.forEach(this::cacheProfileEntity));
+        assetService.findProfileEntityIdInfosByTenantId(tenantId, cfSettings.getInitTenantFetchPackSize(), page -> page.forEach(this::cacheProfileEntity));
 
         PageDataIterable<Customer> customers = new PageDataIterable<>(pageLink -> customerService.findCustomersByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         for (Customer customer : customers) {
@@ -863,6 +837,19 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             } catch (Exception e) {
                 log.error("Failed to process customer record: {}", customer, e);
             }
+        }
+    }
+
+    private void cacheProfileEntity(ProfileEntityIdInfo idInfo) {
+        log.trace("Processing {} record: {}", idInfo.getEntityId().getEntityType(), idInfo);
+        try {
+            entityProfileCache.add(idInfo.getProfileId(), idInfo.getEntityId());
+            EntityId ownerId = idInfo.getOwnerId();
+            if (ownerId != null) {
+                ownerEntities.computeIfAbsent(ownerId, __ -> new HashSet<>()).add(idInfo.getEntityId());
+            }
+        } catch (Exception e) {
+            log.error("Failed to process {} record: {}", idInfo.getEntityId().getEntityType(), idInfo, e);
         }
     }
 

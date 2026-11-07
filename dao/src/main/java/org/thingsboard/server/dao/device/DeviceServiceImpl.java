@@ -81,12 +81,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
+import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service("DeviceDaoService")
@@ -396,11 +398,19 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return deviceDao.countDevices();
     }
 
+    @Deprecated(since = "4.4", forRemoval = true)
     @Override
     public PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink) {
         log.trace("Executing findTenantDeviceIdPairs, pageLink [{}]", pageLink);
         validatePageLink(pageLink);
         return deviceDao.findDeviceIdInfos(pageLink);
+    }
+
+    @Override
+    public void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer) {
+        log.trace("Executing findAllDeviceIdInfos, pageSize [{}]", pageSize);
+        validatePositiveNumber(pageSize, "Incorrect page size " + pageSize);
+        deviceDao.findAllDeviceIdInfos(pageSize, pageConsumer);
     }
 
     @Override
@@ -412,6 +422,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return deviceDao.findIdsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
 
+    @Deprecated(since = "4.4", forRemoval = true)
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink) {
         log.trace("Executing findProfileEntityIdInfos, pageLink [{}]", pageLink);
@@ -419,12 +430,21 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return deviceDao.findProfileEntityIdInfos(pageLink);
     }
 
+    @Deprecated(since = "4.4", forRemoval = true)
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId[{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
         return deviceDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public void findProfileEntityIdInfosByTenantId(TenantId tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer) {
+        log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId [{}], pageSize [{}]", tenantId, pageSize);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePositiveNumber(pageSize, "Incorrect page size " + pageSize);
+        deviceDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), pageSize, pageConsumer);
     }
 
     @Override

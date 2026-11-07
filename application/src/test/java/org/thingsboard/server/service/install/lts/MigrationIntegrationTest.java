@@ -726,6 +726,30 @@ public class MigrationIntegrationTest extends AbstractControllerTest {
         return Boolean.TRUE.equals(exists);
     }
 
+    @Test
+    public void appliesSchemaForV4410CreatesDeviceAndAssetTenantIdIndexes() {
+        // The test-context schema already ships the indexes (schema-entities-idx.sql), so drop them first to prove the
+        // 4.4.1.0 schema_update.sql re-creates them. The finally block restores them for the shared DaoSqlTest schema.
+        try {
+            jdbcTemplate.execute("DROP INDEX IF EXISTS idx_device_tenant_id_id");
+            jdbcTemplate.execute("DROP INDEX IF EXISTS idx_asset_tenant_id_id");
+            assertFalse(indexExists("idx_device_tenant_id_id"));
+            assertFalse(indexExists("idx_asset_tenant_id_id"));
+
+            migrationService.applyMigrations("4.4.0.0", "4.4.1.0", false, () -> {});
+
+            assertEquals("CREATE INDEX idx_device_tenant_id_id ON public.device USING btree (tenant_id, id)",
+                    jdbcTemplate.queryForObject("SELECT indexdef FROM pg_indexes WHERE indexname = ?", String.class,
+                            "idx_device_tenant_id_id"));
+            assertEquals("CREATE INDEX idx_asset_tenant_id_id ON public.asset USING btree (tenant_id, id)",
+                    jdbcTemplate.queryForObject("SELECT indexdef FROM pg_indexes WHERE indexname = ?", String.class,
+                            "idx_asset_tenant_id_id"));
+        } finally {
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_device_tenant_id_id ON device(tenant_id, id)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_asset_tenant_id_id ON asset(tenant_id, id)");
+        }
+    }
+
     private boolean indexExists(String indexName) {
         Boolean exists = jdbcTemplate.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = ?)", Boolean.class, indexName);
