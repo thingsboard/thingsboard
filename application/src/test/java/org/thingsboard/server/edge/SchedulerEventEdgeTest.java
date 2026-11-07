@@ -12,6 +12,12 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.SchedulerEventId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.report.ReportConfig;
+import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.report.ReportTemplateType;
+import org.thingsboard.server.common.data.report.TbReportFormat;
+import org.thingsboard.server.common.data.report.configuration.CsvReportTemplateConfig;
+import org.thingsboard.server.common.data.report.configuration.components.HeadingComponent;
 import org.thingsboard.server.common.data.scheduler.MonthlyRepeat;
 import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 import org.thingsboard.server.common.data.scheduler.SchedulerEventInfo;
@@ -23,11 +29,14 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.DataConstants.GENERATE_REPORT;
 
 @DaoSqlTest
 public class SchedulerEventEdgeTest extends AbstractEdgeTest {
@@ -285,6 +294,57 @@ public class SchedulerEventEdgeTest extends AbstractEdgeTest {
         schedulerEvent.setOriginatorId(tenantId);
         schedulerEvent.setOwnerId(ownerId);
         return schedulerEvent;
+    }
+
+    @Test
+    public void testSchedulerEventWithTenantIdOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        SchedulerEvent schedulerEvent = createSchedulerEvent("Edge Scheduler Event With Different Tenant", tenantId);
+        schedulerEvent.setId(new SchedulerEventId(UUID.randomUUID()));
+        schedulerEvent.setTenantId(differentTenantId);
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(createUplinkMsg(schedulerEvent));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        SchedulerEvent foundSchedulerEvent = doGet("/api/schedulerEvent/" + schedulerEvent.getUuidId(), SchedulerEvent.class);
+        Assert.assertEquals(tenantId, foundSchedulerEvent.getTenantId());
+    }
+
+    @Test
+    public void testGenerateReportSchedulerEventWithUserOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        ReportTemplate reportTemplate = new ReportTemplate();
+        reportTemplate.setTenantId(tenantId);
+        reportTemplate.setOwnerId(tenantId);
+        reportTemplate.setName("Scheduler Report Template");
+        reportTemplate.setType(ReportTemplateType.REPORT);
+        reportTemplate.setFormat(TbReportFormat.CSV);
+        CsvReportTemplateConfig reportTemplateConfig = new CsvReportTemplateConfig();
+        reportTemplateConfig.setEntityAliases(new ArrayList<>());
+        reportTemplateConfig.setFilters(new ArrayList<>());
+        HeadingComponent headingComponent = new HeadingComponent();
+        headingComponent.setValue("Heading");
+        reportTemplateConfig.setComponents(List.of(headingComponent));
+        reportTemplate.setConfiguration(reportTemplateConfig);
+        ReportTemplate savedReportTemplate = doPost("/api/reportTemplate", reportTemplate, ReportTemplate.class);
+
+        ReportConfig reportConfig = new ReportConfig();
+        reportConfig.setReportTemplateId(savedReportTemplate.getId());
+        reportConfig.setUserId(savedDifferentTenantUser.getId());
+        reportConfig.setTimezone("UTC");
+        SchedulerEvent schedulerEvent = createSchedulerEvent("Edge Report Scheduler Event", tenantId);
+        schedulerEvent.setId(new SchedulerEventId(UUID.randomUUID()));
+        schedulerEvent.setType(GENERATE_REPORT);
+        schedulerEvent.setConfiguration(JacksonUtil.valueToTree(reportConfig));
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(createUplinkMsg(schedulerEvent));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        doGet("/api/schedulerEvent/" + schedulerEvent.getUuidId()).andExpect(status().isNotFound());
     }
 
 }

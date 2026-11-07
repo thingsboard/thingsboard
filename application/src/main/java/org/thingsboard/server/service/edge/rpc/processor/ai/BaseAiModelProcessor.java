@@ -31,9 +31,11 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
         try {
             AiModel aiModel = JacksonUtil.fromString(aiModelUpdateMsg.getEntity(), AiModel.class, true);
             if (aiModel == null) {
-                throw new RuntimeException("[{" + tenantId + "}] aiModelUpdateMsg {" + aiModelUpdateMsg + " } cannot be converted to aiModel");
+                throw new RuntimeException("[{" + tenantId + "}] aiModelUpdateMsg for aiModel {" + aiModelId + "} cannot be converted to aiModel");
             }
 
+            checkEntityTenant(tenantId, aiModelId);
+            aiModel.setTenantId(tenantId);
             Optional<AiModel> aiModelById = edgeCtx.getAiModelService().findAiModelById(tenantId, aiModelId);
             if (aiModelById.isEmpty()) {
                 aiModel.setCreatedTime(Uuids.unixTimestamp(aiModelId.getId()));
@@ -61,7 +63,7 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
 
             edgeCtx.getAiModelService().save(aiModel, false);
         } catch (Exception e) {
-            log.error("[{}] Failed to process aiModel update msg [{}]", tenantId, aiModelUpdateMsg, e);
+            log.error("[{}] Failed to process aiModel update msg for aiModel [{}]", tenantId, aiModelId, e);
             throw e;
         }
         return Pair.of(isCreated, isNameUpdated);

@@ -1389,7 +1389,7 @@ public class EntityGroupController extends AutoCommitController {
             Edge edge = checkEdgeId(edgeId, Operation.WRITE);
 
             EntityGroupId entityGroupId = new EntityGroupId(toUUID(strEntityGroupId));
-            checkEntityGroupId(entityGroupId, Operation.READ);
+            checkEntityGroupId(entityGroupId, Operation.WRITE);
             EntityType groupType = checkStrEntityGroupType("groupType", strGroupType);
 
             EntityGroup savedEntityGroup = checkNotNull(entityGroupService.assignEntityGroupToEdge(getCurrentUser().getTenantId(), entityGroupId, edgeId, groupType));

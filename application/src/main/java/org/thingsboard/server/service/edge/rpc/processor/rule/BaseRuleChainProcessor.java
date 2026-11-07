@@ -13,6 +13,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -27,6 +28,7 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
 
     protected Pair<Boolean, Boolean> saveOrUpdateRuleChain(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateMsg ruleChainUpdateMsg, RuleChainType ruleChainType) {
         boolean created = false;
+        checkEntityTenant(tenantId, ruleChainId);
         RuleChain ruleChainFromDb = edgeCtx.getRuleChainService().findRuleChainById(tenantId, ruleChainId);
         if (ruleChainFromDb == null) {
             created = true;
@@ -36,6 +38,8 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
         if (ruleChain == null) {
             throw new RuntimeException("[{" + tenantId + "}] ruleChainUpdateMsg {" + ruleChainUpdateMsg + "} cannot be converted to rule chain");
         }
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setId(created ? null : ruleChainId);
         boolean isRoot = ruleChain.isRoot();
         if (RuleChainType.CORE.equals(ruleChainType)) {
             ruleChain.setRoot(false);
@@ -56,6 +60,9 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
         RuleChainMetaData ruleChainMetadata = JacksonUtil.fromString(ruleChainMetadataUpdateMsg.getEntity(), RuleChainMetaData.class, true);
         if (ruleChainMetadata == null) {
             throw new RuntimeException("[{" + tenantId + "}] ruleChainMetadataUpdateMsg {" + ruleChainMetadataUpdateMsg + "} cannot be converted to rule chain metadata");
+        }
+        if (ruleChainMetadata.getRuleChainId() == null || !isEntityExists(tenantId, ruleChainMetadata.getRuleChainId())) {
+            throw new DataValidationException("Rule chain metadata is referencing to non-existent rule chain!");
         }
         if (!ruleChainMetadata.getNodes().isEmpty()) {
             ruleChainMetadata.setVersion(null);
