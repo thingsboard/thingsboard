@@ -1115,6 +1115,9 @@ redis:
     nodes: "${REDIS_NODES:}"
     # Maximum number of redirects to follow when executing commands across the cluster.
     max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    # Period in seconds of the background refresh of the cluster slot map. It finds slots that moved to another node
+    # (after a failover, or when a node gets a new IP) even before a command to the old node fails. Set 0 to disable.
+    topology-refresh-period-sec: "${REDIS_CLUSTER_TOPOLOGY_REFRESH_PERIOD_SEC:30}"
     # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   sentinel:
@@ -1170,6 +1173,19 @@ redis:
     blockWhenExhausted: "${REDIS_POOL_CONFIG_BLOCK_WHEN_EXHAUSTED:true}"
   # TTL for short-living SET commands that are used to replace DEL to enable transaction support
   evictTtlInMs: "${REDIS_EVICT_TTL_MS:60000}"
+  # Pauses rule engine queue consumers while Redis is unavailable, instead of failing (and, with the default skip
+  # processing strategy, dropping) every message. Messages wait in the queue and are processed after Redis recovers.
+  circuit_breaker:
+    # Enable the circuit breaker
+    enabled: "${REDIS_CIRCUIT_BREAKER_ENABLED:false}"
+    # Number of Redis availability errors (connection, redirect, cluster down) within the window that opens the breaker
+    failures_threshold: "${REDIS_CIRCUIT_BREAKER_FAILURES_THRESHOLD:5}"
+    # Window in milliseconds for counting the errors
+    failures_window_ms: "${REDIS_CIRCUIT_BREAKER_FAILURES_WINDOW_MS:10000}"
+    # How often, in milliseconds, an open breaker checks whether Redis is available again
+    probe_interval_ms: "${REDIS_CIRCUIT_BREAKER_PROBE_INTERVAL_MS:1000}"
+    # Minimum time in milliseconds the breaker stays open, to avoid flapping
+    min_open_ms: "${REDIS_CIRCUIT_BREAKER_MIN_OPEN_MS:5000}"
 
 
 # Update version parameters
