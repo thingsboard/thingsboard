@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.agent.AgentAppEventActionType;
 import org.thingsboard.server.common.data.agent.AgentAppProfile;
 import org.thingsboard.server.common.data.agent.AgentAppProfileInfo;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.agent.template.AgentAppTemplate;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AgentAppProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -97,15 +99,29 @@ public class AgentAppProfileController extends BaseController {
     }
 
     @ApiOperation(value = "Create or Update Agent Application Profile (saveAgentAppProfile)",
-            notes = "Creates or updates an agent application profile." + TENANT_AUTHORITY_PARAGRAPH)
+            notes = "Creates or updates an agent application profile. Optionally sets the edge profile that edges auto-created "
+                    + "from this profile are placed on, in the same request: when the 'edgeProfileId' parameter is absent the link "
+                    + "is left untouched; when it is present the link is replaced - including an explicitly empty value "
+                    + "(e.g. 'edgeProfileId='), which clears it so the tenant default edge profile is used. Only edges created "
+                    + "afterwards are affected." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/agent/app/profile", method = RequestMethod.POST)
     @ResponseBody
     public AgentAppProfile saveAgentAppProfile(
-            @RequestBody AgentAppProfile profile) throws Exception {
+            @RequestBody AgentAppProfile profile,
+            @Parameter(description = "Edge profile id for edges auto-created from this application profile. "
+                    + "Absent: the link is not modified. Present: the link is replaced; an explicitly empty value clears it.")
+            @RequestParam(required = false) String edgeProfileId) throws Exception {
         profile.setTenantId(getTenantId());
         checkEntity(profile.getId(), profile, Resource.AGENT_APP_PROFILE);
-        return tbProfileService.save(profile, getCurrentUser());
+        if (edgeProfileId == null) {
+            return tbProfileService.save(profile, getCurrentUser());
+        }
+        EdgeProfileId edgeProfile = null;
+        if (StringUtils.isNotBlank(edgeProfileId)) {
+            edgeProfile = checkEdgeProfileId(new EdgeProfileId(toUUID(edgeProfileId)), Operation.READ).getId();
+        }
+        return tbProfileService.save(profile, edgeProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Agent Application Profile (deleteAgentAppProfile)",
@@ -119,6 +135,21 @@ public class AgentAppProfileController extends BaseController {
         AgentAppProfileId profileId = new AgentAppProfileId(toUUID(strProfileId));
         AgentAppProfile profile = checkAgentAppProfileId(profileId, Operation.DELETE);
         tbProfileService.delete(profile, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Get Edge Profile of Agent Application Profile (getAgentAppProfileEdgeProfileId)",
+            notes = "Fetch the edge profile that edges auto-created from this application profile are assigned to. "
+                    + "Returns an empty response when no edge profile is linked, meaning the tenant default is used."
+                    + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/agent/app/profile/{profileId}/edgeProfile")
+    @ResponseBody
+    public EdgeProfileId getAgentAppProfileEdgeProfileId(
+            @Parameter(description = "Profile Id") @PathVariable(PROFILE_ID) String strProfileId) throws ThingsboardException {
+        checkParameter(PROFILE_ID, strProfileId);
+        AgentAppProfileId profileId = new AgentAppProfileId(toUUID(strProfileId));
+        checkAgentAppProfileId(profileId, Operation.READ);
+        return agentAppProfileService.findEdgeProfileId(getTenantId(), profileId);
     }
 
     @ApiOperation(value = "Merge template into application profile for preview (mergeAgentAppProfileForPreview)",

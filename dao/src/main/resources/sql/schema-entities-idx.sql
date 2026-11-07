@@ -61,6 +61,8 @@ CREATE INDEX IF NOT EXISTS idx_edge_event_tenant_id_edge_id_created_time ON edge
 
 CREATE INDEX IF NOT EXISTS idx_edge_event_id ON edge_event(id);
 
+CREATE INDEX IF NOT EXISTS idx_edge_edge_profile_id ON edge(tenant_id, edge_profile_id);
+
 CREATE INDEX IF NOT EXISTS idx_entity_group_by_type_name_and_owner_id ON entity_group(type, name, owner_id);
 
 CREATE INDEX IF NOT EXISTS idx_rpc_tenant_id_device_id ON rpc(tenant_id, device_id);

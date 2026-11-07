@@ -103,7 +103,7 @@ public class ApiKeyAuthenticationProviderTest extends AbstractControllerTest {
 
         testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
-                ActionType.ADDED, 2);
+                ActionType.ADDED, 1);
 
         savedEdge.setName("My new edge");
         doPostWithApiKey("/api/edge", savedEdge, Edge.class, null);

@@ -28,6 +28,7 @@ import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
 import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { EdgeModule } from '@home/pages/edge/edge.module';
+import { EdgeProfileModule } from '@home/pages/edge-profile/edge-profile.module';
 import { OtaUpdateModule } from '@home/pages/ota-update/ota-update.module';
 import { SolutionCreatorModule } from '@home/pages/ai-solution-creator/solution-creator.module';
 import { VcModule } from '@home/pages/vc/vc.module';
@@ -72,6 +73,7 @@ import { IotHubModule } from '@home/pages/iot-hub/iot-hub.module';
     AssetModule,
     AlarmModule,
     EdgeModule,
+    EdgeProfileModule,
     AgentModule,
     EntityViewModule,
     CustomerModule,

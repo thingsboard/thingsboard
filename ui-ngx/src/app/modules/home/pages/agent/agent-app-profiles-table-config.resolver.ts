@@ -54,13 +54,20 @@ export class AgentAppProfilesTableConfigResolver {
     this.config.deleteEntitiesContent = () => this.translate.instant('agent.delete-app-profiles-text');
 
     this.config.loadEntity = id => this.agentService.getAgentAppProfileById(id.id);
-    this.config.saveEntity = profile => this.agentService.saveAgentAppProfile(profile).pipe(
-      tap(saved => {
-        if (saved?.id?.id) {
-          this.showAssignedAppsPropagationHint();
-        }
-      })
-    );
+    this.config.saveEntity = profile => {
+      // the edge profile link is not part of the profile payload, the form carries it here to be sent as a request parameter
+      const edgeProfileId: string | undefined = (profile as any).edgeProfileId;
+      const edgeProfileOnlyChange = !!(profile as any).edgeProfileOnlyChange;
+      delete (profile as any).edgeProfileId;
+      delete (profile as any).edgeProfileOnlyChange;
+      return this.agentService.saveAgentAppProfile(profile, undefined, edgeProfileId).pipe(
+        tap(saved => {
+          if (saved?.id?.id) {
+            this.showAssignedAppsPropagationHint(edgeProfileOnlyChange);
+          }
+        })
+      );
+    };
     this.config.onEntityAction = action => this.onProfileAction(action);
     this.config.addEntity = () => this.openProfileWizard();
   }
@@ -145,10 +152,12 @@ export class AgentAppProfilesTableConfigResolver {
     );
   }
 
-  private showAssignedAppsPropagationHint() {
+  private showAssignedAppsPropagationHint(edgeProfileOnlyChange = false) {
     this.dialogService.alert(
       this.translate.instant('agent.app-profile-saved-title'),
-      this.translate.instant('agent.app-profile-saved-propagation-text')
+      this.translate.instant(edgeProfileOnlyChange
+        ? 'agent.app-profile-saved-edge-profile-text'
+        : 'agent.app-profile-saved-propagation-text')
     );
   }
 

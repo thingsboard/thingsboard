@@ -1,0 +1,20 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+package org.thingsboard.server.cache.edge;
+
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
+
+@Data
+@RequiredArgsConstructor
+public class EdgeProfileCacheEvictEvent {
+
+    private final TenantId tenantId;
+    private final EdgeProfileId id;
+    private final String newName;
+    private final String oldName;
+    private final boolean defaultProfile;
+
+}

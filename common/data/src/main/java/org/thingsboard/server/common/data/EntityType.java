@@ -5,7 +5,6 @@ package org.thingsboard.server.common.data;
 
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -85,7 +84,8 @@ public enum EntityType {
     AGENT_APP_UNIT(113),
     AGENT_APP_PROFILE(114),
     AGENT_PROFILE(115),
-    AGENT_BULK_ACTION(116);
+    AGENT_BULK_ACTION(116),
+    EDGE_PROFILE(117);
 
     // TODO DON'T FORGET TO ADD NEW ENTITY TYPES TO THE END OF THE LIST NOT TO BREAK ORDINALS
 

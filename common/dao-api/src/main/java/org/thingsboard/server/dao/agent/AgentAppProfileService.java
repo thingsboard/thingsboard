@@ -9,6 +9,7 @@ import org.thingsboard.server.common.data.agent.AgentApplicationType;
 import org.thingsboard.server.common.data.id.AgentAppProfileId;
 import org.thingsboard.server.common.data.id.AgentProfileId;
 import org.thingsboard.server.common.data.id.AgentId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -38,6 +39,17 @@ public interface AgentAppProfileService extends EntityDaoService {
             TenantId tenantId, AgentProfileId agentProfileId, AgentApplicationType appType, String templateVersion);
 
     void deleteProfile(TenantId tenantId, AgentAppProfileId profileId);
+
+    /**
+     * Edge profile that edges auto-created from this application profile are assigned to.
+     * Stored as a relation, so nothing about edges lives on the application profile itself.
+     * Returns true only when the link actually changed, so an unchanged save stays out of the audit log.
+     */
+    boolean setEdgeProfile(TenantId tenantId, AgentAppProfileId profileId, EdgeProfileId edgeProfileId);
+
+    EdgeProfileId findEdgeProfileId(TenantId tenantId, AgentAppProfileId profileId);
+
+    long countAppProfilesByEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId);
 
     List<AgentAppProfile> findUninstalledAppProfilesForAgentProfile(TenantId tenantId, AgentProfileId agentProfileId, AgentId agentId);
 

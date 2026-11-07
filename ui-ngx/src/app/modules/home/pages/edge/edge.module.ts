@@ -9,6 +9,7 @@ import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { AgentSharedComponentsModule } from '@home/components/agent/agent-shared-components.module';
 import { EdgeRoutingModule } from '@home/pages/edge/edge-routing.module';
+import { EdgeProfileModule } from '@home/pages/edge-profile/edge-profile.module';
 import { EdgeComponent } from './edge.component';
 import { EDGE_GROUP_CONFIG_FACTORY } from '@home/models/group/group-entities-table-config.models';
 import { EdgeGroupConfigFactory } from '@home/pages/edge/edge-group-config.factory';
@@ -28,7 +29,8 @@ import { RequestEdgeComponent } from '@home/pages/edge/request-edge.component';
     HomeComponentsModule,
     AgentSharedComponentsModule,
     HomeDialogsModule,
-    EdgeRoutingModule
+    EdgeRoutingModule,
+    EdgeProfileModule
   ],
   providers: [
     {

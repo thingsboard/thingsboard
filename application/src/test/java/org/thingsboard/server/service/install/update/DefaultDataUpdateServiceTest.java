@@ -80,6 +80,8 @@ class DefaultDataUpdateServiceTest {
     @Mock
     private EdgeService edgeService;
     @Mock
+    private EdgeProfileMigrationService edgeProfileMigrationService;
+    @Mock
     private SystemDataLoaderService systemDataLoaderService;
     @Mock
     private ComponentDiscoveryService componentDiscoveryService;

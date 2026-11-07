@@ -7,6 +7,7 @@ import { CustomerId } from '@shared/models/id/customer-id';
 import { EdgeId } from '@shared/models/id/edge-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import { EdgeProfileId } from '@shared/models/id/edge-profile-id';
 import { BaseEventBody } from '@shared/models/event.models';
 import { EventId } from '@shared/models/id/event-id';
 import { HasTenantId, HasVersion } from '@shared/models/entity.models';
@@ -26,6 +27,7 @@ export interface Edge extends BaseData<EdgeId>, HasTenantId, HasVersion {
   label?: string;
   additionalInfo?: any;
   rootRuleChainId?: RuleChainId;
+  edgeProfileId?: EdgeProfileId;
 }
 
 export type EdgeInfo = Edge & GroupEntityInfo<EdgeId>;

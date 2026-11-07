@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.integration;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -227,7 +228,15 @@ public class BaseIntegrationService extends CachedVersionedEntityService<Integra
 
     @Override
     public Integration assignIntegrationToEdge(TenantId tenantId, IntegrationId integrationId, EdgeId edgeId) {
+        return assignIntegrationToEdge(tenantId, integrationId, edgeId, null);
+    }
+
+    @Override
+    public Integration assignIntegrationToEdge(TenantId tenantId, IntegrationId integrationId, EdgeId edgeId, JsonNode additionalInfo) {
         Integration integration = findIntegrationById(tenantId, integrationId);
+        if (integration == null) {
+            throw new DataValidationException("Can't assign non-existent integration to edge!");
+        }
         Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
             throw new DataValidationException("Can't assign integration to non-existent edge!");
@@ -239,7 +248,7 @@ public class BaseIntegrationService extends CachedVersionedEntityService<Integra
             throw new DataValidationException("Can't assign non edge template integration to edge!");
         }
         try {
-            createRelation(tenantId, new EntityRelation(edgeId, integrationId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
+            createRelation(tenantId, new EntityRelation(edgeId, integrationId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE, edgeRelationInfo(tenantId, edgeId, integrationId, EntityRelation.CONTAINS_TYPE, additionalInfo)));
         } catch (Exception e) {
             log.warn("[{}] Failed to create integration relation. Edge Id: [{}]", integrationId, edgeId);
             throw new RuntimeException(e);

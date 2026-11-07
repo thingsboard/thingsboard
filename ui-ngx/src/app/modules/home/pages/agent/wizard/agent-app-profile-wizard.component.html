@@ -146,7 +146,41 @@
       </div>
     </mat-step>
 
-    <!-- Step 3: Summary + Confirm -->
+    <!-- Step 3 (EDGE only): Edge profile for auto-created edges -->
+    @if (isEdgeAppType) {
+      <mat-step [label]="'agent.app-profile-step-edge' | translate">
+        <div class="step-content">
+          <p class="hint" translate>agent.app-profile-edge-profile-wizard-hint</p>
+          <form [formGroup]="profileForm">
+            <tb-edge-profile-autocomplete
+              formControlName="edgeProfileId"
+              [selectDefaultProfile]="!editMode"
+              [addNewProfile]="true"
+              [editProfileEnabled]="true"
+              subscriptSizing="dynamic"
+              (edgeProfileChanged)="onEdgeProfileChanged($event)"
+              hint="agent.app-profile-edge-profile-empty-hint">
+            </tb-edge-profile-autocomplete>
+          </form>
+
+          <div class="step-footer">
+            <button mat-button matStepperPrevious>
+              <mat-icon>chevron_left</mat-icon>
+              {{ 'action.back' | translate }}
+            </button>
+            <button mat-button (click)="cancel()">
+              {{ 'action.cancel' | translate }}
+            </button>
+            <button mat-raised-button color="primary" matStepperNext>
+              {{ 'action.next' | translate }}
+              <mat-icon iconPositionEnd>chevron_right</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+    }
+
+    <!-- Step 4: Summary + Confirm -->
     <mat-step [label]="'agent.app-profile-step-save' | translate">
       <div class="step-content">
 
@@ -173,6 +207,14 @@
               <div class="summary-row">
                 <span class="label" translate>agent.app-profile-description</span>
                 <span class="value">{{ profileDescription }}</span>
+              </div>
+            }
+            @if (isEdgeAppType) {
+              <div class="summary-row">
+                <span class="label" translate>agent.app-profile-edge-profile</span>
+                <span class="value">
+                  {{ selectedEdgeProfile?.name ?? defaultEdgeProfile?.name ?? ('agent.app-profile-edge-profile-default' | translate) }}
+                </span>
               </div>
             }
           </div>

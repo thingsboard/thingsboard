@@ -17,24 +17,28 @@ import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
+
 @Schema
 @EqualsAndHashCode(callSuper = true)
 @ToString
 @Setter
-public class Edge extends BaseDataWithAdditionalInfo<EdgeId>
-        implements HasLabel, GroupEntity<EdgeId>, HasVersion {
+public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel, GroupEntity<EdgeId>, HasVersion {
 
+    @Serial
     private static final long serialVersionUID = 4934987555236873728L;
 
     private TenantId tenantId;
     private CustomerId customerId;
     private RuleChainId rootRuleChainId;
+    private EdgeProfileId edgeProfileId;
     @NoXss
     @Length(fieldName = "name")
     private String name;
@@ -73,6 +77,7 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId>
         this.tenantId = edge.getTenantId();
         this.customerId = edge.getCustomerId();
         this.rootRuleChainId = edge.getRootRuleChainId();
+        this.edgeProfileId = edge.getEdgeProfileId();
         this.name = edge.getName();
         this.type = edge.getType();
         this.label = edge.getLabel();
@@ -87,6 +92,7 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId>
         this.tenantId = edge.getTenantId();
         this.customerId = edge.getCustomerId();
         this.rootRuleChainId = edge.getRootRuleChainId();
+        this.edgeProfileId = edge.getEdgeProfileId();
         this.name = edge.getName();
         this.type = edge.getType();
         this.label = edge.getLabel();
@@ -118,6 +124,11 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId>
         return this.tenantId;
     }
 
+    @Schema(description = "JSON object with the Edge Profile Id. Resolved from 'type' or the tenant default when omitted.")
+    public EdgeProfileId getEdgeProfileId() {
+        return edgeProfileId;
+    }
+
     @Schema(description = "JSON object with Customer Id.")
     @Override
     public CustomerId getCustomerId() {
@@ -135,7 +146,7 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId>
         return this.name;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Edge type", example = "Silos")
+    @Schema(description = "Edge Profile Name. Always set to the name of the edge profile on save; used to resolve the profile only when 'edgeProfileId' is omitted.", example = "Silos")
     public String getType() {
         return this.type;
     }

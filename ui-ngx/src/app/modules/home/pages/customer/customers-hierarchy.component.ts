@@ -41,11 +41,9 @@ import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-g
 import { EntityGroupConfigResolver } from '@home/components/group/entity-group-config.resolver';
 import { Edge, edgeEntityGroupTypes } from '@shared/models/edge.models';
 import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { RuleChainsTableConfigResolver } from '@home/pages/rulechain/rulechains-table-config.resolver';
 import { Authority } from '@shared/models/authority.enum';
 import { EdgeService } from '@core/http/edge.service';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { RuleChainParams } from '@shared/models/rule-chain.models';
 import { IntegrationParams } from '@shared/models/integration.models';
 import { IntegrationsTableConfigResolver } from '@home/pages/integration/integrations-table-config.resolver';
 
@@ -78,7 +76,6 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
   customerNodesMap: {[parentNodeId: string]: {[customerId: string]: string}} = {};
   customerGroupsNodesMap: {[customerNodeId: string]: {[groupsType: string]: string}} = {};
   edgeNodesMap: {[parentNodeId: string]: {[edgeId: string]: string}} = {};
-  edgeGroupsNodesMap: {[customerNodeId: string]: {[groupsType: string]: string}} = {};
 
   internalIdToNodeIds: {[internalId: string]: string[]} = {};
   internalIdToParentNodeIds: {[internalId: string]: string[]} = {};
@@ -98,7 +95,6 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
     customersDeleted: this.customersDeleted.bind(this),
     edgeAdded: this.edgeAdded.bind(this),
     edgesDeleted: this.edgesDeleted.bind(this),
-    edgeGroupsSelected: this.onEdgeGroupsSelected.bind(this),
     edgeUpdated: this.edgeUpdated.bind(this)
   };
 
@@ -136,7 +132,6 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
               private translate: TranslateService,
               private entityGroupsTableConfigResolver: EntityGroupsTableConfigResolver,
               private entityGroupConfigResolver: EntityGroupConfigResolver,
-              private ruleChainsTableConfigResolver: RuleChainsTableConfigResolver,
               private integrationsTableConfigResolver: IntegrationsTableConfigResolver) {
     super(store);
   }
@@ -322,11 +317,6 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
       case EntityType.SCHEDULER_EVENT:
         this.updateSchedulerView('scheduler', edge);
         break;
-      case EntityType.RULE_CHAIN:
-        const ruleChainParams = entityGroupParams as RuleChainParams;
-        ruleChainParams.ruleChainScope = 'edge';
-        this.updateRuleChains(ruleChainParams);
-        break;
       case EntityType.INTEGRATION:
         const integrationParams = entityGroupParams as IntegrationParams;
         integrationParams.integrationScope = 'edge';
@@ -343,15 +333,6 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
   private updateSchedulerView(viewMode: CustomersHierarchyViewMode, edge: Edge) {
     this.edgeId = edge.id.id;
     this.viewMode = viewMode;
-  }
-
-  private updateRuleChains(ruleChainParams: RuleChainParams) {
-    const ruleChainsTableConfig = this.resolveRuleChainsTableConfig(ruleChainParams);
-    this.updateView('groups', ruleChainParams, ruleChainsTableConfig, null);
-  }
-
-  private resolveRuleChainsTableConfig(ruleChainParams: RuleChainParams): EntityTableConfig<BaseData<HasId>> {
-    return this.ruleChainsTableConfigResolver.resolveRuleChainsTableConfig(ruleChainParams);
   }
 
   private updateIntegrations(integrationParams: IntegrationParams) {
@@ -560,13 +541,10 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
   private loadNodesForEdge(parentNodeId: string, parentEntityGroupId: string, edge: Edge,
                            customerData: EdgeNodeCustomerData): CustomersHierarchyNode[] {
     const nodes: CustomersHierarchyNode[] = [];
-    const nodesMap = {};
-    this.edgeGroupsNodesMap[parentNodeId] = nodesMap;
     this.allowedEdgeGroupTypes.forEach((groupType) => {
       const text = entityGroupsNodeText(this.translate, groupType);
       const node = this.createBaseEdgeNode(parentEntityGroupId, edge, customerData, groupType, text, true);
       nodes.push(node);
-      nodesMap[groupType] = node.id;
       this.registerNode(node, parentNodeId);
     });
     if (this.userPermissionsService.hasGenericPermission(Resource.SCHEDULER_EVENT, Operation.READ)) {
@@ -574,16 +552,6 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
       const text = entitiesNodeText(this.translate, entityType, 'entity.type-scheduler-events');
       const node = this.createBaseEdgeNode(parentEntityGroupId, edge, customerData, entityType, text, false);
       nodes.push(node);
-      nodesMap[entityType] = node.id;
-      this.registerNode(node, parentNodeId);
-    }
-    if (this.userPermissionsService.hasGenericPermission(Resource.RULE_CHAIN, Operation.READ) &&
-        getCurrentAuthUser(this.store).authority === Authority.TENANT_ADMIN) {
-      const entityType = EntityType.RULE_CHAIN;
-      const text = entitiesNodeText(this.translate, entityType, 'entity.type-rulechains');
-      const node = this.createBaseEdgeNode(parentEntityGroupId, edge, customerData, entityType, text, false);
-      nodes.push(node);
-      nodesMap[entityType] = node.id;
       this.registerNode(node, parentNodeId);
     }
     if (this.userPermissionsService.hasGenericPermission(Resource.INTEGRATION, Operation.READ) &&
@@ -592,7 +560,6 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
       const text = entitiesNodeText(this.translate, entityType, 'entity.type-integrations');
       const node = this.createBaseEdgeNode(parentEntityGroupId, edge, customerData, entityType, text, false);
       nodes.push(node);
-      nodesMap[entityType] = node.id;
       this.registerNode(node, parentNodeId);
     }
     return nodes;
@@ -675,31 +642,6 @@ export class CustomersHierarchyComponent extends PageComponent implements OnInit
       }
     } else {
       this.openNode(parentNodeId, () => this.onCustomerGroupsSelected(parentNodeId, customerId, groupsType));
-    }
-  }
-
-  private onEdgeGroupsSelected(parentNodeId: string, edgeId: string, groupsType: EntityType) {
-    const nodesMap = this.edgeNodesMap[parentNodeId];
-    if (nodesMap) {
-      const edgeNodeId = nodesMap[edgeId];
-      if (edgeNodeId) {
-        const customerGroupNodeMap = this.edgeGroupsNodesMap[edgeNodeId];
-        if (customerGroupNodeMap) {
-          const nodeId = customerGroupNodeMap[groupsType];
-          if (nodeId) {
-            setTimeout(() => {
-              this.nodeEditCallbacks.selectNode(nodeId);
-              if (!this.nodeEditCallbacks.nodeIsOpen(nodeId)) {
-                this.nodeEditCallbacks.openNode(nodeId);
-              }
-            }, 0);
-          }
-        } else {
-          this.openNode(edgeNodeId, () => this.onEdgeGroupsSelected(parentNodeId, edgeId, groupsType));
-        }
-      }
-    } else {
-      this.openNode(parentNodeId, () => this.onEdgeGroupsSelected(parentNodeId, edgeId, groupsType));
     }
   }
 

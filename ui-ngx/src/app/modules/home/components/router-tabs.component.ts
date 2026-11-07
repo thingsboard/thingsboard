@@ -13,6 +13,8 @@ import { MenuSection } from '@core/services/menu.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { isDefined } from '@core/utils';
 
 @Component({
     selector: 'tb-router-tabs',
@@ -40,6 +42,7 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
               public activatedRoute: ActivatedRoute,
               public router: Router,
               private menuService: MenuService,
+              private userPermissionsService: UserPermissionsService,
               private activeComponentService: ActiveComponentService) {
     super(store);
   }
@@ -119,15 +122,17 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
     const sectionPath = this.getSectionPath(activatedRoute);
     const authority = getCurrentAuthUser(this.store).authority;
     const children = activatedRoute.routeConfig.children.filter(page => {
-      if (page.path !== '') {
-        if (page.data?.auth) {
-          return page.data?.auth.includes(authority);
-        } else {
-          return true;
-        }
-      } else {
+      if (page.path === '') {
         return false;
       }
+      if (page.data?.auth && !page.data.auth.includes(authority)) {
+        return false;
+      }
+      // same contract as AuthGuard's data.canActivate: a tab the user may not open is not shown
+      if (isDefined(page.data?.canActivate) && !page.data.canActivate(this.userPermissionsService)) {
+        return false;
+      }
+      return true;
     });
     if (children.length) {
       return children.map(tab => ({

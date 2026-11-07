@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileCon
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.group.ColumnConfiguration;
 import org.thingsboard.server.common.data.group.ColumnType;
@@ -71,6 +72,8 @@ import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.agent.AgentAppProfileService;
 import org.thingsboard.server.dao.agent.AgentProfileService;
@@ -79,11 +82,13 @@ import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
 import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.role.RoleService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.sql.agent.AppTemplateRegistry;
 import org.thingsboard.server.dao.tenant.TenantService;
 
@@ -130,6 +135,10 @@ public abstract class AbstractServiceTest {
     protected AgentProfileService agentProfileService;
     @Autowired
     protected AgentAppProfileService agentAppProfileService;
+    @Autowired
+    protected EdgeProfileService edgeProfileService;
+    @Autowired
+    protected RuleChainService ruleChainService;
 
     protected Tenant tenant;
     protected TenantId tenantId;
@@ -238,7 +247,23 @@ public abstract class AbstractServiceTest {
         tenant.setTenantProfileId(tenantProfileId);
         Tenant savedTenant = tenantService.saveTenant(tenant);
         assertNotNull(savedTenant);
+        createEdgeRootRuleChain(savedTenant.getId());
         return savedTenant;
+    }
+
+    // a real tenant gets its edge root rule chain from InstallScripts, which the dao module cannot reach
+    protected RuleChain createEdgeRootRuleChain(TenantId tenantId) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Edge Root Rule Chain");
+        ruleChain.setType(RuleChainType.EDGE);
+        ruleChain.setRoot(true);
+        ruleChain = ruleChainService.saveRuleChain(ruleChain);
+        EdgeProfile profile = new EdgeProfile(edgeProfileService.findDefaultEdgeProfile(tenantId));
+        profile.getProfileData().getRuleChainIds().add(ruleChain.getId());
+        profile.setRootRuleChainId(ruleChain.getId());
+        edgeProfileService.saveEdgeProfile(profile);
+        return ruleChain;
     }
 
     protected Edge constructEdge(TenantId tenantId, String name, String type) {

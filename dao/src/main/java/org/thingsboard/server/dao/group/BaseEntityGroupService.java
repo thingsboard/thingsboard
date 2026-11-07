@@ -1010,6 +1010,11 @@ public class BaseEntityGroupService extends AbstractCachedEntityService<EntityGr
 
     @Override
     public EntityGroup assignEntityGroupToEdge(TenantId tenantId, EntityGroupId entityGroupId, EdgeId edgeId, EntityType groupType) {
+        return assignEntityGroupToEdge(tenantId, entityGroupId, edgeId, groupType, null);
+    }
+
+    @Override
+    public EntityGroup assignEntityGroupToEdge(TenantId tenantId, EntityGroupId entityGroupId, EdgeId edgeId, EntityType groupType, JsonNode additionalInfo) {
         EntityGroup entityGroup = findEntityGroupById(tenantId, entityGroupId);
         Edge edge = edgeService.findEdgeById(tenantId, edgeId);
         if (edge == null) {
@@ -1017,7 +1022,7 @@ public class BaseEntityGroupService extends AbstractCachedEntityService<EntityGr
         }
         try {
             String relationType = EDGE_ENTITY_GROUP_RELATION_PREFIX + groupType.name();
-            createRelation(tenantId, new EntityRelation(edgeId, entityGroupId, relationType, RelationTypeGroup.EDGE));
+            createRelation(tenantId, new EntityRelation(edgeId, entityGroupId, relationType, RelationTypeGroup.EDGE, edgeRelationInfo(tenantId, edgeId, entityGroupId, relationType, additionalInfo)));
         } catch (Exception e) {
             log.warn("[{}] Failed to create entity group relation. Edge Id: [{}]", entityGroupId, edgeId);
             throw new RuntimeException(e);

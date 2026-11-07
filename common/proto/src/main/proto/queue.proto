@@ -69,6 +69,7 @@ enum EntityTypeProto {
   AGENT_APP_PROFILE     = 114;
   AGENT_PROFILE         = 115;
   AGENT_BULK_ACTION     = 116;
+  EDGE_PROFILE          = 117;
 }
 
 enum ApiUsageRecordKeyProto {

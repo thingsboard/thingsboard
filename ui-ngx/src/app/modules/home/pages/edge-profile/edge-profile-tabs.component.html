@@ -1,0 +1,23 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (entity && !isEdit) {
+  @if (isTenantAdmin()) {
+    <mat-tab label="{{ 'edge-profile.assignments' | translate }}" #assignmentsTab="matTab">
+      <tb-edge-assignments mode="profile"
+                           [entityId]="entity.id"
+                           [active]="assignmentsTab.isActive"
+                           [readonly]="!(resource.EDGE_PROFILE | hasGenericPermission: operation.WRITE)"
+                           (assignmentsChanged)="entitiesTableConfig?.updateData(false, true)">
+      </tb-edge-assignments>
+    </mat-tab>
+  }
+  @if (resource.AUDIT_LOG | hasGenericPermission: operation.READ) {
+    <mat-tab label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
+      <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+    </mat-tab>
+  }
+}

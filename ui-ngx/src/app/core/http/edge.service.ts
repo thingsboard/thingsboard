@@ -9,6 +9,7 @@ import { PageLink, TimePageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { Edge, EdgeEvent, EdgeInfo, EdgeInstructions, EdgeSearchQuery } from '@shared/models/edge.models';
+import { EdgeAssignments } from '@shared/models/edge-profile.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 
@@ -32,6 +33,14 @@ export class EdgeService {
 
   public getEdgeInfo(edgeId: string, config?: RequestConfig): Observable<EdgeInfo> {
     return this.http.get<EdgeInfo>(`/api/edge/info/${edgeId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeAssignments(edgeId: string, config?: RequestConfig): Observable<EdgeAssignments> {
+    return this.http.get<EdgeAssignments>(`/api/edge/${edgeId}/assignments`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public setEdgeRootRuleChain(edgeId: string, ruleChainId: string, config?: RequestConfig): Observable<Edge> {
+    return this.http.post<Edge>(`/api/edge/${edgeId}/${ruleChainId}/root`, null, defaultHttpOptionsFromConfig(config));
   }
 
   public saveEdge(edge: Edge, entityGroupIds?: string | string[], config?: RequestConfig): Observable<Edge> {
@@ -128,8 +137,10 @@ export class EdgeService {
     return this.http.post(`/api/edge/sync/${edgeId}`, edgeId, defaultHttpOptionsFromConfig(config));
   }
 
-  public findMissingToRelatedRuleChains(edgeId: string, config?: RequestConfig): Observable<string> {
-    return this.http.get<string>(`/api/edge/missingToRelatedRuleChains/${edgeId}`, defaultHttpOptionsFromConfig(config));
+  // the endpoint is declared as returning String server side, but the body is a JSON object keyed by rule chain name
+  public findMissingToRelatedRuleChains(edgeId: string, config?: RequestConfig): Observable<{[ruleChainName: string]: string[]}> {
+    return this.http.get<{[ruleChainName: string]: string[]}>(`/api/edge/missingToRelatedRuleChains/${edgeId}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findByName(edgeName: string, config?: RequestConfig): Observable<Edge> {

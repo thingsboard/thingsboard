@@ -50,6 +50,17 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
                                            @Param("textSearch") String textSearch,
                                            Pageable pageable);
 
+    @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId AND d.edgeProfileId = :edgeProfileId " +
+            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true)")
+    Page<EdgeEntity> findByTenantIdAndEdgeProfileId(@Param("tenantId") UUID tenantId,
+                                                    @Param("edgeProfileId") UUID edgeProfileId,
+                                                    @Param("textSearch") String textSearch,
+                                                    Pageable pageable);
+
+    Long countByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId);
+
+    boolean existsByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId);
+
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
             "AND d.type = :type " +

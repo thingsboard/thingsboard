@@ -12,70 +12,6 @@
     [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  @if (resource.USER_GROUP | hasGenericPermission: operation.READ) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'manageUsers')"
-      [class.!hidden]="hideManageUsers() || isEdit">
-      {{ 'edge.manage-user-groups' | translate }}
-    </button>
-  }
-  @if (resource.ASSET_GROUP | hasGenericPermission: operation.READ) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'manageAssets')"
-      [class.!hidden]="hideManageAssets() || isEdit">
-      {{ 'edge.manage-asset-groups' | translate }}
-    </button>
-  }
-  @if (resource.DEVICE_GROUP | hasGenericPermission: operation.READ) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'manageDevices')"
-      [class.!hidden]="hideManageDevices() || isEdit">
-      {{ 'edge.manage-device-groups' | translate }}
-    </button>
-  }
-  @if (resource.ENTITY_VIEW_GROUP | hasGenericPermission: operation.READ) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'manageEntityViews')"
-      [class.!hidden]="hideManageEntityViews() || isEdit">
-      {{ 'edge.manage-entity-view-groups' | translate }}
-    </button>
-  }
-  @if (resource.DASHBOARD_GROUP | hasGenericPermission: operation.READ) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'manageDashboards')"
-      [class.!hidden]="hideManageDashboards() || isEdit">
-      {{ 'edge.manage-dashboard-groups' | translate }}
-    </button>
-  }
-  @if (resource.SCHEDULER_EVENT | hasGenericPermission: operation.READ) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'manageSchedulerEvents')"
-      [class.!hidden]="hideManageSchedulerEvents() || isEdit">
-      {{ 'edge.manage-scheduler-events' | translate }}
-    </button>
-  }
-  @if (isTenantAdmin() && (resource.RULE_CHAIN | hasGenericPermission: operation.READ)) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'manageRuleChains')"
-      [class.!hidden]="isEdit">
-      {{ 'edge.manage-rulechains' | translate }}
-    </button>
-  }
-  @if (isTenantAdmin() && (resource.INTEGRATION | hasGenericPermission: operation.READ)) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'manageIntegrations')"
-      [class.!hidden]="isEdit">
-      {{ 'edge.manage-integrations' | translate }}
-    </button>
-  }
   @if (canManageOwnerAndGroups()) {
     <button mat-stroked-button color="primary"
       [disabled]="(isLoading$ | async)"
@@ -186,12 +122,15 @@
           <mat-error>{{ 'edge.name-max-length' | translate }}</mat-error>
         }
       </mat-form-field>
-      <tb-entity-subtype-autocomplete
-        formControlName="type"
+      <tb-edge-profile-autocomplete
+        formControlName="edgeProfileId"
         appearance="outline"
         [required]="true"
-        [entityType]="entityType.EDGE">
-      </tb-entity-subtype-autocomplete>
+        [selectDefaultProfile]="isAdd"
+        [addNewProfile]="true"
+        [editProfileEnabled]="true"
+        [showDetailsPageLink]="true">
+      </tb-edge-profile-autocomplete>
       @if (licenseVersion < 2) {
         @if ((resource.EDGE | hasGenericPermission: operation.CREATE) || (resource.EDGE | hasGenericPermission: operation.WRITE)) {
           <div>

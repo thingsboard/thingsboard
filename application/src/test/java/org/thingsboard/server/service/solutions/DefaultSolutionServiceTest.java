@@ -22,7 +22,15 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
+import org.thingsboard.server.service.entitiy.edge.profile.TbEdgeProfileService;
+import org.thingsboard.server.service.solutions.data.definition.EdgeDefinition;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -91,6 +99,10 @@ class DefaultSolutionServiceTest {
     @Mock
     private AssetProfileService assetProfileService;
     @Mock
+    private EdgeProfileService edgeProfileService;
+    @Mock
+    private TbEdgeProfileService tbEdgeProfileService;
+    @Mock
     private SubscriptionService subscriptionService;
 
     @InjectMocks
@@ -98,6 +110,58 @@ class DefaultSolutionServiceTest {
 
     @TempDir
     private Path tempDir;
+
+    @Test
+    void testSolutionEdgeNamedAfterAProfileInUseGetsAProfileOfItsOwn() throws Exception {
+        User user = new User();
+        RuleChainId newRoot = new RuleChainId(UUID.randomUUID());
+        EdgeProfile inUse = edgeProfile("default", new RuleChainId(UUID.randomUUID()));
+        EdgeProfile ownProfile = edgeProfile("default (2)", null);
+        when(edgeProfileService.findEdgeProfileByName(tenantId, "default")).thenReturn(inUse);
+        when(edgeProfileService.findEdgeProfileByName(tenantId, "default (2)")).thenReturn(null);
+        when(edgeProfileService.findOrCreateEdgeProfile(tenantId, "default (2)")).thenReturn(ownProfile);
+        when(tbEdgeProfileService.setRootRuleChain(ownProfile, newRoot, user)).thenReturn(ownProfile);
+        // no type at all: the edge name alone decides the profile, and it happens to name the tenant default
+        EdgeDefinition definition = new EdgeDefinition();
+        definition.setName("default");
+
+        EdgeProfile result = ReflectionTestUtils.invokeMethod(service, "getEdgeProfileWithRootRuleChain",
+                tenantId, definition, newRoot, user);
+
+        assertThat(result).isEqualTo(ownProfile);
+        verify(tbEdgeProfileService, never()).setRootRuleChain(eq(inUse), any(), any());
+    }
+
+    @Test
+    void testSolutionEdgeWhoseTypeAndNameAreBothInUseGetsASuffixedProfile() throws Exception {
+        User user = new User();
+        RuleChainId newRoot = new RuleChainId(UUID.randomUUID());
+        EdgeProfile typeProfile = edgeProfile("gateway", new RuleChainId(UUID.randomUUID()));
+        EdgeProfile nameProfile = edgeProfile("default", new RuleChainId(UUID.randomUUID()));
+        EdgeProfile ownProfile = edgeProfile("default (2)", null);
+        when(edgeProfileService.findEdgeProfileByName(tenantId, "gateway")).thenReturn(typeProfile);
+        when(edgeProfileService.findEdgeProfileByName(tenantId, "default")).thenReturn(nameProfile);
+        when(edgeProfileService.findEdgeProfileByName(tenantId, "default (2)")).thenReturn(null);
+        when(edgeProfileService.findOrCreateEdgeProfile(tenantId, "default (2)")).thenReturn(ownProfile);
+        when(tbEdgeProfileService.setRootRuleChain(ownProfile, newRoot, user)).thenReturn(ownProfile);
+        EdgeDefinition definition = new EdgeDefinition();
+        definition.setName("default");
+        definition.setType("gateway");
+
+        EdgeProfile result = ReflectionTestUtils.invokeMethod(service, "getEdgeProfileWithRootRuleChain",
+                tenantId, definition, newRoot, user);
+
+        assertThat(result).isEqualTo(ownProfile);
+        verify(tbEdgeProfileService, never()).setRootRuleChain(eq(typeProfile), any(), any());
+        verify(tbEdgeProfileService, never()).setRootRuleChain(eq(nameProfile), any(), any());
+    }
+
+    private EdgeProfile edgeProfile(String name, RuleChainId root) {
+        EdgeProfile profile = new EdgeProfile(new EdgeProfileId(UUID.randomUUID()));
+        profile.setName(name);
+        profile.setRootRuleChainId(root);
+        return profile;
+    }
 
     @Test
     void testValidateSolutionNamesEveryConflictingEntity() throws IOException {

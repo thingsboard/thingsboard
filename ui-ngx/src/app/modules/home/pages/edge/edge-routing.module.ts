@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Injectable, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, Route, RouterModule, Routes } from '@angular/router';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
@@ -24,44 +24,17 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { IntegrationsTableConfigResolver } from '@home/pages/integration/integrations-table-config.resolver';
 import { EntityType } from '@shared/models/entity-type.models';
-import { dashboardGroupsRoute } from '@home/pages/dashboard/dashboard-routing.module';
-import { userGroupsRoute } from '@home/pages/user/user-routing.module';
-import { assetGroupsRoute } from '@home/pages/asset/asset-routing.module';
-import { deviceGroupsRoute } from '@home/pages/device/device-routing.module';
-import { entityViewGroupsRoute } from '@home/pages/entity-view/entity-view-routing.module';
-import { edgeEntitiesTitle, entityGroupsTitle, resolveGroupParams } from '@shared/models/entity-group.models';
+import { entityGroupsTitle } from '@shared/models/entity-group.models';
 import { EntityGroupsTableConfigResolver } from '@home/components/group/entity-groups-table-config.resolver';
 import { EntityGroupResolver } from '@home/pages/group/entity-group.shared';
 import { GroupEntitiesTableComponent } from '@home/components/group/group-entities-table.component';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { EdgesTableConfigResolver } from '@home/pages/edge/edges-table-config.resolver';
-import { SchedulerEventsComponent } from '@home/components/scheduler/scheduler-events.component';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { EdgeService } from '@core/http/edge.service';
 import { MenuId } from '@core/services/menu.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { RequestEdgeComponent } from '@home/pages/edge/request-edge.component';
-
-@Injectable()
-export class EdgeTitleResolver  {
-
-  constructor(private edgeService: EdgeService) {
-  }
-
-  resolve(route: ActivatedRouteSnapshot): Observable<string> {
-    const params = resolveGroupParams(route);
-    if (params.edgeId) {
-      return this.edgeService.getEdge(params.edgeId).pipe(
-        map((edge) => edge.name)
-      );
-    } else {
-      return of(null);
-    }
-  }
-}
 
 const disabledEdgeReplaceComponentFunction = (store: Store<AppState>) => {
   const authState = getCurrentAuthState(store);
@@ -92,229 +65,6 @@ const edgeRoute = (entityGroup: any, entitiesTableConfig: any): Route =>
       entitiesTableConfig
     }
   });
-
-const edgeSchedulerRoute: Route = {
-  path: ':edgeId/scheduler',
-  component: SchedulerEventsComponent,
-  data: {
-    edgeEntitiesType: EntityType.SCHEDULER_EVENT,
-    auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-    breadcrumb: {
-      labelFunction: (route, translate, component, data) =>
-        route.data.edgeTitle + ': ' + translate.instant(edgeEntitiesTitle(EntityType.SCHEDULER_EVENT)),
-      icon: 'schedule'
-    },
-    backNavigationCommands: ['../..'],
-    hideTabs: true
-  },
-  resolve: {
-    entityGroup: EntityGroupResolver,
-    edgeTitle: EdgeTitleResolver
-  }
-};
-
-const edgeRuleChainsRoute: Route = {
-  path: ':edgeId/ruleChains',
-  data: {
-    edgeEntitiesType: EntityType.RULE_CHAIN,
-    breadcrumb: {
-      labelFunction: (route, translate, component, data) =>
-        route.data.edgeTitle + ': ' + translate.instant(edgeEntitiesTitle(EntityType.RULE_CHAIN)),
-      icon: 'settings_ethernet'
-    },
-    backNavigationCommands: ['../..'],
-    hideTabs: true
-  },
-  resolve: {
-    edgeTitle: EdgeTitleResolver
-  },
-  children: [
-    {
-      path: '',
-      component: EntitiesTableComponent,
-      data: {
-        title: 'edge.rulechains',
-        auth: [Authority.TENANT_ADMIN],
-        ruleChainsType: 'edge'
-      },
-      resolve: {
-        entityGroup: EntityGroupResolver,
-        entitiesTableConfig: RuleChainsTableConfigResolver
-      }
-    },
-    {
-      path: ':ruleChainId',
-      component: RuleChainPageComponent,
-      canDeactivate: [ConfirmOnExitGuard],
-      data: {
-        breadcrumb: {
-          labelFunction: ruleChainBreadcumbLabelFunction,
-          icon: 'settings_ethernet'
-        } as BreadCrumbConfig<RuleChainPageComponent>,
-        auth: [Authority.TENANT_ADMIN],
-        title: 'rulechain.edge-rulechain',
-        import: false,
-        ruleChainType: RuleChainType.EDGE,
-        ruleChainsType: 'edge'
-      },
-      loadChildren: () => import('../rulechain/rulechain-page.module').then(m => m.RuleChainPageModule),
-      resolve: {
-        entityGroup: EntityGroupResolver,
-        ruleChain: RuleChainResolver,
-        ruleChainMetaData: RuleChainMetaDataResolver,
-        ruleNodeComponents: RuleNodeComponentsResolver,
-        tooltipster: TooltipsterResolver
-      }
-    }
-  ]
-};
-
-const edgeIntegrationsRoute: Route = {
-  path: ':edgeId/integrations',
-  data: {
-    edgeEntitiesType: EntityType.INTEGRATION,
-    breadcrumb: {
-      labelFunction: (route, translate, component, data) =>
-        route.data.edgeTitle + ': ' + translate.instant(edgeEntitiesTitle(EntityType.INTEGRATION)),
-      icon: 'input'
-    },
-    backNavigationCommands: ['../..'],
-    hideTabs: true
-  },
-  resolve: {
-    edgeTitle: EdgeTitleResolver
-  },
-  children: [
-    {
-      path: '',
-      component: EntitiesTableComponent,
-      data: {
-        title: 'edge.integrations',
-        auth: [Authority.TENANT_ADMIN],
-        integrationsType: 'edge'
-      },
-      resolve: {
-        entityGroup: EntityGroupResolver,
-        entitiesTableConfig: IntegrationsTableConfigResolver
-      }
-    },
-    {
-      path: ':entityId',
-      component: EntityDetailsPageComponent,
-      canDeactivate: [ConfirmOnExitGuard],
-      data: {
-        breadcrumb: {
-          labelFunction: entityDetailsPageBreadcrumbLabelFunction,
-          icon: 'input'
-        } as BreadCrumbConfig<EntityDetailsPageComponent>,
-        auth: [Authority.TENANT_ADMIN],
-        title: 'edge.integration-templates',
-        integrationsType: 'edge'
-      },
-      resolve: {
-        entityGroup: EntityGroupResolver,
-        entitiesTableConfig: IntegrationsTableConfigResolver
-      }
-    }
-  ]
-};
-
-const edgeChildrenRoutes = (): Routes =>
-  ([
-    { ...userGroupsRoute, ...{
-        path: ':edgeId/userGroups',
-        data: {
-          edgeEntitiesType: EntityType.USER,
-          groupType: EntityType.USER,
-          breadcrumb: {
-            labelFunction: (route, translate, component, data) =>
-              route.data.edgeTitle + ': ' + translate.instant(edgeEntitiesTitle(EntityType.USER)),
-            icon: 'account_circle'
-          },
-          backNavigationCommands: ['../..'],
-          hideTabs: true
-        },
-        resolve: {
-          edgeTitle: EdgeTitleResolver
-        }
-      }
-    },
-    { ...assetGroupsRoute, ...{
-        path: ':edgeId/assetGroups',
-        data: {
-          edgeEntitiesType: EntityType.ASSET,
-          groupType: EntityType.ASSET,
-          breadcrumb: {
-            labelFunction: (route, translate, component, data) =>
-              route.data.edgeTitle + ': ' + translate.instant(edgeEntitiesTitle(EntityType.ASSET)),
-            icon: 'domain'
-          },
-          backNavigationCommands: ['../..'],
-          hideTabs: true
-        },
-        resolve: {
-          edgeTitle: EdgeTitleResolver
-        }
-      }
-    },
-    { ...deviceGroupsRoute, ...{
-        path: ':edgeId/deviceGroups',
-        data: {
-          edgeEntitiesType: EntityType.DEVICE,
-          groupType: EntityType.DEVICE,
-          breadcrumb: {
-            labelFunction: (route, translate, component, data) =>
-              route.data.edgeTitle + ': ' + translate.instant(edgeEntitiesTitle(EntityType.DEVICE)),
-            icon: 'devices_other'
-          },
-          backNavigationCommands: ['../..'],
-          hideTabs: true
-        },
-        resolve: {
-          edgeTitle: EdgeTitleResolver
-        }
-      }
-    },
-    { ...entityViewGroupsRoute, ...{
-        path: ':edgeId/entityViewGroups',
-        data: {
-          edgeEntitiesType: EntityType.ENTITY_VIEW,
-          groupType: EntityType.ENTITY_VIEW,
-          breadcrumb: {
-            labelFunction: (route, translate, component, data) =>
-              route.data.edgeTitle + ': ' + translate.instant(edgeEntitiesTitle(EntityType.ENTITY_VIEW)),
-            icon: 'view_quilt'
-          },
-          backNavigationCommands: ['../..'],
-          hideTabs: true
-        },
-        resolve: {
-          edgeTitle: EdgeTitleResolver
-        }
-      }
-    },
-    { ...dashboardGroupsRoute, ...{
-        path: ':edgeId/dashboardGroups',
-        data: {
-          edgeEntitiesType: EntityType.DASHBOARD,
-          groupType: EntityType.DASHBOARD,
-          breadcrumb: {
-            labelFunction: (route, translate, component, data) =>
-              route.data.edgeTitle + ': ' + translate.instant(edgeEntitiesTitle(EntityType.DASHBOARD)),
-            icon: 'dashboard'
-          },
-          backNavigationCommands: ['../..'],
-          hideTabs: true
-        },
-        resolve: {
-          edgeTitle: EdgeTitleResolver
-        }
-      }
-    },
-    edgeSchedulerRoute,
-    edgeRuleChainsRoute,
-    edgeIntegrationsRoute
-  ]);
 
 const edgeGroupsChildrenRoutesTemplate = (root: boolean, shared: boolean): Routes => {
   const routes: Routes = [];
@@ -363,7 +113,6 @@ const edgeGroupsChildrenRoutesTemplate = (root: boolean, shared: boolean): Route
           entityGroup: EntityGroupResolver
         }
       },
-      ...edgeChildrenRoutes(),
       edgeRoute(EntityGroupResolver, 'emptyEdgeTableConfigResolver')
     ]
   };
@@ -635,8 +384,7 @@ export const edgesRoute = (root = false): Route => {
           entityGroup: EntityGroupResolver
         }
       },
-      edgeRoute(EntityGroupResolver, EdgesTableConfigResolver),
-      ...edgeChildrenRoutes()
+      edgeRoute(EntityGroupResolver, EdgesTableConfigResolver)
     ]
   };
   routeConfig.children.push(edgesRouteSection);
@@ -655,7 +403,6 @@ export const edgesRoute = (root = false): Route => {
   exports: [RouterModule],
   providers: [
     EdgesTableConfigResolver,
-    EdgeTitleResolver,
     {
       provide: 'emptyEdgeTableConfigResolver',
       useValue: (route: ActivatedRouteSnapshot) => null

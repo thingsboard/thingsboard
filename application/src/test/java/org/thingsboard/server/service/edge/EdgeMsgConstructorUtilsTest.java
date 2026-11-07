@@ -293,6 +293,32 @@ public class EdgeMsgConstructorUtilsTest {
         Assertions.assertEquals(deviceAttrUpdate3, merged.get(2));
     }
 
+    @Test
+    public void testMergeDownlinkDuplicates_onlyFinalAssignmentOfEntityIsSent() {
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        UUID flippedGroupId = UUID.randomUUID();
+        UUID removedGroupId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+
+        var unassignFlipped = createEdgeEvent(tenantId, 1, EdgeEventActionType.UNASSIGNED_FROM_EDGE,
+                flippedGroupId, EdgeEventType.ENTITY_GROUP, JacksonUtil.toJsonNode("{\"edgeProfileId\":\"a\"}"));
+        var assignRemoved = createEdgeEvent(tenantId, 2, EdgeEventActionType.ASSIGNED_TO_EDGE,
+                removedGroupId, EdgeEventType.ENTITY_GROUP, null);
+        var assignFlipped = createEdgeEvent(tenantId, 3, EdgeEventActionType.ASSIGNED_TO_EDGE,
+                flippedGroupId, EdgeEventType.ENTITY_GROUP, JacksonUtil.toJsonNode("{\"edgeProfileId\":\"b\"}"));
+        var customerDeleted = createEdgeEvent(tenantId, 4, EdgeEventActionType.DELETED,
+                customerId, EdgeEventType.CUSTOMER, null);
+        var resendFlipped = createEdgeEvent(tenantId, 5, EdgeEventActionType.ASSIGNED_TO_EDGE,
+                flippedGroupId, EdgeEventType.ENTITY_GROUP, JacksonUtil.toJsonNode("{\"edgeProfileId\":\"b\"}"));
+        var unassignRemoved = createEdgeEvent(tenantId, 6, EdgeEventActionType.UNASSIGNED_FROM_EDGE,
+                removedGroupId, EdgeEventType.ENTITY_GROUP, null);
+
+        List<EdgeEvent> merged = EdgeMsgConstructorUtils.mergeAndFilterDownlinkDuplicates(
+                List.of(unassignFlipped, assignRemoved, assignFlipped, customerDeleted, resendFlipped, unassignRemoved));
+
+        Assertions.assertEquals(List.of(customerDeleted, resendFlipped, unassignRemoved), merged);
+    }
+
     private Integer getIntValue(JsonNode body, String key) {
         return body.get("kv").get(key) != null ? body.get("kv").get(key).asInt() : null;
     }
@@ -568,4 +594,5 @@ public class EdgeMsgConstructorUtilsTest {
         Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
                 "ReportTemplate version should be null in serialized message");
     }
+
 }

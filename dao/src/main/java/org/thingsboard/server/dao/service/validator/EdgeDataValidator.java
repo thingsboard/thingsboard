@@ -10,10 +10,12 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
+import org.thingsboard.server.dao.edge.EdgeProfileDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -28,6 +30,7 @@ public class EdgeDataValidator extends DataValidator<Edge> {
     private final EdgeDao edgeDao;
     private final TenantService tenantService;
     private final CustomerDao customerDao;
+    private final EdgeProfileDao edgeProfileDao;
 
     @Lazy
     private final SubscriptionService subscriptionService;
@@ -67,6 +70,13 @@ public class EdgeDataValidator extends DataValidator<Edge> {
             if (!tenantService.tenantExists(edge.getTenantId())) {
                 throw new DataValidationException("Edge is referencing to non-existent tenant!");
             }
+        }
+        if (edge.getEdgeProfileId() == null) {
+            throw new DataValidationException("Edge should be assigned to an edge profile!");
+        }
+        EdgeProfile profile = edgeProfileDao.findById(edge.getTenantId(), edge.getEdgeProfileId().getId());
+        if (profile == null || !profile.getTenantId().equals(edge.getTenantId())) {
+            throw new DataValidationException("Edge is referencing to non-existent edge profile!");
         }
         if (edge.getCustomerId() == null) {
             edge.setCustomerId(new CustomerId(NULL_UUID));

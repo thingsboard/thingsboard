@@ -495,7 +495,6 @@ export interface HierarchyCallbacks {
   customerAdded?: (parentNodeId: string, customer: Customer) => void;
   customerUpdated?: (customer: Customer) => void;
   customersDeleted?: (customerIds: string[]) => void;
-  edgeGroupsSelected?: (parentNodeId: string, edgeId: string, groupsType: EntityType) => void;
   edgeAdded?: (parentNodeId: string, edge: Edge) => void;
   edgeUpdated?: (edge: Edge) => void;
   edgesDeleted?: (edgeIds: string[]) => void;

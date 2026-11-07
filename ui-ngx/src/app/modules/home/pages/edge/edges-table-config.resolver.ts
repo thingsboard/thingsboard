@@ -21,7 +21,7 @@ import { EntityAction } from '@home/models/entity/entity-component.models';
 import { Observable, of } from 'rxjs';
 import { select, Store } from '@ngrx/store';
 import { getCurrentAuthUser, selectUserSettingsProperty } from '@core/auth/auth.selectors';
-import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { filter, map, mergeMap, take, tap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { Authority } from '@app/shared/models/authority.enum';
 import { CustomerService } from '@core/http/customer.service';
@@ -32,6 +32,8 @@ import { DialogService } from '@core/services/dialog.service';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { edgeCreationAllowed, EdgeInfo } from '@shared/models/edge.models';
 import { EdgeService } from '@core/http/edge.service';
+import { EdgeProfileService } from '@core/http/edge-profile.service';
+import { confirmEdgeProfileChange } from '@home/pages/edge/edge-profile-change';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import {
   EdgeInstructionsDialogComponent,
@@ -43,7 +45,6 @@ import { GroupEntityTabsComponent } from '@home/components/group/group-entity-ta
 import { EdgeComponent } from '@home/pages/edge/edge.component';
 import { EdgeTableHeaderComponent } from '@home/pages/edge/edge-table-header.component';
 import { AuthUser } from '@shared/models/user.model';
-import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { UtilsService } from '@core/services/utils.service';
@@ -63,6 +64,7 @@ export class EdgesTableConfigResolver  {
               private store: Store<AppState>,
               private broadcast: BroadcastService,
               private edgeService: EdgeService,
+              private edgeProfileService: EdgeProfileService,
               private customerService: CustomerService,
               private dialogService: DialogService,
               private homeDialogs: HomeDialogsService,
@@ -130,7 +132,10 @@ export class EdgesTableConfigResolver  {
     config.deleteEntitiesContent = () => this.translate.instant('edge.delete-edges-text');
 
     config.loadEntity = id => this.edgeService.getEdgeInfo(id.id);
-    config.saveEntity = edge => this.edgeService.saveEdge(edge).pipe(
+    config.saveEntity = (edge, originalEdge) => confirmEdgeProfileChange(edge, originalEdge, this.edgeProfileService,
+      this.dialogService, this.translate).pipe(
+      filter(Boolean),
+      mergeMap(() => this.edgeService.saveEdge(edge)),
       tap(() => {
         this.broadcast.broadcast('edgeSaved');
       }),
@@ -144,7 +149,7 @@ export class EdgesTableConfigResolver  {
     const columns: Array<EntityColumn<EdgeInfo>> = [
       new DateEntityTableColumn<EdgeInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<EdgeInfo>('name', 'edge.name', '20%', config.entityTitle),
-      new EntityTableColumn<EdgeInfo>('type', 'edge.edge-type', '20%'),
+      new EntityTableColumn<EdgeInfo>('type', 'edge.edge-profile', '20%'),
       new EntityTableColumn<EdgeInfo>('label', 'edge.label', '15%')
     ];
     if (config.componentsData.includeCustomers) {
@@ -173,88 +178,6 @@ export class EdgesTableConfigResolver  {
 
   configureCellActions(authUser: AuthUser, config: EntityTableConfig<EdgeInfo>): Array<CellActionDescriptor<EdgeInfo>> {
     const actions: Array<CellActionDescriptor<EdgeInfo>> = [];
-    if (this.userPermissionsService.hasGenericPermission(Resource.USER_GROUP, Operation.READ)) {
-      actions.push(
-        {
-          name: this.translate.instant('edge.manage-edge-user-groups'),
-          icon: 'account_circle',
-          isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.manageUsers($event, entity, config)
-        }
-      );
-    }
-    if (this.userPermissionsService.hasGenericPermission(Resource.ASSET_GROUP, Operation.READ)) {
-      actions.push(
-        {
-          name: this.translate.instant('edge.manage-edge-asset-groups'),
-          icon: 'domain',
-          isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.manageAssets($event, entity, config)
-        }
-      );
-    }
-    if (this.userPermissionsService.hasGenericPermission(Resource.DEVICE_GROUP, Operation.READ)) {
-      actions.push(
-        {
-          name: this.translate.instant('edge.manage-edge-device-groups'),
-          icon: 'devices_other',
-          isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.manageDevices($event, entity, config)
-        }
-      );
-    }
-    if (this.userPermissionsService.hasGenericPermission(Resource.ENTITY_VIEW_GROUP, Operation.READ)) {
-      actions.push(
-        {
-          name: this.translate.instant('edge.manage-edge-entity-view-groups'),
-          icon: 'view_quilt',
-          isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.manageEntityViews($event, entity, config)
-        }
-      );
-    }
-    if (this.userPermissionsService.hasGenericPermission(Resource.DASHBOARD_GROUP, Operation.READ)) {
-      actions.push(
-        {
-          name: this.translate.instant('edge.manage-edge-dashboard-groups'),
-          icon: 'dashboard',
-          isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.manageDashboards($event, entity, config)
-        }
-      );
-    }
-    if (this.userPermissionsService.hasGenericPermission(Resource.SCHEDULER_EVENT, Operation.READ)) {
-      actions.push(
-        {
-          name: this.translate.instant('edge.manage-edge-scheduler-events'),
-          icon: 'schedule',
-          isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.manageSchedulerEvents($event, entity, config)
-        }
-      );
-    }
-    if (this.userPermissionsService.hasGenericPermission(Resource.RULE_CHAIN, Operation.READ) &&
-      authUser.authority === Authority.TENANT_ADMIN) {
-      actions.push(
-        {
-          name: this.translate.instant('edge.manage-edge-rule-chains'),
-          icon: 'settings_ethernet',
-          isEnabled: () => true,
-          onAction: ($event, entity) => this.manageRuleChains($event, entity, config)
-        }
-      );
-    }
-    if (this.userPermissionsService.hasGenericPermission(Resource.INTEGRATION, Operation.READ) &&
-      authUser.authority === Authority.TENANT_ADMIN) {
-      actions.push(
-        {
-          name: this.translate.instant('edge.manage-edge-integrations'),
-          icon: 'input',
-          isEnabled: () => true,
-          onAction: ($event, entity) => this.manageIntegrations($event, entity, config)
-        }
-      );
-    }
     return actions;
   }
 
@@ -320,75 +243,6 @@ export class EdgesTableConfigResolver  {
       $event.stopPropagation();
     }
     const url = this.router.createUrlTree([edge.id.id], {relativeTo: config.getActivatedRoute()});
-    this.router.navigateByUrl(url);
-  }
-
-  manageUsers($event: Event, edge: EdgeInfo, config: EntityTableConfig<EdgeInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.navigateToChildEdgePage(config, edge, '/userGroups');
-  }
-
-  manageAssets($event: Event, edge: EdgeInfo, config: EntityTableConfig<EdgeInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.navigateToChildEdgePage(config, edge, '/assetGroups');
-  }
-
-  manageDevices($event: Event, edge: EdgeInfo, config: EntityTableConfig<EdgeInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.navigateToChildEdgePage(config, edge, '/deviceGroups');
-  }
-
-  manageEntityViews($event: Event, edge: EdgeInfo, config: EntityTableConfig<EdgeInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.navigateToChildEdgePage(config, edge, '/entityViewGroups');
-  }
-
-  manageDashboards($event: Event, edge: EdgeInfo, config: EntityTableConfig<EdgeInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.navigateToChildEdgePage(config, edge, '/dashboardGroups');
-  }
-
-  manageSchedulerEvents($event: Event, edge: EdgeInfo, config: EntityTableConfig<EdgeInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.navigateToChildEdgePage(config, edge, '/scheduler');
-  }
-
-  manageRuleChains($event: Event, edge: EdgeInfo, config: EntityTableConfig<EdgeInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.navigateToChildEdgePage(config, edge, '/ruleChains');
-  }
-
-  manageIntegrations($event: Event, edge: EdgeInfo, config: EntityTableConfig<EdgeInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.navigateToChildEdgePage(config, edge, '/integrations');
-  }
-
-  private navigateToChildEdgePage(config: EntityTableConfig<EdgeInfo>, edge: EdgeInfo, page: string) {
-    let url = `edgeManagement/edges/all/${edge.id.id}${page}`;
-    if (config.customerId) {
-      if (config.groupParams.childEntityGroupId) {
-        const targetGroups = config.groupParams.shared ? 'shared' : 'groups';
-        url = `customers/${targetGroups}/${config.groupParams.entityGroupId}/${config.groupParams.customerId}/${url}`;
-      } else {
-        url = `customers/all/${config.customerId}/${url}`;
-      }
-    }
     this.router.navigateByUrl(url);
   }
 
@@ -471,30 +325,6 @@ export class EdgesTableConfigResolver  {
     switch (action.action) {
       case 'open':
         this.openEdge(action.event, action.entity, config);
-        return true;
-      case 'manageUsers':
-        this.manageUsers(action.event, action.entity, config);
-        return true;
-      case 'manageAssets':
-        this.manageAssets(action.event, action.entity, config);
-        return true;
-      case 'manageDevices':
-        this.manageDevices(action.event, action.entity, config);
-        return true;
-      case 'manageEntityViews':
-        this.manageEntityViews(action.event, action.entity, config);
-        return true;
-      case 'manageDashboards':
-        this.manageDashboards(action.event, action.entity, config);
-        return true;
-      case 'manageSchedulerEvents':
-        this.manageSchedulerEvents(action.event, action.entity, config);
-        return true;
-      case 'manageRuleChains':
-        this.manageRuleChains(action.event, action.entity, config);
-        return true;
-      case 'manageIntegrations':
-        this.manageIntegrations(action.event, action.entity, config);
         return true;
       case 'syncEdge':
         this.syncEdge(action.event, action.entity);

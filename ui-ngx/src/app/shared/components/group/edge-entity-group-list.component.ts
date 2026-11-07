@@ -64,6 +64,10 @@ export class EdgeEntityGroupListComponent implements ControlValueAccessor, OnIni
   @Input()
   excludeGroupAll: boolean;
 
+  // a caller with its own owner selector lists only that owner's groups, not the ones it inherits from above
+  @Input()
+  ownerGroupsOnly = false;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
@@ -86,7 +90,10 @@ export class EdgeEntityGroupListComponent implements ControlValueAccessor, OnIni
 
   entityGroups: Array<EntityInfoData> = [];
   filteredEntityGroups: Observable<Array<EntityInfoData>>;
+  // bound by callers that let the user choose the owner; otherwise it stays on the owner the dialog was opened for
+  @Input()
   ownerId: EntityId;
+
   edgeId: string;
   tenantId: string;
 
@@ -146,7 +153,7 @@ export class EdgeEntityGroupListComponent implements ControlValueAccessor, OnIni
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'groupType') {
+        if (propName === 'groupType' || propName === 'ownerId') {
           this.reset();
         }
       }
@@ -253,6 +260,10 @@ export class EdgeEntityGroupListComponent implements ControlValueAccessor, OnIni
   }
 
   getEntityGroups(pageLink: PageLink): Observable<PageData<EntityInfoData>> {
+    if (this.ownerGroupsOnly) {
+      return this.entityGroupService.getEntityGroupEntityInfosByOwnerId(pageLink, this.ownerId.entityType as EntityType,
+        this.ownerId.id, this.groupType, {ignoreLoading: true});
+    }
     return this.entityGroupService.getEntityGroupEntityInfosHierarchyByOwnerId(pageLink, this.ownerId.entityType as EntityType,
       this.ownerId.id, this.groupType, {ignoreLoading: true});
   }

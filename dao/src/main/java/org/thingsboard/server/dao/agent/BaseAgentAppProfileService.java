@@ -12,33 +12,38 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.agent.AgentAppProfileCacheEvictEvent;
 import org.thingsboard.server.cache.agent.AgentAppProfileCacheKey;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.agent.AgentAppProfile;
 import org.thingsboard.server.common.data.agent.AgentAppProfileInfo;
 import org.thingsboard.server.common.data.agent.AgentAppProfileRelationInfo;
 import org.thingsboard.server.common.data.agent.AgentApplicationType;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.id.AgentAppProfileId;
-import org.thingsboard.server.common.data.id.AgentProfileId;
 import org.thingsboard.server.common.data.id.AgentId;
+import org.thingsboard.server.common.data.id.AgentProfileId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.edge.EdgeProfileDao;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.relation.RelationDao;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.exception.DataValidationException;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -49,9 +54,19 @@ public class BaseAgentAppProfileService extends AbstractCachedEntityService<Agen
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_PROFILE_ID = "Incorrect profileId ";
+    public static final String PROVISIONS_ON_PROFILE_RELATION_TYPE = "ProvisionsOnProfile";
 
     @Autowired
     private AgentAppProfileDao profileDao;
+
+    @Autowired
+    private RelationService relationService;
+
+    @Autowired
+    private RelationDao relationDao;
+
+    @Autowired
+    private EdgeProfileDao edgeProfileDao;
 
     @Autowired
     private DataValidator<AgentAppProfile> profileValidator;
@@ -153,6 +168,78 @@ public class BaseAgentAppProfileService extends AbstractCachedEntityService<Agen
     }
 
     @Override
+    @Transactional
+    public boolean setEdgeProfile(TenantId tenantId, AgentAppProfileId profileId, EdgeProfileId edgeProfileId) {
+        log.trace("Executing setEdgeProfile [{}][{}]", profileId, edgeProfileId);
+        validateId(profileId, id -> INCORRECT_PROFILE_ID + id);
+        AgentAppProfile profile = findProfileById(tenantId, profileId);
+        if (profile == null) {
+            throw new DataValidationException("Agent application profile not found!");
+        }
+        if (profile.getAppType() != AgentApplicationType.EDGE) {
+            throw new DataValidationException("Only an EDGE agent application profile can provision on an edge profile!");
+        }
+        // held until this transaction ends, so two callers cannot both read "no link" and both insert one
+        profileDao.lockEdgeProfileLink(profileId.getId());
+        // read the table, not the cache: the previous writer's evict only runs after its commit, so the cached
+        // list can still be the pre-write one by the time the lock is handed over
+        EntityRelation existing = findEdgeProfileRelationForUpdate(tenantId, profileId);
+        if (edgeProfileId == null) {
+            if (existing == null) {
+                return false;
+            }
+            relationService.deleteRelation(tenantId, existing);
+            return true;
+        }
+        // the form sends the link on every save, so an unchanged one skips both the re-stamp and the validation read:
+        // the target was validated when it was linked, it cannot be deleted while linked, and its root cannot be removed
+        if (existing != null && edgeProfileId.getId().equals(existing.getTo().getId())) {
+            return false;
+        }
+        EdgeProfile edgeProfile = edgeProfileDao.findById(tenantId, edgeProfileId.getId());
+        if (edgeProfile == null || !tenantId.equals(edgeProfile.getTenantId())) {
+            throw new DataValidationException("Agent application profile is referencing to non-existent edge profile!");
+        }
+        // an edge cannot be saved onto a rootless profile, so accepting one here would only fail later inside auto-install
+        if (edgeProfile.getRootRuleChainId() == null) {
+            throw new DataValidationException("Edge profile [" + edgeProfile.getName() + "] has no root rule chain and cannot be used to create edges!");
+        }
+        if (existing != null) {
+            relationService.deleteRelation(tenantId, existing);
+        }
+        relationService.saveRelation(tenantId, new EntityRelation(profileId, edgeProfileId,
+                PROVISIONS_ON_PROFILE_RELATION_TYPE, RelationTypeGroup.AGENT));
+        return true;
+    }
+
+    @Override
+    public EdgeProfileId findEdgeProfileId(TenantId tenantId, AgentAppProfileId profileId) {
+        log.trace("Executing findEdgeProfileId [{}]", profileId);
+        validateId(profileId, id -> INCORRECT_PROFILE_ID + id);
+        EntityRelation relation = findEdgeProfileRelation(tenantId, profileId);
+        return relation == null ? null : new EdgeProfileId(relation.getTo().getId());
+    }
+
+    @Override
+    public long countAppProfilesByEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId) {
+        log.trace("Executing countAppProfilesByEdgeProfileId [{}]", edgeProfileId);
+        return relationService.findByToAndType(tenantId, edgeProfileId,
+                PROVISIONS_ON_PROFILE_RELATION_TYPE, RelationTypeGroup.AGENT).size();
+    }
+
+    private EntityRelation findEdgeProfileRelation(TenantId tenantId, AgentAppProfileId profileId) {
+        List<EntityRelation> relations = relationService.findByFromAndType(tenantId, profileId,
+                PROVISIONS_ON_PROFILE_RELATION_TYPE, RelationTypeGroup.AGENT);
+        return relations.isEmpty() ? null : relations.get(0);
+    }
+
+    private EntityRelation findEdgeProfileRelationForUpdate(TenantId tenantId, AgentAppProfileId profileId) {
+        List<EntityRelation> relations = relationDao.findAllByFromAndType(tenantId, profileId,
+                PROVISIONS_ON_PROFILE_RELATION_TYPE, RelationTypeGroup.AGENT);
+        return relations.isEmpty() ? null : relations.get(0);
+    }
+
+    @Override
     public List<AgentAppProfile> findUninstalledAppProfilesForAgentProfile(TenantId tenantId, AgentProfileId agentProfileId, AgentId agentId) {
         log.trace("Executing findUninstalledAppProfilesForAgentProfile, agentProfileId [{}], agentId [{}]", agentProfileId, agentId);
         if (agentProfileId == null || agentId == null) {
@@ -243,4 +330,5 @@ public class BaseAgentAppProfileService extends AbstractCachedEntityService<Agen
             removeProfile(tenantId, entity);
         }
     };
+
 }

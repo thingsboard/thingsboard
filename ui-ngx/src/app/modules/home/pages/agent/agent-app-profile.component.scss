@@ -22,6 +22,9 @@
       height: 14px;
     }
   }
+  .mat-mdc-form-field:has(.tb-app-upgrade-hint) {
+    margin-bottom: 12px;
+  }
   .tb-mat-label {
     display: block;
     margin-bottom: 8px;

@@ -23,11 +23,15 @@ import org.thingsboard.server.common.data.agent.config.DockerComposeConfig;
 import org.thingsboard.server.common.data.agent.step.ComposeStartStep;
 import org.thingsboard.server.common.data.agent.step.ComposeTypeChoiceStep;
 import org.thingsboard.server.common.data.agent.template.AgentAppTemplate;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.agent.AgentApplicationService;
 import org.thingsboard.server.dao.sql.agent.AppTemplateRegistry;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -75,6 +79,36 @@ public class AgentAppProfileControllerTest extends AbstractControllerTest {
         doPost("/api/agent/app/profile", profile).andExpect(status().isForbidden());
 
         loginTenantAdmin();
+    }
+
+    @Test
+    public void testSaveAppProfile_edgeProfileIdTriState() throws Exception {
+        AgentAppProfile saved = doPost("/api/agent/app/profile",
+                edgeAppProfile("Tri-state Edge App Profile", createEdgeTemplate("3.3.3EDGEPE")), AgentAppProfile.class);
+        Assert.assertNull(getEdgeProfileId(saved));
+        EdgeProfile edgeProfile = createRootedEdgeProfile("Tri-state Edge Profile");
+
+        saved = doPost("/api/agent/app/profile?edgeProfileId=" + edgeProfile.getId().getId(), saved, AgentAppProfile.class);
+        Assert.assertEquals(edgeProfile.getId(), getEdgeProfileId(saved));
+
+        saved = doPost("/api/agent/app/profile", saved, AgentAppProfile.class);
+        Assert.assertEquals(edgeProfile.getId(), getEdgeProfileId(saved));
+
+        saved = doPost("/api/agent/app/profile?edgeProfileId=", saved, AgentAppProfile.class);
+        Assert.assertNull(getEdgeProfileId(saved));
+    }
+
+    @Test
+    public void testSaveAppProfile_rejectedEdgeProfileLinkRollsBackTheProfile() throws Exception {
+        EdgeProfile edgeProfile = createRootedEdgeProfile("Generic Link Edge Profile");
+        AgentAppProfile profile = AgentTemplateTestSupport.appProfileFor(createTemplate(), "Generic Profile With Edge Link");
+        long before = countTenantAppProfiles();
+
+        doPost("/api/agent/app/profile?edgeProfileId=" + edgeProfile.getId().getId(), profile)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Only an EDGE agent application profile")));
+
+        Assert.assertEquals(before, countTenantAppProfiles());
     }
 
     @Test
@@ -323,6 +357,42 @@ public class AgentAppProfileControllerTest extends AbstractControllerTest {
         ObjectNode compose = JacksonUtil.newObjectNode();
         compose.set("services", services);
         return compose;
+    }
+
+    private AgentAppProfile edgeAppProfile(String name, AgentAppTemplate template) {
+        AgentAppProfile profile = new AgentAppProfile();
+        profile.setName(name);
+        profile.setAppType(AgentApplicationType.EDGE);
+        profile.setTemplateVersion(template.getCurrentVersion());
+        DockerComposeConfig config = new DockerComposeConfig();
+        config.setCompose(edgeCompose(template.getCurrentVersion()));
+        profile.setConfig(config);
+        return profile;
+    }
+
+    private EdgeProfile createRootedEdgeProfile(String name) throws Exception {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(name + " RC");
+        ruleChain.setType(RuleChainType.EDGE);
+        ruleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+        EdgeProfile edgeProfile = new EdgeProfile();
+        edgeProfile.setName(name);
+        edgeProfile.getProfileData().getRuleChainIds().add(ruleChain.getId());
+        edgeProfile.setRootRuleChainId(ruleChain.getId());
+        return doPost("/api/edgeProfile", edgeProfile, EdgeProfile.class);
+    }
+
+    // an unlinked profile answers with an empty body, which the typed reader cannot map
+    private EdgeProfileId getEdgeProfileId(AgentAppProfile profile) throws Exception {
+        String body = doGet("/api/agent/app/profile/" + profile.getId().getId() + "/edgeProfile")
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        return body.isEmpty() ? null : JacksonUtil.fromString(body, EdgeProfileId.class);
+    }
+
+    private long countTenantAppProfiles() throws Exception {
+        PageData<AgentAppProfile> page = doGetTypedWithPageLink("/api/tenant/agent/app/profiles?",
+                new TypeReference<>() {}, new PageLink(1));
+        return page.getTotalElements();
     }
 
     private AgentAppTemplate createTemplate() {

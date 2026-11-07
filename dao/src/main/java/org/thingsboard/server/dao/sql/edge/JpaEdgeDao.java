@@ -143,6 +143,34 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
+    public PageData<Edge> findEdgesByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId, PageLink pageLink) {
+        return DaoUtil.toPageData(edgeRepository.findByTenantIdAndEdgeProfileId(tenantId, edgeProfileId,
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public List<UUID> updateTypeByEdgeProfileId(UUID tenantId, UUID edgeProfileId, String type) {
+        return jdbcTemplate.queryForList("UPDATE edge SET type = ?, version = version + 1 " +
+                        "WHERE tenant_id = ? AND edge_profile_id = ? AND type IS DISTINCT FROM ? RETURNING id",
+                UUID.class, type, tenantId, edgeProfileId, type);
+    }
+
+    @Override
+    public List<Edge> findEdgesByTenantIdAndIds(UUID tenantId, List<UUID> edgeIds) {
+        return DaoUtil.convertDataList(edgeRepository.findEdgesByTenantIdAndIdIn(tenantId, edgeIds));
+    }
+
+    @Override
+    public long countByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId) {
+        return edgeRepository.countByTenantIdAndEdgeProfileId(tenantId, edgeProfileId);
+    }
+
+    @Override
+    public boolean existsByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId) {
+        return edgeRepository.existsByTenantIdAndEdgeProfileId(tenantId, edgeProfileId);
+    }
+
+    @Override
     public PageData<Edge> findEdgesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink) {
         return DaoUtil.toPageData(
                 edgeRepository.findByTenantIdAndCustomerIdAndType(

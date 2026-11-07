@@ -41,6 +41,7 @@ import java.util.UUID;
                 @DiscriminatorMapping(value = "DEVICE_PROFILE", schema = DeviceProfileId.class),
                 @DiscriminatorMapping(value = "DOMAIN", schema = DomainId.class),
                 @DiscriminatorMapping(value = "EDGE", schema = EdgeId.class),
+                @DiscriminatorMapping(value = "EDGE_PROFILE", schema = EdgeProfileId.class),
                 @DiscriminatorMapping(value = "ENTITY_GROUP", schema = EntityGroupId.class),
                 @DiscriminatorMapping(value = "ENTITY_VIEW", schema = EntityViewId.class),
                 @DiscriminatorMapping(value = "GROUP_PERMISSION", schema = GroupPermissionId.class),

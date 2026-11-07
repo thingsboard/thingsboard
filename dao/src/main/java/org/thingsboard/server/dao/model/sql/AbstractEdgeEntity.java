@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseVersionedEntity;
@@ -44,6 +45,9 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEn
 
     @Column(name = EDGE_ROOT_RULE_CHAIN_ID_PROPERTY, columnDefinition = "uuid")
     private UUID rootRuleChainId;
+
+    @Column(name = ModelConstants.EDGE_EDGE_PROFILE_ID_PROPERTY, columnDefinition = "uuid")
+    private UUID edgeProfileId;
 
     @Column(name = EDGE_TYPE_PROPERTY)
     private String type;
@@ -85,6 +89,9 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEn
         if (edge.getRootRuleChainId() != null) {
             this.rootRuleChainId = edge.getRootRuleChainId().getId();
         }
+        if (edge.getEdgeProfileId() != null) {
+            this.edgeProfileId = edge.getEdgeProfileId().getId();
+        }
         this.type = edge.getType();
         this.name = edge.getName();
         this.label = edge.getLabel();
@@ -100,6 +107,7 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEn
         this.tenantId = edgeEntity.getTenantId();
         this.customerId = edgeEntity.getCustomerId();
         this.rootRuleChainId = edgeEntity.getRootRuleChainId();
+        this.edgeProfileId = edgeEntity.getEdgeProfileId();
         this.type = edgeEntity.getType();
         this.name = edgeEntity.getName();
         this.label = edgeEntity.getLabel();
@@ -122,6 +130,9 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEn
         }
         if (rootRuleChainId != null) {
             edge.setRootRuleChainId(new RuleChainId(rootRuleChainId));
+        }
+        if (edgeProfileId != null) {
+            edge.setEdgeProfileId(new EdgeProfileId(edgeProfileId));
         }
         edge.setType(type);
         edge.setName(name);

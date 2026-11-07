@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc;
 
 
@@ -18,4 +19,6 @@ public class EdgeEventStorageSettings {
     private long sleepIntervalBetweenBatches;
     @Value("${edges.storage.misordering_compensation_millis:60000}")
     private long misorderingCompensationMillis;
+    @Value("${edges.storage.retry_failed_entity_downlinks:false}")
+    private boolean retryFailedEntityDownlinks;
 }

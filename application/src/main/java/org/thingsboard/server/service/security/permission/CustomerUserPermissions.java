@@ -82,6 +82,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         put(Resource.AUDIT_LOG, genericPermissionChecker);
         put(Resource.DEVICE_PROFILE, profilePermissionChecker);
         put(Resource.ASSET_PROFILE, profilePermissionChecker);
+        put(Resource.EDGE_PROFILE, profilePermissionChecker);
         put(Resource.TB_RESOURCE, customerResourcePermissionChecker);
         put(Resource.OTA_PACKAGE, otaPackagePermissionChecker);
         put(Resource.MOBILE_APP_SETTINGS, qrCodeSettingsPermissionChecker);

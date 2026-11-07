@@ -24,6 +24,7 @@ import org.thingsboard.server.dao.agent.AgentProfileService;
 import org.thingsboard.server.dao.agent.AgentService;
 import org.thingsboard.server.dao.blob.BlobEntityService;
 import org.thingsboard.server.dao.converter.ConverterService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.integration.IntegrationService;
@@ -76,6 +77,8 @@ public interface TbPeContext {
     AgentProfileService getAgentProfileService();
 
     AgentBulkActionService getAgentBulkActionService();
+
+    EdgeProfileService getEdgeProfileService();
 
     DeviceGroupOtaPackageService getDeviceGroupOtaPackageService();
 

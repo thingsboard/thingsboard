@@ -353,8 +353,16 @@ export class AgentService {
     return this.http.get<AgentAppProfileInfo>(`/api/agent/app/profile/info/${profileId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveAgentAppProfile(profile: AgentAppProfile, config?: RequestConfig): Observable<AgentAppProfile> {
-    return this.http.post<AgentAppProfile>('/api/agent/app/profile', profile, defaultHttpOptionsFromConfig(config));
+  public saveAgentAppProfile(profile: AgentAppProfile, config?: RequestConfig, edgeProfileId?: string): Observable<AgentAppProfile> {
+    // an undefined edge profile id leaves the existing link untouched, an empty one clears it
+    const url = edgeProfileId === undefined
+      ? '/api/agent/app/profile'
+      : `/api/agent/app/profile?edgeProfileId=${encodeURIComponent(edgeProfileId ?? '')}`;
+    return this.http.post<AgentAppProfile>(url, profile, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAgentAppProfileEdgeProfileId(profileId: string, config?: RequestConfig): Observable<EntityId> {
+    return this.http.get<EntityId>(`/api/agent/app/profile/${profileId}/edgeProfile`, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteAgentAppProfile(profileId: string, config?: RequestConfig): Observable<void> {

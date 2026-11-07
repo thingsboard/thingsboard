@@ -71,6 +71,7 @@ public enum Resource {
     AGENT(EntityType.AGENT),
     AGENT_APP_PROFILE(EntityType.AGENT_APP_PROFILE),
     AGENT_PROFILE(EntityType.AGENT_PROFILE),
+    EDGE_PROFILE(EntityType.EDGE_PROFILE),
     AI,
     API_KEY(EntityType.API_KEY);
 
@@ -164,6 +165,7 @@ public enum Resource {
         operationsByResource.put(Resource.AGENT, Operation.defaultEntityOperations);
         operationsByResource.put(Resource.AGENT_APP_PROFILE, Operation.crudOperations);
         operationsByResource.put(Resource.AGENT_PROFILE, Operation.crudOperations);
+        operationsByResource.put(Resource.EDGE_PROFILE, Operation.crudOperations);
 
         resourcesByAuthority.put(Authority.SYS_ADMIN, Set.of(
                 Resource.ALL,
@@ -244,6 +246,7 @@ public enum Resource {
                 Resource.AGENT,
                 Resource.AGENT_APP_PROFILE,
                 Resource.AGENT_PROFILE,
+                Resource.EDGE_PROFILE,
                 Resource.AGENT_GROUP,
                 Resource.AI,
                 Resource.API_KEY
@@ -279,6 +282,7 @@ public enum Resource {
                 Resource.AUDIT_LOG,
                 Resource.DEVICE_PROFILE,
                 Resource.ASSET_PROFILE,
+                Resource.EDGE_PROFILE,
                 Resource.MOBILE_APP_SETTINGS,
                 Resource.REPORT_TEMPLATE,
                 Resource.REPORT,

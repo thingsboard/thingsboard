@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeAssignments;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
@@ -45,17 +46,16 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
-import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.config.annotations.ApiOperation;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeBulkImportService;
 import org.thingsboard.server.service.edge.instructions.EdgeInstallInstructionsService;
 import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
+import org.thingsboard.server.service.edge.profile.EdgeAssignmentsService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -77,9 +77,9 @@ import static org.thingsboard.server.controller.ControllerConstants.INCLUDE_CUST
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RBAC_GROUP_READ_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
-import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -95,6 +95,7 @@ public class EdgeController extends BaseController {
 
     private final EdgeBulkImportService edgeBulkImportService;
     private final TbEdgeService tbEdgeService;
+    private final EdgeAssignmentsService edgeAssignmentsService;
     private final Optional<EdgeRpcService> edgeRpcServiceOpt;
     private final Optional<EdgeInstallInstructionsService> edgeInstallServiceOpt;
     private final Optional<EdgeUpgradeInstructionsService> edgeUpgradeServiceOpt;
@@ -162,14 +163,6 @@ public class EdgeController extends BaseController {
         edge.setTenantId(tenantId);
         boolean created = edge.getId() == null;
 
-        RuleChain edgeTemplateRootRuleChain = null;
-        if (created) {
-            edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(tenantId);
-            if (edgeTemplateRootRuleChain == null) {
-                throw new DataValidationException("Root edge rule chain is not available!");
-            }
-        }
-
         List<EntityGroupId> entityGroupIds = new ArrayList<>();
         List<EntityGroup> entityGroups = new ArrayList<>();
         String[] groupIds = null;
@@ -199,7 +192,7 @@ public class EdgeController extends BaseController {
                     edge.getId(), edge, null);
         }
 
-        return tbEdgeService.save(edge, edgeTemplateRootRuleChain, entityGroups, getCurrentUser());
+        return tbEdgeService.save(edge, entityGroups, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete edge (deleteEdge)",
@@ -284,11 +277,24 @@ public class EdgeController extends BaseController {
         return getTenantEdge(edgeName);
     }
 
+    @ApiOperation(value = "Get Edge Assignments (getEdgeAssignments)",
+            notes = "Rule chains, entity groups, integrations and scheduler events assigned to the edge, each marked PROFILE or EDGE by source. " +
+                    "Rows are limited to what the caller may read: rule chains and integrations are tenant-level and returned to tenant administrators only; " +
+                    "entity groups and scheduler events are scoped to the caller's owner hierarchy and generic read permissions." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping("/edge/{edgeId}/assignments")
+    public EdgeAssignments getEdgeAssignments(@PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
+        checkParameter(EDGE_ID, strEdgeId);
+        Edge edge = checkEdgeId(new EdgeId(toUUID(strEdgeId)), Operation.READ);
+        return edgeAssignmentsService.forEdge(getTenantId(), edge, getCurrentUser());
+    }
+
     @ApiOperation(value = "Set root rule chain for provided edge (setEdgeRootRuleChain)",
-            notes = "Change root rule chain of the edge to the new provided rule chain. \n" +
-                    "This operation will send a notification to update root rule chain on remote edge service."
-                    + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+            notes = "Makes the rule chain the root rule chain of this edge only, overriding the root set by its edge profile. " +
+                    "The rule chain is assigned to the edge first when it is not yet. The override survives a re-apply of the profile and a change " +
+                    "of the profile's root rule chain, and is replaced when the edge moves to another profile. " +
+                    "The remote edge is notified." + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping(value = "/edge/{edgeId}/{ruleChainId}/root")
     public Edge setEdgeRootRuleChain(@Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                      @PathVariable(EDGE_ID) String strEdgeId,
@@ -296,11 +302,9 @@ public class EdgeController extends BaseController {
                                      @PathVariable("ruleChainId") String strRuleChainId) throws Exception {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter("ruleChainId", strRuleChainId);
+        Edge edge = checkEdgeId(new EdgeId(toUUID(strEdgeId)), Operation.WRITE);
         RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
         checkRuleChain(ruleChainId, Operation.READ);
-
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        Edge edge = checkEdgeId(edgeId, Operation.WRITE);
         return tbEdgeService.setEdgeRootRuleChain(edge, ruleChainId, getCurrentUser());
     }
 
@@ -624,10 +628,6 @@ public class EdgeController extends BaseController {
     @PostMapping("/edge/bulk_import")
     public BulkImportResult<Edge> processEdgesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
-        RuleChain edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(user.getTenantId());
-        if (edgeTemplateRootRuleChain == null) {
-            throw new DataValidationException("Root edge rule chain is not available!");
-        }
         return edgeBulkImportService.processBulkImport(request, user,
                 (edge, savingFunction) -> {
                     try {

@@ -1,0 +1,81 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  padding: 16px;
+}
+
+.tb-banner {
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+
+  &.info { background: color-mix(in srgb, var(--tb-primary-500, #305680) 8%, transparent); }
+  &.locked { background: rgba(0, 0, 0, 0.04); color: rgba(0, 0, 0, 0.64); }
+}
+
+.tb-group-label {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.tb-toolbar { min-height: 48px; }
+.tb-search-icon { color: rgba(0, 0, 0, 0.54); }
+.tb-source-toggle {
+  display: inline-block;
+  ::ng-deep tb-toggle-header { width: fit-content; }
+  ::ng-deep .mat-button-toggle-group { width: auto !important; }
+}
+
+.tb-count { color: var(--tb-primary-500, #305680); font-weight: 500; }
+.tb-none { color: rgba(0, 0, 0, 0.38); }
+
+.tb-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: default;
+
+  &.profile {
+    background: color-mix(in srgb, var(--tb-primary-500, #305680) 12%, transparent);
+    color: var(--tb-primary-500, #305680);
+    cursor: pointer;
+  }
+  &.local { background: rgba(0, 0, 0, 0.06); color: rgba(0, 0, 0, 0.76); }
+}
+
+table.tb-rows {
+  width: 100%;
+  // fixed, so the columns sit at the same offsets in every section: with the default auto layout each
+  // table sizes itself to its own content and an empty section lands its headers elsewhere than a full one
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th { text-align: left; font-weight: 500; color: rgba(0, 0, 0, 0.54); padding: 6px 8px; border-bottom: 1px solid rgba(0, 0, 0, 0.12); }
+  td { padding: 6px 8px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+  // half the row for the name, half for source + owner; the name column is left unsized so it absorbs
+  // whatever is over after the action buttons, which keeps every section's columns at the same offsets
+  .tb-col-source { width: 20%; }
+  // rule chains put Root in the slot the other sections use for Owner, so it takes the same width and
+  // every section lands Name/Source/last column at identical offsets
+  .tb-col-owner, .tb-col-root { width: 30%; }
+  .tb-actions { width: 96px; text-align: right; white-space: nowrap; }
+  .tb-row-icon { font-size: 18px; width: 18px; height: 18px; color: rgba(0, 0, 0, 0.38); flex: none; }
+  .tb-root-on { color: var(--tb-primary-500, #305680); }
+  // a fixed layout clips instead of widening, so long values need an explicit ellipsis
+  .tb-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tb-col-name > span { min-width: 0; }
+}
+
+.tb-section-footer { padding-top: 8px; }
+.tb-range { font-size: 12px; color: rgba(0, 0, 0, 0.54); }
