@@ -195,7 +195,7 @@
                       <mat-label translate>integration.integration-key</mat-label>
                       <input matInput formControlName="routingKey">
                     </mat-form-field>
-                    <button mat-icon-button ngxClipboard type="button" color="primary"
+                    <button mat-icon-button ngxClipboard type="button"
                             (cbOnSuccess)="onIntegrationInfoCopied('key')"
                             [cbContent]="integrationConfigurationForm.get('routingKey').value"
                             matTooltip="{{'integration.copy-integration-key' | translate}}">
@@ -207,7 +207,7 @@
                       <mat-label translate>integration.integration-secret</mat-label>
                       <input matInput formControlName="secret">
                     </mat-form-field>
-                    <button mat-icon-button ngxClipboard type="button" color="primary"
+                    <button mat-icon-button ngxClipboard type="button"
                             (cbOnSuccess)="onIntegrationInfoCopied('secret')"
                             [cbContent]="integrationConfigurationForm.get('secret').value"
                             matTooltip="{{'integration.copy-integration-secret' | translate}}">
