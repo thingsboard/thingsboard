@@ -159,6 +159,7 @@ import { EdgeEntityGroupListComponent } from '@shared/components/group/edge-enti
 import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
+import { FilterButtonComponent } from '@shared/components/button/filter-button.component';
 import { TogglePasswordComponent } from '@shared/components/button/toggle-password.component';
 import { WidgetButtonToggleComponent } from '@shared/components/button/widget-button-toggle.component';
 import { HelpPopupComponent } from '@shared/components/help-popup.component';
@@ -489,6 +490,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShareEntityGroupComponent,
     OtaPackageAutocompleteComponent,
     CopyButtonComponent,
+    FilterButtonComponent,
     TogglePasswordComponent,
     WidgetButtonToggleComponent,
     ProtobufContentComponent,
@@ -802,6 +804,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShareEntityGroupComponent,
     OtaPackageAutocompleteComponent,
     CopyButtonComponent,
+    FilterButtonComponent,
     TogglePasswordComponent,
     WidgetButtonToggleComponent,
     ProtobufContentComponent,

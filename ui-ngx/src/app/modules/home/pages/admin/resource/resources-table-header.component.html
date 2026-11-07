@@ -1,21 +1,28 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-form-field class="mat-block" subscriptSizing="dynamic">
-  <mat-label translate>resource.resource-type</mat-label>
-  <mat-select [ngModel]="entitiesTableConfig.componentsData.resourceType"
-              (ngModelChange)="resourceTypeChanged($event)"
-              placeholder="{{ 'resource.resource-type' | translate }}">
-    <mat-option value="">
-      {{ "resource.all-types" | translate }}
-    </mat-option>
-    @for (resourceType of resourceTypes; track resourceType) {
-      <mat-option [value]="resourceType">
-        {{ resourceTypesTranslationMap.get(resourceType) | translate }}
-      </mat-option>
-    }
-  </mat-select>
-</mat-form-field>
+<tb-filter-button emptyLabel="resource.resource-filter-title"
+                  emptyValue=""
+                  [valueLabel]="resourceTypeLabel"
+                  [ngModel]="entitiesTableConfig.componentsData.resourceType"
+                  (ngModelChange)="resourceTypeChanged($event)">
+  <ng-template let-control>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>resource.resource-type</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select [formControl]="control">
+          <mat-option value="">{{ 'resource.all-types' | translate }}</mat-option>
+          @for (resourceType of resourceTypes; track resourceType) {
+            <mat-option [value]="resourceType">
+              {{ resourceTypesTranslationMap.get(resourceType) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </ng-template>
+</tb-filter-button>

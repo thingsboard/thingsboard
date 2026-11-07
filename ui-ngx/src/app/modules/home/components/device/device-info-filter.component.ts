@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -39,7 +40,7 @@ export interface DeviceFilterConfigData {
 @Component({
     selector: 'tb-device-info-filter',
     templateUrl: './device-info-filter.component.html',
-    styleUrls: ['./device-info-filter.component.scss'],
+    styleUrls: ['../../../../../scss/filter-button.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,

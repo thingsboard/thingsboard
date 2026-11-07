@@ -5,8 +5,15 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-form-field [formGroup]="selectAssetProfileFormGroup" class="mat-block" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
-  <mat-label>{{ 'asset-profile.asset-profile' | translate }}</mat-label>
+<mat-form-field [formGroup]="selectAssetProfileFormGroup"
+  [class.tb-inline-field]="inlineField"
+  [class.flex]="inlineField"
+  class="mat-block"
+  [appearance]="inlineField ? 'outline' : appearance"
+  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  @if (!inlineField) {
+    <mat-label>{{ 'asset-profile.asset-profile' | translate }}</mat-label>
+  }
   <input matInput type="text"
     #assetProfileInput
     formControlName="assetProfile"

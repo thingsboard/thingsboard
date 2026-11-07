@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (panelMode) {
@@ -16,7 +17,7 @@
       <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
     </button>
   } @else {
-    <div class="tb-device-filter-config-component tb-form-panel no-padding no-border" [formGroup]="deviceInfoFilterForm">
+    <div class="tb-filter-button-panel-content tb-form-panel no-padding no-border" [formGroup]="deviceInfoFilterForm">
       <div class="tb-form-row column-xs">
         <div class="fixed-title-width" translate>device-profile.device-profile</div>
         <tb-device-profile-autocomplete
@@ -68,7 +69,7 @@
   </form>
 </ng-template>
 <ng-template #deviceFilter>
-  <div class="tb-device-filter-config-component tb-form-panel no-padding no-border" [formGroup]="deviceInfoFilterForm">
+  <div class="tb-filter-button-panel-content tb-form-panel no-padding no-border" [formGroup]="deviceInfoFilterForm">
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>device-profile.device-profile</div>
       <tb-device-profile-autocomplete
