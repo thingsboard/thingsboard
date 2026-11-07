@@ -5,6 +5,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.assertj.core.data.Offset;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -16,15 +17,22 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.UserInfo;
+import org.thingsboard.server.common.data.UserPasswordResetLink;
+import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.common.data.wl.LoginWhiteLabelingParams;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserCredentialsDao;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -288,6 +296,156 @@ public class AuthControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetPasswordResetLink() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenant-admin-reset@thingsboard.org");
+        User savedUser = createUserAndLogin(user, "initialPassword1");
+        loginTenantAdmin();
+
+        String resetLink = getPasswordResetLink(savedUser);
+        assertThat(resetLink).contains("/api/noauth/resetPassword?resetToken=");
+
+        UserPasswordResetLink resetLinkInfo = getPasswordResetLinkInfo(savedUser);
+        assertThat(resetLinkInfo.value()).contains("/api/noauth/resetPassword?resetToken=");
+        assertThat(resetLinkInfo.ttlMs()).isPositive();
+
+        // verify the link works end-to-end (use the freshest one)
+        String resetToken = StringUtils.substringAfterLast(resetLinkInfo.value(), "resetToken=");
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(any(), anyString(), anyString());
+        doPost("/api/noauth/resetPassword", JacksonUtil.newObjectNode()
+                .put("resetToken", resetToken)
+                .put("password", "newPassword1"))
+                .andExpect(status().isOk());
+
+        resetTokens();
+        loginUser(savedUser.getEmail(), "newPassword1");
+    }
+
+    @Test
+    public void testGetPasswordResetLinkReusesValidToken() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenant-admin-reset-reuse@thingsboard.org");
+        User savedUser = createUserAndLogin(user, "initialPassword1");
+        loginTenantAdmin();
+
+        // repeated calls are idempotent while the token is still valid — no churn for prefetch/double-click
+        UserPasswordResetLink first = getPasswordResetLinkInfo(savedUser);
+        UserPasswordResetLink second = getPasswordResetLinkInfo(savedUser);
+        assertThat(second.value()).isEqualTo(first.value());
+
+        // the reused link still works end-to-end
+        String resetToken = StringUtils.substringAfterLast(first.value(), "resetToken=");
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(any(), anyString(), anyString());
+        doPost("/api/noauth/resetPassword", JacksonUtil.newObjectNode()
+                .put("resetToken", resetToken)
+                .put("password", "newPassword1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetPasswordResetLinkForNotYetActivatedUser() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenant-admin-reset-not-activated@thingsboard.org");
+        user = doPost("/api/user", user, User.class);
+
+        doGet("/api/user/" + user.getId() + "/passwordResetLinkInfo")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("User is not yet activated!")));
+    }
+
+    @Test
+    public void testGetPasswordResetLinkForDisabledUser() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenant-admin-reset-disabled@thingsboard.org");
+        User savedUser = createUserAndLogin(user, "initialPassword1");
+        loginTenantAdmin();
+
+        doPost("/api/user/" + savedUser.getId() + "/userCredentialsEnabled?userCredentialsEnabled=false")
+                .andExpect(status().isOk());
+
+        doGet("/api/user/" + savedUser.getId() + "/passwordResetLinkInfo")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("User account is disabled!")));
+    }
+
+    @Test
+    public void testGetPasswordResetLinkForbiddenForCustomerUserWithoutWritePermission() throws Exception {
+        loginCustomerUser();
+        doGet("/api/user/" + customerAdminUserId + "/passwordResetLinkInfo")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testGetPasswordResetLinkByTenantAdminWithUserWritePermission() throws Exception {
+        loginTenantAdmin();
+        loginAsRestrictedTenantAdmin(tenantId, Map.of(Resource.USER, List.of(Operation.READ, Operation.WRITE)));
+
+        UserPasswordResetLink resetLinkInfo = doGet("/api/user/" + customerUserId + "/passwordResetLinkInfo", UserPasswordResetLink.class);
+        assertThat(resetLinkInfo.value()).contains("/api/noauth/resetPassword?resetToken=");
+    }
+
+    @Test
+    public void testGetPasswordResetLinkForbiddenForOwnUser() throws Exception {
+        loginCustomerAdminUser();
+        doGet("/api/user/" + customerAdminUserId + "/passwordResetLinkInfo")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testGetPasswordResetLinkForbiddenForTenantAdminWithoutUserWritePermission() throws Exception {
+        loginTenantAdmin();
+        loginAsRestrictedTenantAdmin(tenantId, Map.of(Resource.USER, List.of(Operation.READ)));
+
+        doGet("/api/user/" + customerUserId + "/passwordResetLinkInfo")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testGetPasswordResetLinkByCustomerAdmin() throws Exception {
+        loginCustomerAdminUser();
+
+        UserPasswordResetLink resetLinkInfo = doGet("/api/user/" + customerUserId + "/passwordResetLinkInfo", UserPasswordResetLink.class);
+        assertThat(resetLinkInfo.value()).contains("/api/noauth/resetPassword?resetToken=");
+
+        doGet("/api/user/" + subCustomerAdminUserId + "/passwordResetLinkInfo")
+                .andExpect(status().isOk());
+        doGet("/api/user/" + tenantAdminUserId + "/passwordResetLinkInfo")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testGetPasswordResetLinkUsesTenantLoginWhiteLabelingBaseUrl() throws Exception {
+        loginTenantAdmin();
+        Domain domain = new Domain();
+        domain.setName("tenant-reset-link.example.com");
+        domain.setOauth2Enabled(false);
+        domain.setPropagateToEdge(false);
+        domain = doPost("/api/domain", domain, Domain.class);
+        String tenantBaseUrl = "https://" + domain.getName();
+
+        LoginWhiteLabelingParams loginWhiteLabelingParams = doGet("/api/whiteLabel/currentLoginWhiteLabelParams", LoginWhiteLabelingParams.class);
+        loginWhiteLabelingParams.setDomainId(domain.getId());
+        loginWhiteLabelingParams.setBaseUrl(tenantBaseUrl);
+        doPost("/api/whiteLabel/loginWhiteLabelParams", loginWhiteLabelingParams, LoginWhiteLabelingParams.class);
+
+        Awaitility.await("Waiting while login white labeling params are updated")
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> tenantBaseUrl.equals(doGet("/api/whiteLabel/currentLoginWhiteLabelParams", LoginWhiteLabelingParams.class).getBaseUrl()));
+
+        loginSysAdmin();
+        UserPasswordResetLink resetLinkInfo = doGet("/api/user/" + tenantAdminUserId + "/passwordResetLinkInfo", UserPasswordResetLink.class);
+        assertThat(resetLinkInfo.value()).startsWith(tenantBaseUrl + "/api/noauth/resetPassword?resetToken=");
+    }
+
+    @Test
     public void testGetPageWithoutRedirect() throws Exception {
         doGet("/login").andExpect(status().isOk());
         doGet("/home").andExpect(status().isOk());
@@ -317,6 +475,14 @@ public class AuthControllerTest extends AbstractControllerTest {
 
     private UserActivationLink getActivationLinkInfo(User user) throws Exception {
         return doGet("/api/user/" + user.getId() + "/activationLinkInfo", UserActivationLink.class);
+    }
+
+    private String getPasswordResetLink(User user) throws Exception {
+        return doGet("/api/user/" + user.getId() + "/passwordResetLink", String.class);
+    }
+
+    private UserPasswordResetLink getPasswordResetLinkInfo(User user) throws Exception {
+        return doGet("/api/user/" + user.getId() + "/passwordResetLinkInfo", UserPasswordResetLink.class);
     }
 
 }

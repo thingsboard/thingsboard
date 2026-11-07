@@ -7,6 +7,7 @@ import { SharedModule } from '@shared/shared.module';
 import { UserComponent } from '@modules/home/pages/user/user.component';
 import { UserRoutingModule } from '@modules/home/pages/user/user-routing.module';
 import { ActivationLinkDialogComponent } from '@modules/home/pages/user/activation-link-dialog.component';
+import { PasswordResetLinkDialogComponent } from '@modules/home/pages/user/password-reset-link-dialog.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
 import { AddUserDialogComponent } from '@home/pages/user/add-user-dialog.component';
@@ -20,7 +21,8 @@ import { UserTableHeaderComponent } from '@home/pages/user/user-table-header.com
     UserTableHeaderComponent,
     UserTabsComponent,
     AddUserDialogComponent,
-    ActivationLinkDialogComponent
+    ActivationLinkDialogComponent,
+    PasswordResetLinkDialogComponent
   ],
   imports: [
     CommonModule,

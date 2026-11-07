@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.UserEmailInfo;
 import org.thingsboard.server.common.data.UserInfo;
+import org.thingsboard.server.common.data.UserPasswordResetLink;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -326,6 +327,40 @@ public class UserController extends BaseController {
         checkUserId(userId, Operation.READ);
         SecurityUser securityUser = getCurrentUser();
         return tbUserService.getActivationLink(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getAuthority(), userId, request);
+    }
+
+    @ApiOperation(value = "Get password reset link (getPasswordResetLink)",
+            notes = "Generate and return a password reset link for the specified user. " +
+                    "Reuses the currently valid reset token, regenerating it only when it is about to expire. " +
+                    "Available only for users that are already activated and whose account is enabled. " +
+                    "The base url for the link is taken from the login white labeling settings of the user's customer or tenant, " +
+                    "or from the general settings of system administrator. " + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/user/{userId}/passwordResetLink", produces = "text/plain")
+    public String getPasswordResetLink(@Parameter(description = USER_ID_PARAM_DESCRIPTION)
+                                       @PathVariable(USER_ID) String strUserId,
+                                       HttpServletRequest request) throws ThingsboardException {
+        return getPasswordResetLinkInfo(strUserId, request).value();
+    }
+
+    @ApiOperation(value = "Get password reset link info (getPasswordResetLinkInfo)",
+            notes = "Generate and return a password reset link info for the specified user. " +
+                    "Reuses the currently valid reset token, regenerating it only when it is about to expire. " +
+                    "Available only for users that are already activated and whose account is enabled. " +
+                    "The base url for the link is taken from the login white labeling settings of the user's customer or tenant, " +
+                    "or from the general settings of system administrator. " + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/user/{userId}/passwordResetLinkInfo")
+    public UserPasswordResetLink getPasswordResetLinkInfo(@Parameter(description = USER_ID_PARAM_DESCRIPTION)
+                                                          @PathVariable(USER_ID) String strUserId,
+                                                          HttpServletRequest request) throws ThingsboardException {
+        checkParameter(USER_ID, strUserId);
+        UserId userId = new UserId(toUUID(strUserId));
+        User user = checkUserId(userId, Operation.WRITE);
+        if (getCurrentUser().getId().equals(userId)) {
+            throw new ThingsboardException("Use change password to update your own password", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
+        return tbUserService.getPasswordResetLink(user, request);
     }
 
     @ApiOperation(value = "Delete User (deleteUser)",
