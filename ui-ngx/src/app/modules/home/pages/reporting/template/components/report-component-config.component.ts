@@ -28,6 +28,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { genNextLabel, isObject } from '@core/utils';
 import {
   pageVariables,
+  hasDifferentReportTimeRanges,
   ReportComponentContext,
   reportComponentTypesData,
   ReportVariable
@@ -138,6 +139,10 @@ export abstract class AbstractReportComponentConfig<C extends ReportComponentCon
 
   public get isPlainFormat(): boolean {
     return this.context.format === TbReportFormat.CSV;
+  }
+
+  public get differentReportTimeRanges(): boolean {
+    return hasDifferentReportTimeRanges(this.context.reportComponents());
   }
 
   public get datasource(): Datasource {

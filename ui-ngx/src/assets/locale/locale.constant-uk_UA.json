@@ -9132,6 +9132,7 @@
     "vertical": "Вертикальне",
     "dashboard": "Дашборд",
     "timewindow": "Часовий інтервал",
+    "different-time-ranges-hint": "Компоненти звіту використовують різні часові інтервали, тому час звіту не визначено, а змінні ${reportStartTime} та ${reportEndTime} відрендеряться порожніми.",
     "export-failed-error": "Не вдалося експортувати шаблон звіту: {{error}}",
     "report-template-file": "Файл шаблону звіту",
     "invalid-report-template-file-error": "Не вдалося імпортувати шаблон звіту: Некоректна структура даних шаблону звіту.",
@@ -9260,7 +9261,8 @@
       "footer-2": "Нижній колонтитул 2",
       "footer-3": "Нижній колонтитул 3",
       "page-number": "Номер сторінки",
-      "created-time": "Час створення"
+      "created-time": "Час створення",
+      "time-range": "Часовий діапазон"
     }
   },
   "scheduled-report": {
