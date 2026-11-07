@@ -1,0 +1,5 @@
+{
+  "uploadFrequency": 60,
+  "enabled": true,
+  "mode": "eco"
+}

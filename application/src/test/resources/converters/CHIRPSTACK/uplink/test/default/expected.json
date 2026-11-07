@@ -1,0 +1,19 @@
+{
+  "entityType": "ASSET",
+  "name": "Asset 1000000000000001",
+  "profile": "Chirpstack default device profile",
+  "telemetry": {
+    "ts": 1684741625404,
+    "values": {
+      "battery": 95,
+      "temperature": 36.6,
+      "saturation": 99
+    }
+  },
+  "attributes": {
+    "sn": 32310067,
+    "devAddr": "20000001",
+    "fPort": 85,
+    "eui": "1000000000000001"
+  }
+}

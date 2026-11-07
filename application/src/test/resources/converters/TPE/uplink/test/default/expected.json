@@ -1,0 +1,19 @@
+{
+  "entityType": "DEVICE",
+  "name": "Device 1000000000000001",
+  "profile": "default",
+  "telemetry": {
+    "ts": 1732828102138,
+    "values": {
+      "battery": 95,
+      "temperature": 36.6,
+      "saturation": 99
+    }
+  },
+  "attributes": {
+    "sn": 32310067,
+    "mType": 2,
+    "eui": "1000000000000001",
+    "fCntDn": 2
+  }
+}
