@@ -7,7 +7,7 @@
 -->
 <form [formGroup]="notificationSettingsFormGroup" class="flex flex-col">
   <div class="flex flex-row" style="height: 48px;">
-    <div class="flex max-w-50% flex-full items-center justify-start">
+    <div class="flex flex-1 items-center justify-start">
       <mat-checkbox color="primary"
                     [disabled]="disabled"
                     (click)="$event.stopPropagation()"
@@ -21,7 +21,7 @@
       </mat-checkbox>
     </div>
     @for (deliveryMethod of deliveryMethods; track deliveryMethod) {
-      <div class="flex flex-1 flex-row">
+      <div class="delivery-method flex flex-row">
         <div class="flex flex-1 items-center justify-start">
           <mat-checkbox color="primary"
                         [disabled]="disabled"
