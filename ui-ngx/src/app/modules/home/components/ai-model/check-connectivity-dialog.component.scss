@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
+@import "../../../../../scss/constants";
+
 :host {
   width: 560px;
   height: 100%;
@@ -38,7 +40,7 @@
   }
 
   .error {
-    color: #D12730;
+    color: $tb-error-color;
   }
 
   ::ng-deep {

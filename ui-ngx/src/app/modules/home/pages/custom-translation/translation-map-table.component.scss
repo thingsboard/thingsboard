@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../scss/constants";
+
 :host {
   background-color: var(--mat-card-elevated-container-color, #fff);
 
@@ -43,7 +45,7 @@
         }
 
         &.untranslated {
-          background: #D12730;
+          background: $tb-error-color;
         }
 
         &.customized {
@@ -109,9 +111,9 @@
       }
 
       &.untranslated {
-        background: rgba(209, 39, 48, 0.04);
+        background: rgba($tb-error-color, 0.04);
         &:hover {
-          background: rgba(209, 39, 48, 0.08);
+          background: rgba($tb-error-color, 0.08);
         }
       }
 

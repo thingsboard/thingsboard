@@ -170,7 +170,7 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
                  mask-image: url('data:image/svg+xml,<svg height="18px" viewBox="0 -960 960 960" width="18px"  xmlns="http://www.w3.org/2000/svg"><path d="M600-96v-86L317-336H144v-216h152l112-132v-180h216v216H472L360-516v121l240 131v-48h216v216H600ZM480-720h72v-72h-72v72ZM216-408h72v-72h-72v72Zm456 240h72v-72h-72v72ZM516-755ZM252-444Zm455 240Z"/></svg>');
               }
               &.tb-close {
-                background: #D12730;
+                background: $tb-error-color;
                 mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M14.25 4.8075L13.1925 3.75L9 7.9425L4.8075 3.75L3.75 4.8075L7.9425 9L3.75 13.1925L4.8075 14.25L9 10.0575L13.1925 14.25L14.25 13.1925L10.0575 9L14.25 4.8075Z"/></svg>');
               }
             }

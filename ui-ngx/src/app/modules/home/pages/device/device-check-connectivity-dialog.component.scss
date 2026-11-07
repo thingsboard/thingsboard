@@ -36,18 +36,8 @@
     font-size: 14px;
 
     &.inactive {
-      color: #d12730;
-      background-color: rgba(209, 39, 48, 0.08);
-    }
-  }
-
-  .tb-hint-instruction {
-    border-radius: 6px;
-    background-color: rgba(48, 86, 128, 0.04);
-    padding: 6px 16px;
-
-    .content {
-      vertical-align: middle;
+      color: $tb-error-color;
+      background-color: rgba($tb-error-color, 0.08);
     }
   }
 

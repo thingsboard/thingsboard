@@ -4,8 +4,6 @@
 @import "../../../../../../../scss/constants";
 
 $enabled-color: #198038;
-$disabled-color: #D12730;
-$warning-color: #FAA405;
 
 $main-color: var(--tb-primary-500);
 
@@ -46,20 +44,20 @@ $main-color: var(--tb-primary-500);
         }
         &.disabled {
           .api-item-statistic-status {
-            color: $disabled-color;
+            color: $tb-error-color;
           }
           .mat-mdc-progress-bar {
-            --mat-progress-bar-track-color: #{rgba($disabled-color, 0.06)};
-            --mat-progress-bar-active-indicator-color: #{$disabled-color};
+            --mat-progress-bar-track-color: #{rgba($tb-error-color, 0.06)};
+            --mat-progress-bar-active-indicator-color: #{$tb-error-color};
           }
         }
         &.warning {
           .api-item-statistic-status {
-            color: $warning-color;
+            color: $tb-warning-color;
           }
           .mat-mdc-progress-bar {
-            --mat-progress-bar-track-color: #{rgba($warning-color, 0.06)};
-            --mat-progress-bar-active-indicator-color: #{$warning-color};
+            --mat-progress-bar-track-color: #{rgba($tb-warning-color, 0.06)};
+            --mat-progress-bar-active-indicator-color: #{$tb-warning-color};
           }
         }
 

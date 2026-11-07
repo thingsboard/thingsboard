@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
+@import "../../../../../../../scss/constants";
+
 :host {
   span.no-data-found {
     font-weight: 400;
@@ -24,17 +26,17 @@
       }
     }
     &.tb-status-warn {
-      color: #FAA405;
+      color: $tb-warning-color;
       &:before {
         content: "warning";
-        color: #FAA405;
+        color: $tb-warning-color;
       }
     }
     &.tb-status-critical {
-      color: #D12730;
+      color: $tb-error-color;
       &:before {
         content: "warning";
-        color: #D12730;
+        color: $tb-error-color;
       }
     }
   }

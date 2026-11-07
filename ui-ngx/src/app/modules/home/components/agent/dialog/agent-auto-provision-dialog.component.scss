@@ -95,57 +95,6 @@
 
     mat-icon { color: $agent-color-success; }
   }
-
-  &.invalid {
-    background: $agent-error-surface;
-    color: $agent-color-error;
-    border-color: rgba(198, 40, 40, 0.18);
-
-    mat-icon { color: $agent-color-error; }
-
-    button {
-      margin-left: auto;
-      flex-shrink: 0;
-
-      mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-        margin-right: 4px;
-        color: inherit;
-      }
-    }
-  }
-}
-
-.tb-info-box {
-  @include agent-info-box;
-  margin: 0 0 16px;
-
-  p {
-    margin: 0 0 6px;
-    font-size: inherit;
-    line-height: inherit;
-    &:last-child { margin-bottom: 0; }
-  }
-
-  .info-title {
-    font-weight: 500;
-  }
-
-  &.info {
-    background: $agent-info-surface;
-    color: $agent-color-info;
-
-    mat-icon { color: $agent-color-info; }
-  }
-
-  &.invalid {
-    background: $agent-error-surface;
-    color: $agent-color-error;
-
-    mat-icon { color: $agent-color-error; }
-  }
 }
 
 .success-banner {
