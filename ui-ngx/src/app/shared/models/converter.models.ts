@@ -28,6 +28,7 @@ export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string
   [IntegrationType.KPN, '/assets/converters/KPN/uplink/tbel.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/tbel.raw'],
   [IntegrationType.TPE, '/assets/converters/TPE/uplink/tbel.raw'],
+  [IntegrationType.KAFKA, '/assets/converters/KAFKA/uplink/tbel.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/tbel.raw']
 ]);
 
@@ -38,6 +39,7 @@ export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.TTN, '/assets/converters/TTN/uplink/js.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/js.raw'],
   [IntegrationType.TPE, '/assets/converters/TPE/uplink/js.raw'],
+  [IntegrationType.KAFKA, '/assets/converters/KAFKA/uplink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/js.raw']
 ]);
 
