@@ -646,6 +646,19 @@ public class DefaultExtensionK8sReconciler implements ExtensionReconciler {
 
     // ReplicaFailure=True: the ReplicaSet could not create pods (quota, admission, PSA).
     // Progressing=False: the rollout gave up (usually ProgressDeadlineExceeded).
+    //
+    // The reason CODE only, never condition.getMessage(). That message is written by the API server and
+    // would reach the tenant through ExtensionStatus.lastError and the persisted last_error column. On a
+    // quota rejection it spells out the namespace totals, and in the shared extensions namespace those
+    // are the sum over EVERY tenant:
+    //   pods "tb-ext-foo-6d4b-abcde" is forbidden: exceeded quota: tb-ext-quota, requested:
+    //   limits.cpu=500m,limits.memory=512Mi, used: limits.cpu=31500m,limits.memory=63Gi, limited: ...
+    // so one tenant could read how much CPU and memory all the others are holding. It also carries object
+    // names, and for an admission rejection the webhook's own endpoint. ReconcilerExceptions.sanitizeMessage
+    // strips hosts, URLs and IPs but not those numbers, which is why this is not simply routed through it.
+    // The Docker backend already surfaces short allow-listed codes and leaves the detail to the operator's
+    // log (see dockerErrorReason, whose comment claims this backend does the same — now it does). The code
+    // is what the tenant can act on: ExceededQuota, FailedCreate, ProgressDeadlineExceeded.
     private static String deploymentConditionError(DeploymentStatus status) {
         if (status == null || status.getConditions() == null) {
             return null;
@@ -656,8 +669,11 @@ public class DefaultExtensionK8sReconciler implements ExtensionReconciler {
             boolean failing = ("ReplicaFailure".equals(type) && "True".equals(conditionStatus))
                     || ("Progressing".equals(type) && "False".equals(conditionStatus));
             if (failing) {
-                String reason = StringUtils.isNotBlank(condition.getReason()) ? condition.getReason() : type;
-                return StringUtils.isNotBlank(condition.getMessage()) ? reason + ": " + condition.getMessage() : reason;
+                if (StringUtils.isNotBlank(condition.getMessage())) {
+                    log.debug("Deployment condition {}={} from the API server: {}",
+                            type, conditionStatus, condition.getMessage());
+                }
+                return StringUtils.isNotBlank(condition.getReason()) ? condition.getReason() : type;
             }
         }
         return null;

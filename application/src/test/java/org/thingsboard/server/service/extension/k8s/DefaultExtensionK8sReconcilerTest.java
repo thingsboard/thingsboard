@@ -8,6 +8,8 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.networking.v1.NetworkPolicy;
 import io.fabric8.kubernetes.api.model.networking.v1.NetworkPolicyBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentConditionBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentStatusBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
@@ -159,6 +161,39 @@ class DefaultExtensionK8sReconcilerTest {
                 client.apps().deployments().inNamespace(NS).withName("tb-ext-acme-billing-9f3a").get().getMetadata().getAnnotations(),
                 ExtensionResourceNames.ANNOTATION_SPEC_HASH);
         assertThat(hash1).isEqualTo(hash2);
+    }
+
+    // The API server writes the condition message, and on a quota rejection it spells out the namespace
+    // totals — which in the shared extensions namespace are the sum over EVERY tenant. That message used
+    // to be concatenated into the health errorReason, and from there it reaches the tenant through
+    // ExtensionStatus.lastError and the persisted last_error column.
+    @Test
+    void aQuotaRejectionReachesTheTenantAsAReasonCodeWithoutTheNamespaceTotals() {
+        Extension ext = extension(8090);
+        ext.setSlug("quota-rejected");
+        DefaultExtensionK8sReconciler r = reconciler();
+        r.apply(ext);
+
+        String name = ExtensionResourceNames.deployment(ext.getSlug());
+        Deployment d = client.apps().deployments().inNamespace(NS).withName(name).get();
+        d.setStatus(new DeploymentStatusBuilder()
+                .withConditions(new DeploymentConditionBuilder()
+                        .withType("ReplicaFailure")
+                        .withStatus("True")
+                        .withReason("FailedCreate")
+                        .withMessage("pods \"tb-ext-quota-rejected-abcde\" is forbidden: exceeded quota: "
+                                + "tb-ext-quota, requested: limits.cpu=500m,limits.memory=512Mi, "
+                                + "used: limits.cpu=31500m,limits.memory=63Gi, "
+                                + "limited: limits.cpu=32,limits.memory=64Gi")
+                        .build())
+                .build());
+        client.apps().deployments().inNamespace(NS).resource(d).update();
+
+        String errorReason = r.describe(ext).errorReason();
+        // the code is what the tenant can act on
+        assertThat(errorReason).isEqualTo("FailedCreate");
+        // and it says nothing about what the other tenants of the namespace are holding
+        assertThat(errorReason).doesNotContain("31500m", "63Gi", "exceeded quota", "tb-ext-quota");
     }
 
     @Test
