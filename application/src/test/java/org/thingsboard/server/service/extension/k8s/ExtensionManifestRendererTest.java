@@ -348,6 +348,40 @@ class ExtensionManifestRendererTest {
         assertThat(limits.get("memory").toString()).isEqualTo("256Mi"); // SMALL memory (request == limit)
     }
 
+    // A slug is released the moment its row is deleted, while the previous owner's pods are still
+    // terminating, so a Service selector keyed on the instance label alone would make THOSE pods —
+    // another tenant's — endpoints of the next owner's Service. The router, having authorized the new
+    // owner for that slug, would then proxy straight into the other tenant's container. The owner
+    // labels are already on the pod template, so scoping the selector by them costs nothing and makes
+    // the Service select nothing until this extension's own pods exist.
+    @Test
+    void serviceAndNetworkPolicySelectTheOwnerAndNotTheSlugAlone() {
+        Extension ext = extension("1.4.0", null, ExtensionState.PROVISIONING);
+        String tenantId = ext.getTenantId().getId().toString();
+        String extensionId = ext.getId().getId().toString();
+
+        var selector = renderer.renderService(ext).getSpec().getSelector();
+        assertThat(selector)
+                .containsEntry("app.kubernetes.io/instance", "tb-ext-acme-billing-9f3a")
+                .containsEntry("app.kubernetes.io/managed-by", "thingsboard")
+                .containsEntry("tb.thingsboard.io/tenant-id", tenantId)
+                .containsEntry("tb.thingsboard.io/extension-id", extensionId);
+
+        // the same scoping on the policy that decides who may reach the pod
+        ExtensionManifestRenderer np = new ExtensionManifestRenderer(
+                NS, "http://tb-node:8080", "/api/health", "/api/extension/route", true, "");
+        assertThat(np.renderNetworkPolicy(ext).getSpec().getPodSelector().getMatchLabels())
+                .containsEntry("app.kubernetes.io/instance", "tb-ext-acme-billing-9f3a")
+                .containsEntry("tb.thingsboard.io/tenant-id", tenantId)
+                .containsEntry("tb.thingsboard.io/extension-id", extensionId);
+
+        // and the selector must still match this extension's own pods, or the fix would simply break
+        // routing instead of narrowing it
+        assertThat(renderer.renderDeployment(ext, "h", null)
+                .getSpec().getTemplate().getMetadata().getLabels())
+                .containsAllEntriesOf(selector);
+    }
+
     @Test
     void serviceExposes8090ToContainerPort() {
         Service s = renderer.renderService(extension("1.4.0", null, ExtensionState.PROVISIONING));

@@ -67,6 +67,37 @@ class DefaultExtensionK8sReconcilerTest {
         return e;
     }
 
+    // Adopting the previous owner's objects is deliberate — see
+    // applyRewritesADeploymentLeftByAPreviousOwnerEvenAtTheSameHash: the new owner has to be able to take
+    // the name back, or the other tenant's workload would serve this extension's traffic forever. What
+    // must NOT follow from that adoption is cross-tenant traffic. The previous owner's pods keep running
+    // while their teardown is still in flight, and the Service is what the router proxies into, so the
+    // selector has to exclude them. Keyed on the slug alone it did not: another tenant's container would
+    // answer a properly authorized call for this slug.
+    @Test
+    void aReusedSlugLeavesTheServiceSelectingOnlyTheNewOwnersPods() {
+        Extension previous = extension(8090);
+        previous.setSlug("reused-slug-service");
+        reconciler().apply(previous);
+
+        Extension current = extension(8090); // same slug, different tenant and extension id
+        current.setSlug("reused-slug-service");
+        reconciler().apply(current);
+
+        Map<String, String> selector = client.services().inNamespace(NS)
+                .withName(ExtensionResourceNames.service(current.getSlug())).get()
+                .getSpec().getSelector();
+
+        // the pods of the previous owner no longer satisfy the selector ...
+        assertThat(selectorMatches(selector, ExtensionResourceNames.baseLabels(previous))).isFalse();
+        // ... and this extension's own pods still do, so the fix narrows the routing instead of breaking it
+        assertThat(selectorMatches(selector, ExtensionResourceNames.baseLabels(current))).isTrue();
+    }
+
+    private static boolean selectorMatches(Map<String, String> selector, Map<String, String> podLabels) {
+        return selector.entrySet().stream().allMatch(e -> e.getValue().equals(podLabels.get(e.getKey())));
+    }
+
     @Test
     void applyCreatesAllObjectsWithNetworkPolicyOnContainerPort() {
         Extension ext = extension(9000);

@@ -245,6 +245,10 @@ public class ExtensionManifestRenderer {
                 .withNewPodSelector()
                 .addToMatchLabels(ExtensionResourceNames.LABEL_APP_INSTANCE,
                         ExtensionResourceNames.instanceLabel(extension.getSlug()))
+                // Owner labels too, for the reason spelled out in renderService: the instance label
+                // alone would also select the previous slug owner's pods, and this policy would then
+                // be the one deciding who may reach another tenant's container.
+                .addToMatchLabels(ExtensionResourceNames.ownerSelector(extension))
                 .endPodSelector()
                 .withPolicyTypes(policyTypes)
                 .withIngress(ingress.build());
@@ -563,6 +567,15 @@ public class ExtensionManifestRenderer {
                 .withType("ClusterIP")
                 .addToSelector(ExtensionResourceNames.LABEL_APP_INSTANCE,
                         ExtensionResourceNames.instanceLabel(extension.getSlug()))
+                // Owner labels as well, never the slug alone. A slug is released the moment its row is
+                // deleted, while the previous owner's pods are still terminating, so a selector keyed on
+                // the instance label alone makes THOSE pods — another tenant's — endpoints of this
+                // Service: the router would then proxy a properly authorized call for this slug straight
+                // into them. The pod template carries these same labels through baseLabels(), so the
+                // Service still selects our own pods, and selects nothing at all until they exist, which
+                // is a clean 503 instead of cross-tenant routing. Same reasoning as ownedPods() in the
+                // reconciler, which scopes the log and describe reads this way.
+                .addToSelector(ExtensionResourceNames.ownerSelector(extension))
                 .addNewPort()
                 .withName(CONTAINER_PORT_NAME)
                 .withPort(ExtensionResourceNames.SERVICE_PORT)
