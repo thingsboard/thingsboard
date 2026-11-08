@@ -3070,6 +3070,12 @@ extensions:
     # 429). The fetch reads a tenant-controlled body (capped at 5 MiB) through the router, so it is bounded
     # the same way as log reads. Enforced per tb-core node. Empty disables it.
     rate-limit: "${TB_EXTENSIONS_DOCS_RATE_LIMIT:20:60}"
+    # How many of these fetches may run at once on this node. The rate limit above bounds how often a
+    # user may ask; this bounds how many upstream round trips are in flight, which is what actually costs
+    # threads, sockets and memory. Over the limit the call returns HTTP 429 at once instead of waiting,
+    # so one tenant whose container accepts connections and then goes quiet cannot pile requests up until
+    # the REST API stops answering for everyone else.
+    max-concurrent-fetches: "${TB_EXTENSIONS_DOCS_MAX_CONCURRENT_FETCHES:4}"
   status:
     # Status collector poll interval (ms).
     poll-interval-ms: "${TB_EXTENSIONS_STATUS_POLL_INTERVAL_MS:10000}"

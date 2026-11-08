@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -20,8 +21,11 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.extension.Extension;
 import org.thingsboard.server.common.data.extension.ExtensionMode;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -30,14 +34,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Fetches an extension's OpenAPI specification for the platform "API docs" page.
@@ -62,6 +68,7 @@ public class ExtensionApiDocsService {
     private static final List<String> SPEC_PATHS = List.of("/v3/api-docs", "/openapi.json");
 
     private static final int MAX_SPEC_SIZE_BYTES = 5 * 1024 * 1024;
+    private static final int READ_CHUNK_BYTES = 32 * 1024;
 
     // The body is written by the tenant's own container, so it gets its own reader with explicit stream
     // constraints instead of the shared one. Jackson's default nesting cap is 1000, deep enough to make a
@@ -93,7 +100,23 @@ public class ExtensionApiDocsService {
     @Value("${extensions.docs.fetch-deadline-ms:30000}")
     private long fetchDeadlineMs;
 
+    // Bulkhead, the same shape as the log reads in DefaultExtensionStatusService. The whole upstream
+    // round trip — connect, headers, then a body read bounded only by fetchDeadlineMs — is started from
+    // the caller's Tomcat thread. The per-user rate limit in the controller bounds the request RATE, not
+    // how many of these run at once, so a tenant whose container accepts the connection and then goes
+    // quiet could keep one request alive for the full 30 s deadline; a few tenant admins, each with their
+    // own 20-per-60 s budget, are enough to fill the default 200-thread connector pool and queue every
+    // REST request of every other tenant on the node. With a bounded pool and AbortPolicy the excess
+    // fails immediately with 429 instead of occupying anything, and the number of concurrent upstream
+    // transfers (sockets, buffers, orchestrator load) is capped whatever the arrival rate.
+    //
+    // This does not hand the Tomcat thread back — the caller still waits for its own answer — and it is
+    // not meant to: what it removes is the unbounded pile-up.
+    @Value("${extensions.docs.max-concurrent-fetches:4}")
+    private int maxConcurrentFetches;
+
     private HttpClient httpClient;
+    private ThreadPoolExecutor fetchExecutor;
 
     @PostConstruct
     private void init() {
@@ -109,6 +132,20 @@ public class ExtensionApiDocsService {
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .connectTimeout(Duration.ofMillis(fetchTimeoutMs))
                 .build();
+        // No queue: a queued fetch would still be waiting when its caller's own deadline has passed, so
+        // queueing only converts a fast 429 into a slow failure. Threads are created on first use.
+        int threads = Math.max(1, maxConcurrentFetches);
+        fetchExecutor = new ThreadPoolExecutor(threads, threads, 0L, TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(),
+                ThingsBoardThreadFactory.forName("ext-api-docs"),
+                new ThreadPoolExecutor.AbortPolicy());
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (fetchExecutor != null) {
+            fetchExecutor.shutdownNow();
+        }
     }
 
     public boolean isEnabled() {
@@ -125,6 +162,48 @@ public class ExtensionApiDocsService {
             throw new ThingsboardException("Extension API docs are not available: " +
                     "extensions.routing.router-internal-url is not configured.", ThingsboardErrorCode.GENERAL);
         }
+        CompletableFuture<JsonNode> result = new CompletableFuture<>();
+        try {
+            fetchExecutor.execute(() -> {
+                try {
+                    result.complete(fetchSpec(extension, authorization));
+                } catch (Throwable th) {
+                    result.completeExceptionally(th);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            // 429, immediately. See the comment on maxConcurrentFetches: this is the point of the pool.
+            throw new TbRateLimitsException("Too many extension API docs requests in progress. "
+                    + "Please retry shortly.");
+        }
+        try {
+            // fetchSpec enforces fetchDeadlineMs itself; the margin only keeps the caller from reporting
+            // a timeout of its own while the real failure is one instant away.
+            return result.get(fetchDeadlineMs + 1000L, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            throw new ThingsboardException("Timed out while reading the OpenAPI specification of extension '"
+                    + extension.getName() + "'.", ThingsboardErrorCode.GENERAL);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            if (cause instanceof ThingsboardException te) {
+                throw te;
+            }
+            if (cause instanceof RuntimeException re) {
+                throw re;
+            }
+            if (cause instanceof Error err) {
+                throw err;
+            }
+            throw new ThingsboardException(cause.getMessage(), ThingsboardErrorCode.GENERAL);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThingsboardException("Interrupted while reading the OpenAPI specification.",
+                    ThingsboardErrorCode.GENERAL);
+        }
+    }
+
+    // The probe sequence itself, always on the bulkhead pool and never on a Tomcat thread.
+    private JsonNode fetchSpec(Extension extension, String authorization) throws ThingsboardException {
         String prefix = routerInternalUrl.replaceAll("/+$", "") + basePath + "/" + extension.getSlug();
         // One deadline for the whole probe sequence, so two slow paths cannot double the budget.
         long deadline = System.currentTimeMillis() + fetchDeadlineMs;
@@ -197,23 +276,31 @@ public class ExtensionApiDocsService {
             if (declared > MAX_SPEC_SIZE_BYTES) {
                 throw new SpecTooLargeException();
             }
-            byte[] buf = new byte[MAX_SPEC_SIZE_BYTES + 1];
+            // Grow with the response instead of allocating the ceiling up front. The cap is a ceiling,
+            // not a typical size — a real specification is tens of kilobytes — so `new byte[5 MiB + 1]`
+            // charged every call 5 MiB of heap for the whole round trip, whatever the tenant actually
+            // served, and that heap stayed held while a slow upstream ran down the 30 s deadline.
+            ByteArrayOutputStream body = new ByteArrayOutputStream(
+                    declared > 0 ? (int) Math.min(declared, READ_CHUNK_BYTES) : READ_CHUNK_BYTES);
+            byte[] chunk = new byte[READ_CHUNK_BYTES];
             int total = 0;
-            int n;
-            while (total < buf.length) {
+            while (true) {
                 if (System.currentTimeMillis() >= deadline) {
                     throw new IOException("API docs fetch exceeded the " + fetchDeadlineMs + " ms deadline");
                 }
-                n = readBounded(in, buf, total, deadline);
+                int n = readBounded(in, chunk, 0, deadline);
                 if (n == -1) {
                     break;
                 }
                 total += n;
+                // Checked on the running total, so a chunked body that lies about its size is cut off as
+                // soon as it crosses the cap rather than after filling the whole ceiling.
+                if (total > MAX_SPEC_SIZE_BYTES) {
+                    throw new SpecTooLargeException();
+                }
+                body.write(chunk, 0, n);
             }
-            if (total > MAX_SPEC_SIZE_BYTES) {
-                throw new SpecTooLargeException();
-            }
-            return new Fetched(status, total == 0 ? null : Arrays.copyOf(buf, total));
+            return new Fetched(status, total == 0 ? null : body.toByteArray());
         }
     }
 
