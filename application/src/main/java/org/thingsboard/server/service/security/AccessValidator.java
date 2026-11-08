@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -98,8 +99,11 @@ import org.thingsboard.server.dao.scheduler.SchedulerEventService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.exception.AccessDeniedException;
 import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.exception.EntityNotFoundException;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
+import org.thingsboard.server.exception.UnauthorizedException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 
@@ -261,8 +265,17 @@ public class AccessValidator {
         return response;
     }
 
+    // The attributes and time series scope is checked here rather than in the controllers: this is the single checkpoint
+    // both the REST API and the WebSocket service go through, and it runs before the entity is fetched, so a rejection
+    // does not reveal whether the entity exists.
     public void validate(SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
-        switch (entityId.getEntityType()) {
+        EntityType entityType = entityId.getEntityType();
+        if (Operation.TS_AND_ATTRIBUTES_OPERATIONS.contains(operation)
+                && !Resource.ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES.contains(entityType)) {
+            callback.onFailure(new IncorrectParameterException("Attributes and time series are not supported for entity type '" + entityType + "'!"));
+            return;
+        }
+        switch (entityType) {
             case DEVICE -> validateDevice(currentUser, operation, entityId, callback);
             case DEVICE_PROFILE -> validateDeviceProfile(currentUser, operation, entityId, callback);
             case ASSET -> validateAsset(currentUser, operation, entityId, callback);
@@ -831,6 +844,12 @@ public class AccessValidator {
                 callback.onFailure(t);
             }
         };
+    }
+
+    // Failures caused by the request itself: they are reported to the client and must not be logged as server errors.
+    public static boolean isClientError(Throwable e) {
+        return e instanceof IncorrectParameterException || e instanceof EntityNotFoundException
+                || e instanceof AccessDeniedException || e instanceof UnauthorizedException;
     }
 
     public static void handleError(Throwable e, final DeferredResult<ResponseEntity> response, HttpStatus defaultErrorStatus) {
