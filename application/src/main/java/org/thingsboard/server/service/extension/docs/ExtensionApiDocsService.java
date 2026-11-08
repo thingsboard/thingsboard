@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.extension.docs;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +62,19 @@ public class ExtensionApiDocsService {
     private static final List<String> SPEC_PATHS = List.of("/v3/api-docs", "/openapi.json");
 
     private static final int MAX_SPEC_SIZE_BYTES = 5 * 1024 * 1024;
+
+    // The body is written by the tenant's own container, so it gets its own reader with explicit stream
+    // constraints instead of the shared one. Jackson's default nesting cap is 1000, deep enough to make a
+    // recursive consumer of this document fail badly, and maxDocumentLength repeats the wire cap at the
+    // parser so a chunked response cannot exceed it either.
+    private static final ObjectMapper SPEC_MAPPER = JsonMapper.builder(JsonFactory.builder()
+                    .streamReadConstraints(StreamReadConstraints.builder()
+                            .maxNestingDepth(64)
+                            .maxDocumentLength(MAX_SPEC_SIZE_BYTES)
+                            .maxNameLength(4096)
+                            .build())
+                    .build())
+            .build();
 
     // The in-cluster URL of the operator's router. Empty disables the endpoint: routing is
     // operator-owned, so TB cannot guess where the router lives.
@@ -253,8 +270,15 @@ public class ExtensionApiDocsService {
     JsonNode parseSpec(byte[] body, Extension extension) throws ThingsboardException {
         JsonNode spec;
         try {
-            spec = JacksonUtil.fromBytes(body);
+            // Deliberately NOT JacksonUtil.fromBytes(byte[]): that helper builds
+            // "...cannot be transformed to Json object: " + Arrays.toString(bytes) for its exception
+            // message, so a 5 MiB non-JSON body — which passes the wire cap — produced a String of about
+            // 27 million characters on this Tomcat worker thread, roughly 40x the bytes the cap allows,
+            // and the catch below threw it straight away. The cap bounded the wire, not the request.
+            spec = SPEC_MAPPER.readTree(body);
         } catch (Exception e) {
+            log.debug("Extension {} returned a document that could not be parsed: {}",
+                    extension.getSlug(), e.getMessage());
             spec = null;
         }
         if (spec == null || !spec.isObject() || !(spec.hasNonNull("openapi") || spec.hasNonNull("swagger"))) {
