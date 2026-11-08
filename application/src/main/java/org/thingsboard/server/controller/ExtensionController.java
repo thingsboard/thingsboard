@@ -93,6 +93,14 @@ public class ExtensionController extends BaseController {
     @Value("${extensions.docs.rate-limit:20:60}")
     private String apiDocsRateLimit;
 
+    // Same shape again, for the two endpoints that reach the orchestrator on a cache miss. Both issue
+    // LISTs over the whole shared extensions namespace, so their cost grows with every tenant's pods,
+    // not just the caller's. The UI polls the list page and the details page while they are open, so the
+    // budget has to hold a few open tabs plus manual refreshes; a client that needs more than one call a
+    // second sustained is a script, not a person.
+    @Value("${extensions.status.rate-limit:60:60}")
+    private String statusRateLimit;
+
     private final ExtensionService extensionService;
     private final TbExtensionService tbExtensionService;
     private final Optional<ExtensionStatusService> statusService;
@@ -145,6 +153,11 @@ public class ExtensionController extends BaseController {
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.EXTENSION, Operation.READ);
+        // After the permission check, as on /logs and /api-docs: an unauthorized caller must not be able
+        // to spend another user's budget. enrichWithStatus below is two unfiltered LISTs of the shared
+        // namespace per uncached call, so an unlimited poll loop here lands on the API server that
+        // tb-core itself depends on in private-cloud mode.
+        checkStatusRateLimit();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         PageData<ExtensionInfo> extensions = extensionService.findExtensionInfosByTenantId(user.getTenantId(), pageLink);
         enrichWithStatus(user.getTenantId(), extensions.getData());
@@ -212,6 +225,10 @@ public class ExtensionController extends BaseController {
     public ExtensionStatus getExtensionStatus(@Parameter(description = "Extension id", required = true)
                                               @PathVariable UUID extensionId) throws ThingsboardException {
         Extension extension = checkExtensionId(new ExtensionId(extensionId), Operation.READ);
+        // A node that does not own this extension's partition has no registry entry, so describe() falls
+        // through to a live Deployment GET plus a Pod LIST and caches nothing. Spreading a poll loop over
+        // the core nodes therefore turned almost every call into orchestrator traffic.
+        checkStatusRateLimit();
         return statusService
                 .map(svc -> svc.describe(extension.getTenantId(), extension))
                 .orElseGet(() -> toStatus(extension));
@@ -387,6 +404,12 @@ public class ExtensionController extends BaseController {
             throw new ThingsboardException("Extension with name '" + name + "' is not deployed!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
         return new ExtensionSlugInfo(extension.getSlug());
+    }
+
+    private void checkStatusRateLimit() throws ThingsboardException {
+        if (!rateLimitService.checkRateLimit(LimitedApi.EXTENSION_STATUS, getCurrentUser().getId(), statusRateLimit)) {
+            throw new TbRateLimitsException("Too many extension status requests. Please retry shortly.");
+        }
     }
 
     private Extension checkExtensionId(ExtensionId extensionId, Operation operation) throws ThingsboardException {

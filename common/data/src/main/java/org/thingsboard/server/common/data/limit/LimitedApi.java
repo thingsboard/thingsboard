@@ -59,6 +59,7 @@ public enum LimitedApi {
     TRENDZ_PUBLIC_SYNC("Trendz sync from public endpoint", false),
     EXTENSION_LOGS("extension log reads", false),
     EXTENSION_API_DOCS("extension API docs reads", false),
+    EXTENSION_STATUS("extension status reads", false),
     AI_CHAT_REQUESTS("AI chat requests", true);
 
     private final Function<DefaultTenantProfileConfiguration, String> configExtractor;

@@ -3077,6 +3077,13 @@ extensions:
     # the REST API stops answering for everyone else.
     max-concurrent-fetches: "${TB_EXTENSIONS_DOCS_MAX_CONCURRENT_FETCHES:4}"
   status:
+    # Per-user rate limit on GET /api/extension/{id}/status and GET /api/tenant/extensions,
+    # "capacity:periodSeconds" (over it -> HTTP 429). Both reach the orchestrator when the status cache
+    # cannot answer, and on Kubernetes that is a LIST over the whole shared extensions namespace, so the
+    # cost of one call grows with every tenant's pods. In private-cloud mode that API server is the one
+    # tb-core itself depends on. The budget holds the UI's own polling of the list and details pages plus
+    # manual refreshes. Enforced per tb-core node. Empty disables it.
+    rate-limit: "${TB_EXTENSIONS_STATUS_RATE_LIMIT:60:60}"
     # Status collector poll interval (ms).
     poll-interval-ms: "${TB_EXTENSIONS_STATUS_POLL_INTERVAL_MS:10000}"
     # Hysteresis: number of consecutive polls that must agree before the stored extension status changes.
