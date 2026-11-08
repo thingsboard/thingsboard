@@ -72,12 +72,28 @@ public class DefaultExtensionK8sReconciler implements ExtensionReconciler {
     static final String TRUNCATION_MARK = "\n(truncated)";
 
     // How long a teardown waits for the pods of a deleted Deployment to disappear before it deletes their
-    // NetworkPolicy. Longer than the default 30 s termination grace period; a pod stuck beyond that (a
-    // finalizer, a node gone) keeps its policy until the orphan sweep. Field injection: test-seam ctor.
-    @Value("${extensions.k8s.pod-termination-wait-ms:45000}")
+    // NetworkPolicy. A pod that outlives the wait keeps its policy until the orphan sweep.
+    //
+    // Deliberately SHORTER than the 30 s termination grace period, which is the opposite of what it looks
+    // like it should be. This wait is a Thread.sleep loop on the shared ext-reconcile pool, and that pool
+    // is sized max(2, availableProcessors()/2) — two threads on a 4-vCPU core node — and is the single
+    // execution context for every tenant's apply, restart, stop, teardown and for the periodic resync.
+    // How long a pod takes to go is decided by the tenant's own container: one that ignores SIGTERM sits
+    // there for its whole grace period on purpose. At 45 s, two deletes of such extensions held both
+    // threads and stalled reconciliation for every tenant on the node, which a tenant could trigger at
+    // will.
+    //
+    // Correctness never depended on the wait. Deleting the policy while pods still run would strip their
+    // egress containment, so the policy must NOT be removed early — but keeping it costs nothing: it is a
+    // restriction, its podSelector carries the owner labels (see ExtensionManifestRenderer.renderService),
+    // so it cannot attach to whoever takes the slug next, and the orphan sweep deletes it on its next pass
+    // (extensions.reconcile.resync-interval-ms, 5 min by default). The wait only buys a prompt cleanup in
+    // the common case, so it is sized for a container that shuts down promptly and hands the rest to the
+    // sweep. Field injection: test-seam ctor.
+    @Value("${extensions.k8s.pod-termination-wait-ms:5000}")
     private long podTerminationWaitMs = DEFAULT_POD_TERMINATION_WAIT_MS;
 
-    static final long DEFAULT_POD_TERMINATION_WAIT_MS = 45_000;
+    static final long DEFAULT_POD_TERMINATION_WAIT_MS = 5_000;
     static final long POD_TERMINATION_POLL_MS = 1_000;
     // How often a precondition-guarded delete re-reads an object that changed under it before giving up.
     static final int DELETE_PRECONDITION_ATTEMPTS = 3;

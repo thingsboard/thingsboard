@@ -2963,6 +2963,15 @@ extensions:
     tb-internal-url: "${TB_EXTENSIONS_K8S_TB_INTERNAL_URL:${TB_EXTENSIONS_TB_INTERNAL_URL:http://tb-node:8080}}"
     # Health endpoint probed by readiness/liveness.
     health-path: "${TB_EXTENSIONS_K8S_HEALTH_PATH:${TB_EXTENSIONS_HEALTH_PATH:/api/health}}"
+    # How long a teardown waits (ms) for the pods of a deleted extension to disappear before it deletes
+    # their NetworkPolicy. The policy must not go while the pods run, or they lose their egress
+    # containment for the rest of their shutdown. Kept SHORT on purpose: this is a sleep loop on the
+    # shared reconcile pool (max(2, cores/2) threads, also serving apply/restart/stop/resync for every
+    # tenant), and the shutdown time is the tenant container's to choose - one that ignores SIGTERM holds
+    # a thread for its whole grace period. A pod that outlives the wait simply keeps its policy, and the
+    # orphan sweep (reconcile.resync-interval-ms) deletes it on the next pass, so raising this only buys
+    # a faster cleanup and pays for it in reconcile latency for everyone on the node.
+    pod-termination-wait-ms: "${TB_EXTENSIONS_K8S_POD_TERMINATION_WAIT_MS:5000}"
     resources:
       # Per-container CPU ceiling: the validator rejects any request/limit above it, and it becomes
       # the namespace LimitRange max. Kubernetes quantity notation.

@@ -351,6 +351,38 @@ class DefaultExtensionK8sReconcilerTest {
                 ExtensionResourceNames.ANNOTATION_SPEC_HASH)).isEqualTo(templateHashBefore);
     }
 
+    // The teardown's wait for pods to go is a Thread.sleep loop on the shared ext-reconcile pool, which
+    // is sized max(2, cores/2) — two threads on a 4-vCPU core node — and how long a pod takes to go is up
+    // to the tenant's container: one that ignores SIGTERM uses its whole grace period on purpose. So the
+    // wait has to stay short, and this is the fallback that makes a short wait safe: a pod that outlives
+    // it keeps its NetworkPolicy, and the sweep removes the policy afterwards. Deleting the policy while
+    // the pod still runs would strip its egress containment, which is the one thing that must not happen.
+    @Test
+    void aTeardownWhosePodsOutlastTheWaitLeavesThePolicyToTheOrphanSweep() {
+        Extension ext = extension(8090);
+        ext.setSlug("slow-shutdown-1a2b");
+        DefaultExtensionK8sReconciler r = reconciler();
+        r.apply(ext);
+        String podName = "tb-ext-slow-shutdown-1a2b-abcde";
+        podOf(ext, podName); // the mock runs no controllers, so this pod never goes away on its own
+
+        String policy = ExtensionResourceNames.networkPolicy(ext.getSlug());
+        r.delete(ext);
+
+        assertThat(client.apps().deployments().inNamespace(NS)
+                .withName(ExtensionResourceNames.deployment(ext.getSlug())).get())
+                .as("the workload itself must be gone")
+                .isNull();
+        assertThat(client.network().v1().networkPolicies().inNamespace(NS).withName(policy).get())
+                .as("a pod that is still there must keep its egress containment")
+                .isNotNull();
+
+        // once the pod is really gone, the sweep clears what the teardown left behind
+        client.pods().inNamespace(NS).withName(podName).delete();
+        r.deleteBySlug(ext.getSlug());
+        assertThat(client.network().v1().networkPolicies().inNamespace(NS).withName(policy).get()).isNull();
+    }
+
     // The orphan sweep is the only net for a teardown that dies partway through. deleteBySlug removes the
     // Deployment first (so the workload stops while its NetworkPolicy still constrains it), which means a
     // failure afterwards leaves Secrets/Service/NetworkPolicy with no Deployment. Discovering orphans by
