@@ -1,0 +1,19 @@
+/** Encoder **/
+
+// The integration calls the Particle function named by "method"
+// and passes "params" as its string argument.
+// msg.params is serialized JSON, for example "\"on\"": JSON.parse returns on.
+var result = {
+    contentType: "JSON",
+    data: JSON.stringify({
+        method: msg.method,
+        params: JSON.parse(msg.params)
+    }),
+    metadata: {
+        // Particle Device ID of the target device.
+        // This guide uses it as the ThingsBoard device name.
+        deviceId: metadata.deviceName
+    }
+};
+
+return result;
