@@ -2,21 +2,25 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.report.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.ReportTemplateId;
 import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.report.configuration.DataKey;
+import org.thingsboard.server.common.data.report.configuration.DataSource;
 import org.thingsboard.server.common.data.report.configuration.HeaderFooter;
 import org.thingsboard.server.common.data.report.configuration.PdfReportTemplateConfig;
 import org.thingsboard.server.common.data.report.configuration.ReportTemplateConfig;
+import org.thingsboard.server.common.data.report.configuration.components.AlarmTableComponent;
 import org.thingsboard.server.common.data.report.configuration.components.DashboardComponent;
+import org.thingsboard.server.common.data.report.configuration.components.DataReportComponent;
 import org.thingsboard.server.common.data.report.configuration.components.ReportComponent;
 import org.thingsboard.server.common.data.report.configuration.components.SplitViewComponent;
 import org.thingsboard.server.common.data.report.configuration.components.SubReportComponent;
+import org.thingsboard.server.common.data.report.configuration.components.TimeseriesChartComponent;
+import org.thingsboard.server.common.data.report.configuration.components.TimeseriesTableComponent;
 import org.thingsboard.server.common.data.report.configuration.timewindow.FixedTimeWindow;
 import org.thingsboard.server.common.data.report.configuration.timewindow.History;
 import org.thingsboard.server.common.data.report.configuration.timewindow.QuickTimeInterval;
@@ -60,11 +64,6 @@ public class ReportTimeRangeResolver {
         return new ReportTimeRange(range.startTs, range.endTs, timezone);
     }
 
-    /**
-     * Collects distinct time windows of the given components and of all sub-report templates they reference.
-     * Returns false as soon as the time range is known to be undefined: either the collected time windows
-     * differ, or a referenced sub-report template can't be fetched.
-     */
     private boolean collect(List<ReportComponent> components, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows, Set<ReportTemplateId> visitedTemplates) {
         for (ReportComponent component : components) {
             if (!collectComponent(component, ctx, timeWindows, visitedTemplates)) {
@@ -74,12 +73,6 @@ public class ReportTimeRangeResolver {
         return true;
     }
 
-    /**
-     * The components that end up on the page: the body ones, plus the header and footer ones of the blocks that
-     * are enabled. Disabling a header or a footer in the UI only flips the flag and keeps the components, and
-     * PdfReportService renders a block only while it is enabled, so the components of a disabled one carry time
-     * windows nothing on the page uses. The first page block is enabled on its own, as it is rendered on its own.
-     */
     private static List<ReportComponent> renderedComponents(ReportTemplateConfig config) {
         List<ReportComponent> components = new ArrayList<>();
         addComponents(components, config.getComponents());
@@ -103,11 +96,6 @@ public class ReportTimeRangeResolver {
         }
     }
 
-    /**
-     * A sub-report puts only the body components of its template on the page: PdfReportService.renderSubReport
-     * passes exactly those to renderContent, so the header and the footer of a sub-report template are never
-     * rendered and the time windows they carry are none of this report's business.
-     */
     private static List<ReportComponent> subReportComponents(ReportTemplateConfig config) {
         return config.getComponents() != null ? config.getComponents() : List.of();
     }
@@ -136,11 +124,7 @@ public class ReportTimeRangeResolver {
     }
 
     private static boolean collectTimeWindows(ReportComponent component, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows) {
-        for (JsonNode node : JacksonUtil.valueToTree(component).findValues("timewindow")) {
-            if (!node.isObject()) {
-                continue;
-            }
-            TimeWindowConfiguration timeWindow = JacksonUtil.treeToValue(node, TimeWindowConfiguration.class);
+        for (TimeWindowConfiguration timeWindow : queriedTimeWindows(component)) {
             History history = timeWindow.getHistory();
             if (history == null) {
                 continue;
@@ -156,6 +140,55 @@ public class ReportTimeRangeResolver {
             }
         }
         return true;
+    }
+
+    private static List<TimeWindowConfiguration> queriedTimeWindows(ReportComponent component) {
+        List<TimeWindowConfiguration> result = new ArrayList<>();
+        addIfPresent(result, componentTimeWindow(component));
+        for (DataSource dataSource : dataSources(component)) {
+            if (dataSource != null) {
+                addAggregatedKeyTimeWindows(result, dataSource.getDataKeys());
+                addAggregatedKeyTimeWindows(result, dataSource.getLatestDataKeys());
+            }
+        }
+        return result;
+    }
+
+    private static void addAggregatedKeyTimeWindows(List<TimeWindowConfiguration> timeWindows, List<DataKey> dataKeys) {
+        if (dataKeys != null) {
+            dataKeys.stream()
+                    .filter(dataKey -> dataKey != null && dataKey.isAggregated())
+                    .forEach(dataKey -> addIfPresent(timeWindows, dataKey.getTimewindow()));
+        }
+    }
+
+    private static TimeWindowConfiguration componentTimeWindow(ReportComponent component) {
+        if (component instanceof TimeseriesChartComponent chart) {
+            return chart.getTimewindow();
+        }
+        if (component instanceof TimeseriesTableComponent table) {
+            return table.getTimewindow();
+        }
+        if (component instanceof AlarmTableComponent alarmTable) {
+            return alarmTable.getTimewindow();
+        }
+        return null;
+    }
+
+    private static List<DataSource> dataSources(ReportComponent component) {
+        if (component instanceof AlarmTableComponent alarmTable) {
+            return alarmTable.getAlarmSource() != null ? List.of(alarmTable.getAlarmSource()) : List.of();
+        }
+        if (component instanceof DataReportComponent dataComponent && dataComponent.getDataSources() != null) {
+            return dataComponent.getDataSources();
+        }
+        return List.of();
+    }
+
+    private static void addIfPresent(List<TimeWindowConfiguration> timeWindows, TimeWindowConfiguration timeWindow) {
+        if (timeWindow != null) {
+            timeWindows.add(timeWindow);
+        }
     }
 
     private boolean collectSubReport(SubReportComponent subReport, TbReportCtx ctx, Map<TimeWindowKey, History> timeWindows, Set<ReportTemplateId> visitedTemplates) {
@@ -179,13 +212,6 @@ public class ReportTimeRangeResolver {
         return collect(subReportComponents(template.getConfiguration()), ctx, timeWindows, visitedTemplates);
     }
 
-    /**
-     * Keys a time window by the fields getTimeRange actually reads for the given history type, plus the
-     * effective timezone. The UI keeps the defaults of every history type in one object - a last interval
-     * window still carries a fixed timewindow stamped when the component was created - so keying by the whole
-     * History would split time windows that resolve to the very same range. Returns null for the time windows
-     * that carry no range at all: for all time, and anything this version doesn't know how to resolve.
-     */
     private static TimeWindowKey toKey(History history, String timezone) {
         return switch (history.getHistoryType()) {
             case LAST_INTERVAL_HISTORY_TYPE ->
@@ -204,10 +230,6 @@ public class ReportTimeRangeResolver {
     private record TimeWindowKey(int historyType, long timewindowMs, long fixedStartTs, long fixedEndTs,
                                  QuickTimeInterval quickInterval, String timezone) {}
 
-    /**
-     * The resolved time range together with the timezone it was resolved in. A time window can carry a timezone
-     * of its own, which is the one the range was computed in, so it is also the one it has to be formatted in.
-     */
     public record ReportTimeRange(long startTs, long endTs, String timezone) {}
 
 }

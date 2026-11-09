@@ -11,13 +11,16 @@ import org.thingsboard.server.common.data.report.ReportData;
 import org.thingsboard.server.common.data.report.configuration.CsvReportTemplateConfig;
 import org.thingsboard.server.common.data.report.configuration.ReportTemplateConfig;
 import org.thingsboard.server.report.context.TbReportCtx;
+import org.thingsboard.server.report.datasource.ReportDataService;
 import org.thingsboard.server.report.util.CsvUtils;
+import org.thingsboard.server.report.util.ReportTimeRangeResolver;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
  * Covers the CSV choke point for the non-production notice: {@link CsvReportService#generateReport} itself,
@@ -41,6 +44,7 @@ public class CsvReportServiceTest {
 
     private String generateCsvReport(boolean nonProduction) throws Exception {
         CsvReportService service = new CsvReportService(List.of());
+        service.timeRangeResolver = new ReportTimeRangeResolver(mock(ReportDataService.class));
 
         CsvReportTemplateConfig configuration = CsvReportTemplateConfig.builder()
                 .components(List.of())

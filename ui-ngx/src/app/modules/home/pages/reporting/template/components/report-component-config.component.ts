@@ -27,11 +27,12 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { genNextLabel, isObject } from '@core/utils';
 import {
+  chartTitleVariableNames,
   pageVariables,
-  hasDifferentReportTimeRanges,
   ReportComponentContext,
   reportComponentTypesData,
-  ReportVariable
+  ReportVariable,
+  tableHeadingVariableNames
 } from '@home/pages/reporting/template/components/report-component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { Observable, of } from 'rxjs';
@@ -141,8 +142,12 @@ export abstract class AbstractReportComponentConfig<C extends ReportComponentCon
     return this.context.format === TbReportFormat.CSV;
   }
 
-  public get differentReportTimeRanges(): boolean {
-    return hasDifferentReportTimeRanges(this.context.reportComponents());
+  readonly tableHeadingVariableNames = tableHeadingVariableNames;
+
+  readonly chartTitleVariableNames = chartTitleVariableNames;
+
+  public get reportTimeRangeUndefined(): boolean {
+    return this.context.reportTimeRangeUndefined();
   }
 
   public get datasource(): Datasource {

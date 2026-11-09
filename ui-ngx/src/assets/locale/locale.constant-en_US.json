@@ -9126,7 +9126,7 @@
         "vertical": "Vertical",
         "dashboard": "Dashboard",
         "timewindow": "Time window",
-        "different-time-ranges-hint": "Report components use different time windows, so the report time range is undefined and the ${reportStartTime} and ${reportEndTime} variables render empty.",
+        "different-time-ranges-hint": "Report components use different time windows, so the report time range is undefined and the ${reportStartTime}, ${reportEndTime} and ${reportTimeRange} variables render empty.",
         "export-failed-error": "Unable to export report template: {{error}}",
         "report-template-file": "Report template file",
         "invalid-report-template-file-error": "Unable to import report template: Invalid report template data structure.",

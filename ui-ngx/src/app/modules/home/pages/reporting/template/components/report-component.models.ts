@@ -37,7 +37,7 @@ import {
   TimeseriesTableReportComponentConfig,
   toReportTimeSeriesChartKeySettings, SplitViewReportComponentConfig
 } from '@shared/models/report-component.models';
-import { Type } from '@angular/core';
+import { Signal, Type } from '@angular/core';
 import { HeadingPreviewComponent } from '@home/pages/reporting/template/components/heading-preview.component';
 import { RichTextPreviewComponent } from '@home/pages/reporting/template/components/rich-text-preview.component';
 import {
@@ -67,7 +67,7 @@ import { ImageConfigComponent } from '@home/pages/reporting/template/components/
 
 import keyImageTemplate from './key-image-svg.raw';
 import { deepClone, insertVariable, mergeDeep, stringToBase64 } from '@core/utils';
-import { DataKey, DatasourceType } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType } from '@shared/models/widget.models';
 import { DashboardPreviewComponent } from '@home/pages/reporting/template/components/dashboard-preview.component';
 import { DashboardConfigComponent } from '@home/pages/reporting/template/components/dashboard-config.component';
 import { AlarmTablePreviewComponent } from '@home/pages/reporting/template/components/alarm-table-preview.component';
@@ -160,6 +160,31 @@ export const reportComponentGroups = new Map<string, Array<string>>(
     ]
   ]
 );
+
+const reportInfoHeadingConfig = (value: string): HeadingReportComponentConfig => ({
+  type: ReportComponentType.HEADING,
+  value,
+  font: {
+    size: 9,
+    sizeUnit: 'pt',
+    weight: '500',
+    style: 'normal',
+    family: 'Roboto'
+  } as Font,
+  color: '#000',
+  textAlignment: 'center',
+  verticalAlignment: 'middle',
+  height: undefined,
+  dataSources: [],
+  margins: null,
+  paddings: {
+    top: 6,
+    bottom: 6,
+    left: 6,
+    right: 6
+  },
+  background: null
+} as HeadingReportComponentConfig);
 
 export const reportComponentsLibrary = new Map<string, ReportComponentLibraryItem>(
   [
@@ -1345,30 +1370,7 @@ export const reportComponentsLibrary = new Map<string, ReportComponentLibraryIte
         title: 'report-template.component.page-number',
         previewImage: '/assets/report/components/page-number.svg',
         type: ReportComponentType.HEADING,
-        defaultConfig: {
-          type: ReportComponentType.HEADING,
-          value: 'Page: ${pageNumber}/${totalPages}',
-          font: {
-            size: 9,
-            sizeUnit: 'pt',
-            weight: '500',
-            style: 'normal',
-            family: 'Roboto'
-          } as Font,
-          color: '#000',
-          textAlignment: 'center',
-          verticalAlignment: 'middle',
-          height: undefined,
-          dataSources: [],
-          margins: null,
-          paddings: {
-            top: 6,
-            bottom: 6,
-            left: 6,
-            right: 6
-          },
-          background: null
-        } as HeadingReportComponentConfig
+        defaultConfig: reportInfoHeadingConfig('Page: ${pageNumber}/${totalPages}')
       }
     ],
     [
@@ -1377,30 +1379,7 @@ export const reportComponentsLibrary = new Map<string, ReportComponentLibraryIte
         title: 'report-template.component.created-time',
         previewImage: '/assets/report/components/created-time.svg',
         type: ReportComponentType.HEADING,
-        defaultConfig: {
-          type: ReportComponentType.HEADING,
-          value: 'Created: ${reportCreatedTime}',
-          font: {
-            size: 9,
-            sizeUnit: 'pt',
-            weight: '500',
-            style: 'normal',
-            family: 'Roboto'
-          } as Font,
-          color: '#000',
-          textAlignment: 'center',
-          verticalAlignment: 'middle',
-          height: undefined,
-          dataSources: [],
-          margins: null,
-          paddings: {
-            top: 6,
-            bottom: 6,
-            left: 6,
-            right: 6
-          },
-          background: null
-        } as HeadingReportComponentConfig
+        defaultConfig: reportInfoHeadingConfig('Created: ${reportCreatedTime}')
       }
     ],
     [
@@ -1409,30 +1388,7 @@ export const reportComponentsLibrary = new Map<string, ReportComponentLibraryIte
         title: 'report-template.component.time-range',
         previewImage: '/assets/report/components/time-range.svg',
         type: ReportComponentType.HEADING,
-        defaultConfig: {
-          type: ReportComponentType.HEADING,
-          value: 'Time Range: ${reportStartTime} – ${reportEndTime}',
-          font: {
-            size: 9,
-            sizeUnit: 'pt',
-            weight: '500',
-            style: 'normal',
-            family: 'Roboto'
-          } as Font,
-          color: '#000',
-          textAlignment: 'center',
-          verticalAlignment: 'middle',
-          height: undefined,
-          dataSources: [],
-          margins: null,
-          paddings: {
-            top: 6,
-            bottom: 6,
-            left: 6,
-            right: 6
-          },
-          background: null
-        } as HeadingReportComponentConfig
+        defaultConfig: reportInfoHeadingConfig('${reportTimeRange}')
       }
     ],
     [
@@ -1856,7 +1812,7 @@ export class ReportDragDropContext {
 
 
 export interface ReportComponentContext {
-  reportComponents: () => ReportComponentConfig[];
+  reportTimeRangeUndefined: Signal<boolean>;
   translate: TranslateService,
   utils: UtilsService,
   entityService: EntityService;
@@ -1866,33 +1822,37 @@ export interface ReportComponentContext {
   dragDropCtx: ReportDragDropContext;
 }
 
-const collectTimewindows = (value: any, result: Timewindow[]): void => {
-  if (!value || typeof value !== 'object') {
+
+
+export const reportTimeRangeVariableNames = ['reportStartTime', 'reportEndTime', 'reportTimeRange'];
+
+const reportTimeRangeVariablePattern = new RegExp(`\\$\\{\\s*(${reportTimeRangeVariableNames.join('|')})\\s*}`);
+
+const collectQueriedTimewindows = (component: ReportComponentConfig, result: Timewindow[]): void => {
+  if (!component || component.type === ReportComponentType.DASHBOARD) {
     return;
   }
-  if (Array.isArray(value)) {
-    value.forEach(item => collectTimewindows(item, result));
+  if (component.type === ReportComponentType.SPLIT_VIEW) {
+    const splitView = component as SplitViewReportComponentConfig;
+    collectQueriedTimewindows(splitView.leftView, result);
+    collectQueriedTimewindows(splitView.rightView, result);
     return;
   }
-  if (value.type === ReportComponentType.DASHBOARD) {
-    return;
+  const config = component as ReportComponentConfig & {timewindow?: Timewindow; dataSources?: Datasource[]; alarmSource?: Datasource};
+  if (config.timewindow) {
+    result.push(config.timewindow);
   }
-  for (const key of Object.keys(value)) {
-    if (key === 'timewindow' && value[key] && typeof value[key] === 'object') {
-      result.push(value[key]);
-    } else {
-      collectTimewindows(value[key], result);
+  const dataSources = config.type === ReportComponentType.ALARM_TABLE ? [config.alarmSource] : config.dataSources ?? [];
+  for (const dataSource of dataSources) {
+    for (const dataKey of [...dataSource?.dataKeys ?? [], ...dataSource?.latestDataKeys ?? []]) {
+      if (dataKey?.timewindow && dataKey.aggregationType && dataKey.aggregationType !== AggregationType.NONE) {
+        result.push(dataKey.timewindow);
+      }
     }
   }
 };
 
-/**
- * Mirrors ReportTimeRangeResolver on the backend: a time window is identified by the fields that determine
- * the range it resolves to, so windows differing only in aggregation, grouping interval or in the leftover
- * defaults of the other history types count as one. Windows without a range of their own - for all time -
- * are skipped, exactly as the backend skips them.
- */
-const reportTimeRangeKey = (timewindow: Timewindow): string => {
+const historyRangeKey = (timewindow: Timewindow): string => {
   const history = timewindow?.history;
   switch (history?.historyType) {
     case HistoryWindowType.LAST_INTERVAL:
@@ -1907,18 +1867,14 @@ const reportTimeRangeKey = (timewindow: Timewindow): string => {
   }
 };
 
-/**
- * Whether the report components resolve to more than one time range, which leaves the report time range,
- * and with it the ${reportStartTime} and ${reportEndTime} variables, undefined.
- *
- * Deliberately narrower than the backend resolver: it ignores the time windows of sub report templates,
- * which are not loaded in the editor, and the timezone of a time window, which falls back to the timezone of
- * the scheduled report the template knows nothing about. Both only make it miss a mismatch the backend sees,
- * never report one that isn't there.
- */
+const reportTimeRangeKey = (timewindow: Timewindow): string => {
+  const rangeKey = historyRangeKey(timewindow);
+  return rangeKey ? `${rangeKey}|tz:${timewindow.timezone || ''}` : null;
+};
+
 export const hasDifferentReportTimeRanges = (components: ReportComponentConfig[]): boolean => {
   const timewindows: Timewindow[] = [];
-  collectTimewindows(components, timewindows);
+  components.forEach(component => collectQueriedTimewindows(component, timewindows));
   const timeRangeKeys = new Set<string>();
   for (const timewindow of timewindows) {
     const key = reportTimeRangeKey(timewindow);
@@ -1931,6 +1887,12 @@ export const hasDifferentReportTimeRanges = (components: ReportComponentConfig[]
   }
   return false;
 };
+
+export const usesReportTimeRangeVariables = (components: ReportComponentConfig[]): boolean =>
+  reportTimeRangeVariablePattern.test(JSON.stringify(components));
+
+export const isReportTimeRangeUndefined = (components: ReportComponentConfig[]): boolean =>
+  usesReportTimeRangeVariables(components) && hasDifferentReportTimeRanges(components);
 
 export const assignReportComponent = (reportComponent: ReportComponentConfig, sourceReportComponent: ReportComponentConfig): void => {
   const ignoreFields: string[] = [];
@@ -1977,28 +1939,18 @@ export interface ReportVariable {
   dataKey?: DataKey;
 }
 
-export const pageVariables: ReportVariable[] = [
-  {
-    type: 'pageVariable',
-    name: 'pageNumber'
-  },
-  {
-    type: 'pageVariable',
-    name: 'totalPages'
-  },
-  {
-    type: 'pageVariable',
-    name: 'reportCreatedTime'
-  },
-  {
-    type: 'pageVariable',
-    name: 'reportStartTime'
-  },
-  {
-    type: 'pageVariable',
-    name: 'reportEndTime'
-  }
-];
+const pageOnlyVariableNames = ['pageNumber', 'totalPages'];
+
+export const pageVariables: ReportVariable[] =
+  [...pageOnlyVariableNames, 'reportCreatedTime', ...reportTimeRangeVariableNames]
+    .map(name => ({type: 'pageVariable', name}));
+
+export const reportInfoVariableNames = pageVariables.map(variable => variable.name)
+  .filter(name => !pageOnlyVariableNames.includes(name));
+
+export const tableHeadingVariableNames = ['entityName', 'entityLabel', 'rowCount', ...reportInfoVariableNames];
+
+export const chartTitleVariableNames = ['entityName', 'entityLabel', ...reportInfoVariableNames];
 
 export const keyImage = (key: string): string => {
   const result = insertVariable(keyImageTemplate, 'key', `\${${key}}`);

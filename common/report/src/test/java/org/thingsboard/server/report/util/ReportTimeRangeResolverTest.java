@@ -14,6 +14,7 @@ import org.thingsboard.server.common.data.report.configuration.DataSource;
 import org.thingsboard.server.common.data.report.configuration.HeaderFooter;
 import org.thingsboard.server.common.data.report.configuration.PdfReportTemplateConfig;
 import org.thingsboard.server.common.data.report.configuration.ReportTemplateConfig;
+import org.thingsboard.server.common.data.report.configuration.components.AlarmTableComponent;
 import org.thingsboard.server.common.data.report.configuration.components.DashboardComponent;
 import org.thingsboard.server.common.data.report.configuration.components.HeadingComponent;
 import org.thingsboard.server.common.data.report.configuration.components.ReportComponent;
@@ -120,11 +121,59 @@ public class ReportTimeRangeResolverTest {
     }
 
     @Test
-    void testResolveTakesDataKeyTimeWindowIntoAccount() {
+    void testResolveTakesAggregatedDataKeyTimeWindowIntoAccount() {
         TimeseriesChartComponent chart = chart(fixedWindow(1000, 2000));
-        chart.setDataSources(List.of(dataSource(dataKey(fixedWindow(1000, 3000)))));
+        chart.setDataSources(List.of(dataSource(dataKey(Aggregation.SUM, fixedWindow(1000, 3000)))));
 
         assertUndefined(resolver.resolve(config(chart), ctx));
+    }
+
+    @Test
+    void testResolveTakesAggregatedLatestDataKeyTimeWindowIntoAccount() {
+        TimeseriesChartComponent chart = chart(fixedWindow(1000, 2000));
+        chart.setDataSources(List.of(DataSource.builder()
+                .dataKeys(List.of())
+                .latestDataKeys(List.of(dataKey(Aggregation.AVG, fixedWindow(1000, 3000))))
+                .build()));
+
+        assertUndefined(resolver.resolve(config(chart), ctx));
+    }
+
+    @Test
+    void testResolveIgnoresTimeWindowOfLatestDataKeyWithoutAggregation() {
+        TimeseriesChartComponent chart = chart(fixedWindow(1000, 2000));
+        chart.setDataSources(List.of(DataSource.builder()
+                .latestDataKeys(List.of(dataKey(Aggregation.NONE, fixedWindow(1000, 3000))))
+                .build()));
+
+        ReportTimeRange range = resolver.resolve(config(chart), ctx);
+
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
+    }
+
+    @Test
+    void testResolveIgnoresTimeWindowOfDataKeyWithoutAggregation() {
+        TimeseriesChartComponent chart = chart(fixedWindow(1000, 2000));
+        chart.setDataSources(List.of(dataSource(
+                dataKey(Aggregation.NONE, fixedWindow(1000, 3000)),
+                dataKey(null, fixedWindow(1000, 4000)))));
+
+        ReportTimeRange range = resolver.resolve(config(chart), ctx);
+
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
+    }
+
+    @Test
+    void testResolveAlarmTableWithoutAlarmSource() {
+        AlarmTableComponent alarmTable = new AlarmTableComponent();
+        alarmTable.setTimewindow(fixedWindow(1000, 2000));
+
+        ReportTimeRange range = resolver.resolve(config(alarmTable), ctx);
+
+        assertThat(range.startTs()).isEqualTo(1000);
+        assertThat(range.endTs()).isEqualTo(2000);
     }
 
     @Test
@@ -163,8 +212,6 @@ public class ReportTimeRangeResolverTest {
 
     @Test
     void testResolveIgnoresResidualFieldsOfOtherHistoryTypes() {
-        // the UI keeps the defaults of every history type in one object, so a last interval window carries
-        // a fixed timewindow stamped when the component was created, and a quick interval left over from the defaults
         TimeWindowConfiguration olderWindow = lastIntervalWindow(DAY_MS);
         olderWindow.getHistory().setFixedTimewindow(fixedTimeWindow(1000, 2000));
         olderWindow.getHistory().setQuickInterval(QuickTimeInterval.CURRENT_DAY);
@@ -402,8 +449,9 @@ public class ReportTimeRangeResolverTest {
         return DataSource.builder().dataKeys(List.of(dataKeys)).build();
     }
 
-    private static DataKey dataKey(TimeWindowConfiguration timewindow) {
+    private static DataKey dataKey(Aggregation aggregationType, TimeWindowConfiguration timewindow) {
         DataKey dataKey = new DataKey("temperature", "timeseries", "Temperature");
+        dataKey.setAggregationType(aggregationType);
         dataKey.setTimewindow(timewindow);
         return dataKey;
     }

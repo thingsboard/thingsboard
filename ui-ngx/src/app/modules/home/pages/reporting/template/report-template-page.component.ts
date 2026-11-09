@@ -11,6 +11,7 @@ import {
   OnDestroy,
   OnInit,
   Renderer2,
+  signal,
   viewChild,
   viewChildren,
   ViewContainerRef,
@@ -61,6 +62,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   assignReportComponent,
   editReportComponent,
+  isReportTimeRangeUndefined,
   pointsToPixels,
   ReportComponentContext,
   reportComponentTypesData,
@@ -180,6 +182,8 @@ export class ReportTemplatePageComponent extends PageComponent
 
   reportComponentContext: ReportComponentContext;
 
+  private readonly reportTimeRangeUndefined = signal(false);
+
   pageWidth: number;
 
   marginLeft: number;
@@ -240,11 +244,7 @@ export class ReportTemplatePageComponent extends PageComponent
   ngOnInit() {
     this.homeService.setHideMainToolbar(true);
     this.reportComponentContext = {
-      reportComponents: () => [
-        ...this.renderedHeaderFooterComponents(this.pdfConfiguration?.header),
-        ...(this.reportTemplate?.configuration?.components ?? []),
-        ...this.renderedHeaderFooterComponents(this.pdfConfiguration?.footer)
-      ],
+      reportTimeRangeUndefined: this.reportTimeRangeUndefined.asReadonly(),
       translate: this.translate,
       utils: this.utils,
       entityService: this.entityService,
@@ -347,7 +347,16 @@ export class ReportTemplatePageComponent extends PageComponent
 
   public enabledHeaderFooterChanged() {
     this.updatePageLayout();
+    this.updateReportTimeRangeUndefined();
     this.isDirty = true;
+  }
+
+  private updateReportTimeRangeUndefined(): void {
+    this.reportTimeRangeUndefined.set(isReportTimeRangeUndefined([
+      ...this.renderedHeaderFooterComponents(this.pdfConfiguration?.header),
+      ...(this.reportTemplate?.configuration?.components ?? []),
+      ...this.renderedHeaderFooterComponents(this.pdfConfiguration?.footer)
+    ]));
   }
 
   private renderedHeaderFooterComponents(headerFooter: HeaderFooter): ReportComponentConfig[] {
@@ -370,6 +379,7 @@ export class ReportTemplatePageComponent extends PageComponent
 
   public reportComponentsChanged(): void {
     this.updatePageLayout();
+    this.updateReportTimeRangeUndefined();
     this.isDirty = true;
     setTimeout(() => {
       this.selectEditingComponent();
@@ -400,6 +410,7 @@ export class ReportTemplatePageComponent extends PageComponent
         }
       }
     }
+    this.updateReportTimeRangeUndefined();
     if (setDirty) {
       this.isDirty = true;
     }
@@ -761,6 +772,7 @@ export class ReportTemplatePageComponent extends PageComponent
     this.subReport = this.reportTemplate.type === ReportTemplateType.SUB_REPORT;
 
     this.updatePageLayout();
+    this.updateReportTimeRangeUndefined();
 
     const entityAliases = entityAliasesListToAliases(this.reportTemplate.configuration.entityAliases);
     const filters = reportDataFilterListToFilters(this.reportTemplate.configuration.filters);
