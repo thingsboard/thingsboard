@@ -44,39 +44,6 @@
   color: var(--tb-ink-54);
 }
 
-.sol-head-name {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font: 500 15px/20px var(--tb-font);
-  letter-spacing: normal;
-  color: var(--tb-ink);
-}
-
-.sol-head-status {
-  flex: none;
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font: 400 12.5px/20px var(--tb-font);
-  color: var(--tb-ink-54);
-  white-space: nowrap;
-
-  .tb-ai-status-mark {
-    width: 10px;
-    height: 10px;
-
-    &.running::before {
-      width: 8px;
-      height: 8px;
-      border-width: 1.5px;
-    }
-  }
-}
-
 .sol-head-actions {
   flex: none;
   margin-left: auto;
@@ -85,7 +52,7 @@
   gap: 2px;
 }
 
-.sol-head-status + .sol-head-actions {
+tb-ai-chat-title:has(.ai-chat-status) + .sol-head-actions {
   margin-left: 0;
 }
 
@@ -287,6 +254,31 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+.sol-head::after, .sol-cols.with-pane .sol-chat::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 12px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--tb-ink) 9%, transparent), transparent);
+  opacity: 0;
+  transition: opacity .15s ease;
+  pointer-events: none;
+}
+
+.sol-head::after {
+  top: 100%;
+}
+
+.sol-cols.with-pane .sol-chat::before {
+  top: 0;
+}
+
+.sol-head.scrolled::after, .sol-cols.with-pane .sol-chat.scrolled::before {
+  opacity: 1;
 }
 
 .sol-cols.with-pane .sol-chat {
@@ -1074,4 +1066,8 @@
 
 .sol-views button[aria-pressed="true"] tb-ai-spin {
   --spin-color: var(--ai-on-action);
+}
+
+.sol-composer:has(.sol-tray) .k-pill {
+  bottom: calc(100% + 44px);
 }

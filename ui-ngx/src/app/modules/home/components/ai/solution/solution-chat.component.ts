@@ -67,7 +67,8 @@ import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-t
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { aggregateByName, IssueStatus } from '@home/components/ai/solution/solution-info/issues-aggregation';
 import { SolutionJsonComponent } from '@home/components/ai/solution/pane/solution-json.component';
-import { AiRenameDialogComponent, AiRenameDialogData } from '@home/components/ai/ai-rename-dialog.component';
+import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
+import { AiSpinKind } from '@home/components/ai/ai-action.models';
 import { aiAnswersOf, aiAnswersText } from '@home/components/ai/ai-question.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -90,6 +91,7 @@ function formatCredits(credits: number): string {
 export class SolutionChatComponent extends PageComponent implements OnInit, OnDestroy {
 
   private static readonly NARROW_WIDTH = 1100;
+  private static readonly END_IN_VIEW = 160;
   private static readonly PANE_MIN = 360;
   private static readonly CHAT_MIN = 420;
   private static readonly PANE_WIDTH_KEY = 'tbSolutionPaneWidth';
@@ -97,6 +99,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
   @ViewChild(AiChatMessagesComponent) chatMessages: AiChatMessagesComponent;
+  @ViewChild(AiChatTitleComponent) titleRef: AiChatTitleComponent;
   @Output() loaded = new EventEmitter<string>();
 
   get hostElement(): HTMLElement {
@@ -124,6 +127,63 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   installed = signal<boolean>(false);
 
   mainDashboard = signal<EntityId[]>([]);
+
+  logScrolled = signal(false);
+  private atEnd = signal(true);
+  private newTurns = signal(0);
+  private seenTurns = 0;
+
+  pill = computed<{mode: 'work' | 'new'; kind: AiSpinKind; label: string; count: number} | null>(() => {
+    if (this.atEnd()) {
+      return null;
+    }
+    const work = this.work();
+    if (work && (this.loading() || this.isGenerating())) {
+      return {mode: 'work', kind: work.kind, label: work.words, count: 0};
+    }
+    const count = this.newTurns();
+    return count ? {mode: 'new', kind: 'think', label: this.translate.instant('ai-assistant.new-count', {count}), count} : null;
+  });
+
+  private newTurnsEffect = effect(() => {
+    const total = this.viewMessages().length;
+    untracked(() => {
+      if (this.atEnd() || total <= this.seenTurns) {
+        this.seenTurns = total;
+        return;
+      }
+      this.newTurns.update(count => count + total - this.seenTurns);
+      this.seenTurns = total;
+    });
+  });
+
+  onLogScroll(area: HTMLElement): void {
+    const scrolled = area.scrollTop > 0;
+    if (scrolled !== this.logScrolled()) {
+      this.logScrolled.set(scrolled);
+    }
+    const atEnd = area.scrollHeight - area.scrollTop - area.clientHeight < SolutionChatComponent.END_IN_VIEW;
+    if (atEnd !== this.atEnd()) {
+      this.atEnd.set(atEnd);
+    }
+    if (atEnd) {
+      this.newTurns.set(0);
+      this.seenTurns = this.viewMessages().length;
+    }
+  }
+
+  goToEnd(area: HTMLElement): void {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    area.scrollTo({top: area.scrollHeight, behavior: reduce ? 'auto' : 'smooth'});
+  }
+
+  statusTip = computed(() => {
+    const level = this.level();
+    if (!level) {
+      return '';
+    }
+    return level === 'error' && this.failure() ? this.failure() : this.translate.instant('ai-assistant.status-tip-' + level);
+  });
 
   level = computed<'running' | 'needs' | 'error' | null>(() => this.loading() || this.isGenerating()
     ? 'running'
@@ -678,25 +738,13 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.fullscreen.update(value => !value);
   }
 
-  renameSolution(): void {
-    if (!this.solutionId) {
+  renameTo(title: string): void {
+    if (!this.solutionId || title === this.title()) {
       return;
     }
-    this.dialogService.dialog.open<AiRenameDialogComponent, AiRenameDialogData, string>(AiRenameDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        title: this.translate.instant('solution-creator.rename-solution-title'),
-        value: this.title() || this.translate.instant('solution-creator.new-solution')
-      }
-    }).afterClosed().subscribe(newTitle => {
-      const title = newTitle?.trim();
-      if (title && title !== this.title()) {
-        this.aiSolutions.rename(this.aiSolutions.find(this.solutionId) ?? {id: this.solutionId}, title).subscribe({
-          next: value => this.updatedSolution(value),
-          error: err => this.showErrorMessage(err)
-        });
-      }
+    this.aiSolutions.rename(this.aiSolutions.find(this.solutionId) ?? {id: this.solutionId}, title).subscribe({
+      next: value => this.updatedSolution(value),
+      error: err => this.showErrorMessage(err)
     });
   }
 

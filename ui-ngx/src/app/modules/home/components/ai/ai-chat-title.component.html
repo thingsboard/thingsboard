@@ -1,0 +1,49 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (title(); as name) {
+  @if (renaming()) {
+    <span class="ai-chat-renaming">
+      <input #titleInput class="ai-chat-rename" [class.compact]="compact()" [value]="name"
+             [attr.aria-label]="'ai-assistant.chat-title' | translate"
+             (keydown)="onRenameKeydown($event)" (blur)="finishRename(titleInput.value)">
+      <button type="button" class="ai-ib" [attr.aria-label]="'ai-assistant.rename-save' | translate"
+              [matTooltip]="'ai-assistant.rename-save' | translate" matTooltipPosition="above"
+              (mousedown)="$event.preventDefault()" (click)="finishRename(titleInput.value)">
+        <mat-icon>check</mat-icon>
+      </button>
+      <button type="button" class="ai-ib" [attr.aria-label]="'ai-assistant.rename-discard' | translate"
+              [matTooltip]="'ai-assistant.rename-discard' | translate" matTooltipPosition="above"
+              (mousedown)="$event.preventDefault()" (click)="cancelRename()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </span>
+  } @else {
+    <span class="ai-chat-name-wrap" [class.static]="!renamable()">
+      <button #chatName type="button" class="ai-chat-name" [class.clipped]="nameClipped()" [class.compact]="compact()"
+              [matTooltip]="nameClipped() ? name : renamable() ? ('ai-assistant.double-click-to-rename' | translate) : ''"
+              [matTooltipDisabled]="!nameClipped() && !renamable()"
+              matTooltipPosition="after" matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
+              (mouseenter)="nameClipped.set(chatName.scrollWidth > chatName.clientWidth + 1)"
+              (keydown.enter)="startRename()" (keydown.f2)="startRename()" (dblclick)="startRename()">{{ name }}</button>
+      @if (renamable()) {
+        <button type="button" class="ai-chat-name-pen" [attr.aria-label]="'action.rename' | translate"
+                [matTooltip]="'action.rename' | translate" matTooltipPosition="above" (click)="startRename()">
+          <mat-icon fontSet="material-icons-round">edit</mat-icon>
+        </button>
+      }
+    </span>
+    @if (level(); as current) {
+      <span class="ai-chat-status" [class]="'ai-chat-status ' + current"
+            [matTooltip]="statusTip()" [matTooltipDisabled]="!statusTip()" matTooltipPosition="below">
+        <span class="tb-ai-status-mark" [class]="'tb-ai-status-mark ' + current"></span>
+        <span>{{ ('ai-assistant.status-' + current) | translate }}</span>
+      </span>
+    }
+  }
+} @else {
+  <span class="ai-chat-name" [class.compact]="compact()">{{ placeholder() }}</span>
+}

@@ -4,18 +4,11 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<header class="sol-head" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
+<header class="sol-head" [class.scrolled]="logScrolled() && !(showPane() && paneOpen())" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
         (fullscreenChanged)="fullscreen.set($event)">
   <mat-icon class="sol-head-mark" fontSet="material-icons-round" aria-hidden="true">layers</mat-icon>
-  <span class="sol-head-name" [matTooltip]="title()" matTooltipPosition="below" [matTooltipDisabled]="!title()">
-    {{ title() || ('solution-creator.new-solution' | translate) }}
-  </span>
-  @if (level(); as current) {
-    <span class="sol-head-status" [class]="'sol-head-status ' + current">
-      <span [class]="'tb-ai-status-mark ' + current"></span>
-      <span>{{ ('ai-assistant.status-' + current) | translate }}</span>
-    </span>
-  }
+  <tb-ai-chat-title [title]="title()" [placeholder]="'solution-creator.new-solution' | translate" [level]="level()"
+                    [statusTip]="statusTip()" [renamable]="!!info()?.id" (renamed)="renameTo($event)"></tb-ai-chat-title>
   <div class="sol-head-actions">
     @if (title() || built()) {
       <button type="button" class="sol-ib" [matMenuTriggerFor]="solutionMenu"
@@ -81,8 +74,8 @@
   </div>
 } @else if (creatorStep()) {
   <div class="sol-cols" [class.with-pane]="showPane() && paneOpen()">
-    <div class="sol-chat">
-      <div #chatArea class="sol-log">
+    <div class="sol-chat" [class.scrolled]="logScrolled()">
+      <div #chatArea class="sol-log" (scroll)="onLogScroll(chatArea)">
         <div class="sol-log-in">
           <tb-ai-chat-messages
             [messages]="viewMessages()"
@@ -148,6 +141,17 @@
       </div>
       <div class="sol-composer">
         <div class="sol-toast-chat" tb-toast toastTarget="solution-creator-chat"></div>
+        @if (pill(); as current) {
+          <button type="button" class="k-pill" [class.new]="current.mode === 'new'"
+                  [matTooltip]="current.label" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.go-to-end' | translate"
+                  (click)="goToEnd(chatArea)">
+            @if (current.mode === 'new') {
+              <mat-icon class="tb-mat-18">arrow_downward</mat-icon>{{ current.count }}
+            } @else {
+              <tb-ai-spin [kind]="current.kind"></tb-ai-spin>
+            }
+          </button>
+        }
         @if (showPane() && !paneOpen()) {
           <button type="button" class="sol-tray" (click)="openPane()" [attr.aria-label]="'solution-creator.pane.open' | translate">
             <mat-icon aria-hidden="true">layers</mat-icon>
@@ -296,7 +300,7 @@
 }
 
 <mat-menu #solutionMenu="matMenu" xPosition="before" class="tb-ai-chat-menu">
-  <button mat-menu-item (click)="renameSolution()">
+  <button mat-menu-item (click)="titleRef?.startRename()">
     <mat-icon fontSet="material-icons-round">edit</mat-icon>
     <span>{{ 'action.rename' | translate }}</span>
   </button>

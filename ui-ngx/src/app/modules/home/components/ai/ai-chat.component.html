@@ -10,56 +10,11 @@
   @if (variant() === 'panel') {
     <span class="tb-ai-mark m32" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
   }
-  @if (chat(); as chat) {
-    @if (renaming()) {
-      <span class="ai-chat-renaming">
-        <input #titleInput class="ai-chat-rename" [value]="chat.title"
-               [attr.aria-label]="'ai-assistant.chat-title' | translate"
-               (keydown)="onRenameKeydown($event)" (blur)="finishRename(titleInput.value)">
-        <button type="button" class="ai-ib" [attr.aria-label]="'ai-assistant.rename-save' | translate"
-                [matTooltip]="'ai-assistant.rename-save' | translate" matTooltipPosition="above"
-                (mousedown)="$event.preventDefault()" (click)="finishRename(titleInput.value)">
-          <mat-icon>check</mat-icon>
-        </button>
-        <button type="button" class="ai-ib" [attr.aria-label]="'ai-assistant.rename-discard' | translate"
-                [matTooltip]="'ai-assistant.rename-discard' | translate" matTooltipPosition="above"
-                (mousedown)="$event.preventDefault()" (click)="renaming.set(false)">
-          <mat-icon>close</mat-icon>
-        </button>
-      </span>
-    } @else {
-      <span class="ai-chat-name-wrap">
-        <button #chatName type="button" class="ai-chat-name" [class.clipped]="nameClipped()"
-                [matTooltip]="nameClipped() ? chat.title : ('ai-assistant.double-click-to-rename' | translate)"
-                matTooltipPosition="after" matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
-                (mouseenter)="nameClipped.set(chatName.scrollWidth > chatName.clientWidth + 1)"
-                (keydown.enter)="startRename()" (keydown.f2)="startRename()" (dblclick)="startRename()">{{ chat.title }}</button>
-        <button type="button" class="ai-chat-name-pen" [attr.aria-label]="'action.rename' | translate"
-                [matTooltip]="'action.rename' | translate" matTooltipPosition="above" (click)="startRename()">
-          <mat-icon fontSet="material-icons-round">edit</mat-icon>
-        </button>
-      </span>
-      @if (level(); as level) {
-        <span class="ai-chat-status" [class]="'ai-chat-status ' + level"
-              [matTooltip]="statusTip()" matTooltipPosition="below">
-          <span class="tb-ai-status-mark" [class]="'tb-ai-status-mark ' + level"></span>
-          <span>{{ ('ai-assistant.status-' + level) | translate }}</span>
-        </span>
-      }
-    }
-  } @else {
-    <span class="ai-chat-name">{{ 'ai-assistant.new-chat' | translate }}</span>
-  }
+  <tb-ai-chat-title [title]="chat()?.title" [placeholder]="'ai-assistant.new-chat' | translate" [level]="level()"
+                    [statusTip]="statusTip()" [compact]="variant() === 'panel'" (renamed)="rename($event)"></tb-ai-chat-title>
   <div class="ai-chat-actions">
-    @if (fullscreenEnabled()) {
-      <button type="button" class="ai-ib" (click)="toggleFullscreen()"
-              [matTooltip]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate" matTooltipPosition="above"
-              [attr.aria-label]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate">
-        <mat-icon fontSet="material-icons-round">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-      </button>
-    }
     @if (variant() === 'panel') {
-      @if (!renaming()) {
+      @if (!titleRef?.renaming()) {
         <button type="button" class="ai-ib more" [matMenuTriggerFor]="panelMenu"
                 [matTooltip]="'ai-assistant.chats-menu' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.chats-menu' | translate">
           <mat-icon>more_vert</mat-icon>
@@ -76,13 +31,20 @@
           </button>
         }
       }
-    } @else if (chat() && !renaming()) {
+    } @else if (chat() && !titleRef?.renaming()) {
       <button type="button" class="ai-ib more" [matMenuTriggerFor]="chatMenu"
               [matTooltip]="'action.more' | translate" matTooltipPosition="above" [attr.aria-label]="'action.more' | translate">
         <mat-icon>more_vert</mat-icon>
       </button>
     }
     <ng-content select="[aiChatActions]"></ng-content>
+    @if (fullscreenEnabled()) {
+      <button type="button" class="ai-ib" (click)="toggleFullscreen()"
+              [matTooltip]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate" matTooltipPosition="above"
+              [attr.aria-label]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate">
+        <mat-icon fontSet="material-icons-round">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      </button>
+    }
   </div>
 </header>
 <div tb-toast [toastTarget]="toastTarget()" class="pointer-events-none absolute inset-0"></div>

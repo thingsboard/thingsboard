@@ -19,6 +19,7 @@ import { AiTipDirective } from '@home/components/ai/ai-tip.directive';
 import { AiSpinComponent } from '@home/components/ai/ai-spin.component';
 import { AiSevMarkComponent } from '@home/components/ai/ai-sev-mark.component';
 import { AiLoadLinesComponent } from '@home/components/ai/ai-load-lines.component';
+import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
 import { AiWorkLineComponent } from '@home/components/ai/ai-work-line.component';
 import { AiActionLineComponent } from '@home/components/ai/ai-action-line.component';
 import { AiRunSummaryComponent } from '@home/components/ai/ai-run-summary.component';
@@ -53,7 +54,8 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiSparkComponent,
     AiQuestionComponent,
     AiSevMarkComponent,
-    AiLoadLinesComponent
+    AiLoadLinesComponent,
+    AiChatTitleComponent
   ],
   imports: [
     CommonModule,
@@ -64,6 +66,7 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiSpinComponent,
     AiSevMarkComponent,
     AiLoadLinesComponent,
+    AiChatTitleComponent,
     AiWorkLineComponent,
     AiRunSummaryComponent,
     AiSparkComponent,

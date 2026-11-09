@@ -49,6 +49,7 @@ import {
 import { aiActionWords, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction, SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL } from '@home/components/ai/ai-action.models';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
+import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
 
 export type AiChatVariant = 'page' | 'panel';
@@ -75,6 +76,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private static readonly RECENT_CHATS = 5;
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
+  @ViewChild(AiChatTitleComponent) titleRef: AiChatTitleComponent;
 
   chatId = model<string | undefined>(undefined);
 
@@ -117,9 +119,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   completedExecutions = signal<Record<string, ToolExecutionResult>>({});
 
-  renaming = signal<boolean>(false);
 
-  nameClipped = signal<boolean>(false);
 
   chat = computed(() => {
     const id = this.chatId();
@@ -306,36 +306,12 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   startRename(): void {
-    if (!this.chat()) {
-      return;
-    }
-    this.renaming.set(true);
-    setTimeout(() => {
-      const input = this.host.nativeElement.querySelector<HTMLInputElement>('.ai-chat-rename');
-      input?.focus();
-      input?.select();
-    });
+    this.titleRef?.startRename();
   }
 
-  onRenameKeydown(event: KeyboardEvent): void {
-    if (event.isComposing) {
-      return;
-    }
-    if (event.key === 'Enter') {
-      (event.target as HTMLInputElement).blur();
-    } else if (event.key === 'Escape') {
-      this.renaming.set(false);
-    }
-  }
-
-  finishRename(value: string): void {
+  rename(title: string): void {
     const chat = this.chat();
-    if (!this.renaming() || !chat) {
-      return;
-    }
-    this.renaming.set(false);
-    const title = value.trim();
-    if (title && title !== chat.title) {
+    if (chat) {
       this.chats.rename(chat.id, title).subscribe({error: err => this.showErrorMessage(err)});
     }
   }
@@ -494,7 +470,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       return;
     }
     this.cancelActiveMessage();
-    this.renaming.set(false);
+    this.titleRef?.cancelRename();
     this.shownChatId = chatId;
     this.resetLogPosition(0);
     this.messages.set([]);
