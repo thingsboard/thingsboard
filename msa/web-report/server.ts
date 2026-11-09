@@ -6,7 +6,16 @@ import bodyParser from 'body-parser';
 import config from 'config';
 import { _logger, flushLogs } from './config/logger';
 import { Browser, chromium, LaunchOptions } from 'playwright-core';
-import { resolveBrowserExecutable } from './browserExecutable';
+import fs from 'fs';
+import path from 'path';
+import {
+    browserLaunchTargets,
+    checkBrowserVersion,
+    describeTarget,
+    launchBrowser,
+    minChromeMajor,
+    smokeRender
+} from './browserLauncher';
 import { route } from './api/routes/tbWebReportRoutes';
 import { TbWebReportPageQueue } from './api/controllers/tbWebReportPageQueue';
 
@@ -33,9 +42,9 @@ let exiting: Promise<void> | undefined;
     try {
         logger.info('Starting ThingsBoard Web Report Microservice...');
 
-        const executable = resolveBrowserExecutable(message => logger.warn(message));
-        logger.info('Chrome headless browser executable: %s (%s)', executable.path, executable.source);
-        const executablePath = executable.path;
+        const plan = browserLaunchTargets(process.env.CHROME_EXECUTABLE, process.platform, fs.existsSync);
+        plan.warnings.forEach(warning => logger.warn(warning));
+        logger.info('Chrome headless browser candidates: %s', plan.targets.map(describeTarget).join(', '));
 
         const browserOptions: LaunchOptions  = {
             headless: true,
@@ -43,16 +52,20 @@ let exiting: Promise<void> | undefined;
             handleSIGINT: false,
             handleSIGTERM: false,
             args: ['--no-sandbox'],
-            timeout: Number(config.get('browser.launchTimeout')),
-            executablePath
+            timeout: Number(config.get('browser.launchTimeout'))
         };
-        browser = await chromium.launch(browserOptions);
+        browser = await launchBrowser(options => chromium.launch(options), browserOptions, plan.targets,
+            message => logger.warn(message));
 
         logger.info('Started chrome headless browser.');
 
         const ver = browser.version();
 
         logger.info('Headless chrome browser version: %s', ver);
+
+        checkBrowserVersion(ver, minChromeMajor(readPlaywrightBrowsersJson()));
+        await smokeRender(browser);
+        logger.info('Chrome headless browser rendered a test PDF.');
 
         pagesQueue = new TbWebReportPageQueue(browser, maxPages, useNewPage, () => exit(-1));
         await pagesQueue.init();
@@ -118,4 +131,9 @@ async function shutdown(status: number) {
     await flushLogs();
     logsFlushed = true;
     process.exit(status);
+}
+
+function readPlaywrightBrowsersJson(): any {
+    const file = path.join(path.dirname(require.resolve('playwright-core/package.json')), 'browsers.json');
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
 }

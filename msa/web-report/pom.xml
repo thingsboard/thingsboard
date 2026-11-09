@@ -30,9 +30,6 @@
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
-        <pkg.win.serviceEnvExtra><![CDATA[<!-- Reports are rendered with Google Chrome (C:\Program Files\Google\Chrome\Application\chrome.exe).
-         Uncomment to use another Chrome or Chromium executable, then restart the service: -->
-    <!-- <env name="CHROME_EXECUTABLE" value="C:\path\to\chrome.exe" /> -->]]></pkg.win.serviceEnvExtra>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
     </properties>
 
@@ -158,6 +155,14 @@
             <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
+                <configuration>
+                    <args combine.children="append">
+                        <arg>-PpkgDebDepends=google-chrome-stable | chromium (>= 1)</arg>
+                        <arg>-PpkgDebRecommends=fonts-noto-cjk,fonts-noto-color-emoji,fonts-roboto,fonts-liberation</arg>
+                        <arg>-PpkgRpmRequires=(google-chrome-stable or chromium)</arg>
+                        <arg>-PpkgRpmPostTrans=if [ -d ${pkg.installFolder}/chromium ]; then find ${pkg.installFolder}/chromium -depth -type d -empty -delete; fi</arg>
+                    </args>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

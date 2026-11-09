@@ -59,8 +59,7 @@ ospackage {
 
 }
 
-// tb-web-report renders reports with the Google Chrome installed on the system
-def isWebReport = pkgName == 'tb-web-report'
+def pkgList = { String name -> ((findProperty(name) ?: '') as String).split(',')*.trim().findAll() }
 
 // Configure our RPM build task
 buildRpm {
@@ -69,12 +68,15 @@ buildRpm {
 
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
+    doFirst { delete archiveFile }
 
-    if (isWebReport) {
-        requires("google-chrome-stable")
-        // Versions with bundled Chromium did not own its directories, so an upgrade leaves them behind empty.
-        // %posttrans runs after the old package's files are removed.
-        postTrans("if [ -d '${pkgInstallFolder}/chromium' ]; then find '${pkgInstallFolder}/chromium' -depth -type d -empty -delete; fi")
+    def rpmRequires = pkgList('pkgRpmRequires')
+    rpmRequires.each { requires(it) }
+    if (rpmRequires.any { it.startsWith('(') }) {
+        requires('rpmlib(RichDependencies)', '4.12.0-1', LESS | EQUAL)
+    }
+    if (findProperty('pkgRpmPostTrans')) {
+        postTrans(findProperty('pkgRpmPostTrans') as String)
     }
 
     preInstall file("${buildDir}/control/rpm/preinst")
@@ -112,15 +114,12 @@ buildDeb {
     configurationFile("${pkgInstallFolder}/conf/default.yml")
     configurationFile("${pkgInstallFolder}/conf/logger.js")
 
-    if (isWebReport) {
-        // Pre-Depends, not Depends: dpkg -i unpacks a package before checking its Depends, so an upgrade without Chrome
-        // would remove the bundled Chromium and leave the service without a browser. Pre-Depends stops it before unpacking.
-        preDepends("google-chrome-stable")
-        recommends("fonts-noto-cjk")
-        recommends("fonts-noto-color-emoji")
-        recommends("fonts-roboto")
-        recommends("fonts-liberation")
+    pkgList('pkgDebDepends').each { String entry ->
+        def alternatives = entry.split('\\|')*.trim()
+        def dependency = requires(alternatives.head())
+        alternatives.tail().each { dependency.or(it) }
     }
+    pkgList('pkgDebRecommends').each { recommends(it) }
 
     preInstall file("${buildDir}/control/deb/preinst")
     postInstall file("${buildDir}/control/deb/postinst")
