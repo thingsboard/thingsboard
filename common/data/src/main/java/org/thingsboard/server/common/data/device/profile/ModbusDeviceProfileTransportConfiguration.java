@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 @Data
 public class ModbusDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Request timeout in milliseconds", example = "3000")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Request timeout in milliseconds. Devices sharing one host:port share a connection, which uses the highest timeout among them", example = "3000")
     private Integer timeoutMs;
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Retries per request after a timeout", example = "1")
     private Integer retries;

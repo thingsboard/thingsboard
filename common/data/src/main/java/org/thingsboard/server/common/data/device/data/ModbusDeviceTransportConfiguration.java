@@ -20,7 +20,7 @@ public class ModbusDeviceTransportConfiguration implements DeviceTransportConfig
     private ModbusEndpoint endpoint = new ModbusTcpEndpoint();
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Unit id (slave address)", example = "1")
     private Integer unitId = 1;
-    @Schema(description = "Overrides the profile request timeout, e.g. for a slow serial bus behind a bridge", example = "5000")
+    @Schema(description = "Overrides the profile request timeout, e.g. for a slow serial bus behind a bridge. Devices sharing one host:port use the highest timeout among them", example = "5000")
     private Integer timeoutMs;
     @Schema(description = "Overrides the profile polling period", example = "10000")
     private Long pollPeriodMs;

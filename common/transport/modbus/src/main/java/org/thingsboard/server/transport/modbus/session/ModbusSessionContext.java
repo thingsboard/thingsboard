@@ -20,11 +20,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.transport.modbus.ModbusTransportContext;
+import org.thingsboard.server.transport.modbus.connection.ModbusConnection;
+import org.thingsboard.server.transport.modbus.poll.ModbusPollLoop;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -42,7 +43,11 @@ public class ModbusSessionContext extends DeviceAwareSessionContext implements S
     private final ModbusTransportContext parentCtx;
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
     @Getter
-    private final List<ScheduledFuture<?>> pollTasks = new CopyOnWriteArrayList<>();
+    private final List<ModbusPollLoop> pollLoops = new CopyOnWriteArrayList<>();
+    /** Connection this session polls through; set by startPolling, cleared by stopPolling. */
+    @Getter
+    @Setter
+    private volatile ModbusConnection connection;
 
     @Getter
     private volatile State state = State.ESTABLISHING;
@@ -69,6 +74,22 @@ public class ModbusSessionContext extends DeviceAwareSessionContext implements S
         return state == State.ACTIVE;
     }
 
+    public long getEffectiveTimeoutMs() {
+        Integer deviceTimeout = deviceConfig.getTimeoutMs();
+        return deviceTimeout != null ? deviceTimeout : profileConfig.getTimeoutMs();
+    }
+
+    public long getEffectiveTimeseriesPeriodMs() {
+        Long devicePeriod = deviceConfig.getPollPeriodMs();
+        return devicePeriod != null ? devicePeriod : profileConfig.getPollPeriodMs();
+    }
+
+    /** Profile attributes period, else the device period override, else the profile period. */
+    public long getEffectiveAttributesPeriodMs() {
+        Long profileAttributesPeriod = profileConfig.getAttributesPollPeriodMs();
+        return profileAttributesPeriod != null ? profileAttributesPeriod : getEffectiveTimeseriesPeriodMs();
+    }
+
     /**
      * Runs {@code onActivate} and moves to {@link State#ACTIVE}, but only if the session is still establishing.
      *
@@ -84,15 +105,15 @@ public class ModbusSessionContext extends DeviceAwareSessionContext implements S
     }
 
     /**
-     * Moves to {@link State#CLOSED} and cancels poll tasks.
+     * Moves to {@link State#CLOSED} and stops poll loops. The connection is released by the transport service.
      *
      * @return {@code true} if the session was active, i.e. registered with core and in need of deregistration
      */
     public synchronized boolean close() {
         boolean wasActive = state == State.ACTIVE;
         state = State.CLOSED;
-        pollTasks.forEach(task -> task.cancel(false));
-        pollTasks.clear();
+        pollLoops.forEach(ModbusPollLoop::stop);
+        pollLoops.clear();
         setDisconnected();
         return wasActive;
     }

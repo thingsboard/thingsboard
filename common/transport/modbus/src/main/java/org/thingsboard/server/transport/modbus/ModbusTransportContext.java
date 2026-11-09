@@ -169,7 +169,10 @@ public class ModbusTransportContext extends TransportContext {
             fail(session, null);
             return;
         }
+        verifyCredsAndRegisterSession(device, credentials, deviceId, session);
+    }
 
+    private void verifyCredsAndRegisterSession(Device device, DeviceCredentials credentials, DeviceId deviceId, ModbusSessionContext session) {
         transportService.process(DeviceTransportType.MODBUS,
                 TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(credentials.getCredentialsId()).build(),
                 new TransportServiceCallback<>() {
