@@ -3,8 +3,12 @@
 // Such a device gets the profile <brand_id>-<model_id>, so all devices of one model share it,
 // or the name the integration metadata gives it under profile.<brand_id>-<model_id>.
 // A device that is not in the Repository can name its model in decoded_payload: its payload formatter adds
-// tbVersionIds: { brand_id, model_id }, which is not telemetry. Any other device gets LoRaWAN Device.
+// tbVersionIds: { brand_id, model_id }, which is not telemetry; they become the attributes brandId and modelId, as the
+// integration writes them from version_ids. Any other device gets LoRaWAN Device.
+// The keys the integration metadata lists under attributes.<brand_id>-<model_id> (comma-separated) are saved as
+// attributes, not telemetry: device information and settings.
 var values = {};
+var attributes = {};
 var history = [];
 var versionIds = null;
 if (metadata.payloadFormat == "JSON") {
@@ -29,18 +33,37 @@ var modelId = metadata.modelId;
 if ((brandId == null || modelId == null) && versionIds instanceof java.util.Map) {
     brandId = versionIds.brand_id;
     modelId = versionIds.model_id;
+    if (brandId != null && modelId != null) {
+        attributes.put("brandId", brandId);
+        attributes.put("modelId", modelId);
+    }
 }
 var profile = "LoRaWAN Device";
 if (brandId != null && modelId != null) {
-    profile = brandId + "-" + modelId;
+    var model = brandId + "-" + modelId;
+    profile = model;
     // The profile name chosen at install, kept in the integration metadata
-    var customProfile = metadata["profile." + profile];
+    var customProfile = metadata["profile." + model];
     if (customProfile != null && customProfile != "") {
         profile = customProfile;
     }
+    var attributeKeys = metadata["attributes." + model];
+    if (attributeKeys != null && attributeKeys != "") {
+        foreach (item : attributeKeys.split(",")) {
+            var key = item.trim();
+            if (key != "" && values.containsKey(key)) {
+                attributes.put(key, values.get(key));
+                values.remove(key);
+            }
+        }
+    }
 }
-if (history.isEmpty()) {
-    return { profile: profile, telemetry: { ts: metadata.ts, values: values } };
+var result = { profile: profile, telemetry: { ts: metadata.ts, values: values } };
+if (!history.isEmpty()) {
+    history.add({ ts: metadata.ts, values: values });
+    result.telemetry = history;
 }
-history.add({ ts: metadata.ts, values: values });
-return { profile: profile, telemetry: history };
+if (!attributes.isEmpty()) {
+    result.attributes = attributes;
+}
+return result;

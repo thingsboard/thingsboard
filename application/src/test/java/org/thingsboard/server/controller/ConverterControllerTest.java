@@ -720,10 +720,11 @@ public class ConverterControllerTest extends AbstractControllerTest {
 
     private static final String THINGS_STACK_FORMATTER_DEVICE_RESULT = "{\"entityType\":\"DEVICE\",\"name\":\"macro-tracker-1\",\"profile\":\"lansitec-macro-tracker\",\"label\":\"macro-tracker-1\",\"group\":\"my-app\"," +
                 "\"telemetry\":{\"ts\":1794304800100,\"values\":{\"batteryLevel\":100,\"chargeState\":\"Charging\",\"fCnt\":5,\"data\":\"IWQ+Az4AbFA=\",\"rssi\":-70,\"snr\":7.0}}," +
-                "\"attributes\":{\"eui\":\"70B3D57ED006F371\",\"deviceId\":\"macro-tracker-1\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
+                "\"attributes\":{\"brandId\":\"lansitec\",\"modelId\":\"macro-tracker\",\"eui\":\"70B3D57ED006F371\",\"deviceId\":\"macro-tracker-1\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
                 "\"spreadingFactor\":9,\"frequency\":868300000}}";
 
-    // A device added without the Repository, whose payload formatter names its model in tbVersionIds
+    // A device added without the Repository, whose payload formatter names its model in tbVersionIds: the profile of the
+    // model, and the brandId and modelId attributes, as a Repository device gets them from version_ids
     @Test
     public void testThingsStackDefaultConvertersGiveFormatterDeviceTheModelProfileOfItsDecodedPayload() throws IOException {
         testThingsStackDefaultConverters(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD, Map.of(), THINGS_STACK_FORMATTER_DEVICE_RESULT);
@@ -751,9 +752,41 @@ public class ConverterControllerTest extends AbstractControllerTest {
     public void testThingsStackDefaultConvertersIgnoreTbVersionIdsThatIsNotAnObject() throws IOException {
         ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD));
         ((ObjectNode) payload.get("uplink_message").get("decoded_payload")).put("tbVersionIds", "lansitec-macro-tracker");
-        String expectedDecodedMessage = THINGS_STACK_FORMATTER_DEVICE_RESULT.replace("\"profile\":\"lansitec-macro-tracker\"", "\"profile\":\"LoRaWAN Device\"");
+        String expectedDecodedMessage = THINGS_STACK_FORMATTER_DEVICE_RESULT.replace("\"profile\":\"lansitec-macro-tracker\"", "\"profile\":\"LoRaWAN Device\"")
+                .replace("\"brandId\":\"lansitec\",\"modelId\":\"macro-tracker\",", "");
 
         testThingsStackDefaultConvertersOnPayload(payload.toString(), Map.of(), expectedDecodedMessage);
+    }
+
+    // The keys the integration metadata lists for the model are attributes, not telemetry; spaces around them are ignored,
+    // and a listed key the uplink doesn't have is skipped. The model may come from tbVersionIds
+    @Test
+    public void testThingsStackDefaultConvertersSaveTheModelsListedKeysAsAttributes() throws IOException {
+        String expectedDecodedMessage = THINGS_STACK_FORMATTER_DEVICE_RESULT
+                .replace("\"chargeState\":\"Charging\",", "")
+                .replace("\"attributes\":{", "\"attributes\":{\"chargeState\":\"Charging\",");
+
+        testThingsStackDefaultConverters(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD,
+                Map.of("attributes.lansitec-macro-tracker", " chargeState , firmwareVersionOfTheTracker"), expectedDecodedMessage);
+    }
+
+    // The list is per brand and model, not per profile name: a renamed profile keeps it. History records stay telemetry
+    @Test
+    public void testThingsStackDefaultConvertersTakeTheListOfARepositoryDeviceByItsModel() throws IOException {
+        String expectedDecodedMessage = THINGS_STACK_REPOSITORY_DEVICE_RESULT
+                .replace("\"profile\":\"milesight-iot-am308\"", "\"profile\":\"AM308\"")
+                .replace("{\"battery\":95,", "{")
+                .replace("\"attributes\":{", "\"attributes\":{\"battery\":95,");
+
+        testThingsStackDefaultConverters(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD,
+                Map.of("profile.milesight-iot-am308", "AM308", "attributes.milesight-iot-am308", "battery"), expectedDecodedMessage);
+    }
+
+    // The list of another model changes nothing
+    @Test
+    public void testThingsStackDefaultConvertersIgnoreTheListOfAnotherModel() throws IOException {
+        testThingsStackDefaultConverters(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD,
+                Map.of("attributes.lansitec-solar-tracker", "chargeState"), THINGS_STACK_FORMATTER_DEVICE_RESULT);
     }
 
     // The TBEL and JS defaults are two copies of one script, so each of them must give this result for TTN and TTI
