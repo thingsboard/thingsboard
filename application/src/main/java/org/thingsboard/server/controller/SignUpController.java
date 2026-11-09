@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
@@ -406,7 +407,9 @@ public class SignUpController extends BaseController {
         String baseUrl = MiscUtils.constructBaseUrl(request);
         String loginUrl;
         if (!StringUtils.isEmpty(pkgName)) {
-            loginUrl = String.format("%s/api/noauth/login?pkgName=%s", baseUrl, pkgName);
+            loginUrl = UriComponentsBuilder.fromUriString(baseUrl).path("/api/noauth/login")
+                    .queryParam("pkgName", pkgName).queryParam("platform", platform)
+                    .encode().toUriString();
         } else {
             loginUrl = String.format("%s/login", baseUrl);
         }
