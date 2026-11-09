@@ -211,7 +211,9 @@
         </div>
         <div #paneBody class="sol-pane-body" [class.dark]="json()" (scroll)="onPaneScroll(paneBody)">
           @if (making() === 'solution' && currentView() === 'solution' && progressInfo(); as progress) {
-            <tb-solution-installed [solution]="progress" [creating]="true" [items]="installProgress()?.items ?? null"></tb-solution-installed>
+            <tb-solution-installed [solution]="progress" [creating]="true" [items]="installProgress()?.items ?? null"
+                                   [stage]="installProgress()?.stage ?? null" [createShare]="createShare()"
+                                   [seconds]="makeSeconds()" [startedAt]="makeStartedAt()"></tb-solution-installed>
           } @else if (making() && currentView() === making()) {
             <div class="sol-loading">
               <span class="sol-loading-glow" aria-hidden="true"></span>

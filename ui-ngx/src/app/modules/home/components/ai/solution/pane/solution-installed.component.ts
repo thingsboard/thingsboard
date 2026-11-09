@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, computed, EventEmitter, inject, input, Output, signal } from '@angular/core';
+import { Component, computed, DestroyRef, EventEmitter, inject, input, Output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
-import { EntityResult, SolutionCreatorInfo, SolutionProgressItem } from '@shared/models/solution-creator.models';
+import { EntityResult, SolutionCreatorInfo, SolutionInstallProgress, SolutionProgressItem } from '@shared/models/solution-creator.models';
 import {
   baseDetailsPageByEntityType,
   EntityType,
@@ -43,6 +43,12 @@ const SECTIONS: EntityType[] = [
   EntityType.RULE_CHAIN
 ];
 
+const SUPPORTING: EntityType[] = [EntityType.ENTITY_GROUP, EntityType.RULE_CHAIN];
+
+const GENERATED: EntityType[] = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.USER];
+
+const STEP_MS = 160;
+
 @Component({
   selector: 'tb-solution-installed',
   templateUrl: './solution-installed.component.html',
@@ -54,6 +60,10 @@ export class SolutionInstalledComponent {
   solution = input.required<SolutionCreatorInfo>();
   creating = input(false);
   items = input<SolutionProgressItem[] | null>(null);
+  stage = input<SolutionInstallProgress['stage'] | null>(null);
+  createShare = input(0.85);
+  seconds = input(90);
+  startedAt = input(0);
 
   @Output() openMain = new EventEmitter<void>();
 
@@ -61,6 +71,44 @@ export class SolutionInstalledComponent {
   private authService = inject(AuthService);
 
   bannerClosed = signal(false);
+
+  private shown = signal(-1);
+  private elapsed = signal(0);
+
+  private planned = computed(() => {
+    const items = this.items() ?? [];
+    return SECTIONS.flatMap(type => items.filter(item => item.type === type));
+  });
+
+  private target = computed(() => {
+    const planned = this.planned();
+    if (!planned.length) {
+      return 0;
+    }
+    const share = this.createShare();
+    const install = this.stage() === 'INSTALL';
+    const ready = planned.filter(item => install ? item.state === 'DONE' : item.state !== 'WORKING').length / planned.length;
+    let count = Math.floor(planned.length * (install ? share + (1 - share) * ready : share * ready));
+    if (!install && !planned.some(item => GENERATED.includes(item.type))) {
+      count = Math.min(count, Math.max(0, planned.filter(item => item.type === EntityType.DASHBOARD).length - 1));
+    }
+    const paced = Math.floor(planned.length * this.elapsed() / Math.max(1, this.seconds()));
+    return Math.min(count, paced, planned.length - 1);
+  });
+
+  constructor() {
+    const created = Date.now();
+    const timer = setInterval(() => {
+      this.elapsed.set((Date.now() - (this.startedAt() || created)) / 1000);
+      const target = this.target();
+      if (this.shown() < 0) {
+        this.shown.set(target);
+      } else if (this.shown() < target) {
+        this.shown.update(count => count + 1);
+      }
+    }, STEP_MS);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+  }
 
   installed = computed(() => !!this.solution()?.metadata?.installed);
 
@@ -82,6 +130,7 @@ export class SolutionInstalledComponent {
           icon: kind.icon,
           palette: kind.palette,
           rows: aggregateByName(type, results[type])
+            .filter(row => !SUPPORTING.includes(type) || row.status !== IssueStatus.OK)
         };
       })
       .filter(section => section.rows.length);
@@ -96,13 +145,17 @@ export class SolutionInstalledComponent {
   hasMain = computed(() => !!this.solution()?.metadata?.installResult?.mainDashboardId);
 
   private plannedSections(items: SolutionProgressItem[], results: Partial<Record<EntityType, EntityResult[]>>): InstalledSection[] {
+    const shown = Math.max(0, this.shown());
+    const install = this.stage() === 'INSTALL';
+    let index = 0;
     return SECTIONS
       .map(type => {
         const kind = aiEntityKind(type === EntityType.ALARM ? 'ALARM_RULE' : type === EntityType.ROLE ? EntityType.USER : type);
         const created = aggregateByName(type, results[type]);
         const rows: InstalledRow[] = items.filter(item => item.type === type).map(item => {
+          const position = index++;
           const result = created.find(row => row.primary?.additionalData?.name === item.name);
-          if (result && item.state === 'DONE') {
+          if (position < shown && install && result && item.state === 'DONE') {
             return result;
           }
           return {
@@ -111,7 +164,7 @@ export class SolutionInstalledComponent {
             status: IssueStatus.OK,
             errors: [],
             warnings: [],
-            progress: item.state === 'WORKING' ? 'now' : 'wait'
+            progress: position < shown ? undefined : position === shown ? 'now' : 'wait'
           };
         });
         return {type, title: entityTypeTranslations.get(type)?.typePlural ?? type, icon: kind.icon, palette: kind.palette, rows};

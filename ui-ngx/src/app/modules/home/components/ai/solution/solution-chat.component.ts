@@ -159,6 +159,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   failure = signal<string | null>(null);
   installProgress = signal<SolutionInstallProgress | null>(null);
+  makeStartedAt = signal(0);
+  private installOnly = signal(false);
   private messageSteps: SolutionStep[] = [];
 
   progressInfo = computed<SolutionCreatorInfo | null>(() => {
@@ -168,6 +170,25 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       return null;
     }
     return {...info, metadata: {built: true, installed: false, installResult: {createdEntities: [], entityResults: progress.entityResults as any}}};
+  });
+
+  createShare = computed(() => {
+    if (this.installOnly()) {
+      return 0;
+    }
+    const estimates = this.info()?.estimates;
+    const create = estimates?.CREATE?.seconds;
+    const install = estimates?.INSTALL?.seconds;
+    return create > 0 && install > 0 ? Math.min(.95, Math.max(.5, create / (create + install))) : .85;
+  });
+
+  makeSeconds = computed(() => {
+    const estimates = this.info()?.estimates;
+    if (this.installOnly()) {
+      return Math.max(5, estimates?.INSTALL?.seconds ?? 15);
+    }
+    const seconds = (estimates?.CREATE?.seconds ?? 0) + (estimates?.INSTALL?.seconds ?? 0);
+    return estimates?.CREATE && estimates?.INSTALL ? Math.max(20, seconds) : 90;
   });
 
   private closingPatch = signal<Partial<GeneralChatMessage>>({});
@@ -776,6 +797,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           this.creatorStep.set('result');
         } else {
           this.installProgress.set(null);
+          this.makeStartedAt.set(Date.now());
+          this.installOnly.set(false);
           const dialogRef = this.initGenerateState('create');
           const uninstallOrContinue$ = !this.solutionInfo.metadata?.installed
             ? of(null)
@@ -824,6 +847,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   installSolution() {
     this.failure.set(null);
     this.installProgress.set(null);
+    this.makeStartedAt.set(Date.now());
+    this.installOnly.set(true);
     if (window.innerWidth >= SolutionChatComponent.NARROW_WIDTH) {
       this.paneOpen.set(true);
     }
