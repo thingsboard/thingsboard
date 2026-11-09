@@ -21,8 +21,8 @@ A JavaScript function invoked when user double-clicks on SVG element with specif
 
 <div class="divider"></div>
 
-If the same tag also has an *on click* action configured, the click action is automatically deferred for a short interval
-and cancelled when a double click is detected — only the double click action is executed.
+A tag can have either an *on click* or an *on double click* action, but not both: every double click also fires two clicks.
+If the symbol metadata contains both, only the click action is executed.
 
 ##### Example
 
@@ -44,7 +44,7 @@ ctx.api.callAction(event, 'doubleClick');  // Trigger widget action 'doubleClick
 
 *Example Use Case*
 
-- **Navigate to Dashboard State:** If the 'doubleClick' action is configured to navigate to a detailed dashboard state, the user will be redirected to that state when double-clicking on the element, while a single click may be reserved for a quick toggle action.
+- **Navigate to Dashboard State:** If the 'doubleClick' action is configured to navigate to a detailed dashboard state, the user will be redirected to that state when double-clicking on the element.
 - **Open URL:** If configured to open a URL, double-clicking on the element will take the user to a specified web resource.
 
 <br>

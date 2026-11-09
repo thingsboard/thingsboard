@@ -11,8 +11,8 @@ import {
   setupTagPanelTooltip
 } from '@home/pages/scada-symbol/scada-symbol-tooltip.components';
 import {
-  ScadaSymbolActionTrigger,
-  scadaSymbolActionTriggers,
+  activeActionTriggers,
+  ScadaSymbolTagActions,
   ScadaSymbolBehavior,
   ScadaSymbolBehaviorType,
   scadaSymbolContentData,
@@ -41,9 +41,9 @@ export interface ScadaSymbolData {
 
 export interface ScadaSymbolEditObjectCallbacks {
   tagHasStateRenderFunction: (tag: string) => boolean;
-  tagHasAction: (tag: string, trigger: ScadaSymbolActionTrigger) => boolean;
+  tagActions: (tag: string) => ScadaSymbolTagActions;
   editTagStateRenderFunction: (tag: string) => void;
-  editTagAction: (tag: string, trigger: ScadaSymbolActionTrigger) => void;
+  editTagActions: (tag: string) => void;
   tagsUpdated: (tags: string[]) => void;
   hasHiddenElements?: (hasHidden: boolean) => void;
   onSymbolEditObjectDirty: (dirty: boolean) => void;
@@ -413,16 +413,16 @@ export class ScadaSymbolEditObject {
     return this.callbacks.tagHasStateRenderFunction(tag);
   }
 
-  public tagHasAction(tag: string, trigger: ScadaSymbolActionTrigger): boolean {
-    return this.callbacks.tagHasAction(tag, trigger);
+  public tagActions(tag: string): ScadaSymbolTagActions {
+    return this.callbacks.tagActions(tag);
   }
 
   public editTagStateRenderFunction(tag: string) {
     this.callbacks.editTagStateRenderFunction(tag);
   }
 
-  public editTagAction(tag: string, trigger: ScadaSymbolActionTrigger) {
-    this.callbacks.editTagAction(tag, trigger);
+  public editTagActions(tag: string) {
+    this.callbacks.editTagActions(tag);
   }
 
   public setDirty(dirty: boolean) {
@@ -635,16 +635,16 @@ export class ScadaSymbolElement {
     }
   }
 
-  public hasAction(trigger: ScadaSymbolActionTrigger): boolean {
+  public actions(): ScadaSymbolTagActions {
     if (this.hasTag()) {
-      return this.editObject.tagHasAction(this.tag, trigger);
+      return this.editObject.tagActions(this.tag);
     } else {
-      return false;
+      return null;
     }
   }
 
-  public hasAnyAction(): boolean {
-    return scadaSymbolActionTriggers.some(trigger => this.hasAction(trigger));
+  public actionsCount(): number {
+    return activeActionTriggers(this.actions()).length;
   }
 
   public editStateRenderFunction() {
@@ -653,9 +653,9 @@ export class ScadaSymbolElement {
     }
   }
 
-  public editAction(trigger: ScadaSymbolActionTrigger) {
+  public editActions() {
     if (this.hasTag()) {
-      this.editObject.editTagAction(this.tag, trigger);
+      this.editObject.editTagActions(this.tag);
     }
   }
 

@@ -20,9 +20,9 @@ import { Subject } from 'rxjs';
 import { ScadaSymbolData, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import {
   parseScadaSymbolMetadataFromContent,
-  ScadaSymbolActionTrigger,
   ScadaSymbolMetadata,
   ScadaSymbolObjectSettings,
+  ScadaSymbolTagActions,
   updateScadaSymbolMetadataInContent
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -330,21 +330,17 @@ export class ScadaSymbolComponent extends PageComponent
     return false;
   }
 
-  tagHasAction(tag: string, trigger: ScadaSymbolActionTrigger): boolean {
+  tagActions(tag: string): ScadaSymbolTagActions {
     const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
-    if (metadata.tags) {
-      const found = metadata.tags.find(t => t.tag === tag);
-      return !!found?.actions?.[trigger]?.actionFunction;
-    }
-    return false;
+    return metadata.tags?.find(t => t.tag === tag)?.actions ?? null;
   }
 
   editTagStateRenderFunction(tag: string) {
     this.symbolMetadata.editTagStateRenderFunction(tag);
   }
 
-  editTagAction(tag: string, trigger: ScadaSymbolActionTrigger) {
-    this.symbolMetadata.editTagAction(tag, trigger);
+  editTagActions(tag: string) {
+    this.symbolMetadata.editTagActions(tag);
   }
 
   onSymbolEditObjectDirty(dirty: boolean) {

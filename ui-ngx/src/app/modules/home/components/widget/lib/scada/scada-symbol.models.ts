@@ -106,32 +106,32 @@ export type ScadaSymbolActionTrigger = 'click' | 'dblclick' | 'contextmenu';
 
 export interface ScadaSymbolActionTriggerInfo {
   name: string;
+  enabledLabel: string;
   helpId: string;
+  excludedBy?: ScadaSymbolActionTrigger;
 }
 
 export const scadaSymbolActionTriggerInfo: Record<ScadaSymbolActionTrigger, ScadaSymbolActionTriggerInfo> = {
   click: {
     name: 'scada.tag.on-click-action',
+    enabledLabel: 'scada.tag.on-click-action-enabled',
     helpId: 'scada/tag_click_action_fn'
   },
   dblclick: {
     name: 'scada.tag.on-double-click-action',
-    helpId: 'scada/tag_dblclick_action_fn'
+    enabledLabel: 'scada.tag.on-double-click-action-enabled',
+    helpId: 'scada/tag_dblclick_action_fn',
+    excludedBy: 'click'
   },
   contextmenu: {
     name: 'scada.tag.on-right-click-action',
+    enabledLabel: 'scada.tag.on-right-click-action-enabled',
     helpId: 'scada/tag_contextmenu_action_fn'
   }
 };
 
 export const scadaSymbolActionTriggers =
   Object.keys(scadaSymbolActionTriggerInfo) as ScadaSymbolActionTrigger[];
-
-// Max interval between clicks of a double click: a click action is deferred by this amount
-// when the same tag also has a dblclick action, so it can be canceled by the second click.
-const dblClickDelay = 500;
-
-
 
 export type ScadaSymbolActionFunction = (ctx: ScadaSymbolContext, element: Element, event: Event) => void;
 export interface ScadaSymbolAction {
@@ -143,8 +143,26 @@ export interface ScadaSymbolTag {
   tag: string;
   stateRenderFunction?: string;
   stateRender?: ScadaSymbolTagStateRenderFunction;
-  actions?: {[trigger in ScadaSymbolActionTrigger]?: ScadaSymbolAction};
+  actions?: ScadaSymbolTagActions;
 }
+
+export type ScadaSymbolTagActions = {[trigger in ScadaSymbolActionTrigger]?: ScadaSymbolAction};
+
+export const exclusiveActionTrigger = (trigger: ScadaSymbolActionTrigger): ScadaSymbolActionTrigger | undefined =>
+  scadaSymbolActionTriggerInfo[trigger].excludedBy ??
+  scadaSymbolActionTriggers.find(other => scadaSymbolActionTriggerInfo[other].excludedBy === trigger);
+
+const isActionExcluded = (actions: ScadaSymbolTagActions, trigger: string): boolean =>
+  scadaSymbolActionTriggers.some(known => {
+    const excludedBy = scadaSymbolActionTriggerInfo[known].excludedBy;
+    return known === trigger && !!excludedBy && !!actions[excludedBy];
+  });
+
+const activeTagActions = (actions: ScadaSymbolTagActions): [string, ScadaSymbolAction][] =>
+  Object.entries(actions).filter(([trigger, action]) => !!action && !isActionExcluded(actions, trigger));
+
+export const activeActionTriggers = (actions: ScadaSymbolTagActions): ScadaSymbolActionTrigger[] =>
+  actions ? scadaSymbolActionTriggers.filter(trigger => !!actions[trigger] && !isActionExcluded(actions, trigger)) : [];
 
 export enum ScadaSymbolBehaviorType {
   value = 'value',
@@ -532,8 +550,6 @@ export class ScadaSymbolObject {
   private readonly shapeResize$: ResizeObserver;
   private readonly destroy$ = new Subject<void>();
 
-  private readonly deferredClickTimeouts = new Set<ReturnType<typeof setTimeout>>();
-
   private scale = 1;
 
   private performInit = true;
@@ -563,8 +579,6 @@ export class ScadaSymbolObject {
   public destroy() {
     this.destroy$.next();
     this.destroy$.complete();
-    this.deferredClickTimeouts.forEach(timeout => clearTimeout(timeout));
-    this.deferredClickTimeouts.clear();
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
@@ -594,11 +608,8 @@ export class ScadaSymbolObject {
     for (const tag of this.metadata.tags) {
       tag.stateRender = parseFunction(tag.stateRenderFunction, ['ctx', 'element']) || (() => {});
       if (tag.actions) {
-        for (const trigger of scadaSymbolActionTriggers) {
-          const action = tag.actions[trigger];
-          if (action) {
-            action.action = parseFunction(action.actionFunction, ['ctx', 'element', 'event']) || (() => {});
-          }
+        for (const [, action] of activeTagActions(tag.actions)) {
+          action.action = parseFunction(action.actionFunction, ['ctx', 'element', 'event']) || (() => {});
         }
       }
     }
@@ -690,38 +701,15 @@ export class ScadaSymbolObject {
     for (const tag of this.metadata.tags) {
       if (tag.actions) {
         const elements = this.svgShape.find(`[tb\\:tag="${tag.tag}"]`);
-        const deferClick = !!tag.actions.click && !!tag.actions.dblclick;
-        for (const trigger of scadaSymbolActionTriggers) {
-          const action = tag.actions[trigger];
-          if (!action) {
-            continue;
-          }
+        for (const [trigger, action] of activeTagActions(tag.actions)) {
           elements.forEach(element => {
             element.attr('cursor', 'pointer');
-            if (trigger === 'click' && deferClick) {
-              let clickTimeout: ReturnType<typeof setTimeout> = null;
-              element.on('click', (event: MouseEvent) => {
-                if (clickTimeout !== null) {
-                  clearTimeout(clickTimeout);
-                  this.deferredClickTimeouts.delete(clickTimeout);
-                  clickTimeout = null;
-                }
-                if (event.detail === 1) {
-                  clickTimeout = setTimeout(() => {
-                    this.deferredClickTimeouts.delete(clickTimeout);
-                    action.action(this.context, element, event);
-                  }, dblClickDelay);
-                  this.deferredClickTimeouts.add(clickTimeout);
-                }
-              });
-            } else {
-              element.on(trigger, (event) => {
-                if (trigger === 'contextmenu') {
-                  event.preventDefault();
-                }
-                action.action(this.context, element, event);
-              });
-            }
+            element.on(trigger, (event) => {
+              if (trigger === 'contextmenu') {
+                event.preventDefault();
+              }
+              action.action(this.context, element, event);
+            });
           });
         }
       }

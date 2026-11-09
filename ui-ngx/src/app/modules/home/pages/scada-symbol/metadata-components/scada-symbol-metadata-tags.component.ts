@@ -25,9 +25,7 @@ import {
   Validator
 } from '@angular/forms';
 import {
-  ScadaSymbolActionTrigger,
   scadaSymbolActionTriggers,
-  scadaSymbolActionTriggerInfo,
   ScadaSymbolTag
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import {
@@ -77,10 +75,6 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   @Input()
   actionFunctionCompleter: TbEditorCompleter;
-
-  actionTriggers = scadaSymbolActionTriggers;
-
-  actionTriggerInfo = scadaSymbolActionTriggerInfo;
 
   tagsFormGroup: UntypedFormGroup;
 
@@ -179,12 +173,12 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     });
   }
 
-  editTagAction(tag: string, trigger: ScadaSymbolActionTrigger): void {
+  editTagActions(tag: string): void {
     setTimeout(() => {
       const tags: ScadaSymbolTag[] = this.tagsFormGroup.get('tags').value;
       const index = tags.findIndex(t => t.tag === tag);
       const tagComponent = this.metadataTags.get(index);
-      tagComponent?.editAction(trigger);
+      tagComponent?.editActions();
     });
   }
 

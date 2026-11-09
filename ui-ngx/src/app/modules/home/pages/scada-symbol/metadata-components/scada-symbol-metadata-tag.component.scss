@@ -2,10 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 .tb-scada-symbol-metadata-tag-row {
   .tb-tag-field {
-    flex: 1 1 40%;
+    flex: 1 1 70%;
   }
-  .tb-state-render-function-field, .tb-action-function-field {
+  .tb-state-render-function-field {
     flex: 1 1 15%;
+  }
+  .tb-actions-field {
+    flex: 1 1 15%;
+  }
+  .tb-state-render-function-field, .tb-actions-field {
     display: flex;
     justify-content: flex-end;
     .mdc-button {

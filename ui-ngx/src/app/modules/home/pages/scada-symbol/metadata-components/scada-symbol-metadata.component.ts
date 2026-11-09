@@ -23,11 +23,7 @@ import {
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import {
-  emptyMetadata,
-  ScadaSymbolActionTrigger,
-  ScadaSymbolMetadata
-} from '@home/components/widget/lib/scada/scada-symbol.models';
+import { emptyMetadata, ScadaSymbolMetadata } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
@@ -198,9 +194,9 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     this.symbolMetadataTags.editTagStateRenderFunction(tag);
   }
 
-  editTagAction(tag: string, trigger: ScadaSymbolActionTrigger): void {
+  editTagActions(tag: string): void {
     this.selectedOption = 'tags';
-    this.symbolMetadataTags.editTagAction(tag, trigger);
+    this.symbolMetadataTags.editTagActions(tag);
   }
 
   public validate(c: UntypedFormControl) {

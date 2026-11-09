@@ -26,8 +26,8 @@ import {
   ScadaSymbolMetadataTagFunctionPanelComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag-function-panel.component';
 import {
-  ScadaSymbolTagActionButtonDirective
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-tag-action-button.directive';
+  ScadaSymbolMetadataTagActionsPanelComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag-actions-panel.component';
 
 @NgModule({
   declarations:
@@ -35,8 +35,8 @@ import {
       ScadaSymbolMetadataComponent,
       ScadaSymbolMetadataTagComponent,
       ScadaSymbolMetadataTagsComponent,
-      ScadaSymbolTagActionButtonDirective,
       ScadaSymbolMetadataTagFunctionPanelComponent,
+      ScadaSymbolMetadataTagActionsPanelComponent,
       ScadaSymbolBehaviorsComponent,
       ScadaSymbolBehaviorRowComponent,
       ScadaSymbolBehaviorPanelComponent
