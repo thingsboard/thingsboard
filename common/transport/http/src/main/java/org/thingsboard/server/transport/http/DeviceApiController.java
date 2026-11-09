@@ -141,7 +141,7 @@ public class DeviceApiController implements TbTransportService {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK",
                     content = @Content(schema = @Schema(implementation = JsonNode.class),
-                            examples = @ExampleObject(name = "attributes", value = "{\"client\": {\"clientKey\": \"value1\"}, \"shared\": {\"sharedKey\": 42}}"))),
+                            examples = @ExampleObject(name = "attributes", value = GET_ATTRIBUTES_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
     })
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -454,10 +454,15 @@ public class DeviceApiController implements TbTransportService {
                     "  \"credentialsType\":\"ACCESS_TOKEN\",\n" +
                     "  \"credentialsValue\":\"DEVICE_ACCESS_TOKEN\",\n" +
                     "  \"status\":\"SUCCESS\"\n" +
-                    "}" + MARKDOWN_CODE_BLOCK_END)
+                    "}" + MARKDOWN_CODE_BLOCK_END +
+                    "For the MQTT_BASIC credentials type, 'credentialsValue' is a JSON object with the MQTT client id, user name and password. " +
+                    "A failed provisioning is also returned with HTTP 200: the response then has 'status' set to NOT_FOUND or FAILURE and an 'errorMsg' instead of credentials, so clients must check the 'status' field.")
     @ApiResponse(responseCode = "200", description = "OK",
             content = @Content(schema = @Schema(implementation = JsonNode.class),
-                            examples = @ExampleObject(name = "provisioned", value = "{\"credentialsType\": \"ACCESS_TOKEN\", \"credentialsValue\": \"sLzc0gDAZPkGMzFVTyUY\", \"status\": \"SUCCESS\"}")))
+                            examples = {
+                                    @ExampleObject(name = "provisioned", value = "{\"credentialsType\": \"ACCESS_TOKEN\", \"credentialsValue\": \"sLzc0gDAZPkGMzFVTyUY\", \"status\": \"SUCCESS\"}"),
+                                    @ExampleObject(name = "notFound", value = "{\"errorMsg\": \"Provision data was not found!\", \"status\": \"NOT_FOUND\"}")
+                            }))
     @RequestMapping(value = "/provision", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> provisionDevice(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "JSON with provision request. See API call description for example.")
