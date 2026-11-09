@@ -40,6 +40,7 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { IntegrationType } from '@shared/models/integration.models';
 import { differsFromDefaultConverter, loadDefaultUplinkConverter, loadOwnDefaultConverterIds } from '@home/components/iot-hub/iot-hub-default-converter';
+import { downloadEntityJson, readableMessage, requestFailureMessage, splitTextWithLink } from '@home/components/iot-hub/iot-hub-utils';
 import {
   cleanFormFieldValue,
   DeviceInstallStep,
@@ -118,15 +119,6 @@ export interface DeviceInstallUpdate {
   fromVersionId: string;
   fromVersion: string;
 }
-
-// ThingsBoard error codes whose message is written for the user: validation, permission, not found, limits
-const SHOWN_ERROR_CODES = new Set([20, 30, 31, 32, 33, 34, 35, 40, 41]);
-const MAX_SHOWN_ERROR_LENGTH = 200;
-
-/** The message as it is when it reads like one written for the user, null for an internal one (a stack trace, a URL, too long). */
-const readableMessage = (message: unknown): string | null =>
-  typeof message === 'string' && message.trim() && message.length <= MAX_SHOWN_ERROR_LENGTH &&
-  !/exception|java\.|https?:\/\/|\bat [\w.$]+\(/i.test(message) ? message : null;
 
 // Fields the server sets, or that the update keeps as they are: they don't count as changes the user made.
 // Nor do the debug settings, which change nothing the entity does, and whether a profile is the default one.
@@ -1901,6 +1893,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return step.type === InstallStepType.INTEGRATION && step.metadata ? this.stepMetadataEntries(step) : undefined;
   }
 
+  /** The entries the INTEGRATION step adds to the integration's metadata, which a delete of the package removes. */
+  private addedMetadataOf(step: DeviceInstallStep): Record<string, string> | undefined {
+    const entries = Object.entries(this.integrationMetadataOf(step) ?? {}).filter(([, value]) => value !== null);
+    return entries.length ? Object.fromEntries(entries) : undefined;
+  }
+
   /** The INTEGRATION step's metadata entries, resolved: null for a self-mapping, whose earlier value is removed. */
   private stepMetadataEntries(step: DeviceInstallStep): Record<string, string | null> {
     const entries: Record<string, string | null> = {};
@@ -2014,18 +2012,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /**
-   * What the user sees for a failed request: ThingsBoard's validation and limit messages as they are,
-   * anything else (a server error, the network, a bug) as a common message, with the details in the console.
-   */
   private failureMessage(error: any): string {
-    const body = error?.error;
-    const message = SHOWN_ERROR_CODES.has(body?.errorCode) ? readableMessage(body.message) : null;
-    if (message) {
-      return message;
-    }
-    console.error('Device package step failed', error);
-    return this.translate.instant('iot-hub.device-install-unexpected-error');
+    return requestFailureMessage(error, this.translate);
   }
 
   // --- Update ---
@@ -2054,7 +2042,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** A translated text with a link written as <a>…</a>, which the translation may put anywhere in it, split around the link. */
   /** Update: what the update did with the entity of a row, once it succeeded. */
   updateOutcomeOf(plan: EntityStepPlan | undefined): string {
     if (!plan || plan.action === 'keep' || plan.resolution === 'use-existing') {
@@ -2064,9 +2051,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   textWithLink(key: string): { before: string; link: string; after: string } {
-    const text: string = this.translate.instant(key);
-    const match = /^([\s\S]*)<a>([\s\S]*)<\/a>([\s\S]*)$/.exec(text);
-    return match ? { before: match[1], link: match[2], after: match[3] } : { before: text, link: '', after: '' };
+    return splitTextWithLink(this.translate.instant(key));
   }
 
   /** Update: saves the entity the user changed, as it is before the update overwrites it, to a JSON file. */
@@ -2075,14 +2060,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!current) {
       return;
     }
-    const blob = new Blob([JSON.stringify(current, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${(ep.resolvedName || ep.step.name).replace(/[^\w\- ]+/g, '_')}.json`;
-    link.click();
-    // Revoked right away, the URL may be gone before the download starts
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadEntityJson(current, ep.resolvedName || ep.step.name);
   }
 
   /**
@@ -2789,8 +2767,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       } else if (ws.type === 'progress' && ws.entitySteps) {
         for (const ep of ws.entitySteps) {
           if (ep.status === 'success' && ep.entityOutput) {
+            const metadata = this.addedMetadataOf(ep.step);
             state[ep.step.id ?? ep.step.name] = { entityOutput: ep.entityOutput, resolution: ep.resolution || 'created',
-              ...(ep.step.default ? { defaultConverter: true } : {}) };
+              ...(ep.step.default ? { defaultConverter: true } : {}), ...(metadata ? { metadata } : {}) };
           }
         }
       }

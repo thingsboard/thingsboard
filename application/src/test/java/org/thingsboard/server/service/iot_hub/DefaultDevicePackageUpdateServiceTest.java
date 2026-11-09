@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -395,8 +395,30 @@ class DefaultDevicePackageUpdateServiceTest {
         // A copy is saved: the integration read, possibly the cache's own instance, stays as it is until the commit
         assertThat(saved.getValue()).isNotSameAs(current);
         assertThat(current.getConfiguration().get("metadata").has("profile.lansitec-badge")).isFalse();
-        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN").get("resolution").asText())
-                .isEqualTo("use-existing");
+        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN");
+        assertThat(state.get("resolution").asText()).isEqualTo("use-existing");
+        // The entries the step added, which a delete of the package removes; not the one it removed
+        assertThat(state.get("metadata")).isEqualTo(JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge"));
+    }
+
+    @Test
+    void integrationOfAStepAVersionDropped_keepsItsMetadataEntries() {
+        // Taken as it was at install with the package's entries; the new version has no step for it
+        ObjectNode installed = stateOf(integrationId, "use-existing");
+        installed.set("metadata", JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("TTN", installed));
+        Integration integration = new Integration();
+        integration.setId(integrationId);
+        when(entityService.fetchEntity(tenantId, integrationId)).thenReturn(Optional.of(integration));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
+
+        assertThat(result.isSuccess()).isTrue();
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        assertThat(descriptor.getCreatedEntityIds()).contains(integrationId);
+        // A later delete that keeps the integration removes these entries
+        assertThat(descriptor.getInstallState().get("TTN").get("metadata"))
+                .isEqualTo(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
     }
 
     @Test
@@ -529,6 +551,53 @@ class DefaultDevicePackageUpdateServiceTest {
         assertThat(created.get("checksum").asText()).isEqualTo("before");
         verify(installedItemService, never()).save(tenantId, creator);
         verify(installedItemService, never()).save(tenantId, taker);
+    }
+
+    @Test
+    void updateOfTheInstalledVersion_keepsTheInstallStateOfTheStepsItLeavesOut() {
+        ConverterId converterId = new ConverterId(UUID.randomUUID());
+        Converter current = new Converter(converterId);
+        current.setTenantId(tenantId);
+        current.setName("Uplink data converter for TTN my-app");
+        current.setVersion(4L);
+        when(converterService.findConverterById(tenantId, converterId)).thenReturn(current);
+        when(converterService.saveConverter(any())).thenAnswer(i -> i.getArgument(0));
+        DeviceInstalledItemDescriptor installed = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        installed.setCreatedEntityIds(List.of(profileId, deviceId, dashboardId, integrationId, converterId));
+        installed.setInstallState(Map.of("Integration", stateOf(integrationId, "created"), "uplink", stateOf(converterId, "created"),
+                "Configuration", JacksonUtil.newObjectNode().set("formValues", JacksonUtil.newObjectNode().put("profileName", "am308"))));
+        ObjectNode versionInfo = JacksonUtil.newObjectNode().put("itemId", itemId.toString()).put("name", "AM308").put("version", "1.0.0");
+        when(iotHubRestClient.getVersionInfo(installedVersionId.toString())).thenReturn(versionInfo);
+        // ThingsBoard's default converter changed: only the converter step is sent
+        DeviceUpdateRequest.Step step = overwrite("Uplink data converter", "UPLINK_CONVERTER", converterId, 4L,
+                JacksonUtil.newObjectNode().put("name", "Uplink").set("configuration", JacksonUtil.newObjectNode().put("tbelDecoder", "return {};")));
+        step.setId("uplink");
+        step.setDefaultConverter(true);
+        DeviceUpdateRequest request = request(step);
+        request.setVersionId(installedVersionId.toString());
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+
+        assertThat(result.isSuccess()).isTrue();
+        Map<String, JsonNode> state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState();
+        ArgumentCaptor<Converter> saved = ArgumentCaptor.forClass(Converter.class);
+        verify(converterService).saveConverter(saved.capture());
+        assertThat(state.get("uplink").get("checksum").asText()).isEqualTo(EntityChecksum.of(saved.getValue()));
+        assertThat(state.get("uplink").get("defaultConverter").asBoolean()).isTrue();
+        assertThat(state.get("Integration")).isEqualTo(stateOf(integrationId, "created"));
+        assertThat(state.get("Configuration").get("formValues").get("profileName").asText()).isEqualTo("am308");
+        verify(integrationService, never()).saveIntegration(any());
+        assertThat(installedItem.getItemVersionId()).isEqualTo(installedVersionId);
+    }
+
+    @Test
+    void updateToAnotherVersion_dropsTheInstallStateOfTheStepsItLeavesOut() {
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("Dashboard", "DASHBOARD", dashboardId)));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState()).containsOnlyKeys("Dashboard");
     }
 
     @Test
