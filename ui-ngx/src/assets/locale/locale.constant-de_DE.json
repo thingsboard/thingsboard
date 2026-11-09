@@ -1880,6 +1880,8 @@
     "model": "Modell",
     "name": "Name",
     "ai-provider": "KI-Anbieter",
+    "customer-access": "Kundenzugriff",
+    "customer-access-hint": "Erlaubt Kundenbenutzern, Chat-Anfragen an dieses Modell zu senden, z. B. aus Trendz Analytics. Die Modellkonfiguration und die Zugangsdaten werden nie offengelegt.",
     "no-found": "Keine KI-Modelle gefunden",
     "list": "{ count, plural, one {Ein Modell} other {Liste von # Modellen} }",
     "selected-fields": "{ count, plural, one {# Modell} other {# Modelle} } ausgewählt",
@@ -8848,7 +8850,8 @@
         "SHARE_GROUP": "Gruppe teilen",
         "ASSIGN_TO_TENANT": "Mandanten zuweisen",
         "READ_CALCULATED_FIELD": "Berechnetes Feld lesen",
-        "WRITE_CALCULATED_FIELD": "Berechnetes Feld schreiben"
+        "WRITE_CALCULATED_FIELD": "Berechnetes Feld schreiben",
+        "INVOKE": "Aufrufen"
       }
     }
   },

@@ -4726,7 +4726,8 @@
                 "ADD_TO_GROUP": "Dodaj do grupy",
                 "REMOVE_FROM_GROUP": "Usuń z grupy",
                 "SHARE_GROUP": "Udostępnij grupę",
-                "ASSIGN_TO_TENANT": "Przypisz do tenanta"
+                "ASSIGN_TO_TENANT": "Przypisz do tenanta",
+                "INVOKE": "Wywołaj"
             }
         }
     },

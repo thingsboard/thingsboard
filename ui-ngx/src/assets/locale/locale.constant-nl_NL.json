@@ -1880,6 +1880,8 @@
     "model": "Model",
     "name": "Naam",
     "ai-provider": "AI-provider",
+    "customer-access": "Klanttoegang",
+    "customer-access-hint": "Hiermee kunnen klantgebruikers chatverzoeken naar dit model sturen, bijvoorbeeld vanuit Trendz Analytics. De modelconfiguratie en inloggegevens worden nooit vrijgegeven.",
     "no-found": "Geen AI-modellen gevonden",
     "list": "{ count, plural, =1 {Eén model} other {Lijst van # modellen} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# modellen} } geselecteerd",
@@ -8848,7 +8850,8 @@
         "SHARE_GROUP": "Groep delen",
         "ASSIGN_TO_TENANT": "Toewijzen aan tenant",
         "READ_CALCULATED_FIELD": "Berekend veld lezen",
-        "WRITE_CALCULATED_FIELD": "Berekend veld schrijven"
+        "WRITE_CALCULATED_FIELD": "Berekend veld schrijven",
+        "INVOKE": "Aanroepen"
       }
     }
   },
