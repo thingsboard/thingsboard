@@ -229,8 +229,9 @@ public class ConverterController extends AutoCommitController {
     }
 
     private JsonNode createDefaultDebugIn(Converter converter, String converterType, String integrationType, String integrationName, Integer converterVersion) throws ThingsboardException {
-        if ((converter == null && !ConverterType.UPLINK.name().equals(converterType)) ||
-                (converter != null && !ConverterType.UPLINK.equals(converter.getType()))) {
+        boolean isUplink = converter != null ? ConverterType.UPLINK.equals(converter.getType()) : ConverterType.UPLINK.name().equals(converterType);
+        boolean isDownlink = converter != null ? ConverterType.DOWNLINK.equals(converter.getType()) : ConverterType.DOWNLINK.name().equals(converterType);
+        if (!isUplink && !isDownlink) {
             return null;
         }
 
@@ -242,6 +243,16 @@ public class ConverterController extends AutoCommitController {
         IntegrationType targetIntegrationType = targetIntegrationInfo.getFirst();
         if (StringUtils.isBlank(integrationName)) {
             integrationName = targetIntegrationInfo.getSecond();
+        }
+
+        if (isDownlink) {
+            Optional<String> downlinkMetadata = converterDefaultsService.getMetadata(targetIntegrationType, ConverterType.DOWNLINK);
+            Optional<String> downlinkPayload = converterDefaultsService.getPayload(targetIntegrationType, ConverterType.DOWNLINK);
+            Optional<String> downlinkMsgType = converterDefaultsService.getDownlinkMsgType(targetIntegrationType);
+            if (downlinkMetadata.isEmpty() && downlinkPayload.isEmpty() && downlinkMsgType.isEmpty()) {
+                return null;
+            }
+            return createDownlinkDebugIn(integrationName, downlinkMetadata, downlinkPayload, downlinkMsgType);
         }
 
         if (converterVersion == null) {
@@ -271,6 +282,21 @@ public class ConverterController extends AutoCommitController {
         return debugIn.isEmpty() ? null : debugIn;
     }
 
+    private JsonNode createDownlinkDebugIn(String integrationName, Optional<String> metadata, Optional<String> payload, Optional<String> msgType) {
+        ObjectNode debugIn = JacksonUtil.newObjectNode();
+        metadata.ifPresent(value -> debugIn.put("inMetadata", JacksonUtil.toString(JacksonUtil.fromString(value, ObjectNode.class))));
+        payload.ifPresent(value -> {
+            debugIn.put("inContent", value);
+            debugIn.put("inContentType", ContentType.JSON.name());
+        });
+        msgType.ifPresent(value -> debugIn.put("inMsgType", value));
+        ObjectNode integrationMetadata = JacksonUtil.newObjectNode();
+        integrationMetadata.put(INTEGRATION_NAME, integrationName);
+        debugIn.put("inIntegrationMetadata", JacksonUtil.toString(integrationMetadata));
+
+        return debugIn;
+    }
+
     private Pair<IntegrationType, String> getTargetIntegrationTypeAndName(Converter converter, String integrationType) throws ThingsboardException {
         IntegrationType targetIntegrationType = null;
         String targetIntegrationName = "";
@@ -289,7 +315,8 @@ public class ConverterController extends AutoCommitController {
         }
 
         if (targetIntegrationType != null && StringUtils.isBlank(targetIntegrationName)) {
-            targetIntegrationName = "Test " + targetIntegrationType.getDirectory();
+            targetIntegrationName = converterDefaultsService.getIntegrationName(targetIntegrationType)
+                    .orElse("Test " + targetIntegrationType.getDirectory());
         }
 
         return (targetIntegrationType == null) ? null : Pair.of(targetIntegrationType, targetIntegrationName);

@@ -4,6 +4,7 @@ package org.thingsboard.server.service.converter;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.converter.ConverterType;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -21,22 +22,36 @@ public class DefaultConverterDefaultsService implements ConverterDefaultsService
     private static final String CONVERTERS_DIR = "converters";
     private static final String PAYLOAD_FILE = "payload.json";
     private static final String METADATA_FILE = "metadata.json";
+    private static final String INTEGRATION_FILE = "integration.json";
+    private static final String MSG_TYPE_FILE = "msgType.txt";
 
     @Override
     public Optional<String> getPayload(IntegrationType integrationType, ConverterType converterType) {
-        return getFileContent(integrationType, converterType, PAYLOAD_FILE);
+        return getFileContent(integrationType, converterType.getDirectory() + "/" + PAYLOAD_FILE);
     }
 
     @Override
     public Optional<String> getMetadata(IntegrationType integrationType, ConverterType converterType) {
-        return getFileContent(integrationType, converterType, METADATA_FILE);
+        return getFileContent(integrationType, converterType.getDirectory() + "/" + METADATA_FILE);
     }
 
-    private Optional<String> getFileContent(IntegrationType integrationType, ConverterType converterType, String fileName) {
+    @Override
+    public Optional<String> getIntegrationName(IntegrationType integrationType) {
+        return getFileContent(integrationType, INTEGRATION_FILE)
+                .map(content -> JacksonUtil.toJsonNode(content).get("name").asText());
+    }
+
+    @Override
+    public Optional<String> getDownlinkMsgType(IntegrationType integrationType) {
+        return getFileContent(integrationType, ConverterType.DOWNLINK.getDirectory() + "/" + MSG_TYPE_FILE)
+                .map(String::trim);
+    }
+
+    private Optional<String> getFileContent(IntegrationType integrationType, String relativePath) {
         if (integrationType.getDirectory() == null) {
             return Optional.empty();
         }
-        String path = String.join("/", CONVERTERS_DIR, integrationType.getDirectory(), converterType.getDirectory(), fileName);
+        String path = String.join("/", CONVERTERS_DIR, integrationType.getDirectory(), relativePath);
         try (InputStream in = getClass().getClassLoader().getResourceAsStream(path)) {
             if (in == null) {
                 return Optional.empty();
