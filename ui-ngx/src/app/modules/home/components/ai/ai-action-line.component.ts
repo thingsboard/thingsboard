@@ -64,7 +64,9 @@ export class AiActionLineComponent {
 
   result = computed(() => aiActionDetail(this.action().result));
 
-  hasDetails = computed(() => !!this.request() || !!this.result());
+  records = computed(() => this.action().status === 'SUCCESS' ? this.action().affectedEntities ?? [] : []);
+
+  hasDetails = computed(() => !!this.request() || !!this.result() || !!this.records().length);
 
   private reason(result?: string): string | undefined {
     const text = result?.trim();

@@ -239,6 +239,20 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private closingPatch = signal<Partial<GeneralChatMessage>>({});
 
+  private stepActions(): ChatMessage[] {
+    const info = this.info();
+    const result = info?.metadata?.installResult;
+    const actions: ChatMessage[] = [{from: 'ACTION', data: {executionId: 'solution-create', tool: 'create_solution', status: 'SUCCESS', startedAt: 0}}];
+    if (this.installed() && result) {
+      const entities = Object.entries(result.entityResults ?? {})
+        .filter(([type]) => type !== EntityType.ENTITY_GROUP && type !== EntityType.RULE_CHAIN)
+        .flatMap(([, entries]) => (entries ?? []).filter(entry => entry?.id && entry.status !== 'ERROR').map(entry => entry.id));
+      actions.push({from: 'ACTION', data: {executionId: 'solution-install', tool: 'install_solution', status: 'SUCCESS',
+        startedAt: result.installedTime ?? 0, affectedEntities: entities}});
+    }
+    return actions;
+  }
+
   closing = computed<GeneralChatMessage | null>(() => {
     const info = this.info();
     if (this.creatorStep() !== 'result' || !this.built() || !info) {
@@ -299,7 +313,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         return answers ? {...message, answers} as GeneralChatMessage : message;
       }
       return message;
-    }).concat(this.closing() ? [this.closing()] : []);
+    }).concat(this.closing() ? [...this.stepActions(), this.closing()] : []);
   });
 
   onChip(id: string): void {

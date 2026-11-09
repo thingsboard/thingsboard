@@ -55,6 +55,11 @@
     color: var(--tb-ink-76);
   }
 
+  .records {
+    display: block;
+    margin: 8px 0 4px;
+  }
+
   .part {
     margin: 8px 0 4px;
     font-size: var(--chat-meta);

@@ -22,6 +22,9 @@
     @if (hasDetails()) {
       <details class="tb-disc tb-disc-details">
         <summary>{{ 'ai-assistant.action.details' | translate }}</summary>
+        @if (records().length) {
+          <tb-ai-run-summary class="records" [entities]="records()"></tb-ai-run-summary>
+        }
         @if (request()) {
           <div class="part">{{ 'ai-assistant.action.request' | translate }}</div>
           <pre>{{ request() }}</pre>

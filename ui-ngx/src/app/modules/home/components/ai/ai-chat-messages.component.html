@@ -56,6 +56,13 @@
     @if (isListedAction(msg) && (msg.data.status !== 'RUNNING' || $index === runningLead)) {
       <div class="ai action">
         <tb-ai-action-line [action]="msg.data" [more]="$index === runningLead ? runningCount - 1 : 0"></tb-ai-action-line>
+        @if ($index === retryIndex) {
+          <div class="k-actions action-ways">
+            <button mat-stroked-button type="button" (click)="prompt.emit(retryPrompt)">
+              <mat-icon>replay</mat-icon>{{ 'ai-assistant.action.try-again' | translate }}
+            </button>
+          </div>
+        }
       </div>
     }
   } @else {
@@ -72,7 +79,7 @@
       } @else if (msg.status === 'INCOMPLETE' || msg.status === 'STOPPED') {
         <div class="incomplete flex" role="status">
           <mat-icon class="incomplete-icon">warning_amber</mat-icon>
-          <span>{{ msg.content }}</span>
+          <span>{{ msg.status === 'STOPPED' ? stoppedText($index, msg.content) : msg.content }}</span>
         </div>
         @if (summaries[$index]; as entities) {
           <tb-ai-run-summary class="summary" [entities]="entities"></tb-ai-run-summary>

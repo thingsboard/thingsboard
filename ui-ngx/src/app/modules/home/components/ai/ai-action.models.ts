@@ -21,6 +21,8 @@ export interface AiWorkState {
 const HIDDEN_TOOLS = new Set(['read_current_time']);
 
 const TOOL_WORDS: Record<string, string> = {
+  create_solution: 'create-solution',
+  install_solution: 'install-solution',
   read_entity: 'read-entity',
   read_timeseries_keys: 'read-telemetry-keys',
   read_attributes: 'read-attributes',

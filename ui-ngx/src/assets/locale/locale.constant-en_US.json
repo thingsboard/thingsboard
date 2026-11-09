@@ -729,6 +729,8 @@
         "error": "Failed",
         "thinking": "Thinking...",
         "connection-lost": "Connection to the AI Assistant was lost. Reconnecting...",
+        "stopped-after": "{ count, plural, =1 {You stopped this reply after 1 step. Nothing more was done.} other {You stopped this reply after # steps. Nothing more was done.} }",
+        "stopped-before": "You stopped this reply before any step. Nothing was done.",
         "notice": {
             "connection-lost": "The connection to the AI service is lost. Reconnecting…",
             "connected-again": "Connected again. The run picks up where it stopped.",
@@ -1014,11 +1016,21 @@
                 "run": "Working on a step",
                 "done": "Finished a step"
             },
+            "create-solution": {
+                "run": "Creating the solution",
+                "done": "The solution is created"
+            },
+            "install-solution": {
+                "run": "Installing the solution",
+                "done": "The solution is installed"
+            },
             "failed": "Failed while {{words}}",
             "auto-approved": "{{words}} · auto-approved",
             "details": "Details",
             "request": "Request",
-            "result": "Result"
+            "result": "Result",
+            "try-again": "Try again",
+            "try-again-prompt": "Try that again"
         },
         "go-to-end": "Go to the end",
         "resume": "Resume",

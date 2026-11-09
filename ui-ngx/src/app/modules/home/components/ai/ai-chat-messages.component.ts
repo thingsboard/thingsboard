@@ -31,6 +31,8 @@ import { decorateLinks, decorateReferences, decorateSeverities } from '@home/com
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { Router } from '@angular/router';
 
+const SOLUTION_STEP_TOOLS = ['create_solution', 'install_solution'];
+
 @Component({
   selector: 'tb-ai-chat-messages',
   templateUrl: './ai-chat-messages.component.html',
@@ -72,6 +74,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   summaries: Record<number, EntityId[]> = {};
   prompts: {index: number; items: AiPrompt[]} | null = null;
   asking: {index: number; questions: AiQuestion[]} | null = null;
+  retryIndex = -1;
+  stoppedSteps: Record<number, number> = {};
   answersAt: Record<number, AiQuestionAnswer[]> = {};
 
   dayLines: Record<number, string> = {};
@@ -212,6 +216,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.prompts = this.findPrompts();
       this.asking = this.findAsking();
       this.answersAt = this.findAnswers();
+      this.retryIndex = this.findRetry();
+      this.stoppedSteps = this.findStoppedSteps();
     }
     if (changes.messages) {
       this.lastAnswerIndex = this.findLastAnswerIndex();
@@ -337,7 +343,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
           add((this.completedExecutions[message.data.executionId] ?? message.result)?.affectedEntities);
           break;
         case 'ACTION':
-          add(message.data.affectedEntities);
+          if (!SOLUTION_STEP_TOOLS.includes(message.data.tool)) {
+            add(message.data.affectedEntities);
+          }
           break;
         case 'AI':
           lastAi = index;
@@ -355,6 +363,51 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   answerQuestions(answers: AiQuestionAnswer[]): void {
     this.answer.emit(aiAnswersText(answers));
+  }
+
+  get retryPrompt(): string {
+    return this.translate.instant('ai-assistant.action.try-again-prompt');
+  }
+
+  stoppedText(index: number, content: string): string {
+    const steps = this.stoppedSteps[index];
+    if (steps === undefined) {
+      return content;
+    }
+    return steps ? this.translate.instant('ai-assistant.stopped-after', {count: steps}) : this.translate.instant('ai-assistant.stopped-before');
+  }
+
+  private findRetry(): number {
+    if (this.loading) {
+      return -1;
+    }
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      const message = this.messages[i];
+      if (message.from === 'USER') {
+        return -1;
+      }
+      if (message.from === 'ACTION' && this.isListedAction(message)) {
+        return message.data.status === 'FAILURE' ? i : -1;
+      }
+    }
+    return -1;
+  }
+
+  private findStoppedSteps(): Record<number, number> {
+    const steps: Record<number, number> = {};
+    let done = 0;
+    this.messages.forEach((message, index) => {
+      if (message.from === 'USER') {
+        done = 0;
+      } else if (message.from === 'ACTION' && this.isListedAction(message) && message.data.status === 'SUCCESS') {
+        done++;
+      } else if (message.from === 'APPROVAL' && (this.completedExecutions[message.data.executionId] ?? message.result)?.executionStatus === 'SUCCESS') {
+        done++;
+      } else if ((message as GeneralChatMessage).status === 'STOPPED') {
+        steps[index] = done;
+      }
+    });
+    return steps;
   }
 
   private findAsking(): {index: number; questions: AiQuestion[]} | null {
