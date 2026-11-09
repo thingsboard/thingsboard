@@ -129,11 +129,13 @@
                 <span class="sol-name" data-pal="people"><mat-icon aria-hidden="true">account_circle</mat-icon><b>{{ iam.name }}</b></span>
               </td>
               <td>
-                @for (operation of operations(iam); track operation) {
-                  <span class="sol-op">{{ ('solution-creator.pane.op-' + operation) | translate }}</span>
-                } @empty {
-                  <span class="faint">{{ iam.permissions || '—' }}</span>
-                }
+                <div class="sol-chips">
+                  @for (operation of operations(iam); track operation) {
+                    <span class="sol-op">{{ ('solution-creator.pane.op-' + operation) | translate }}</span>
+                  } @empty {
+                    <span class="faint">{{ iam.permissions || '—' }}</span>
+                  }
+                </div>
               </td>
               <td class="secondary wrap">{{ iam.description }}</td>
             </tr>

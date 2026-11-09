@@ -86,43 +86,57 @@
   }
 
   td.act {
-    width: 76px;
+    width: 170px;
   }
 
   td.stc {
     width: 44px;
   }
+
+  td code.k-ent, td .k-sev, td .sol-op {
+    vertical-align: baseline;
+  }
+
 }
 
-.sol-act {
+.sol-acts {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin: -6px 0 -6px 2px;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: var(--tb-ink-60);
-  cursor: pointer;
-  vertical-align: top;
+  gap: 2px;
+}
+
+.sol-act.mat-mdc-button {
+  height: 36px;
+  margin: -8px 0 -6px;
+  padding: 0 8px;
+  gap: 8px;
+  border: 1px solid transparent;
+  line-height: 36px;
+  --mat-button-text-label-text-color: var(--tb-ink-76);
+  --mdc-text-button-label-text-color: var(--tb-ink-76);
 
   .mat-icon {
     font-size: 18px;
     width: 18px;
     height: 18px;
+    margin: 0 0 0 -4px;
+  }
+}
+
+:host.narrow .sol-acts {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+:host.narrow .sol-installed-table {
+  table-layout: auto;
+
+  td.sol-installed-name {
+    width: auto;
   }
 
-  &:hover {
-    background: rgba(0, 0, 0, 0.06);
-    color: var(--tb-ink);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--ai-focus);
-    outline-offset: 1px;
+  td.act {
+    width: 1px;
   }
 }
 

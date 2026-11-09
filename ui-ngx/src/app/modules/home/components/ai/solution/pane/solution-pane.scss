@@ -151,16 +151,76 @@
 .sol-sec-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  min-height: 52px;
-  padding: 14px var(--art-x) 6px;
+  min-height: 32px;
+  margin: 12px var(--art-x) 0;
   box-sizing: border-box;
 
   h3 {
-    flex: 1;
     margin: 0;
-    font: 500 var(--chat-head)/var(--chat-head-lh) var(--tb-font);
+    font: 500 var(--chat-line)/var(--chat-line-lh) var(--tb-font);
+    letter-spacing: .25px;
     color: var(--tb-ink);
+  }
+}
+
+.sol-infos > .sol-sec-head:first-child {
+  margin-top: 4px;
+}
+
+.sol-sec-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: none;
+  border-bottom: 0 !important;
+  transition: color .12s ease;
+
+  .mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    color: var(--tb-ink-38);
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+
+  &:hover, &:focus-visible {
+    color: var(--ai-link);
+    text-decoration: underline;
+
+    .mat-icon {
+      opacity: 1;
+    }
+  }
+}
+
+a.sol-ent {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 0 !important;
+
+  b {
+    transition: color .12s ease;
+  }
+
+  &:hover, &:focus-visible {
+    text-decoration: underline;
+  }
+
+  &:hover b, &:focus-visible b {
+    color: var(--ai-link);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
@@ -317,15 +377,22 @@ table.sol-table {
   }
 }
 
+.sol-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .sol-op {
   display: inline-block;
-  margin: 0 4px 4px 0;
-  padding: 0 7px;
-  border-radius: 5px;
-  background: rgba(0, 0, 0, 0.05);
-  font-size: var(--chat-meta);
-  line-height: 20px;
+  margin: 0;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: var(--chat-caption);
+  line-height: var(--chat-caption-lh);
   color: var(--tb-ink-76);
+  white-space: nowrap;
 }
 
 .sol-sev {

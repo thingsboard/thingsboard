@@ -26,46 +26,91 @@
   <p class="sol-not-installed">{{ 'solution-creator.pane.not-installed' | translate }}</p>
 }
 <div class="sol-infos" [class.creating]="creating()">
-  @for (section of sections(); track section.type) {
-    <div class="sol-sec-head"><h3>{{ section.title | translate }}</h3></div>
+  @for (section of sections(); track section.id) {
+    <div class="sol-sec-head">
+      <h3>
+        @if (section.link) {
+          <a class="sol-sec-link" [routerLink]="section.link" matTooltipPosition="above" matTooltipShowDelay="600"
+             [matTooltip]="'solution-creator.pane.open-list' | translate: {name: (section.title | translate)}">
+            {{ section.title | translate }}<mat-icon aria-hidden="true">open_in_new</mat-icon>
+          </a>
+        } @else {
+          {{ section.title | translate }}
+        }
+      </h3>
+    </div>
     <table class="sol-table sol-installed-table">
       <tbody>
         @for (row of section.rows; track row.key) {
           <tr [class.waiting]="row.progress === 'wait'">
             <td class="wrap sol-installed-name">
-              <span class="sol-name" [attr.data-pal]="section.palette">
-                <mat-icon aria-hidden="true">{{ section.icon }}</mat-icon>
-                @if (link(section.type, row); as url) {
-                  <a [routerLink]="url"><b>{{ row.primary.additionalData?.name }}</b></a>
-                } @else {
-                  <b>{{ row.primary.additionalData?.name }}</b>
-                }
-              </span>
-            </td>
-            <td class="secondary wrap">
-              @if (section.type === 'ALARM' && severities(row).length) {
-                @for (severity of severities(row); track severity) {
-                  <span class="sol-sev" [style.color]="severityColor(severity)"><i></i>{{ severityLabel(severity) | translate }}</span>
-                }
+              @if (link(row.type, row); as url) {
+                <a class="sol-name sol-ent" [attr.data-pal]="row.palette" [routerLink]="url" matTooltipPosition="above" matTooltipShowDelay="600"
+                   [matTooltip]="'solution-creator.pane.open-list' | translate: {name: row.primary.additionalData?.name}">
+                  <mat-icon aria-hidden="true">{{ row.icon }}</mat-icon><b>{{ row.primary.additionalData?.name }}</b>
+                </a>
+              } @else {
+                <span class="sol-name" [attr.data-pal]="row.palette">
+                  <mat-icon aria-hidden="true">{{ row.icon }}</mat-icon><b>{{ row.primary.additionalData?.name }}</b>
+                </span>
               }
-              {{ detail(section.type, row) }}
             </td>
-            @if (section.type === 'DASHBOARD') {
-              <td class="act">
-                @if (link(section.type, row); as url) {
-                  <a class="sol-act" [routerLink]="url" [matTooltip]="'solution-creator.pane.open' | translate" matTooltipPosition="above"
-                     [attr.aria-label]="'solution-creator.pane.open' | translate">
-                    <mat-icon fontSet="material-icons-round">open_in_new</mat-icon>
-                  </a>
-                }
-                @if (canViewAs(row)) {
-                  <button type="button" class="sol-act" (click)="viewAs(row)"
-                          [matTooltip]="'solution-creator.pane.view-as-user' | translate: {name: detail(section.type, row)}" matTooltipPosition="above"
-                          [attr.aria-label]="'solution-creator.pane.view-as-user' | translate: {name: detail(section.type, row)}">
-                    <mat-icon fontSet="material-icons-round">person</mat-icon>
-                  </button>
-                }
-              </td>
+            @switch (section.id) {
+              @case ('dashboards') {
+                <td class="secondary wrap">{{ row.details.role }}</td>
+                <td class="act">
+                  <span class="sol-acts">
+                    @if (link(row.type, row); as url) {
+                      <a mat-button class="sol-act" [routerLink]="url" matTooltipPosition="above" matTooltipShowDelay="600"
+                         [matTooltip]="'solution-creator.pane.open-name' | translate: {name: row.primary.additionalData?.name}">
+                        <mat-icon>open_in_new</mat-icon>{{ 'solution-creator.pane.open' | translate }}
+                      </a>
+                    }
+                    @if (canViewAs(row)) {
+                      <button mat-button type="button" class="sol-act" (click)="viewAs(row)" matTooltipPosition="above" matTooltipShowDelay="600"
+                              [matTooltip]="'solution-creator.pane.view-as-user' | translate: {name: dashboardUser(row)}">
+                        <mat-icon>person</mat-icon>{{ 'solution-creator.pane.view-as' | translate }}
+                      </button>
+                    }
+                  </span>
+                </td>
+              }
+              @case ('users') {
+                <td class="secondary wrap">{{ row.details.role }}</td>
+                <td class="secondary nowrap sol-in">{{ row.details.where }}</td>
+              }
+              @case ('profiles') {
+                <td class="secondary nowrap">{{ row.details.kindLabel }}</td>
+              }
+              @case ('roles') {
+                <td>
+                  <div class="sol-chips">
+                    @for (op of row.details.ops ?? []; track op) {
+                      <span class="sol-op">{{ op }}</span>
+                    }
+                  </div>
+                </td>
+              }
+              @case ('alarms') {
+                <td>
+                  <div class="sol-chips">
+                    @for (severity of row.details.severities ?? []; track severity) {
+                      <span class="k-sev" [class]="'k-sev ' + severityTone(severity)">
+                        <tb-ai-sev-mark [severity]="severity"></tb-ai-sev-mark>{{ severityLabel(severity) | translate }}
+                      </span>
+                    }
+                  </div>
+                </td>
+              }
+              @case ('cfs') {
+              }
+              @default {
+                <td>
+                  @if (row.details.chip; as chip) {
+                    <code class="k-ent" [attr.data-pal]="chip.palette"><mat-icon class="k-ent-ic" aria-hidden="true">{{ chip.icon }}</mat-icon>{{ chip.label }}</code>
+                  }
+                </td>
+              }
             }
             <td class="stc">
               @if (row.progress === 'wait') {

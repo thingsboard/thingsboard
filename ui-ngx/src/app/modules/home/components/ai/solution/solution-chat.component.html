@@ -126,7 +126,7 @@
               <p>{{ 'solution-creator.issues-lead' | translate: {count: issues().length} }}</p>
               <ul>
                 @for (issue of issues().slice(0, 6); track $index) {
-                  <li><b>{{ issue.name }}</b> · {{ (issue.status === 'ERROR' ? 'solution-creator.pane.status-error' : 'solution-creator.pane.status-warn') | translate }}</li>
+                  <li><b>{{ issue.name }}</b> · {{ issue.status === 'WARN' && issue.message ? issue.message : ((issue.status === 'ERROR' ? 'solution-creator.pane.status-error' : 'solution-creator.pane.status-warn') | translate) }}</li>
                 }
               </ul>
               <div class="k-hint tip sol-hint">

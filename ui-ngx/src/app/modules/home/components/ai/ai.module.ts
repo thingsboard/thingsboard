@@ -17,6 +17,7 @@ import { AiAttachmentsComponent } from '@home/components/ai/ai-attachments.compo
 import { AiAttachmentPreviewDialogComponent } from '@home/components/ai/ai-attachment-preview-dialog.component';
 import { AiTipDirective } from '@home/components/ai/ai-tip.directive';
 import { AiSpinComponent } from '@home/components/ai/ai-spin.component';
+import { AiSevMarkComponent } from '@home/components/ai/ai-sev-mark.component';
 import { AiWorkLineComponent } from '@home/components/ai/ai-work-line.component';
 import { AiActionLineComponent } from '@home/components/ai/ai-action-line.component';
 import { AiRunSummaryComponent } from '@home/components/ai/ai-run-summary.component';
@@ -49,7 +50,8 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiAssistantButtonComponent,
     AiRecordComponent,
     AiSparkComponent,
-    AiQuestionComponent
+    AiQuestionComponent,
+    AiSevMarkComponent
   ],
   imports: [
     CommonModule,
@@ -58,6 +60,7 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
   exports: [
     AiAssistantButtonComponent,
     AiSpinComponent,
+    AiSevMarkComponent,
     AiWorkLineComponent,
     AiRunSummaryComponent,
     AiSparkComponent,

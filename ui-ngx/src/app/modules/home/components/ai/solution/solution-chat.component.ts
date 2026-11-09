@@ -333,14 +333,14 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   paneMore = signal(false);
 
-  issues = computed<Array<{name: string; status: string}>>(() => {
+  issues = computed<Array<{name: string; status: string; message?: string}>>(() => {
     const results = this.info()?.metadata?.installResult?.entityResults;
     if (!results || !this.info()?.metadata?.installed) {
       return [];
     }
     return Object.values(results).flat()
       .filter(entry => entry?.status === 'ERROR' || entry?.status === 'WARN')
-      .map(entry => ({name: entry.additionalData?.name ?? '', status: entry.status}));
+      .map(entry => ({name: entry.additionalData?.name ?? '', status: entry.status, message: entry.error?.message}));
   });
 
   private paneEdgeEffect = effect(() => {

@@ -43,6 +43,7 @@ export interface SolutionProgressItem {
   name?: string;
   state: 'WAIT' | 'WORKING' | 'DONE';
   profile?: string;
+  customer?: string;
 }
 
 export interface SolutionInstallProgress {
