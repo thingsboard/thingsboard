@@ -229,6 +229,10 @@ public class TrendzSyncServiceTest extends AbstractControllerTest {
         assertNotNull(apiKeyByDescription);
         assertTrue(apiKeyByDescription.isInternal());
         assertEquals(DefaultTrendzSyncService.TRENDZ_API_KEY_DESCRIPTION, apiKeyByDescription.getDescription());
+        assertEquals(Set.of(Operation.READ, Operation.INVOKE),
+                apiKeyByDescription.getPermissions().getPermissionsForAuthority(Authority.TENANT_ADMIN).get(Resource.AI_MODEL));
+        assertEquals(Set.of(Operation.INVOKE),
+                apiKeyByDescription.getPermissions().getPermissionsForAuthority(Authority.CUSTOMER_USER).get(Resource.AI_MODEL));
     }
 
     @Test

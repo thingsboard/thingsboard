@@ -1880,6 +1880,8 @@
     "model": "Модель",
     "name": "Назва",
     "ai-provider": "Постачальник ШІ",
+    "customer-access": "Доступ для клієнтів",
+    "customer-access-hint": "Дозволяє користувачам клієнтів надсилати чат-запити до цієї моделі, наприклад із Trendz Analytics. Конфігурація моделі та облікові дані ніколи не розкриваються.",
     "no-found": "Моделей ШІ не знайдено",
     "list": "{ count, plural, =1 {Одна модель} few {Список із # моделей} many {Список із # моделей} other {Список із # моделі} }",
     "selected-fields": "Вибрано { count, plural, one {# модель} few {# моделі} other {# моделей} }",
@@ -5031,8 +5033,8 @@
     "value-expression": "Вираз значення",
     "topic": "Топік",
     "timeout": "Тайм-аут у мілісекундах",
-    "converter-json-required": "Потрібно вказати Json конвертера.",
-    "converter-json-parse": "Не вдалося розібрати json конвертера.",
+    "converter-json-required": "Потрібно вказати JSON конвертера.",
+    "converter-json-parse": "Не вдалося розібрати JSON конвертера.",
     "filter-expression": "Вираз фільтра",
     "connect-requests": "Запити підключення",
     "add-connect-request": "Додати запит підключення",
@@ -8848,7 +8850,8 @@
         "SHARE_GROUP": "Поділитися групою",
         "ASSIGN_TO_TENANT": "Призначити орендарю",
         "READ_CALCULATED_FIELD": "Читати розрахункові поля та правила тривог",
-        "WRITE_CALCULATED_FIELD": "Записати розрахункові поля та правила тривог"
+        "WRITE_CALCULATED_FIELD": "Записати розрахункові поля та правила тривог",
+        "INVOKE": "Виклик"
       }
     }
   },

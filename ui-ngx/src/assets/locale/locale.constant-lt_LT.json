@@ -1301,6 +1301,8 @@
     "model": "Modelis",
     "name": "Pavadinimas",
     "ai-provider": "AI tiekėjas",
+    "customer-access": "Klientų prieiga",
+    "customer-access-hint": "Leidžia klientų naudotojams siųsti pokalbių užklausas šiam modeliui, pvz., iš Trendz Analytics. Modelio konfigūracija ir prisijungimo duomenys niekada neatskleidžiami.",
     "no-found": "AI modelių nerasta",
     "list": "{ count, plural, =1 {Vienas modelis} other {# modelių sąrašas} }",
     "selected-fields": "{ count, plural, =1 {1 modelis} other {# modeliai} } pasirinkta",
@@ -7097,7 +7099,8 @@
         "SHARE_GROUP": "Bendrinti grupę",
         "ASSIGN_TO_TENANT": "Priskirti valdytojui",
         "READ_CALCULATED_FIELD": "Skaityti apskaičiuotą lauką",
-        "WRITE_CALCULATED_FIELD": "Rašyti į apskaičiuotą lauką"
+        "WRITE_CALCULATED_FIELD": "Rašyti į apskaičiuotą lauką",
+        "INVOKE": "Iškviesti"
       }
     }
   },

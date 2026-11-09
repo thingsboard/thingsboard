@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
@@ -19,7 +20,7 @@ import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProvid
 @Builder
 public record GoogleVertexAiGeminiChatModelConfig(
         @Schema(ref = "#/components/schemas/GoogleVertexAiGeminiProviderConfig")
-        @NotNull @Valid GoogleVertexAiGeminiProviderConfig providerConfig,
+        @With @NotNull @Valid GoogleVertexAiGeminiProviderConfig providerConfig,
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,
         @Positive @Max(1) Double topP,
@@ -34,6 +35,11 @@ public record GoogleVertexAiGeminiChatModelConfig(
     @Override
     public AiProvider provider() {
         return AiProvider.GOOGLE_VERTEX_AI_GEMINI;
+    }
+
+    @Override
+    public GoogleVertexAiGeminiChatModelConfig withoutProviderConfig() {
+        return withProviderConfig(null);
     }
 
     @Override
