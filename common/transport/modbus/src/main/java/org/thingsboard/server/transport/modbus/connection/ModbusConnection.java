@@ -124,36 +124,50 @@ public class ModbusConnection {
         log.info("[{}] Closed Modbus connection", key);
     }
 
+    /**
+     * Sends queued requests while there is a free slot. Called after every enqueue and every completion;
+     * there is no sender thread. Returns as soon as the connection is closed, all slots are taken or the queue is empty.
+     */
     private void dispatch() {
-        while (true) {
-            PendingRequest request;
-            ModbusClientAdapter target;
-            synchronized (lock) {
-                if (closed || inFlight >= maxInFlight || queue.isEmpty()) {
-                    return;
-                }
-                request = queue.poll();
-                inFlight++;
-                target = client;
-            }
-            CompletionStage<byte[]> response;
-            try {
-                response = target.read(request.unitId(), request.functionCode(), request.address(), request.count());
-            } catch (Exception e) {
-                response = CompletableFuture.failedFuture(e);
-            }
-            response.whenComplete((data, error) -> {
-                synchronized (lock) {
-                    inFlight--;
-                }
-                if (error != null) {
-                    request.future().completeExceptionally(error);
-                } else {
-                    request.future().complete(data);
-                }
-                dispatch();
-            });
+        Dispatch next;
+        while ((next = nextToSend()) != null) {
+            send(next);
         }
+    }
+
+    /**
+     * Takes the next queued request and a slot for it, or {@code null} if nothing can be sent now.
+     * The client is captured together with the slot, so a concurrent client rebuild cannot swap it in between.
+     */
+    private Dispatch nextToSend() {
+        synchronized (lock) {
+            if (closed || inFlight >= maxInFlight || queue.isEmpty()) {
+                return null;
+            }
+            inFlight++;
+            return new Dispatch(queue.poll(), client);
+        }
+    }
+
+    private void send(Dispatch dispatch) {
+        PendingRequest request = dispatch.request();
+        CompletionStage<byte[]> response;
+        try {
+            response = dispatch.client().read(request.unitId(), request.functionCode(), request.address(), request.count());
+        } catch (Exception e) {
+            response = CompletableFuture.failedFuture(e);
+        }
+        response.whenComplete((data, error) -> {
+            synchronized (lock) {
+                inFlight--;
+            }
+            if (error != null) {
+                request.future().completeExceptionally(error);
+            } else {
+                request.future().complete(data);
+            }
+            dispatch();
+        });
     }
 
     private ModbusClientAdapter newClient(Duration requestTimeout) {
@@ -173,6 +187,8 @@ public class ModbusConnection {
             log.debug("[{}] Failed to disconnect Modbus client", key, e);
         }
     }
+
+    private record Dispatch(PendingRequest request, ModbusClientAdapter client) {}
 
     private record PendingRequest(
             int unitId, ModbusFunctionCode functionCode, int address, int count, CompletableFuture<byte[]> future) {}
