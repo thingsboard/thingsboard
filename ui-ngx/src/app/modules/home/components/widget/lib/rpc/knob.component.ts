@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { deepClone, isDefined } from '@core/utils';
@@ -318,11 +319,8 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
 
   private setFontSize(element: JQuery<HTMLElement>, text: string, fontSize: number, maxWidth: number) {
     let textWidth = this.measureTextWidth(text, fontSize);
-    while (textWidth > maxWidth) {
+    while (textWidth > maxWidth && fontSize > 1) {
       fontSize--;
-      if (fontSize < 0) {
-        break;
-      }
       textWidth = this.measureTextWidth(text, fontSize);
     }
     element.css({fontSize: fontSize + 'px', lineHeight: fontSize + 'px'});
