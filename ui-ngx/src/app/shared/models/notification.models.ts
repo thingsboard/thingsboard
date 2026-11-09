@@ -806,52 +806,54 @@ export const singleNotificationTypeTemplate = (type: NotificationType) => {
          type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST;
 }
 
-const allAuthorities = [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER];
-const tenantAuthorities = [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER];
+export const sysAdminNotificationTypes: ReadonlySet<NotificationType> = new Set([
+  NotificationType.ENTITIES_LIMIT,
+  NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
+  NotificationType.ADDON_ACCESS_REQUEST,
+  NotificationType.ADDON_ACCESS_ERROR,
+  NotificationType.PLAN_UPGRADE_REQUEST,
+  NotificationType.API_USAGE_LIMIT,
+  NotificationType.NEW_PLATFORM_VERSION,
+  NotificationType.RATE_LIMITS,
+  NotificationType.TASK_PROCESSING_FAILURE,
+  NotificationType.RESOURCES_SHORTAGE
+]);
 
-// Authorities that may receive notifications of the given type with any configuration of rules and recipients
-export const NotificationTypeRecipientAuthorities: Record<NotificationType, Authority[]> = {
-  [NotificationType.GENERAL]: allAuthorities,
-  [NotificationType.ALARM]: tenantAuthorities,
-  [NotificationType.DEVICE_ACTIVITY]: tenantAuthorities,
-  [NotificationType.ENTITY_ACTION]: tenantAuthorities,
-  [NotificationType.ALARM_COMMENT]: tenantAuthorities,
-  [NotificationType.ALARM_ASSIGNMENT]: tenantAuthorities,
-  [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT]: tenantAuthorities,
-  [NotificationType.ENTITIES_LIMIT]: allAuthorities,
-  [NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST]: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-  [NotificationType.ADDON_ACCESS_REQUEST]: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-  [NotificationType.ADDON_ACCESS_ERROR]: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-  [NotificationType.PLAN_UPGRADE_REQUEST]: [Authority.SYS_ADMIN],
-  [NotificationType.API_USAGE_LIMIT]: allAuthorities,
-  [NotificationType.NEW_PLATFORM_VERSION]: allAuthorities,
-  [NotificationType.RULE_NODE]: tenantAuthorities,
-  [NotificationType.INTEGRATION_LIFECYCLE_EVENT]: tenantAuthorities,
-  [NotificationType.RATE_LIMITS]: allAuthorities,
-  [NotificationType.EDGE_CONNECTION]: tenantAuthorities,
-  [NotificationType.EDGE_COMMUNICATION_FAILURE]: tenantAuthorities,
-  [NotificationType.TASK_PROCESSING_FAILURE]: allAuthorities,
-  [NotificationType.RESOURCES_SHORTAGE]: allAuthorities,
-  [NotificationType.USER_ACTIVATED]: tenantAuthorities,
-  [NotificationType.USER_REGISTERED]: tenantAuthorities,
-  [NotificationType.REPORT_GENERATED]: tenantAuthorities
-};
+export const adminRequestNotificationTypes: ReadonlySet<NotificationType> = new Set([
+  NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
+  NotificationType.ADDON_ACCESS_REQUEST,
+  NotificationType.ADDON_ACCESS_ERROR,
+  NotificationType.PLAN_UPGRADE_REQUEST
+]);
 
-const edgeNotificationTypes = new Set<NotificationType>([
+export const sysAdminRequestNotificationTypes: ReadonlySet<NotificationType> = new Set([
+  NotificationType.PLAN_UPGRADE_REQUEST
+]);
+
+export const edgeNotificationTypes: ReadonlySet<NotificationType> = new Set([
   NotificationType.EDGE_CONNECTION,
   NotificationType.EDGE_COMMUNICATION_FAILURE
 ]);
 
-export const isNotificationTypeApplicable = (type: NotificationType, authority: Authority, edgesSupportEnabled: boolean): boolean => {
-  const authorities = NotificationTypeRecipientAuthorities[type];
-  if (!authorities) {
-    return true;
+export const isSysAdminNotificationType = (type: NotificationType | TriggerType): boolean =>
+  sysAdminNotificationTypes.has(type as NotificationType);
+
+export const isNotificationTypeReceivable = (type: NotificationType, authority: Authority, edgesSupportEnabled: boolean): boolean => {
+  switch (authority) {
+    case Authority.SYS_ADMIN:
+      return type === NotificationType.GENERAL || sysAdminNotificationTypes.has(type);
+    case Authority.CUSTOMER_USER:
+      if (adminRequestNotificationTypes.has(type)) {
+        return false;
+      }
+      break;
+    default:
+      if (sysAdminRequestNotificationTypes.has(type)) {
+        return false;
+      }
   }
-  if (edgeNotificationTypes.has(type) && !edgesSupportEnabled) {
-    return false;
-  }
-  return authorities.includes(authority);
-}
+  return edgesSupportEnabled || !edgeNotificationTypes.has(type);
+};
 
 export function notificationAiAssistantConfig(store: Store<AppState>,
                                               userPermissionsService: UserPermissionsService,

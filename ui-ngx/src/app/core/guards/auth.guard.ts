@@ -151,6 +151,16 @@ export class AuthGuard  {
             if (data.auth && data.auth.indexOf(authority) === -1) {
               this.dialogService.forbidden();
               return of(false);
+            } else if (data.requiredMenuLink) {
+              return this.menuService.isMenuLinkAvailable(data.requiredMenuLink).pipe(
+                take(1),
+                map((allow) => {
+                  if (!allow) {
+                    this.dialogService.forbidden();
+                  }
+                  return allow;
+                })
+              );
             } else if (isDefined(data.canActivate$)) {
               return (data.canActivate$ as (userPermissionsService: UserPermissionsService, params: any) => Observable<boolean>)(this.userPermissionsService, params).pipe(
                 catchError(() => of(false)),

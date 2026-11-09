@@ -30,10 +30,11 @@
     <mat-card-content style="padding-top: 16px; overflow: hidden;">
       <form [formGroup]="notificationSettings" class="notification-form">
         <section class="notification-section">
-          <div  class="notification-section-block">
-            <div class="notification-header">
-              <div class="flex flex-row items-center justify-start" style="height: 44px;">
-                <div class="flex-1">
+          <div class="notification-section-block"
+               [style.--tb-notification-delivery-methods-count]="notificationDeliveryMethods?.length ?? 0">
+            <div class="notification-header col-span-full grid grid-cols-subgrid">
+              <div class="col-span-full grid grid-cols-subgrid items-center" style="height: 44px;">
+                <div>
                   <mat-checkbox color="warn"
                     [disabled]="readonly"
                     (click)="$event.stopPropagation()"
@@ -44,31 +45,28 @@
                   </mat-checkbox>
                 </div>
                 @for (deliveryMethods of notificationDeliveryMethods; track deliveryMethods) {
-                  <div class="delivery-method">
-                    <div class="flex flex-1 items-center justify-start">
-                      <mat-checkbox color="warn"
-                        [disabled]="readonly"
-                        [checked]="getChecked(deliveryMethods)"
-                        (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
-                        [indeterminate]="getIndeterminate(deliveryMethods)"
-                        (click)="$event.stopPropagation()">
-                        <mat-label>{{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}</mat-label>
-                      </mat-checkbox>
-                    </div>
+                  <div class="whitespace-nowrap">
+                    <mat-checkbox color="warn"
+                      [disabled]="readonly"
+                      [checked]="getChecked(deliveryMethods)"
+                      (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
+                      [indeterminate]="getIndeterminate(deliveryMethods)"
+                      (click)="$event.stopPropagation()">
+                      <mat-label>{{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}</mat-label>
+                    </mat-checkbox>
                   </div>
                 }
               </div>
-              <mat-divider></mat-divider>
+              <mat-divider class="col-span-full"></mat-divider>
             </div>
-            @for (settingsControl of notificationSettingsFormArray.controls; track settingsControl; let i = $index) {
-              <div>
-                <tb-notification-setting-form [formControl]="settingsControl"
-                  [deliveryMethods]="notificationDeliveryMethods">
-                </tb-notification-setting-form>
-                @if (!$last) {
-                  <mat-divider></mat-divider>
-                }
-              </div>
+            @for (settingsControl of notificationSettingsFormArray.controls; track settingsControl) {
+              <tb-notification-setting-form class="contents"
+                [formControl]="settingsControl"
+                [deliveryMethods]="notificationDeliveryMethods">
+              </tb-notification-setting-form>
+              @if (!$last) {
+                <mat-divider class="col-span-full"></mat-divider>
+              }
             }
           </div>
         </section>

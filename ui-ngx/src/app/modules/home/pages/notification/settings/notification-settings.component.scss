@@ -12,9 +12,7 @@
     min-height: 0;
     @media #{$mat-gt-sm} {
       width: 800px;
-    }
-    @media #{$mat-md} {
-      width: 90%;
+      max-width: 100%;
     }
     .mat-mdc-card-content {
       display: flex;
@@ -29,15 +27,13 @@
       flex-direction: column;
       min-height: 0;
     }
-    .delivery-method {
-      flex: 0 0 var(--tb-notification-delivery-method-width);
-    }
     .notification-section {
       min-height: 0;
       border: 1px solid rgba(0, 0, 0, 0.12);
       overflow: auto;
       &-block {
-        --tb-notification-delivery-method-width: 120px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) repeat(var(--tb-notification-delivery-methods-count), minmax(120px, max-content));
         min-width: 720px;
       }
       .notification-header {

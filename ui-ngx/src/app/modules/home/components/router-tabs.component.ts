@@ -8,7 +8,7 @@ import { AppState } from '@core/core.state';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { MenuService } from '@core/services/menu.service';
 import { distinctUntilChanged, filter, map, mergeMap, startWith, take } from 'rxjs/operators';
-import { merge, Observable } from 'rxjs';
+import { combineLatest, merge, Observable } from 'rxjs';
 import { MenuSection } from '@core/services/menu.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
@@ -54,10 +54,14 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
       viewContainerRef.createComponent(this.replaceComponent);
     } else {
       if (this.activatedRoute.snapshot.data.useChildrenRoutesForTabs) {
-        this.tabs$ = this.router.events.pipe(
-          filter((event) => event instanceof NavigationEnd),
-          startWith(''),
-          map(() => this.buildTabsForRoutes(this.activatedRoute))
+        this.tabs$ = combineLatest([
+          this.router.events.pipe(
+            filter((event) => event instanceof NavigationEnd),
+            startWith('')
+          ),
+          this.menuService.availableMenuLinks()
+        ]).pipe(
+          map(([, menuLinks]) => this.buildTabsForRoutes(this.activatedRoute, menuLinks))
         );
       } else {
         this.tabs$ = merge(this.menuService.menuSections(),
@@ -115,19 +119,17 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
     return [];
   }
 
-  private buildTabsForRoutes(activatedRoute: ActivatedRoute): Array<MenuSection> {
+  private buildTabsForRoutes(activatedRoute: ActivatedRoute, menuLinks: Array<MenuSection>): Array<MenuSection> {
     const sectionPath = this.getSectionPath(activatedRoute);
     const authority = getCurrentAuthUser(this.store).authority;
     const children = activatedRoute.routeConfig.children.filter(page => {
-      if (page.path !== '') {
-        if (page.data?.auth) {
-          return page.data?.auth.includes(authority);
-        } else {
-          return true;
-        }
-      } else {
+      if (page.path === '') {
         return false;
       }
+      if (page.data?.auth && !page.data.auth.includes(authority)) {
+        return false;
+      }
+      return !page.data?.requiredMenuLink || menuLinks.some(link => link.id === page.data.requiredMenuLink);
     });
     if (children.length) {
       return children.map(tab => ({

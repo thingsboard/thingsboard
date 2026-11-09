@@ -3,9 +3,10 @@
 import { Routes } from '@angular/router';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
-import { inject, NgModule } from '@angular/core';
+import { inject } from '@angular/core';
 import { NotificationSettingsComponent } from '@home/pages/notification/settings/notification-settings.component';
 import { NotificationService } from '@core/http/notification.service';
+import { MenuId } from '@core/services/menu.models';
 
 export const notificationUserSettingsRoutes: Routes = [
   {
@@ -14,6 +15,7 @@ export const notificationUserSettingsRoutes: Routes = [
     canDeactivate: [ConfirmOnExitGuard],
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      requiredMenuLink: MenuId.notification_inbox,
       title: 'account.notification-settings',
       breadcrumb: {
         label: 'account.notification-settings',

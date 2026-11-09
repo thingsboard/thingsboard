@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { NotificationTemplate, NotificationType } from '@shared/models/notification.models';
+import { isSysAdminNotificationType, NotificationTemplate, NotificationType } from '@shared/models/notification.models';
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -18,8 +18,6 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
-import { AuthUser } from '@shared/models/user.model';
-import { Authority } from '@shared/models/authority.enum';
 
 export interface TemplateNotificationDialogData {
   template?: NotificationTemplate;
@@ -176,22 +174,9 @@ export class TemplateNotificationDialogComponent
   }
 
   private allowNotificationType(): NotificationType[] {
-    const sysAdminAllowNotificationTypes = new Set([
-      NotificationType.ENTITIES_LIMIT,
-      NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
-      NotificationType.ADDON_ACCESS_REQUEST,
-      NotificationType.ADDON_ACCESS_ERROR,
-      NotificationType.PLAN_UPGRADE_REQUEST,
-      NotificationType.API_USAGE_LIMIT,
-      NotificationType.NEW_PLATFORM_VERSION,
-      NotificationType.RATE_LIMITS,
-      NotificationType.TASK_PROCESSING_FAILURE,
-      NotificationType.RESOURCES_SHORTAGE
-    ]);
-
     if (this.isSysAdmin()) {
-      return [NotificationType.GENERAL, ...sysAdminAllowNotificationTypes];
+      return Object.values(NotificationType).filter(type => type === NotificationType.GENERAL || isSysAdminNotificationType(type));
     }
-    return Object.values(NotificationType).filter(type => !sysAdminAllowNotificationTypes.has(type));
+    return Object.values(NotificationType).filter(type => !isSysAdminNotificationType(type));
   }
 }
