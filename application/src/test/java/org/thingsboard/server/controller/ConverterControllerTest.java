@@ -691,7 +691,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 "\"telemetry\":[{\"ts\":1793170000000,\"values\":{\"temperature\":24.1,\"co2\":550}},{\"ts\":1793181600100,\"values\":{\"battery\":95,\"temperature\":24.5,\"co2\":560," +
                 "\"fCnt\":12,\"data\":\"AXVk\",\"rssi\":-60,\"snr\":9.5,\"channel\":2,\"consumedAirtime\":\"0.061696s\"}}]," +
                 "\"attributes\":{\"eui\":\"24E124707C481005\",\"joinEui\":\"24E124C0002A0001\",\"devAddr\":\"260B1234\",\"deviceId\":\"am308-office\",\"applicationId\":\"my-app\"," +
-                "\"fPort\":85,\"bandwidth\":125000,\"spreadingFactor\":7,\"codeRate\":\"4/5\",\"frequency\":\"868100000\",\"brandId\":\"milesight-iot\",\"modelId\":\"am308\"," +
+                "\"fPort\":85,\"bandwidth\":125000,\"spreadingFactor\":7,\"codeRate\":\"4/5\",\"frequency\":868100000,\"brandId\":\"milesight-iot\",\"modelId\":\"am308\"," +
                 "\"hardwareVersion\":\"1.0\",\"firmwareVersion\":\"1.0\",\"bandId\":\"EU_863_870\",\"netId\":\"000013\",\"tenantId\":\"ttn\",\"clusterId\":\"eu1\"," +
                 "\"clusterAddress\":\"eu1.cloud.thethings.network\"}}";
 
@@ -713,7 +713,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"manual-node\",\"profile\":\"LoRaWAN Device\",\"label\":\"manual-node\",\"group\":\"my-app\"," +
                 "\"telemetry\":{\"ts\":1793181600100,\"values\":{\"fCnt\":3,\"data\":\"Ae0DM18OTGM=\",\"rssi\":-70,\"snr\":7.0}}," +
                 "\"attributes\":{\"eui\":\"70B3D57ED006F370\",\"deviceId\":\"manual-node\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
-                "\"spreadingFactor\":9,\"frequency\":\"868300000\"}}";
+                "\"spreadingFactor\":9,\"frequency\":868300000}}";
 
         testThingsStackDefaultConverters(THINGS_STACK_MANUAL_DEVICE_PAYLOAD, Map.of("profile.milesight-iot-am308", "AM308"), expectedDecodedMessage);
     }
@@ -721,7 +721,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
     private static final String THINGS_STACK_FORMATTER_DEVICE_RESULT = "{\"entityType\":\"DEVICE\",\"name\":\"macro-tracker-1\",\"profile\":\"lansitec-macro-tracker\",\"label\":\"macro-tracker-1\",\"group\":\"my-app\"," +
                 "\"telemetry\":{\"ts\":1794304800100,\"values\":{\"batteryLevel\":100,\"chargeState\":\"Charging\",\"fCnt\":5,\"data\":\"IWQ+Az4AbFA=\",\"rssi\":-70,\"snr\":7.0}}," +
                 "\"attributes\":{\"eui\":\"70B3D57ED006F371\",\"deviceId\":\"macro-tracker-1\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
-                "\"spreadingFactor\":9,\"frequency\":\"868300000\"}}";
+                "\"spreadingFactor\":9,\"frequency\":868300000}}";
 
     // A device added without the Repository, whose payload formatter names its model in tbVersionIds
     @Test
