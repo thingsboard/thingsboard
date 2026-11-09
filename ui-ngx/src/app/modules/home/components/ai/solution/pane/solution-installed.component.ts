@@ -89,7 +89,10 @@ export class SolutionInstalledComponent {
     const install = this.stage() === 'INSTALL';
     const ready = planned.filter(item => install ? item.state === 'DONE' : item.state !== 'WORKING').length / planned.length;
     let count = Math.floor(planned.length * (install ? share + (1 - share) * ready : share * ready));
-    if (!install && !planned.some(item => GENERATED.includes(item.type))) {
+    const pending = planned.findIndex(item => !item.name);
+    if (!install && pending >= 0) {
+      count = Math.min(count, pending);
+    } else if (!install && !planned.some(item => GENERATED.includes(item.type))) {
       count = Math.min(count, Math.max(0, planned.filter(item => item.type === EntityType.DASHBOARD).length - 1));
     }
     const paced = Math.floor(planned.length * this.elapsed() / Math.max(1, this.seconds()));
@@ -154,13 +157,13 @@ export class SolutionInstalledComponent {
         const created = aggregateByName(type, results[type]);
         const rows: InstalledRow[] = items.filter(item => item.type === type).map(item => {
           const position = index++;
-          const result = created.find(row => row.primary?.additionalData?.name === item.name);
+          const result = item.name ? created.find(row => row.primary?.additionalData?.name === item.name) : undefined;
           if (position < shown && install && result && item.state === 'DONE') {
             return result;
           }
           return {
-            key: `${type}:${item.name}`,
-            primary: {additionalData: {name: item.name}} as EntityResult,
+            key: item.name ? `${type}:${item.name}` : `${type}:pending:${item.profile}`,
+            primary: {additionalData: {name: item.name ?? this.translate.instant('solution-creator.pane.pending-' + type, {profile: item.profile})}} as EntityResult,
             status: IssueStatus.OK,
             errors: [],
             warnings: [],

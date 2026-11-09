@@ -40,8 +40,9 @@ export interface SolutionCreatorInfo {
 
 export interface SolutionProgressItem {
   type: EntityType;
-  name: string;
+  name?: string;
   state: 'WAIT' | 'WORKING' | 'DONE';
+  profile?: string;
 }
 
 export interface SolutionInstallProgress {
