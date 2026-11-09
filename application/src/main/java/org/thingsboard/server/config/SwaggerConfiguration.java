@@ -269,7 +269,8 @@ public class SwaggerConfiguration {
 
         var requestBody = new RequestBody().description("Refresh token request")
                 .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
-                        new MediaType().schema(new Schema<JsonNode>().addProperty("refreshToken", new Schema<>().type("string")))));
+                        new MediaType().schema(new Schema<JsonNode>().types(Set.of("object"))
+                                .addProperty("refreshToken", new Schema<>().types(Set.of("string"))))));
 
         operation.requestBody(requestBody);
 
@@ -378,7 +379,7 @@ public class SwaggerConfiguration {
     }
 
     private static void registerSchema(Components components, String name, Class<?> cls) {
-        ResolvedSchema resolved = ModelConverters.getInstance()
+        ResolvedSchema resolved = ModelConverters.getInstance(true)
                 .readAllAsResolvedSchema(new AnnotatedType().type(cls));
         components.addSchemas(name, resolved.schema);
         if (resolved.referencedSchemas != null) {
