@@ -462,6 +462,16 @@
         white-space: nowrap;
       }
 
+      a .k-ext {
+        width: 14px;
+        height: 14px;
+        margin-left: 4px;
+        font-size: 14px;
+        line-height: 14px;
+        vertical-align: -2px;
+        color: var(--tb-ink-38);
+      }
+
       a:not(.tb-chiplink) {
         font-weight: 400;
         color: var(--ai-link);

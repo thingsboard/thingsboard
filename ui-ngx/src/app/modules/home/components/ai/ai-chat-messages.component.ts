@@ -27,7 +27,8 @@ export interface AnswerReportEvent {
   comment?: string;
 }
 import { decorateCodeBlocks, decorateTables } from '@home/components/ai/ai-code-block';
-import { decorateReferences } from '@home/components/ai/ai-references';
+import { decorateLinks, decorateReferences, decorateSeverities } from '@home/components/ai/ai-references';
+import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { Router } from '@angular/router';
 
 @Component({
@@ -115,6 +116,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     decorateCodeBlocks(answer, this.translate, text => this.clipboard.copyFromContent(text));
     decorateTables(answer);
     decorateReferences(answer, (message as GeneralChatMessage)?.references);
+    decorateLinks(answer);
+    decorateSeverities(answer, (message as GeneralChatMessage)?.severities,
+      severity => this.translate.instant(alarmSeverityTranslations.get(severity as AlarmSeverity) ?? severity));
   }
 
   @HostListener('click', ['$event'])

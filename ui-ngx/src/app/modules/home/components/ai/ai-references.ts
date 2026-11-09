@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { aiEntityKind } from '@home/components/ai/ai-action.models';
+import { aiSevMarkElement } from '@home/components/ai/ai-sev-mark.component';
 
 export interface AiReference {
   name: string;
@@ -64,7 +65,7 @@ function chip(reference: AiReference): HTMLElement {
   icon.setAttribute('aria-hidden', 'true');
   icon.textContent = kind.icon;
   code.append(icon, reference.name);
-  const base = baseDetailsPageByEntityType.get(reference.entityType as EntityType);
+  const base = reference.entityType === 'ALARM_RULE' ? '/alarms/alarm-rules' : baseDetailsPageByEntityType.get(reference.entityType as EntityType);
   if (!base) {
     return code;
   }
@@ -77,4 +78,61 @@ function chip(reference: AiReference): HTMLElement {
 
 function escape(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function decorateLinks(root: HTMLElement): void {
+  root.querySelectorAll<HTMLAnchorElement>('a[href]:not(.tb-chiplink)').forEach(link => {
+    if (link.closest('pre, code') || link.origin === location.origin || !/^https?:$/.test(link.protocol)) {
+      return;
+    }
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    if (!link.querySelector('.k-ext')) {
+      const icon = document.createElement('span');
+      icon.className = 'mat-icon notranslate material-icons mat-ligature-font k-ext';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = 'open_in_new';
+      link.append(icon);
+    }
+  });
+}
+
+const SEVERITY_SKIP = 'code, pre, a, table, .k-sev, .tb-chiplink';
+
+export function decorateSeverities(root: HTMLElement, severities: string[] | undefined, label: (severity: string) => string): void {
+  if (!severities?.length) {
+    return;
+  }
+  const pattern = new RegExp(`(?<![\\p{L}\\p{N}_])(${severities.map(severity => severity.toLowerCase()).join('|')})(?![\\p{L}\\p{N}_])`, 'iu');
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: node => node.parentElement?.closest(SEVERITY_SKIP) || !node.textContent?.trim() ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  });
+  const nodes: Text[] = [];
+  while (walker.nextNode()) {
+    nodes.push(walker.currentNode as Text);
+  }
+  nodes.forEach(node => {
+    let rest = node.textContent ?? '';
+    let match = pattern.exec(rest);
+    if (!match) {
+      return;
+    }
+    const fragment = document.createDocumentFragment();
+    while (match) {
+      if (match.index > 0) {
+        fragment.append(rest.slice(0, match.index));
+      }
+      const severity = match[1].toUpperCase();
+      const chip = document.createElement('span');
+      chip.className = 'k-sev ' + severity.toLowerCase();
+      chip.append(aiSevMarkElement(severity), label(severity));
+      fragment.append(chip);
+      rest = rest.slice(match.index + match[1].length);
+      match = pattern.exec(rest);
+    }
+    if (rest) {
+      fragment.append(rest);
+    }
+    node.replaceWith(fragment);
+  });
 }

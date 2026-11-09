@@ -1434,7 +1434,9 @@ code.k-ent[data-pal="solution"] .k-ent-ic { color: var(--entity-solution-fg); }
 .k-sev {
   padding: 2px 7px 2px 5px;
   border-radius: 5px;
-  font: 500 14px/20px var(--tb-font);
+  font-family: var(--tb-font);
+  font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
   color: var(--sv-t);
   background: color-mix(in srgb, var(--sv) 10%, transparent);

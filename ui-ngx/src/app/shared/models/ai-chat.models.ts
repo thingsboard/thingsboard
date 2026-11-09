@@ -52,6 +52,7 @@ export interface AssistantChatEvent extends BaseChatEvent {
   data: {
     message: string;
     references?: AiEntityReference[];
+    severities?: string[];
   }
 }
 
