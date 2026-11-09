@@ -700,7 +700,11 @@
             "done": "Done",
             "skip": "Skip",
             "you-said": "You said",
-            "skipped": "You skipped"
+            "skipped": "You skipped",
+            "none": "None",
+            "no-answer": "No answer",
+            "your-answer": "Your answer",
+            "type-answer": "Type the answer"
         },
         "ai-assistant": "AI Assistant",
         "configure-with-ai": "Configure with AI",

@@ -105,6 +105,8 @@
       (rate)="onRate($event)"
       (report)="onReport($event)"
       (resume)="resume()"
+      (prompt)="ask($event)"
+      (answer)="ask($event)"
       (editMessage)="promptInput?.setValue($event)">
     </tb-ai-chat-messages>
   } @else if (!chatId() && docked()) {

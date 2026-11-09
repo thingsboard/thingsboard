@@ -36,27 +36,61 @@
           }
         </div>
         <div class="k-ask-a">
-          <div class="k-optcards" [class.list]="step.options.length >= 5" role="radiogroup" [attr.aria-label]="step.question"
-               [style.--n]="step.options.length">
-            @for (option of step.options; track option.label) {
-              <button type="button" role="radio" class="k-optcard" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
-                      [disabled]="disabled()" (click)="pick(step, option.label)">
-                <span class="k-optdot"></span>
-                <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
-              </button>
-            }
-            <div class="k-optcard other" role="radio" [attr.aria-checked]="isOther(step)" (click)="otherArea.focus()">
-              <span class="k-optdot"></span>
-              <span class="k-optbody">
-                <b>{{ 'ai-assistant.question.other' | translate }}</b>
-                <textarea #otherArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
-                          [value]="otherText(step)"
-                          [placeholder]="'ai-assistant.question.other-hint' | translate"
-                          [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
-                          (focus)="pickOther(step)" (input)="type(step, otherArea)" (keydown.enter)="onEnter($event)"></textarea>
-              </span>
+          @if (isFree(step)) {
+            <div class="k-optcards list">
+              <div class="k-optcard other free" (click)="freeArea.focus()">
+                <span class="k-optbody">
+                  <b>{{ 'ai-assistant.question.your-answer' | translate }}</b>
+                  <textarea #freeArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
+                            [value]="otherText(step)" [placeholder]="'ai-assistant.question.type-answer' | translate"
+                            [attr.aria-label]="step.question" (input)="type(step, freeArea)" (keydown.enter)="onEnter($event)"></textarea>
+                </span>
+              </div>
             </div>
-          </div>
+          } @else if (step.multiple) {
+            <div class="k-optcards" [class.list]="step.options.length >= 5" role="group" [attr.aria-label]="step.question"
+                 [style.--n]="step.options.length">
+              @for (option of step.options; track option.label) {
+                <button type="button" role="checkbox" class="k-optcard multi" [attr.aria-checked]="isChosen(step, option.label)"
+                        [disabled]="disabled()" (click)="toggle(step, option.label)">
+                  <span class="k-optdot"><mat-icon aria-hidden="true">check</mat-icon></span>
+                  <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
+                </button>
+              }
+              <div class="k-optcard multi other" role="checkbox" [attr.aria-checked]="isOther(step)" (click)="multiArea.focus()">
+                <span class="k-optdot"><mat-icon aria-hidden="true">check</mat-icon></span>
+                <span class="k-optbody">
+                  <b>{{ 'ai-assistant.question.other' | translate }}</b>
+                  <textarea #multiArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
+                            [value]="otherText(step)" [placeholder]="'ai-assistant.question.other-hint' | translate"
+                            [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
+                            (input)="type(step, multiArea)" (keydown.enter)="onEnter($event)"></textarea>
+                </span>
+              </div>
+            </div>
+          } @else {
+            <div class="k-optcards" [class.list]="step.options.length >= 5" role="radiogroup" [attr.aria-label]="step.question"
+                 [style.--n]="step.options.length">
+              @for (option of step.options; track option.label) {
+                <button type="button" role="radio" class="k-optcard" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
+                        [disabled]="disabled()" (click)="pick(step, option.label)">
+                  <span class="k-optdot"></span>
+                  <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
+                </button>
+              }
+              <div class="k-optcard other" role="radio" [attr.aria-checked]="isOther(step)" (click)="otherArea.focus()">
+                <span class="k-optdot"></span>
+                <span class="k-optbody">
+                  <b>{{ 'ai-assistant.question.other' | translate }}</b>
+                  <textarea #otherArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
+                            [value]="otherText(step)"
+                            [placeholder]="'ai-assistant.question.other-hint' | translate"
+                            [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
+                            (focus)="pickOther(step)" (input)="type(step, otherArea)" (keydown.enter)="onEnter($event)"></textarea>
+                </span>
+              </div>
+            </div>
+          }
         </div>
       </div>
     }

@@ -46,7 +46,7 @@ import {
   ToolFinished,
   ToolStarted
 } from '@shared/models/ai-chat.models';
-import { aiActionWords, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction } from '@home/components/ai/ai-action.models';
+import { aiActionWords, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction, SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL } from '@home/components/ai/ai-action.models';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
@@ -714,7 +714,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       executionId: started.executionId,
       tool: started.tool,
       arguments: started.arguments,
-      status: 'RUNNING',
+      status: started.tool === SUGGEST_PROMPTS_TOOL || started.tool === ASK_USER_TOOL ? 'SUCCESS' : 'RUNNING',
       startedAt: Date.now()
     };
     this.messages.update(list => [...list, {from: 'ACTION', data: action}]);
@@ -728,7 +728,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
       ? {from: 'ACTION', data: {...message.data, status: finished.status, durationMs: finished.durationMs, result: finished.result,
           affectedEntities: finished.affectedEntities}}
       : message));
-    if (!this.messages().some(message => message.from === 'ACTION' && message.data.status === 'RUNNING')) {
+    const prompts = this.messages().some(message => message.from === 'ACTION' && message.data.executionId === finished.executionId
+      && (message.data.tool === SUGGEST_PROMPTS_TOOL || message.data.tool === ASK_USER_TOOL));
+    if (!prompts && !this.messages().some(message => message.from === 'ACTION' && message.data.status === 'RUNNING')) {
       this.setWork('going-through-results', true);
     }
   }

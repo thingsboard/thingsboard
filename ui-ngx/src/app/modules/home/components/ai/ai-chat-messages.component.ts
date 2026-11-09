@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
+import { AiQuestion, AiQuestionAnswer, ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
 import { ClipboardService } from 'ngx-clipboard';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -12,7 +12,8 @@ import {
   ToolExecutionRequested,
   ToolExecutionResult
 } from '@shared/models/ai-chat.models';
-import { AiWorkState } from '@home/components/ai/ai-action.models';
+import { AiPrompt, aiPromptsOf, aiQuestionsOf, ASK_USER_TOOL, AiWorkState, isHiddenAiAction, SUGGEST_PROMPTS_TOOL } from '@home/components/ai/ai-action.models';
+import { aiAnswersOf, aiAnswersText } from '@home/components/ai/ai-question.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
 export interface AnswerRatingEvent {
@@ -25,7 +26,7 @@ export interface AnswerReportEvent {
   problem: AnswerProblem;
   comment?: string;
 }
-import { decorateCodeBlocks } from '@home/components/ai/ai-code-block';
+import { decorateCodeBlocks, decorateTables } from '@home/components/ai/ai-code-block';
 
 @Component({
   selector: 'tb-ai-chat-messages',
@@ -53,6 +54,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Output() askAgain = new EventEmitter<void>();
   @Output() editMessage = new EventEmitter<string>();
   @Output() resume = new EventEmitter<void>();
+  @Output() prompt = new EventEmitter<string>();
+  @Output() answer = new EventEmitter<string>();
   @Output() resourceError = new EventEmitter<any>();
 
   waitApproval = false;
@@ -64,6 +67,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   runningCount = 0;
 
   summaries: Record<number, EntityId[]> = {};
+  prompts: {index: number; items: AiPrompt[]} | null = null;
+  asking: {index: number; questions: AiQuestion[]} | null = null;
+  answersAt: Record<number, AiQuestionAnswer[]> = {};
 
   dayLines: Record<number, string> = {};
 
@@ -104,6 +110,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   decorateCode(answer: HTMLElement): void {
     decorateCodeBlocks(answer, this.translate, text => this.clipboard.copyFromContent(text));
+    decorateTables(answer);
   }
 
   isFolded(index: number, content: string): boolean {
@@ -181,6 +188,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     }
     if (changes.messages || changes.completedExecutions || changes.loading) {
       this.summaries = this.findSummaries();
+      this.prompts = this.findPrompts();
+      this.asking = this.findAsking();
+      this.answersAt = this.findAnswers();
     }
     if (changes.messages) {
       this.lastAnswerIndex = this.findLastAnswerIndex();
@@ -315,6 +325,70 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     });
     close(!this.loading);
     return summaries;
+  }
+
+  isListedAction(message: ChatMessage): boolean {
+    return message.from === 'ACTION' && message.data.tool !== SUGGEST_PROMPTS_TOOL && message.data.tool !== ASK_USER_TOOL
+      && !isHiddenAiAction(message.data.tool);
+  }
+
+  answerQuestions(answers: AiQuestionAnswer[]): void {
+    this.answer.emit(aiAnswersText(answers));
+  }
+
+  private findAsking(): {index: number; questions: AiQuestion[]} | null {
+    if (this.loading) {
+      return null;
+    }
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      const message = this.messages[i];
+      if (message.from === 'USER') {
+        return null;
+      }
+      if (message.from === 'ACTION' && message.data.tool === ASK_USER_TOOL) {
+        const questions = aiQuestionsOf(message.data.arguments);
+        return questions.length ? {index: i, questions} : null;
+      }
+    }
+    return null;
+  }
+
+  private findAnswers(): Record<number, AiQuestionAnswer[]> {
+    const answers: Record<number, AiQuestionAnswer[]> = {};
+    let questions: AiQuestion[] = [];
+    this.messages.forEach((message, index) => {
+      if (message.from === 'ACTION' && message.data.tool === ASK_USER_TOOL) {
+        questions = aiQuestionsOf(message.data.arguments);
+      } else if (message.from === 'USER') {
+        const found = questions.length ? aiAnswersOf(message.content, questions) : null;
+        if (found) {
+          answers[index] = found;
+        }
+        questions = [];
+      }
+    });
+    return answers;
+  }
+
+  private findPrompts(): {index: number; items: AiPrompt[]} | null {
+    if (this.loading) {
+      return null;
+    }
+    let items: AiPrompt[] = [];
+    let answer = -1;
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      const message = this.messages[i];
+      if (message.from === 'USER') {
+        break;
+      }
+      if (message.from === 'ACTION' && message.data.tool === SUGGEST_PROMPTS_TOOL && !items.length) {
+        items = aiPromptsOf(message.data.arguments);
+      }
+      if (message.from === 'AI' && !message.status && answer < 0) {
+        answer = i;
+      }
+    }
+    return items.length && answer >= 0 ? {index: answer, items} : null;
   }
 
   private findLastAnswerIndex(): number {

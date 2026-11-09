@@ -72,7 +72,8 @@ export interface AiQuestion {
   question: string;
   why?: string;
   options: AiQuestionOption[];
-  recommended?: string;
+  recommended?: string | string[];
+  multiple?: boolean;
 }
 
 export interface AiQuestionAnswer {

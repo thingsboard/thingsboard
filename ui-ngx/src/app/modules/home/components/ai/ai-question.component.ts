@@ -1,7 +1,35 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, computed, EventEmitter, input, Output, signal } from '@angular/core';
+import { Component, computed, EventEmitter, inject, input, Output, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { AiQuestion, AiQuestionAnswer } from '@shared/models/solution-creator.models';
+
+const MULTI_SEPARATOR = ', ';
+
+export function aiAnswersText(answers: AiQuestionAnswer[]): string {
+  return answers.map(item => item.question.question.trim() + ' ' + item.answer.trim()).join('\n');
+}
+
+export function aiAnswersOf(content: string | undefined, questions: AiQuestion[] | undefined): AiQuestionAnswer[] | null {
+  if (!content || !questions?.length) {
+    return null;
+  }
+  const lines = content.split('\n').map(line => line.trim()).filter(Boolean);
+  const answers: AiQuestionAnswer[] = [];
+  for (const line of lines) {
+    const question = questions.find(item => line.startsWith(item.question.trim() + ' '));
+    if (!question) {
+      return null;
+    }
+    answers.push({question, answer: line.slice(question.question.trim().length).trim()});
+  }
+  return answers.length ? answers : null;
+}
+
+function recommendedOf(question: AiQuestion): string[] {
+  const recommended = Array.isArray(question.recommended) ? question.recommended : question.recommended ? [question.recommended] : [];
+  return recommended.filter(label => question.options.some(option => option.label === label));
+}
 
 @Component({
   selector: 'tb-ai-question',
@@ -18,9 +46,12 @@ export class AiQuestionComponent {
   @Output() done = new EventEmitter<AiQuestionAnswer[]>();
   @Output() skip = new EventEmitter<AiQuestionAnswer[]>();
 
+  private translate = inject(TranslateService);
+
   at = signal(0);
   move = signal<'next' | 'back' | null>(null);
   private picked = signal<Record<string, string>>({});
+  private chosen = signal<Record<string, string[]>>({});
   private typed = signal<Record<string, string>>({});
 
   current = computed(() => this.questions()[Math.min(this.at(), this.questions().length - 1)]);
@@ -31,10 +62,29 @@ export class AiQuestionComponent {
     if (picked !== undefined) {
       return picked;
     }
-    return question.options.some(option => option.label === question.recommended) ? question.recommended : question.options[0]?.label ?? '';
+    return this.isFree(question) ? '' : this.defaultOf(question);
+  }
+
+  isFree(question: AiQuestion): boolean {
+    return !question.options?.length;
+  }
+
+  isChosen(question: AiQuestion, label: string): boolean {
+    return (this.chosen()[question.id] ?? recommendedOf(question)).includes(label);
+  }
+
+  toggle(question: AiQuestion, label: string): void {
+    const current = this.chosen()[question.id] ?? recommendedOf(question);
+    this.chosen.update(values => ({...values, [question.id]: current.includes(label) ? current.filter(item => item !== label) : [...current, label]}));
   }
 
   isOther(question: AiQuestion): boolean {
+    if (this.isFree(question)) {
+      return true;
+    }
+    if (question.multiple) {
+      return !!this.otherText(question).trim();
+    }
     return this.picked()[question.id] === null;
   }
 
@@ -43,6 +93,9 @@ export class AiQuestionComponent {
   }
 
   ready(question: AiQuestion): boolean {
+    if (question.multiple && !this.isFree(question)) {
+      return true;
+    }
     return this.isOther(question) ? !!this.otherText(question).trim() : !!this.valueOf(question);
   }
 
@@ -51,6 +104,9 @@ export class AiQuestionComponent {
   }
 
   pickOther(question: AiQuestion): void {
+    if (question.multiple || this.isFree(question)) {
+      return;
+    }
     if (!this.isOther(question)) {
       this.picked.update(values => ({...values, [question.id]: null}));
     }
@@ -96,13 +152,29 @@ export class AiQuestionComponent {
   }
 
   private answers(): AiQuestionAnswer[] {
-    return this.questions().map(question => ({
-      question,
-      answer: this.isOther(question) ? this.otherText(question).trim() : this.valueOf(question)
-    }));
+    return this.questions().map(question => ({question, answer: this.answerOf(question)}));
+  }
+
+  private answerOf(question: AiQuestion): string {
+    if (question.multiple && !this.isFree(question)) {
+      const values = [...question.options.map(option => option.label).filter(label => this.isChosen(question, label))];
+      const typed = this.otherText(question).trim();
+      if (typed) {
+        values.push(typed);
+      }
+      return values.length ? values.join(MULTI_SEPARATOR) : this.translate.instant('ai-assistant.question.none');
+    }
+    return this.isOther(question) ? this.otherText(question).trim() : this.valueOf(question);
   }
 
   private defaultOf(question: AiQuestion): string {
-    return question.options.some(option => option.label === question.recommended) ? question.recommended : question.options[0]?.label ?? '';
+    if (this.isFree(question)) {
+      return this.translate.instant('ai-assistant.question.no-answer');
+    }
+    if (question.multiple) {
+      const recommended = recommendedOf(question);
+      return recommended.length ? recommended.join(MULTI_SEPARATOR) : this.translate.instant('ai-assistant.question.none');
+    }
+    return recommendedOf(question)[0] ?? question.options?.[0]?.label ?? '';
   }
 }

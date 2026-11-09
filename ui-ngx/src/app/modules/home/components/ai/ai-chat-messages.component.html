@@ -8,8 +8,8 @@
   @if (dayLines[$index]; as day) {
     <div class="k-day" role="separator"><span>{{ day }}</span></div>
   }
-  @if (msg.from === 'USER' && msg.answers?.length) {
-    <tb-ai-question class="answers" [questions]="[]" [answered]="msg.answers" [time]="msg.time"></tb-ai-question>
+  @if (msg.from === 'USER' && (msg.answers?.length || answersAt[$index])) {
+    <tb-ai-question class="answers" [questions]="[]" [answered]="msg.answers ?? answersAt[$index]" [time]="msg.time"></tb-ai-question>
   } @else if (msg.from === 'USER') {
     @if (msg.startedFrom) {
       <tb-ai-started-from [from]="msg.startedFrom"></tb-ai-started-from>
@@ -48,8 +48,12 @@
         }
       </div>
     </div>
+  } @else if (msg.from === 'ACTION' && asking?.index === $index) {
+    <div class="ai ask">
+      <tb-ai-question [questions]="asking.questions" [time]="msg.data.startedAt" (done)="answerQuestions($event)" (skip)="answerQuestions($event)"></tb-ai-question>
+    </div>
   } @else if (msg.from === 'ACTION') {
-    @if (msg.data.status !== 'RUNNING' || $index === runningLead) {
+    @if (isListedAction(msg) && (msg.data.status !== 'RUNNING' || $index === runningLead)) {
       <div class="ai action">
         <tb-ai-action-line [action]="msg.data" [more]="$index === runningLead ? runningCount - 1 : 0"></tb-ai-action-line>
       </div>
@@ -139,6 +143,18 @@
             }
           </span>
         </div>
+        @if (prompts?.index === $index) {
+          <div class="k-chips agent-chips">
+            @for (option of prompts.items; track $index) {
+              <button type="button" class="ob-chip" (click)="prompt.emit(option.text)">
+                @if (option.icon) {
+                  <mat-icon aria-hidden="true">{{ option.icon }}</mat-icon>
+                }
+                {{ option.text }}
+              </button>
+            }
+          </div>
+        }
         @if (msg.chips?.length) {
           <div class="k-chips agent-chips">
             @for (option of msg.chips; track option.id) {

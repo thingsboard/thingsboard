@@ -483,6 +483,7 @@
             font-weight: 500;
             color: var(--tb-text-secondary);
             border-bottom: 1px solid var(--tb-line);
+            text-align: left;
             white-space: nowrap;
           }
         }
@@ -504,6 +505,19 @@
 
         th:last-child, td:last-child {
           padding-right: 0;
+        }
+
+        td.long {
+          white-space: normal;
+          min-width: 16em;
+        }
+
+        th[align="right"], td[align="right"] {
+          text-align: right;
+        }
+
+        th[align="center"], td[align="center"] {
+          text-align: center;
         }
       }
 

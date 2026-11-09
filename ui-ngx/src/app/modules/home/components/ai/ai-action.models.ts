@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { AiQuestion } from '@shared/models/solution-creator.models';
+
 export type { AiAction, AiActionStatus } from '@shared/models/ai-chat.models';
 
 export type AiSpinKind = 'think' | 'gen' | 'install' | 'listen' | 'stop';
@@ -16,7 +18,6 @@ export interface AiWorkState {
   moment: AiWorkMoment;
   since: number;
 }
-
 const HIDDEN_TOOLS = new Set(['read_current_time']);
 
 const TOOL_WORDS: Record<string, string> = {
@@ -89,6 +90,49 @@ const DELETED_TARGETS: Record<string, string> = {
 const ACTION_PREFIX = 'ai-assistant.action.';
 
 export const isHiddenAiAction = (tool: string): boolean => HIDDEN_TOOLS.has(tool);
+
+export const SUGGEST_PROMPTS_TOOL = 'suggest_next_prompts';
+
+export const ASK_USER_TOOL = 'ask_user';
+
+export function aiQuestionsOf(args: unknown): AiQuestion[] {
+  const questions = (args as {questions?: unknown})?.questions;
+  if (!Array.isArray(questions)) {
+    return [];
+  }
+  return questions
+    .filter(question => typeof question?.question === 'string' && question.question.trim())
+    .slice(0, 3)
+    .map((question, index) => ({
+      id: typeof question.id === 'string' && question.id ? question.id : 'q' + index,
+      question: question.question.trim(),
+      why: typeof question.why === 'string' ? question.why : undefined,
+      options: (Array.isArray(question.options) ? question.options : [])
+        .filter(option => typeof option?.label === 'string' && option.label.trim())
+        .slice(0, 6)
+        .map(option => ({label: option.label.trim(), hint: typeof option.hint === 'string' ? option.hint : undefined})),
+      recommended: Array.isArray(question.recommended) ? question.recommended.filter(label => typeof label === 'string') : undefined,
+      multiple: question.multiple === true
+    }));
+}
+
+const MAX_PROMPTS = 4;
+
+export interface AiPrompt {
+  text: string;
+  icon?: string;
+}
+
+export function aiPromptsOf(args: unknown): AiPrompt[] {
+  const prompts = (args as {prompts?: unknown})?.prompts;
+  if (!Array.isArray(prompts)) {
+    return [];
+  }
+  return prompts
+    .filter(prompt => typeof prompt?.text === 'string' && prompt.text.trim())
+    .map(prompt => ({text: prompt.text.trim(), icon: typeof prompt.icon === 'string' && /^[a-z0-9_]+$/.test(prompt.icon) ? prompt.icon : undefined}))
+    .slice(0, MAX_PROMPTS);
+}
 
 export function aiActionWords(tool: string, args: unknown): AiActionWords {
   const values = (args && typeof args === 'object' ? args : {}) as Record<string, any>;

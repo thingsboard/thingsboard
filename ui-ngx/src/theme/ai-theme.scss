@@ -1895,6 +1895,37 @@ code.k-ent[data-pal="solution"] .k-ent-ic { color: var(--entity-solution-fg); }
   }
 }
 
+.k-optcard.multi {
+  .k-optdot {
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+
+    &::after {
+      display: none;
+    }
+
+    .mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      line-height: 14px;
+      transform: scale(0);
+      transition: transform .1s cubic-bezier(.2, 0, 0, 1);
+    }
+  }
+
+  &[aria-checked="true"] .k-optdot {
+    background: var(--ai-selected);
+
+    .mat-icon {
+      transform: scale(1);
+    }
+  }
+}
+
 .k-optbody {
   b {
     display: block;

@@ -68,25 +68,10 @@ import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { aggregateByName, IssueStatus } from '@home/components/ai/solution/solution-info/issues-aggregation';
 import { SolutionJsonComponent } from '@home/components/ai/solution/pane/solution-json.component';
 import { AiRenameDialogComponent, AiRenameDialogData } from '@home/components/ai/ai-rename-dialog.component';
+import { aiAnswersOf, aiAnswersText } from '@home/components/ai/ai-question.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
 export type SolutionView = 'overview' | 'dashboards' | 'solution';
-
-function answersOf(content: string | undefined, questions: AiQuestion[] | undefined): AiQuestionAnswer[] | null {
-  if (!content || !questions?.length) {
-    return null;
-  }
-  const lines = content.split('\n').map(line => line.trim()).filter(Boolean);
-  const answers: AiQuestionAnswer[] = [];
-  for (const line of lines) {
-    const question = questions.find(item => line.startsWith(item.question.trim() + ' '));
-    if (!question) {
-      return null;
-    }
-    answers.push({question, answer: line.slice(question.question.trim().length).trim()});
-  }
-  return answers.length ? answers : null;
-}
 
 function formatCredits(credits: number): string {
   if (credits >= 1000) {
@@ -250,7 +235,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       }
       if (message.from === 'USER') {
         const previous = messages[index - 1] as GeneralChatMessage;
-        const answers = previous?.from === 'AI' ? answersOf((message as GeneralChatMessage).content, previous.questions) : null;
+        const answers = previous?.from === 'AI' ? aiAnswersOf((message as GeneralChatMessage).content, previous.questions) : null;
         return answers ? {...message, answers} as GeneralChatMessage : message;
       }
       return message;
@@ -928,7 +913,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   answerQuestions(answers: AiQuestionAnswer[]): void {
-    this.sendMsgFromUser({message: answers.map(item => item.question.question.trim() + ' ' + item.answer.trim()).join('\n'), resources: []});
+    this.sendMsgFromUser({message: aiAnswersText(answers), resources: []});
   }
 
   skipQuestions(answers: AiQuestionAnswer[]): void {

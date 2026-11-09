@@ -420,3 +420,11 @@ function logLine(line: string): Piece[] {
 function matches(line: string, pattern: RegExp): string[] {
   return line.match(pattern) ?? [];
 }
+
+const LONG_CELL = 32;
+
+export function decorateTables(root: HTMLElement): void {
+  root.querySelectorAll('table td, table th').forEach((cell: HTMLElement) => {
+    cell.classList.toggle('long', (cell.textContent ?? '').trim().length > LONG_CELL);
+  });
+}
