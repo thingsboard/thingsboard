@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { AiQuestion, AiQuestionAnswer, ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AiQuestion, AiQuestionAnswer, ApprovalChatMessage, ChatMessage, GeneralChatMessage } from '@shared/models/solution-creator.models';
 import { ClipboardService } from 'ngx-clipboard';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -27,6 +27,8 @@ export interface AnswerReportEvent {
   comment?: string;
 }
 import { decorateCodeBlocks, decorateTables } from '@home/components/ai/ai-code-block';
+import { decorateReferences } from '@home/components/ai/ai-references';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'tb-ai-chat-messages',
@@ -98,7 +100,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   constructor(private elementRef: ElementRef<HTMLElement>,
               private clipboard: ClipboardService,
-              private translate: TranslateService) {}
+              private translate: TranslateService,
+              private router: Router) {}
 
   copyText(text: string, index: number): void {
     if (this.clipboard.copyFromContent(text)) {
@@ -108,9 +111,23 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     }
   }
 
-  decorateCode(answer: HTMLElement): void {
+  decorateCode(answer: HTMLElement, message?: ChatMessage): void {
     decorateCodeBlocks(answer, this.translate, text => this.clipboard.copyFromContent(text));
     decorateTables(answer);
+    decorateReferences(answer, (message as GeneralChatMessage)?.references);
+  }
+
+  @HostListener('click', ['$event'])
+  openInApp(event: MouseEvent): void {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    const link = (event.target as HTMLElement)?.closest('.agent a[href]') as HTMLAnchorElement | null;
+    if (!link || link.target === '_blank' || link.origin !== location.origin) {
+      return;
+    }
+    event.preventDefault();
+    this.router.navigateByUrl(link.pathname + link.search + link.hash);
   }
 
   isFolded(index: number, content: string): boolean {

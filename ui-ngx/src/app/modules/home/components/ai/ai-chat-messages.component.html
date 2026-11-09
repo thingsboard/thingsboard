@@ -93,7 +93,7 @@
             @if (msg.lead) {
               <p class="lead">{{ msg.lead }}</p>
             }
-            <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.done !== undefined ? withoutDoneMark(msg.content) : msg.content)" (ready)="decorateCode(answer)"></tb-markdown>
+            <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.done !== undefined ? withoutDoneMark(msg.content) : msg.content)" (ready)="decorateCode(answer, msg)"></tb-markdown>
             @if (summaries[$index]; as entities) {
               <tb-ai-run-summary [entities]="entities"></tb-ai-run-summary>
             }

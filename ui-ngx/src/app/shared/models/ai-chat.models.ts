@@ -41,10 +41,17 @@ export interface BaseChatEvent {
   event: string;
 }
 
+export interface AiEntityReference {
+  name: string;
+  entityType: string;
+  id: string;
+}
+
 export interface AssistantChatEvent extends BaseChatEvent {
   event: 'assistantMessage',
   data: {
     message: string;
+    references?: AiEntityReference[];
   }
 }
 

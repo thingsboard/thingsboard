@@ -2250,3 +2250,34 @@ textarea.k-opt-input {
   max-width: 760px;
   margin: 0 auto 8px;
 }
+
+a.tb-chiplink, a.tb-chiplink:hover, a.tb-chiplink:focus-visible {
+  text-decoration: none !important;
+  border-bottom: 0 !important;
+  color: inherit;
+  border-radius: 6px;
+}
+
+a.tb-chiplink > code {
+  position: relative;
+  top: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, currentColor 28%, transparent);
+  transition: text-decoration-color .12s ease;
+}
+
+a.tb-chiplink:hover > code, a.tb-chiplink:focus-visible > code {
+  text-decoration-color: currentColor;
+}
+
+a.tb-chiplink:active > code {
+  top: 1px;
+}
+
+a.tb-chiplink:focus-visible {
+  outline: 2px solid var(--tb-primary-300);
+  outline-offset: 1px;
+}

@@ -433,7 +433,7 @@
         font-weight: 500;
       }
 
-      code:not([class*=language-]) {
+      code:not([class*=language-]):not(.k-ent) {
         display: inline-block;
         white-space: nowrap;
         padding: 2px 7px;
@@ -445,7 +445,24 @@
         color: var(--tb-ink);
       }
 
-      a {
+      a.tb-chiplink {
+        font-weight: 400;
+        color: var(--tb-ink);
+      }
+
+      code.k-ent {
+        display: inline-block;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 2px 7px;
+        border-radius: 5px;
+        background: rgba(0, 0, 0, 0.05);
+        font: 400 14px/18px var(--tb-font);
+        color: var(--tb-ink);
+        white-space: nowrap;
+      }
+
+      a:not(.tb-chiplink) {
         font-weight: 400;
         color: var(--ai-link);
         text-decoration: none;

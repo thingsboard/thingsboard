@@ -241,6 +241,7 @@ export interface AiStartedFrom {
 export interface GeneralChatMessage {
   from: 'USER' | 'AI' | 'SYSTEM' | 'GENERATE';
   content: string;
+  references?: Array<{name: string; entityType: string; id: string}>;
   status?: 'INCOMPLETE' | 'STOPPED';
   rating?: 'UP' | 'DOWN';
   reported?: boolean;

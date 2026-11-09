@@ -627,7 +627,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private handleChatEvent(event: ChatEvent): Observable<ChatEvent> {
     switch (event.event) {
       case 'assistantMessage':
-        this.messages.update(list => [...list, {from: 'AI', content: event.data.message, time: Date.now()}]);
+        this.messages.update(list => [...list, event.data.references?.length
+          ? {from: 'AI', content: event.data.message, references: event.data.references, time: Date.now()}
+          : {from: 'AI', content: event.data.message, time: Date.now()}]);
         break;
       case 'toolExecutionRequested':
         this.handleToolApproval(event);
