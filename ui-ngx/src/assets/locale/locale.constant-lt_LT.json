@@ -688,13 +688,7 @@
     "mobile-settings": "Mobiliosios programėlės nustatymai",
     "firebase-service-account-file": "Firebase paslaugos paskyros prisijungimo duomenų JSON failas",
     "select-firebase-service-account-file": "Nuvilkite savo Firebase paslaugos paskyros prisijungimo duomenų failą arba ",
-    "use-system-mobile-settings": "Naudoti sistemos mobiliosios programėlės nustatymus",
-    "trendz": "PredAna",
-    "trendz-settings": "PredAna nustatymai",
-    "trendz-url": "PredAna URL",
-    "trendz-url-required": "PredAna URL yra privalomas",
-    "trendz-api-key": "PredAna API raktas",
-    "trendz-enable": "Įjungti PredAna"
+    "use-system-mobile-settings": "Naudoti sistemos mobiliosios programėlės nustatymus"
   },
   "ai-assistant": {
     "configure-with-ai": "Konfigūruoti naudojant DI",
@@ -1365,7 +1359,6 @@
     "transport-data-points-hourly-activity": "Transporto duomenų taškų aktyvumas per valandą",
     "transport-data-points-daily-activity": "Transporto duomenų taškų aktyvumas per dieną",
     "transport-data-points-monthly-activity": "Transporto duomenų taškų aktyvumas per mėnesį",
-    "transport-hourly-activity": "Transporto valandinė veikla",
     "transport-messages": "Transporto žinutės",
     "transport-messages-hourly-activity": "Transporto žinučių aktyvumas per valandą",
     "transport-data-point-hourly-activity": "Transporto duomenų taškų aktyvumas per valandą",
@@ -1390,7 +1383,6 @@
       "disabled": "Išjungta",
       "warning": "Perspėjimas"
     },
-    "transport-monthly-activity": "Transporto mėnesinė veikla",
     "view-details": "Peržiūrėti informaciją",
     "view-statistics": "Peržiūrėti statistiką",
     "reports-created": "Sukurtos ataskaitos",
@@ -1586,7 +1578,6 @@
     "argument-owner": "Dabartinis savininkas",
     "argument-relation-query": "Susiję subjektai",
     "argument-type": "Argumento tipas",
-    "see-debug-events": "Peržiūrėti derinimo įvykius",
     "attribute": "Atributas",
     "copy-argument-name": "Kopijuoti argumento pavadinimą",
     "timeseries-key": "Laiko eilučių raktas",
@@ -2161,8 +2152,7 @@
     "decoder-output": "Dekoderio išvestis",
     "converter-output": "Keitiklio išvestis",
     "converter-type": "Keitiklio tipas",
-    "update-raw-payload": "Atnaujintas RAW duomenų paketas",
-    "see-debug-events": "Peržiūrėti derinimo įvykius"
+    "update-raw-payload": "Atnaujintas RAW duomenų paketas"
   },
   "content-type": {
     "json": "JSON",
@@ -2872,7 +2862,6 @@
     "unable-delete-device-alias-text": "Įrenginio pseudonimo „{{deviceAlias}}“ ištrinti nepavyko, nes jis naudojamas šiuose valdikliuose:<br/>{{widgetsList}}",
     "is-gateway": "Gateway",
     "overwrite-activity-time": "Perrašyti aktyvumo laiką prijungtam įrenginiui",
-    "device-filter": "Įrenginių filtras",
     "device-filter-title": "Įrenginių filtras",
     "filter-title": "Filtras",
     "device-state": "Įrenginio būsena",
@@ -5981,8 +5970,7 @@
     "downlink-connection-string": "Downlink jungties eilutė",
     "downlink-connection-string-required": "Downlink jungties eilutė yra privaloma",
     "downlink-topic-name": "Downlink temos pavadinimas",
-    "downlink-topic-name-required": "Downlink temos pavadinimas yra privalomas",
-    "see-debug-events": "Peržiūrėti derinimo įvykius"
+    "downlink-topic-name-required": "Downlink temos pavadinimas yra privalomas"
   },
   "scada": {
     "symbols": "SCADA simboliai",
@@ -6335,8 +6323,7 @@
     "type-rule-chain": "Taisyklių grandinė",
     "type-rule-chain-plural": "Taisyklių grandinės",
     "type-device": "Įrenginys",
-    "type-device-plural": "Įrenginiai",
-    "selected": "Pasirinkta"
+    "type-device-plural": "Įrenginiai"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -6726,7 +6713,6 @@
     "create-account": "Sukurti paskyrą",
     "sign-in-with": "Prisijungti naudojant {{name}}",
     "sign-in-to-your-account": "Prisijunkite prie savo paskyros",
-    "login-with": "Prisijungti kaip {{name}}",
     "or": "arba",
     "error": "Prisijungimo klaida",
     "verify-your-identity": "Patvirtinkite savo tapatybę",
@@ -8048,7 +8034,6 @@
     "endpoint-url-pattern": "Galinio taško URL šablonas",
     "endpoint-url-pattern-required": "Galinio taško URL šablonas yra privalomas",
     "request-method": "Užklausos metodas",
-    "use-simple-client-http-factory": "Naudoti paprastą HTTP kliento kūrimo būdą",
     "ignore-request-body": "Be užklausos turinio",
     "request-body-template": "Užklausos turinio šablonas",
     "request-body-template-hint": "Naudokite <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> metaduomenims, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> žinutės reikšmėms. Jei laukas tuščias, kaip užklausos turinys naudojama žinutės naudingoji apkrova. Ne JSON naudingosioms apkrovoms įjunkite „Konvertuoti į gryną tekstą“. <br/><br/> Paslaptį galite įterpti naudodami vietos rezervavimo ženklą <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>, kur „name“ yra paslapties identifikatorius, o „type“ – TEXT arba TEXT_FILE. Tai naudinga taisyklių mazgų konfigūracijos laukuose, kurie tiesiogiai nepalaiko parinkties „Naudoti paslaptį“. Pavyzdys: <code><span style=\"color: #000;\">$&#123;</span>secret:tenant password;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8224,7 +8209,6 @@
     "proxy-port-range": "Proxy prievadas turi būti nuo 1 iki 65535.",
     "proxy-user": "Proxy naudotojas",
     "proxy-password": "Proxy slaptažodis",
-    "proxy-scheme": "Tarpiklio schema (Proxy scheme)",
     "numbers-to-template": "Telefono numerių šablonas",
     "numbers-to-template-required": "Telefono numerių šablonas yra privalomas",
     "numbers-to-template-hint": "Telefono numerius atskirkite kableliais. Naudokite <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> reikšmėms iš metaduomenų ir <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> reikšmėms iš žinutės turinio",
@@ -8648,8 +8632,7 @@
       "time-series": "Laiko eilutės",
       "latest": "Naujausios reikšmės",
       "web-sockets": "WebSockets",
-      "calculated-fields-and-alarm-rules": "Apskaičiuotieji laukai ir įspėjimų taisyklės",
-      "calculated-fields": "Apskaičiuoti laukai"
+      "calculated-fields-and-alarm-rules": "Apskaičiuotieji laukai ir įspėjimų taisyklės"
     },
     "save-attribute": {
       "processing-settings": "Apdorojimo nustatymai",
@@ -9011,8 +8994,6 @@
     "single-entity": "Vienas subjektas",
     "group-entities": "Grupės subjektai",
     "entities-group-owner": "Subjektų grupės savininkas",
-    "single-device": "Vienas įrenginys",
-    "group-of-devices": "Įrenginių grupė",
     "devices-group-owner": "Įrenginių grupės savininkas",
     "message-body": "Žinutės turinys",
     "target": "Tikslas",
@@ -9103,8 +9084,7 @@
     "manage-public-access": "Valdyti viešąją prieigą",
     "public-status-hint": "Kai įjungta, bet kas, turintis viešąją ataskaitos nuorodą, gali atsisiųsti ataskaitą.",
     "public-link-text": "Ši ataskaita yra vieša. Bendrinkite toliau pateiktą nuorodą – bet kas, turintis ją, gali atsisiųsti ataskaitą be autorizacijos.",
-    "copy-public-link": "Kopijuoti nuorodą",
-    "reports-filter": "Ataskaitų filtras"
+    "copy-public-link": "Kopijuoti nuorodą"
   },
   "report-template": {
     "report-template": "Ataskaitos šablonas",
@@ -9112,7 +9092,6 @@
     "add": "Pridėti ataskaitos šabloną",
     "search": "Ieškokite ataskaitų šablonų",
     "template-filter": "Šablonų filtras",
-    "templates-filter": "Šablonų filtras",
     "sub-report": "Subataskaita",
     "no-report-templates-text": "Ataskaitų šablonų nerasta",
     "no-sub-reports-text": "Subataskaitų nerasta",
@@ -10742,8 +10721,6 @@
     },
     "task-filter": "Užduočių filtras",
     "task-filter-params": "Filtras: {{ filterParams }}",
-    "tasks-filter": "Užduočių filtras",
-    "tasks-filter-params": "Filtras: {{ filterParams }}",
     "tasks-status-list": "Užduočių būsenų sąrašas",
     "tasks-type-list": "Užduočių tipų sąrašas",
     "time-taken": "Trukmė",
@@ -11428,22 +11405,6 @@
     "ai-credits-usage": "DI kreditai: panaudota {{ used }} iš {{ max }}",
     "ai-credits-description": "Šį mėnesį panaudojote <strong>{{ used }}</strong> iš savo <strong>{{ max }}</strong> DI kreditų. Limitas atsinaujins {{ date }}. Norėdami padidinti DI kreditų limitą, susisiekite su sistemos administratoriumi."
   },
-  "solution-template": {
-    "solution-template": "Sprendimo šablonas",
-    "solution-templates": "Sprendimo šablonai",
-    "management": "Sprendimų šablonų valdymas",
-    "details": "Informacija",
-    "install": "Įdiegti",
-    "level": "Lygis",
-    "install-title": "Sprendimo šablonas sėkmingai įdiegtas",
-    "install-failed-title": "Sprendimo šablono diegimas nepavyko",
-    "instructions": "Instrukcijos",
-    "goto-main-dashboard": "Eiti į pagrindinį skydelį",
-    "delete": "Panaikinti",
-    "delete-solution-title": "Ar tikrai norite panaikinti sprendimą „{{solutionTitle}}“?",
-    "delete-solution-text": "Būkite dėmesingi — po patvirtinimo sprendimas ir visa su juo susijusi informacija bus negrįžtamai pašalinta.",
-    "installing": "Diegiamas sprendimo šablonas..."
-  },
   "markdown": {
     "edit": "Redaguoti",
     "preview": "Peržiūra",
@@ -11460,20 +11421,8 @@
     "app-title": "Programos pavadinimas",
     "favicon": "Svetainės piktograma",
     "favicon-desc": "Piktograma naršyklės skirtuke ir žymėse. PNG arba ICO, rekomenduojama 32×32 px",
-    "favicon-description": "*.ico, *.gif arba *.png formato paveikslėlis, kurio dydis neviršija {{kbSize}} KB.",
-    "favicon-size-error": "Paveikslėlis per didelis. Didžiausias leistinas dydis – {{kbSize}} KB.",
-    "favicon-type-error": "Netinkamas paveikslėlio formatas. Leidžiami tik ICO, GIF arba PNG formatai.",
-    "drop-favicon-image": "Įtempkite svetainės piktogramos paveikslėlį arba spustelėkite, kad pasirinktumėte failą įkėlimui.",
-    "drop-favicon-image-or": "Įtempkite piktogramos paveikslėlį arba",
-    "no-favicon-image": "Piktograma nepasirinkta",
     "logo": "Logotipas",
     "logo-desc": "SVG arba PNG, aukštis ne mažiau kaip 96px, iki 200 KB",
-    "logo-description": "Bet koks paveikslėlis, kurio dydis neviršija {{kbSize}} KB.",
-    "logo-size-error": "Logotipas per didelis. Didžiausias leistinas dydis – {{kbSize}} KB.",
-    "logo-type-error": "Netinkamas logotipo failas. Leidžiami tik paveikslėliai.",
-    "drop-logo-image": "Įtempkite logotipo paveikslėlį arba spustelėkite, kad pasirinktumėte failą įkėlimui.",
-    "drop-logo-image-or": "Įtempkite logotipo paveikslėlį arba",
-    "no-logo-image": "Logotipas nepasirinktas",
     "logo-height": "Logotipo aukštis",
     "logo-height-desc": "Proporcingai keičia logotipo mastelį ir jį centruoja. Aukštiems logotipams padidinkite aukštį (iki 200px)",
     "collapsed-logo": "Suskleistos šoninės juostos logotipas",
@@ -11520,7 +11469,6 @@
     "override-trendz-add-on-name": "Pakeisti Trendz analizės priedo pavadinimą",
     "override-trendz-add-on-name-desc": "Visoje platformoje pervadina Trendz priedą į „Išplėstinė analitika“",
     "show-platform-name-version-bottom-left-corner": "Rodyti platformos pavadinimą ir versiją apatiniame kairiajame kampe",
-    "hide-connectivity-dialog": "Slėpti ryšio dialogą",
     "show-platform-name-version": "Rodyti platformos pavadinimą ir versiją",
     "platform-name": "Platformos pavadinimas",
     "platform-version": "Platformos versija",
@@ -12746,9 +12694,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13085,10 +13031,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "Prisijungimo duomenys",
-      "here-app-id": "HERE programos ID",
-      "here-app-code": "HERE programos kodas",
       "here-api-key": "HERE API raktas",
-      "here-use-new-version-api-3": "Naudoti API 3 versiją",
       "tencent-maps-api-key": "Tencent Maps API raktas",
       "tencent-map-type-roadmap": "Keliai",
       "tencent-map-type-satelite": "Palydovinis",
@@ -13985,7 +13928,6 @@
       "roles-and-permissions": "Vaidmenys ir leidimai",
       "groups": "Grupės",
       "integrations": "Integracijos",
-      "solution-templates": "Sprendimų šablonai",
       "scheduler": "Planuoklė",
       "white-labeling": "Prekės ženklo tinkinimas"
     },
@@ -13999,11 +13941,6 @@
       "critical": "Kritiniai",
       "assigned-to-me": "Priskirti man",
       "total": "Iš viso"
-    },
-    "solution-templates": {
-      "title": "Sprendimų šablonai",
-      "prototype-plan": "Prototipo planas",
-      "startup-plan": "Startuolio planas"
     },
     "getting-started": {
       "get-started": "Pradėti",
