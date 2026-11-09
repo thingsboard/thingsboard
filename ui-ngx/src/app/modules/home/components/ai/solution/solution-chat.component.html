@@ -152,7 +152,7 @@
           <button type="button" class="sol-tray" (click)="openPane()" [attr.aria-label]="'solution-creator.pane.open' | translate">
             <mat-icon aria-hidden="true">layers</mat-icon>
             <b>{{ 'solution-creator.pane.solution' | translate }}</b>
-            <span class="sol-tray-note" [class.working]="!!making()">
+            <span class="sol-tray-note" [class.working]="!!making()" [class.failed]="!making() && !!failure()">
               @if (making()) {
                 <tb-ai-spin [kind]="making() === 'solution' ? 'install' : 'gen'"></tb-ai-spin>
               }
@@ -161,7 +161,7 @@
             @if (level() === 'needs') {
               <span class="sol-tray-dot" aria-hidden="true"></span>
             }
-            <mat-icon class="sol-tray-chev" aria-hidden="true">expand_less</mat-icon>
+            <mat-icon class="sol-tray-chev" aria-hidden="true">chevron_right</mat-icon>
           </button>
         }
         <tb-ai-prompt-input
@@ -215,11 +215,13 @@
                                    [stage]="installProgress()?.stage ?? null" [createShare]="createShare()"
                                    [seconds]="makeSeconds()" [startedAt]="makeStartedAt()"></tb-solution-installed>
           } @else if (making() && currentView() === making()) {
-            <div class="sol-loading">
-              <span class="sol-loading-glow" aria-hidden="true"></span>
-              <span class="tb-ai-mark m64" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
-              <p class="sol-loading-line">{{ work()?.words }}</p>
-              <p class="sol-loading-est">{{ estimateOf(making()) }}</p>
+            <div class="art-loading k-mark sol-loading" role="status">
+              <span class="art-load-markwrap">
+                <span class="art-load-glow" aria-hidden="true"></span>
+                <span class="tb-ai-mark m64" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
+              </span>
+              <tb-ai-load-lines [line]="work()?.words" [lines]="work()?.lines ?? []"></tb-ai-load-lines>
+              <p class="art-load-note">{{ estimateOf(making()) }}</p>
             </div>
           } @else if (json()) {
             <tb-solution-json #jsonView class="sol-json" [value]="jsonValue()"
@@ -240,36 +242,35 @@
             }
           }
         </div>
-        @if (making() !== 'solution') {
+        @if (!making()) {
         <footer class="sol-pane-foot">
-          @if (making()) {
-            <span class="sol-foot-note">{{ work()?.words }}</span>
-          } @else if (json() && jsonEditing()) {
+          @if (json() && jsonEditing()) {
             <span class="sol-foot-note">{{ 'solution-creator.pane.json-note' | translate }}</span>
             <button mat-button type="button" (click)="jsonView?.done()">{{ 'action.cancel' | translate }}</button>
             <button mat-flat-button type="button" [disabled]="!jsonView?.dirty" (click)="applyJson()">{{ 'action.apply' | translate }}</button>
           } @else if (currentView() === 'solution' || creatorStep() === 'result') {
             @if (installed()) {
               <button mat-button type="button" class="warn" (click)="uninstallSolution()">
-                <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>{{ 'solution-creator.uninstall-solution' | translate }}
+                <mat-icon>delete_outline</mat-icon>{{ 'solution-creator.uninstall-solution' | translate }}
               </button>
             }
             <span class="sol-spacer"></span>
             <button mat-button type="button" (click)="back()">
-              <mat-icon fontSet="material-icons-round">edit</mat-icon>{{ 'action.edit' | translate }}
-            </button>
-            <button mat-button type="button" (click)="openInfo()">
-              <mat-icon fontSet="material-icons-round">info_outline</mat-icon>{{ 'solution-creator.info' | translate }}
+              <mat-icon>edit</mat-icon>{{ 'action.edit' | translate }}
             </button>
             @if (installed()) {
-              @if (solutionMetadata.installResult?.mainDashboardId) {
-                <button mat-flat-button type="button" (click)="gotoMainDashboard()">
-                  <mat-icon fontSet="material-icons-round">dashboard</mat-icon>{{ 'solution-creator.main-dashboard' | translate }}
+              @if (mainUser()) {
+                <button mat-stroked-button type="button" class="sol-foot-stroked" (click)="viewAsMainUser()">
+                  <mat-icon>person</mat-icon>{{ 'solution-creator.pane.view-as-main' | translate }}
+                </button>
+              } @else if (solutionMetadata.installResult?.mainDashboardId) {
+                <button mat-stroked-button type="button" class="sol-foot-stroked" (click)="gotoMainDashboard()">
+                  <mat-icon>dashboard</mat-icon>{{ 'solution-creator.main-dashboard' | translate }}
                 </button>
               }
             } @else {
               <button mat-flat-button type="button" (click)="installSolution()">
-                <mat-icon fontSet="material-icons-round">rocket_launch</mat-icon>{{ 'solution-creator.install-solution' | translate }}
+                <mat-icon>rocket_launch</mat-icon>{{ 'solution-creator.install-solution' | translate }}
               </button>
             }
           } @else if (currentView() === 'overview') {
@@ -279,11 +280,9 @@
             </button>
           } @else {
             <span class="sol-foot-note">{{ estimateOf('solution') }}</span>
-            <button mat-button type="button" [disabled]="loading()" (click)="back()">
-              <mat-icon fontSet="material-icons-round">arrow_back</mat-icon>{{ 'action.back' | translate }}
-            </button>
-            <button mat-button type="button" [disabled]="loading() || !messages().length" (click)="startOver()">
-              <mat-icon fontSet="material-icons-round">refresh</mat-icon>{{ 'solution-creator.generate-again' | translate }}
+            <button mat-button type="button" [disabled]="loading()" (click)="back()">{{ 'action.back' | translate }}</button>
+            <button mat-stroked-button type="button" class="sol-foot-stroked" [disabled]="loading() || !messages().length" (click)="startOver()">
+              <mat-icon>refresh</mat-icon>{{ 'solution-creator.regenerate' | translate }}
             </button>
             <button mat-flat-button type="button" [disabled]="loading()" (click)="nextStep()">
               {{ nextButtonLabel | translate }}
@@ -305,6 +304,12 @@
     <button mat-menu-item (click)="editDesign()">
       <mat-icon fontSet="material-icons-round">design_services</mat-icon>
       <span>{{ 'ai-assistant.edit-design' | translate }}</span>
+    </button>
+  }
+  @if (creatorStep() === 'result') {
+    <button mat-menu-item (click)="openInfo()">
+      <mat-icon fontSet="material-icons-round">info_outline</mat-icon>
+      <span>{{ 'solution-creator.info' | translate }}</span>
     </button>
   }
   @if (installed()) {

@@ -103,6 +103,10 @@ export class SolutionOverviewComponent implements OnChanges, AfterViewInit, OnDe
     return alarmSeverityColors.get(severity?.toUpperCase() as AlarmSeverity) ?? null;
   }
 
+  severityTone(severity: string): string {
+    return (severity ?? '').toLowerCase();
+  }
+
   severityLabel(severity: string): string {
     return alarmSeverityTranslations.get(severity?.toUpperCase() as AlarmSeverity) ?? severity;
   }

@@ -160,9 +160,13 @@
             <tr>
               <td class="wrap">
                 <span class="sol-name" data-pal="path">
-                  <mat-icon aria-hidden="true">functions</mat-icon>
-                  <span><b>{{ metric.calculatedFieldName }}</b><small>{{ metric.profileName }}</small></span>
+                  <mat-icon aria-hidden="true">functions</mat-icon><b>{{ metric.calculatedFieldName }}</b>
                 </span>
+                @if (metric.profileName) {
+                  <div class="sol-sub">
+                    <code class="k-ent" data-pal="device"><mat-icon class="k-ent-ic" aria-hidden="true">category</mat-icon>{{ metric.profileName }}</code>
+                  </div>
+                }
               </td>
               <td class="secondary wrap">{{ metric.calculation }}</td>
             </tr>
@@ -178,7 +182,7 @@
       <table class="sol-table">
         <thead>
           <tr>
-            <th scope="col">{{ 'solution-creator.pane.name' | translate }}</th>
+            <th scope="col">{{ 'solution-creator.pane.alarm-rule' | translate }}</th>
             <th scope="col">{{ 'solution-creator.pane.severity' | translate }}</th>
             <th scope="col" class="chev"></th>
           </tr>
@@ -189,14 +193,20 @@
             <tr class="clickable" [class.on]="open() === key" (click)="toggle(key)" [attr.aria-expanded]="open() === key">
               <td class="wrap">
                 <span class="sol-name" data-pal="rule">
-                  <mat-icon aria-hidden="true">rule</mat-icon>
-                  <span><b>{{ alarm.alarmName }}</b><small>{{ alarm.condition }}</small></span>
+                  <mat-icon aria-hidden="true">rule</mat-icon><b>{{ alarm.alarmName }}</b>
                 </span>
-              </td>
-              <td class="nowrap">
-                @for (severity of alarm.severities; track severity) {
-                  <span class="sol-sev" [style.color]="severityColor(severity)"><i></i>{{ severityLabel(severity) | translate }}</span>
+                @if (alarm.condition) {
+                  <div class="sol-sub"><code class="sol-cond">{{ alarm.condition }}</code></div>
                 }
+              </td>
+              <td>
+                <div class="sol-chips">
+                  @for (severity of alarm.severities; track severity) {
+                    <span [class]="'k-sev ' + severityTone(severity)">
+                      <tb-ai-sev-mark [severity]="severity"></tb-ai-sev-mark>{{ severityLabel(severity) | translate }}
+                    </span>
+                  }
+                </div>
               </td>
               <td class="chev"><mat-icon class="sol-chev" [class.open]="open() === key">expand_more</mat-icon></td>
             </tr>
@@ -205,9 +215,13 @@
                 <td colspan="3">
                   <dl class="sol-facts">
                     <dt>{{ 'solution-creator.pane.profiles' | translate }}</dt>
-                    <dd>{{ alarm.profileNames?.join(', ') }}</dd>
-                    <dt>{{ 'solution-creator.pane.condition' | translate }}</dt>
-                    <dd>{{ alarm.condition }}</dd>
+                    <dd>
+                      <div class="sol-chips">
+                        @for (profile of alarm.profileNames ?? []; track profile) {
+                          <code class="k-ent" data-pal="device"><mat-icon class="k-ent-ic" aria-hidden="true">category</mat-icon>{{ profile }}</code>
+                        }
+                      </div>
+                    </dd>
                   </dl>
                   <button mat-button type="button" class="sol-remove" (click)="removeAlarm(alarm)">
                     <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>{{ 'solution-creator.pane.remove' | translate }}

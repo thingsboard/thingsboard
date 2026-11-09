@@ -377,6 +377,28 @@ table.sol-table {
   }
 }
 
+.sol-sub {
+  margin-top: 2px;
+  padding-left: 26px;
+}
+
+code.sol-cond {
+  display: inline-block;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.06);
+  font: 400 14px/18px var(--tb-mono);
+  color: var(--tb-ink);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+table.sol-table td code.k-ent, table.sol-table td .k-sev, table.sol-table td .sol-op {
+  vertical-align: baseline;
+}
+
 .sol-chips {
   display: flex;
   flex-wrap: wrap;

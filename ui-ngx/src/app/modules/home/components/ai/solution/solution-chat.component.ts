@@ -128,7 +128,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   loading = signal<boolean>(false);
   isGenerating = signal<boolean>(false);
 
-  work = signal<{words: string; kind: 'think' | 'gen' | 'install'; since: number} | null>(null);
+  work = signal<{words: string; kind: 'think' | 'gen' | 'install'; since: number; lines?: string[]} | null>(null);
 
   fullscreen = signal<boolean>(false);
 
@@ -158,6 +158,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   uninstalledAt = signal<number | null>(null);
 
   failure = signal<string | null>(null);
+  failedAt = signal<'install' | 'step'>('step');
   installProgress = signal<SolutionInstallProgress | null>(null);
   makeStartedAt = signal(0);
   private installOnly = signal(false);
@@ -433,6 +434,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     const making = this.making();
     if (making) {
       return this.translate.instant(making === 'solution' ? 'solution-creator.pane.creating' : 'solution-creator.pane.designing');
+    }
+    if (this.failure()) {
+      return this.translate.instant(this.failedAt() === 'install' ? 'solution-creator.pane.install-failed' : 'solution-creator.pane.step-failed');
     }
     return this.translate.instant('solution-creator.pane.view-' + this.currentView());
   });
@@ -735,7 +739,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.paneMore.set(body.scrollTop + body.clientHeight < body.scrollHeight - 1);
   }
 
-  private reportFailure(err: any): void {
+  private reportFailure(err: any, at?: 'install' | 'step'): void {
+    this.failedAt.set(at ?? (this.creatorStep() === 'result' ? 'install' : 'step'));
     const responseType = isNotEmptyStr(err?.error) ? 'text' : undefined;
     this.failure.set(parseHttpErrorMessage(err, this.translate, responseType, this.sanitizer).message);
     this.paneOpen.set(true);
@@ -872,7 +877,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           this.showInstalled();
         },
         error: (err) => {
-          this.reportFailure(err);
+          this.reportFailure(err, 'install');
         }
       });
   }
@@ -1248,6 +1253,11 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private resetSolution(): void {
     this.clearWork();
+    this.pickedView.set(null);
+    this.json.set(false);
+    this.jsonEditing.set(false);
+    this.installProgress.set(null);
+    this.failedAt.set('step');
     this.uninstalledAt.set(null);
     this.cancelPending$.next();
     this.isReadyStep.set(false);
@@ -1352,10 +1362,11 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.clearWork();
     this.making.set(making);
     const since = Date.now();
+    const lines = messages.map(message => this.translate.instant(message.text) as string);
     let at = 0;
-    messages.forEach(message => {
+    messages.forEach((message, index) => {
       at += message.delay;
-      this.workTimers.push(setTimeout(() => this.work.set({words: this.translate.instant(message.text), kind, since}), at));
+      this.workTimers.push(setTimeout(() => this.work.set({words: lines[index], kind, since, lines}), at));
     });
     return {close: () => this.clearWork()};
   }
