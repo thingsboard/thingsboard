@@ -729,6 +729,13 @@
         "error": "Failed",
         "thinking": "Thinking...",
         "connection-lost": "Connection to the AI Assistant was lost. Reconnecting...",
+        "notice": {
+            "connection-lost": "The connection to the AI service is lost. Reconnecting…",
+            "connected-again": "Connected again. The run picks up where it stopped.",
+            "reconnect-failed": "Could not reconnect. Send the message again to retry.",
+            "rate-limited": "Too many requests for a moment. Send the message again in a minute.",
+            "credits-used-up": "The AI credits are used up. Sending resumes when the limit resets."
+        },
         "reconnect-failed": "Couldn't reconnect to the AI Assistant. Reopen the chat to see its reply.",
         "ask-the-assistant": "Ask the AI Assistant",
         "send": "Send",

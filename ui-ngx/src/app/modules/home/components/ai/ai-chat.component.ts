@@ -34,6 +34,7 @@ import { ActionChatMessage, AiStartedFrom, ApprovalChatMessage, ChatMessage, Gen
 import {
   AiAssistantPromptExample,
   AiChatClientContext,
+  AiNotice,
   AiPromptMessage,
   ChatInfo,
   ChatLevel,
@@ -73,6 +74,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private static readonly RESUME_ATTEMPTS = 4;
   private static readonly RESUME_DELAY_MS = 2000;
   private static readonly END_IN_VIEW = 160;
+  private static readonly NOTICE_MS = 6000;
   private static readonly RECENT_CHATS = 5;
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
@@ -143,6 +145,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private atEnd = signal(true);
 
   private newTurns = signal(0);
+
+  notice = signal<AiNotice | null>(null);
+
+  private noticeTimer: ReturnType<typeof setTimeout>;
 
   private seenMessages = 0;
 
@@ -436,6 +442,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     if (startedFrom) {
       userMessage.startedFrom = startedFrom;
     }
+    this.clearPassingNotice();
     this.messages.update(list => [...list, userMessage]);
     if (this.loading() && this.chatId()) {
       this.sendWhileWorking(prompt, userMessage);
@@ -444,7 +451,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.sendMessage(prompt).subscribe({
       error: err => {
         if (this.isConnectionLost(err) && this.chatId()) {
-          this.showErrorToast(this.translate.instant('ai-assistant.connection-lost'));
+          this.setNotice('warn', 'wifi_off', 'connection-lost');
           this.resumeTurn(this.chatId(), true);
           return;
         }
@@ -581,6 +588,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
       concatMap(event => {
         if (event.event === 'turnResumed') {
           resumed = true;
+          if (afterConnectionLoss) {
+            this.setNotice('info', 'wifi', 'connected-again', AiChatComponent.NOTICE_MS);
+          }
           this.startLoading();
           this.dropRunningReply();
           return of(event);
@@ -595,12 +605,15 @@ export class AiChatComponent implements OnInit, OnDestroy {
     ).subscribe({
       error: () => {
         if (afterConnectionLoss) {
-          this.showErrorToast(this.translate.instant('ai-assistant.reconnect-failed'));
+          this.setNotice('warn', 'wifi_off', 'reconnect-failed');
         }
       },
       complete: () => {
         if (this.messageCancelled || this.chatId() !== chatId) {
           return;
+        }
+        if (afterConnectionLoss && !resumed) {
+          this.setNotice('info', 'wifi', 'connected-again', AiChatComponent.NOTICE_MS);
         }
         if (resumed || afterConnectionLoss) {
           this.aiChat.getChatMessages(chatId, {ignoreLoading: true, ignoreErrors: true})
@@ -640,7 +653,12 @@ export class AiChatComponent implements OnInit, OnDestroy {
         }
         break;
       default:
-        if (event.event === 'error') {
+        if (event.event === 'error' && event.data?.code) {
+          this.restoreLastPrompt();
+          this.setNotice(event.data.code === 'CREDITS_USED_UP' ? 'block' : 'warn',
+            event.data.code === 'CREDITS_USED_UP' ? 'block' : 'hourglass_top',
+            event.data.code === 'CREDITS_USED_UP' ? 'credits-used-up' : 'rate-limited');
+        } else if (event.event === 'error') {
           const message = event.data?.message || this.translate.instant('ai-assistant.run-failed');
           this.chats.setFailed(this.chatId(), message);
           this.messages.update(list => [...list, {from: 'AI', content: message, status: 'INCOMPLETE', time: Date.now()}]);
@@ -800,6 +818,39 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private showErrorMessage(error: any): void {
     const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
     this.showErrorToast(parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message);
+  }
+
+  private setNotice(kind: AiNotice['kind'], icon: string, key: string, hideAfter?: number): void {
+    clearTimeout(this.noticeTimer);
+    const notice: AiNotice = {kind, icon, text: this.translate.instant('ai-assistant.notice.' + key)};
+    this.notice.set(notice);
+    if (hideAfter) {
+      this.noticeTimer = setTimeout(() => {
+        if (this.notice() === notice) {
+          this.notice.set(null);
+        }
+      }, hideAfter);
+    }
+  }
+
+  private clearPassingNotice(): void {
+    if (this.notice()?.kind !== 'block') {
+      clearTimeout(this.noticeTimer);
+      this.notice.set(null);
+    }
+  }
+
+  private restoreLastPrompt(): void {
+    const messages = this.messages();
+    const last = messages.map(message => message.from).lastIndexOf('USER');
+    if (last < 0) {
+      return;
+    }
+    const content = (messages[last] as GeneralChatMessage).content;
+    this.messages.set(messages.slice(0, last));
+    if (content) {
+      setTimeout(() => this.promptInput?.setValue(content));
+    }
   }
 
   private showErrorToast(message: string): void {

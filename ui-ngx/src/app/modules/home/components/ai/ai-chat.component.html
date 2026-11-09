@@ -111,7 +111,13 @@
         }
       </button>
     }
+    @if (notice(); as current) {
+      <div class="k-notice k-notice-edge" [class]="'k-notice k-notice-edge ' + (current.kind === 'block' ? 'blocking' : current.kind)" [attr.role]="current.kind === 'block' ? 'alert' : 'status'">
+        <mat-icon aria-hidden="true">{{ current.icon }}</mat-icon><span>{{ current.text }}</span>
+      </div>
+    }
     <tb-ai-prompt-input
+      [blocked]="notice()?.kind === 'block'"
       [docked]="docked()"
       [placeholder]="placeholder()"
       [loading]="loading() && !waitingApproval()"

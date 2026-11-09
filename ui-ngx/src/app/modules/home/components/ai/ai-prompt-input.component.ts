@@ -95,6 +95,8 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   @Input() sendWhileWorking = false;
 
+  @Input() blocked = false;
+
   @Output() stopped = new EventEmitter<void>();
 
   get working(): boolean {
@@ -145,7 +147,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   get canSend(): boolean {
     const ready = this.attachments().some(attachment => attachment.status === 'ready');
-    return (!this.loading || this.sendWhileWorking) && !this.uploading() && (!!this.message.value?.trim() || ready);
+    return !this.blocked && (!this.loading || this.sendWhileWorking) && !this.uploading() && (!!this.message.value?.trim() || ready);
   }
 
   private hasContent(): boolean {

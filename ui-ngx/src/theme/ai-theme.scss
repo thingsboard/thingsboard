@@ -2199,3 +2199,54 @@ textarea.k-opt-input {
     animation: none;
   }
 }
+
+.k-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.035);
+  font: 400 13.5px/19px var(--tb-font);
+  color: var(--tb-ink-76);
+
+  > span:not(.mat-icon) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mat-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--tb-ink-54);
+  }
+
+  &.warn {
+    background: var(--tb-caution-tint, #fff3e0);
+
+    .mat-icon {
+      color: var(--tb-caution);
+    }
+  }
+
+  &.blocking {
+    background: color-mix(in srgb, var(--tb-crit) 7%, transparent);
+    color: var(--tb-ink);
+
+    .mat-icon {
+      color: var(--tb-crit);
+    }
+  }
+
+  .mdc-button {
+    flex: none;
+    height: 30px;
+  }
+}
+
+.k-notice-edge {
+  max-width: 760px;
+  margin: 0 auto 8px;
+}

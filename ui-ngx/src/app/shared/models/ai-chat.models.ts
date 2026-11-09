@@ -124,7 +124,14 @@ export interface ErrorEvent extends BaseChatEvent {
   event: 'error';
   data: {
     message: string;
+    code?: 'CREDITS_USED_UP' | 'RATE_LIMITED';
   };
+}
+
+export interface AiNotice {
+  kind: 'info' | 'warn' | 'block';
+  icon: string;
+  text: string;
 }
 
 export interface ChatTitleGeneratedEvent extends BaseChatEvent {
