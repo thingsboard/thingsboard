@@ -33,6 +33,9 @@
         <blackBoxTests.skip>true</blackBoxTests.skip>
         <exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
         <docker.push-arm-amd-image.phase>none</docker.push-arm-amd-image.phase>
+        <sbom.image.repository>${docker.repo}/${docker.name}</sbom.image.repository>
+        <sbom.image.outputFile>${project.build.directory}/sbom/image-${sbom.image.architecture}.cdx.json</sbom.image.outputFile>
+        <sbom.image.scanExclude>${pkg.installFolder}/**</sbom.image.scanExclude>
     </properties>
 
     <modules>
@@ -282,6 +285,26 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>${exec-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.thingsboard</groupId>
+                    <artifactId>sbom-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>image-sbom</id>
+                            <goals>
+                                <goal>image</goal>
+                            </goals>
+                            <configuration>
+                                <components>
+                                    <component>
+                                        <sbom>${sbom.image.package.dir}/${pkg.name}.deb.cdx.json</sbom>
+                                        <file>${project.build.directory}/${pkg.name}.deb</file>
+                                    </component>
+                                </components>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

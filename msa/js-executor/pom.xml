@@ -39,6 +39,7 @@
              the command line. -->
         <yarn.test.skip>${skip.yarn}</yarn.test.skip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
+        <sbom.image.scanExclude></sbom.image.scanExclude>
     </properties>
 
     <dependencies>
@@ -105,6 +106,15 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>generate sbom</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>yarn pkg</id>
                         <goals>
                             <goal>yarn</goal>
@@ -123,6 +133,30 @@
                         <configuration>
                             <skip>${yarn.test.skip}</skip>
                             <arguments>--mutex network run test</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sbom-metadata</id>
+                        <configuration>
+                            <targetFile>${project.build.directory}/sbom/${pkg.name}.cdx.json</targetFile>
+                            <skip>${skip.yarn}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>image-sbom</id>
+                        <configuration>
+                            <components combine.self="override">
+                                <component>
+                                    <sbom>${project.build.directory}/sbom/${pkg.name}.cdx.json</sbom>
+                                    <installDir>${pkg.installFolder}</installDir>
+                                </component>
+                            </components>
                         </configuration>
                     </execution>
                 </executions>
@@ -167,6 +201,10 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.thingsboard</groupId>

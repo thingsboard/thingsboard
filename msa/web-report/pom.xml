@@ -32,6 +32,7 @@
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
+        <sbom.image.scanExclude></sbom.image.scanExclude>
     </properties>
 
     <dependencies>
@@ -173,6 +174,10 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
             </plugin>
@@ -185,6 +190,19 @@
                 <artifactId>properties-maven-plugin</artifactId>
                 <version>1.2.1</version>
                 <executions>
+                    <execution>
+                        <id>read-bundled-versions-for-image</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>read-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <files>
+                                <file>${project.build.directory}/sbom/bundled-versions.properties</file>
+                            </files>
+                            <quiet>true</quiet>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>read-bundled-versions</id>
                         <phase>${sbom.package.phase}</phase>
@@ -219,13 +237,13 @@
                                 <package>
                                     <id>deb</id>
                                     <file>${project.build.directory}/${pkg.name}.deb</file>
-                                    <purl>pkg:deb/thingsboard/${pkg.name}@${project.version}-1?arch=amd64</purl>
+                                    <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=amd64</purl>
                                     <skip>${pkg.skip.deb}</skip>
                                 </package>
                                 <package>
                                     <id>rpm</id>
                                     <file>${project.build.directory}/${pkg.name}.rpm</file>
-                                    <purl>pkg:rpm/thingsboard/${pkg.name}@${project.version}-1?arch=x86_64</purl>
+                                    <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=x86_64</purl>
                                     <skip>${pkg.skip.rpm}</skip>
                                 </package>
                                 <package>
@@ -309,6 +327,59 @@
                                     <packages>
                                         <package>zip</package>
                                     </packages>
+                                </component>
+                            </components>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>image-sbom</id>
+                        <configuration>
+                            <components combine.self="override">
+                                <component>
+                                    <sbom>${project.build.directory}/sbom/tb-web-report.cdx.json</sbom>
+                                    <installDir>${pkg.installFolder}</installDir>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>chrome-for-testing</name>
+                                    <version>${chromium.version}</version>
+                                    <description>Chrome for Testing build downloaded by Playwright to /ms-playwright, used to render reports.</description>
+                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=linux&amp;arch=${sbom.image.architecture}</purl>
+                                    <cpe>cpe:2.3:a:google:chrome:${chromium.version}:*:*:*:*:*:*:*</cpe>
+                                    <supplier>
+                                        <name>Google LLC</name>
+                                        <urls>
+                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
+                                        </urls>
+                                    </supplier>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>chrome-headless-shell</name>
+                                    <version>${chromium-headless-shell.version}</version>
+                                    <description>Chrome Headless Shell build downloaded by Playwright to /ms-playwright.</description>
+                                    <purl>pkg:generic/google/chrome-headless-shell@${chromium-headless-shell.version}?os=linux&amp;arch=${sbom.image.architecture}</purl>
+                                    <cpe>cpe:2.3:a:google:chrome:${chromium-headless-shell.version}:*:*:*:*:*:*:*</cpe>
+                                    <supplier>
+                                        <name>Google LLC</name>
+                                        <urls>
+                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
+                                        </urls>
+                                    </supplier>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>playwright-ffmpeg</name>
+                                    <version>${ffmpeg.revision}</version>
+                                    <description>FFmpeg build by Playwright (revision ${ffmpeg.revision}), downloaded to /ms-playwright.</description>
+                                    <purl>pkg:generic/microsoft/playwright-ffmpeg@${ffmpeg.revision}?os=linux&amp;arch=${sbom.image.architecture}</purl>
+                                    <license>LGPL-2.1-or-later</license>
+                                    <supplier>
+                                        <name>Microsoft Corporation</name>
+                                        <urls>
+                                            <url>https://playwright.dev</url>
+                                        </urls>
+                                    </supplier>
                                 </component>
                             </components>
                         </configuration>

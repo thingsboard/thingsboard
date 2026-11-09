@@ -26,6 +26,8 @@
         <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
         <pkg.name>tb-edqs</pkg.name>
         <docker.name>${tb.docker.id}-edqs</docker.name>
+        <sbom.metadata.skip>true</sbom.metadata.skip>
+        <sbom.image.package.dir>${main.dir}/edqs/target</sbom.image.package.dir>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
@@ -104,6 +106,10 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

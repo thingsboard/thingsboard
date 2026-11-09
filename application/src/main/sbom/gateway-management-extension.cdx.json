@@ -7,11 +7,6 @@
     "tools": {
       "components": [
         {
-          "type": "application",
-          "name": "npm",
-          "version": "10.9.3"
-        },
-        {
           "type": "library",
           "name": "cyclonedx-library",
           "group": "@cyclonedx",
@@ -48,71 +43,29 @@
               "value": ">=20.18.0"
             }
           ]
-        },
-        {
-          "type": "application",
-          "name": "cyclonedx-npm",
-          "group": "@cyclonedx",
-          "version": "6.0.1",
-          "author": "Jan Kowalleck",
-          "description": "Create CycloneDX Software Bill of Materials (SBOM) from NPM projects.",
-          "licenses": [
-            {
-              "license": {
-                "id": "Apache-2.0"
-              }
-            }
-          ],
-          "externalReferences": [
-            {
-              "url": "https://github.com/CycloneDX/cyclonedx-node-npm/issues",
-              "type": "issue-tracker",
-              "comment": "as detected from PackageJson property \"bugs.url\""
-            },
-            {
-              "url": "git+https://github.com/CycloneDX/cyclonedx-node-npm.git",
-              "type": "vcs",
-              "comment": "as detected from PackageJson property \"repository.url\""
-            },
-            {
-              "url": "https://github.com/CycloneDX/cyclonedx-node-npm#readme",
-              "type": "website",
-              "comment": "as detected from PackageJson property \"homepage\""
-            }
-          ],
-          "properties": [
-            {
-              "name": "cdx:npm:package:constraint:engine:node",
-              "value": ">=20.18.0"
-            },
-            {
-              "name": "cdx:npm:package:constraint:engine:npm",
-              "value": ">=9"
-            }
-          ]
         }
       ]
     },
     "component": {
       "type": "library",
-      "bom-ref": "pkg:github/thingsboard/gateway-management-extensions@a12065d71896d3da95d4d1001c8269bf31d90f24",
+      "name": "gateway-management-extension",
+      "version": "ad35b4bb843b4743516186513de0de2036eba698",
+      "bom-ref": "pkg:github/thingsboard/gateway-management-extensions@ad35b4bb843b4743516186513de0de2036eba698",
       "supplier": {
         "name": "ThingsBoard, Inc.",
         "url": [
-          "https://thingsboard.io"
+          "https://thingsboard.io/"
         ]
       },
-      "name": "gateway-management-extension",
-      "version": "a12065d71896d3da95d4d1001c8269bf31d90f24",
       "description": "ThingsBoard Gateway Management Extension",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "93a6ff12bd47df919f24bca66cb6bdbc54eb8204958753f946817aef78208175"
+          "content": "88a02bcc1834d6b31dbf209b1cec8b72df8a6e8abe2ef23979c89bf2fb19002b"
         },
         {
           "alg": "SHA-512",
-          "content": "98aa801bdb31b1dfe0a9b22a602ec43286bf6db0548a1abbdf7922872baa169f671aa82e1f024a23f6d704b863048939e77bc67f2b97cd872a1f6a8b4d9068fe"
+          "content": "3edf11e676df22b2069c5f2a9f22fb582259d9f8df65f13696ef57c6286d12dd3d1ae912ca0154896d1fb286a8ebec288bb907af14fe24c77de272c419d74252"
         }
       ],
       "licenses": [
@@ -122,12 +75,18 @@
           }
         }
       ],
-      "purl": "pkg:github/thingsboard/gateway-management-extensions@a12065d71896d3da95d4d1001c8269bf31d90f24",
+      "purl": "pkg:github/thingsboard/gateway-management-extensions@ad35b4bb843b4743516186513de0de2036eba698",
       "externalReferences": [
         {
-          "type": "vcs",
-          "url": "https://github.com/thingsboard/gateway-management-extensions/tree/a12065d71896d3da95d4d1001c8269bf31d90f24"
+          "url": "https://github.com/thingsboard/gateway-management-extensions/tree/ad35b4bb843b4743516186513de0de2036eba698",
+          "type": "vcs"
         }
+      ]
+    },
+    "supplier": {
+      "name": "ThingsBoard, Inc.",
+      "url": [
+        "https://thingsboard.io/"
       ]
     },
     "properties": [
@@ -135,70 +94,14 @@
         "name": "cdx:reproducible",
         "value": "true"
       }
-    ],
-    "supplier": {
-      "name": "ThingsBoard, Inc.",
-      "url": [
-        "https://thingsboard.io"
-      ]
-    }
+    ]
   },
   "components": [
     {
       "type": "library",
-      "name": "core",
-      "group": "@angular",
-      "version": "18.2.6",
-      "bom-ref": "gateway-management-extension@4.0.0|@angular/core@18.2.6",
-      "author": "angular",
-      "description": "Angular - the core framework",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT",
-            "acknowledgement": "declared"
-          }
-        }
-      ],
-      "purl": "pkg:npm/%40angular/core@18.2.6",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/@angular/core/-/core-18.2.6.tgz",
-          "type": "distribution",
-          "comment": "as detected from npm-ls property \"resolved\""
-        },
-        {
-          "url": "https://github.com/angular/angular/issues",
-          "type": "issue-tracker",
-          "comment": "as detected from PackageJson property \"bugs.url\""
-        },
-        {
-          "url": "git+https://github.com/angular/angular.git#packages/core",
-          "type": "vcs",
-          "comment": "as detected from PackageJson property \"repository.url\" and \"repository.directory\""
-        },
-        {
-          "url": "https://github.com/angular/angular#readme",
-          "type": "website",
-          "comment": "as detected from PackageJson property \"homepage\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:constraint:engine:node",
-          "value": "^18.19.1 || ^20.11.1 || >=22.0.0"
-        },
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/@angular/core"
-        }
-      ]
-    },
-    {
-      "type": "library",
       "name": "echarts",
-      "version": "5.5.0-TB",
-      "bom-ref": "gateway-management-extension@4.0.0|echarts@5.5.0-TB",
+      "version": "5.5.4-TB",
+      "bom-ref": "pkg:npm/echarts@5.5.4-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fecharts%2Farchive%2F5.5.4-TB.tar.gz",
       "description": "Apache ECharts is a powerful, interactive charting and data visualization library for browser",
       "licenses": [
         {
@@ -208,20 +111,25 @@
           }
         }
       ],
-      "purl": "pkg:npm/echarts@5.5.0-TB",
+      "purl": "pkg:npm/echarts@5.5.4-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fecharts%2Farchive%2F5.5.4-TB.tar.gz",
       "externalReferences": [
         {
-          "url": "https://github.com/apache/echarts/issues",
+          "url": "https://github.com/thingsboard/echarts/archive/5.5.4-TB.tar.gz",
+          "type": "distribution",
+          "comment": "as detected from yarn.lock property \"resolved\""
+        },
+        {
+          "url": "https://github.com/thingsboard/echarts/issues",
           "type": "issue-tracker",
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "git+https://github.com/apache/echarts.git",
+          "url": "git+https://github.com/thingsboard/echarts.git",
           "type": "vcs",
           "comment": "as detected from PackageJson property \"repository.url\""
         },
         {
-          "url": "https://echarts.apache.org",
+          "url": "https://github.com/thingsboard/echarts",
           "type": "website",
           "comment": "as detected from PackageJson property \"homepage\""
         }
@@ -236,8 +144,8 @@
     {
       "type": "library",
       "name": "zrender",
-      "version": "5.5.0",
-      "bom-ref": "gateway-management-extension@4.0.0|zrender@5.5.0",
+      "version": "5.5.1-TB",
+      "bom-ref": "pkg:npm/zrender@5.5.1-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fzrender%2Farchive%2F5.5.1-TB.tar.gz",
       "description": "A lightweight graphic library providing 2d draw for Apache ECharts",
       "licenses": [
         {
@@ -247,25 +155,25 @@
           }
         }
       ],
-      "purl": "pkg:npm/zrender@5.5.0",
+      "purl": "pkg:npm/zrender@5.5.1-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fzrender%2Farchive%2F5.5.1-TB.tar.gz",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/zrender/-/zrender-5.5.0.tgz",
+          "url": "https://github.com/thingsboard/zrender/archive/5.5.1-TB.tar.gz",
           "type": "distribution",
-          "comment": "as detected from npm-ls property \"resolved\""
+          "comment": "as detected from yarn.lock property \"resolved\""
         },
         {
-          "url": "https://github.com/ecomfe/zrender/issues",
+          "url": "https://github.com/thingsboard/zrender/issues",
           "type": "issue-tracker",
           "comment": "as detected from PackageJson property \"bugs.url\""
         },
         {
-          "url": "git+https://github.com/ecomfe/zrender.git",
+          "url": "git+https://github.com/thingsboard/zrender.git",
           "type": "vcs",
           "comment": "as detected from PackageJson property \"repository.url\""
         },
         {
-          "url": "https://github.com/ecomfe/zrender#readme",
+          "url": "https://github.com/thingsboard/zrender#readme",
           "type": "website",
           "comment": "as detected from PackageJson property \"homepage\""
         }
@@ -280,25 +188,19 @@
   ],
   "dependencies": [
     {
-      "ref": "pkg:github/thingsboard/gateway-management-extensions@a12065d71896d3da95d4d1001c8269bf31d90f24",
+      "ref": "pkg:github/thingsboard/gateway-management-extensions@ad35b4bb843b4743516186513de0de2036eba698",
       "dependsOn": [
-        "gateway-management-extension@4.0.0|@angular/core@18.2.6",
-        "gateway-management-extension@4.0.0|echarts@5.5.0-TB"
+        "pkg:npm/echarts@5.5.4-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fecharts%2Farchive%2F5.5.4-TB.tar.gz"
       ]
     },
     {
-      "ref": "gateway-management-extension@4.0.0|@angular/core@18.2.6",
-      "dependsOn": []
-    },
-    {
-      "ref": "gateway-management-extension@4.0.0|echarts@5.5.0-TB",
+      "ref": "pkg:npm/echarts@5.5.4-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fecharts%2Farchive%2F5.5.4-TB.tar.gz",
       "dependsOn": [
-        "gateway-management-extension@4.0.0|zrender@5.5.0"
+        "pkg:npm/zrender@5.5.1-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fzrender%2Farchive%2F5.5.1-TB.tar.gz"
       ]
     },
     {
-      "ref": "gateway-management-extension@4.0.0|zrender@5.5.0",
-      "dependsOn": []
+      "ref": "pkg:npm/zrender@5.5.1-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fzrender%2Farchive%2F5.5.1-TB.tar.gz"
     }
   ]
 }

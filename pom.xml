@@ -649,6 +649,7 @@
                                     <arg>-PpackagingDir=${main.dir}/packaging</arg>
                                     <arg>-PprojectBuildDir=${basedir}/target</arg>
                                     <arg>-PprojectVersion=${project.version}</arg>
+                                    <arg>-PpkgVersion=${pkg.version}</arg>
                                     <arg>
                                         -PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}
                                     </arg>
@@ -838,13 +839,13 @@
                                     <package>
                                         <id>deb</id>
                                         <file>${project.build.directory}/${pkg.name}.deb</file>
-                                        <purl>pkg:deb/thingsboard/${pkg.name}@${project.version}-1?arch=all</purl>
+                                        <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=all</purl>
                                         <skip>${pkg.skip.deb}</skip>
                                     </package>
                                     <package>
                                         <id>rpm</id>
                                         <file>${project.build.directory}/${pkg.name}.rpm</file>
-                                        <purl>pkg:rpm/thingsboard/${pkg.name}@${project.version}-1?arch=noarch</purl>
+                                        <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=noarch</purl>
                                         <skip>${pkg.skip.rpm}</skip>
                                     </package>
                                     <package>
@@ -1003,6 +1004,20 @@
                                 <sources>
                                     <source>${basedir}/target/generated-sources</source>
                                 </sources>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>pkg-version</id>
+                            <phase>${pkg.process-resources.phase}</phase>
+                            <goals>
+                                <goal>regex-property</goal>
+                            </goals>
+                            <configuration>
+                                <name>pkg.version</name>
+                                <value>${project.version}</value>
+                                <regex>-</regex>
+                                <replacement>~</replacement>
+                                <failIfNoMatch>false</failIfNoMatch>
                             </configuration>
                         </execution>
                     </executions>

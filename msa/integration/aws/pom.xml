@@ -27,6 +27,8 @@
         <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
         <pkg.name>tb-aws-integration</pkg.name>
         <docker.name>${tb.docker.id}-aws-integration</docker.name>
+        <sbom.metadata.skip>true</sbom.metadata.skip>
+        <sbom.image.package.dir>${main.dir}/integration/aws/target</sbom.image.package.dir>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <docker.push-integration-arm-amd-image.phase>pre-integration-test</docker.push-integration-arm-amd-image.phase>
@@ -107,6 +109,10 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
