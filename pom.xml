@@ -1029,7 +1029,7 @@
                 <plugin>
                     <groupId>io.github.git-commit-id</groupId>
                     <artifactId>git-commit-id-maven-plugin</artifactId>
-                    <version>5.0.0</version>
+                    <version>10.0.1</version>
                     <executions>
                         <execution>
                             <id>get-the-git-infos</id>
