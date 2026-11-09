@@ -2125,7 +2125,7 @@
     "update-raw-payload": "Bijgewerkte RAW-payload"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "Tekst",
     "binary": "Binair (Base64)",
     "hex": "Binair (Hex)"
@@ -3369,7 +3369,7 @@
       "fw-update-resource-required": "Firmware-update CoAP-resource is verplicht.",
       "sw-update-resource": "Software-update CoAP-resource",
       "sw-update-resource-required": "Software-update CoAP-resource is verplicht.",
-      "config-json-tab": "Json Config Profielapparaat",
+      "config-json-tab": "JSON Config Profielapparaat",
       "attributes-name": {
         "min-period": "Minimale periode",
         "max-period": "Maximale periode",
@@ -5016,7 +5016,7 @@
     "mapping": "Mapping",
     "topic-filter": "Onderwerpfilter",
     "converter-type": "Convertertype",
-    "converter-json": "Json",
+    "converter-json": "JSON",
     "json-name-expression": "Apparaatnaam JSON-expressie",
     "topic-name-expression": "Apparaatnaam topic-expressie",
     "json-type-expression": "Apparaattype JSON-expressie",

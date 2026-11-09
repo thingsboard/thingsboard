@@ -2127,7 +2127,7 @@
     "update-raw-payload": "已更新的原始载荷"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "文本",
     "binary": "二进制 (Base64)",
     "hex": "二进制（Hex）"
@@ -3080,9 +3080,9 @@
     "mqtt-device-payload-type-json": "JSON",
     "mqtt-device-payload-type-proto": "Protobuf",
     "mqtt-enable-compatibility-with-json-payload-format": "启用与其他负载格式的兼容性。",
-    "mqtt-enable-compatibility-with-json-payload-format-hint": "启用后，平台将默认使用 Protobuf 负载格式。如果解析失败，平台将尝试使用 JSON 负载格式。适用于固件更新期间的向后兼容性。例如，初始版本的固件使用 Json，而新版本使用 Protobuf。在设备群的固件更新过程中，需要同时支持 Protobuf 和 JSON。兼容模式会引入轻微的性能下降，因此建议在所有设备更新完成后禁用此模式。",
-    "mqtt-use-json-format-for-default-downlink-topics": "对默认下行主题使用 Json 格式",
-    "mqtt-use-json-format-for-default-downlink-topics-hint": "启用后，平台将使用 Json 负载格式通过以下主题推送属性和 RPC：<b>v1/devices/me/attributes/response/$request_id</b>、<b>v1/devices/me/attributes</b>、<b>v1/devices/me/rpc/request/$request_id</b>、<b>v1/devices/me/rpc/response/$request_id</b>。此设置不影响使用新 (v2) 主题发送的属性和 RPC 订阅：<b>v2/a/res/$request_id</b>、<b>v2/a</b>、<b>v2/r/req/$request_id</b>、<b>v2/r/res/$request_id</b>。其中 <b>$request_id</b> 是整数请求标识符。",
+    "mqtt-enable-compatibility-with-json-payload-format-hint": "启用后，平台将默认使用 Protobuf 负载格式。如果解析失败，平台将尝试使用 JSON 负载格式。适用于固件更新期间的向后兼容性。例如，初始版本的固件使用 JSON，而新版本使用 Protobuf。在设备群的固件更新过程中，需要同时支持 Protobuf 和 JSON。兼容模式会引入轻微的性能下降，因此建议在所有设备更新完成后禁用此模式。",
+    "mqtt-use-json-format-for-default-downlink-topics": "对默认下行主题使用 JSON 格式",
+    "mqtt-use-json-format-for-default-downlink-topics-hint": "启用后，平台将使用 JSON 负载格式通过以下主题推送属性和 RPC：<b>v1/devices/me/attributes/response/$request_id</b>、<b>v1/devices/me/attributes</b>、<b>v1/devices/me/rpc/request/$request_id</b>、<b>v1/devices/me/rpc/response/$request_id</b>。此设置不影响使用新 (v2) 主题发送的属性和 RPC 订阅：<b>v2/a/res/$request_id</b>、<b>v2/a</b>、<b>v2/r/req/$request_id</b>、<b>v2/r/res/$request_id</b>。其中 <b>$request_id</b> 是整数请求标识符。",
     "mqtt-send-ack-on-validation-exception": "在 PUBLISH 消息验证失败时发送 PUBACK",
     "mqtt-send-ack-on-validation-exception-hint": "默认情况下，平台在消息验证失败时将关闭 MQTT 会话。启用后，平台将发送发布确认而不是关闭会话。",
     "mqtt-protocol-version": "协议版本",
@@ -3371,7 +3371,7 @@
       "fw-update-resource-required": "固件更新 CoAP 资源为必填项。",
       "sw-update-resource": "软件更新 CoAP 资源",
       "sw-update-resource-required": "软件更新 CoAP 资源为必填项。",
-      "config-json-tab": "Json 配置设备配置",
+      "config-json-tab": "JSON 配置设备配置",
       "attributes-name": {
         "min-period": "最小周期",
         "max-period": "最大周期",
@@ -5018,7 +5018,7 @@
     "mapping": "映射",
     "topic-filter": "主题过滤器",
     "converter-type": "转换器类型",
-    "converter-json": "Json",
+    "converter-json": "JSON",
     "json-name-expression": "设备名称 JSON 表达式",
     "topic-name-expression": "设备名称主题表达式",
     "json-type-expression": "设备类型 JSON 表达式",
