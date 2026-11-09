@@ -1125,7 +1125,11 @@
             "made": "What this run made or changed",
             "open-dashboard": "Open dashboard",
             "alarm-rule": "Alarm rule",
-            "calculated-field": "Calculated field"
+            "calculated-field": "Calculated field",
+            "entities": "{ count, plural, =1 {1 entity} other {# entities} }",
+            "alarm-rules": "Alarm rules",
+            "more": "{{count}} more",
+            "fewer": "Fewer"
         },
         "work": {
             "reading-request": "Reading the request",
