@@ -32,33 +32,29 @@
     </button>
   </div>
 
-  <mat-expansion-panel class="expansion-panel-setting"
-                       [expanded]="chirpStackIntegrationConfigForm.get('allowDownlink').value">
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        <mat-slide-toggle formControlName="allowDownlink" (click)="$event.stopPropagation()">
-          {{ 'integration.allow-downlink' | translate }}
-        </mat-slide-toggle>
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-    <section class="expansion-panel-setting-content">
-      <mat-form-field appearance="outline" class="mat-block">
-        <mat-label translate>integration.application-server-url</mat-label>
-        <input matInput formControlName="applicationServerUrl" required>
-        @if (chirpStackIntegrationConfigForm.get('applicationServerUrl').hasError('required')) {
-          <mat-error translate>
-            integration.application-server-url-required
-          </mat-error>
-        }
-      </mat-form-field>
-      <tb-secret-key-input formControlName="applicationServerAPIToken" class="mat-block flex-1"
-                           required
-                           appearance="outline"
-                           label="{{ 'integration.application-server-api-token' | translate }}"
-                           requiredText="{{ 'integration.application-server-api-token-required' | translate }}">
-      </tb-secret-key-input>
-    </section>
-  </mat-expansion-panel>
+  @if (isSetDownlink) {
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>integration.downlink-credentials</legend>
+      <div class="flex flex-col gt-xs:gap-2">
+        <mat-form-field appearance="outline" class="mat-block">
+          <mat-label translate>integration.application-server-url</mat-label>
+          <input matInput formControlName="applicationServerUrl" required>
+          @if (chirpStackIntegrationConfigForm.get('applicationServerUrl').hasError('required')) {
+            <mat-error translate>
+              integration.application-server-url-required
+            </mat-error>
+          }
+        </mat-form-field>
+        <tb-secret-key-input formControlName="applicationServerAPIToken" class="mat-block flex-1"
+                             required
+                             appearance="outline"
+                             label="{{ 'integration.application-server-api-token' | translate }}"
+                             requiredText="{{ 'integration.application-server-api-token-required' | translate }}">
+        </tb-secret-key-input>
+      </div>
+    </fieldset>
+  }
+
   <mat-slide-toggle class="mat-slide" style="padding-bottom: 16px;"
                     formControlName="useAPI4Plus">
     {{ 'integration.use-api-four-plus' | translate }}

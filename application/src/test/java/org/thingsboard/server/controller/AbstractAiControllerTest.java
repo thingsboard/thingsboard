@@ -121,10 +121,21 @@ public abstract class AbstractAiControllerTest extends AbstractControllerTest {
         return TbAiClient.TbAiResponse.builder().success(false).error(error).build();
     }
 
+    protected static TbAiClient.TbAiResponse failure(int status, String error) {
+        return TbAiClient.TbAiResponse.builder().success(false).status(status).error(error).build();
+    }
+
     protected static ObjectNode chatMessage(String from, String content) {
         return JacksonUtil.newObjectNode()
                 .put("from", from)
                 .put("content", content);
+    }
+
+    protected MockHttpServletRequestBuilder resumeRequest(UUID chatId) {
+        MockHttpServletRequestBuilder request = post("/api/ai/chats/" + chatId + "/resume")
+                .accept(MediaType.TEXT_EVENT_STREAM);
+        setJwtToken(request);
+        return request;
     }
 
     protected MockHttpServletRequestBuilder sendMessageRequest(UUID chatId, JsonNode body, String acceptLanguage) {

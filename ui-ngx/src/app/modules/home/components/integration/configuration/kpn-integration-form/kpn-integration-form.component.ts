@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -11,7 +12,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { baseUrl, isDefinedAndNotNull } from '@core/utils';
+import { baseUrl, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { takeUntil } from 'rxjs/operators';
 import {
   IntegrationCredentialType,
@@ -25,10 +26,15 @@ import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { IntegrationForm } from '@home/components/integration/configuration/integration-form';
 
+interface KpnIntegrationFormValue extends Omit<KpnIntegration, 'enableSecurity' | 'headersFilter'> {
+  securityHeader: string;
+  additionalHeadersFilter: {[key: string]: string};
+}
+
 @Component({
     selector: 'tb-kpn-integration-form',
     templateUrl: './kpn-integration-form.component.html',
-    styleUrls: ['./kpn-integration-form.component.scss'],
+    styleUrls: [],
     providers: [{
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => KpnIntegrationFormComponent),
@@ -47,13 +53,32 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
 
   IntegrationCredentialType = IntegrationCredentialType;
 
+  httpsDestinationSettingsExpanded = false;
+
+  noSecurity = true;
+
   @Input()
   routingKey: string;
 
+  @Input()
+  set isSetDownlink(value: boolean) {
+    if (this.isSetDownlinkValue !== value) {
+      this.isSetDownlinkValue = value;
+      this.updateCredentialsValidators();
+    }
+  }
+
+  get isSetDownlink(): boolean {
+    return this.isSetDownlinkValue;
+  }
+
   private integrationType = IntegrationType.KPN;
+  private securityHeaderName = 'X-Things-Secret';
+  private isSetDownlinkValue = false;
 
   private propagateChangePending = false;
   private propagateChange = (v: any) => { };
+  private validatorChange = () => { };
 
   constructor(private fb: UntypedFormBuilder,
               private store: Store<AppState>,
@@ -68,16 +93,15 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
     }
     this.kpnIntegrationConfigForm = this.fb.group({
       baseUrl: [baseUrl(), baseURLValidators],
-      destinationSharedSecret: [""],
       httpEndpoint: [{
         value: integrationEndPointUrl(this.integrationType, baseUrl(), this.routingKey),
         disabled: true
       }],
-      enableSecurity: [false],
-      headersFilter: [{}],
-      allowDownlink: [false],
-      apiId:[],
-      apiKey:[]
+      securityHeader: [''],
+      destinationSharedSecret: [''],
+      additionalHeadersFilter: [{}, (control: AbstractControl) => this.additionalHeadersFilterValidator(control)],
+      apiId: [],
+      apiKey: []
     });
     this.kpnIntegrationConfigForm.get('baseUrl').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -85,25 +109,23 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
       const httpEndpoint = integrationEndPointUrl(this.integrationType, value, this.routingKey);
       this.kpnIntegrationConfigForm.get('httpEndpoint').patchValue(httpEndpoint);
     });
-      this.kpnIntegrationConfigForm.get('allowDownlink').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.updateEnableFields();
-    });
     this.kpnIntegrationConfigForm.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
-      this.updateModels(this.kpnIntegrationConfigForm.getRawValue());
+      const value = this.kpnIntegrationConfigForm.getRawValue();
+      this.updateNoSecurity(value);
+      this.updateModels(value);
     });
-    this.kpnIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
+    this.updateCredentialsValidators();
   }
 
   writeValue(value: KpnIntegration) {
     if (isDefinedAndNotNull(value)) {
-      this.kpnIntegrationConfigForm.reset(value, {emitEvent: false});
-      if (!this.disabled) {
-        this.updateEnableFields();
-      }
+      const formValue = this.configToFormValue(value);
+      this.httpsDestinationSettingsExpanded = isNotEmptyStr(formValue.destinationSharedSecret) ||
+        Object.keys(formValue.additionalHeadersFilter).length > 0;
+      this.kpnIntegrationConfigForm.reset(formValue, {emitEvent: false});
+      this.updateNoSecurity(this.kpnIntegrationConfigForm.getRawValue());
     } else {
       this.propagateChangePending = true;
     }
@@ -121,13 +143,16 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
 
   registerOnTouched(fn: any) { }
 
+  registerOnValidatorChange(fn: () => void) {
+    this.validatorChange = fn;
+  }
+
   setDisabledState(isDisabled: boolean) {
     this.disabled = isDisabled;
     if (isDisabled) {
       this.kpnIntegrationConfigForm.disable({emitEvent: false});
     } else {
       this.kpnIntegrationConfigForm.enable({emitEvent: false});
-      this.updateEnableFields();
       this.kpnIntegrationConfigForm.get('httpEndpoint').disable({emitEvent: false});
     }
   }
@@ -150,26 +175,51 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
       }));
   }
 
-  private updateModels(value) {
-    this.propagateChange(value);
+  private updateNoSecurity({securityHeader, destinationSharedSecret, additionalHeadersFilter}: KpnIntegrationFormValue) {
+    this.noSecurity = !isNotEmptyStr(securityHeader) && !isNotEmptyStr(destinationSharedSecret) &&
+      !Object.keys(additionalHeadersFilter).length;
   }
 
-  private updateEnableFields() {
-    const allowDownlink = this.kpnIntegrationConfigForm.get('allowDownlink').value;
-    if (allowDownlink) {
-      this.kpnIntegrationConfigForm.get('apiId').enable({emitEvent: false});
-      this.kpnIntegrationConfigForm.get('apiKey').enable({emitEvent: false});
-      this.kpnIntegrationConfigForm.get('apiId').setValidators(Validators.required);
-      this.kpnIntegrationConfigForm.get('apiKey').setValidators(Validators.required);
-    } else {
-      this.kpnIntegrationConfigForm.get('apiId').disable({emitEvent: false});
-      this.kpnIntegrationConfigForm.get('apiKey').disable({emitEvent: false});
-      this.kpnIntegrationConfigForm.get('apiId').clearValidators();
-      this.kpnIntegrationConfigForm.get('apiKey').clearValidators();
+  private updateModels(value: KpnIntegrationFormValue) {
+    this.propagateChange(this.formValueToConfig(value));
+  }
 
+  private configToFormValue({enableSecurity, headersFilter, ...config}: KpnIntegration): KpnIntegrationFormValue {
+    const additionalHeadersFilter = enableSecurity ? {...headersFilter} : {};
+    const securityHeaderKey = Object.keys(additionalHeadersFilter).find(key => this.isSecurityHeader(key));
+    let securityHeader = '';
+    if (securityHeaderKey) {
+      securityHeader = additionalHeadersFilter[securityHeaderKey];
+      delete additionalHeadersFilter[securityHeaderKey];
     }
-    this.kpnIntegrationConfigForm.get('apiId').updateValueAndValidity({emitEvent: false});
-    this.kpnIntegrationConfigForm.get('apiKey').updateValueAndValidity({emitEvent: false});
-    this.kpnIntegrationConfigForm.get('destinationSharedSecret').updateValueAndValidity({emitEvent: false});
+    return {...config, securityHeader, additionalHeadersFilter};
+  }
+
+  private formValueToConfig({securityHeader, additionalHeadersFilter, ...config}: KpnIntegrationFormValue): KpnIntegration {
+    const headersFilter = {...additionalHeadersFilter};
+    if (isNotEmptyStr(securityHeader)) {
+      headersFilter[this.securityHeaderName] = securityHeader.trim();
+    }
+    const enableSecurity = Object.keys(headersFilter).length > 0;
+    return {...config, enableSecurity, headersFilter};
+  }
+
+  private additionalHeadersFilterValidator(control: AbstractControl): ValidationErrors | null {
+    return Object.keys(control.value ?? {}).some(key => this.isSecurityHeader(key)) ? {securityHeaderDuplicate: true} : null;
+  }
+
+  private isSecurityHeader(key: string): boolean {
+    return key.toLowerCase() === this.securityHeaderName.toLowerCase();
+  }
+
+  private updateCredentialsValidators() {
+    if (this.kpnIntegrationConfigForm) {
+      const validators = this.isSetDownlink ? [Validators.required] : [];
+      this.kpnIntegrationConfigForm.get('apiId').setValidators(validators);
+      this.kpnIntegrationConfigForm.get('apiKey').setValidators(validators);
+      this.kpnIntegrationConfigForm.get('apiId').updateValueAndValidity({emitEvent: false});
+      this.kpnIntegrationConfigForm.get('apiKey').updateValueAndValidity({emitEvent: false});
+      this.validatorChange();
+    }
   }
 }
