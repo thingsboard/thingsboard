@@ -169,10 +169,16 @@
             <mat-icon class="art-tray-chev" aria-hidden="true">chevron_right</mat-icon>
           </button>
         }
+        @if (notice(); as current) {
+          <div class="k-notice k-notice-edge" [class]="'k-notice k-notice-edge ' + (current.kind === 'block' ? 'blocking' : current.kind)" [attr.role]="current.kind === 'block' ? 'alert' : 'status'">
+            <mat-icon aria-hidden="true">{{ current.icon }}</mat-icon><span>{{ current.text }}</span>
+          </div>
+        }
         <tb-ai-prompt-input
           [placeholder]="activePlaceholder() | translate"
           [loading]="loading() || isGenerating() || making() === 'solution'"
           [stoppable]="!!info()?.id"
+          [blocked]="notice()?.kind === 'block'"
           [stopping]="stopping()"
           (stopped)="stop()"
           [pinned]="true"

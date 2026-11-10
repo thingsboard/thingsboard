@@ -733,6 +733,7 @@
         "stopped-before": "You stopped this reply before any step. Nothing was done.",
         "notice": {
             "connection-lost": "The connection to the AI service is lost. Reconnecting…",
+            "connection-failed": "The connection to the AI service is lost. Send the message again to retry.",
             "connected-again": "Connected again. The run picks up where it stopped.",
             "reconnect-failed": "Could not reconnect. Send the message again to retry.",
             "rate-limited": "Too many requests for a moment. Send the message again in a minute.",

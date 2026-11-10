@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { AiNotice } from '@shared/models/ai-chat.models';
 import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.component';
 import {
   Component,
@@ -209,6 +210,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   private messageSteps: SolutionStep[] = [];
 
   stopping = signal(false);
+
+  notice = signal<AiNotice | null>(null);
 
   private stoppedAction: (() => void) | null = null;
 
@@ -795,6 +798,25 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     action?.();
   }
 
+  private noticeFor(err: any): boolean {
+    const status = err?.status;
+    const message = (parseHttpErrorMessage(err, this.translate, isNotEmptyStr(err?.error) ? 'text' : undefined, this.sanitizer).message ?? '').toString();
+    if (status === 0) {
+      this.setNotice('warn', 'wifi_off', 'connection-failed');
+    } else if (/out of ai credits|ai_credits limit exceeded/i.test(message)) {
+      this.setNotice('block', 'block', 'credits-used-up');
+    } else if (status === 429) {
+      this.setNotice('warn', 'hourglass_top', 'rate-limited');
+    } else {
+      return false;
+    }
+    return true;
+  }
+
+  private setNotice(kind: AiNotice['kind'], icon: string, key: string): void {
+    this.notice.set({kind, icon, text: this.translate.instant('ai-assistant.notice.' + key)});
+  }
+
   private wasStopped(err: any, again: () => void): boolean {
     if (!this.stopping() || err?.status !== 409) {
       return false;
@@ -909,7 +931,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
                 this.showInstalled();
               },
               error: (err) => {
-                if (!this.wasStopped(err, () => this.nextStep())) {
+                if (!this.wasStopped(err, () => this.nextStep()) && !this.noticeFor(err)) {
                   this.reportFailure(err);
                 }
               }
@@ -947,7 +969,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           this.showInstalled();
         },
         error: (err) => {
-          if (!this.wasStopped(err, () => this.installSolution())) {
+          if (!this.wasStopped(err, () => this.installSolution()) && !this.noticeFor(err)) {
             this.reportFailure(err, 'install');
           }
         }
@@ -1243,7 +1265,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         }
       }),
       catchError(err => {
-        if (!this.wasStopped(err, () => this.sendMessage(msg, resources).subscribe(() => {}))) {
+        if (!this.wasStopped(err, () => this.sendMessage(msg, resources).subscribe(() => {})) && !this.noticeFor(err)) {
           this.showErrorMessage(err);
         }
         this.rememberSolution();
@@ -1501,6 +1523,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private initLoadingState(): void {
     this.failure.set(null);
+    if (this.notice()?.kind !== 'block') {
+      this.notice.set(null);
+    }
     this.loading.set(true);
     if (!this.workTimers.length) {
       this.startWork([{text: this.messages().length ? 'solution-creator.work-thinking' : 'solution-creator.work-reading', delay: 0}], 'think');
