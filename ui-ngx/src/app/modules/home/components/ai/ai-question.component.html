@@ -19,6 +19,24 @@
       </div>
     }
   </div>
+} @else if (sheet()) {
+  <div class="k-ask sheet">
+    <div class="k-head">
+      <mat-icon class="tb-mat-18" aria-hidden="true">help_outline</mat-icon>{{ 'ai-assistant.question.needs-answer' | translate }}
+    </div>
+    @for (step of questions(); track step.id; let index = $index) {
+      <section class="k-sheet-q">
+        <ng-container *ngTemplateOutlet="stepBody; context: {$implicit: step, numbered: index + 1}"></ng-container>
+      </section>
+    }
+    <div class="k-actions">
+      <button mat-flat-button type="button" color="primary" [disabled]="disabled() || !allReady()" (click)="finish()">
+        <mat-icon>check</mat-icon>{{ 'ai-assistant.question.done' | translate }}
+      </button>
+      <span class="tb-spacer"></span>
+      <button mat-button type="button" [disabled]="disabled()" (click)="skipAll()">{{ 'ai-assistant.question.skip' | translate }}</button>
+    </div>
+  </div>
 } @else if (current(); as question) {
   <div class="k-ask stepped">
     <div class="k-head">
@@ -29,87 +47,7 @@
     </div>
     @for (step of [question]; track step.id) {
       <div class="k-step" [class.in-next]="move() === 'next'" [class.in-back]="move() === 'back'">
-        <div class="k-ask-q">
-          <b>{{ step.question }}</b>
-          @if (step.why) {
-            <span class="k-why">{{ step.why }}</span>
-          }
-        </div>
-        <div class="k-ask-a">
-          @if (isFree(step)) {
-            <div class="k-optcards list">
-              <div class="k-optcard other free" (click)="freeArea.focus()">
-                <span class="k-optbody">
-                  <b>{{ 'ai-assistant.question.your-answer' | translate }}</b>
-                  <textarea #freeArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
-                            [value]="otherText(step)" [placeholder]="'ai-assistant.question.type-answer' | translate"
-                            [attr.aria-label]="step.question" (input)="type(step, freeArea)" (keydown.enter)="onEnter($event)"></textarea>
-                </span>
-              </div>
-            </div>
-          } @else if (step.multiple) {
-            <div class="k-optcards" [class.list]="step.options.length >= 5" role="group" [attr.aria-label]="step.question"
-                 [style.--n]="step.options.length">
-              @for (option of step.options; track option.label) {
-                <button type="button" role="checkbox" class="k-optcard multi" [attr.aria-checked]="isChosen(step, option.label)"
-                        [disabled]="disabled()" (click)="toggle(step, option.label)">
-                  <span class="k-optdot"><mat-icon aria-hidden="true">check</mat-icon></span>
-                  <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
-                </button>
-              }
-              <div class="k-optcard multi other" role="checkbox" [attr.aria-checked]="isOther(step)" (click)="multiArea.focus()">
-                <span class="k-optdot"><mat-icon aria-hidden="true">check</mat-icon></span>
-                <span class="k-optbody">
-                  <b>{{ 'ai-assistant.question.other' | translate }}</b>
-                  <textarea #multiArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
-                            [value]="otherText(step)" [placeholder]="'ai-assistant.question.other-hint' | translate"
-                            [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
-                            (input)="type(step, multiArea)" (keydown.enter)="onEnter($event)"></textarea>
-                </span>
-              </div>
-            </div>
-          } @else if (isChipRow(step)) {
-            <div class="k-optrow" role="radiogroup" [attr.aria-label]="step.question">
-              @for (option of step.options; track option.label) {
-                <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
-                        [attr.aria-pressed]="!isOther(step) && valueOf(step) === option.label"
-                        [disabled]="disabled()" (click)="pick(step, option.label)">{{ option.label }}</button>
-              }
-              <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="isOther(step)" [attr.aria-pressed]="isOther(step)"
-                      [disabled]="disabled()" (click)="pickOther(step)">{{ 'ai-assistant.question.other-chip' | translate }}</button>
-            </div>
-            @if (isOther(step)) {
-              <textarea #rowArea class="k-opt-input k-other-area" rows="1" spellcheck="false" [disabled]="disabled()"
-                        [value]="otherText(step)" [placeholder]="'ai-assistant.question.other-hint' | translate"
-                        [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
-                        (input)="type(step, rowArea)" (keydown.enter)="onEnter($event)"></textarea>
-            } @else if (chosenHint(step); as hint) {
-              <p class="k-opthint">{{ hint }}</p>
-            }
-          } @else {
-            <div class="k-optcards" [class.list]="step.options.length >= 5" role="radiogroup" [attr.aria-label]="step.question"
-                 [style.--n]="step.options.length">
-              @for (option of step.options; track option.label) {
-                <button type="button" role="radio" class="k-optcard" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
-                        [disabled]="disabled()" (click)="pick(step, option.label)">
-                  <span class="k-optdot"></span>
-                  <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
-                </button>
-              }
-              <div class="k-optcard other" role="radio" [attr.aria-checked]="isOther(step)" (click)="otherArea.focus()">
-                <span class="k-optdot"></span>
-                <span class="k-optbody">
-                  <b>{{ 'ai-assistant.question.other' | translate }}</b>
-                  <textarea #otherArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
-                            [value]="otherText(step)"
-                            [placeholder]="'ai-assistant.question.other-hint' | translate"
-                            [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
-                            (focus)="pickOther(step)" (input)="type(step, otherArea)" (keydown.enter)="onEnter($event)"></textarea>
-                </span>
-              </div>
-            </div>
-          }
-        </div>
+        <ng-container *ngTemplateOutlet="stepBody; context: {$implicit: step, numbered: 0}"></ng-container>
       </div>
     }
     <div class="k-actions">
@@ -126,3 +64,90 @@
     </div>
   </div>
 }
+
+<ng-template #stepBody let-step let-numbered="numbered">
+  <div class="k-ask-q" [class.numbered]="numbered">
+    @if (numbered) {
+      <span class="k-qn" aria-hidden="true"><b>{{ numbered }}</b></span>
+    }
+    <b>{{ step.question }}</b>
+    @if (step.why) {
+      <span class="k-why">{{ step.why }}</span>
+    }
+  </div>
+  <div class="k-ask-a">
+    @if (isFree(step)) {
+      <div class="k-optcards list">
+        <div class="k-optcard other free" (click)="freeArea.focus()">
+          <span class="k-optbody">
+            <b>{{ 'ai-assistant.question.your-answer' | translate }}</b>
+            <textarea #freeArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
+                      [value]="otherText(step)" [placeholder]="'ai-assistant.question.type-answer' | translate"
+                      [attr.aria-label]="step.question" (input)="type(step, freeArea)" (keydown.enter)="onEnter($event)"></textarea>
+          </span>
+        </div>
+      </div>
+    } @else if (step.multiple) {
+      <div class="k-optcards" [class.list]="step.options.length >= 5" role="group" [attr.aria-label]="step.question"
+           [style.--n]="step.options.length">
+        @for (option of step.options; track option.label) {
+          <button type="button" role="checkbox" class="k-optcard multi" [attr.aria-checked]="isChosen(step, option.label)"
+                  [disabled]="disabled()" (click)="toggle(step, option.label)">
+            <span class="k-optdot"><mat-icon aria-hidden="true">check</mat-icon></span>
+            <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
+          </button>
+        }
+        <div class="k-optcard multi other" role="checkbox" [attr.aria-checked]="isOther(step)" (click)="multiArea.focus()">
+          <span class="k-optdot"><mat-icon aria-hidden="true">check</mat-icon></span>
+          <span class="k-optbody">
+            <b>{{ 'ai-assistant.question.other' | translate }}</b>
+            <textarea #multiArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
+                      [value]="otherText(step)" [placeholder]="'ai-assistant.question.other-hint' | translate"
+                      [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
+                      (input)="type(step, multiArea)" (keydown.enter)="onEnter($event)"></textarea>
+          </span>
+        </div>
+      </div>
+    } @else if (isChipRow(step)) {
+      <div class="k-optrow" role="radiogroup" [attr.aria-label]="step.question">
+        @for (option of step.options; track option.label) {
+          <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
+                  [attr.aria-pressed]="!isOther(step) && valueOf(step) === option.label"
+                  [disabled]="disabled()" (click)="pick(step, option.label)">{{ option.label }}</button>
+        }
+        <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="isOther(step)" [attr.aria-pressed]="isOther(step)"
+                [disabled]="disabled()" (click)="pickOther(step)">{{ 'ai-assistant.question.other-chip' | translate }}</button>
+      </div>
+      @if (isOther(step)) {
+        <textarea #rowArea class="k-opt-input k-other-area" rows="1" spellcheck="false" [disabled]="disabled()"
+                  [value]="otherText(step)" [placeholder]="'ai-assistant.question.other-hint' | translate"
+                  [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
+                  (input)="type(step, rowArea)" (keydown.enter)="onEnter($event)"></textarea>
+      } @else if (chosenHint(step); as hint) {
+        <p class="k-opthint">{{ hint }}</p>
+      }
+    } @else {
+      <div class="k-optcards" [class.list]="step.options.length >= 5" role="radiogroup" [attr.aria-label]="step.question"
+           [style.--n]="step.options.length">
+        @for (option of step.options; track option.label) {
+          <button type="button" role="radio" class="k-optcard" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
+                  [disabled]="disabled()" (click)="pick(step, option.label)">
+            <span class="k-optdot"></span>
+            <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
+          </button>
+        }
+        <div class="k-optcard other" role="radio" [attr.aria-checked]="isOther(step)" (click)="otherArea.focus()">
+          <span class="k-optdot"></span>
+          <span class="k-optbody">
+            <b>{{ 'ai-assistant.question.other' | translate }}</b>
+            <textarea #otherArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
+                      [value]="otherText(step)"
+                      [placeholder]="'ai-assistant.question.other-hint' | translate"
+                      [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
+                      (focus)="pickOther(step)" (input)="type(step, otherArea)" (keydown.enter)="onEnter($event)"></textarea>
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+</ng-template>

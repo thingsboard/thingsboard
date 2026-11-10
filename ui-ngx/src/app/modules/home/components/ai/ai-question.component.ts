@@ -99,6 +99,17 @@ export class AiQuestionComponent {
     return this.isOther(question) ? !!this.otherText(question).trim() : !!this.valueOf(question);
   }
 
+  sheet = computed(() => this.questions().length > 1 && this.questions().every(question =>
+    !question.multiple && !this.isFree(question) && (this.isChipRow(question) || question.options.length <= 3)));
+
+  allReady = computed(() => this.questions().every(question => this.ready(question)));
+
+  finish(): void {
+    if (!this.disabled() && this.questions().every(question => this.ready(question))) {
+      this.done.emit(this.answers());
+    }
+  }
+
   isChipRow(question: AiQuestion): boolean {
     return !question.multiple && question.options.length >= 2 && question.options.length <= 4
       && question.options.every(option => option.label.length <= 24);
@@ -157,7 +168,11 @@ export class AiQuestionComponent {
     const keyboard = event as KeyboardEvent;
     if (!keyboard.shiftKey && !keyboard.isComposing) {
       event.preventDefault();
-      this.next();
+      if (this.sheet()) {
+        this.finish();
+      } else {
+        this.next();
+      }
     }
   }
 

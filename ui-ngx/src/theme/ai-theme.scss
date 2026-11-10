@@ -4176,3 +4176,68 @@ a.tb-chiplink:focus-visible {
   width: 100%;
   margin-top: 8px;
 }
+
+.k-ask.sheet {
+  gap: 0;
+
+  > .k-head + .k-sheet-q {
+    margin-top: 12px;
+  }
+
+  > .k-actions {
+    padding-top: 14px;
+    border-top: 1px solid var(--tb-line);
+  }
+
+  .k-ask-q b {
+    font-size: 15px;
+    line-height: 21px;
+  }
+
+  .k-optcard {
+    padding: 8px 10px;
+  }
+}
+
+.k-sheet-q {
+  display: grid;
+  gap: 12px;
+  padding: 14px 0 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.k-ask-q.numbered {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: center;
+
+  > b, > .k-why {
+    grid-column: 2;
+  }
+}
+
+.k-qn {
+  grid-row: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 11px;
+  background: var(--tb-surface);
+  box-shadow: inset 0 0 0 1.5px var(--ai-teal-500);
+  gap: 1px;
+  font: 500 12px/22px var(--tb-font);
+  letter-spacing: normal;
+  white-space: nowrap;
+  color: var(--tb-ink-76);
+
+  b {
+    font-weight: 600;
+    line-height: 22px;
+  }
+}
