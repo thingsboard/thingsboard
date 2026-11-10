@@ -40,6 +40,10 @@
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
         <sbom.package.phase>none</sbom.package.phase>
+        <!-- The time of the release, written to the SBOMs as their timestamp. Set it together with the release version:
+             mvn versions:set-property -Dproperty=project.build.outputTimestamp -DnewVersion=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+             Maven also gives the files inside the jars this time, so that a build can be repeated. -->
+        <project.build.outputTimestamp>2026-11-10T11:40:00Z</project.build.outputTimestamp>
         <!-- SBOMs are made only on request: build with -Dsbom.skip=false. It turns on the SBOMs of the jars and packages
              and, in a build that pushes the multi-architecture Docker images (see msa/pom.xml), those of the images.
              No profile turns them on: activating a profile of this POM would switch off the packaging profile,
