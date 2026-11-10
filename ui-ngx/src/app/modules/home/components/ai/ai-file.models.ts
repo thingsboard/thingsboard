@@ -69,8 +69,22 @@ export interface AiFile {
 const PNG_SCALE = 2;
 const PNG_MAX_SIDE = 4096;
 
+const XML_ENTITIES = new Set(['amp', 'lt', 'gt', 'quot', 'apos']);
+
 export function aiImageSrc(file: AiFile): string {
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(file.content);
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xmlEntities(file.content));
+}
+
+function xmlEntities(svg: string): string {
+  const decoder = document.createElement('textarea');
+  return svg.replace(/&([a-zA-Z][a-zA-Z0-9]*);/g, (entity, name: string) => {
+    if (XML_ENTITIES.has(name)) {
+      return entity;
+    }
+    decoder.innerHTML = entity;
+    const text = decoder.value;
+    return text === entity ? '&amp;' + name + ';' : Array.from(text).map(char => `&#${char.codePointAt(0)};`).join('');
+  });
 }
 
 export function downloadAiFile(file: AiFile): void {

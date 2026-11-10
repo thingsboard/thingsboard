@@ -2142,6 +2142,10 @@ code.k-ent[data-pal="solution"] .k-ent-ic { color: var(--entity-solution-fg); }
     }
   }
 
+  &.free {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   &.other {
     cursor: text;
 
