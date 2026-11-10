@@ -66,7 +66,7 @@ function chip(reference: AiReference): HTMLElement {
   icon.textContent = kind.icon;
   code.append(icon, reference.name);
   const base = reference.entityType === 'ALARM_RULE' ? '/alarms/alarm-rules' : baseDetailsPageByEntityType.get(reference.entityType as EntityType);
-  if (!base) {
+  if (!base || !reference.id) {
     return code;
   }
   const link = document.createElement('a');

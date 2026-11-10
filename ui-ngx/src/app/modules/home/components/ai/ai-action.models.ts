@@ -160,6 +160,7 @@ export interface AiPlanStep {
   by: 'agent' | 'user';
   needs?: string;
   optional?: boolean;
+  makes?: {type: string; name: string}[];
 }
 
 export interface AiPlanProgress {
@@ -180,7 +181,10 @@ export function aiPlanOf(args: unknown): AiPlanStep[] {
       text: step.text.trim(),
       by: step.by === 'user' ? 'user' : 'agent',
       needs: step.by === 'user' && PLAN_NEEDS.has(step.needs) ? step.needs : undefined,
-      optional: step.optional === true
+      optional: step.optional === true,
+      makes: Array.isArray(step.makes)
+        ? step.makes.filter(made => typeof made?.type === 'string' && typeof made?.name === 'string' && made.name.trim()).slice(0, 4)
+        : []
     }));
 }
 

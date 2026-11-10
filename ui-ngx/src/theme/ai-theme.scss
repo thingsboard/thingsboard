@@ -1534,7 +1534,20 @@ code.k-ent[data-pal="solution"] .k-ent-ic { color: var(--entity-solution-fg); }
     }
   }
 
-  .k-what code {
+  .k-what code.k-ent {
+    font-size: var(--chat-code);
+    line-height: var(--chat-chip-lh);
+    padding: 0 6px;
+
+    .k-ent-ic {
+      width: calc(var(--chat-code) + 1px);
+      height: calc(var(--chat-code) + 1px);
+      font-size: calc(var(--chat-code) + 1px);
+      line-height: calc(var(--chat-code) + 1px);
+    }
+  }
+
+  .k-what code:not(.k-ent) {
     display: inline-block;
     padding: 2px 7px;
     border-radius: 5px;
@@ -4123,4 +4136,43 @@ a.tb-chiplink:focus-visible {
     line-height: 16px;
     color: var(--k-grey);
   }
+}
+
+.k-optrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .ob-chip {
+    height: calc(var(--chat-control) + 2px);
+    padding: 0 14px;
+    font-size: var(--chat-line);
+    line-height: var(--chat-control);
+
+    &[aria-pressed="true"] {
+      border-color: var(--ai-selected);
+      background: var(--tb-surface);
+      box-shadow: inset 0 0 0 1px var(--ai-selected);
+      font-weight: 500;
+      color: var(--tb-ink);
+    }
+  }
+}
+
+.k-ask .k-opthint {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 19px;
+  letter-spacing: .25px;
+  color: var(--k-grey);
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+.k-ask .k-other-area {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
 }

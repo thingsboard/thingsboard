@@ -7,7 +7,7 @@
 <div class="k-plan min" [class.gate]="gate()">
   <div class="k-plan-head">
     <span>{{ 'ai-assistant.plan.title' | translate }}</span>
-    <span class="k-plan-count">{{ gate() ? ('ai-assistant.plan.steps' | translate: {count: counted()}) : ('ai-assistant.plan.done-of' | translate: {done: done(), count: counted()}) }}</span>
+    <span class="k-plan-count">{{ gate() || !progress() ? ('ai-assistant.plan.steps' | translate: {count: counted()}) : ('ai-assistant.plan.done-of' | translate: {done: done(), count: counted()}) }}</span>
     <span class="tb-spacer"></span>
     @if (gate()) {
       <button type="button" class="k-iconbtn" (click)="change.emit()" [matTooltip]="'ai-assistant.plan.change' | translate"

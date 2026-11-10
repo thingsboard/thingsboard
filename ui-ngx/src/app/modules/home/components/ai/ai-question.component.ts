@@ -99,6 +99,16 @@ export class AiQuestionComponent {
     return this.isOther(question) ? !!this.otherText(question).trim() : !!this.valueOf(question);
   }
 
+  isChipRow(question: AiQuestion): boolean {
+    return !question.multiple && question.options.length >= 2 && question.options.length <= 4
+      && question.options.every(option => option.label.length <= 24);
+  }
+
+  chosenHint(question: AiQuestion): string | undefined {
+    const value = this.valueOf(question);
+    return question.options.find(option => option.label === value)?.hint;
+  }
+
   pick(question: AiQuestion, label: string): void {
     this.picked.update(values => ({...values, [question.id]: label}));
   }

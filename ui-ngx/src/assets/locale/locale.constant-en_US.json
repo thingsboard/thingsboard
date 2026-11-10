@@ -692,6 +692,7 @@
       },
     "ai-assistant": {
         "question": {
+            "other-chip": "Other…",
             "needs-answer": "Needs an answer",
             "count": "{{at}} of {{of}}",
             "other": "Something else",
@@ -1291,6 +1292,7 @@
             "done-of": "{{done}} of {{count}}",
             "change": "Change the plan",
             "change-prompt": "Change the plan: ",
+            "change-ask": "Change the plan.",
             "you": "You",
             "needs": {
                 "device": "Requires device",

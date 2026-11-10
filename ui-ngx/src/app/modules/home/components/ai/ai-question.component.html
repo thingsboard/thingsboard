@@ -68,6 +68,24 @@
                 </span>
               </div>
             </div>
+          } @else if (isChipRow(step)) {
+            <div class="k-optrow" role="radiogroup" [attr.aria-label]="step.question">
+              @for (option of step.options; track option.label) {
+                <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
+                        [attr.aria-pressed]="!isOther(step) && valueOf(step) === option.label"
+                        [disabled]="disabled()" (click)="pick(step, option.label)">{{ option.label }}</button>
+              }
+              <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="isOther(step)" [attr.aria-pressed]="isOther(step)"
+                      [disabled]="disabled()" (click)="pickOther(step)">{{ 'ai-assistant.question.other-chip' | translate }}</button>
+            </div>
+            @if (isOther(step)) {
+              <textarea #rowArea class="k-opt-input k-other-area" rows="1" spellcheck="false" [disabled]="disabled()"
+                        [value]="otherText(step)" [placeholder]="'ai-assistant.question.other-hint' | translate"
+                        [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
+                        (input)="type(step, rowArea)" (keydown.enter)="onEnter($event)"></textarea>
+            } @else if (chosenHint(step); as hint) {
+              <p class="k-opthint">{{ hint }}</p>
+            }
           } @else {
             <div class="k-optcards" [class.list]="step.options.length >= 5" role="radiogroup" [attr.aria-label]="step.question"
                  [style.--n]="step.options.length">

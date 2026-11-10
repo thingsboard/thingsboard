@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, computed, EventEmitter, input, Output, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, EventEmitter, inject, input, Output, signal } from '@angular/core';
+import { decorateReferences } from '@home/components/ai/ai-references';
 import { AiPlanProgress, AiPlanStep } from '@home/components/ai/ai-action.models';
 
 export interface AiPlanRun {
@@ -26,6 +27,20 @@ export class AiPlanComponent {
   @Output() change = new EventEmitter<void>();
 
   private cleared = signal<ReadonlySet<number>>(new Set());
+
+  private host = inject(ElementRef<HTMLElement>);
+
+  private chips = effect(() => {
+    const steps = this.steps();
+    setTimeout(() => {
+      const whats = (this.host.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.k-plan li .k-what');
+      steps.forEach((step, index) => {
+        if (step.makes?.length && whats[index]) {
+          decorateReferences(whats[index], step.makes.map(made => ({name: made.name, entityType: made.type, id: ''})));
+        }
+      });
+    });
+  });
 
   marks = computed<AiPlanMark[]>(() => {
     const progress = this.progress();

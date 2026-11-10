@@ -453,7 +453,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   changePlan(): void {
-    this.promptInput?.setValue(this.translate.instant('ai-assistant.plan.change-prompt'));
+    this.ask(this.translate.instant('ai-assistant.plan.change-ask'));
   }
 
   openAllChats(): void {
