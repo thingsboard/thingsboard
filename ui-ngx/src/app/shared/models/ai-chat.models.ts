@@ -83,6 +83,8 @@ export interface ToolExecutionRequested extends BaseChatToolEventData {
   icon?: string;
   review?: AiApprovalReview;
   time?: number;
+  tool?: string;
+  arguments?: unknown;
 }
 
 export type AiReviewFieldKind = 'FACT' | 'CHANGE' | 'UNCHANGED';
@@ -133,6 +135,7 @@ export interface ToolExecutionResult extends BaseChatToolEventData {
   icon?: string;
   affectedEntities?: Array<EntityId>;
   reason?: string;
+  result?: string;
 }
 
 export interface ToolExecutionResultEvent extends BaseChatEvent {

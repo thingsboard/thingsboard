@@ -22,6 +22,7 @@ import { AiLoadLinesComponent } from '@home/components/ai/ai-load-lines.componen
 import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
 import { AiWorkLineComponent } from '@home/components/ai/ai-work-line.component';
 import { AiActionLineComponent } from '@home/components/ai/ai-action-line.component';
+import { AiActionDetailComponent } from '@home/components/ai/ai-action-detail.component';
 import { AiRunSummaryComponent } from '@home/components/ai/ai-run-summary.component';
 import { AiStartedFromComponent } from '@home/components/ai/ai-started-from.component';
 import { AiAssistantButtonComponent } from '@home/components/ai/ai-assistant-button.component';
@@ -50,6 +51,7 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiSpinComponent,
     AiWorkLineComponent,
     AiActionLineComponent,
+    AiActionDetailComponent,
     AiRunSummaryComponent,
     AiStartedFromComponent,
     AiAssistantButtonComponent,

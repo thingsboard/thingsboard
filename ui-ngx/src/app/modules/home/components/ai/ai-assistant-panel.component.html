@@ -6,7 +6,7 @@
 -->
 <div class="tb-ai-grip" role="separator" tabindex="0" aria-orientation="vertical"
      [attr.aria-label]="'ai-assistant.resize-panel' | translate"
-     [attr.title]="'ai-assistant.resize-panel-hint' | translate"
+     [matTooltip]="'ai-assistant.resize-panel-hint' | translate" matTooltipPosition="left"
      [attr.aria-valuemin]="minWidth" [attr.aria-valuemax]="maxWidth" [attr.aria-valuenow]="width()"
      (dblclick)="setWidth(defaultWidth, true)"
      (keydown)="onGripKey($event)"

@@ -20,18 +20,13 @@
       }
     </div>
     @if (hasDetails()) {
-      <details class="tb-disc tb-disc-details">
+      <details class="tb-disc tb-disc-details" (toggle)="opened.set($any($event.target).open)">
         <summary>{{ 'ai-assistant.action.details' | translate }}</summary>
-        @if (records().length) {
-          <tb-ai-run-summary class="records" [entities]="records()"></tb-ai-run-summary>
-        }
-        @if (request()) {
-          <div class="part">{{ 'ai-assistant.action.request' | translate }}</div>
-          <pre>{{ request() }}</pre>
-        }
-        @if (result()) {
-          <div class="part">{{ 'ai-assistant.action.result' | translate }}</div>
-          <pre>{{ result() }}</pre>
+        @if (opened()) {
+          @if (records().length) {
+            <tb-ai-run-summary class="records" [entities]="records()"></tb-ai-run-summary>
+          }
+          <tb-ai-action-detail [view]="detail()" [names]="names()"></tb-ai-action-detail>
         }
       </details>
     }

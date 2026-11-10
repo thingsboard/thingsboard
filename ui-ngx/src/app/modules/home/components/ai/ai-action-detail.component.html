@@ -1,0 +1,148 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (hood()) {
+  <p class="k-hood"><mat-icon class="tb-mat-16" aria-hidden="true">code</mat-icon><span>{{ hood() }}</span></p>
+}
+@for (block of view().blocks; track $index) {
+  @switch (block.type) {
+    @case ('hub') {
+      <div class="k-detail-recs">
+        @for (row of hub(); track row.id) {
+          <div class="tb-rec line type-device k-hub" data-pal="device" [matTooltip]="row.description" matTooltipPosition="above" [matTooltipShowDelay]="400">
+            <span class="tb-rec-tile"><mat-icon aria-hidden="true">memory</mat-icon></span>
+            @if (row.item) {
+              <a class="tb-rec-name" href="#" (click)="openHub(row, $event)">{{ row.name }}</a>
+            } @else {
+              <span class="tb-rec-name">{{ row.name }}</span>
+            }
+            <span class="tb-rec-meta">
+              <span class="tb-hub-ic" [matTooltip]="'ai-assistant.detail.on-iot-hub' | translate" matTooltipPosition="above"><mat-icon class="tb-mat-16" aria-hidden="true">hub</mat-icon></span>
+              {{ 'ai-assistant.detail.hub-device' | translate }}@if (row.maker) { · {{ row.maker }}}@if (row.verified) {<mat-icon class="k-ver" aria-hidden="true">verified</mat-icon>}@if (row.installs) { · {{ row.installs }}}
+            </span>
+          </div>
+        }
+      </div>
+    }
+    @case ('records') {
+      @if (block.label) {
+        <div class="k-detail-label">{{ say(block.label) }}</div>
+      }
+      <div class="k-detail-recs">
+        @for (row of block.rows; track $index) {
+          <div class="tb-rec line" [attr.data-pal]="kind(row.entityType).palette">
+            <span class="tb-rec-tile"><mat-icon aria-hidden="true">{{ kind(row.entityType).icon }}</mat-icon></span>
+            @if (recordUrl(row); as url) {
+              <a class="tb-rec-name" [routerLink]="url">{{ row.name }}</a>
+            } @else {
+              <span class="tb-rec-name">{{ row.name }}</span>
+            }
+            @if (row.meta) {
+              <span class="tb-rec-meta">{{ row.meta }}</span>
+            }
+          </div>
+        }
+      </div>
+      @if (more(block); as rest) {
+        <div class="k-detail-more">{{ 'ai-assistant.detail.more' | translate:{count: rest} }}</div>
+      }
+    }
+    @case ('values') {
+      @if (block.label) {
+        <div class="k-detail-label">{{ say(block.label) }}</div>
+      }
+      <div class="k-tels">
+        @for (row of block.rows; track $index) {
+          <span class="k-tel" [matTooltip]="row.time ? time(row.time) : ''" [matTooltipDisabled]="!row.time" matTooltipPosition="above"><code class="k-tel-key">{{ row.key }}</code><span class="k-tel-val">{{ row.value }}</span></span>
+        }
+      </div>
+    }
+    @case ('series') {
+      <div class="k-series">
+        @for (row of block.rows; track row.key) {
+          <div class="k-series-row">
+            <code class="k-tel-key">{{ row.key }}</code>
+            <svg class="k-series-spark" viewBox="0 0 96 20" preserveAspectRatio="none" aria-hidden="true"><path [attr.d]="row.path"></path></svg>
+            <span class="k-series-meta">{{ 'ai-assistant.detail.series' | translate:{points: row.points, min: number(row.min), max: number(row.max), last: number(row.last)} }}</span>
+          </div>
+        }
+      </div>
+    }
+    @case ('keys') {
+      @if (block.label) {
+        <div class="k-detail-label">{{ say(block.label) }}</div>
+      }
+      <div class="k-tels">
+        @for (key of block.keys; track $index) {
+          <code class="k-tel-key">{{ key }}</code>
+        }
+      </div>
+    }
+    @case ('facts') {
+      <dl class="k-fields k-detail-facts">
+        @for (fact of block.rows; track $index) {
+          <dt>{{ label(fact) }}</dt>
+          <dd [class.mono]="fact.mono">
+            @if (factLink(fact); as url) {
+              <a [routerLink]="url">{{ factValue(fact) }}</a>
+            } @else if (fact.secret && !revealed().has(view().hood?.key + $index)) {
+              <span>{{ masked(factValue(fact)) }}</span>
+              <button type="button" class="k-reveal" (click)="reveal(view().hood?.key + $index)" [attr.aria-label]="'ai-assistant.detail.show' | translate" [matTooltip]="'ai-assistant.detail.show' | translate" matTooltipPosition="above">
+                <mat-icon class="tb-mat-16" aria-hidden="true">visibility</mat-icon>
+              </button>
+            } @else {
+              {{ factValue(fact) }}
+            }
+          </dd>
+        }
+      </dl>
+    }
+    @case ('list') {
+      @if (block.label) {
+        <div class="k-detail-label">{{ say(block.label) }}</div>
+      }
+      <ul class="k-made">
+        @for (row of block.rows; track $index) {
+          <li>{{ row }}</li>
+        }
+      </ul>
+    }
+    @case ('commands') {
+      <div class="k-codetabs-slot" [attr.data-block]="$index"></div>
+    }
+    @case ('code') {
+      <pre><code [class]="'language-' + block.label.toLowerCase()">{{ block.text }}</code></pre>
+    }
+    @case ('links') {
+      <div class="k-detail-links">
+        @for (row of block.rows; track $index) {
+          <a class="k-detail-link" [href]="row.url" target="_blank" rel="noopener">
+            <span class="k-detail-link-t">{{ row.title }}</span>
+            <span class="k-detail-link-from">{{ row.from }}</span>
+            @if (row.snippet) {
+              <span class="k-detail-link-s">{{ row.snippet }}</span>
+            }
+          </a>
+        }
+      </div>
+    }
+    @case ('markdown') {
+      <div class="k-detail-md">
+        <tb-markdown usePlainMarkdown [data]="block.text"></tb-markdown>
+      </div>
+    }
+    @case ('note') {
+      <p class="k-detail-note">{{ say(block.text) }}</p>
+    }
+    @case ('text') {
+      <p class="k-detail-text">{{ block.text }}</p>
+    }
+    @case ('json') {
+      <div class="k-detail-label">{{ ('ai-assistant.action.' + block.label) | translate }}</div>
+      <pre class="k-detail-json">{{ block.text }}</pre>
+    }
+  }
+}

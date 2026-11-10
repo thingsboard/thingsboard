@@ -89,7 +89,7 @@
   } @else if (msg.from === 'ACTION') {
     @if (isListedAction(msg) && (msg.data.status !== 'RUNNING' || $index === runningLead)) {
       <div class="ai action">
-        <tb-ai-action-line [action]="msg.data" [more]="$index === runningLead ? runningCount - 1 : 0"></tb-ai-action-line>
+        <tb-ai-action-line [action]="msg.data" [names]="detailNames" [more]="$index === runningLead ? runningCount - 1 : 0"></tb-ai-action-line>
         @if ($index === retryIndex) {
           <div class="k-actions action-ways">
             <button mat-stroked-button type="button" (click)="prompt.emit(retryPrompt)">

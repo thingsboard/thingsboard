@@ -50,7 +50,7 @@ const LIST_PAGES: Record<string, {entityType: string; url: string}> = {
     @if (page(); as current) {
       <span>{{ 'ai-assistant.started-from' | translate }}</span>
       @if (current.url) {
-        <a class="tb-chiplink" [routerLink]="current.url" [attr.title]="'ai-assistant.open-page' | translate: {name: current.name}">
+        <a class="tb-chiplink" [routerLink]="current.url" [matTooltip]="'ai-assistant.open-page' | translate: {name: current.name}" matTooltipPosition="above">
           <code class="k-ent" [attr.data-pal]="kind().palette"><mat-icon class="k-ent-ic" aria-hidden="true">{{ kind().icon }}</mat-icon>{{ current.name }}</code>
         </a>
       } @else {

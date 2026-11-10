@@ -5,7 +5,7 @@
 
 -->
 @if (handedOver) {
-  <tb-ai-action-line [action]="handedOver" [outcomeText]="outcomeText" [autoApproved]="state === 'auto'" [linkEntity]="!isDestructive"></tb-ai-action-line>
+  <tb-ai-action-line [action]="handedOver" [outcomeText]="outcomeText" [autoApproved]="state === 'auto'" [linkEntity]="!isDestructive" [facts]="handedFacts"></tb-ai-action-line>
 } @else {
 <div class="k-review"
      [class.done]="state === 'approved'"

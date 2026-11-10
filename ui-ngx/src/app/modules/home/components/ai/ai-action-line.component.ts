@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
+import { aiActionDetailView, AiDetailFact, AiDetailNames } from '@home/components/ai/ai-action-detail.models';
 import {
   AiAction,
   aiEntityKind,
-  aiActionDetail,
   aiActionDuration,
   aiActionWords
 } from '@home/components/ai/ai-action.models';
@@ -83,13 +83,21 @@ export class AiActionLineComponent {
 
   duration = computed(() => this.action().durationMs != null ? aiActionDuration(this.action().durationMs) : '');
 
-  request = computed(() => aiActionDetail(this.action().arguments));
+  names = input<AiDetailNames>(new Map());
 
-  result = computed(() => aiActionDetail(this.action().result));
+  facts = input<AiDetailFact[]>([]);
+
+  detail = computed(() => {
+    const view = aiActionDetailView(this.action(), this.names());
+    const facts = this.facts();
+    return facts.length ? {...view, blocks: [...view.blocks, {type: 'facts' as const, rows: facts}]} : view;
+  });
+
+  opened = signal(false);
 
   records = computed(() => this.action().status === 'SUCCESS' ? this.action().affectedEntities ?? [] : []);
 
-  hasDetails = computed(() => !!this.request() || !!this.result() || !!this.records().length);
+  hasDetails = computed(() => !!this.detail().hood || !!this.detail().blocks.length || !!this.records().length);
 
   private reason(result?: string): string | undefined {
     const text = result?.trim();

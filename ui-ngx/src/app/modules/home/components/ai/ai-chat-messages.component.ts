@@ -55,6 +55,7 @@ export interface AnswerReportEvent {
   comment?: string;
 }
 import { decorateCodeBlocks, decorateTables, fileLanguage } from '@home/components/ai/ai-code-block';
+import { aiDetailNames, AiDetailNames } from '@home/components/ai/ai-action-detail.models';
 import { decorateHints, decorateLinks, decorateReferences, decorateSeverities, decorateValues } from '@home/components/ai/ai-references';
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { Router } from '@angular/router';
@@ -82,6 +83,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() feedback = false;
   @Input() shownFile: string | null = null;
   @Input() ghostFirst = false;
+
+  detailNames: AiDetailNames = new Map();
   @Output() rate = new EventEmitter<AnswerRatingEvent>();
   @Output() chip = new EventEmitter<string>();
   @Output() report = new EventEmitter<AnswerReportEvent>();
@@ -306,6 +309,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     }
     if (changes.messages) {
       this.refreshDayLines();
+      this.detailNames = aiDetailNames(this.messages as Array<{from: string; data?: any; references?: Array<{id: string; name: string; entityType: string}>}>, this.detailNames);
     }
     if (changes.messages || changes.completedExecutions || changes.loading || changes.autoApprove || changes.denyReasons) {
       this.offerIndex = this.findOffer();

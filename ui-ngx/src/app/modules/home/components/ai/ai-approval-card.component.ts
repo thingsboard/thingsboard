@@ -26,6 +26,8 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 
 export type ApprovalCardState = 'pending' | 'approved' | 'auto' | 'denied' | 'expired';
 
+import { AiDetailFact } from '@home/components/ai/ai-action-detail.models';
+
 export interface AiReviewRow {
   label: string;
   labelCode: boolean;
@@ -79,6 +81,8 @@ export class AiApprovalCardComponent implements OnChanges {
 
   handedOver: AiAction | null = null;
 
+  handedFacts: AiDetailFact[] = [];
+
   private autoApproved = false;
 
   private readonly cd = inject(ChangeDetectorRef);
@@ -105,11 +109,14 @@ export class AiApprovalCardComponent implements OnChanges {
         this.state = this.autoApproved ? 'auto' : 'approved';
         this.handedOver = {
           executionId: result.executionId,
-          tool: '',
+          tool: this.data.tool ?? '',
+          arguments: this.data.arguments,
+          result: result.result,
           status: result.executionStatus,
           startedAt: this.data.time ?? Date.now(),
           affectedEntities: result.affectedEntities ?? []
         };
+        this.handedFacts = this.reviewFacts();
       }
       this.cd.detectChanges();
     }
@@ -188,6 +195,13 @@ export class AiApprovalCardComponent implements OnChanges {
 
   get facts(): AiReviewRow[] {
     return this.rows('FACT').slice(0, MAX_FIELDS);
+  }
+
+  private reviewFacts(): AiDetailFact[] {
+    return [
+      ...this.rows('FACT').map(row => ({label: row.label, raw: true, value: row.value, mono: row.valueCode})),
+      ...this.rows('CHANGE').map(row => ({label: row.label, raw: true, value: `${row.current ?? '—'} → ${row.value}`, mono: row.valueCode}))
+    ];
   }
 
   get changes(): AiReviewRow[] {

@@ -142,6 +142,63 @@ function decorate(pre: HTMLElement, translate: TranslateService, copy: (text: st
   }
 }
 
+export interface CodeTab {
+  label: string;
+  text: string;
+}
+
+export function codeTabsBlock(tabs: CodeTab[], lang: string, translate: TranslateService, copy: (text: string) => boolean,
+                              initial = 0, picked?: (tab: CodeTab) => void): HTMLElement {
+  const language = LANGUAGES[lang] ?? {lang: 'text', label: lang.toUpperCase(), icon: 'code'};
+  const shell = language.lang === 'shell' || language.lang === 'powershell';
+  let current = Math.min(Math.max(initial, 0), tabs.length - 1);
+  const block = element('div', 'tb-codeblock labeled tabbed');
+  block.dataset.lang = language.lang;
+  block.classList.toggle('shell', shell);
+  const head = element('div', 'tb-codeblock-head');
+  const list = element('div', 'tb-codetabs');
+  list.setAttribute('role', 'tablist');
+  const code = element('code', 'lang-' + language.lang);
+  const pre = element('pre', 'tb-code');
+  pre.append(code);
+  const buttons = tabs.map((tab, index) => {
+    const button = element('button', 'tb-codetab') as HTMLButtonElement;
+    button.type = 'button';
+    button.setAttribute('role', 'tab');
+    button.textContent = tab.label;
+    button.addEventListener('click', () => {
+      if (index !== current) {
+        current = index;
+        paint();
+        picked?.(tabs[current]);
+      }
+    });
+    button.addEventListener('keydown', event => {
+      const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (step) {
+        event.preventDefault();
+        current = (current + step + tabs.length) % tabs.length;
+        paint();
+        buttons[current].focus();
+        picked?.(tabs[current]);
+      }
+    });
+    return button;
+  });
+  const paint = () => {
+    buttons.forEach((button, index) => {
+      button.setAttribute('aria-selected', String(index === current));
+      button.tabIndex = index === current ? 0 : -1;
+    });
+    code.replaceChildren(...lines(language.lang, tabs[current].text));
+  };
+  list.append(...buttons);
+  head.append(icon(language.icon, 'tb-mat-16'), list, copyBtn(() => tabs[current].text, translate, copy));
+  block.append(head, pre);
+  paint();
+  return block;
+}
+
 function wrapBtn(block: HTMLElement, text: string, translate: TranslateService): HTMLButtonElement | null {
   if (!SIDEWAYS.includes(block.dataset.lang) || !text.split('\n').some(line => line.length > LONG_LINE)) {
     return null;
@@ -167,7 +224,7 @@ function commandCopyBtn(text: string, translate: TranslateService, copy: (text: 
   return button;
 }
 
-function copyBtn(text: string, translate: TranslateService, copy: (text: string) => boolean): HTMLButtonElement {
+function copyBtn(text: string | (() => string), translate: TranslateService, copy: (text: string) => boolean): HTMLButtonElement {
   const button = element('button', 'tb-codecopy') as HTMLButtonElement;
   button.type = 'button';
   button.dataset.tip = translate.instant('ai-assistant.copy');
@@ -176,7 +233,7 @@ function copyBtn(text: string, translate: TranslateService, copy: (text: string)
   button.append(icon('content_copy', 'tb-mat-16'));
   let timer: ReturnType<typeof setTimeout>;
   button.addEventListener('click', () => {
-    if (copy(text)) {
+    if (copy(typeof text === 'function' ? text() : text)) {
       button.classList.add('copied');
       clearTimeout(timer);
       timer = setTimeout(() => button.classList.remove('copied'), COPIED_MS);

@@ -6,7 +6,7 @@
 -->
 <div class="k-files">
   @for (item of shown; track item.resource.id) {
-    <button type="button" class="k-file" [class.pic]="item.image" [attr.title]="item.resource.name" (click)="open(item)">
+    <button type="button" class="k-file" [class.pic]="item.image" [matTooltip]="item.resource.name" matTooltipPosition="above" (click)="open(item)">
       @if (item.image) {
         <span class="k-file-pic" aria-hidden="true">
           @if (item.url$ | async; as url) {

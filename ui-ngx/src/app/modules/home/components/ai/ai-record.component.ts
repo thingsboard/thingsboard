@@ -13,9 +13,9 @@ export interface AiRecordState {
   template: `
     <span class="tb-rec-tile"><mat-icon aria-hidden="true">{{ kind().icon }}</mat-icon></span>
     @if (url()) {
-      <a class="tb-rec-name" [routerLink]="url()" [attr.title]="name()">{{ name() }}</a>
+      <a class="tb-rec-name" [routerLink]="url()" [matTooltip]="name()" matTooltipPosition="above" [matTooltipShowDelay]="600">{{ name() }}</a>
     } @else {
-      <span class="tb-rec-name" [attr.title]="name()">{{ name() }}</span>
+      <span class="tb-rec-name" [matTooltip]="name()" matTooltipPosition="above" [matTooltipShowDelay]="600">{{ name() }}</span>
     }
     @if (meta()) {
       <span class="tb-rec-meta">{{ meta() }}</span>

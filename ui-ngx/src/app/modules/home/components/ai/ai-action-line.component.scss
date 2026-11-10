@@ -59,27 +59,4 @@
     display: block;
     margin: 8px 0 4px;
   }
-
-  .part {
-    margin: 8px 0 4px;
-    font-size: var(--chat-meta);
-    line-height: var(--chat-meta-lh);
-    font-weight: 500;
-    color: var(--tb-text-secondary);
-  }
-
-  pre {
-    margin: 0;
-    max-height: 240px;
-    overflow: auto;
-    padding: 8px 10px;
-    border-radius: 8px;
-    background: var(--tb-line-soft);
-    font-family: var(--tb-mono);
-    font-size: 12px;
-    line-height: 18px;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    color: var(--tb-ink-76);
-  }
 }
