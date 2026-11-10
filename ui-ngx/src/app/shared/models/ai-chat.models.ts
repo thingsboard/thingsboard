@@ -45,6 +45,11 @@ export interface BaseChatEvent {
   event: string;
 }
 
+export interface AiReading {
+  key: string;
+  values: string[];
+}
+
 export interface AiEntityReference {
   name: string;
   entityType: string;
@@ -57,6 +62,7 @@ export interface AssistantChatEvent extends BaseChatEvent {
     message: string;
     references?: AiEntityReference[];
     severities?: string[];
+    readings?: AiReading[];
   }
 }
 

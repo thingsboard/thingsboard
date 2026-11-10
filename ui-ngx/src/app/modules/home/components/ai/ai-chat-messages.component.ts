@@ -49,7 +49,7 @@ export interface AnswerReportEvent {
   comment?: string;
 }
 import { decorateCodeBlocks, decorateTables, fileLanguage } from '@home/components/ai/ai-code-block';
-import { decorateHints, decorateLinks, decorateReferences, decorateSeverities } from '@home/components/ai/ai-references';
+import { decorateHints, decorateLinks, decorateReferences, decorateSeverities, decorateValues } from '@home/components/ai/ai-references';
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { Router } from '@angular/router';
 
@@ -157,6 +157,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     decorateReferences(answer, (message as GeneralChatMessage)?.references);
     decorateLinks(answer);
     decorateHints(answer);
+    decorateValues(answer, (message as GeneralChatMessage)?.readings);
     decorateSeverities(answer, (message as GeneralChatMessage)?.severities,
       severity => this.translate.instant(alarmSeverityTranslations.get(severity as AlarmSeverity) ?? severity));
   }

@@ -784,7 +784,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
         this.messages.update(list => [...this.withoutStreaming(list), {
           from: 'AI', content: event.data.message, time: Date.now(),
           ...(event.data.references?.length ? {references: event.data.references} : {}),
-          ...(event.data.severities?.length ? {severities: event.data.severities} : {})
+          ...(event.data.severities?.length ? {severities: event.data.severities} : {}),
+          ...(event.data.readings?.length ? {readings: event.data.readings} : {})
         }]);
         break;
       case 'toolExecutionRequested':

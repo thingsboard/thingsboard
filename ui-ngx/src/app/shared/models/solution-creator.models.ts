@@ -246,6 +246,7 @@ export interface GeneralChatMessage {
   content: string;
   references?: Array<{name: string; entityType: string; id: string}>;
   severities?: string[];
+  readings?: Array<{key: string; values: string[]}>;
   status?: 'INCOMPLETE' | 'STOPPED';
   streaming?: boolean;
   rating?: 'UP' | 'DOWN';

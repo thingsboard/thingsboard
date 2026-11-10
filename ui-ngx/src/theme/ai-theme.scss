@@ -4241,3 +4241,44 @@ a.tb-chiplink:focus-visible {
     line-height: 22px;
   }
 }
+
+.k-tel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--tb-mono);
+  font-size: var(--chat-chip, 14px);
+  line-height: var(--chat-text-lh);
+  white-space: nowrap;
+  vertical-align: baseline;
+
+  code.k-tel-key.k-tel-key {
+    padding: 2px 7px;
+    border: 0;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.06);
+    font-family: var(--tb-mono);
+    font-size: var(--chat-chip, 14px);
+    line-height: var(--chat-chip-lh);
+    color: var(--tb-ink);
+  }
+
+  .k-tel-val {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 4px;
+    border-radius: 5px;
+    font-size: var(--chat-chip, 14px);
+    line-height: var(--chat-chip-lh);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--tb-ink);
+  }
+
+  .k-tel-unit {
+    margin-left: -1px;
+    font-weight: 400;
+    color: var(--k-grey);
+  }
+}

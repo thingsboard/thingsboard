@@ -170,3 +170,50 @@ export function decorateHints(root: HTMLElement): void {
     quote.replaceWith(box);
   });
 }
+
+const VALUE_CODE = /^([^:\n]{1,60}):\s+(.+)$/;
+const NUMBER = /^([-−]?\d+(?:\.\d+)?)(.*)$/;
+
+export function decorateValues(root: HTMLElement, readings: Array<{key: string; values: string[]}> | undefined): void {
+  if (!readings?.length) {
+    return;
+  }
+  root.querySelectorAll<HTMLElement>('code').forEach(code => {
+    if (code.closest('pre, a, .k-ent, .k-tel') || code.children.length) {
+      return;
+    }
+    const match = VALUE_CODE.exec(code.textContent?.trim() ?? '');
+    const reading = match ? readings.find(item => item.key === match[1].trim()) : undefined;
+    if (!match || !reading) {
+      return;
+    }
+    const written = match[2].trim();
+    const number = NUMBER.exec(written);
+    let value: string;
+    let unit = '';
+    if (number && reading.values.some(item => Number(item) === Number(number[1].replace('−', '-')))) {
+      value = number[1].replace('-', '−');
+      unit = number[2].trim();
+    } else if (reading.values.includes(written)) {
+      value = written;
+    } else {
+      return;
+    }
+    const chip = document.createElement('span');
+    chip.className = 'k-tel';
+    const key = document.createElement('code');
+    key.className = 'k-tel-key';
+    key.textContent = reading.key;
+    const shown = document.createElement('span');
+    shown.className = 'k-tel-val';
+    shown.append(value);
+    if (unit) {
+      const unitEl = document.createElement('span');
+      unitEl.className = 'k-tel-unit';
+      unitEl.textContent = unit;
+      shown.append(unitEl);
+    }
+    chip.append(key, shown);
+    code.replaceWith(chip);
+  });
+}
