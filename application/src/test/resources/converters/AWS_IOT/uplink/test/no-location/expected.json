@@ -1,0 +1,15 @@
+{
+  "deviceName": "Thermostat-01",
+  "deviceType": "thermostat",
+  "attributes": {
+    "fwVersion": "1.4.2"
+  },
+  "telemetry": {
+    "ts": 1791901200000,
+    "values": {
+      "temperature": 25.3,
+      "humidity": 62.8,
+      "battery": 78.5
+    }
+  }
+}

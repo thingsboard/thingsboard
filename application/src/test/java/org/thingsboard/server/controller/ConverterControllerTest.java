@@ -47,6 +47,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -707,6 +708,52 @@ public class ConverterControllerTest extends AbstractControllerTest {
             loginSysAdmin();
             doPost("/api/tenantProfile", defaultTenantProfile, TenantProfile.class);
         }
+    }
+
+    @Test
+    public void testAwsIotDefaultDecoderTopic() throws Exception {
+        String uplinkDir = "converters/AWS_IOT/uplink/";
+        String payload = readResource(uplinkDir + "payload.json").orElseThrow();
+        JsonNode expected = JacksonUtil.toJsonNode(readResource(uplinkDir + "test/default/expected.json").orElseThrow());
+
+        // topic -> expected error
+        Map<String, String> errorCases = new LinkedHashMap<>();
+        errorCases.put(null, "MQTT topic is missing or empty");
+        errorCases.put("", "MQTT topic is missing or empty");
+        errorCases.put("  ", "MQTT topic is missing or empty");
+        errorCases.put("thermostat", "MQTT topic must contain device type and device name: thermostat");
+        errorCases.put("tb/aws/iot/telemetry/thermostat/", "MQTT topic must contain device type and device name: tb/aws/iot/telemetry/thermostat/");
+        errorCases.put("tb/aws/iot/telemetry//Thermostat-01", "MQTT topic must contain device type and device name: tb/aws/iot/telemetry//Thermostat-01");
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String decoder = readResource(uplinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // Spaces around the device type and name segments are not part of the device type and name.
+            JsonNode response = decodeAwsIotUplink(decoder, scriptLang, payload, "tb/aws/iot/telemetry/ thermostat / Thermostat-01 ");
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": topic with spaces").isEmpty();
+            softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": topic with spaces").isEqualTo(expected);
+
+            for (Map.Entry<String, String> errorCase : errorCases.entrySet()) {
+                String description = scriptLang + ": topic " + errorCase.getKey();
+                response = decodeAwsIotUplink(decoder, scriptLang, payload, errorCase.getKey());
+                softly.assertThat(response.get("output").asText()).as(description).isEmpty();
+                softly.assertThat(response.get("error").asText()).as(description).contains(errorCase.getValue());
+            }
+        }
+        softly.assertAll();
+    }
+
+    private JsonNode decodeAwsIotUplink(String decoder, ScriptLanguage scriptLang, String payload, String topic) {
+        ObjectNode metadata = JacksonUtil.newObjectNode();
+        if (topic != null) {
+            metadata.put("topic", topic);
+        }
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("decoder", decoder);
+        inputParams.set("metadata", metadata);
+        inputParams.put("payload", Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
+        return doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
     }
 
     @Test
