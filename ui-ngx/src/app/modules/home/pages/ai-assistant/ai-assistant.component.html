@@ -66,7 +66,7 @@
                         (dblclick)="$event.stopPropagation(); startRename(chat)">
                     @if (chat.solution) {
                       <mat-icon class="ai-row-ic" fontSet="material-icons-round" aria-hidden="true">layers</mat-icon>
-                    }{{ chat.title }}</span>
+                    }@for (part of marked(chat.title); track $index) {@if (part.hit) {<mark>{{ part.text }}</mark>} @else {{{ part.text }}}}@if (snippetOf(chat); as snippet) {<small class="ai-row-s">@for (part of snippet; track $index) {@if (part.hit) {<mark>{{ part.text }}</mark>} @else {{{ part.text }}}}</small>}</span>
                   @if (levelOf(chat); as level) {
                     <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="tipOf(chat)" matTooltipPosition="above"></span>
                   }
@@ -173,6 +173,10 @@
     <button mat-menu-item (click)="togglePinned(chat)">
       <mat-icon fontSet="material-icons-round">push_pin</mat-icon>
       <span>{{ (chat.pinned ? 'ai-assistant.unpin' : 'ai-assistant.pin') | translate }}</span>
+    </button>
+    <button mat-menu-item (click)="runAgain(chat)">
+      <mat-icon fontSet="material-icons-round">replay</mat-icon>
+      <span>{{ 'ai-assistant.run-again' | translate }}</span>
     </button>
     <button mat-menu-item class="danger" (click)="deleteChat(chat)">
       <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>

@@ -512,3 +512,19 @@
   box-shadow: 0 0 0 2px var(--tb-surface);
   pointer-events: none;
 }
+
+.ai-row-title mark, .ai-row-s mark {
+  padding: 0 1px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--ai-teal-500) 18%, transparent);
+  color: inherit;
+}
+
+.ai-row-s {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 400 12px/16px var(--tb-font);
+  color: var(--tb-ink-54);
+}

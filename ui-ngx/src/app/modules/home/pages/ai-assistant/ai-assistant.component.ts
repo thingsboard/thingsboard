@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { AiChatService } from '@core/http/ai-chat.service';
 import {
   Component,
   computed,
@@ -35,6 +36,8 @@ export interface AiRailRow {
   title: string;
   createdTime: number;
   pinned: boolean;
+  pinnedTime?: number;
+  prompt?: string;
   chat?: ChatInfo;
   solution?: SolutionInfo;
 }
@@ -82,11 +85,13 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   aiChats = inject(AiChatsService);
 
+  private aiChat = inject(AiChatService);
+
   aiSolutions = inject(AiSolutionsService);
 
   rows = computed<AiRailRow[]>(() => [
     ...this.aiChats.chats().map(chat => ({
-      id: chat.id, title: chat.title, createdTime: chat.createdTime, pinned: !!chat.pinned, chat
+      id: chat.id, title: chat.title, createdTime: chat.createdTime, pinned: !!chat.pinned, pinnedTime: chat.pinnedTime, prompt: chat.prompt, chat
     })),
     ...this.aiSolutions.solutions().map(solution => ({
       id: solution.id, title: this.aiSolutions.titleOf(solution), createdTime: solution.createdTime ?? 0, pinned: !!solution.pinned, solution
@@ -97,7 +102,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     const query = this.query().trim().toLowerCase();
     const chats = this.rows();
     if (query) {
-      const found = chats.filter(chat => (chat.title ?? '').toLowerCase().includes(query));
+      const found = chats.filter(chat => (chat.title ?? '').toLowerCase().includes(query) || (chat.prompt ?? '').toLowerCase().includes(query));
       return found.length
         ? [{label: this.translate.instant('ai-assistant.chats-found', {count: found.length}), chats: found}]
         : [];
@@ -117,6 +122,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     }
     const needsFirst = (row: AiRailRow) => this.needsAttention(row) ? 0 : 1;
     groups.forEach(group => group.chats.sort((a, b) => needsFirst(a) - needsFirst(b)));
+    groups[0].chats.sort((a, b) => (b.pinnedTime ?? b.createdTime) - (a.pinnedTime ?? a.createdTime));
     return groups.filter(group => group.chats.length);
   });
 
@@ -241,6 +247,54 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     if (event.target === event.currentTarget) {
       this.settleRail();
     }
+  }
+
+  marked(text: string | undefined): {text: string; hit: boolean}[] {
+    const value = text ?? '';
+    const query = this.query().trim();
+    const at = query ? value.toLowerCase().indexOf(query.toLowerCase()) : -1;
+    return at < 0 ? [{text: value, hit: false}] : [
+      {text: value.slice(0, at), hit: false},
+      {text: value.slice(at, at + query.length), hit: true},
+      {text: value.slice(at + query.length), hit: false}
+    ].filter(part => part.text);
+  }
+
+  snippetOf(row: AiRailRow): {text: string; hit: boolean}[] | null {
+    const query = this.query().trim().toLowerCase();
+    const prompt = row.prompt ?? '';
+    const at = query ? prompt.toLowerCase().indexOf(query) : -1;
+    if (!query || (row.title ?? '').toLowerCase().includes(query) || at < 0) {
+      return null;
+    }
+    let start = Math.max(0, at - 18);
+    const space = prompt.indexOf(' ', start);
+    if (start && space > -1 && space < at) {
+      start = space + 1;
+    }
+    return [
+      {text: (start ? '…' : '') + prompt.slice(start, at), hit: false},
+      {text: prompt.slice(at, at + query.length), hit: true},
+      {text: prompt.slice(at + query.length, at + query.length + 40), hit: false}
+    ].filter(part => part.text);
+  }
+
+  runAgain(chat: ChatInfo): void {
+    const start = (prompt: string | undefined) => {
+      if (!prompt?.trim()) {
+        return;
+      }
+      this.newChat();
+      setTimeout(() => this.chat?.ask(prompt.trim()));
+    };
+    if (chat.prompt) {
+      start(chat.prompt);
+      return;
+    }
+    this.aiChat.getChatMessages(chat.id, {ignoreLoading: true}).subscribe({
+      next: messages => start((messages.find(message => message.from === 'USER') as {content?: string} | undefined)?.content),
+      error: err => this.showErrorMessage(err)
+    });
   }
 
   newChat(): void {

@@ -165,7 +165,7 @@ export class AiChatsService {
 
   setPinned(chatId: string, pinned: boolean): Observable<void> {
     return this.aiChat.updatedChat(chatId, {pinned}, {ignoreLoading: true, ignoreErrors: true}).pipe(
-      tap(() => this._chats.update(list => list.map(chat => chat.id === chatId ? {...chat, pinned} : chat)))
+      tap(() => this._chats.update(list => list.map(chat => chat.id === chatId ? {...chat, pinned, pinnedTime: pinned ? Date.now() : undefined} : chat)))
     );
   }
 

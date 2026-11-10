@@ -31,6 +31,8 @@ export interface ChatInfo extends ChatConfiguration {
   id: string;
   createdTime: number;
   pinned?: boolean;
+  pinnedTime?: number;
+  prompt?: string;
   status?: ChatStatus;
   statusReason?: string;
 }
