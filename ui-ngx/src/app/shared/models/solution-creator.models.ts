@@ -244,6 +244,7 @@ export interface GeneralChatMessage {
   references?: Array<{name: string; entityType: string; id: string}>;
   severities?: string[];
   status?: 'INCOMPLETE' | 'STOPPED';
+  streaming?: boolean;
   rating?: 'UP' | 'DOWN';
   reported?: boolean;
   startedFrom?: AiStartedFrom;

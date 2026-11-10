@@ -120,7 +120,7 @@
           </div>
         }
       } @else {
-        <div class="agent" [class.done]="msg.done" #answer>
+        <div class="agent" [class.done]="msg.done" [class.streaming]="msg.streaming" #answer>
           @if (msg.done) {
             <mat-icon class="done-mark" aria-hidden="true">check</mat-icon>
           }
@@ -146,6 +146,7 @@
         @if (msg.note) {
           <p class="agent-note">{{ msg.note }}</p>
         }
+        @if (!msg.streaming) {
         <div class="msg-foot agent-foot">
           @if (msg.time) {
             <time [matTooltip]="fullTime(msg.time)" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
@@ -178,6 +179,7 @@
             }
           </span>
         </div>
+        }
         @if (prompts?.index === $index) {
           <div class="k-chips agent-chips">
             @for (option of prompts.items; track $index) {
@@ -231,7 +233,7 @@
     }
   }
 }
-@if (loading && !waitApproval && !actionRunning) {
+@if (loading && !waitApproval && !actionRunning && !streaming) {
   <div class="generating flex items-center">
     @if (loadingLongTime) {
       <ng-content select="[loadingLongTime]"></ng-content>

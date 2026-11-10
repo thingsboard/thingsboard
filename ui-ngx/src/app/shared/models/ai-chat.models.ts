@@ -215,7 +215,14 @@ export interface MessageQueuedEvent extends BaseChatEvent {
   data: Record<string, never>;
 }
 
-export type ChatEvent = AssistantChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
+export interface AssistantDeltaChatEvent extends BaseChatEvent {
+  event: 'assistantDelta';
+  data: {
+    text: string;
+  };
+}
+
+export type ChatEvent = AssistantChatEvent | AssistantDeltaChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
   | TurnResumedEvent | TurnStoppedEvent | MessageQueuedEvent | ToolStartedEvent | ToolFinishedEvent;
 
 export enum AiAssistantViewType {

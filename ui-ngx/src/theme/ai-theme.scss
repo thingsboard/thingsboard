@@ -3587,3 +3587,26 @@ a.tb-chiplink:focus-visible {
     font-weight: 500;
   }
 }
+
+.agent.streaming [class*="tb-markdown-view"] > :is(p, h1, h2, h3, h4, h5, h6):last-child::after,
+.agent.streaming [class*="tb-markdown-view"] > :is(ul, ol):last-child > li:last-child::after,
+.k-caret {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: var(--tb-ink);
+  animation: k-caret 1s steps(2, start) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes k-caret {
+  to {
+    opacity: 0;
+  }
+}

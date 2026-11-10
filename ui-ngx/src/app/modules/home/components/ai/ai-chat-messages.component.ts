@@ -101,6 +101,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   stoppedSteps: Record<number, number> = {};
   answersAt: Record<number, AiQuestionAnswer[]> = {};
   offerIndex = -1;
+  streaming = false;
   files: Record<number, AiFile> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
 
@@ -254,6 +255,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     }
     if (changes.messages) {
       this.lastAnswerIndex = this.findLastAnswerIndex();
+      const tail = this.messages[this.messages.length - 1];
+      this.streaming = tail?.from === 'AI' && !!tail.streaming;
       const running = this.messages.map((message, index) => message.from === 'ACTION' && message.data.status === 'RUNNING' ? index : -1)
         .filter(index => index >= 0);
       this.actionRunning = running.length > 0;

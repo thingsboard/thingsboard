@@ -703,8 +703,11 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   private handleChatEvent(event: ChatEvent): Observable<ChatEvent> {
     switch (event.event) {
+      case 'assistantDelta':
+        this.appendDelta(event.data.text);
+        break;
       case 'assistantMessage':
-        this.messages.update(list => [...list, {
+        this.messages.update(list => [...this.withoutStreaming(list), {
           from: 'AI', content: event.data.message, time: Date.now(),
           ...(event.data.references?.length ? {references: event.data.references} : {}),
           ...(event.data.severities?.length ? {severities: event.data.severities} : {})
@@ -726,7 +729,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
         this.finishAction(event.data);
         break;
       case 'turnStopped':
-        this.messages.update(list => [...list, {from: 'AI', content: this.translate.instant('ai-assistant.stopped'), status: 'STOPPED', time: Date.now()}]);
+        this.messages.update(list => [...this.endStreaming(list), {from: 'AI', content: this.translate.instant('ai-assistant.stopped'), status: 'STOPPED', time: Date.now()}]);
         break;
       case 'chatTitleGenerated':
         if (this.chatId() && event.data.title) {
@@ -742,7 +745,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
         } else if (event.event === 'error') {
           const message = event.data?.message || this.translate.instant('ai-assistant.run-failed');
           this.chats.setFailed(this.chatId(), message);
-          this.messages.update(list => [...list, {from: 'AI', content: message, status: 'INCOMPLETE', time: Date.now()}]);
+          this.messages.update(list => [...this.endStreaming(list), {from: 'AI', content: message, status: 'INCOMPLETE', time: Date.now()}]);
         }
     }
     return of(event);
@@ -852,6 +855,26 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.scrolled.set(false);
     this.newTurns.set(0);
     this.seenMessages = seen;
+  }
+
+  private appendDelta(text: string): void {
+    const last = this.messages()[this.messages().length - 1];
+    if (last?.from === 'AI' && last.streaming) {
+      this.messages.update(list => [...list.slice(0, -1), {...last, content: last.content + text}]);
+      return;
+    }
+    this.work.set(undefined);
+    this.messages.update(list => [...list, {from: 'AI', content: text, streaming: true, time: Date.now()}]);
+  }
+
+  private withoutStreaming(list: ChatMessage[]): ChatMessage[] {
+    const last = list[list.length - 1];
+    return last?.from === 'AI' && last.streaming ? list.slice(0, -1) : list;
+  }
+
+  private endStreaming(list: ChatMessage[]): ChatMessage[] {
+    const last = list[list.length - 1];
+    return last?.from === 'AI' && last.streaming ? [...list.slice(0, -1), {...last, streaming: false}] : list;
   }
 
   private dropRunningReply(): void {
