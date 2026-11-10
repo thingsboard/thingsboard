@@ -208,6 +208,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   private installOnly = signal(false);
   private messageSteps: SolutionStep[] = [];
 
+  stopping = signal(false);
+
+  private stoppedAction: (() => void) | null = null;
+
   progressInfo = computed<SolutionCreatorInfo | null>(() => {
     const progress = this.installProgress();
     const info = this.info();
@@ -769,6 +773,40 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.aboutOpen.set(false);
   }
 
+  stop(): void {
+    if (!this.solutionId || this.stopping()) {
+      return;
+    }
+    this.stopping.set(true);
+    this.solutionCreator.stopSolution(this.solutionId, {ignoreLoading: true, ignoreErrors: true}).subscribe({
+      next: stopped => {
+        if (!stopped) {
+          this.stopping.set(false);
+        }
+      },
+      error: () => this.stopping.set(false)
+    });
+  }
+
+  resume(): void {
+    const action = this.stoppedAction;
+    this.stoppedAction = null;
+    this.messages.update(list => list.filter(message => (message as GeneralChatMessage).status !== 'STOPPED'));
+    action?.();
+  }
+
+  private wasStopped(err: any, again: () => void): boolean {
+    if (!this.stopping() || err?.status !== 409) {
+      return false;
+    }
+    this.stopping.set(false);
+    this.stoppedAction = again;
+    this.messageSteps = [...this.messageSteps, this.solutionStep()];
+    this.messages.update(list => [...list, {from: 'AI', content: this.translate.instant('solution-creator.stopped'), status: 'STOPPED', time: Date.now()}]);
+    setTimeout(() => this.scrollLogToEnd(true));
+    return true;
+  }
+
   private reportFailure(err: any, at?: 'install' | 'step'): void {
     this.failedAt.set(at ?? (this.creatorStep() === 'result' ? 'install' : 'step'));
     const responseType = isNotEmptyStr(err?.error) ? 'text' : undefined;
@@ -871,7 +909,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
                 this.showInstalled();
               },
               error: (err) => {
-                this.reportFailure(err);
+                if (!this.wasStopped(err, () => this.nextStep())) {
+                  this.reportFailure(err);
+                }
               }
             });
         }
@@ -907,7 +947,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           this.showInstalled();
         },
         error: (err) => {
-          this.reportFailure(err, 'install');
+          if (!this.wasStopped(err, () => this.installSolution())) {
+            this.reportFailure(err, 'install');
+          }
         }
       });
   }
@@ -1201,7 +1243,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         }
       }),
       catchError(err => {
-        this.showErrorMessage(err);
+        if (!this.wasStopped(err, () => this.sendMessage(msg, resources).subscribe(() => {}))) {
+          this.showErrorMessage(err);
+        }
         this.rememberSolution();
         return EMPTY;
       }),

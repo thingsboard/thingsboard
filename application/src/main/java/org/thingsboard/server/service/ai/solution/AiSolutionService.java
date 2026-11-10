@@ -25,6 +25,8 @@ public interface AiSolutionService {
 
     void clearStep(UUID solutionId, SolutionStep step, SecurityUser user);
 
+    JsonNode stopSolution(UUID solutionId, SecurityUser user);
+
     JsonNode installSolution(UUID solutionId, String tbAccessToken, String clientOrigin, SecurityUser user);
 
     JsonNode uninstallSolution(UUID solutionId, String tbAccessToken, String clientOrigin, SecurityUser user);

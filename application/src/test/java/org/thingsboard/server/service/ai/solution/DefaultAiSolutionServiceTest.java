@@ -215,6 +215,22 @@ class DefaultAiSolutionServiceTest {
     }
 
     @Test
+    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenStopSolutionCalled() {
+        // GIVEN
+        UUID solutionId = UUID.randomUUID();
+        given(tbAiService.process(any(), same(user), eq(false))).willReturn(null);
+
+        // WHEN
+        service.stopSolution(solutionId, user);
+
+        // THEN
+        assertThat(captureProcessCallWithoutCreditCheck().apply(tokenProvider)).isSameAs(tbAiResponse);
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.SOLUTION_STOP.equals(operation.type())
+                && Objects.equals(new SolutionOperationRequest(solutionId), operation.payload())), same(user), same(tokenProvider));
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
     void shouldProcessWithoutCreditCheckAndDelegateToClient_whenInstallSolutionCalled() {
         // GIVEN
         UUID solutionId = UUID.randomUUID();

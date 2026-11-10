@@ -37,6 +37,10 @@ export class SolutionsCreatorService {
     return this.http.delete<void>(`/api/ai/solution/${solutionId}/${step}/clear`, defaultHttpOptionsFromConfig(config));
   }
 
+  public stopSolution(solutionId: string, config?: RequestConfig): Observable<boolean> {
+    return this.http.post<boolean>(`/api/ai/solution/${solutionId}/stop`, null, defaultHttpOptionsFromConfig(config));
+  }
+
   public createSolution(solutionId: string, config?: RequestConfig): Observable<SolutionCreatorInfo> {
     return this.http.post<SolutionCreatorInfo>(`/api/ai/solution/${solutionId}/create`, '', defaultHttpOptionsFromConfig(config));
   }

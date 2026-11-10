@@ -86,6 +86,7 @@
             (rate)="onRate($event)"
             (report)="onReport($event)"
             (chip)="onChip($event)"
+            (resume)="resume()"
             (resourceError)="showErrorMessage($event)">
           </tb-ai-chat-messages>
           @if (pendingQuestions(); as questions) {
@@ -170,7 +171,10 @@
         }
         <tb-ai-prompt-input
           [placeholder]="activePlaceholder() | translate"
-          [loading]="loading() || isGenerating()"
+          [loading]="loading() || isGenerating() || making() === 'solution'"
+          [stoppable]="!!info()?.id"
+          [stopping]="stopping()"
+          (stopped)="stop()"
           [pinned]="true"
           [dropZone]="chatArea"
           (messageSent)="sendMsgFromUser($event)">

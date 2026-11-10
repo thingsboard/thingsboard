@@ -93,6 +93,14 @@ public class AiSolutionController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/{solutionId}/stop")
+    public JsonNode stopSolution(@PathVariable UUID solutionId) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
+        return aiSolutionService.stopSolution(solutionId, user);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PutMapping("/{solutionId}/{dataKey}")
     public JsonNode updateData(@PathVariable UUID solutionId,
                                @PathVariable String dataKey,

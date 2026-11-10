@@ -11829,6 +11829,7 @@
         "select-recaptcha-enterprise-service-account-file": "Drag and drop your account credentials file"
     },
     "solution-creator": {
+        "stopped": "You stopped this step. Nothing was changed.",
         "pane": {
             "alarms": "Alarms",
             "attribute": "attribute",
