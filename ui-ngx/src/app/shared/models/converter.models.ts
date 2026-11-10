@@ -45,6 +45,7 @@ export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string
   [IntegrationType.OPC_UA, '/assets/converters/OPC_UA/downlink/tbel.raw'],
   [IntegrationType.TTI, '/assets/converters/TTI/downlink/tbel.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/downlink/tbel.raw'],
+  [IntegrationType.AWS_IOT, '/assets/converters/AWS_IOT/downlink/tbel.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/tbel.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/downlink/tbel.raw'],
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/downlink/tbel.raw']
@@ -53,6 +54,7 @@ export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string
 export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
   [IntegrationType.TTI, '/assets/converters/TTI/downlink/js.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/downlink/js.raw'],
+  [IntegrationType.AWS_IOT, '/assets/converters/AWS_IOT/downlink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/js.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/downlink/js.raw'],
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/downlink/js.raw']

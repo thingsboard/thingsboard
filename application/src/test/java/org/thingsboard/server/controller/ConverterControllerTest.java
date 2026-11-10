@@ -868,6 +868,42 @@ public class ConverterControllerTest extends AbstractControllerTest {
         testDecoder(LORIOT_UPLINK_DECODER_RETURN_ARRAY, getDefaultPayload(IntegrationType.LORIOT), expectedDecodedMessage, converter);
     }
 
+    @Test
+    public void testAwsIotDefaultEncoder() throws Exception {
+        String downlinkDir = "converters/AWS_IOT/downlink/";
+        String msg = readResource(downlinkDir + "payload.json").orElseThrow();
+        String msgType = readResource(downlinkDir + "msgType.txt").orElseThrow().trim();
+        JsonNode expected = JacksonUtil.toJsonNode(readResource(downlinkDir + "test/default/expected.json").orElseThrow());
+        String rpc = "{\"method\":\"setInterval\",\"params\":\"60\"}";
+        JsonNode expectedRpc = JacksonUtil.newObjectNode()
+                .put("contentType", "JSON")
+                .put("data", rpc)
+                .set("metadata", JacksonUtil.newObjectNode().put("topic", "tb/aws/iot/commands/Thermostat-01"));
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String encoder = readResource(downlinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // RPC command: the method and params are published as they are.
+            JsonNode response = encodeDownlink(encoder, scriptLang, rpc, "RPC_CALL_FROM_SERVER_TO_DEVICE", "{\"deviceName\":\"Thermostat-01\"}");
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": RPC command").isEmpty();
+            softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": RPC command").isEqualTo(expectedRpc);
+
+            // Spaces around the device name are not part of the command topic.
+            response = encodeDownlink(encoder, scriptLang, msg, msgType, "{\"deviceName\":\" Thermostat-01 \"}");
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": device name with spaces").isEmpty();
+            softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": device name with spaces").isEqualTo(expected);
+
+            // No device name: no command is published to a wrong topic.
+            for (String metadata : List.of("{}", "{\"deviceName\":\"  \"}")) {
+                response = encodeDownlink(encoder, scriptLang, msg, msgType, metadata);
+                softly.assertThat(response.get("output").asText()).as(scriptLang + ": " + metadata).isEqualTo("null");
+                softly.assertThat(response.get("error").asText()).as(scriptLang + ": " + metadata).contains("Message metadata has no deviceName");
+            }
+        }
+        softly.assertAll();
+    }
+
     private String getDefaultPayload(IntegrationType integrationType) throws IOException {
         return readResource("converters/" + integrationType.getDirectory() + "/uplink/payload.json").orElseThrow();
     }
