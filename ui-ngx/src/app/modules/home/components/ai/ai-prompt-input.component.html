@@ -9,8 +9,22 @@
     <input #fileInput type="file" hidden multiple [accept]="accept()" (change)="onFilesPicked($event)">
   }
   <div class="composer-field">
-    @if (attachments().length) {
+    @if (attachments().length || quote) {
       <div class="composer-files">
+        @if (quote) {
+          <span class="composer-file ref">
+            <mat-icon class="tb-mat-18">{{ quote.icon }}</mat-icon>
+            <span class="file-text">
+              <b>{{ quote.name }}</b>
+              <small>{{ (quote.from === quote.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: quote.from, to: quote.to} }}</small>
+            </span>
+            <button type="button" class="file-remove"
+                    [attr.aria-label]="'ai-assistant.remove-file' | translate: {name: quote.name}"
+                    (click)="quoteRemoved.emit()">
+              <mat-icon class="tb-mat-16">close</mat-icon>
+            </button>
+          </span>
+        }
         @for (attachment of attachments(); track attachment.key) {
           <span class="composer-file"
                 [class.up]="attachment.status === 'uploading'"

@@ -26,7 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { guid } from '@core/utils';
 import { AiResourceService } from '@core/http/ai-resource.service';
-import { AI_IMAGE_MEDIA_TYPES, AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
+import { AI_IMAGE_MEDIA_TYPES, AiLinesQuote, AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
 import {
   AI_SVG_EXTENSION,
   aiAttachmentKind,
@@ -71,6 +71,10 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   @Input() placeholder = '';
 
   @Input() suggestion: string | null = null;
+
+  @Input() quote: AiLinesQuote | null = null;
+
+  @Output() quoteRemoved = new EventEmitter<void>();
 
   @Input() loading: boolean;
 
@@ -148,7 +152,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   get canSend(): boolean {
     const ready = this.attachments().some(attachment => attachment.status === 'ready');
-    return !this.blocked && (!this.loading || this.sendWhileWorking) && !this.uploading() && (!!this.message.value?.trim() || ready);
+    return !this.blocked && (!this.loading || this.sendWhileWorking) && !this.uploading() && (!!this.message.value?.trim() || ready || !!this.quote);
   }
 
   private hasContent(): boolean {
@@ -219,13 +223,17 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   send(): void {
     const msg = this.message.value?.trim() ?? '';
     const ready = this.attachments().filter(attachment => attachment.status === 'ready');
-    if ((this.loading && !this.sendWhileWorking) || this.uploading() || (!msg && !ready.length)) {
+    if ((this.loading && !this.sendWhileWorking) || this.uploading() || (!msg && !ready.length && !this.quote)) {
       return;
     }
     this.fly();
     this.clearText();
     this.clearAttachments(false);
-    this.messageSent.emit({message: msg, resources: ready.map(attachment => attachment.resource)});
+    const sent: AiPromptMessage = {message: msg, resources: ready.map(attachment => attachment.resource)};
+    if (this.quote) {
+      sent.quote = this.quote;
+    }
+    this.messageSent.emit(sent);
   }
 
   reset(): void {

@@ -34,8 +34,10 @@ import { ActionChatMessage, AiStartedFrom, ApprovalChatMessage, ChatMessage, Gen
 import {
   AiAssistantPromptExample,
   AiChatClientContext,
+  AiLinesQuote,
   AiNotice,
   AiPromptMessage,
+  aiQuoteText,
   ChatInfo,
   ChatLevel,
   ApprovalResult,
@@ -50,6 +52,7 @@ import {
 import { aiActionWords, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction, isKitCardTool } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
 import { AiFile } from '@home/components/ai/ai-file.models';
+import { AiFileBodyComponent, AiFileMarks } from '@home/components/ai/ai-file-body.component';
 import { ClipboardService } from 'ngx-clipboard';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -146,6 +149,69 @@ export class AiChatComponent implements OnInit, OnDestroy {
   fileWrap = signal(AiChatComponent.storedFileWrap());
 
   fileCopied = signal(false);
+
+  fileTheme = signal<'dark' | 'light'>(AiChatComponent.stored('tbAiFileTheme') === 'light' ? 'light' : 'dark');
+
+  fileWhitespace = signal(AiChatComponent.stored('tbAiFileWhitespace') === 'true');
+
+  fileMarks = signal<AiFileMarks | null>(null);
+
+  composerQuote = signal<AiLinesQuote | null>(null);
+
+  @ViewChild(AiFileBodyComponent) fileBody: AiFileBodyComponent;
+
+  private static stored(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private static store(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      return;
+    }
+  }
+
+  fileDark(file: AiFile): boolean {
+    return (!file.markdown || this.fileSource()) && this.fileTheme() === 'dark';
+  }
+
+  setFileTheme(theme: 'dark' | 'light'): void {
+    this.fileTheme.set(theme);
+    AiChatComponent.store('tbAiFileTheme', theme);
+  }
+
+  toggleFileWhitespace(): void {
+    this.fileWhitespace.update(value => !value);
+    AiChatComponent.store('tbAiFileWhitespace', String(this.fileWhitespace()));
+  }
+
+  markedText(file: AiFile): string {
+    const marks = this.fileMarks();
+    return marks ? file.content.replace(/\n$/, '').split('\n').slice(marks.from - 1, marks.to).join('\n') : '';
+  }
+
+  copyMarked(file: AiFile): void {
+    this.clipboard.copyFromContent(this.markedText(file));
+  }
+
+  askAboutMarks(file: AiFile): void {
+    const marks = this.fileMarks();
+    if (!marks) {
+      return;
+    }
+    this.composerQuote.set({name: file.name, icon: file.icon, lang: file.lang === 'text' ? '' : file.lang, from: marks.from, to: marks.to,
+      text: this.markedText(file)});
+    this.fileMarks.set(null);
+    if (this.docked()) {
+      this.fileOpen.set(false);
+    }
+    setTimeout(() => this.promptInput?.focus());
+  }
 
   private fileCopiedTimer: ReturnType<typeof setTimeout>;
 
@@ -347,6 +413,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.shownFile.set(file);
     this.fileChat = this.chatId();
     this.fileSource.set(false);
+    this.fileMarks.set(null);
     this.fileOpen.set(true);
   }
 
@@ -511,6 +578,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   sendMsgFromUser(prompt: AiPromptMessage): void {
+    if (prompt.quote) {
+      prompt = {message: aiQuoteText(prompt.quote, prompt.message), resources: prompt.resources};
+      this.composerQuote.set(null);
+    }
     const waiting = this.waitingApproval();
     if (waiting) {
       if (prompt.message.trim()) {

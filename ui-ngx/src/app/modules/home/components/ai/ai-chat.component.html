@@ -138,6 +138,8 @@
       [docked]="docked()"
       [placeholder]="placeholder()"
       [suggestion]="suggestion()"
+      [quote]="composerQuote()"
+      (quoteRemoved)="composerQuote.set(null)"
       [loading]="loading() && !waitingApproval()"
       [dropZone]="chatArea"
       [pinned]="!!messages().length || loading()"
@@ -183,7 +185,7 @@
 </div>
 @if (shownFile(); as file) {
   @if (fileOpen()) {
-    <tb-ai-artifact-pane [class.art-dark]="!file.markdown || fileSource()" [dark]="!file.markdown || fileSource()" (closed)="fileOpen.set(false)">
+    <tb-ai-artifact-pane [class.art-dark]="fileDark(file)" [dark]="!file.markdown || fileSource()" (closed)="fileOpen.set(false)">
       <h2 artHead class="art-title">
         <mat-icon class="tb-mat-20" aria-hidden="true">{{ file.icon }}</mat-icon>
         <span>{{ file.name }}</span>
@@ -199,9 +201,17 @@
         }
         @if (!file.markdown || fileSource()) {
           <div class="art-tools">
+            <button type="button" class="art-tool icon-only" (click)="fileBody?.openFind()"
+                    [matTooltip]="'ai-assistant.file.find' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.find' | translate">
+              <mat-icon class="tb-mat-18" aria-hidden="true">search</mat-icon>
+            </button>
             <button type="button" class="art-tool icon-only" [class.on]="fileWrap()" [attr.aria-pressed]="fileWrap()" (click)="toggleFileWrap()"
                     [matTooltip]="'ai-assistant.file.wrap' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.wrap' | translate">
               <mat-icon class="tb-mat-18" aria-hidden="true">wrap_text</mat-icon>
+            </button>
+            <button type="button" class="art-tool icon-only" [matMenuTriggerFor]="fileOptions"
+                    [matTooltip]="'ai-assistant.file.more' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.more' | translate">
+              <mat-icon class="tb-mat-18" aria-hidden="true">more_vert</mat-icon>
             </button>
           </div>
         }
@@ -217,8 +227,40 @@
           </button>
         </div>
       </div>
-      <tb-ai-file-body [file]="file" [wrap]="fileWrap()" [source]="fileSource()"></tb-ai-file-body>
+      <tb-ai-file-body [file]="file" [wrap]="fileWrap()" [source]="fileSource()" [whitespace]="fileWhitespace()"
+                       [marks]="fileMarks()" (marksChange)="fileMarks.set($event)"></tb-ai-file-body>
+      @if (fileMarks(); as marks) {
+        <footer artFoot class="art-pane-foot art-marks">
+          <span class="file-marked">
+            <mat-icon class="tb-mat-16" aria-hidden="true">format_list_numbered</mat-icon>
+            {{ (marks.from === marks.to ? 'ai-assistant.file.line-marked' : 'ai-assistant.file.lines-marked') | translate: {from: marks.from, to: marks.to} }}
+          </span>
+          <span class="art-spacer"></span>
+          <button mat-button type="button" (click)="fileMarks.set(null)">{{ 'ai-assistant.file.clear' | translate }}</button>
+          <button mat-stroked-button type="button" (click)="copyMarked(file)"><mat-icon>content_copy</mat-icon>{{ 'action.copy' | translate }}</button>
+          <button mat-flat-button type="button" class="art-ask" (click)="askAboutMarks(file)"><mat-icon>auto_awesome</mat-icon>{{ 'ai-assistant.file.ask-about' | translate }}</button>
+        </footer>
+      }
     </tb-ai-artifact-pane>
+    <mat-menu #fileOptions="matMenu" xPosition="before" class="tb-ai-chat-menu art-opts">
+      <button mat-menu-item role="menuitemcheckbox" [attr.aria-checked]="fileWhitespace()" (click)="$event.stopPropagation(); toggleFileWhitespace()">
+        <mat-icon fontSet="material-icons-round">space_bar</mat-icon>
+        <span class="art-opt-l">{{ 'ai-assistant.file.show-whitespace' | translate }}</span>
+        <span class="art-switch" [class.on]="fileWhitespace()" aria-hidden="true"><i></i></span>
+      </button>
+      <div class="art-opt-row" role="group" [attr.aria-label]="'ai-assistant.file.theme' | translate" (click)="$event.stopPropagation()">
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">contrast</mat-icon>
+        <span>{{ 'ai-assistant.file.theme' | translate }}</span>
+        <div class="art-modes art-opt-modes" role="radiogroup">
+          <button type="button" role="radio" [attr.aria-checked]="fileTheme() === 'dark'" (click)="setFileTheme('dark')">
+            <mat-icon class="tb-mat-16" aria-hidden="true">dark_mode</mat-icon><span>{{ 'ai-assistant.file.dark' | translate }}</span>
+          </button>
+          <button type="button" role="radio" [attr.aria-checked]="fileTheme() === 'light'" (click)="setFileTheme('light')">
+            <mat-icon class="tb-mat-16" aria-hidden="true">light_mode</mat-icon><span>{{ 'ai-assistant.file.light' | translate }}</span>
+          </button>
+        </div>
+      </div>
+    </mat-menu>
   }
 }
 </div>

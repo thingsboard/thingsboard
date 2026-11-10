@@ -9,6 +9,7 @@ import {
   AnswerProblem,
   AnswerRating,
   ApprovalResult,
+  aiQuoteOf,
   ToolExecutionRequested,
   ToolApprovalResult,
   ToolExecutionResult
@@ -47,7 +48,7 @@ export interface AnswerReportEvent {
   problem: AnswerProblem;
   comment?: string;
 }
-import { decorateCodeBlocks, decorateTables } from '@home/components/ai/ai-code-block';
+import { decorateCodeBlocks, decorateTables, fileLanguage } from '@home/components/ai/ai-code-block';
 import { decorateHints, decorateLinks, decorateReferences, decorateSeverities } from '@home/components/ai/ai-references';
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { Router } from '@angular/router';
@@ -106,6 +107,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   offerIndex = -1;
   streaming = false;
   files: Record<number, AiFile> = {};
+  quotes: Record<number, {name: string; icon: string; from: number; to: number; message: string}> = {};
   sources: Record<number, AiSource[]> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
 
@@ -254,6 +256,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.asking = this.findAsking();
       this.plans = this.findPlans();
       this.files = this.findFiles();
+      this.quotes = this.findQuotes();
       this.sources = this.findSources();
       this.answersAt = this.findAnswers();
       this.retryIndex = this.findRetry();
@@ -526,6 +529,19 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       }
     });
     return sources;
+  }
+
+  private findQuotes(): Record<number, {name: string; icon: string; from: number; to: number; message: string}> {
+    const quotes: Record<number, {name: string; icon: string; from: number; to: number; message: string}> = {};
+    this.messages.forEach((message, index) => {
+      if (message.from === 'USER') {
+        const found = aiQuoteOf(message.content);
+        if (found) {
+          quotes[index] = {name: found.quote.name, icon: fileLanguage(found.quote.name).icon, from: found.quote.from, to: found.quote.to, message: found.message};
+        }
+      }
+    });
+    return quotes;
   }
 
   private findFiles(): Record<number, AiFile> {

@@ -285,9 +285,38 @@ export interface AiResourceConfig {
   extensions: string[];
 }
 
+export interface AiLinesQuote {
+  name: string;
+  icon: string;
+  lang: string;
+  from: number;
+  to: number;
+  text: string;
+}
+
 export interface AiPromptMessage {
   message: string;
   resources: AiResourceInfo[];
+  quote?: AiLinesQuote;
+}
+
+const QUOTE_PATTERN = /^About lines? (\d+)(?:–(\d+))? of (.+?):\n```([\w+-]*)\n([\s\S]*?)\n```\n*/;
+
+export function aiQuoteText(quote: AiLinesQuote, message: string): string {
+  const lines = quote.from === quote.to ? `line ${quote.from}` : `lines ${quote.from}–${quote.to}`;
+  return `About ${lines} of ${quote.name}:\n\`\`\`${quote.lang}\n${quote.text}\n\`\`\`\n\n${message}`;
+}
+
+export function aiQuoteOf(content: string | undefined): {quote: Omit<AiLinesQuote, 'icon'>; message: string} | null {
+  const match = content ? QUOTE_PATTERN.exec(content) : null;
+  if (!match) {
+    return null;
+  }
+  const from = Number(match[1]);
+  return {
+    quote: {from, to: match[2] ? Number(match[2]) : from, name: match[3], lang: match[4], text: match[5]},
+    message: content.slice(match[0].length)
+  };
 }
 
 export const AI_IMAGE_MEDIA_TYPES: readonly string[] = ['image/png', 'image/jpeg', 'image/webp'];

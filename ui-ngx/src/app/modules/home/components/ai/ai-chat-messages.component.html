@@ -16,9 +16,15 @@
     }
     <div class="user">
       <div class="turn">
-        @if (msg.content) {
-          <div class="msg" [class.folded]="isFolded($index, msg.content)"><span class="words">{{ msg.content }}</span></div>
-          @if (isFolded($index, msg.content)) {
+        @if (quotes[$index]; as quoted) {
+          <span class="k-quote-chip">
+            <mat-icon class="tb-mat-18" aria-hidden="true">{{ quoted.icon }}</mat-icon>
+            <span><b>{{ quoted.name }}</b><small>{{ (quoted.from === quoted.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: quoted.from, to: quoted.to} }}</small></span>
+          </span>
+        }
+        @if (quotes[$index] ? quotes[$index].message : msg.content; as words) {
+          <div class="msg" [class.folded]="isFolded($index, words)"><span class="words">{{ words }}</span></div>
+          @if (isFolded($index, words)) {
             <button type="button" class="tb-more show-all" (click)="unfold($index)">
               <mat-icon aria-hidden="true">expand_more</mat-icon>{{ 'ai-assistant.show-all' | translate }}
             </button>
@@ -38,7 +44,7 @@
               <mat-icon class="tb-mat-16">{{ copiedIndex === $index ? 'check' : 'content_copy' }}</mat-icon>
             </button>
             <button type="button" class="foot-tool" [matTooltip]="'ai-assistant.edit-message' | translate" matTooltipPosition="above"
-                    [attr.aria-label]="'ai-assistant.edit-message' | translate" (click)="editMessage.emit(msg.content)">
+                    [attr.aria-label]="'ai-assistant.edit-message' | translate" (click)="editMessage.emit(quotes[$index]?.message ?? msg.content)">
               <mat-icon class="tb-mat-16">edit</mat-icon>
             </button>
           </span>
