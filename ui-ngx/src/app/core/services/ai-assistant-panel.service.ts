@@ -76,16 +76,12 @@ export class AiAssistantPanelService implements OnDestroy {
   }
 
   private _autoApproveUserId: string | null = null;
-  private _autoApproveChats = signal<Set<string>>(new Set());
 
   private _autoApproveUserSync = this.store.select(selectAuthUser).pipe(
     map(user => user?.userId ?? null),
     distinctUntilChanged(),
     takeUntilDestroyed(this.destroyRef)
-  ).subscribe(userId => {
-    this._autoApproveUserId = userId;
-    this._autoApproveChats.set(this.loadAutoApproveChats(userId));
-  });
+  ).subscribe(userId => this._autoApproveUserId = userId);
 
   private _updatedData$ = new Subject<Array<EntityId>>();
   readonly updatedData$ = this._updatedData$.asObservable();
@@ -98,7 +94,6 @@ export class AiAssistantPanelService implements OnDestroy {
 
   setChats(chats: ChatInfo[]): void {
     this._chats.set(chats);
-    this.pruneAutoApproveChats(chats);
   }
 
   addChat(chat: ChatInfo): void {
@@ -117,54 +112,22 @@ export class AiAssistantPanelService implements OnDestroy {
         this._lastChatIdByContext.delete(key);
       }
     }
-    this.setAutoApprove(chatId, false);
   }
 
-  isAutoApprove(chatId: string | undefined): boolean {
-    return !!chatId && this._autoApproveChats().has(chatId);
+  updateChatAutoApprove(chatId: string, autoApprove: boolean): void {
+    this._chats.update(list => list?.map(c => c.id === chatId ? {...c, autoApprove} : c) ?? null);
   }
 
-  setAutoApprove(chatId: string, enabled: boolean): void {
-    this._autoApproveChats.update(chats => {
-      const next = new Set(chats);
-      if (enabled) {
-        next.add(chatId);
-      } else {
-        next.delete(chatId);
+  takeStoredAutoApproveChats(): string[] {
+    const key = `${AiAssistantPanelService.AUTO_APPROVE_STORAGE_KEY}_${this._autoApproveUserId ?? 'anonymous'}`;
+    try {
+      const ids = this.localStorage.getItem(key);
+      if (ids !== null) {
+        this.localStorage.removeItem(key);
       }
-      return next;
-    });
-    this.persistAutoApproveChats();
-  }
-
-  private pruneAutoApproveChats(chats: ChatInfo[]): void {
-    const valid = new Set(chats.map(c => c.id));
-    const current = this._autoApproveChats();
-    const pruned = new Set([...current].filter(id => valid.has(id)));
-    if (pruned.size !== current.size) {
-      this._autoApproveChats.set(pruned);
-      this.persistAutoApproveChats();
-    }
-  }
-
-  private autoApproveStorageKey(userId: string | null): string {
-    return `${AiAssistantPanelService.AUTO_APPROVE_STORAGE_KEY}_${userId ?? 'anonymous'}`;
-  }
-
-  private loadAutoApproveChats(userId: string | null): Set<string> {
-    try {
-      const ids = this.localStorage.getItem(this.autoApproveStorageKey(userId));
-      return new Set(Array.isArray(ids) ? ids as string[] : []);
+      return Array.isArray(ids) ? ids as string[] : [];
     } catch {
-      return new Set();
-    }
-  }
-
-  private persistAutoApproveChats(): void {
-    try {
-      this.localStorage.setItem(this.autoApproveStorageKey(this._autoApproveUserId), [...this._autoApproveChats()]);
-    } catch {
-      // ignore storage write errors (e.g. private mode quota)
+      return [];
     }
   }
 

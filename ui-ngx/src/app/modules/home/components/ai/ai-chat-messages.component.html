@@ -66,6 +66,20 @@
       </div>
     }
   } @else {
+    @if ($index === offerIndex) {
+      <div class="ai">
+        <div class="k-offer" role="group" [attr.aria-label]="'ai-assistant.offer.label' | translate">
+          <span class="k-offer-ic" aria-hidden="true"><mat-icon>bolt</mat-icon></span>
+          <span>{{ 'ai-assistant.offer.text' | translate }}</span>
+          <span class="k-chips">
+            <button type="button" class="ob-chip" (click)="autoApproveRest.emit()">
+              <mat-icon aria-hidden="true">bolt</mat-icon>{{ 'ai-assistant.offer.approve-rest' | translate }}
+            </button>
+            <button type="button" class="ob-chip k-chip-quiet" (click)="keepAsking()">{{ 'ai-assistant.offer.keep-asking' | translate }}</button>
+          </span>
+        </div>
+      </div>
+    }
     <div class="ai" [class.action]="msg.from === 'APPROVAL' && getCompletedExecution(msg)?.approvalStatus === 'APPROVED'">
       @if (msg.from === 'APPROVAL') {
         <tb-ai-approval-card

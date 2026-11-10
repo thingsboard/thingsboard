@@ -85,9 +85,10 @@ export class AiApprovalCardComponent implements OnChanges {
   private readonly translate = inject(TranslateService);
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (this.autoApprove && this.state === 'pending' && !this.completedExecution) {
+    if ((this.data?.autoApproved || this.autoApprove) && this.state === 'pending' && !this.completedExecution) {
       this.autoApproved = true;
-      this.approve();
+      this.denying = false;
+      this.state = 'auto';
     }
     if (this.answered && this.state === 'pending' && !this.completedExecution) {
       this.denying = false;

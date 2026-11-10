@@ -130,7 +130,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   newChatAutoApprove = signal<boolean>(false);
 
-  autoApprove = computed(() => this.chatId() ? this.panelService.isAutoApprove(this.chatId()) : this.newChatAutoApprove());
+  autoApprove = computed(() => this.chatId() ? !!this.chat()?.autoApprove : this.newChatAutoApprove());
 
   denyReasons = signal<Record<string, string>>({});
 
@@ -339,7 +339,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   setAutoApprove(enabled: boolean): void {
     const chatId = this.chatId();
     if (chatId) {
-      this.panelService.setAutoApprove(chatId, enabled);
+      this.chats.setAutoApprove(chatId, enabled).subscribe({error: err => this.showErrorMessage(err)});
     } else {
       this.newChatAutoApprove.set(enabled);
     }
@@ -362,7 +362,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   onApprovalAction(event: ApprovalResult): void {
     const chatId = this.chatId();
     if (event.autoApprove && chatId) {
-      this.panelService.setAutoApprove(chatId, true);
+      this.chats.setAutoApprove(chatId, true).subscribe({error: err => this.showErrorMessage(err)});
     }
     this.answeredApprovals.update(set => new Set(set).add(event.executionId));
     this.setWork(event.approved ? 'applying-change' : event.reason ? 'reading-what-to-change' : 'going-through-results');
@@ -539,11 +539,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.messageCancelled = false;
     const startOrContinue$ = this.chatId()
       ? of(null)
-      : this.chats.create('New chat').pipe(
+      : this.chats.create('New chat', this.newChatAutoApprove()).pipe(
         tap(chat => {
-          if (this.newChatAutoApprove()) {
-            this.panelService.setAutoApprove(chat.id, true);
-          }
           this.shownChatId = chat.id;
           this.chatId.set(chat.id);
         })

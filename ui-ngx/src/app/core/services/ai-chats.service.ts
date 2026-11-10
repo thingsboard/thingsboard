@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AiChatService } from '@core/http/ai-chat.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { DialogService } from '@core/services/dialog.service';
-import { AnswerFeedback, ChatInfo, ChatLevel } from '@shared/models/ai-chat.models';
+import { AnswerFeedback, ChatConfiguration, ChatInfo, ChatLevel } from '@shared/models/ai-chat.models';
 
 @Injectable({ providedIn: 'root' })
 export class AiChatsService {
@@ -106,6 +106,7 @@ export class AiChatsService {
           this._chats.set(chats);
           this._loaded.set(true);
           this.panelService.setChats(chats);
+          this.moveStoredAutoApprove(chats);
         },
         error: () => this._loaded.set(true)
       })
@@ -116,9 +117,10 @@ export class AiChatsService {
     return chatId ? this._chats().find(chat => chat.id === chatId) : undefined;
   }
 
-  create(title: string): Observable<ChatInfo> {
-    return this.aiChat.createChat({title}, {ignoreLoading: true, ignoreErrors: true}).pipe(
-      map(id => ({id, title, createdTime: Date.now()} as ChatInfo)),
+  create(title: string, autoApprove = false): Observable<ChatInfo> {
+    const request: ChatConfiguration = autoApprove ? {title, autoApprove} : {title};
+    return this.aiChat.createChat(request, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      map(id => ({id, title, createdTime: Date.now(), autoApprove} as ChatInfo)),
       tap(chat => {
         this._chats.update(list => [chat, ...list]);
         if (this.panelService.chats() !== null) {
@@ -136,6 +138,29 @@ export class AiChatsService {
 
   sendFeedback(chatId: string, feedback: AnswerFeedback): Observable<void> {
     return this.aiChat.updatedChat(chatId, {feedback}, {ignoreLoading: true});
+  }
+
+  isAutoApprove(chatId: string | undefined): boolean {
+    return !!this.find(chatId)?.autoApprove;
+  }
+
+  setAutoApprove(chatId: string, autoApprove: boolean): Observable<void> {
+    const before = this.isAutoApprove(chatId);
+    this.applyAutoApprove(chatId, autoApprove);
+    return this.aiChat.updatedChat(chatId, {autoApprove}, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap({error: () => this.applyAutoApprove(chatId, before)})
+    );
+  }
+
+  private applyAutoApprove(chatId: string, autoApprove: boolean): void {
+    this._chats.update(list => list.map(chat => chat.id === chatId ? {...chat, autoApprove} : chat));
+    this.panelService.updateChatAutoApprove(chatId, autoApprove);
+  }
+
+  private moveStoredAutoApprove(chats: ChatInfo[]): void {
+    const stored = new Set(this.panelService.takeStoredAutoApproveChats());
+    chats.filter(chat => stored.has(chat.id) && !chat.autoApprove)
+      .forEach(chat => this.setAutoApprove(chat.id, true).subscribe({error: () => {}}));
   }
 
   setPinned(chatId: string, pinned: boolean): Observable<void> {

@@ -4,6 +4,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 
 export interface ChatConfiguration {
   title: string;
+  autoApprove?: boolean;
 }
 
 export type AnswerRating = 'UP' | 'DOWN' | 'NONE';
@@ -23,6 +24,7 @@ export interface ChatUpdate {
   title?: string;
   pinned?: boolean;
   feedback?: AnswerFeedback;
+  autoApprove?: boolean;
 }
 
 export interface ChatInfo extends ChatConfiguration {
@@ -65,6 +67,7 @@ export interface ToolExecutionRequested extends BaseChatToolEventData {
   needsApproval: boolean;
   destructive: boolean;
   message: string;
+  autoApproved?: boolean;
   title?: string;
   approveLabel?: string;
   denyLabel?: string;

@@ -10,6 +10,7 @@ import {
   AnswerRating,
   ApprovalResult,
   ToolExecutionRequested,
+  ToolApprovalResult,
   ToolExecutionResult
 } from '@shared/models/ai-chat.models';
 import { AiPrompt, aiPromptsOf, aiQuestionsOf, ASK_USER_TOOL, AiWorkState, isHiddenAiAction, SUGGEST_PROMPTS_TOOL } from '@home/components/ai/ai-action.models';
@@ -59,6 +60,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Output() askAgain = new EventEmitter<void>();
   @Output() editMessage = new EventEmitter<string>();
   @Output() resume = new EventEmitter<void>();
+  @Output() autoApproveRest = new EventEmitter<void>();
   @Output() prompt = new EventEmitter<string>();
   @Output() answer = new EventEmitter<string>();
   @Output() resourceError = new EventEmitter<any>();
@@ -77,6 +79,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   retryIndex = -1;
   stoppedSteps: Record<number, number> = {};
   answersAt: Record<number, AiQuestionAnswer[]> = {};
+  offerIndex = -1;
+
+  private keptAsking = new Set<number>();
 
   dayLines: Record<number, string> = {};
 
@@ -211,6 +216,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     if (changes.messages) {
       this.refreshDayLines();
     }
+    if (changes.messages || changes.completedExecutions || changes.loading || changes.autoApprove || changes.denyReasons) {
+      this.offerIndex = this.findOffer();
+    }
     if (changes.messages || changes.completedExecutions || changes.loading) {
       this.summaries = this.findSummaries();
       this.prompts = this.findPrompts();
@@ -265,6 +273,40 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
         }
       }
     }
+  }
+
+  keepAsking(): void {
+    this.keptAsking.add(this.turnStart(this.offerIndex));
+    this.offerIndex = -1;
+  }
+
+  private findOffer(): number {
+    const last = this.messages.length - 1;
+    const pending = this.messages[last];
+    if (this.autoApprove || pending?.from !== 'APPROVAL' || !pending.data.needsApproval || pending.data.autoApproved
+      || this.approvalResult(pending) || this.denyReasons[pending.data.executionId]) {
+      return -1;
+    }
+    const start = this.turnStart(last);
+    if (this.keptAsking.has(start)) {
+      return -1;
+    }
+    const approvedBefore = this.messages.slice(start + 1, last).some(message => message.from === 'APPROVAL'
+      && !message.data.autoApproved && this.approvalResult(message)?.approvalStatus === ToolApprovalResult.APPROVED);
+    return approvedBefore ? last : -1;
+  }
+
+  private approvalResult(message: ApprovalChatMessage): ToolExecutionResult | undefined {
+    return this.completedExecutions[message.data.executionId] ?? message.result;
+  }
+
+  private turnStart(index: number): number {
+    for (let i = index; i >= 0; i--) {
+      if (this.messages[i].from === 'USER') {
+        return i;
+      }
+    }
+    return -1;
   }
 
   approval($event: ApprovalResult) {
