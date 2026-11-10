@@ -6,6 +6,7 @@ import com.digitalpetri.modbus.server.ModbusTcpServer;
 import com.digitalpetri.modbus.server.ProcessImage;
 import com.digitalpetri.modbus.server.ReadWriteModbusServices;
 import com.digitalpetri.modbus.tcp.server.NettyTcpServerTransport;
+import io.netty.channel.ChannelOption;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,6 +63,8 @@ import static org.mockito.Mockito.verify;
 class ModbusPollingIntegrationTest {
 
     private static final long WAIT_MS = 5000;
+    /** The client backs off 1 s, 2 s, 4 s… between connect attempts, so recovery is not immediate. */
+    private static final long RECOVERY_MS = 20_000;
 
     private final Map<Integer, ProcessImage> images = new ConcurrentHashMap<>();
     private ModbusTcpServer server;
@@ -78,17 +81,7 @@ class ModbusPollingIntegrationTest {
         }
         images.put(1, new ProcessImage());
         images.put(2, new ProcessImage());
-        var services = new ReadWriteModbusServices() {
-            @Override
-            protected Optional<ProcessImage> getProcessImage(int unitId) {
-                return Optional.ofNullable(images.get(unitId));
-            }
-        };
-        server = ModbusTcpServer.create(NettyTcpServerTransport.create(cfg -> {
-            cfg.bindAddress = "127.0.0.1";
-            cfg.port = port;
-        }), services);
-        server.start();
+        startServer();
 
         transportService = mock(TransportService.class);
         pool = new ModbusConnectionPool();
@@ -177,6 +170,40 @@ class ModbusPollingIntegrationTest {
 
         verify(transportService, timeout(WAIT_MS).atLeast(2)).errorEvent(any(), any(), anyString(), any());
         verify(transportService, times(0)).recordActivity(session.getSessionInfo());
+        service.stopPolling(session);
+    }
+
+    @Test
+    void pollingResumesAfterServerRestart() throws Exception {
+        writeInputFloat(1, 0, 1f);
+        ModbusSessionContext session = session(1, profile(false, 100L));
+        service.startPolling(session);
+        verifyVoltagePolled(1.0, WAIT_MS);
+
+        server.stop();
+        verify(transportService, timeout(WAIT_MS).atLeastOnce()).errorEvent(any(), any(), anyString(), any());
+
+        writeInputFloat(1, 0, 2f);
+        startServer();
+
+        verifyVoltagePolled(2.0, RECOVERY_MS);
+        service.stopPolling(session);
+    }
+
+    @Test
+    void pollingStartsWhenServerComesUpLater() throws Exception {
+        server.stop();
+        writeInputFloat(1, 0, 3f);
+        ModbusSessionContext session = session(1, profile(false, 100L));
+
+        service.startPolling(session);
+        verify(transportService, timeout(WAIT_MS).atLeast(2)).errorEvent(any(), any(), anyString(), any());
+        verify(transportService, times(0)).recordActivity(session.getSessionInfo());
+
+        startServer();
+
+        verifyVoltagePolled(3.0, RECOVERY_MS);
+        verify(transportService, atLeastOnce()).recordActivity(session.getSessionInfo());
         service.stopPolling(session);
     }
 
@@ -287,6 +314,30 @@ class ModbusPollingIntegrationTest {
         verify(transportService, timeout(WAIT_MS)).process(eq(session.getSessionInfo()), eq(msg),
                 eq(RpcStatus.DELIVERED), eq(true), any());
         service.stopPolling(session);
+    }
+
+    /** Starts (or restarts) the server on the same port; process images survive a restart. */
+    private void startServer() throws Exception {
+        var services = new ReadWriteModbusServices() {
+            @Override
+            protected Optional<ProcessImage> getProcessImage(int unitId) {
+                return Optional.ofNullable(images.get(unitId));
+            }
+        };
+        server = ModbusTcpServer.create(NettyTcpServerTransport.create(cfg -> {
+            cfg.bindAddress = "127.0.0.1";
+            cfg.port = port;
+            cfg.bootstrapCustomizer = bootstrap -> bootstrap.option(ChannelOption.SO_REUSEADDR, true);
+        }), services);
+        server.start();
+    }
+
+    private void verifyVoltagePolled(double expected, long timeoutMs) {
+        Awaitility.await().atMost(Duration.ofMillis(timeoutMs)).untilAsserted(() -> {
+            ArgumentCaptor<TransportProtos.PostTelemetryMsg> captor = ArgumentCaptor.forClass(TransportProtos.PostTelemetryMsg.class);
+            verify(transportService, atLeastOnce()).process(any(TransportProtos.SessionInfoProto.class), captor.capture(), any());
+            assertThat(captor.getAllValues()).anyMatch(msg -> value(msg, "voltage").getDoubleV() == expected);
+        });
     }
 
     private ModbusDownlinkService downlink() {
