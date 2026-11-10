@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -747,15 +748,17 @@ public class ConverterControllerTest extends AbstractControllerTest {
         testThingsStackDefaultConvertersOnPayload(payload.toString(), Map.of(), THINGS_STACK_REPOSITORY_DEVICE_RESULT);
     }
 
-    // tbVersionIds that is not an object names no model
+    // tbVersionIds that is not an object (a text, null, a list) names no model, and is not telemetry either
     @Test
     public void testThingsStackDefaultConvertersIgnoreTbVersionIdsThatIsNotAnObject() throws IOException {
-        ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD));
-        ((ObjectNode) payload.get("uplink_message").get("decoded_payload")).put("tbVersionIds", "lansitec-macro-tracker");
         String expectedDecodedMessage = THINGS_STACK_FORMATTER_DEVICE_RESULT.replace("\"profile\":\"lansitec-macro-tracker\"", "\"profile\":\"LoRaWAN Device\"")
                 .replace("\"brandId\":\"lansitec\",\"modelId\":\"macro-tracker\",", "");
+        for (String tbVersionIds : List.of("\"lansitec-macro-tracker\"", "null", "[\"lansitec\",\"macro-tracker\"]")) {
+            ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD));
+            ((ObjectNode) payload.get("uplink_message").get("decoded_payload")).set("tbVersionIds", JacksonUtil.toJsonNode(tbVersionIds));
 
-        testThingsStackDefaultConvertersOnPayload(payload.toString(), Map.of(), expectedDecodedMessage);
+            testThingsStackDefaultConvertersOnPayload(payload.toString(), Map.of(), expectedDecodedMessage);
+        }
     }
 
     // The keys the integration metadata lists for the model are attributes, not telemetry; spaces around them are ignored,
@@ -770,16 +773,20 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 Map.of("attributes.lansitec-macro-tracker", " chargeState , firmwareVersionOfTheTracker"), expectedDecodedMessage);
     }
 
-    // The list is per brand and model, not per profile name: a renamed profile keeps it. History records stay telemetry
+    // The list is per brand and model, not per profile name: a renamed profile keeps it. History records stay telemetry:
+    // temperature is in the history record (24.1) and in the latest values (24.5), and only the latest one is an attribute
     @Test
     public void testThingsStackDefaultConvertersTakeTheListOfARepositoryDeviceByItsModel() throws IOException {
+        String latestTemperature = "\"temperature\":24.5,";
+        assertThat(THINGS_STACK_REPOSITORY_DEVICE_RESULT.split(Pattern.quote(latestTemperature), -1)).hasSize(2);
+        assertThat(THINGS_STACK_REPOSITORY_DEVICE_RESULT).contains("{\"temperature\":24.1,\"co2\":550}");
         String expectedDecodedMessage = THINGS_STACK_REPOSITORY_DEVICE_RESULT
                 .replace("\"profile\":\"milesight-iot-am308\"", "\"profile\":\"AM308\"")
-                .replace("{\"battery\":95,", "{")
-                .replace("\"attributes\":{", "\"attributes\":{\"battery\":95,");
+                .replace(latestTemperature, "")
+                .replace("\"attributes\":{", "\"attributes\":{\"temperature\":24.5,");
 
         testThingsStackDefaultConverters(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD,
-                Map.of("profile.milesight-iot-am308", "AM308", "attributes.milesight-iot-am308", "battery"), expectedDecodedMessage);
+                Map.of("profile.milesight-iot-am308", "AM308", "attributes.milesight-iot-am308", "temperature"), expectedDecodedMessage);
     }
 
     // The list of another model changes nothing

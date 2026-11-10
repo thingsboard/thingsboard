@@ -23,14 +23,14 @@ if (metadata.payloadFormat == 'JSON') {
         });
         delete values.history;
     }
-    if (values.tbVersionIds != null) {
+    if (Object.prototype.hasOwnProperty.call(values, 'tbVersionIds')) {
         versionIds = values.tbVersionIds;
         delete values.tbVersionIds;
     }
 }
 var brandId = metadata.brandId;
 var modelId = metadata.modelId;
-if ((brandId == null || modelId == null) && versionIds != null) {
+if ((brandId == null || modelId == null) && typeof versionIds === 'object' && versionIds !== null && !Array.isArray(versionIds)) {
     brandId = versionIds.brand_id;
     modelId = versionIds.model_id;
     if (brandId != null && modelId != null) {
