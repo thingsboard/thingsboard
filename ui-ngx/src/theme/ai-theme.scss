@@ -1786,6 +1786,15 @@ code.k-ent[data-pal="solution"] .k-ent-ic { color: var(--entity-solution-fg); }
   }
 }
 
+.k-chips.agent-chips .ob-chip {
+  height: auto;
+  min-height: var(--chat-control);
+  padding-top: calc((var(--chat-control) - 22px) / 2);
+  padding-bottom: calc((var(--chat-control) - 22px) / 2);
+  line-height: 20px;
+  text-align: left;
+}
+
 .k-deny-in {
   width: 100%;
   box-sizing: border-box;
@@ -3297,6 +3306,59 @@ a.tb-chiplink:focus-visible {
   }
 }
 
+.art-card.made {
+  padding: 0;
+  cursor: default;
+
+  .art-card-open {
+flex: 1;
+min-width: 0;
+display: flex;
+align-items: center;
+gap: 12px;
+margin: 0;
+padding: 8px 4px 8px 12px;
+border: 0;
+border-radius: 10px 0 0 10px;
+background: none;
+font: inherit;
+text-align: left;
+color: inherit;
+cursor: pointer;
+
+&:focus-visible {
+  outline: 2px solid var(--ai-focus);
+  outline-offset: -2px;
+}
+  }
+
+  .art-card-dl {
+flex: none;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+width: 32px;
+height: 32px;
+margin: 0 8px 0 0;
+padding: 0;
+border: 0;
+border-radius: 8px;
+background: none;
+color: var(--tb-ink-54);
+cursor: pointer;
+
+&:hover {
+  background: color-mix(in srgb, var(--tb-ink) 6%, transparent);
+  color: var(--tb-ink);
+}
+
+&:focus-visible {
+  outline: 2px solid var(--ai-focus);
+  outline-offset: 1px;
+}
+  }
+}
+
 .art-card-ic {
   flex: none;
   display: inline-flex;
@@ -3455,6 +3517,38 @@ a.tb-chiplink:focus-visible {
     overflow-wrap: break-word;
     padding-left: calc(var(--ind, 0ch) + 2ch);
     text-indent: calc(-1 * (var(--ind, 0ch) + 2ch));
+  }
+}
+
+.file-img {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  padding: 20px var(--art-x) 40px;
+  box-sizing: border-box;
+
+  .file-img-open {
+    display: block;
+    width: 100%;
+    max-width: 960px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    cursor: zoom-in;
+
+    &:focus-visible {
+      outline: 2px solid var(--ai-focus);
+      outline-offset: 2px;
+    }
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 }
 

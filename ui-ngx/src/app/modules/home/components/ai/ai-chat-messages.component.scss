@@ -433,7 +433,7 @@
         font-weight: 500;
       }
 
-      code:not([class*=language-]):not(.k-ent) {
+      code:not([class*=language-]):not(.k-ent):not(pre code) {
         display: inline-block;
         white-space: nowrap;
         padding: 2px 7px;

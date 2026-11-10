@@ -34,7 +34,13 @@ import {
   UPDATE_PLAN_TOOL
 } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
-import { AiFile, aiFileOf, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
+import { AiFile, aiFileOf, AiMadeFile, aiMadeFileOf, CREATE_FILE_TOOL, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
+import { MatDialog } from '@angular/material/dialog';
+import { AiResourceService } from '@core/http/ai-resource.service';
+import {
+  AiAttachmentPreviewDialogComponent,
+  AiAttachmentPreviewDialogData
+} from '@home/components/ai/ai-attachment-preview-dialog.component';
 import { aiAnswersOf, aiAnswersText } from '@home/components/ai/ai-question.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -108,6 +114,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   offerIndex = -1;
   streaming = false;
   files: Record<number, AiFile> = {};
+  madeFiles: Record<number, AiMadeFile> = {};
   quotes: Record<number, {name: string; icon: string; from: number; to: number; message: string}> = {};
   sources: Record<number, AiSource[]> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
@@ -142,7 +149,42 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   constructor(private elementRef: ElementRef<HTMLElement>,
               private clipboard: ClipboardService,
               private translate: TranslateService,
-              private router: Router) {}
+              private router: Router,
+              private dialog: MatDialog,
+              private aiResourceService: AiResourceService) {}
+
+  openMadeFile(file: AiMadeFile): void {
+    if (file.preview === 'image') {
+      this.dialog.open<AiAttachmentPreviewDialogComponent, AiAttachmentPreviewDialogData>(AiAttachmentPreviewDialogComponent, {
+        panelClass: ['tb-dialog', 'tb-ai-attachment-preview-dialog'],
+        maxWidth: '92vw',
+        data: {resource: file.resource}
+      });
+    } else if (file.preview === 'pdf') {
+      const tab = window.open('', '_blank');
+      this.aiResourceService.getUrl(file.resource.id).subscribe({
+        next: url => {
+          if (tab) {
+            tab.location.href = url;
+          } else {
+            window.open(url, '_blank');
+          }
+        },
+        error: error => {
+          tab?.close();
+          this.resourceError.emit(error);
+        }
+      });
+    } else {
+      this.downloadMadeFile(file);
+    }
+  }
+
+  downloadMadeFile(file: AiMadeFile): void {
+    this.aiResourceService.download(file.resource).subscribe({
+      error: error => this.resourceError.emit(error)
+    });
+  }
 
   copyText(text: string, index: number): void {
     if (this.clipboard.copyFromContent(text)) {
@@ -204,6 +246,22 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   openReport(index: number): void {
     this.reportingIndex = index;
     this.reportProblem = null;
+    setTimeout(() => this.revealReport());
+  }
+
+  private revealReport(): void {
+    const report = this.elementRef.nativeElement.querySelector<HTMLElement>('.k-report');
+    const scroller = report?.closest<HTMLElement>('.ai-chat-body');
+    if (!report || !scroller) {
+      return;
+    }
+    const composer = scroller.querySelector<HTMLElement>('.ai-chat-composer');
+    const cover = composer?.querySelector<HTMLElement>('.k-pill') ?? composer;
+    const limit = Math.min(scroller.getBoundingClientRect().bottom, cover?.getBoundingClientRect().top ?? Infinity) - 12;
+    const overflow = report.getBoundingClientRect().bottom - limit;
+    if (overflow > 0) {
+      scroller.scrollBy({top: overflow, behavior: 'smooth'});
+    }
   }
 
   closeReport(): void {
@@ -258,6 +316,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.asking = this.findAsking();
       this.plans = this.findPlans();
       this.files = this.findFiles();
+      this.madeFiles = this.findMadeFiles();
       this.quotes = this.findQuotes();
       this.sources = this.findSources();
       this.answersAt = this.findAnswers();
@@ -551,6 +610,19 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     this.messages.forEach((message, index) => {
       if (message.from === 'ACTION' && message.data.tool === WRITE_FILE_TOOL) {
         const file = aiFileOf(message.data.executionId, message.data.arguments);
+        if (file) {
+          files[index] = file;
+        }
+      }
+    });
+    return files;
+  }
+
+  private findMadeFiles(): Record<number, AiMadeFile> {
+    const files: Record<number, AiMadeFile> = {};
+    this.messages.forEach((message, index) => {
+      if (message.from === 'ACTION' && message.data.tool === CREATE_FILE_TOOL && message.data.status === 'SUCCESS') {
+        const file = aiMadeFileOf(message.data.executionId, message.data.result);
         if (file) {
           files[index] = file;
         }

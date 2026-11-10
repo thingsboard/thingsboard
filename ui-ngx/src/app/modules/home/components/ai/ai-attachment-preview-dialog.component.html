@@ -5,12 +5,23 @@
 
 -->
 <mat-toolbar class="flex items-center gap-2">
-  <h2 class="preview-title">{{ data.resource.name }}</h2>
+  <h2 class="preview-title">{{ title }}</h2>
   <span class="flex-1"></span>
-  <button mat-icon-button type="button" (click)="download()"
-          [matTooltip]="'action.download' | translate" matTooltipPosition="above">
-    <mat-icon>download</mat-icon>
-  </button>
+  @if (data.downloadPng) {
+    <button mat-icon-button type="button" [matMenuTriggerFor]="downloads"
+            [matTooltip]="'action.download' | translate" matTooltipPosition="above">
+      <mat-icon>download</mat-icon>
+    </button>
+    <mat-menu #downloads="matMenu" xPosition="before">
+      <button mat-menu-item type="button" (click)="download()">{{ 'ai-assistant.file.download-svg' | translate }}</button>
+      <button mat-menu-item type="button" (click)="downloadPng()">{{ 'ai-assistant.file.download-png' | translate }}</button>
+    </mat-menu>
+  } @else {
+    <button mat-icon-button type="button" (click)="download()"
+            [matTooltip]="'action.download' | translate" matTooltipPosition="above">
+      <mat-icon>download</mat-icon>
+    </button>
+  }
   <button mat-icon-button type="button" (click)="close()"
           [matTooltip]="'action.close' | translate" matTooltipPosition="above">
     <mat-icon>close</mat-icon>
@@ -19,7 +30,7 @@
 <div mat-dialog-content class="preview-content" tb-toast toastTarget="aiAttachmentPreview">
   @if (preview$ | async; as preview) {
     @if (preview.url) {
-      <img [src]="preview.url" [alt]="data.resource.name">
+      <img [src]="preview.url" [alt]="title" [class.vector]="data.vector">
     } @else {
       <div class="preview-error">
         <mat-icon>broken_image</mat-icon>

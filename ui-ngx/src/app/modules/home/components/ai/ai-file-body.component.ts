@@ -1,7 +1,12 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { AfterViewInit, Component, effect, ElementRef, EventEmitter, input, Output, signal, ViewChild } from '@angular/core';
-import { AiFile } from '@home/components/ai/ai-file.models';
+import { AfterViewInit, Component, computed, effect, inject, ElementRef, EventEmitter, input, Output, signal, ViewChild } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { AiFile, aiImageSrc, downloadAiFile, downloadAiFileAsPng } from '@home/components/ai/ai-file.models';
+import {
+  AiAttachmentPreviewDialogComponent,
+  AiAttachmentPreviewDialogData
+} from '@home/components/ai/ai-attachment-preview-dialog.component';
 import { highlightCode } from '@home/components/ai/ai-code-block';
 
 export interface AiFileMarks {
@@ -15,6 +20,13 @@ export interface AiFileMarks {
     @if (file().markdown && !source()) {
       <div class="file-md art-page agent">
         <tb-markdown usePlainMarkdown [data]="file().content" [additionalStyles]="markdownStyles"></tb-markdown>
+      </div>
+    } @else if (file().image && !source()) {
+      <div class="file-img art-page">
+        <button type="button" class="file-img-open" (click)="expandImage()"
+                [matTooltip]="'ai-assistant.file.expand' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.expand' | translate">
+          <img [src]="imageSrc()" [alt]="file().name">
+        </button>
       </div>
     } @else {
       @if (finding()) {
@@ -53,6 +65,10 @@ export class AiFileBodyComponent implements AfterViewInit {
 
   @ViewChild('code') code: ElementRef<HTMLElement>;
   @ViewChild('findInput') findInput: ElementRef<HTMLInputElement>;
+
+  private dialog = inject(MatDialog);
+
+  imageSrc = computed(() => aiImageSrc(this.file()));
 
   finding = signal(false);
   query = signal('');
@@ -93,6 +109,15 @@ export class AiFileBodyComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.drawCode();
+  }
+
+  expandImage(): void {
+    const file = this.file();
+    this.dialog.open<AiAttachmentPreviewDialogComponent, AiAttachmentPreviewDialogData>(AiAttachmentPreviewDialogComponent, {
+      panelClass: ['tb-dialog', 'tb-ai-attachment-preview-dialog'],
+      maxWidth: '92vw',
+      data: {name: file.name, url: this.imageSrc(), vector: true, download: () => downloadAiFile(file), downloadPng: () => downloadAiFileAsPng(file)}
+    });
   }
 
   openFind(): void {
@@ -136,7 +161,7 @@ export class AiFileBodyComponent implements AfterViewInit {
   }
 
   onKey(event: KeyboardEvent): void {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f' && !(this.file().markdown && !this.source())) {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f' && !(this.file().previewed && !this.source())) {
       event.preventDefault();
       this.openFind();
     }

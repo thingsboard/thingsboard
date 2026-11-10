@@ -126,6 +126,7 @@ tb-ai-chat-title:has(.ai-chat-status) + .ai-chat-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 20px 20px 0;
   container: k-chat / inline-size;

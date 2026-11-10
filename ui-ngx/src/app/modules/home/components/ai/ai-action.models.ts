@@ -149,7 +149,7 @@ export function aiSourcesOf(args: unknown): AiSource[] {
 
 export const UPDATE_PLAN_TOOL = 'update_plan';
 
-const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file', CITE_SOURCES_TOOL]);
+const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file', 'create_file', CITE_SOURCES_TOOL]);
 
 export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);
 

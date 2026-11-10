@@ -51,7 +51,7 @@ import {
 } from '@shared/models/ai-chat.models';
 import { aiActionWords, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, aiTurnPrompts, isHiddenAiAction, isKitCardTool } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
-import { AiFile } from '@home/components/ai/ai-file.models';
+import { AiFile, downloadAiFile, downloadAiFileAsPng } from '@home/components/ai/ai-file.models';
 import { AiFileBodyComponent, AiFileMarks } from '@home/components/ai/ai-file-body.component';
 import { ClipboardService } from 'ngx-clipboard';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
@@ -179,7 +179,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   fileDark(file: AiFile): boolean {
-    return (!file.markdown || this.fileSource()) && this.fileTheme() === 'dark';
+    return (!file.previewed || this.fileSource()) && this.fileTheme() === 'dark';
   }
 
   setFileTheme(theme: 'dark' | 'light'): void {
@@ -447,12 +447,17 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   downloadFile(file: AiFile): void {
-    const url = URL.createObjectURL(new Blob([file.content], {type: 'text/plain;charset=utf-8'}));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = file.name;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url));
+    downloadAiFile(file);
+  }
+
+  downloadFileAsPng(file: AiFile): void {
+    downloadAiFileAsPng(file).catch(() => this.store.dispatch(new ActionNotificationShow({
+      message: this.translate.instant('ai-assistant.file.png-failed'),
+      type: 'error',
+      modern: true,
+      verticalPosition: 'bottom',
+      horizontalPosition: 'center'
+    })));
   }
 
   runPlan(event: {run: AiPlanRun; steps: AiPlanStep[]}): void {

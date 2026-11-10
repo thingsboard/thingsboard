@@ -63,6 +63,20 @@
         <mat-icon class="tb-mat-18 art-card-chev" aria-hidden="true">chevron_right</mat-icon>
       </button>
     </div>
+  } @else if (msg.from === 'ACTION' && madeFiles[$index]; as made) {
+    <div class="ai art-cards">
+      <div class="art-card made">
+        <button type="button" class="art-card-open" (click)="openMadeFile(made)"
+                [attr.aria-label]="(made.preview ? 'ai-assistant.file.open' : 'ai-assistant.file.download') | translate">
+          <span class="art-card-ic"><mat-icon class="tb-mat-20" aria-hidden="true">{{ made.icon }}</mat-icon></span>
+          <span class="art-card-t"><b>{{ made.resource.name }}</b><small>{{ made.label }} · {{ made.size }}</small></span>
+        </button>
+        <button type="button" class="art-card-dl" (click)="downloadMadeFile(made)"
+                [matTooltip]="'ai-assistant.file.download' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.file.download' | translate">
+          <mat-icon class="tb-mat-18" aria-hidden="true">download</mat-icon>
+        </button>
+      </div>
+    </div>
   } @else if (msg.from === 'ACTION' && plans[$index]; as plan) {
     <div class="ai plan">
       <tb-ai-plan [steps]="plan.steps" [progress]="plan.progress" [gate]="plan.gate" [autoApprove]="autoApprove"

@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { DestroyRef, Injectable } from '@angular/core';
+import { DestroyRef, inject, Injectable } from '@angular/core';
 
+import { AiAssistantConfigService, isEdgeScope } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   DateEntityTableColumn,
@@ -40,6 +42,8 @@ import { PageLink } from '@shared/models/page/page-link';
 export class ConvertersTableConfigResolver  {
 
   private readonly config: EntityTableConfig<Converter> = new EntityTableConfig<Converter>();
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private converterService: ConverterService,
               private userPermissionsService: UserPermissionsService,
@@ -135,6 +139,8 @@ export class ConvertersTableConfigResolver  {
     this.config.entitiesFetchFunction = this.configureEntityFunctions(this.config.componentsData.converterScope);
 
     defaultEntityTablePermissions(this.userPermissionsService, this.config);
+    this.config.aiAssistantConfig = isEdgeScope(this.config.componentsData.converterScope) ? null :
+      this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CONVERTER_LIST, AiAssistantViewType.CONVERTER);
     return this.config;
   }
 

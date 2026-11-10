@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
+import { AiAssistantConfigService, isEdgeScope } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   EntityTableConfig
@@ -25,6 +27,8 @@ import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.s
 @Injectable()
 export class RuleChainsTableConfigResolver  {
 
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
+
   constructor(private ruleChainService: RuleChainService,
               private dialogService: DialogService,
               private dialog: MatDialog,
@@ -41,7 +45,10 @@ export class RuleChainsTableConfigResolver  {
   }
 
   resolve(route: ActivatedRouteSnapshot): EntityTableConfig<RuleChain> {
-    return this.resolveRuleChainsTableConfig(route);
+    const config = this.resolveRuleChainsTableConfig(route);
+    config.aiAssistantConfig = isEdgeScope(config.componentsData.ruleChainScope) ? null :
+      this.aiAssistantConfigService.tableConfig(AiAssistantViewType.RULE_CHAIN_LIST, AiAssistantViewType.RULE_CHAIN);
+    return config;
   }
 
   resolveRuleChainsTableConfig(params: ActivatedRouteSnapshot | RuleChainParams): EntityTableConfig<RuleChain> {

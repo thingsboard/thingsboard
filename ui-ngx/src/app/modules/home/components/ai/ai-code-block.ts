@@ -49,6 +49,7 @@ const FILE_LANGUAGES: Record<string, CodeLanguage> = {
   h: {lang: 'c', label: 'C', icon: 'code'},
   hpp: {lang: 'c', label: 'C++', icon: 'code'},
   md: {lang: 'text', label: 'Markdown', icon: 'article'},
+  svg: {lang: 'text', label: 'SVG', icon: 'image'},
   markdown: {lang: 'text', label: 'Markdown', icon: 'article'},
   txt: {lang: 'text', label: 'Text', icon: 'notes'},
   csv: {lang: 'text', label: 'CSV', icon: 'table_chart'},

@@ -27,6 +27,11 @@
       max-height: calc(90vh - 96px);
       object-fit: contain;
       border-radius: 8px;
+
+      &.vector {
+        width: min(1200px, 88vw);
+        height: auto;
+      }
     }
 
     .preview-error {

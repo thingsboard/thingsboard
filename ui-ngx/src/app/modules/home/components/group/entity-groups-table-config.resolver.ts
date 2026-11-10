@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,11 +22,14 @@ import { AppState } from '@core/core.state';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Operation, Resource } from '@shared/models/security.models';
 import { deviceAiAssistantConfig } from '@shared/models/device.models';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
 import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Injectable()
 export class EntityGroupsTableConfigResolver  {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private entityGroupService: EntityGroupService,
               private customerService: CustomerService,
@@ -67,6 +70,9 @@ export class EntityGroupsTableConfigResolver  {
       config.aiAssistantConfig = deviceAiAssistantConfig(this.store, this.userPermissionsService, this.translate,
         this.userPermissionsService.hasGenericPermission(Resource.DEVICE, Operation.WRITE),
         AiAssistantViewType.DEVICE_GROUP, AiAssistantViewType.DEVICE_GROUP_LIST);
+    }
+    if (config.groupType === EntityType.ASSET) {
+      config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.ASSET_GROUP_LIST, AiAssistantViewType.ASSET_GROUP);
     }
 
     if (config.customerId && resolveCustomer) {

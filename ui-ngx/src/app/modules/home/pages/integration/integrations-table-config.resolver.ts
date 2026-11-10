@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { DestroyRef, Injectable } from '@angular/core';
+import { DestroyRef, inject, Injectable } from '@angular/core';
 
+import { AiAssistantConfigService, isEdgeScope } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,6 +27,8 @@ import { EntityDebugSettingsService } from '@home/components/entity/debug/entity
 @Injectable()
 export class IntegrationsTableConfigResolver  {
 
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
+
   constructor(private integrationService: IntegrationService,
               private userPermissionsService: UserPermissionsService,
               private edgeService: EdgeService,
@@ -39,7 +43,10 @@ export class IntegrationsTableConfigResolver  {
   }
 
   resolve(route: ActivatedRouteSnapshot): EntityTableConfig<Integration, PageLink, IntegrationInfo> {
-    return this.resolveIntegrationsTableConfig(resolveIntegrationParams(route));
+    const config = this.resolveIntegrationsTableConfig(resolveIntegrationParams(route));
+    config.aiAssistantConfig = isEdgeScope(config.componentsData.integrationScope) ? null :
+      this.aiAssistantConfigService.tableConfig(AiAssistantViewType.INTEGRATION_LIST, AiAssistantViewType.INTEGRATION);
+    return config;
   }
 
   resolveIntegrationsTableConfig(params: IntegrationParams): EntityTableConfig<Integration, PageLink, IntegrationInfo> {

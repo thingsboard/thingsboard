@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { Router } from '@angular/router';
 import {
   checkBoxCell,
@@ -28,6 +30,8 @@ import { UserPermissionsService } from '@core/http/user-permissions.service';
 export class AssetProfilesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<AssetProfile> = new EntityTableConfig<AssetProfile>();
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private assetProfileService: AssetProfileService,
               private importExport: ImportExportService,
@@ -96,6 +100,7 @@ export class AssetProfilesTableConfigResolver  {
   resolve(): EntityTableConfig<AssetProfile> {
     this.config.tableTitle = this.translate.instant('asset-profile.asset-profiles');
     defaultEntityTablePermissions(this.userPermissionsService, this.config);
+    this.config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.ASSET_PROFILE_LIST, AiAssistantViewType.ASSET_PROFILE);
     return this.config;
   }
 

@@ -1203,7 +1203,17 @@
             "NOTIFICATION_RULE_LIST": "Notification rules",
             "NOTIFICATION_RECIPIENT_LIST": "Notification recipients",
             "SENT_NOTIFICATION_LIST": "Sent notifications",
-            "NOTIFICATION_INBOX": "Notification inbox"
+            "NOTIFICATION_INBOX": "Notification inbox",
+            "ASSET_LIST": "Assets",
+            "ASSET_GROUP_LIST": "Asset groups",
+            "ENTITY_VIEW_LIST": "Entity views",
+            "DEVICE_PROFILE_LIST": "Device profiles",
+            "ASSET_PROFILE_LIST": "Asset profiles",
+            "CUSTOMER_LIST": "Customers",
+            "USER_LIST": "Users",
+            "RULE_CHAIN_LIST": "Rule chains",
+            "INTEGRATION_LIST": "Integrations",
+            "CONVERTER_LIST": "Converters"
         },
         "copy-answer": "Copy the answer",
         "feedback": {
@@ -1263,6 +1273,11 @@
             "download": "Download",
             "source": "Edit",
             "source-tip": "The Markdown source; editing in place comes later",
+            "source-tip-image": "The SVG source",
+            "expand": "Expand the image",
+            "download-svg": "Download as SVG",
+            "download-png": "Download as PNG",
+            "png-failed": "The PNG could not be made from this image.",
             "find": "Find in file",
             "match-of": "{{at}} of {{count}}",
             "no-matches": "No matches",
@@ -1282,6 +1297,176 @@
             "ask-about": "Ask about them"
         },
         "welcome": {
+            "placeholder": "Ask anything or describe what to set up...",
+            "assets": {
+                "title": "Ask about your assets",
+                "line": "Their telemetry and alarms, or a dashboard to watch them.",
+                "suggestion": "Build a dashboard for my assets.",
+                "example": {
+                    "find": {"label": "Find assets with alarms", "message": "Which of my assets have active alarms?"}
+                }
+            },
+            "asset": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this asset",
+                "line": "Its telemetry, alarms and calculated fields, or a dashboard for it.",
+                "suggestion": "How is this asset doing?",
+                "example": {
+                    "telemetry": {"label": "Show its latest telemetry", "message": "Show the latest telemetry of this asset."},
+                    "metric": {"label": "Add a calculated field", "message": "Add a calculated field to this asset."},
+                    "dashboard": {"label": "Build its dashboard", "message": "Build a dashboard for this asset."}
+                }
+            },
+            "asset-groups": {
+                "title": "Ask about your asset groups",
+                "line": "Watch a group's assets on a dashboard or set up alarms for them.",
+                "suggestion": "Build a dashboard for one of my asset groups.",
+                "example": {
+                    "find": {"label": "Find groups with alarms", "message": "Which of my asset groups have assets with active alarms?"}
+                }
+            },
+            "asset-group": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this asset group",
+                "line": "Its assets, how they are doing, or what to set up for all of them.",
+                "suggestion": "How are the assets in this group doing?",
+                "example": {
+                    "status": {"label": "Check the group", "message": "How are the assets in this group doing?"}
+                }
+            },
+            "entity-views": {
+                "title": "Ask about your entity views",
+                "line": "Their telemetry and alarms, or a dashboard to show them.",
+                "suggestion": "Build a dashboard for my entity views.",
+                "example": {
+                    "find": {"label": "List my entity views", "message": "Which entity views do I have, and which entities do they show?"}
+                }
+            },
+            "entity-view": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this entity view",
+                "line": "Its telemetry and the entity it shows, or a dashboard for it.",
+                "suggestion": "Show the latest telemetry of this entity view.",
+                "example": {
+                    "telemetry": {"label": "Show its latest telemetry", "message": "Show the latest telemetry of this entity view."},
+                    "source": {"label": "Find its entity", "message": "Which entity does this entity view show?"}
+                }
+            },
+            "device-profiles": {
+                "title": "Ask about your device profiles",
+                "line": "Alarm rules and calculated fields for the devices of a profile.",
+                "suggestion": "Suggest alarm rules for my device profiles.",
+                "example": {
+                    "find": {"label": "Find profiles without alarms", "message": "Which of my device profiles have no alarm rules?"}
+                }
+            },
+            "device-profile": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this device profile",
+                "line": "Alarm rules and calculated fields for its devices.",
+                "suggestion": "Set up an alarm rule for this device profile.",
+                "example": {
+                    "devices": {"label": "List its devices", "message": "Which devices use this profile?"},
+                    "alarm": {"label": "Set up an alarm", "message": "Set up an alarm rule for this device profile."},
+                    "metric": {"label": "Add a calculated field", "message": "Add a calculated field to this device profile."}
+                }
+            },
+            "asset-profiles": {
+                "title": "Ask about your asset profiles",
+                "line": "Alarm rules and calculated fields for the assets of a profile.",
+                "suggestion": "Suggest alarm rules for my asset profiles.",
+                "example": {
+                    "find": {"label": "Find profiles without alarms", "message": "Which of my asset profiles have no alarm rules?"}
+                }
+            },
+            "asset-profile": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this asset profile",
+                "line": "Alarm rules and calculated fields for its assets.",
+                "suggestion": "Set up an alarm rule for this asset profile.",
+                "example": {
+                    "assets": {"label": "List its assets", "message": "Which assets use this profile?"},
+                    "alarm": {"label": "Set up an alarm", "message": "Set up an alarm rule for this asset profile."}
+                }
+            },
+            "customers": {
+                "title": "Ask about your customers",
+                "line": "Their devices and dashboards, or how their equipment is doing.",
+                "suggestion": "Which customers have devices with active alarms?",
+                "example": {
+                    "find": {"label": "Find customers with alarms", "message": "Which customers have devices with active alarms?"}
+                }
+            },
+            "customer": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this customer",
+                "line": "Its devices, alarms and dashboards.",
+                "suggestion": "How are this customer's devices doing?",
+                "example": {
+                    "devices": {"label": "List its devices", "message": "Which devices does this customer own?"},
+                    "dashboard": {"label": "Build its dashboard", "message": "Build a dashboard for this customer's devices."}
+                }
+            },
+            "users": {
+                "title": "Ask about your users",
+                "line": "Who gets notified, and how notifications reach them.",
+                "suggestion": "Who gets notified when an alarm is raised?",
+                "example": {
+                    "find": {"label": "Find who gets alarms", "message": "Which users receive alarm notifications?"}
+                }
+            },
+            "user": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this user",
+                "line": "The notifications this user gets.",
+                "suggestion": "Which notifications does this user get?",
+                "example": {
+                    "notifications": {"label": "Notify this user", "message": "Notify this user when a critical alarm is raised."}
+                }
+            },
+            "rule-chains": {
+                "title": "What would you like to set up?",
+                "line": "Alarm rules, calculated fields, dashboards and notifications, or connecting a device.",
+                "suggestion": "Notify me when a critical alarm is raised.",
+                "example": {
+                    "alarm": {"label": "Set up an alarm", "message": "Help me set up an alarm rule."},
+                    "notify": {"label": "Get notified", "message": "Notify me when a critical alarm is raised."}
+                }
+            },
+            "integrations": {
+                "title": "Ask about your integrations",
+                "line": "Connect devices through an integration.",
+                "suggestion": "Help me connect a device through an integration.",
+                "example": {
+                    "connect": {"label": "Connect a device", "message": "Help me connect a device through an integration."}
+                }
+            },
+            "integration": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this integration",
+                "line": "Connect devices through it.",
+                "suggestion": "Help me connect a device through this integration.",
+                "example": {
+                    "connect": {"label": "Connect a device", "message": "Help me connect a device through this integration."}
+                }
+            },
+            "converters": {
+                "title": "Ask about your converters",
+                "line": "Connect devices through an integration and its converters.",
+                "suggestion": "Help me connect a device through an integration.",
+                "example": {
+                    "connect": {"label": "Connect a device", "message": "Help me connect a device through an integration."}
+                }
+            },
+            "converter": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this converter",
+                "line": "Connect devices through an integration that uses it.",
+                "suggestion": "Help me connect a device using this converter.",
+                "example": {
+                    "connect": {"label": "Connect a device", "message": "Help me connect a device using this converter."}
+                }
+            },
             "dashboards": {
                 "title": "Ask about your dashboards",
                 "line": "Find one, build a new one, or change what it shows.",

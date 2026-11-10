@@ -155,6 +155,36 @@ export class AiAssistantPanelService implements OnDestroy {
       case AiAssistantViewType.DEVICE_GROUP:
       case AiAssistantViewType.DEVICE_GROUP_LIST:
         return 'DEVICE_GROUP';
+      case AiAssistantViewType.ASSET:
+      case AiAssistantViewType.ASSET_LIST:
+        return 'ASSET';
+      case AiAssistantViewType.ASSET_GROUP:
+      case AiAssistantViewType.ASSET_GROUP_LIST:
+        return 'ASSET_GROUP';
+      case AiAssistantViewType.ENTITY_VIEW:
+      case AiAssistantViewType.ENTITY_VIEW_LIST:
+        return 'ENTITY_VIEW';
+      case AiAssistantViewType.DEVICE_PROFILE:
+      case AiAssistantViewType.DEVICE_PROFILE_LIST:
+        return 'DEVICE_PROFILE';
+      case AiAssistantViewType.ASSET_PROFILE:
+      case AiAssistantViewType.ASSET_PROFILE_LIST:
+        return 'ASSET_PROFILE';
+      case AiAssistantViewType.CUSTOMER:
+      case AiAssistantViewType.CUSTOMER_LIST:
+        return 'CUSTOMER';
+      case AiAssistantViewType.USER:
+      case AiAssistantViewType.USER_LIST:
+        return 'USER';
+      case AiAssistantViewType.RULE_CHAIN:
+      case AiAssistantViewType.RULE_CHAIN_LIST:
+        return 'RULE_CHAIN';
+      case AiAssistantViewType.INTEGRATION:
+      case AiAssistantViewType.INTEGRATION_LIST:
+        return 'INTEGRATION';
+      case AiAssistantViewType.CONVERTER:
+      case AiAssistantViewType.CONVERTER_LIST:
+        return 'CONVERTER';
       case AiAssistantViewType.NOTIFICATION_INBOX:
       case AiAssistantViewType.SENT_NOTIFICATION_LIST:
       case AiAssistantViewType.NOTIFICATION_TEMPLATE_LIST:

@@ -8,7 +8,9 @@ import {
   EntityGroupStateInfo,
   GroupEntityTableConfig
 } from '@home/models/group/group-entities-table-config.models';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, inject, Injectable } from '@angular/core';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { MatDialog } from '@angular/material/dialog';
@@ -36,6 +38,8 @@ import { UserComponent } from '@home/pages/user/user.component';
 
 @Injectable()
 export class UserGroupConfigFactory implements EntityGroupStateConfigFactory<UserInfo> {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private groupConfigTableConfigService: GroupConfigTableConfigService<UserInfo>,
               private userPermissionsService: UserPermissionsService,
@@ -88,6 +92,7 @@ export class UserGroupConfigFactory implements EntityGroupStateConfigFactory<Use
         }
       );
     }
+    config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.USER_LIST, AiAssistantViewType.USER);
     return this.groupConfigTableConfigService.prepareConfiguration(params, config);
   }
 
