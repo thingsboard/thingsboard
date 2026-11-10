@@ -6,9 +6,9 @@
   "main": "server.ts",
   "bin": "server.js",
   "scripts": {
-    "pkg": "tsc && pkg --debug -t node22-linux-x64 --output ./target/thingsboard-web-report-linux ./target/src > ./target/pkg-linux.log && pkg --debug -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/thingsboard-web-report-win.exe ./target/src > ./target/pkg-win.log && node install.js",
+    "pkg": "tsc && pkg -t node22-linux-x64 --output ./target/thingsboard-web-report-linux ./target/src && pkg -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/thingsboard-web-report-win.exe ./target/src && node install.js",
     "sbom": "node ../../tools/src/main/javascript/yarn-sbom.js target/sbom/tb-web-report.cdx.json application",
-    "sbom-check": "node sbom-check.js",
+    "sbom-check": "pkg --debug -t node22-linux-x64 --output ./target/pkg-debug/linux ./target/src > ./target/pkg-linux.log && pkg --debug -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/pkg-debug/win.exe ./target/src > ./target/pkg-win.log && node sbom-check.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --watch --watch-preserve-output -r ts-node/register server.ts",
     "start-prod": "NODE_ENV=production node --watch --watch-preserve-output -r ts-node/register server.ts",

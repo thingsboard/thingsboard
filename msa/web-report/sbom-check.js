@@ -30,6 +30,8 @@ const BASE_BINARY = /fetched-v(\d+\.\d+\.\d+)-/;
         }
         console.log(`The ${os} binary contains ${bundled.size} npm packages, all listed in the SBOM (${listed.size} listed)`);
     }
+    // The --debug executables were built only for their logs
+    fs.rmSync(path.join(TARGET_DIR, 'pkg-debug'), { recursive: true, force: true });
     fs.writeFileSync(VERSIONS_FILE, Object.entries(versions).map(([key, value]) => `${key}=${value}\n`).join(''));
     console.log(`Wrote ${VERSIONS_FILE}: ${JSON.stringify(versions)}`);
 })();

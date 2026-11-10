@@ -51,6 +51,9 @@
         <sbom.skip>true</sbom.skip>
         <!-- The SBOM steps that run in yarn. Also skipped with -Dskip.yarn=true: see the skip-pkg-without-yarn profile. -->
         <sbom.yarn.skip>${sbom.skip}</sbom.yarn.skip>
+        <!-- The yarn SBOM steps of the UI modules: ui-ngx, msa/web-ui and msa/web-report. Also skipped with
+             -Dskip.ui.build=true, which leaves them without node and node_modules: see the skip-pkg-without-ui-build profile. -->
+        <sbom.ui.skip>${sbom.yarn.skip}</sbom.ui.skip>
         <!-- Use -Dpkg.skip=true to skip all packaging at once (bootjar + deb + rpm + zip).
              Individual flags below can be set independently for finer control. -->
         <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
@@ -308,6 +311,7 @@
                 </property>
             </activation>
             <properties>
+                <sbom.ui.skip>true</sbom.ui.skip>
                 <pkg.skip.bootjar>true</pkg.skip.bootjar>
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
@@ -632,6 +636,14 @@
                                 <layout>ZIP</layout>
                                 <executable>true</executable>
                                 <excludeDevtools>true</excludeDevtools>
+                                <!-- Lombok is needed only to compile. Its provided scope keeps it out of the SBOM,
+                                     so it must stay out of the jar too. -->
+                                <excludes>
+                                    <exclude>
+                                        <groupId>org.projectlombok</groupId>
+                                        <artifactId>lombok</artifactId>
+                                    </exclude>
+                                </excludes>
                                 <embeddedLaunchScriptProperties>
                                     <confFolder>${pkg.installFolder}/conf</confFolder>
                                     <logFolder>${pkg.unixLogFolder}</logFolder>
@@ -944,6 +956,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>

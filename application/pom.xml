@@ -599,6 +599,36 @@
                 <artifactId>maven-assembly-plugin</artifactId>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <!-- The gateway extension and its SBOM are committed together and must match. The package SBOM
+                         checks it too, but only with -Dsbom.skip=false, which would be at the release. -->
+                    <execution>
+                        <id>check-gateway-extension-sbom</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <checksum file="${project.basedir}/src/main/data/resources/js_extensions/gateway-management-extension.js"
+                                          algorithm="SHA-256" property="gateway.extension.sha256"/>
+                                <loadfile srcFile="${project.basedir}/src/main/sbom/gateway-management-extension.cdx.json"
+                                          property="gateway.extension.sbom"/>
+                                <fail message="src/main/sbom/gateway-management-extension.cdx.json does not describe src/main/data/resources/js_extensions/gateway-management-extension.js: it does not contain the file's SHA-256 ${gateway.extension.sha256}. Take both files from the same build in the gateway-management-extensions-dist repository.">
+                                    <condition>
+                                        <not>
+                                            <contains string="${gateway.extension.sbom}" substring="${gateway.extension.sha256}"/>
+                                        </not>
+                                    </condition>
+                                </fail>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>sbom-maven-plugin</artifactId>
                 <executions>

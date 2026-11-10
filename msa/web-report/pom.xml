@@ -107,7 +107,7 @@
                             <goal>yarn</goal>
                         </goals>
                         <configuration>
-                            <skip>${sbom.yarn.skip}</skip>
+                            <skip>${sbom.ui.skip}</skip>
                             <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
                         </configuration>
                     </execution>
@@ -128,7 +128,7 @@
                         </goals>
                         <phase>compile</phase>
                         <configuration>
-                            <skip>${sbom.yarn.skip}</skip>
+                            <skip>${sbom.ui.skip}</skip>
                             <arguments>run sbom-check</arguments>
                         </configuration>
                     </execution>
