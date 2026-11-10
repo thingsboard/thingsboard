@@ -142,7 +142,10 @@
               "node_modules/prismjs/themes/prism.css",
               "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css",
               "node_modules/ace-diff/dist/ace-diff.min.css",
-              "node_modules/photoswipe/dist/photoswipe.css"
+              "node_modules/photoswipe/dist/photoswipe.css",
+              "node_modules/@fullcalendar/angular/skeleton.css",
+              "node_modules/@fullcalendar/angular/themes/classic/theme.css",
+              "node_modules/@fullcalendar/angular/themes/classic/palette.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
