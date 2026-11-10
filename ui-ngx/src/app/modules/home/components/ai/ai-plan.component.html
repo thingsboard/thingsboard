@@ -1,0 +1,57 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="k-plan min" [class.gate]="gate()">
+  <div class="k-plan-head">
+    <span>{{ 'ai-assistant.plan.title' | translate }}</span>
+    <span class="k-plan-count">{{ gate() ? ('ai-assistant.plan.steps' | translate: {count: counted()}) : ('ai-assistant.plan.done-of' | translate: {done: done(), count: counted()}) }}</span>
+    <span class="tb-spacer"></span>
+    @if (gate()) {
+      <button type="button" class="k-iconbtn" (click)="change.emit()" [matTooltip]="'ai-assistant.plan.change' | translate"
+              matTooltipPosition="above" [attr.aria-label]="'ai-assistant.plan.change' | translate">
+        <mat-icon class="tb-mat-18" aria-hidden="true">edit</mat-icon>
+      </button>
+    }
+  </div>
+  <ol>
+    @for (step of steps(); track $index) {
+      <li [class]="(step.by === 'user' ? 'you ' : 'ai ') + marks()[$index]" [class.unchecked]="gate() && step.optional && !checked($index)">
+        @if (gate() && step.optional) {
+          <input type="checkbox" class="k-check" [checked]="checked($index)" (change)="toggle($index)"
+                 [attr.aria-label]="step.text">
+        } @else {
+          <span class="k-pmark" [class]="'k-pmark ' + marks()[$index]">
+            @if (marks()[$index] === 'done') {
+              <mat-icon aria-hidden="true">check</mat-icon>
+            } @else if (marks()[$index] === 'off') {
+              <mat-icon aria-hidden="true">remove</mat-icon>
+            }
+          </span>
+        }
+        <span class="k-what">@if (step.by === 'user') {<span class="k-you">{{ 'ai-assistant.plan.you' | translate }}</span>@if (step.needs) {<span class="k-need">{{ 'ai-assistant.plan.needs.' + step.needs | translate }}</span>}}@for (part of parts(step.text); track $index) {@if (part.code) {<code>{{ part.text }}</code>} @else {{{ part.text }}}}</span>
+      </li>
+    }
+  </ol>
+  @if (gate()) {
+    <div class="k-actions k-plan-foot">
+      @if (autoApprove()) {
+        <button mat-flat-button type="button" (click)="start(true)" [matTooltip]="'ai-assistant.plan.run-auto-tip' | translate" matTooltipPosition="above">
+          <mat-icon>bolt</mat-icon>{{ 'ai-assistant.plan.run-auto' | translate }}
+        </button>
+        <button mat-stroked-button type="button" (click)="start(false)" [matTooltip]="'ai-assistant.plan.run-tip' | translate" matTooltipPosition="above">
+          <mat-icon>play_arrow</mat-icon>{{ 'ai-assistant.plan.run-step-by-step' | translate }}
+        </button>
+      } @else {
+        <button mat-flat-button type="button" (click)="start(false)" [matTooltip]="'ai-assistant.plan.run-tip' | translate" matTooltipPosition="above">
+          <mat-icon>play_arrow</mat-icon>{{ 'ai-assistant.plan.run' | translate }}
+        </button>
+        <button mat-stroked-button type="button" (click)="start(true)" [matTooltip]="'ai-assistant.plan.run-auto-tip' | translate" matTooltipPosition="above">
+          <mat-icon>bolt</mat-icon>{{ 'ai-assistant.plan.run-auto' | translate }}
+        </button>
+      }
+    </div>
+  }
+</div>

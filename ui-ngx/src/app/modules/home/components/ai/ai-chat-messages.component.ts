@@ -13,7 +13,23 @@ import {
   ToolApprovalResult,
   ToolExecutionResult
 } from '@shared/models/ai-chat.models';
-import { AiPrompt, aiPromptsOf, aiQuestionsOf, ASK_USER_TOOL, AiWorkState, isHiddenAiAction, SUGGEST_PROMPTS_TOOL } from '@home/components/ai/ai-action.models';
+import {
+  aiPlanOf,
+  AiPlanProgress,
+  aiPlanProgressOf,
+  AiPlanStep,
+  AiPrompt,
+  aiPromptsOf,
+  aiQuestionsOf,
+  ASK_USER_TOOL,
+  AiWorkState,
+  isHiddenAiAction,
+  isKitCardTool,
+  PROPOSE_PLAN_TOOL,
+  SUGGEST_PROMPTS_TOOL,
+  UPDATE_PLAN_TOOL
+} from '@home/components/ai/ai-action.models';
+import { AiPlanRun } from '@home/components/ai/ai-plan.component';
 import { aiAnswersOf, aiAnswersText } from '@home/components/ai/ai-question.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -61,6 +77,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Output() editMessage = new EventEmitter<string>();
   @Output() resume = new EventEmitter<void>();
   @Output() autoApproveRest = new EventEmitter<void>();
+  @Output() runPlan = new EventEmitter<{run: AiPlanRun; steps: AiPlanStep[]}>();
+  @Output() changePlan = new EventEmitter<void>();
   @Output() prompt = new EventEmitter<string>();
   @Output() answer = new EventEmitter<string>();
   @Output() resourceError = new EventEmitter<any>();
@@ -80,6 +98,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   stoppedSteps: Record<number, number> = {};
   answersAt: Record<number, AiQuestionAnswer[]> = {};
   offerIndex = -1;
+  plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
 
   private keptAsking = new Set<number>();
 
@@ -223,6 +242,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.summaries = this.findSummaries();
       this.prompts = this.findPrompts();
       this.asking = this.findAsking();
+      this.plans = this.findPlans();
       this.answersAt = this.findAnswers();
       this.retryIndex = this.findRetry();
       this.stoppedSteps = this.findStoppedSteps();
@@ -399,8 +419,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   }
 
   isListedAction(message: ChatMessage): boolean {
-    return message.from === 'ACTION' && message.data.tool !== SUGGEST_PROMPTS_TOOL && message.data.tool !== ASK_USER_TOOL
-      && !isHiddenAiAction(message.data.tool);
+    return message.from === 'ACTION' && !isKitCardTool(message.data.tool) && !isHiddenAiAction(message.data.tool);
   }
 
   answerQuestions(answers: AiQuestionAnswer[]): void {
@@ -467,6 +486,30 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       }
     }
     return null;
+  }
+
+  private findPlans(): Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> {
+    const plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
+    let current = -1;
+    this.messages.forEach((message, index) => {
+      if (message.from !== 'ACTION') {
+        return;
+      }
+      if (message.data.tool === PROPOSE_PLAN_TOOL) {
+        const steps = aiPlanOf(message.data.arguments);
+        if (steps.length) {
+          plans[index] = {steps, progress: null, gate: false};
+          current = index;
+        }
+      } else if (message.data.tool === UPDATE_PLAN_TOOL && current >= 0) {
+        plans[current].progress = aiPlanProgressOf(message.data.arguments);
+      }
+    });
+    if (current >= 0 && !this.loading && !plans[current].progress
+      && !this.messages.slice(current + 1).some(message => message.from === 'USER')) {
+      plans[current].gate = true;
+    }
+    return plans;
   }
 
   private findAnswers(): Record<number, AiQuestionAnswer[]> {

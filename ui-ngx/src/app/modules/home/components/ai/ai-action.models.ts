@@ -97,6 +97,55 @@ export const SUGGEST_PROMPTS_TOOL = 'suggest_next_prompts';
 
 export const ASK_USER_TOOL = 'ask_user';
 
+export const PROPOSE_PLAN_TOOL = 'propose_plan';
+
+export const UPDATE_PLAN_TOOL = 'update_plan';
+
+const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL]);
+
+export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);
+
+const PLAN_NEEDS = new Set(['device', 'account', 'computer', 'phone']);
+
+export interface AiPlanStep {
+  text: string;
+  by: 'agent' | 'user';
+  needs?: string;
+  optional?: boolean;
+}
+
+export interface AiPlanProgress {
+  done: number[];
+  now?: number;
+  skipped: number[];
+}
+
+export function aiPlanOf(args: unknown): AiPlanStep[] {
+  const steps = (args as {steps?: unknown})?.steps;
+  if (!Array.isArray(steps)) {
+    return [];
+  }
+  return steps
+    .filter(step => typeof step?.text === 'string' && step.text.trim())
+    .slice(0, 8)
+    .map(step => ({
+      text: step.text.trim(),
+      by: step.by === 'user' ? 'user' : 'agent',
+      needs: step.by === 'user' && PLAN_NEEDS.has(step.needs) ? step.needs : undefined,
+      optional: step.optional === true
+    }));
+}
+
+export function aiPlanProgressOf(args: unknown): AiPlanProgress {
+  const values = (args ?? {}) as {done?: unknown; now?: unknown; skipped?: unknown};
+  const numbers = (list: unknown): number[] => Array.isArray(list) ? list.filter(item => Number.isInteger(item) && item > 0) : [];
+  return {
+    done: numbers(values.done),
+    now: Number.isInteger(values.now) && (values.now as number) > 0 ? values.now as number : undefined,
+    skipped: numbers(values.skipped)
+  };
+}
+
 export function aiQuestionsOf(args: unknown): AiQuestion[] {
   const questions = (args as {questions?: unknown})?.questions;
   if (!Array.isArray(questions)) {

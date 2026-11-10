@@ -101,6 +101,7 @@ export class AiApprovalCardComponent implements OnChanges {
       } else if (result.approvalStatus === ToolApprovalResult.DENIED) {
         this.state = 'denied';
       } else {
+        this.autoApproved = this.autoApproved || !!this.data?.autoApproved;
         this.state = this.autoApproved ? 'auto' : 'approved';
         this.handedOver = {
           executionId: result.executionId,

@@ -48,6 +48,11 @@
         }
       </div>
     </div>
+  } @else if (msg.from === 'ACTION' && plans[$index]; as plan) {
+    <div class="ai plan">
+      <tb-ai-plan [steps]="plan.steps" [progress]="plan.progress" [gate]="plan.gate" [autoApprove]="autoApprove"
+                  (run)="runPlan.emit({run: $event, steps: plan.steps})" (change)="changePlan.emit()"></tb-ai-plan>
+    </div>
   } @else if (msg.from === 'ACTION' && asking?.index === $index) {
     <div class="ai ask">
       <tb-ai-question [questions]="asking.questions" [time]="msg.data.startedAt" (done)="answerQuestions($event)" (skip)="answerQuestions($event)"></tb-ai-question>

@@ -47,7 +47,8 @@ import {
   ToolFinished,
   ToolStarted
 } from '@shared/models/ai-chat.models';
-import { aiActionWords, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction, SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL } from '@home/components/ai/ai-action.models';
+import { aiActionWords, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction, isKitCardTool } from '@home/components/ai/ai-action.models';
+import { AiPlanRun } from '@home/components/ai/ai-plan.component';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
@@ -304,6 +305,19 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   ask(message: string): void {
     this.sendMsgFromUser({message, resources: []});
+  }
+
+  runPlan(event: {run: AiPlanRun; steps: AiPlanStep[]}): void {
+    if (event.run.auto && !this.autoApprove()) {
+      this.setAutoApprove(true);
+    }
+    const left = event.run.skipped.map(number => this.translate.instant('ai-assistant.plan.leave-out',
+      {number, text: event.steps[number - 1]?.text ?? ''}));
+    this.ask([this.translate.instant('ai-assistant.plan.run-prompt'), ...left].join('\n'));
+  }
+
+  changePlan(): void {
+    this.promptInput?.setValue(this.translate.instant('ai-assistant.plan.change-prompt'));
   }
 
   openAllChats(): void {
@@ -709,7 +723,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       executionId: started.executionId,
       tool: started.tool,
       arguments: started.arguments,
-      status: started.tool === SUGGEST_PROMPTS_TOOL || started.tool === ASK_USER_TOOL ? 'SUCCESS' : 'RUNNING',
+      status: isKitCardTool(started.tool) ? 'SUCCESS' : 'RUNNING',
       startedAt: Date.now()
     };
     this.messages.update(list => [...list, {from: 'ACTION', data: action}]);
@@ -724,7 +738,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
           affectedEntities: finished.affectedEntities}}
       : message));
     const prompts = this.messages().some(message => message.from === 'ACTION' && message.data.executionId === finished.executionId
-      && (message.data.tool === SUGGEST_PROMPTS_TOOL || message.data.tool === ASK_USER_TOOL));
+      && isKitCardTool(message.data.tool));
     if (!prompts && !this.messages().some(message => message.from === 'ACTION' && message.data.status === 'RUNNING')) {
       this.setWork('going-through-results', true);
     }
