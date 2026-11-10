@@ -17,7 +17,8 @@ import { AiChatComponent } from '@home/components/ai/ai-chat.component';
     '[class.open]': 'isOpen',
     '[class.suppressed]': 'panelService.suppressed()',
     '[attr.inert]': 'isOpen ? null : ""',
-    '(transitionend)': 'onSlideEnd($event)'
+    '(transitionend)': 'onSlideEnd($event)',
+    '(click)': 'onClick($event)'
   }
 })
 export class AiAssistantPanelComponent {
@@ -67,6 +68,10 @@ export class AiAssistantPanelComponent {
     const key = this.panelService.contextKey();
     if (this.panelService.open() && this.lastContextKey !== null && key !== null && key !== this.lastContextKey) {
       untracked(() => {
+        const carried = this.panelService.takeCarriedChat();
+        if (carried && carried === this.chatId()) {
+          return;
+        }
         this.chatId.set(undefined);
         this.selectLastChat();
       });
@@ -133,6 +138,16 @@ export class AiAssistantPanelComponent {
     this.panelService.close();
   }
 
+  onClick(event: MouseEvent): void {
+    const chatId = this.chatId();
+    const link = (event.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+    if (!chatId || !link || link.target === '_blank' || link.origin !== window.location.origin
+      || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    this.panelService.carryChat(chatId);
+  }
+
   onChatId(chatId: string | undefined): void {
     this.chatId.set(chatId);
     this.panelService.setLastChatId(chatId);
@@ -154,6 +169,11 @@ export class AiAssistantPanelComponent {
 
   private selectLastChat(): void {
     if (this.chatId()) {
+      return;
+    }
+    const carried = this.panelService.takeCarriedChat();
+    if (carried && this.chats.find(carried)) {
+      this.chatId.set(carried);
       return;
     }
     const lastId = this.panelService.lastChatIdForContext();

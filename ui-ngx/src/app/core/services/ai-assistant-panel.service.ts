@@ -88,6 +88,27 @@ export class AiAssistantPanelService implements OnDestroy {
 
   private _teardownTimer: NodeJS.Timeout;
 
+  private static readonly CARRY_MS = 15000;
+  private _carried: {chatId: string; from: string | null; at: number} | null = null;
+
+  carryChat(chatId: string): void {
+    this._carried = {chatId, from: this.contextKey(), at: Date.now()};
+  }
+
+  takeCarriedChat(): string | undefined {
+    const carried = this._carried;
+    const key = this.contextKey();
+    if (!carried || key === null || key === carried.from) {
+      return undefined;
+    }
+    this._carried = null;
+    if (Date.now() - carried.at > AiAssistantPanelService.CARRY_MS) {
+      return undefined;
+    }
+    this._lastChatIdByContext.set(key, carried.chatId);
+    return carried.chatId;
+  }
+
   toggle(): void {
     this._open.update(open => !open);
   }
