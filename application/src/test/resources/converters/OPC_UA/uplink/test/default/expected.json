@@ -1,0 +1,13 @@
+{
+  "deviceName": "MyDevice",
+  "deviceType": "OPC-UA Device",
+  "attributes": {
+    "opcUaNodeFqn": "Objects.MyObjects.MyDevice",
+    "opcUaNamespaceIndex": "6",
+    "opcUaIdentifier": "MyDevice"
+  },
+  "telemetry": {
+    "level": "42.17",
+    "switchState": true
+  }
+}
