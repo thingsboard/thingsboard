@@ -16,6 +16,7 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = true)
 public class BackupCodeTwoFaAccountConfig extends TwoFaAccountConfig {
 
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     @NotEmpty
     private Set<String> codes;
 

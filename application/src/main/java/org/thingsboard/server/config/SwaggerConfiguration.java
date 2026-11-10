@@ -112,6 +112,7 @@ public class SwaggerConfiguration {
     // Keyed by the schema name that swagger-core generates (see resolveSchemaName).
     private final Map<String, List<String>> schemaPropertyOrders = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> schemaOwnProps = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> schemaNotRequiredProps = new ConcurrentHashMap<>();
     // Tracks schema name → fully-qualified class names to detect collisions.
     private final Map<String, Set<String>> schemaNameToClasses = new ConcurrentHashMap<>();
 
@@ -386,6 +387,10 @@ public class SwaggerConfiguration {
                             if (!ownProps.isEmpty()) {
                                 schemaOwnProps.put(schemaName, ownProps);
                             }
+                            Set<String> notRequiredProps = computeNotRequiredPropNames(beanDesc);
+                            if (!notRequiredProps.isEmpty()) {
+                                schemaNotRequiredProps.put(schemaName, notRequiredProps);
+                            }
                         } catch (Exception e) {
                             log.debug("Failed to resolve property order for {}: {}", cls.getName(), e.getMessage());
                         }
@@ -571,6 +576,13 @@ public class SwaggerConfiguration {
                 schemas.forEach((schemaName, schema) -> {
                     Set<String> ownProps = schemaOwnProps.getOrDefault(schemaName, Set.of());
                     deduplicateAllOfProperties(schema, schemas, ownProps);
+                });
+
+                // Honour an explicit @Schema(requiredMode = NOT_REQUIRED): swagger-core skips @NotNull
+                // for such properties, but still adds the ones with @NotBlank / @NotEmpty to 'required'.
+                schemas.forEach((schemaName, schema) -> {
+                    Set<String> notRequiredProps = schemaNotRequiredProps.getOrDefault(schemaName, Set.of());
+                    removeRequiredProperties(schema, notRequiredProps);
                 });
 
                 // Reorder properties for all component schemas. This runs after all
@@ -1155,6 +1167,37 @@ public class SwaggerConfiguration {
             if (jsonName != null) own.add(jsonName);
         }
         return own;
+    }
+
+    private static Set<String> computeNotRequiredPropNames(com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        Set<String> notRequired = new LinkedHashSet<>();
+        for (var prop : beanDesc.findProperties()) {
+            var member = prop.getPrimaryMember();
+            if (member == null) continue;
+            var schemaAnnotation = member.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+            if (schemaAnnotation != null && schemaAnnotation.requiredMode() == io.swagger.v3.oas.annotations.media.Schema.RequiredMode.NOT_REQUIRED) {
+                notRequired.add(prop.getName());
+            }
+        }
+        return notRequired;
+    }
+
+    private static void removeRequiredProperties(Schema<?> schema, Set<String> notRequiredProps) {
+        if (notRequiredProps.isEmpty()) {
+            return;
+        }
+        List<Schema> schemas = new ArrayList<>();
+        schemas.add(schema);
+        if (schema.getAllOf() != null) {
+            schemas.addAll(schema.getAllOf());
+        }
+        for (Schema<?> s : schemas) {
+            if (s.getRequired() != null && s.getRequired().stream().anyMatch(notRequiredProps::contains)) {
+                List<String> required = new ArrayList<>(s.getRequired());
+                required.removeAll(notRequiredProps);
+                s.setRequired(required.isEmpty() ? null : required);
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
