@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -98,6 +99,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
     private static final String DEFAULT_V2_CONFIGURATION = "converters/default-converters-v2-configuration.json";
     private static final String THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD = "payload/things_stack_repository_device_payload.json";
     private static final String THINGS_STACK_MANUAL_DEVICE_PAYLOAD = "payload/things_stack_manual_device_payload.json";
+    private static final String THINGS_STACK_FORMATTER_DEVICE_PAYLOAD = "payload/things_stack_formatter_device_payload.json";
 
     @Before
     public void beforeTest() throws Exception {
@@ -690,7 +692,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 "\"telemetry\":[{\"ts\":1793170000000,\"values\":{\"temperature\":24.1,\"co2\":550}},{\"ts\":1793181600100,\"values\":{\"battery\":95,\"temperature\":24.5,\"co2\":560," +
                 "\"fCnt\":12,\"data\":\"AXVk\",\"rssi\":-60,\"snr\":9.5,\"channel\":2,\"consumedAirtime\":\"0.061696s\"}}]," +
                 "\"attributes\":{\"eui\":\"24E124707C481005\",\"joinEui\":\"24E124C0002A0001\",\"devAddr\":\"260B1234\",\"deviceId\":\"am308-office\",\"applicationId\":\"my-app\"," +
-                "\"fPort\":85,\"bandwidth\":125000,\"spreadingFactor\":7,\"codeRate\":\"4/5\",\"frequency\":\"868100000\",\"brandId\":\"milesight-iot\",\"modelId\":\"am308\"," +
+                "\"fPort\":85,\"bandwidth\":125000,\"spreadingFactor\":7,\"codeRate\":\"4/5\",\"frequency\":868100000,\"brandId\":\"milesight-iot\",\"modelId\":\"am308\"," +
                 "\"hardwareVersion\":\"1.0\",\"firmwareVersion\":\"1.0\",\"bandId\":\"EU_863_870\",\"netId\":\"000013\",\"tenantId\":\"ttn\",\"clusterId\":\"eu1\"," +
                 "\"clusterAddress\":\"eu1.cloud.thethings.network\"}}";
 
@@ -712,15 +714,95 @@ public class ConverterControllerTest extends AbstractControllerTest {
         String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"manual-node\",\"profile\":\"LoRaWAN Device\",\"label\":\"manual-node\",\"group\":\"my-app\"," +
                 "\"telemetry\":{\"ts\":1793181600100,\"values\":{\"fCnt\":3,\"data\":\"Ae0DM18OTGM=\",\"rssi\":-70,\"snr\":7.0}}," +
                 "\"attributes\":{\"eui\":\"70B3D57ED006F370\",\"deviceId\":\"manual-node\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
-                "\"spreadingFactor\":9,\"frequency\":\"868300000\"}}";
+                "\"spreadingFactor\":9,\"frequency\":868300000}}";
 
         testThingsStackDefaultConverters(THINGS_STACK_MANUAL_DEVICE_PAYLOAD, Map.of("profile.milesight-iot-am308", "AM308"), expectedDecodedMessage);
     }
 
+    private static final String THINGS_STACK_FORMATTER_DEVICE_RESULT = "{\"entityType\":\"DEVICE\",\"name\":\"macro-tracker-1\",\"profile\":\"lansitec-macro-tracker\",\"label\":\"macro-tracker-1\",\"group\":\"my-app\"," +
+                "\"telemetry\":{\"ts\":1794304800100,\"values\":{\"batteryLevel\":100,\"chargeState\":\"Charging\",\"fCnt\":5,\"data\":\"IWQ+Az4AbFA=\",\"rssi\":-70,\"snr\":7.0}}," +
+                "\"attributes\":{\"brandId\":\"lansitec\",\"modelId\":\"macro-tracker\",\"eui\":\"70B3D57ED006F371\",\"deviceId\":\"macro-tracker-1\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
+                "\"spreadingFactor\":9,\"frequency\":868300000}}";
+
+    // A device added without the Repository, whose payload formatter names its model in tbVersionIds: the profile of the
+    // model, and the brandId and modelId attributes, as a Repository device gets them from version_ids
+    @Test
+    public void testThingsStackDefaultConvertersGiveFormatterDeviceTheModelProfileOfItsDecodedPayload() throws IOException {
+        testThingsStackDefaultConverters(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD, Map.of(), THINGS_STACK_FORMATTER_DEVICE_RESULT);
+    }
+
+    @Test
+    public void testThingsStackDefaultConvertersTakeProfileNameOfFormatterDeviceFromIntegrationMetadata() throws IOException {
+        String expectedDecodedMessage = THINGS_STACK_FORMATTER_DEVICE_RESULT.replace("\"profile\":\"lansitec-macro-tracker\"", "\"profile\":\"Macro tracker\"");
+
+        testThingsStackDefaultConverters(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD, Map.of("profile.lansitec-macro-tracker", "Macro tracker"), expectedDecodedMessage);
+    }
+
+    // version_ids come first: tbVersionIds of a Repository device does not change its profile, and is not telemetry either
+    @Test
+    public void testThingsStackDefaultConvertersPreferRepositoryModelToTbVersionIds() throws IOException {
+        ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD));
+        ((ObjectNode) payload.get("uplink_message").get("decoded_payload"))
+                .set("tbVersionIds", JacksonUtil.toJsonNode("{\"brand_id\":\"lansitec\",\"model_id\":\"macro-tracker\"}"));
+
+        testThingsStackDefaultConvertersOnPayload(payload.toString(), Map.of(), THINGS_STACK_REPOSITORY_DEVICE_RESULT);
+    }
+
+    // tbVersionIds that is not an object (a text, null, a list) names no model, and is not telemetry either
+    @Test
+    public void testThingsStackDefaultConvertersIgnoreTbVersionIdsThatIsNotAnObject() throws IOException {
+        String expectedDecodedMessage = THINGS_STACK_FORMATTER_DEVICE_RESULT.replace("\"profile\":\"lansitec-macro-tracker\"", "\"profile\":\"LoRaWAN Device\"")
+                .replace("\"brandId\":\"lansitec\",\"modelId\":\"macro-tracker\",", "");
+        for (String tbVersionIds : List.of("\"lansitec-macro-tracker\"", "null", "[\"lansitec\",\"macro-tracker\"]")) {
+            ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD));
+            ((ObjectNode) payload.get("uplink_message").get("decoded_payload")).set("tbVersionIds", JacksonUtil.toJsonNode(tbVersionIds));
+
+            testThingsStackDefaultConvertersOnPayload(payload.toString(), Map.of(), expectedDecodedMessage);
+        }
+    }
+
+    // The keys the integration metadata lists for the model are attributes, not telemetry; spaces around them are ignored,
+    // and a listed key the uplink doesn't have is skipped. The model may come from tbVersionIds
+    @Test
+    public void testThingsStackDefaultConvertersSaveTheModelsListedKeysAsAttributes() throws IOException {
+        String expectedDecodedMessage = THINGS_STACK_FORMATTER_DEVICE_RESULT
+                .replace("\"chargeState\":\"Charging\",", "")
+                .replace("\"attributes\":{", "\"attributes\":{\"chargeState\":\"Charging\",");
+
+        testThingsStackDefaultConverters(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD,
+                Map.of("attributes.lansitec-macro-tracker", " chargeState , firmwareVersionOfTheTracker"), expectedDecodedMessage);
+    }
+
+    // The list is per brand and model, not per profile name: a renamed profile keeps it. History records stay telemetry:
+    // temperature is in the history record (24.1) and in the latest values (24.5), and only the latest one is an attribute
+    @Test
+    public void testThingsStackDefaultConvertersTakeTheListOfARepositoryDeviceByItsModel() throws IOException {
+        String latestTemperature = "\"temperature\":24.5,";
+        assertThat(THINGS_STACK_REPOSITORY_DEVICE_RESULT.split(Pattern.quote(latestTemperature), -1)).hasSize(2);
+        assertThat(THINGS_STACK_REPOSITORY_DEVICE_RESULT).contains("{\"temperature\":24.1,\"co2\":550}");
+        String expectedDecodedMessage = THINGS_STACK_REPOSITORY_DEVICE_RESULT
+                .replace("\"profile\":\"milesight-iot-am308\"", "\"profile\":\"AM308\"")
+                .replace(latestTemperature, "")
+                .replace("\"attributes\":{", "\"attributes\":{\"temperature\":24.5,");
+
+        testThingsStackDefaultConverters(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD,
+                Map.of("profile.milesight-iot-am308", "AM308", "attributes.milesight-iot-am308", "temperature"), expectedDecodedMessage);
+    }
+
+    // The list of another model changes nothing
+    @Test
+    public void testThingsStackDefaultConvertersIgnoreTheListOfAnotherModel() throws IOException {
+        testThingsStackDefaultConverters(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD,
+                Map.of("attributes.lansitec-solar-tracker", "chargeState"), THINGS_STACK_FORMATTER_DEVICE_RESULT);
+    }
+
     // The TBEL and JS defaults are two copies of one script, so each of them must give this result for TTN and TTI
     private void testThingsStackDefaultConverters(String payloadFile, Map<String, String> integrationMetadata, String expectedResult) throws IOException {
+        testThingsStackDefaultConvertersOnPayload(readResource(payloadFile), integrationMetadata, expectedResult);
+    }
+
+    private void testThingsStackDefaultConvertersOnPayload(String payload, Map<String, String> integrationMetadata, String expectedResult) throws IOException {
         JsonNode defaultConfigurations = JacksonUtil.toJsonNode(readResource(DEFAULT_V2_CONFIGURATION));
-        String payload = readResource(payloadFile);
         for (IntegrationType integrationType : List.of(IntegrationType.TTN, IntegrationType.TTI)) {
             Converter converter = createConverter(defaultConfigurations.get(integrationType.name()), integrationType, 2);
             for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
