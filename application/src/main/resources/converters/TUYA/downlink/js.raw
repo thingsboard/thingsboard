@@ -1,0 +1,50 @@
+// Encode downlink data from incoming Rule Engine message
+
+// msg - JSON message payload downlink message json
+// msgType - type of message, for ex. 'ATTRIBUTES_UPDATED', 'POST_TELEMETRY_REQUEST', etc.
+// metadata - list of key-value pairs with additional data about the message
+// integrationMetadata - list of key-value pairs with additional data defined in Integration executing this converter
+
+/** Encoder **/
+
+// Send an RPC request to the Tuya device as a Device Control command:
+// the RPC method becomes the command code, the RPC params become its value.
+// For example, method "switch_1" with params "true" turns a smart plug on.
+
+// The device name is the Tuya device ID. Reject the message if it is missing or empty.
+var deviceId = typeof metadata.deviceName === "string" ? metadata.deviceName.trim() : "";
+if (!deviceId) {
+    throw new Error("Message metadata has no deviceName");
+}
+
+// Only RPC requests carry a method. Reject other messages.
+if (msg.method == null) {
+    throw new Error("Message has no RPC method");
+}
+
+// RPC params often arrive as the strings "true"/"false". Convert them to booleans
+// for on/off data points. Keep other values (numbers, strings) as they are.
+var value = msg.params;
+if (value === "true" || value === "false") {
+    value = value === "true";
+}
+
+var command = {
+    code: msg.method,
+    value: value
+};
+
+var result = {
+    // The Tuya Device Control API expects a JSON body.
+    contentType: "JSON",
+
+    // One command: { "code": ..., "value": ... }.
+    data: JSON.stringify(command),
+
+    // The integration sends the command to the Tuya device with this ID.
+    metadata: {
+        deviceId: deviceId
+    }
+};
+
+return result;

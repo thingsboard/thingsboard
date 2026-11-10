@@ -745,6 +745,34 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testTuyaDefaultEncoder() throws Exception {
+        String rpc = "{\"method\":\"switch_1\",\"params\":\"true\"}";
+        String rpcMsgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+        JsonNode expected = JacksonUtil.toJsonNode("{\"contentType\":\"JSON\",\"data\":\"{\\\"code\\\":\\\"switch_1\\\",\\\"value\\\":true}\"," +
+                "\"metadata\":{\"deviceId\":\"bfac3c40adca459c9chaar\"}}");
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String encoder = readResource("converters/TUYA/downlink/" + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            JsonNode response = encodeDownlink(encoder, scriptLang, rpc, rpcMsgType, "{\"deviceName\":\" bfac3c40adca459c9chaar \"}");
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": device name with spaces").isEmpty();
+            softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": device name with spaces").isEqualTo(expected);
+
+            for (String metadata : List.of("{}", "{\"deviceName\":\"  \"}")) {
+                response = encodeDownlink(encoder, scriptLang, rpc, rpcMsgType, metadata);
+                softly.assertThat(response.get("output").asText()).as(scriptLang + ": " + metadata).isEqualTo("null");
+                softly.assertThat(response.get("error").asText()).as(scriptLang + ": " + metadata).contains("Message metadata has no deviceName");
+            }
+
+            response = encodeDownlink(encoder, scriptLang, "{\"temperatureUploadFrequency\":60}", "ATTRIBUTES_UPDATED", "{\"deviceName\":\"bfac3c40adca459c9chaar\"}");
+            softly.assertThat(response.get("output").asText()).as(scriptLang + ": attribute update").isEqualTo("null");
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": attribute update").contains("Message has no RPC method");
+        }
+        softly.assertAll();
+    }
+
+    @Test
     public void testDefaultDownlinkConverters() throws Exception {
         Resource[] expectedFiles = new PathMatchingResourcePatternResolver().getResources("classpath*:converters/*/downlink/test/*/expected.json");
 
