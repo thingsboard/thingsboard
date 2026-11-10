@@ -778,6 +778,29 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testTuyaDefaultDecoderRejectsMessageWithoutDevId() throws Exception {
+        List<String> payloads = List.of(
+                "{\"status\":[{\"code\":\"switch_1\",\"value\":true}]}",
+                "{\"devId\":\"  \",\"status\":[{\"code\":\"switch_1\",\"value\":true}]}"
+        );
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String decoder = readResource("converters/TUYA/uplink/" + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+            for (String payload : payloads) {
+                ObjectNode inputParams = JacksonUtil.newObjectNode();
+                inputParams.put("decoder", decoder);
+                inputParams.set("metadata", JacksonUtil.newObjectNode());
+                inputParams.put("payload", Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
+                JsonNode response = doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
+                softly.assertThat(response.get("output").asText()).as(scriptLang + ": " + payload).isEmpty();
+                softly.assertThat(response.get("error").asText()).as(scriptLang + ": " + payload).contains("Tuya message has no devId");
+            }
+        }
+        softly.assertAll();
+    }
+
+    @Test
     public void testTTINotDefaultDecoder() throws IOException {
         String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"eui-1000000000000001\",\"profile\":\"IndustrialSensorProfile\",\"customer\":\"MyCustomer\",\"group\":\"SensorsGroup\"," +
                 "\"telemetry\":{\"ts\":1684398325906,\"values\":{\"battery\":95,\"temperature\":36.6}},\"attributes\":{\"devAddr\":\"20000001\",\"fPort\":85,\"eui\":\"1000000000000001\"}}";

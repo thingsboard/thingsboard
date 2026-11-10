@@ -1,0 +1,10 @@
+{
+  "deviceName": "bfac3c40adca459c9chaar",
+  "deviceType": "Tuya device",
+  "attributes": {},
+  "telemetry": [
+    { "ts": 1785490000000, "values": { "cur_voltage": 208.6 } },
+    { "ts": 1785490000000, "values": { "cur_power": 14.2 } },
+    { "ts": 1785490000000, "values": { "cur_current": 0.063 } }
+  ]
+}

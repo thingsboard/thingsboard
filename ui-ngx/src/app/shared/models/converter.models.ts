@@ -20,6 +20,7 @@ export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/uplink/tbel.raw'],
   [IntegrationType.TTI,'/assets/converters/TTI/uplink/tbel.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/uplink/tbel.raw'],
+  [IntegrationType.TUYA, '/assets/converters/TUYA/uplink/tbel.raw'],
   [IntegrationType.SIGFOX, '/assets/converters/SIGFOX/uplink/tbel.raw'],
   [IntegrationType.AZURE_IOT_HUB, '/assets/converters/AZURE_IOT_HUB/uplink/tbel.raw'],
   [IntegrationType.AZURE_EVENT_HUB, '/assets/converters/AZURE_EVENT_HUB/uplink/tbel.raw'],
@@ -36,6 +37,7 @@ export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/uplink/js.raw'],
   [IntegrationType.TTI,'/assets/converters/TTI/uplink/js.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/uplink/js.raw'],
+  [IntegrationType.TUYA, '/assets/converters/TUYA/uplink/js.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/js.raw'],
   [IntegrationType.TPE, '/assets/converters/TPE/uplink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/js.raw']
