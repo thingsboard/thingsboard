@@ -18,6 +18,10 @@ import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
+import org.thingsboard.rule.engine.report.TbGenerateReportNode;
+import org.thingsboard.rule.engine.report.TbGenerateReportNodeConfiguration;
+import org.thingsboard.rule.engine.report.TbGenerateReportV2Node;
+import org.thingsboard.rule.engine.report.TbGenerateReportV2NodeConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -54,6 +58,7 @@ import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedField
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.converter.ConverterType;
+import org.thingsboard.server.common.data.dashboardreport.DashboardReportConfig;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -598,6 +603,157 @@ public class VersionControlTest extends AbstractControllerTest {
                 .findFirst().get().getConfiguration(), TbMsgGeneratorNodeConfiguration.class);
         assertThat(importedGeneratorNodeConfig.getOriginatorId()).isEqualTo(importedCustomer.getId().toString());
         assertThat(importedGeneratorNodeConfig.getJsScript()).contains("var someUuid = \"" + someUuid + "\";");
+    }
+
+    @Test
+    public void testRuleChainVc_reportNodeUser_resolvedByEmailBetweenTenants() throws Exception {
+        Device device = createDevice("Device 1", "test1");
+        ReportTemplate reportTemplate = createReportTemplate(tenantId1, null, "Weekly report", device.getId());
+        String reportUserEmail = "report-generator@thingsboard.org";
+        User reportUser1 = createTenantUser(tenantId1, reportUserEmail);
+        RuleChain ruleChain = createRuleChain("Rule chain with report node");
+        addReportNode(ruleChain.getId(), reportTemplate.getId(), reportUser1.getId());
+
+        String versionId = createVersion("rule chain with report node", EntityType.RULE_CHAIN, EntityType.REPORT_TEMPLATE);
+
+        // emails are unique across one DB, so free it up to simulate the same user existing on another environment
+        reportUser1.setEmail("renamed-" + reportUserEmail);
+        doPost("/api/user", reportUser1, User.class);
+
+        loginTenant2();
+        User reportUser2 = createTenantUser(tenantId2, reportUserEmail);
+        loadVersion(versionId, EntityType.RULE_CHAIN, EntityType.REPORT_TEMPLATE);
+
+        TbGenerateReportV2NodeConfiguration importedConfig = findReportNodeConfig(ruleChain.getName());
+        assertThat(importedConfig.getConfig().getUserId()).isEqualTo(reportUser2.getId());
+        assertThat(importedConfig.getConfig().getReportTemplateId()).isEqualTo(findReportTemplate(reportTemplate.getName()).getId());
+    }
+
+    @Test
+    public void testRuleChainVc_reportNodeUser_unknownUserIsKept() throws Exception {
+        Device device = createDevice("Device 1", "test1");
+        ReportTemplate reportTemplate = createReportTemplate(tenantId1, null, "Weekly report", device.getId());
+        User reportUser1 = createTenantUser(tenantId1, "report-generator@thingsboard.org");
+        RuleChain ruleChain = createRuleChain("Rule chain with report node");
+        addReportNode(ruleChain.getId(), reportTemplate.getId(), reportUser1.getId());
+
+        String versionId = createVersion("rule chain with report node", EntityType.RULE_CHAIN, EntityType.REPORT_TEMPLATE);
+        // the user exists only on the "source environment"
+        doDelete("/api/user/" + reportUser1.getId()).andExpect(status().isOk());
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.RULE_CHAIN, EntityType.REPORT_TEMPLATE);
+
+        TbGenerateReportV2NodeConfiguration importedConfig = findReportNodeConfig(ruleChain.getName());
+        assertThat(importedConfig.getConfig().getUserId().getId()).isNotEqualTo(tenantId2.getId());
+        assertThat(importedConfig.getConfig().getUserId()).isEqualTo(reportUser1.getId());
+    }
+
+    @Test
+    public void testRuleChainVc_reportNodeUser_userOfAnotherTenantIsCleared() throws Exception {
+        Device device = createDevice("Device 1", "test1");
+        ReportTemplate reportTemplate = createReportTemplate(tenantId1, null, "Weekly report", device.getId());
+        User reportUser1 = createTenantUser(tenantId1, "report-generator@thingsboard.org");
+        RuleChain ruleChain = createRuleChain("Rule chain with report node");
+        addReportNode(ruleChain.getId(), reportTemplate.getId(), reportUser1.getId());
+
+        String versionId = createVersion("rule chain with report node", EntityType.RULE_CHAIN, EntityType.REPORT_TEMPLATE);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.RULE_CHAIN, EntityType.REPORT_TEMPLATE);
+
+        TbGenerateReportV2NodeConfiguration importedConfig = findReportNodeConfig(ruleChain.getName());
+        assertThat(importedConfig.getConfig().getUserId().getId()).isEqualTo(EntityId.NULL_UUID);
+    }
+
+    @Test
+    public void testRuleChainVc_legacyReportNodeUser_resolvedByEmailBetweenTenants() throws Exception {
+        String reportUserEmail = "report-generator@thingsboard.org";
+        User reportUser1 = createTenantUser(tenantId1, reportUserEmail);
+        RuleChain ruleChain = createRuleChain("Rule chain with legacy report node");
+        RuleChainMetaData metaData = findRuleChainMetaData(ruleChain.getId());
+        List<RuleNode> nodes = new ArrayList<>(metaData.getNodes());
+        RuleNode reportNode = new RuleNode();
+        reportNode.setName("Generate report v1");
+        reportNode.setType(TbGenerateReportNode.class.getName());
+        reportNode.setConfigurationVersion(TbGenerateReportNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        DashboardReportConfig reportConfig = new DashboardReportConfig();
+        reportConfig.setNamePattern("report-%d{yyyy-MM-dd_HH:mm:ss}");
+        reportConfig.setType("pdf");
+        reportConfig.setUserId(reportUser1.getId().toString());
+        TbGenerateReportNodeConfiguration reportNodeConfig = new TbGenerateReportNodeConfiguration();
+        reportNodeConfig.setUseSystemReportsServer(true);
+        reportNodeConfig.setReportConfig(reportConfig);
+        reportNode.setConfiguration(JacksonUtil.valueToTree(reportNodeConfig));
+        nodes.add(reportNode);
+        metaData.setNodes(nodes);
+        doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
+
+        String versionId = createVersion("rule chain with legacy report node", EntityType.RULE_CHAIN);
+        reportUser1.setEmail("renamed-" + reportUserEmail);
+        doPost("/api/user", reportUser1, User.class);
+
+        loginTenant2();
+        User reportUser2 = createTenantUser(tenantId2, reportUserEmail);
+        loadVersion(versionId, EntityType.RULE_CHAIN);
+
+        RuleChainMetaData importedMetaData = findRuleChainMetaData(findRuleChain(ruleChain.getName()).getId());
+        RuleNode importedNode = importedMetaData.getNodes().stream()
+                .filter(node -> node.getType().equals(TbGenerateReportNode.class.getName()))
+                .findFirst().orElseThrow();
+        TbGenerateReportNodeConfiguration importedConfig = JacksonUtil.treeToValue(importedNode.getConfiguration(), TbGenerateReportNodeConfiguration.class);
+        assertThat(importedConfig.getReportConfig().getUserId()).isEqualTo(reportUser2.getId().toString());
+    }
+
+    @Test
+    public void testRuleChainVc_reportNodeUser_sameTenantKeepsUser() throws Exception {
+        Device device = createDevice("Device 1", "test1");
+        ReportTemplate reportTemplate = createReportTemplate(tenantId1, null, "Weekly report", device.getId());
+        User reportUser1 = createTenantUser(tenantId1, "report-generator@thingsboard.org");
+        RuleChain ruleChain = createRuleChain("Rule chain with report node");
+        addReportNode(ruleChain.getId(), reportTemplate.getId(), reportUser1.getId());
+
+        String versionId = createVersion("rule chain with report node", EntityType.RULE_CHAIN, EntityType.REPORT_TEMPLATE);
+        loadVersion(versionId, EntityType.RULE_CHAIN, EntityType.REPORT_TEMPLATE);
+
+        TbGenerateReportV2NodeConfiguration importedConfig = findReportNodeConfig(ruleChain.getName());
+        assertThat(importedConfig.getConfig().getUserId()).isEqualTo(reportUser1.getId());
+    }
+
+    private User createTenantUser(TenantId tenantId, String email) throws Exception {
+        User user = new User();
+        user.setTenantId(tenantId);
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail(email);
+        return createUser(user, email);
+    }
+
+    private void addReportNode(RuleChainId ruleChainId, ReportTemplateId reportTemplateId, UserId userId) throws Exception {
+        RuleChainMetaData metaData = findRuleChainMetaData(ruleChainId);
+        List<RuleNode> nodes = new ArrayList<>(metaData.getNodes());
+        RuleNode reportNode = new RuleNode();
+        reportNode.setName("Generate report");
+        reportNode.setType(TbGenerateReportV2Node.class.getName());
+        reportNode.setConfigurationVersion(TbGenerateReportV2Node.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        ReportConfig reportConfig = new ReportConfig();
+        reportConfig.setReportTemplateId(reportTemplateId);
+        reportConfig.setTimezone("Europe/Berlin");
+        reportConfig.setUserId(userId);
+        TbGenerateReportV2NodeConfiguration reportNodeConfig = new TbGenerateReportV2NodeConfiguration();
+        reportNodeConfig.setConfig(reportConfig);
+        reportNode.setConfiguration(JacksonUtil.valueToTree(reportNodeConfig));
+        nodes.add(reportNode);
+        metaData.setNodes(nodes);
+        doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
+    }
+
+    private TbGenerateReportV2NodeConfiguration findReportNodeConfig(String ruleChainName) throws Exception {
+        RuleChain importedRuleChain = findRuleChain(ruleChainName);
+        RuleChainMetaData importedMetaData = findRuleChainMetaData(importedRuleChain.getId());
+        RuleNode reportNode = importedMetaData.getNodes().stream()
+                .filter(node -> node.getType().equals(TbGenerateReportV2Node.class.getName()))
+                .findFirst().orElseThrow();
+        return JacksonUtil.treeToValue(reportNode.getConfiguration(), TbGenerateReportV2NodeConfiguration.class);
     }
 
     @Test
