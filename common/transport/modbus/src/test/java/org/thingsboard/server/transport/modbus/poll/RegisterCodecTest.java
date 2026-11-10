@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.transport.modbus.poll;
 
+import com.google.gson.JsonPrimitive;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.transport.modbus.ModbusByteOrder;
 import org.thingsboard.server.common.data.transport.modbus.ModbusDataType;
 import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
 import org.thingsboard.server.common.data.transport.modbus.ModbusMapping;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -120,6 +122,101 @@ class RegisterCodecTest {
     void rejectsTooShortResponse() {
         assertThatThrownBy(() -> decode(new byte[]{0x00, 0x01}, mapping(ModbusDataType.FLOAT32, 0), BIG, BIG))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void encodeDecodeRoundTripForNumbersInAllOrders() {
+        Object[][] cases = {
+                {ModbusDataType.INT16, -2L}, {ModbusDataType.UINT16, 65534L}, {ModbusDataType.INT32, -70000L},
+                {ModbusDataType.UINT32, 4294967295L}, {ModbusDataType.INT64, -123456789012L}, {ModbusDataType.FLOAT32, 231.4},
+                {ModbusDataType.FLOAT64, 1.25}, {ModbusDataType.FLOAT16, 1.5}};
+        for (Object[] c : cases) {
+            ModbusMapping m = mapping((ModbusDataType) c[0], 0);
+            for (ModbusByteOrder byteOrder : ModbusByteOrder.values()) {
+                for (ModbusByteOrder wordOrder : ModbusByteOrder.values()) {
+                    byte[] wire = RegisterCodec.encodeRegisters(new JsonPrimitive((Number) c[1]), m, byteOrder, wordOrder);
+                    assertThat(decode(wire, m, byteOrder, wordOrder)).as(c[0] + " " + byteOrder + "/" + wordOrder).isEqualTo(c[1]);
+                }
+            }
+        }
+    }
+
+    @Test
+    void encodeReversesMultiplierAndRoundsHalfUp() {
+        ModbusMapping m = mapping(ModbusDataType.UINT16, 0);
+        m.setMultiplier(0.1);
+        assertThat(RegisterCodec.encodeRegisters(new JsonPrimitive(23.5), m, BIG, BIG)).containsExactly(0x00, 0xEB);
+        assertThat(RegisterCodec.encodeRegisters(new JsonPrimitive(23.55), m, BIG, BIG)).containsExactly(0x00, 0xEC);
+    }
+
+    @Test
+    void encodeRejectsOutOfRangeValues() {
+        assertThatThrownBy(() -> RegisterCodec.encodeRegisters(new JsonPrimitive(70000), mapping(ModbusDataType.UINT16, 0), BIG, BIG))
+                .hasMessageContaining("out of range for UINT16");
+        assertThatThrownBy(() -> RegisterCodec.encodeRegisters(new JsonPrimitive(-1), mapping(ModbusDataType.UINT32, 0), BIG, BIG))
+                .hasMessageContaining("out of range for UINT32");
+        assertThatThrownBy(() -> RegisterCodec.encodeRegisters(new JsonPrimitive("abc"), mapping(ModbusDataType.INT16, 0), BIG, BIG))
+                .hasMessageContaining("Expected a number");
+    }
+
+    @Test
+    void encodeRejectsValuesTooLargeForFloatTypes() {
+        assertThatThrownBy(() -> RegisterCodec.encodeRegisters(new JsonPrimitive(70000), mapping(ModbusDataType.FLOAT16, 0), BIG, BIG))
+                .hasMessageContaining("out of range for FLOAT16");
+        assertThatThrownBy(() -> RegisterCodec.encodeRegisters(new JsonPrimitive(1e40), mapping(ModbusDataType.FLOAT32, 0), BIG, BIG))
+                .hasMessageContaining("out of range for FLOAT32");
+        assertThatThrownBy(() -> RegisterCodec.encodeRegisters(new JsonPrimitive("1e400"), mapping(ModbusDataType.FLOAT64, 0), BIG, BIG))
+                .hasMessageContaining("out of range for FLOAT64");
+    }
+
+    @Test
+    void encodeKeepsAll64BitDigitsWhenMultiplierIsSet() {
+        ModbusMapping m = mapping(ModbusDataType.UINT64, 0);
+        m.setMultiplier(1.0);
+        BigInteger value = new BigInteger("12345678901234567891");
+
+        byte[] wire = RegisterCodec.encodeRegisters(new JsonPrimitive(value), m, BIG, BIG);
+
+        assertThat(new BigInteger(1, wire)).isEqualTo(value);
+    }
+
+    @Test
+    void encodeStringPadsAndRejectsTooLong() {
+        ModbusMapping m = mapping(ModbusDataType.STRING, 0);
+        m.setObjectsCount(2);
+        assertThat(RegisterCodec.encodeRegisters(new JsonPrimitive("AB"), m, BIG, BIG)).containsExactly('A', 'B', 0, 0);
+        assertThat(RegisterCodec.encodeRegisters(new JsonPrimitive("AB"), m, LITTLE, BIG)).containsExactly('B', 'A', 0, 0);
+        assertThatThrownBy(() -> RegisterCodec.encodeRegisters(new JsonPrimitive("ABCDE"), m, BIG, BIG))
+                .hasMessageContaining("does not fit");
+    }
+
+    @Test
+    void encodeBytesRequiresExactLength() {
+        ModbusMapping m = mapping(ModbusDataType.BYTES, 0);
+        m.setObjectsCount(1);
+        assertThat(RegisterCodec.encodeRegisters(new JsonPrimitive("01ab"), m, BIG, BIG)).containsExactly(0x01, 0xAB);
+        assertThatThrownBy(() -> RegisterCodec.encodeRegisters(new JsonPrimitive("01"), m, BIG, BIG))
+                .hasMessageContaining("Expected 2 bytes");
+    }
+
+    @Test
+    void encodeCoilAcceptsBooleansNumbersAndStrings() {
+        assertThat(RegisterCodec.encodeCoil(new JsonPrimitive(true))).isTrue();
+        assertThat(RegisterCodec.encodeCoil(new JsonPrimitive(0))).isFalse();
+        assertThat(RegisterCodec.encodeCoil(new JsonPrimitive("TRUE"))).isTrue();
+        assertThat(RegisterCodec.encodeCoil(new JsonPrimitive(1.0))).isTrue();
+        assertThat(RegisterCodec.encodeCoil(new JsonPrimitive(0.0))).isFalse();
+        assertThat(RegisterCodec.encodeCoil(new JsonPrimitive(" 1.0 "))).isTrue();
+        assertThatThrownBy(() -> RegisterCodec.encodeCoil(new JsonPrimitive(2))).hasMessageContaining("Expected true/false");
+        assertThatThrownBy(() -> RegisterCodec.encodeCoil(new JsonPrimitive(0.5))).hasMessageContaining("Expected true/false");
+        assertThatThrownBy(() -> RegisterCodec.encodeCoil(new JsonPrimitive(-1))).hasMessageContaining("Expected true/false");
+        assertThatThrownBy(() -> RegisterCodec.encodeCoil(new JsonPrimitive("on"))).hasMessageContaining("Expected true/false");
+    }
+
+    @Test
+    void maskForSetsOrClearsOneBit() {
+        assertThat(RegisterCodec.maskFor(true, 7)).containsExactly(0xFF7F, 0x0080);
+        assertThat(RegisterCodec.maskFor(false, 7)).containsExactly(0xFF7F, 0x0000);
     }
 
     private static Object decode(byte[] data, ModbusMapping mapping, ModbusByteOrder byteOrder, ModbusByteOrder wordOrder) {

@@ -72,14 +72,6 @@ public class ModbusPollLoop {
         }
     }
 
-    public long getPeriodMs() {
-        return periodMs;
-    }
-
-    public List<ReadBlock> getBlocks() {
-        return List.copyOf(blocks);
-    }
-
     private void schedule(long delayMs) {
         if (!stopped) {
             scheduled = scheduler.schedule(this::runCycle, delayMs, TimeUnit.MILLISECONDS);

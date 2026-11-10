@@ -29,6 +29,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbModbusTransportComponent;
+import org.thingsboard.server.transport.modbus.downlink.ModbusDownlinkService;
 import org.thingsboard.server.transport.modbus.service.ModbusTransportBalancingService;
 import org.thingsboard.server.transport.modbus.service.ModbusTransportService;
 import org.thingsboard.server.transport.modbus.session.ModbusSessionContext;
@@ -48,6 +49,7 @@ public class ModbusTransportContext extends TransportContext {
     private final DeviceProtoService deviceProtoService;
     private final ModbusTransportBalancingService balancingService;
     private final ModbusTransportService modbusTransportService;
+    private final ModbusDownlinkService downlinkService;
 
     @Value("${transport.modbus.batch_retries}")
     private int batchRetries;
@@ -104,6 +106,15 @@ public class ModbusTransportContext extends TransportContext {
 
     public void onDeviceDeleted(DeviceId deviceId) {
         getExecutor().execute(() -> handleDevice(deviceId, null));
+    }
+
+    /** Downlinks arrive on core callback threads; Modbus encoding and queuing run on the transport executor. */
+    public void onAttributeUpdate(ModbusSessionContext session, TransportProtos.AttributeUpdateNotificationMsg msg) {
+        getExecutor().execute(() -> downlinkService.onAttributeUpdate(session, msg));
+    }
+
+    public void onToDeviceRpcRequest(ModbusSessionContext session, TransportProtos.ToDeviceRpcRequestMsg msg) {
+        getExecutor().execute(() -> downlinkService.onToDeviceRpcRequest(session, msg));
     }
 
     public void onDeviceProfileUpdated(ModbusSessionContext session, DeviceProfile deviceProfile) {
@@ -188,9 +199,19 @@ public class ModbusTransportContext extends TransportContext {
                             activated = session.activate(() -> {
                                 registerTransportSession(session, msg);
                                 session.setProfileConfig(getModbusProfileTransportConfiguration(msg.getDeviceProfile()));
-                                session.setSessionTimeoutHandler(() -> registerTransportSession(session, msg));
+                                session.setSessionTimeoutHandler(() -> {
+                                    registerTransportSession(session, msg);
+                                    subscribeToDownlinks(session);
+                                });
                                 modbusTransportService.startPolling(session);
                             });
+                            // Core delivers pending RPCs as soon as the session subscribes, so subscribe only once it is active;
+                            // the lock keeps a concurrent destroy from leaving a subscription for a closed session.
+                            synchronized (session) {
+                                if (activated && session.isActive()) {
+                                    subscribeToDownlinks(session);
+                                }
+                            }
                         } catch (Exception e) {
                             if (session.getSessionInfo() != null) {
                                 transportService.deregisterSession(session.getSessionInfo());
@@ -223,13 +244,17 @@ public class ModbusTransportContext extends TransportContext {
         session.setDeviceProfile(msg.getDeviceProfile());
 
         transportService.registerAsyncSession(sessionInfo, session);
+        session.setConnected(true);
+    }
+
+    private void subscribeToDownlinks(ModbusSessionContext session) {
+        SessionInfoProto sessionInfo = session.getSessionInfo();
         transportService.process(sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder()
                 .setSessionType(TransportProtos.SessionType.ASYNC)
                 .build(), TransportServiceCallback.EMPTY);
         transportService.process(sessionInfo, TransportProtos.SubscribeToRPCMsg.newBuilder()
                 .setSessionType(TransportProtos.SessionType.ASYNC)
                 .build(), TransportServiceCallback.EMPTY);
-        session.setConnected(true);
     }
 
     /** Releases the claim of a session that failed to establish, so a later device update can retry. */

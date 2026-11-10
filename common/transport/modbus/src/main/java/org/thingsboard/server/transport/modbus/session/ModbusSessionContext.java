@@ -149,12 +149,12 @@ public class ModbusSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification) {
-        // todo: write mapped shared attributes (attributeUpdates)
+        parentCtx.onAttributeUpdate(this, attributeUpdateNotification);
     }
 
     @Override
     public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest) {
-        // todo: read/write by rpc mapping; reply with ToDeviceRpcResponseMsg (payload or error)
+        parentCtx.onToDeviceRpcRequest(this, toDeviceRequest);
     }
 
     @Override

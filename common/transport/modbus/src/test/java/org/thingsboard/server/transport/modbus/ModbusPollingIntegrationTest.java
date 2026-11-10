@@ -6,6 +6,7 @@ import com.digitalpetri.modbus.server.ModbusTcpServer;
 import com.digitalpetri.modbus.server.ProcessImage;
 import com.digitalpetri.modbus.server.ReadWriteModbusServices;
 import com.digitalpetri.modbus.tcp.server.NettyTcpServerTransport;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,30 +19,38 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.transport.modbus.ModbusDataType;
 import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
 import org.thingsboard.server.common.data.transport.modbus.ModbusMapping;
 import org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpEndpoint;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpFraming;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.modbus.connection.ModbusConnectionPool;
+import org.thingsboard.server.transport.modbus.downlink.ModbusDownlinkService;
 import org.thingsboard.server.transport.modbus.service.ModbusTransportService;
 import org.thingsboard.server.transport.modbus.session.ModbusSessionContext;
 
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -86,6 +95,7 @@ class ModbusPollingIntegrationTest {
         ReflectionTestUtils.setField(pool, "eventLoopThreads", 1);
         ReflectionTestUtils.setField(pool, "responseProcessingParallelism", 2);
         ReflectionTestUtils.setField(pool, "maxInFlightPerEndpoint", 1);
+        ReflectionTestUtils.setField(pool, "maxQueueSizePerEndpoint", 100);
         ReflectionTestUtils.setField(pool, "connectTimeoutMs", 1000L);
         pool.init();
         service = new ModbusTransportService(pool, transportService);
@@ -176,9 +186,9 @@ class ModbusPollingIntegrationTest {
         service.startPolling(mbap);
 
         ModbusSessionContext rtu = session(2, profile(false, 100L));
-        ((ModbusTcpEndpoint) rtu.getDeviceConfig().getEndpoint()).setFraming(org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpFraming.RTU);
+        ((ModbusTcpEndpoint) rtu.getDeviceConfig().getEndpoint()).setFraming(ModbusTcpFraming.RTU);
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.startPolling(rtu)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> service.startPolling(rtu)).isInstanceOf(IllegalStateException.class);
         assertThat(rtu.getConnection()).isNull();
         assertThat(pool.getConnectionsCount()).isEqualTo(1);
         service.stopPolling(mbap);
@@ -191,7 +201,7 @@ class ModbusPollingIntegrationTest {
         ModbusSessionContext rtu = session(2, profile(false, 100L));
         ModbusTcpEndpoint rtuEndpoint = (ModbusTcpEndpoint) rtu.getDeviceConfig().getEndpoint();
         rtuEndpoint.setPort(port + 1); // separate key; nothing listens there, the connection just keeps retrying
-        rtuEndpoint.setFraming(org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpFraming.RTU);
+        rtuEndpoint.setFraming(ModbusTcpFraming.RTU);
 
         var mbapConnection = pool.acquire(mbap);
         var rtuConnection = pool.acquire(rtu);
@@ -202,6 +212,124 @@ class ModbusPollingIntegrationTest {
         pool.release(mbap, mbapConnection);
         pool.release(rtu, rtuConnection);
         assertThat(pool.getConnectionsCount()).isZero();
+    }
+
+    @Test
+    void sharedAttributeUpdateWritesHoldingRegister() {
+        ModbusSessionContext session = activeWriteSession();
+
+        downlink().onAttributeUpdate(session, TransportProtos.AttributeUpdateNotificationMsg.newBuilder()
+                .addSharedUpdated(TransportProtos.TsKvProto.newBuilder().setKv(TransportProtos.KeyValueProto.newBuilder()
+                        .setKey("ctRatio").setType(TransportProtos.KeyValueType.LONG_V).setLongV(200))).build());
+
+        Awaitility.await().atMost(Duration.ofMillis(WAIT_MS))
+                .untilAsserted(() -> assertThat(holdingRegister(1, 20)).containsExactly(0, 200));
+        service.stopPolling(session);
+    }
+
+    @Test
+    void rpcWritesCoilReadsRegisterAndMaskWritesBit() {
+        ModbusSessionContext session = activeWriteSession();
+        images.get(1).with(tx -> tx.writeHoldingRegisters(regs -> {
+            regs.put(30, new byte[]{0, 7});
+            regs.put(100, new byte[]{0, 0x0A});
+        }));
+
+        assertThat(rpc(session, 1, "resetEnergy", "true").getPayload()).isEqualTo("{\"result\":\"ok\"}");
+        assertThat(images.get(1).<Boolean>get(tx -> tx.readCoils(coils -> coils.get(1)))).isTrue();
+
+        assertThat(rpc(session, 2, "getSetpoint", "{}").getPayload()).isEqualTo("{\"value\":7}");
+
+        assertThat(rpc(session, 3, "remoteControl", "{\"value\": true}").getError()).isEmpty();
+        assertThat(holdingRegister(1, 100)).containsExactly(0, 0x8A); // bit 7 set, bits 1 and 3 kept
+        service.stopPolling(session);
+    }
+
+    @Test
+    void rpcWritesWithMultipleRegisterAndMultipleCoilFunctionCodes() {
+        ModbusSessionContext session = activeWriteSession();
+
+        assertThat(rpc(session, 1, "setLimit", "231.5").getPayload()).isEqualTo("{\"result\":\"ok\"}");
+        byte[] expected = ByteBuffer.allocate(4).putFloat(231.5f).array();
+        assertThat(holdingRegister(1, 40)).containsExactly(expected[0], expected[1]);
+        assertThat(holdingRegister(1, 41)).containsExactly(expected[2], expected[3]);
+
+        assertThat(rpc(session, 2, "enableOutput", "true").getPayload()).isEqualTo("{\"result\":\"ok\"}");
+        assertThat(images.get(1).<Boolean>get(tx -> tx.readCoils(coils -> coils.get(3)))).isTrue();
+        service.stopPolling(session);
+    }
+
+    @Test
+    void rpcErrorsGoToErrorField() {
+        ModbusSessionContext session = activeWriteSession();
+
+        assertThat(rpc(session, 1, "nope", "1").getError()).isEqualTo("Unknown RPC method 'nope'");
+        assertThat(rpc(session, 2, "setSetpoint", "{}").getError()).startsWith("Value is required");
+        assertThat(rpc(session, 3, "setSetpoint", "70000").getError()).contains("out of range for UINT16");
+        service.stopPolling(session);
+    }
+
+    @Test
+    void rpcToUnitThatDoesNotAnswerTimesOut() {
+        ModbusSessionContext session = activeWriteSession(5); // the server knows units 1 and 2 only and stays silent for others
+
+        assertThat(rpc(session, 1, "getSetpoint", "{}").getError()).isEqualTo("Device did not respond in time");
+        service.stopPolling(session);
+    }
+
+    @Test
+    void oneWayRpcReportsDelivered() {
+        ModbusSessionContext session = activeWriteSession();
+        var msg = TransportProtos.ToDeviceRpcRequestMsg.newBuilder().setRequestId(9).setMethodName("resetEnergy").setParams("true").setOneway(true).build();
+
+        downlink().onToDeviceRpcRequest(session, msg);
+
+        verify(transportService, timeout(WAIT_MS)).process(eq(session.getSessionInfo()), eq(msg),
+                eq(RpcStatus.DELIVERED), eq(true), any());
+        service.stopPolling(session);
+    }
+
+    private ModbusDownlinkService downlink() {
+        return new ModbusDownlinkService(transportService);
+    }
+
+    private ModbusSessionContext activeWriteSession() {
+        return activeWriteSession(1);
+    }
+
+    private ModbusSessionContext activeWriteSession(int unitId) {
+        ModbusDeviceProfileTransportConfiguration profile = profile(false, 1000L);
+        ModbusMapping remote = mapping("remoteControl", ModbusDataType.BITS, ModbusFunctionCode.MASK_WRITE_REGISTER, 100, 1);
+        remote.setBit(7);
+        profile.setAttributeUpdates(List.of(mapping("ctRatio", ModbusDataType.UINT16, ModbusFunctionCode.WRITE_SINGLE_REGISTER, 20, null)));
+        profile.setRpc(List.of(
+                mapping("resetEnergy", ModbusDataType.BITS, ModbusFunctionCode.WRITE_SINGLE_COIL, 1, 1),
+                mapping("getSetpoint", ModbusDataType.UINT16, ModbusFunctionCode.READ_HOLDING_REGISTERS, 30, null),
+                mapping("setSetpoint", ModbusDataType.UINT16, ModbusFunctionCode.WRITE_SINGLE_REGISTER, 30, null),
+                mapping("setLimit", ModbusDataType.FLOAT32, ModbusFunctionCode.WRITE_MULTIPLE_REGISTERS, 40, null),
+                mapping("enableOutput", ModbusDataType.BITS, ModbusFunctionCode.WRITE_MULTIPLE_COILS, 3, 1),
+                remote));
+        ModbusSessionContext session = session(unitId, profile);
+        session.activate(() -> {});
+        service.startPolling(session);
+        return session;
+    }
+
+    private TransportProtos.ToDeviceRpcResponseMsg rpc(ModbusSessionContext session, int requestId, String method, String params) {
+        downlink().onToDeviceRpcRequest(session, TransportProtos.ToDeviceRpcRequestMsg.newBuilder()
+                .setRequestId(requestId).setMethodName(method).setParams(params).build());
+        var response = new AtomicReference<TransportProtos.ToDeviceRpcResponseMsg>();
+        Awaitility.await().atMost(Duration.ofMillis(WAIT_MS)).untilAsserted(() -> {
+            ArgumentCaptor<TransportProtos.ToDeviceRpcResponseMsg> captor = ArgumentCaptor.forClass(TransportProtos.ToDeviceRpcResponseMsg.class);
+            verify(transportService, atLeastOnce()).process(eq(session.getSessionInfo()), captor.capture(), any());
+            response.set(captor.getAllValues().stream().filter(r -> r.getRequestId() == requestId).findFirst()
+                    .orElseThrow(() -> new AssertionError("No response yet for request " + requestId)));
+        });
+        return response.get();
+    }
+
+    private byte[] holdingRegister(int unitId, int address) {
+        return images.get(unitId).get(tx -> tx.readHoldingRegisters(regs -> regs.get(address)));
     }
 
     private TransportProtos.PostTelemetryMsg captureTelemetry(int times) {

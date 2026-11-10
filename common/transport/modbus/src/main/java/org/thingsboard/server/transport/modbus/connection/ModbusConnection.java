@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -23,11 +24,15 @@ import java.util.function.Function;
  * Independent of the transport underneath: the client comes from {@code clientFactory}, and everything specific to an
  * endpoint type (TCP today, serial later) is decided by {@link ModbusConnectionPool}.
  * <p>
- * Requests are queued and at most {@code maxInFlight} are outstanding at a time. The request timeout belongs to the client,
+ * Requests are queued and at most {@code maxInFlight} are outstanding at a time. At most {@code maxQueueSize} wait in the
+ * queue: beyond that new requests fail at once, so an unreachable device cannot pile up writes without limit.
+ * The request timeout belongs to the client,
  * so the connection uses the highest timeout among its sessions and rebuilds the client when a session needs a higher one.
  */
 @Slf4j
 public class ModbusConnection {
+
+    public static final long NO_DEADLINE = 0L;
 
     @Getter
     private final String key;
@@ -39,11 +44,15 @@ public class ModbusConnection {
     private final String settings;
     @Getter
     private final int maxInFlight;
+    @Getter
+    private final int maxQueueSize;
     private final Function<Duration, ModbusClientAdapter> clientFactory;
 
     private final Set<UUID> sessionIds = ConcurrentHashMap.newKeySet();
     private final Object lock = new Object();
     private final ArrayDeque<PendingRequest> queue = new ArrayDeque<>();
+    /** Calls to {@link #dispatch} not yet accounted for; non-zero while a dispatch loop is running. */
+    private final AtomicInteger dispatchCalls = new AtomicInteger();
 
     // guarded by lock
     private ModbusClientAdapter client;
@@ -53,11 +62,12 @@ public class ModbusConnection {
     private boolean closed;
 
     @Builder
-    public ModbusConnection(String key, String settings, int maxInFlight, Duration timeout,
+    public ModbusConnection(String key, String settings, int maxInFlight, int maxQueueSize, Duration timeout,
                           Function<Duration, ModbusClientAdapter> clientFactory) {
         this.key = key;
         this.settings = settings;
         this.maxInFlight = Math.max(1, maxInFlight);
+        this.maxQueueSize = Math.max(1, maxQueueSize);
         this.clientFactory = clientFactory;
         this.timeout = timeout;
         this.client = newClient(timeout);
@@ -94,10 +104,25 @@ public class ModbusConnection {
     }
 
     public CompletableFuture<byte[]> read(int unitId, ModbusFunctionCode functionCode, int address, int count) {
-        PendingRequest request = new PendingRequest(unitId, functionCode, address, count, new CompletableFuture<>());
+        return execute(client -> client.read(unitId, functionCode, address, count), NO_DEADLINE);
+    }
+
+    /**
+     * Queues any operation (read or write) behind the ones already waiting on this connection.
+     * Fails at once if the connection is closed or {@code maxQueueSize} operations are already waiting.
+     *
+     * @param deadlineMs epoch millis after which the operation is dropped instead of sent (e.g. an expired RPC), or {@link #NO_DEADLINE}
+     */
+    public CompletableFuture<byte[]> execute(Function<ModbusClientAdapter, CompletionStage<byte[]>> operation, long deadlineMs) {
+        PendingRequest request = new PendingRequest(operation, deadlineMs, new CompletableFuture<>());
         synchronized (lock) {
             if (closed) {
                 request.future().completeExceptionally(new IllegalStateException("Modbus connection " + key + " is closed"));
+                return request.future();
+            }
+            if (queue.size() >= maxQueueSize) {
+                request.future().completeExceptionally(new IllegalStateException(
+                        "Modbus connection " + key + " is overloaded: " + maxQueueSize + " requests are already waiting"));
                 return request.future();
             }
             queue.add(request);
@@ -126,34 +151,66 @@ public class ModbusConnection {
 
     /**
      * Sends queued requests while there is a free slot. Called after every enqueue and every completion;
-     * there is no sender thread. Returns as soon as the connection is closed, all slots are taken or the queue is empty.
+     * there is no sender thread.
+     * <p>
+     * Only one caller at a time runs the loop. A call that arrives while it is running, from another thread or from a
+     * request that completed inside {@link #send}, is only counted in {@code dispatchCalls} and returns. The running loop
+     * sends what it can; when nothing more can be sent it checks whether such calls were counted meanwhile and, if so,
+     * looks at the queue again. So requests that fail immediately are handled one after another instead of one inside
+     * another, and a request queued (or a slot freed) just as the loop is finishing is not left waiting.
      */
     private void dispatch() {
-        Dispatch next;
-        while ((next = nextToSend()) != null) {
-            send(next);
+        if (dispatchCalls.getAndIncrement() != 0) {
+            return;
+        }
+        int unhandledCalls = 1; // this call
+        while (unhandledCalls != 0) {
+            Dispatch next = nextToSend();
+            if (next != null) {
+                send(next);
+            } else {
+                unhandledCalls = dispatchCalls.addAndGet(-unhandledCalls);
+            }
         }
     }
 
     /**
-     * Takes the next queued request and a slot for it, or {@code null} if nothing can be sent now.
+     * Takes the next queued request and a slot for it, or {@code null} if nothing can be sent now: the connection is
+     * closed, all slots are taken or the queue is empty. Requests whose deadline has passed are dropped on the way.
      * The client is captured together with the slot, so a concurrent client rebuild cannot swap it in between.
      */
     private Dispatch nextToSend() {
+        List<PendingRequest> expired = null;
+        Dispatch next = null;
+        long now = System.currentTimeMillis();
+
         synchronized (lock) {
-            if (closed || inFlight >= maxInFlight || queue.isEmpty()) {
-                return null;
+            while (!closed && inFlight < maxInFlight && !queue.isEmpty()) {
+                PendingRequest request = queue.poll();
+                if (request.deadlineMs() != NO_DEADLINE && now > request.deadlineMs()) {
+                    if (expired == null) {
+                        expired = new ArrayList<>();
+                    }
+                    expired.add(request);
+                    continue;
+                }
+                inFlight++;
+                next = new Dispatch(request, client);
+                break;
             }
-            inFlight++;
-            return new Dispatch(queue.poll(), client);
         }
+        if (expired != null) {
+            IllegalStateException error = new IllegalStateException("Request expired before it was sent");
+            expired.forEach(request -> request.future().completeExceptionally(error));
+        }
+        return next;
     }
 
     private void send(Dispatch dispatch) {
         PendingRequest request = dispatch.request();
         CompletionStage<byte[]> response;
         try {
-            response = dispatch.client().read(request.unitId(), request.functionCode(), request.address(), request.count());
+            response = request.operation().apply(dispatch.client());
         } catch (Exception e) {
             response = CompletableFuture.failedFuture(e);
         }
@@ -190,7 +247,7 @@ public class ModbusConnection {
 
     private record Dispatch(PendingRequest request, ModbusClientAdapter client) {}
 
-    private record PendingRequest(
-            int unitId, ModbusFunctionCode functionCode, int address, int count, CompletableFuture<byte[]> future) {}
+    private record PendingRequest(Function<ModbusClientAdapter, CompletionStage<byte[]>> operation, long deadlineMs,
+                                  CompletableFuture<byte[]> future) {}
 
 }

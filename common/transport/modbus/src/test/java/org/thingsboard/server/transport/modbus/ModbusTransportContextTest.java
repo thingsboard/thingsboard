@@ -31,10 +31,13 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.service.DeviceProtoService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.transport.modbus.downlink.ModbusDownlinkService;
 import org.thingsboard.server.transport.modbus.service.ModbusTransportBalancingService;
 import org.thingsboard.server.transport.modbus.service.ModbusTransportService;
 import org.thingsboard.server.transport.modbus.session.ModbusSessionContext;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,6 +45,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -72,7 +77,8 @@ class ModbusTransportContextTest {
         TbServiceInfoProvider serviceInfoProvider = mock(TbServiceInfoProvider.class);
         when(serviceInfoProvider.getServiceId()).thenReturn("tb-transport-1");
 
-        context = new ModbusTransportContext(deviceProtoService, balancingService, modbusTransportService);
+        context = new ModbusTransportContext(deviceProtoService, balancingService, modbusTransportService,
+                mock(ModbusDownlinkService.class));
         ReflectionTestUtils.setField(context, "transportService", transportService);
         ReflectionTestUtils.setField(context, "serviceInfoProvider", serviceInfoProvider);
         ReflectionTestUtils.setField(context, "executor", MoreExecutors.newDirectExecutorService());
@@ -96,6 +102,21 @@ class ModbusTransportContextTest {
         verify(transportService).process(any(TransportProtos.SessionInfoProto.class), any(TransportProtos.SubscribeToRPCMsg.class), any());
         verify(modbusTransportService, times(1)).startPolling(session);
         verify(transportService).lifecycleEvent(tenantId, deviceId, ComponentLifecycleEvent.STARTED, true, null);
+    }
+
+    @Test
+    void sessionSubscribesToDownlinksOnlyOnceActive() {
+        // core delivers pending RPCs right after the subscription: the session must already accept them
+        List<ModbusSessionContext.State> statesOnSubscribe = new ArrayList<>();
+        doAnswer(inv -> statesOnSubscribe.add(sessions().get(deviceId).getState()))
+                .when(transportService).process(any(TransportProtos.SessionInfoProto.class), any(TransportProtos.SubscribeToRPCMsg.class), any());
+        doAnswer(inv -> statesOnSubscribe.add(sessions().get(deviceId).getState()))
+                .when(transportService).process(any(TransportProtos.SessionInfoProto.class), any(TransportProtos.SubscribeToAttributeUpdatesMsg.class), any());
+
+        context.onDeviceUpdatedOrCreated(new DeviceUpdatedEvent(device(OWNED_HOST)));
+        tokenCallback().onSuccess(validResponse());
+
+        assertThat(statesOnSubscribe).containsExactly(ModbusSessionContext.State.ACTIVE, ModbusSessionContext.State.ACTIVE);
     }
 
     @Test
@@ -197,7 +218,7 @@ class ModbusTransportContextTest {
     @SuppressWarnings("unchecked")
     private TransportServiceCallback<ValidateDeviceCredentialsResponse> tokenCallback() {
         ArgumentCaptor<TransportServiceCallback<ValidateDeviceCredentialsResponse>> captor = ArgumentCaptor.forClass(TransportServiceCallback.class);
-        verify(transportService, org.mockito.Mockito.atLeastOnce())
+        verify(transportService, atLeastOnce())
                 .process(eq(DeviceTransportType.MODBUS), any(TransportProtos.ValidateDeviceTokenRequestMsg.class), captor.capture());
         return captor.getValue();
     }
