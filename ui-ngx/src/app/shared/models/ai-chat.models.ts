@@ -119,6 +119,7 @@ export interface AiAssistantPanelConfig {
   showButton?: boolean;
   fill?: boolean;
   promptExamples?: AiAssistantPromptExample[];
+  suggestion?: string;
 }
 
 export interface BaseChatToolEventData {

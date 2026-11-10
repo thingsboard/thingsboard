@@ -591,6 +591,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.panelService.setConfig({
         title: this.translate.instant('dashboard.ai-assistant-title'),
         initialPromptPlaceholder: this.translate.instant('dashboard.ai-assistant-initial-prompt-placeholder'),
+        suggestion: this.translate.instant('dashboard.ai-assistant-suggestion'),
         fill: true,
         promptExamples: [
           {

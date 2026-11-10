@@ -40,6 +40,12 @@ export class AiAssistantPanelComponent {
 
   promptExamples = computed<AiAssistantPromptExample[]>(() => this.panelService.config()?.promptExamples ?? []);
 
+  startSuggestion = computed<string | null>(() => {
+    const config = this.panelService.config();
+    const example = config?.promptExamples?.[0]?.message?.trim();
+    return config?.suggestion ?? (example && example.length <= 80 && !example.includes('...') ? example : null);
+  });
+
   private chats = inject(AiChatsService);
   private elementRef = inject(ElementRef<HTMLElement>);
 

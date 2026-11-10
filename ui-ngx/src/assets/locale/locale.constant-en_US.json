@@ -3098,6 +3098,7 @@
         "ai-assistant-title": "Ask about this dashboard",
         "ai-assistant-initial-prompt-placeholder": "Describe what you'd like to set up...",
         "ai-assistant-example-monitor-device-label": "Monitor a device",
+        "ai-assistant-suggestion": "How is it doing?",
         "ai-assistant-example-monitor-device-message": "The device is ... I want to set up this dashboard as a single-state view of it, showing its latest telemetry as value cards at the top, a time series chart of that telemetry below them, and a table of its active alarms at the bottom.",
         "ai-assistant-example-monitor-fleet-label": "Monitor a device fleet",
         "ai-assistant-example-monitor-fleet-message": "The device type is ... I want to set up this dashboard with two states for it. The overview state should list all devices of that type in an entities table, with a table of active alarms for those devices below it. Selecting a device opens a details state showing that device's latest telemetry as value cards at the top, a time series chart of that telemetry below them, and a table of its active alarms at the bottom.",
@@ -3276,6 +3277,7 @@
     "device": {
         "ai-assistant-initial-prompt-placeholder": "Describe what you'd like to set up...",
         "ai-assistant-example-connect-label": "Connect my device",
+        "ai-assistant-suggestion": "Which of my devices are inactive?",
         "ai-assistant-example-connect-message": "Help me connect one of my devices to the platform so it starts sending real telemetry.",
         "all": "All",
         "all-devices": "All devices",

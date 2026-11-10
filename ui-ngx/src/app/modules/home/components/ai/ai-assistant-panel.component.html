@@ -23,6 +23,7 @@
               [startTitle]="panelService.config()?.title"
               [startLine]="panelService.config()?.subTitle"
               [startPlaceholder]="panelService.config()?.initialPromptPlaceholder"
+              [startSuggestion]="startSuggestion()"
               (closed)="close()">
   </tb-ai-chat>
 </div>

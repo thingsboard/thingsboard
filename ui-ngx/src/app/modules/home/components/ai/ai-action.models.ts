@@ -226,6 +226,19 @@ export interface AiPrompt {
   icon?: string;
 }
 
+export function aiTurnPrompts(messages: Array<{from: string; data?: any}>): AiPrompt[] {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.from === 'USER') {
+      return [];
+    }
+    if (message.from === 'ACTION' && message.data?.tool === SUGGEST_PROMPTS_TOOL) {
+      return aiPromptsOf(message.data.arguments);
+    }
+  }
+  return [];
+}
+
 export function aiPromptsOf(args: unknown): AiPrompt[] {
   const prompts = (args as {prompts?: unknown})?.prompts;
   if (!Array.isArray(prompts)) {

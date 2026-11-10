@@ -49,7 +49,7 @@ import {
   ToolFinished,
   ToolStarted
 } from '@shared/models/ai-chat.models';
-import { aiActionWords, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction, isKitCardTool } from '@home/components/ai/ai-action.models';
+import { aiActionWords, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, aiTurnPrompts, isHiddenAiAction, isKitCardTool } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
 import { AiFile } from '@home/components/ai/ai-file.models';
 import { AiFileBodyComponent, AiFileMarks } from '@home/components/ai/ai-file-body.component';
@@ -103,6 +103,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
   startLine = input<string>();
 
   startPlaceholder = input<string>();
+
+  startSuggestion = input<string | null>(null);
 
   closed = output<void>();
 
@@ -276,8 +278,18 @@ export class AiChatComponent implements OnInit, OnDestroy {
       .find(message => !completed[message.data.executionId] && !answered.has(message.data.executionId) && message.data.needsApproval);
   });
 
-  suggestion = computed(() => !this.docked() && !this.chatId() && !this.messages().length && !this.loading()
-    ? this.translate.instant('ai-assistant.start-suggestion') : null);
+  suggestion = computed(() => {
+    if (this.loading() || this.waitingApproval()) {
+      return null;
+    }
+    if (!this.messages().length) {
+      if (this.chatId()) {
+        return null;
+      }
+      return this.docked() ? this.startSuggestion() : this.translate.instant('ai-assistant.start-suggestion');
+    }
+    return aiTurnPrompts(this.messages())[0]?.text ?? null;
+  });
 
   placeholder = computed(() => !this.waitingApproval() && !this.messages().length && this.startPlaceholder()
     ? this.startPlaceholder()

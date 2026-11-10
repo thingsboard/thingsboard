@@ -75,6 +75,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() work: AiWorkState | undefined;
   @Input() feedback = false;
   @Input() shownFile: string | null = null;
+  @Input() ghostFirst = false;
   @Output() rate = new EventEmitter<AnswerRatingEvent>();
   @Output() chip = new EventEmitter<string>();
   @Output() report = new EventEmitter<AnswerReportEvent>();
@@ -617,7 +618,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
         answer = i;
       }
     }
-    return items.length && answer >= 0 ? {index: answer, items} : null;
+    const shown = this.ghostFirst ? items.slice(1) : items;
+    return shown.length && answer >= 0 ? {index: answer, items: shown} : null;
   }
 
   private findLastAnswerIndex(): number {

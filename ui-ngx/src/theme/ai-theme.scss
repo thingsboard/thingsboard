@@ -4282,3 +4282,11 @@ a.tb-chiplink:focus-visible {
     color: var(--k-grey);
   }
 }
+
+.tb-ai-composer.docked .composer-ghost {
+  top: 10px;
+  left: 33px;
+  right: 44px;
+  font-size: var(--chat-line);
+  line-height: var(--chat-line-lh);
+}

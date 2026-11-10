@@ -73,6 +73,7 @@
       (runPlan)="runPlan($event)"
       (changePlan)="changePlan()"
       [shownFile]="fileOpen() ? (shownFile()?.executionId ?? null) : null"
+      [ghostFirst]="true"
       (openFile)="showFile($event)"
       (prompt)="ask($event)"
       (answer)="ask($event)"
