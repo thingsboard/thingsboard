@@ -248,13 +248,15 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   private stepActions(): ChatMessage[] {
     const info = this.info();
     const result = info?.metadata?.installResult;
-    const actions: ChatMessage[] = [{from: 'ACTION', data: {executionId: 'solution-create', tool: 'create_solution', status: 'SUCCESS', startedAt: 0}}];
+    const metadata = info?.metadata;
+    const actions: ChatMessage[] = [{from: 'ACTION', data: {executionId: 'solution-create', tool: 'create_solution', status: 'SUCCESS',
+      startedAt: metadata?.builtTime ?? 0, durationMs: metadata?.createDurationMs}}];
     if (this.installed() && result) {
       const entities = Object.entries(result.entityResults ?? {})
         .filter(([type]) => type !== EntityType.ENTITY_GROUP && type !== EntityType.RULE_CHAIN)
         .flatMap(([, entries]) => (entries ?? []).filter(entry => entry?.id && entry.status !== 'ERROR').map(entry => entry.id));
       actions.push({from: 'ACTION', data: {executionId: 'solution-install', tool: 'install_solution', status: 'SUCCESS',
-        startedAt: result.installedTime ?? 0, affectedEntities: entities}});
+        startedAt: result.installedTime ?? 0, durationMs: result.durationMs, affectedEntities: entities}});
     }
     return actions;
   }

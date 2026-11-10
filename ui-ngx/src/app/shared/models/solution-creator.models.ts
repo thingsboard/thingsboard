@@ -100,6 +100,8 @@ export interface SolutionData {
 export interface SolutionMetadata {
   installed: boolean;
   built: boolean;
+  builtTime?: number;
+  createDurationMs?: number;
   installResult?: SolutionInstallResult;
 }
 
@@ -108,6 +110,7 @@ export interface SolutionInstallResult {
   createdEntities: Array<BaseData<EntityId>>;
   entityResults?: Record<EntityType, Array<EntityResult>>;
   installedTime?: number;
+  durationMs?: number;
 }
 
 export interface EntityResult {

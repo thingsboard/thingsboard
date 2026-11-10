@@ -14,7 +14,7 @@
   @default {
     <div class="out">
       <mat-icon class="mark" aria-hidden="true">{{ action().status === 'FAILURE' ? 'error_outline' : 'check' }}</mat-icon>
-      <span class="say">{{ outcome() }}</span>
+      <span class="say">@if (outcomeChip(); as chip) {{{ chip.before }}@if (chip.link) {<a class="tb-chiplink" [routerLink]="chip.link"><code class="k-ent" [attr.data-pal]="chip.palette"><span class="mat-icon notranslate material-icons mat-ligature-font k-ent-ic" aria-hidden="true">{{ chip.icon }}</span>{{ chip.name }}</code></a>} @else {<code class="k-ent" [attr.data-pal]="chip.palette"><span class="mat-icon notranslate material-icons mat-ligature-font k-ent-ic" aria-hidden="true">{{ chip.icon }}</span>{{ chip.name }}</code>}{{ chip.after }}} @else {{{ outcome() }}}</span>
       @if (duration()) {
         <span class="dur">{{ duration() }}</span>
       }

@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import {
   AiAction,
+  aiEntityKind,
   aiActionDetail,
   aiActionDuration,
   aiActionWords
@@ -35,6 +37,27 @@ export class AiActionLineComponent {
 
   autoApproved = input(false);
 
+  linkEntity = input(true);
+
+  outcomeChip = computed(() => {
+    const entity = this.action().affectedEntities?.[0];
+    const text = this.outcome();
+    const match = entity && this.action().status === 'SUCCESS' ? /'([^']{1,120})'/.exec(text) : null;
+    if (!match) {
+      return null;
+    }
+    const kind = aiEntityKind(entity.entityType);
+    const base = baseDetailsPageByEntityType.get(entity.entityType as EntityType);
+    return {
+      before: text.slice(0, match.index),
+      name: match[1],
+      after: text.slice(match.index + match[0].length),
+      icon: kind.icon,
+      palette: kind.palette,
+      link: this.linkEntity() && base ? `${base}/${entity.id}` : null
+    };
+  });
+
   private runWords = computed(() => this.translate.instant(this.words().key + '.run', this.words().params));
 
   running = computed(() => this.more() > 0
@@ -58,7 +81,7 @@ export class AiActionLineComponent {
     return this.translate.instant(words.key + '.done', words.params);
   }
 
-  duration = computed(() => this.action().durationMs !== undefined ? aiActionDuration(this.action().durationMs) : '');
+  duration = computed(() => this.action().durationMs != null ? aiActionDuration(this.action().durationMs) : '');
 
   request = computed(() => aiActionDetail(this.action().arguments));
 

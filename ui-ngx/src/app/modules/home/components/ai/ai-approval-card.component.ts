@@ -107,7 +107,8 @@ export class AiApprovalCardComponent implements OnChanges {
           executionId: result.executionId,
           tool: '',
           status: result.executionStatus,
-          startedAt: this.data.time ?? Date.now()
+          startedAt: this.data.time ?? Date.now(),
+          affectedEntities: result.affectedEntities ?? []
         };
       }
       this.cd.detectChanges();
