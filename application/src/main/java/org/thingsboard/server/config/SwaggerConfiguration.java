@@ -578,12 +578,7 @@ public class SwaggerConfiguration {
                     deduplicateAllOfProperties(schema, schemas, ownProps);
                 });
 
-                // Honour an explicit @Schema(requiredMode = NOT_REQUIRED): swagger-core skips @NotNull
-                // for such properties, but still adds the ones with @NotBlank / @NotEmpty to 'required'.
-                schemas.forEach((schemaName, schema) -> {
-                    Set<String> notRequiredProps = schemaNotRequiredProps.getOrDefault(schemaName, Set.of());
-                    removeRequiredProperties(schema, notRequiredProps);
-                });
+                removeNotRequiredProperties(schemas);
 
                 // Reorder properties for all component schemas. This runs after all
                 // schemas are finalized so it covers schemas the ModelConverter only
@@ -1167,6 +1162,15 @@ public class SwaggerConfiguration {
             if (jsonName != null) own.add(jsonName);
         }
         return own;
+    }
+
+    // Honour an explicit @Schema(requiredMode = NOT_REQUIRED): swagger-core skips @NotNull
+    // for such properties, but still adds the ones with @NotBlank / @NotEmpty to 'required'.
+    void removeNotRequiredProperties(Map<String, Schema> schemas) {
+        schemas.forEach((schemaName, schema) -> {
+            Set<String> notRequiredProps = schemaNotRequiredProps.getOrDefault(schemaName, Set.of());
+            removeRequiredProperties(schema, notRequiredProps);
+        });
     }
 
     private static Set<String> computeNotRequiredPropNames(com.fasterxml.jackson.databind.BeanDescription beanDesc) {

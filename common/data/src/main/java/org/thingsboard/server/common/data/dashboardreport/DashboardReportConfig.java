@@ -21,7 +21,7 @@ public class DashboardReportConfig {
     boolean useDashboardTimewindow;
     @Schema(description = "Specific dashboard timewindow that will be used during dashboard report generation.")
     JsonNode timewindow;
-    @Schema(description = "If set, timewindow configured in the target dashboard will be used during dashboard report generation.", example = "report-%d{yyyy-MM-dd_HH:mm:ss}", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @Schema(description = "Pattern of the generated report file name. '%d{<date format>}' is replaced with the report generation time formatted in the report timezone. If not set, 'report-%d{yyyy-MM-dd_HH:mm:ss}' is used.", example = "report-%d{yyyy-MM-dd_HH:mm:ss}", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     String namePattern;
     @Schema(description = "Dashboard report file type, can be PDF | PNG | JPEG.", example = "pdf")
     String type;
