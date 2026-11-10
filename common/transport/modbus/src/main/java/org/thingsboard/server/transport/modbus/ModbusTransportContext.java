@@ -272,9 +272,15 @@ public class ModbusTransportContext extends TransportContext {
         if (session == null) {
             return;
         }
-        boolean wasActive = session.close();
+        boolean wasActive;
+        // same lock as restartPolling: a restart in progress finishes first, and its poll loops are stopped here
+        synchronized (session) {
+            wasActive = session.close();
+            if (wasActive) {
+                modbusTransportService.stopPolling(session);
+            }
+        }
         if (wasActive) {
-            modbusTransportService.stopPolling(session);
             transportService.deregisterSession(session.getSessionInfo());
             transportService.lifecycleEvent(session.getTenantId(), session.getDeviceId(), ComponentLifecycleEvent.STOPPED, true, null);
         }
@@ -297,10 +303,17 @@ public class ModbusTransportContext extends TransportContext {
         transportService.lifecycleEvent(session.getTenantId(), session.getDeviceId(), ComponentLifecycleEvent.UPDATED, true, null);
     }
 
+    /**
+     * Restarts are triggered from different threads (device update on the transport executor, profile update on a core
+     * callback thread) and may coincide with a destroy. The session lock makes them take turns: two restarts cannot both
+     * start poll loops, and a destroyed session is never left polling.
+     */
     private void restartPolling(ModbusSessionContext session) {
-        modbusTransportService.stopPolling(session);
-        if (session.isActive()) {
-            modbusTransportService.startPolling(session);
+        synchronized (session) {
+            modbusTransportService.stopPolling(session);
+            if (session.isActive()) {
+                modbusTransportService.startPolling(session);
+            }
         }
     }
 

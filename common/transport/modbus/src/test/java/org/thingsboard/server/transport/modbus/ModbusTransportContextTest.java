@@ -37,9 +37,13 @@ import org.thingsboard.server.transport.modbus.service.ModbusTransportService;
 import org.thingsboard.server.transport.modbus.session.ModbusSessionContext;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -215,6 +219,104 @@ class ModbusTransportContextTest {
         verify(transportService).lifecycleEvent(tenantId, deviceId, ComponentLifecycleEvent.UPDATED, true, null);
     }
 
+    @Test
+    void destroyDuringRestartNeverLeavesPollingOnClosedSession() throws Exception {
+        ModbusSessionContext session = activeSession();
+        CountDownLatch restartStarted = new CountDownLatch(1);
+        CountDownLatch letRestartContinue = new CountDownLatch(1);
+        // the restart has seen the session active and is in the middle of starting its poll loops
+        List<String> calls = recordPollingCalls(session, "start", restartStarted, letRestartContinue);
+
+        Thread restart = new Thread(() -> context.onDeviceUpdatedOrCreated(new DeviceUpdatedEvent(deviceWithUnitId(7))), "restart");
+        restart.start();
+        assertThat(restartStarted.await(5, TimeUnit.SECONDS)).isTrue();
+        Thread destroy = new Thread(() -> context.onDeviceDeletedEvent(new DeviceDeletedEvent(deviceId)), "destroy");
+        destroy.start();
+        awaitBlockedOrFinished(destroy);
+        letRestartContinue.countDown();
+        restart.join(5000);
+        destroy.join(5000);
+
+        assertThat(session.getState()).isEqualTo(ModbusSessionContext.State.CLOSED);
+        // the destroy waited for the restart, so its stop comes after the loops were started and stops them
+        assertThat(calls).containsExactly("stop", "start on ACTIVE", "started", "stop");
+    }
+
+    @Test
+    void concurrentRestartsDoNotInterleave() throws Exception {
+        ModbusSessionContext session = activeSession();
+        CountDownLatch restartStarted = new CountDownLatch(1);
+        CountDownLatch letRestartContinue = new CountDownLatch(1);
+        List<String> calls = recordPollingCalls(session, "stop", restartStarted, letRestartContinue);
+
+        Thread deviceRestart = new Thread(() -> context.onDeviceUpdatedOrCreated(new DeviceUpdatedEvent(deviceWithUnitId(7))), "device-restart");
+        deviceRestart.start();
+        assertThat(restartStarted.await(5, TimeUnit.SECONDS)).isTrue();
+        Thread profileRestart = new Thread(() -> context.onDeviceProfileUpdated(session, profile(9000L)), "profile-restart");
+        profileRestart.start();
+        awaitBlockedOrFinished(profileRestart);
+        letRestartContinue.countDown();
+        deviceRestart.join(5000);
+        profileRestart.join(5000);
+
+        assertThat(calls).containsExactly("stop", "start on ACTIVE", "started", "stop", "start on ACTIVE", "started");
+    }
+
+    private ModbusSessionContext activeSession() {
+        context.onDeviceUpdatedOrCreated(new DeviceUpdatedEvent(device(OWNED_HOST)));
+        tokenCallback().onSuccess(validResponse());
+        return sessions().get(deviceId);
+    }
+
+    private Device deviceWithUnitId(int unitId) {
+        Device device = device(OWNED_HOST);
+        ((ModbusDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration()).setUnitId(unitId);
+        return device;
+    }
+
+    /**
+     * Records every later stopPolling ("stop") and startPolling ("start on STATE" when it begins, "started" when it returns)
+     * in call order. The first call of {@code pausedCall} is held until the test lets it go; later calls pass straight through.
+     */
+    private List<String> recordPollingCalls(ModbusSessionContext session, String pausedCall, CountDownLatch pauseReached, CountDownLatch letContinue) {
+        List<String> calls = Collections.synchronizedList(new ArrayList<>());
+        AtomicBoolean first = new AtomicBoolean(true);
+        Runnable pause = () -> {
+            if (first.getAndSet(false)) {
+                pauseReached.countDown();
+                try {
+                    letContinue.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+        doAnswer(inv -> {
+            calls.add("stop");
+            if (pausedCall.equals("stop")) {
+                pause.run();
+            }
+            return null;
+        }).when(modbusTransportService).stopPolling(session);
+        doAnswer(inv -> {
+            calls.add("start on " + session.getState());
+            if (pausedCall.equals("start")) {
+                pause.run();
+            }
+            calls.add("started");
+            return null;
+        }).when(modbusTransportService).startPolling(session);
+        return calls;
+    }
+
+    /** Waits until the thread is either parked on the session lock or done, i.e. it has got as far as it can. */
+    private static void awaitBlockedOrFinished(Thread thread) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 5000;
+        while (thread.isAlive() && thread.getState() != Thread.State.BLOCKED && System.currentTimeMillis() < deadline) {
+            Thread.sleep(10);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private TransportServiceCallback<ValidateDeviceCredentialsResponse> tokenCallback() {
         ArgumentCaptor<TransportServiceCallback<ValidateDeviceCredentialsResponse>> captor = ArgumentCaptor.forClass(TransportServiceCallback.class);
@@ -266,22 +368,25 @@ class ModbusTransportContextTest {
         deviceInfo.setDeviceName("Meter A");
         deviceInfo.setDeviceType("meter");
 
+        return ValidateDeviceCredentialsResponse.builder()
+                .deviceInfo(deviceInfo)
+                .deviceProfile(profile(5000L))
+                .credentials("token-" + deviceId)
+                .build();
+    }
+
+    private DeviceProfile profile(long pollPeriodMs) {
         ModbusDeviceProfileTransportConfiguration profileConfig = new ModbusDeviceProfileTransportConfiguration();
         profileConfig.setTimeoutMs(3000);
         profileConfig.setRetries(1);
-        profileConfig.setPollPeriodMs(5000L);
+        profileConfig.setPollPeriodMs(pollPeriodMs);
         DeviceProfileData profileData = new DeviceProfileData();
         profileData.setTransportConfiguration(profileConfig);
         DeviceProfile profile = new DeviceProfile(profileId);
         profile.setName("meter");
         profile.setTransportType(DeviceTransportType.MODBUS);
         profile.setProfileData(profileData);
-
-        return ValidateDeviceCredentialsResponse.builder()
-                .deviceInfo(deviceInfo)
-                .deviceProfile(profile)
-                .credentials("token-" + deviceId)
-                .build();
+        return profile;
     }
 
 }
