@@ -1,19 +1,13 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai.dto;
 
-import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.data.message.Content;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public record TbChatRequest(
         @Schema(
@@ -42,25 +36,7 @@ public record TbChatRequest(
 ) {
 
     public ChatRequest toLangChainChatRequest() {
-        return ChatRequest.builder()
-                .messages(getLangChainMessages())
-                .build();
-    }
-
-    private List<ChatMessage> getLangChainMessages() {
-        List<ChatMessage> messages = new ArrayList<>(2);
-
-        if (systemMessage != null) {
-            messages.add(SystemMessage.from(systemMessage));
-        }
-
-        List<Content> langChainContents = userMessage.contents().stream()
-                .map(TbContent::toLangChainContent)
-                .toList();
-
-        messages.add(UserMessage.from(langChainContents));
-
-        return messages;
+        return new TbChatPrompt(systemMessage, userMessage).toLangChainChatRequest();
     }
 
 }

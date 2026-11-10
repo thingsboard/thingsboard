@@ -1880,6 +1880,8 @@
     "model": "モデル",
     "name": "名前",
     "ai-provider": "AIプロバイダー",
+    "customer-access": "顧客アクセス",
+    "customer-access-hint": "顧客ユーザーがこのモデルにチャットリクエストを送信できるようにします（例：Trendz Analyticsから）。モデルの設定と認証情報が公開されることはありません。",
     "no-found": "AIモデルが見つかりません",
     "list": "{ count, plural, =1 {AIモデル} other {AIモデル一覧 # 件} }",
     "selected-fields": "{ count, plural, =1 {1 件のAIモデル} other {# 件のAIモデル} } を選択",
@@ -8848,7 +8850,8 @@
         "SHARE_GROUP": "グループを共有",
         "ASSIGN_TO_TENANT": "テナントに割り当て",
         "READ_CALCULATED_FIELD": "計算フィールドを読み取り",
-        "WRITE_CALCULATED_FIELD": "計算フィールドを書き込み"
+        "WRITE_CALCULATED_FIELD": "計算フィールドを書き込み",
+        "INVOKE": "呼び出し"
       }
     }
   },

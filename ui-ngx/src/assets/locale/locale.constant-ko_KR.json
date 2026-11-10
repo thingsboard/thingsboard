@@ -1607,6 +1607,8 @@
         "model": "모델",
         "name": "이름",
         "ai-provider": "AI 제공자",
+        "customer-access": "고객 액세스",
+        "customer-access-hint": "고객 사용자가 이 모델에 채팅 요청을 보낼 수 있도록 합니다(예: Trendz Analytics에서). 모델 구성과 자격 증명은 절대 노출되지 않습니다.",
         "no-found": "AI 모델이 없습니다",
         "list": "{ count, plural, =1 {1개 모델} other {#개 모델 목록} }",
         "selected-fields": "{ count, plural, =1 {1개 모델} other {#개 모델} } 선택됨",

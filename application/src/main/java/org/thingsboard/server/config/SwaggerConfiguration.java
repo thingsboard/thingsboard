@@ -37,6 +37,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springdoc.core.customizers.ParameterCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
@@ -49,11 +50,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.ClassUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.query.AliasEntityType;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -269,7 +273,8 @@ public class SwaggerConfiguration {
 
         var requestBody = new RequestBody().description("Refresh token request")
                 .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
-                        new MediaType().schema(new Schema<JsonNode>().addProperty("refreshToken", new Schema<>().type("string")))));
+                        new MediaType().schema(new Schema<JsonNode>().types(Set.of("object"))
+                                .addProperty("refreshToken", new Schema<>().types(Set.of("string"))))));
 
         operation.requestBody(requestBody);
 
@@ -289,6 +294,38 @@ public class SwaggerConfiguration {
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();
+    }
+
+    // springdoc infers the parameter type from the Java type only when @Parameter(schema = @Schema(...))
+    // sets neither type nor implementation; otherwise (e.g. schema = @Schema(minimum = "1")) it falls back
+    // to "string". Restore integer/int32 or integer/int64 for int and long parameters, keeping the rest of the schema.
+    @Bean
+    public ParameterCustomizer integerParameterCustomizer() {
+        return (parameter, methodParameter) -> {
+            if (parameter == null || parameter.getSchema() == null) {
+                return parameter;
+            }
+            Schema<?> schema = parameter.getSchema();
+            boolean isString = "string".equals(schema.getType()) || Set.of("string").equals(schema.getTypes());
+            String format = integerFormat(methodParameter);
+            if (isString && format != null && schema.getFormat() == null) {
+                schema.setType("integer");
+                schema.setTypes(Set.of("integer"));
+                schema.setFormat(format);
+            }
+            return parameter;
+        };
+    }
+
+    private static String integerFormat(MethodParameter methodParameter) {
+        Class<?> type = ClassUtils.resolvePrimitiveIfNecessary(methodParameter.getParameterType());
+        if (Integer.class.equals(type)) {
+            return "int32";
+        }
+        if (Long.class.equals(type)) {
+            return "int64";
+        }
+        return null;
     }
 
     @Bean
@@ -361,9 +398,11 @@ public class SwaggerConfiguration {
         };
     }
 
+    // The document is OpenAPI 3.1 (see springDocProperties above), which serializes
+    // Schema.types; a schema built with Schema.type(...) is written without a type.
     private void addDefaultSchemas(OpenAPI openAPI) {
         Schema<?> errorCodeSchema = new Schema<>()
-                .type("integer")
+                .types(Set.of("integer"))
                 .description("Platform error code")
                 ._enum(Arrays.stream(ThingsboardErrorCode.values())
                         .map(ThingsboardErrorCode::getErrorCode)
@@ -374,11 +413,17 @@ public class SwaggerConfiguration {
         registerSchema(components, "ThingsboardErrorResponse", ThingsboardErrorResponse.class);
         registerSchema(components, "ThingsboardCredentialsExpiredResponse", ThingsboardCredentialsExpiredResponse.class);
         components.addSchemas("ThingsboardErrorCode", errorCodeSchema);
+        // AliasEntityId.entityType is a plain string, so no schema references AliasEntityType;
+        // register it to keep the alias names in the spec and in generated clients.
+        components.addSchemas("AliasEntityType", new Schema<String>()
+                .types(Set.of("string"))
+                .description("Alias for an entity of the current user, used as AliasEntityId.entityType")
+                ._enum(Arrays.stream(AliasEntityType.values()).map(Enum::name).toList()));
         registerSchema(components, "AiChatModelConfig", AiChatModelConfig.class);
     }
 
     private static void registerSchema(Components components, String name, Class<?> cls) {
-        ResolvedSchema resolved = ModelConverters.getInstance()
+        ResolvedSchema resolved = ModelConverters.getInstance(true)
                 .readAllAsResolvedSchema(new AnnotatedType().type(cls));
         components.addSchemas(name, resolved.schema);
         if (resolved.referencedSchemas != null) {

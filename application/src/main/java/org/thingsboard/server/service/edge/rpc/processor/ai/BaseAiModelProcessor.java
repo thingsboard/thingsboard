@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.ai;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
@@ -29,7 +31,8 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
         boolean isCreated = false;
         boolean isNameUpdated = false;
         try {
-            AiModel aiModel = JacksonUtil.fromString(aiModelUpdateMsg.getEntity(), AiModel.class, true);
+            JsonNode aiModelJson = JacksonUtil.toJsonNode(aiModelUpdateMsg.getEntity());
+            AiModel aiModel = JacksonUtil.treeToValueIgnoringUnknown(aiModelJson, AiModel.class);
             if (aiModel == null) {
                 throw new RuntimeException("[{" + tenantId + "}] aiModelUpdateMsg {" + aiModelUpdateMsg + " } cannot be converted to aiModel");
             }
@@ -41,6 +44,10 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
                 aiModel.setId(null);
             } else {
                 aiModel.setId(aiModelId);
+                // edge versions without customer access support do not send this field
+                if (!aiModelJson.has("customerAccessEnabled")) {
+                    aiModel.setCustomerAccessEnabled(aiModelById.get().isCustomerAccessEnabled());
+                }
             }
 
             String aiModelName = aiModel.getName();

@@ -4806,7 +4806,8 @@
                 "ADD_TO_GROUP": "إضافة إلى المجموعة",
                 "REMOVE_FROM_GROUP": "إزالة من المجموعة",
                 "SHARE_GROUP": "مشاركة المجموعة",
-                "ASSIGN_TO_TENANT": "تعيين للمستأجر"
+                "ASSIGN_TO_TENANT": "تعيين للمستأجر",
+                "INVOKE": "استدعاء"
             }
         }
     },

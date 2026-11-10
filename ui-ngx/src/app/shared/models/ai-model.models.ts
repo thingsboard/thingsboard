@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { HasTenantId } from '@shared/models/entity.models';
 import { AiModelId } from '@shared/models/id/ai-model-id';
 
 export interface AiModel extends Omit<BaseData<AiModelId>, 'label'>, HasTenantId, ExportableEntity<AiModelId> {
   modelType: ModelType;
+  customerAccessEnabled?: boolean;
   configuration: {
     provider: AiProvider
     providerConfig: {

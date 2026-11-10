@@ -714,6 +714,32 @@
         "thinking": "Thinking...",
         "connection-lost": "Connection to the AI Assistant was lost. Reconnecting...",
         "reconnect-failed": "Couldn't reconnect to the AI Assistant. Reopen the chat to see its reply.",
+        "ask-the-assistant": "Ask the AI Assistant",
+        "send": "Send",
+        "new-line": "New line",
+        "focus-composer": "Focus the composer",
+        "shortcuts": "Shortcuts",
+        "add-files": "Add files",
+        "add-files-text": "PDFs, spreadsheets, images or text.",
+        "add-files-hint": "Up to {{count}}, {{size}} each. Or drop them here.",
+        "remove-file": "Remove {{name}}",
+        "attachment-failed": "Upload failed",
+        "attachment-load-failed": "The file couldn't be loaded",
+        "attachment-uploading": "Uploading · {{progress}} %",
+        "attachment-unsupported": "Not supported: a PDF, spreadsheet, image or text",
+        "attachment-larger-than": "Larger than {{size}}",
+        "attachment-svg-failed": "This SVG can't be converted to an image",
+        "attachment-over-limit": "More than {{count}} files",
+        "file-kind": {
+            "image": "Image",
+            "pdf": "PDF",
+            "table": "Table",
+            "document": "Document",
+            "slides": "Slides",
+            "json": "JSON",
+            "text": "Text",
+            "file": "File"
+        },
         "rename-chat-title": "Rename this chat",
         "export-chat": "Export chat",
         "main-title": "Hello! I'm your AI Assistant"
@@ -1882,6 +1908,8 @@
         "model": "Model",
         "name": "Name",
         "ai-provider": "AI provider",
+        "customer-access": "Customer access",
+        "customer-access-hint": "Allows customer users to send chat requests to this model, e.g. from Trendz Analytics. The model configuration and credentials are never exposed.",
         "no-found": "No AI models found",
         "list": "{ count, plural, =1 {One model} other {List of # models} }",
         "selected-fields": "{ count, plural, =1 {1 model} other {# models} } selected",
@@ -8903,7 +8931,8 @@
                 "SHARE_GROUP": "Share Group",
                 "ASSIGN_TO_TENANT": "Assign to Tenant",
                 "READ_CALCULATED_FIELD": "Read Calculated Field and Alarm Rules",
-                "WRITE_CALCULATED_FIELD": "Write Calculated Field and Alarm Rules"
+                "WRITE_CALCULATED_FIELD": "Write Calculated Field and Alarm Rules",
+                "INVOKE": "Invoke"
             }
         }
     },
