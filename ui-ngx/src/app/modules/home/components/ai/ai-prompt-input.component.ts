@@ -36,8 +36,7 @@ import {
   isAiSvg,
   namePastedImage,
   svgToAiImage,
-  aiServerMessage
-} from '@home/components/ai/ai-attachment.models';
+  aiServerMessage, aiResourceFact } from '@home/components/ai/ai-attachment.models';
 
 interface PendingAttachment {
   key: string;
@@ -70,6 +69,8 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   @Input() placeholder = '';
+
+  @Input() suggestion: string | null = null;
 
   @Input() loading: boolean;
 
@@ -194,6 +195,11 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   }
 
   onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Tab' && !event.shiftKey && this.suggestion && !this.message.value) {
+      event.preventDefault();
+      this.setValue(this.suggestion);
+      return;
+    }
     if (event.key === 'Escape' && this.working) {
       event.preventDefault();
       this.stop();
@@ -276,7 +282,8 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     if (attachment.status === 'uploading') {
       return this.translate.instant('ai-assistant.attachment-uploading', {progress: attachment.progress});
     }
-    return `${this.translate.instant(attachment.kind)} · ${formatAiFileSize(attachment.size)}`;
+    const fact = aiResourceFact(attachment.resource?.facts, this.translate);
+    return `${this.translate.instant(attachment.kind)} · ${fact ?? formatAiFileSize(attachment.size)}`;
   }
 
   addFiles(files: File[]): void {

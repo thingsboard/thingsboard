@@ -38,11 +38,16 @@
     }
     <div class="composer-row">
       <span class="composer-chevron" aria-hidden="true"></span>
+      @if (suggestion && !hasText()) {
+        <div class="composer-ghost" aria-hidden="true"><span>{{ suggestion }}</span><kbd>Tab</kbd></div>
+        <span id="composer-suggestion" class="tb-ai-sr-only">{{ 'ai-assistant.suggestion-sr' | translate: {text: suggestion} }}</span>
+      }
       <textarea #textarea
                 rows="2"
                 spellcheck="false"
                 [attr.aria-label]="'ai-assistant.ask-the-assistant' | translate"
-                [placeholder]="placeholder"
+                [attr.aria-describedby]="suggestion && !hasText() ? 'composer-suggestion' : null"
+                [placeholder]="suggestion ? '' : placeholder"
                 [formControl]="message"
                 (input)="onInput()"
                 (paste)="onPaste($event)"
@@ -144,6 +149,12 @@
       <span>{{ 'ai-assistant.new-line' | translate }}</span>
       <span class="tip-caps"><kbd>Shift</kbd><kbd>Enter</kbd></span>
     </div>
+    @if (suggestion && !hasText()) {
+      <div class="tip-keyrow">
+        <span>{{ 'ai-assistant.accept-suggestion' | translate }}</span>
+        <span class="tip-caps"><kbd>Tab</kbd></span>
+      </div>
+    }
     <div class="tip-keyrow">
       <span>{{ 'ai-assistant.focus-composer' | translate }}</span>
       <span class="tip-caps"><kbd>/</kbd></span>

@@ -6,7 +6,8 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AiResourceInfo, isAiImageResource } from '@shared/models/ai-chat.models';
 import { AiResourceService } from '@core/http/ai-resource.service';
-import { aiAttachmentExtension, aiAttachmentKind } from '@home/components/ai/ai-attachment.models';
+import { aiAttachmentExtension, aiAttachmentKind, aiResourceFact } from '@home/components/ai/ai-attachment.models';
+import { TranslateService } from '@ngx-translate/core';
 import {
   AiAttachmentPreviewDialogComponent,
   AiAttachmentPreviewDialogData
@@ -34,8 +35,13 @@ export class AiAttachmentsComponent implements OnChanges {
 
   shown: AiAttachmentItem[] = [];
 
+  factOf(item: AiAttachmentItem): string | null {
+    return item.image ? null : aiResourceFact(item.resource.facts, this.translateService);
+  }
+
   constructor(private aiResourceService: AiResourceService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private translateService: TranslateService) {
   }
 
   ngOnChanges(changes: SimpleChanges): void {

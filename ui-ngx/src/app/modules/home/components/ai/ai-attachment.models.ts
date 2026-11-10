@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { HttpErrorResponse } from '@angular/common/http';
-import { AI_IMAGE_MEDIA_TYPES } from '@shared/models/ai-chat.models';
+import { AI_IMAGE_MEDIA_TYPES, AiResourceFacts } from '@shared/models/ai-chat.models';
+import { TranslateService } from '@ngx-translate/core';
 
 const MAX_IMAGE_SIDE = 2560;
 const MIN_SVG_SIDE = 1024;
@@ -186,4 +187,20 @@ export function aiServerMessage(error: unknown): string | undefined {
   }
   const message = body && typeof body === 'object' ? (body as {message?: unknown}).message : undefined;
   return typeof message === 'string' && message.trim() ? message.trim() : undefined;
+}
+
+export function aiResourceFact(facts: AiResourceFacts | undefined, translate: TranslateService): string | null {
+  if (!facts) {
+    return null;
+  }
+  if (facts.pages != null) {
+    return translate.instant('ai-assistant.fact.pages', {count: facts.pages});
+  }
+  if (facts.rows != null) {
+    return translate.instant('ai-assistant.fact.rows', {count: facts.rows}) + ' · ' + translate.instant('ai-assistant.fact.columns', {count: facts.columns ?? 0});
+  }
+  if (facts.lines != null) {
+    return translate.instant('ai-assistant.fact.lines', {count: facts.lines});
+  }
+  return null;
 }

@@ -137,6 +137,7 @@
       [blocked]="notice()?.kind === 'block'"
       [docked]="docked()"
       [placeholder]="placeholder()"
+      [suggestion]="suggestion()"
       [loading]="loading() && !waitingApproval()"
       [dropZone]="chatArea"
       [pinned]="!!messages().length || loading()"

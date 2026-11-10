@@ -18,7 +18,7 @@
       }
       <span class="k-file-text">
         <b>{{ item.resource.name }}</b>
-        <small>@if (!item.image && item.extension) { {{ item.extension }} · }{{ item.resource.size | fileSize }}</small>
+        <small>@if (!item.image && item.extension) { {{ item.extension }} · }{{ factOf(item) ?? (item.resource.size | fileSize) }}</small>
       </span>
     </button>
   }

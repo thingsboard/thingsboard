@@ -263,11 +263,19 @@ export interface SendChatMessageRequest {
   resources?: string[];
 }
 
+export interface AiResourceFacts {
+  pages?: number;
+  rows?: number;
+  columns?: number;
+  lines?: number;
+}
+
 export interface AiResourceInfo {
   id: string;
   name: string;
   mediaType: string;
   size: number;
+  facts?: AiResourceFacts;
 }
 
 export interface AiResourceConfig {

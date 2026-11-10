@@ -210,6 +210,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
       .find(message => !completed[message.data.executionId] && !answered.has(message.data.executionId) && message.data.needsApproval);
   });
 
+  suggestion = computed(() => !this.docked() && !this.chatId() && !this.messages().length && !this.loading()
+    ? this.translate.instant('ai-assistant.start-suggestion') : null);
+
   placeholder = computed(() => !this.waitingApproval() && !this.messages().length && this.startPlaceholder()
     ? this.startPlaceholder()
     : this.translate.instant(this.waitingApproval()

@@ -3703,3 +3703,57 @@ a.tb-chiplink:focus-visible {
 .agent-docs {
   margin-top: 10px;
 }
+
+.ai .agent .agent-body .tb-markdown-view [class*="tb-markdown-view-"] .k-hint.agent-hint {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--k-grey);
+
+  b {
+    font-size: inherit;
+    line-height: inherit;
+    font-weight: 500;
+    color: var(--tb-ink);
+  }
+}
+
+.composer-ghost {
+  position: absolute;
+  top: 12px;
+  left: 42px;
+  right: 58px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  pointer-events: none;
+  font-family: var(--tb-font);
+  font-size: var(--chat-text);
+  line-height: var(--chat-text-lh);
+  color: var(--k-faint);
+
+  kbd {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 0 6px;
+    border: 1px solid var(--tb-line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--chat-key);
+    font-family: var(--tb-mono);
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--tb-ink-54);
+  }
+}
+
+.tb-ai-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

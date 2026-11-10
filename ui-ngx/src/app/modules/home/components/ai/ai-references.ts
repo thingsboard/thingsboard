@@ -136,3 +136,37 @@ export function decorateSeverities(root: HTMLElement, severities: string[] | und
     node.replaceWith(fragment);
   });
 }
+
+const HINT_KINDS: Record<string, {kind: string; icon: string}> = {
+  note: {kind: 'note', icon: 'info_outline'},
+  tip: {kind: 'tip', icon: 'lightbulb_outline'},
+  'heads-up': {kind: 'heads-up', icon: 'outlined_flag'}
+};
+
+export function decorateHints(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>('blockquote').forEach(quote => {
+    const paragraph = quote.querySelector('p') ?? quote;
+    const first = paragraph.firstChild;
+    const match = first?.nodeType === Node.TEXT_NODE ? /^\s*(note|tip|heads-up)\s*:\s*/i.exec(first.textContent ?? '') : null;
+    if (!match) {
+      return;
+    }
+    const hint = HINT_KINDS[match[1].toLowerCase()];
+    first.textContent = (first.textContent ?? '').slice(match[0].length);
+    const box = document.createElement('div');
+    box.className = 'k-hint agent-hint ' + hint.kind;
+    const icon = document.createElement('mat-icon');
+    icon.className = 'mat-icon material-icons mat-icon-no-color';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = hint.icon;
+    const text = document.createElement('span');
+    paragraph.querySelectorAll('strong').forEach(strong => {
+      const lead = document.createElement('b');
+      lead.append(...Array.from(strong.childNodes));
+      strong.replaceWith(lead);
+    });
+    text.append(...Array.from(paragraph.childNodes));
+    box.append(icon, text);
+    quote.replaceWith(box);
+  });
+}
