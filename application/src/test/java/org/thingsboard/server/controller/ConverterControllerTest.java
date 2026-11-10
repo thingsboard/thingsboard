@@ -82,7 +82,9 @@ public class ConverterControllerTest extends AbstractControllerTest {
     private static final String TTN_UPLINK_JSON_DECODER = "converter/ttn_uplink_json_decoder.raw";
     private static final String LORIOT_UPLINK_DECODER_RETURN_ARRAY = "converter/loriot_uplink_decoder_array.raw";
     private static final String TTN_DECODED_PAYLOAD = "payload/ttn_payload_with_decoded.json";
-    private static final String DEFAULT_V2_CONFIGURATION = "converters/default-converters-v2-configuration.json";
+    private static final String TTN_CUSTOM_DECODER_PAYLOAD = "payload/ttn_custom_decoder_payload.json";
+    private static final String TTI_CUSTOM_DECODER_PAYLOAD = "payload/tti_custom_decoder_payload.json";
+    private static final String DEFAULT_V2_CONFIGURATION = "ui-ngx/src/assets/converters/default-converters-v2-configuration.json";
     private static final String THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD = "payload/things_stack_repository_device_payload.json";
     private static final String THINGS_STACK_MANUAL_DEVICE_PAYLOAD = "payload/things_stack_manual_device_payload.json";
     private static final String THINGS_STACK_FORMATTER_DEVICE_PAYLOAD = "payload/things_stack_formatter_device_payload.json";
@@ -790,7 +792,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "eui-$eui", "$applicationId", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TTI, 2);
 
-        testDecoder(TTI_UPLINK_DECODER, getDefaultPayload(IntegrationType.TTI), expectedDecodedMessage, converter);
+        testDecoder(TTI_UPLINK_DECODER, readResource(TTI_CUSTOM_DECODER_PAYLOAD).orElseThrow(), expectedDecodedMessage, converter);
     }
 
     private static final String THINGS_STACK_REPOSITORY_DEVICE_RESULT = "{\"entityType\":\"DEVICE\",\"name\":\"am308-office\",\"profile\":\"milesight-iot-am308\",\"label\":\"am308-office\",\"group\":\"my-app\"," +
@@ -846,7 +848,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
     // version_ids come first: tbVersionIds of a Repository device does not change its profile, and is not telemetry either
     @Test
     public void testThingsStackDefaultConvertersPreferRepositoryModelToTbVersionIds() throws IOException {
-        ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD));
+        ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD).orElseThrow());
         ((ObjectNode) payload.get("uplink_message").get("decoded_payload"))
                 .set("tbVersionIds", JacksonUtil.toJsonNode("{\"brand_id\":\"lansitec\",\"model_id\":\"macro-tracker\"}"));
 
@@ -859,7 +861,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         String expectedDecodedMessage = THINGS_STACK_FORMATTER_DEVICE_RESULT.replace("\"profile\":\"lansitec-macro-tracker\"", "\"profile\":\"LoRaWAN Device\"")
                 .replace("\"brandId\":\"lansitec\",\"modelId\":\"macro-tracker\",", "");
         for (String tbVersionIds : List.of("\"lansitec-macro-tracker\"", "null", "[\"lansitec\",\"macro-tracker\"]")) {
-            ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD));
+            ObjectNode payload = (ObjectNode) JacksonUtil.toJsonNode(readResource(THINGS_STACK_FORMATTER_DEVICE_PAYLOAD).orElseThrow());
             ((ObjectNode) payload.get("uplink_message").get("decoded_payload")).set("tbVersionIds", JacksonUtil.toJsonNode(tbVersionIds));
 
             testThingsStackDefaultConvertersOnPayload(payload.toString(), Map.of(), expectedDecodedMessage);
@@ -903,16 +905,16 @@ public class ConverterControllerTest extends AbstractControllerTest {
 
     // The TBEL and JS defaults are two copies of one script, so each of them must give this result for TTN and TTI
     private void testThingsStackDefaultConverters(String payloadFile, Map<String, String> integrationMetadata, String expectedResult) throws IOException {
-        testThingsStackDefaultConvertersOnPayload(readResource(payloadFile), integrationMetadata, expectedResult);
+        testThingsStackDefaultConvertersOnPayload(readResource(payloadFile).orElseThrow(), integrationMetadata, expectedResult);
     }
 
     private void testThingsStackDefaultConvertersOnPayload(String payload, Map<String, String> integrationMetadata, String expectedResult) throws IOException {
-        JsonNode defaultConfigurations = JacksonUtil.toJsonNode(readResource(DEFAULT_V2_CONFIGURATION));
+        JsonNode defaultConfigurations = JacksonUtil.toJsonNode(FrontEndSource.read(DEFAULT_V2_CONFIGURATION));
         for (IntegrationType integrationType : List.of(IntegrationType.TTN, IntegrationType.TTI)) {
             Converter converter = createConverter(defaultConfigurations.get(integrationType.name()), integrationType, 2);
             for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
-                String decoderFileName = "converters/" + scriptLang.name().toLowerCase() + "-" + integrationType.name().toLowerCase() + "-decoder.raw";
-                assertThat(JacksonUtil.toJsonNode(decode(decoderFileName, payload, converter, scriptLang, integrationMetadata)))
+                String decoder = readResource("converters/" + integrationType.getDirectory() + "/uplink/" + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+                assertThat(JacksonUtil.toJsonNode(decodeUplink(decoder, scriptLang, payload, "{}", converter, integrationMetadata)))
                         .as("%s %s", integrationType, scriptLang)
                         .isEqualTo(JacksonUtil.toJsonNode(expectedResult));
             }
@@ -927,7 +929,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "eui-$eui", "$applicationId", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TTN, 2);
 
-        testDecoder(TTN_UPLINK_DECODER, getDefaultPayload(IntegrationType.TTN), expectedDecodedMessage, converter);
+        testDecoder(TTN_UPLINK_DECODER, readResource(TTN_CUSTOM_DECODER_PAYLOAD).orElseThrow(), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -1025,21 +1027,16 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     public void testDecoder(String decoderFileName, String payloadExample, String expectedResult, Converter converter) throws IOException {
-        assertThat(decode(decoderFileName, payloadExample, converter, ScriptLanguage.TBEL)).isEqualTo(expectedResult);
-    }
-
-    private String decode(String decoderFileName, String payloadExample, Converter converter, ScriptLanguage scriptLang) throws IOException {
-        return decode(decoderFileName, payloadExample, converter, scriptLang, Map.of());
-    }
-
-    // integrationMetadata: what the integration adds to the metadata of every uplink, from its configuration
-    private String decode(String decoderFileName, String payloadExample, Converter converter, ScriptLanguage scriptLang,
-                          Map<String, String> integrationMetadata) throws IOException {
-        byte[] bytes = IOUtils.toByteArray(ConverterControllerTest.class.getClassLoader().getResourceAsStream(decoderFileName));
-        assertThat(decodeUplink(new String(bytes), ScriptLanguage.TBEL, payloadExample, "{}", converter)).isEqualTo(expectedResult);
+        assertThat(decodeUplink(readResource(decoderFileName).orElseThrow(), ScriptLanguage.TBEL, payloadExample, "{}", converter)).isEqualTo(expectedResult);
     }
 
     private String decodeUplink(String decoder, ScriptLanguage scriptLang, String payloadExample, String metadata, Converter converter) {
+        return decodeUplink(decoder, scriptLang, payloadExample, metadata, converter, Map.of());
+    }
+
+    // integrationMetadata: what the integration adds to the metadata of every uplink, from its configuration
+    private String decodeUplink(String decoder, ScriptLanguage scriptLang, String payloadExample, String metadata, Converter converter,
+                                Map<String, String> integrationMetadata) {
         String base64Payload = Base64.getEncoder().encodeToString(payloadExample.getBytes(StandardCharsets.UTF_8));
 
         ObjectNode inputParams = JacksonUtil.newObjectNode();

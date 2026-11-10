@@ -14,7 +14,18 @@
     "session_key_id": "AYfg8rhha5n+FWx0ZaAprA==",
     "f_port": 85,
     "f_cnt": 5017,
-    "frm_payload": "Ae0DM18OTGM=",
+    "frm_payload": "A2fuAARofAUAAQbLAgd9qAMIfSUACXNmJwt9IAAMfTAA",
+    "decoded_payload": {
+        "temperature": 23.8,
+        "humidity": 62,
+        "pir": "trigger",
+        "light_level": 2,
+        "co2": 936,
+        "tvoc": 0.37,
+        "pressure": 1008.6,
+        "pm2_5": 32,
+        "pm10": 48
+    },
     "rx_metadata": [{
         "gateway_ids": {
             "gateway_id": "eui-6A7E111A10000000",
@@ -66,6 +77,13 @@
         },
         "received_at": "2023-05-18T08:25:25.906399073Z",
         "consumed_airtime": "0.097536s",
+        "version_ids": {
+            "brand_id": "milesight-iot",
+            "model_id": "am308",
+            "hardware_version": "1.x",
+            "firmware_version": "1.x",
+            "band_id": "EU_863_870"
+        },
         "network_ids": {
             "net_id": "000013",
             "tenant_id": "tenant",
