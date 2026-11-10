@@ -107,6 +107,7 @@
                             <goal>yarn</goal>
                         </goals>
                         <configuration>
+                            <skip>${sbom.yarn.skip}</skip>
                             <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
                         </configuration>
                     </execution>
@@ -127,6 +128,7 @@
                         </goals>
                         <phase>compile</phase>
                         <configuration>
+                            <skip>${sbom.yarn.skip}</skip>
                             <arguments>run sbom-check</arguments>
                         </configuration>
                     </execution>
@@ -191,19 +193,6 @@
                 <version>1.2.1</version>
                 <executions>
                     <execution>
-                        <id>read-bundled-versions-for-image</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>read-project-properties</goal>
-                        </goals>
-                        <configuration>
-                            <files>
-                                <file>${project.build.directory}/sbom/bundled-versions.properties</file>
-                            </files>
-                            <quiet>true</quiet>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>read-bundled-versions</id>
                         <phase>${sbom.package.phase}</phase>
                         <goals>
@@ -213,10 +202,49 @@
                             <files>
                                 <file>${project.build.directory}/sbom/bundled-versions.properties</file>
                             </files>
+                            <!-- "sbom check" writes the file only when SBOMs are made -->
+                            <quiet>true</quiet>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>build-docker-image</id>
+                        <phase>pre-integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${dockerfile.skip}</skip>
+                            <executable>docker</executable>
+                            <workingDirectory>${project.build.directory}</workingDirectory>
+                            <arguments>
+                                <argument>build</argument>
+                                <argument>-t</argument>
+                                <argument>${docker.repo}/${docker.name}:latest</argument>
+                                <argument>.</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>tag-docker-image</id>
+                        <phase>pre-integration-test</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <skip>${dockerfile.skip}</skip>
+                            <executable>docker</executable>
+                            <arguments>
+                                <argument>tag</argument>
+                                <argument>${docker.repo}/${docker.name}:latest</argument>
+                                <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- After exec-maven-plugin: the image SBOM is made in the phase that pushes the image, once it is pushed -->
             <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>sbom-maven-plugin</artifactId>
@@ -344,7 +372,7 @@
                                     <name>chrome-for-testing</name>
                                     <version>${chromium.version}</version>
                                     <description>Chrome for Testing build downloaded by Playwright to /ms-playwright, used to render reports.</description>
-                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=linux&amp;arch=${sbom.image.architecture}</purl>
+                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=linux&amp;arch=@{architecture}</purl>
                                     <cpe>cpe:2.3:a:google:chrome:${chromium.version}:*:*:*:*:*:*:*</cpe>
                                     <supplier>
                                         <name>Google LLC</name>
@@ -358,7 +386,7 @@
                                     <name>chrome-headless-shell</name>
                                     <version>${chromium-headless-shell.version}</version>
                                     <description>Chrome Headless Shell build downloaded by Playwright to /ms-playwright.</description>
-                                    <purl>pkg:generic/google/chrome-headless-shell@${chromium-headless-shell.version}?os=linux&amp;arch=${sbom.image.architecture}</purl>
+                                    <purl>pkg:generic/google/chrome-headless-shell@${chromium-headless-shell.version}?os=linux&amp;arch=@{architecture}</purl>
                                     <cpe>cpe:2.3:a:google:chrome:${chromium-headless-shell.version}:*:*:*:*:*:*:*</cpe>
                                     <supplier>
                                         <name>Google LLC</name>
@@ -372,7 +400,7 @@
                                     <name>playwright-ffmpeg</name>
                                     <version>${ffmpeg.revision}</version>
                                     <description>FFmpeg build by Playwright (revision ${ffmpeg.revision}), downloaded to /ms-playwright.</description>
-                                    <purl>pkg:generic/microsoft/playwright-ffmpeg@${ffmpeg.revision}?os=linux&amp;arch=${sbom.image.architecture}</purl>
+                                    <purl>pkg:generic/microsoft/playwright-ffmpeg@${ffmpeg.revision}?os=linux&amp;arch=@{architecture}</purl>
                                     <license>LGPL-2.1-or-later</license>
                                     <supplier>
                                         <name>Microsoft Corporation</name>
@@ -382,42 +410,6 @@
                                     </supplier>
                                 </component>
                             </components>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>build-docker-image</id>
-                        <phase>pre-integration-test</phase>
-                        <goals><goal>exec</goal></goals>
-                        <configuration>
-                            <skip>${dockerfile.skip}</skip>
-                            <executable>docker</executable>
-                            <workingDirectory>${project.build.directory}</workingDirectory>
-                            <arguments>
-                                <argument>build</argument>
-                                <argument>-t</argument>
-                                <argument>${docker.repo}/${docker.name}:latest</argument>
-                                <argument>.</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>tag-docker-image</id>
-                        <phase>pre-integration-test</phase>
-                        <goals><goal>exec</goal></goals>
-                        <configuration>
-                            <skip>${dockerfile.skip}</skip>
-                            <executable>docker</executable>
-                            <arguments>
-                                <argument>tag</argument>
-                                <argument>${docker.repo}/${docker.name}:latest</argument>
-                                <argument>${docker.repo}/${docker.name}:${project.version}</argument>
-                            </arguments>
                         </configuration>
                     </execution>
                 </executions>

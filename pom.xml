@@ -40,6 +40,13 @@
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
         <sbom.package.phase>none</sbom.package.phase>
+        <!-- SBOMs are made only on request: build with -Dsbom.skip=false. It turns on the SBOMs of the jars and packages
+             and, in a build that pushes the multi-architecture Docker images (see msa/pom.xml), those of the images.
+             No profile turns them on: activating a profile of this POM would switch off the packaging profile,
+             which is active by default. -->
+        <sbom.skip>true</sbom.skip>
+        <!-- The SBOM steps that run in yarn. Also skipped with -Dskip.yarn=true: see the skip-pkg-without-yarn profile. -->
+        <sbom.yarn.skip>${sbom.skip}</sbom.yarn.skip>
         <!-- Use -Dpkg.skip=true to skip all packaging at once (bootjar + deb + rpm + zip).
              Individual flags below can be set independently for finer control. -->
         <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
@@ -281,6 +288,7 @@
                 </property>
             </activation>
             <properties>
+                <sbom.yarn.skip>true</sbom.yarn.skip>
                 <pkg.skip.bootjar>true</pkg.skip.bootjar>
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
@@ -789,6 +797,7 @@
                         <outputName>application.cdx</outputName>
                         <includeProvidedScope>false</includeProvidedScope>
                         <skipNotDeployed>false</skipNotDeployed>
+                        <skip>${sbom.skip}</skip>
                     </configuration>
                 </plugin>
                 <plugin>

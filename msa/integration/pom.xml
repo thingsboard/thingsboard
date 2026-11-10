@@ -23,6 +23,8 @@
     <properties>
         <main.dir>${basedir}/../..</main.dir>
         <docker.push-integration-arm-amd-image.phase>none</docker.push-integration-arm-amd-image.phase>
+        <!-- Set by the profiles that push the multi-architecture integration images -->
+        <sbom.integration-image.phase>none</sbom.integration-image.phase>
     </properties>
 
     <modules>
@@ -49,6 +51,11 @@
                     <name>push-integration-docker-amd-arm-images</name>
                 </property>
             </activation>
+            <properties>
+                <!-- With -Dsbom.skip=false, sbom-maven-plugin attaches an SBOM to each image once it is pushed: the tags are those pushed below -->
+                <sbom.integration-image.phase>${docker.push-integration-arm-amd-image.phase}</sbom.integration-image.phase>
+                <sbom.integration-image.tags>latest,${project.version}</sbom.integration-image.tags>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -112,6 +119,9 @@
             <properties>
                 <docker.lts.tag>4.4.1-latest</docker.lts.tag>
                 <docker.skip.latest.tag>false</docker.skip.latest.tag>
+                <!-- With -Dsbom.skip=false, sbom-maven-plugin attaches an SBOM to each image once it is pushed: the tags are those pushed below -->
+                <sbom.integration-image.phase>${docker.push-integration-arm-amd-image.phase}</sbom.integration-image.phase>
+                <sbom.integration-image.tags>${sbom.image.latestTag},${project.version},${docker.lts.tag}</sbom.integration-image.tags>
             </properties>
             <build>
                 <plugins>
@@ -189,5 +199,36 @@
             </build>
         </profile>
     </profiles>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.thingsboard</groupId>
+                    <artifactId>sbom-maven-plugin</artifactId>
+                    <executions>
+                        <!-- As image-sbom in msa/pom.xml, for the images the integration profiles push: an execution of its own,
+                             because the two sets of profiles push different modules and can run in one build. -->
+                        <execution>
+                            <id>integration-image-sbom</id>
+                            <phase>${sbom.integration-image.phase}</phase>
+                            <goals>
+                                <goal>image</goal>
+                            </goals>
+                            <configuration>
+                                <tags>${sbom.integration-image.tags}</tags>
+                                <components>
+                                    <component>
+                                        <sbom>${sbom.image.package.dir}/${pkg.name}.deb.cdx.json</sbom>
+                                        <file>${project.build.directory}/${pkg.name}.deb</file>
+                                    </component>
+                                </components>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>
