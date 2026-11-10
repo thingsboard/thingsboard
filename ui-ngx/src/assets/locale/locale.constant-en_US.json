@@ -1095,7 +1095,13 @@
                 "output": "Output",
                 "severities": "Severities",
                 "clears": "Clears",
-                "undo": "Undo"
+                "undo": "Undo",
+                "template": "Template",
+                "recipients": "Recipients",
+                "delivery": "Delivery",
+                "body": "Message",
+                "keys": "Keys",
+                "scope": "Scope"
             },
             "value": {
                 "undo-none": "none: it cannot be restored",
