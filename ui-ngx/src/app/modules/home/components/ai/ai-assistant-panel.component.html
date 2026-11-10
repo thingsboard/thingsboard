@@ -19,11 +19,11 @@
               [chatId]="chatId()"
               (chatIdChange)="onChatId($event)"
               [clientContext]="clientContext()"
-              [prompts]="promptExamples()"
-              [startTitle]="panelService.config()?.title"
-              [startLine]="panelService.config()?.subTitle"
+              [prompts]="welcome().examples"
+              [startTitle]="welcome().title"
+              [startLine]="welcome().line"
               [startPlaceholder]="panelService.config()?.initialPromptPlaceholder"
-              [startSuggestion]="startSuggestion()"
+              [startSuggestion]="welcome().suggestion"
               (closed)="close()">
   </tb-ai-chat>
 </div>

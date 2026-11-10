@@ -1281,6 +1281,94 @@
             "clear": "Clear",
             "ask-about": "Ask about them"
         },
+        "welcome": {
+            "dashboards": {
+                "title": "Ask about your dashboards",
+                "line": "Find one, build a new one, or change what it shows.",
+                "suggestion": "Build a dashboard for one of my devices",
+                "example": {
+                    "build": {"label": "Build a dashboard", "message": "Build a dashboard for one of my devices with its latest telemetry, a chart and its active alarms."},
+                    "find": {"label": "Find a dashboard", "message": "Which of my dashboards show device telemetry?"}
+                }
+            },
+            "dashboard": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this dashboard",
+                "line": "What is on it, what to change, or something new.",
+                "suggestion": "How is it doing?"
+            },
+            "devices": {
+                "title": "Ask about your devices",
+                "line": "Find devices, check how they are doing, or connect a new one.",
+                "suggestion": "Which of my devices are inactive?",
+                "example": {
+                    "inactive": {"label": "Find inactive devices", "message": "Which of my devices are inactive?"}
+                }
+            },
+            "device": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this device",
+                "line": "Its telemetry, alarms and settings, or what to set up next.",
+                "suggestion": "How is this device doing?",
+                "example": {
+                    "telemetry": {"label": "Show its latest telemetry", "message": "Show the latest telemetry of this device."},
+                    "alarm": {"label": "Set up an alarm", "message": "Set up an alarm rule for this device."},
+                    "dashboard": {"label": "Build its dashboard", "message": "Build a dashboard for this device."}
+                }
+            },
+            "device-groups": {
+                "title": "Ask about your device groups",
+                "line": "What is in them, or how to organize your devices.",
+                "suggestion": "Which device groups do I have?"
+            },
+            "device-group": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this device group",
+                "line": "Its devices, how they are doing, or what to set up for all of them.",
+                "suggestion": "How are the devices in this group doing?",
+                "example": {
+                    "status": {"label": "Check the group", "message": "How are the devices in this group doing?"}
+                }
+            },
+            "alarm-rules": {
+                "title": "Ask about your alarm rules",
+                "line": "Review them, find gaps, or add a new one.",
+                "suggestion": "Review my devices and suggest alarm rules worth setting up."
+            },
+            "alarm-rule": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this alarm rule",
+                "line": "What it watches, when it fires, or how to change it.",
+                "suggestion": "Explain this alarm rule",
+                "example": {
+                    "explain": {"label": "Explain this rule", "message": "Explain what this alarm rule watches and when it raises an alarm."}
+                }
+            },
+            "alarms": {
+                "title": "Ask about your alarms",
+                "line": "What is active, why it fired, or what to do about it.",
+                "suggestion": "Which alarms need attention?"
+            },
+            "calculated-fields": {
+                "title": "Ask about calculated fields",
+                "line": "What they compute, or a new one worth setting up.",
+                "suggestion": "Review my devices and suggest calculated fields worth setting up."
+            },
+            "calculated-field": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this calculated field",
+                "line": "What it computes, or how to change it.",
+                "suggestion": "Explain this calculated field",
+                "example": {
+                    "explain": {"label": "Explain this field", "message": "Explain what this calculated field computes and from which keys."}
+                }
+            },
+            "notifications": {
+                "title": "Ask about notifications",
+                "line": "Who is told, about what, and how.",
+                "suggestion": "Explain how notifications work in ThingsBoard."
+            }
+        },
         "artifact": {
             "close": "Close the panel",
             "resize": "Resize the panel",

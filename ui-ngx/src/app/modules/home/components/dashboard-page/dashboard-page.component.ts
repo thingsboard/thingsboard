@@ -617,6 +617,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       entityId: { entityType: EntityType.DASHBOARD, id: this.currentDashboardId },
       dashboardState: this.dashboardCtx.state ?? undefined
     });
+    this.panelService.setViewName(this.dashboard?.title ? this.utils.customTranslation(this.dashboard.title, this.dashboard.title) : null);
   }
 
   private reloadDashboard(): void {

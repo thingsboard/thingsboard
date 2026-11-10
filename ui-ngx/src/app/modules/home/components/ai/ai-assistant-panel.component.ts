@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { aiWelcome } from '@home/components/ai/ai-welcome.models';
 import { Component, computed, effect, ElementRef, inject, signal, untracked, ViewChild } from '@angular/core';
 import { AiAssistantPromptExample } from '@shared/models/ai-chat.models';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { TranslateService } from '@ngx-translate/core';
 import { AiChatsService } from '@core/services/ai-chats.service';
 import { AiChatComponent } from '@home/components/ai/ai-chat.component';
 
@@ -22,6 +24,8 @@ export class AiAssistantPanelComponent {
 
   panelService = inject(AiAssistantPanelService);
 
+  private translate = inject(TranslateService);
+
   @ViewChild(AiChatComponent) chat: AiChatComponent;
 
   get isOpen() { return this.panelService.open(); }
@@ -40,11 +44,8 @@ export class AiAssistantPanelComponent {
 
   promptExamples = computed<AiAssistantPromptExample[]>(() => this.panelService.config()?.promptExamples ?? []);
 
-  startSuggestion = computed<string | null>(() => {
-    const config = this.panelService.config();
-    const example = config?.promptExamples?.[0]?.message?.trim();
-    return config?.suggestion ?? (example && example.length <= 80 && !example.includes('...') ? example : null);
-  });
+  welcome = computed(() => aiWelcome(this.panelService.clientContext()?.view, this.panelService.viewName(), this.panelService.config(),
+    this.translate));
 
   private chats = inject(AiChatsService);
   private elementRef = inject(ElementRef<HTMLElement>);

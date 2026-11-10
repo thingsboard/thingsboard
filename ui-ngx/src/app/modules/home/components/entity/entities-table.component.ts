@@ -555,6 +555,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       ? {type: viewConfig.entityView, entityId: entity.id as EntityId}
       : {type: viewConfig.listView, entityId: viewConfig.listEntityId};
     this.panelService.setClientContextForView(view);
+    this.panelService.setViewName(viewConfig.entityView && entity ? this.entitiesTableConfig.entityTitle(entity) : null);
   }
 
   toggleAiAssistant($event: Event) {

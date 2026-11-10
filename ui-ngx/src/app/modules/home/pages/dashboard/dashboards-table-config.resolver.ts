@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { Injectable } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
@@ -102,6 +103,12 @@ export class DashboardsTableConfigResolver {
           config.tableTitle = this.translate.instant('dashboard.dashboards');
         }
         config.columns = this.configureColumns(authUser, config);
+        if (getCurrentAuthState(this.store).aiEnabled && this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)) {
+          config.aiAssistantConfig = {
+            view: {listView: AiAssistantViewType.DASHBOARD_LIST, entityView: AiAssistantViewType.DASHBOARD},
+            initialPromptPlaceholder: this.translate.instant('dashboard.ai-assistant-initial-prompt-placeholder')
+          };
+        }
         this.configureEntityFunctions(config);
         config.cellActionDescriptors = this.configureCellActions(config);
         config.groupActionDescriptors = this.configureGroupActions(config);

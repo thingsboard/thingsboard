@@ -198,6 +198,13 @@ export class AiAssistantPanelService implements OnDestroy {
     }
   }
 
+  private _viewName = signal<string | null>(null);
+  readonly viewName = this._viewName.asReadonly();
+
+  setViewName(name: string | null): void {
+    this._viewName.set(name?.trim() || null);
+  }
+
   setConfig(config: AiAssistantPanelConfig | null): void {
     this._config.set(config);
   }
@@ -234,6 +241,7 @@ export class AiAssistantPanelService implements OnDestroy {
     this._enabled.set(false);
     this._detailsOpen.set(false);
     this._clientContext.set(null);
+    this._viewName.set(null);
     this._sentClientContextByChat.clear();
     this._chats.set(null);
     this._teardownTimer = setTimeout(() => {
