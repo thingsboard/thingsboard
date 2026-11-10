@@ -9,7 +9,7 @@
 
 // Send an RPC request to the Tuya device as a Device Control command:
 // the RPC method becomes the command code, the RPC params become its value.
-// For example, method "switch_1" with params "true" turns a smart plug on.
+// For example, method "switch_1" with params true turns a smart plug on.
 
 // The device name is the Tuya device ID. Reject the message if it is missing or empty.
 var deviceId = metadata.deviceName != null ? metadata.deviceName.trim() : null;
@@ -17,16 +17,28 @@ if (deviceId == null || deviceId.isEmpty()) {
     raiseError("Message metadata has no deviceName");
 }
 
-// Only RPC requests carry a method. Reject other messages.
-if (msg.method == null) {
-    raiseError("Message has no RPC method");
+// Only RPC requests are sent as commands. Reject other messages, for example attribute updates.
+if (msgType != "RPC_CALL_FROM_SERVER_TO_DEVICE") {
+    raiseError("Message is not an RPC request");
+}
+if (msg.method == null || msg.method.trim().isEmpty()) {
+    raiseError("RPC request has no method");
 }
 
-// RPC params often arrive as the strings "true"/"false". Convert them to booleans
-// for on/off data points. Keep other values (numbers, strings) as they are.
+// ThingsBoard passes RPC params as JSON text, for example true as "true", 500 as "500"
+// and "colour" as "\"colour\"". Parse JSON text into a boolean, number, string or object.
+// Keep other text, for example colour typed without quotes, as it is.
 var value = msg.params;
-if (value == "true" || value == "false") {
-    value = value == "true";
+if (value instanceof String) {
+    var text = value.trim();
+    if (text == "true" || text == "false" || text == "null"
+            || text.matches("-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?")
+            || text.startsWith("\"") || text.startsWith("{") || text.startsWith("[")) {
+        value = JSON.parse(text);
+    }
+}
+if (value == null) {
+    raiseError("RPC request has no params");
 }
 
 var command = {

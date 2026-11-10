@@ -746,28 +746,38 @@ public class ConverterControllerTest extends AbstractControllerTest {
 
     @Test
     public void testTuyaDefaultEncoder() throws Exception {
-        String rpc = "{\"method\":\"switch_1\",\"params\":\"true\"}";
-        String rpcMsgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
-        JsonNode expected = JacksonUtil.toJsonNode("{\"contentType\":\"JSON\",\"data\":\"{\\\"code\\\":\\\"switch_1\\\",\\\"value\\\":true}\"," +
-                "\"metadata\":{\"deviceId\":\"bfac3c40adca459c9chaar\"}}");
+        String downlinkDir = "converters/TUYA/downlink/";
+        String rpc = readResource(downlinkDir + "payload.json").orElseThrow();
+        String rpcMsgType = readResource(downlinkDir + "msgType.txt").orElseThrow().trim();
+        String metadata = readResource(downlinkDir + "metadata.json").orElseThrow();
+        JsonNode expected = JacksonUtil.toJsonNode(readResource(downlinkDir + "test/default/expected.json").orElseThrow());
+        String deviceName = JacksonUtil.toJsonNode(metadata).get("deviceName").asText();
+
+        // message, message type, metadata -> expected error
+        List<List<String>> errorCases = List.of(
+                List.of(rpc, rpcMsgType, "{}", "Message metadata has no deviceName"),
+                List.of(rpc, rpcMsgType, "{\"deviceName\":\"  \"}", "Message metadata has no deviceName"),
+                List.of(rpc, "ATTRIBUTES_UPDATED", metadata, "Message is not an RPC request"),
+                List.of("{\"params\":\"true\"}", rpcMsgType, metadata, "RPC request has no method"),
+                List.of("{\"method\":\"  \",\"params\":\"true\"}", rpcMsgType, metadata, "RPC request has no method"),
+                List.of("{\"method\":\"switch_1\"}", rpcMsgType, metadata, "RPC request has no params"),
+                List.of("{\"method\":\"switch_1\",\"params\":\"null\"}", rpcMsgType, metadata, "RPC request has no params")
+        );
 
         SoftAssertions softly = new SoftAssertions();
         for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
-            String encoder = readResource("converters/TUYA/downlink/" + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+            String encoder = readResource(downlinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
 
-            JsonNode response = encodeDownlink(encoder, scriptLang, rpc, rpcMsgType, "{\"deviceName\":\" bfac3c40adca459c9chaar \"}");
+            JsonNode response = encodeDownlink(encoder, scriptLang, rpc, rpcMsgType, "{\"deviceName\":\" " + deviceName + " \"}");
             softly.assertThat(response.get("error").asText()).as(scriptLang + ": device name with spaces").isEmpty();
             softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": device name with spaces").isEqualTo(expected);
 
-            for (String metadata : List.of("{}", "{\"deviceName\":\"  \"}")) {
-                response = encodeDownlink(encoder, scriptLang, rpc, rpcMsgType, metadata);
-                softly.assertThat(response.get("output").asText()).as(scriptLang + ": " + metadata).isEqualTo("null");
-                softly.assertThat(response.get("error").asText()).as(scriptLang + ": " + metadata).contains("Message metadata has no deviceName");
+            for (List<String> errorCase : errorCases) {
+                String description = scriptLang + ": " + errorCase.get(0) + ", " + errorCase.get(1) + ", " + errorCase.get(2);
+                response = encodeDownlink(encoder, scriptLang, errorCase.get(0), errorCase.get(1), errorCase.get(2));
+                softly.assertThat(response.get("output").asText()).as(description).isEqualTo("null");
+                softly.assertThat(response.get("error").asText()).as(description).contains(errorCase.get(3));
             }
-
-            response = encodeDownlink(encoder, scriptLang, "{\"temperatureUploadFrequency\":60}", "ATTRIBUTES_UPDATED", "{\"deviceName\":\"bfac3c40adca459c9chaar\"}");
-            softly.assertThat(response.get("output").asText()).as(scriptLang + ": attribute update").isEqualTo("null");
-            softly.assertThat(response.get("error").asText()).as(scriptLang + ": attribute update").contains("Message has no RPC method");
         }
         softly.assertAll();
     }

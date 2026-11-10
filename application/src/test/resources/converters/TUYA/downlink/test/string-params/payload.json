@@ -1,4 +1,4 @@
 {
   "method": "work_mode",
-  "params": "colour"
+  "params": "\"colour\""
 }
