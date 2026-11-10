@@ -101,7 +101,7 @@ export const PROPOSE_PLAN_TOOL = 'propose_plan';
 
 export const UPDATE_PLAN_TOOL = 'update_plan';
 
-const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL]);
+const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file']);
 
 export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);
 

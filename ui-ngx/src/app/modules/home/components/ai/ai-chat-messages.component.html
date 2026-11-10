@@ -48,6 +48,15 @@
         }
       </div>
     </div>
+  } @else if (msg.from === 'ACTION' && files[$index]; as file) {
+    <div class="ai art-cards">
+      <button type="button" class="art-card" [class.on]="shownFile === file.executionId" [attr.aria-pressed]="shownFile === file.executionId"
+              (click)="openFile.emit(file)">
+        <span class="art-card-ic"><mat-icon class="tb-mat-20" aria-hidden="true">{{ file.icon }}</mat-icon></span>
+        <span class="art-card-t"><b>{{ file.name }}</b><small>{{ 'ai-assistant.file.meta' | translate: {label: file.label, lines: file.lines, size: file.size} }}</small></span>
+        <mat-icon class="tb-mat-18 art-card-chev" aria-hidden="true">chevron_right</mat-icon>
+      </button>
+    </div>
   } @else if (msg.from === 'ACTION' && plans[$index]; as plan) {
     <div class="ai plan">
       <tb-ai-plan [steps]="plan.steps" [progress]="plan.progress" [gate]="plan.gate" [autoApprove]="autoApprove"

@@ -1,0 +1,23 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="art-pane-edge" role="separator" tabindex="0" aria-orientation="vertical"
+     [attr.aria-label]="'ai-assistant.artifact.resize' | translate"
+     [matTooltip]="'ai-assistant.artifact.resize-hint' | translate" matTooltipPosition="left" matTooltipShowDelay="600"
+     (pointerdown)="startResize($event)" (dblclick)="resetWidth()" (keydown)="onEdgeKey($event)"></div>
+<div class="art-pane-head">
+  <button type="button" class="art-ib art-pane-close" (click)="closed.emit()"
+          [matTooltip]="'ai-assistant.artifact.close' | translate" matTooltipPosition="below"
+          [attr.aria-label]="'ai-assistant.artifact.close' | translate">
+    <mat-icon class="wide-only">chevron_right</mat-icon>
+    <mat-icon class="narrow-only">arrow_back</mat-icon>
+  </button>
+  <ng-content select="[artHead]"></ng-content>
+</div>
+<div #body class="art-pane-body" [class.dark]="dark()" (scroll)="refreshEdges()">
+  <ng-content></ng-content>
+</div>
+<ng-content select="[artFoot]"></ng-content>

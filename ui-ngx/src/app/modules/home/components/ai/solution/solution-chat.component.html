@@ -73,7 +73,7 @@
     </div>
   </div>
 } @else if (creatorStep()) {
-  <div class="sol-cols" [class.with-pane]="showPane() && paneOpen()">
+  <div class="sol-cols art-cols" [class.with-pane]="showPane() && paneOpen()">
     <div class="sol-chat" [class.scrolled]="logScrolled()">
       <div #chatArea class="sol-log" (scroll)="onLogScroll(chatArea)">
         <div class="sol-log-in">
@@ -153,19 +153,19 @@
           </button>
         }
         @if (showPane() && !paneOpen()) {
-          <button type="button" class="sol-tray" (click)="openPane()" [attr.aria-label]="'solution-creator.pane.open' | translate">
+          <button type="button" class="art-tray" (click)="openPane()" [attr.aria-label]="'solution-creator.pane.open' | translate">
             <mat-icon aria-hidden="true">layers</mat-icon>
             <b>{{ 'solution-creator.pane.solution' | translate }}</b>
-            <span class="sol-tray-note" [class.working]="!!making()" [class.failed]="!making() && !!failure()">
+            <span class="art-tray-note" [class.working]="!!making()" [class.failed]="!making() && !!failure()">
               @if (making()) {
                 <tb-ai-spin [kind]="making() === 'solution' ? 'install' : 'gen'"></tb-ai-spin>
               }
               {{ trayNote() }}
             </span>
             @if (level() === 'needs') {
-              <span class="sol-tray-dot" aria-hidden="true"></span>
+              <span class="art-tray-dot" aria-hidden="true"></span>
             }
-            <mat-icon class="sol-tray-chev" aria-hidden="true">chevron_right</mat-icon>
+            <mat-icon class="art-tray-chev" aria-hidden="true">chevron_right</mat-icon>
           </button>
         }
         <tb-ai-prompt-input
@@ -178,20 +178,8 @@
       </div>
     </div>
     @if (showPane() && paneOpen()) {
-      <aside class="sol-pane" [style.flex-basis]="paneWidth() ? paneWidth() + 'px' : null"
-             [class.scrolled]="paneScrolled()" [class.more]="paneMore()">
-        <div class="sol-pane-edge" role="separator" tabindex="0" aria-orientation="vertical"
-             [attr.aria-label]="'solution-creator.pane.resize' | translate"
-             [matTooltip]="'solution-creator.pane.resize-hint' | translate" matTooltipPosition="left" matTooltipShowDelay="600"
-             (pointerdown)="startResize($event)" (dblclick)="resetPaneWidth()" (keydown)="onEdgeKey($event)"></div>
-        <div class="sol-pane-head">
-          <button type="button" class="sol-ib sol-pane-close" (click)="closePane()"
-                  [matTooltip]="'solution-creator.pane.close' | translate" matTooltipPosition="below"
-                  [attr.aria-label]="'solution-creator.pane.close' | translate">
-            <mat-icon class="wide-only">chevron_right</mat-icon>
-            <mat-icon class="narrow-only">arrow_back</mat-icon>
-          </button>
-          <div class="sol-views" role="group" [attr.aria-label]="'solution-creator.pane.view' | translate">
+      <tb-ai-artifact-pane #pane [dark]="json()" (closed)="closePane()">
+          <div artHead class="sol-views" role="group" [attr.aria-label]="'solution-creator.pane.view' | translate">
             @for (view of views(); track view.id) {
               <button type="button" [attr.aria-pressed]="currentView() === view.id" [class.working]="view.state === 'working'"
                       [disabled]="view.state === 'next'" (click)="pickView(view.id)"
@@ -207,13 +195,11 @@
             }
           </div>
           @if (jsonAvailable()) {
-            <button type="button" class="sol-tool" [class.on]="json()" [attr.aria-pressed]="json()" (click)="toggleJson()"
+            <button artHead type="button" class="sol-tool" [class.on]="json()" [attr.aria-pressed]="json()" (click)="toggleJson()"
                     [matTooltip]="'solution-creator.pane.json-tip' | translate" matTooltipPosition="below">
               <mat-icon aria-hidden="true">data_object</mat-icon><span>JSON</span>
             </button>
           }
-        </div>
-        <div #paneBody class="sol-pane-body" [class.dark]="json()" (scroll)="onPaneScroll(paneBody)">
           @if (making() === 'solution' && currentView() === 'solution' && progressInfo(); as progress) {
             <tb-solution-installed [solution]="progress" [creating]="true" [items]="installProgress()?.items ?? null"
                                    [stage]="installProgress()?.stage ?? null" [createShare]="createShare()"
@@ -245,9 +231,8 @@
               }
             }
           }
-        </div>
         @if (!making()) {
-        <footer class="sol-pane-foot">
+        <footer artFoot class="art-pane-foot">
           @if (json() && jsonEditing()) {
             <span class="sol-foot-note">{{ 'solution-creator.pane.json-note' | translate }}</span>
             <button mat-button type="button" (click)="jsonView?.done()">{{ 'action.cancel' | translate }}</button>
@@ -294,7 +279,7 @@
           }
         </footer>
         }
-      </aside>
+      </tb-ai-artifact-pane>
     }
   </div>
 }

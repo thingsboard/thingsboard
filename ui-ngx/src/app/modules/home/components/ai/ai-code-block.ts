@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { TranslateService } from '@ngx-translate/core';
 
-interface CodeLanguage {
+export interface CodeLanguage {
   lang: string;
   label: string;
   icon: string;
@@ -43,6 +43,25 @@ const LANGUAGES: Record<string, CodeLanguage> = {
   html: {lang: 'text', label: 'HTML', icon: 'code'},
   css: {lang: 'text', label: 'CSS', icon: 'code'}
 };
+
+const FILE_LANGUAGES: Record<string, CodeLanguage> = {
+  ino: {lang: 'c', label: 'Arduino', icon: 'code'},
+  h: {lang: 'c', label: 'C', icon: 'code'},
+  hpp: {lang: 'c', label: 'C++', icon: 'code'},
+  md: {lang: 'text', label: 'Markdown', icon: 'article'},
+  markdown: {lang: 'text', label: 'Markdown', icon: 'article'},
+  txt: {lang: 'text', label: 'Text', icon: 'notes'},
+  csv: {lang: 'text', label: 'CSV', icon: 'table_chart'},
+  toml: {lang: 'text', label: 'TOML', icon: 'description'},
+  ini: {lang: 'text', label: 'INI', icon: 'description'},
+  conf: {lang: 'text', label: 'Config', icon: 'description'},
+  env: {lang: 'shell', label: 'Env', icon: 'description'}
+};
+
+export function fileLanguage(name: string): CodeLanguage {
+  const ext = name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '';
+  return FILE_LANGUAGES[ext] ?? LANGUAGES[ext] ?? {lang: 'text', label: ext ? ext.toUpperCase() : 'Text', icon: 'description'};
+}
 
 export function decorateCodeBlocks(root: HTMLElement, translate: TranslateService, copy: (text: string) => boolean): void {
   root.querySelectorAll('pre').forEach(pre => {

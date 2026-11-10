@@ -30,6 +30,7 @@ import {
   UPDATE_PLAN_TOOL
 } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
+import { AiFile, aiFileOf, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
 import { aiAnswersOf, aiAnswersText } from '@home/components/ai/ai-question.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -69,6 +70,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() denyReasons: Record<string, string> = {};
   @Input() work: AiWorkState | undefined;
   @Input() feedback = false;
+  @Input() shownFile: string | null = null;
   @Output() rate = new EventEmitter<AnswerRatingEvent>();
   @Output() chip = new EventEmitter<string>();
   @Output() report = new EventEmitter<AnswerReportEvent>();
@@ -79,6 +81,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Output() autoApproveRest = new EventEmitter<void>();
   @Output() runPlan = new EventEmitter<{run: AiPlanRun; steps: AiPlanStep[]}>();
   @Output() changePlan = new EventEmitter<void>();
+  @Output() openFile = new EventEmitter<AiFile>();
   @Output() prompt = new EventEmitter<string>();
   @Output() answer = new EventEmitter<string>();
   @Output() resourceError = new EventEmitter<any>();
@@ -98,6 +101,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   stoppedSteps: Record<number, number> = {};
   answersAt: Record<number, AiQuestionAnswer[]> = {};
   offerIndex = -1;
+  files: Record<number, AiFile> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
 
   private keptAsking = new Set<number>();
@@ -243,6 +247,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.prompts = this.findPrompts();
       this.asking = this.findAsking();
       this.plans = this.findPlans();
+      this.files = this.findFiles();
       this.answersAt = this.findAnswers();
       this.retryIndex = this.findRetry();
       this.stoppedSteps = this.findStoppedSteps();
@@ -486,6 +491,19 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       }
     }
     return null;
+  }
+
+  private findFiles(): Record<number, AiFile> {
+    const files: Record<number, AiFile> = {};
+    this.messages.forEach((message, index) => {
+      if (message.from === 'ACTION' && message.data.tool === WRITE_FILE_TOOL) {
+        const file = aiFileOf(message.data.executionId, message.data.arguments);
+        if (file) {
+          files[index] = file;
+        }
+      }
+    });
+    return files;
   }
 
   private findPlans(): Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> {

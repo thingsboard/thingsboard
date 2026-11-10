@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.component';
 import {
   Component,
   computed,
@@ -92,14 +93,12 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private static readonly NARROW_WIDTH = 1100;
   private static readonly END_IN_VIEW = 160;
-  private static readonly PANE_MIN = 360;
-  private static readonly CHAT_MIN = 420;
-  private static readonly PANE_WIDTH_KEY = 'tbSolutionPaneWidth';
   private static readonly CONNECTIVITY_GUIDE = 'https://thingsboard.io/docs/getting-started-guides/connectivity/';
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
   @ViewChild(AiChatMessagesComponent) chatMessages: AiChatMessagesComponent;
   @ViewChild(AiChatTitleComponent) titleRef: AiChatTitleComponent;
+  @ViewChild(AiArtifactPaneComponent) pane: AiArtifactPaneComponent;
   @Output() loaded = new EventEmitter<string>();
 
   get hostElement(): HTMLElement {
@@ -389,10 +388,6 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   aboutOpen = signal(false);
 
-  paneScrolled = signal(false);
-
-  paneMore = signal(false);
-
   issues = computed<Array<{name: string; status: string; message?: string}>>(() => {
     const results = this.info()?.metadata?.installResult?.entityResults;
     if (!results || !this.info()?.metadata?.installed) {
@@ -407,12 +402,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.currentView();
     this.json();
     this.paneOpen();
-    untracked(() => setTimeout(() => {
-      const body = this.elementRef.nativeElement.querySelector('.sol-pane-body') as HTMLElement;
-      if (body) {
-        this.onPaneScroll(body);
-      }
-    }, 50));
+    untracked(() => setTimeout(() => this.pane?.refreshEdges(), 50));
   });
 
   private failureEffect = effect(() => {
@@ -446,8 +436,6 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   @ViewChild('jsonView') jsonView: SolutionJsonComponent;
 
   paneOpen = signal(typeof window === 'undefined' || window.innerWidth >= SolutionChatComponent.NARROW_WIDTH);
-
-  paneWidth = signal<number | null>(this.storedPaneWidth());
 
   phase = computed(() => `${this.creatorStep()}:${this.solutionStep()}`);
 
@@ -779,11 +767,6 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   @HostListener('keydown.escape')
   closeAbout(): void {
     this.aboutOpen.set(false);
-  }
-
-  onPaneScroll(body: HTMLElement): void {
-    this.paneScrolled.set(body.scrollTop > 0);
-    this.paneMore.set(body.scrollTop + body.clientHeight < body.scrollHeight - 1);
   }
 
   private reportFailure(err: any, at?: 'install' | 'step'): void {
@@ -1453,91 +1436,6 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.paneOpen.set(false);
     this.json.set(false);
     this.jsonEditing.set(false);
-  }
-
-  startResize(event: PointerEvent): void {
-    event.preventDefault();
-    const edge = event.target as HTMLElement;
-    const cols = this.elementRef.nativeElement.querySelector('.sol-cols') as HTMLElement;
-    const pane = this.elementRef.nativeElement.querySelector('.sol-pane') as HTMLElement;
-    if (!cols || !pane) {
-      return;
-    }
-    const startX = event.clientX;
-    const startWidth = pane.getBoundingClientRect().width;
-    const max = cols.getBoundingClientRect().width - SolutionChatComponent.CHAT_MIN;
-    edge.setPointerCapture(event.pointerId);
-    edge.classList.add('held');
-    let closing = false;
-    const move = (e: PointerEvent) => {
-      const width = startWidth + (startX - e.clientX);
-      closing = width < SolutionChatComponent.PANE_MIN - 72;
-      pane.classList.toggle('closing', closing);
-      this.paneWidth.set(Math.round(Math.min(max, Math.max(SolutionChatComponent.PANE_MIN, width))));
-    };
-    const up = () => {
-      edge.removeEventListener('pointermove', move);
-      edge.removeEventListener('pointerup', up);
-      edge.removeEventListener('pointercancel', up);
-      edge.classList.remove('held');
-      pane.classList.remove('closing');
-      if (closing) {
-        this.paneWidth.set(startWidth);
-        this.closePane();
-      } else {
-        this.storePaneWidth();
-      }
-    };
-    edge.addEventListener('pointermove', move);
-    edge.addEventListener('pointerup', up);
-    edge.addEventListener('pointercancel', up);
-  }
-
-  resetPaneWidth(): void {
-    this.paneWidth.set(null);
-    this.storePaneWidth();
-  }
-
-  onEdgeKey(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      this.resetPaneWidth();
-      return;
-    }
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
-      return;
-    }
-    event.preventDefault();
-    const pane = this.elementRef.nativeElement.querySelector('.sol-pane') as HTMLElement;
-    const cols = this.elementRef.nativeElement.querySelector('.sol-cols') as HTMLElement;
-    if (!pane || !cols) {
-      return;
-    }
-    const step = event.shiftKey ? 64 : 16;
-    const width = pane.getBoundingClientRect().width + (event.key === 'ArrowLeft' ? step : -step);
-    const max = cols.getBoundingClientRect().width - SolutionChatComponent.CHAT_MIN;
-    this.paneWidth.set(Math.round(Math.min(max, Math.max(SolutionChatComponent.PANE_MIN, width))));
-    this.storePaneWidth();
-  }
-
-  private storedPaneWidth(): number | null {
-    try {
-      return Number(localStorage.getItem(SolutionChatComponent.PANE_WIDTH_KEY)) || null;
-    } catch {
-      return null;
-    }
-  }
-
-  private storePaneWidth(): void {
-    try {
-      const width = this.paneWidth();
-      if (width) {
-        localStorage.setItem(SolutionChatComponent.PANE_WIDTH_KEY, String(width));
-      } else {
-        localStorage.removeItem(SolutionChatComponent.PANE_WIDTH_KEY);
-      }
-    } catch {
-      return;
-    }
   }
 
   toggleMoreExamples(): void {

@@ -4,6 +4,8 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
+<div class="art-cols" [class.with-pane]="!!shownFile() && fileOpen()" [class.narrow]="docked()">
+<div class="ai-chat-col">
 <header class="ai-chat-head" [class.scrolled]="scrolled()" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
         (fullscreenChanged)="onFullscreenChanged($event)">
   <ng-content select="[aiChatLead]"></ng-content>
@@ -70,6 +72,8 @@
       (autoApproveRest)="setAutoApprove(true)"
       (runPlan)="runPlan($event)"
       (changePlan)="changePlan()"
+      [shownFile]="fileOpen() ? (shownFile()?.executionId ?? null) : null"
+      (openFile)="showFile($event)"
       (prompt)="ask($event)"
       (answer)="ask($event)"
       (editMessage)="promptInput?.setValue($event)">
@@ -113,6 +117,16 @@
           <tb-ai-spin [kind]="current.kind"></tb-ai-spin>
         }
       </button>
+    }
+    @if (shownFile(); as file) {
+      @if (!fileOpen()) {
+        <button type="button" class="art-tray" (click)="fileOpen.set(true)" [attr.aria-label]="'ai-assistant.file.open' | translate">
+          <mat-icon aria-hidden="true">{{ file.icon }}</mat-icon>
+          <b>{{ file.name }}</b>
+          <span class="art-tray-note">{{ 'ai-assistant.file.lines' | translate: {count: file.lines} }}</span>
+          <mat-icon class="art-tray-chev" aria-hidden="true">chevron_right</mat-icon>
+        </button>
+      }
     }
     @if (notice(); as current) {
       <div class="k-notice k-notice-edge" [class]="'k-notice k-notice-edge ' + (current.kind === 'block' ? 'blocking' : current.kind)" [attr.role]="current.kind === 'block' ? 'alert' : 'status'">
@@ -164,6 +178,48 @@
       </div>
     </section>
   }
+</div>
+</div>
+@if (shownFile(); as file) {
+  @if (fileOpen()) {
+    <tb-ai-artifact-pane [class.art-dark]="!file.markdown || fileSource()" [dark]="!file.markdown || fileSource()" (closed)="fileOpen.set(false)">
+      <h2 artHead class="art-title">
+        <mat-icon class="tb-mat-20" aria-hidden="true">{{ file.icon }}</mat-icon>
+        <span>{{ file.name }}</span>
+        <small>{{ 'ai-assistant.file.meta' | translate: {label: file.label, lines: file.lines, size: file.size} }}</small>
+      </h2>
+      <div artHead class="art-head-r">
+        @if (file.markdown) {
+          <button type="button" class="art-edit" role="switch" [attr.aria-checked]="fileSource()" (click)="fileSource.set(!fileSource())"
+                  [matTooltip]="'ai-assistant.file.source-tip' | translate" matTooltipPosition="below">
+            <mat-icon aria-hidden="true">edit</mat-icon><span class="art-edit-t">{{ 'ai-assistant.file.source' | translate }}</span>
+            <span class="art-edit-sw" aria-hidden="true"><i></i></span>
+          </button>
+        }
+        @if (!file.markdown || fileSource()) {
+          <div class="art-tools">
+            <button type="button" class="art-tool icon-only" [class.on]="fileWrap()" [attr.aria-pressed]="fileWrap()" (click)="toggleFileWrap()"
+                    [matTooltip]="'ai-assistant.file.wrap' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.wrap' | translate">
+              <mat-icon class="tb-mat-18" aria-hidden="true">wrap_text</mat-icon>
+            </button>
+          </div>
+        }
+        <div class="art-tools">
+          <button type="button" class="art-tool icon-only" [class.copied]="fileCopied()" (click)="copyFile(file)"
+                  [matTooltip]="(fileCopied() ? 'ai-assistant.copied' : 'ai-assistant.file.copy') | translate" matTooltipPosition="below"
+                  [attr.aria-label]="'ai-assistant.file.copy' | translate">
+            <mat-icon class="tb-mat-18" aria-hidden="true">{{ fileCopied() ? 'check' : 'content_copy' }}</mat-icon>
+          </button>
+          <button type="button" class="art-tool icon-only" (click)="downloadFile(file)"
+                  [matTooltip]="'ai-assistant.file.download' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.download' | translate">
+            <mat-icon class="tb-mat-18" aria-hidden="true">download</mat-icon>
+          </button>
+        </div>
+      </div>
+      <tb-ai-file-body [file]="file" [wrap]="fileWrap()" [source]="fileSource()"></tb-ai-file-body>
+    </tb-ai-artifact-pane>
+  }
+}
 </div>
 
 <mat-menu #panelMenu="matMenu" xPosition="before" class="tb-ai-chat-menu">

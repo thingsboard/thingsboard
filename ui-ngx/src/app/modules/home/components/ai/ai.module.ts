@@ -28,6 +28,8 @@ import { AiAssistantButtonComponent } from '@home/components/ai/ai-assistant-but
 import { AiRecordComponent } from '@home/components/ai/ai-record.component';
 import { AiQuestionComponent } from '@home/components/ai/ai-question.component';
 import { AiPlanComponent } from '@home/components/ai/ai-plan.component';
+import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.component';
+import { AiFileBodyComponent } from '@home/components/ai/ai-file-body.component';
 import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
 
 @NgModule({
@@ -55,6 +57,8 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiSparkComponent,
     AiQuestionComponent,
     AiPlanComponent,
+    AiArtifactPaneComponent,
+    AiFileBodyComponent,
     AiSevMarkComponent,
     AiLoadLinesComponent,
     AiChatTitleComponent
@@ -83,7 +87,9 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiNoTelemetryModalComponent,
     AiAttachmentsComponent,
     AiQuestionComponent,
-    AiPlanComponent
+    AiPlanComponent,
+    AiArtifactPaneComponent,
+    AiFileBodyComponent
   ]
 })
 export class AiModule {}

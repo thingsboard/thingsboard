@@ -1242,6 +1242,21 @@
         "auto-approve-off": "Off",
         "auto-approve-text": "Actions go ahead without waiting for your Approve.",
         "auto-approve-new-chat-text": "In the new chat, actions go ahead without waiting for your Approve.",
+        "file": {
+            "meta": "{{label}} · {{lines}} lines · {{size}}",
+            "lines": "{ count, plural, =1 {1 line} other {# lines} }",
+            "open": "Open the file",
+            "wrap": "Wrap long lines",
+            "copy": "Copy the file",
+            "download": "Download",
+            "source": "Edit",
+            "source-tip": "The Markdown source; editing in place comes later"
+        },
+        "artifact": {
+            "close": "Close the panel",
+            "resize": "Resize the panel",
+            "resize-hint": "Drag to resize; double-click to reset"
+        },
         "plan": {
             "title": "Plan",
             "steps": "{ count, plural, =1 {1 step} other {# steps} }",

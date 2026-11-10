@@ -49,6 +49,8 @@ import {
 } from '@shared/models/ai-chat.models';
 import { aiActionWords, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction, isKitCardTool } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
+import { AiFile } from '@home/components/ai/ai-file.models';
+import { ClipboardService } from 'ngx-clipboard';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
@@ -131,6 +133,30 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   newChatAutoApprove = signal<boolean>(false);
 
+  private static readonly FILE_WRAP_KEY = 'tbAiFileWrap';
+
+  shownFile = signal<AiFile | null>(null);
+
+  fileOpen = signal(false);
+
+  private fileChat: string | undefined;
+
+  fileSource = signal(false);
+
+  fileWrap = signal(AiChatComponent.storedFileWrap());
+
+  fileCopied = signal(false);
+
+  private fileCopiedTimer: ReturnType<typeof setTimeout>;
+
+  private static storedFileWrap(): boolean {
+    try {
+      return localStorage.getItem(AiChatComponent.FILE_WRAP_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  }
+
   autoApprove = computed(() => this.chatId() ? !!this.chat()?.autoApprove : this.newChatAutoApprove());
 
   denyReasons = signal<Record<string, string>>({});
@@ -196,6 +222,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private chats = inject(AiChatsService);
   private panelService = inject(AiAssistantPanelService);
   private translate = inject(TranslateService);
+  private clipboard = inject(ClipboardService);
   private store = inject(Store<AppState>);
   private sanitizer = inject(DomSanitizer);
   private destroyRef = inject(DestroyRef);
@@ -219,7 +246,13 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   private chatIdEffect = effect(() => {
     const chatId = this.chatId();
-    untracked(() => this.show(chatId));
+    untracked(() => {
+      if (this.fileChat !== chatId) {
+        this.shownFile.set(null);
+        this.fileOpen.set(false);
+      }
+      this.show(chatId);
+    });
   });
 
   level = computed(() => {
@@ -305,6 +338,39 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   ask(message: string): void {
     this.sendMsgFromUser({message, resources: []});
+  }
+
+  showFile(file: AiFile): void {
+    this.shownFile.set(file);
+    this.fileChat = this.chatId();
+    this.fileSource.set(false);
+    this.fileOpen.set(true);
+  }
+
+  toggleFileWrap(): void {
+    this.fileWrap.update(wrap => !wrap);
+    try {
+      localStorage.setItem(AiChatComponent.FILE_WRAP_KEY, String(this.fileWrap()));
+    } catch {
+      return;
+    }
+  }
+
+  copyFile(file: AiFile): void {
+    if (this.clipboard.copyFromContent(file.content)) {
+      this.fileCopied.set(true);
+      clearTimeout(this.fileCopiedTimer);
+      this.fileCopiedTimer = setTimeout(() => this.fileCopied.set(false), 1500);
+    }
+  }
+
+  downloadFile(file: AiFile): void {
+    const url = URL.createObjectURL(new Blob([file.content], {type: 'text/plain;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url));
   }
 
   runPlan(event: {run: AiPlanRun; steps: AiPlanStep[]}): void {

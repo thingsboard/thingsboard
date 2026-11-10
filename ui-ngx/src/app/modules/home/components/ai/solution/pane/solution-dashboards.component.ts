@@ -32,7 +32,7 @@ export class SolutionDashboardsComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.resize = new ResizeObserver(() => this.wide.set(this.host.nativeElement.clientWidth >= 660 && this.dashboards?.length > 1));
     this.resize.observe(this.host.nativeElement);
-    this.scroller = this.host.nativeElement.closest('.sol-pane-body') as HTMLElement;
+    this.scroller = this.host.nativeElement.closest('.art-pane-body') as HTMLElement;
     this.scroller?.addEventListener('scroll', this.scrollListener, {passive: true});
   }
 

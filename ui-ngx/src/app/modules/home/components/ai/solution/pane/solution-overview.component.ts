@@ -89,7 +89,7 @@ export class SolutionOverviewComponent implements OnChanges, AfterViewInit, OnDe
   ngAfterViewInit(): void {
     this.resize = new ResizeObserver(() => this.wide.set(this.host.nativeElement.clientWidth >= 660));
     this.resize.observe(this.host.nativeElement);
-    this.scroller = this.host.nativeElement.closest('.sol-pane-body') as HTMLElement;
+    this.scroller = this.host.nativeElement.closest('.art-pane-body') as HTMLElement;
     this.scroller?.addEventListener('scroll', this.scrollListener, {passive: true});
   }
 
@@ -127,7 +127,7 @@ export class SolutionOverviewComponent implements OnChanges, AfterViewInit, OnDe
   goTo(section: SectionId): void {
     this.active.set(section);
     const target = this.host.nativeElement.querySelector(`[data-sec="${section}"]`) as HTMLElement;
-    const scroller = this.host.nativeElement.closest('.sol-pane-body') as HTMLElement;
+    const scroller = this.host.nativeElement.closest('.art-pane-body') as HTMLElement;
     if (target && scroller) {
       const tabs = this.wide() ? 0 : (this.host.nativeElement.querySelector('.sol-tabs') as HTMLElement)?.offsetHeight ?? 0;
       scroller.scrollTo({top: scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - tabs, behavior: 'smooth'});
