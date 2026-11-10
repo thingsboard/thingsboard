@@ -210,9 +210,8 @@ public class EntityGroupController extends AutoCommitController {
             @RequestBody EntityGroup entityGroup) throws Exception {
         SecurityUser currentUser = getCurrentUser();
         checkEntityGroupType(entityGroup.getType());
-        Operation operation = entityGroup.getId() == null ? Operation.CREATE : Operation.WRITE;
         EntityId parentEntityId = entityGroup.getOwnerId();
-        if (operation == Operation.CREATE) {
+        if (entityGroup.getId() == null) {
             if (parentEntityId == null || parentEntityId.isNullUid()) {
                 parentEntityId = currentUser.getOwnerId();
             } else {
@@ -221,13 +220,11 @@ public class EntityGroupController extends AutoCommitController {
                             "Invalid entity group ownerId!", ThingsboardErrorCode.PERMISSION_DENIED);
                 }
             }
+            EntityGroupInfo entityGroupInfo = new EntityGroupInfo(entityGroup, ownersCacheService.fetchOwnersHierarchy(getTenantId(), parentEntityId));
+            accessControlService.checkEntityGroupInfoPermission(currentUser, Operation.CREATE, entityGroupInfo);
         } else {
-            validateEntityId(parentEntityId, id -> "Incorrect entity group ownerId " + id);
+            parentEntityId = checkEntityGroupId(entityGroup.getId(), Operation.WRITE).getOwnerId();
         }
-
-        EntityGroupInfo entityGroupInfo = new EntityGroupInfo(entityGroup, ownersCacheService.fetchOwnersHierarchy(getTenantId(), parentEntityId));
-
-        accessControlService.checkEntityGroupInfoPermission(currentUser, operation, entityGroupInfo);
 
         return tbEntityGroupService.save(getTenantId(), parentEntityId, entityGroup, getCurrentUser());
     }
