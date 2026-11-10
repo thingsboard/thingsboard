@@ -146,6 +146,22 @@
         @if (msg.note) {
           <p class="agent-note">{{ msg.note }}</p>
         }
+        @if (sources[$index]; as cited) {
+          <div class="k-docs agent-docs">
+          @for (source of cited; track source.url) {
+            <div class="k-doc" [class.ext]="source.external">
+              <span class="k-doc-tile"><mat-icon aria-hidden="true">{{ source.icon }}</mat-icon></span>
+              <span class="k-doc-t">
+                <a class="k-doc-title" [href]="source.url" target="_blank" rel="noopener noreferrer">{{ source.title }}@if (source.external) {<mat-icon class="k-ext" aria-hidden="true">open_in_new</mat-icon>}</a>
+                <span class="k-doc-from">{{ source.from }}</span>
+                @if (source.quote) {
+                  <q>{{ source.quote }}</q>
+                }
+              </span>
+            </div>
+          }
+          </div>
+        }
         @if (!msg.streaming) {
         <div class="msg-foot agent-foot">
           @if (msg.time) {

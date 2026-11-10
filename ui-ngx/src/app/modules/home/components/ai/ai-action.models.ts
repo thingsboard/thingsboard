@@ -99,9 +99,57 @@ export const ASK_USER_TOOL = 'ask_user';
 
 export const PROPOSE_PLAN_TOOL = 'propose_plan';
 
+export const CITE_SOURCES_TOOL = 'cite_sources';
+
+export interface AiSource {
+  url: string;
+  title: string;
+  from: string;
+  quote?: string;
+  icon: string;
+  external: boolean;
+}
+
+const humanize = (segment: string): string => {
+  const words = decodeURIComponent(segment).replace(/\.[a-z]+$/i, '').replace(/[-_]+/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : '';
+};
+
+export function aiSourcesOf(args: unknown): AiSource[] {
+  const sources = (args as {sources?: unknown})?.sources;
+  if (!Array.isArray(sources)) {
+    return [];
+  }
+  return sources.flatMap(source => {
+    if (typeof source?.url !== 'string' || typeof source?.title !== 'string') {
+      return [];
+    }
+    let url: URL;
+    try {
+      url = new URL(source.url);
+    } catch {
+      return [];
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+      return [];
+    }
+    const host = url.hostname.replace(/^www\./, '');
+    const product = host === 'thingsboard.io' || host.endsWith('.thingsboard.io') || host.endsWith('thingsboard.cloud');
+    const path = url.pathname.split('/').filter(segment => segment.length > 2).slice(0, 2).map(humanize).filter(Boolean);
+    return [{
+      url: url.href,
+      title: source.title.trim(),
+      from: [host, ...path].join(' › '),
+      quote: typeof source.quote === 'string' && source.quote.trim() ? source.quote.trim() : undefined,
+      icon: !product ? 'public' : /pricing/i.test(url.pathname) ? 'sell' : 'menu_book',
+      external: !product
+    }];
+  }).slice(0, 3);
+}
+
 export const UPDATE_PLAN_TOOL = 'update_plan';
 
-const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file']);
+const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file', CITE_SOURCES_TOOL]);
 
 export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);
 

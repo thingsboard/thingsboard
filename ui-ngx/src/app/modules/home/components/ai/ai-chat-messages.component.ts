@@ -15,6 +15,9 @@ import {
 } from '@shared/models/ai-chat.models';
 import {
   aiPlanOf,
+  AiSource,
+  aiSourcesOf,
+  CITE_SOURCES_TOOL,
   AiPlanProgress,
   aiPlanProgressOf,
   AiPlanStep,
@@ -103,6 +106,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   offerIndex = -1;
   streaming = false;
   files: Record<number, AiFile> = {};
+  sources: Record<number, AiSource[]> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
 
   private keptAsking = new Set<number>();
@@ -249,6 +253,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.asking = this.findAsking();
       this.plans = this.findPlans();
       this.files = this.findFiles();
+      this.sources = this.findSources();
       this.answersAt = this.findAnswers();
       this.retryIndex = this.findRetry();
       this.stoppedSteps = this.findStoppedSteps();
@@ -494,6 +499,32 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       }
     }
     return null;
+  }
+
+  private findSources(): Record<number, AiSource[]> {
+    const sources: Record<number, AiSource[]> = {};
+    let answer = -1;
+    let pending: AiSource[] = [];
+    const place = () => {
+      if (pending.length && answer >= 0) {
+        sources[answer] = [...(sources[answer] ?? []), ...pending];
+        pending = [];
+      }
+    };
+    this.messages.forEach((message, index) => {
+      if (message.from === 'USER') {
+        place();
+        answer = -1;
+        pending = [];
+      } else if (message.from === 'AI' && !message.status) {
+        answer = index;
+        place();
+      } else if (message.from === 'ACTION' && message.data.tool === CITE_SOURCES_TOOL && message.data.status !== 'FAILURE') {
+        pending.push(...aiSourcesOf(message.data.arguments));
+        place();
+      }
+    });
+    return sources;
   }
 
   private findFiles(): Record<number, AiFile> {
