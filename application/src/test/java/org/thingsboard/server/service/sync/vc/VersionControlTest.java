@@ -119,6 +119,8 @@ import org.thingsboard.server.common.data.scheduler.SchedulerEventWithCustomerIn
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
+import org.thingsboard.server.common.data.sync.vc.EntityDataDiff;
 import org.thingsboard.server.common.data.sync.vc.EntityTypeLoadResult;
 import org.thingsboard.server.common.data.sync.vc.EntityVersion;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
@@ -703,6 +705,32 @@ public class VersionControlTest extends AbstractControllerTest {
                 .findFirst().orElseThrow();
         TbGenerateReportNodeConfiguration importedConfig = JacksonUtil.treeToValue(importedNode.getConfiguration(), TbGenerateReportNodeConfiguration.class);
         assertThat(importedConfig.getReportConfig().getUserId()).isEqualTo(reportUser2.getId().toString());
+    }
+
+    @Test
+    public void testRuleChainVc_reportNodeUserEmail_exportedOnlyWithUserReadPermission() throws Exception {
+        Device device = createDevice("Device 1", "test1");
+        ReportTemplate reportTemplate = createReportTemplate(tenantId1, null, "Weekly report", device.getId());
+        String reportUserEmail = "report-generator@thingsboard.org";
+        User reportUser = createTenantUser(tenantId1, reportUserEmail);
+        RuleChain ruleChain = createRuleChain("Rule chain with report node");
+        addReportNode(ruleChain.getId(), reportTemplate.getId(), reportUser.getId());
+        String versionId = createVersion("rule chain with report node", EntityType.RULE_CHAIN);
+
+        RuleChainExportData exportedByAdmin = getCurrentRuleChainExport(ruleChain.getId(), versionId);
+        assertThat(exportedByAdmin.getUserEmails()).containsValue(reportUserEmail);
+
+        loginAsRestrictedTenantAdmin(tenantId1, Map.of(
+                Resource.RULE_CHAIN, List.of(Operation.READ),
+                Resource.VERSION_CONTROL, List.of(Operation.READ))); // no USER READ
+        RuleChainExportData exportedWithoutUserRead = getCurrentRuleChainExport(ruleChain.getId(), versionId);
+        assertThat(exportedWithoutUserRead.getMetaData().getNodes()).isNotEmpty();
+        assertThat(exportedWithoutUserRead.getUserEmails()).isNullOrEmpty();
+    }
+
+    private RuleChainExportData getCurrentRuleChainExport(RuleChainId ruleChainId, String versionId) throws Exception {
+        EntityDataDiff diff = doGetAsync("/api/entities/vc/diff/RULE_CHAIN/" + ruleChainId.getId() + "?versionId=" + versionId, EntityDataDiff.class);
+        return (RuleChainExportData) diff.getCurrentVersion();
     }
 
     @Test
