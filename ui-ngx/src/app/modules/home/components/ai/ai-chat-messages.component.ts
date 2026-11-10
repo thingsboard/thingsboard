@@ -725,12 +725,14 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       scroller.removeEventListener('wheel', release);
       scroller.removeEventListener('touchstart', release);
       scroller.removeEventListener('keydown', release);
+      scroller.removeEventListener('pointerdown', release);
       this.releaseBottom = undefined;
     };
     const timeout = setTimeout(release, AiChatMessagesComponent.PIN_TO_BOTTOM_MS);
     scroller.addEventListener('wheel', release, {passive: true});
     scroller.addEventListener('touchstart', release, {passive: true});
     scroller.addEventListener('keydown', release);
+    scroller.addEventListener('pointerdown', release, {passive: true});
     this.releaseBottom = release;
     stick();
   }

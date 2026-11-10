@@ -4435,6 +4435,26 @@ tb-ai-action-detail.k-detail {
   display: block;
   font-family: var(--tb-font);
 
+  .k-detail-recs,
+  .k-tels,
+  .k-series,
+  .k-made,
+  .k-detail-links,
+  .k-detail-facts {
+    max-height: 214px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--tb-ink-38) transparent;
+  }
+
+  .k-detail-recs {
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-right: 6px;
+  }
+
   > :first-child {
     margin-top: 0;
   }
