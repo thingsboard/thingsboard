@@ -53,6 +53,7 @@ export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string
 ])
 
 export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
+  [IntegrationType.OPC_UA, '/assets/converters/OPC_UA/downlink/js.raw'],
   [IntegrationType.TTI, '/assets/converters/TTI/downlink/js.raw'],
   [IntegrationType.TTN, '/assets/converters/TTN/downlink/js.raw'],
   [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/js.raw'],
