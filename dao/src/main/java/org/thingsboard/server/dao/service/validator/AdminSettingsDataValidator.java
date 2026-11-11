@@ -29,6 +29,10 @@ public class AdminSettingsDataValidator extends DataValidator<AdminSettings> {
     protected AdminSettings validateUpdate(TenantId tenantId, AdminSettings adminSettings) {
         AdminSettings existentAdminSettings = adminSettingsService.findAdminSettingsById(tenantId, adminSettings.getId());
         if (existentAdminSettings != null) {
+            TenantId targetTenantId = adminSettings.getTenantId() != null ? adminSettings.getTenantId() : TenantId.SYS_TENANT_ID;
+            if (!existentAdminSettings.getTenantId().equals(targetTenantId)) {
+                throw new DataValidationException("Can't move existing admin settings entry to different tenant!");
+            }
             if (!existentAdminSettings.getKey().equals(adminSettings.getKey())) {
                 throw new DataValidationException("Changing key of admin settings entry is prohibited!");
             }
