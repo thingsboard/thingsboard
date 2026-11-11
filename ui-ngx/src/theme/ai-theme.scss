@@ -3538,7 +3538,7 @@ cursor: pointer;
   flex-direction: column;
 }
 
-.file-code {
+.file-code, .file-edit {
   --fc-ink: var(--tb-ink);
   --fc-ln: var(--tb-ink-38);
   --fc-ln-hover: var(--tb-ink-76);
@@ -3566,7 +3566,7 @@ cursor: pointer;
   tab-size: 2;
 }
 
-.art-dark .file-code {
+.art-dark :is(.file-code, .file-edit) {
   --fc-ink: var(--tb-code-fg);
   --fc-ln: rgba(255, 255, 255, 0.32);
   --fc-ln-hover: rgba(255, 255, 255, 0.72);
@@ -3696,7 +3696,7 @@ cursor: pointer;
   }
 }
 
-.file-code {
+.file-code, .file-edit {
   .hl-cmd, .hl-ok {
     color: var(--hl-cmd);
   }
