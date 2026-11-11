@@ -3,8 +3,6 @@
 package org.thingsboard.server.service.iot_hub;
 
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.OtaPackageInfo;
-import org.thingsboard.server.dao.ota.OtaPackageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +63,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -101,7 +100,6 @@ public class DefaultIotHubService implements IotHubService {
     private final IotHubInstalledItemService iotHubInstalledItemService;
     private final WidgetTypeService widgetTypeService;
     private final DashboardService dashboardService;
-    private final OtaPackageService otaPackageService;
     private final CalculatedFieldService calculatedFieldService;
     private final DeviceProfileService deviceProfileService;
     private final DeviceService deviceService;
@@ -730,10 +728,10 @@ public class DefaultIotHubService implements IotHubService {
 
     /**
      * The update removes the package's entities one by one. ThingsBoard refuses to delete a device profile that is the
-     * default one, that devices outside the package use or that a firmware or software package refers to; a dashboard
-     * that a profile outside the package uses as its default dashboard; and a rule chain that is the root one or the
-     * default rule chain of a profile outside the package. Found after the first deletes, such a refusal would leave the
-     * package half removed and fail every Retry the same way, so it is checked before anything is removed.
+     * default one or that devices outside the package use; a dashboard that a profile outside the package uses as its
+     * default dashboard; and a rule chain that is the root one or the default rule chain of a profile outside the package.
+     * (The firmware and software of a profile are deleted with it.) Found after the first deletes, such a refusal would
+     * leave the package half removed and fail every Retry the same way, so it is checked before anything is removed.
      */
     private void checkPackageEntitiesCanBeRemoved(TenantId tenantId, List<EntityId> packageEntityIds) {
         if (packageEntityIds == null || packageEntityIds.isEmpty()) {
@@ -760,12 +758,6 @@ public class DefaultIotHubService implements IotHubService {
                 }
                 if (otherDevices > 0) {
                     blockers.add("the device profile '" + profile.getName() + "' is used by " + otherDevices + " other device(s)");
-                }
-                for (OtaPackageInfo ota : new PageDataIterable<>(link -> otaPackageService.findTenantOtaPackagesByTenantId(tenantId, link), 1000)) {
-                    if (profile.getId().equals(ota.getDeviceProfileId())) {
-                        blockers.add("the device profile '" + profile.getName() + "' is used by the " + ota.getType().name().toLowerCase()
-                                + " '" + ota.getTitle() + " " + ota.getVersion() + "'");
-                    }
                 }
             } else if (entityId.getEntityType() == EntityType.DASHBOARD) {
                 Dashboard dashboard = dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId()));
@@ -831,15 +823,21 @@ public class DefaultIotHubService implements IotHubService {
         return tracked.stream().filter(id -> !usedExisting.contains(id.getId().toString())).toList();
     }
 
-    /** Removes the entities in reverse order of creation. Returns the ones that failed, in order of creation, with the reason. */
+    private static final Map<EntityType, Integer> DELETE_ORDER = Map.of(EntityType.DEVICE, 0, EntityType.DEVICE_PROFILE, 1,
+            EntityType.DASHBOARD, 2, EntityType.RULE_CHAIN, 3);
+
+    /** Removes the entities, each before what it refers to. Returns the ones that failed, in order of creation, with the reason. */
     private Map<EntityId, String> deleteDevicePackageEntities(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
         Map<EntityId, String> failed = new LinkedHashMap<>();
         if (createdEntityIds == null || createdEntityIds.isEmpty()) {
             return failed;
         }
-        List<EntityId> reversed = new ArrayList<>(createdEntityIds);
-        Collections.reverse(reversed);
-        for (EntityId entityId : reversed) {
+        // An entity goes before what it refers to: a device before its profile, a profile before its default dashboard
+        // and rule chain. Within a type, the reverse of the creation order.
+        List<EntityId> ordered = new ArrayList<>(createdEntityIds);
+        Collections.reverse(ordered);
+        ordered.sort(Comparator.comparingInt(id -> DELETE_ORDER.getOrDefault(id.getEntityType(), DELETE_ORDER.size())));
+        for (EntityId entityId : ordered) {
             try {
                 deleteDevicePackageEntity(tenantId, entityId, user);
             } catch (Exception e) {
