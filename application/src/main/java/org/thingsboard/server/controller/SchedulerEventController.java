@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -163,10 +162,15 @@ public class SchedulerEventController extends BaseController {
     private void checkEventConfigPermissions(SchedulerEvent schedulerEvent) throws ThingsboardException {
         if (GENERATE_REPORT.equals(schedulerEvent.getType())) {
             SecurityUser currentUser = getCurrentUser();
-            ReportConfig reportConfig = checkNotNull(JacksonUtil.treeToValue(schedulerEvent.getConfiguration(), ReportConfig.class),
-                    "Report scheduler event configuration should be specified!");
+            ReportConfig reportConfig = JacksonUtil.treeToValue(schedulerEvent.getConfiguration(), ReportConfig.class);
+            if (reportConfig == null) {
+                throw new ThingsboardException("Report scheduler event configuration should be specified!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
             checkReportTemplateId(reportConfig.getReportTemplateId(), Operation.READ);
-            UserId reportUserId = checkNotNull(reportConfig.getUserId(), "Report user must be specified!");
+            UserId reportUserId = reportConfig.getUserId();
+            if (reportUserId == null) {
+                throw new ThingsboardException("Report user must be specified!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
             checkReportUser(reportUserId);
             checkUserOwnerPermission(currentUser, reportUserId);
         } else if (schedulerEvent.getConfiguration() != null) {
