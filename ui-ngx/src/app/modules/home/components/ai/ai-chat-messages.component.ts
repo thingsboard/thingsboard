@@ -378,7 +378,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       // In auto-approve we are not blocked on the user, so the assistant keeps working: the
       // thinking indicator must stay visible (waitApproval false) and the view must follow the
       // stream of auto-generated cards down to the bottom.
-      this.waitApproval = lastMsg?.from === 'APPROVAL' && !this.autoApprove;
+      this.waitApproval = lastMsg?.from === 'APPROVAL' && !this.autoApprove && !this.isAnswered(lastMsg as ApprovalChatMessage);
       if (this.autoApprove) {
         setTimeout(() => this.scrollToBottom('auto'), 0);
       } else if (lastMsg?.from === 'USER') {
@@ -437,7 +437,15 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     return -1;
   }
 
+  private answeredApprovals = new Set<string>();
+
+  private isAnswered(message: ApprovalChatMessage): boolean {
+    const executionId = message.data?.executionId;
+    return !!message.result || this.answeredApprovals.has(executionId) || !!this.completedExecutions?.[executionId];
+  }
+
   approval($event: ApprovalResult) {
+    this.answeredApprovals.add($event.executionId);
     this.waitApproval = false;
     this.approvalAction.emit($event);
   }
