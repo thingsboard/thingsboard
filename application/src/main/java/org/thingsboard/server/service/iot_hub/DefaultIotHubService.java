@@ -714,15 +714,15 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
+    private static final Map<EntityType, Integer> DELETE_ORDER = Map.of(EntityType.DEVICE, 0, EntityType.DEVICE_PROFILE, 1,
+            EntityType.DASHBOARD, 2, EntityType.RULE_CHAIN, 3, EntityType.INTEGRATION, 4, EntityType.CONVERTER, 5);
+
     /**
      * Deletes what a device package created, except the entities another installed device package
      * also uses (e.g. an integration it took over with Overwrite): deleting those would break that package,
      * and the ones the user had before and the package took as they were (use existing).
      * A kept integration loses the metadata entries the package added.
      */
-    private static final Map<EntityType, Integer> DELETE_ORDER = Map.of(EntityType.DEVICE, 0, EntityType.DEVICE_PROFILE, 1,
-            EntityType.DASHBOARD, 2, EntityType.RULE_CHAIN, 3, EntityType.INTEGRATION, 4, EntityType.CONVERTER, 5);
-
     private void deleteDevicePackageEntities(TenantId tenantId, IotHubInstalledItemId installedItemId,
                                              DeviceInstalledItemDescriptor descriptor, SecurityUser user) {
         List<EntityId> createdEntityIds = descriptor.getCreatedEntityIds();
