@@ -32,6 +32,12 @@ import { MarkerIconContainer, MarkerShape } from '@shared/models/widget/maps/mar
 import { ColorRange, DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
 import _ from 'lodash';
 
+const LEAFLET_SHADOW_PANE_Z_INDEX = 500;
+const LEAFLET_MARKER_PANE_Z_INDEX = 600;
+
+export const markersPaneZIndex = (markersLayerIndex: number): number =>
+  Math.max(LEAFLET_SHADOW_PANE_Z_INDEX + 1, LEAFLET_MARKER_PANE_Z_INDEX - 1 - markersLayerIndex);
+
 export enum MapType {
   geoMap = 'geoMap',
   image = 'image'
