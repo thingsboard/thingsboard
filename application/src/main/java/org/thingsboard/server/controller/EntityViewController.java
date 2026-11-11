@@ -41,6 +41,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -123,6 +124,9 @@ public class EntityViewController extends BaseController {
                     .checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.CREATE, null, entityView);
         } else {
             existingEntityView = checkEntityViewId(entityView.getId(), Operation.WRITE);
+        }
+        if (existingEntityView == null || !hasSameSourceData(existingEntityView, entityView)) {
+            checkEntityId(entityView.getEntityId(), Operation.READ);
         }
         return tbEntityViewService.save(entityView, existingEntityView, getCurrentUser());
     }
@@ -460,4 +464,12 @@ public class EntityViewController extends BaseController {
                 nonFilteredResult.hasNext());
         return checkNotNull(filteredResult);
     }
+
+    private static boolean hasSameSourceData(EntityView existing, EntityView entityView) {
+        return Objects.equals(existing.getEntityId(), entityView.getEntityId())
+                && Objects.equals(existing.getKeys(), entityView.getKeys())
+                && existing.getStartTimeMs() == entityView.getStartTimeMs()
+                && existing.getEndTimeMs() == entityView.getEndTimeMs();
+    }
+
 }
