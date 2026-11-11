@@ -109,8 +109,10 @@ tb-user-menu {
     font-size: 13px;
     line-height: 16px;
     color: rgba(0,0,0,0.6);
-    .tb-email-local {
+    .tb-email-local, .tb-email-domain {
+      flex: 2 1 0;
       min-width: 0;
+      max-width: max-content;
     }
     @supports (container-type: scroll-state) {
       .tb-email-local {
@@ -123,13 +125,12 @@ tb-user-menu {
           position: sticky;
           right: 0;
           padding-left: 0.6em;
-          background: linear-gradient(to right, transparent, #fff 0.6em);
+          background: linear-gradient(to right, transparent, $popover-bg 0.6em);
         }
       }
     }
     .tb-email-domain {
-      flex-shrink: 0;
-      max-width: 60%;
+      flex-grow: 3;
     }
   }
   .mat-mdc-button {
