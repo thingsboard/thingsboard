@@ -830,13 +830,15 @@ class DefaultIotHubServiceTest {
         profile.setDefaultRuleChainId(ruleChain.getId());
         when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(profile));
         when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any())).thenReturn(page());
-        IotHubInstalledItem item = devicePackage(ruleChain.getId(), profile.getId());
+        // The rule chain listed last: in reverse order of creation it would go before the profile that refers to it
+        IotHubInstalledItem item = devicePackage(profile.getId(), ruleChain.getId());
         String newVersionId = mockNewVersion(item);
 
         service.removeDevicePackageEntities(user, item.getId(), newVersionId);
 
-        verify(tbDeviceProfileService).delete(profile, user);
-        verify(tbRuleChainService).delete(ruleChain, user);
+        InOrder order = inOrder(tbDeviceProfileService, tbRuleChainService);
+        order.verify(tbDeviceProfileService).delete(profile, user);
+        order.verify(tbRuleChainService).delete(ruleChain, user);
     }
 
     @Test
