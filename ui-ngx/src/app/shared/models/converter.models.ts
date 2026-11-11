@@ -16,6 +16,7 @@ export enum ConverterType {
 }
 
 export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string>([
+  [IntegrationType.COAP, '/assets/converters/COAP/uplink/tbel.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/uplink/tbel.raw'],
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/uplink/tbel.raw'],
   [IntegrationType.TTI,'/assets/converters/TTI/uplink/tbel.raw'],
@@ -32,6 +33,7 @@ export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string
 ]);
 
 export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>([
+  [IntegrationType.COAP, '/assets/converters/COAP/uplink/js.raw'],
   [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/uplink/js.raw'],
   [IntegrationType.LORIOT, '/assets/converters/LORIOT/uplink/js.raw'],
   [IntegrationType.TTI,'/assets/converters/TTI/uplink/js.raw'],

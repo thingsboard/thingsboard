@@ -45,8 +45,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -844,6 +846,63 @@ public class ConverterControllerTest extends AbstractControllerTest {
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.CHIRPSTACK, 2);
 
         testDecoder(CHIRPSTACK_UPLINK_DECODER, getDefaultPayload(IntegrationType.CHIRPSTACK), expectedDecodedMessage, converter);
+    }
+
+    @Test
+    public void testCoapDefaultDecoder() throws Exception {
+        String json = "{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"thermostat\",\"serialNumber\":\"SN-12345\",\"temperature\":25.5,\"ts\":1791901200000}";
+        JsonNode expected = JacksonUtil.toJsonNode("{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"thermostat\"," +
+                "\"attributes\":{\"serialNumber\":\"SN-12345\"},\"telemetry\":{\"ts\":1791901200000,\"values\":{\"temperature\":25.5}}}");
+        byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
+        String notJson = "Payload is not a JSON object (Content-Format: ";
+        String missingName = "Device name is missing. Provide deviceName in the payload.";
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String decoder = readResource("converters/COAP/uplink/" + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // A JSON object is decoded whatever Content-Format the request has.
+            for (String contentFormat : Arrays.asList(null, "50", "0")) {
+                JsonNode response = decodeCoapUplink(decoder, scriptLang, jsonBytes, contentFormat);
+                softly.assertThat(response.get("error").asText()).as(scriptLang + ": JSON, Content-Format " + contentFormat).isEmpty();
+                softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": JSON, Content-Format " + contentFormat).isEqualTo(expected);
+            }
+
+            // Text, binary data and a JSON array are not decoded; the error names the Content-Format.
+            Map<byte[], String> notJsonCases = new LinkedHashMap<>();
+            notJsonCases.put("Thermostat-01,25.5".getBytes(StandardCharsets.UTF_8), "0");
+            notJsonCases.put(new byte[]{0x01, 0x02, 0x7f}, "42");
+            notJsonCases.put("[{\"deviceName\":\"Thermostat-01\"}]".getBytes(StandardCharsets.UTF_8), "50");
+            notJsonCases.put("Thermostat-01".getBytes(StandardCharsets.UTF_8), null);
+            for (Map.Entry<byte[], String> notJsonCase : notJsonCases.entrySet()) {
+                String expectedFormat = notJsonCase.getValue() != null ? notJsonCase.getValue() : "not set";
+                String description = scriptLang + ": not JSON, Content-Format " + notJsonCase.getValue();
+                JsonNode response = decodeCoapUplink(decoder, scriptLang, notJsonCase.getKey(), notJsonCase.getValue());
+                softly.assertThat(response.get("output").asText()).as(description).isEmpty();
+                softly.assertThat(response.get("error").asText()).as(description)
+                        .contains(notJson + expectedFormat + "). Adapt the decoder to your payload format.");
+            }
+
+            // A JSON object without a device name is rejected.
+            for (String noName : List.of("{\"temperature\":25.5}", "{\"deviceName\":\"  \",\"temperature\":25.5}")) {
+                JsonNode response = decodeCoapUplink(decoder, scriptLang, noName.getBytes(StandardCharsets.UTF_8), "50");
+                softly.assertThat(response.get("output").asText()).as(scriptLang + ": " + noName).isEmpty();
+                softly.assertThat(response.get("error").asText()).as(scriptLang + ": " + noName).contains(missingName);
+            }
+        }
+        softly.assertAll();
+    }
+
+    private JsonNode decodeCoapUplink(String decoder, ScriptLanguage scriptLang, byte[] payload, String contentFormat) {
+        ObjectNode metadata = JacksonUtil.newObjectNode();
+        if (contentFormat != null) {
+            metadata.put("Option:content-format", contentFormat);
+        }
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("decoder", decoder);
+        inputParams.set("metadata", metadata);
+        inputParams.put("payload", Base64.getEncoder().encodeToString(payload));
+        return doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
     }
 
     @Test
