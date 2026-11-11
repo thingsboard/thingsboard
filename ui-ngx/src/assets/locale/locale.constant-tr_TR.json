@@ -5426,7 +5426,6 @@
         "community-string": "SNMP topluluk dizesi"
       },
       "isgateway": "Gateway mi",
-      "activity-time-from-gateway-device": "Gateway cihazından etkinlik zamanı",
       "description": "Açıklama",
       "edge-license-key": "Lisans Anahtarı",
       "cloud-endpoint": "Bulut Uç Noktası",

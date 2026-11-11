@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable, NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
@@ -49,7 +50,7 @@ export const securityRoutes: Routes = [
       title: 'security.security',
       breadcrumb: {
         label: 'security.security',
-        icon: 'lock'
+        icon: 'mdi:lock-outline'
       }
     },
     resolve: {

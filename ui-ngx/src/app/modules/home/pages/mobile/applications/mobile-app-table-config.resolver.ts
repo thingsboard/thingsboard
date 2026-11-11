@@ -66,8 +66,7 @@ export class MobileAppTableConfigResolver  {
           icon: 'content_copy',
           style: {
             padding: '4px',
-            'font-size': '16px',
-            color: 'rgba(0,0,0,.54)'
+            'font-size': '16px'
           },
           isEnabled: (entity) => !!entity.pkgName,
           onAction: (_$event, entity) => entity.pkgName,
@@ -82,8 +81,7 @@ export class MobileAppTableConfigResolver  {
           icon: 'content_copy',
           style: {
             padding: '4px',
-            'font-size': '16px',
-            color: 'rgba(0,0,0,.54)'
+            'font-size': '16px'
           },
           isEnabled: (entity) => !!entity.appSecret,
           onAction: (_$event, entity) => entity.appSecret,
