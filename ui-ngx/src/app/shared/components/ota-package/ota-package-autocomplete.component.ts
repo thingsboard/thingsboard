@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { merge, Observable, of, Subject } from 'rxjs';
@@ -16,8 +17,8 @@ import { OtaPackageInfo, OtaUpdateTranslation, OtaUpdateType } from '@shared/mod
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
+import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
@@ -69,6 +70,9 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   @Input()
+  deviceGroupId: string;
+
+  @Input()
   labelText: string;
 
   @Input()
@@ -76,6 +80,18 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
 
   @Input()
   useFullEntityId = false;
+
+  private deviceGroupAllValue: boolean;
+
+  get deviceGroupAll(): boolean {
+    return this.deviceGroupAllValue;
+  }
+
+  @Input()
+  set deviceGroupAll(value: boolean) {
+    this.deviceGroupAllValue = coerceBooleanProperty(value);
+    this.setDisabledState(this.deviceGroupAll);
+  }
 
   @Input()
   showDetailsPageLink = false;
@@ -174,7 +190,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.disabled = isDisabled || this.deviceGroupAll;
     if (this.disabled) {
       this.otaPackageFormGroup.disable({emitEvent: false});
     } else {
@@ -248,20 +264,27 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   fetchPackages(searchText?: string): Observable<Array<OtaPackageInfo>> {
-    if (isDefinedAndNotNull(this.deviceProfileId)) {
-      this.searchText = searchText;
-      const pageLink = new PageLink(50, 0, searchText, {
-        property: 'title',
-        direction: Direction.ASC
-      });
-      return this.otaPackageService.getOtaPackagesInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
-        {ignoreLoading: true}).pipe(
-        catchError(() => of(emptyPageData<OtaPackageInfo>())),
-        map((data) => data && data.data.length ? data.data : null)
-      );
+    this.searchText = searchText;
+    const pageLink = new PageLink(50, 0, searchText, {
+      property: 'title',
+      direction: Direction.ASC
+    });
+    let fetchFirmware$: Observable<PageData<OtaPackageInfo>>;
+    if (isDefinedAndNotNull(this.deviceGroupId)) {
+      fetchFirmware$ = this.otaPackageService
+        .getOtaPackagesInfoByDeviceGroupId(pageLink, this.deviceGroupId, this.type, {ignoreLoading: true});
     } else {
-      return of([]);
+      if (isDefinedAndNotNull(this.deviceProfileId)) {
+        fetchFirmware$ = this.otaPackageService
+          .getOtaPackagesInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type, {ignoreLoading: true});
+      } else {
+        return of([]);
+      }
     }
+    return fetchFirmware$.pipe(
+      catchError(() => of(emptyPageData<OtaPackageInfo>())),
+      map((data) => data && data.data.length ? data.data : null)
+    );
   }
 
   clear() {

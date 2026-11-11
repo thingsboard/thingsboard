@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NavTreeNode } from '@shared/components/nav-tree.component';
 import { Datasource } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -10,9 +11,36 @@ export interface EntityNodeDatasource extends Datasource {
   nodeId: string;
 }
 
+export interface EdgeOverviewNode extends NavTreeNode {
+  data?: BaseEdgeNodeData;
+}
+
+export interface BaseEdgeNodeData {
+  type: EdgeNodeType;
+  group: BaseData<HasId>;
+  groupType: EntityType;
+}
+
+export type EdgeNodeType = 'group' | 'groups';
+
+export interface EntityGroupNodeData extends BaseEdgeNodeData {
+  type: 'group';
+}
+
+export interface EntityGroupsNodeData extends BaseEdgeNodeData {
+  type: 'groups';
+  edge?: BaseData<HasId>;
+}
+
 export function edgeGroupsNodeText(translate: TranslateService, entityType: EntityType): string {
   const nodeIcon = materialIconByEntityType(entityType);
-  const nodeText = textForEdgeGroupsType(translate, entityType);
+  const nodeText = textForEntityGroupsType(translate, entityType);
+  return nodeIcon + nodeText;
+}
+
+export function entityGroupNodeText(entity: any): string {
+  const nodeIcon = materialIconByEntityType(entity.type);
+  const nodeText = entity.name;
   return nodeIcon + nodeText;
 }
 
@@ -31,64 +59,47 @@ export function materialIconByEntityType(entityType: EntityType): string {
     case EntityType.ASSET:
       materialIcon = 'domain';
       break;
+    case EntityType.USER:
+      materialIcon = 'account_circle';
+      break;
     case EntityType.DASHBOARD:
       materialIcon = 'dashboards';
       break;
     case EntityType.ENTITY_VIEW:
       materialIcon = 'view_quilt';
       break;
+    case EntityType.SCHEDULER_EVENT:
+      materialIcon = 'schedule';
+      break;
     case EntityType.RULE_CHAIN:
       materialIcon = 'settings_ethernet';
+      break;
+    case EntityType.INTEGRATION:
+      materialIcon = 'input';
       break;
   }
   return '<mat-icon class="node-icon material-icons" role="img" aria-hidden="false">' + materialIcon + '</mat-icon>';
 }
 
-export function textForEdgeGroupsType(translate: TranslateService, entityType: EntityType): string {
-  let textForEdgeGroupsType: string = '';
+export function textForEntityGroupsType(translate: TranslateService, entityType: EntityType): string {
+  let textForEntityGroupsType: string = '';
   switch (entityType) {
-    case EntityType.DEVICE:
-      textForEdgeGroupsType = 'device.devices';
-      break;
+    case EntityType.USER:
+      return translate.instant('entity-group.user-groups');
     case EntityType.ASSET:
-      textForEdgeGroupsType = 'asset.assets';
-      break;
-    case EntityType.DASHBOARD:
-      textForEdgeGroupsType = 'dashboard.dashboards';
-      break;
+      return translate.instant('entity-group.asset-groups');
+    case EntityType.DEVICE:
+      return translate.instant('entity-group.device-groups');
     case EntityType.ENTITY_VIEW:
-      textForEdgeGroupsType = 'entity-view.entity-views';
-      break;
+      return translate.instant('entity-group.entity-view-groups');
+    case EntityType.DASHBOARD:
+      return translate.instant('entity-group.dashboard-groups');
+    case EntityType.SCHEDULER_EVENT:
+      return translate.instant('entity.type-scheduler-events');
     case EntityType.RULE_CHAIN:
-      textForEdgeGroupsType = 'rulechain.rulechains';
-      break;
+      return translate.instant('entity.type-rulechains');
+    case EntityType.INTEGRATION:
+      return translate.instant('entity.type-integrations');
   }
-  return translate.instant(textForEdgeGroupsType);
-}
-
-export const edgeGroupsTypes: EntityType[] = [
-  EntityType.ASSET,
-  EntityType.DEVICE,
-  EntityType.ENTITY_VIEW,
-  EntityType.DASHBOARD,
-  EntityType.RULE_CHAIN
-]
-
-export interface EdgeOverviewNode extends NavTreeNode {
-  data?: EdgeOverviewNodeData;
-}
-
-export type EdgeOverviewNodeData = EdgeGroupNodeData | EntityNodeData;
-
-export interface EdgeGroupNodeData extends BaseEdgeOverviewNodeData {
-  entityType: EntityType;
-  entity: BaseData<HasId>;
-}
-
-export interface EntityNodeData extends BaseEdgeOverviewNodeData {
-  entity: BaseData<HasId>;
-}
-
-export interface BaseEdgeOverviewNodeData {
-  internalId: string;
+  return translate.instant(textForEntityGroupsType);
 }

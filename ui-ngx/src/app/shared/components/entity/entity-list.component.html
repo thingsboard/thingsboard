@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-form-field [formGroup]="entityListFormGroup" class="mat-block"
@@ -59,7 +60,7 @@
             </div>
           } @else {
             <span>
-              {{ 'entity.no-entities-matching' | translate: {entity: searchText} }}
+              {{ noEntitiesText | translate: {entity: searchText} }}
             </span>
             @if (allowCreateNew) {
               <span>
@@ -78,7 +79,7 @@
   }
   @if (!inlineField && entityListFormGroup.get('entities').hasError('required')) {
     <mat-error>
-      {{ requiredText }}
+      {{ requiredLabel }}
     </mat-error>
   }
   <div matSuffix>

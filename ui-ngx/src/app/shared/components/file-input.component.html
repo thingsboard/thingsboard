@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-container" [class.tb-button]="asButton">
@@ -15,7 +16,7 @@
   <ng-container #flow="flow"
                 [flowConfig]="{allowDuplicateUploads: true}">
     <div class="tb-file-select-container">
-      <div class="tb-file-clear-container">
+      <div class="tb-file-clear-container" [class.!hidden]="hideClearButtonOnEmpty && !fileContent">
         <button mat-icon-button color="primary"
                 type="button"
                 (click)="clearFile()"

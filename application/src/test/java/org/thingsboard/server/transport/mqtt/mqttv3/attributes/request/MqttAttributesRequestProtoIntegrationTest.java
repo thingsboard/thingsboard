@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.mqttv3.attributes.request;
 
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +60,26 @@ public class MqttAttributesRequestProtoIntegrationTest extends AbstractMqttAttri
                 .build();
         processBeforeTest(configProperties);
         processProtoTestGatewayRequestAttributesValuesFromTheServer();
+    }
+
+    @Test
+    public void testRequestAllSharedAttributesFromTheServerGatewaySeparated() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .gatewayName("Gateway Test Request all shared attributes from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
+        processProtoTestGatewayRequestAllSharedSeparated();
+    }
+
+    @Test
+    public void testRequestAllClientAttributesFromTheServerGatewaySeparated() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .gatewayName("Gateway Test Request all client attributes from the server proto")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .build();
+        processBeforeTest(configProperties);
+        processProtoTestGatewayRequestAllClientSeparated();
     }
 
     @Test

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BackgroundSettings, BackgroundType, cssUnit, Font } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import {
@@ -176,8 +177,8 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
   iconSize: 24,
   iconSizeUnit: 'px',
   iconColor: 'rgba(0, 0, 0, 0.76)',
-  switchColorOn: '#5469FF',
-  switchColorOff: 'rgba(84, 105, 255, 0.30)',
+  switchColorOn: 'var(--tb-primary-500)',
+  switchColorOff: 'var(--tb-primary-100)',
   switchColorDisabled: '#D5D7E5',
   tumblerColorOn: '#fff',
   tumblerColorOff: '#fff',

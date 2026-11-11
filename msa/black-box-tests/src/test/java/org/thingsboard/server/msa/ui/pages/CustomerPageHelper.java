@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.pages;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,15 @@ public class CustomerPageHelper extends CustomerPageElements {
     private String customerEmail;
     private String customerCountry;
     private String customerCity;
+    private String headerName;
+
+    public void setCustomerHeaderName() {
+        this.headerName = headerNameCustomerView().getText();
+    }
+
+    public String getCustomerHeaderName() {
+        return headerName;
+    }
 
     public void setCustomerName() {
         this.customerName = entityTitles().get(0).getText();
@@ -125,6 +135,7 @@ public class CustomerPageHelper extends CustomerPageElements {
     }
 
     public void assignedDashboard() {
+        new DashboardPageElements(driver).openDashboardCroupBtn().get(0).click();
         plusBtn().click();
         assignedField().click();
         setDashboard();
@@ -145,7 +156,7 @@ public class CustomerPageHelper extends CustomerPageElements {
         return elementsIsNotPresent(getEntity(title));
     }
 
-    public void sortByNameDown() {
+    public void sortByTitleDown() {
         doubleClick(sortByTitleBtn());
     }
 
@@ -153,9 +164,19 @@ public class CustomerPageHelper extends CustomerPageElements {
         enterText(titleFieldAddEntityView(), keysToEnter);
     }
 
+    public boolean doneBtnIsEnable() {
+        waitUntilAttributeContains(doneBtnEditViewVisible(), "disabled", "true");
+        return doneBtnEditViewVisible().isEnabled();
+    }
+
     public void enterPhoneNumber(String number) {
+        phoneNumberEntityView().click();
         phoneNumberEntityView().sendKeys(number);
         phoneNumberEntityView().sendKeys(Keys.TAB);
+    }
+
+    public void waitUntilCustomerNotVisible(String customerName) {
+        waitUntilInvisibilityOfElementLocated(entity(customerName));
     }
 
     public void openCustomerAlarms(String customerName) {

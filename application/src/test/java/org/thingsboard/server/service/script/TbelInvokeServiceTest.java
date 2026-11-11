@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.script;
 
@@ -285,6 +285,20 @@ class TbelInvokeServiceTest extends AbstractTbelInvokeTest {
                 .satisfies(ex -> {
                     assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.RUNTIME);
                     assertThat(ex.getCause().getMessage()).contains("could not resolve class: java.util.spi.LocaleServiceProvider");
+                });
+    }
+
+    @Test
+    void givenForbiddenFormatter_whenInvoking_thenThrowsRuntimeError() throws ExecutionException, InterruptedException {
+        UUID scriptId = evalScript("new java.util.Formatter(\"/tmp/test.txt\")");
+        assertThatThrownBy(() -> invokeScript(scriptId, "{\"temperature\":25}"))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.RUNTIME);
+                    assertThat(ex.getCause().getMessage()).contains("could not resolve class: java.util.Formatter");
                 });
     }
 

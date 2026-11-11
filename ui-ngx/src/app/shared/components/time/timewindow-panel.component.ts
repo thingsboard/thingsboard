@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
-  EventEmitter,
+  EventEmitter, HostBinding,
   Inject,
   InjectionToken,
   OnDestroy,
@@ -68,6 +69,9 @@ export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelDat
     standalone: false
 })
 export class TimewindowPanelComponent extends PageComponent implements OnInit, OnDestroy {
+
+  @HostBinding('style.width')
+  width = '450px';
 
   @Output()
   changeTimewindow = new EventEmitter<Timewindow>();
@@ -150,6 +154,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     this.timezone = data.timezone;
     this.isEdit = data.isEdit;
     this.panelMode = data.panelMode;
+    if (this.forAllTimeEnabled) {
+      this.width = '500px';
+    }
 
     this.updateTimewindowAdvancedParams();
 

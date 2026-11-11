@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Component, Inject, ViewEncapsulation } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -12,10 +13,12 @@ import { DialogService } from '@core/services/dialog.service';
 import { AuthService } from '@core/auth/auth.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { NotificationService } from '@core/http/notification.service';
+import { Authority } from '@shared/models/authority.enum';
 
 export interface EntityLimitExceededDialogData {
   entityType: EntityType;
   limit: number;
+  subscriptionViolation: boolean;
 }
 
 // @dynamic
@@ -30,6 +33,8 @@ export class EntityLimitExceededDialogComponent extends DialogComponent<EntityLi
 
   limitReachedText: string;
 
+  isCustomerUser = getCurrentAuthUser(this.store).authority === Authority.CUSTOMER_USER;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: EntityLimitExceededDialogData,
@@ -40,13 +45,22 @@ export class EntityLimitExceededDialogComponent extends DialogComponent<EntityLi
               private notificationService: NotificationService) {
     super(store, router, dialogRef);
 
+    const entitiesPlural = (this.translate.instant(entityTypeTranslations.get(data.entityType).typePlural) as string).toLowerCase();
+    const entity = (this.translate.instant(entityTypeTranslations.get(data.entityType).type) as string).toLowerCase();
     let entitiesText: string;
-    if (data.limit > 1) {
-      entitiesText = data.limit + ' ' + (this.translate.instant(entityTypeTranslations.get(data.entityType).typePlural) as string).toLowerCase();
+    if (this.isCustomerUser || this.data.subscriptionViolation) {
+      entitiesText = entitiesPlural;
     } else {
-      entitiesText = '1 ' + (this.translate.instant(entityTypeTranslations.get(data.entityType).type) as string).toLowerCase();
+      if (data.limit > 1) {
+        entitiesText = data.limit + ' ' + entitiesPlural;
+      } else {
+        entitiesText = '1 ' + entity;
+      }
     }
-    this.limitReachedText = this.translate.instant('entity.limit-reached-text', { entities: entitiesText, entity: (this.translate.instant(entityTypeTranslations.get(data.entityType).type) as string).toLowerCase() });
+    this.limitReachedText = this.translate.instant('entity.limit-reached-text', {
+      entities: entitiesText,
+      entity
+    });
   }
 
   cancel(): void {
@@ -57,7 +71,7 @@ export class EntityLimitExceededDialogComponent extends DialogComponent<EntityLi
     if ($event) {
       $event.stopPropagation();
     }
-    this.notificationService.sendEntitiesLimitIncreaseRequest(this.data.entityType).subscribe(
+    this.notificationService.sendEntitiesLimitIncreaseRequest(this.data.entityType, this.data.subscriptionViolation).subscribe(
       () => {
         this.dialogRef.close();
         this.dialogs.alert(

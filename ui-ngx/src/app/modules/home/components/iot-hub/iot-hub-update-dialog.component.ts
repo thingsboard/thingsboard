@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -57,6 +57,17 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
   getTypeLabel(): string {
     const key = this.typeTranslations.get(this.data.itemType);
     return key ? this.translate.instant(key) : '';
+  }
+
+  /**
+   * Updating a solution template is a delete + reinstall of every entity it created, and unlike the other item
+   * types it is not stopped by the modified-entity check, so the tenant's own edits to those dashboards, devices
+   * and rule chains are lost. Say that instead of the generic "replace the current version" wording.
+   */
+  get updateDescKey(): string {
+    return this.data?.itemType === ItemType.SOLUTION_TEMPLATE
+      ? 'iot-hub.update-desc-solution-template'
+      : 'iot-hub.update-desc';
   }
 
   update(force = false): void {

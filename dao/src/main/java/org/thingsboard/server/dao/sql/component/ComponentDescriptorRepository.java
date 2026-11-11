@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.component;
 
 import org.springframework.data.domain.Page;
@@ -39,4 +40,5 @@ public interface ComponentDescriptorRepository extends JpaRepository<ComponentDe
     @Modifying
     @Query("DELETE FROM ComponentDescriptorEntity cd where cd.clazz = :clazz")
     void deleteByClazz(@Param("clazz") String clazz);
+
 }

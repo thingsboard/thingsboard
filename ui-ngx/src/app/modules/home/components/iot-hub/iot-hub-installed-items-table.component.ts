@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -16,7 +17,7 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import { MatSort } from '@angular/material/sort';
 import { MatPaginator } from '@angular/material/paginator';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
@@ -157,7 +158,6 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   getItemTypeChipClass(itemType: string): string {
     switch (itemType) {
       case 'WIDGET': return 'tb-type-widget';
-      case 'DASHBOARD': return 'tb-type-dashboard';
       case 'CALCULATED_FIELD': return 'tb-type-calc-field';
       case 'ALARM_RULE': return 'tb-type-alarm-rule';
       case 'RULE_CHAIN': return 'tb-type-rule-chain';

@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div #valueCardPanel class="tb-value-card-panel" [class]="layout" [style.padding]="padding" [style]="backgroundStyle$ | async">
@@ -32,8 +33,7 @@
         <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
         <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
       }
-      @case (layout === valueCardLayout.horizontal ||
-        layout === valueCardLayout.horizontal_reversed ? layout : '') {
+      @default {
         <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
         <div class="flex-1"></div>
         <ng-container *ngTemplateOutlet="valueTpl"></ng-container>

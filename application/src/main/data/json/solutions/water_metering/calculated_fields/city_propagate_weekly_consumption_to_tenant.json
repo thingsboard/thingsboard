@@ -1,0 +1,44 @@
+{
+  "reprocessingOrder": 4,
+  "type": "PROPAGATION",
+  "name": "Propagate city weekly consumption to tenant",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "72f0ad58-5a8d-4c98-817e-6c9062c57bbf"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "PROPAGATION",
+    "arguments": {
+      "weeklyConsumption": {
+        "refEntityKey": {
+          "key": "weeklyConsumption",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      }
+    },
+    "expression": null,
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": true,
+        "saveLatest": true,
+        "sendWsUpdate": true,
+        "processCfs": true
+      }
+    },
+    "relation": {
+      "direction": "TO",
+      "relationType": "Owns"
+    },
+    "applyExpressionToResolvedArguments": false
+  }
+}

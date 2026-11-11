@@ -1,5 +1,5 @@
 --
--- SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+-- SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 -- SPDX-License-Identifier: Apache-2.0
 --
 
@@ -56,4 +56,9 @@ VALUES ( '6eaaefa6-4612-11e7-a919-92ebcb67fe33', 1592576748000 ,'13814000-1dd2-1
         '{"type": "SKIP_ALL_FAILURES", "retries": 3, "failurePercentage": 0.0, "pauseBetweenRetries": 3, "maxPauseBetweenRetries": 3}'
 );
 
-INSERT INTO tb_schema_settings (schema_version, product) VALUES (999999000000, 'CE');
+INSERT INTO tb_schema_settings (schema_version, product) VALUES (999999000000, 'PE');
+
+-- tb_cluster normally gets its single row from the installer, which does not run for tests. Seed it here
+-- so the license secret and claim token columns are writable in every test context that replays this file
+-- (the @DaoSqlTest PostgreSQL schema and the Timescale one alike).
+INSERT INTO tb_cluster (cluster_id) VALUES ('cbb0ea36-3d5f-4b0e-9f5a-4a3d3b8f5f21');

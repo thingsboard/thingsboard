@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
-import { AssetInfo } from '@app/shared/models/asset.models';
+import { Asset } from '@app/shared/models/asset.models';
 import { EntityId } from "@shared/models/id/entity-id";
 
 @Component({
@@ -13,7 +14,7 @@ import { EntityId } from "@shared/models/id/entity-id";
     styleUrls: [],
     standalone: false
 })
-export class AssetTabsComponent extends EntityTabsComponent<AssetInfo> {
+export class AssetTabsComponent extends EntityTabsComponent<Asset> {
 
   ownerId: EntityId;
 
@@ -33,7 +34,7 @@ export class AssetTabsComponent extends EntityTabsComponent<AssetInfo> {
     }
   }
 
-  protected setEntity(entity: AssetInfo) {
+  protected setEntity(entity: Asset) {
     this.ownerId = entity.customerId.id !== this.nullUid ? entity.customerId : entity.tenantId;
     super.setEntity(entity);
   }

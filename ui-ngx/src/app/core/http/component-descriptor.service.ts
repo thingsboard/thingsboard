@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ComponentDescriptor, ComponentType } from '@shared/models/component-descriptor.models';
@@ -59,7 +60,7 @@ export class ComponentDescriptorService {
     if (!componentTypes.length) {
       return of(result);
     } else {
-      return this.http.get<Array<ComponentDescriptor>>(`/api/components?componentTypes=${componentTypes.join(',')}&ruleChainType=${ruleChainType}`,
+      return this.http.get<Array<ComponentDescriptor>>(`/api/components?ruleChainType=${ruleChainType}&componentTypes=${componentTypes.join(',')}`,
         defaultHttpOptionsFromConfig(config)).pipe(
         map((componentDescriptors) => {
           componentDescriptors.forEach((componentDescriptor) => {

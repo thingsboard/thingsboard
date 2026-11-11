@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataKey,
   Datasource,
@@ -30,6 +31,12 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerIconContainer, MarkerShape } from '@shared/models/widget/maps/marker-shape.models';
 import { ColorRange, DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
 import _ from 'lodash';
+
+const LEAFLET_SHADOW_PANE_Z_INDEX = 500;
+const LEAFLET_MARKER_PANE_Z_INDEX = 600;
+
+export const markersPaneZIndex = (markersLayerIndex: number): number =>
+  Math.max(LEAFLET_SHADOW_PANE_Z_INDEX + 1, LEAFLET_MARKER_PANE_Z_INDEX - 1 - markersLayerIndex);
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -862,6 +869,7 @@ export interface BaseMapSettings {
   additionalDataSources: AdditionalMapDataSourceSettings[];
   controlsPosition: MapControlsPosition;
   zoomActions: MapZoomAction[];
+  useGestureHandling: boolean;
   scales: MapScale[];
   dragModeButton: boolean;
   fitMapBounds: boolean;
@@ -887,6 +895,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   additionalDataSources: [],
   controlsPosition: MapControlsPosition.topleft,
   zoomActions: [MapZoomAction.scroll, MapZoomAction.doubleClick, MapZoomAction.controlButtons],
+  useGestureHandling: false,
   scales: [],
   dragModeButton: false,
   fitMapBounds: true,
@@ -919,6 +928,7 @@ export const defaultMapActionButtonSettings: MapActionButtonSettings = {
 export enum MapProvider {
   openfreemap = 'openfreemap',
   openstreet = 'openstreet',
+  carto = 'carto',
   google = 'google',
   here = 'here',
   tencent = 'tencent',
@@ -931,6 +941,7 @@ export const mapProviderTranslationMap = new Map<MapProvider, string>(
   [
     [MapProvider.openfreemap, 'widgets.maps.layer.provider.openfreemap.title'],
     [MapProvider.openstreet, 'widgets.maps.layer.provider.openstreet.title'],
+    [MapProvider.carto, 'widgets.maps.layer.provider.carto.title'],
     [MapProvider.google, 'widgets.maps.layer.provider.google.title'],
     [MapProvider.here, 'widgets.maps.layer.provider.here.title'],
     [MapProvider.tencent, 'widgets.maps.layer.provider.tencent.title'],
@@ -971,6 +982,9 @@ export const mapLayerValid = (layer: MapLayerSettings): boolean => {
     case MapProvider.openstreet:
       const openStreetLayer = layer as OpenStreetMapLayerSettings;
       return !!openStreetLayer.layerType;
+    case MapProvider.carto:
+      const cartoLayer = layer as CartoMapLayerSettings;
+      return !!cartoLayer.layerType;
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
       return !!googleLayer.layerType;
@@ -1007,6 +1021,9 @@ export const defaultLayerTitle = (layer: MapLayerSettings): string => {
     case MapProvider.openstreet:
       const openStreetLayer = layer as OpenStreetMapLayerSettings;
       return openStreetMapLayerTranslationMap.get(openStreetLayer.layerType);
+    case MapProvider.carto:
+      const cartoLayer = layer as CartoMapLayerSettings;
+      return cartoLayerTranslationMap.get(cartoLayer.layerType);
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
       return googleMapLayerTranslationMap.get(googleLayer.layerType);
@@ -1026,9 +1043,7 @@ export enum OpenStreetLayerType {
   openStreetHot = 'OpenStreetMap.HOT',
   esriWorldStreetMap = 'Esri.WorldStreetMap',
   esriWorldTopoMap = 'Esri.WorldTopoMap',
-  esriWorldImagery = 'Esri.WorldImagery',
-  cartoDbPositron = 'CartoDB.Positron',
-  cartoDbDarkMatter = 'CartoDB.DarkMatter'
+  esriWorldImagery = 'Esri.WorldImagery'
 }
 
 export const openStreetLayerTypes = Object.values(OpenStreetLayerType) as OpenStreetLayerType[];
@@ -1039,9 +1054,7 @@ export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, str
     [OpenStreetLayerType.openStreetHot, 'widgets.maps.layer.provider.openstreet.hot'],
     [OpenStreetLayerType.esriWorldStreetMap, 'widgets.maps.layer.provider.openstreet.esri-street'],
     [OpenStreetLayerType.esriWorldTopoMap, 'widgets.maps.layer.provider.openstreet.esri-topo'],
-    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery'],
-    [OpenStreetLayerType.cartoDbPositron, 'widgets.maps.layer.provider.openstreet.cartodb-positron'],
-    [OpenStreetLayerType.cartoDbDarkMatter, 'widgets.maps.layer.provider.openstreet.cartodb-dark-matter']
+    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery']
   ]
 );
 
@@ -1079,6 +1092,32 @@ export interface OpenFreeMapLayerSettings extends MapLayerSettings {
 export const defaultOpenFreeMapLayerSettings: OpenFreeMapLayerSettings = {
   provider: MapProvider.openfreemap,
   layerType: OpenFreeMapStyleType.bright
+}
+
+export enum CartoLayerType {
+  cartoPositron = 'CartoDB.Positron',
+  cartoDarkMatter = 'CartoDB.DarkMatter'
+}
+
+export const cartoLayerTypes = Object.values(CartoLayerType) as CartoLayerType[];
+
+export const cartoLayerTranslationMap = new Map<CartoLayerType, string>(
+  [
+    [CartoLayerType.cartoPositron, 'widgets.maps.layer.provider.carto.positron'],
+    [CartoLayerType.cartoDarkMatter, 'widgets.maps.layer.provider.carto.dark-matter']
+  ]
+);
+
+export interface CartoMapLayerSettings extends MapLayerSettings {
+  provider: MapProvider.carto;
+  layerType: CartoLayerType;
+  apiKey?: string;
+}
+
+export const defaultCartoMapLayerSettings: CartoMapLayerSettings = {
+  provider: MapProvider.carto,
+  layerType: CartoLayerType.cartoPositron,
+  apiKey: null
 }
 
 export enum GoogleLayerType {
@@ -1141,6 +1180,16 @@ export const defaultHereMapLayerSettings: HereMapLayerSettings = {
   apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
 }
 
+const hereV3Variants: {[v2Variant: string]: string} = {
+  normalDay: 'exploreDay',
+  normalNight: 'exploreNight',
+  hybridDay: 'exploreSatelliteDay',
+  terrainDay: 'topoDay'
+};
+
+export const hereV3Provider = (layerType: string): string =>
+  `HERE.${hereV3Variants[layerType?.split('.')[1]] || hereV3Variants.normalDay}`;
+
 export enum TencentLayerType {
   tencentNormal = 'Tencent.Normal',
   tencentSatellite = 'Tencent.Satellite',
@@ -1179,12 +1228,31 @@ export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
   tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 }
 
+export const mapProviderHasApiKey = (provider: MapProvider): boolean =>
+  [MapProvider.carto, MapProvider.google, MapProvider.here].includes(provider);
+
+export const mapProviderRequiresApiKey = (provider: MapProvider): boolean =>
+  [MapProvider.google, MapProvider.here].includes(provider);
+
+const legacyOpenStreetCartoLayerTypes = new Set<string>(cartoLayerTypes);
+
+// CARTO layers used to be stored under the OpenStreetMap provider, keep reading them as CARTO layers
+export const normalizeMapLayerSettings = (layer: MapLayerSettings): MapLayerSettings => {
+  if (layer?.provider === MapProvider.openstreet &&
+    legacyOpenStreetCartoLayerTypes.has((layer as OpenStreetMapLayerSettings).layerType)) {
+    return {...layer, provider: MapProvider.carto};
+  }
+  return layer;
+};
+
 export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings => {
   switch (provider) {
     case MapProvider.openfreemap:
       return defaultOpenFreeMapLayerSettings;
     case MapProvider.openstreet:
       return defaultOpenStreetMapLayerSettings;
+    case MapProvider.carto:
+      return defaultCartoMapLayerSettings;
     case MapProvider.google:
       return defaultGoogleMapLayerSettings;
     case MapProvider.here:
@@ -1475,7 +1543,7 @@ const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Obse
   image.src = imageUrl;
 });
 
-const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
+export const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
   imageLoader(imageUrl).pipe(map(image => [image.width, image.height]));
 
 export interface ImageWithAspect {

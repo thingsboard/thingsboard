@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { BaseData, ExportableEntity } from '@shared/models/base-data';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { BaseData, ExportableEntity, GroupEntityInfo } from '@shared/models/base-data';
 import { AssetId } from './id/asset-id';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { CustomerId } from '@shared/models/id/customer-id';
@@ -38,11 +39,7 @@ export interface Asset extends BaseData<AssetId>, HasTenantId, HasVersion, Expor
   additionalInfo?: any;
 }
 
-export interface AssetInfo extends Asset {
-  customerTitle: string;
-  customerIsPublic: boolean;
-  assetProfileName: string;
-}
+export type AssetInfo = Asset & GroupEntityInfo<AssetId>;
 
 export interface AssetSearchQuery extends EntitySearchQuery {
   assetTypes: Array<string>;

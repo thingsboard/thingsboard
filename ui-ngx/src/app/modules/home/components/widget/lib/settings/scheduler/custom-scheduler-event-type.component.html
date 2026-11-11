@@ -1,0 +1,56 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-expansion-panel class="custom-scheduler-event-type" [formGroup]="customSchedulerEventTypeFormGroup" [(expanded)]="expanded">
+  <mat-expansion-panel-header>
+    <div class="flex flex-1 flex-row items-center justify-start">
+      <mat-panel-title>
+        <div class="flex flex-1 flex-row items-center justify-start">
+          <div [innerHTML]="customSchedulerEventTypeHtml()"></div>
+        </div>
+      </mat-panel-title>
+      <span class="flex-1"></span>
+      @if (!disabled) {
+        <button mat-icon-button style="min-width: 40px;"
+          type="button"
+          (click)="removeCustomSchedulerEventType.emit()"
+          matTooltip="{{ 'action.remove' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  </mat-expansion-panel-header>
+  <ng-template matExpansionPanelContent>
+    <div class="flex flex-col gap-2">
+      <mat-divider></mat-divider>
+      <section class="tb-widget-settings flex flex-col">
+        <section class="flex flex-row items-center justify-start gap-2">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>widgets.scheduler.display-name</mat-label>
+            <input required matInput formControlName="name">
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>widgets.scheduler.type-name</mat-label>
+            <input required matInput formControlName="value">
+          </mat-form-field>
+        </section>
+        <mat-slide-toggle formControlName="originator" class="slide-block">
+          {{ 'widgets.scheduler.display-originator-select' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="msgType" class="slide-block">
+          {{ 'widgets.scheduler.display-message-type-select' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="metadata" class="slide-block">
+          {{ 'widgets.scheduler.display-metadata-table' | translate }}
+        </mat-slide-toggle>
+        <tb-html formControlName="template" required
+          label="{{ 'widgets.scheduler.configuration-html-template' | translate }}">
+        </tb-html>
+      </section>
+    </div>
+  </ng-template>
+</mat-expansion-panel>

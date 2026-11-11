@@ -1,26 +1,50 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install.lts;
 
+import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
+import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemDescriptor;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,6 +57,15 @@ class V4_3_1_3MigrationTest {
 
     @Mock
     private WidgetTypeService widgetTypeService;
+
+    @Mock
+    private AttributesService attributesService;
+
+    @Mock
+    private IotHubInstalledItemService iotHubInstalledItemService;
+
+    @Mock
+    private JdbcTemplate jdbcTemplate;
 
     @InjectMocks
     private V4_3_1_3Migration migration;
@@ -79,5 +112,136 @@ class V4_3_1_3MigrationTest {
 
         verify(widgetTypeService, never()).saveWidgetType(any());
         verify(widgetsBundleService, never()).deleteWidgetsBundle(any(), any());
+    }
+
+    // --- Legacy solution-template migration ---
+
+    // Mappings baked into V4_3_1_3Migration.LEGACY_SOLUTION_TEMPLATES (the 4.3 set differs from the 4.2 one).
+    private static final String TEMPERATURE_LEGACY_ID = "temperature_sensors";
+    private static final UUID TEMPERATURE_ITEM_ID = UUID.fromString("9a64ef1f-c926-45fb-9a5f-0e88e40c485d");
+    private static final UUID TEMPERATURE_ITEM_VERSION_ID = UUID.fromString("91ee53a0-68e9-11f1-992c-0f4d95fca092");
+    private static final String TEMPERATURE_ITEM_NAME = "Temperature & Humidity sensors";
+
+    private static final String WATER_METERING_LEGACY_ID = "water_metering";
+
+    @Test
+    void migratesLegacySolutionTemplateToIotHubAndCleansUpAttributes() {
+        TenantId tenantId = new TenantId(UUID.randomUUID());
+        UUID createdDeviceId = UUID.randomUUID();
+        UUID dashboardGroupUuid = UUID.randomUUID();
+        UUID dashboardUuid = UUID.randomUUID();
+
+        String entitiesJson = "[{\"entityType\":\"DEVICE\",\"id\":\"" + createdDeviceId + "\"}]";
+        String instructionsJson = "{" +
+                "\"dashboardGroupId\":{\"entityType\":\"ENTITY_GROUP\",\"id\":\"" + dashboardGroupUuid + "\"}," +
+                "\"dashboardId\":{\"entityType\":\"DASHBOARD\",\"id\":\"" + dashboardUuid + "\"}," +
+                "\"details\":\"Some installation details\"}";
+
+        stubSingleTenant(tenantId);
+        stubAttributes(tenantId, List.of(
+                booleanEntry(TEMPERATURE_LEGACY_ID + "_status", true),
+                stringEntry(TEMPERATURE_LEGACY_ID + "_entities", entitiesJson),
+                stringEntry(TEMPERATURE_LEGACY_ID + "_instructions", instructionsJson)));
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any()))
+                .thenReturn(List.of());
+        when(attributesService.removeAll(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), any()))
+                .thenReturn(Futures.immediateFuture(List.of()));
+
+        migration.applyAfterCommit();
+
+        ArgumentCaptor<IotHubInstalledItem> itemCaptor = ArgumentCaptor.forClass(IotHubInstalledItem.class);
+        verify(iotHubInstalledItemService).save(eq(tenantId), itemCaptor.capture());
+        IotHubInstalledItem saved = itemCaptor.getValue();
+        assertEquals(tenantId, saved.getTenantId());
+        assertEquals(TEMPERATURE_ITEM_ID, saved.getItemId());
+        assertEquals(TEMPERATURE_ITEM_VERSION_ID, saved.getItemVersionId());
+        assertEquals(TEMPERATURE_ITEM_NAME, saved.getItemName());
+        assertEquals("SOLUTION_TEMPLATE", saved.getItemType());
+        assertEquals("1.0.0", saved.getVersion());
+
+        assertNotNull(saved.getDescriptor());
+        SolutionTemplateInstalledItemDescriptor descriptor =
+                (SolutionTemplateInstalledItemDescriptor) saved.getDescriptor();
+        // temperature_sensors has empty tenantTelemetryKeys in the baked mapping
+        assertEquals(List.of(), descriptor.getTenantTelemetryKeys());
+        assertEquals(List.of(), descriptor.getTenantAttributeKeys());
+        assertFalse(descriptor.isMainDashboardPublic());
+        assertEquals(List.<EntityId>of(new DeviceId(createdDeviceId)), descriptor.getCreatedEntityIds());
+        assertEquals(new EntityGroupId(dashboardGroupUuid), descriptor.getDashboardGroupId());
+        assertEquals(new DashboardId(dashboardUuid), descriptor.getDashboardId());
+        assertEquals("Some installation details", descriptor.getDetails());
+
+        // consume-once cleanup: all three legacy keys for the migrated template are removed
+        ArgumentCaptor<List<String>> keysCaptor = ArgumentCaptor.forClass(List.class);
+        verify(attributesService).removeAll(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), keysCaptor.capture());
+        List<String> removedKeys = keysCaptor.getValue();
+        assertTrue(removedKeys.contains(TEMPERATURE_LEGACY_ID + "_status"));
+        assertTrue(removedKeys.contains(TEMPERATURE_LEGACY_ID + "_entities"));
+        assertTrue(removedKeys.contains(TEMPERATURE_LEGACY_ID + "_instructions"));
+    }
+
+    @Test
+    void doesNotMigrateWhenStatusFlagIsFalseOrAbsent() {
+        TenantId tenantId = new TenantId(UUID.randomUUID());
+
+        stubSingleTenant(tenantId);
+        // temperature_sensors: status=false (gating) ; water_metering: status absent (only entities present)
+        stubAttributes(tenantId, List.of(
+                booleanEntry(TEMPERATURE_LEGACY_ID + "_status", false),
+                stringEntry(TEMPERATURE_LEGACY_ID + "_entities", "[]"),
+                stringEntry(WATER_METERING_LEGACY_ID + "_entities", "[]")));
+
+        migration.applyAfterCommit();
+
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+        // nothing migrated -> no attribute cleanup at all
+        verify(attributesService, never()).removeAll(any(), any(), any(), any());
+    }
+
+    @Test
+    void skipsDuplicateSaveButStillCleansUpWhenAlreadyInstalled() {
+        TenantId tenantId = new TenantId(UUID.randomUUID());
+
+        stubSingleTenant(tenantId);
+        stubAttributes(tenantId, List.of(
+                booleanEntry(TEMPERATURE_LEGACY_ID + "_status", true),
+                stringEntry(TEMPERATURE_LEGACY_ID + "_entities", "[]"),
+                stringEntry(TEMPERATURE_LEGACY_ID + "_instructions", "{}")));
+        // the template's itemId is reported as already installed
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any()))
+                .thenReturn(List.of(TEMPERATURE_ITEM_ID));
+        when(attributesService.removeAll(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), any()))
+                .thenReturn(Futures.immediateFuture(List.of()));
+
+        migration.applyAfterCommit();
+
+        // no duplicate save
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+        // but legacy attributes are still consumed
+        ArgumentCaptor<List<String>> keysCaptor = ArgumentCaptor.forClass(List.class);
+        verify(attributesService).removeAll(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), keysCaptor.capture());
+        List<String> removedKeys = keysCaptor.getValue();
+        assertTrue(removedKeys.contains(TEMPERATURE_LEGACY_ID + "_status"));
+        assertTrue(removedKeys.contains(TEMPERATURE_LEGACY_ID + "_entities"));
+        assertTrue(removedKeys.contains(TEMPERATURE_LEGACY_ID + "_instructions"));
+    }
+
+    // Stubs the discovery query to return a single tenant that has legacy solution-template attributes.
+    private void stubSingleTenant(TenantId tenantId) {
+        when(jdbcTemplate.queryForList(anyString(), eq(UUID.class), any(Object[].class)))
+                .thenReturn(List.of(tenantId.getId()));
+    }
+
+    private void stubAttributes(TenantId tenantId, List<AttributeKvEntry> entries) {
+        when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), any(Collection.class)))
+                .thenReturn(Futures.immediateFuture(new ArrayList<>(entries)));
+    }
+
+    private static AttributeKvEntry booleanEntry(String key, boolean value) {
+        return new BaseAttributeKvEntry(new BooleanDataEntry(key, value), System.currentTimeMillis());
+    }
+
+    private static AttributeKvEntry stringEntry(String key, String value) {
+        return new BaseAttributeKvEntry(new StringDataEntry(key, value), System.currentTimeMillis());
     }
 }

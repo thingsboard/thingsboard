@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   calculateNewPointCoordinate,
   defaultImageMapSettings,
@@ -200,6 +201,7 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
     if (!this.map && this.imageLayerData.aspect > 0) {
       const center = this.pointToLatLng(this.width / 2, this.height / 2);
       this.map = L.map(this.mapElement, {
+        ...this.gestureHandlingMapOptions,
         scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
         doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
         zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),
@@ -232,6 +234,11 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
       this.imageOverlay.setBounds(bounds);
     } else {
       this.imageOverlay = L.imageOverlay(this.imageLayerData.imageUrl, bounds).addTo(this.map);
+      if (this.ctx.reportService.reportView) {
+        this.imageOverlay.once('load', () => {
+          this.ctx.reportService.onMapLoaded(this.mapUuid);
+        });
+      }
     }
     const padding = 200 * this.maxZoom;
     const southWest = this.pointToLatLng(-padding, h + padding);

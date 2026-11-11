@@ -1,0 +1,22 @@
+{
+  "type": "HTTP",
+  "debugFailures": false,
+  "debugAll": true,
+  "enabled": true,
+  "allowCreateDevicesOrAssets": false,
+  "defaultConverterId": null,
+  "downlinkConverterId": null,
+  "routingKey": null,
+  "configuration": {
+    "metadata": {},
+    "baseUrl": "%1$s",
+    "httpEndpoint": "%1$s/api/v1/integrations/http/%2$s",
+    "enableSecurity": false,
+    "headersFilter": {},
+    "replaceNoContentToOk": false
+  },
+  "additionalInfo": null,
+  "externalId": null,
+  "remote": false,
+  "edgeTemplate": false
+}

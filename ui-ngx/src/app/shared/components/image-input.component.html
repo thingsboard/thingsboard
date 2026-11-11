@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-container">
@@ -15,7 +16,7 @@
         <div class="image-container" [class]="{'disabled': disabled}">
           <div class="tb-image-preview-container">
             @if (!safeImageUrl && disabled) {
-              <div class="tb-image-preview-text">{{ 'dashboard.empty-image' | translate }}</div>
+              <div class="tb-image-preview-text">{{ emptyImageText }}</div>
             } @else {
               <img class="tb-image-preview" [src]="safeImageUrl" />
             }
@@ -40,7 +41,7 @@
           <div class="upload-label">
             <mat-icon class="tb-mat-32">cloud_upload</mat-icon>
             <div class="upload-text-area">
-              <span class="hide-xs" translate>image-input.drag-and-drop</span>
+              <span class="hide-xs">{{ dropLabel }}</span>
               <div class="upload-button-area">
                 <span class="hide-xs" translate>image-input.or</span>
                 <button type="button" mat-button color="primary" class="browse-file">

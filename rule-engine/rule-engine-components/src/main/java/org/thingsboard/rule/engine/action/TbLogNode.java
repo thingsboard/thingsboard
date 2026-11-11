@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -54,10 +55,6 @@ public class TbLogNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!log.isInfoEnabled()) {
-            ctx.tellSuccess(msg);
-            return;
-        }
         if (standard) {
             logStandard(ctx, msg);
             return;

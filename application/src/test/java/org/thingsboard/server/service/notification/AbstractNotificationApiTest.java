@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,12 +34,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.encryptionkey.EncryptionService;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 
 import java.net.URISyntaxException;
@@ -72,6 +75,10 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     protected SqlPartitioningRepository partitioningRepository;
     @Autowired
     protected DefaultNotifications defaultNotifications;
+    @Autowired
+    protected SecretService secretService;
+    @Autowired
+    protected EncryptionService encryptionService;
 
     public static final String DEFAULT_NOTIFICATION_SUBJECT = "Just a test";
     public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.GENERAL;
@@ -84,6 +91,8 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         notificationTargetService.deleteNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID);
         partitioningRepository.cleanupPartitionsCache("notification", Long.MAX_VALUE, 0);
         notificationSettingsService.deleteNotificationSettings(TenantId.SYS_TENANT_ID);
+        secretService.deleteByTenantId(TenantId.SYS_TENANT_ID);
+        encryptionService.deleteEncryptionKeyByTenantId(TenantId.SYS_TENANT_ID);
     }
 
     protected NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text, NotificationDeliveryMethod... deliveryMethods) {
@@ -188,12 +197,12 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     protected PageData<NotificationRuleInfo> findNotificationRules() throws Exception {
         PageLink pageLink = new PageLink(10);
-        return doGetTypedWithPageLink("/api/notification/rules?", new TypeReference<PageData<NotificationRuleInfo>>() {}, pageLink);
+        return doGetTypedWithPageLink("/api/notification/rules?", new TypeReference<>() {}, pageLink);
     }
 
     @Override
     protected NotificationApiWsClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
-        NotificationApiWsClient wsClient = new NotificationApiWsClient(WS_URL + wsPort);
+        NotificationApiWsClient wsClient = new NotificationApiWsClient(WS_URL + serverPort);
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         wsClient.authenticate(token);
         return wsClient;

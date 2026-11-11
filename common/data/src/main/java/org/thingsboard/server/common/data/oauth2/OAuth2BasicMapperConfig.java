@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.oauth2;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,6 +9,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.validation.Length;
+
+import java.util.List;
 
 @Builder(toBuilder = true)
 @EqualsAndHashCode
@@ -40,4 +43,6 @@ public class OAuth2BasicMapperConfig {
     private final String defaultDashboardName;
     @Schema(description = "Whether default dashboard should be open in full screen")
     private final boolean alwaysFullScreen;
+    private final String parentCustomerNamePattern;
+    private final List<String> userGroupsNamePattern;
 }

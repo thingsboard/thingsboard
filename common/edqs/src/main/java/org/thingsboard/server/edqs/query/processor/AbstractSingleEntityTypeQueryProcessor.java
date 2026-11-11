@@ -1,8 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.query.processor;
 
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.edqs.data.EntityData;
@@ -11,6 +11,7 @@ import org.thingsboard.server.edqs.query.SortableEntityData;
 import org.thingsboard.server.edqs.repo.TenantRepo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -24,45 +25,133 @@ public abstract class AbstractSingleEntityTypeQueryProcessor<T extends EntityFil
 
     @Override
     public List<SortableEntityData> processQuery() {
-        if (ctx.isTenantUser()) {
-            return processTenantQuery();
+        var readPermissions = ctx.getMergedReadPermissionsByEntityType();
+        if (readPermissions == null) {
+            return Collections.emptyList();
+        }
+        var readAttrPermissions = ctx.getMergedReadAttrPermissionsByEntityType();
+        var readTsPermissions = ctx.getMergedReadTsPermissionsByEntityType();
+
+        boolean hasGenericRead = readPermissions.isHasGenericRead();
+        boolean hasGroups = readPermissions.getEntityGroupIds() != null && !readPermissions.getEntityGroupIds().isEmpty();
+        if (!hasGenericRead && !hasGroups) {
+            return Collections.emptyList();
+        }
+        boolean hasGenericAttrRead = readAttrPermissions.isHasGenericRead();
+        boolean hasGenericTsRead = readTsPermissions.isHasGenericRead();
+
+        if (hasGenericRead) {
+            if (ctx.isTenantUser()) {
+                if (hasGroups && (!hasGenericAttrRead || !hasGenericTsRead)) {
+                    return processTenantGenericReadWithGroups(hasGenericAttrRead, hasGenericTsRead,
+                            toGroupPermissions(readPermissions, readAttrPermissions, readTsPermissions));
+                } else {
+                    return processTenantGenericRead(hasGenericAttrRead, hasGenericTsRead);
+                }
+            } else {
+                if (hasGroups) {
+                    return processCustomerGenericReadWithGroups(ctx.getCustomerId().getId(), hasGenericAttrRead, hasGenericTsRead,
+                            toGroupPermissions(readPermissions, readAttrPermissions, readTsPermissions));
+                } else {
+                    return processCustomerGenericRead(ctx.getCustomerId().getId(), hasGenericAttrRead, hasGenericTsRead);
+                }
+            }
         } else {
-            return processCustomerQuery(ctx.getCustomerId().getId());
+            return processGroupsOnly(toGroupPermissions(readPermissions, readAttrPermissions, readTsPermissions));
         }
     }
 
     @Override
-    public long count() {
+    public long count() { // TODO: get rid of the duplicates
+        var readPermissions = ctx.getMergedReadPermissionsByEntityType();
+        if (readPermissions == null) {
+            return 0;
+        }
+        var readAttrPermissions = ctx.getMergedReadAttrPermissionsByEntityType();
+        var readTsPermissions = ctx.getMergedReadTsPermissionsByEntityType();
+        boolean hasGenericRead = readPermissions.isHasGenericRead();
+        boolean hasGroups = readPermissions.getEntityGroupIds() != null && !readPermissions.getEntityGroupIds().isEmpty();
+
+        if (!hasGenericRead && !hasGroups && !ctx.isIgnorePermissionCheck()) {
+            return 0;
+        }
+
         AtomicLong result = new AtomicLong();
         Consumer<EntityData<?>> counter = ed -> result.incrementAndGet();
 
         if (ctx.isIgnorePermissionCheck()) {
             processAll(counter);
         } else if (ctx.isTenantUser()) {
-            processAll(counter);
+            if (hasGenericRead) {
+                processAll(counter);
+            } else {
+                processGroupsOnly(toGroupPermissions(readPermissions, readAttrPermissions, readTsPermissions), counter);
+            }
         } else {
-            processCustomerQuery(ctx.getCustomerId().getId(), counter);
+            if (hasGenericRead) {
+                if (hasGroups) {
+                    result.addAndGet(processCustomerGenericReadWithGroups(ctx.getCustomerId().getId(), readAttrPermissions.isHasGenericRead(), readTsPermissions.isHasGenericRead(),
+                            toGroupPermissions(readPermissions, readAttrPermissions, readTsPermissions)).size()); // FIXME: not efficient
+                } else {
+                    processCustomerGenericRead(ctx.getCustomerId().getId(), counter);
+                }
+            } else {
+                processGroupsOnly(toGroupPermissions(readPermissions, readAttrPermissions, readTsPermissions), counter);
+            }
         }
         return result.get();
     }
 
-    protected List<SortableEntityData> processTenantQuery() {
+    protected List<SortableEntityData> processTenantGenericRead(boolean readAttrPermissions,
+                                                                boolean readTsPermissions) {
         List<SortableEntityData> result = new ArrayList<>(getProbableResultSize());
         processAll(ed -> {
-            result.add(toSortData(ed));
+            result.add(toSortData(ed, readAttrPermissions, readTsPermissions));
         });
         return result;
     }
 
-    protected List<SortableEntityData> processCustomerQuery(UUID customerId) {
+    protected List<SortableEntityData> processCustomerGenericRead(UUID customerId,
+                                                                  boolean readAttrPermissions,
+                                                                  boolean readTsPermissions) {
         List<SortableEntityData> result = new ArrayList<>(getProbableResultSize());
-        processCustomerQuery(customerId, ed -> {
-            result.add(toSortData(ed));
+        processCustomerGenericRead(customerId, ed -> {
+            result.add(toSortData(ed, readAttrPermissions, readTsPermissions));
         });
         return result;
     }
 
-    protected abstract void processCustomerQuery(UUID customerId, Consumer<EntityData<?>> processor);
+    protected abstract void processCustomerGenericRead(UUID customerId, Consumer<EntityData<?>> processor);
+
+    protected List<SortableEntityData> processTenantGenericReadWithGroups(boolean readAttrPermissions,
+                                                                          boolean readTsPermissions,
+                                                                          List<GroupPermissions> groupPermissions) {
+        List<SortableEntityData> result = new ArrayList<>(getProbableResultSize());
+        processAll(ed -> {
+            CombinedPermissions permissions = getCombinedPermissions(ed.getId(), true, readAttrPermissions, readTsPermissions, groupPermissions);
+            SortableEntityData sortData = toSortData(ed, permissions);
+            result.add(sortData);
+        });
+        return result;
+    }
+
+    protected abstract List<SortableEntityData> processCustomerGenericReadWithGroups(UUID customerId,
+                                                                                     boolean readAttrPermissions,
+                                                                                     boolean readTsPermissions,
+                                                                                     List<GroupPermissions> groupPermissions);
+
+    protected List<SortableEntityData> processGroupsOnly(List<GroupPermissions> groupPermissions) {
+        List<SortableEntityData> result = new ArrayList<>(getProbableResultSize());
+        processGroupsOnly(groupPermissions, ed -> {
+            SortableEntityData sortData = toSortDataGroupsOnly(ed, groupPermissions);
+            if (sortData != null) {
+                result.add(sortData);
+            }
+        });
+        return result;
+    }
+
+    protected abstract void processGroupsOnly(List<GroupPermissions> groupPermissions, Consumer<EntityData<?>> processor);
 
     protected abstract void processAll(Consumer<EntityData<?>> processor);
 

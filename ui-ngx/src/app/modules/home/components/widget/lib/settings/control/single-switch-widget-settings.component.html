@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="singleSwitchWidgetSettingsForm">
@@ -135,6 +136,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.single-switch.on</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="switchColorOn">
           </tb-color-input>
         </div>
@@ -142,6 +144,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.single-switch.off</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="switchColorOff">
           </tb-color-input>
         </div>
@@ -149,6 +152,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.single-switch.disabled</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="switchColorDisabled">
           </tb-color-input>
         </div>
@@ -160,6 +164,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.single-switch.on</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="tumblerColorOn">
           </tb-color-input>
         </div>
@@ -167,6 +172,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.single-switch.off</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="tumblerColorOff">
           </tb-color-input>
         </div>
@@ -174,6 +180,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.single-switch.disabled</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="tumblerColorDisabled">
           </tb-color-input>
         </div>

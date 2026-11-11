@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.tenant;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -22,6 +23,10 @@ public interface TenantService extends EntityDaoService {
 
     ListenableFuture<Tenant> findTenantByIdAsync(TenantId callerId, TenantId tenantId);
 
+    ListenableFuture<List<Tenant>> findTenantsByIdsAsync(TenantId callerId, List<TenantId> tenantIds);
+
+    List<Tenant> findTenantsByIds(TenantId callerId, List<TenantId> tenantIds);
+
     Tenant saveTenant(Tenant tenant);
 
     Tenant saveTenant(Tenant tenant, Consumer<TenantId> defaultEntitiesCreator);
@@ -41,7 +46,5 @@ public interface TenantService extends EntityDaoService {
     void deleteTenants();
 
     PageData<TenantId> findTenantsIds(PageLink pageLink);
-
-    List<Tenant> findTenantsByIds(TenantId callerId, List<TenantId> tenantIds);
 
 }

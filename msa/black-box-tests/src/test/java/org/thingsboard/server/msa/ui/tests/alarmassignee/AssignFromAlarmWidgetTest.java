@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.alarmassignee;
 
 import io.qameta.allure.Description;
@@ -31,7 +32,7 @@ public class AssignFromAlarmWidgetTest extends AbstractAssignTest {
         alarmWidget = new AlarmWidgetElements(driver);
 
         dashboard = testRestClient.postDashboard(EntityPrototypes.defaultDashboardPrototype("Dashboard"));
-        sideBarMenuView.dashboardBtn().click();
+        sideBarMenuView.goToAllDashboards();
         dashboardPage.entity(dashboard.getName()).click();
         dashboardPage.editBtn().click();
         dashboardPage.openSelectWidgetsBundleMenu();
@@ -53,7 +54,7 @@ public class AssignFromAlarmWidgetTest extends AbstractAssignTest {
 
     @BeforeMethod
     public void goToDashboardPage() {
-        sideBarMenuView.dashboardBtn().click();
+        sideBarMenuView.goToAllDashboards();
         dashboardPage.entity(dashboard.getName()).click();
     }
 

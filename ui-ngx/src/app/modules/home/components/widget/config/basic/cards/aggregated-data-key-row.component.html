@@ -1,15 +1,18 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-aggregated-data-key-row">
   <mat-form-field class="tb-inline-field tb-position-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="position">
-      <mat-option *ngFor="let position of aggregatedValueCardKeyPositions" [value]="position">
-        {{ aggregatedValueCardKeyPositionTranslationMap.get(position) | translate }}
-      </mat-option>
+      @for (position of aggregatedValueCardKeyPositions; track position) {
+        <mat-option [value]="position">
+          {{ aggregatedValueCardKeyPositionTranslationMap.get(position) | translate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <mat-form-field class="tb-inline-field tb-aggregation-field" subscriptSizing="dynamic">
@@ -69,20 +72,24 @@
   </div>
 </div>
 <ng-template #keyName>
-  <ng-container *ngIf="dataKeyHasPostprocessing(); else keyName">
+  @if (dataKeyHasPostprocessing()) {
     <strong><span>f(</span></strong><ng-container *ngTemplateOutlet="keyNameTemplate"></ng-container><strong><span>)</span></strong>
-  </ng-container>
-  <ng-template #keyName>
+  } @else {
     <ng-container *ngTemplateOutlet="keyNameTemplate"></ng-container>
-  </ng-template>
+  }
 </ng-template>
 <ng-template #keyNameTemplate>
   <ng-container>
     <strong><span class="tb-agg-func">{{ (modelValue?.aggregationType || aggregationTypes.NONE) }}</span></strong>
-    <span *ngIf="!modelValue?.aggregationType || modelValue?.aggregationType === aggregationTypes.NONE; else aggValue">({{ 'datakey.latest-value' | translate }})</span>
+    @if (!modelValue?.aggregationType || modelValue?.aggregationType === aggregationTypes.NONE) {
+      <span>({{ 'datakey.latest-value' | translate }})</span>
+    } @else {
+      @if (modelValue?.comparisonEnabled && modelValue?.comparisonResultType !== comparisonResultTypes.PREVIOUS_VALUE) {
+        <span>({{ 'datakey.delta' | translate }}:{{ (modelValue?.comparisonResultType === comparisonResultTypes.DELTA_PERCENT ? 'datakey.percent' : 'datakey.absolute') | translate }})</span>
+      }
+      @if (modelValue?.comparisonEnabled && modelValue?.comparisonResultType === comparisonResultTypes.PREVIOUS_VALUE) {
+        <span>({{ 'datakey.delta-calculation-result-previous-value' | translate }})</span>
+      }
+    }
   </ng-container>
-  <ng-template #aggValue>
-    <span *ngIf="modelValue?.comparisonEnabled && modelValue?.comparisonResultType !== comparisonResultTypes.PREVIOUS_VALUE">({{ 'datakey.delta' | translate }}:{{ (modelValue?.comparisonResultType === comparisonResultTypes.DELTA_PERCENT ? 'datakey.percent' : 'datakey.absolute') | translate }})</span>
-    <span *ngIf="modelValue?.comparisonEnabled && modelValue?.comparisonResultType === comparisonResultTypes.PREVIOUS_VALUE">({{ 'datakey.delta-calculation-result-previous-value' | translate }})</span>
-  </ng-template>
 </ng-template>

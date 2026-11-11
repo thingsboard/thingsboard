@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, RouterModule, Routes } from '@angular/router';
 
@@ -11,6 +12,9 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardResolver } from '@app/modules/home/pages/dashboard/dashboard-routing.module';
 import { UtilsService } from '@core/services/utils.service';
 import { Widget } from '@app/shared/models/widget.models';
+import { Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { EntityType } from '@shared/models/entity-type.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 @Injectable()
@@ -47,12 +51,15 @@ const routes: Routes = [
         skip: true
       },
       auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      canActivate: (userPermissionsService: UserPermissionsService): boolean =>
+        userPermissionsService.hasReadGroupsPermission(EntityType.DASHBOARD) || userPermissionsService.hasReadGenericPermission(Resource.DASHBOARD),
       title: 'dashboard.dashboard',
       widgetEditMode: false,
       singlePageMode: true
     },
     resolve: {
-      dashboard: DashboardResolver
+      dashboard: DashboardResolver,
+      entityGroup: 'entityGroupResolver'
     }
   },
   {
@@ -69,7 +76,8 @@ const routes: Routes = [
       singlePageMode: true
     },
     resolve: {
-      dashboard: WidgetEditorDashboardResolver
+      dashboard: WidgetEditorDashboardResolver,
+      entityGroup: 'entityGroupResolver'
     }
   }
 ];
@@ -79,7 +87,11 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     WidgetEditorDashboardResolver,
-    DashboardResolver
+    DashboardResolver,
+    {
+      provide: 'entityGroupResolver',
+      useValue: (route: ActivatedRouteSnapshot) => null
+    }
   ]
 })
 export class DashboardPagesRoutingModule { }

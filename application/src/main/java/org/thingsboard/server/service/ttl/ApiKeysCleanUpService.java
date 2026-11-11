@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @Slf4j
 @Service
 @TbCoreComponent
-@ConditionalOnExpression("${sql.ttl.api_keys.enabled:true} && ${sql.ttl.api_keys.ttl:0} > 0")
+@ConditionalOnExpression("${sql.ttl.api_keys.enabled:true}")
 public class ApiKeysCleanUpService extends AbstractCleanUpService {
 
     public static final String RANDOM_DELAY_INTERVAL_MS_EXPRESSION =

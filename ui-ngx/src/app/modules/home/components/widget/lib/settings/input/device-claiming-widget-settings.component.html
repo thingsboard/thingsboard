@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section class="tb-widget-settings flex flex-col" [formGroup]="deviceClaimingWidgetSettingsForm">
@@ -69,5 +70,40 @@
       <mat-label translate>widgets.input-widgets.claim-device-secret-key-required-message</mat-label>
       <input matInput formControlName="requiredErrorSecretKey">
     </mat-form-field>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.input-widgets.relations-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="deviceClaimingWidgetSettingsForm.get('relateDevice').value">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="relateDevice" (click)="$event.stopPropagation()"
+                            class="flex items-stretch justify-center">
+            {{ 'widgets.input-widgets.relate-device-to-state-entity' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section class="flex flex-row gap-2">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>widgets.input-widgets.relate-direction</mat-label>
+            <mat-select formControlName="relateDirection">
+              <mat-option [value]="'from'">
+                {{ 'widgets.input-widgets.relate-direction-from' | translate }}
+              </mat-option>
+              <mat-option [value]="'to'">
+                {{ 'widgets.input-widgets.relate-direction-to' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>widgets.input-widgets.relation-type</mat-label>
+            <input matInput formControlName="relateType">
+          </mat-form-field>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
   </fieldset>
 </section>

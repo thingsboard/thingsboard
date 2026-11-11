@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ImageResourceInfo } from '@shared/models/resource.models';
 import * as svgjs from '@svgdotjs/svg.js';
 import { Box, Element, Rect, Style, SVG, Svg, Timeline } from '@svgdotjs/svg.js';
@@ -29,6 +30,7 @@ import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
 import ITooltipPosition = JQueryTooltipster.ITooltipPosition;
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 export interface ScadaSymbolData {
   imageResource: ImageResourceInfo;
@@ -1111,9 +1113,14 @@ export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion
 };
 
 export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags: string[],
-                                             customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+                                             customTranslate: CustomTranslatePipe,
+                                             wl: WhiteLabelingService): TbEditorCompletion => {
 
-  const scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
+  let scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
+  const baseUrl = wl.getHelpLinkBaseUrl();
+  if (baseUrl) {
+    scadaSymbolAnimationLink = scadaSymbolAnimationLink.replace('https://thingsboard.io', baseUrl);
+  }
   const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}" target="_blank">ScadaSymbolAnimation</a>`;
   const connectorScadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevConnectorAnimation;
   const connectorScadaSymbolAnimation = `<a href="${connectorScadaSymbolAnimationLink}" target="_blank">ConnectorScadaSymbolAnimation</a>`;

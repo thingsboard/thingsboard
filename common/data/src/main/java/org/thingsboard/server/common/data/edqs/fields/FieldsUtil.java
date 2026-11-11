@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.edqs.fields;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,11 +17,19 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.blob.BlobEntity;
+import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.queue.QueueStats;
+import org.thingsboard.server.common.data.report.Report;
+import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
@@ -55,6 +64,16 @@ public class FieldsUtil {
             return toFields(widgetType);
         } else if (entity instanceof WidgetsBundle widgetsBundle) {
             return toFields(widgetsBundle);
+        } else if (entity instanceof Converter converter) {
+            return toFields(converter);
+        } else if (entity instanceof Integration integration) {
+            return toFields(integration);
+        } else if (entity instanceof SchedulerEvent schedulerEvent) {
+            return toFields(schedulerEvent);
+        } else if (entity instanceof Role role) {
+            return toFields(role);
+        } else if (entity instanceof EntityGroup entityGroup) {
+            return toFields(entityGroup);
         } else if (entity instanceof DeviceProfile deviceProfile) {
             return toFields(deviceProfile);
         } else if (entity instanceof AssetProfile assetProfile) {
@@ -63,6 +82,12 @@ public class FieldsUtil {
             return toFields(queueStats);
         } else if (entity instanceof ApiUsageState apiUsageState) {
             return toFields(apiUsageState);
+        } else if (entity instanceof BlobEntity blobEntity) {
+            return toFields(blobEntity);
+        } else if (entity instanceof ReportTemplate reportTemplate) {
+            return toFields(reportTemplate);
+        } else if (entity instanceof Report report) {
+            return toFields(report);
         } else {
             throw new IllegalArgumentException("Unsupported entity type: " + entity.getClass().getName());
         }
@@ -72,6 +97,7 @@ public class FieldsUtil {
         return CustomerFields.builder()
                 .id(entity.getUuidId())
                 .createdTime(entity.getCreatedTime())
+                .customerId(getCustomerId(entity.getCustomerId()))
                 .name(entity.getTitle())
                 .additionalInfo(getText(entity.getAdditionalInfo()))
                 .email(entity.getEmail())
@@ -185,6 +211,7 @@ public class FieldsUtil {
         return DashboardFields.builder()
                 .id(entity.getUuidId())
                 .createdTime(entity.getCreatedTime())
+                .customerId(getCustomerId(entity.getCustomerId()))
                 .name(entity.getTitle())
                 .version(entity.getVersion())
                 .build();
@@ -223,6 +250,68 @@ public class FieldsUtil {
                 .id(entity.getUuidId())
                 .createdTime(entity.getCreatedTime())
                 .name(entity.getName())
+                .version(entity.getVersion())
+                .build();
+    }
+
+    private static ConverterFields toFields(Converter entity) {
+        return ConverterFields.builder()
+                .id(entity.getUuidId())
+                .createdTime(entity.getCreatedTime())
+                .name(entity.getName())
+                .type(entity.getType().name())
+                .additionalInfo(getText(entity.getAdditionalInfo()))
+                .version(entity.getVersion())
+                .build();
+    }
+
+    private static IntegrationFields toFields(Integration entity) {
+        return IntegrationFields.builder()
+                .id(entity.getUuidId())
+                .createdTime(entity.getCreatedTime())
+                .name(entity.getName())
+                .type(entity.getType().name())
+                .additionalInfo(getText(entity.getAdditionalInfo()))
+                .version(entity.getVersion())
+                .build();
+    }
+
+    private static SchedulerEventFields toFields(SchedulerEvent entity) {
+        return SchedulerEventFields.builder()
+                .id(entity.getUuidId())
+                .createdTime(entity.getCreatedTime())
+                .customerId(getCustomerId(entity.getCustomerId()))
+                .name(entity.getName())
+                .type(entity.getType())
+                .originatorId(entity.getOriginatorId())
+                .schedule(getText(entity.getSchedule()))
+                .configuration(getText(entity.getConfiguration()))
+                .additionalInfo(getText(entity.getAdditionalInfo()))
+                .version(entity.getVersion())
+                .build();
+    }
+
+    private static RoleFields toFields(Role entity) {
+        return RoleFields.builder()
+                .id(entity.getUuidId())
+                .createdTime(entity.getCreatedTime())
+                .customerId(getCustomerId(entity.getCustomerId()))
+                .name(entity.getName())
+                .type(entity.getType().name())
+                .additionalInfo(getText(entity.getAdditionalInfo()))
+                .version(entity.getVersion())
+                .build();
+    }
+
+    private static EntityGroupFields toFields(EntityGroup entity) {
+        return EntityGroupFields.builder()
+                .id(entity.getUuidId())
+                .createdTime(entity.getCreatedTime())
+                .name(entity.getName())
+                .type(entity.getType().name())
+                .additionalInfo(getText(entity.getAdditionalInfo()))
+                .ownerId(entity.getOwnerId().getId())
+                .ownerType(entity.getOwnerId().getEntityType())
                 .version(entity.getVersion())
                 .build();
     }
@@ -271,7 +360,42 @@ public class FieldsUtil {
                 .emailExecState(entity.getEmailExecState())
                 .smsExecState(entity.getSmsExecState())
                 .alarmExecState(entity.getAlarmExecState())
+                .reportExecState(entity.getReportExecState())
+                .aiState(entity.getAiState())
                 .version(entity.getVersion())
+                .build();
+    }
+
+    private static BlobEntityFields toFields(BlobEntity entity) {
+        return BlobEntityFields.builder()
+                .id(entity.getUuidId())
+                .createdTime(entity.getCreatedTime())
+                .customerId(getCustomerId(entity.getCustomerId()))
+                .name(entity.getName())
+                .type(entity.getType())
+                .additionalInfo(getText(entity.getAdditionalInfo()))
+                .build();
+    }
+
+    private static ReportTemplateFields toFields(ReportTemplate entity) {
+        return ReportTemplateFields.builder()
+                .id(entity.getUuidId())
+                .createdTime(entity.getCreatedTime())
+                .customerId(getCustomerId(entity.getCustomerId()))
+                .name(entity.getName())
+                .type(entity.getType().name())
+                .format(entity.getFormat().name())
+                .version(entity.getVersion())
+                .build();
+    }
+
+    private static ReportFields toFields(Report entity) {
+        return ReportFields.builder()
+                .id(entity.getUuidId())
+                .createdTime(entity.getCreatedTime())
+                .customerId(getCustomerId(entity.getCustomerId()))
+                .name(entity.getName())
+                .format(entity.getFormat().name())
                 .build();
     }
 

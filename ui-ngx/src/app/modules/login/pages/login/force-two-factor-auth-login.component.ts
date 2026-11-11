@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, ElementRef, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, ElementRef, HostBinding, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -25,6 +26,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import printTemplate from '@home/pages/security/authentication-dialog/backup-code-print-template.raw';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { mergeMap, tap } from 'rxjs/operators';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 enum ForceTwoFAState {
@@ -53,6 +55,8 @@ enum BackupCodeState {
     standalone: false
 })
 export class ForceTwoFactorAuthLoginComponent extends PageComponent implements OnInit, OnDestroy {
+
+  @HostBinding('class') class = 'tb-custom-css';
 
   TwoFactorAuthProviderType = TwoFactorAuthProviderType;
   providersData = twoFactorAuthProvidersLoginData;
@@ -92,7 +96,8 @@ export class ForceTwoFactorAuthLoginComponent extends PageComponent implements O
               private importExportService: ImportExportService,
               public dialog: MatDialog,
               public dialogService: DialogService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public wl: WhiteLabelingService) {
     super(store);
   }
 

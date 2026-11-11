@@ -1,15 +1,20 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { IStateControllerComponent, StateControllerState } from '@home/components/dashboard-page/states/state-controller.models';
 import { IDashboardController } from '../dashboard-page.models';
 import { DashboardState } from '@app/shared/models/dashboard.models';
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { NgZone, OnDestroy, OnInit, Directive } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { StateObject, StateParams } from '@app/core/api/widget-api.models';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { WindowMessage } from '@shared/models/window-message.model';
+import { UtilsService } from '@core/services/utils.service';
 
+// @dynamic
 @Directive()
 export abstract class StateControllerComponent implements IStateControllerComponent, OnInit, OnDestroy {
 
@@ -84,8 +89,11 @@ export abstract class StateControllerComponent implements IStateControllerCompon
 
   protected constructor(protected router: Router,
                         protected route: ActivatedRoute,
+                        protected utils: UtilsService,
+                        protected window: Window,
                         protected ngZone: NgZone,
-                        protected statesControllerService: StatesControllerService) {
+                        protected statesControllerService: StatesControllerService,
+                        protected dashboardUtils: DashboardUtilsService) {
   }
 
   ngOnInit(): void {
@@ -117,6 +125,14 @@ export abstract class StateControllerComponent implements IStateControllerCompon
     this.stateChangedSubject.complete();
   }
 
+  protected normalizeStateObject(stateObject: StateControllerState): StateControllerState {
+    const result = (stateObject || []).filter((stateObj) => stateObj.id && this.states[stateObj.id]);
+    if (!result.length) {
+      result.push({ id: this.dashboardUtils.getRootStateId(this.states), params: {} });
+    }
+    return result;
+  }
+
   protected updateStateParam(newState: string, replaceCurrentHistoryUrl = false) {
     this.currentState = newState;
     if (this.syncStateWithQueryParam) {
@@ -132,6 +148,13 @@ export abstract class StateControllerComponent implements IStateControllerCompon
             replaceUrl: replaceCurrentHistoryUrl
           });
       });
+    }
+    if (this.utils.stateSelectView) {
+      const message: WindowMessage = {
+        type: 'dashboardStateSelected',
+        data: this.currentState
+      };
+      this.window.parent.postMessage(JSON.stringify(message), '*');
     }
     this.stateChangedSubject.next(this.currentState);
   }

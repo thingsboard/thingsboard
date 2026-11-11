@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.stats;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
@@ -71,7 +73,7 @@ public class DefaultStatsFactory implements StatsFactory {
 
     @Override
     public <T extends Number> T createGauge(String key, T number, String... tags) {
-        return meterRegistry.gauge(key, Tags.of(tags), number);
+        return metricsEnabled ? meterRegistry.gauge(key, Tags.of(tags), number) : number;
     }
 
     @Override
@@ -136,4 +138,9 @@ public class DefaultStatsFactory implements StatsFactory {
             return null;
         }
     }
+
+    public Meter remove(Counter counter) {
+        return meterRegistry.remove(counter.getId());
+    }
+
 }

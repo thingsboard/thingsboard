@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.script;
 
 import com.google.common.util.concurrent.Futures;
@@ -63,7 +64,7 @@ class RemoteJsInvokeServiceTest {
         remoteJsInvokeService.requestTemplate = jsRequestTemplate;
         StatsFactory statsFactory = mock(StatsFactory.class);
         when(statsFactory.createStatsCounter(any(), any())).thenReturn(mock(StatsCounter.class));
-        ReflectionTestUtils.setField(remoteJsInvokeService, "statsFactory", statsFactory);
+        ReflectionTestUtils.setField(remoteJsInvokeService, "statsFactory", Optional.of(statsFactory));
         remoteJsInvokeService.init();
     }
 

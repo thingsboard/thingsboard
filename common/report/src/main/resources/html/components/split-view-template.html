@@ -1,0 +1,16 @@
+<table class="tb-split-view">
+  <colgroup>
+    <col th:style="|width: ${leftWidth}px;|">
+    <col th:style="|width: ${centerWidth}px;|">
+    <col th:style="|width: ${rightWidth}px;|">
+  </colgroup>
+  <tr>
+    <td th:style="|display: table-cell;
+                   vertical-align: ${leftVerticalAlignment};|"
+        th:utext="${leftContent}">[Left content]</td>
+    <td></td>
+    <td th:style="|display: table-cell;
+                   vertical-align: ${rightVerticalAlignment};|"
+        th:utext="${rightContent}">[Right content]</td>
+  </tr>
+</table>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   additionalMapDataSourcesToDatasources,
   BaseMapSettings,
@@ -8,6 +9,7 @@ import {
   mapDataLayerTypes,
   MapScale,
   MapType,
+  markersPaneZIndex,
   mergeMapDatasources,
   parseCenterPosition,
   TbCircleData,
@@ -75,6 +77,8 @@ import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 
 type TooltipInstancesData = { root: HTMLElement, instances: ITooltipsterInstance[] };
 
+const GESTURE_HANDLING_DURATION = 2000;
+
 export abstract class TbMap<S extends BaseMapSettings> {
 
   protected settings: S;
@@ -126,6 +130,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected shapePatternStorage: ShapePatternStorage = {};
 
+  protected mapUuid: string;
+
   private readonly mapResize$: ResizeObserver;
 
   private tooltipInstances: TooltipInstancesData[] = [];
@@ -140,9 +146,17 @@ export abstract class TbMap<S extends BaseMapSettings> {
     return !!this.currentEditButton;
   }
 
+  private dataLayersSubscription: IWidgetSubscription;
+  private tripDataLayersSubscription: IWidgetSubscription;
+
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
                         protected containerElement: HTMLElement) {
+    if (this.ctx.reportService.reportView) {
+      this.mapUuid = this.ctx.reportService.onWaitForMap();
+      $(containerElement).addClass('tb-web-report');
+    }
+    this.ctx.customDataExport = this.customDataExport.bind(this);
     this.ctx.actionsApi.placeMapItem = this.placeMapItem.bind(this);
     (this.ctx as any).mapInstance = this;
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
@@ -251,7 +265,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.latestDataLayers = [];
     this.tripDataLayers = [];
     if (this.settings.markers) {
-      const markersDataLayers = this.settings.markers.map(settings => new TbMarkersDataLayer(this, settings));
+      const markersDataLayers = this.settings.markers.map((settings, i) => new TbMarkersDataLayer(this, settings, i));
       this.dataLayers.push(...markersDataLayers);
       this.latestDataLayers.push(...markersDataLayers);
     }
@@ -345,6 +359,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
             }
             this.ctx.subscriptionApi.createSubscription(dataLayersSubscriptionOptions, false).subscribe(
               (dataLayersSubscription) => {
+                this.dataLayersSubscription = dataLayersSubscription;
                 let pageSize = this.settings.mapPageSize;
                 if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
                   pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
@@ -394,6 +409,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
             this.ctx.subscriptionApi.createSubscription(tripDataLayersSubscriptionOptions, false).subscribe(
               (tripDataLayersSubscription) => {
+                this.tripDataLayersSubscription = tripDataLayersSubscription;
                 let pageSize = this.settings.mapPageSize;
                 if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
                   pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
@@ -932,6 +948,17 @@ export abstract class TbMap<S extends BaseMapSettings> {
     });
   }
 
+  private customDataExport(): {[key: string]: any}[] {
+    let exportData: {[key: string]: any}[] = [];
+    if (this.dataLayersSubscription) {
+      exportData = [...this.dataLayersSubscription.exportData()];
+    }
+    if (this.tripDataLayersSubscription) {
+      exportData = [...exportData,...this.tripDataLayersSubscription.exportData()];
+    }
+    return exportData;
+  }
+
   private update(subscription: IWidgetSubscription) {
     this.dsData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.data,
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
@@ -1117,6 +1144,20 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected abstract fitBounds(bounds: L.LatLngBounds): void;
 
+  protected get gestureHandlingMapOptions(): Pick<L.MapOptions, 'gestureHandling' | 'gestureHandlingOptions'> {
+    return {
+      gestureHandling: this.settings.useGestureHandling,
+      gestureHandlingOptions: {
+        duration: GESTURE_HANDLING_DURATION,
+        text: {
+          touch: this.ctx.translate.instant('widgets.maps.control.gesture-handling-touch'),
+          scroll: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll'),
+          scrollMac: this.ctx.translate.instant('widgets.maps.control.gesture-handling-scroll-mac'),
+        }
+      }
+    };
+  }
+
   protected doSetupControls(): Observable<any> {
     return of(null);
   }
@@ -1178,6 +1219,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
         }
       }
     }
+  }
+
+  public getMarkersPane(markersLayerIndex: number): string {
+    const name = `tb-markers-pane-${markersLayerIndex}`;
+    if (!this.map.getPane(name)) {
+      this.map.createPane(name).style.zIndex = String(markersPaneZIndex(markersLayerIndex));
+    }
+    return name;
   }
 
   public storeShapePattern(patternId: string, pattern: L.TB.Pattern): void {

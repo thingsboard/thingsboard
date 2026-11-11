@@ -43,7 +43,7 @@
     },
     {
       "tag": "value",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.measured, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.measured, {units: ctx.properties.units, decimals: ctx.properties.valueDecimals, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -420,6 +420,18 @@
       "type": "color",
       "default": "#000",
       "disableOnProperty": "showUnits",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "valueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
       "disabled": false,
       "visible": true
     },

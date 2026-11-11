@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -22,6 +23,8 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { DatePipe } from '@angular/common';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { UtilsService } from "@core/services/utils.service";
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -41,6 +44,8 @@ export class CalculatedFieldsTableComponent {
   entityId = input<EntityId>();
   entityName = input<string>();
   ownerId = input<EntityId>();
+  readonly = input(false);
+  hideClearEventAction  = input(false);
 
   calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
 
@@ -59,8 +64,9 @@ export class CalculatedFieldsTableComponent {
               private destroyRef: DestroyRef,
               private route: ActivatedRoute,
               private router: Router,
-              private iotHubActions: IotHubActionsService
-  ) {
+              private popoverService: TbPopoverService,
+              private userPermissionsService: UserPermissionsService,
+              private iotHubActions: IotHubActionsService) {
     this.pageMode = !!this.route.snapshot.data.isPage;
     effect(() => {
       if (this.active() || this.pageMode) {
@@ -79,6 +85,10 @@ export class CalculatedFieldsTableComponent {
           this.entityDebugSettingsService,
           this.utilsService,
           this.router,
+          this.readonly(),
+          this.hideClearEventAction(),
+          this.popoverService,
+          this.userPermissionsService,
           this.iotHubActions,
           this.pageMode,
         );

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.rule;
 
 import org.thingsboard.server.common.data.User;
@@ -13,12 +14,16 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 import java.util.Set;
 
-public interface TbRuleChainService extends SimpleTbEntityService<RuleChain> {
+public interface TbRuleChainService {
+
+    RuleChain save(RuleChain ruleChain, SecurityUser user) throws Exception;
+
+    void delete(RuleChain ruleChain, User user);
 
     Set<String> getRuleChainOutputLabels(TenantId tenantId, RuleChainId ruleChainId);
 

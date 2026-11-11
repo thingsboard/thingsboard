@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { defaultMapSettings, MapSetting, MapType } from '@shared/models/widget/maps/map.models';
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';

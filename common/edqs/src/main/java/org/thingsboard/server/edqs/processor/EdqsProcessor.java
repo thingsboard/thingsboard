@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.processor;
 
 import com.google.common.collect.Sets;
@@ -20,6 +21,7 @@ import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEvent;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsObjectKey;
 import org.thingsboard.server.common.data.edqs.query.EdqsRequest;
 import org.thingsboard.server.common.data.edqs.query.EdqsResponse;
 import org.thingsboard.server.common.data.edqs.query.QueryResult;
@@ -214,10 +216,10 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         try {
             if (request.getEntityDataQuery() != null) {
                 PageData<QueryResult> result = repository.findEntityDataByQuery(tenantId, customerId,
-                        request.getEntityDataQuery(), false);
+                        request.getUserPermissions(), request.getEntityDataQuery(), false);
                 response.setEntityDataQueryResult(result.mapData(QueryResult::toOldEntityData));
             } else if (request.getEntityCountQuery() != null) {
-                long result = repository.countEntitiesByQuery(tenantId, customerId, request.getEntityCountQuery(), tenantId.isSysTenantId());
+                long result = repository.countEntitiesByQuery(tenantId, customerId, request.getUserPermissions(), request.getEntityCountQuery(), tenantId.isSysTenantId());
                 response.setEntityCountQueryResult(result);
             }
             log.trace("[{}] Request: {}, response: {}", tenantId, request, response);
@@ -239,7 +241,8 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             EdqsObject object = mapper.deserialize(objectType, eventMsg.getData().toByteArray(), false);
 
             if (version != null) {
-                if (!versionsStore.isNew(mapper.getKey(object), version)) {
+                EdqsObjectKey key = mapper.getKey(object);
+                if (!versionsStore.isNew(key, version, eventType, eventMsg.getVersionsResetOnDelete())) {
                     return;
                 }
             } else if (!ObjectType.unversionedTypes.contains(objectType)) {

@@ -1,0 +1,133 @@
+{
+  "fqn": "advanced_analytics_view",
+  "name": "Advanced analytics view",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/analytics-view.svg",
+  "description": "Displays saved Advanced analytics visualizations.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 7.5,
+    "sizeY": 3,
+    "resources": [
+      {
+        "url": "/trendz/bundle/trendz-tb-lib.js",
+        "isModule": true
+      }
+    ],
+    "templateHtml": "<div *ngIf=\"!inited\" class=\"container\">Advanced analytics view</div>\n<div *ngIf=\"inited && jwt\" (click)=\"onClick($event)\">\n  <tb-example\n    [jwt]=\"getJwtToken()\"\n    [jwtRefresh]=\"getRefreshToken()\"\n    [ctx]=\"ctx\"\n    [isInEditMode]=\"ctx.isEdit\"\n    [isViewMode]=\"true\"\n    [filterValues]=\"filterValue\"\n    [resourceURL]=\"resourceURL\"\n    (dataChannel)=\"onDataChannelInit($event)\"\n  ></tb-example>\n</div>",
+    "templateCss": ".container {\n    width: 100%; \n    height: 100%;\n    text-align: center;\n    font-size: 24px;\n}",
+    "controllerScript": "let $scope;\nlet settings;\nlet prevFilterValue;\n\n\nself.actionSources = function() {\n    return {\n        'rowClick': {\n            name: 'widget-action.row-click',\n            multiple: false\n        },\n        'dateSelected': {\n            name: 'date-selected',\n            multiple: false\n        },\n        'changedRadioButton': {\n            name: 'changed-radio-button',\n            multiple: false\n        },\n        'elementClick': {\n            name: 'widget-action.element-click',\n            multiple: true\n        }\n    };\n}\n\nself.onInit = function() {\n    $scope = self.ctx.$scope;\n    $scope.ctx = self.ctx;\n    $scope.jwt = self.getJwtToken();\n    $scope.ctx.jwt = $scope.jwt;\n    $scope.jwtRefresh = self.getRefreshToken();\n    $scope.inited = false;\n    \n    $scope.getJwtToken = self.getJwtToken;\n    $scope.ctx.getJwtToken = self.getJwtToken;\n    \n    $scope.getRefreshToken = self.getRefreshToken;\n    $scope.ctx.getRefreshToken = self.getRefreshToken;\n    \n    $scope.onDataChannelInit = self.onDataChannelInit;\n    $scope.ctx.onDataChannelInit = self.onDataChannelInit;\n\n    settings = JSON.parse(JSON.stringify($scope.ctx.settings)) || {};\n    const utils = self.ctx.$scope.$injector.get(self.ctx.servicesMap.get('utils'));\n        \n    let widgetService = self.ctx.entityService.widgetService;\n    let resourceURL = '';\n    \n    if(widgetService.widgetsInfoInMemoryCache) {\n        let widgetInfo = widgetService.widgetsInfoInMemoryCache.get(self.ctx.widget.typeFullFqn)\n        if(widgetInfo && widgetInfo.resources.length && isResourceHasDomain(widgetInfo.resources[0].url)) {\n            resourceURL = widgetInfo.resources[0].url;\n        } else {\n            resourceURL = settings.viewUrl;\n        }\n    }\n\n    $scope.resourceURL = resourceURL;\n\n    if (!settings.viewUrl && !settings.view) {\n        $scope.inited = false;\n    } else {\n        $scope.inited = true;\n    }\n\n    if (settings.widgetTitle && settings.widgetTitle.length) {\n        let titlePattern = utils.customTranslation(settings.widgetTitle, settings.widgetTitle);\n        \n        let newTitle;\n        if(self.ctx.datasources.length !== 1) {\n            newTitle = titlePattern.replace(/\\${.*?}/g, \"\");\n        } else {\n            let datasource = self.ctx.datasources[0];\n            newTitle = utils.createLabelFromDatasource(datasource, titlePattern);\n        }\n\n        if (self.ctx.widgetTitle !== newTitle) {\n            self.ctx.widgetTitle = newTitle;\n            self.ctx.updateWidgetParams();\n        }\n    }\n\n    self.ctx.$scope.onClick = function(e) {\n        if ((e && e.target && e.target.className.includes('mat-menu-trigger')) ||\n            (e && e.target && e.target.className.includes('mat-button-wrapper'))) {\n            return;\n        }\n\n        let descriptors = self.ctx.$scope.ctx.actionsApi.getActionDescriptors('elementClick');\n        let actionEvent;\n        if (descriptors.length) {\n            actionEvent = descriptors[0];\n\n            setTimeout(() => {\n                self.ctx.$scope.ctx.actionsApi.handleWidgetAction(null, actionEvent);\n            }, 0);\n        }\n\n    }\n}\n\nself.onDataUpdated = function() {\n    let newFilters = readFilterValues();\n    if (prevFilterValue === newFilters) {\n        return;\n    }\n    $scope.filterValue = newFilters;\n    prevFilterValue = $scope.filterValue;\n}\n\nself.onDestroy = function() {}\n\nself.onEditModeChanged = function(e) {}\n\nself.onResize = function() {\n    if ($scope.subscriptionService) {\n        $scope.subscriptionService.emit('parentResize', 'tb_dashboard', 'onResizeEvent');\n    }\n}\n\nself.onDataChannelInit = function(subscriptionService) {\n    $scope.subscriptionService = subscriptionService;\n}\n\nfunction readFilterValues() {\n    if (self.ctx && self.ctx.defaultSubscription && self.ctx.defaultSubscription.data && self.ctx.defaultSubscription.data.length > 0) {\n        let filterValues = [];\n        for (let i = 0; i < self.ctx.defaultSubscription.data.length; i++) {\n            let value = getDescendantProp(self.ctx.defaultSubscription.data[i], 'data.0.1');\n            if (value && value !== 'Unresolved') {\n                filterValues.push(value);\n            }\n        }\n        let filterObject = {};\n        filterObject[settings.filterName] = filterValues;\n        return filterObject;\n    } else {\n        usePostMessage = false;\n        return null;\n    }\n}\n\nfunction getDescendantProp(obj, path) {\n    return path.split('.').reduce((acc, part) => acc && acc[part], obj)\n}\n\nself.getRefreshToken = function() {\n    let jwtToken = localStorage.getItem('refresh_token');\n    if (jwtToken) {\n        jwtToken = jwtToken.replaceAll('\"', \"\");\n        return jwtToken;\n    }\n\n    return 'unknown';\n}\n\nself.getJwtToken = function() {\n    let jwtToken = localStorage.getItem('jwt_token');\n    if (jwtToken) {\n        jwtToken = jwtToken.replaceAll('\"', \"\");\n        return jwtToken;\n    }\n\n    return 'unknown';\n}\n\nself.useCustomDatasources = function() {\n    return false;\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: false,\n        useCustomDatasources: true,\n        dataKeysOptional: true,\n        datasourcesOptional: true,\n    };\n};\n\nfunction isResourceHasDomain(url) {\n    return url.startsWith('http://') || url.startsWith('https://')\n}",
+    "settingsForm": [
+      {
+        "id": "widgetTitle",
+        "name": "Widget title",
+        "type": "text",
+        "divider": true,
+        "fieldClass": "flex"
+      },
+      {
+        "id": "viewUrl",
+        "name": "View URL",
+        "type": "text",
+        "required": true,
+        "divider": false,
+        "fieldClass": "flex"
+      },
+      {
+        "id": "filterName",
+        "name": "Filter name",
+        "type": "text",
+        "fieldClass": "flex"
+      },
+      {
+        "id": "useDashboardTimeWindow",
+        "name": "Use dashboard time window",
+        "type": "switch",
+        "default": false
+      },
+      {
+        "id": "enableViewCaching",
+        "name": "Enable view caching",
+        "type": "switch",
+        "default": true
+      },
+      {
+        "id": "canCancelViewLoading",
+        "name": "Show button for cancel view loading",
+        "type": "switch",
+        "default": false,
+        "divider": true
+      },
+      {
+        "id": "updateInRealTime",
+        "name": "Update data in real-time",
+        "group": "Real-time update configuration",
+        "type": "switch",
+        "default": false,
+        "divider": false,
+        "rowClass": "no-border"
+      },
+      {
+        "id": "updateInRealTimeInterval",
+        "name": "Interval for updating data in real-time",
+        "group": "Real-time update configuration",
+        "type": "number",
+        "default": 1,
+        "divider": false,
+        "fieldSuffix": "minutes",
+        "disableOnProperty": "updateInRealTime",
+        "rowClass": "no-border"
+      },
+      {
+        "id": "channelName",
+        "name": "Filter change event name",
+        "group": "Filters management",
+        "type": "text",
+        "default": "analytics-filter",
+        "rowClass": "no-border",
+        "fieldClass": "flex"
+      },
+      {
+        "id": "isFiltersBroadcasting",
+        "name": "Broadcast filter change event",
+        "group": "Filters management",
+        "type": "switch",
+        "default": false,
+        "rowClass": "no-border"
+      },
+      {
+        "id": "isFiltersListen",
+        "name": "Listen filter change event",
+        "group": "Filters management",
+        "type": "switch",
+        "default": false,
+        "rowClass": "no-border"
+      },
+      {
+        "id": "isSaveFilters",
+        "name": "Save filters selection",
+        "group": "Filters management",
+        "type": "switch",
+        "default": false,
+        "rowClass": "no-border"
+      }
+    ],
+    "dataKeySettingsForm": [],
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"showTitle\":false,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Advanced analytics view\",\"decimals\":null,\"enableDataExport\":false}"
+  },
+  "resources": [
+    {
+      "link": "/api/images/system/analytics-view.svg",
+      "title": "\"Advanced analytics view\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "analytics-view.svg",
+      "publicResourceKey": "R9EIb3ECbbIBNsLeg5WYsebFEfm9FMxx",
+      "mediaType": "image/svg+xml",
+      "data": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjUwMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmIi8+PGcgc3Ryb2tlPSIjZTBlMGUwIj48cGF0aCBkPSJNNTAgNDUwaDkzME01MCAzOTNoOTMwTTUwIDMzNmg5MzBNNTAgMjc5aDkzME01MCAyMjJoOTMwTTUwIDE2NWg5MzBNNTAgMTA4aDkzME01MCA1MWg5MzAiLz48L2c+PHBhdGggc3Ryb2tlPSIjYTNiMWU4IiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik01MCA1MWg5MzAiLz48cGF0aCBzdHJva2U9IiNhM2IxZTgiIHN0cm9rZS1kYXNoYXJyYXk9IjUsMyIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJNNjAwIDUxaDM4MCIvPjxnIGZpbGw9IiM3NzciIGZvbnQtc2l6ZT0iMTAiIHRleHQtYW5jaG9yPSJlbmQiPjx0ZXh0IHg9IjQ1IiB5PSI0NTMiPjA8L3RleHQ+PHRleHQgeD0iNDUiIHk9IjM5NiI+MTAwPC90ZXh0Pjx0ZXh0IHg9IjQ1IiB5PSIzMzkiPjIwMDwvdGV4dD48dGV4dCB4PSI0NSIgeT0iMjgyIj4zMDA8L3RleHQ+PHRleHQgeD0iNDUiIHk9IjIyNSI+NDAwPC90ZXh0Pjx0ZXh0IHg9IjQ1IiB5PSIxNjgiPjUwMDwvdGV4dD48dGV4dCB4PSI0NSIgeT0iMTExIj42MDA8L3RleHQ+PHRleHQgeD0iNDUiIHk9IjU0Ij43MDA8L3RleHQ+PC9nPjx0ZXh0IHg9IjE1IiB5PSIyNTAiIGZpbGw9IiMzMzMiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSJib2xkIiB0cmFuc2Zvcm09InJvdGF0ZSgtOTAgMTUgMjUwKSI+UHJlZGljdGlvbjwvdGV4dD48ZyBmaWxsPSIjNzc3IiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dGV4dCB4PSI1MCIgeT0iNDcwIj4yMDIzPC90ZXh0Pjx0ZXh0IHg9IjE3MCIgeT0iNDcwIj5GZWI8L3RleHQ+PHRleHQgeD0iMjkwIiB5PSI0NzAiPk1hcjwvdGV4dD48dGV4dCB4PSI0MTAiIHk9IjQ3MCI+QXByPC90ZXh0Pjx0ZXh0IHg9IjUzMCIgeT0iNDcwIj5NYXk8L3RleHQ+PHRleHQgeD0iNjUwIiB5PSI0NzAiPkp1bjwvdGV4dD48dGV4dCB4PSI3NzAiIHk9IjQ3MCI+SnVsPC90ZXh0Pjx0ZXh0IHg9Ijg5MCIgeT0iNDcwIj5BdWc8L3RleHQ+PC9nPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdiODVkNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik01MCA0MzBxMTAtMjAgMjAgMHQxMCAwbDUtNzBxNS0xMCAxMCAwbDUgNzUgMTAtMTAgMTAtNSAxMC02MGgxMGw1IDY1IDEwLTUgMTAtMTIwIDUgMTIwIDEwIDUgNS03NWgxMGw1LTYwIDUgNjBoMTBsNSA5MCAxMC0xNSAxMCA1IDEwLTEzMCAxMCA2MGgxMGwxMC02NSAxMCA1NSA1IDg1IDIwIDEwIDUtMTU1IDUgMTM1IDEwIDUgMTAtNWgxMGw1LTc1IDUgODAgNS03MCA1LTExMGgxMGw1IDkwIDUtOTAgNS0xMCA1LTgwIDUgODAgNSAxMjAgNSAxMCA1LTIwIDEwIDkwIDUtNzAgNS0yMDUgMTAgNSA1IDE5MGgxMGw1LTEwIDUtMTg1IDEwIDc1IDUgMTIwaDE1bDUtMTEwIDUtMTAgNSAxMjAgNS0xMTAgNSAxMTAgNS0xOTUgNSA2NWg1bDUgMTIwIDUgMTAiLz48cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiM2ZWJjYjIiIHN0cm9rZS1kYXNoYXJyYXk9IjYsNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiIGQ9Im01NjAgMzYwIDUtMTEwIDUtNTAgNSA1MGg1bDUtNjAgMTAgMTAgNSA1MCA1IDcwIDUtMTMwIDUgMTMwaDVsMTAgMTAgNS0zMCA1LTEyMCA1IDE0MCA1IDVoMTBsMTAtNWgxMGwxMC0xMCA1LTcwIDUgMjAgNS0zMCA1LTcwIDUtMTAgNSA5MCAxMC0xODAgNSA5MCA1IDgwaDE1bDUgODAgNS03MCA1IDExMCA1LTEyMGg1bDUtMTUwIDUgMTAgMTAgMTMwIDUgMjAgNSAxMCA1LTIwIDEwLTE1MCA1LTEwIDUgMTcwIDUgNSA1LTUgNS04MCA1LTUgNSA1NSA1LTQwIDUtNTAgNSAxMTAgNS0xNjAgNSAxMCA1IDEyMCA1LTE0MCA1IDEwIDUgMTYwIDUtMTcwIDUgNSA1IDEzNSA1LTEyMCA1LTYwIDUgNzAgNSA0MCIvPjwvc3ZnPg==",
+      "public": true
+    }
+  ],
+  "scada": false,
+  "tags": null
+}

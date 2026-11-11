@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "constants";
 
 :host {
@@ -9,26 +10,10 @@
 :host ::ng-deep {
 
   .tb-side-menu {
-    padding: 12px 0;
+    padding: 0 0 24px;
     margin: 0;
     list-style: none;
     --mat-button-text-label-text-weight: 400;
-    &.tb-collapsed {
-      a.mat-mdc-button.mat-mdc-button-base {
-        padding-right: 0;
-        min-width: 0;
-        span.mdc-button__label {
-          opacity: 0;
-        }
-        &.is-new::after {
-          opacity: 0;
-        }
-      }
-    }
-    .mat-divider.mat-divider-horizontal {
-      margin-top: 12px;
-      margin-bottom: 12px;
-    }
   }
 
   .tb-side-menu ul {
@@ -39,6 +24,7 @@
 
   a.mat-mdc-button.mat-mdc-button-base {
     display: inline-flex;
+    position: relative;
     width: 100%;
     height: 40px;
     align-items: center;
@@ -48,20 +34,65 @@
     padding: 0 16px;
     --mat-button-text-label-text-color: rgba(0, 0, 0, .76);
     &:hover, &.tb-hovered {
-      background-color: rgba(0, 0, 0, .07);
+      background-color: rgba(0, 0, 0, .04);
       border-bottom: none;
     }
     &:focus {
       border-bottom: none;
     }
-    &.tb-active {
-      background-color: rgba(0, 0, 0, .05);
+    &:not(.tb-button-toggle) {
+      &.tb-active:not(.tb-toggled) {
+        background-color: color-mix(in srgb, var(--tb-primary-500) 12%, transparent);
+        color: var(--tb-primary-500);
+      }
+    }
+    &.tb-active:not(.tb-toggled) {
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--tb-primary-500);
+      }
+    }
+    &.is-new::after {
+      position: absolute;
+      right: 16px;
+      top: 10px;
+      content: "NEW";
+      background: color-mix(in srgb, var(--tb-primary-500) 12%, transparent);
+      color: var(--tb-primary-500);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .25px;
+      line-height: 16px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      opacity: 1;
+      transition: opacity $sidenav-anim-timing;
     }
     .mat-icon {
+      &.tb-filled-icon {
+        display: none;
+      }
+      &.tb-outlined-icon {
+        display: inline-block;
+      }
+    }
+    .mat-icon, img {
       margin-right: 8px;
       margin-left: 0;
       min-width: 1.125rem;
       min-height: 1.125rem;
+      width: 1.125rem;
+      height: 1.125rem;
+      font-size: 1.125rem;;
+    }
+    img {
+      color: currentColor;
+      fill: currentColor;
     }
     span.mdc-button__label {
       width: 100%;
@@ -69,6 +100,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       display: inline-flex;
+      align-items: center;
       opacity: 1;
       transition: opacity $sidenav-anim-timing;
       & > span {
@@ -78,6 +110,119 @@
       .tb-toggle-icon {
         padding-top: 12px;
         padding-bottom: 12px;
+      }
+    }
+    &.tb-button-toggle {
+      &.is-new::after {
+        right: 44px;
+      }
+      .tb-toggle-icon {
+        display: inline-block;
+        width: 12px;
+        min-width: 12px;
+        font-size: 12px;
+        margin: auto 0 auto auto;
+        background-size: 100% auto;
+        transition: transform .3s ease-in-out;
+        &.tb-toggled {
+          transform: rotateZ(180deg);
+          opacity: 0.5;
+        }
+      }
+    }
+  }
+
+  .tb-menu-toggle-list {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+
+    transition: .45s cubic-bezier(.35, 0, .25, 1);
+
+    transition-property: height;
+
+    a.mat-mdc-button {
+      padding-left: 32px;
+      &:not(.tb-active) {
+        .mat-icon {
+          color: color-mix(in srgb, currentColor 80%, transparent);
+        }
+      }
+    }
+  }
+}
+
+:host :host-context(.tb-primary-panels) ::ng-deep {
+  .tb-side-menu {
+    a.mat-mdc-button.mat-mdc-button-base {
+      &:hover, &.tb-hovered {
+        background-color: color-mix(in srgb, var(--tb-primary-contrast-500) 8%, transparent);
+      }
+      &:not(.tb-button-toggle) {
+        &.tb-active:not(.tb-toggled) {
+          background-color: color-mix(in srgb, var(--tb-primary-contrast-500) 15%, transparent);
+          color: currentColor;
+        }
+      }
+      &.tb-active:not(.tb-toggled) {
+        &::before {
+          background: var(--tb-primary-contrast-500);
+        }
+      }
+      &.is-new::after {
+        background: var(--tb-primary-contrast-500);
+      }
+      .mat-icon {
+        &.tb-filled-icon {
+          display: inline-block;
+        }
+        &.tb-outlined-icon {
+          display: none;
+        }
+      }
+    }
+    .tb-menu-toggle-list {
+      a.mat-mdc-button.mat-mdc-button-base {
+        .mat-icon {
+          &.tb-filled-icon {
+            display: none;
+          }
+          &.tb-outlined-icon {
+            display: inline-block;
+          }
+        }
+      }
+    }
+  }
+}
+
+:host :host-context(.tb-site-sidenav.tb-collapsed) ::ng-deep {
+  .tb-side-menu {
+    padding: 0 0 8px;
+    a.mat-mdc-button.mat-mdc-button-base {
+      padding-right: 0;
+      min-width: 0;
+      span.mdc-button__label {
+        opacity: 0;
+      }
+      &.is-new::after {
+        opacity: 0;
+      }
+    }
+  }
+}
+
+:host :host-context(.tb-site-sidenav:not(.tb-collapsed)) ::ng-deep {
+  .tb-side-menu {
+    a.mat-mdc-button.mat-mdc-button-base {
+      &:not(.tb-button-toggle) {
+        border-bottom: 1px solid var(--tb-menu-border-color);
+      }
+    }
+    .tb-menu-toggle-list {
+      border-bottom: 1px solid var(--tb-menu-border-color);
+      a.mat-mdc-button.mat-mdc-button-base {
+        border-bottom: none;
       }
     }
   }

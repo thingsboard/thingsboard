@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.script;
 
 import com.google.common.util.concurrent.Futures;
@@ -11,9 +12,11 @@ import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -28,11 +31,11 @@ public abstract class RuleNodeScriptEngine<T extends ScriptInvokeService, R> imp
     protected final UUID scriptId;
     private final TenantId tenantId;
 
-    public RuleNodeScriptEngine(TenantId tenantId, T scriptInvokeService, String script, String... argNames) {
+    public RuleNodeScriptEngine(TenantId tenantId, T scriptInvokeService, ScriptType scriptType, String script, String... argNames) {
         this.tenantId = tenantId;
         this.scriptInvokeService = scriptInvokeService;
         try {
-            scriptId = this.scriptInvokeService.eval(tenantId, ScriptType.RULE_NODE_SCRIPT, script, argNames).get();
+            scriptId = this.scriptInvokeService.eval(tenantId, scriptType, script, argNames).get();
         } catch (Exception e) {
             Throwable t = e;
             if (e instanceof ExecutionException) {
@@ -61,6 +64,14 @@ public abstract class RuleNodeScriptEngine<T extends ScriptInvokeService, R> imp
     }
 
     protected abstract TbMsg executeGenerateTransform(TbMsg prevMsg, R result);
+
+    @Override
+    public ListenableFuture<Boolean> executeAttributesFilterAsync(Map<String, KvEntry> attributes) {
+        Object inArgs = prepareAttributes(attributes);
+        return Futures.transform(executeScriptAsync(null, inArgs), this::executeFilterTransform, directExecutor());
+    }
+
+    protected abstract Object prepareAttributes(Map<String, KvEntry> attributes);
 
     @Override
     public ListenableFuture<Boolean> executeFilterAsync(TbMsg msg) {

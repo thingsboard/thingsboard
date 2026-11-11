@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.connectivity;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,7 +39,6 @@ import org.thingsboard.server.msa.DisableUIListeners;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -108,7 +108,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
         assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.6));
         assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
     }
 
@@ -127,7 +127,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
         assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.6));
         assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
     }
 
@@ -168,7 +168,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
 
-        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, mapper.readTree(sharedAttributes.toString()));
+        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, JacksonUtil.toJsonNode(sharedAttributes.toString()));
         var event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
 
         JsonObject requestData = new JsonObject();
@@ -223,6 +223,34 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     }
 
     @Test
+    public void gatewayRequestAllSharedReturnsSeparatedResponse() throws Exception {
+        JsonObject sharedAttributes = new JsonObject();
+        sharedAttributes.addProperty("attr1", "value1");
+        sharedAttributes.addProperty("attr2", true);
+        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, JacksonUtil.toJsonNode(sharedAttributes.toString()));
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        // new format: empty sharedKeys => all shared; scope-separated response
+        JsonObject requestData = new JsonObject();
+        requestData.addProperty("id", 1);
+        requestData.addProperty("device", createdDevice.getName());
+        requestData.addProperty("sharedKeys", "");
+        mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
+
+        // Saving the shared attribute above also triggers an attribute-update push on
+        // v1/gateway/attributes, which can land in the queue before the request response.
+        // Skip those and read the event from the response topic.
+        MqttEvent event = pollEventForTopic("v1/gateway/attributes/response");
+        JsonObject responseData = JsonParser.parseString(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(responseData.has("shared")).isTrue();
+        assertThat(responseData.has("value")).isFalse();
+        assertThat(responseData.has("values")).isFalse();
+        assertThat(responseData.getAsJsonObject("shared").get("attr1").getAsString()).isEqualTo("value1");
+        assertThat(responseData.getAsJsonObject("shared").get("attr2").getAsBoolean()).isTrue();
+    }
+
+    @Test
     public void requestAttributeValuesFromServer() throws Exception {
         WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
         // Add a new client attribute
@@ -250,7 +278,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         // Subscribe for attribute update event
         mqttClient.on("v1/gateway/attributes", listener, MqttQoS.AT_LEAST_ONCE).get();
 
-        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, mapper.readTree(sharedAttributes.toString()));
+        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, JacksonUtil.toJsonNode(sharedAttributes.toString()));
         MqttEvent sharedAttributeEvent = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
 
         // Catch attribute update event
@@ -283,10 +311,10 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         gatewaySharedAttributeValue.addProperty("device", createdDevice.getName());
         gatewaySharedAttributeValue.add("data", sharedAttributes);
 
-        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, mapper.readTree(sharedAttributes.toString()));
+        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, JacksonUtil.toJsonNode(sharedAttributes.toString()));
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        assertThat(mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText())
+        assertThat(JacksonUtil.fromString(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText())
                 .isEqualTo(sharedAttributeValue);
 
         // Update the shared attribute value
@@ -298,9 +326,9 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         gatewayUpdatedSharedAttributeValue.addProperty("device", createdDevice.getName());
         gatewayUpdatedSharedAttributeValue.add("data", updatedSharedAttributes);
 
-        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, mapper.readTree(updatedSharedAttributes.toString()));
+        testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, JacksonUtil.toJsonNode(updatedSharedAttributes.toString()));
         event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        assertThat(mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText())
+        assertThat(JacksonUtil.fromString(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText())
                 .isEqualTo(updatedSharedAttributeValue);
     }
 
@@ -319,8 +347,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName())));
         ListenableFuture<JsonNode> future = service.submit(() -> {
             try {
-                return testRestClient.postServerSideRpc(createdDevice.getId(), mapper.readTree(serverRpcPayload.toString()));
-            } catch (IOException e) {
+                return testRestClient.postServerSideRpc(createdDevice.getId(), JacksonUtil.toJsonNode(serverRpcPayload.toString()));
+            } catch (IllegalArgumentException e) {
                 return null;
             }
         });
@@ -348,7 +376,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish(gatewayRpcTopic, Unpooled.wrappedBuffer(gatewayResponse.toString().getBytes())).get();
         JsonNode serverResponse = future.get(5 * timeoutMultiplier, TimeUnit.SECONDS);
 
-        assertThat(serverResponse).isEqualTo(mapper.readTree(clientResponse.toString()));
+        assertThat(serverResponse).isEqualTo(JacksonUtil.toJsonNode(clientResponse.toString()));
     }
 
     @Test
@@ -356,6 +384,21 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         testRestClient.deleteDevice(this.createdDevice.getId());
         testRestClient.getDeviceById(this.createdDevice.getId(), HttpStatus.NOT_FOUND.value());
         this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice);
+    }
+
+    private MqttEvent pollEventForTopic(String topic) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10 * timeoutMultiplier);
+        long remaining;
+        while ((remaining = deadline - System.currentTimeMillis()) > 0) {
+            MqttEvent event = listener.getEvents().poll(remaining, TimeUnit.MILLISECONDS);
+            if (event == null) {
+                break;
+            }
+            if (topic.equals(event.getTopic())) {
+                return event;
+            }
+        }
+        return null;
     }
 
     private void checkAttribute(boolean client, String expectedValue) throws Exception {

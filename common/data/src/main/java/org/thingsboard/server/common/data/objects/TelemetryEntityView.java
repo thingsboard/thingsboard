@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.objects;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,7 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 public class TelemetryEntityView implements Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of time-series data keys to expose", example = "[\"temperature\", \"humidity\"]")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of time-series data keys to expose", example = "[\"temperature\", \"humidity\"]")
     private List<String> timeseries;
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with attributes to expose")
     private AttributesEntityView attributes;

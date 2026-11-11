@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-form-panel tb-data-keys-panel"
@@ -10,6 +11,7 @@
   @if (!hidePanel) {
     <div class="tb-form-panel-title">{{ panelTitle }}</div>
   }
+  <ng-content></ng-content>
   <div class="tb-form-table">
     <div class="tb-form-table-header no-padding-right">
       @if (hasAdditionalLatestDataKeys) {
@@ -49,6 +51,7 @@
                              [datasourceType]="datasourceType"
                              [deviceId]="deviceId"
                              [entityAliasId]="entityAliasId"
+                             [reportMode]="reportMode"
                              [hasAdditionalLatestDataKeys]="hasAdditionalLatestDataKeys"
                              [hideDataKeyColor]="hideDataKeyColor"
                              [hideDecimals]="hideDecimals"
@@ -70,6 +73,7 @@
                       cdkDragHandle
                       class="lt-lg:!hidden"
                       [class.tb-hidden]="!dragEnabled"
+                      [class.invisible]="disabled"
                       matTooltip="{{ 'action.drag' | translate }}"
                       matTooltipPosition="above">
                 <mat-icon>drag_indicator</mat-icon>
@@ -85,9 +89,11 @@
       <tb-error noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
     }
   </div>
-  <div>
-    <button type="button" mat-stroked-button color="primary" (click)="addKey()">
-      {{ addKeyTitle }}
-    </button>
-  </div>
+  @if (!disabled) {
+    <div>
+      <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+        {{ addKeyTitle }}
+      </button>
+    </div>
+  }
 </div>

@@ -1,5 +1,17 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+:host {
+  .tb-form-hint {
+    background-color: #00000008;
+    border-radius: 4px;
+    padding: 4px 8px;
+
+    .mat-icon {
+      color: #FAA405;
+    }
+  }
+}
 .tb-qrcode-preview {
   background-color: rgba(0, 0, 0, 0.04);
   box-shadow: none;

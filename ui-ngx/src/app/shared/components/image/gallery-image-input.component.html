@@ -1,12 +1,13 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-container">
+<div class="tb-container" [class.tb-no-padding]="noPadding">
   @if (label) {
-    <label class="tb-title" [class]="{'tb-error': !disabled && (required && linkType === ImageLinkType.none), 'tb-required': !disabled && required}">{{label}}</label>
+    <label class="tb-title" tb-hint-tooltip-icon="{{ hint }}" [class.pointer-event]="hint" [class]="{'tb-error': !disabled && (required && linkType === ImageLinkType.none), 'tb-required': !disabled && required}">{{label}}</label>
   }
   <div class="tb-image-select-container" [class]="{disabled: disabled && (linkType === ImageLinkType.none || linkType === ImageLinkType.base64)}">
     <div class="tb-image-container">

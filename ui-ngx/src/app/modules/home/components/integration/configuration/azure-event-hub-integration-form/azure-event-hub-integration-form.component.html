@@ -1,0 +1,92 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="azureEventHubIntegrationConfigForm">
+
+  <tb-secret-key-input formControlName="connectionString" class="mat-block flex-1"
+                       required
+                       appearance="outline"
+                       label="{{ 'integration.connection-string' | translate }}"
+                       requiredText="{{ 'integration.connection-string-required' | translate }}">
+  </tb-secret-key-input>
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.iot-hub-name</mat-label>
+    <input matInput [required]="isSetDownLink" formControlName="iotHubName">
+    @if (azureEventHubIntegrationConfigForm.get('iotHubName').hasError('required')) {
+      <mat-error translate>
+        integration.event-iot-hub-name-required
+      </mat-error>
+    }
+  </mat-form-field>
+
+  <mat-expansion-panel class="expansion-panel-setting"
+                       [expanded]="azureEventHubIntegrationConfigForm.get('enablePersistentCheckpoints').value">
+    <mat-expansion-panel-header class="flex flex-row">
+      <mat-panel-title tb-hint-tooltip-icon="{{ 'integration.enable-persistent-checkpoints-hint' | translate }}">
+        <mat-slide-toggle [aria-label]="'integration.enable-persistent-checkpoints' | translate"
+                          formControlName="enablePersistentCheckpoints"
+                          (click)="$event.stopPropagation()">
+          {{ 'integration.enable-persistent-checkpoints' | translate }}
+        </mat-slide-toggle>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <tb-secret-key-input formControlName="storageConnectionString" class="mat-block flex-1"
+                           required
+                           appearance="outline"
+                           label="{{ 'integration.storage-connection-string' | translate }}"
+                           requiredText="{{ 'integration.storage-connection-string-required' | translate }}">
+      </tb-secret-key-input>
+      <mat-form-field appearance="outline" class="mat-block">
+        <mat-label translate>integration.container-name</mat-label>
+        <input matInput formControlName="containerName">
+        @if (azureEventHubIntegrationConfigForm.get('containerName').hasError('required')) {
+          <mat-error translate>
+            integration.container-name-required
+          </mat-error>
+        }
+      </mat-form-field>
+    </ng-template>
+  </mat-expansion-panel>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+
+      <mat-form-field appearance="outline" class="mat-block">
+        <mat-label translate>integration.connect-timeout</mat-label>
+        <input matInput type="number" step="1" min="1" max="200" required formControlName="connectTimeoutSec">
+        @if (azureEventHubIntegrationConfigForm.get('connectTimeoutSec').hasError('required')) {
+          <mat-error translate>integration.connect-timeout-required</mat-error>
+        }
+        @if (azureEventHubIntegrationConfigForm.get('connectTimeoutSec').hasError('min')) {
+          <mat-error translate>
+            integration.connect-timeout-range
+          </mat-error>
+        }
+        @if (azureEventHubIntegrationConfigForm.get('connectTimeoutSec').hasError('max')) {
+          <mat-error translate>
+            integration.connect-timeout-range
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="mat-block">
+        <mat-label translate>integration.consumer-group</mat-label>
+        <input matInput formControlName="consumerGroup">
+      </mat-form-field>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+
+</section>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,10 +47,6 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
                 TbLwM2MSecurityInfo tbLwM2MSecurityInfo = JavaSerDesUtil.decode(data);
                 if (tbLwM2MSecurityInfo != null) {
                     if (SecurityMode.NO_SEC.equals(tbLwM2MSecurityInfo.getSecurityMode())){
-
-                        // for tests: redis connect NoSec (securityInfo == null)
-                        log.info("lwm2m redis securityStore (decode -ok). Endpoint: [{}], secMode: [NoSec] key: [{}], data [{}]", endpoint, SEC_EP, data);
-
                         return SecurityInfo.newPreSharedKeyInfo(SecurityMode.NO_SEC.toString(), SecurityMode.NO_SEC.toString(),
                                 SecurityMode.NO_SEC.toString().getBytes());
                     } else {

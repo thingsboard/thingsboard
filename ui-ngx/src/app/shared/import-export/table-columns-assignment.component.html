@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -31,6 +31,13 @@
             @for (credential of columnDeviceCredentials; track credential) {
               <mat-option [value]="credential.value" [disabled]="credential.disabled">
                 {{ columnTypesTranslations.get(credential.value) | translate }}
+              </mat-option>
+            }
+          </mat-optgroup>
+          <mat-optgroup label="{{ 'import.gateway' | translate }}">
+            @for (gatewayColumn of columnDeviceGateway; track gatewayColumn) {
+              <mat-option [value]="gatewayColumn.value" [disabled]="gatewayColumn.disabled">
+                {{ columnTypesTranslations.get(gatewayColumn.value) | translate }}
               </mat-option>
             }
           </mat-optgroup>

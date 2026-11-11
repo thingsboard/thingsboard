@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   important: ".tb-default",
@@ -85,6 +86,7 @@ module.exports = {
         '6.25': '1.5625rem'
       },
       minHeight: {
+        '7.5': '1.875rem',
         '19': '4.75rem'
       },
       minWidth: {
@@ -153,7 +155,13 @@ module.exports = {
         '60%': '60%',
         '70%': '70%',
         '80%': '80%',
-        '100%': '100%'
+        '100%': '100%',
+        '7.5': '1.875rem',
+        '80vh': '80vh',
+      },
+      margin: {
+        '4.5': '1.125rem',
+        '5.5': '1.375rem'
       }
     },
   },

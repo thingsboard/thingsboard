@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.alarmassignee;
 
 import io.qameta.allure.Description;
@@ -208,7 +209,7 @@ public class AssignDetailsTabAssignTest extends AbstractAssignTest {
     @Description("Assign alarm to yourself for Customer entity details")
     @Test
     public void assignCustomerAlarmToYourself() {
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.openCustomerAlarms(customerTitle);
         alarmPage.assignAlarmTo(customerAlarmType, Const.TENANT_EMAIL);
 

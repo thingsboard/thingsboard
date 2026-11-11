@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="aiConfigForm" class="flex flex-col gap-4">
@@ -11,6 +12,7 @@
     </div>
     <section class="flex flex-col">
       <tb-entity-autocomplete
+        [allowCreateNew]="resource.AI_MODEL | hasGenericPermission: operation.CREATE"
         allowCreateNew
         useFullEntityId
         required
@@ -77,7 +79,7 @@
           placeholderText="{{ 'rule-node-config.ai.ai-resources' | translate }}"
           [inlineField]="true"
           [entityType]="EntityType.TB_RESOURCE"
-          [subType]="ResourceType.GENERAL"
+          [entitySubType]="ResourceType.GENERAL"
           (createNew)="createAiResources($event, 'resourceIds')"
           formControlName="resourceIds">
         </tb-entity-list>

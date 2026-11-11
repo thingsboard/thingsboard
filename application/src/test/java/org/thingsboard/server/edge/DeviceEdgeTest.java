@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -19,7 +20,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -34,16 +34,19 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
@@ -52,6 +55,7 @@ import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
+import org.thingsboard.server.gen.edge.v1.EntityGroupRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RpcResponseMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
@@ -60,6 +64,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -93,38 +98,22 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     @Autowired
     protected EdgeService edgeService;
 
+    @Autowired
+    protected RpcService rpcService;
+
     @Test
     public void testDevices() throws Exception {
-        // create device and assign to edge; update device
-        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        // create device entity group and assign to edge
+        EntityGroup deviceEntityGroup1 = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "DeviceGroup1", tenantId);
 
-        // unassign device from edge
-        edgeImitator.expectMessageAmount(1);
-        doDelete("/api/edge/" + edge.getUuidId()
-                + "/device/" + savedDevice.getUuidId(), Device.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
-        DeviceUpdateMsg deviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
-        Assert.assertEquals(ENTITY_DELETED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
-        Assert.assertEquals(savedDevice.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedDevice.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getIdLSB());
-
-        // delete device - message expected, message send to all edges
-        edgeImitator.expectMessageAmount(1);
-        doDelete("/api/device/" + savedDevice.getUuidId())
-                .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages(5));
-
-        // create device #2 and assign to edge
+        // create device and add to entity group 1
         edgeImitator.expectMessageAmount(2);
-        savedDevice = saveDevice("Edge Device 3", DEFAULT_DEVICE_TYPE);
-        doPost("/api/edge/" + edge.getUuidId()
-                + "/device/" + savedDevice.getUuidId(), Device.class);
+        Device savedDevice = saveDevice("Edge Device 1", THERMOSTAT_DEVICE_PROFILE_NAME, deviceEntityGroup1.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
+
         Optional<DeviceUpdateMsg> deviceUpdateMsgOpt = edgeImitator.findMessageByType(DeviceUpdateMsg.class);
         Assert.assertTrue(deviceUpdateMsgOpt.isPresent());
-        deviceUpdateMsg = deviceUpdateMsgOpt.get();
+        DeviceUpdateMsg deviceUpdateMsg = deviceUpdateMsgOpt.get();
         Device deviceFromMsg = JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
         Assert.assertNotNull(deviceFromMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
@@ -132,7 +121,6 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedDevice.getId(), deviceFromMsg.getId());
         Assert.assertEquals(savedDevice.getName(), deviceFromMsg.getName());
         Assert.assertEquals(savedDevice.getType(), deviceFromMsg.getType());
-
         Optional<DeviceProfileUpdateMsg> deviceProfileUpdateMsgOpt = edgeImitator.findMessageByType(DeviceProfileUpdateMsg.class);
         Assert.assertTrue(deviceProfileUpdateMsgOpt.isPresent());
         DeviceProfileUpdateMsg deviceProfileUpdateMsg = deviceProfileUpdateMsgOpt.get();
@@ -140,42 +128,72 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedDevice.getDeviceProfileId().getId().getMostSignificantBits(), deviceProfileUpdateMsg.getIdMSB());
         Assert.assertEquals(savedDevice.getDeviceProfileId().getId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
 
-        // assign device #2 to customer
-        Customer customer = new Customer();
-        customer.setTitle("Edge Customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-        edgeImitator.expectMessageAmount(2);
-        doPost("/api/customer/" + savedCustomer.getUuidId()
-                + "/edge/" + edge.getUuidId(), Edge.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
+        // request devices by entity group id
+        testDeviceEntityGroupRequestMsg(deviceEntityGroup1.getUuidId().getMostSignificantBits(),
+                deviceEntityGroup1.getUuidId().getLeastSignificantBits(), savedDevice.getId());
 
+        // add device to entity group 2
+        EntityGroup deviceEntityGroup2 = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "DeviceGroup2", tenantId);
         edgeImitator.expectMessageAmount(2);
-        doPost("/api/customer/" + savedCustomer.getUuidId()
-                + "/device/" + savedDevice.getUuidId(), Device.class);
+        addEntitiesToEntityGroup(Collections.singletonList(savedDevice.getId()), deviceEntityGroup2.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
         deviceUpdateMsgOpt = edgeImitator.findMessageByType(DeviceUpdateMsg.class);
         Assert.assertTrue(deviceUpdateMsgOpt.isPresent());
         deviceUpdateMsg = deviceUpdateMsgOpt.get();
-        deviceFromMsg = JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
-        Assert.assertNotNull(deviceFromMsg);
-        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
-        Assert.assertEquals(savedCustomer.getId(), deviceFromMsg.getCustomerId());
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
+        Device device = JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
+        Assert.assertNotNull(device);
+        Assert.assertEquals(deviceEntityGroup2.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getEntityGroupIdMSB());
+        Assert.assertEquals(deviceEntityGroup2.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getEntityGroupIdLSB());
+        Assert.assertEquals(savedDevice, device);
 
-        // unassign device #2 from customer
+        deviceProfileUpdateMsgOpt = edgeImitator.findMessageByType(DeviceProfileUpdateMsg.class);
+        Assert.assertTrue(deviceProfileUpdateMsgOpt.isPresent());
+        deviceProfileUpdateMsg = deviceProfileUpdateMsgOpt.get();
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
+        Assert.assertEquals(savedDevice.getDeviceProfileId().getId().getMostSignificantBits(), deviceProfileUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedDevice.getDeviceProfileId().getId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
+
+        // update device
         edgeImitator.expectMessageAmount(2);
-        doDelete("/api/customer/device/" + savedDevice.getUuidId(), Device.class);
+        savedDevice.setName("Edge Device 1 Updated");
+        savedDevice = doPost("/api/device", savedDevice, Device.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         deviceUpdateMsgOpt = edgeImitator.findMessageByType(DeviceUpdateMsg.class);
         Assert.assertTrue(deviceUpdateMsgOpt.isPresent());
         deviceUpdateMsg = deviceUpdateMsgOpt.get();
-        deviceFromMsg = JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
-        Assert.assertNotNull(deviceFromMsg);
+        device = JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
+        Assert.assertNotNull(device);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
-        Assert.assertEquals(
-                new CustomerId(EntityId.NULL_UUID),
-                new CustomerId(new UUID(deviceFromMsg.getCustomerId().getId().getMostSignificantBits(), deviceFromMsg.getCustomerId().getId().getLeastSignificantBits())));
+        Assert.assertEquals("Edge Device 1 Updated", device.getName());
 
-        // delete device #2 - messages expected
+        // remove device from entity group 2
+        edgeImitator.expectMessageAmount(1);
+        deleteEntitiesFromEntityGroup(Collections.singletonList(savedDevice.getId()), deviceEntityGroup2.getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
+        deviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
+        Assert.assertEquals(deviceEntityGroup2.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getEntityGroupIdMSB());
+        Assert.assertEquals(deviceEntityGroup2.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getEntityGroupIdLSB());
+
+        unAssignEntityGroupFromEdge(deviceEntityGroup2);
+
+        // remove device from entity group 1
+        edgeImitator.expectMessageAmount(1);
+        deleteEntitiesFromEntityGroup(Collections.singletonList(savedDevice.getId()), deviceEntityGroup1.getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
+        deviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
+        Assert.assertEquals(deviceEntityGroup1.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getEntityGroupIdMSB());
+        Assert.assertEquals(deviceEntityGroup1.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getEntityGroupIdLSB());
+
+        unAssignEntityGroupFromEdge(deviceEntityGroup1);
+
+        // delete device
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/device/" + savedDevice.getUuidId())
                 .andExpect(status().isOk());
@@ -186,7 +204,35 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(ENTITY_DELETED_RPC_MESSAGE, deviceUpdateMsg.getMsgType());
         Assert.assertEquals(savedDevice.getUuidId().getMostSignificantBits(), deviceUpdateMsg.getIdMSB());
         Assert.assertEquals(savedDevice.getUuidId().getLeastSignificantBits(), deviceUpdateMsg.getIdLSB());
+    }
 
+    private void testDeviceEntityGroupRequestMsg(long msbId, long lsbId, DeviceId expectedDeviceId) throws Exception {
+        EntityGroupRequestMsg.Builder deviceEntitiesGroupRequestMsgBuilder = EntityGroupRequestMsg.newBuilder()
+                .setEntityGroupIdMSB(msbId)
+                .setEntityGroupIdLSB(lsbId)
+                .setType(EntityType.DEVICE.name());
+        testAutoGeneratedCodeByProtobuf(deviceEntitiesGroupRequestMsgBuilder);
+
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder()
+                .addEntityGroupEntitiesRequestMsg(deviceEntitiesGroupRequestMsgBuilder.build());
+        testAutoGeneratedCodeByProtobuf(uplinkMsgBuilder);
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(2);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        Optional<DeviceUpdateMsg> deviceUpdateMsgOpt = edgeImitator.findMessageByType(DeviceUpdateMsg.class);
+        Assert.assertTrue(deviceUpdateMsgOpt.isPresent());
+        DeviceUpdateMsg deviceUpdateMsg = deviceUpdateMsgOpt.get();
+        DeviceId receivedDeviceId =
+                new DeviceId(new UUID(deviceUpdateMsg.getIdMSB(), deviceUpdateMsg.getIdLSB()));
+        Assert.assertEquals(expectedDeviceId, receivedDeviceId);
+        Optional<DeviceProfileUpdateMsg> deviceProfileUpdateMsgOpt = edgeImitator.findMessageByType(DeviceProfileUpdateMsg.class);
+        Assert.assertTrue(deviceProfileUpdateMsgOpt.isPresent());
+
+        testAutoGeneratedCodeByProtobuf(deviceUpdateMsg);
     }
 
     @Test
@@ -304,7 +350,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendDeviceRpcResponseToCloud() throws Exception {
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         DeviceRpcCallMsg.Builder deviceRpcCallResponseBuilder = DeviceRpcCallMsg.newBuilder();
@@ -330,7 +376,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendDeviceCredentialsUpdateToCloud() throws Exception {
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
         DeviceCredentials deviceCredentials = buildDeviceCredentialsForUplinkMsg(device.getId());
 
@@ -349,7 +395,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendDeviceCredentialsRequestToCloud() throws Exception {
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
         DeviceCredentials deviceCredentials = doGet("/api/device/" + device.getUuidId() + "/credentials", DeviceCredentials.class);
 
@@ -379,7 +425,8 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendAttributesRequestToCloud() throws Exception {
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
         sendAttributesRequestAndVerify(device, DataConstants.SERVER_SCOPE, "{\"key1\":\"value1\"}",
                 "key1", "value1");
         sendAttributesRequestAndVerify(device, DataConstants.SERVER_SCOPE, "{\"inactivityTimeout\":3600000}",
@@ -395,12 +442,12 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendDeleteDeviceOnEdgeToCloud() throws Exception {
-        Device savedDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
         UplinkMsg.Builder upLinkMsgBuilder = UplinkMsg.newBuilder();
         DeviceUpdateMsg.Builder deviceDeleteMsgBuilder = DeviceUpdateMsg.newBuilder();
         deviceDeleteMsgBuilder.setMsgType(ENTITY_DELETED_RPC_MESSAGE);
-        deviceDeleteMsgBuilder.setIdMSB(savedDevice.getId().getId().getMostSignificantBits());
-        deviceDeleteMsgBuilder.setIdLSB(savedDevice.getId().getId().getLeastSignificantBits());
+        deviceDeleteMsgBuilder.setIdMSB(device.getId().getId().getMostSignificantBits());
+        deviceDeleteMsgBuilder.setIdLSB(device.getId().getId().getLeastSignificantBits());
         testAutoGeneratedCodeByProtobuf(deviceDeleteMsgBuilder);
 
         upLinkMsgBuilder.addDeviceUpdateMsg(deviceDeleteMsgBuilder.build());
@@ -411,7 +458,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForResponses());
 
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
-                doGet("/api/device/info/" + savedDevice.getUuidId(), DeviceInfo.class, status().isNotFound())
+                doGet("/api/device/info/" + device.getUuidId(), DeviceInfo.class, status().isNotFound())
         );
     }
 
@@ -607,6 +654,9 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(device);
         Assert.assertEquals(deviceName, device.getName());
 
+        var deviceGroups = getEntityGroupsIdsForEntity(device.getId());
+        Assert.assertEquals("Device must have 2 groups - 'All' and 'Edge All group'", 2, deviceGroups.size());
+
         // update device on edge
         deviceMsg.setName(deviceName + " Updated");
         uplinkMsgBuilder = UplinkMsg.newBuilder();
@@ -628,7 +678,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testRpcCall() throws Exception {
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
         ObjectNode body = JacksonUtil.newObjectNode();
         body.put("requestId", new Random().nextInt());
@@ -654,6 +704,124 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(2, latestDeviceRpcCallMsg.getRetries());
     }
 
+    @Test
+    public void testRpcV2StatusUpdateFromEdge() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        Rpc rpc = savePersistentRpc(device, RpcStatus.QUEUED);
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.DELIVERED, null);
+        awaitRpcStatus(rpc.getId(), RpcStatus.DELIVERED);
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.SUCCESSFUL, "{\"result\":\"ok\"}");
+        Rpc successful = awaitRpcStatus(rpc.getId(), RpcStatus.SUCCESSFUL);
+        Assert.assertEquals("ok", successful.getResponse().get("result").asText());
+
+        // stale intermediate status must not regress a final RPC
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.DELIVERED, null);
+        await().during(1, TimeUnit.SECONDS).atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> getPersistentRpc(rpc.getId()).getStatus() == RpcStatus.SUCCESSFUL);
+    }
+
+    @Test
+    public void testRpcV2StatusRetryAfterTimeoutFromEdge() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        Rpc rpc = savePersistentRpc(device, RpcStatus.SENT);
+
+        // TIMEOUT with retries left is followed by a re-delivery
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.TIMEOUT, null);
+        awaitRpcStatus(rpc.getId(), RpcStatus.TIMEOUT);
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.SENT, null);
+        awaitRpcStatus(rpc.getId(), RpcStatus.SENT);
+    }
+
+    @Test
+    public void testRpcV2NonJsonResponseFromEdge() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        Rpc rpc = savePersistentRpc(device, RpcStatus.DELIVERED);
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.SUCCESSFUL, "not a json");
+        Rpc successful = awaitRpcStatus(rpc.getId(), RpcStatus.SUCCESSFUL);
+        Assert.assertEquals("not a json", successful.getResponse().get("error").asText());
+    }
+
+    @Test
+    public void testRpcV2StatusForUnknownRpcFromEdge() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        RpcId unknownRpcId = new RpcId(Uuids.timeBased());
+
+        sendRpcStatusUplink(device, unknownRpcId, RpcStatus.DELIVERED, null);
+        doGet("/api/rpc/persistent/" + unknownRpcId.getId()).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testRpcV2DeleteFromEdge() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        Rpc rpc = savePersistentRpc(device, RpcStatus.DELIVERED);
+
+        edgeImitator.expectMessageAmount(1);
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.DELETED, null);
+        doGet("/api/rpc/persistent/" + rpc.getUuidId()).andExpect(status().isNotFound());
+        // delete originated from the edge must not be echoed back
+        Assert.assertFalse(edgeImitator.waitForMessages(1));
+    }
+
+    @Test
+    public void testRpcV2DeleteFromCloud() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        Rpc rpc = savePersistentRpc(device, RpcStatus.SUCCESSFUL);
+
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/rpc/persistent/" + rpc.getUuidId()).andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceRpcCallMsg);
+        DeviceRpcCallMsg deviceRpcCallMsg = (DeviceRpcCallMsg) latestMessage;
+        Assert.assertEquals(RpcStatus.DELETED.name(), deviceRpcCallMsg.getRpcStatus());
+        Assert.assertEquals(rpc.getUuidId(), new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB()));
+        Assert.assertFalse(deviceRpcCallMsg.hasRequestMsg());
+        Assert.assertFalse(deviceRpcCallMsg.hasResponseMsg());
+    }
+
+    private Rpc savePersistentRpc(Device device, RpcStatus status) throws Exception {
+        Rpc rpc = new Rpc(new RpcId(Uuids.timeBased()));
+        rpc.setTenantId(tenantId);
+        rpc.setDeviceId(device.getId());
+        rpc.setExpirationTime(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1));
+        rpc.setRequest(JacksonUtil.newObjectNode().put("method", "test_method"));
+        rpc.setStatus(status);
+        Assert.assertTrue(rpcService.createIfAbsentAsync(rpc).get(TIMEOUT, TimeUnit.SECONDS));
+        return rpc;
+    }
+
+    private Rpc getPersistentRpc(RpcId rpcId) throws Exception {
+        return doGet("/api/rpc/persistent/" + rpcId.getId(), Rpc.class);
+    }
+
+    // RPC status writes are batched and asynchronous, so wait for the expected status to land
+    private Rpc awaitRpcStatus(RpcId rpcId, RpcStatus expectedStatus) {
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> getPersistentRpc(rpcId), rpc -> rpc.getStatus() == expectedStatus);
+    }
+
+    private void sendRpcStatusUplink(Device device, RpcId rpcId, RpcStatus rpcStatus, String response) throws Exception {
+        DeviceRpcCallMsg.Builder builder = DeviceRpcCallMsg.newBuilder()
+                .setDeviceIdMSB(device.getUuidId().getMostSignificantBits())
+                .setDeviceIdLSB(device.getUuidId().getLeastSignificantBits())
+                .setRequestUuidMSB(rpcId.getId().getMostSignificantBits())
+                .setRequestUuidLSB(rpcId.getId().getLeastSignificantBits())
+                .setRpcStatus(rpcStatus.name());
+        if (response != null) {
+            builder.setResponseMsg(RpcResponseMsg.newBuilder().setResponse(response).build());
+        }
+        UplinkMsg uplinkMsg = UplinkMsg.newBuilder().addDeviceRpcCallMsg(builder.build()).build();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+    }
+
     private void sendAttributesRequestAndVerify(Device device, String scope, String attributesDataStr, String expectedKey,
                                                 String expectedValue) throws Exception {
         JsonNode attributesData = JacksonUtil.toJsonNode(attributesDataStr);
@@ -663,7 +831,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
         // Wait before device attributes saved to database before requesting them from edge
         Awaitility.await()
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     String urlTemplate = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/keys/attributes/" + scope;
                     List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
@@ -765,7 +933,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testVerifyDeliveryOfLatestTimeseriesOnAttributesRequest() throws Exception {
-        Device device = findDeviceByName("Edge Device 1");
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
         JsonNode timeseriesData = JacksonUtil.toJsonNode("{\"temperature\":25, \"isEnabled\": true}");
 
@@ -774,7 +942,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
         // Wait before device timeseries saved to database before requesting them from edge
         Awaitility.await()
-                .atMost(10, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     String urlTemplate = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/keys/timeseries";
                     List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {
@@ -823,21 +991,35 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testVerifyProcessCorrectEdgeUpdateToDeviceActorOnUnassignFromDifferentEdge() throws Exception {
-        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
-
-        // assign device to another edge
+        // create tmp edge
         Edge tmpEdge = doPost("/api/edge", constructEdge("Test Tmp Edge", "test"), Edge.class);
-        doPost("/api/edge/" + tmpEdge.getUuidId()
-                + "/device/" + device.getUuidId(), Device.class);
+
+        // create entity group and assign to tmp edge
+        EntityGroup deviceEntityGroup = new EntityGroup();
+        deviceEntityGroup.setType(EntityType.DEVICE);
+        deviceEntityGroup.setName(StringUtils.randomAlphanumeric(15));
+        deviceEntityGroup = doPost("/api/entityGroup", deviceEntityGroup, EntityGroup.class);
+        deviceEntityGroup = doPost("/api/edge/" + tmpEdge.getUuidId()
+                + "/entityGroup/" + deviceEntityGroup.getId().toString() + "/" + EntityType.DEVICE.name(), EntityGroup.class);
+
+        // create entity group and assign to edge, add device to entity group
+        EntityGroup entityGroup = createEntityGroupAndAssignToEdge(EntityType.DEVICE, StringUtils.randomAlphanumeric(15), tenantId);
+        Device device = saveDevice(StringUtils.randomAlphanumeric(15), THERMOSTAT_DEVICE_PROFILE_NAME, entityGroup.getId());
+
+        // add device to another entity group, assigned to another edge
+        addEntitiesToEntityGroup(List.of(device.getId()), deviceEntityGroup.getId());
+
         List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, device.getId());
         Assert.assertEquals(2, relatedEdgeIds.size());
 
-        // unassign device from edge
+        // unassign entity group from edge
         doDelete("/api/edge/" + edge.getUuidId()
-                + "/device/" + device.getUuidId(), Device.class);
-        relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, device.getId());
-        Assert.assertEquals(1, relatedEdgeIds.size());
-        Assert.assertEquals(tmpEdge.getId(), relatedEdgeIds.get(0));
+                + "/entityGroup/" + entityGroup.getUuidId().toString() + "/" + entityGroup.getType().name(), EntityGroup.class);
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<EdgeId> allRelatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, device.getId());
+            Assert.assertEquals(1, allRelatedEdgeIds.size());
+            Assert.assertEquals(tmpEdge.getId(), allRelatedEdgeIds.get(0));
+        });
 
         // edge is disconnected: perform rpc call - no edge event saved
         doPostAsync(
@@ -862,6 +1044,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                 .untilAsserted(() -> verify(tbClusterService, times(1)).onEdgeHighPriorityMsg(any()));
 
         // clean up tmp edge
+        doDelete("/api/entityGroup/" + entityGroup.getId().getId().toString()).andExpect(status().isOk());
         doDelete("/api/edge/" + tmpEdge.getId().getId().toString()).andExpect(status().isOk());
     }
 

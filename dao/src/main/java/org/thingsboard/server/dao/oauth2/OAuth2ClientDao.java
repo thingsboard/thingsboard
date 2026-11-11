@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.oauth2;
 
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 public interface OAuth2ClientDao extends Dao<OAuth2Client> {
 
-    PageData<OAuth2Client> findByTenantId(UUID tenantId, PageLink pageLink);
+    PageData<OAuth2Client> findByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
 
     List<OAuth2Client> findEnabledByDomainName(String domainName);
 

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,13 +23,12 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.InstallScripts;
-import org.thingsboard.server.service.install.lts.LtsMigrationService;
-import org.thingsboard.server.service.install.lts.LtsVersion;
+import org.thingsboard.server.service.install.lts.MigrationService;
+import org.thingsboard.server.service.install.lts.Version;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -54,6 +54,7 @@ import java.util.stream.Stream;
 public class SystemPatchApplier {
 
     private static final String SCHEMA_VIEWS_SQL = "sql/schema-views.sql";
+    private static final String SCHEMA_FUNCTIONS_SQL = "sql/schema-functions.sql";
 
     private static final long ADVISORY_LOCK_ID = 7536891047216478431L;
 
@@ -63,7 +64,7 @@ public class SystemPatchApplier {
     private final WidgetTypeService widgetTypeService;
     private final WidgetsBundleService widgetsBundleService;
     private final ImageService imageService;
-    private final LtsMigrationService ltsMigrationService;
+    private final MigrationService migrationService;
 
     @PostConstruct
     private void init() {
@@ -81,6 +82,8 @@ public class SystemPatchApplier {
 
     private void applyPatchIfNeeded() {
         boolean skipVersionCheck = DefaultDataUpdateService.getEnv("SKIP_PATCH_VERSION_CHECK", false);
+        // A failed run is retried only because isVersionChanged() stays true until a version is recorded;
+        // SKIP_PATCH_VERSION_CHECK bypasses that check, so a flag left set reruns this method on every boot.
         if (!skipVersionCheck && !isVersionChanged()) {
             return;
         }
@@ -93,11 +96,25 @@ public class SystemPatchApplier {
         try {
             String dbVersion = schemaSettingsService.getDbSchemaVersion();
             String packageVersion = schemaSettingsService.getPackageSchemaVersion();
-            ltsMigrationService.applyMigrations(dbVersion, packageVersion);
 
-            updateSqlViews();
-            log.info("Updated sql database views");
+            // skipVersionCheck got us here with the database possibly already at the package version, where the
+            // default half-open selection would be empty: pass it on so that run still applies the stored version's
+            // own migration.
+            List<String> appliedVersions = migrationService.applyMigrations(dbVersion, packageVersion, skipVersionCheck, () -> {
+                // Between the schema and backfill phases: the schema phase may have added columns these definitions
+                // reference, and the refreshed definitions are then in effect for the whole backfill run. Each file
+                // is one jdbcTemplate.execute, so PostgreSQL runs it in a single implicit transaction and other
+                // sessions never observe a dropped-but-not-recreated gap - which holds only while the scripts stay
+                // COMMIT-free.
+                runSqlScript(SCHEMA_VIEWS_SQL);
+                log.info("Updated sql database views");
+                runSqlScript(SCHEMA_FUNCTIONS_SQL);
+                log.info("Updated sql database functions");
+            });
 
+            // After every migration's backfill, so a sync failure cannot stop a backfill from ever completing. The
+            // cost is that a persistently failing sync re-runs the backfills on each boot, which applyAfterCommit()
+            // is required to tolerate.
             WidgetTypeStats widgetStats = updateWidgetTypes();
             log.info("System widget types: {} created, {} updated", widgetStats.created(), widgetStats.updated());
 
@@ -107,6 +124,7 @@ public class SystemPatchApplier {
             int createdImages = createMissingSystemImages();
             log.info("Created {} new system images", createdImages);
 
+            migrationService.recordVersions(appliedVersions);
             schemaSettingsService.updateSchemaVersion();
             log.info("System data patch update completed successfully");
 
@@ -121,11 +139,11 @@ public class SystemPatchApplier {
 
         log.trace("Package version: {}, DB schema version: {}", packageVersion, dbVersion);
 
-        LtsVersion packageVersionInfo;
-        LtsVersion dbVersionInfo;
+        Version packageVersionInfo;
+        Version dbVersionInfo;
         try {
-            packageVersionInfo = LtsVersion.parse(packageVersion);
-            dbVersionInfo = LtsVersion.parse(dbVersion);
+            packageVersionInfo = Version.parse(packageVersion);
+            dbVersionInfo = Version.parse(dbVersion);
         } catch (IllegalArgumentException e) {
             log.warn("Unable to parse versions. Package: {}, DB: {}", packageVersion, dbVersion);
             return false;
@@ -139,13 +157,17 @@ public class SystemPatchApplier {
         return true;
     }
 
-    private void updateSqlViews() {
+    /**
+     * Runs a stored-SQL resource (schema-views.sql / schema-functions.sql) by executing the whole file as a single JDBC
+     * statement. See the call site in {@link #applyPatchIfNeeded} for why replaying the function file wholesale on a
+     * serving node is safe.
+     */
+    private void runSqlScript(String resource) {
         try {
-            URL schemaViewsUrl = Resources.getResource(SCHEMA_VIEWS_SQL);
-            String sql = Resources.toString(schemaViewsUrl, Charsets.UTF_8);
+            String sql = Resources.toString(Resources.getResource(resource), Charsets.UTF_8);
             jdbcTemplate.execute(sql);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to update database views from schema-views.sql", e);
+            throw new RuntimeException("Unable to run SQL script " + resource, e);
         }
     }
 

@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -11,22 +12,24 @@ import { UtilsService } from '@core/services/utils.service';
 import { LoadNodesCallback } from '@shared/components/nav-tree.component';
 import { EntityType } from '@shared/models/entity-type.models';
 import {
-  EdgeGroupNodeData,
   edgeGroupsNodeText,
-  edgeGroupsTypes,
-  entityNodeText,
   EdgeOverviewNode,
-  EntityNodeData,
-  EntityNodeDatasource
+  EntityGroupNodeData,
+  entityGroupNodeText,
+  EntityGroupsNodeData,
+  EntityNodeDatasource,
+  entityNodeText
 } from '@home/components/widget/lib/edges-overview-widget.models';
-import { EdgeService } from '@core/http/edge.service';
 import { EntityService } from '@core/http/entity.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
+import { edgeEntityGroupTypes } from "@shared/models/edge.models";
+import { groupResourceByGroupType, Operation, Resource } from "@shared/models/security.models";
+import { UserPermissionsService } from "@core/http/user-permissions.service";
+import { EntityGroupService } from '@core/http/entity-group.service';
+import { EntityGroupInfo } from '@shared/models/entity-group.models';
 import { isDefined } from '@core/utils';
 
 interface EdgesOverviewWidgetSettings {
@@ -45,7 +48,6 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
   ctx: WidgetContext;
 
   public toastTargetId = 'edges-overview-' + this.utils.guid();
-  public customerTitle: string = null;
   public edgeIsDatasource: boolean = true;
 
   private widgetConfig: WidgetConfig;
@@ -56,11 +58,11 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
   private nodeIdCounter = 0;
 
   constructor(protected store: Store<AppState>,
-              private edgeService: EdgeService,
               private entityService: EntityService,
-              private translateService: TranslateService,
+              private entityGroupService: EntityGroupService,
+              private translate: TranslateService,
               private utils: UtilsService,
-              private cd: ChangeDetectorRef) {
+              private userPermissionsService: UserPermissionsService) {
     super(store);
   }
 
@@ -75,102 +77,48 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
 
   public loadNodes: LoadNodesCallback = (node, cb) => {
     const datasource: Datasource = this.datasources[0];
-    if (node.id === '#' && datasource) {
-      if (datasource.type === DatasourceType.entity && datasource.entity.id.entityType === EntityType.EDGE) {
-        var selectedEdge: BaseData<EntityId> = datasource.entity;
-        this.updateTitle(selectedEdge);
-        this.getCustomerTitle(selectedEdge.id.id);
-        cb(this.loadNodesForEdge(selectedEdge));
-      } else if (datasource.type === DatasourceType.function) {
-        cb(this.loadNodesForEdge(datasource.entity));
+    if (datasource) {
+      const pageLink = datasource.pageLink ? new PageLink(datasource.pageLink.pageSize) : null;
+      const groupType = node.data ? node.data.groupType : null;
+      if (node.id === '#') {
+        if (datasource.type === DatasourceType.entity && datasource.entity.id.entityType === EntityType.EDGE) {
+          const selectedEdge: BaseData<EntityId> = datasource.entity;
+          this.updateTitle(selectedEdge);
+          cb(this.loadNodesForEdge(selectedEdge));
+        } else if (datasource.type === DatasourceType.function) {
+          cb(this.loadNodesForEdge(datasource.entity));
+        } else {
+          this.edgeIsDatasource = false;
+          cb([]);
+        }
+      } else if (node.data && node.data.type === 'groups') {
+        if (isDefined(node.data.edge)) {
+          const edgeId = node.data.edge.id.id;
+          this.entityService.getAssignedToEdgeEntitiesByType(edgeId, groupType, pageLink).subscribe((entityGroups) => {
+            if (entityGroups) {
+              cb(this.entityGroupsToNodes(entityGroups, groupType));
+            }
+          });
+        } else {
+          const entityId = node.data.group.id.id;
+          this.entityGroupService.getEntityGroupEntities(entityId, pageLink, groupType).subscribe(
+            (entities) => {
+              cb(this.entitiesToNodes(entities.data, groupType));
+            }
+          );
+        }
       } else {
-        this.edgeIsDatasource = false;
         cb([]);
       }
-    }
-    else if (node.data && node.data.entity.id.entityType === EntityType.EDGE) {
-      const edgeId = node.data.entity.id.id;
-      const entityType = node.data.entityType;
-      const pageLink = new PageLink(datasource.pageLink.pageSize);
-      this.entityService.getAssignedToEdgeEntitiesByType(edgeId, entityType, pageLink).subscribe(
-        (entities) => {
-          if (entities.data.length > 0) {
-            cb(this.entitiesToNodes(entities.data));
-          } else {
-            cb([]);
-          }
-        }
-      );
     } else {
       cb([]);
     }
   }
 
-  private loadNodesForEdge(entity: BaseData<HasId>): EdgeOverviewNode[] {
-    const nodes: EdgeOverviewNode[] = [];
-    const authUser = getCurrentAuthUser(this.store);
-    var allowedGroupTypes: EntityType[] = edgeGroupsTypes;
-    if (authUser.authority === Authority.CUSTOMER_USER) {
-      allowedGroupTypes = edgeGroupsTypes.filter(type => type !== EntityType.RULE_CHAIN);
-    }
-    allowedGroupTypes.forEach((entityType) => {
-      const node: EdgeOverviewNode = {
-        id: (++this.nodeIdCounter)+'',
-        icon: false,
-        text: edgeGroupsNodeText(this.translateService, entityType),
-        children: true,
-        data: {
-          entityType,
-          entity,
-          internalId: entity.id.id + '_' + entityType
-        } as EdgeGroupNodeData
-      };
-      nodes.push(node);
-    });
-    return nodes;
-  }
-
-  private createEntityNode(entity: BaseData<HasId>): EdgeOverviewNode {
-    return {
-      id: (++this.nodeIdCounter)+'',
-      icon: false,
-      text: entityNodeText(entity),
-      children: false,
-      state: {
-        disabled: false
-      },
-      data: {
-        entity: entity,
-        internalId: entity.id.id
-      } as EntityNodeData
-    } as EdgeOverviewNode;
-  }
-
-  private entitiesToNodes(entities: BaseData<HasId>[]): EdgeOverviewNode[] {
-    const nodes: EdgeOverviewNode[] = [];
-    if (entities) {
-      entities.forEach((entity) => {
-        const node = this.createEntityNode(entity);
-        nodes.push(node);
-      });
-    }
-    return nodes;
-  }
-
-  private getCustomerTitle(edgeId: string) {
-    this.edgeService.getEdgeInfo(edgeId).subscribe(
-      (edge) => {
-        if (edge.customerTitle) {
-          this.customerTitle = this.translateService.instant('edge.assigned-to-customer', {customerTitle: edge.customerTitle});
-        } else {
-          this.customerTitle = null;
-        }
-        this.cd.detectChanges();
-      });
-  }
-
   private initializeConfig(): void {
-    const edgeIsDatasource: boolean = this.datasources[0] && this.datasources[0].type === DatasourceType.entity && this.datasources[0].entity.id.entityType === EntityType.EDGE;
+    const edgeIsDatasource: boolean = this.datasources[0]
+      && this.datasources[0].type === DatasourceType.entity
+      && this.datasources[0].entity.id.entityType === EntityType.EDGE;
     if (edgeIsDatasource) {
       const edge = this.datasources[0].entity;
       this.updateTitle(edge);
@@ -179,6 +127,99 @@ export class EdgesOverviewWidgetComponent extends PageComponent implements OnIni
 
   private updateTitle(edge: BaseData<EntityId>): void {
     const displayDefaultTitle: boolean = isDefined(this.settings.enableDefaultTitle) ? this.settings.enableDefaultTitle : false;
-    this.ctx.widgetTitle = displayDefaultTitle ? `${edge.name} Quick Overview` : this.widgetConfig.title;
+    const defaultTitle = this.translate.instant('edge.quick-overview-widget-header', {edgeName: edge.name});
+    this.ctx.widgetTitle = displayDefaultTitle ? defaultTitle : this.widgetConfig.title;
   }
+
+  private loadNodesForEdge(edge: BaseData<HasId>): EdgeOverviewNode[] {
+    const nodes: EdgeOverviewNode[] = [];
+    const allowedEntityGroupTypes: Array<EntityType> = this.getAllowedEntityGroupTypes();
+    allowedEntityGroupTypes.forEach((groupType) => {
+      const node: EdgeOverviewNode = this.createEdgeGroupsNode(edge, groupType);
+      nodes.push(node);
+    });
+    return nodes;
+  }
+
+  private getAllowedEntityGroupTypes() {
+    var allowedEntityTypes: Array<EntityType> = edgeEntityGroupTypes.filter((groupType) =>
+      this.userPermissionsService.hasGenericPermission(groupResourceByGroupType.get(groupType), Operation.READ));
+
+    if (this.userPermissionsService.hasReadGenericPermission(Resource.SCHEDULER_EVENT)) {
+      allowedEntityTypes.push(EntityType.SCHEDULER_EVENT);
+    }
+    if (this.userPermissionsService.hasReadGenericPermission(Resource.RULE_CHAIN)) {
+      allowedEntityTypes.push(EntityType.RULE_CHAIN);
+    }
+    if (this.userPermissionsService.hasReadGenericPermission(Resource.INTEGRATION)) {
+      allowedEntityTypes.push(EntityType.INTEGRATION);
+    }
+    return allowedEntityTypes;
+  }
+
+  private createEdgeGroupsNode(edge: BaseData<HasId>, groupType: EntityType): EdgeOverviewNode {
+    return {
+      id: (++this.nodeIdCounter)+'',
+      icon: false,
+      text: edgeGroupsNodeText(this.translate, groupType),
+      children: true,
+      data: {
+        type: 'groups',
+        group: edge,
+        groupType,
+        edge
+      } as EntityGroupsNodeData
+    };
+  }
+
+  private entityGroupsToNodes(entityGroups: EntityGroupInfo[], groupType: EntityType): EdgeOverviewNode[] {
+    const nodes: EdgeOverviewNode[] = [];
+    if (entityGroups) {
+      entityGroups.forEach((entityGroup) => {
+        const node = this.createEntityGroupsNode(entityGroup, groupType);
+        nodes.push(node);
+      });
+    }
+    return nodes;
+  }
+
+  private createEntityGroupsNode(group: EntityGroupInfo, groupType: EntityType): EdgeOverviewNode {
+    return {
+      id: (++this.nodeIdCounter)+'',
+      icon: false,
+      text: group.id.entityType === EntityType.ENTITY_GROUP ? entityGroupNodeText(group) : entityNodeText(group),
+      children: group.id.entityType === EntityType.ENTITY_GROUP && this.userPermissionsService.isOwnedGroup(group),
+      data: {
+        type: 'groups',
+        group,
+        groupType
+      } as EntityGroupsNodeData
+    } as EdgeOverviewNode;
+  }
+
+  private entitiesToNodes(entities: BaseData<HasId>[], groupType: EntityType): EdgeOverviewNode[] {
+    const nodes: EdgeOverviewNode[] = [];
+    if (entities) {
+      entities.forEach((entity) => {
+        const node = this.createEntityGroupNode(entity, groupType);
+        nodes.push(node);
+      });
+    }
+    return nodes;
+  }
+
+  private createEntityGroupNode(group: BaseData<HasId>, groupType: EntityType): EdgeOverviewNode {
+    return {
+      id: (++this.nodeIdCounter)+'',
+      icon: false,
+      text: entityNodeText(group),
+      children: false,
+      data: {
+        type: 'group',
+        group,
+        groupType
+      } as EntityGroupNodeData
+    } as EdgeOverviewNode;
+  }
+
 }

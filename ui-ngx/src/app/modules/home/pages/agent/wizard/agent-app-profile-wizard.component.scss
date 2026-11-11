@@ -1,0 +1,49 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/wizard/agent-wizard' as *;
+
+@include wizard-chrome;
+@include wizard-step-basics;
+@include wizard-type-cards;
+@include wizard-diff;
+@include wizard-summary;
+
+:host {
+  .tb-install-wizard-body {
+    min-height: 50vh;
+  }
+
+  .step-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: calc(50vh - 140px);
+
+    .hint,
+    .type-cards {
+      margin-bottom: 0;
+    }
+
+    .type-select {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .step-footer {
+      margin-top: auto;
+    }
+  }
+
+  .summary-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .tb-app-compose-hint {
+    margin-bottom: -16px;
+  }
+}

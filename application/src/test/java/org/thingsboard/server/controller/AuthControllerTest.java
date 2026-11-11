@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,6 +15,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
+import org.thingsboard.server.common.data.UserInfo;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -29,6 +31,7 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -72,6 +75,9 @@ public class AuthControllerTest extends AbstractControllerTest {
         assertThat(user.getAdditionalInfo().get("userCredentialsEnabled").asBoolean()).isTrue();
         assertThat(user.getAdditionalInfo().get("userActivated").asBoolean()).isTrue();
         assertThat(user.getAdditionalInfo().get("lastLoginTs").asLong()).isCloseTo(System.currentTimeMillis(), within(10000L));
+        UserInfo userInfo = getUserInfo(customerUserId);
+        assertThat(userInfo.getAdditionalInfo().get("lastLoginTs").asLong()).isCloseTo(System.currentTimeMillis(), within(10000L));
+        assertThat(userInfo.getOwnerName()).isEqualTo("Customer");
     }
 
     @Test
@@ -81,7 +87,7 @@ public class AuthControllerTest extends AbstractControllerTest {
         assertThat(user.getAuthority()).isEqualTo(Authority.SYS_ADMIN);
         assertThat(user.getEmail()).isEqualTo(SYS_ADMIN_EMAIL);
 
-        TimeUnit.SECONDS.sleep(1); //We need to make sure that event for invalidating token was successfully processed
+        TimeUnit.SECONDS.sleep(1); //We need to make sure that event for invalidating token was successfully processed;
 
         logout();
         doGet("/api/auth/user")
@@ -186,7 +192,7 @@ public class AuthControllerTest extends AbstractControllerTest {
                 .put("resetToken", this.currentResetPasswordToken)
                 .put("password", newPassword);
 
-        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(any(), anyString(), anyString());
         doPost("/api/noauth/resetPassword", resetPasswordRequest)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message",
@@ -299,6 +305,10 @@ public class AuthControllerTest extends AbstractControllerTest {
 
     private User getUser(UserId id) throws Exception {
         return doGet("/api/user/" + id, User.class);
+    }
+
+    private UserInfo getUserInfo(UserId id) throws Exception {
+        return doGet("/api/user/info/" + id, UserInfo.class);
     }
 
     private String getActivationLink(User user) throws Exception {

@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   FormControl,
@@ -21,7 +22,7 @@ import {
   widgetType
 } from '@shared/models/widget.models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { deepClone } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
@@ -29,6 +30,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { FormProperty } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { IAliasController } from '@core/api/widget-api.models';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+
+export interface DataSourcesOptions {
+  maxDatasources?: number;
+  maxDataKeys?: number;
+  datasourcesOptional?: boolean;
+  dataKeysOptional?: boolean;
+  widgetType?: widgetType;
+  allowFunctions?: boolean;
+}
 
 @Component({
     selector: 'tb-datasources',
@@ -54,15 +66,16 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
 
   public get isAlarmSource(): boolean {
-    return this.widgetConfigComponent.widgetType === widgetType.alarm;
+    return this.widgetType === widgetType.alarm;
   }
 
   public get basicMode(): boolean {
-    return !this.widgetConfigComponent.widgetEditMode && this.configMode === WidgetConfigMode.basic;
+    return !this.widgetConfigComponent?.widgetEditMode && this.configMode === WidgetConfigMode.basic;
   }
 
   public get maxDatasources(): number {
-    return (this.forceSingleDatasource || this.isAlarmSource) ? 1 : this.widgetConfigComponent.modelValue?.typeParameters?.maxDatasources;
+    return this.hasDataSourcesOption('maxDatasources') ? this.getDataSourcesOption('maxDatasources') :
+      ((this.forceSingleDatasource || this.isAlarmSource) ? 1 : this.widgetConfigComponent?.modelValue?.typeParameters?.maxDatasources);
   }
 
   public get singleDatasource(): boolean {
@@ -70,7 +83,8 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   public get showAddDatasource(): boolean {
-   return this.widgetConfigComponent.modelValue?.typeParameters &&
+   return !this.disabled &&
+    (this.widgetConfigComponent?.modelValue?.typeParameters || this.hasDataSourcesOption('maxDatasources')) &&
     (this.maxDatasources === -1 || this.datasourcesFormArray.length < this.maxDatasources);
   }
 
@@ -80,6 +94,14 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  stroked = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   @Input()
   @coerceBoolean()
@@ -128,6 +150,15 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   @Input()
   configMode: WidgetConfigMode;
 
+  @Input()
+  dataSourcesOptions: DataSourcesOptions;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  callbacks: WidgetConfigCallbacks;
+
   datasourcesFormGroup: UntypedFormGroup;
 
   timeseriesKeyError = false;
@@ -142,7 +173,7 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   constructor(private fb: UntypedFormBuilder,
               private utils: UtilsService,
               public translate: TranslateService,
-              private widgetConfigComponent: WidgetConfigComponent,
+              @Optional() private widgetConfigComponent: WidgetConfigComponent,
               private destroyRef: DestroyRef) {
   }
 
@@ -332,7 +363,7 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   public addDatasource(emitEvent = true) {
     let newDatasource: Datasource;
-    if (this.widgetConfigComponent.functionsOnly) {
+    if (this.widgetConfigComponent?.functionsOnly) {
       newDatasource = deepClone(this.utils.getDefaultDatasource(this.dataKeySettingsForm));
       newDatasource.dataKeys = [this.dataKeysCallbacks.generateDataKey('Sin', DataKeyType.function, this.dataKeySettingsForm,
         false, this.dataKeySettingsFunction)];
@@ -348,24 +379,59 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     this.datasourcesFormArray.push(this.fb.control(newDatasource, []), {emitEvent});
   }
 
+  private hasDataSourcesOption(key: string): boolean {
+    if (this.dataSourcesOptions) {
+      return isDefinedAndNotNull(this.dataSourcesOptions[key]);
+    } else {
+      return false;
+    }
+  }
+
+  private getDataSourcesOption<T>(key: string): T {
+    return this.dataSourcesOptions[key];
+  }
+
   private get dataKeySettingsForm(): FormProperty[] {
-    return this.widgetConfigComponent.modelValue?.dataKeySettingsForm;
+    return this.widgetConfigComponent?.modelValue?.dataKeySettingsForm;
   }
 
   private get dataKeySettingsFunction(): DataKeySettingsFunction {
-    return this.widgetConfigComponent.modelValue?.dataKeySettingsFunction;
+    return this.widgetConfigComponent?.modelValue?.dataKeySettingsFunction;
   }
 
   private get dataKeysCallbacks(): DataKeysCallbacks {
-    return this.widgetConfigComponent.widgetConfigCallbacks;
+    return this.widgetConfigComponent?.widgetConfigCallbacks;
   }
 
   private get hasAdditionalLatestDataKeys(): boolean {
-    return this.widgetConfigComponent.widgetType === widgetType.timeseries &&
-      this.widgetConfigComponent.modelValue?.typeParameters?.hasAdditionalLatestDataKeys;
+    return this.widgetType === widgetType.timeseries &&
+      this.widgetConfigComponent?.modelValue?.typeParameters?.hasAdditionalLatestDataKeys;
   }
 
-  private get datasourcesOptional(): boolean {
-    return this.widgetConfigComponent.modelValue?.typeParameters?.datasourcesOptional;
+  public get widgetType(): widgetType {
+    return this.widgetConfigComponent?.widgetType || this.getDataSourcesOption('widgetType');
+  }
+
+  public get datasourcesOptional(): boolean {
+    return this.widgetConfigComponent?.modelValue?.typeParameters?.datasourcesOptional ||
+           this.hasDataSourcesOption('datasourcesOptional') && this.getDataSourcesOption('datasourcesOptional');
+  }
+
+  public get dataKeysOptional(): boolean {
+    return this.widgetConfigComponent?.modelValue?.typeParameters?.dataKeysOptional ||
+           this.hasDataSourcesOption('dataKeysOptional') && this.getDataSourcesOption('dataKeysOptional');
+  }
+
+  public get maxDataKeys(): number {
+    return this.widgetConfigComponent?.modelValue?.typeParameters?.maxDataKeys ||
+      this.hasDataSourcesOption('maxDataKeys') ? this.getDataSourcesOption('maxDataKeys') : null;
+  }
+
+  public get allowFunctions(): boolean {
+    return this.hasDataSourcesOption('allowFunctions') ? this.getDataSourcesOption('allowFunctions') : true;
+  }
+
+  public get datasources(): Datasource[] {
+    return this.datasourcesFormGroup.get('datasources').value;
   }
 }

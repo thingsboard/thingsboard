@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import '../../../../../../../../../scss/constants';
 
 .tb-action-settings-panel {
   width: 530px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -15,6 +17,8 @@
     flex-direction: column;
     gap: 16px;
     overflow: auto;
+    flex: 1;
+    min-height: 0;
   }
   .tb-action-settings-title {
     font-size: 16px;

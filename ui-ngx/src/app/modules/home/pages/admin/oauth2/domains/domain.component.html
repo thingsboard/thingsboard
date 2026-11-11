@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section class="tb-form-panel no-gap no-border" [class.no-padding]="isAdd" [formGroup]="entityForm">
@@ -33,7 +34,6 @@
       <tb-copy-button
         matSuffix
         miniButton="false"
-        color="primary"
         [copyText]="redirectURI()"
         tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
         tooltipPosition="above"

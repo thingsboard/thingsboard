@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf.ctx.state.aggregation.single;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,6 +23,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.single.in
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.DefaultCalculatedFieldReprocessingService.EntityAggCfReprocessingCtx;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
@@ -297,6 +299,26 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             }
         });
         return result;
+    }
+
+    public ListenableFuture<CalculatedFieldResult> performAggregationDuringInterval(EntityAggCfReprocessingCtx reprocessingCtx) {
+        Set<String> argNames = ctx.getArguments().keySet();
+        AggIntervalEntry aggInterval = reprocessingCtx.getIntervalCursor();
+        Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
+        argNames.forEach(argName -> {
+            processArgument(aggInterval, argName, false, results);
+        });
+
+        Output output = ctx.getOutput();
+        ArrayNode result = toResult(results, output.getDecimalsByDefault());
+        if (result.isEmpty()) {
+            return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);
+        }
+        return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                .type(output.getType())
+                .scope(output.getScope())
+                .result(result)
+                .build());
     }
 
     @Override

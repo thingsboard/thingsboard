@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.mqtt;
 
 import io.netty.channel.Channel;
@@ -55,7 +56,12 @@ public final class MqttClientConfig {
     @Getter
     private long reconnectDelay = 1L;
     @Getter
-    private int maxBytesInMessage = 8092;
+    private int maxBytesInMessage = 32368;
+
+    @Getter
+    private int backPressureHighWatermark = 450;
+    @Getter
+    private int backPressureLowWatermark = 200;
 
     @Getter
     @Setter
@@ -106,6 +112,30 @@ public final class MqttClientConfig {
             throw new IllegalArgumentException("timeoutSeconds must be > 0 or -1");
         }
         this.timeoutSeconds = timeoutSeconds;
+    }
+
+    public void setBackPressureHighWatermark(int backPressureHighWatermark) {
+        if (backPressureHighWatermark < 0) {
+            throw new IllegalArgumentException("backPressureHighWatermark must be >= 0 (0 to disable), but was " + backPressureHighWatermark);
+        }
+        if (backPressureHighWatermark > 0 && backPressureLowWatermark > 0 && backPressureHighWatermark <= backPressureLowWatermark) {
+            throw new IllegalArgumentException("backPressureHighWatermark (" + backPressureHighWatermark + ") must be > backPressureLowWatermark (" + backPressureLowWatermark + ")");
+        }
+        this.backPressureHighWatermark = backPressureHighWatermark;
+    }
+
+    public void setBackPressureLowWatermark(int backPressureLowWatermark) {
+        if (backPressureLowWatermark < 0) {
+            throw new IllegalArgumentException("backPressureLowWatermark must be >= 0 (0 to disable), but was " + backPressureLowWatermark);
+        }
+        if (backPressureLowWatermark > 0 && backPressureHighWatermark > 0 && backPressureLowWatermark >= backPressureHighWatermark) {
+            throw new IllegalArgumentException("backPressureLowWatermark (" + backPressureLowWatermark + ") must be < backPressureHighWatermark (" + backPressureHighWatermark + ")");
+        }
+        this.backPressureLowWatermark = backPressureLowWatermark;
+    }
+
+    public boolean isBackPressureEnabled() {
+        return backPressureHighWatermark > 0 && backPressureLowWatermark > 0;
     }
 
     public void setProtocolVersion(MqttVersion protocolVersion) {

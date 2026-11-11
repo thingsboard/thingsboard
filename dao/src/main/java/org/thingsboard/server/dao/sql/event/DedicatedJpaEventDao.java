@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.event;
 
 import org.springframework.stereotype.Component;
@@ -22,12 +23,16 @@ public class DedicatedJpaEventDao extends JpaBaseEventDao {
                                 DedicatedEventInsertRepository eventInsertRepository,
                                 RuleNodeDebugEventRepository ruleNodeDebugEventRepository,
                                 RuleChainDebugEventRepository ruleChainDebugEventRepository,
+                                RawEventRepository rawEventRepository,
+                                IntegrationDebugEventRepository integrationDebugEventRepository,
+                                ConverterDebugEventRepository converterDebugEventRepository,
                                 ScheduledLogExecutorComponent logExecutor,
                                 StatsFactory statsFactory,
                                 CalculatedFieldDebugEventRepository cfDebugEventRepository) {
         super(partitionConfiguration, partitioningRepository, lcEventRepository, statsEventRepository,
                 errorEventRepository, eventInsertRepository, ruleNodeDebugEventRepository,
-                ruleChainDebugEventRepository, logExecutor, statsFactory, cfDebugEventRepository);
+                ruleChainDebugEventRepository, rawEventRepository, integrationDebugEventRepository,
+                converterDebugEventRepository, cfDebugEventRepository, logExecutor, statsFactory);
     }
 
 }

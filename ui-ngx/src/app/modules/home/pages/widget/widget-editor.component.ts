@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { PageComponent } from '@shared/components/page.component';
 import {
   Component,
@@ -62,6 +63,7 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 import { HomeService } from '@core/services/home.service';
 import Timeout = NodeJS.Timeout;
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 // @dynamic
 @Component({
@@ -177,6 +179,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private customTranslate: CustomTranslatePipe,
               private http: HttpClient,
               private breadcrumbService: BreadcrumbService,
+              public wl: WhiteLabelingService,
               public homeService: HomeService) {
     super(store);
 

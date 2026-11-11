@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -111,6 +112,32 @@ public class DeviceCredentialsServiceTest extends AbstractServiceTest {
             });
         } finally {
             deviceService.deleteDevice(tenantId, device.getId());
+        }
+    }
+
+    @Test
+    public void testSaveDeviceCredentialsWithDuplicateCredentialsId() {
+        Device firstDevice = new Device();
+        firstDevice.setName("First device");
+        firstDevice.setType("default");
+        firstDevice.setTenantId(tenantId);
+        firstDevice = deviceService.saveDevice(firstDevice);
+        Device secondDevice = new Device();
+        secondDevice.setName("Second device");
+        secondDevice.setType("default");
+        secondDevice.setTenantId(tenantId);
+        secondDevice = deviceService.saveDevice(secondDevice);
+        DeviceCredentials firstDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, firstDevice.getId());
+        DeviceCredentials secondDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, secondDevice.getId());
+        secondDeviceCredentials.setCredentialsId(firstDeviceCredentials.getCredentialsId());
+        try {
+            DataValidationException exception = Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceCredentialsService.updateDeviceCredentials(tenantId, secondDeviceCredentials);
+            });
+            Assertions.assertEquals("Device credentials are already assigned to another device!", exception.getMessage());
+        } finally {
+            deviceService.deleteDevice(tenantId, firstDevice.getId());
+            deviceService.deleteDevice(tenantId, secondDevice.getId());
         }
     }
 

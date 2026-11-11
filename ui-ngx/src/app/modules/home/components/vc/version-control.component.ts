@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -10,6 +11,7 @@ import { UntypedFormGroup } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Observable } from 'rxjs';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
     selector: 'tb-version-control',
@@ -38,6 +40,9 @@ export class VersionControlComponent implements OnInit, HasConfirmForm {
 
   @Input()
   entityId: EntityId;
+
+  @Input()
+  groupType: EntityType;
 
   @Input()
   entityName: string;

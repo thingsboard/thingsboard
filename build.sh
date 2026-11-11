@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+# SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 #
 
 set -e # exit on any error
 
-#PROJECTS="msa/tb-node,msa/web-ui,rule-engine-pe/rule-node-twilio-sms"
 PROJECTS=""
 
 if [ "$1" ]; then

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ECharts,
   EChartsOption,
@@ -30,7 +31,8 @@ import {
   isUndefined,
   isUndefinedOrNull,
   mergeDeep,
-  parseFunction
+  parseFunction,
+  plainColorFromVariable
 } from '@core/utils';
 import tinycolor from 'tinycolor2';
 import { TimeAxisBaseOption, ValueAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
@@ -543,7 +545,7 @@ export const timeSeriesChartThresholdDefaultSettings: TimeSeriesChartThreshold =
     size: 12,
     sizeUnit: 'px',
     style: 'normal',
-    weight: '400',
+    weight: 'normal',
     lineHeight: '1'
   },
   labelColor: chartColorScheme['threshold.label'].light,
@@ -608,7 +610,7 @@ export interface TimeSeriesChartVisualMapPiece {
 
 export const createTimeSeriesChartVisualMapPiece = (color: string, from?: number, to?: number): TimeSeriesChartVisualMapPiece => {
   const piece: TimeSeriesChartVisualMapPiece = {
-    color
+    color: plainColorFromVariable(color)
   };
   if (isNumber(from) && isNumber(to)) {
     if (from === to) {
@@ -1107,10 +1109,10 @@ export const createTimeSeriesVisualMapOption = (settings: TimeSeriesChartVisualM
   dimension: 1,
   pieces: settings.pieces,
   outOfRange: {
-  color: settings.outOfRangeColor
+  color: plainColorFromVariable(settings.outOfRangeColor)
 },
   inRange: !settings.pieces.length ? {
-    color: settings.outOfRangeColor
+    color: plainColorFromVariable(settings.outOfRangeColor)
   } : undefined
 });
 
@@ -1244,6 +1246,14 @@ const createThresholdData = (val: string | number, item: TimeSeriesChartThreshol
     }
   ];
 
+export const dataKeySeriesType = (settings: any): TimeSeriesChartSeriesType => {
+  if (settings.seriesType) {
+    return settings.seriesType;
+  } else {
+    return settings.type;
+  }
+}
+
 const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
                              stack: boolean,
                              noAggregation: boolean,
@@ -1252,7 +1262,7 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
   const series: Array<LineSeriesOption | CustomSeriesOption> = [];
   const enabledDataItems = dataItems.filter(d => d.enabled);
   const barDataItems = enabledDataItems.filter(d =>
-    d.dataKey.settings.type === TimeSeriesChartSeriesType.bar && d.data.length);
+    dataKeySeriesType(d.dataKey.settings) === TimeSeriesChartSeriesType.bar && d.data.length);
   let barsCount = barDataItems.length;
   const barGroups: number[] = [];
   if (stack) {
@@ -1264,7 +1274,7 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
     barsCount = barGroups.length;
   }
   for (const item of enabledDataItems) {
-    if (item.dataKey.settings.type === TimeSeriesChartSeriesType.bar) {
+    if (dataKeySeriesType(item.dataKey.settings) === TimeSeriesChartSeriesType.bar) {
       if (!item.barRenderContext) {
         item.barRenderContext = {noAggregation,
           shared: barRenderSharedContext};
@@ -1313,7 +1323,7 @@ export const updateDarkMode = (options: EChartsOption,
     }
   }
   for (const item of dataItems) {
-    if (item.dataKey.settings.type === TimeSeriesChartSeriesType.line) {
+    if (dataKeySeriesType(item.dataKey.settings) === TimeSeriesChartSeriesType.line) {
       const lineSettings = item.dataKey.settings as LineSeriesSettings;
       if (item.option.label?.show) {
         item.option.label.rich.value.color = prepareChartThemeColor(lineSettings.pointLabelColor, darkMode, 'series.label');
@@ -1369,7 +1379,7 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
       }
     };
     item.option = seriesOption;
-    if (settings.type === TimeSeriesChartSeriesType.line) {
+    if (dataKeySeriesType(settings) === TimeSeriesChartSeriesType.line) {
       const lineSettings = settings.lineSettings;
       const lineSeriesOption = seriesOption as LineSeriesOption;
       lineSeriesOption.type = 'line';

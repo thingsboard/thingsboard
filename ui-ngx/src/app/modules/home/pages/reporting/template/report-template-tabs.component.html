@@ -1,0 +1,20 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (entity && (resource.AUDIT_LOG | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
+    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+  </mat-tab>
+}
+@if (entity && authUser.authority === authorities.TENANT_ADMIN && ([resource.VERSION_CONTROL, resource.REPORT_TEMPLATE] | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
+    <tb-version-control detailsMode="true" singleEntityMode="true"
+      (versionRestored)="entitiesTableConfig.updateData()"
+    [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
+  </mat-tab>
+}

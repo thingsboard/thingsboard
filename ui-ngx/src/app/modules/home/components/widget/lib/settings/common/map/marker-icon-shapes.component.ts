@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
@@ -16,6 +17,7 @@ import { MatIconRegistry } from '@angular/material/icon';
 import tinycolor from 'tinycolor2';
 import { map, share } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { plainColorFromVariable } from '@core/utils';
 
 export interface MarkerIconInfo {
   iconContainer?: MarkerIconContainer;
@@ -102,7 +104,7 @@ export class MarkerIconShapesComponent extends PageComponent implements OnInit {
     this.iconContainers = containersList.map((iconContainer) => {
       return {
         iconContainer,
-        html$: createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, iconContainer, this.icon, tinycolor(this.color)).pipe(
+        html$: createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, iconContainer, this.icon, tinycolor(plainColorFromVariable(this.color))).pipe(
           map((element) => {
             return this.domSanitizer.bypassSecurityTrustHtml(element.outerHTML);
           }),

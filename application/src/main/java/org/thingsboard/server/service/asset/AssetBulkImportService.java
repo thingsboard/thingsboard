@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.asset;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,6 +12,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
 import org.thingsboard.server.dao.asset.AssetProfileService;
@@ -55,7 +58,7 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
 
     @Override
     @SneakyThrows
-    protected Asset saveEntity(SecurityUser user, Asset entity, Map<BulkImportColumnType, String> fields) {
+    protected Asset saveEntity(SecurityUser user, Asset entity, EntityGroup entityGroup, Map<BulkImportColumnType, String> fields) {
         AssetProfile assetProfile;
         if (StringUtils.isNotEmpty(entity.getType())) {
             assetProfile = assetProfileService.findOrCreateAssetProfile(entity.getTenantId(), entity.getType());
@@ -63,7 +66,7 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
             assetProfile = assetProfileService.findDefaultAssetProfile(entity.getTenantId());
         }
         entity.setAssetProfileId(assetProfile.getId());
-        return tbAssetService.save(entity, user);
+        return tbAssetService.save(entity, entityGroup, user);
     }
 
     @Override
@@ -73,9 +76,9 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     }
 
     @Override
-    protected void setOwners(Asset entity, SecurityUser user) {
-        entity.setTenantId(user.getTenantId());
-        entity.setCustomerId(user.getCustomerId());
+    protected void setOwners(Asset entity, TenantId tenantId, CustomerId customerId) {
+        entity.setTenantId(tenantId);
+        entity.setCustomerId(customerId);
     }
 
     @Override

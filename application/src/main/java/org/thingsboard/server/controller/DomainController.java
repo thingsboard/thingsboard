@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,20 +26,24 @@ import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.domain.TbDomainService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.permission.Operation.DELETE;
+import static org.thingsboard.server.common.data.permission.Operation.READ;
+import static org.thingsboard.server.common.data.permission.Operation.WRITE;
+import static org.thingsboard.server.common.data.permission.Resource.DOMAIN;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
@@ -55,33 +60,35 @@ public class DomainController extends BaseController {
                     "The newly created Domain Id will be present in the response. " +
                     "Specify existing Domain Id to update the domain. " +
                     "Referencing non-existing Domain Id will cause 'Not Found' error." +
-                    "\n\nDomain name is unique for entire platform setup.\n\n" + SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+                    "\n\nDomain name is unique for entire platform setup.\n\n" + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/domain")
     public Domain saveDomain(
             @Parameter(description = "A JSON value representing the Domain.", required = true)
             @RequestBody @Valid Domain domain,
             @Parameter(description = "A list of oauth2 client registration ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam(name = "oauth2ClientIds", required = false) UUID[] ids) throws Exception {
-        domain.setTenantId(getTenantId());
-        checkEntity(domain.getId(), domain, Resource.DOMAIN);
+        SecurityUser currentUser = getCurrentUser();
+        domain.setTenantId(currentUser.getTenantId());
+        domain.setCustomerId(currentUser.getCustomerId());
+        checkEntity(domain.getId(), domain, DOMAIN);
         return tbDomainService.save(domain, getOAuth2ClientIds(ids), getCurrentUser());
     }
 
     @ApiOperation(value = "Update oauth2 clients (updateDomainOauth2Clients)",
-            notes = "Update oauth2 clients for the specified domain. ")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+            notes = "Update oauth2 clients for the specified domain. " + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PutMapping(value = "/domain/{id}/oauth2Clients")
     public void updateDomainOauth2Clients(@PathVariable UUID id,
                                           @RequestBody UUID[] clientIds) throws ThingsboardException {
         DomainId domainId = new DomainId(id);
-        Domain domain = checkDomainId(domainId, Operation.WRITE);
+        Domain domain = checkDomainId(domainId, WRITE);
         List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
         tbDomainService.updateOauth2Clients(domain, oAuth2ClientIds, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get Domain infos (getDomainInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @ApiOperation(value = "Get Domain infos (getDomainInfos)", notes = SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/domain/infos")
     public PageData<DomainInfo> getDomainInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                @RequestParam int pageSize,
@@ -93,26 +100,27 @@ public class DomainController extends BaseController {
                                                @RequestParam(required = false) String sortProperty,
                                                @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.DOMAIN, Operation.READ);
+        SecurityUser currentUser = getCurrentUser();
+        accessControlService.checkPermission(currentUser, DOMAIN, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return domainService.findDomainInfosByTenantId(getTenantId(), pageLink);
+        return domainService.findDomainInfosByTenantIdAndCustomerId(currentUser.getTenantId(), currentUser.getCustomerId(), pageLink);
     }
 
-    @ApiOperation(value = "Get Domain info by Id (getDomainInfoById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @ApiOperation(value = "Get Domain info by Id (getDomainInfoById)", notes = SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/domain/info/{id}")
     public DomainInfo getDomainInfoById(@PathVariable UUID id) throws ThingsboardException {
         DomainId domainId = new DomainId(id);
-        return checkEntityId(domainId, domainService::findDomainInfoById, Operation.READ);
+        return checkEntityId(domainId, domainService::findDomainInfoById, READ);
     }
 
     @ApiOperation(value = "Delete Domain by ID (deleteDomain)",
-            notes = "Deletes Domain by ID. Referencing non-existing domain Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+            notes = "Deletes Domain by ID. Referencing non-existing domain Id will cause an error." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/domain/{id}")
     public void deleteDomain(@PathVariable UUID id) throws Exception {
         DomainId domainId = new DomainId(id);
-        Domain domain = checkDomainId(domainId, Operation.DELETE);
+        Domain domain = checkDomainId(domainId, DELETE);
         tbDomainService.delete(domain, getCurrentUser());
     }
 

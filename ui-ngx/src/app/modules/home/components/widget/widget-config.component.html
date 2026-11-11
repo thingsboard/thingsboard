@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-widget-config tb-absolute-fill">
@@ -165,13 +166,21 @@
           <mat-slide-toggle class="mat-slide slide-block" formControlName="enableFullscreen">
             {{ 'widget-config.enable-fullscreen' | translate }}
           </mat-slide-toggle>
+          <mat-slide-toggle class="mat-slide slide-block" formControlName="enableDataExport"
+                            [class.!hidden]="!displayDataExport">
+            {{ 'widget-config.enable-data-export' | translate }}
+          </mat-slide-toggle>
         </div>
       </div>
       <div [class.!hidden]="selectedOption !== 'actions'" [formGroup]="actionsSettings" class="mat-content" style="height: 100%;">
         <div class="tb-form-panel" style="height: 100%;">
           <tb-manage-widget-actions
             [callbacks]="widgetConfigCallbacks"
+            [actionTypes]="widgetActionTypesList"
+            [customFunctionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
             [widgetType] = "modelValue.widgetType"
+            [widgetName]="modelValue.widgetName"
+            [widgetTitle]="modelValue.config?.title"
             [defaultIconColor]="widgetSettings.get('color').value"
             [actionSources]="modelValue.actionSources"
             [additionalWidgetActionTypes]="modelValue.typeParameters?.additionalWidgetActionTypes"
@@ -269,12 +278,12 @@
           </button>
         </div>
         <tb-alarm-filter-config #alarmFilterConfig buttonMode="false"
-        formControlName="alarmFilterConfig" [initialAlarmFilterConfig]="{}"></tb-alarm-filter-config>
+                                formControlName="alarmFilterConfig" [initialAlarmFilterConfig]="{}"></tb-alarm-filter-config>
       </div>
     }
     @if (widgetType !== widgetTypes.rpc &&
-      widgetType !== widgetTypes.alarm &&
-      modelValue?.isDataEnabled) {
+    widgetType !== widgetTypes.alarm &&
+    modelValue?.isDataEnabled) {
       <div
         [formGroup]="dataSettings">
         <tb-datasources
@@ -284,7 +293,7 @@
       </div>
     }
     @if (widgetType === widgetTypes.rpc &&
-      modelValue?.isDataEnabled) {
+    modelValue?.isDataEnabled) {
       <ng-container [formGroup]="targetDeviceSettings">
         <tb-target-device formControlName="targetDevice" appearance="outline">
         </tb-target-device>
@@ -353,16 +362,15 @@
     @if (displayAdvancedAppearance) {
       <div class="flex-1" [formGroup]="advancedSettings">
         <tb-widget-settings
-            [aliasController]="aliasController"
-            [callbacks]="widgetConfigCallbacks"
-            [functionsOnly]="functionsOnly"
-            [dashboard]="dashboard"
-            [widget]="widget"
-            [widgetConfig]="modelValue"
-            formControlName="settings">
+          [aliasController]="aliasController"
+          [callbacks]="widgetConfigCallbacks"
+          [functionsOnly]="functionsOnly"
+          [dashboard]="dashboard"
+          [widget]="widget"
+          [widgetConfig]="modelValue"
+          formControlName="settings">
         </tb-widget-settings>
       </div>
     }
   </ng-template>
 </div>
-

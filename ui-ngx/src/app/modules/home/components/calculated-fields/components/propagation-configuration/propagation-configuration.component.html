@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="propagateConfiguration" class="tb-form-panel no-border no-padding">
@@ -46,7 +47,8 @@
                                   [ownerId]="ownerId"
                                   [watchKeyChange]="true"
                                   [isEditValue]="isEditValue"
-                                  [isScript]="propagateConfiguration.get('applyExpressionToResolvedArguments').value"/>
+                                  [isScript]="propagateConfiguration.get('applyExpressionToResolvedArguments').value"
+                                  [readonly]="readonly"/>
   </div>
   <div class="tb-form-panel no-gap" [class.!hidden]="!propagateConfiguration.get('applyExpressionToResolvedArguments').value">
     <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.script' | translate }}</div>
@@ -69,19 +71,21 @@
                 matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                 matTooltipPosition="above"
                 class="tb-mat-32"
-                [disabled]="propagateConfiguration.get('arguments').invalid || disabled"
+                [disabled]="propagateConfiguration.get('arguments').invalid || disabled || readonly"
                 (click)="onTestScript()">
           <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
         </button>
       </tb-js-func>
-      <div>
-        <button mat-button mat-raised-button color="primary"
-                type="button"
-                (click)="onTestScript()"
-                [disabled]="propagateConfiguration.get('arguments').invalid || disabled">
-          {{ 'calculated-fields.test-script-function' | translate }}
-        </button>
-      </div>
+      @if (!readonly) {
+        <div>
+          <button mat-button mat-raised-button color="primary"
+                  type="button"
+                  (click)="onTestScript()"
+                  [disabled]="propagateConfiguration.get('arguments').invalid || disabled">
+            {{ 'calculated-fields.test-script-function' | translate }}
+          </button>
+        </div>
+      }
     </div>
   </div>
   <tb-calculate-field-output formControlName="output" [entityId]="entityId">

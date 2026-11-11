@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   DestroyRef,
@@ -15,9 +16,9 @@ import { PageComponent } from '@shared/components/page.component';
 import {
   commonFonts,
   ComponentStyle, cssUnit,
-  Font,
+  Font, fontStyle,
   fontStyles,
-  fontStyleTranslations,
+  fontStyleTranslations, fontWeight,
   fontWeights,
   fontWeightTranslations, isFontPartiallySet,
   textStyle
@@ -66,7 +67,10 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   forceSizeUnit: cssUnit;
 
   @Input()
-  popover: TbPopoverComponent<FontSettingsPanelComponent>;
+  allowedFontWeights: fontWeight[];
+
+  @Input()
+  allowedFontStyles: fontStyle[];
 
   @Output()
   fontApplied = new EventEmitter<Font>();
@@ -91,11 +95,18 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
 
   constructor(private fb: UntypedFormBuilder,
               protected store: Store<AppState>,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private popover: TbPopoverComponent) {
     super(store);
   }
 
   ngOnInit(): void {
+    if (this.allowedFontWeights?.length) {
+      this.fontWeightsList = this.allowedFontWeights;
+    }
+    if (this.allowedFontStyles?.length) {
+      this.fontStylesList = this.allowedFontStyles;
+    }
     this.fontFormGroup = this.fb.group(
       {
         size: [{value: this.font?.size, disabled: this.autoScale}, [Validators.min(0)]],

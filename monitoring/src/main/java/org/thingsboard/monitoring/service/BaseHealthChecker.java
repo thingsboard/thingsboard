@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.monitoring.service;
 
 import jakarta.annotation.PostConstruct;
@@ -38,8 +39,11 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     private MonitoringReporter reporter;
     @Autowired
     private TbStopWatch stopWatch;
+
     @Value("${monitoring.check_timeout_ms}")
     private int resultCheckTimeoutMs;
+    @Value("${monitoring.domain}")
+    protected String domain;
 
     @Getter
     private final Map<String, BaseHealthChecker<C, T>> associates = new HashMap<>();

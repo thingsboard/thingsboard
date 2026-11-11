@@ -1,20 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.trendz;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TrendzSettings implements Serializable {
-
-    private boolean enabled;
-    private String baseUrl;
-    private String apiKey;
-
-}
+public record TrendzSettings(TrendzConfiguration configuration,
+                             TrendzSynchronizationResult synchronizationResult) implements Serializable {}

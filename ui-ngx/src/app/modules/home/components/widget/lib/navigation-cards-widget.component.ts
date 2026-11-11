@@ -1,7 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { PageComponent } from '@shared/components/page.component';
 import { Component, Input, NgZone, OnInit } from '@angular/core';
+import { HttpParams } from '@angular/common/http';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -63,10 +65,20 @@ export class NavigationCardsWidgetComponent extends PageComponent implements OnI
     this.ctx.detectChanges();
   }
 
-  navigate($event: Event, path: string) {
+  sectionUrl(section: MenuSection): string {
+    let url = section.path;
+    if (section.queryParams) {
+      const params = new HttpParams({ fromObject: section.queryParams });
+      url = `${url}?${params.toString()}`;
+    }
+    return url;
+  }
+
+  navigate($event: Event, section: MenuSection) {
     $event.preventDefault();
     this.ngZone.run(() => {
-      this.router.navigateByUrl(path);
+      const url = this.sectionUrl(section);
+      this.router.navigateByUrl(url);
     });
   }
 

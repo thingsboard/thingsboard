@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-widget-button-custom-style-panel" [formGroup]="customStyleFormGroup">
@@ -12,6 +13,7 @@
         {{ 'widgets.button.main' | translate }}
       </mat-slide-toggle>
       <tb-color-input asBoxInput
+                      useThemePalette
                       formControlName="mainColor">
       </tb-color-input>
     </div>
@@ -20,6 +22,7 @@
         {{ 'widgets.button.background' | translate }}
       </mat-slide-toggle>
       <tb-color-input asBoxInput
+                      useThemePalette
                       formControlName="backgroundColor">
       </tb-color-input>
     </div>

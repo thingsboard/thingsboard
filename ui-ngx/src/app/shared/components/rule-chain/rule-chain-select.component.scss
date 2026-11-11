@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   min-width: 52px;
   width: 100%;
@@ -8,7 +9,7 @@
     width: 100%;
 
     input {
-      color: rgba(0,0,0,0.87);
+      color: currentColor;
       cursor: pointer;
       text-overflow: ellipsis;
       pointer-events: none;

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import L, { LeafletMouseEvent } from 'leaflet';
 import { CircleData, WidgetCircleSettings } from '@home/components/widget/lib/maps-legacy/map-models';

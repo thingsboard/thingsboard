@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.widgets.type;
 
 import lombok.AllArgsConstructor;
@@ -25,11 +26,6 @@ public class DefaultWidgetTypeService extends AbstractTbEntityService implements
 
     private final WidgetTypeService widgetTypeService;
     private final TbResourceService tbResourceService;
-
-    @Override
-    public WidgetTypeDetails save(WidgetTypeDetails entity, SecurityUser user) throws Exception {
-        return this.save(entity, false, user);
-    }
 
     @Override
     public WidgetTypeDetails save(WidgetTypeDetails widgetTypeDetails, boolean updateExistingByFqn, SecurityUser user) throws Exception {

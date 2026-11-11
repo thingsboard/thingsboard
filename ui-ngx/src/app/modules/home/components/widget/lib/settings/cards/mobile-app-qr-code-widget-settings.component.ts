@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from "@angular/core";
 import { UntypedFormBuilder, UntypedFormGroup } from "@angular/forms";
 import { WidgetSettings, WidgetSettingsComponent } from "@shared/models/widget.models";
@@ -7,6 +8,10 @@ import { AppState } from '@core/core.state';
 import { Store } from "@ngrx/store";
 import { badgePositionTranslationsMap } from '@shared/models/mobile-app.models';
 import { mobileAppQrCodeWidgetDefaultSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widget.models';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { UserPermissionsService} from '@core/http/user-permissions.service';
+import { Operation, Resource} from "@shared/models/security.models";
 
 @Component({
     selector: 'tb-mobile-app-qr-code-widget-settings',
@@ -20,9 +25,15 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
 
   badgePositionTranslationsMap = badgePositionTranslationsMap;
 
+  displayConfigurationHint = false;
+
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private userPermissionsService: UserPermissionsService) {
     super(store);
+    this.displayConfigurationHint = getCurrentAuthUser(this.store).authority !== Authority.CUSTOMER_USER &&
+      (this.userPermissionsService.hasGenericPermission(Resource.MOBILE_APP_SETTINGS, Operation.WRITE) ||
+      this.userPermissionsService.hasGenericPermission(Resource.MOBILE_APP_SETTINGS, Operation.READ));
   }
 
   protected settingsForm(): UntypedFormGroup {
@@ -67,6 +78,13 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
         this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
       }
     }
+  }
+
+  navigateToMobileAppSettings($event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    window.open(window.location.origin + '/settings/mobile-app', '_blank');
   }
 
 }

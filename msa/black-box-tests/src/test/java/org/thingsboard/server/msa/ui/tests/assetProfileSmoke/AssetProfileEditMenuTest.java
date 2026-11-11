@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
@@ -57,9 +58,9 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
         profilesPage.entity(name).click();
         profilesPage.setHeaderName();
         String nameBefore = profilesPage.getHeaderName();
-        jsClick(profilesPage.editPencilBtn());
+        jsClick(profilesPage.profileViewEditPencilBtn());
         profilesPage.changeNameEditMenu(newName);
-        profilesPage.doneBtnEditView().click();
+        profilesPage.profileViewDoneBtn().click();
         this.name = newName;
         profilesPage.setHeaderName();
         String nameAfter = profilesPage.getHeaderName();
@@ -79,10 +80,10 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
-        jsClick(profilesPage.editPencilBtn());
+        jsClick(profilesPage.profileViewEditPencilBtn());
         profilesPage.changeNameEditMenu("");
 
-        Assert.assertFalse(profilesPage.doneBtnEditViewVisible().isEnabled());
+        Assert.assertFalse(profilesPage.profileViewVisibleDoneBtn().isEnabled());
     }
 
     @Epic("Asset profiles smoke")
@@ -96,9 +97,9 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
-        jsClick(profilesPage.editPencilBtn());
+        jsClick(profilesPage.profileViewEditPencilBtn());
         profilesPage.changeNameEditMenu(Keys.SPACE);
-        profilesPage.doneBtnEditView().click();
+        profilesPage.profileViewDoneBtn().click();
 
         Assert.assertNotNull(profilesPage.warningMessage());
         Assert.assertTrue(profilesPage.warningMessage().isDisplayed());
@@ -116,9 +117,9 @@ public class AssetProfileEditMenuTest extends AbstractDriverBaseTest {
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.entity(name).click();
-        jsClick(profilesPage.editPencilBtn());
+        jsClick(profilesPage.profileViewEditPencilBtn());
         profilesPage.profileViewDescriptionField().sendKeys(newDescription);
-        profilesPage.doneBtnEditView().click();
+        profilesPage.profileViewDoneBtn().click();
         profilesPage.setDescription();
 
         Assert.assertEquals(profilesPage.getDescription(), finalDescription);

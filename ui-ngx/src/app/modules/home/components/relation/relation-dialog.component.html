@@ -1,16 +1,21 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="relationFormGroup" (ngSubmit)="save()" style="min-width: 600px;">
-  <mat-toolbar class="tb-dialog-header flex flex-row">
-    <h2>{{ (isAdd ? 'relation.add' : 'relation.edit' ) | translate }}</h2>
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    @if (!readonly) {
+      <h2>{{ (isAdd ? 'relation.add' : 'relation.edit' ) | translate }}</h2>
+    } @else {
+      <h2>{{ 'relation.view' | translate }}</h2>
+    }
     <span class="flex-1"></span>
     <button mat-icon-button
-            (click)="cancel()"
-            type="button">
+      (click)="cancel()"
+      type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
@@ -31,6 +36,7 @@
       'relation.to-entity' : 'relation.from-entity') | translate}}</small>
       <tb-entity-list-select
         formControlName="targetEntityIds"
+        [operation]="!readonly ? operation.WRITE : operation.READ"
         [additionEntityTypes]="additionEntityTypes"
         appearance="outline"
         required="true">
@@ -51,15 +57,17 @@
   <div mat-dialog-actions class="flex flex-row">
     <span class="flex-1"></span>
     <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || relationFormGroup.invalid || !(relationFormGroup.dirty || additionalInfo.dirty)">
-      {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
-    </button>
+    @if (!readonly) {
+      <button mat-button mat-raised-button color="primary"
+        type="submit"
+        [disabled]="(isLoading$ | async) || relationFormGroup.invalid || !(relationFormGroup.dirty || additionalInfo.dirty)">
+        {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
+      </button>
+    }
   </div>
 </form>

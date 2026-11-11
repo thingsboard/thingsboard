@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   Component,
@@ -11,14 +11,14 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { ColorRange, ColorSettings, ColorType, ComponentStyle } from '@shared/models/widget-settings.models';
+import { ColorSettings, ColorType, ComponentStyle, normalizeColorRangeSettings } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   ColorSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/color-settings-panel.component';
 import { IAliasController } from '@core/api/widget-api.models';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
@@ -129,11 +129,9 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
 
   writeValue(value: ColorSettings): void {
     if (value) {
-      this.modelValue = value;
-      if (isDefinedAndNotNull(this.modelValue.rangeList) && !isDefinedAndNotNull(this.modelValue.rangeList?.advancedMode)) {
-        const range = deepClone(this.modelValue.rangeList) as ColorRange[];
-        this.modelValue.rangeList = deepClone({advancedMode: false, range});
-      }
+      this.modelValue = isDefinedAndNotNull(value.rangeList)
+        ? {...value, rangeList: normalizeColorRangeSettings(value.rangeList)}
+        : value;
       this.updateColorStyle();
     }
   }

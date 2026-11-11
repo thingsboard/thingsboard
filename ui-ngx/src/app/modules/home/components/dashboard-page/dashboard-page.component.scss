@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 $toolbar-height: 56px !default;
@@ -158,7 +159,18 @@ div.tb-dashboard-page {
   section.tb-header-buttons.tb-enter-edit-mode {
     top: 2px;
     .mdc-fab.tb-btn-edit {
-      opacity: .5;
+      --tb-anim-visible-opacity: .5;
+    }
+  }
+
+  section.tb-header-buttons.tb-side-menu-toggle {
+    top: 2px;
+    left: 2px;
+    .mdc-fab.tb-btn-menu-toggle {
+      --tb-anim-visible-opacity: .5;
+    }
+    @media #{$mat-gt-sm} {
+      display: none;
     }
   }
 

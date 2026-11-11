@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -14,6 +15,7 @@ import { takeUntil } from 'rxjs/operators';
     selector: 'tb-profile-lwm2m-attributes',
     templateUrl: './lwm2m-attributes.component.html',
     styleUrls: [],
+    exportAs: 'tbLwm2mAttributes',
     providers: [{
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => Lwm2mAttributesComponent),
@@ -123,6 +125,10 @@ export class Lwm2mAttributesComponent implements ControlValueAccessor, OnDestroy
     if ($event) {
       $event.stopPropagation();
     }
+    this.openAttributesDialog();
+  }
+
+  public openAttributesDialog(): void {
     this.dialog.open<Lwm2mAttributesDialogComponent, Lwm2mAttributesDialogData, AttributesNameValueMap>(Lwm2mAttributesDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { EmptyConfigComponent } from './empty-config.component';
 import { CommonModule } from '@angular/common';
@@ -13,6 +14,7 @@ import {
 } from '@home/components/rule-node/transformation/transformation-rule-node-config.module';
 import { FlowRuleNodeConfigModule } from '@home/components/rule-node/flow/flow-rule-node-config.module';
 import { RuleChainService } from '@core/http/rule-chain.service';
+import { AnalyticsRuleNodeConfigModule } from '@home/components/rule-node/analytics/analytics-rule-node-config.module';
 
 @NgModule({
   declarations: [
@@ -24,6 +26,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
   ],
   exports: [
     ActionRuleNodeConfigModule,
+    AnalyticsRuleNodeConfigModule,
     FilterRuleNodeConfigModule,
     EnrichmentRuleNodeCoreModule,
     ExternalRuleNodeConfigModule,

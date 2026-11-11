@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.alarmassignee;
 
 import io.qameta.allure.Description;
@@ -96,7 +97,7 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
         alarmPage.assignAlarmTo(assignedTenantAlarmType, Const.TENANT_EMAIL);
-        devicePage.closeDeviceDetailsViewBtn().click();
+        devicePage.closeDetailsViewBtn().click();
         loginByUser(userWithNameEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(deviceName);
@@ -111,9 +112,10 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
         alarmPage.assignAlarmTo(tenantAlarmType, Const.TENANT_EMAIL);
-        devicePage.closeDeviceDetailsViewBtn().click();
-        devicePage.assignToCustomerBtn(tenantDeviceName).click();
-        devicePage.assignToCustomer(customerTitle);
+        devicePage.closeDetailsViewBtn().click();
+        devicePage.checkBox(tenantDeviceName).click();
+        devicePage.changeOwnerBtn().click();
+        devicePage.changeOwner(customerTitle);
         loginByUser(userEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
@@ -127,15 +129,16 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
         alarmPage.assignAlarmTo(tenantAlarmType, Const.TENANT_EMAIL);
-        devicePage.closeDeviceDetailsViewBtn().click();
-        devicePage.assignToCustomerBtn(tenantDeviceName).click();
-        devicePage.assignToCustomer(customerTitle);
+        devicePage.closeDetailsViewBtn().click();
+        devicePage.checkBox(tenantDeviceName).click();
+        devicePage.changeOwnerBtn().click();
+        devicePage.changeOwner(customerTitle);
         loginByUser(userEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
-        jsClick(alarmPage.assignBtn(tenantAlarmType));
+        alarmPage.assignAlarmTo(tenantAlarmType, userEmail);
 
-        assertIsDisplayed(alarmPage.accessForbiddenDialogView());
+        assertIsDisplayed(alarmPage.assignedUser(userEmail));
     }
 
     @Description("Check the reassign tenant for old alarm on device")
@@ -144,15 +147,17 @@ public class AssignDetailsTabFromCustomerAssignTest extends AbstractAssignTest {
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
         alarmPage.assignAlarmTo(tenantAlarmType, Const.TENANT_EMAIL);
-        devicePage.closeDeviceDetailsViewBtn().click();
-        devicePage.assignToCustomerBtn(tenantDeviceName).click();
-        devicePage.assignToCustomer(customerTitle);
+        devicePage.closeDetailsViewBtn().click();
+        devicePage.checkBox(tenantDeviceName).click();
+        devicePage.changeOwnerBtn().click();
+        devicePage.changeOwner(customerTitle);
         loginByUser(userEmail);
         sideBarMenuView.goToDevicesPage();
         devicePage.openDeviceAlarms(tenantDeviceName);
         alarmPage.alarmDetailsBtn(tenantAlarmType).click();
+        alarmDetailsView.assignAlarmTo(userEmail);
+        alarmDetailsView.closeAlarmDetailsViewBtn().click();
 
-
-        assertIsDisplayed(alarmPage.accessForbiddenDialogView());
+        assertIsDisplayed(alarmPage.assignedUser(userEmail));
     }
 }

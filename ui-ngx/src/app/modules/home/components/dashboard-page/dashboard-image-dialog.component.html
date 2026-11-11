@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form (ngSubmit)="save()">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2 translate>dashboard.update-image</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
@@ -21,12 +22,12 @@
   <div mat-dialog-content style="position: relative;">
     <fieldset [disabled]="(isLoading$ | async) || (takingScreenshot$ | async)" class="flex flex-col items-stretch justify-center gap-2">
       <div [formGroup]="dashboardRectFormGroup" class="flex flex-col items-center justify-center gap-2">
-        <mat-form-field class="rect-field">
+        <mat-form-field class="rect-field" appearance="outline">
           <mat-label>Top %</mat-label>
           <input matInput formControlName="top" type="number" step="1" min="0" max="100">
         </mat-form-field>
         <div class="flex flex-row items-center justify-center gap-2">
-          <mat-form-field  class="rect-field">
+          <mat-form-field  class="rect-field" appearance="outline">
             <mat-label>Left %</mat-label>
             <input matInput formControlName="left" type="number" step="1" min="0" max="100">
           </mat-form-field>
@@ -37,12 +38,12 @@
               <img class="tb-image-preview" [src]="imageUrl | image | async" />
             }
           </div>
-          <mat-form-field class="rect-field">
+          <mat-form-field class="rect-field" appearance="outline">
             <mat-label>Right %</mat-label>
             <input matInput formControlName="right" type="number" step="1" min="0" max="100">
           </mat-form-field>
         </div>
-        <mat-form-field class="rect-field">
+        <mat-form-field class="rect-field" appearance="outline">
           <mat-label>Bottom %</mat-label>
           <input matInput formControlName="bottom" type="number" step="1" min="0" max="100">
         </mat-form-field>

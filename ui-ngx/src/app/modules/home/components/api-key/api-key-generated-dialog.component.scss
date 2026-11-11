@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-@import '../../src/scss/constants';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@import '../scss/constants';
 
 :host {
   display: grid;
@@ -36,7 +37,7 @@
         pre[class*=language-] {
           margin: 0;
           background: #F3F6FA;
-          border-color: $tb-primary-color;
+          border-color: var(--tb-primary-500);
           padding-right: 38px;
           overflow: hidden;
           overflow-x: auto;
@@ -53,7 +54,7 @@
       button.clipboard-btn {
         right: -2px;
         p {
-          color: $tb-primary-color;
+          color: var(--tb-primary-500);
         }
         p, div {
           background-color: #F3F6FA;
@@ -68,7 +69,7 @@
             display: block;
             width: 18px;
             height: 18px;
-            background: $tb-primary-color;
+            background: var(--tb-primary-500);
             mask-image: url(/assets/copy-code-icon.svg);
             -webkit-mask-image: url(/assets/copy-code-icon.svg);
             mask-repeat: no-repeat;

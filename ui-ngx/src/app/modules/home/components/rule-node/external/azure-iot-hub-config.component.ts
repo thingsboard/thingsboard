@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
@@ -84,24 +85,18 @@ export class AzureIotHubConfigComponent extends RuleNodeConfigurationComponent {
     }
     credentialsControl.get('sasKey').setValidators([]);
     credentialsControl.get('privateKey').setValidators([]);
-    credentialsControl.get('privateKeyFileName').setValidators([]);
     credentialsControl.get('cert').setValidators([]);
-    credentialsControl.get('certFileName').setValidators([]);
     switch (credentialsType) {
       case 'sas':
         credentialsControl.get('sasKey').setValidators([Validators.required]);
         break;
       case 'cert.PEM':
         credentialsControl.get('privateKey').setValidators([Validators.required]);
-        credentialsControl.get('privateKeyFileName').setValidators([Validators.required]);
         credentialsControl.get('cert').setValidators([Validators.required]);
-        credentialsControl.get('certFileName').setValidators([Validators.required]);
         break;
     }
     credentialsControl.get('sasKey').updateValueAndValidity({emitEvent});
     credentialsControl.get('privateKey').updateValueAndValidity({emitEvent});
-    credentialsControl.get('privateKeyFileName').updateValueAndValidity({emitEvent});
     credentialsControl.get('cert').updateValueAndValidity({emitEvent});
-    credentialsControl.get('certFileName').updateValueAndValidity({emitEvent});
   }
 }

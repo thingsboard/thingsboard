@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth;
 
 import org.junit.Before;
@@ -18,7 +19,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserAuthDetails;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
@@ -32,8 +37,13 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 import org.thingsboard.server.service.user.cache.UserAuthDetailsCache;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -74,9 +84,14 @@ public class TokenOutdatingTest {
     private SecurityUser securityUser;
 
     @Before
-    public void setUp() {
+    public void setUp() throws ThingsboardException {
         UserId userId = new UserId(UUID.randomUUID());
         securityUser = createMockSecurityUser(userId);
+
+        UserPermissionsService userPermissionsService = mock(UserPermissionsService.class);
+        Map<Resource, Set<Operation>> genericPermissions = new HashMap<>();
+        MergedUserPermissions mergedUserPermissions = new MergedUserPermissions(genericPermissions, Collections.emptyMap());
+        when(userPermissionsService.getMergedPermissions(any(), eq(false))).thenReturn(mergedUserPermissions);
 
         UserAuthDetailsCache userAuthDetailsCache = mock(UserAuthDetailsCache.class);
 
@@ -87,7 +102,7 @@ public class TokenOutdatingTest {
         when(userAuthDetailsCache.getUserAuthDetails(any(), eq(userId))).thenReturn(new UserAuthDetails(user, true));
 
         accessTokenAuthenticationProvider = new JwtAuthenticationProvider(tokenFactory, tokenOutdatingService);
-        refreshTokenAuthenticationProvider = new RefreshTokenAuthenticationProvider(tokenFactory, userAuthDetailsCache, mock(CustomerService.class), tokenOutdatingService);
+        refreshTokenAuthenticationProvider = new RefreshTokenAuthenticationProvider(tokenFactory, userAuthDetailsCache, userPermissionsService, mock(CustomerService.class), tokenOutdatingService);
     }
 
     @Test
@@ -162,7 +177,7 @@ public class TokenOutdatingTest {
     public void testOnlyOneTokenExpired() throws InterruptedException {
         JwtToken jwtToken = tokenFactory.createAccessJwtToken(securityUser);
 
-        SecurityUser anotherSecurityUser = new SecurityUser(securityUser, securityUser.isEnabled(), securityUser.getUserPrincipal());
+        SecurityUser anotherSecurityUser = new SecurityUser(securityUser, securityUser.isEnabled(), securityUser.getUserPrincipal(), securityUser.getUserPermissions());
         JwtToken anotherJwtToken = tokenFactory.createAccessJwtToken(anotherSecurityUser);
 
         assertDoesNotThrow(() -> {
@@ -186,7 +201,7 @@ public class TokenOutdatingTest {
     public void testResetAllSessions() throws InterruptedException {
         JwtToken jwtToken = tokenFactory.createAccessJwtToken(securityUser);
 
-        SecurityUser anotherSecurityUser = new SecurityUser(securityUser, securityUser.isEnabled(), securityUser.getUserPrincipal());
+        SecurityUser anotherSecurityUser = new SecurityUser(securityUser, securityUser.isEnabled(), securityUser.getUserPrincipal(), securityUser.getUserPermissions());
         JwtToken anotherJwtToken = tokenFactory.createAccessJwtToken(anotherSecurityUser);
 
         assertDoesNotThrow(() -> {

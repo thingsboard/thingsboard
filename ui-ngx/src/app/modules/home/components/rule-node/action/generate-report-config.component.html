@@ -1,0 +1,16 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="generateReportConfigForm" class="flex flex-col gap-4">
+  <mat-slide-toggle formControlName="useConfigFromMessage">
+    {{ 'rule-node-config.use-report-config-from-message' | translate }}
+  </mat-slide-toggle>
+  @if (!generateReportConfigForm.get('useConfigFromMessage').value) {
+    <tb-report-config
+      formControlName="config">
+    </tb-report-config>
+  }
+</section>

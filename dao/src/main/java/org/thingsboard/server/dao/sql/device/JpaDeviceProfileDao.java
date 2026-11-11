@@ -1,13 +1,16 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileCacheInfo;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -79,6 +82,16 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     }
 
     @Override
+    public ListenableFuture<List<DeviceProfileInfo>> findDeviceProfilesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceProfileIds) {
+        return service.submit(() -> deviceProfileRepository.findDeviceProfileInfosByTenantIdAndIdIn(tenantId, deviceProfileIds));
+    }
+
+    @Override
+    public List<DeviceProfileInfo> findDeviceProfilesByTenantIdAndIds(UUID tenantId, List<UUID> deviceProfileIds) {
+        return deviceProfileRepository.findDeviceProfileInfosByTenantIdAndIdIn(tenantId, deviceProfileIds);
+    }
+
+    @Override
     public DeviceProfile findDefaultDeviceProfile(TenantId tenantId) {
         return DaoUtil.getData(deviceProfileRepository.findByDefaultTrueAndTenantId(tenantId.getId()));
     }
@@ -108,11 +121,6 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
         return activeOnly ?
                 deviceProfileRepository.findActiveTenantDeviceProfileNames(tenantId) :
                 deviceProfileRepository.findAllTenantDeviceProfileNames(tenantId);
-    }
-
-    @Override
-    public List<DeviceProfileInfo> findDeviceProfilesByTenantIdAndIds(UUID tenantId, List<UUID> deviceProfileIds) {
-        return deviceProfileRepository.findDeviceProfileInfosByTenantIdAndIdIn(tenantId, deviceProfileIds);
     }
 
     @Override
@@ -159,6 +167,11 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     @Override
     public List<DeviceProfileFields> findNextBatch(UUID id, int batchSize) {
         return deviceProfileRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
+    public List<DeviceProfileCacheInfo> findDeviceProfileCacheInfos(UUID id, int batchSize) {
+        return deviceProfileRepository.findDeviceProfileCacheInfos(id, Limit.of(batchSize));
     }
 
     @Override

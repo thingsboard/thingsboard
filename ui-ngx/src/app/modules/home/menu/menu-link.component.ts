@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MenuSection } from '@core/services/menu.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -7,7 +8,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 @Component({
     selector: 'tb-menu-link',
     templateUrl: './menu-link.component.html',
-    styleUrls: ['./menu-link.component.scss'],
+    styleUrls: [],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })

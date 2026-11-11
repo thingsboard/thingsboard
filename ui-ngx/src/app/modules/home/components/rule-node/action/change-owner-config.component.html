@@ -1,0 +1,50 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="changeOwnerConfigForm" class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel stroked">
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" translate>rule-node-config.owner-type</div>
+      <tb-toggle-select appearance="fill" formControlName="ownerType">
+        @for (ownerType of ownerTypes; track ownerType) {
+          <tb-toggle-option [value]="ownerType">
+            {{ ownerTypeTranslationsMap.get(ownerType) | translate }}
+          </tb-toggle-option>
+        }
+      </tb-toggle-select>
+    </div>
+
+    @if (changeOwnerConfigForm.get('ownerType').value === ownerType.CUSTOMER) {
+      <section class="tb-form-panel no-border no-padding">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
+          <mat-label translate>rule-node-config.owner-name-pattern</mat-label>
+          <input required matInput formControlName="ownerNamePattern">
+          @if (changeOwnerConfigForm.get('ownerNamePattern').hasError('required') ||
+            changeOwnerConfigForm.get('ownerNamePattern').hasError('pattern')) {
+            <mat-error>
+              {{ 'rule-node-config.owner-name-pattern-required' | translate }}
+            </mat-error>
+          }
+          <mat-hint translate>rule-node-config.customer-name-pattern-hint</mat-hint>
+        </mat-form-field>
+    <div tb-hint-tooltip-icon="{{ changeOwnerConfigForm.get('createOwnerOnOriginatorLevel').value
+      ? ('rule-node-config.create-new-customer-if-not-exists-hint' | translate)
+      : ('rule-node-config.create-owner-if-not-exists-hint' | translate) }}"
+          class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="createOwnerIfNotExists">
+            {{ 'rule-node-config.create-owner-if-not-exists' | translate }}
+          </mat-slide-toggle>
+        </div>
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.create-owner-on-originator-level-hint' | translate }}"
+          class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="createOwnerOnOriginatorLevel">
+            {{ 'rule-node-config.create-owner-on-originator-level' | translate }}
+          </mat-slide-toggle>
+        </div>
+      </section>
+    }
+  </div>
+</section>

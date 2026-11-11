@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div>
@@ -11,18 +12,19 @@
         <div class="flex flex-1 flex-col">
           <span class="mat-headline-5" translate>notification.settings.notification-settings</span>
         </div>
-        <div class="flex flex-col">
-          <button mat-button color="primary"
-                  [disabled]="(isLoading$ | async)"
-          (click)="resetSettings()">{{ 'notification.settings.reset-all' | translate }}</button>
-        </div>
+        @if (!readonly) {
+          <div class="flex flex-col">
+            <button mat-button color="primary"
+              [disabled]="(isLoading$ | async)"
+            (click)="resetSettings()">{{ 'notification.settings.reset-all' | translate }}</button>
+          </div>
+        }
       </div>
     </mat-card-header>
     @if (isLoading$ | async) {
       <mat-progress-bar color="warn" mode="indeterminate">
       </mat-progress-bar>
-    }
-    @if (!(isLoading$ | async)) {
+    } @else {
       <div style="height: 4px;"></div>
     }
     <mat-card-content style="padding-top: 16px; overflow: hidden;">
@@ -32,10 +34,11 @@
             <div class="flex flex-row items-center justify-start" style="height: 44px;">
               <div class="max-w-50% flex-full">
                 <mat-checkbox color="warn"
-                              (click)="$event.stopPropagation()"
-                              [indeterminate]="getIndeterminate()"
-                              (change)="changeInstanceTypeCheckBox($event.checked)"
-                              [checked]="getChecked()">
+                  [disabled]="readonly"
+                  (click)="$event.stopPropagation()"
+                  [indeterminate]="getIndeterminate()"
+                  (change)="changeInstanceTypeCheckBox($event.checked)"
+                  [checked]="getChecked()">
                   <mat-label translate>notification.settings.type</mat-label>
                 </mat-checkbox>
               </div>
@@ -43,10 +46,11 @@
                 <div class="flex-1">
                   <div class="flex flex-1 items-center justify-start">
                     <mat-checkbox color="warn"
-                                  [checked]="getChecked(deliveryMethods)"
-                                  (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
-                                  [indeterminate]="getIndeterminate(deliveryMethods)"
-                                  (click)="$event.stopPropagation()">
+                      [disabled]="readonly"
+                      [checked]="getChecked(deliveryMethods)"
+                      (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
+                      [indeterminate]="getIndeterminate(deliveryMethods)"
+                      (click)="$event.stopPropagation()">
                       <mat-label>{{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}</mat-label>
                     </mat-checkbox>
                   </div>
@@ -57,7 +61,7 @@
             @for (settingsControl of notificationSettingsFormArray.controls; track settingsControl; let i = $index) {
               <div>
                 <tb-notification-setting-form [formControl]="settingsControl"
-                                              [deliveryMethods]="notificationDeliveryMethods">
+                  [deliveryMethods]="notificationDeliveryMethods">
                 </tb-notification-setting-form>
                 @if (!$last) {
                   <mat-divider></mat-divider>
@@ -68,13 +72,15 @@
         </section>
       </form>
     </mat-card-content>
-    <div class="flex flex-row items-start justify-end" style="padding: 16px;">
-      <button mat-button mat-raised-button color="primary"
-              type="button"
-              (click)="save()"
-              [disabled]="(isLoading$ | async) || notificationSettings.invalid || !notificationSettings.dirty">
-        {{ 'action.save' | translate }}
-      </button>
-    </div>
+    @if (!readonly) {
+      <div class="flex flex-row items-start justify-end" style="padding: 16px;">
+        <button mat-button mat-raised-button color="primary"
+          type="button"
+          (click)="save()"
+          [disabled]="(isLoading$ | async) || notificationSettings.invalid || !notificationSettings.dirty">
+          {{ 'action.save' | translate }}
+        </button>
+      </div>
+    }
   </mat-card>
 </div>

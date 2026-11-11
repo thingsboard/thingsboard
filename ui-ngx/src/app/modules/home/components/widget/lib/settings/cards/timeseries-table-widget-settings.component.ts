@@ -1,11 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
+import { buildPageStepSizeValues, columnExportOptions } from '@home/components/widget/lib/table-widget.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { entityFields } from '@shared/models/entity.models';
 
@@ -42,6 +43,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       reserveSpaceForHiddenAction: 'true',
       showTimestamp: true,
       dateFormat: {format: 'yyyy-MM-dd HH:mm:ss'},
+      timestampExportOption: columnExportOptions.onlyVisible,
       displayPagination: true,
       useEntityLabel: false,
       defaultPageSize: 10,
@@ -84,6 +86,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       reserveSpaceForHiddenAction: [settings.reserveSpaceForHiddenAction, []],
       showTimestamp: [settings.showTimestamp, []],
       dateFormat: [dateFormat, []],
+      timestampExportOption: [settings.timestampExportOption, []],
       displayPagination: [settings.displayPagination, []],
       useEntityLabel: [settings.useEntityLabel, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],

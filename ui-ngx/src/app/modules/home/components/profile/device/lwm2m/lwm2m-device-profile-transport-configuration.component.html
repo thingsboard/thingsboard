@@ -1,14 +1,15 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section style="padding-bottom: 16px; margin: 0">
   <mat-tab-group dynamicHeight>
     <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
       <ng-template matTabContent>
-        <section [formGroup]="lwm2mDeviceProfileFormGroup" class="mt-2">
+        <section [formGroup]="lwm2mDeviceProfileFormGroup" class="mt-2 flex flex-col gap-2">
           <tb-profile-lwm2m-object-list
             (addList)="addObjectsList($event)"
             (removeList)="removeObjectsList($event)"

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -24,7 +25,7 @@ public class DummyEdqsService implements EdqsService {
     public void onUpdate(TenantId tenantId, ObjectType objectType, EdqsObject object) {}
 
     @Override
-    public void onDelete(TenantId tenantId, EntityId entityId) {}
+    public void onDelete(TenantId tenantId, EntityId entityId, Object entity) {}
 
     @Override
     public void onDelete(TenantId tenantId, ObjectType objectType, EdqsObject object) {}

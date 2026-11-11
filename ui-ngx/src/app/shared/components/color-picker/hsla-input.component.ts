@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Color } from '@iplab/ngx-color-picker';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -26,6 +27,10 @@ export class HslaInputComponent {
 
   @Input()
   public suffixValue = '%';
+
+  @Input()
+  @coerceBoolean()
+  public alpha = false;
 
   public get value(): ReturnType<Color['getHsla']> {
     return this.color.getHsla();

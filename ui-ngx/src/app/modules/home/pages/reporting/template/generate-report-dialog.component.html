@@ -1,0 +1,64 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="generateReportForm" style="width: 600px;" >
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2 translate>report.generate-report</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel outlined no-padding no-border no-gap">
+      <tb-entity-autocomplete
+        appearance="outline"
+        required
+        useFullEntityId
+        [entityType]="entityType.USER"
+        formControlName="userId">
+      </tb-entity-autocomplete>
+      <tb-timezone-select
+        appearance="outline"
+        userTimezoneByDefault
+        required
+        formControlName="timezone">
+      </tb-timezone-select>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="makePublic">
+          <div tb-hint-tooltip-icon="{{'report.public-status-hint' | translate}}">
+            {{ 'report.public-status' | translate }}
+          </div>
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-panel no-padding-bottom stroked">
+        <div class="tb-form-panel-title" translate>rule-node-config.originator</div>
+        <tb-entity-select
+          [allowedEntityTypes]="allowedOriginatorTypes"
+          appearance="outline"
+          useAliasEntityTypes="true"
+          formControlName="originator">
+        </tb-entity-select>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="items-center justify-end">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async) || generateReportForm.invalid"
+            (click)="generate()">
+      {{ 'report.generate-report' | translate }}
+    </button>
+  </div>
+</form>

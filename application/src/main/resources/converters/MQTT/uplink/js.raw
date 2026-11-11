@@ -1,0 +1,104 @@
+// Decode an uplink message from a buffer
+// payload - array of bytes
+// metadata - key/value object
+
+/** Decoder **/
+
+// decode payload to JSON
+var data = decodeToJson(payload);
+
+// --- Device name and type ---
+// Extract from MQTT topic (e.g. "my/topic/deviceType/deviceName")
+var topicParts = metadata['topic'] != null ? metadata['topic'].split('/') : null;
+
+var deviceName = data.deviceName != null ? data.deviceName :
+    (topicParts != null && topicParts.length > 0 ? topicParts[topicParts.length - 1] : 'Unknown Device');
+
+var deviceType = data.deviceType != null ? data.deviceType :
+    (topicParts != null && topicParts.length > 1 ? topicParts[topicParts.length - 2] : 'default');
+// var customerName = 'Customer C';
+// var groupName = 'thermostat devices';
+
+// use assetName and assetType instead of deviceName and deviceType
+// to automatically create assets instead of devices.
+// var assetName = 'Asset A';
+// var assetType = 'building';
+
+// --- Timestamp parsing ---
+var timestamp = -1;
+if (data.ts != null) {
+    timestamp = data.ts;
+} else if (data.timestamp != null) {
+    timestamp = new Date(data.timestamp).getTime();
+}
+if (timestamp == -1) {
+    timestamp = Date.now();
+}
+
+// --- Telemetry and attributes ---
+var telemetry = {};
+
+// Keys from the payload that should be stored as attributes instead of telemetry
+var attributeKeyList = ["serialNumber"];
+
+// Add the payload keys that match the attribute key list to attributes
+var attributes = {};
+for (var i = 0; i < attributeKeyList.length; i++) {
+    var attributeKey = attributeKeyList[i];
+    if (data[attributeKey] != null) {
+        attributes[attributeKey] = data[attributeKey];
+    }
+}
+
+// Keys to exclude from telemetry (device info, attributes and non-telemetry fields)
+var excludeFromTelemetryList = ["deviceName", "deviceType", "ts", "timestamp"].concat(attributeKeyList);
+
+// Parse all remaining JSON fields as telemetry
+toFlatMap(data, telemetry, excludeFromTelemetryList);
+
+// Result object with device attributes/telemetry data
+var result = {
+   deviceName: deviceName,
+   deviceType: deviceType,
+// customerName: customerName,
+// groupName: groupName,
+// assetName: assetName,
+// assetType: assetType,
+};
+
+// Add attributes to the result only if at least one matching key was found
+if (Object.keys(attributes).length > 0) {
+   result.attributes = attributes;
+}
+
+result.telemetry = {
+   ts: timestamp,
+   values: telemetry
+};
+
+/** Helper functions **/
+
+function decodeToString(payload) {
+   return String.fromCharCode.apply(String, payload);
+}
+
+function decodeToJson(payload) {
+   var str = decodeToString(payload);
+   return JSON.parse(str);
+}
+
+function toFlatMap(obj, result, excludeList, prefix) {
+    prefix = prefix || '';
+    for (var key in obj) {
+        if (excludeList.indexOf(key) !== -1) continue;
+        var value = obj[key];
+        var fullKey = prefix ? prefix + '.' + key : key;
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            toFlatMap(value, result, excludeList, fullKey);
+        } else {
+            result[fullKey] = value;
+        }
+    }
+}
+
+return result;

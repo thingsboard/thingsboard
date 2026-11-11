@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -7,13 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceCacheInfo;
 import org.thingsboard.server.common.data.DeviceIdInfo;
-import org.thingsboard.server.common.data.DeviceInfo;
-import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -22,11 +21,13 @@ import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edqs.fields.DeviceFields;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
@@ -34,8 +35,10 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityInfosToDto;
 
@@ -67,11 +70,6 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
-    public DeviceInfo findDeviceInfoById(TenantId tenantId, UUID deviceId) {
-        return DaoUtil.getData(deviceRepository.findDeviceInfoById(deviceId));
-    }
-
-    @Override
     public PageData<Device> findDevicesByTenantId(UUID tenantId, PageLink pageLink) {
         if (StringUtils.isEmpty(pageLink.getTextSearch())) {
             return DaoUtil.toPageData(
@@ -88,16 +86,30 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
-    public PageData<DeviceInfo> findDeviceInfosByFilter(DeviceInfoFilter filter, PageLink pageLink) {
-        return DaoUtil.toPageData(
-                deviceRepository.findDeviceInfosByFilter(
-                        filter.getTenantId().getId(),
-                        DaoUtil.getId(filter.getCustomerId()),
-                        DaoUtil.getId(filter.getEdgeId()),
-                        filter.getType(),
-                        DaoUtil.getId(filter.getDeviceProfileId()),
-                        filter.getActive() != null,
-                        Boolean.TRUE.equals(filter.getActive()),
+    public Long countDevices() {
+        return deviceRepository.count();
+    }
+
+    @Override
+    public ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds) {
+        return DaoUtil.getEntitiesByTenantIdAndIdIn(deviceIds, ids ->
+                deviceRepository.findDevicesByTenantIdAndIdIn(tenantId, ids), service);
+    }
+
+    @Override
+    public PageData<Device> findDevicesByEntityGroupId(UUID groupId, PageLink pageLink) {
+        return DaoUtil.toPageData(deviceRepository
+                .findByEntityGroupId(
+                        groupId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Device> findDevicesByEntityGroupIds(List<UUID> groupIds, PageLink pageLink) {
+        return DaoUtil.toPageData(deviceRepository
+                .findByEntityGroupIds(
+                        groupIds,
                         pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
@@ -108,8 +120,13 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
-    public ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds) {
-        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findDevicesByTenantIdAndIdIn(tenantId, deviceIds)));
+    public PageData<Device> findDevicesByEntityGroupIdsAndType(List<UUID> groupIds, String type, PageLink pageLink) {
+        return DaoUtil.toPageData(deviceRepository
+                .findByEntityGroupIdsAndType(
+                        groupIds,
+                        type,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)));
     }
 
     @Override
@@ -149,13 +166,13 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
 
     @Override
     public ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds) {
-        return service.submit(() -> DaoUtil.convertDataList(
-                deviceRepository.findDevicesByTenantIdAndCustomerIdAndIdIn(tenantId, customerId, deviceIds)));
+        return DaoUtil.getEntitiesByTenantIdAndIdIn(deviceIds, ids ->
+                deviceRepository.findDevicesByTenantIdAndCustomerIdAndIdIn(tenantId, customerId, ids), service);
     }
 
     @Override
     public Optional<Device> findDeviceByTenantIdAndName(UUID tenantId, String name) {
-        Device device = DaoUtil.getData(deviceRepository.findByTenantIdAndName(tenantId, name));
+        Device device = DaoUtil.getData(deviceRepository.findFirstByTenantIdAndName(tenantId, name));
         return Optional.ofNullable(device);
     }
 
@@ -181,29 +198,6 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(UUID tenantId,
-                                                                           UUID deviceProfileId,
-                                                                           OtaPackageType type,
-                                                                           PageLink pageLink) {
-        Pageable pageable = DaoUtil.toPageable(pageLink);
-        Page<DeviceEntity> page = OtaPackageUtil.getByOtaPackageType(
-                () -> deviceRepository.findByTenantIdAndTypeAndFirmwareIdIsNull(tenantId, deviceProfileId, pageable),
-                () -> deviceRepository.findByTenantIdAndTypeAndSoftwareIdIsNull(tenantId, deviceProfileId, pageable),
-                type
-        );
-        return DaoUtil.toPageData(page);
-    }
-
-    @Override
-    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(UUID tenantId, UUID deviceProfileId, OtaPackageType type) {
-        return OtaPackageUtil.getByOtaPackageType(
-                () -> deviceRepository.countByTenantIdAndDeviceProfileIdAndFirmwareIdIsNull(tenantId, deviceProfileId),
-                () -> deviceRepository.countByTenantIdAndDeviceProfileIdAndSoftwareIdIsNull(tenantId, deviceProfileId),
-                type
-        );
-    }
-
-    @Override
     public PageData<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink) {
         return DaoUtil.toPageData(
                 deviceRepository.findByTenantIdAndCustomerIdAndType(
@@ -212,6 +206,17 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                         type,
                         pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<DeviceId> findIdsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink) {
+        Page<UUID> page;
+        if (customerId == null) {
+            page = deviceRepository.findIdsByTenantIdAndNullCustomerId(tenantId, DaoUtil.toPageable(pageLink));
+        } else {
+            page = deviceRepository.findIdsByTenantIdAndCustomerId(tenantId, customerId, DaoUtil.toPageable(pageLink));
+        }
+        return DaoUtil.pageToPageData(page, DeviceId::new);
     }
 
     @Override
@@ -240,26 +245,44 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
-        log.debug("Try to find devices by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
-        return DaoUtil.toPageData(deviceRepository
-                .findByTenantIdAndEdgeId(
-                        tenantId,
-                        edgeId,
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink)));
+    public PageData<Device> findByEntityGroupAndDeviceProfileAndEmptyOtaPackage(UUID groupId,
+                                                                                UUID deviceProfileId,
+                                                                                OtaPackageType type,
+                                                                                PageLink pageLink) {
+        Page<DeviceEntity> page = OtaPackageUtil.getByOtaPackageType(
+                () -> deviceRepository.findByEntityGroupIdAndDeviceProfileIdAndFirmwareIdIsNull(
+                        groupId, deviceProfileId, DaoUtil.toPageable(pageLink)),
+                () -> deviceRepository.findByEntityGroupIdAndDeviceProfileIdAndSoftwareIdIsNull(
+                        groupId, deviceProfileId, DaoUtil.toPageable(pageLink)),
+                type);
+        return DaoUtil.toPageData(page);
     }
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink) {
-        log.debug("Try to find devices by tenantId [{}], edgeId [{}], type [{}] and pageLink [{}]", tenantId, edgeId, type, pageLink);
-        return DaoUtil.toPageData(deviceRepository
-                .findByTenantIdAndEdgeIdAndType(
-                        tenantId,
-                        edgeId,
-                        type,
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink)));
+    public PageData<Device> findByDeviceProfileAndEmptyOtaPackage(UUID tenantId, UUID deviceProfileId,
+                                                                  OtaPackageType type,
+                                                                  PageLink pageLink) {
+        Page<DeviceEntity> page = OtaPackageUtil.getByOtaPackageType(
+                () -> deviceRepository.findByDeviceProfileIdAndFirmwareIdIsNull(tenantId, deviceProfileId, DaoUtil.toPageable(pageLink)),
+                () -> deviceRepository.findByDeviceProfileIdAndSoftwareIdIsNull(tenantId, deviceProfileId, DaoUtil.toPageable(pageLink)),
+                type);
+        return DaoUtil.toPageData(page);
+    }
+
+    @Override
+    public Long countByEntityGroupAndEmptyOtaPackage(UUID groupId, UUID otaPackageId, OtaPackageType type) {
+        return OtaPackageUtil.getByOtaPackageType(
+                () -> deviceRepository.countByEntityGroupIdAndFirmwareIdIsNull(groupId, otaPackageId),
+                () -> deviceRepository.countByEntityGroupIdAndSoftwareIdIsNull(groupId, otaPackageId),
+                type);
+    }
+
+    @Override
+    public Long countByDeviceProfileAndEmptyOtaPackage(UUID tenantId, UUID deviceProfileId, OtaPackageType type) {
+        return OtaPackageUtil.getByOtaPackageType(
+                () -> deviceRepository.countByDeviceProfileIdAndFirmwareIdIsNull(tenantId, deviceProfileId),
+                () -> deviceRepository.countByDeviceProfileIdAndSoftwareIdIsNull(tenantId, deviceProfileId),
+                type);
     }
 
     @Override
@@ -278,6 +301,24 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink) {
         log.debug("Find profile device id infos by tenantId[{}], pageLink [{}]", tenantId, pageLink);
         return nativeDeviceRepository.findProfileEntityIdInfosByTenantId(tenantId, DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
+    public EntityInfo findDeviceEntityInfoById(TenantId tenantId, DeviceId deviceId) {
+        return deviceRepository.findEntityInfoById(deviceId.getId());
+    }
+
+    @Override
+    public PageData<EntityInfo> findDeviceEntityInfosByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(deviceRepository.findEntityInfosByTenantIdAndProfileId(
+                tenantId.getId(),
+                deviceProfileId.getId(),
+                DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public Map<String, Long> countDevicesPerTransportType() {
+        return deviceRepository.countDevicesPerTransportType().stream().collect(Collectors.toMap(e -> e.getFirst().name(), TbPair::getSecond));
     }
 
     @Override
@@ -309,6 +350,11 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     @Override
     public List<DeviceFields> findNextBatch(UUID id, int batchSize) {
         return deviceRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
+    public List<DeviceCacheInfo> findDeviceCacheInfosByRelationType(String relationType, UUID id, int batchSize) {
+        return deviceRepository.findDeviceCacheInfosByRelationType(relationType, id, Limit.of(batchSize));
     }
 
     @Override

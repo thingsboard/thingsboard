@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.rulechainssmoke;
 
 import io.qameta.allure.Description;
@@ -29,9 +30,9 @@ public class RuleChainEditMenuTest extends AbstractRuleChainTest {
         ruleChainsPage.detailsBtn(ruleChainName).click();
         ruleChainsPage.setHeaderName();
         String nameBefore = ruleChainsPage.getHeaderName();
-        ruleChainsPage.editPencilBtn().click();
+        ruleChainsPage.editPencilRuleChainViewBtn().click();
         ruleChainsPage.changeNameEditMenu(newRuleChainName);
-        ruleChainsPage.doneBtnEditView().click();
+        ruleChainsPage.doneBtnEditRuleChainView().click();
         ruleChainName = newRuleChainName;
         ruleChainsPage.setHeaderName();
         String nameAfter = ruleChainsPage.getHeaderName();
@@ -48,7 +49,7 @@ public class RuleChainEditMenuTest extends AbstractRuleChainTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(ruleChainName).click();
-        ruleChainsPage.editPencilBtn().click();
+        ruleChainsPage.editPencilRuleChainViewBtn().click();
         ruleChainsPage.changeNameEditMenu("");
 
         assertIsDisable(ruleChainsPage.doneBtnEditViewVisible());
@@ -62,9 +63,9 @@ public class RuleChainEditMenuTest extends AbstractRuleChainTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(ruleChainName).click();
-        ruleChainsPage.editPencilBtn().click();
+        ruleChainsPage.editPencilRuleChainViewBtn().click();
         ruleChainsPage.changeNameEditMenu(" ");
-        ruleChainsPage.doneBtnEditView().click();
+        ruleChainsPage.doneBtnEditRuleChainView().click();
 
         assertIsDisplayed(ruleChainsPage.warningMessage());
         assertThat(ruleChainsPage.warningMessage().getText()).as("Text of warning message").isEqualTo(EMPTY_RULE_CHAIN_MESSAGE);
@@ -78,9 +79,9 @@ public class RuleChainEditMenuTest extends AbstractRuleChainTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(ruleChainName).click();
-        ruleChainsPage.editPencilBtn().click();
+        ruleChainsPage.editPencilRuleChainViewBtn().click();
         ruleChainsPage.descriptionEntityView().sendKeys(newDescription);
-        ruleChainsPage.doneBtnEditView().click();
+        ruleChainsPage.doneBtnEditRuleChainView().click();
         ruleChainsPage.setDescription();
 
         assertThat(ruleChainsPage.getDescription()).as("The description changed correctly").isEqualTo(finalDescription);
@@ -94,9 +95,9 @@ public class RuleChainEditMenuTest extends AbstractRuleChainTest {
 
         sideBarMenuView.ruleChainsBtn().click();
         ruleChainsPage.detailsBtn(ruleChainName).click();
-        ruleChainsPage.editPencilBtn().click();
+        ruleChainsPage.editPencilRuleChainViewBtn().click();
         ruleChainsPage.debugCheckboxEdit().click();
-        ruleChainsPage.doneBtnEditView().click();
+        ruleChainsPage.doneBtnEditRuleChainView().click();
 
         if (debugMode) {
             assertThat(ruleChainsPage.debugCheckboxView().getAttribute("class").contains("selected"))

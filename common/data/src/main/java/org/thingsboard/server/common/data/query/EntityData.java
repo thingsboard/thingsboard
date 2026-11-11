@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -16,12 +17,14 @@ import java.util.Map;
 public class EntityData {
 
     private EntityId entityId;
+    private boolean readAttrs;
+    private boolean readTs;
     private Map<EntityKeyType, Map<String, TsValue>> latest;
     private Map<String, TsValue[]> timeseries;
     private Map<Integer, ComparisonTsValue> aggLatest;
 
-    public EntityData(EntityId entityId, Map<EntityKeyType, Map<String, TsValue>> latest, Map<String, TsValue[]> timeseries) {
-        this(entityId, latest, timeseries, null);
+    public EntityData(EntityId entityId, boolean readAttrs, boolean readTs, Map<EntityKeyType, Map<String, TsValue>> latest, Map<String, TsValue[]> timeseries) {
+        this(entityId, readAttrs, readTs, latest, timeseries, null);
     }
 
     @JsonIgnore

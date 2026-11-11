@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, DestroyRef, inject, Inject, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,7 +28,6 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
 import { AssetInfo } from '@shared/models/asset.models';
 import { DeviceInfo } from '@shared/models/device.models';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityService } from '@core/http/entity.service';
 
 @Component({
@@ -46,7 +46,7 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
 
   disabledConfiguration = false;
 
-  ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
+  ownerId: EntityId = new TenantId(getCurrentAuthUser(this.store).tenantId);
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly EntityType = EntityType;
   readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
@@ -97,6 +97,7 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
 
   changeEntity(entity: BaseData<EntityId>): void {
     this.entityName = entity?.name;
+    this.ownerId = entity?.ownerId ?? new TenantId(getCurrentAuthUser(this.store).tenantId);
   }
 
   buildForm(_entity?: CalculatedFieldInfo): FormGroup {
@@ -141,15 +142,11 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
     if (entityId?.entityType === EntityType.DEVICE || entityId?.entityType === EntityType.ASSET) {
       this.entityService.getEntity(entityId.entityType, entityId.id, { ignoreLoading: true, ignoreErrors: true }).subscribe(
         (entity: AssetInfo | DeviceInfo) => {
-          if (this.isAssignedToCustomer(entity)) {
-            this.ownerId = entity.customerId;
+          if (entity.ownerId) {
+            this.ownerId = entity.ownerId;
           }
         }
       );
     }
-  }
-
-  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
-    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
   }
 }

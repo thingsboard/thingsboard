@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.validator;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
+import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.UUID;
@@ -29,6 +31,8 @@ class EdgeDataValidatorTest {
     CustomerDao customerDao;
     @MockitoSpyBean
     EdgeDataValidator validator;
+    @MockitoBean
+    SubscriptionService subscriptionService;
     TenantId tenantId = TenantId.fromUUID(UUID.fromString("9ef79cdf-37a8-4119-b682-2e7ed4e018da"));
 
     @BeforeEach
@@ -44,6 +48,8 @@ class EdgeDataValidatorTest {
         edge.setSecret("secret");
         edge.setRoutingKey("53c56104-d302-4d6e-97f5-a7a99c7effdc");
         edge.setTenantId(tenantId);
+        edge.setEdgeLicenseKey("abcd");
+        edge.setCloudEndpoint("https://localhost");
 
         validator.validateDataImpl(tenantId, edge);
         verify(validator).validateString("Edge name", edge.getName());

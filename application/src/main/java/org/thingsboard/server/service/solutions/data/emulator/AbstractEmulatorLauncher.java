@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data.emulator;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -8,11 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.GroupEntity;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -33,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Data
-public abstract class AbstractEmulatorLauncher<T extends HasId<? extends EntityId> & HasTenantId & HasName> {
+public abstract class AbstractEmulatorLauncher<T extends GroupEntity<?>> {
 
     protected static final TbQueueCallback EMPTY_CALLBACK = new TbQueueCallback() {
         @Override

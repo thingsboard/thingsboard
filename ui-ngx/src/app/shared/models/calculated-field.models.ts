@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { HasEntityDebugSettings, HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
@@ -19,6 +20,7 @@ import { EntitySearchDirection } from '@shared/models/relation.models';
 import { AbstractControl, FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { AlarmRule } from "@shared/models/alarm-rule.models";
 import { AlarmSeverity } from "@shared/models/alarm.models";
+import { JobStatus } from '@shared/models/job.models';
 
 export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
 
@@ -187,6 +189,7 @@ export interface CalculatedFieldAlarmRuleConfiguration {
   clearRule?: AlarmRule;
   propagate: boolean;
   propagateToOwner: boolean;
+  propagateToOwnerHierarchy: boolean;
   propagateToTenant: boolean;
   propagateRelationTypes?: Array<string>;
 }
@@ -562,6 +565,12 @@ export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown
 export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
   timeWindow: { startTs: number; endTs: number; };
   values: CalculatedFieldSingleArgumentValue<ValueType>[];
+}
+
+export interface CalculatedFieldReprocessingValidation {
+  isValid: boolean;
+  message: string;
+  lastJobStatus: JobStatus;
 }
 
 export type CalculatedFieldSingleArgumentValue<ValueType = unknown> = CalculatedFieldAttributeArgumentValue<ValueType> & CalculatedFieldLatestTelemetryArgumentValue<ValueType>;

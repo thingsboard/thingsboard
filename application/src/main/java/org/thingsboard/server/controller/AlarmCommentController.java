@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,11 +25,11 @@ import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_COMMENT_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
@@ -68,7 +69,11 @@ public class AlarmCommentController extends BaseController {
         Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);
         SecurityUser currentUser = getCurrentUser();
         if (alarmComment.getId() != null) {
-            checkUserPermission(alarmComment, alarmId, "edit", currentUser);
+            AlarmComment existingAlarmComment = checkAlarmCommentId(alarmComment.getId(), alarmId);
+            if (existingAlarmComment.getUserId() != null && !existingAlarmComment.getUserId().equals(currentUser.getId())) {
+                throw new ThingsboardException("User is not allowed to edit other user's comment",
+                        ThingsboardErrorCode.PERMISSION_DENIED);
+            }
         }
         alarmComment.setAlarmId(alarmId);
         alarmComment.setType(AlarmCommentType.OTHER);
@@ -87,9 +92,6 @@ public class AlarmCommentController extends BaseController {
         AlarmCommentId alarmCommentId = new AlarmCommentId(toUUID(strCommentId));
         AlarmComment alarmComment = checkAlarmCommentId(alarmCommentId, alarmId);
         SecurityUser currentUser = getCurrentUser();
-        if (!currentUser.isTenantAdmin()) {
-            checkUserPermission(alarmComment, alarmId, "delete", currentUser);
-        }
         tbAlarmCommentService.deleteAlarmComment(alarm, alarmComment, currentUser);
     }
 
@@ -112,17 +114,10 @@ public class AlarmCommentController extends BaseController {
     ) throws Exception {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        Alarm alarm = checkAlarmId(alarmId, Operation.READ);
-        PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
-        return checkNotNull(alarmCommentService.findAlarmComments(alarm.getTenantId(), alarmId, pageLink));
-    }
+        checkAlarmId(alarmId, Operation.READ);
 
-    private void checkUserPermission(AlarmComment alarmComment, AlarmId alarmId, String operation, SecurityUser currentUser) throws ThingsboardException {
-        AlarmComment existingAlarmComment = checkAlarmCommentId(alarmComment.getId(), alarmId);
-        if (existingAlarmComment.getUserId() != null && !existingAlarmComment.getUserId().equals(currentUser.getId())) {
-            throw new ThingsboardException("User is not allowed to " + operation + " other user's comment",
-                    ThingsboardErrorCode.PERMISSION_DENIED);
-        }
+        PageLink pageLink = createPageLink(pageSize, page, null, sortProperty, sortOrder);
+        return checkNotNull(alarmCommentService.findAlarmComments(getTenantId(), alarmId, pageLink));
     }
 
 }

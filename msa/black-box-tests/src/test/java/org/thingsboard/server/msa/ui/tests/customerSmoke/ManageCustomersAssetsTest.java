@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
@@ -11,18 +12,18 @@ import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
-import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
+import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 
 public class ManageCustomersAssetsTest extends AbstractDriverBaseTest {
 
-    private SideBarMenuViewElements sideBarMenuView;
+    private SideBarMenuViewHelper sideBarMenuView;
     private CustomerPageHelper customerPage;
-    private final String manage = "Assets";
+    private final String iconText = ": Assets";
 
     @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
-        sideBarMenuView = new SideBarMenuViewElements(driver);
+        sideBarMenuView = new SideBarMenuViewHelper(driver);
         customerPage = new CustomerPageHelper(driver);
     }
 
@@ -31,14 +32,15 @@ public class ManageCustomersAssetsTest extends AbstractDriverBaseTest {
     @Test(groups = "smoke")
     @Description("Open manage window by right corner btn")
     public void openWindowByRightCornerBtn() {
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.setCustomerName();
-        customerPage.manageCustomersAssetsBtn(customerPage.getCustomerName()).click();
+        customerPage.manageCustomersAssetGroupsBtn(customerPage.getCustomerName()).click();
 
-        Assert.assertTrue(urlContains(manage.toLowerCase()));
-        Assert.assertNotNull(customerPage.customerAssetsIconHeader());
-        Assert.assertTrue(customerPage.customerAssetsIconHeader().isDisplayed());
-        Assert.assertTrue(customerPage.customerManageWindowIconHead().getText().contains(manage));
+        Assert.assertTrue(urlContains("assets"));
+        Assert.assertNotNull(customerPage.customerUserIconHeader());
+        Assert.assertTrue(customerPage.customerUserIconHeader().isDisplayed());
+        Assert.assertTrue(customerPage.customerUserIconHeader().getText().contains(customerPage.getCustomerName() + iconText));
+        Assert.assertTrue(customerPage.customerManageWindowIconHead().getText().contains(customerPage.getCustomerName() + iconText));
     }
 
     @Epic("Customers smoke tests")
@@ -46,14 +48,15 @@ public class ManageCustomersAssetsTest extends AbstractDriverBaseTest {
     @Test(groups = "smoke")
     @Description("Open manage window by btn in entity view")
     public void openWindowByView() {
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.setCustomerName();
         customerPage.entity(customerPage.getCustomerName()).click();
-        jsClick(customerPage.manageCustomersAssetsBtnView());
+        jsClick(customerPage.manageCustomersAssetGroupsBtnView());
 
-        Assert.assertTrue(urlContains(manage.toLowerCase()));
-        Assert.assertNotNull(customerPage.customerAssetsIconHeader());
-        Assert.assertTrue(customerPage.customerAssetsIconHeader().isDisplayed());
-        Assert.assertTrue(customerPage.customerManageWindowIconHead().getText().contains(manage));
+        Assert.assertTrue(urlContains("assets"));
+        Assert.assertNotNull(customerPage.customerUserIconHeader());
+        Assert.assertTrue(customerPage.customerUserIconHeader().isDisplayed());
+        Assert.assertTrue(customerPage.customerUserIconHeader().getText().contains(customerPage.getCustomerName() + iconText));
+        Assert.assertTrue(customerPage.customerManageWindowIconHead().getText().contains(customerPage.getCustomerName() + iconText));
     }
 }

@@ -1,0 +1,81 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectAgentProfileFormGroup" class="mat-block" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+  <mat-label>{{ 'agent.agent-profile' | translate }}</mat-label>
+  <input matInput type="text"
+         #agentProfileInput
+         formControlName="agentProfile"
+         (focusin)="onFocus()"
+         [required]="required"
+         (keydown)="agentProfileEnter($event)"
+         [matAutocomplete]="agentProfileAutocomplete"
+         [class.!hidden]="showDetailsPageLink && disabled && selectAgentProfileFormGroup.get('agentProfile').value">
+  @if (showDetailsPageLink && disabled && selectAgentProfileFormGroup.get('agentProfile').value &&
+       (resource.AGENT_PROFILE | hasGenericPermission: operation.READ)) {
+    <a aria-label="Open agent profile" [routerLink]="agentProfileURL">
+      {{ displayAgentProfileFn(selectAgentProfileFormGroup.get('agentProfile').value) }}
+    </a>
+  }
+  @if (selectAgentProfileFormGroup.get('agentProfile').value && !disabled) {
+    <button type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (selectAgentProfileFormGroup.get('agentProfile').value?.id && !disabled && editProfileEnabled &&
+       (resource.AGENT_PROFILE | hasGenericPermission: operation.WRITE)) {
+    <button type="button"
+            matSuffix mat-icon-button aria-label="Edit"
+            matTooltip="{{ 'agent.edit-profile' | translate }}"
+            matTooltipPosition="above"
+            (click)="editAgentProfile($event)">
+      <mat-icon class="material-icons">edit</mat-icon>
+    </button>
+  }
+  @if (!selectAgentProfileFormGroup.get('agentProfile').value && !disabled && addNewProfile &&
+       (resource.AGENT_PROFILE | hasGenericPermission: operation.CREATE)) {
+    <button mat-button color="primary" matSuffix
+            (click)="createAgentProfile($event, '')">
+      <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete"
+                    #agentProfileAutocomplete="matAutocomplete"
+                    [displayWith]="displayAgentProfileFn">
+    @for (agentProfile of filteredAgentProfiles | async; track agentProfile.id.id) {
+      <mat-option [value]="agentProfile">
+        <span [innerHTML]="agentProfile.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredAgentProfiles | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText) || !addNewProfile) {
+            <div><span translate>agent.no-agent-profiles-found</span></div>
+          } @else {
+            <span>
+              {{ translate.get('agent.no-agent-profiles-matching',
+              {entity: truncate.transform(searchText, true, 6, '...')}) | async }}
+            </span>
+            @if (resource.AGENT_PROFILE | hasGenericPermission: operation.CREATE) {
+              <span>
+                <a translate (click)="createAgentProfile($event, searchText)">agent.create-new-agent-profile</a>
+              </span>
+            }
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (selectAgentProfileFormGroup.get('agentProfile').hasError('required')) {
+    <mat-error>{{ 'agent.agent-profile-required' | translate }}</mat-error>
+  }
+  @if (hint && !disabled) {
+    <mat-hint>{{ hint | translate }}</mat-hint>
+  }
+</mat-form-field>

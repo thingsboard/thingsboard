@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -62,6 +63,14 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
   @Input()
   @coerceBoolean()
   hideYAxis = false;
+
+  @Input()
+  @coerceBoolean()
+  supportsUnitConversion = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   @Input()
   panelTitle = 'widgets.time-series-chart.threshold.threshold-settings';
@@ -153,10 +162,10 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
 
   private _labelPreviewFn(): string {
     let units: TbUnit = this.thresholdSettingsFormGroup.get('units').value;
-    units = isNotEmptyTbUnits(units) ? units : this.widgetConfig.units;
+    units = isNotEmptyTbUnits(units) ? units : this.widgetConfig?.units;
     let decimals: number = this.thresholdSettingsFormGroup.get('decimals').value;
     decimals = isDefinedAndNotNull(decimals) ? decimals :
-      (isDefinedAndNotNull(this.widgetConfig.decimals) ? this.widgetConfig.decimals : 2);
+      (isDefinedAndNotNull(this.widgetConfig?.decimals) ? this.widgetConfig?.decimals : 2);
     return formatValue(22, decimals, getSourceTbUnitSymbol(units), false);
   }
 }

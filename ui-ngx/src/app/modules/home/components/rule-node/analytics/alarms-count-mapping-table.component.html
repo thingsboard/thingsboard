@@ -1,0 +1,45 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-alarms-count-mapping-table flex flex-col">
+  <label translate class="tb-title no-padding">rule-node-config.mappings</label>
+  <div class="body">
+    @for (alarmsCountMapping of mappings; track alarmsCountMapping) {
+      <div class="row mat-elevation-z1 flex flex-1 flex-row items-center justify-start">
+        <span class="cell tb-alarms-count-mapping-display-value flex-1">{{ mappingDisplayValue(alarmsCountMapping)}}</span>
+        <button [class.!hidden]="disabled"
+          [disabled]="isLoading$ | async"
+          mat-icon-button color="primary" type="button"
+          (click)="editAlarmsCountMapping($event, alarmsCountMapping)"
+          matTooltip="{{'rule-node-config.edit-mapping' | translate}}"
+          matTooltipPosition="above">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button [class.!hidden]="disabled"
+          [disabled]="isLoading$ | async"
+          mat-icon-button color="primary" type="button"
+          (click)="removeAlarmsCountMapping($index)"
+          matTooltip="{{'rule-node-config.remove-mapping' | translate}}"
+          matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+  <span [class.!hidden]="mappings.length"
+    [class.disabled]="disabled"
+    [class.required]="required"
+  class="no-data-found flex items-center justify-center" translate>rule-node-config.add-mapping-prompt</span>
+  <div style="padding-top: 20px;">
+    <button [class.!hidden]="disabled" [disabled]="isLoading$ | async" type="button"
+      mat-raised-button color="primary" (click)="addAlarmsCountMapping($event)"
+      matTooltip="{{ 'rule-node-config.add-mapping' | translate }}"
+      matTooltipPosition="above">
+      <mat-icon>add</mat-icon>
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</section>

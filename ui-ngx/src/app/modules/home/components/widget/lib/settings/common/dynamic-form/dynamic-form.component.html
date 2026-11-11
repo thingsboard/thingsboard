@@ -1,14 +1,15 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [class.!hidden]="!propertyGroups?.length && !propertiesContent.children?.length" class="tb-form-panel"
-     [class.stroked]="stroked" [class.no-padding]="noPadding" [class.no-border]="noBorder"
-     [formGroup]="propertiesFormGroup">
+  [class.stroked]="stroked" [class.no-padding]="noPadding" [class.no-border]="noBorder"
+  [formGroup]="propertiesFormGroup">
   @if (title) {
-    <div class="tb-form-panel-title">{{ title }}</div>
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ hint }}">{{ title }}</div>
   }
   <ng-container #propertiesContent><ng-content select=".tb-properties-content"></ng-content></ng-container>
   @for (propertyGroup of propertyGroups; track propertyGroup) {
@@ -50,6 +51,7 @@
           <tb-dynamic-form
             formControlName="{{ propertyContainer.property.id }}"
             title="{{ propertyContainer.label | customTranslate }}"
+            hint="{{ propertyContainer.hint | customTranslate }}"
             stroked
             [properties]="propertyContainer.properties">
           </tb-dynamic-form>
@@ -60,6 +62,7 @@
               <tb-multiple-gallery-image-input
                 class="flex-1"
                 label="{{ propertyContainer.property.name | customTranslate }}"
+                hint="{{ propertyContainer.hint | customTranslate }}"
                 formControlName="{{ propertyContainer.property.id }}"
                 [required]="propertyContainer.property.required">
               </tb-multiple-gallery-image-input>
@@ -69,7 +72,8 @@
             <tb-dynamic-form-array
               formControlName="{{ propertyContainer.property.id }}"
               [itemProperty]="propertyContainer.arrayItemProperty"
-              title="{{ propertyContainer.label | customTranslate }}">
+              title="{{ propertyContainer.label | customTranslate }}"
+                       hint="{{ propertyContainer.hint |customTranslate }}">
             </tb-dynamic-form-array>
           }
         }
@@ -135,6 +139,9 @@
             @if (property.type === FormPropertyType.font) {
               <tb-font-settings
                 [class]="property.fieldClass"
+                [forceSizeUnit]="property.forceSizeUnit"
+                [allowedFontWeights]="property.allowedFontWeights"
+                [allowedFontStyles]="property.allowedFontStyles"
                 formControlName="{{ property.id }}"
                 clearButton
                 disabledLineHeight>
@@ -146,6 +153,14 @@
                 [required]="property.required"
                 [supportsUnitConversion]="property.supportsUnitConversion"
               formControlName="{{ property.id }}"></tb-unit-input>
+            }
+            @if (property.type === FormPropertyType.cssSize) {
+              <tb-css-size-input
+                [class]="property.fieldClass"
+                [required]="property.required"
+                [allowedCssUnits]="property.allowedCssUnits"
+                formControlName="{{ property.id }}">
+              </tb-css-size-input>
             }
             @if (property.type === FormPropertyType.icon) {
               <tb-material-icon-select
@@ -175,9 +190,9 @@
           <mat-label>{{ property.name | customTranslate }}</mat-label>
         }
         <textarea matInput
-                  [rows]="property.rows || 2"
-                  formControlName="{{ property.id }}"
-                  [required]="property.required"
+          [rows]="property.rows || 2"
+          formControlName="{{ property.id }}"
+          [required]="property.required"
         placeholder="{{ 'widget-config.set' | translate }}"></textarea>
       </mat-form-field>
     }
@@ -190,10 +205,10 @@
           <mat-label>{{ property.name | customTranslate }}</mat-label>
         }
         <input matInput
-               [type]="property.type"
-               formControlName="{{ property.id }}"
-               [required]="property.required"
-               placeholder="{{ 'widget-config.set' | translate }}">
+          [type]="property.type"
+          formControlName="{{ property.id }}"
+          [required]="property.required"
+          placeholder="{{ 'widget-config.set' | translate }}">
         @if (property.fieldSuffix) {
           <div class="lt-md:!hidden" matSuffix>{{ property.fieldSuffix | customTranslate }}</div>
         }
@@ -209,13 +224,13 @@
           <mat-label>{{ property.name | customTranslate }}</mat-label>
         }
         <input matInput
-               type="number"
-               formControlName="{{ property.id }}"
-               [required]="property.required"
-               [min]="property.min"
-               [max]="property.max"
-               [step]="property.step"
-               placeholder="{{ 'widget-config.set' | translate }}">
+          type="number"
+          formControlName="{{ property.id }}"
+          [required]="property.required"
+          [min]="property.min"
+          [max]="property.max"
+          [step]="property.step"
+          placeholder="{{ 'widget-config.set' | translate }}">
         @if (property.fieldSuffix) {
           <div class="lt-md:!hidden" matSuffix>{{ property.fieldSuffix | customTranslate }}</div>
         }
@@ -230,8 +245,8 @@
           <mat-label>{{ property.name | customTranslate }}</mat-label>
         }
         <mat-select formControlName="{{ property.id }}"
-                    [required]="property.required"
-                    [multiple]="property.multiple">
+          [required]="property.required"
+          [multiple]="property.multiple">
           @if (!property.multiple && property.allowEmptyOption) {
             <mat-option [value]="null"></mat-option>
           }
@@ -261,49 +276,49 @@
     @if (property.type === FormPropertyType.javascript) {
       <div class="tb-form-row flex-1">
         <tb-js-func class="flex-1"
-                    label="{{ property.name | customTranslate }}"
-                    disableUndefinedCheck
-                    [required]="property.required"
-                    [helpId]="property.helpId"
-                    formControlName="{{ property.id }}">
+          label="{{ property.name | customTranslate }}"
+          disableUndefinedCheck
+          [required]="property.required"
+          [helpId]="property.helpId"
+          formControlName="{{ property.id }}">
         </tb-js-func>
       </div>
     }
     @if (property.type === FormPropertyType.json) {
       <div class="tb-form-row flex-1">
         <tb-json-content class="flex-1"
-                         label="{{ property.name | customTranslate }}"
-                         [required]="property.required"
-                         [contentType]="ContentType.JSON"
-                         formControlName="{{ property.id }}">
+          label="{{ property.name | customTranslate }}"
+          [required]="property.required"
+          [contentType]="ContentType.JSON"
+          formControlName="{{ property.id }}">
         </tb-json-content>
       </div>
     }
     @if (property.type === FormPropertyType.html) {
       <div class="tb-form-row flex-1">
         <tb-html class="flex-1"
-                 label="{{ property.name | customTranslate }}"
-                 [required]="property.required"
-                 formControlName="{{ property.id }}">
+          label="{{ property.name | customTranslate }}"
+          [required]="property.required"
+          formControlName="{{ property.id }}">
         </tb-html>
       </div>
     }
     @if (property.type === FormPropertyType.css) {
       <div class="tb-form-row flex-1">
         <tb-css class="flex-1"
-                label="{{ property.name | customTranslate }}"
-                [required]="property.required"
-                formControlName="{{ property.id }}">
+          label="{{ property.name | customTranslate }}"
+          [required]="property.required"
+          formControlName="{{ property.id }}">
         </tb-css>
       </div>
     }
     @if (property.type === FormPropertyType.markdown) {
       <div class="tb-form-row flex-1">
         <tb-markdown-editor class="flex-1"
-                            label="{{ property.name | customTranslate }}"
-                            [required]="property.required"
-                            [helpId]="property.helpId"
-                            formControlName="{{ property.id }}">
+          label="{{ property.name | customTranslate }}"
+          [required]="property.required"
+          [helpId]="property.helpId"
+          formControlName="{{ property.id }}">
         </tb-markdown-editor>
       </div>
     }
@@ -312,6 +327,7 @@
         <tb-gallery-image-input
           class="flex-1"
           label="{{ property.name | customTranslate }}"
+          hint="{{ property.hint | customTranslate }}"
           formControlName="{{ property.id }}"
           [required]="property.required">
         </tb-gallery-image-input>
@@ -322,8 +338,8 @@
         class="tb-form-row tb-radios-property column-xs flex-1" [class.direction-column]="property.direction === 'column'">
         <div tbTruncateWithTooltip class="fixed-title-width fixed-title-height">{{ property.name | customTranslate }}</div>
         <mat-radio-group class="flex flex-1 flex-wrap" [class.flex-col]="property.direction === 'column'"
-                         [required]="property.required"
-                         formControlName="{{ property.id }}">
+          [required]="property.required"
+          formControlName="{{ property.id }}">
           @for (item of property.items; track item) {
             <mat-radio-button [value]="item.value">
               <div tbTruncateWithTooltip>{{ item.label | customTranslate }}</div>

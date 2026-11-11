@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
@@ -187,7 +188,7 @@ export class AlarmRuleFilterPredicateListComponent implements ControlValueAccess
         isAdd: true,
         arguments: this.arguments,
         argumentInUse: this.argumentInUse,
-        readonly: this.readonly
+        readonly: this.disabled
       }
     }).afterClosed().pipe(
       map(result => result)

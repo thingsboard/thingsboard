@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.attributes;
 
 import com.google.common.util.concurrent.Futures;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,6 +66,7 @@ public class CachedAttributesService implements AttributesService {
     private final DefaultCounter hitCounter;
     private final DefaultCounter missCounter;
     private final VersionedTbCache<AttributeCacheKey, AttributeKvEntry> cache;
+    private final CitusSettings citusSettings;
     private ListeningExecutorService cacheExecutor;
 
     @Value("${cache.type:caffeine}")
@@ -75,12 +78,14 @@ public class CachedAttributesService implements AttributesService {
                                    JpaExecutorService jpaExecutorService,
                                    @Lazy EdqsService edqsService, StatsFactory statsFactory,
                                    CacheExecutorService cacheExecutorService,
-                                   VersionedTbCache<AttributeCacheKey, AttributeKvEntry> cache) {
+                                   VersionedTbCache<AttributeCacheKey, AttributeKvEntry> cache,
+                                   CitusSettings citusSettings) {
         this.attributesDao = attributesDao;
         this.jpaExecutorService = jpaExecutorService;
         this.edqsService = edqsService;
         this.cacheExecutorService = cacheExecutorService;
         this.cache = cache;
+        this.citusSettings = citusSettings;
 
         this.hitCounter = statsFactory.createDefaultCounter(STATS_NAME, "result", "hit");
         this.missCounter = statsFactory.createDefaultCounter(STATS_NAME, "result", "miss");
@@ -89,6 +94,12 @@ public class CachedAttributesService implements AttributesService {
     @PostConstruct
     public void init() {
         this.cacheExecutor = getExecutor(cacheType, cacheExecutorService);
+        if (citusSettings.isEnabled() && (StringUtils.isEmpty(cacheType) || LOCAL_CACHE_TYPE.equals(cacheType))) {
+            log.warn("Citus is enabled with the per-node caffeine cache (cache.type={}). Attribute deletion evicts " +
+                    "only the local node's cache, so in a multi-node cluster other nodes may serve a stale value for a " +
+                    "deleted and re-created attribute until the cache TTL expires. Use a shared cache (cache.type=redis) " +
+                    "for correct cross-node eviction.", cacheType);
+        }
     }
 
     /**
@@ -266,7 +277,24 @@ public class CachedAttributesService implements AttributesService {
         return Futures.allAsList(futures.stream().map(future -> Futures.transform(future, keyVersionPair -> {
             String key = keyVersionPair.getFirst();
             Long version = keyVersionPair.getSecond();
-            cache.evict(new AttributeCacheKey(scope, entityId, key), version);
+            AttributeCacheKey cacheKey = new AttributeCacheKey(scope, entityId, key);
+            if (citusSettings.isEnabled()) {
+                // Citus uses a per-row version: after a delete a re-inserted row's version resets to 1, so a
+                // version-guarded evict could be rejected by the cache that still holds the higher version of the
+                // just-deleted row. Evict unconditionally and let the next read repopulate from DB.
+                // This is only correct with a shared cache (e.g. Redis), where the evict reaches all nodes. With the
+                // per-node caffeine cache the evict clears only the local node: another node still holding the
+                // pre-delete entry rejects the re-created row's version-1 put and serves the stale value until TTL.
+                // Even with shared Redis a race remains: a reader that fetched the row just before this DELETE
+                // committed can run its read-through cache.put AFTER this evict, leaving the cache serving the
+                // deleted value. Because versioned puts are strict-greater, a re-created row (per-row version
+                // restarting at 1) cannot displace that stale entry until the cache TTL expires. This is the
+                // documented "self-heals at cache TTL" acceptance for the delete+re-create race.
+                // See the startup warning in init().
+                cache.evict(cacheKey);
+            } else {
+                cache.evict(cacheKey, version);
+            }
             if (version != null) {
                 TenantId edqsTenantId = entityId.getEntityType() == EntityType.TENANT ? (TenantId) entityId : tenantId;
                 edqsService.onDelete(edqsTenantId, ObjectType.ATTRIBUTE_KV, new AttributeKv(entityId, scope, key, version));

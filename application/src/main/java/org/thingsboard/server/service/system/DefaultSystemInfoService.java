@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.system;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -79,6 +81,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private final TelemetrySubscriptionService telemetryService;
     private final TbApiUsageStateClient apiUsageStateClient;
     private final AdminSettingsService adminSettingsService;
+    private final WhiteLabelingService whiteLabelingService;
     private final DomainService domainService;
     private final MailService mailService;
     private final SmsService smsService;
@@ -121,17 +124,10 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         return systemInfo;
     }
 
-    protected void saveCurrentSystemInfo() {
-        if (discoveryService.isMonolith()) {
-            saveCurrentMonolithSystemInfo();
-        } else {
-            saveCurrentClusterSystemInfo();
-        }
-    }
-
     @Override
     public FeaturesInfo getFeaturesInfo() {
         FeaturesInfo featuresInfo = new FeaturesInfo();
+        featuresInfo.setWhiteLabelingEnabled(whiteLabelingService.isWhiteLabelingConfigured(TenantId.SYS_TENANT_ID));
         featuresInfo.setEmailEnabled(isEmailEnabled());
         featuresInfo.setSmsEnabled(smsService.isConfigured(TenantId.SYS_TENANT_ID));
         featuresInfo.setOauthEnabled(domainService.isOauth2Enabled(TenantId.SYS_TENANT_ID));
@@ -166,6 +162,14 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
             return notifications.getJsonValue().get("deliveryMethodsConfigs").has("SLACK");
         }
         return false;
+    }
+
+    protected void saveCurrentSystemInfo() {
+        if (discoveryService.isMonolith()) {
+            saveCurrentMonolithSystemInfo();
+        } else {
+            saveCurrentClusterSystemInfo();
+        }
     }
 
     private void saveCurrentClusterSystemInfo() {

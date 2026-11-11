@@ -1,19 +1,21 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.widget;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasImage;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasTitle;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -24,7 +26,7 @@ import java.io.Serial;
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId>, HasTitle, HasImage, HasVersion {
+public class WidgetsBundle extends BaseData<WidgetsBundleId> implements TenantEntity, ExportableEntity<WidgetsBundleId>, HasTitle, HasImage, HasVersion {
 
     @Serial
     private static final long serialVersionUID = -7627368878362410489L;
@@ -84,7 +86,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     @Schema(description = "JSON object with the Widget Bundle Id. " +
             "Specify this field to update the Widget Bundle. " +
             "Referencing non-existing Widget Bundle Id will cause error. " +
-            "Omit this field to create new Widget Bundle." )
+            "Omit this field to create new Widget Bundle.")
     @Override
     public WidgetsBundleId getId() {
         return super.getId();
@@ -102,4 +104,11 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     public String getName() {
         return title;
     }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.WIDGETS_BUNDLE;
+    }
+
 }

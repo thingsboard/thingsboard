@@ -1,7 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +16,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId, HasVersion {
+public class ApiUsageState extends BaseData<ApiUsageStateId> implements TenantEntity, HasVersion {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -28,6 +30,8 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
     private ApiUsageStateValue emailExecState;
     private ApiUsageStateValue smsExecState;
     private ApiUsageStateValue alarmExecState;
+    private ApiUsageStateValue reportExecState;
+    private ApiUsageStateValue aiState;
     private Long version;
 
     public ApiUsageState() {
@@ -50,6 +54,8 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.reportExecState = ur.getReportExecState();
+        this.aiState = ur.getAiState();
         this.version = ur.getVersion();
     }
 
@@ -83,6 +89,20 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
 
     public boolean isAlarmCreationEnabled() {
         return alarmExecState != ApiUsageStateValue.DISABLED;
+    }
+
+    public boolean isReportCreationEnabled() {
+        return reportExecState != ApiUsageStateValue.DISABLED;
+    }
+
+    public boolean isAiEnabled() {
+        return aiState != ApiUsageStateValue.DISABLED;
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.API_USAGE_STATE;
     }
 
 }

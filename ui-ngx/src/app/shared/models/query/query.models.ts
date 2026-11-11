@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AliasFilterType, EntityFilters } from '@shared/models/alias.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { SortDirection } from '@angular/material/sort';
@@ -201,6 +202,47 @@ export function createDefaultFilterPredicate(valueType: EntityKeyValueType, comp
       break;
   }
   return predicate;
+}
+
+export interface KeyFilterPredicateFormValue {
+  operation?: StringOperation | NumericOperation | BooleanOperation | ComplexOperation;
+  value?: FilterPredicateValue<string | number | boolean>;
+  ignoreCase?: boolean;
+  predicates?: KeyFilterPredicateInfo[];
+}
+
+export function toKeyFilterPredicate(type: FilterPredicateType, formValue: KeyFilterPredicateFormValue): KeyFilterPredicate {
+  switch (type) {
+    case FilterPredicateType.STRING:
+      return {
+        type: FilterPredicateType.STRING,
+        operation: formValue.operation as StringOperation,
+        value: formValue.value as FilterPredicateValue<string>,
+        ignoreCase: !!formValue.ignoreCase
+      };
+    case FilterPredicateType.NUMERIC:
+      return {
+        type: FilterPredicateType.NUMERIC,
+        operation: formValue.operation as NumericOperation,
+        value: formValue.value as FilterPredicateValue<number>
+      };
+    case FilterPredicateType.BOOLEAN:
+      return {
+        type: FilterPredicateType.BOOLEAN,
+        operation: formValue.operation as BooleanOperation,
+        value: formValue.value as FilterPredicateValue<boolean>
+      };
+    case FilterPredicateType.COMPLEX:
+      return {
+        type: FilterPredicateType.COMPLEX,
+        operation: formValue.operation as ComplexOperation,
+        predicates: formValue.predicates
+      };
+    default: {
+      const exhaustiveCheck: never = type;
+      throw new Error(`Unsupported filter predicate type: ${exhaustiveCheck}`);
+    }
+  }
 }
 
 export function getDynamicSourcesForAllowUser(allow: boolean): DynamicValueSourceType[] {
@@ -826,6 +868,19 @@ export interface EntityData {
 export interface AlarmData extends AlarmInfo {
   entityId: string;
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
+}
+
+export function getLatestDataValue(latest: {[entityKeyType: string]: {[key: string]: TsValue}},
+                                   entityKeyType: EntityKeyType, key: string, defaultValue?: string): string {
+  let value = defaultValue;
+  const fields = latest[entityKeyType];
+  if (fields) {
+    const tsValue = fields[key];
+    if (tsValue && isDefinedAndNotNull(tsValue.value)) {
+      value = tsValue.value;
+    }
+  }
+  return value;
 }
 
 export function entityPageDataChanged(prevPageData: PageData<EntityData>, nextPageData: PageData<EntityData>): boolean {

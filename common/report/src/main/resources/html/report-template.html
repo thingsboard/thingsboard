@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <link rel="stylesheet" type="text/css" media="all" href="/html/styles/main.css"/>
+    <style th:inline="text">
+      @page {
+          size: [[${pageWidth}]] [[${pageHeight}]];
+          background: [[${pageBackground}]];
+          margin-left: [[${pageMarginLeft}]];
+          margin-right: [[${pageMarginRight}]];
+          margin-top: [[${pageMarginTop}]];
+          margin-bottom: [[${pageMarginBottom}]];
+      }
+
+    </style>
+    <style th:if="${enableHeader}" th:inline="text">
+        @page {
+            @top-center {
+                content: element(header);
+                padding-top: [[${pageHeaderPadding}]];
+                vertical-align: bottom;
+            }
+        }
+
+        .header {
+            position: running(header);
+            height: [[${pageHeaderHeight}]];
+            overflow: hidden;
+        }
+    </style>
+    <style th:if="${enableFooter}" th:inline="text">
+        @page {
+            @bottom-center {
+                content: element(footer);
+                vertical-align: top;
+            }
+        }
+
+        .footer {
+            position: running(footer);
+            height: [[${pageFooterHeight}]];
+            overflow: hidden;
+        }
+    </style>
+    <style th:if="${enableFirstPageHeader}" th:inline="text">
+        @page:first {
+            margin-top: [[${firstPageMarginTop}]];
+
+            @top-center {
+                content: element(firstHeader);
+                padding-top: [[${pageHeaderPadding}]];
+                vertical-align: bottom;
+            }
+        }
+
+        .firstHeader {
+            position: running(firstHeader);
+            height: [[${firstPageHeaderHeight}]];
+            overflow: hidden;
+        }
+
+    </style>
+    <style th:if="${enableFirstPageFooter}" th:inline="text">
+        @page:first {
+            margin-bottom: [[${firstPageMarginBottom}]];
+
+            @bottom-center {
+                content: element(firstFooter);
+                vertical-align: top;
+            }
+        }
+
+        .firstFooter {
+            position: running(firstFooter);
+            height: [[${firstPageFooterHeight}]];
+            overflow: hidden;
+        }
+    </style>
+  </head>
+  <body>
+    <div th:if="${enableFirstPageHeader}" class='firstHeader' th:utext="${firstPageHeader}"></div>
+    <div th:if="${enableFirstPageFooter}" class='firstFooter' th:utext="${firstPageFooter}"></div>
+    <div th:if="${enableHeader}" class='header' th:utext="${pageHeader}"></div>
+    <div th:if="${enableFooter}" class='footer' th:utext="${pageFooter}"></div>
+    <div class='content' th:utext="${pageContent}"></div>
+  </body>
+</html>

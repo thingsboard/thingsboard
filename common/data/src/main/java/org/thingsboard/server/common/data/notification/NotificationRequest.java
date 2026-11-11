@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.notification;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,8 +13,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -32,7 +34,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NotificationRequest extends BaseData<NotificationRequestId> implements HasTenantId, HasName {
+public class NotificationRequest extends BaseData<NotificationRequestId> implements HasName, TenantEntity {
 
     private TenantId tenantId;
     @NotEmpty
@@ -86,6 +88,11 @@ public class NotificationRequest extends BaseData<NotificationRequestId> impleme
     @JsonIgnore
     public boolean isScheduled() {
         return status == NotificationRequestStatus.SCHEDULED;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.NOTIFICATION_REQUEST;
     }
 
 }

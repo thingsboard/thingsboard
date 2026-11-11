@@ -1,19 +1,21 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityComponent } from '../../components/entity/entity.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityViewInfo } from '@app/shared/models/entity-view.models';
 import { Observable } from 'rxjs';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
+import { EntityViewInfo } from '@shared/models/entity-view.models';
+import { GroupEntityComponent } from '@home/components/group/group-entity.component';
+import { GroupEntityTableConfig } from '@home/models/group/group-entities-table-config.models';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Component({
     selector: 'tb-entity-view',
@@ -21,13 +23,13 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
     styleUrls: ['./entity-view.component.scss'],
     standalone: false
 })
-export class EntityViewComponent extends EntityComponent<EntityViewInfo> {
+export class EntityViewComponent extends GroupEntityComponent<EntityViewInfo> {
 
   entityType = EntityType;
 
   dataKeyType = DataKeyType;
 
-  entityViewScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
+  // entityViewScope: 'tenant' | 'customer' | 'customer_user';
 
   allowedEntityTypes = [EntityType.DEVICE, EntityType.ASSET];
 
@@ -39,14 +41,16 @@ export class EntityViewComponent extends EntityComponent<EntityViewInfo> {
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: EntityViewInfo,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<EntityViewInfo>,
-              public fb: UntypedFormBuilder,
-              protected cd: ChangeDetectorRef) {
-    super(store, fb, entityValue, entitiesTableConfigValue, cd);
+              @Inject('entitiesTableConfig')
+              protected entitiesTableConfigValue: EntityTableConfig<EntityViewInfo> | GroupEntityTableConfig<EntityViewInfo>,
+              protected fb: UntypedFormBuilder,
+              protected cd: ChangeDetectorRef,
+              protected userPermissionsService: UserPermissionsService) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd, userPermissionsService);
   }
 
   ngOnInit() {
-    this.entityViewScope = this.entitiesTableConfig.componentsData.entityViewScope;
+    // this.entityViewScope = this.entitiesTableConfig.componentsData.entityViewScope;
     super.ngOnInit();
     this.maxStartTimeMs = this.entityForm.get('endTimeMs').valueChanges;
     this.minEndTimeMs = this.entityForm.get('startTimeMs').valueChanges;
@@ -61,9 +65,9 @@ export class EntityViewComponent extends EntityComponent<EntityViewInfo> {
     }
   }
 
-  isAssignedToCustomer(entity: EntityViewInfo): boolean {
+  /* isAssignedToCustomer(entity: EntityView): boolean {
     return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
-  }
+  } */
 
   buildForm(entity: EntityViewInfo): UntypedFormGroup {
     return this.fb.group(

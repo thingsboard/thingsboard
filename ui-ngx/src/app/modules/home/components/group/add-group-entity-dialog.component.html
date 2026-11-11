@@ -1,0 +1,89 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2 translate>{{ translations.add }}</h2>
+  <span class="flex-1"></span>
+  <div [tb-help]="helpLinkId()"></div>
+  <button mat-icon-button
+    (click)="cancel()"
+    type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate">
+  </mat-progress-bar>
+} @else {
+  <div style="height: 4px;"></div>
+}
+<div mat-dialog-content [class]="{'no-padding': addDialogOwnerAndGroupWizard}">
+  @if (addDialogOwnerAndGroupWizard) {
+    <mat-horizontal-stepper
+      [linear]="true"
+      [labelPosition]="labelPosition"
+      #addGroupEntityWizardStepper
+      (selectionChange)="changeStep($event)">
+      <ng-template matStepperIcon="edit">
+        <mat-icon>check</mat-icon>
+      </ng-template>
+      <mat-step #detailsFormStep [stepControl]="detailsForm">
+        <ng-template matStepLabel>{{ translations.details | translate}}</ng-template>
+        <tb-anchor #entityDetailsForm></tb-anchor>
+      </mat-step>
+      <mat-step [stepControl]="ownerAndGroupsFormGroup" [optional]="true">
+        <ng-template matStepLabel>{{ 'entity-group.owner-and-groups' | translate }}</ng-template>
+        <ng-container *ngTemplateOutlet=ownersAndGroup></ng-container>
+      </mat-step>
+    </mat-horizontal-stepper>
+  } @else {
+    <tb-anchor #entityDetailsForm></tb-anchor>
+    <div #ownersAndGroupPanel class="tb-form-panel stroked no-padding-bottom" style="margin-bottom: 16px">
+      <div class="tb-form-panel-title" translate>entity-group.owner-and-groups</div>
+      <ng-container *ngTemplateOutlet=ownersAndGroup></ng-container>
+    </div>
+  }
+</div>
+<div mat-dialog-actions style="padding: 0">
+  @if (addDialogOwnerAndGroupWizard) {
+    <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
+      @if (selectedIndex > 0) {
+        <button mat-stroked-button
+          [disabled]="(isLoading$ | async)"
+        (click)="previousStep()">{{ 'action.back' | translate }}</button>
+      }
+      <span class="flex-1"></span>
+      @if (showNext) {
+        <button mat-stroked-button
+          color="primary"
+          [disabled]="(isLoading$ | async)"
+        (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(selectedIndex+1) | translate)} }}</button>
+      }
+    </div>
+  }
+  <mat-divider style="width: 100%"></mat-divider>
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
+    <button mat-button
+      [disabled]="(isLoading$ | async)"
+    (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+      [disabled]="(isLoading$ | async)"
+      color="primary"
+    (click)="add()">{{ 'action.add' | translate }}</button>
+  </div>
+</div>
+
+<ng-template #ownersAndGroup>
+  <form [formGroup]="ownerAndGroupsFormGroup">
+    <tb-owner-and-groups
+      [entityType]="entityType"
+      [defaultOwnerId]="initialOwnerId"
+      [skipDefaultPermissionCheck]="true"
+      appearance="outline"
+      formControlName="ownerAndGroups">
+    </tb-owner-and-groups>
+  </form>
+</ng-template>

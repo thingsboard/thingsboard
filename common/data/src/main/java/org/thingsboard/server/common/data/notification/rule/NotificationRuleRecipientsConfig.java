@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.notification.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,7 +33,8 @@ import java.util.UUID;
                 @DiscriminatorMapping(value = "API_USAGE_LIMIT", schema = DefaultNotificationRuleRecipientsConfig.ApiUsageLimitRecipientsConfig.class),
                 @DiscriminatorMapping(value = "RATE_LIMITS", schema = DefaultNotificationRuleRecipientsConfig.RateLimitsRecipientsConfig.class),
                 @DiscriminatorMapping(value = "TASK_PROCESSING_FAILURE", schema = DefaultNotificationRuleRecipientsConfig.TaskProcessingFailureRecipientsConfig.class),
-                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
+                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class),
+                @DiscriminatorMapping(value = "INTEGRATION_LIFECYCLE_EVENT", schema = DefaultNotificationRuleRecipientsConfig.IntegrationLifecycleEventRecipientsConfig.class)
         })
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "triggerType", include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = DefaultNotificationRuleRecipientsConfig.class)
@@ -50,7 +52,8 @@ import java.util.UUID;
         @Type(name = "API_USAGE_LIMIT", value = DefaultNotificationRuleRecipientsConfig.ApiUsageLimitRecipientsConfig.class),
         @Type(name = "RATE_LIMITS", value = DefaultNotificationRuleRecipientsConfig.RateLimitsRecipientsConfig.class),
         @Type(name = "TASK_PROCESSING_FAILURE", value = DefaultNotificationRuleRecipientsConfig.TaskProcessingFailureRecipientsConfig.class),
-        @Type(name = "RESOURCES_SHORTAGE", value = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class)
+        @Type(name = "RESOURCES_SHORTAGE", value = DefaultNotificationRuleRecipientsConfig.ResourceShortageRecipientsConfig.class),
+        @Type(name = "INTEGRATION_LIFECYCLE_EVENT", value = DefaultNotificationRuleRecipientsConfig.IntegrationLifecycleEventRecipientsConfig.class)
 })
 public interface NotificationRuleRecipientsConfig extends Serializable {
 

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable, NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
@@ -30,7 +31,7 @@ export const oAuth2Routes: Routes = [
     path: 'oauth2',
     component: RouterTabsComponent,
     data: {
-      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       breadcrumb: {
         label: 'admin.oauth2.oauth2',
         icon: 'mdi:shield-account'
@@ -41,18 +42,15 @@ export const oAuth2Routes: Routes = [
         path: '',
         children: [],
         data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          redirectTo: {
-            SYS_ADMIN: '/security-settings/oauth2/domains',
-            TENANT_ADMIN: '/security-settings/oauth2/clients'
-          }
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: '/security-settings/oauth2/domains'
         }
       },
       {
         path: 'domains',
         component: EntitiesTableComponent,
         data: {
-          auth: [Authority.SYS_ADMIN],
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
           title: 'admin.oauth2.domains',
           breadcrumb: {
             menuId: MenuId.domains
@@ -75,7 +73,7 @@ export const oAuth2Routes: Routes = [
             path: '',
             component: EntitiesTableComponent,
             data: {
-              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
               title: 'admin.oauth2.clients'
             },
             resolve: {
@@ -93,7 +91,7 @@ export const oAuth2Routes: Routes = [
                     labelFunction: entityDetailsPageBreadcrumbLabelFunction,
                     icon: 'public'
                   } as BreadCrumbConfig<EntityDetailsPageComponent>,
-                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
                   title: 'admin.oauth2.clients',
                   hideTabs: true,
                   backNavigationCommands: ['../..']

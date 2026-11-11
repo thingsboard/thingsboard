@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -10,9 +12,13 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.device.DeviceDao;
+import org.thingsboard.server.dao.subscription.SubscriptionService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.Optional;
@@ -26,14 +32,25 @@ public class DeviceDataValidator extends AbstractHasOtaPackageValidator<Device> 
     private DeviceDao deviceDao;
 
     @Autowired
+    @Lazy
+    private DeviceService deviceService;
+
+    @Autowired
     private TenantService tenantService;
 
     @Autowired
     private CustomerDao customerDao;
 
+    @Autowired
+    @Lazy
+    private SubscriptionService subscriptionService;
+
     @Override
     protected void validateCreate(TenantId tenantId, Device device) {
+        subscriptionService.createDeviceAllowed(device.getTenantId());
         validateNumberOfEntitiesPerTenant(tenantId, EntityType.DEVICE);
+        validateNameUniqueness(device, null, deviceService::findDeviceByTenantIdAndName, "Device with such name already exists!");
+        validateExternalIdUniqueness(device, null, deviceDao, "Device with such external id already exists!");
     }
 
     @Override
@@ -42,6 +59,8 @@ public class DeviceDataValidator extends AbstractHasOtaPackageValidator<Device> 
         if (old == null) {
             throw new DataValidationException("Can't update non existing device!");
         }
+        validateNameUniqueness(device, old, deviceService::findDeviceByTenantIdAndName, "Device with such name already exists!");
+        validateExternalIdUniqueness(device, old, deviceDao, "Device with such external id already exists!");
         return old;
     }
 

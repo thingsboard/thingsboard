@@ -1,0 +1,89 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2 translate>entity-group.add</h2>
+  <span class="flex-1"></span>
+  <div [tb-help]="'entityGroups'"></div>
+  <button mat-icon-button
+    (click)="cancel()"
+    type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate">
+  </mat-progress-bar>
+}
+<div mat-dialog-content>
+  <mat-horizontal-stepper [linear]="true" [labelPosition]="labelPosition" #addEntityGroupWizardStepper (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="entityGroupWizardFormGroup">
+      <form [formGroup]="entityGroupWizardFormGroup" style="padding-bottom: 16px;">
+        <ng-template matStepLabel>{{ 'entity-group.entity-group-details' | translate}}</ng-template>
+        <fieldset [disabled]="isLoading$ | async">
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>entity-group.name</mat-label>
+            <input matInput formControlName="name" required>
+            @if (entityGroupWizardFormGroup.get('name').hasError('required')) {
+              <mat-error>
+                {{ 'entity-group.name-required' | translate }}
+              </mat-error>
+            }
+            @if (entityGroupWizardFormGroup.get('name').hasError('maxlength')) {
+              <mat-error>
+                {{ 'entity-group.name-max-length' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="mat-block" appearance="outline">
+            <mat-label translate>entity-group.description</mat-label>
+            <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
+          </mat-form-field>
+        </fieldset>
+      </form>
+    </mat-step>
+    <mat-step [stepControl]="shareEntityGroupFormGroup" [optional]="true">
+      <form [formGroup]="shareEntityGroupFormGroup">
+        <ng-template matStepLabel>{{ 'entity-group.share' | translate }}</ng-template>
+        <mat-checkbox formControlName="shareEntityGroup">{{ 'entity-group.share' | translate }}</mat-checkbox>
+        @if (shareEntityGroupFormGroup.get('shareEntityGroup').value) {
+          <tb-share-entity-group
+            formControlName="shareGroupRequest">
+          </tb-share-entity-group>
+        }
+      </form>
+    </mat-step>
+  </mat-horizontal-stepper>
+</div>
+<div mat-dialog-actions>
+  <div class="flex flex-1 items-center p-2">
+    @if (selectedIndex > 0) {
+      <button mat-stroked-button
+        [disabled]="(isLoading$ | async)"
+      (click)="previousStep()">{{ 'action.back' | translate }}</button>
+    }
+    <span class="flex-1"></span>
+    @if (showNext) {
+      <button mat-stroked-button
+        color="primary"
+        [disabled]="(isLoading$ | async)"
+      (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(selectedIndex+1) | translate)} }}</button>
+    }
+  </div>
+  <mat-divider style="width: 100%"></mat-divider>
+  <div class="flex flex-1 items-center justify-end gap-2 p-2">
+    <button mat-button
+      [disabled]="(isLoading$ | async)"
+    (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+      [disabled]="(isLoading$ | async)"
+      color="primary"
+    (click)="add()">{{ 'action.add' | translate }}</button>
+  </div>
+</div>

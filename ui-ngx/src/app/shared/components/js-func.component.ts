@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -27,7 +28,7 @@ import { deepClone, guid, isEqual, isObject, isUndefined, isUndefinedOrNull } fr
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
-import { beautifyJs } from '@shared/models/beautify.models';
+import { beautifyJs, beautifyTbel } from '@shared/models/beautify.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { compileTbFunction, loadModulesCompleter, TbFunction } from '@shared/models/js-function.models';
@@ -292,7 +293,8 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   }
 
   beautifyJs() {
-    beautifyJs(this.modelValue, {indent_size: 4, wrap_line_length: 60}).subscribe(
+    const beautify = ScriptLanguage.TBEL === this.scriptLanguage ? beautifyTbel : beautifyJs;
+    beautify(this.modelValue, {indent_size: 4, wrap_line_length: 60}).subscribe(
       (res) => {
         this.jsEditor.setValue(res ? res : '', -1);
         this.updateView();

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,7 +53,7 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
 
     @Override
     public AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
-        log.debug("Saving Alarm Comment: {}", alarmComment);
+        log.debug("Deleting Alarm Comment: {}", alarmComment);
         alarmCommentDataValidator.validate(alarmComment, c -> tenantId);
         AlarmComment result = alarmCommentDao.save(tenantId, alarmComment);
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(result)

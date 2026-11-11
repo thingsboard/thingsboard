@@ -1,0 +1,426 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+
+@use '../../../components/agent/agent-shared' as *;
+
+$row-h: 20px;
+$num-w: 56px;
+$pad-x: 16px;
+
+$ink-87: $agent-text-primary;
+$ink-60: rgba(0, 0, 0, 0.60);
+$ink-42: rgba(0, 0, 0, 0.42);
+$ink-30: rgba(0, 0, 0, 0.30);
+$ink-12: $agent-divider;
+$ink-08: $agent-divider-light;
+$ink-04: rgba(0, 0, 0, 0.04);
+
+$accent-live:   $agent-color-success;
+$accent-paused: $agent-color-warning;
+
+$lvl-error: $agent-color-error;
+
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.tb-log-monitor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid $ink-12;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+
+  &--paused {
+    border-color: rgba(239, 108, 0, 0.45);
+    box-shadow: inset 0 0 0 1px rgba(239, 108, 0, 0.18);
+  }
+}
+
+.tb-log-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px 6px 14px;
+  background: #fbfbfc;
+  border-bottom: 1px solid $ink-08;
+  min-height: 44px;
+}
+
+.tb-log-toolbar-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: $ink-60;
+  min-width: 0;
+}
+
+.tb-log-stream-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $accent-live;
+  box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.5);
+  animation: tbLogStreamPulse 1.6s ease-out infinite;
+
+  &--paused {
+    background: $accent-paused;
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(239, 108, 0, 0.12);
+  }
+}
+
+@keyframes tbLogStreamPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.45); }
+  70%  { box-shadow: 0 0 0 6px rgba(46, 125, 50, 0);   }
+  100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);     }
+}
+
+.tb-log-stream-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: $ink-87;
+}
+
+.tb-log-stream-sep {
+  color: $ink-30;
+}
+
+.tb-log-stream-count {
+  font-family: $agent-mono-font;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: $ink-87;
+  .tb-log-stream-count-unit {
+    color: $ink-42;
+    font-family: inherit;
+    margin-left: 2px;
+  }
+}
+
+.tb-log-stream-buffered {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  margin-left: 4px;
+  background: rgba(239, 108, 0, 0.12);
+  color: #b35900;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: $agent-mono-font;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-log-stream-dropped {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  margin-left: 4px;
+  background: rgba(198, 40, 40, 0.10);
+  color: $agent-color-error;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: $agent-mono-font;
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+.tb-log-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tb-log-toolbar-divider {
+  width: 1px;
+  height: 22px;
+  background: $ink-12;
+  margin: 0 4px;
+}
+
+.tb-log-search {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 6px 0 10px;
+  background: #ffffff;
+  border: 1px solid $ink-12;
+  border-radius: 16px;
+  transition: border-color 120ms ease, box-shadow 120ms ease, width 160ms ease;
+  width: 200px;
+
+  &:focus-within {
+    border-color: $agent-color-info;
+    box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
+    width: 260px;
+  }
+
+  &--active {
+    background: $agent-warning-surface;
+    border-color: $agent-warning-border;
+  }
+
+  .tb-log-search-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: $ink-42;
+    margin-right: 6px;
+  }
+
+  .tb-log-search-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    color: $ink-87;
+    font-family: $agent-mono-font;
+    &::placeholder { color: $ink-42; font-family: inherit; }
+  }
+
+  .tb-log-search-clear {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0;
+    line-height: 1;
+    margin-left: 2px;
+
+    ::ng-deep .mat-mdc-button-touch-target {
+      width: 22px;
+      height: 22px;
+    }
+    ::ng-deep mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      line-height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+.tb-log-tool {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  color: $ink-60;
+  transition: background 120ms ease, color 120ms ease;
+
+  ::ng-deep mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover:not([disabled]) {
+    background: $ink-04;
+    color: $ink-87;
+  }
+
+  &--active {
+    color: $agent-color-info;
+    background: rgba(21, 101, 192, 0.08);
+    &:hover:not([disabled]) {
+      background: rgba(21, 101, 192, 0.14);
+      color: $agent-color-info-dark;
+    }
+  }
+
+  &--danger:hover:not([disabled]) {
+    color: $lvl-error;
+    background: rgba(198, 40, 40, 0.06);
+  }
+
+  &[disabled] {
+    color: $ink-30;
+  }
+}
+
+.tb-log-monitor-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #ffffff;
+}
+
+.tb-log-viewport {
+  height: 100%;
+  width: 100%;
+  font-family: $agent-mono-font;
+  font-size: 12.5px;
+  line-height: $row-h;
+  color: $ink-87;
+
+  ::ng-deep .cdk-virtual-scroll-content-wrapper {
+    width: 100%;
+  }
+}
+
+.tb-log-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  height: $row-h;
+  white-space: pre;
+  transition: background-color 60ms linear;
+
+  &--line {
+    padding: 0 $pad-x 0 0;
+    cursor: text;
+
+    &:hover {
+      background: $ink-04;
+      .tb-log-row-num    { color: $ink-60; }
+    }
+  }
+
+  &--gap {
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: $ink-42;
+    font-style: italic;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.02) 50%, transparent 100%);
+  }
+}
+
+.tb-log-row-num {
+  flex: 0 0 $num-w;
+  padding-right: 12px;
+  text-align: right;
+  color: $ink-30;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  border-right: 1px solid $ink-08;
+  background: #fafbfc;
+}
+
+.tb-log-row-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-left: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  ::ng-deep .tb-log-mark {
+    background: #fff59d;
+    color: $ink-87;
+    border-radius: 2px;
+    padding: 0 1px;
+    box-shadow: 0 0 0 1px $agent-warning-border inset;
+  }
+}
+
+.tb-log-row-gap-rule {
+  flex: 0 1 80px;
+  height: 1px;
+  background: $ink-12;
+}
+
+.tb-log-row-gap-text {
+  font-family: $agent-mono-font;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.tb-log-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  pointer-events: none;
+  color: $ink-42;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+}
+
+.tb-log-empty-pulse {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid $ink-12;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border-radius: 50%;
+    background: $ink-12;
+    animation: tbLogEmptyPulse 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes tbLogEmptyPulse {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50%      { transform: scale(1);   opacity: 1;   }
+}
+
+.tb-log-jump {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 6px 10px;
+  background: $agent-color-info;
+  color: #ffffff;
+  border: none;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  box-shadow: 0 6px 16px rgba(21, 101, 192, 0.28), 0 2px 4px $agent-divider-light;
+  cursor: pointer;
+  animation: tbLogJumpIn 180ms ease-out;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: $agent-color-info-dark;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(21, 101, 192, 0.34), 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@keyframes tbLogJumpIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}

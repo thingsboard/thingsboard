@@ -1,0 +1,118 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  min-width: 100%;
+  max-width: 100%;
+  width: 1280px;
+  display: grid;
+  --mat-dialog-supporting-text-color: rgba(0, 0, 0, 0.86);
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
+  max-height: 100%;
+
+  .tb-markdown-view {
+    overflow-y: auto;
+    table {
+      width: 100%;
+      margin: 0;
+      min-width: 800px;
+
+      & > thead {
+        & > tr {
+          & > th {
+            font-size: 14px;
+          }
+        }
+      }
+
+      & > tbody {
+        & > tr {
+          & > td {
+            font-size: 14px;
+            overflow-wrap: normal;
+          }
+        }
+      }
+
+      .severities-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+
+        .severity-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 16px;
+          letter-spacing: 0.02em;
+        }
+      }
+    }
+  }
+
+  .status-chip {
+    background-color: rgba(25, 128, 56, 0.08);
+    color: #198038 !important;
+    padding: 4px 12px !important;
+
+    &.warn {
+      background-color: rgba(250, 164, 5, 0.12);
+      color: #c76a00 !important;
+
+      ::ng-deep .mat-badge-content {
+        background-color: #c76a00;
+        color: #fff;
+      }
+    }
+
+    &.error {
+      background-color: rgba(209, 39, 48, 0.08);
+      color: #D12730 !important;
+
+      ::ng-deep .mat-badge-content {
+        background-color: #D12730;
+        color: #fff;
+      }
+    }
+
+    &.clickable {
+      cursor: pointer;
+    }
+
+    ::ng-deep .mat-badge-small .mat-badge-content {
+      font-weight: 500;
+    }
+  }
+
+  .dashboard-infos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    .card {
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 4px;
+      padding: 24px;
+      font-size: 14px;
+      box-sizing: border-box;
+      max-width: 600px;
+
+      .person-info {
+        color: rgba(0, 0, 0, 0.54);
+      }
+
+      &::ng-deep {
+        .mdc-button__label {
+          display: contents;
+        }
+      }
+    }
+  }
+
+  &::ng-deep {
+    .tb-markdown-view {
+      p {
+        padding: 0;
+      }
+    }
+  }
+}

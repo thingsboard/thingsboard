@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
 import io.qameta.allure.Description;
@@ -23,7 +24,7 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Remove the device by clicking on the trash icon in the right side of device")
     public void deleteDeviceByRightSideBtn() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.deleteDeviceByRightSideBtn(deviceName);
         devicePage.refreshBtn().click();
 
@@ -33,7 +34,7 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Remove device by mark in the checkbox and then click on the trash can icon in the menu that appears at the top")
     public void deleteSelectedDevice() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.deleteSelected(deviceName);
         devicePage.refreshBtn().click();
 
@@ -43,7 +44,7 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Remove the device by clicking on the 'Delete device' btn in the entity view")
     public void deleteDeviceFromDetailsTab() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.deleteDeviceFromDetailsTab();
         devicePage.refreshBtn();
@@ -54,7 +55,7 @@ public class DeleteDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Remove the device by clicking on the trash icon in the right side of device without refresh")
     public void deleteDeviceWithoutRefresh() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.deleteDeviceByRightSideBtn(deviceName);
 
         devicePage.assertEntityIsNotPresent(deviceName);

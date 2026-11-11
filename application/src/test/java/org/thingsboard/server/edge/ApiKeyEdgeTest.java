@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -10,6 +11,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
@@ -126,8 +128,9 @@ public class ApiKeyEdgeTest extends AbstractEdgeTest {
         user.setFirstName("ApiKey");
         user.setLastName("TestUser");
 
+        EntityGroupInfo tenantAdminGroup = findTenantAdminsGroup();
         edgeImitator.expectMessageAmount(3);
-        User savedUser = createUser(user, "tenant");
+        User savedUser = createUser(user, "tenant", tenantAdminGroup.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
         Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
         Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());

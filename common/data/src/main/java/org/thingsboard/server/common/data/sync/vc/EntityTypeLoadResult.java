@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.sync.vc;
 
 import lombok.AllArgsConstructor;
@@ -21,6 +22,9 @@ public class EntityTypeLoadResult implements Serializable {
     private int created;
     private int updated;
     private int deleted;
+    private int groupsCreated;
+    private int groupsUpdated;
+    private int groupsDeleted;
 
     public EntityTypeLoadResult(EntityType entityType) {
         this.entityType = entityType;

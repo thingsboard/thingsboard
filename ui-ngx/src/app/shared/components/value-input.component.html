@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form #inputForm="ngForm">
@@ -26,8 +27,8 @@
     }
     @if (valueType === valueTypeEnum.STRING) {
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex flex-1">
-        <input [disabled]="disabled" matInput [required]="required" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
-               placeholder="{{ 'value.string-value' | translate }}{{ required ? '*' : ''}}"/>
+        <input [disabled]="disabled" matInput [required]="required && !stringNotRequired" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
+               placeholder="{{ 'value.string-value' | translate }}{{ required && !stringNotRequired ? '*' : ''}}"/>
         @if (value.hasError('required') && value.control.touched) {
           <mat-icon matSuffix
                     matTooltipPosition="above"

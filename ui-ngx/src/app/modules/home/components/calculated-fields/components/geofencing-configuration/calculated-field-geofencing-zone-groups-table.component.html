@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="flex flex-col gap-3">
@@ -82,8 +83,8 @@
       </ng-container>
 
       <ng-container matColumnDef="actions" stickyEnd>
-        <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
-        <mat-cell *matCellDef="let geofenceZone;">
+        <mat-header-cell *matHeaderCellDef class="w-20 min-w-20" [class.hidden]="readonly"/>
+        <mat-cell *matCellDef="let geofenceZone;" [class.hidden]="readonly">
           <div class="tb-form-table-row-cell-buttons min-w-20">
             @if (!isEditValue) {
               <button type="button"
@@ -134,14 +135,16 @@
     {{ 'calculated-fields.no-zone-configured' | translate }}
   </div>
   <div class="flex h-9 justify-between">
-    <button type="button"
-            mat-stroked-button
-            color="primary"
-            #button
-            (click)="manageZone($event, button)"
-            [disabled]="maxArgumentsPerCF > 0 && zoneGroupsFormArray.length >= maxArgumentsPerCF || disable">
-      {{ 'calculated-fields.add-zone-group' | translate }}
-    </button>
+    @if (!readonly) {
+      <button type="button"
+              mat-stroked-button
+              color="primary"
+              #button
+              (click)="manageZone($event, button)"
+              [disabled]="maxArgumentsPerCF > 0 && zoneGroupsFormArray.length >= maxArgumentsPerCF || disable">
+        {{ 'calculated-fields.add-zone-group' | translate }}
+      </button>
+    }
     @if (maxArgumentsPerCF && zoneGroupsFormArray.length >= maxArgumentsPerCF) {
       <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
         <mat-icon>warning</mat-icon>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.adaptors;
 
 import com.google.gson.JsonElement;
@@ -24,10 +25,7 @@ import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionConte
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
@@ -163,15 +161,9 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
             result.setRequestId(getRequestId(topicName, topicBase));
             String payload = inbound.payload().toString(UTF8);
-            JsonElement requestBody = JsonParser.parseString(payload);
-            Set<String> clientKeys = toStringSet(requestBody, "clientKeys");
-            Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
-            if (clientKeys != null) {
-                result.addAllClientAttributeNames(clientKeys);
-            }
-            if (sharedKeys != null) {
-                result.addAllSharedAttributeNames(sharedKeys);
-            }
+            JsonObject json = JsonParser.parseString(payload).getAsJsonObject();
+            JsonConverter.parseAttributeScope(json, "clientKeys", () -> result.setAllClientAttributes(true), result::addAllClientAttributeNames);
+            JsonConverter.parseAttributeScope(json, "sharedKeys", () -> result.setAllSharedAttributes(true), result::addAllSharedAttributeNames);
             return result.build();
         } catch (RuntimeException e) {
             log.debug("Failed to decode get attributes request", e);
@@ -233,15 +225,6 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         ByteBuf payload = ALLOCATOR.buffer();
         payload.writeBytes(json.toString().getBytes(UTF8));
         return new MqttPublishMessage(mqttFixedHeader, header, payload);
-    }
-
-    private Set<String> toStringSet(JsonElement requestBody, String name) {
-        JsonElement element = requestBody.getAsJsonObject().get(name);
-        if (element != null) {
-            return new HashSet<>(Arrays.asList(element.getAsString().split(",")));
-        } else {
-            return null;
-        }
     }
 
     private static String validatePayload(UUID sessionId, ByteBuf payloadData, boolean isEmptyPayloadAllowed) throws AdaptorException {

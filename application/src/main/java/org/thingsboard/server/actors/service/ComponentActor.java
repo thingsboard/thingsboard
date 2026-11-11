@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -99,9 +100,6 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
                     break;
                 case UPDATED:
                     processor.onUpdate(ctx);
-                    break;
-                case ACTIVATED:
-                    processor.onActivate(ctx);
                     break;
                 case SUSPENDED:
                     processor.onSuspend(ctx);

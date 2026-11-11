@@ -1,0 +1,46 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+  <div class="tb-install-wizard-toolbar-content">
+    <h2>{{ 'agent.app-assign-compare-title' | translate }}:</h2>
+    <span class="flex-1">{{ data.profileName }}</span>
+  </div>
+  <div tb-help="agentAppProfileUse"></div>
+  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div mat-dialog-content class="tb-install-wizard-body">
+  <div class="diff-header-row">
+    <div class="diff-header compare">{{ 'agent.app-update-current-config' | translate }}</div>
+    <div class="diff-header compare">{{ 'agent.app-update-future-config' | translate }}</div>
+    <div class="diff-readonly-chip" [matTooltip]="'agent.app-diff-read-only' | translate">
+      <mat-icon>lock</mat-icon>
+      <span translate>agent.app-diff-read-only</span>
+    </div>
+    <button type="button" class="diff-sync-toggle"
+            [class.active]="diffSyncScroll"
+            [matTooltip]="'agent.app-diff-sync-scroll' | translate"
+            (click)="diffSyncScroll = !diffSyncScroll">
+      <mat-icon>{{ diffSyncScroll ? 'link' : 'link_off' }}</mat-icon>
+    </button>
+  </div>
+  <tb-agent-compose-diff [left]="data.currentYaml" [right]="data.futureYaml" [readOnly]="true" [syncScroll]="diffSyncScroll"></tb-agent-compose-diff>
+  <p class="diff-hint">
+    {{ 'agent.app-assign-compare-hint' | translate: { profileName: data.profileName, appName: data.appName } }}
+  </p>
+
+  <div class="step-footer">
+    <button mat-button (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary" (click)="confirm()">
+      <span>{{ 'agent.app-assign-compare-cta' | translate }}</span>
+    </button>
+  </div>
+</div>

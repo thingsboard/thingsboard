@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -56,22 +57,13 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     edgeCtx.getAlarmService().updateAlarm(AlarmUpdateRequest.fromAlarm(alarm));
                     break;
                 case ALARM_ACK_RPC_MESSAGE:
-                    Alarm alarmToAck = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
-                    if (alarmToAck != null) {
-                        edgeCtx.getAlarmService().acknowledgeAlarm(tenantId, alarmId, alarm.getAckTs());
-                    }
+                    edgeCtx.getAlarmService().acknowledgeAlarm(tenantId, alarm.getOriginator(), alarmId, alarm.getAckTs());
                     break;
                 case ALARM_CLEAR_RPC_MESSAGE:
-                    Alarm alarmToClear = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
-                    if (alarmToClear != null) {
-                        edgeCtx.getAlarmService().clearAlarm(tenantId, alarmId, alarm.getClearTs(), alarm.getDetails(), true);
-                    }
+                    edgeCtx.getAlarmService().clearAlarm(tenantId, alarm.getOriginator(), alarmId, alarm.getClearTs(), alarm.getDetails(), true);
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    Alarm alarmToDelete = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
-                    if (alarmToDelete != null) {
-                        edgeCtx.getAlarmService().delAlarm(tenantId, alarmId);
-                    }
+                    edgeCtx.getAlarmService().delAlarm(tenantId, alarm.getOriginator(), alarmId);
                     break;
                 case UNRECOGNIZED:
                 default:

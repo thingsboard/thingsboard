@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Datasource, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { Component } from '@angular/core';
@@ -28,6 +28,7 @@ import {
   ColorSettings,
   ColorType,
   constantColor,
+  normalizeColorRangeSettings,
   simpleDateFormat,
   ValueSourceConfig,
   ValueSourceType
@@ -219,7 +220,8 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
 
     if (barColor.type === ColorType.range) {
       settings.useFixedLevelColor = true;
-      settings.fixedLevelColors = barColor.rangeList.advancedMode ? barColor.rangeList.rangeAdvanced : barColor.rangeList.range;
+      const rangeList = normalizeColorRangeSettings(barColor.rangeList);
+      settings.fixedLevelColors = rangeList?.advancedMode ? rangeList.rangeAdvanced : rangeList?.range;
     } else {
       settings.useFixedLevelColor = false;
     }

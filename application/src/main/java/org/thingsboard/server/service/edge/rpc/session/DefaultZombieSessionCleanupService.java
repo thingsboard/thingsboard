@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.session;
 
@@ -59,8 +59,10 @@ public class DefaultZombieSessionCleanupService implements ZombieSessionCleanupS
 
     private void cleanupZombieSessions() {
         try {
+            // remove by identity: the edge may have reconnected since the zombie scan, and that newer
+            // session must not be evicted by the cleanup of the one it replaced
             tryToDestroyZombieSessions(getZombieSessions(edgeSessionsHolder.getSessions().values()),
-                    s -> edgeSessionsHolder.removeByEdgeId(s.getState().getEdge().getId()));
+                    s -> edgeSessionsHolder.removeByEdgeIdIfCurrent(s.getState().getEdgeId(), s.getState().getSessionId()));
 
             tryToDestroyZombieSessions(getZombieSessions(edgeSessionsHolder.getSessionsById().values()),
                     s -> edgeSessionsHolder.removeBySessionId(s.getState().getSessionId()));

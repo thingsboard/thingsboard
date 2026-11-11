@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   booleanAttribute,
@@ -76,6 +77,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   @Input() ownerId: EntityId;
   @Input() isScript: boolean;
   @Input({transform: booleanAttribute}) disable = false;
+  @Input({transform: booleanAttribute}) readonly: boolean;
   @Input({transform: booleanAttribute}) isEditValue = true;
   @Input() watchKeyChange = false;
 

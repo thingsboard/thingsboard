@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.mobile.bundle;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,6 +37,11 @@ public class MobileAppBundleInfo extends MobileAppBundle {
         this.androidPkgName = androidPkgName;
         this.iosPkgName = iosPkgName;
         this.qrCodeEnabled = qrCodeEnabled;
+        this.oauth2ClientInfos = oauth2ClientInfos;
+    }
+
+    public MobileAppBundleInfo(MobileAppBundle mobileApp, List<OAuth2ClientInfo> oauth2ClientInfos) {
+        super(mobileApp);
         this.oauth2ClientInfos = oauth2ClientInfos;
     }
 

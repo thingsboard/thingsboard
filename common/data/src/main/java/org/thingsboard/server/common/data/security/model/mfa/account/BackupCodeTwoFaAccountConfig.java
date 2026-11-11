@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.security.model.mfa.account;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -16,6 +17,7 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = true)
 public class BackupCodeTwoFaAccountConfig extends TwoFaAccountConfig {
 
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     @NotEmpty
     private Set<String> codes;
 

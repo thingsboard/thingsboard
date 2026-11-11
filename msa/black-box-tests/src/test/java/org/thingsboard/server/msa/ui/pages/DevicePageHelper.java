@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
@@ -17,12 +18,6 @@ public class DevicePageHelper extends DevicePageElements {
             device(deviceName).click();
         }
         deviceDetailsAlarmsBtn().click();
-    }
-
-    public void assignToCustomer(String customerTitle) {
-        chooseCustomerForAssignField().click();
-        entityFromDropdown(customerTitle).click();
-        submitBtn().click();
     }
 
     public void openCreateDeviceView() {
@@ -62,25 +57,15 @@ public class DevicePageHelper extends DevicePageElements {
         entityFromDropdown(deviceProfileName).click();
     }
 
-    public void unassignedDeviceByRightSideBtn(String deviceName) {
-        unassignBtn(deviceName).click();
-        warningPopUpYesBtn().click();
-    }
-
-    public void unassignedDeviceFromDetailsTab() {
-        unassignBtnDetailsTab().click();
-        warningPopUpYesBtn().click();
-    }
-
     public void selectDevices(String... deviceNames) {
         for (String deviceName : deviceNames) {
             checkBox(deviceName).click();
         }
     }
 
-    public void assignSelectedDevices(String... deviceNames) {
+    public void changeOwnerSelectedDevices(String... deviceNames) {
         selectDevices(deviceNames);
-        assignMarkedDeviceBtn().click();
+        changeOwnerDeviceBtn().click();
     }
 
     public void deleteSelectedDevices(String... deviceNames) {
@@ -111,23 +96,23 @@ public class DevicePageHelper extends DevicePageElements {
         submitBtn().click();
     }
 
-    public void makeDevicePublicByRightSideBtn(String deviceName) {
-        makeDevicePublicBtn(deviceName).click();
+    public void makeDeviceGroupPublicByRightSideBtn(String deviceName) {
+        makeDeviceGroupPublicBtn(deviceName).click();
         warningPopUpYesBtn().click();
     }
 
-    public void makeDevicePublicFromDetailsTab() {
-        makeDevicePublicBtnDetailsTab().click();
+    public void makeDeviceGroupPublicFromDetailsTab() {
+        makeDeviceGroupPublicBtnDetailsTab().click();
         warningPopUpYesBtn().click();
     }
 
-    public void makeDevicePrivateByRightSideBtn(String deviceName) {
-        makeDevicePrivateBtn(deviceName).click();
+    public void makeDeviceGroupPrivateByRightSideBtn(String deviceName) {
+        makeDeviceGroupPrivateBtn(deviceName).click();
         warningPopUpYesBtn().click();
     }
 
-    public void makeDevicePrivateFromDetailsTab() {
-        makeDevicePrivateBtnDetailsTab().click();
+    public void makeDeviceGroupPrivateFromDetailsTab() {
+        makeDeviceGroupPrivateBtnDetailsTab().click();
         warningPopUpYesBtn().click();
     }
 }

@@ -1,35 +1,40 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (!standalone) {
   <div class="tb-details-buttons xs:flex xs:flex-col">
+    @if (resource.TENANT_PROFILE | hasGenericPermission: operation.WRITE) {
+      <button mat-stroked-button color="primary"
+        [disabled]="(isLoading$ | async)"
+        (click)="onEntityAction($event, 'open')"
+        [class.!hidden]="isEdit || isDetailsPage">
+        {{'common.open-details-page' | translate }}
+      </button>
+    }
     <button mat-stroked-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'open')"
-            [class.!hidden]="isEdit || isDetailsPage">
-      {{'common.open-details-page' | translate }}
-    </button>
-    <button mat-stroked-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'setDefault')"
-            [class.!hidden]="isEdit || entity?.default">
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'setDefault')"
+      [class.!hidden]="isEdit || entity?.default">
       {{'tenant-profile.set-default' | translate }}
     </button>
-    <button mat-stroked-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'delete')"
-            [class.!hidden]="hideDelete() || isEdit">
-      {{'tenant-profile.delete' | translate }}
-    </button>
+    @if (resource.TENANT_PROFILE | hasGenericPermission: operation.DELETE) {
+      <button mat-stroked-button color="primary"
+        [disabled]="(isLoading$ | async)"
+        (click)="onEntityAction($event, 'delete')"
+        [class.!hidden]="hideDelete() || isEdit">
+        {{'tenant-profile.delete' | translate }}
+      </button>
+    }
     <div class="flex flex-row xs:flex-col">
       <button mat-stroked-button
-              ngxClipboard
-              (cbOnSuccess)="onTenantProfileIdCopied($event)"
-              [cbContent]="entity?.id?.id"
-              [class.!hidden]="isEdit">
+        ngxClipboard
+        (cbOnSuccess)="onTenantProfileIdCopied($event)"
+        [cbContent]="entity?.id?.id"
+        [class.!hidden]="isEdit">
         <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
         <span translate>tenant-profile.copyId</span>
       </button>
@@ -38,7 +43,7 @@
 }
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+    <fieldset [disabled]="(isLoading$ | async)">
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>tenant-profile.name</mat-label>
         <input matInput formControlName="name" required/>

@@ -1,0 +1,95 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectReportTemplateFormGroup"
+                [class]="{'tb-inline-field': inlineField, 'flex': inlineField,
+                          'tb-suffix-absolute': (inlineField && !selectReportTemplateFormGroup.get('reportTemplate').value)}"
+  class="mat-block"
+  [floatLabel]="floatLabel"
+  [appearance]="inlineField ? 'outline' : appearance"
+  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  @if (!inlineField) {
+    <mat-label>{{ labelTranslationKey | translate }}</mat-label>
+  }
+  <input matInput type="text"
+    #reportTemplateInput
+    placeholder="{{ placeholder ? placeholder : (placeholderTranslationKey | translate) }}"
+    formControlName="reportTemplate"
+    (focusin)="onFocus()"
+    [required]="required"
+    [matAutocomplete]="reportTemplateAutocomplete"
+    [class.!hidden]="disabled && selectReportTemplateFormGroup.get('reportTemplate').value">
+  @if (selectReportTemplateFormGroup.get('reportTemplate').value && disabled) {
+    <a
+      [attr.aria-label]="'report-template.open-report-template' | translate"
+      [routerLink]=reportTemplateURL>
+      {{ displayReportTemplateFn(selectReportTemplateFormGroup.get('reportTemplate').value) }}
+    </a>
+  }
+  @if (selectReportTemplateFormGroup.get('reportTemplate').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (selectReportTemplateFormGroup.get('reportTemplate').value && newTabDetailsButton && reportTemplateURL !== '' && !disabled) {
+    <button
+      type="button"
+      matTooltip="{{ openNewTabTranslationKey | translate }}"
+      matTooltipPosition="above"
+      matSuffix mat-icon-button aria-label="Details"
+      (click)="openReportTemplateNewTab($event)">
+      <tb-icon matButtonIcon>open_in_new</tb-icon>
+    </button>
+  }
+  @if (inlineField && selectReportTemplateFormGroup.get('reportTemplate').hasError('required')
+    && selectReportTemplateFormGroup.get('reportTemplate').touched) {
+    <mat-icon matSuffix
+      matTooltipPosition="above"
+      matTooltipClass="tb-error-tooltip"
+      [matTooltip]="reportTemplateRequiredTranslationKey | translate"
+      class="tb-error">
+      warning
+    </mat-icon>
+  }
+  <mat-autocomplete
+    class="tb-autocomplete"
+    #reportTemplateAutocomplete="matAutocomplete"
+    [displayWith]="displayReportTemplateFn">
+    @for (reportTemplate of filteredReportTemplates | async; track reportTemplate) {
+      <mat-option [value]="reportTemplate">
+        <span [innerHTML]="reportTemplate.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredReportTemplates | async)?.length) {
+      <mat-option [value]="null">
+        <div (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span>{{ noReportTemplatesTranslationKey | translate }}</span>
+            </div>
+          } @else {
+            <span>
+              {{ translate.get(noReportTemplatesMatchingTranslationKey, {entity: searchText}) | async }}
+            </span>
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (!inlineField && showError) {
+    <mat-error>
+      <ng-content select="[tb-error]"></ng-content>
+    </mat-error>
+  }
+  @if (!inlineField && showHint) {
+    <mat-hint>
+      <ng-content select="[tb-hint]"></ng-content>
+    </mat-hint>
+  }
+</mat-form-field>

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import express from 'express';
 import config from 'config';
@@ -9,7 +9,7 @@ import httpProxy from 'http-proxy';
 import compression from 'compression';
 import historyApiFallback from 'connect-history-api-fallback';
 import { Socket } from 'net';
-import { RequestHandler } from 'serve-static';
+import { RequestHandler } from 'express';
 
 const logger = _logger('main');
 
@@ -123,7 +123,7 @@ let connections: Socket[] = [];
 
         const staticServe = express.static(root);
 
-        const indexHtmlFallback: RequestHandler<any> = (req, res, next) => {
+        const indexHtmlFallback: RequestHandler = (req, res, next) => {
           res.sendFile(path.join(root, 'index.html'));
         };
 

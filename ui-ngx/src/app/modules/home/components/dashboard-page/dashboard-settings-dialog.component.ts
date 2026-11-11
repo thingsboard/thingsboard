@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnDestroy, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -115,6 +116,8 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
         showUpdateDashboardImage: [
           {value: isUndefined(this.settings.showUpdateDashboardImage) ? true : this.settings.showUpdateDashboardImage,
           disabled: hideToolbar}, []],
+        showConfigureWithAi: [{value: isUndefined(this.settings.showConfigureWithAi) ? true : this.settings.showConfigureWithAi,
+          disabled: hideToolbar}, []],
         dashboardCss: [isUndefined(this.settings.dashboardCss) ? '' : this.settings.dashboardCss, []],
       });
       this.settingsFormGroup.get('stateControllerId').valueChanges.pipe(
@@ -160,6 +163,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
             this.settingsFormGroup.get('showDashboardTimewindow').disable();
             this.settingsFormGroup.get('showDashboardExport').disable();
             this.settingsFormGroup.get('showUpdateDashboardImage').disable();
+            this.settingsFormGroup.get('showConfigureWithAi').disable();
           } else {
             this.settingsFormGroup.get('toolbarAlwaysOpen').enable();
             this.settingsFormGroup.get('showDashboardsSelect').enable();
@@ -168,6 +172,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
             this.settingsFormGroup.get('showDashboardTimewindow').enable();
             this.settingsFormGroup.get('showDashboardExport').enable();
             this.settingsFormGroup.get('showUpdateDashboardImage').enable();
+            this.settingsFormGroup.get('showConfigureWithAi').enable();
           }
         }
       );

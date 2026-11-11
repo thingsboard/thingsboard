@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.debug;
 
 import com.google.common.util.concurrent.Futures;
@@ -59,8 +60,9 @@ import static org.mockito.Mockito.times;
 @ExtendWith(MockitoExtension.class)
 public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW,
-            EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_NODE);
+    private final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW,
+            EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_NODE,
+            EntityType.CONVERTER, EntityType.INTEGRATION, EntityType.SCHEDULER_EVENT, EntityType.BLOB_ENTITY, EntityType.ROLE, EntityType.ENTITY_GROUP);
 
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1c649392-1f53-4377-b12f-1ba172611746"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("4470dfc2-f621-42b2-b82c-b5776d424140"));
@@ -150,7 +152,9 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"ASSET", "DEVICE", "ENTITY_VIEW", "CUSTOMER", "USER", "DASHBOARD", "EDGE"})
+    @ValueSource(strings = {
+            "ASSET", "DEVICE", "ENTITY_VIEW", "CUSTOMER", "USER", "DASHBOARD", "EDGE",
+            "CONVERTER", "INTEGRATION", "SCHEDULER_EVENT", "BLOB_ENTITY", "ROLE"})
     public void givenOriginatorEntityType_whenInit_thenVerifyOriginatorId(String entityTypeStr) throws TbNodeException {
         // GIVEN
         EntityType entityType = EntityType.valueOf(entityTypeStr);
@@ -280,18 +284,33 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
                         "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"RULE_NODE\", \"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}"),
                 // config for version 2 with upgrade from version 1 (originatorType is not selected)
                 Arguments.of(1,
-                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":null,\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}",
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":null,\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"groupOwnerId\": null,\"groupType\": null}",
                         true,
                         "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"RULE_NODE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}"),
                 // config for version 2 with upgrade from version 1 (originatorId is not selected)
                 Arguments.of(1,
-                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}",
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"groupOwnerId\": null,\"groupType\": null}",
                         true,
                         "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"RULE_NODE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}"),
                 // config for version 2 with upgrade from version 1 (originatorType and originatorId are selected)
                 Arguments.of(1,
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"groupOwnerId\": null,\"groupType\": null}",
+                        true,
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}"),
+                // config for version 2 with upgrade from version 1 (groupOwnerId and groupType do not exist)
+                Arguments.of(1,
                         "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}",
                         false,
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}"),
+                // config for version 2 with upgrade from version 1 (groupOwnerId does not exist)
+                Arguments.of(1,
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"groupType\": null}",
+                        true,
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}"),
+                // config for version 2 with upgrade from version 1 (groupType does not exist)
+                Arguments.of(1,
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"groupOwnerId\": null}",
+                        true,
                         "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}")
 
         );

@@ -1,14 +1,17 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport;
 
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ResourceDeleteMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ResourceUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
@@ -29,18 +32,18 @@ public interface SessionMsgListener {
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
 
-    void onDeviceDeleted(DeviceId deviceId);
-
     default void onUplinkNotification(UplinkNotificationMsg notificationMsg){};
 
     default void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials){}
 
-    default void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {}
+    default void onDeviceProfileUpdate(SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {}
 
-    default void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device,
+    default void onDeviceUpdate(SessionInfoProto sessionInfo, Device device,
                                 Optional<DeviceProfile> deviceProfileOpt) {}
 
-    default void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt) {}
+    default void onDeviceDeleted(DeviceId deviceId) {}
 
-    default void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceUpdateMsgOpt) {}
+    default void onResourceUpdate(ResourceUpdateMsg resourceUpdateMsgOpt) {}
+
+    default void onResourceDelete(ResourceDeleteMsg resourceUpdateMsgOpt) {}
 }

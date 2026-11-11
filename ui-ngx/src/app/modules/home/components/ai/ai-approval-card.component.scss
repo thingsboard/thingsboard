@@ -1,0 +1,83 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  padding: 16px;
+
+  &.executing {
+    color: rgba(0, 0, 0, 0.76);
+  }
+
+  &.approved {
+    color: #198038;
+    background-color: rgba(25, 128, 56, 0.06);
+  }
+
+  &.denied {
+    color: rgba(0, 0, 0, 0.54);
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+
+  &.error {
+    color: #D12730;
+    background-color: rgba(209, 39, 48, 0.08);
+  }
+
+  .approval-title {
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+  }
+
+  .approval-content {
+    font-size: 14px;
+    line-height: 20px;
+    margin-bottom: 16px;
+    color: rgba(0, 0, 0, 0.54);
+    letter-spacing: 0.25px;
+  }
+
+  .approval-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+
+    .approved {
+      flex: 1;
+      --mat-button-filled-label-text-color: #FFF;
+      --mat-button-filled-container-color: #198038;
+    }
+
+    .danger {
+      flex: 1;
+      --mat-button-filled-label-text-color: #FFF;
+      --mat-button-filled-container-color: #d32f2f;
+    }
+
+    .denied {
+      flex: 1;
+      --mat-button-outlined-label-text-color: #FF5722;
+    }
+  }
+
+  .approve-all {
+    width: 100%;
+    margin-top: 8px;
+    --mat-button-text-label-text-color: rgba(0, 0, 0, 0.54);
+    --mat-button-text-container-height: 32px;
+  }
+
+  .approval-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+  }
+}

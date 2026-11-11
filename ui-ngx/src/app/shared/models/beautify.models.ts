@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Observable } from 'rxjs/internal/Observable';
 import { from, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -53,6 +54,17 @@ export function beautifyJs(source: string, options?: any): Observable<string> {
     map((mod) => {
       return mod.js_beautify(source, options);
     })
+  );
+}
+
+const tbelSafeNav = '.?';
+const tbelSafeNavPlaceholder = '._TSN_';
+
+export function beautifyTbel(source: string, options?: any): Observable<string> {
+  const masked = source?.split(tbelSafeNav).join(tbelSafeNavPlaceholder);
+  const tbelOptions = {...(options ?? {}), wrap_line_length: 0};
+  return beautifyJs(masked, tbelOptions).pipe(
+    map((res) => res?.split(tbelSafeNavPlaceholder).join(tbelSafeNav))
   );
 }
 

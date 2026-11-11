@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.ws;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,9 +15,11 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.service.log.LogStreamDispatcher;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.subscription.TbEntityDataSubscriptionService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.ws.notification.NotificationCommandsHandler;
@@ -47,10 +50,12 @@ class DefaultWebSocketServiceTest {
                 mock(NotificationCommandsHandler.class),
                 msgEndpoint,
                 mock(AccessValidator.class),
+                mock(AccessControlService.class),
                 mock(AttributesService.class),
                 mock(TimeseriesService.class),
                 mock(TbServiceInfoProvider.class),
-                tenantProfileCache
+                tenantProfileCache,
+                mock(LogStreamDispatcher.class)
         );
     }
 

@@ -1,0 +1,47 @@
+{
+  "type": "SCRIPT",
+  "name": "Update irrigation state",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "0d58a217-f0d9-4ab6-b8be-d7d41fb36437"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "SCRIPT",
+    "arguments": {
+      "currentIrrigationWaterConsumption": {
+        "refEntityKey": {
+          "key": "currentIrrigationWaterConsumption",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      },
+      "irrigationState": {
+        "refEntityKey": {
+          "key": "irrigationState",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      },
+      "irrigationTask": {
+        "refEntityKey": {
+          "key": "irrigationTask",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      }
+    },
+    "expression": "irrigationTask.consumption = currentIrrigationWaterConsumption;\nirrigationTask.duration = ctx.latestTs - irrigationTask.startTs;\n\nvar values = {\n    \"irrigationTask\": irrigationTask\n};\n\n\nvar shouldTurnOff = false;\n\nif (irrigationTask == null) {\n    shouldTurnOff = true;\n} else if (irrigationTask.durationThreshold > 0) {\n    shouldTurnOff = (irrigationTask.startTs + irrigationTask.durationThreshold) <= ctx.latestTs;\n} else {\n    shouldTurnOff = currentIrrigationWaterConsumption >= irrigationTask.consumptionThreshold;\n}\n\nif (shouldTurnOff) {\n    values.irrigationState = \"DONE\";\n}\n\nreturn {\n    \"ts\": ctx.args.irrigationTask.ts,\n    \"values\": values\n}",
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.job;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -22,6 +23,7 @@ import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.TaskResult;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -169,7 +171,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                     .entity(job)
                     .build());
         }
-        log.info("[{}] Saved job: {}", tenantId, job);
+        log.debug("[{}] Saved job: {}", tenantId, job);
         if (prevStatus != null && job.getStatus() != prevStatus) {
             log.info("[{}][{}][{}] New job status: {} -> {}", tenantId, job.getId(), job.getType(), prevStatus, job.getStatus());
             if (job.getStatus().isOneOf(CANCELLED, COMPLETED, FAILED) && prevStatus != QUEUED) { // if prev status is QUEUED - means there are already running jobs with this type, no need to check for waiting job
@@ -195,7 +197,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         Set<EntityId> entityIds = jobs.getData().stream()
                 .map(Job::getEntityId)
                 .collect(Collectors.toSet());
-        Map<EntityId, EntityInfo> entityInfos = entityService.fetchEntityInfos(tenantId, null, entityIds);
+        Map<EntityId, EntityInfo> entityInfos = entityService.fetchEntityInfos(tenantId, null, entityIds, MergedUserPermissions.ALL);
         jobs.getData().forEach(job -> {
             EntityInfo entityInfo = entityInfos.get(job.getEntityId());
             if (entityInfo != null) {

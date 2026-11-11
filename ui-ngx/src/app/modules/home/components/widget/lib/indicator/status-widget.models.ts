@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { DataToValueType, GetValueAction, GetValueSettings } from '@shared/models/action-widget-settings.models';
 import { BackgroundSettings, BackgroundType, cssUnit, Font } from '@shared/models/widget-settings.models';
 
@@ -130,7 +131,7 @@ export const statusWidgetDefaultSettings: StatusWidgetSettings = {
     secondaryColor: 'rgba(255, 255, 255, 0.80)',
     background: {
       type: BackgroundType.color,
-      color: '#3F52DD',
+      color: 'var(--tb-primary-500)',
       overlay: {
         enabled: false,
         color: 'rgba(255,255,255,0.72)',

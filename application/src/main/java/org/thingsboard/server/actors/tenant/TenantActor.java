@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.tenant;
 
 import lombok.extern.slf4j.Slf4j;
@@ -110,6 +111,8 @@ public class TenantActor extends RuleChainManagerActor {
             }
         } catch (Exception e) {
             log.warn("[{}] Unknown failure", tenantId, e);
+//            TODO: throw this in 3.1?
+//            throw new TbActorException("Failed to init actor", e);
         }
     }
 
@@ -196,8 +199,8 @@ public class TenantActor extends RuleChainManagerActor {
 
     private void forwardToCfActor(TenantAwareMsg msg, boolean priority) {
         if (cfActor == null) {
-            if (msg instanceof CalculatedFieldStateRestoreMsg) {
-                log.warn("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
+            if (msg instanceof CalculatedFieldStateRestoreMsg restoreMsg) {
+                log.warn("[{}] CF Actor is not initialized. Skipping CF state restore: [{}]", tenantId, restoreMsg.getId());
             } else {
                 log.debug("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
             }
@@ -282,7 +285,7 @@ public class TenantActor extends RuleChainManagerActor {
                         log.info("[{}] Failed to init CF Actor.", tenantId, e);
                     }
                 }
-                if (!ruleChainsInitialized) {
+                if (!ruleChainsInitialized && getApiUsageState().isReExecEnabled()) {
                     log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
                     initRuleChains();
                 }
@@ -312,15 +315,21 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        if (msg.getEntityId().getEntityType().equals(EntityType.API_USAGE_STATE)) {
+        EntityType entityType = msg.getEntityId().getEntityType();
+        if (entityType.equals(EntityType.API_USAGE_STATE)) {
             ApiUsageState old = getApiUsageState();
             apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
-            if (old.isReExecEnabled() && !apiUsageState.isReExecEnabled()) {
-                log.info("[{}] Received API state update. Going to DISABLE Rule Engine execution.", tenantId);
-                destroyRuleChains();
-            } else if (!old.isReExecEnabled() && apiUsageState.isReExecEnabled()) {
-                log.info("[{}] Received API state update. Going to ENABLE Rule Engine execution.", tenantId);
-                initRuleChains();
+            // Rule chains are initialized only on the rule engine service that manages the tenant, with the same checks
+            // (isRuleEngine, isManagedByCurrentService, isReExecEnabled) as in init() and onPartitionChangeMsg()
+            if (isRuleEngine) {
+                if (old.isReExecEnabled() && !apiUsageState.isReExecEnabled()) {
+                    log.info("[{}] Received API state update. Going to DISABLE Rule Engine execution.", tenantId);
+                    destroyRuleChains();
+                } else if (!old.isReExecEnabled() && apiUsageState.isReExecEnabled()
+                        && systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                    log.info("[{}] Received API state update. Going to ENABLE Rule Engine execution.", tenantId);
+                    initRuleChains();
+                }
             }
         }
         if (msg.getEntityId().getEntityType() == EntityType.DEVICE && ComponentLifecycleEvent.DELETED == msg.getEvent() && isMyPartition(msg.getEntityId())) {
@@ -329,10 +338,10 @@ public class TenantActor extends RuleChainManagerActor {
             deletedDevices.add(deviceId);
         }
         if (isRuleEngine) {
-            if (ruleChainsInitialized) {
+            if (ruleChainsInitialized && !(entityType.equals(EntityType.INTEGRATION) || entityType.equals(EntityType.CONVERTER))) {
                 TbActorRef target = getEntityActorRef(msg.getEntityId());
                 if (target != null) {
-                    if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+                    if (entityType == EntityType.RULE_CHAIN) {
                         RuleChain ruleChain = systemContext.getRuleChainService().
                                 findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
                         if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {

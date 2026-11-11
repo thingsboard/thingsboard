@@ -1,0 +1,45 @@
+{
+  "end_device_ids": {
+    "device_id": "vadymdevice1",
+    "application_ids": {
+      "application_id": "vadym-application"
+    },
+    "dev_eui": "70B3D57ED006F370",
+    "join_eui": "0000000000000000"
+  },
+  "correlation_ids": [
+    "as:up:01JRFKVBM468QGBBRBE3VKSPT3",
+    "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:9b789f66-02fa-420a-be5b-49aa20016bce"
+  ],
+  "received_at": "2025-04-10T10:27:38.243792904Z",
+  "uplink_message": {
+    "f_port": 1,
+    "frm_payload": "Ae0DM18OTGM=",
+    "decoded_payload": {
+      "sn": 32310067,
+      "battery": 95,
+      "temperature": 36.6,
+      "saturation": 99
+    },
+    "rx_metadata": [
+      {
+        "gateway_ids": {
+          "gateway_id": "test"
+        },
+        "rssi": 42,
+        "channel_rssi": 42,
+        "snr": 4.2
+      }
+    ],
+    "settings": {
+      "data_rate": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreading_factor": 7
+        }
+      },
+      "frequency": "868000000"
+    }
+  },
+  "simulated": true
+}

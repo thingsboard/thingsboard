@@ -1,0 +1,50 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectFormGroup" class="mat-block" appearance="outline">
+  <mat-label>{{ (labelKey || 'agent.app-related-entity') | translate }}</mat-label>
+  <input matInput type="text"
+         #relatedEntityInput
+         formControlName="relatedEntity"
+         (focusin)="onFocus()"
+         [required]="required"
+         [matAutocomplete]="relatedEntityAutocomplete">
+  @if (required && selectFormGroup.get('relatedEntity').hasError('required')) {
+    <mat-error>{{ 'agent.app-related-entity-required' | translate }}</mat-error>
+  }
+  @if (selectFormGroup.get('relatedEntity').value && !disabled) {
+    <button type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (allowCreate && !disabled && !selectFormGroup.get('relatedEntity').value) {
+    <button mat-button color="primary" matSuffix type="button"
+            (mousedown)="$event.preventDefault()"
+            (click)="createEntity($event)">
+      <span style="white-space: nowrap">{{ 'agent.deploy-create-new' | translate }}</span>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete"
+                    #relatedEntityAutocomplete="matAutocomplete"
+                    [displayWith]="displayOptionFn">
+    @if (filteredOptions | async; as options) {
+      @for (option of options; track option.id) {
+        <mat-option [value]="option">
+          <span>{{ option.name }}</span>
+        </mat-option>
+      }
+      @if (!options.length) {
+        <mat-option [value]="null" class="tb-not-found" disabled>
+          <div class="tb-not-found-content">
+            <span>{{ (allowCreate && !disabled ? 'agent.app-related-entity-none-create' : 'agent.app-related-entity-none') | translate }}</span>
+          </div>
+        </mat-option>
+      }
+    }
+  </mat-autocomplete>
+</mat-form-field>

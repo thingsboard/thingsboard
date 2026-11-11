@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import { DEFAULT_ZOOM_LEVEL, WidgetUnitedMapSettings } from '../map-models';
@@ -18,16 +19,27 @@ export class GoogleMap extends LeafletMap {
 
   constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
     super(ctx, $container, options);
+    let mapUuid: string;
+    if (this.ctx.reportService.reportView) {
+      mapUuid = this.ctx.reportService.onWaitForMap();
+    }
     this.resource = ctx.$injector.get(ResourcesService);
     this.loadGoogle(() => {
       const map = L.map($container, {
         attributionControl: false,
         doubleClickZoom: !this.options.disableDoubleClickZooming,
-        zoomControl: !this.options.disableZoomControl
+        zoomControl: !this.options.disableZoomControl,
+        fadeAnimation: !ctx.reportService.reportView
       }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
-      (L.gridLayer as any).googleMutant({
+      const tileLayer = (L.gridLayer as any).googleMutant({
         type: options?.gmDefaultMapType || 'roadmap'
-      }).addTo(map);
+      });
+      tileLayer.addTo(map);
+      if (this.ctx.reportService.reportView) {
+        tileLayer.once('load', () => {
+          this.ctx.reportService.onMapLoaded(mapUuid);
+        });
+      }
       super.setMap(map);
     }, options.gmApiKey);
   }

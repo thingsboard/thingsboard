@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -17,7 +18,7 @@ import {
   BooleanOperation, booleanOperationTranslationMap,
   NumericOperation, numericOperationTranslationMap,
   StringOperation, stringOperationTranslationMap, ComplexFilterPredicateInfo, KeyFilterPredicateUserInfo,
-  KeyFilterPredicate
+  KeyFilterPredicate, toKeyFilterPredicate
 } from '@shared/models/query/query.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ComplexFilterPredicateDialogData } from '@home/components/filter/filter-component.models';
@@ -144,21 +145,7 @@ export class FilterPredicateComponent implements ControlValueAccessor, Validator
     let predicate: KeyFilterPredicateInfo = null;
     if (this.filterPredicateFormGroup.valid) {
       const v = this.filterPredicateFormGroup.getRawValue();
-      let keyFilterPredicate: KeyFilterPredicate;
-      if (this.type === FilterPredicateType.COMPLEX) {
-        keyFilterPredicate = {
-          type: FilterPredicateType.COMPLEX,
-          operation: v.operation,
-          predicates: v.predicates
-        } as KeyFilterPredicate;
-      } else {
-        keyFilterPredicate = {
-          type: this.type,
-          value: v.value,
-          operation: v.operation,
-          ignoreCase: !!v.ignoreCase
-        } as KeyFilterPredicate;
-      }
+      const keyFilterPredicate: KeyFilterPredicate = toKeyFilterPredicate(this.type, v);
       predicate = {
         keyFilterPredicate,
         userInfo: v.userInfo

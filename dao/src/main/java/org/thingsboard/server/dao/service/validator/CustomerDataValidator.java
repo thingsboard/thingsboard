@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +11,9 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.customer.CustomerServiceImpl;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.exception.DataValidationException;
 
 @Component
 public class CustomerDataValidator extends DataValidator<Customer> {
@@ -40,7 +41,7 @@ public class CustomerDataValidator extends DataValidator<Customer> {
     @Override
     protected void validateDataImpl(TenantId tenantId, Customer customer) {
         validateString("Customer title", customer.getTitle());
-        if (customer.getTitle().equals(CustomerServiceImpl.PUBLIC_CUSTOMER_TITLE)) {
+        if (customer.getTitle().equals(CustomerServiceImpl.PUBLIC_CUSTOMER_SUFFIX)) {
             throw new DataValidationException("'Public' title for customer is system reserved!");
         }
         if (!StringUtils.isEmpty(customer.getEmail())) {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.resource.sql;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -47,10 +48,10 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.ai.AiModelService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.service.resource.TbResourceService;
 
@@ -601,6 +602,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNull(foundResource);
     }
+
 
     @Test
     public void testShouldNotDeleteResourceIfUsedInAiNode() throws Exception {

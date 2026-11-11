@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="legendConfigForm">
@@ -34,17 +35,21 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="tb-form-row space-between column-lt-md">
-    <div translate>legend.show-values</div>
-    <mat-chip-listbox multiple formControlName="showValues">
-      <mat-chip-option value="min">{{ 'legend.min-option' | translate }}</mat-chip-option>
-      <mat-chip-option value="max">{{ 'legend.max-option' | translate }}</mat-chip-option>
-      <mat-chip-option value="average">{{ 'legend.average-option' | translate }}</mat-chip-option>
-      <mat-chip-option value="total">{{ 'legend.total-option' | translate }}</mat-chip-option>
-      <mat-chip-option value="latest">{{ 'legend.latest-option' | translate }}</mat-chip-option>
-    </mat-chip-listbox>
-  </div>
-  <mat-slide-toggle class="mat-slide" formControlName="sortDataKeys">
-    {{ 'legend.sort-legend' | translate }}
-  </mat-slide-toggle>
+  @if (!hideValues) {
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>legend.show-values</div>
+      <mat-chip-listbox multiple formControlName="showValues">
+        <mat-chip-option value="min">{{ 'legend.min-option' | translate }}</mat-chip-option>
+        <mat-chip-option value="max">{{ 'legend.max-option' | translate }}</mat-chip-option>
+        <mat-chip-option value="average">{{ 'legend.average-option' | translate }}</mat-chip-option>
+        <mat-chip-option value="total">{{ 'legend.total-option' | translate }}</mat-chip-option>
+        <mat-chip-option value="latest">{{ 'legend.latest-option' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+  }
+  @if (!hideSortDataKeys) {
+    <mat-slide-toggle class="mat-slide" formControlName="sortDataKeys">
+      {{ 'legend.sort-legend' | translate }}
+    </mat-slide-toggle>
+  }
 </ng-container>

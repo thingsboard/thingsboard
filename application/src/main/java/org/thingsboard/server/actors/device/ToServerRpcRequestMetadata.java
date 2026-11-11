@@ -1,9 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.device;
 
 import lombok.Data;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionType;
 
 import java.util.UUID;
 
@@ -13,6 +14,6 @@ import java.util.UUID;
 @Data
 public class ToServerRpcRequestMetadata {
     private final UUID sessionId;
-    private final TransportProtos.SessionType type;
+    private final SessionType type;
     private final String nodeId;
 }

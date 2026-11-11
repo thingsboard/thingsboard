@@ -1,0 +1,337 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div>
+  <mat-card appearance="outlined" class="settings-card">
+    <mat-card-header>
+      <mat-card-title>
+        <span class="mat-headline-5">{{ (isLoginWl ? 'white-labeling.login-white-labeling' : 'white-labeling.white-labeling') | translate }}</span>
+      </mat-card-title>
+      <span class="flex-1"></span>
+      <div tb-help="whiteLabeling"></div>
+    </mat-card-header>
+    @if (isLoading$ | async) {
+      <mat-progress-bar color="warn" mode="indeterminate">
+      </mat-progress-bar>
+    } @else {
+      <div style="height: 4px;"></div>
+    }
+    <mat-card-content style="padding-top: 16px;">
+      <form [formGroup]="wlSettings" (ngSubmit)="save()" #wlSettingsForm="ngForm">
+        <fieldset [disabled]="(isLoading$ | async) || readonly" class="flex flex-col gap-10">
+          @if (isLoginWl) {
+            <div class="flex flex-col gap-5">
+              <div class="tb-wl-title">{{ 'white-labeling.domain' | translate }}</div>
+              @if (!isSysAdmin) {
+                <tb-entity-autocomplete
+                  [entityType]="EntityType.DOMAIN"
+                  labelText="white-labeling.domain-name"
+                  useFullEntityId
+                  required
+                  appearance="outline"
+                  subscriptSizing="dynamic"
+                  formControlName="domainId"
+                  [allowCreateNew]="resource.DOMAIN | hasGenericPermission: operation.CREATE"
+                  (entityChanged)="domainChange($event)"
+                  (createNew)="createDomain($event)"
+                >
+                </tb-entity-autocomplete>
+              }
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label translate>white-labeling.base-url</mat-label>
+                <input matInput formControlName="baseUrl"/>
+                @if (wlSettings.get('baseUrl').hasError('required')) {
+                  <mat-error>
+                    {{ 'white-labeling.base-url-required' | translate }}
+                  </mat-error>
+                }
+                @if (wlSettings.get('baseUrl').hasError('pattern')) {
+                  <mat-error>
+                    {{ 'white-labeling.error-verification-url' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+              <mat-checkbox formControlName="prohibitDifferentUrl">
+                <div class="flex flex-col gap-1">
+                  <div class="tb-wl-subtitle">{{ 'white-labeling.prohibit-different-url' | translate }}</div>
+                  <div class="tb-wl-desc">{{ 'white-labeling.prohibit-different-url-hint' | translate }}</div>
+                </div>
+              </mat-checkbox>
+            </div>
+          }
+          <div class="flex flex-col gap-5">
+            <div class="tb-wl-title">{{ 'white-labeling.logo-and-titles' | translate }}</div>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label translate>white-labeling.app-title</mat-label>
+              <input matInput formControlName="appTitle"/>
+              @if (wlSettings.get('appTitle').hasError('maxlength')) {
+                <mat-error>
+                  {{ 'white-labeling.app-title-max-length' | translate }}
+                </mat-error>
+              }
+            </mat-form-field>
+            <div formGroupName="favicon" class="flex flex-col gap-2">
+              <div class="flex flex-col gap-1.5">
+                <div class="tb-wl-subtitle">{{ 'white-labeling.favicon' | translate }}</div>
+                <div class="tb-wl-desc">{{ 'white-labeling.favicon-desc' | translate }}</div>
+              </div>
+              <tb-gallery-image-input
+                noPadding
+                formControlName="url"
+              ></tb-gallery-image-input>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div class="flex flex-col gap-1.5">
+                <div class="tb-wl-subtitle">{{ 'white-labeling.logo' | translate }}</div>
+                <div class="tb-wl-desc">{{ 'white-labeling.logo-desc' | translate }}</div>
+              </div>
+              <tb-gallery-image-input
+                noPadding
+                formControlName="logoImageUrl"
+              ></tb-gallery-image-input>
+            </div>
+            <div class="flex flex-row items-center gap-2">
+              <div class="flex flex-1 flex-col gap-1.5">
+                <div class="tb-wl-subtitle">{{ 'white-labeling.logo-height' | translate }}</div>
+                <div class="tb-wl-desc">{{ 'white-labeling.logo-height-desc' | translate }}</div>
+              </div>
+              <mat-form-field class="tb-wl-logo-height" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" step="1" min="1" placeholder="{{ logoHeightPlaceholder }}"
+                       formControlName="logoImageHeight"
+                       (keydown)="onLogoHeightKeydown($event)"
+                       (mousedown)="onLogoHeightMouseDown($event)"/>
+                <span class="tb-wl-field-suffix" matSuffix>px</span>
+              </mat-form-field>
+            </div>
+            @if (!isLoginWl) {
+              <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-1.5">
+                  <div class="tb-wl-subtitle">{{ 'white-labeling.collapsed-logo' | translate }}</div>
+                  <div class="tb-wl-desc">{{ 'white-labeling.collapsed-logo-desc' | translate }}</div>
+                </div>
+                <tb-gallery-image-input
+                  noPadding
+                  formControlName="collapsedLogoImageUrl"
+                ></tb-gallery-image-input>
+              </div>
+            }
+            <div class="flex flex-col gap-3">
+              @if (!isLoginWl) {
+                <mat-checkbox formControlName="overrideTrendzName">
+                  <div class="flex flex-col gap-1">
+                    <div class="tb-wl-subtitle">{{ 'white-labeling.override-trendz-add-on-name' | translate }}</div>
+                    <div class="tb-wl-desc">{{ 'white-labeling.override-trendz-add-on-name-desc' | translate }}</div>
+                  </div>
+                </mat-checkbox>
+              }
+              <mat-checkbox formControlName="showNameVersion">
+                <div class="tb-wl-subtitle">
+                  {{ (isLoginWl ? 'white-labeling.show-platform-name-version' : 'white-labeling.show-platform-name-version-bottom-left-corner') | translate }}
+                </div>
+              </mat-checkbox>
+              @if (wlSettings.get('showNameVersion').value) {
+                <div class="flex flex-col gap-5 pl-12 pr-4">
+                  <mat-form-field floatLabel='always' appearance="outline" subscriptSizing="dynamic">
+                    <mat-label translate>white-labeling.platform-name</mat-label>
+                    <input matInput required placeholder="ThingsBoard" formControlName="platformName"/>
+                  </mat-form-field>
+                  <mat-form-field floatLabel='always' appearance="outline" subscriptSizing="dynamic">
+                    <mat-label translate>white-labeling.platform-version</mat-label>
+                    <input matInput required placeholder="{{thingsboardVersion}}" formControlName="platformVersion"/>
+                  </mat-form-field>
+                  @if (isLoginWl) {
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <mat-label translate>white-labeling.position.label</mat-label>
+                      <mat-select formControlName="showNameBottom">
+                        @for (position of showPosition; track position) {
+                          <mat-option
+                            [value]="position.value">
+                            {{ position.name | translate }}
+                          </mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          <div class="flex flex-col gap-5">
+            <div class="tb-wl-title">{{ 'white-labeling.appearance' | translate }}</div>
+            @if (!isLoginWl) {
+              <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1.5">
+                  <div class="tb-wl-subtitle">{{ 'white-labeling.application-shell' | translate }}</div>
+                  <div class="tb-wl-desc">{{ 'white-labeling.application-shell-desc' | translate }}</div>
+                </div>
+                <mat-radio-group formControlName="primaryColorPanels" color="primary"
+                                 class="tb-wl-shell-select flex flex-1 flex-row gap-2"
+                                 [style.--tb-primary-shell-preview]="selectedPrimaryColor"
+                                 [style.--tb-accent-shell-preview]="selectedAccentColor">
+                  <mat-radio-button class="flex-1" [value]="false">
+                    <div>{{ 'white-labeling.light' | translate }}</div>
+                    <div class="tb-wl-shell-preview-container"
+                         [innerHtml]="'assets/wl/light-shell.svg' | safeSvg | async">
+                    </div>
+                  </mat-radio-button>
+                  <mat-radio-button class="flex-1" [value]="true">
+                    <div>{{ 'white-labeling.primary' | translate }}</div>
+                    <div class="tb-wl-shell-preview-container"
+                         [innerHtml]="'assets/wl/primary-shell.svg' | safeSvg | async">
+                    </div>
+                  </mat-radio-button>
+                </mat-radio-group>
+              </div>
+            } @else {
+              <div class="tb-wl-login-preview-container"
+                   [style.--tb-login-bg-preview]="selectedLoginPageBackgroundColor"
+                   [style.--tb-login-fg-preview]="selectedLoginPageForegroundColor"
+                   [style.--tb-primary-login-preview]="selectedPrimaryColor"
+                   [style.--tb-accent-login-preview]="selectedAccentColor"
+                   [innerHtml]="'assets/wl/login-preview.svg' | safeSvg | async">
+              </div>
+            }
+            <div class="flex flex-col gap-3">
+              <div formGroupName="paletteSettings" class="flex flex-row items-center gap-4 xs:flex-col xs:items-stretch">
+                <div class="flex flex-1 flex-col gap-1.5">
+                  <div class="tb-wl-subtitle">{{ 'white-labeling.primary-palette' | translate }}</div>
+                  <div class="tb-wl-desc">{{ 'white-labeling.primary-palette-desc' | translate }}</div>
+                </div>
+                <tb-palette class="tb-wl-color flex-1"
+                            [isLogin]="isLoginWl"
+                            [isPrimary]="true"
+                            label="{{ 'white-labeling.primary-palette' | translate }}"
+                            formControlName="primaryPalette"
+                ></tb-palette>
+              </div>
+              @if (isLoginWl) {
+                <mat-checkbox formControlName="darkForeground">
+                  <div class="flex flex-col gap-1">
+                    <div class="tb-wl-subtitle">{{ 'white-labeling.dark-foreground' | translate }}</div>
+                    <div class="tb-wl-desc">{{ 'white-labeling.dark-foreground-desc' | translate }}</div>
+                  </div>
+                </mat-checkbox>
+              }
+            </div>
+            <div formGroupName="paletteSettings" class="flex flex-row items-center gap-4 xs:flex-col xs:items-stretch">
+              <div class="flex flex-1 flex-col gap-1.5">
+                <div class="tb-wl-subtitle">{{ 'white-labeling.accent-palette' | translate }}</div>
+                <div class="tb-wl-desc">{{ 'white-labeling.accent-palette-desc' | translate }}</div>
+              </div>
+              <tb-palette class="tb-wl-color flex-1"
+                [isLogin]="isLoginWl"
+                [isPrimary]="false"
+                label="{{ 'white-labeling.accent-palette' | translate }}"
+                formControlName="accentPalette"
+              ></tb-palette>
+            </div>
+            @if (isLoginWl) {
+              <div class="flex flex-row items-center gap-4 xs:flex-col xs:items-stretch">
+                <div class="flex flex-1 flex-col gap-1.5">
+                  <div class="tb-wl-subtitle">{{ 'white-labeling.page-background-color' | translate }}</div>
+                  <div class="tb-wl-desc">{{ 'white-labeling.page-background-color-desc' | translate }}</div>
+                </div>
+                <tb-color-input
+                  class="tb-wl-color flex-1"
+                  label="{{'white-labeling.page-background-color' | translate}}"
+                  appearance="outline"
+                  subscriptSizing="dynamic"
+                  colorClearPicker
+                  openOnInput
+                  palettePreview
+                  pickerButtonIcon="mdi:palette-outline"
+                  defaultColor="{{ defaultLoginPageBackgroundColor }}"
+                  formControlName="pageBackgroundColor">
+                </tb-color-input>
+              </div>
+            }
+            <div class="flex flex-row items-center gap-4 xs:flex-col xs:items-start">
+              <div class="flex flex-1 flex-col gap-1.5">
+                <div class="tb-wl-subtitle">{{ 'white-labeling.advanced-css' | translate }}</div>
+                <div class="tb-wl-desc">{{ 'white-labeling.advanced-css-desc' | translate }}</div>
+              </div>
+              <button mat-button mat-stroked-button color="primary" [disabled]="(isLoading$ | async) || readonly"
+                      type="button" (click)="editCustomCss()">{{ (hasCustomCSS ? 'white-labeling.edit-custom-css' : 'white-labeling.add-custom-css') | translate}}
+              </button>
+            </div>
+          </div>
+          @if (!isLoginWl && (isTenant || isSysAdmin)) {
+            <div class="flex flex-col gap-4">
+              <div class="tb-wl-title">{{ 'white-labeling.interface-options' | translate }}</div>
+              <div class="flex flex-col gap-3">
+                @if (isTenant) {
+                  <mat-checkbox
+                    [disabled]="wlSettings.get('hideConnectivityDialog')?.disabled"
+                    [checked]="!wlSettings.get('hideConnectivityDialog')?.value"
+                    (change)="onShowConnectivityDialogChange($event.checked)">
+                    <div class="flex flex-col gap-1">
+                      <div class="tb-wl-subtitle">{{ 'white-labeling.show-connectivity-dialog' | translate }}</div>
+                      <div class="tb-wl-desc">{{ 'white-labeling.show-connectivity-dialog-desc' | translate }}</div>
+                    </div>
+                  </mat-checkbox>
+                } @else if (isSysAdmin) {
+                  <mat-checkbox formControlName="enableHelpLinks">
+                    <div class="flex flex-col gap-1">
+                      <div class="tb-wl-subtitle">{{ 'white-labeling.enable-help-links' | translate }}</div>
+                      <div class="tb-wl-desc">{{ 'white-labeling.enable-help-links-desc' | translate }}</div>
+                    </div>
+                  </mat-checkbox>
+                  @if (wlSettings.get('enableHelpLinks').value) {
+                    <div class="pl-12">
+                      <div class="tb-wl-help-links-container">
+                        <div class="flex flex-col gap-2">
+                          <div class="flex flex-col gap-1.5">
+                            <div class="tb-wl-subtitle">{{ 'white-labeling.help-link-base-url' | translate }}</div>
+                            <div class="tb-wl-desc">{{ 'white-labeling.help-link-base-url-desc' | translate }}</div>
+                          </div>
+                          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                            <input matInput formControlName="helpLinkBaseUrl"/>
+                          </mat-form-field>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                          <div class="flex flex-col gap-1.5">
+                            <div class="tb-wl-subtitle">{{ 'white-labeling.ui-help-base-url' | translate }}</div>
+                            <div class="tb-wl-desc">{{ 'white-labeling.ui-help-base-url-desc' | translate }}</div>
+                          </div>
+                          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                            <input matInput formControlName="uiHelpBaseUrl" [placeholder]="uiHelpBaseUrlPlaceholder$ | async"/>
+                          </mat-form-field>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+          <div class="flex w-full flex-wrap items-center justify-between gap-4">
+            <button mat-stroked-button
+              color="warn"
+              [disabled]="(isLoading$ | async)"
+              type="button"
+              (click)="delete(wlSettingsForm)">
+              <tb-icon matButtonIcon>mdi:broom</tb-icon>
+              {{ 'action.reset-default' | translate }}
+            </button>
+            <span class="flex-1"></span>
+            @if (!isLoginWl && !readonly) {
+              <button mat-button mat-raised-button
+                [disabled]="(isLoading$ | async) || wlSettings.invalid"
+                type="button" (click)="preview()">{{ 'white-labeling.preview' | translate }}
+              </button>
+            }
+            @if (!readonly) {
+              <button mat-button mat-raised-button color="primary"
+                [disabled]="(isLoading$ | async) || wlSettings.invalid || !wlSettings.dirty"
+                type="submit">{{ 'action.save' | translate }}
+              </button>
+            }
+          </div>
+        </fieldset>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

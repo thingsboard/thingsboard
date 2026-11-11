@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ACTION_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_BODY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_EDGE_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_GROUP_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_SEQUENTIAL_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TABLE_NAME;
@@ -70,6 +72,9 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
     @Column(name = EDGE_EVENT_UID_PROPERTY)
     private String edgeEventUid;
 
+    @Column(name = EDGE_EVENT_ENTITY_GROUP_ID_PROPERTY)
+    private UUID entityGroupId;
+
     @Column(name = TS_COLUMN)
     private long ts;
 
@@ -90,6 +95,9 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
         if (edgeEvent.getEntityId() != null) {
             this.entityId = edgeEvent.getEntityId();
         }
+        if (edgeEvent.getEntityGroupId() != null) {
+            this.entityGroupId = edgeEvent.getEntityGroupId();
+        }
         this.edgeEventType = edgeEvent.getType();
         this.edgeEventAction = edgeEvent.getAction();
         this.entityBody = edgeEvent.getBody();
@@ -104,6 +112,9 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
         edgeEvent.setEdgeId(new EdgeId(edgeId));
         if (entityId != null) {
             edgeEvent.setEntityId(entityId);
+        }
+        if (entityGroupId != null) {
+            edgeEvent.setEntityGroupId(entityGroupId);
         }
         edgeEvent.setType(edgeEventType);
         edgeEvent.setAction(edgeEventAction);

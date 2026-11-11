@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="hex-input-container">
@@ -18,8 +19,10 @@
       icon="content_copy">
     </tb-copy-button>
   </mat-form-field>
-  <mat-form-field class="alpha-input" subscriptSizing="dynamic">
-    <input matInput #hue type="number" min="0" max="100" [value]="hueValue" (keyup)="onHueInputChange($event, hue.value)">
-    <span matSuffix>%</span>
-  </mat-form-field>
+  @if (alpha) {
+    <mat-form-field class="alpha-input" subscriptSizing="dynamic">
+      <input matInput #hue type="number" min="0" max="100" [value]="hueValue" (keyup)="onHueInputChange($event, hue.value)">
+      <span matSuffix>%</span>
+    </mat-form-field>
+  }
 </div>

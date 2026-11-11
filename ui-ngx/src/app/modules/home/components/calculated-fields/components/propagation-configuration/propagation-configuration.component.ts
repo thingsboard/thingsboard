@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -63,6 +64,9 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
 
   @Input({required: true})
   ownerId: EntityId;
+
+  @Input({ transform: booleanAttribute })
+  readonly: boolean;
 
   @Input({required: true})
   testScript: () => Observable<string>;

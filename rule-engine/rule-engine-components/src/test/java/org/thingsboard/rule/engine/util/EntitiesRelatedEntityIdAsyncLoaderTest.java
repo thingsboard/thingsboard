@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
@@ -12,6 +13,7 @@ import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,6 +34,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -92,6 +95,32 @@ public class EntitiesRelatedEntityIdAsyncLoaderTest {
         verify(relationServiceMock, times(1)).findByQuery(eq(TENANT_ID), eq(expectedEntityRelationsQuery));
     }
 
+    @Test
+    public void givenRelationsQuery_whenFindEntitiesAsync_ShouldBuildCorrectEntityRelationsQuery() {
+        // GIVEN
+        var expectedEntityRelationsQuery = new EntityRelationsQuery();
+        var parameters = new RelationsSearchParameters(
+                ASSET_ORIGINATOR_ID,
+                relationsQuery.getDirection(),
+                relationsQuery.getMaxLevel(),
+                relationsQuery.isFetchLastLevelOnly()
+        );
+        expectedEntityRelationsQuery.setParameters(parameters);
+        expectedEntityRelationsQuery.setFilters(relationsQuery.getFilters());
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        when(relationServiceMock.findByQuery(eq(TENANT_ID), eq(expectedEntityRelationsQuery)))
+                .thenReturn(Futures.immediateFuture(null));
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
+        // WHEN
+        EntitiesRelatedEntityIdAsyncLoader.findEntitiesAsync(ctxMock, ASSET_ORIGINATOR_ID, relationsQuery);
+
+        // THEN
+        verify(relationServiceMock, times(1)).findByQuery(eq(TENANT_ID), eq(expectedEntityRelationsQuery));
+    }
+
 
     @Test
     public void givenSeveralEntitiesFound_whenFindEntityAsync_ShouldKeepOneAndDiscardOthers() throws Exception {
@@ -147,6 +176,61 @@ public class EntitiesRelatedEntityIdAsyncLoaderTest {
         assertEquals(device1.getId(), actualDeviceId);
     }
 
+    @Test
+    public void givenSeveralEntitiesFound_whenFindEntitiesAsync_ShouldKeepAll() throws Exception {
+        // GIVEN
+        var expectedEntityRelationsQuery = new EntityRelationsQuery();
+        var parameters = new RelationsSearchParameters(
+                ASSET_ORIGINATOR_ID,
+                relationsQuery.getDirection(),
+                relationsQuery.getMaxLevel(),
+                relationsQuery.isFetchLastLevelOnly()
+        );
+        expectedEntityRelationsQuery.setParameters(parameters);
+        expectedEntityRelationsQuery.setFilters(relationsQuery.getFilters());
+
+        var device1 = new Device(new DeviceId(UUID.randomUUID()));
+        device1.setName("Device 1");
+        var device2 = new Device(new DeviceId(UUID.randomUUID()));
+        device1.setName("Device 2");
+        var device3 = new Asset(new AssetId(UUID.randomUUID()));
+        device3.setName("Device 3");
+
+        var entityRelationDevice1 = new EntityRelation();
+        entityRelationDevice1.setFrom(ASSET_ORIGINATOR_ID);
+        entityRelationDevice1.setTo(device1.getId());
+        entityRelationDevice1.setType(EntityRelation.CONTAINS_TYPE);
+
+        var entityRelationDevice2 = new EntityRelation();
+        entityRelationDevice2.setFrom(ASSET_ORIGINATOR_ID);
+        entityRelationDevice2.setTo(device2.getId());
+        entityRelationDevice2.setType(EntityRelation.CONTAINS_TYPE);
+
+        var entityRelationDevice3 = new EntityRelation();
+        entityRelationDevice3.setFrom(ASSET_ORIGINATOR_ID);
+        entityRelationDevice3.setTo(device3.getId());
+        entityRelationDevice3.setType(EntityRelation.CONTAINS_TYPE);
+
+        var expectedEntityRelationsList = List.of(entityRelationDevice1, entityRelationDevice2, entityRelationDevice3);
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        when(relationServiceMock.findByQuery(eq(TENANT_ID), eq(expectedEntityRelationsQuery)))
+                .thenReturn(Futures.immediateFuture(expectedEntityRelationsList));
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+
+        // WHEN
+        var relatedEntityIdsFuture = EntitiesRelatedEntityIdAsyncLoader.findEntitiesAsync(ctxMock, ASSET_ORIGINATOR_ID, relationsQuery);
+
+        // THEN
+        assertNotNull(relatedEntityIdsFuture);
+
+        var actualRelatedEntityIdsFuture = relatedEntityIdsFuture.get();
+        assertNotNull(actualRelatedEntityIdsFuture);
+        List<EntityId> expectedEntityIdsList = List.of(device1.getId(), device2.getId(), device3.getId());
+        assertTrue(actualRelatedEntityIdsFuture.containsAll(expectedEntityIdsList));
+    }
+
 
     @Test
     public void givenRelationQuery_whenFindEntityAsync_thenOK() {
@@ -191,10 +275,68 @@ public class EntitiesRelatedEntityIdAsyncLoaderTest {
         verifyEntityIdFuture(entityIdFuture, ASSET_ORIGINATOR_ID);
     }
 
+    @Test
+    public void givenRelationQuery_whenFindEntitiesAsync_thenOK() {
+        // GIVEN
+        List<EntityRelation> entityRelations = new ArrayList<>();
+        entityRelations.add(createEntityRelation(TENANT_ID, ASSET_ORIGINATOR_ID));
+
+        when(relationServiceMock.findByQuery(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Futures.immediateFuture(entityRelations));
+
+        // WHEN
+        ListenableFuture<List<EntityId>> entityIdListFuture = EntitiesRelatedEntityIdAsyncLoader.findEntitiesAsync(ctxMock, TENANT_ID, relationsQuery);
+
+        // THEN
+        verifyEntityIdListFuture(entityIdListFuture, entityRelations, ASSET_ORIGINATOR_ID);
+    }
+
+    @Test
+    public void givenRelationQuery_whenFindEntitiesAsync_thenReturnEmptyList() {
+        // GIVEN
+        List<EntityRelation> entityRelations = new ArrayList<>();
+
+        when(relationServiceMock.findByQuery(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Futures.immediateFuture(entityRelations));
+
+        // WHEN
+        ListenableFuture<List<EntityId>> entityIdListFuture = EntitiesRelatedEntityIdAsyncLoader.findEntitiesAsync(ctxMock, TENANT_ID, relationsQuery);
+
+        // THEN
+        verifyEntityIdListFuture(entityIdListFuture, entityRelations, ASSET_ORIGINATOR_ID);
+    }
+
+    @Test
+    public void givenRelationQuery_whenFindEntitiesAsync_thenFailure() {
+        // GIVEN
+        relationsQuery.setDirection(null);
+
+        List<EntityRelation> entityRelations = new ArrayList<>();
+        entityRelations.add(createEntityRelation(TENANT_ID, ASSET_ORIGINATOR_ID));
+
+        when(relationServiceMock.findByQuery(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Futures.immediateFuture(entityRelations));
+
+        // WHEN
+        ListenableFuture<List<EntityId>> entityIdListFuture = EntitiesRelatedEntityIdAsyncLoader.findEntitiesAsync(ctxMock, TENANT_ID, relationsQuery);
+        verifyEntityIdListFuture(entityIdListFuture, entityRelations, ASSET_ORIGINATOR_ID);
+    }
+
     private void verifyEntityIdFuture(ListenableFuture<EntityId> entityIdFuture, EntityId assetId) {
         withCallback(entityIdFuture,
                 entityId -> assertThat(entityId).isEqualTo(assetId),
                 throwable -> assertThat(throwable).isInstanceOf(IllegalStateException.class), ctxMock.getDbCallbackExecutor());
+    }
+
+    private void verifyEntityIdListFuture(ListenableFuture<List<EntityId>> entityIdListFuture, List<EntityRelation> entityRelations, EntityId assetId) {
+        withCallback(entityIdListFuture,
+                entityIdList -> {
+                    assertThat(entityIdList).isInstanceOf(List.class);
+                    assertThat(entityIdList.size()).isEqualTo(entityRelations.size());
+                    if (entityIdList.size() > 0) {
+                        assertThat(entityIdList.get(0)).isEqualTo(assetId);
+                    }
+                },
+                throwable -> {
+                    assertThat(throwable).isInstanceOf(IllegalStateException.class);
+                }, ctxMock.getDbCallbackExecutor());
     }
 
     private static EntityRelation createEntityRelation(EntityId from, EntityId to) {

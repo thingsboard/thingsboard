@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.resource;
 
 import org.thingsboard.server.common.data.Dashboard;
@@ -19,11 +20,11 @@ import java.util.List;
 
 public interface TbResourceService {
 
-    default TbResourceInfo save(TbResource entity) throws Exception {
+    default TbResourceInfo save(TbResource entity) throws ThingsboardException {
         return save(entity, null);
     }
 
-    TbResourceInfo save(TbResource entity, SecurityUser user) throws Exception;
+    TbResourceInfo save(TbResource entity, SecurityUser user) throws ThingsboardException;
 
     TbResourceDeleteResult delete(TbResourceInfo entity, boolean force, User user);
 

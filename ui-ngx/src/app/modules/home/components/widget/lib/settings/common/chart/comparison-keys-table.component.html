@@ -1,0 +1,31 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<div class="tb-comparison-keys-table tb-form-table">
+  <div class="tb-form-table-header">
+    <div class="tb-form-table-header-cell tb-show-header" translate>widgets.time-series-chart.comparison.show</div>
+    <div class="tb-form-table-header-cell tb-key-header" translate>datakey.key</div>
+    <div class="tb-form-table-header-cell tb-label-header" translate>datakey.label</div>
+    <div class="tb-form-table-header-cell tb-color-header" translate>datakey.color</div>
+  </div>
+  @if (keysFormArray().controls.length) {
+    <div class="tb-form-table-body">
+      @for (keyControl of keysFormArray().controls; track keyControl) {
+        <div>
+          <tb-comparison-key-row
+            class="flex-1"
+            [datasourceType]="datasourceType"
+            [reportMode]="reportMode"
+            [formControl]="keyControl">
+          </tb-comparison-key-row>
+        </div>
+      }
+    </div>
+  } @else {
+    <span class="tb-prompt flex items-center justify-center">{{ 'widgets.chart.no-series' | translate }}</span>
+  }
+</div>

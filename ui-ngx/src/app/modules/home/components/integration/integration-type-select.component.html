@@ -1,0 +1,54 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="integrationTypeFormGroup" class="mat-block" [floatLabel]="floatLabel" [appearance]="appearance">
+  <mat-label translate>integration.type</mat-label>
+  <input matInput type="text"
+    #integrationTypeInput
+    formControlName="type"
+    (focusin)="onFocus()"
+    (keyup.enter)="selectedType()"
+    [required]="required"
+    placeholder="{{ placeholder }}"
+    [matAutocomplete]="integrationTypesAutocomplete">
+  @if (integrationTypeFormGroup.get('type').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete tb-integration-type-autocomplete"
+    [displayWith]="displayIntegrationTypeFn"
+    #integrationTypesAutocomplete="matAutocomplete">
+    <div class="flex flex-row flex-wrap">
+      @for (integrationInfo of filteredIntegrationTypes | async; track integrationInfo) {
+        <mat-option [value]="integrationInfo" class="max-w-50% flex-full xs:max-w-full">
+          <div class="integration-type-button flex flex-row">
+            <img class="icon" [src]="integrationInfo.icon" alt="icon">
+            <div class="flex-1">
+              <div class="name">{{ integrationInfo.name }}</div>
+              <div class="description">{{ integrationInfo.description }}</div>
+            </div>
+          </div>
+        </mat-option>
+      }
+    </div>
+    @if (!(filteredIntegrationTypes | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          {{ "integration.type-not-found" | translate }}
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (integrationTypeFormGroup.get('type').hasError('required')) {
+    <mat-error>
+      {{ 'integration.type-required' | translate }}
+    </mat-error>
+  }
+</mat-form-field>

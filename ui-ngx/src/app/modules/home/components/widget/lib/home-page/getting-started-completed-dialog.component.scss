@@ -1,10 +1,24 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 .tb-getting-started-completed-dialog {
   .mat-mdc-dialog-container .mdc-dialog__surface {
     border-radius: 8px;
-    background-image: url(/assets/home/greetings_bg.svg);
-    background-repeat: no-repeat;
+    position: relative;
+    &:before {
+      content: "";
+      border-radius: 8px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--tb-primary-500);
+      -webkit-mask-image: url(/assets/home/greetings_bg.svg);
+      -webkit-mask-repeat: no-repeat;
+      mask-image: url(/assets/home/greetings_bg.svg);
+      mask-repeat: no-repeat;
+    }
   }
 
   .tb-getting-started-completed-dialog-container {
@@ -26,7 +40,7 @@
     font-size: 36px;
     text-align: center;
     border-radius: 50%;
-    border: 2px solid #305680;
+    border: 2px solid var(--tb-primary-500);
     background: #FFFFFF;
   }
 

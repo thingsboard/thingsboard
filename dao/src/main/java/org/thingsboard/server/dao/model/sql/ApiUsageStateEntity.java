@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import jakarta.persistence.Column;
@@ -57,6 +58,14 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
     @Column(name = ModelConstants.API_USAGE_STATE_ALARM_EXEC_COLUMN)
     private ApiUsageStateValue alarmExecState = ApiUsageStateValue.ENABLED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_REPORT_EXEC_COLUMN)
+    private ApiUsageStateValue reportExecState = ApiUsageStateValue.ENABLED;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_AI_COLUMN)
+    private ApiUsageStateValue aiState = ApiUsageStateValue.ENABLED;
+
     public ApiUsageStateEntity() {
     }
 
@@ -77,6 +86,8 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.reportExecState = ur.getReportExecState();
+        this.aiState = ur.getAiState();
     }
 
     @Override
@@ -97,6 +108,8 @@ public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> impl
         ur.setEmailExecState(emailExecState);
         ur.setSmsExecState(smsExecState);
         ur.setAlarmExecState(alarmExecState);
+        ur.setReportExecState(reportExecState);
+        ur.setAiState(aiState);
         ur.setVersion(version);
         return ur;
     }

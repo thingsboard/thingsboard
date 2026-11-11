@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -94,6 +95,17 @@ export class ImageService {
     return this.loadImageDataUrl(imageLink, asString, emptyUrl);
   }
 
+  public getLoginImageDataUrl(imageUrl: string, faviconElseLogo: boolean,
+                              asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
+    const parts = imageUrl.split('/');
+    const type = parts[parts.length - 2];
+    const key = encodeURIComponent(parts[parts.length - 1]);
+    const imageLink = faviconElseLogo
+      ? `/api/noauth/whiteLabel/loginFavicon/${type}/${key}`
+      : `/api/noauth/whiteLabel/loginLogo/${type}/${key}`;
+    return this.loadImageDataUrl(imageLink, asString, emptyUrl);
+  }
+
   private loadImageDataUrl(imageLink: string, asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
     let request: ReplaySubject<Blob>;
     if (this.imagesLoading[imageLink]) {
@@ -153,6 +165,16 @@ export class ImageService {
     imageUrl = removeTbImagePrefix(imageUrl);
     if (isImageResourceUrl(imageUrl)) {
       return this.getImageDataUrl(imageUrl, preview, asString, emptyUrl);
+    } else {
+      return of(asString ? imageUrl : this.sanitizer.bypassSecurityTrustUrl(imageUrl));
+    }
+  }
+
+  public resolveLoginImageUrl(imageUrl: string, faviconElseLogo: boolean,
+                              asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
+    imageUrl = removeTbImagePrefix(imageUrl);
+    if (isImageResourceUrl(imageUrl)) {
+      return this.getLoginImageDataUrl(imageUrl, faviconElseLogo, asString, emptyUrl);
     } else {
       return of(asString ? imageUrl : this.sanitizer.bypassSecurityTrustUrl(imageUrl));
     }

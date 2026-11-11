@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.edqs.query;
 
 import lombok.Data;
@@ -17,10 +18,12 @@ import java.util.Map;
 public class QueryResult {
 
     private final EntityId entityId;
+    private final boolean readAttrs;
+    private final boolean readTs;
     private final Map<EntityKeyType, Map<String, TsValue>> latest;
 
     public EntityData toOldEntityData() {
-        return new EntityData(entityId, latest, Collections.emptyMap(), Collections.emptyMap());
+        return new EntityData(entityId, readAttrs, readTs, latest, Collections.emptyMap(), Collections.emptyMap());
     }
 
 }

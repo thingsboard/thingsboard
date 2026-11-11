@@ -1,7 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { MenuSection } from '@core/services/menu.models';
+import { MenuSection, sectionPath } from '@core/services/menu.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.actions';
@@ -40,17 +41,9 @@ export class MenuToggleComponent {
     } else {
       this.section.opened = !this.section.opened;
       this.store.dispatch(new ActionPreferencesUpdateOpenedMenuSection({
-        path: this.section.path,
+        path: sectionPath(this.section),
         opened: this.section.opened
       }));
-    }
-  }
-
-  toggleSectionActive(): boolean {
-    if (this.collapsed) {
-      return this.section.active;
-    } else {
-      return false;
     }
   }
 }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,10 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.QueryContext;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
@@ -24,6 +28,7 @@ import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,6 +90,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.originator_type as originator_type," +
             " a.propagate as propagate," +
             " a.propagate_to_owner as propagate_to_owner," +
+            " a.propagate_to_owner_hierarchy as propagate_to_owner_hierarchy," +
             " a.propagate_to_tenant as propagate_to_tenant," +
             " a.severity as severity," +
             " a.start_ts as start_ts," +
@@ -101,24 +107,38 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.cleared as cleared, " +
             " a.acknowledged as acknowledged, ";
 
-    private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id ";
+    // Strict equality on originator_id (in addition to alarm_id) is required in both plain-PostgreSQL and Citus
+    // modes: on Citus it co-locates the join so it prunes to a single shard, and on plain PostgreSQL it keeps the
+    // predicate identical. The trade-off is that an entity_alarm row with a NULL originator_id -- written by a
+    // pre-4.3.1.4 node during a rolling upgrade -- is dropped by this inner join: entity-scoped
+    // (searchPropagatedAlarms) reads UNDER-REPORT such rows (missing from results, not merely returned slower)
+    // until they are repaired. The 4.3.1.4 migration (see V4_3_1_4Migration) backfills pre-existing rows once and
+    // logs detection/repair guidance for the sysadmin to run manually after the whole cluster is upgraded.
+    private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id and a.originator_id = ea.originator_id ";
 
     protected final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
 
     private final DefaultQueryLogComponent queryLog;
+    private final CitusSettings citusSettings;
 
-    public DefaultAlarmQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate, DefaultQueryLogComponent queryLog) {
+    public DefaultAlarmQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate,
+                                       DefaultQueryLogComponent queryLog, CitusSettings citusSettings) {
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
         this.queryLog = queryLog;
+        this.citusSettings = citusSettings;
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, MergedUserPermissions mergedUserPermissions,
+                                                               AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        if (!mergedUserPermissions.hasGenericPermission(Resource.ALARM, Operation.READ)) {
+            return PageData.emptyPageData();
+        }
         return transactionTemplate.execute(trStatus -> {
             AlarmDataPageLink pageLink = query.getPageLink();
-            SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM));
+            SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM, mergedUserPermissions, null), citusSettings.isEnabled());
             ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
             StringBuilder fromPart = new StringBuilder(" from alarm_info a ");
@@ -129,7 +149,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             if (pageLink.isSearchPropagatedAlarms()) {
                 selectPart.append(" ea.entity_id as entity_id ");
                 fromPart.append(JOIN_ENTITY_ALARMS);
-                wherePart.append(buildPermissionsQuery(tenantId, ctx));
+                wherePart.append(buildPermissionsQuery(tenantId, ctx, mergedUserPermissions));
                 addAnd = true;
             } else {
                 selectPart.append(" a.originator_id as entity_id ");
@@ -304,8 +324,8 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     }
 
     @Override
-    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query, Collection<EntityId> orderedEntityIds) {
-        SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM));
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions mergedUserPermissions, AlarmCountQuery query, Collection<EntityId> orderedEntityIds) {
+        SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, customerId, EntityType.ALARM, mergedUserPermissions, null), citusSettings.isEnabled());
 
         if (query.isSearchPropagatedAlarms()) {
             if (query.getEntityFilter() == null) {
@@ -430,7 +450,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         }
     }
 
-    private String buildPermissionsQuery(TenantId tenantId, SqlQueryContext ctx) {
+    private String buildPermissionsQuery(TenantId tenantId, SqlQueryContext ctx, MergedUserPermissions mergedUserPermissions) {
         StringBuilder permissionsQuery = new StringBuilder();
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
         permissionsQuery.append(" a.tenant_id = :permissions_tenant_id and ea.tenant_id = :permissions_tenant_id ");

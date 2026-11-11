@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, HostBinding } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -8,6 +9,7 @@ import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
 import { finalize } from 'rxjs/operators';
 import { PageComponent } from '@shared/components/page.component';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 @Component({
     selector: 'tb-create-password',
@@ -24,8 +26,11 @@ export class CreatePasswordComponent extends PageComponent {
 
   private activateToken: string;
 
+  @HostBinding('class') class = 'tb-custom-css';
+
   constructor(private route: ActivatedRoute,
               private authService: AuthService,
+              public wl: WhiteLabelingService,
               private fb: FormBuilder) {
     super();
     this.activateToken = this.route.snapshot.queryParams['activateToken'] || '';

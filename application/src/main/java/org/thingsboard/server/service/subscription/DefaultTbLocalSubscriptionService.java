@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import jakarta.annotation.PostConstruct;
@@ -44,6 +45,7 @@ import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
+import org.thingsboard.server.service.log.sub.LogsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
@@ -435,6 +437,21 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.NOTIFICATIONS.equals(sub.getType()) || TbSubscriptionType.NOTIFICATIONS_COUNT.equals(sub.getType()),
                 update, callback);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void onLogsUpdate(EntityId entityId, LogsSubscriptionUpdate update, TbCallback callback) {
+        var subs = subscriptionsByEntityId.get(entityId.getId());
+        if (subs != null) {
+            subs.getSubs().forEach(s -> {
+                if (TbSubscriptionType.LOGS.equals(s.getType())) {
+                    TbSubscription<LogsSubscriptionUpdate> sub = (TbSubscription<LogsSubscriptionUpdate>) s;
+                    sub.getUpdateProcessor().accept(sub, update);
+                }
+            });
+        }
+        callback.onSuccess();
     }
 
     @Override

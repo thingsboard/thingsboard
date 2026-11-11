@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 plugins {
     id "com.netflix.nebula.ospackage" version "12.1.1"
 }
@@ -13,7 +14,7 @@ base {
 // OS Package plugin configuration
 ospackage {
     packageName = pkgName
-    version = "${project.version}"
+    version = pkgVersion
     release = 1
     os = LINUX
     type = BINARY
@@ -56,6 +57,11 @@ ospackage {
         into "web"
     }
 
+    // Copy chromium files
+    from("${buildDir}/package/linux/chromium") {
+        into "chromium"
+    }
+
 }
 
 // Configure our RPM build task
@@ -63,7 +69,6 @@ buildRpm {
 
     arch = X86_64
 
-    archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
     preInstall file("${buildDir}/control/rpm/preinst")

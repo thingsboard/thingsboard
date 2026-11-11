@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +27,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
@@ -34,6 +37,7 @@ import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
@@ -92,6 +96,7 @@ public class AuthController extends BaseController {
     @PostMapping(value = "/auth/changePassword")
     public JwtPair changePassword(@Parameter(description = "Change Password Request")
                                   @RequestBody ChangePasswordRequest changePasswordRequest) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.PROFILE, Operation.WRITE);
         String currentPassword = changePasswordRequest.getCurrentPassword();
         String newPassword = changePasswordRequest.getNewPassword();
         SecurityUser securityUser = getCurrentUser();
@@ -146,13 +151,20 @@ public class AuthController extends BaseController {
             HttpServletRequest request) throws ThingsboardException {
         try {
             String email = resetPasswordByEmailRequest.getEmail();
-            UserCredentials userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
-            User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
-            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+            User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, email);
+            if (user == null) {
+                throw new IncorrectParameterException(String.format("Unable to find user by email [%s]", email));
+            }
+            UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, user.getId());
+            UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+            SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal, getMergedUserPermissions(user, false));
+            accessControlService.checkPermission(securityUser, Resource.PROFILE, Operation.WRITE);
+
+            userCredentials = userService.requestPasswordReset(TenantId.SYS_TENANT_ID, email);
+            String baseUrl = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), request);
             String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
                     userCredentials.getResetToken());
-
-            mailService.sendResetPasswordEmailAsync(resetUrl, userCredentials.getResetTokenTtl(), email);
+            mailService.sendResetPasswordEmailAsync(user.getTenantId(), resetUrl, userCredentials.getResetTokenTtl(), email);
         } catch (Exception e) {
             log.warn("Error occurred: {}", e.getMessage());
         }
@@ -198,15 +210,15 @@ public class AuthController extends BaseController {
         UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, activateToken, encodedPassword);
         User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-        SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
+        SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal, getMergedUserPermissions(user, false));
         userService.setUserCredentialsEnabled(user.getTenantId(), user.getId(), true);
-        String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+        String baseUrl = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), request);
         String loginUrl = String.format("%s/login", baseUrl);
         String email = user.getEmail();
 
         if (sendActivationMail) {
             try {
-                mailService.sendAccountActivatedEmail(loginUrl, email);
+                mailService.sendAccountActivatedEmail(user.getTenantId(), loginUrl, email);
             } catch (Exception e) {
                 log.warn("Unable to send account activation email [{}]", e.getMessage());
             }
@@ -248,12 +260,12 @@ public class AuthController extends BaseController {
             userCredentials = userService.replaceUserCredentials(TenantId.SYS_TENANT_ID, userCredentials);
             User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
             UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-            SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
-            String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), request);
+            SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal, getMergedUserPermissions(user, false));
+            String baseUrl = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), request);
             String loginUrl = String.format("%s/login", baseUrl);
             String email = user.getEmail();
             try {
-                mailService.sendPasswordWasResetEmail(loginUrl, email);
+                mailService.sendPasswordWasResetEmail(user.getTenantId(), loginUrl, email);
             } catch (Exception e) {
                 log.warn("Couldn't send password was reset email: {}", e.getMessage());
             }

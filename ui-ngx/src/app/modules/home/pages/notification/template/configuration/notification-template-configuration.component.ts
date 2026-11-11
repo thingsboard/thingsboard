@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -77,7 +78,8 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
       '| link table image | alignleft aligncenter alignright alignjustify  ' +
       '| numlist bullist | outdent indent  | removeformat | code | fullscreen',
     toolbar_mode: 'sliding',
-    height: 400
+    height: 400,
+    content_style: 'body { margin: 0; }'
   });
 
   private propagateChange = null;

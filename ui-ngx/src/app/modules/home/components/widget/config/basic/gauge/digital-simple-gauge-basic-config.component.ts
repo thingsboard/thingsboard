@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,7 +28,7 @@ import {
   DigitalGaugeSettings,
   DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
-import { ColorSettings, ColorType } from '@shared/models/widget-settings.models';
+import { ColorSettings, ColorType, normalizeColorRangeSettings } from '@shared/models/widget-settings.models';
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
@@ -161,8 +162,8 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
 
     if (barColor.type === ColorType.range) {
       this.widgetConfig.config.settings.useFixedLevelColor = true;
-      this.widgetConfig.config.settings.fixedLevelColors =
-        barColor.rangeList.advancedMode ? barColor.rangeList.rangeAdvanced : barColor.rangeList.range;
+      const rangeList = normalizeColorRangeSettings(barColor.rangeList);
+      this.widgetConfig.config.settings.fixedLevelColors = rangeList?.advancedMode ? rangeList.rangeAdvanced : rangeList?.range;
     } else {
       this.widgetConfig.config.settings.useFixedLevelColor = false;
     }
@@ -245,6 +246,9 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
 
   private getCardButtons(config: WidgetConfig): string[] {
     const buttons: string[] = [];
+    if (isUndefined(config.enableDataExport) || config.enableDataExport) {
+      buttons.push('dataExport');
+    }
     if (isUndefined(config.enableFullscreen) || config.enableFullscreen) {
       buttons.push('fullscreen');
     }
@@ -252,6 +256,7 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
   }
 
   private setCardButtons(buttons: string[], config: WidgetConfig) {
+    config.enableDataExport = buttons.includes('dataExport');
     config.enableFullscreen = buttons.includes('fullscreen');
   }
 

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.data;
 
 import lombok.Getter;
@@ -93,6 +94,11 @@ public abstract class BaseEntityData<T extends EntityFields> implements EntityDa
     @Override
     public String getOwnerType() {
         return isTenantEntity() ? EntityType.TENANT.name() :  EntityType.CUSTOMER.name();
+    }
+
+    @Override
+    public UUID getPermissionCustomerId() {
+        return getCustomerId();
     }
 
     @Override

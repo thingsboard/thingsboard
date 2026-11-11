@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <service>
@@ -15,5 +16,6 @@
     <env name="LOG_FOLDER" value="${pkg.winWrapperLogFolder}" />
     <env name="NODE_ENV" value="production" />
     <env name="WEB_FOLDER" value="%BASE%\web" />
+    <env name="CHROME_EXECUTABLE" value="%BASE%\chromium\chrome.exe" />
     <executable>%BASE%\bin\${pkg.name}.exe</executable>
 </service>

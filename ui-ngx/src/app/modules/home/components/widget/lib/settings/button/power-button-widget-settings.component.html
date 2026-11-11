@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="powerButtonWidgetSettingsForm">
@@ -87,6 +88,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.main</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="mainColorOn">
           </tb-color-input>
         </div>
@@ -94,6 +96,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.background</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="backgroundColorOn">
           </tb-color-input>
         </div>
@@ -105,6 +108,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.main</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="mainColorOff">
           </tb-color-input>
         </div>
@@ -112,6 +116,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.background</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="backgroundColorOff">
           </tb-color-input>
         </div>
@@ -123,6 +128,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.main</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="mainColorDisabled">
           </tb-color-input>
         </div>
@@ -130,6 +136,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.background</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="backgroundColorDisabled">
           </tb-color-input>
         </div>

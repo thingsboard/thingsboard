@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.alarmassignee;
 
 import io.qameta.allure.Epic;
@@ -7,6 +8,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -61,8 +63,10 @@ abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
         assignedAlarmType = "Test assigned alarm " + random();
 
         customerId = testRestClient.postCustomer(EntityPrototypes.defaultCustomerPrototype(customerTitle)).getId();
-        userId = testRestClient.postUser(EntityPrototypes.defaultUser(userEmail, getCustomerByName(customerTitle).getId())).getId();
-        userWithNameId = testRestClient.postUser(EntityPrototypes.defaultUser(userWithNameEmail, getCustomerByName(customerTitle).getId(), userName)).getId();
+        userId = testRestClient.postUser(EntityPrototypes.defaultUser(userEmail, getCustomerByName(customerTitle).getId()),
+                getCustomerUserGroupByCustomerTitleAndGroupName(customerTitle, EntityGroup.GROUP_CUSTOMER_ADMINS_NAME).getId()).getId();
+        userWithNameId = testRestClient.postUser(EntityPrototypes.defaultUser(userWithNameEmail, getCustomerByName(customerTitle).getId(), userName),
+                getCustomerUserGroupByCustomerTitleAndGroupName(customerTitle, EntityGroup.GROUP_CUSTOMER_ADMINS_NAME).getId()).getId();
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype("Device ", customerId)).getName();
         deviceId = testRestClient.getDeviceByName(deviceName).getId();
     }
@@ -70,7 +74,6 @@ abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
     @AfterClass
     public void deleteCommonEntities() {
         deleteCustomerById(customerId);
-        deleteDeviceById(deviceId);
     }
 
     @BeforeMethod
@@ -85,7 +88,7 @@ abstract public class AbstractAssignTest extends AbstractDriverBaseTest {
     }
 
     public void loginByUser(String userEmail) {
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.manageCustomersUserBtn(customerTitle).click();
         customerPage.getUserLoginBtnByEmail(userEmail).click();
     }

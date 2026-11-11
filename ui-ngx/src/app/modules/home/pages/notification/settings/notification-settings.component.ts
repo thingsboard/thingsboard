@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -16,11 +17,13 @@ import {
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { DialogService } from '@core/services/dialog.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Component({
     selector: 'tb-notification-settings',
     templateUrl: './notification-settings.component.html',
-    styleUrls: ['./notification-settings.component.scss'],
+    styleUrls: ['./../../admin/settings-card.scss', './notification-settings.component.scss'],
     standalone: false
 })
 export class NotificationSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
@@ -29,6 +32,8 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
 
   notificationDeliveryMethods: NotificationDeliveryMethod[];
   notificationDeliveryMethodInfoMap = NotificationDeliveryMethodInfoMap;
+
+  readonly = !this.userPermissionsService.hasGenericPermission(Resource.PROFILE, Operation.WRITE);
 
   private deliveryMethods = new Set([
     NotificationDeliveryMethod.SLACK,
@@ -40,7 +45,9 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
               private translate: TranslateService,
               private dialogService: DialogService,
               private notificationService: NotificationService,
-              private fb: UntypedFormBuilder,) {
+              private fb: UntypedFormBuilder,
+              private userPermissionsService: UserPermissionsService,
+              ) {
     super(store);
     this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(
       allowMethods => {
@@ -57,13 +64,16 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     this.notificationSettings = this.fb.group({
       prefs: this.fb.array([])
     });
+    if (this.readonly) {
+      this.notificationSettings.disable();
+    }
   }
 
   private patchNotificationSettings(settings: NotificationUserSettings) {
     const notificationSettingsControls: Array<AbstractControl> = [];
     if (settings.prefs) {
       this.prepareNotificationSettings(settings.prefs).forEach(setting =>
-        notificationSettingsControls.push(this.fb.control(setting, [Validators.required]))
+        notificationSettingsControls.push(this.fb.control({value: setting, disabled: this.readonly}, [Validators.required]))
       );
     }
     this.notificationSettings.setControl('prefs', this.fb.array(notificationSettingsControls), {emitEvent: false});

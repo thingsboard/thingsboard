@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
@@ -15,7 +16,7 @@ base {
 // OS Package plugin configuration
 ospackage {
     packageName = pkgName
-    version = "${project.version}"
+    version = pkgVersion
     release = 1
     os = LINUX
     type = BINARY
@@ -88,7 +89,6 @@ buildRpm {
 
     arch = NOARCH
 
-    archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
     // Support Java 25 (current), plus Java 21 and Java 17 (backward compatibility) for RPM-based distros

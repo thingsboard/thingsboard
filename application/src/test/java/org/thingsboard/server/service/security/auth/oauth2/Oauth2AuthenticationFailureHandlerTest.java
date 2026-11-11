@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,7 +43,7 @@ public class Oauth2AuthenticationFailureHandlerTest {
         response = mock(HttpServletResponse.class);
         when(request.getContextPath()).thenReturn("");
         when(response.encodeRedirectURL(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(systemSecurityService.getBaseUrl(any(TenantId.class), any(CustomerId.class), any(HttpServletRequest.class))).thenReturn(BASE_URL);
+        when(systemSecurityService.getBaseUrl(any(Authority.class), any(TenantId.class), any(CustomerId.class), any(HttpServletRequest.class))).thenReturn(BASE_URL);
     }
 
     @Test

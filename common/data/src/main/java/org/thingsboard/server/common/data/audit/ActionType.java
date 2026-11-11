@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.audit;
 
 import lombok.Getter;
@@ -77,6 +78,12 @@ public enum ActionType {
      */
     UNASSIGNED_FROM_CUSTOMER(TbMsgType.ENTITY_UNASSIGNED),
     /**
+     * Entity ownership changed (PE only). Pushes {@link TbMsgType#OWNER_CHANGED} to rule engine.
+     * Rule engine msg metadata includes {@code targetOwnerId} and {@code targetOwnerType}.
+     * Audit log payload: new owner info.
+     */
+    CHANGE_OWNER(TbMsgType.OWNER_CHANGED),
+    /**
      * User account or integration activated. Does not push to rule engine.
      * Audit log payload: entity string id.
      */
@@ -112,12 +119,6 @@ public enum ActionType {
      */
     RELATIONS_DELETED(TbMsgType.RELATIONS_DELETED),
     /**
-     * REST API call to rule engine. Does not push to rule engine directly
-     * (the REST controller creates a {@link TbMsgType#REST_API_REQUEST} message itself).
-     * Audit log payload: call details.
-     */
-    REST_API_RULE_ENGINE_CALL,
-    /**
      * Alarm acknowledged by a user. Pushes {@link TbMsgType#ALARM_ACK} to rule engine.
      * Rule engine msg data: full alarm JSON. Originator: alarm id.
      */
@@ -142,6 +143,34 @@ public enum ActionType {
      * Rule engine msg data: full alarm JSON. Originator: alarm id.
      */
     ALARM_UNASSIGNED(TbMsgType.ALARM_UNASSIGNED, true),
+    /**
+     * Entity added to an entity group (PE only). Pushes {@link TbMsgType#ADDED_TO_ENTITY_GROUP} to rule engine.
+     * Rule engine msg metadata includes {@code addedToEntityGroupId} and {@code addedToEntityGroupName}.
+     * Audit log payload: entity group name.
+     */
+    ADDED_TO_ENTITY_GROUP(TbMsgType.ADDED_TO_ENTITY_GROUP),
+    /**
+     * Entity removed from an entity group (PE only). Pushes {@link TbMsgType#REMOVED_FROM_ENTITY_GROUP} to rule engine.
+     * Rule engine msg metadata includes {@code removedFromEntityGroupId} and {@code removedFromEntityGroupName}.
+     * Audit log payload: entity group name.
+     */
+    REMOVED_FROM_ENTITY_GROUP(TbMsgType.REMOVED_FROM_ENTITY_GROUP),
+    /**
+     * REST API call to rule engine. Does not push to rule engine directly
+     * (the REST controller creates a {@link TbMsgType#REST_API_REQUEST} message itself).
+     * Audit log payload: call details.
+     */
+    REST_API_RULE_ENGINE_CALL,
+    /**
+     * Entity made public via entity group (PE only). Does not push to rule engine.
+     * Audit log payload: entity group name.
+     */
+    MADE_PUBLIC,
+    /**
+     * Entity made private via entity group (PE only). Does not push to rule engine.
+     * Audit log payload: entity group name.
+     */
+    MADE_PRIVATE,
     /**
      * User logged in. Does not push to rule engine.
      */
@@ -206,7 +235,32 @@ public enum ActionType {
     /**
      * SMS sent. Does not push to rule engine.
      */
-    SMS_SENT;
+    SMS_SENT,
+    /**
+     * Non-production mode re-confirmed by a system administrator. Does not push to rule engine.
+     */
+    NON_PRODUCTION_CONFIRMED,
+    /**
+     * Community Grant instance checker run on the offline path. Nothing in this product writes it: Community
+     * Grant enrollment is a Community Edition path.
+     * <p>
+     * It is declared here because audit rows outlive the product they were written by. A deployment converted
+     * from CE keeps its audit_log across the conversion, {@code AuditLogEntity} maps this enum
+     * {@code @Enumerated(EnumType.STRING)}, and Hibernate resolves a stored name against the constants that
+     * exist - so a name with no constant is not an unknown row, it is an exception thrown while reading the
+     * audit log at all. Removing this constant makes those deployments unable to open the page.
+     */
+    COMMUNITY_GRANT_OFFLINE_CHECKER_RUN,
+    /**
+     * Community Grant access request. Never written by this product, and declared for the same reason as
+     * {@link #COMMUNITY_GRANT_OFFLINE_CHECKER_RUN}.
+     */
+    COMMUNITY_GRANT_REQUEST_ACCESS,
+    /**
+     * Community Grant enrollment started or declined. Never written by this product, and declared for the
+     * same reason as {@link #COMMUNITY_GRANT_OFFLINE_CHECKER_RUN}.
+     */
+    COMMUNITY_GRANT_ENROLLMENT;
 
     @Getter
     private final boolean read;

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -26,6 +27,7 @@ import { Ace } from 'ace-builds';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
+import { EntityType } from '@shared/models/entity-type.models';
 
 interface DiffInfo {
   leftStartLine: number;
@@ -53,10 +55,16 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
   versionId: string;
 
   @Input()
+  groupType: EntityType;
+
+  @Input()
   entityId: EntityId;
 
   @Input()
   externalEntityId: EntityId;
+
+  @Input()
+  readonly: boolean;
 
   @Output()
   versionRestored = new EventEmitter<void>();
@@ -301,6 +309,8 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
         context: {
           versionName: this.versionName,
           versionId: this.versionId,
+          groupType: this.groupType,
+          internalEntityId: this.entityId,
           externalEntityId: this.externalEntityId,
           onClose: (result: VersionLoadResult | null) => {
             restoreVersionPopover.hide();
