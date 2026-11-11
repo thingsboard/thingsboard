@@ -203,7 +203,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         @Override
         @SuppressWarnings("unchecked")
         public boolean hasPermission(SecurityUser user, Operation operation, ApiKeyId entityId, ApiKeyInfo entity) {
-            return user.getTenantId().equals(entity.getTenantId());
+            return user.getTenantId().equals(entity.getTenantId()) && user.getId().equals(entity.getUserId());
         }
     };
 
