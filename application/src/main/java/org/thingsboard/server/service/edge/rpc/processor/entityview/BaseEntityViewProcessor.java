@@ -34,7 +34,11 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         if (entityView == null) {
             throw new RuntimeException("[{" + tenantId + "}] entityViewUpdateMsg {" + entityViewUpdateMsg + "} cannot be converted to entity view");
         }
+        entityView.setTenantId(tenantId);
         EntityView entityViewById = edgeCtx.getEntityViewService().findEntityViewById(tenantId, entityViewId);
+        if (entityViewById != null && !tenantId.equals(entityViewById.getTenantId())) {
+            throw new RuntimeException("[{" + tenantId + "}] entity view {" + entityViewId + "} belongs to another tenant");
+        }
         if (entityViewById == null) {
             created = true;
             entityView.setId(null);

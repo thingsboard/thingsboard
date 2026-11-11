@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.service.timeseries;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.data.Offset;
 import org.junit.After;
@@ -11,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
@@ -63,6 +64,9 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     @Autowired
     EntityViewService entityViewService;
 
+    @Autowired
+    DeviceService deviceService;
+
     @Value("${database.ts.type}")
     String databaseTsLatestType;
 
@@ -82,7 +86,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     KvEntry booleanKvEntry = new BooleanDataEntry(BOOLEAN_KEY, Boolean.TRUE);
 
     protected TenantId tenantId;
-    protected DeviceId deviceId = new DeviceId(Uuids.timeBased());
+    protected DeviceId deviceId;
 
     @Before
     public void before() {
@@ -91,6 +95,12 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         Tenant savedTenant = tenantService.saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("My device");
+        device.setType("default");
+        deviceId = deviceService.saveDevice(device).getId();
     }
 
     @After
