@@ -12,7 +12,7 @@
   @if (variant() === 'panel') {
     <span class="tb-ai-mark m32" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
   }
-  <tb-ai-chat-title [title]="chat()?.title" [placeholder]="'ai-assistant.new-chat' | translate" [level]="level()"
+  <tb-ai-chat-title [title]="chat()?.title" [placeholder]="historyLoading() ? '' : ('ai-assistant.new-chat' | translate)" [level]="level()"
                     [statusTip]="statusTip()" [compact]="variant() === 'panel'" (renamed)="rename($event)"></tb-ai-chat-title>
   <div class="ai-chat-actions">
     @if (chatFiles().length && !titleRef?.renaming()) {
@@ -59,7 +59,7 @@
   </div>
 </header>
 <div tb-toast [toastTarget]="toastTarget()" class="pointer-events-none absolute inset-0"></div>
-<div #chatArea class="ai-chat-body" [class.empty]="!messages().length && !loading()" (scroll)="onLogScroll(chatArea)">
+<div #chatArea class="ai-chat-body" [class.empty]="!messages().length && !loading() && !historyLoading()" (scroll)="onLogScroll(chatArea)">
   @if (messages().length || loading()) {
     <tb-ai-chat-messages
       class="ai-chat-log"
@@ -88,6 +88,11 @@
       (answer)="ask($event)"
       (editMessage)="promptInput?.setValue($event)">
     </tb-ai-chat-messages>
+  } @else if (historyLoading()) {
+    <div class="ai-chat-loading" role="status">
+      <tb-ai-spin kind="think"></tb-ai-spin>
+      <span>{{ 'ai-assistant.loading-chat' | translate }}</span>
+    </div>
   } @else if (!chatId() && docked()) {
     <div class="k-newchat">
       <span class="tb-ai-mark m44" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
@@ -142,7 +147,7 @@
       (quoteRemoved)="composerQuote.set(null)"
       [loading]="loading() && !waitingApproval()"
       [dropZone]="chatArea"
-      [pinned]="!!messages().length || loading()"
+      [pinned]="!!messages().length || loading() || historyLoading()"
       [showAutoApprove]="true"
       [sendWhileWorking]="true"
       [autoApprove]="autoApprove()"

@@ -5747,3 +5747,30 @@ tb-ai-action-detail.k-detail {
 .sol-json-tools {
   margin-left: auto;
 }
+
+.ai-chat-loading {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 160px;
+  font: 400 var(--chat-line)/var(--chat-line-lh) var(--tb-font);
+  color: var(--tb-ink-54);
+  animation: ai-chat-loading-in .2s ease .25s both;
+
+  tb-ai-spin {
+    --spin: 22px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes ai-chat-loading-in {
+  from {
+    opacity: 0;
+  }
+}

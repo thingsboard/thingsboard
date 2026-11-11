@@ -206,6 +206,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   jsonEditing = signal(false);
 
+  opening = signal(false);
+
   jsonWrap = signal(SolutionChatComponent.stored('tbAiFileWrap') === 'true');
 
   jsonWhitespace = signal(SolutionChatComponent.stored('tbAiFileWhitespace') === 'true');
@@ -782,8 +784,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       tap(() => this.resetSolution()),
       switchMap(data => {
         if (data.solutionId && data.solutionId !== NEW_SOLUTION_ID) {
+          this.opening.set(true);
           return this.solutionCreator.getSolutionById(data.solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(
             catchError(err => {
+              this.opening.set(false);
               this.creatorStep.set('chat');
               if (err?.status === 400 || err?.status === 404) {
                 this.router.navigate([], {
@@ -799,12 +803,14 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
             })
           );
         } else {
+          this.opening.set(false);
           this.creatorStep.set('chat');
           return EMPTY;
         }
       }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(solution => {
+      this.opening.set(false);
       this.solutionId = solution.id;
       this.solutionInfo = solution;
       this.forceScroll = true;

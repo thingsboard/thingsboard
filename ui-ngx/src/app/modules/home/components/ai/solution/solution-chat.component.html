@@ -7,7 +7,7 @@
 <header class="sol-head" [class.scrolled]="logScrolled() && !(showPane() && paneOpen())" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
         (fullscreenChanged)="fullscreen.set($event)">
   <mat-icon class="sol-head-mark" fontSet="material-icons-round" aria-hidden="true">layers</mat-icon>
-  <tb-ai-chat-title [title]="title()" [placeholder]="'solution-creator.new-solution' | translate" [level]="level()"
+  <tb-ai-chat-title [title]="title()" [placeholder]="opening() ? '' : ('solution-creator.new-solution' | translate)" [level]="level()"
                     [statusTip]="statusTip()" [renamable]="!!info()?.id" (renamed)="renameTo($event)"></tb-ai-chat-title>
   <div class="sol-head-actions">
     @if (title() || built()) {
@@ -25,7 +25,12 @@
 </header>
 <div class="sol-toast" tb-toast toastTarget="solution-creator"></div>
 
-@if (isInitialEmpty()) {
+@if (opening()) {
+  <div class="ai-chat-loading sol-opening" role="status">
+    <tb-ai-spin kind="think"></tb-ai-spin>
+    <span>{{ 'solution-creator.opening' | translate }}</span>
+  </div>
+} @else if (isInitialEmpty()) {
   <div class="sol-hero">
     <div class="sol-hero-scroll">
     <div class="sol-hero-in">

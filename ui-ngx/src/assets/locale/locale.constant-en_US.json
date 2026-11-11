@@ -712,6 +712,7 @@
         "follow-up-prompt-placeholder": "Add something, or ask what happened…",
         "sub-title": "I can help you set up and manage your Devices, Dashboards, Calculated Fields, Alarm Rules, and Notifications — just describe what you need, and I'll handle the rest.",
         "split-view": "Split view",
+        "loading-chat": "Opening the chat…",
         "ai-assistant-key": "AI Assistant  /",
         "keys": {
             "title": "Keyboard shortcuts",
@@ -12325,6 +12326,7 @@
         "select-recaptcha-enterprise-service-account-file": "Drag and drop your account credentials file"
     },
     "solution-creator": {
+        "opening": "Opening the solution…",
         "stopped": "You stopped this step. Nothing was changed.",
         "pane": {
             "alarms": "Alarms",

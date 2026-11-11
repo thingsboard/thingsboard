@@ -133,6 +133,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   loading = signal<boolean>(false);
 
+  historyLoading = signal(false);
+
   completedExecutions = signal<Record<string, ToolExecutionResult>>({});
 
 
@@ -406,12 +408,14 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.loadChat$.pipe(
       switchMap(id => this.aiChat.getChatMessages(id, {ignoreLoading: true, ignoreErrors: true}).pipe(
         catchError(err => {
+          this.historyLoading.set(false);
           this.showErrorMessage(err);
           return EMPTY;
         })
       )),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(messages => {
+      this.historyLoading.set(false);
       this.showHistory(messages);
       this.resumeTurn(this.chatId());
     });
@@ -758,6 +762,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.completedExecutions.set({});
     this.denyReasons.set({});
     this.answeredApprovals.set(new Set());
+    this.historyLoading.set(!!chatId);
     if (chatId) {
       this.loadChat$.next(chatId);
     } else {
