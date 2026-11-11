@@ -5244,7 +5244,10 @@ tb-ai-action-detail.k-detail {
 .file-edit {
   position: relative;
   flex: 1;
-  min-height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   display: grid;
   grid-template-columns: var(--file-gutter, 56px) minmax(0, 1fr);
   align-items: start;
@@ -5291,7 +5294,7 @@ tb-ai-action-detail.k-detail {
   margin: 0;
   padding: 12px var(--art-x, 16px) 24px 0;
   font: inherit;
-  letter-spacing: 0;
+  letter-spacing: .25px;
   tab-size: 2;
   word-break: normal;
 }
@@ -5707,4 +5710,32 @@ tb-ai-action-detail.k-detail {
       grid-template-columns: minmax(0, 1fr);
     }
   }
+}
+
+.file-bar-name {
+  font-weight: 500;
+  color: var(--tb-ink-76);
+}
+
+.art-dark .file-bar-name {
+  color: var(--tb-code-fg);
+}
+
+.file-bar-state.sol-json-err {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--tb-crit);
+
+  .file-bar-dot {
+    background: var(--tb-crit);
+  }
+}
+
+.art-dark .file-bar-state.sol-json-err {
+  color: #ffb4ab;
+}
+
+.sol-json-tools {
+  margin-left: auto;
 }

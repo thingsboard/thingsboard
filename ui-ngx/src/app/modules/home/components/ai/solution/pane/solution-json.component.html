@@ -4,35 +4,5 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div class="sol-json-block">
-  <div class="sol-json-head">
-    <span class="sol-json-label">{{ fileName() }}</span>
-    @if (editing() && error(); as message) {
-      <span class="sol-json-err" role="alert">{{ 'solution-creator.pane.json-invalid' | translate: {message} }}</span>
-    }
-    <button type="button" class="sol-json-tool" [class.done]="copied()" (click)="copy()"
-            [matTooltip]="(copied() ? 'ai-assistant.copied' : 'ai-assistant.copy') | translate" matTooltipPosition="above"
-            [attr.aria-label]="'ai-assistant.copy' | translate">
-      <mat-icon>{{ copied() ? 'check' : 'content_copy' }}</mat-icon>
-    </button>
-    <button type="button" class="sol-json-tool labeled" (click)="download()"
-            [attr.aria-label]="'solution-creator.pane.download-file' | translate: {name: fileName()}">
-      <mat-icon>download</mat-icon>{{ 'solution-creator.pane.download' | translate }}
-    </button>
-    <button type="button" class="sol-json-tool labeled" [attr.aria-pressed]="editing()" (click)="toggleEdit()">
-      <mat-icon>{{ editing() ? 'visibility' : 'edit' }}</mat-icon>{{ (editing() ? 'solution-creator.pane.view-json' : 'action.edit') | translate }}
-    </button>
-  </div>
-  @if (editing()) {
-    <div class="sol-json-edit" (click)="focusEditor($event)">
-      <div class="sol-json-in">
-        <pre class="sol-json-code sol-json-layer" aria-hidden="true"><code #layer class="lang-json"></code></pre>
-        <textarea #area class="sol-json-ta" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"
-                  [attr.aria-label]="'ai-assistant.file.editor' | translate: {name: fileName()}"
-                  [value]="draft()" (input)="onInput(area.value)" (keydown)="onKey($event)"></textarea>
-      </div>
-    </div>
-  } @else {
-    <pre class="sol-json-code"><code #code class="lang-json"></code></pre>
-  }
-</div>
+<tb-ai-file-body [file]="file()" [wrap]="wrap()" [whitespace]="whitespace()" [saver]="saver"
+                 (discarded)="discarded.emit()"></tb-ai-file-body>

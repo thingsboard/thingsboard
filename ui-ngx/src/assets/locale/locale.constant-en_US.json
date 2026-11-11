@@ -12350,6 +12350,8 @@
             "view-as-user": "View as {{name}}",
             "json-note": "Edits here are applied as they are; the AI does not review them.",
             "json-invalid": "Not valid JSON: {{message}}",
+            "json-applied": "Applied",
+            "json-discarded": "Your JSON changes were discarded.",
             "json-tip": "View as JSON",
             "download": "Download",
             "download-file": "Download {{name}}",

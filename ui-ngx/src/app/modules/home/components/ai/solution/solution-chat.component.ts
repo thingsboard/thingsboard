@@ -10,6 +10,7 @@ import {
   ElementRef,
   EventEmitter,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
   Output,
@@ -55,6 +56,8 @@ import {
   tap
 } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { ClipboardService } from 'ngx-clipboard';
+import { downloadAiFile } from '@home/components/ai/ai-file.models';
 import { EMPTY, Observable, of, Subject, timer } from 'rxjs';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DialogService } from '@core/services/dialog.service';
@@ -202,6 +205,75 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   json = signal(false);
 
   jsonEditing = signal(false);
+
+  jsonWrap = signal(SolutionChatComponent.stored('tbAiFileWrap') === 'true');
+
+  jsonWhitespace = signal(SolutionChatComponent.stored('tbAiFileWhitespace') === 'true');
+
+  jsonDark = signal(SolutionChatComponent.stored('tbAiFileTheme') !== 'light');
+
+  jsonCopied = signal(false);
+
+  private jsonCopiedTimer: ReturnType<typeof setTimeout>;
+
+  private clipboardService = inject(ClipboardService);
+
+  jsonDraftId = signal('');
+
+  toggleJsonWrap(): void {
+    this.jsonWrap.update(wrap => !wrap);
+    SolutionChatComponent.store('tbAiFileWrap', String(this.jsonWrap()));
+  }
+
+  toggleJsonWhitespace(): void {
+    this.jsonWhitespace.update(value => !value);
+    SolutionChatComponent.store('tbAiFileWhitespace', String(this.jsonWhitespace()));
+  }
+
+  setJsonTheme(theme: 'dark' | 'light'): void {
+    this.jsonDark.set(theme === 'dark');
+    SolutionChatComponent.store('tbAiFileTheme', theme);
+  }
+
+  copyJson(): void {
+    if (this.jsonView && this.clipboardService.copyFromContent(this.jsonView.text())) {
+      this.jsonCopied.set(true);
+      clearTimeout(this.jsonCopiedTimer);
+      this.jsonCopiedTimer = setTimeout(() => this.jsonCopied.set(false), 1500);
+    }
+  }
+
+  downloadJson(): void {
+    if (this.jsonView) {
+      downloadAiFile({...this.jsonView.file(), content: this.jsonView.text()});
+    }
+  }
+
+  onJsonDiscarded(): void {
+    this.store.dispatch(new ActionNotificationShow({
+      message: this.translate.instant('solution-creator.pane.json-discarded'),
+      type: 'success',
+      modern: true,
+      verticalPosition: 'bottom',
+      horizontalPosition: 'center'
+    }));
+  }
+
+  private static stored(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private static store(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      return;
+    }
+  }
 
   uninstalledAt = signal<number | null>(null);
 
@@ -1489,9 +1561,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     this.json.set(!this.json());
   }
 
-  applyJson(): void {
-    const value = this.jsonView?.edited();
-    this.jsonView?.done();
+  applyJson(value: unknown): void {
     if (this.currentView() === 'dashboards') {
       this.updatedDashboardOverview(value as DashboardsOverview[]);
     } else {

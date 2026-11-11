@@ -188,7 +188,7 @@
       </div>
     </div>
     @if (showPane() && paneOpen()) {
-      <tb-ai-artifact-pane #pane [dark]="json()" (closed)="closePane()">
+      <tb-ai-artifact-pane #pane [dark]="json() && jsonDark()" [class.art-dark]="json() && jsonDark()" [class.sol-json-on]="json()" (closed)="closePane()">
           <div artHead class="sol-views" role="group" [attr.aria-label]="'solution-creator.pane.view' | translate">
             @for (view of views(); track view.id) {
               <button type="button" [attr.aria-pressed]="currentView() === view.id" [class.working]="view.state === 'working' && currentView() !== view.id"
@@ -204,6 +204,39 @@
               </button>
             }
           </div>
+          @if (json() && jsonView) {
+            <div artHead class="art-head-r sol-json-tools">
+              <div class="art-tools">
+                @if (!jsonView.body().editing()) {
+                  <button type="button" class="art-tool icon-only" (click)="jsonView.body().openFind()"
+                          [matTooltip]="'ai-assistant.file.find' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.find' | translate">
+                    <mat-icon class="tb-mat-18" aria-hidden="true">search</mat-icon>
+                  </button>
+                }
+                <button type="button" class="art-tool icon-only" [class.on]="jsonWrap()" [attr.aria-pressed]="jsonWrap()" (click)="toggleJsonWrap()"
+                        [matTooltip]="'ai-assistant.file.wrap' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.wrap' | translate">
+                  <mat-icon class="tb-mat-18" aria-hidden="true">wrap_text</mat-icon>
+                </button>
+                <button type="button" class="art-tool icon-only" [matMenuTriggerFor]="jsonOptions"
+                        [matTooltip]="'ai-assistant.file.more' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.more' | translate">
+                  <mat-icon class="tb-mat-18" aria-hidden="true">more_vert</mat-icon>
+                </button>
+              </div>
+              <div class="art-tools">
+                <button type="button" class="art-tool icon-only art-copy" [class.copied]="jsonCopied()" (click)="copyJson()"
+                        [matTooltip]="(jsonCopied() ? 'ai-assistant.copied' : 'ai-assistant.file.copy') | translate" matTooltipPosition="below"
+                        [attr.aria-label]="'ai-assistant.file.copy' | translate">
+                  <mat-icon class="tb-mat-18 art-copy-ic" aria-hidden="true">content_copy</mat-icon>
+                  <svg class="art-copy-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+                </button>
+                <span class="tb-ai-sr-only" aria-live="polite">{{ jsonCopied() ? ('ai-assistant.copied' | translate) : '' }}</span>
+                <button type="button" class="art-tool icon-only" (click)="downloadJson()"
+                        [matTooltip]="'ai-assistant.file.download' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.download' | translate">
+                  <mat-icon class="tb-mat-18" aria-hidden="true">download</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
           @if (jsonAvailable()) {
             <button artHead type="button" class="sol-tool" [class.on]="json()" [attr.aria-pressed]="json()" (click)="toggleJson()"
                     [matTooltip]="'solution-creator.pane.json-tip' | translate" matTooltipPosition="below">
@@ -224,8 +257,10 @@
               <p class="art-load-note">{{ estimateOf(making()) }}</p>
             </div>
           } @else if (json()) {
-            <tb-solution-json #jsonView class="sol-json" [value]="jsonValue()"
+            <tb-solution-json #jsonView class="sol-json" [value]="jsonValue()" [draftId]="jsonDraftId()"
                               [fileName]="currentView() === 'dashboards' ? 'dashboards.json' : 'solution.json'"
+                              [wrap]="jsonWrap()" [whitespace]="jsonWhitespace()"
+                              (applied)="applyJson($event)" (discarded)="onJsonDiscarded()"
                               (editingChange)="jsonEditing.set($event)"></tb-solution-json>
           } @else {
             @switch (currentView()) {
@@ -242,11 +277,48 @@
             }
           }
         @if (!making()) {
-        <footer artFoot class="art-pane-foot">
-          @if (json() && jsonEditing()) {
-            <span class="sol-foot-note">{{ 'solution-creator.pane.json-note' | translate }}</span>
-            <button mat-button type="button" (click)="jsonView?.done()">{{ 'action.cancel' | translate }}</button>
-            <button mat-flat-button type="button" [disabled]="!jsonView?.dirty" (click)="applyJson()">{{ 'action.apply' | translate }}</button>
+        <footer artFoot class="art-pane-foot" [class.file-bar]="json()">
+          @if (json() && jsonView; as view) {
+            <span class="file-bar-info">
+              @if (view.body().editing()) {
+                @if (view.error(); as message) {
+                  <span class="file-bar-state sol-json-err" role="alert"><i class="file-bar-dot" aria-hidden="true"></i>{{ 'solution-creator.pane.json-invalid' | translate: {message} }}</span>
+                } @else if (view.body().dirty()) {
+                  <span class="file-bar-state"><i class="file-bar-dot" aria-hidden="true"></i>{{ 'ai-assistant.file.unsaved' | translate }}</span>
+                } @else {
+                  <span class="file-bar-state">{{ 'ai-assistant.file.editing' | translate }}</span>
+                }
+                @if (view.body().caret(); as caret) {
+                  <i class="file-bar-sep" aria-hidden="true">·</i>
+                  <span class="file-bar-pos">{{ 'ai-assistant.file.position' | translate: {line: caret.line, col: caret.col} }}</span>
+                }
+              } @else if (view.body().saved()) {
+                <span class="file-bar-saved"><mat-icon aria-hidden="true">check</mat-icon>{{ 'solution-creator.pane.json-applied' | translate }}</span>
+              } @else {
+                <span class="file-bar-name">{{ view.fileName() }}</span>
+                <i class="file-bar-sep" aria-hidden="true">·</i>
+                <span>{{ 'ai-assistant.file.lines' | translate: {count: view.file().lines} }}</span>
+                <i class="file-bar-sep" aria-hidden="true">·</i>
+                <span>{{ view.file().size }}</span>
+              }
+            </span>
+            <span class="file-bar-acts">
+              @if (view.body().editing()) {
+                @if (view.body().dirty()) {
+                  <button mat-stroked-button type="button" class="file-bar-b" (click)="view.body().discard()">{{ 'ai-assistant.file.discard' | translate }}</button>
+                  <button mat-flat-button type="button" class="file-bar-b file-bar-save" [disabled]="!!view.error()" (click)="view.body().save()"
+                          [matTooltip]="'solution-creator.pane.json-note' | translate" matTooltipPosition="above">
+                    {{ 'action.apply' | translate }}
+                  </button>
+                } @else {
+                  <button mat-stroked-button type="button" class="file-bar-b" (click)="view.body().done()">{{ 'ai-assistant.file.done' | translate }}</button>
+                }
+              } @else {
+                <button mat-stroked-button type="button" class="file-bar-b" (click)="view.body().startEdit()">
+                  <mat-icon>edit</mat-icon>{{ 'ai-assistant.file.edit' | translate }}
+                </button>
+              }
+            </span>
           } @else if (currentView() === 'solution' || creatorStep() === 'result') {
             @if (installed()) {
               <button mat-button type="button" class="warn" (click)="uninstallSolution()">
@@ -321,4 +393,26 @@
     <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>
     <span>{{ 'action.delete' | translate }}</span>
   </button>
+</mat-menu>
+
+<mat-menu #jsonOptions="matMenu" xPosition="before" class="tb-ai-chat-menu art-opts">
+  @if (!jsonView?.body()?.editing()) {
+    <button mat-menu-item role="menuitemcheckbox" [attr.aria-checked]="jsonWhitespace()" (click)="$event.stopPropagation(); toggleJsonWhitespace()">
+      <mat-icon fontSet="material-icons-round">space_bar</mat-icon>
+      <span class="art-opt-l">{{ 'ai-assistant.file.show-whitespace' | translate }}</span>
+      <span class="art-switch" [class.on]="jsonWhitespace()" aria-hidden="true"><i></i></span>
+    </button>
+  }
+  <div class="art-opt-row" role="group" [attr.aria-label]="'ai-assistant.file.theme' | translate" (click)="$event.stopPropagation()">
+    <mat-icon fontSet="material-icons-round" aria-hidden="true">contrast</mat-icon>
+    <span>{{ 'ai-assistant.file.theme' | translate }}</span>
+    <div class="art-modes art-opt-modes" role="radiogroup">
+      <button type="button" role="radio" [attr.aria-checked]="jsonDark()" (click)="setJsonTheme('dark')">
+        <mat-icon class="tb-mat-16" aria-hidden="true">dark_mode</mat-icon><span>{{ 'ai-assistant.file.dark' | translate }}</span>
+      </button>
+      <button type="button" role="radio" [attr.aria-checked]="!jsonDark()" (click)="setJsonTheme('light')">
+        <mat-icon class="tb-mat-16" aria-hidden="true">light_mode</mat-icon><span>{{ 'ai-assistant.file.light' | translate }}</span>
+      </button>
+    </div>
+  </div>
 </mat-menu>

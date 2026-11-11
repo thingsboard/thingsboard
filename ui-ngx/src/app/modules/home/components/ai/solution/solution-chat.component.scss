@@ -794,3 +794,73 @@ tb-ai-chat-title:has(.ai-chat-status) + .sol-head-actions {
     min-width: 0;
   }
 }
+
+@container pane (max-width: 900px) {
+  .sol-json-on .sol-views button:not([aria-pressed="true"]) {
+    padding: 0 9px;
+
+    .sol-views-l {
+      display: none;
+    }
+  }
+}
+
+@container pane (max-width: 560px) {
+  .sol-json-on .sol-views button[aria-pressed="true"] {
+    padding: 0 9px;
+
+    .sol-views-l {
+      display: none;
+    }
+  }
+
+  .sol-json-on .sol-tool > span {
+    display: none;
+  }
+}
+
+.art-dark {
+  .sol-views button {
+    color: rgba(255, 255, 255, 0.72);
+
+    > .mat-icon {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    &:not([aria-pressed="true"]):not([disabled]):hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    &[aria-pressed="true"] {
+      background: rgba(143, 227, 211, 0.14);
+      color: var(--ai-dark-accent);
+
+      > .mat-icon {
+        color: var(--ai-dark-accent);
+      }
+    }
+  }
+
+  .sol-tool {
+    color: rgba(255, 255, 255, 0.72);
+
+    .mat-icon {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    &.on {
+      background: rgba(143, 227, 211, 0.14);
+      color: var(--ai-dark-accent);
+
+      .mat-icon {
+        color: var(--ai-dark-accent);
+      }
+    }
+  }
+}
