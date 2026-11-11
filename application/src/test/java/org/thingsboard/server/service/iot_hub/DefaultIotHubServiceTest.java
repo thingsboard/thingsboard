@@ -5,10 +5,6 @@ package org.thingsboard.server.service.iot_hub;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.ota.OtaPackageService;
-import org.thingsboard.server.common.data.OtaPackageInfo;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -91,8 +87,6 @@ class DefaultIotHubServiceTest {
     private DeviceProfileService deviceProfileService;
     @Mock
     private TbDeviceService tbDeviceService;
-    @Mock
-    private OtaPackageService otaPackageService;
     @Mock
     private AssetProfileService assetProfileService;
     @Mock
@@ -496,7 +490,7 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
-    void removeDevicePackageEntities_removesEntitiesInReverseOrderAndKeepsTheItemVersion() throws Exception {
+    void removeDevicePackageEntities_removesTheDeviceBeforeTheDashboardAndKeepsTheItemVersion() throws Exception {
         mockTenant();
         Device device = new Device(new DeviceId(UUID.randomUUID()));
         Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
@@ -525,8 +519,8 @@ class DefaultIotHubServiceTest {
         service.removeDevicePackageEntities(user, item.getId(), newVersionId);
 
         InOrder order = inOrder(tbDashboardService, tbDeviceService, iotHubInstalledItemService);
-        order.verify(tbDashboardService).delete(dashboard, user);
         order.verify(tbDeviceService).delete(device, user);
+        order.verify(tbDashboardService).delete(dashboard, user);
         order.verify(iotHubInstalledItemService).save(tenantId, item);
         // The item keeps its version until the wizard registers the new one, and lists nothing to remove again.
         assertThat(item.getItemVersionId()).isEqualTo(versionId);
@@ -928,22 +922,27 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
-    void removeDevicePackageEntities_profileOfAFirmware_refusedBeforeRemoving() {
+    void removeDevicePackageEntities_dashboardOfThePackageProfile_profileDeletedFirst() throws Exception {
         mockTenant();
         DeviceProfile profile = packageProfile(false);
+        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
+        dashboard.setTenantId(tenantId);
+        dashboard.setTitle("Package dashboard");
+        profile.setDefaultDashboardId(dashboard.getId());
+        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
+        when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(profile));
+        lenient().when(assetProfileService.findAssetProfiles(eq(tenantId), any())).thenReturn(page());
         when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any())).thenReturn(page());
-        OtaPackageInfo firmware = new OtaPackageInfo(new OtaPackageId(UUID.randomUUID()));
-        firmware.setDeviceProfileId(profile.getId());
-        firmware.setType(OtaPackageType.FIRMWARE);
-        firmware.setTitle("fw");
-        firmware.setVersion("1.2");
-        when(otaPackageService.findTenantOtaPackagesByTenantId(eq(tenantId), any())).thenReturn(page(firmware));
-        IotHubInstalledItem item = devicePackage(profile.getId());
+        // Created in this order by the wizard: the profile, then the dashboard
+        IotHubInstalledItem item = devicePackage(profile.getId(), dashboard.getId());
         String newVersionId = mockNewVersion(item);
 
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("'Package profile' is used by the firmware 'fw 1.2'");
+        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
+
+        // The profile refers to the dashboard: deleting the dashboard first would fail on fk_default_dashboard_device_profile
+        InOrder order = inOrder(tbDeviceProfileService, tbDashboardService);
+        order.verify(tbDeviceProfileService).delete(profile, user);
+        order.verify(tbDashboardService).delete(dashboard, user);
     }
 
     private DeviceProfile packageProfile(boolean isDefault) {
@@ -952,7 +951,6 @@ class DefaultIotHubServiceTest {
         profile.setName("Package profile");
         profile.setDefault(isDefault);
         when(deviceProfileService.findDeviceProfileById(tenantId, profile.getId())).thenReturn(profile);
-        lenient().when(otaPackageService.findTenantOtaPackagesByTenantId(eq(tenantId), any())).thenReturn(page());
         return profile;
     }
 
