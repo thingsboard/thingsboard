@@ -296,6 +296,19 @@ public class SchedulerEventControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveDashboardReportEventWithCurrentUserCredentialsUsesSaverWhenReportUserNotAccessible() throws Exception {
+        loginCustomerAdminUser();
+        SchedulerEvent saved = saveSchedulerEvent(createDashboardReportSchedulerEvent(tenantAdminUserId, true));
+        assertThat(saved.getConfiguration().get("msgBody").get("reportConfig").get("userId").asText()).isEqualTo(customerAdminUserId.toString());
+    }
+
+    @Test
+    public void testSaveDashboardReportEventWithCurrentUserCredentialsKeepsAccessibleReportUser() throws Exception {
+        SchedulerEvent saved = saveSchedulerEvent(createDashboardReportSchedulerEvent(customerAdminUserId, true));
+        assertThat(saved.getConfiguration().get("msgBody").get("reportConfig").get("userId").asText()).isEqualTo(customerAdminUserId.toString());
+    }
+
+    @Test
     public void testSaveReportEventRequiresReportUser() throws Exception {
         ReportTemplate template = doPost("/api/reportTemplate", buildTemplate("CSV report template", ReportTemplateType.REPORT, TbReportFormat.CSV), ReportTemplate.class);
         doPost("/api/schedulerEvent", createReportSchedulerEvent(template.getId(), null)).andExpect(status().isBadRequest());
@@ -340,12 +353,16 @@ public class SchedulerEventControllerTest extends AbstractControllerTest {
     }
 
     private SchedulerEvent createDashboardReportSchedulerEvent(UserId userId) {
+        return createDashboardReportSchedulerEvent(userId, false);
+    }
+
+    private SchedulerEvent createDashboardReportSchedulerEvent(UserId userId, boolean useCurrentUserCredentials) {
         SchedulerEvent schedulerEvent = createSchedulerEvent();
         schedulerEvent.setType("generateDashboardReport");
         ObjectNode reportConfig = JacksonUtil.newObjectNode();
         reportConfig.put("namePattern", "report-%d{yyyy-MM-dd_HH:mm:ss}");
         reportConfig.put("type", "pdf");
-        reportConfig.put("useCurrentUserCredentials", false);
+        reportConfig.put("useCurrentUserCredentials", useCurrentUserCredentials);
         reportConfig.put("userId", userId.toString());
         ObjectNode msgBody = JacksonUtil.newObjectNode();
         msgBody.set("reportConfig", reportConfig);

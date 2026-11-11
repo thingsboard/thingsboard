@@ -114,6 +114,13 @@ public class DashboardReportControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testDownloadTestReportWithCurrentUserCredentialsUsesCurrentUserWhenReportUserNotAccessible() throws Exception {
+        loginCustomerAdminUser();
+        doPostTestReport(tenantAdminUserId.toString(), null, true).andExpect(status().isOk());
+        verifyReportGenerated(customerAdminUserId);
+    }
+
+    @Test
     public void testDownloadTestReportRequiresUserId() throws Exception {
         loginCustomerAdminUser();
         doPostTestReport(null).andExpect(status().isBadRequest());
@@ -162,6 +169,10 @@ public class DashboardReportControllerTest extends AbstractControllerTest {
     }
 
     private ResultActions doPostTestReport(String userId, String reportsServerEndpointUrl) throws Exception {
+        return doPostTestReport(userId, reportsServerEndpointUrl, false);
+    }
+
+    private ResultActions doPostTestReport(String userId, String reportsServerEndpointUrl, boolean useCurrentUserCredentials) throws Exception {
         DashboardReportConfig reportConfig = new DashboardReportConfig();
         reportConfig.setBaseUrl(REPORT_BASE_URL);
         reportConfig.setDashboardId(dashboard.getId().toString());
@@ -169,6 +180,7 @@ public class DashboardReportControllerTest extends AbstractControllerTest {
         reportConfig.setNamePattern("report");
         reportConfig.setType("pdf");
         reportConfig.setUserId(userId);
+        reportConfig.setUseCurrentUserCredentials(useCurrentUserCredentials);
         String url = "/api/report/test";
         if (reportsServerEndpointUrl != null) {
             url += "?reportsServerEndpointUrl=" + reportsServerEndpointUrl;

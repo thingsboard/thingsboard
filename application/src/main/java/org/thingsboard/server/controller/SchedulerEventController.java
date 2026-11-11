@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -174,6 +176,13 @@ public class SchedulerEventController extends BaseController {
             checkReportUser(reportUserId);
             checkUserOwnerPermission(currentUser, reportUserId);
         } else if (schedulerEvent.getConfiguration() != null) {
+            if (schedulerEvent.getConfiguration().path("msgBody").path("reportConfig") instanceof ObjectNode reportConfig
+                    && reportConfig.path("useCurrentUserCredentials").asBoolean(false)
+                    && reportConfig.path("userId").isTextual()
+                    && StringUtils.isNotBlank(reportConfig.get("userId").asText())) {
+                UserId reportUserId = resolveReportUser(new UserId(toUUID(reportConfig.get("userId").asText())), true);
+                reportConfig.put("userId", reportUserId.toString());
+            }
             checkMsgReportUser(schedulerEvent.getConfiguration().path("msgBody"));
         }
     }

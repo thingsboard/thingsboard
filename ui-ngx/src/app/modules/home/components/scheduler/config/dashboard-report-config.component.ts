@@ -63,10 +63,6 @@ export class DashboardReportConfigComponent extends PageComponent implements Con
   pdfReportMode = false;
 
   @Input()
-  @coerceBoolean()
-  rebindCurrentUser = false;
-
-  @Input()
   disabled: boolean;
 
   authUser = getCurrentAuthUser(this.store);
@@ -197,20 +193,8 @@ export class DashboardReportConfigComponent extends PageComponent implements Con
 
   writeValue(value: DashboardReportConfig | null): void {
     this.modelValue = safeMerge<DashboardReportConfig>(this.createDefaultReportConfig(), value);
-    const rebind = this.rebindCurrentUser && !this.pdfReportMode && this.modelValue.useCurrentUserCredentials &&
-      this.modelValue.userId !== this.authUser.userId;
-    if (rebind) {
-      this.modelValue = {...this.modelValue, userId: this.authUser.userId};
-    }
     this.reportConfigFormGroup.reset(this.modelValue, {emitEvent: false});
     this.updateEnabledState();
-    if (rebind) {
-      setTimeout(() => {
-        if (!this.disabled) {
-          this.updateModel();
-        }
-      }, 0);
-    }
   }
 
   validate(): ValidationErrors | null {

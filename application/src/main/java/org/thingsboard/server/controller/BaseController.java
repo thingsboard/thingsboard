@@ -900,6 +900,22 @@ public abstract class BaseController {
         }
     }
 
+    protected UserId resolveReportUser(UserId userId, boolean useCurrentUserCredentials) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        if (useCurrentUserCredentials && !currentUser.getId().equals(userId) && !canImpersonate(userId)) {
+            return currentUser.getId();
+        }
+        checkReportUser(userId);
+        return userId;
+    }
+
+    private boolean canImpersonate(UserId userId) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        User user = userService.findUserById(currentUser.getTenantId(), userId);
+        return user != null && currentUser.getTenantId().equals(user.getTenantId()) &&
+                accessControlService.hasPermission(currentUser, Resource.USER, Operation.IMPERSONATE, userId, user);
+    }
+
     protected void checkTemplateReportUser(NotificationTemplate notificationTemplate) throws ThingsboardException {
         NotificationTemplateConfig configuration = notificationTemplate != null ? notificationTemplate.getConfiguration() : null;
         if (configuration != null && configuration.isAttachReport() && configuration.getUserId() != null) {

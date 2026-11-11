@@ -131,7 +131,8 @@ public class DashboardReportController extends BaseController {
 
             String strUserId = reportConfig.getUserId();
             checkParameter(USER_ID, strUserId);
-            checkReportUser(new UserId(toUUID(strUserId)));
+            UserId reportUserId = resolveReportUser(new UserId(toUUID(strUserId)), reportConfig.isUseCurrentUserCredentials());
+            reportConfig.setUserId(reportUserId.toString());
 
             if (Authority.CUSTOMER_USER.equals(getCurrentUser().getAuthority())) {
                 reportsServerEndpointUrl = null;
