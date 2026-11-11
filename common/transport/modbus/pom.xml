@@ -44,6 +44,14 @@
         <dependency>
             <groupId>com.digitalpetri.modbus</groupId>
             <artifactId>modbus-tcp</artifactId>
+            <exclusions>
+                <!-- Needed only by the library's Netty client transports, which we replace (TcpClientTransport).
+                     Its 1.x line conflicts with netty-channel-fsm 0.x used by Eclipse Milo (OPC-UA integration). -->
+                <exclusion>
+                    <groupId>com.digitalpetri.netty</groupId>
+                    <artifactId>netty-channel-fsm</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

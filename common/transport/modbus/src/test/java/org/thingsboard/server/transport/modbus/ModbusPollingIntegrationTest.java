@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.transport.modbus;
 
+import com.digitalpetri.modbus.server.ModbusRtuServer;
 import com.digitalpetri.modbus.server.ModbusTcpServer;
 import com.digitalpetri.modbus.server.ProcessImage;
 import com.digitalpetri.modbus.server.ReadWriteModbusServices;
+import com.digitalpetri.modbus.tcp.server.NettyRtuServerTransport;
 import com.digitalpetri.modbus.tcp.server.NettyTcpServerTransport;
 import io.netty.channel.ChannelOption;
 import org.awaitility.Awaitility;
@@ -208,6 +210,37 @@ class ModbusPollingIntegrationTest {
     }
 
     @Test
+    void rtuOverTcpPollsAndWrites() throws Exception {
+        int rtuPort;
+        try (ServerSocket socket = new ServerSocket(0)) {
+            rtuPort = socket.getLocalPort();
+        }
+        ModbusRtuServer rtuServer = ModbusRtuServer.create(NettyRtuServerTransport.create(cfg -> {
+            cfg.bindAddress = "127.0.0.1";
+            cfg.port = rtuPort;
+        }), services());
+        rtuServer.start();
+        try {
+            writeInputFloat(1, 0, 5.5f);
+            ModbusDeviceProfileTransportConfiguration profile = profile(false, 100L);
+            profile.setRpc(List.of(mapping("setSetpoint", ModbusDataType.UINT16, ModbusFunctionCode.WRITE_SINGLE_REGISTER, 30, null)));
+            ModbusSessionContext session = session(1, profile);
+            ModbusTcpEndpoint endpoint = (ModbusTcpEndpoint) session.getDeviceConfig().getEndpoint();
+            endpoint.setPort(rtuPort);
+            endpoint.setFraming(ModbusTcpFraming.RTU);
+            session.activate(() -> {});
+            service.startPolling(session);
+
+            verifyVoltagePolled(5.5, WAIT_MS);
+            assertThat(rpc(session, 1, "setSetpoint", "42").getPayload()).isEqualTo("{\"result\":\"ok\"}");
+            assertThat(holdingRegister(1, 30)).containsExactly(0, 42);
+            service.stopPolling(session);
+        } finally {
+            rtuServer.stop();
+        }
+    }
+
+    @Test
     void framingConflictOnSameEndpointIsRejected() {
         ModbusSessionContext mbap = session(1, profile(false, 100L));
         service.startPolling(mbap);
@@ -318,18 +351,22 @@ class ModbusPollingIntegrationTest {
 
     /** Starts (or restarts) the server on the same port; process images survive a restart. */
     private void startServer() throws Exception {
-        var services = new ReadWriteModbusServices() {
+        server = ModbusTcpServer.create(NettyTcpServerTransport.create(cfg -> {
+            cfg.bindAddress = "127.0.0.1";
+            cfg.port = port;
+            cfg.bootstrapCustomizer = bootstrap -> bootstrap.option(ChannelOption.SO_REUSEADDR, true);
+        }), services());
+        server.start();
+    }
+
+    /** Serves the shared process images, by unit id; unknown units get no answer. */
+    private ReadWriteModbusServices services() {
+        return new ReadWriteModbusServices() {
             @Override
             protected Optional<ProcessImage> getProcessImage(int unitId) {
                 return Optional.ofNullable(images.get(unitId));
             }
         };
-        server = ModbusTcpServer.create(NettyTcpServerTransport.create(cfg -> {
-            cfg.bindAddress = "127.0.0.1";
-            cfg.port = port;
-            cfg.bootstrapCustomizer = bootstrap -> bootstrap.option(ChannelOption.SO_REUSEADDR, true);
-        }), services);
-        server.start();
     }
 
     private void verifyVoltagePolled(double expected, long timeoutMs) {

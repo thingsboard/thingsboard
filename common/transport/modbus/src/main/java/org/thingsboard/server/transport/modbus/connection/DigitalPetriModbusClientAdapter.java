@@ -18,9 +18,6 @@ import com.digitalpetri.modbus.pdu.WriteMultipleCoilsRequest;
 import com.digitalpetri.modbus.pdu.WriteMultipleRegistersRequest;
 import com.digitalpetri.modbus.pdu.WriteSingleCoilRequest;
 import com.digitalpetri.modbus.pdu.WriteSingleRegisterRequest;
-import com.digitalpetri.modbus.tcp.client.NettyClientTransportConfig;
-import com.digitalpetri.modbus.tcp.client.NettyRtuClientTransport;
-import com.digitalpetri.modbus.tcp.client.NettyTcpClientTransport;
 import io.netty.channel.EventLoopGroup;
 import lombok.Builder;
 import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
@@ -30,11 +27,11 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
 
 /**
  * {@link ModbusClientAdapter} over digitalpetri/modbus: {@link ModbusTcpClient} for MBAP framing,
- * {@link ModbusRtuClient} for RTU frames tunnelled over TCP. Reconnects are handled by the library transport.
+ * {@link ModbusRtuClient} for RTU frames tunnelled over TCP. The clients run over our own {@link TcpClientTransport}s
+ * (reconnecting), not the library's Netty transports: those need a {@code netty-channel-fsm} version that conflicts with Milo.
  */
 public class DigitalPetriModbusClientAdapter implements ModbusClientAdapter {
 
@@ -43,17 +40,13 @@ public class DigitalPetriModbusClientAdapter implements ModbusClientAdapter {
     @Builder
     public DigitalPetriModbusClientAdapter(String host, int port, ModbusTcpFraming framing, Duration requestTimeout,
                                            Duration connectTimeout, EventLoopGroup eventLoopGroup, ExecutorService executor) {
-        Consumer<NettyClientTransportConfig.Builder> transportConfig = cfg -> {
-            cfg.hostname = host;
-            cfg.port = port;
-            cfg.connectTimeout = connectTimeout;
-            cfg.connectPersistent = true;
-            cfg.eventLoopGroup = eventLoopGroup;
-            cfg.executor = executor;
-        };
         this.client = switch (framing) {
-            case MBAP -> ModbusTcpClient.create(NettyTcpClientTransport.create(transportConfig), cfg -> cfg.requestTimeout = requestTimeout);
-            case RTU -> ModbusRtuClient.create(NettyRtuClientTransport.create(transportConfig), cfg -> cfg.requestTimeout = requestTimeout);
+            case MBAP -> ModbusTcpClient.create(
+                    new MbapTcpClientTransport(host, port, connectTimeout, requestTimeout, eventLoopGroup, executor),
+                    cfg -> cfg.requestTimeout = requestTimeout);
+            case RTU -> ModbusRtuClient.create(
+                    new RtuTcpClientTransport(host, port, connectTimeout, requestTimeout, eventLoopGroup, executor),
+                    cfg -> cfg.requestTimeout = requestTimeout);
         };
     }
 

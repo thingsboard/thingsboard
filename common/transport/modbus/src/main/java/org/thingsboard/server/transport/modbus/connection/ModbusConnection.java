@@ -49,12 +49,16 @@ public class ModbusConnection {
     private final Function<Duration, ModbusClientAdapter> clientFactory;
 
     private final Set<UUID> sessionIds = ConcurrentHashMap.newKeySet();
-    private final Object lock = new Object();
+    /**
+     * Guards the request queue and the state the dispatch reads with it: in-flight count, current client, timeout and
+     * closed flag. Taken by callers queuing requests, by response callbacks and by client rebuilds.
+     */
+    private final Object requestQueueLock = new Object();
     private final ArrayDeque<PendingRequest> queue = new ArrayDeque<>();
     /** Calls to {@link #dispatch} not yet accounted for; non-zero while a dispatch loop is running. */
     private final AtomicInteger dispatchCalls = new AtomicInteger();
 
-    // guarded by lock
+    // guarded by requestQueueLock
     private ModbusClientAdapter client;
     @Getter
     private Duration timeout;
@@ -91,7 +95,7 @@ public class ModbusConnection {
      */
     public void ensureTimeout(Duration required) {
         ModbusClientAdapter old;
-        synchronized (lock) {
+        synchronized (requestQueueLock) {
             if (closed || required.compareTo(timeout) <= 0) {
                 return;
             }
@@ -115,7 +119,7 @@ public class ModbusConnection {
      */
     public CompletableFuture<byte[]> execute(Function<ModbusClientAdapter, CompletionStage<byte[]>> operation, long deadlineMs) {
         PendingRequest request = new PendingRequest(operation, deadlineMs, new CompletableFuture<>());
-        synchronized (lock) {
+        synchronized (requestQueueLock) {
             if (closed) {
                 request.future().completeExceptionally(new IllegalStateException("Modbus connection " + key + " is closed"));
                 return request.future();
@@ -134,7 +138,7 @@ public class ModbusConnection {
     public void close() {
         List<PendingRequest> pending;
         ModbusClientAdapter old;
-        synchronized (lock) {
+        synchronized (requestQueueLock) {
             if (closed) {
                 return;
             }
@@ -184,7 +188,7 @@ public class ModbusConnection {
         Dispatch next = null;
         long now = System.currentTimeMillis();
 
-        synchronized (lock) {
+        synchronized (requestQueueLock) {
             while (!closed && inFlight < maxInFlight && !queue.isEmpty()) {
                 PendingRequest request = queue.poll();
                 if (request.deadlineMs() != NO_DEADLINE && now > request.deadlineMs()) {
@@ -215,7 +219,7 @@ public class ModbusConnection {
             response = CompletableFuture.failedFuture(e);
         }
         response.whenComplete((data, error) -> {
-            synchronized (lock) {
+            synchronized (requestQueueLock) {
                 inFlight--;
             }
             if (error != null) {
