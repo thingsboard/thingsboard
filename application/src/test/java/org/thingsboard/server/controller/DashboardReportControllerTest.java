@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: LicenseRef-ThingsBoard-PE
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
 import org.junit.Before;
