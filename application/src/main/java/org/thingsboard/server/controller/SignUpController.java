@@ -265,7 +265,7 @@ public class SignUpController extends BaseController {
     }
 
     @ApiOperation(value = "Resend Activation Email (resendEmailActivation)",
-            notes = "Request to resend the activation email for the user. Checks that user was not activated yet.")
+            notes = "Request to resend the activation email for a user who signed up through this domain or mobile application and has not verified the email yet.")
     @PostMapping(value = "/noauth/resendEmailActivation")
     public void resendEmailActivation(
             @Parameter(description = "Email of the user.", required = true, example = "john.doe@company.com")
@@ -285,19 +285,17 @@ public class SignUpController extends BaseController {
         }
 
         User existingUser = userService.findUserByEmail(TenantId.SYS_TENANT_ID, email);
-        if (existingUser != null) {
-            UserCredentials credentials = userService.findUserCredentialsByUserId(existingUser.getTenantId(), existingUser.getId());
-            if (credentials.isEnabled()) {
-                throw new DataValidationException("User with email '" + existingUser.getEmail() + "' "
-                        + " is already active!");
-            } else {
-                credentials = userService.checkUserActivationToken(tenantId, credentials);
-                sendEmailVerification(tenantId, request, credentials, email, null, pkgName, platform);
-            }
-        } else {
+        if (existingUser == null || !tenantId.equals(existingUser.getTenantId())) {
             throw new DataValidationException("User with email '" + email + "' "
                     + " is not registered!");
         }
+        UserCredentials credentials = userService.findUserCredentialsByUserId(tenantId, existingUser.getId());
+        if (credentials.isEnabled() || credentials.getActivateToken() == null || credentials.getPassword() == null) {
+            throw new DataValidationException("User with email '" + existingUser.getEmail() + "' "
+                    + " is already active!");
+        }
+        credentials = userService.checkUserActivationToken(tenantId, credentials);
+        sendEmailVerification(tenantId, request, credentials, email, null, pkgName, platform);
     }
 
     @ApiOperation(value = "Activate User using code from Email (activateEmail)",

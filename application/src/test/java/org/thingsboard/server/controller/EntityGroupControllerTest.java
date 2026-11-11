@@ -33,6 +33,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,6 +88,100 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
         doPost("/api/entityGroup", savedEntityGroup, EntityGroup.class);
         EntityGroup foundEntityGroup = doGet("/api/entityGroup/" + savedEntityGroup.getId().getId().toString(), EntityGroup.class);
         Assert.assertEquals(savedEntityGroup.getName(), foundEntityGroup.getName());
+    }
+
+    @Test
+    public void testShouldNotChangeEntityGroupOwnerAsGroupOwner() throws Exception {
+        loginTenantAdmin();
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Device Group");
+        entityGroup.setType(EntityType.DEVICE);
+        EntityGroup savedEntityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+
+        savedEntityGroup.setOwnerId(customerId);
+        doPost("/api/entityGroup", savedEntityGroup)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Entity group owner can't be changed!")));
+
+        assertThat(entityGroupService.findEntityGroupById(tenantId, savedEntityGroup.getId()).getOwnerId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    public void testShouldNotChangeEntityGroupType() throws Exception {
+        loginTenantAdmin();
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Device Group");
+        entityGroup.setType(EntityType.DEVICE);
+        EntityGroup savedEntityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+
+        savedEntityGroup.setType(EntityType.USER);
+        doPost("/api/entityGroup", savedEntityGroup)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Entity group type can't be changed!")));
+
+        assertThat(entityGroupService.findEntityGroupById(tenantId, savedEntityGroup.getId()).getType()).isEqualTo(EntityType.DEVICE);
+    }
+
+    @Test
+    public void testShouldNotMoveTenantEntityGroupToCustomerAsCustomerAdmin() throws Exception {
+        EntityGroup tenantAdministratorsGroup = entityGroupService.findEntityGroupByTypeAndName(tenantId, tenantId,
+                EntityType.USER, EntityGroup.GROUP_TENANT_ADMINS_NAME).get();
+
+        loginCustomerAdminUser();
+        EntityGroup movedEntityGroup = new EntityGroup(tenantAdministratorsGroup);
+        movedEntityGroup.setOwnerId(customerId);
+        doPost("/api/entityGroup", movedEntityGroup)
+                .andExpect(status().isForbidden());
+
+        assertThat(entityGroupService.findEntityGroupById(tenantId, tenantAdministratorsGroup.getId()).getOwnerId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    public void testShouldNotMoveEntityGroupSharedWithWriteAccess() throws Exception {
+        loginTenantAdmin();
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Shared Device Group");
+        entityGroup.setType(EntityType.DEVICE);
+        EntityGroup savedEntityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+        var shareGroupRequest = new ShareGroupRequest(customerId, true, null, false, Collections.emptyList());
+        doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, savedEntityGroup.getId().toString())
+                .andExpect(status().isOk());
+
+        loginCustomerAdminUser();
+        EntityGroup sharedEntityGroup = doGet("/api/entityGroup/" + savedEntityGroup.getId().getId(), EntityGroup.class);
+        sharedEntityGroup.setOwnerId(customerId);
+        doPost("/api/entityGroup", sharedEntityGroup)
+                .andExpect(status().isForbidden());
+
+        assertThat(entityGroupService.findEntityGroupById(tenantId, savedEntityGroup.getId()).getOwnerId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    public void testShouldNotMoveOtherTenantEntityGroup() throws Exception {
+        loginDifferentTenant();
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Other Tenant Device Group");
+        entityGroup.setType(EntityType.DEVICE);
+        EntityGroup otherTenantEntityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+
+        loginCustomerAdminUser();
+        otherTenantEntityGroup.setOwnerId(customerId);
+        doPost("/api/entityGroup", otherTenantEntityGroup)
+                .andExpect(status().isForbidden());
+
+        assertThat(entityGroupService.findEntityGroupById(differentTenantId, otherTenantEntityGroup.getId()).getOwnerId()).isEqualTo(differentTenantId);
+    }
+
+    @Test
+    public void testShouldNotUpdateNonExistingEntityGroup() throws Exception {
+        loginTenantAdmin();
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setId(new EntityGroupId(UUID.randomUUID()));
+        entityGroup.setName("Non-existing Device Group");
+        entityGroup.setType(EntityType.DEVICE);
+        entityGroup.setOwnerId(tenantId);
+        doPost("/api/entityGroup", entityGroup)
+                .andExpect(status().isNotFound());
     }
 
     @Test
