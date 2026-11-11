@@ -142,6 +142,7 @@
 }
 
 .sol-json-code.sol-json-layer {
+  tab-size: 2;
   overflow: visible;
   pointer-events: none;
 }
@@ -160,7 +161,8 @@
   overflow: hidden;
   background: none;
   font: 13px/20px var(--tb-mono);
-  letter-spacing: normal;
+  letter-spacing: inherit;
+  word-spacing: inherit;
   white-space: pre;
   tab-size: 2;
   color: transparent;
