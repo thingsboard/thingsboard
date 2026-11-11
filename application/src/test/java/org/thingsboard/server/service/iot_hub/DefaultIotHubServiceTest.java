@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import static org.mockito.Mockito.lenient;
 import org.thingsboard.server.dao.converter.ConverterService;
+import org.thingsboard.server.service.entitiy.converter.TbConverterService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.ConverterId;
@@ -97,6 +98,8 @@ class DefaultIotHubServiceTest {
     private IntegrationService integrationService;
     @Mock
     private ConverterService converterService;
+    @Mock
+    private TbConverterService tbConverterService;
     @Mock
     private TbDeviceProfileService tbDeviceProfileService;
     @Mock
@@ -875,13 +878,15 @@ class DefaultIotHubServiceTest {
         profile.setDefaultRuleChainId(ruleChain.getId());
         when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(profile));
         when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any())).thenReturn(page());
-        IotHubInstalledItem item = devicePackage(ruleChain.getId(), profile.getId());
+        // The rule chain listed last: in reverse order of creation it would go before the profile that refers to it
+        IotHubInstalledItem item = devicePackage(profile.getId(), ruleChain.getId());
         String newVersionId = mockNewVersion(item);
 
         service.removeDevicePackageEntities(user, item.getId(), newVersionId);
 
-        verify(tbDeviceProfileService).delete(profile, user);
-        verify(tbRuleChainService).delete(ruleChain, user);
+        InOrder order = inOrder(tbDeviceProfileService, tbRuleChainService);
+        order.verify(tbDeviceProfileService).delete(profile, user);
+        order.verify(tbRuleChainService).delete(ruleChain, user);
     }
 
     @Test
@@ -994,6 +999,28 @@ class DefaultIotHubServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("'Package converter' is used by the integration 'Another integration'");
         verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void removeDevicePackageEntities_integrationRemovedBeforeItsConverter() throws Exception {
+        mockTenant();
+        Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        converter.setTenantId(tenantId);
+        converter.setName("Package converter");
+        Integration integration = new Integration(new IntegrationId(UUID.randomUUID()));
+        integration.setTenantId(tenantId);
+        when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
+        when(integrationService.findIntegrationsByConverterId(tenantId, converter.getId())).thenReturn(List.of(integration));
+        when(integrationService.findIntegrationById(tenantId, integration.getId())).thenReturn(integration);
+        // The converter listed last: in reverse order of creation it would go before the integration that uses it
+        IotHubInstalledItem item = devicePackage(integration.getId(), converter.getId());
+        String newVersionId = mockNewVersion(item);
+
+        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
+
+        InOrder order = inOrder(integrationService, tbConverterService);
+        order.verify(integrationService).deleteIntegration(tenantId, integration.getId());
+        order.verify(tbConverterService).delete(converter, user);
     }
 
     private IotHubInstalledItem devicePackage(EntityId... created) {
