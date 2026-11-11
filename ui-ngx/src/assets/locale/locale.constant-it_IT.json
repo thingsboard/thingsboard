@@ -1880,6 +1880,8 @@
     "model": "Modello",
     "name": "Nome",
     "ai-provider": "Fornitore IA",
+    "customer-access": "Accesso clienti",
+    "customer-access-hint": "Consente agli utenti dei clienti di inviare richieste di chat a questo modello, ad es. da Trendz Analytics. La configurazione del modello e le credenziali non vengono mai esposte.",
     "no-found": "Nessun modello IA trovato",
     "list": "{ count, plural, =1 {Un modello} other {Elenco di # modelli} }",
     "selected-fields": "{ count, plural, =1 {1 modello} other {# modelli} } selezionati",
@@ -2125,7 +2127,7 @@
     "update-raw-payload": "Payload RAW aggiornato"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "Testo",
     "binary": "Binario (Base64)",
     "hex": "Binario (Hex)"
@@ -5016,7 +5018,7 @@
     "mapping": "Mappatura",
     "topic-filter": "Filtro topic",
     "converter-type": "Tipo convertitore",
-    "converter-json": "Json",
+    "converter-json": "JSON",
     "json-name-expression": "Espressione nome dispositivo JSON",
     "topic-name-expression": "Espressione nome dispositivo topic",
     "json-type-expression": "Espressione tipo dispositivo JSON",
@@ -8847,7 +8849,8 @@
         "SHARE_GROUP": "Condividi gruppo",
         "ASSIGN_TO_TENANT": "Assegna a tenant",
         "READ_CALCULATED_FIELD": "Leggi campo calcolato",
-        "WRITE_CALCULATED_FIELD": "Scrivi campo calcolato"
+        "WRITE_CALCULATED_FIELD": "Scrivi campo calcolato",
+        "INVOKE": "Invocare"
       }
     }
   },

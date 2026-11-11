@@ -24,7 +24,7 @@
       <mat-label translate>integration.http-endpoint</mat-label>
       <input matInput formControlName="httpEndpoint">
     </mat-form-field>
-    <button mat-icon-button ngxClipboard type="button" color="primary"
+    <button mat-icon-button ngxClipboard type="button"
             (cbOnSuccess)="onHttpEndpointCopied()"
             [cbContent]="baseHttpIntegrationConfigForm.get('httpEndpoint').value"
             matTooltip="{{'integration.copy-http-endpoint-url' | translate }}">
@@ -67,10 +67,12 @@
       </mat-panel-description>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
-      <mat-slide-toggle class="toggle" [aria-label]="'integration.replace-no-content-to-ok' | translate"
-                        formControlName="replaceNoContentToOk">
-        {{ 'integration.replace-no-content-to-ok' | translate }}
-      </mat-slide-toggle>
+      @if (showReplaceNoContentToOk) {
+        <mat-slide-toggle class="toggle" [aria-label]="'integration.replace-no-content-to-ok' | translate"
+                          formControlName="replaceNoContentToOk">
+          {{ 'integration.replace-no-content-to-ok' | translate }}
+        </mat-slide-toggle>
+      }
       <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
       </ng-container>
     </ng-template>

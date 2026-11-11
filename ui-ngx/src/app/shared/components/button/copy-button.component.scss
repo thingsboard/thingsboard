@@ -14,7 +14,7 @@
     color: #00C851 !important;
   }
   &:hover{
-    .mat-icon{
+    .mat-mdc-icon-button:not(:disabled) .mat-icon:not(.copied){
       color: var(--tb-primary-500) !important;
     }
   }

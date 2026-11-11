@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="attachments">
+  @for (item of shown; track item.resource.id) {
+    <div class="attachment"
+         [class.image]="item.image"
+         [class.file]="!item.image"
+         [matTooltip]="item.resource.name"
+         matTooltipPosition="above"
+         (click)="open(item)">
+      @if (item.image) {
+        @if (item.url$ | async; as url) {
+          <img [src]="url" [alt]="item.resource.name">
+        } @else {
+          <mat-icon class="placeholder">image</mat-icon>
+        }
+      } @else {
+        <div class="file-icon"><mat-icon>{{ item.icon }}</mat-icon></div>
+        <div class="file-meta">
+          <span class="file-name">{{ item.resource.name }}</span>
+          <span class="file-info">{{ item.extension }}@if (item.extension) { · }{{ item.resource.size | fileSize }}</span>
+        </div>
+      }
+    </div>
+  }
+</div>
