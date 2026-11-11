@@ -248,6 +248,8 @@ public class EntityViewEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(differentTenantId, storedView.getTenantId());
         Assert.assertEquals("Other tenant EntityView", storedView.getName());
         Assert.assertEquals(otherTenantDevice.getId(), storedView.getEntityId());
+        Assert.assertEquals(otherTenantView.getCustomerId(), storedView.getCustomerId());
+        Assert.assertEquals(otherTenantView.getOwnerId(), storedView.getOwnerId());
         loginTenantAdmin();
     }
 

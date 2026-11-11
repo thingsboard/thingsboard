@@ -371,15 +371,15 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     @Test
     public void testUpdateEntityViewByCustomerUserToEntityNotAssignedToCustomer() throws Exception {
         EntityView savedView = getNewSavedEntityView("Customer entity view");
-        doPost("/api/customer/" + customerId.getId() + "/entityView/" + savedView.getId().getId(), EntityView.class);
-        doPost("/api/customer/" + customerId.getId() + "/device/" + testDevice.getId().getId(), Device.class);
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/ENTITY_VIEW/" + savedView.getId().getId()).andExpect(status().isOk());
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + testDevice.getId().getId()).andExpect(status().isOk());
 
         Device otherDevice = new Device();
         otherDevice.setName("Device not assigned to customer");
         otherDevice.setType("default");
         otherDevice = doPost("/api/device", otherDevice, Device.class);
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
 
         EntityView customerView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
         customerView.setEntityId(otherDevice.getId());
@@ -393,9 +393,9 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     @Test
     public void testUpdateEntityViewByCustomerUserKeepingEntity() throws Exception {
         EntityView savedView = getNewSavedEntityView("Customer entity view");
-        doPost("/api/customer/" + customerId.getId() + "/entityView/" + savedView.getId().getId(), EntityView.class);
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/ENTITY_VIEW/" + savedView.getId().getId()).andExpect(status().isOk());
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
 
         EntityView customerView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
         customerView.setName("Customer entity view renamed");
@@ -408,9 +408,9 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     @Test
     public void testUpdateEntityViewKeysByCustomerUserWithEntityNotAssignedToCustomer() throws Exception {
         EntityView savedView = getNewSavedEntityView("Customer entity view");
-        doPost("/api/customer/" + customerId.getId() + "/entityView/" + savedView.getId().getId(), EntityView.class);
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/ENTITY_VIEW/" + savedView.getId().getId()).andExpect(status().isOk());
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
 
         EntityView customerView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
         customerView.setKeys(new TelemetryEntityView(List.of("tsKey1"), new AttributesEntityView()));
