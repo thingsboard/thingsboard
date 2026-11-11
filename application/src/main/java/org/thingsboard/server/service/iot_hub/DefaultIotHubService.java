@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -630,6 +633,8 @@ public class DefaultIotHubService implements IotHubService {
             UUID itemId = UUID.fromString(versionInfo.get("itemId").asText());
             String version = versionInfo.get("version").asText();
 
+            validateDevicePackageEntities(tenantId, descriptor);
+
             IotHubInstalledItem installedItem = new IotHubInstalledItem();
             installedItem.setTenantId(tenantId);
             installedItem.setItemId(itemId);
@@ -683,25 +688,47 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
+    private void validateDevicePackageEntities(TenantId tenantId, DeviceInstalledItemDescriptor descriptor) {
+        if (descriptor == null) {
+            throw new IllegalArgumentException("Device package descriptor is required");
+        }
+        List<EntityId> entityIds = new ArrayList<>();
+        if (descriptor.getCreatedEntityIds() != null) {
+            entityIds.addAll(descriptor.getCreatedEntityIds());
+        }
+        if (descriptor.getDashboardId() != null) {
+            entityIds.add(descriptor.getDashboardId());
+        }
+        for (EntityId entityId : entityIds) {
+            if (entityId == null || findDevicePackageEntity(tenantId, entityId) == null) {
+                throw new IllegalArgumentException("Device package entity not found: " + entityId);
+            }
+        }
+    }
+
+    private HasTenantId findDevicePackageEntity(TenantId tenantId, EntityId entityId) {
+        HasTenantId entity = switch (entityId.getEntityType()) {
+            case DEVICE -> deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
+            case DEVICE_PROFILE -> deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId()));
+            case DASHBOARD -> dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId()));
+            case RULE_CHAIN -> ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
+            default -> null;
+        };
+        return entity != null && tenantId.equals(entity.getTenantId()) ? entity : null;
+    }
+
     private void deleteDevicePackageEntity(TenantId tenantId, EntityId entityId, SecurityUser user) {
-        switch (entityId.getEntityType()) {
-            case DEVICE -> {
-                var device = deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
-                if (device != null) tbDeviceService.delete(device, user);
-            }
-            case DEVICE_PROFILE -> {
-                var profile = deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId()));
-                if (profile != null) tbDeviceProfileService.delete(profile, user);
-            }
-            case DASHBOARD -> {
-                var dashboard = dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId()));
-                if (dashboard != null) tbDashboardService.delete(dashboard, user);
-            }
-            case RULE_CHAIN -> {
-                var ruleChain = ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
-                if (ruleChain != null) tbRuleChainService.delete(ruleChain, user);
-            }
-            default -> log.warn("[{}] Unsupported entity type for device package delete: {}", tenantId, entityId.getEntityType());
+        HasTenantId entity = findDevicePackageEntity(tenantId, entityId);
+        if (entity instanceof Device device) {
+            tbDeviceService.delete(device, user);
+        } else if (entity instanceof DeviceProfile profile) {
+            tbDeviceProfileService.delete(profile, user);
+        } else if (entity instanceof Dashboard dashboard) {
+            tbDashboardService.delete(dashboard, user);
+        } else if (entity instanceof RuleChain ruleChain) {
+            tbRuleChainService.delete(ruleChain, user);
+        } else {
+            log.warn("[{}] Skipped device package entity {}: not found", tenantId, entityId);
         }
     }
 
