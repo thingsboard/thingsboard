@@ -79,7 +79,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
-import org.thingsboard.server.utils.MiscUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -213,7 +212,7 @@ public class SignUpController extends BaseController {
         UserCredentials savedUserCredentials = saveUserCredentials(savedUser, signUpRequest);
 
         try {
-            sendEmailVerification(tenantId, request, savedUserCredentials, email, null, signUpRequest.getPkgName(), signUpRequest.getPlatform());
+            sendEmailVerification(tenantId, request, savedUser, savedUserCredentials, email, signUpRequest.getPkgName(), signUpRequest.getPlatform());
         } catch (ThingsboardException e) {
             customerService.deleteCustomer(tenantId, savedCustomer.getId());
             throw e;
@@ -231,11 +230,9 @@ public class SignUpController extends BaseController {
         return SignUpResult.SUCCESS;
     }
 
-    private void sendEmailVerification(TenantId tenantId, HttpServletRequest request, UserCredentials userCredentials,
-                                       String targetEmail, String baseUrl, String pkgName, PlatformType platformType) throws ThingsboardException {
-        if (baseUrl == null) {
-            baseUrl = MiscUtils.constructBaseUrl(request);
-        }
+    private void sendEmailVerification(TenantId tenantId, HttpServletRequest request, User user, UserCredentials userCredentials,
+                                       String targetEmail, String pkgName, PlatformType platformType) throws ThingsboardException {
+        String baseUrl = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), request);
         String activationLink = String.format("%s/api/noauth/activateEmail?emailCode=%s", baseUrl, userCredentials.getActivateToken());
         if (!StringUtils.isEmpty(pkgName)) {
             checkNotNull(platformType);
@@ -299,7 +296,7 @@ public class SignUpController extends BaseController {
                     + " is already active!");
         }
         credentials = userService.checkUserActivationToken(tenantId, credentials);
-        sendEmailVerification(tenantId, request, credentials, email, null, pkgName, platform);
+        sendEmailVerification(tenantId, request, existingUser, credentials, email, pkgName, platform);
     }
 
     @ApiOperation(value = "Activate User using code from Email (activateEmail)",
@@ -397,15 +394,18 @@ public class SignUpController extends BaseController {
         if (userCredentials.getPassword() == null) {
             throw new ThingsboardException("Unable to activate user!", ThingsboardErrorCode.PERMISSION_DENIED);
         }
+        User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
+        if (user == null || !tenantId.equals(user.getTenantId())) {
+            throw new ThingsboardException("Invalid email code!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
         String encodedPassword = userCredentials.getPassword();
         UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, emailCode, encodedPassword);
-        User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
         setPrivacyPolicyAccepted(user);
         setTermsOfUseAccepted(user);
         user = userService.saveUser(tenantId, user);
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
         SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal, getMergedUserPermissions(user, false));
-        String baseUrl = MiscUtils.constructBaseUrl(request);
+        String baseUrl = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), request);
         String loginUrl;
         if (!StringUtils.isEmpty(pkgName)) {
             loginUrl = String.format("%s/api/noauth/login?pkgName=%s", baseUrl, pkgName);
