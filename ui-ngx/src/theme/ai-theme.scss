@@ -974,7 +974,8 @@
     }
 
     img {
-      object-fit: contain;
+      object-fit: cover;
+      object-position: top center;
     }
 
     > .tb-rec-tile {
