@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
+import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.integration.Integration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
@@ -820,9 +823,10 @@ public class DefaultIotHubService implements IotHubService {
             throw new IllegalArgumentException("IoT Hub returned the version without its item");
         }
         checkSameItem(installedItem, UUID.fromString(itemId));
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        checkPackageEntitiesCanBeRemoved(tenantId, packageOwnedEntityIds(descriptor));
         // Refusals above are a 400 and remove nothing. Any failure from here on is not a 400, so the wizard knows that
         // entities may already be gone (each delete is committed on its own).
-        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
         Map<EntityId, String> failed;
         try {
             failed = deleteDevicePackageEntities(tenantId, packageOwnedEntityIds(descriptor), user);
@@ -921,6 +925,74 @@ public class DefaultIotHubService implements IotHubService {
      * The entities the package created: the tracked ones without those the user chose, on a name conflict, to use as they
      * were (the install state keeps that choice). The default device profile, for example, is never the package's.
      */
+    /**
+     * The update removes the package's entities one by one. ThingsBoard refuses to delete a device profile that is the
+     * default one or that devices outside the package use, a converter that an integration outside the package uses,
+     * and a rule chain that is the root one or the default rule chain of a profile outside the package. Found after the first deletes, such a refusal would leave the package half
+     * removed and fail every Retry the same way, so it is checked before anything is removed: a 400 removes nothing.
+     */
+    private void checkPackageEntitiesCanBeRemoved(TenantId tenantId, List<EntityId> packageEntityIds) {
+        if (packageEntityIds == null || packageEntityIds.isEmpty()) {
+            return;
+        }
+        Set<UUID> owned = new HashSet<>();
+        packageEntityIds.forEach(id -> owned.add(id.getId()));
+        List<String> blockers = new ArrayList<>();
+        for (EntityId entityId : packageEntityIds) {
+            if (entityId.getEntityType() == EntityType.DEVICE_PROFILE) {
+                DeviceProfile profile = deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId()));
+                if (!isOwnedBy(profile, tenantId)) {
+                    continue;
+                }
+                if (profile.isDefault()) {
+                    blockers.add("the device profile '" + profile.getName() + "' is the default device profile");
+                }
+                long otherDevices = 0;
+                for (DeviceId deviceId : new PageDataIterable<>(link -> deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(
+                        tenantId, profile.getId(), link), 1000)) {
+                    if (!owned.contains(deviceId.getId())) {
+                        otherDevices++;
+                    }
+                }
+                if (otherDevices > 0) {
+                    blockers.add("the device profile '" + profile.getName() + "' is used by " + otherDevices + " other device(s)");
+                }
+            } else if (entityId.getEntityType() == EntityType.CONVERTER) {
+                Converter converter = converterService.findConverterById(tenantId, new ConverterId(entityId.getId()));
+                if (!isOwnedBy(converter, tenantId)) {
+                    continue;
+                }
+                for (Integration integration : integrationService.findIntegrationsByConverterId(tenantId, converter.getId())) {
+                    if (!owned.contains(integration.getId().getId())) {
+                        blockers.add("the converter '" + converter.getName() + "' is used by the integration '" + integration.getName() + "'");
+                    }
+                }
+            } else if (entityId.getEntityType() == EntityType.RULE_CHAIN) {
+                RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
+                if (!isOwnedBy(ruleChain, tenantId)) {
+                    continue;
+                }
+                if (ruleChain.isRoot()) {
+                    blockers.add("the rule chain '" + ruleChain.getName() + "' is the root rule chain");
+                }
+                for (DeviceProfile profile : new PageDataIterable<>(link -> deviceProfileService.findDeviceProfiles(tenantId, link), 1000)) {
+                    if (ruleChain.getId().equals(profile.getDefaultRuleChainId()) && !owned.contains(profile.getId().getId())) {
+                        blockers.add("the rule chain '" + ruleChain.getName() + "' is the rule chain of the device profile '" + profile.getName() + "'");
+                    }
+                }
+                for (AssetProfile profile : new PageDataIterable<>(link -> assetProfileService.findAssetProfiles(tenantId, link), 1000)) {
+                    if (ruleChain.getId().equals(profile.getDefaultRuleChainId())) {
+                        blockers.add("the rule chain '" + ruleChain.getName() + "' is the rule chain of the asset profile '" + profile.getName() + "'");
+                    }
+                }
+            }
+        }
+        if (!blockers.isEmpty()) {
+            throw new IllegalArgumentException("The package can't be updated: " + String.join("; ", blockers)
+                    + ". Move them to other profiles or rule chains first, or delete them. Nothing was removed.");
+        }
+    }
+
     private static List<EntityId> packageOwnedEntityIds(DeviceInstalledItemDescriptor descriptor) {
         List<EntityId> tracked = descriptor.getCreatedEntityIds();
         if (tracked == null || descriptor.getInstallState() == null) {
