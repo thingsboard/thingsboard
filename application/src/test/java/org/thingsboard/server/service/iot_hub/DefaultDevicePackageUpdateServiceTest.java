@@ -422,6 +422,40 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void integrationUsedByAStepNewToThePackage_isListedAsUsedAsItWas() {
+        // The installed version has no integration step; the new one takes the tenant's integration as it is
+        DeviceInstalledItemDescriptor installed = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        installed.setCreatedEntityIds(List.of(profileId, deviceId, dashboardId));
+        installed.setInstallState(Map.of("Profile", stateOf(profileId, "created"), "AM308", stateOf(deviceId, "created"),
+                "Dashboard", stateOf(dashboardId, "created")));
+        IntegrationId tenantsIntegrationId = new IntegrationId(UUID.randomUUID());
+        Integration current = new Integration();
+        current.setId(tenantsIntegrationId);
+        current.setTenantId(tenantId);
+        current.setName("TTN my-app");
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.set("metadata", JacksonUtil.newObjectNode().put("profile.other-model", "Other"));
+        current.setConfiguration(configuration);
+        when(integrationService.findIntegrationById(tenantId, tenantsIntegrationId)).thenReturn(current);
+        when(integrationService.saveIntegration(any())).thenAnswer(i -> i.getArgument(0));
+        DeviceUpdateRequest.Step step = keep("TTN", "INTEGRATION", tenantsIntegrationId);
+        step.setResolution("use-existing");
+        step.setMetadata(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isTrue();
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        // A delete walks createdEntityIds and keeps what usedExistingEntityIds lists, removing only the package's
+        // entries from it (DefaultIotHubServiceTest#deleteInstalledItem_devicePackage_removesItsMetadataEntriesFromTheIntegrationItTookAsItWas)
+        assertThat(descriptor.getCreatedEntityIds()).containsOnlyOnce(tenantsIntegrationId);
+        assertThat(descriptor.getUsedExistingEntityIds()).containsExactly(tenantsIntegrationId);
+        JsonNode state = descriptor.getInstallState().get("TTN");
+        assertThat(state.get("resolution").asText()).isEqualTo("use-existing");
+        assertThat(state.get("metadata")).isEqualTo(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+    }
+
+    @Test
     void keptIntegrationWithTheEntriesItHas_isNotSaved() {
         Integration current = new Integration();
         current.setId(integrationId);

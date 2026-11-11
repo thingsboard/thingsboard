@@ -329,9 +329,12 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                     state.set("metadata", metadata);
                 }
                 installState.put(step.getId() != null ? step.getId() : step.getName(), state);
-                if (!"use-existing".equals(resolution)) {
+                // As at install, an entity used as it was is listed too, so a delete removes the metadata entries the
+                // package added to it; usedExistingEntityIds keeps it the user's
+                if (!stepEntityIds.contains(result.entityId())) {
                     stepEntityIds.add(result.entityId());
-                } else {
+                }
+                if ("use-existing".equals(resolution)) {
                     usedExistingIds.putIfAbsent(result.entityId().getId(), result.entityId());
                 }
                 if (result.entityId() instanceof DashboardId id) {
