@@ -15,7 +15,7 @@
           <span class="composer-file ref">
             <mat-icon class="tb-mat-18">{{ quote.icon }}</mat-icon>
             <span class="file-text">
-              <b>{{ quote.name }}</b>
+              <b><span class="art-name">{{ fileName(quote.name).base }}<span class="art-ext">{{ fileName(quote.name).ext }}</span></span></b>
               <small>{{ (quote.from === quote.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: quote.from, to: quote.to} }}</small>
             </span>
             <button type="button" class="file-remove"
@@ -35,7 +35,7 @@
               <mat-icon class="tb-mat-18">{{ attachment.status === 'error' ? 'error_outline' : attachment.icon }}</mat-icon>
             }
             <span class="file-text">
-              <b>{{ attachment.name }}</b>
+              <b><span class="art-name">{{ fileName(attachment.name).base }}<span class="art-ext">{{ fileName(attachment.name).ext }}</span></span></b>
               <small>{{ meta(attachment) }}</small>
             </span>
             @if (attachment.status === 'uploading') {

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { aiFileName } from '@home/components/ai/ai-file.models';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
@@ -28,6 +29,8 @@ interface AiAttachmentItem {
   standalone: false
 })
 export class AiAttachmentsComponent implements OnChanges {
+
+  readonly fileName = aiFileName;
 
   @Input() resources: AiResourceInfo[];
 

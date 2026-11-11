@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { aiFileName } from '@home/components/ai/ai-file.models';
 import {
   AfterViewInit,
   Component,
@@ -63,6 +64,8 @@ const FLY_DURATION = 520;
   standalone: false
 })
 export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestroy {
+
+  readonly fileName = aiFileName;
 
   private aiResourceService = inject(AiResourceService);
   private translate = inject(TranslateService);
