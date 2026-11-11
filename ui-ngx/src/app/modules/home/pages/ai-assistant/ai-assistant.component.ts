@@ -6,6 +6,7 @@ import {
   Component,
   computed,
   effect,
+  DestroyRef,
   ElementRef,
   HostListener,
   inject,
@@ -261,15 +262,24 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     if (event.target === event.currentTarget) {
       this.settleRail();
     }
-    const chatId = this.chatId();
-    const link = (event.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
-    if (!chatId || this.solutionId() || !link || link.target === '_blank' || link.origin !== window.location.origin
-      || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
-      || link.pathname === '/ai-assistant' || link.pathname.startsWith('/ai-assistant/')) {
-      return;
-    }
-    this.panelService.carryChatToPage(chatId);
   }
+
+  private carryOnLink = (() => {
+    const host = this.host.nativeElement;
+    const listener = (event: MouseEvent) => {
+      const chatId = this.chatId();
+      const link = (event.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+      if (!chatId || this.solutionId() || !link || !link.closest('.ai-canvas') || link.target === '_blank'
+        || link.origin !== window.location.origin || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+        || link.pathname === '/ai-assistant' || link.pathname.startsWith('/ai-assistant/')) {
+        return;
+      }
+      this.panelService.carryChatToPage(chatId);
+    };
+    host.addEventListener('click', listener, true);
+    inject(DestroyRef).onDestroy(() => host.removeEventListener('click', listener, true));
+    return true;
+  })();
 
   marked(text: string | undefined): {text: string; hit: boolean}[] {
     const value = text ?? '';
