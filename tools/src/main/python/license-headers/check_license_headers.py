@@ -9,17 +9,21 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
+import io
 import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import sqlite3
 import subprocess
 import sys
 import tempfile
+import threading
 import uuid
 import xml.etree.ElementTree as ET
 
@@ -45,6 +49,7 @@ RELICENSING_COMMIT = "31936b09d24871e421f212502a8342f9d8aabb20"
 CE_REMOTE = "https://github.com/thingsboard/thingsboard.git"
 CURATIONS = "tools/src/main/python/license-headers/curations.json"
 README = "tools/src/main/python/license-headers/README.md"
+CHECKER_PATHS = ("tools/src/main/python/license-headers/", "check-license-headers.sh")
 CURATION_FIELDS = {"path", "contentHash", "header", "reason"}
 CONTENT_HASH = re.compile(r"sha256:[0-9a-f]{64}")
 UNRECOGNIZED = "unrecognized"
@@ -65,6 +70,11 @@ RESTAMP_LISTING = 40
 REPEATED_HEADERS = 3
 HEADER_WINDOW = 4096
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
+JOBS_VARIABLE = "LICENSE_HEADERS_JOBS"
+CACHE_DIRECTORY = "target/license-headers-cache"
+CACHE_FORMAT = "1"
+CACHE_UPDATED = ".updated"
+CACHE_SIGNATURES_KEPT = 3
 
 
 @dataclass(frozen=True)
@@ -130,6 +140,26 @@ class Console:
 
 
 console = Console()
+
+
+def jobs():
+    """Parallel subprocesses: LICENSE_HEADERS_JOBS when set, otherwise all CPUs but one to keep the machine responsive."""
+    configured = os.environ.get(JOBS_VARIABLE, "")
+    if configured:
+        if not configured.isdigit() or int(configured) < 1:
+            raise Failure(f"{JOBS_VARIABLE} must be a positive number, not {configured!r}")
+        return int(configured)
+    return max(1, (os.cpu_count() or 1) - 1)
+
+
+def parallel(function, items):
+    """Results of function for every item in item order; the first failure propagates."""
+    items = list(items)
+    workers = min(len(items), jobs())
+    if workers <= 1:
+        return [function(item) for item in items]
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(function, items))
 
 
 def run(argv, cwd, *, data=None, ok=(0,)):
@@ -238,9 +268,12 @@ class Change:
     status: str
 
 
-def history(repo, revision, *options):
+def history(repo, revisions, *options):
+    """First-parent changes of every revision in one walk: commits shared by several revisions appear once."""
+    if not revisions or any(revision.startswith("-") for revision in revisions):
+        raise Failure("history needs revisions that do not start with '-'")
     raw = git(repo, "log", "--first-parent", "--diff-merges=first-parent", "--root", "--raw", "--no-abbrev",
-              "--no-renames", "-z", "--format=%x1e%H", *options, revision, "--")
+              "--no-renames", "-z", "--format=%x1e%H", *options, *revisions, "--")
     return list(parse_history(raw))
 
 
@@ -400,8 +433,8 @@ def validate_curation(entry):
     return name
 
 
-def xml_plain(path):
-    root = ET.parse(path).getroot()
+def xml_plain(source):
+    root = ET.parse(source).getroot()
     for element in root.iter():
         element.tag = element.tag.rsplit("}", 1)[-1]
     return root
@@ -418,7 +451,15 @@ class Plugin:
 
 
 def read_plugin(repo):
-    plugins = xml_plain(repo / "pom.xml").findall("./build/pluginManagement/plugins/plugin")
+    return parse_plugin(xml_plain(repo / "pom.xml"))
+
+
+def plugin_signature(plugin):
+    return plugin.version, ET.tostring(plugin.configuration)
+
+
+def parse_plugin(project):
+    plugins = project.findall("./build/pluginManagement/plugins/plugin")
     plugin = next((p for p in plugins if p.findtext("artifactId") == "license-maven-plugin"), None)
     if plugin is None:
         raise Failure("Root pom.xml does not manage the Mycila license plugin")
@@ -451,8 +492,8 @@ class Scope:
 def discover_scope(repo, plugin):
     states = defaultdict(set)
     modules = []
-    for entry in SCOPE_POMS:
-        for report in scope_check(repo, plugin, entry):
+    for reports in parallel(lambda entry: scope_check(repo, plugin, entry), SCOPE_POMS):
+        for report in reports:
             module = report.parent.parent
             modules.append({"path": str(module.relative_to(repo)), "report": str(report.relative_to(repo))})
             for name, result in read_scope_report(repo, module, report):
@@ -516,7 +557,6 @@ class Mycila:
     def __init__(self, repo, directory, plugin):
         self.root = directory
         self.plugin = plugin
-        self.report = directory / "report.json"
         self.paths = {}
         self.contents = {}
         self.removed = {}
@@ -527,9 +567,10 @@ class Mycila:
             (directory / name).parent.mkdir(parents=True, exist_ok=True)
             (directory / name).write_bytes(self.templates[header])
 
-    def add(self, key, name, content):
+    def add(self, key, name, content, slot=None):
         group = "head" if key[0] == "head" else "ce"
-        path = self.root / "files" / group / str(len(self.paths)) / PurePosixPath(name).name
+        slot = len(self.paths) if slot is None else slot
+        path = self.root / "files" / group / str(slot) / PurePosixPath(name).name
         path.parent.mkdir(parents=True)
         path.write_bytes(content)
         self.paths[key] = path.relative_to(self.root).as_posix()
@@ -548,8 +589,9 @@ class Mycila:
     def current_headers(self, keys):
         keys = list(keys)
         recognized = defaultdict(list)
-        for header in TEMPLATES:
-            for key, result in self.invoke("check", header, keys).items():
+        checks = parallel(lambda header: self.invoke("check", header, keys), TEMPLATES)
+        for header, results in zip(TEMPLATES, checks):
+            for key, result in results.items():
                 if result == "PRESENT":
                     recognized[key].append(header)
         return {key: recognized[key][0] if len(recognized[key]) == 1 else UNRECOGNIZED for key in keys}
@@ -631,43 +673,46 @@ class Mycila:
                 rejected[key] = "more than one header, review by hand"
         accepted = [key for key in keys if key not in rejected]
         with self.guarded(accepted):
-            for header in TEMPLATES:
-                group = [key for key in accepted if expected[key] == header]
-                if group:
-                    self.invoke("format", header, group)
+            groups = {header: [key for key in accepted if expected[key] == header] for header in TEMPLATES}
+            parallel(lambda header: self.invoke("format", header, groups[header]), TEMPLATES)
         return {key: self.contents[key] for key in accepted}, rejected
 
     def invoke(self, goal, header, keys, *, styles=()):
         keys = list(keys)
         if not keys:
             return {}
-        self.write_pom(header, keys, styles)
-        self.report.unlink(missing_ok=True)
+        invocation = uuid.uuid4().hex
+        pom, report = self.root / f"pom-{invocation}.xml", self.root / f"report-{invocation}.json"
+        self.write_pom(pom, report, header, keys, styles)
         try:
-            maven(self.root, [self.plugin.coordinates + ":" + goal])
+            maven(self.root, ["-f", pom.name, self.plugin.coordinates + ":" + goal])
+            results = self.read_results(report)
         except Failure as exc:
-            unknown = self.unknown_inputs(keys)
+            unknown = self.unknown_inputs(report, keys)
             if unknown:
                 raise Failure(f"Mycila cannot normalize these inputs: {unknown[:20]}") from exc
             raise
-        results = self.read_results()
+        finally:
+            pom.unlink(missing_ok=True)
+            report.unlink(missing_ok=True)
         if set(results) != {self.paths[key] for key in keys} or "UNKNOWN" in results.values():
             raise Failure("Mycila comparison scope was incomplete or unknown")
         return {key: results[self.paths[key]] for key in keys}
 
-    def read_results(self):
-        if not self.report.exists():
+    @staticmethod
+    def read_results(report):
+        if not report.exists():
             raise Failure("Mycila did not produce its comparison report")
-        return {item["path"]: item["result"] for item in json.loads(self.report.read_text())["files"]}
+        return {item["path"]: item["result"] for item in json.loads(report.read_text())["files"]}
 
-    def unknown_inputs(self, keys):
+    def unknown_inputs(self, report, keys):
         try:
-            results = self.read_results()
+            results = self.read_results(report)
         except Failure:
             return []
         return [str(key) for key in keys if results.get(self.paths[key]) == "UNKNOWN"]
 
-    def write_pom(self, header, keys, styles):
+    def write_pom(self, pom, report, header, keys, styles):
         project = ET.Element("project", xmlns="http://maven.apache.org/POM/4.0.0")
         append_elements(project, [("modelVersion", "4.0.0"), ("groupId", "license.provenance"),
                                   ("artifactId", "temporary-comparison"), ("version", "1")])
@@ -677,7 +722,7 @@ class Mycila:
         config = ET.SubElement(plugin, "configuration")
         append_elements(config, [("encoding", "UTF-8"), ("strictCheck", "true"), ("quiet", "true"),
                                  ("failIfMissing", "false"), ("failIfUnknown", "true"),
-                                 ("reportFormat", "json"), ("reportLocation", str(self.report))])
+                                 ("reportFormat", "json"), ("reportLocation", str(report))])
         config.append(self.mapping(styles))
         license_set = ET.SubElement(ET.SubElement(config, "licenseSets"), "licenseSet")
         append_elements(license_set, [("header", str(self.root / TEMPLATES[header])),
@@ -688,7 +733,7 @@ class Mycila:
             parent = ET.SubElement(license_set, "inlineHeaderStyles")
             for style in styles:
                 append_elements(ET.SubElement(parent, "inlineHeaderStyle"), (("name", style.name),) + style.settings)
-        ET.ElementTree(project).write(self.root / "pom.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(project).write(pom, encoding="utf-8", xml_declaration=True)
 
     def mapping(self, styles):
         mapping = self.plugin.configuration.find("mapping")
@@ -822,9 +867,8 @@ class Lineage:
         if git(repo, "rev-parse", "--is-shallow-repository").decode().strip() == "true":
             raise Failure("this clone is shallow and the check needs full history. Run git fetch --unshallow.")
         deleted = {}
-        for base in bases:
-            for change in history(repo, base, "--diff-filter=D"):
-                deleted.setdefault(change.path, {"path": change.path, "ref": change.commit + "^1", "blob": change.old})
+        for change in history(repo, list(bases), "--diff-filter=D"):
+            deleted.setdefault(change.path, {"path": change.path, "ref": change.commit + "^1", "blob": change.old})
         return cls(head=head, bases=tuple(bases), trees={base: tree(repo, base) for base in bases}, deleted=deleted)
 
     def versions(self, name):
@@ -867,7 +911,116 @@ class Comparison:
         ))
 
 
-def compare(repo, plugin, lineage, contents):
+class NormalizationCache:
+    """Header-free contents of CE inputs from earlier runs, keyed by content and file name (Mycila styles follow the
+    name). One SQLite file per normalization signature: a different Mycila setup, template or check misses the cache."""
+
+    def __init__(self, directory, signature):
+        self.directory = directory
+        self.lock = threading.Lock()
+        self.added = 0
+        self.hits = 0
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / CACHE_UPDATED).unlink(missing_ok=True)
+        self.path = directory / f"{signature}.sqlite"
+        try:
+            self.database = self.open()
+        except sqlite3.DatabaseError:
+            # A damaged cache only costs time: start it again instead of failing the check.
+            self.path.unlink()
+            self.database = self.open()
+        os.utime(self.path)
+        for stale in sorted(directory.glob("*.sqlite"), key=lambda path: path.stat().st_mtime)[:-CACHE_SIGNATURES_KEPT]:
+            stale.unlink()
+
+    def open(self):
+        database = sqlite3.connect(self.path, check_same_thread=False)
+        database.execute("CREATE TABLE IF NOT EXISTS normalized (input TEXT PRIMARY KEY, content BLOB NOT NULL)")
+        return database
+
+    @staticmethod
+    def input(name, raw):
+        return hashlib.sha256(raw).hexdigest() + "/" + PurePosixPath(name).name
+
+    def get(self, inputs):
+        found = {}
+        with self.lock:
+            for key, raw in inputs.items():
+                row = self.database.execute("SELECT content FROM normalized WHERE input = ?",
+                                            (self.input(key[0], raw),)).fetchone()
+                if row is not None:
+                    found[key] = bytes(row[0])
+            self.hits += len(found)
+        return found
+
+    def put(self, entries):
+        with self.lock:
+            self.database.executemany("INSERT OR IGNORE INTO normalized VALUES (?, ?)",
+                                      [(self.input(key[0], raw), content) for key, raw, content in entries])
+            self.added += len(entries)
+
+    def close(self):
+        self.database.commit()
+        self.database.close()
+        if self.added:
+            (self.directory / CACHE_UPDATED).touch()
+
+
+class NoCache:
+    added = hits = 0
+
+    def get(self, inputs):
+        return {}
+
+    def put(self, entries):
+        pass
+
+    def close(self):
+        pass
+
+
+def cache_signature(repo, plugin):
+    digest = hashlib.sha256(CACHE_FORMAT.encode())
+    version, configuration = plugin_signature(plugin)
+    for part in (Path(__file__).read_bytes(), version.encode(), configuration,
+                 *((repo / name).read_bytes() for name in TEMPLATES.values())):
+        digest.update(len(part).to_bytes(8, "big") + part)
+    return digest.hexdigest()[:32]
+
+
+def normalize(repo, plugin, cache, inputs):
+    """Header-free contents of CE inputs ({key: raw bytes}, key[0] the file name), from the cache when it has them."""
+    found = cache.get(inputs)
+    missing = {key: raw for key, raw in inputs.items() if key not in found}
+    if missing:
+        with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
+            mycila = Mycila(repo, Path(temporary), plugin)
+            for key, raw in missing.items():
+                mycila.add(key, key[0], raw)
+            mycila.strip_headers()
+            grown = [key[0] for key, raw in missing.items() if len(mycila.contents[key]) > len(raw)]
+            if grown:
+                raise Failure(f"Mycila grew these files while removing their headers: {grown[:20]}")
+            found |= {key: mycila.contents[key] for key in missing}
+        cache.put([(key, raw, found[key]) for key, raw in missing.items()])
+    return found
+
+
+def staged_size(content):
+    return len(content.replace(b"\r\n", b"\n"))
+
+
+def could_be_copy(size, destinations):
+    """Git scores a pair 0 unless the smaller blob is at least half the larger (diffcore-rename estimate_similarity)."""
+    return any(2 * min(size, other) >= max(size, other) for other in destinations)
+
+
+def could_shrink_to_copy(raw_size, destinations):
+    """Normalizing never grows a file: below half the smallest destination it stays out of Git's reach."""
+    return 2 * raw_size >= min(destinations)
+
+
+def compare(repo, plugin, lineage, contents, cache):
     names = list(contents)
     new_paths = {name for name in names if not lineage.versions(name)}
     sources = {}
@@ -877,22 +1030,32 @@ def compare(repo, plugin, lineage, contents):
                 sources.setdefault((name, files[name]), base)
         for key in comparable_ce_files(files, new_paths).items():
             sources.setdefault(key, base)
+    versions = {(name, oid) for name in names for _, oid in lineage.versions(name)}
+    # Every input keeps the slot it has among all inputs, so the copy search sees the same paths, and Git breaks
+    # ties between equally similar sources the same way, however many sources the size filter drops.
+    slots = {("head", name): index for index, name in enumerate(names)}
+    slots |= {key: len(names) + index for index, key in enumerate(sorted(sources))}
     bytes_by_id = blobs(repo, [oid for _, oid in sources])
     with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
         mycila = Mycila(repo, Path(temporary), plugin)
         for name, content in contents.items():
-            mycila.add(("head", name), name, content)
-        for path, oid in sorted(sources):
-            mycila.add((path, oid), path, bytes_by_id[oid])
+            mycila.add(("head", name), name, content, slots[("head", name)])
         console.begin("Recognizing headers")
         recognized = mycila.current_headers([("head", name) for name in names])
         console.end()
         console.begin("Comparing against CE")
-        normalized = mycila.strip_headers()
+        head_hashes, copy_sources = parallel(lambda job: job(), [
+            mycila.strip_headers,
+            lambda: normalize(repo, plugin, cache, {key: bytes_by_id[key[1]] for key in versions})])
         headers = mycila.header_states(recognized)
-        copies = normalized_copies(mycila, sources, new_paths, mycila.nonempty())
-    merges = clean_merges(repo, plugin, lineage, names, normalized)
-    console.end(f"done ({len(normalized)} file versions)")
+        destinations = {name: mycila.contents[("head", name)] for name in sorted(new_paths)
+                        if mycila.contents[("head", name)].strip()}
+    normalized = head_hashes | {key: comparison_hash(content) for key, content in copy_sources.items()}
+    copies, searched = copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id,
+                                       destinations, copy_sources, normalized)
+    merges = clean_merges(repo, plugin, cache, lineage, names, normalized)
+    console.end(f"done ({len(normalized)} file versions, {searched} of {len(sources) - len(versions)} "
+                f"other CE files searched for copies, {cache.hits} from the cache)")
     return Comparison(
         lineage=lineage,
         contents=contents,
@@ -905,36 +1068,141 @@ def compare(repo, plugin, lineage, contents):
     )
 
 
-def clean_merges(repo, plugin, lineage, names, normalized):
-    merged = {}
-    for index, left in enumerate(lineage.bases):
-        for right in lineage.bases[index + 1:]:
-            ancestors = git(repo, "merge-base", "--all", left, right).decode().split()
-            if len(ancestors) != 1:
+def copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id, destinations, copy_sources,
+                    normalized):
+    """CE files similar to the paths that CE does not have, normalized only when Git could match them by size."""
+    if not destinations:
+        return {}, 0
+    sizes = [staged_size(content) for content in destinations.values()]
+    others = sorted(key for key in sources if key not in versions
+                    and could_shrink_to_copy(len(bytes_by_id[key[1]]), sizes))
+    found = normalize(repo, plugin, cache, {key: bytes_by_id[key[1]] for key in others})
+    normalized |= {key: comparison_hash(content) for key, content in found.items()}
+    with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
+        staging = Mycila(repo, Path(temporary), plugin)
+        for key, content in (found | copy_sources).items():
+            staging.add(key, key[0], content, slots[key])
+        for name, content in destinations.items():
+            staging.add(("head", name), name, content, slots[("head", name)])
+        reachable = {key: sources[key] for key in [*others, *copy_sources]
+                     if could_be_copy(staged_size(staging.contents[key]), sizes)}
+        return normalized_copies(staging, reachable, set(destinations), staging.nonempty()), len(others)
+
+
+def clean_merges(repo, plugin, cache, lineage, names, normalized):
+    pairs = [(left, right) for index, left in enumerate(lineage.bases) for right in lineage.bases[index + 1:]]
+
+    def ancestry(pair):
+        ancestors = git(repo, "merge-base", "--all", *pair).decode().split()
+        return (ancestors[0], tree(repo, ancestors[0])) if len(ancestors) == 1 else None
+
+    candidates = []
+    for (left, right), common in zip(pairs, parallel(ancestry, pairs)):
+        if common is None:
+            continue
+        ancestor, files = common
+        for name in names:
+            ours, theirs = lineage.trees[left].get(name), lineage.trees[right].get(name)
+            if ours is None or theirs is None or ours == theirs or name not in files:
                 continue
-            ancestry = tree(repo, ancestors[0])
-            for name in names:
-                ours, theirs = lineage.trees[left].get(name), lineage.trees[right].get(name)
-                if ours is None or theirs is None or ours == theirs or name not in ancestry:
-                    continue
-                if normalized[("head", name)] in {normalized[(name, ours)], normalized[(name, theirs)]}:
-                    continue
-                content = merge_blobs(repo, ours, ancestry[name], theirs)
-                if content is not None:
-                    merged[(name, left, right)] = (content, {"path": name, "merge": [left, right],
-                                                             "base": ancestors[0]})
+            if normalized[("head", name)] in {normalized[(name, ours)], normalized[(name, theirs)]}:
+                continue
+            candidates.append(((name, left, right), (ours, files[name], theirs), ancestor))
+    # Base pairs share most blobs: every distinct three-way merge runs once, all of them in parallel.
+    triples = list(dict.fromkeys(triple for _, triple, _ in candidates))
+    contents = dict(zip(triples, parallel(lambda triple: merge_blobs(repo, *triple), triples)))
+    merged = {}
+    for key, triple, ancestor in candidates:
+        if contents[triple] is not None:
+            merged[key] = (contents[triple], {"path": key[0], "merge": [key[1], key[2]], "base": ancestor})
     if not merged:
         return {}
-    with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
-        mycila = Mycila(repo, Path(temporary), plugin)
-        for key, (content, _) in merged.items():
-            mycila.add(key, key[0], content)
-        hashes = mycila.strip_headers()
+    found = normalize(repo, plugin, cache, {key: content for key, (content, _) in merged.items()})
+    hashes = {key: comparison_hash(content) for key, content in found.items()}
     result = {}
     for key, (_, description) in merged.items():
         if hashes[key] == normalized[("head", key[0])]:
             result.setdefault(key[0], description)
     return result
+
+
+@dataclass(frozen=True)
+class Selection:
+    since: str
+    merge_base: str
+    paths: frozenset | None
+    reason: str
+
+    @property
+    def full(self):
+        return self.paths is None
+
+    def report(self):
+        return {"since": self.since, "mergeBase": self.merge_base, "full": self.full, "reason": self.reason}
+
+
+def merge_base(repo, since):
+    commit = resolve(repo, since)
+    bases = run(["git", "merge-base", commit, "HEAD"], repo, ok=(0, 1)).stdout.decode().split()
+    if not bases:
+        raise Failure(f"HEAD shares no history with {since}.")
+    return bases[0]
+
+
+def changed_paths(repo, commit):
+    """Paths that differ between the commit and the working tree, untracked files included."""
+    tracked = git(repo, "diff", "--name-only", "--no-renames", "-z", commit, "--")
+    untracked = git(repo, "ls-files", "--others", "--exclude-standard", "-z")
+    return {path.decode("utf-8") for path in (tracked + b"\0" + untracked).split(b"\0") if path}
+
+
+def committed(repo, commit, name):
+    result = run(["git", "cat-file", "blob", f"{commit}:{name}"], repo, ok=(0, 128))
+    return result.stdout if result.returncode == 0 else None
+
+
+def committed_plugin(repo, commit):
+    content = committed(repo, commit, "pom.xml")
+    try:
+        return None if content is None else plugin_signature(parse_plugin(xml_plain(io.BytesIO(content))))
+    except (Failure, ET.ParseError):
+        return None
+
+
+def committed_curations(repo, commit):
+    content = committed(repo, commit, CURATIONS)
+    if content is None:
+        return {}
+    try:
+        return {entry["path"]: entry for entry in json.loads(content)["curations"]}
+    except (ValueError, KeyError, TypeError):
+        return None
+
+
+def select_changes(repo, since, bases, ce_bases, plugin, curations):
+    """Files to check against a PR target: the changed ones, unless a change can move verdicts of unchanged files."""
+    base = merge_base(repo, since)
+
+    def full(reason):
+        return Selection(since, base, None, reason)
+
+    try:
+        if sorted(ce_bases(base)) != sorted(bases):
+            return full("the CE commits merged into the branch changed")
+    except Failure:
+        return full("the CE commits merged at the merge base cannot be resolved")
+    if committed_plugin(repo, base) != plugin_signature(plugin):
+        return full("the Mycila configuration in the root pom.xml changed")
+    changed = changed_paths(repo, base)
+    checker = sorted(path for path in changed
+                     if path.startswith(CHECKER_PATHS) and path not in {CURATIONS, README})
+    if checker:
+        return full(f"the check itself changed ({checker[0]})")
+    previous = committed_curations(repo, base)
+    curated = set(curations) if previous is None else {
+        name for name in set(previous) | set(curations) if previous.get(name) != curations.get(name)}
+    paths = frozenset(changed | curated)
+    return Selection(since, base, paths, f"{len(paths)} changed paths")
 
 
 def current_branch(repo):
@@ -1058,15 +1326,19 @@ def print_findings(rows, curation_issues, ref_names):
                     f"Rerun with --fix to remove them from {CURATIONS}", style=None)
 
 
-def print_summary(rows, curation_issues, report):
+def print_summary(rows, curation_issues, report, label="files"):
     findings = sum(row["status"] != "match" for row in rows) + len(curation_issues)
     restamped = sum("previousHeader" in row for row in rows)
     note = f" ({restamped} restamped)" if restamped else ""
     if findings:
-        console.line(f"{findings} finding{'s' if findings != 1 else ''} in {len(rows)} files{note}. Report: {report}",
+        console.line(f"{findings} finding{'s' if findings != 1 else ''} in {len(rows)} {label}{note}. Report: {report}",
                      "red")
         return
-    console.line(f"All {len(rows)} files carry the expected header{note}.", "green")
+    if not rows:
+        console.line(f"No {label} to check.", "green")
+        console.line(f"Report: {report}")
+        return
+    console.line(f"All {len(rows)} {label} carry the expected header{note}.", "green")
     counts = Counter(row["expectedHeader"] for row in rows)
     console.line("  " + " · ".join(f"{header} {counts[header]}" for header in TEMPLATES if counts[header]))
     console.line(f"Report: {report}")
@@ -1166,16 +1438,37 @@ def check(args):
     curation_bytes = curation_path.read_bytes()
     curations = load_curations(curation_path)
     console.begin("Resolving Git history")
-    bases = merged_ce_bases(repo, head, ce["commit"]) if "ref" in ce else relicensed_ce_bases(repo, head)
+
+    def ce_bases(commit):
+        return merged_ce_bases(repo, commit, ce["commit"]) if "ref" in ce else relicensed_ce_bases(repo, commit)
+
+    bases = ce_bases(head)
     lineage = Lineage.load(repo, head, bases)
     console.end("done (CE base " + ", ".join(ref_name(base, ref_names) for base in bases) + ")")
+    selection = None
+    if args.since:
+        console.begin(f"Selecting files changed since {args.since}")
+        selection = select_changes(repo, args.since, bases, ce_bases, plugin, curations)
+        console.end(("full check: " if selection.full else "") + selection.reason
+                    + f" (merge base {selection.merge_base[:11]})")
     console.begin("Collecting Mycila scope")
     scope = discover_scope(repo, plugin)
     console.end(f"{len(scope.eligible)} files ({scope.ignored} Git-ignored skipped)")
-    contents = {name: (repo / name).read_bytes() for name in scope.eligible}
-    comparison = compare(repo, plugin, lineage, contents)
+    checked = (scope.eligible if selection is None or selection.full
+               else [name for name in scope.eligible if name in selection.paths])
+    if selection is not None and not selection.full:
+        console.line(f"Checking {len(checked)} of {len(scope.eligible)} files in scope", "dim")
+    contents = {name: (repo / name).read_bytes() for name in checked}
+    rows = []
+    if contents:
+        cache = (NoCache() if args.no_cache
+                 else NormalizationCache((repo / args.cache).resolve(), cache_signature(repo, plugin)))
+        try:
+            comparison = compare(repo, plugin, lineage, contents, cache)
+        finally:
+            cache.close()
+        rows = [comparison.classify(name, curations.get(name)) for name in checked]
     console.line()
-    rows = [comparison.classify(name, curations.get(name)) for name in scope.eligible]
     orphaned = [{"path": name, "status": "stale-curation", "reason": "file is no longer in scope"}
                 for name in sorted(set(curations) - set(scope.eligible))]
     ensure_inputs_unchanged(repo, lineage, curation_path, curation_bytes, contents)
@@ -1190,6 +1483,7 @@ def check(args):
         "head": lineage.head,
         "ce": ce | {"bases": list(lineage.bases)},
         "scope": {"supported": len(scope.eligible), "unknown": scope.unknown, "modules": scope.modules},
+        "selection": selection.report() if selection is not None else None,
         "summary": dict(summary),
         "restamped": sorted(row["path"] for row in rows if "previousHeader" in row),
         "removedCurations": removed,
@@ -1203,7 +1497,7 @@ def check(args):
     print_restamped(rows)
     print_removed_curations(removed)
     print_findings(rows, orphaned, ref_names)
-    print_summary(rows, orphaned, report)
+    print_summary(rows, orphaned, report, "files" if selection is None or selection.full else "changed files")
     return 1 if orphaned or summary.keys() - {"match"} else 0
 
 
@@ -1215,7 +1509,15 @@ def main(argv=None):
                              "without it, CE is the history of HEAD that does not contain the relicensing commit")
     parser.add_argument("--ce-remote", default=CE_REMOTE,
                         help=f"Git URL or path of the CE repository to fetch --ce-ref from (default: {CE_REMOTE})")
+    parser.add_argument("--since", metavar="REF",
+                        help="check only files changed since the merge base of REF and HEAD, uncommitted and "
+                             "untracked files included; falls back to the full check when the CE commits, the "
+                             "root Mycila configuration or the check itself changed")
     parser.add_argument("--output", default="target/license-provenance/report.json")
+    parser.add_argument("--cache", default=CACHE_DIRECTORY, metavar="DIRECTORY",
+                        help="header-free CE contents from earlier runs, reused while the Mycila setup, the "
+                             f"templates and the check stay the same (default: {CACHE_DIRECTORY})")
+    parser.add_argument("--no-cache", action="store_true", help="normalize every CE input again")
     parser.add_argument("--fix", action="store_true",
                         help="restamp files whose expected header the check determined and remove redundant or "
                              "orphaned curations; unrecognized headers are kept")

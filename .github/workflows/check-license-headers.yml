@@ -46,10 +46,37 @@ jobs:
           java-version: 21
           cache: maven
 
+      # Header-free CE contents from earlier runs. A pull request reads the cache of its base branch, then of master;
+      # only pushes and manual runs write one, so a pull request never feeds the cache that other runs trust.
+      - name: Restore normalized CE contents
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target/license-headers-cache
+          key: license-headers-ce-v1-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            license-headers-ce-v1-${{ github.ref_name }}-
+            license-headers-ce-v1-
+
       - name: Check license headers
+        env:
+          # Pull requests check only the files they change; pushes and manual runs check every file.
+          SINCE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
         run: |
           mkdir -p target/license-provenance
-          ./check-license-headers.sh 2>&1 | tee target/license-provenance/console.log
+          # The runner does nothing else: use every CPU, not all but one as on a workstation.
+          LICENSE_HEADERS_JOBS="$(nproc)"
+          export LICENSE_HEADERS_JOBS
+          ./check-license-headers.sh ${SINCE:+--since "$SINCE"} 2>&1 | tee target/license-provenance/console.log
+
+      # Saved even when the check finds problems, but only when the run normalized something the cache lacked.
+      - name: Save normalized CE contents
+        if: >-
+          always() && github.event_name != 'pull_request'
+          && hashFiles('target/license-headers-cache/.updated') != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target/license-headers-cache
+          key: license-headers-ce-v1-${{ github.ref_name }}-${{ github.run_id }}
 
       - name: Add findings to the job summary
         if: failure() && hashFiles('target/license-provenance/console.log') != ''
