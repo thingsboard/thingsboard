@@ -230,7 +230,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
             affectedEntities.some(entityId => entityId.entityType === entitiesTableConfig.entityType)),
           takeUntil(this.destroy$)
         ).subscribe(() => {
-          this.updateData();
+          this.updateData(false);
         });
       }
     }
