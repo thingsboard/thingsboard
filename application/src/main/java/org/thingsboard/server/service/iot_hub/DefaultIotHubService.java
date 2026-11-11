@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.iot_hub;
 
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +101,7 @@ public class DefaultIotHubService implements IotHubService {
     private final IotHubInstalledItemService iotHubInstalledItemService;
     private final WidgetTypeService widgetTypeService;
     private final DashboardService dashboardService;
+    private final OtaPackageService otaPackageService;
     private final CalculatedFieldService calculatedFieldService;
     private final DeviceProfileService deviceProfileService;
     private final DeviceService deviceService;
@@ -725,14 +729,11 @@ public class DefaultIotHubService implements IotHubService {
     }
 
     /**
-     * The entities the package created: the tracked ones without those the user chose, on a name conflict, to use as they
-     * were (the install state keeps that choice). The default device profile, for example, is never the package's.
-     */
-    /**
      * The update removes the package's entities one by one. ThingsBoard refuses to delete a device profile that is the
-     * default one or that devices outside the package use, and a rule chain that is the root one or the default rule
-     * chain of a profile outside the package. Found after the first deletes, such a refusal would leave the package half
-     * removed and fail every Retry the same way, so it is checked before anything is removed: a 400 removes nothing.
+     * default one, that devices outside the package use or that a firmware or software package refers to; a dashboard
+     * that a profile outside the package uses as its default dashboard; and a rule chain that is the root one or the
+     * default rule chain of a profile outside the package. Found after the first deletes, such a refusal would leave the
+     * package half removed and fail every Retry the same way, so it is checked before anything is removed.
      */
     private void checkPackageEntitiesCanBeRemoved(TenantId tenantId, List<EntityId> packageEntityIds) {
         if (packageEntityIds == null || packageEntityIds.isEmpty()) {
@@ -760,6 +761,27 @@ public class DefaultIotHubService implements IotHubService {
                 if (otherDevices > 0) {
                     blockers.add("the device profile '" + profile.getName() + "' is used by " + otherDevices + " other device(s)");
                 }
+                for (OtaPackageInfo ota : new PageDataIterable<>(link -> otaPackageService.findTenantOtaPackagesByTenantId(tenantId, link), 1000)) {
+                    if (profile.getId().equals(ota.getDeviceProfileId())) {
+                        blockers.add("the device profile '" + profile.getName() + "' is used by the " + ota.getType().name().toLowerCase()
+                                + " '" + ota.getTitle() + " " + ota.getVersion() + "'");
+                    }
+                }
+            } else if (entityId.getEntityType() == EntityType.DASHBOARD) {
+                Dashboard dashboard = dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId()));
+                if (!isOwnedBy(dashboard, tenantId)) {
+                    continue;
+                }
+                for (DeviceProfile profile : new PageDataIterable<>(link -> deviceProfileService.findDeviceProfiles(tenantId, link), 1000)) {
+                    if (dashboard.getId().equals(profile.getDefaultDashboardId()) && !owned.contains(profile.getId().getId())) {
+                        blockers.add("the dashboard '" + dashboard.getTitle() + "' is the default dashboard of the device profile '" + profile.getName() + "'");
+                    }
+                }
+                for (AssetProfile profile : new PageDataIterable<>(link -> assetProfileService.findAssetProfiles(tenantId, link), 1000)) {
+                    if (dashboard.getId().equals(profile.getDefaultDashboardId())) {
+                        blockers.add("the dashboard '" + dashboard.getTitle() + "' is the default dashboard of the asset profile '" + profile.getName() + "'");
+                    }
+                }
             } else if (entityId.getEntityType() == EntityType.RULE_CHAIN) {
                 RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
                 if (!isOwnedBy(ruleChain, tenantId)) {
@@ -781,11 +803,16 @@ public class DefaultIotHubService implements IotHubService {
             }
         }
         if (!blockers.isEmpty()) {
+            // Not "nothing was removed": an earlier attempt may have removed part of the package already.
             throw new IllegalArgumentException("The package can't be updated: " + String.join("; ", blockers)
-                    + ". Move them to other profiles or rule chains first, or delete them. Nothing was removed.");
+                    + ". Change or delete them first.");
         }
     }
 
+    /**
+     * The entities the package created: the tracked ones without those the user chose, on a name conflict, to use as they
+     * were (the install state keeps that choice). The default device profile, for example, is never the package's.
+     */
     private static List<EntityId> packageOwnedEntityIds(DeviceInstalledItemDescriptor descriptor) {
         List<EntityId> tracked = descriptor.getCreatedEntityIds();
         if (tracked == null || descriptor.getInstallState() == null) {
