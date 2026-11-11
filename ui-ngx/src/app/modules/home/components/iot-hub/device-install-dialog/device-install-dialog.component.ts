@@ -1328,7 +1328,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       } else if (field.key === TRANSPORT_PORT_FIELD_KEY) {
         validators.push(transportPortValidator);
       }
-      const initialValue = this.resolveInitialFieldValue(field, storedValues?.[field.key]);
+      // A read-only transport field shows the current Device connectivity setting: the installed version's host and
+      // port may be out of date, and the user couldn't correct them. The step of its own has no stored values anyway
+      const currentSetting = !this.reviewMode && field.readOnly
+        && (field.key === TRANSPORT_HOST_FIELD_KEY || field.key === TRANSPORT_PORT_FIELD_KEY);
+      const initialValue = this.resolveInitialFieldValue(field, currentSetting ? undefined : storedValues?.[field.key]);
       controls[field.key] = new UntypedFormControl({ value: initialValue, disabled: !!field.readOnly }, validators);
     }
     ws.formGroup = new UntypedFormGroup(controls);
