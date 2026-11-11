@@ -3,7 +3,7 @@
 import { computed, DestroyRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { NavigationStart, Router } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AiAssistantPanelConfig,
@@ -68,6 +68,18 @@ export class AiAssistantPanelService implements OnDestroy {
         this._open.set(false);
       }
     });
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(event => {
+      const openHere = this._openOnArrival && !AiAssistantPanelService.withoutPanel(event.urlAfterRedirects);
+      if (!AiAssistantPanelService.withoutPanel(event.urlAfterRedirects)) {
+        this._openOnArrival = false;
+      }
+      if (openHere) {
+        this._open.set(true);
+      }
+    });
   })();
 
   private static withoutPanel(url: string): boolean {
@@ -91,21 +103,37 @@ export class AiAssistantPanelService implements OnDestroy {
   private static readonly CARRY_MS = 15000;
   private _carried: {chatId: string; from: string | null; at: number} | null = null;
 
+  private static readonly FROM_AI_PAGE = 'ai-assistant-page';
+
+  private _openOnArrival = false;
+
   carryChat(chatId: string): void {
     this._carried = {chatId, from: this.contextKey(), at: Date.now()};
+  }
+
+  carryChatToPage(chatId: string): void {
+    this._carried = {chatId, from: AiAssistantPanelService.FROM_AI_PAGE, at: Date.now()};
+    this._openOnArrival = true;
+  }
+
+  hasCarriedChat(): boolean {
+    return !!this._carried;
   }
 
   takeCarriedChat(): string | undefined {
     const carried = this._carried;
     const key = this.contextKey();
-    if (!carried || key === null || key === carried.from) {
+    const fromPage = carried?.from === AiAssistantPanelService.FROM_AI_PAGE;
+    if (!carried || (key === null && !fromPage) || key === carried.from) {
       return undefined;
     }
     this._carried = null;
     if (Date.now() - carried.at > AiAssistantPanelService.CARRY_MS) {
       return undefined;
     }
-    this._lastChatIdByContext.set(key, carried.chatId);
+    if (key !== null) {
+      this._lastChatIdByContext.set(key, carried.chatId);
+    }
     return carried.chatId;
   }
 

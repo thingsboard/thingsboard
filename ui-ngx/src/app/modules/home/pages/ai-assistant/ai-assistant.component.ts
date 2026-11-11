@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { AiChatService } from '@core/http/ai-chat.service';
 import {
   Component,
@@ -156,6 +157,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  private panelService = inject(AiAssistantPanelService);
+
   private initialSelection = (() => {
     const params = this.route.snapshot.queryParamMap;
     const solutionId = params.get('solutionId');
@@ -258,6 +261,14 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     if (event.target === event.currentTarget) {
       this.settleRail();
     }
+    const chatId = this.chatId();
+    const link = (event.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+    if (!chatId || this.solutionId() || !link || link.target === '_blank' || link.origin !== window.location.origin
+      || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+      || link.pathname === '/ai-assistant' || link.pathname.startsWith('/ai-assistant/')) {
+      return;
+    }
+    this.panelService.carryChatToPage(chatId);
   }
 
   marked(text: string | undefined): {text: string; hit: boolean}[] {

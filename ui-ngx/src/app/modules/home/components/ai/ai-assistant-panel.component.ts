@@ -81,8 +81,20 @@ export class AiAssistantPanelComponent {
   private openEffect = effect(() => {
     if (this.panelService.open()) {
       untracked(() => {
-        this.dropChatFromOtherContext();
-        this.chats.load().subscribe(() => this.selectLastChat());
+        const carried = this.panelService.hasCarriedChat();
+        if (!carried) {
+          this.dropChatFromOtherContext();
+        }
+        this.chats.load().subscribe(() => {
+          if (carried) {
+            const chatId = this.panelService.takeCarriedChat();
+            if (chatId && this.chats.find(chatId)) {
+              this.chatId.set(chatId);
+              return;
+            }
+          }
+          this.selectLastChat();
+        });
       });
     }
   });
