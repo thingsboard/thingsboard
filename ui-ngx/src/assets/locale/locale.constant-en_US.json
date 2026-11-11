@@ -12349,6 +12349,7 @@
             "installed-line": "{ entities, plural, =1 {1 entity} other {# entities} } · { dashboards, plural, =1 {1 dashboard} other {# dashboards} } · live on simulated data",
             "view-as-user": "View as {{name}}",
             "json-note": "Edits here are applied as they are; the AI does not review them.",
+            "json-invalid": "Not valid JSON: {{message}}",
             "json-tip": "View as JSON",
             "download": "Download",
             "download-file": "Download {{name}}",

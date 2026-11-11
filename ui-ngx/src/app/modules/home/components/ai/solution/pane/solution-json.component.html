@@ -7,6 +7,9 @@
 <div class="sol-json-block">
   <div class="sol-json-head">
     <span class="sol-json-label">{{ fileName() }}</span>
+    @if (editing() && error(); as message) {
+      <span class="sol-json-err" role="alert">{{ 'solution-creator.pane.json-invalid' | translate: {message} }}</span>
+    }
     <button type="button" class="sol-json-tool" [class.done]="copied()" (click)="copy()"
             [matTooltip]="(copied() ? 'ai-assistant.copied' : 'ai-assistant.copy') | translate" matTooltipPosition="above"
             [attr.aria-label]="'ai-assistant.copy' | translate">
@@ -21,7 +24,14 @@
     </button>
   </div>
   @if (editing()) {
-    <tb-json-object-edit class="sol-json-editor" [fillHeight]="true" [formControl]="control"></tb-json-object-edit>
+    <div class="sol-json-edit" (click)="focusEditor($event)">
+      <div class="sol-json-in">
+        <pre class="sol-json-code sol-json-layer" aria-hidden="true"><code #layer class="lang-json"></code></pre>
+        <textarea #area class="sol-json-ta" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"
+                  [attr.aria-label]="'ai-assistant.file.editor' | translate: {name: fileName()}"
+                  [value]="draft()" (input)="onInput(area.value)" (keydown)="onKey($event)"></textarea>
+      </div>
+    </div>
   } @else {
     <pre class="sol-json-code"><code #code class="lang-json"></code></pre>
   }
