@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, of, EMPTY } from 'rxjs';
+import { Observable, of, EMPTY, forkJoin } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
@@ -24,6 +24,10 @@ import { TbDeviceInstallDialogComponent, DeviceInstallDialogData } from './devic
 import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData } from './iot-hub-installed-items-dialog.component';
 import { IotHubBuiltInService } from './iot-hub-built-in.service';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { DeviceService } from '@core/http/device.service';
+import { EntityGroupService } from '@core/http/entity-group.service';
+import { EntityType } from '@shared/models/entity-type.models';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { isBuiltInItem } from './iot-hub-utils';
 
 /**
@@ -41,7 +45,9 @@ export class IotHubActionsService {
     private dialogService: DialogService,
     private translate: TranslateService,
     private builtInService: IotHubBuiltInService,
-    private iotHubApiService: IotHubApiService
+    private iotHubApiService: IotHubApiService,
+    private deviceService: DeviceService,
+    private entityGroupService: EntityGroupService
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -183,11 +189,15 @@ export class IotHubActionsService {
   /** The install wizard of the new version updates a device package: it needs the user's input. */
   private reinstallDevice(installedItem: IotHubInstalledItem, versionId: string): Observable<string | boolean> {
     const descriptor = installedItem.descriptor as DeviceInstalledItemDescriptor;
-    return this.iotHubApiService.getVersionInfo(versionId).pipe(
-      switchMap(item => this.openDeviceInstallDialog(item, {
+    return forkJoin({
+      item: this.iotHubApiService.getVersionInfo(versionId),
+      placement: this.findDevicePlacement(descriptor)
+    }).pipe(
+      switchMap(({ item, placement }) => this.openDeviceInstallDialog(item, {
         replaceInstalledItemId: installedItem.id.id,
         selectedInstallMethod: descriptor?.selectedInstallMethod,
-        installState: descriptor?.installState
+        installState: descriptor?.installState,
+        ...placement
       })),
       map(result => result === 'installed' ? 'updated' : false),
       // The error itself is shown by the HTTP interceptor; nothing is changed yet.
@@ -222,6 +232,32 @@ export class IotHubActionsService {
         selectedInstallMethod: deviceDescriptor.selectedInstallMethod,
         installState: deviceDescriptor.installState
       });
+  }
+
+  /**
+   * The customer and the entity group of the installed version's device: the new version's device is created there
+   * too, as the wizard creates it in the group and for the customer it was installed from. With several groups the
+   * first one other than "All" is taken; nothing when the device cannot be read. When an earlier update already removed
+   * the device, the placement the server kept for it ($placement in the install state).
+   */
+  private findDevicePlacement(descriptor: DeviceInstalledItemDescriptor): Observable<{ entityGroupId?: string; customerId?: string }> {
+    const deviceId = descriptor?.createdEntityIds?.find(id => id.entityType === EntityType.DEVICE)?.id;
+    if (!deviceId) {
+      const kept = descriptor?.installState?.['$placement'];
+      return of({ entityGroupId: kept?.entityGroupId, customerId: kept?.customerId });
+    }
+    const config = { ignoreLoading: true, ignoreErrors: true };
+    // Each lookup failing on its own (a deleted device, no access to its groups) only leaves its part out.
+    return forkJoin({
+      customerId: this.deviceService.getDevice(deviceId, config).pipe(
+        map(device => device.customerId && device.customerId.id !== NULL_UUID ? device.customerId.id : undefined),
+        catchError(() => of(undefined))),
+      entityGroupId: this.entityGroupService.getEntityGroupIdsForEntityId(EntityType.DEVICE, deviceId, config).pipe(
+        switchMap(groupIds => groupIds.length
+          ? this.entityGroupService.getEntityGroupsByIds(groupIds.map(groupId => groupId.id), config) : of([])),
+        map(groups => groups.find(group => !group.groupAll)?.id.id),
+        catchError(() => of(undefined)))
+    });
   }
 
   private openDeviceInstallDialog(item: MpItemVersionView,

@@ -4,6 +4,7 @@
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -800,7 +801,8 @@ public class DefaultIotHubService implements IotHubService {
     }
 
     @Override
-    public void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId) {
+    public void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId,
+                                            UUID entityGroupId, UUID customerId) {
         TenantId tenantId = user.getTenantId();
         IotHubInstalledItem installedItem = findDevicePackage(tenantId, installedItemId);
         // Checked before anything is removed: the registration of the new version checks the same and would fail.
@@ -832,9 +834,23 @@ public class DefaultIotHubService implements IotHubService {
             }
             // Keep what the user entered in the forms (the wizard of the new version starts from it), drop the outputs of
             // the removed entities: their ids, links and tokens no longer exist.
-            if (descriptor.getInstallState() != null) {
-                descriptor.setInstallState(stripEntityOutputs(descriptor.getInstallState()));
+            Map<String, JsonNode> installState = descriptor.getInstallState() != null
+                    ? stripEntityOutputs(descriptor.getInstallState()) : null;
+            // PE: where the removed device was, so that a retry still creates the new one there.
+            if (entityGroupId != null || customerId != null) {
+                if (installState == null) {
+                    installState = new LinkedHashMap<>();
+                }
+                ObjectNode placement = JacksonUtil.newObjectNode();
+                if (entityGroupId != null) {
+                    placement.put("entityGroupId", entityGroupId.toString());
+                }
+                if (customerId != null) {
+                    placement.put("customerId", customerId.toString());
+                }
+                installState.put(PLACEMENT_STATE, placement);
             }
+            descriptor.setInstallState(installState);
             iotHubInstalledItemService.save(tenantId, installedItem);
         } catch (RuntimeException e) {
             // Without the cause: BaseController answers 400 for an IncorrectParameterException cause, and a 400 tells the
@@ -849,11 +865,15 @@ public class DefaultIotHubService implements IotHubService {
         log.info("[{}] Removed the entities of device package {} for its update", tenantId, installedItem.getItemName());
     }
 
+    private static final String PLACEMENT_STATE = "$placement";
+
     private static Map<String, JsonNode> stripEntityOutputs(Map<String, JsonNode> installState) {
         Map<String, JsonNode> stripped = new LinkedHashMap<>();
         installState.forEach((step, state) -> {
             JsonNode formValues = state != null ? state.get("formValues") : null;
-            if (formValues != null) {
+            if (PLACEMENT_STATE.equals(step) && state != null) {
+                stripped.put(step, state);
+            } else if (formValues != null) {
                 stripped.put(step, JacksonUtil.newObjectNode().set("formValues", formValues));
             }
         });

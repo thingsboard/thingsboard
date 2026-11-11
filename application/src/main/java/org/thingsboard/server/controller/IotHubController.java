@@ -101,9 +101,12 @@ public class IotHubController extends BaseController {
     @PostMapping("/installedItems/{installedItemId}/device/removeEntities")
     @ResponseBody
     public void removeDevicePackageEntities(@PathVariable UUID installedItemId,
-                                            @RequestParam String versionId) throws ThingsboardException {
+                                            @RequestParam String versionId,
+                                            @RequestParam(required = false) UUID entityGroupId,
+                                            @RequestParam(required = false) UUID customerId) throws ThingsboardException {
         checkAllPermissions();
-        iotHubService.removeDevicePackageEntities(getCurrentUser(), new IotHubInstalledItemId(installedItemId), versionId);
+        iotHubService.removeDevicePackageEntities(getCurrentUser(), new IotHubInstalledItemId(installedItemId), versionId,
+                entityGroupId, customerId);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

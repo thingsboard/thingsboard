@@ -175,11 +175,12 @@ export class IotHubApiService {
     );
   }
 
-  public removeDevicePackageEntities(installedItemId: string, versionId: string, config?: IotHubRequestConfig): Observable<void> {
+  public removeDevicePackageEntities(installedItemId: string, versionId: string, config?: IotHubRequestConfig,
+                                     placement?: { entityGroupId?: string; customerId?: string }): Observable<void> {
     return this.http.post<void>(
       `/api/iot-hub/installedItems/${installedItemId}/device/removeEntities`,
       null,
-      { params: this.buildParams(config, { versionId }) }
+      { params: this.buildParams(config, { versionId, entityGroupId: placement?.entityGroupId, customerId: placement?.customerId }) }
     );
   }
 

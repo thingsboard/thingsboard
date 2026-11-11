@@ -10,6 +10,8 @@ import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.UUID;
+
 public interface IotHubService {
 
     InstallItemVersionResult installItemVersion(SecurityUser user, String versionId, JsonNode data, HttpServletRequest request);
@@ -31,8 +33,15 @@ public interface IotHubService {
      * Refused with an {@link IllegalArgumentException} (a 400), before anything is removed, when the item is not a device
      * package, {@code versionId} (the version to install) is not a version of that item, or IoT Hub does not answer. A failure once removing started is an
      * {@link IllegalStateException}: entities may already be removed.
+     * PE: the entity group and the customer of the removed device are kept in the install state ({@code $placement}),
+     * so the new version's device is created there even when the update is retried after the device is gone.
      */
-    void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId);
+    void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId,
+                                     UUID entityGroupId, UUID customerId);
+
+    default void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId) {
+        removeDevicePackageEntities(user, installedItemId, versionId, null, null);
+    }
 
     void deleteInstalledItem(SecurityUser user, IotHubInstalledItemId installedItemId);
 

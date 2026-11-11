@@ -937,8 +937,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     this.removingReplaced.set(true);
     try {
+      // The server keeps the placement, so that a retry after the device is gone still creates the new one there.
       await firstValueFrom(this.iotHubApiService.removeDevicePackageEntities(this.data.replaceInstalledItemId,
-        this.data.item.id as string, { ignoreLoading: true, ignoreErrors: true }));
+        this.data.item.id as string, { ignoreLoading: true, ignoreErrors: true },
+        { entityGroupId: this.data.entityGroupId, customerId: this.data.customerId }));
       this.replacedEntitiesRemoved = true;
       this.replacedEntitiesMayBeGone = true;
       return true;

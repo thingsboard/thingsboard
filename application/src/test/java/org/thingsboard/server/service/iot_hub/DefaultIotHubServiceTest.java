@@ -505,6 +505,40 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
+    void removeDevicePackageEntities_keepsThePlacementOfTheRemovedDeviceForARetry() throws Exception {
+        mockTenant();
+        Device device = new Device(new DeviceId(UUID.randomUUID()));
+        device.setTenantId(tenantId);
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.<EntityId>of(device.getId()));
+        descriptor.setInstallState(new LinkedHashMap<>(Map.of(
+                "Configuration", JacksonUtil.toJsonNode("{\"formValues\":{\"gatewayName\":\"GW\"}}"))));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setItemId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        String newVersionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(newVersionId))
+                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
+        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
+        UUID entityGroupId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+
+        service.removeDevicePackageEntities(user, item.getId(), newVersionId, entityGroupId, customerId);
+
+        verify(tbDeviceService).delete(device, user);
+        assertThat(descriptor.getInstallState()).containsOnlyKeys("Configuration", "$placement");
+        assertThat(descriptor.getInstallState().get("$placement").get("entityGroupId").asText()).isEqualTo(entityGroupId.toString());
+        assertThat(descriptor.getInstallState().get("$placement").get("customerId").asText()).isEqualTo(customerId.toString());
+
+        // A retry after the device is gone: the wizard sends the kept placement again, and it stays.
+        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
+        assertThat(descriptor.getInstallState()).containsOnlyKeys("Configuration", "$placement");
+        assertThat(descriptor.getInstallState().get("$placement").get("customerId").asText()).isEqualTo(customerId.toString());
+    }
+
+    @Test
     void registerDeviceInstall_replace_updatesTheSameItemToTheNewVersion() {
         mockTenant();
         IotHubInstalledItem item = installedItem(UUID.randomUUID());
