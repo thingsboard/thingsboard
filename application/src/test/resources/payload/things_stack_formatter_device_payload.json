@@ -17,7 +17,8 @@
         "model_id": "macro-tracker"
       },
       "batteryLevel": 100,
-      "chargeState": "Charging"
+      "chargeState": "Charging",
+      "temperatureUnit": "°C"
     },
     "rx_metadata": [
       {

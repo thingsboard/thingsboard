@@ -826,8 +826,9 @@ public class ConverterControllerTest extends AbstractControllerTest {
         testThingsStackDefaultConverters(THINGS_STACK_MANUAL_DEVICE_PAYLOAD, Map.of("profile.milesight-iot-am308", "AM308"), expectedDecodedMessage);
     }
 
+    // temperatureUnit is not ASCII: decoded_payload reaches the decoders as UTF-8, and both must give the same text
     private static final String THINGS_STACK_FORMATTER_DEVICE_RESULT = "{\"entityType\":\"DEVICE\",\"name\":\"macro-tracker-1\",\"profile\":\"lansitec-macro-tracker\",\"label\":\"macro-tracker-1\",\"group\":\"my-app\"," +
-                "\"telemetry\":{\"ts\":1794304800100,\"values\":{\"batteryLevel\":100,\"chargeState\":\"Charging\",\"fCnt\":5,\"data\":\"IWQ+Az4AbFA=\",\"rssi\":-70,\"snr\":7.0}}," +
+                "\"telemetry\":{\"ts\":1794304800100,\"values\":{\"batteryLevel\":100,\"chargeState\":\"Charging\",\"temperatureUnit\":\"°C\",\"fCnt\":5,\"data\":\"IWQ+Az4AbFA=\",\"rssi\":-70,\"snr\":7.0}}," +
                 "\"attributes\":{\"brandId\":\"lansitec\",\"modelId\":\"macro-tracker\",\"eui\":\"70B3D57ED006F371\",\"deviceId\":\"macro-tracker-1\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
                 "\"spreadingFactor\":9,\"frequency\":868300000}}";
 
