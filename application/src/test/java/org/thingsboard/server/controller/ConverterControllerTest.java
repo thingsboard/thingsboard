@@ -836,6 +836,63 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGenericDefaultDecoderRequiresDeviceName() throws Exception {
+        String payload = "{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"thermostat\",\"serialNumber\":\"SN-12345\",\"temperature\":25.5,\"ts\":1791901200000}";
+        JsonNode expected = JacksonUtil.toJsonNode("{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"thermostat\"," +
+                "\"attributes\":{\"serialNumber\":\"SN-12345\"},\"telemetry\":{\"ts\":1791901200000,\"values\":{\"temperature\":25.5}}}");
+        JsonNode expectedDefaultType = JacksonUtil.toJsonNode("{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"default\"," +
+                "\"telemetry\":{\"ts\":1791901200000,\"values\":{\"temperature\":25.5}}}");
+        List<String> defaultTypePayloads = List.of(
+                "{\"deviceName\":\"Thermostat-01\",\"temperature\":25.5,\"ts\":1791901200000}",
+                "{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"  \",\"temperature\":25.5,\"ts\":1791901200000}"
+        );
+        List<String> noNamePayloads = List.of(
+                "{\"temperature\":25.5}",
+                "{\"deviceName\":null,\"temperature\":25.5}",
+                "{\"deviceName\":\"\",\"temperature\":25.5}",
+                "{\"deviceName\":\"   \",\"temperature\":25.5}",
+                "{}"
+        );
+
+        SoftAssertions softly = new SoftAssertions();
+        // The generic template is used by integrations without their own template; HTTP has its own copy.
+        for (String uplinkDir : List.of("converters/default/uplink/", "converters/HTTP/uplink/")) {
+            for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+                String decoder = readResource(uplinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+                String description = uplinkDir + " [" + scriptLang + "] ";
+
+                JsonNode response = decodeGenericUplink(decoder, scriptLang, payload);
+                softly.assertThat(response.get("error").asText()).as(description + payload).isEmpty();
+                softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(description + payload).isEqualTo(expected);
+
+                // A missing or blank device type falls back to "default".
+                for (String defaultTypePayload : defaultTypePayloads) {
+                    response = decodeGenericUplink(decoder, scriptLang, defaultTypePayload);
+                    softly.assertThat(response.get("error").asText()).as(description + defaultTypePayload).isEmpty();
+                    softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(description + defaultTypePayload).isEqualTo(expectedDefaultType);
+                }
+
+                // A missing, null, empty or blank device name rejects the message instead of creating "Unknown Device".
+                for (String noNamePayload : noNamePayloads) {
+                    response = decodeGenericUplink(decoder, scriptLang, noNamePayload);
+                    softly.assertThat(response.get("output").asText()).as(description + noNamePayload).isEmpty();
+                    softly.assertThat(response.get("error").asText()).as(description + noNamePayload)
+                            .contains("Device name is missing. Provide deviceName in the payload.");
+                }
+            }
+        }
+        softly.assertAll();
+    }
+
+    private JsonNode decodeGenericUplink(String decoder, ScriptLanguage scriptLang, String payload) {
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("decoder", decoder);
+        inputParams.set("metadata", JacksonUtil.newObjectNode());
+        inputParams.put("payload", Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
+        return doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
+    }
+
+    @Test
     public void testChirpStackNotDefaultDecoder() throws IOException {
         String expectedDecodedMessage = "{\"entityType\":\"ASSET\",\"name\":\"Asset 1000000000000001\",\"profile\":\"IndustrialSensorProfile\",\"customer\":\"MyCustomer\",\"group\":\"SensorsGroup\"," +
                 "\"telemetry\":{\"ts\":1684741625404,\"values\":{\"battery\":95,\"temperature\":36.6}},\"attributes\":{\"devAddr\":\"20000001\",\"fPort\":85,\"eui\":\"1000000000000001\"}}";
