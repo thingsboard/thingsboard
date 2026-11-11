@@ -5444,7 +5444,6 @@
                 "community-string": "SNMP 커뮤니티 문자열"
             },
             "isgateway": "Gateway 여부",
-            "activity-time-from-gateway-device": "Gateway 장치의 활동 시간",
             "description": "설명",
             "edge-license-key": "라이선스 키",
             "cloud-endpoint": "클라우드 엔드포인트",

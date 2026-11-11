@@ -5452,7 +5452,6 @@
         "community-string": "SNMP bendruomenės eilutė"
       },
       "isgateway": "Yra Gateway įrenginys",
-      "activity-time-from-gateway-device": "Aktyvumo laikas iš Gateway įrenginio",
       "description": "Aprašymas",
       "edge-license-key": "Licencijos raktas",
       "cloud-endpoint": "Debesies galinis taškas",
