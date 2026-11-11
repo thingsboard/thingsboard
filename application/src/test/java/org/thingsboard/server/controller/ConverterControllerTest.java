@@ -47,6 +47,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -811,6 +812,47 @@ public class ConverterControllerTest extends AbstractControllerTest {
         String payload = new String(resourceAsStream.readAllBytes(), StandardCharsets.UTF_8);
 
         testDecoder(TTN_UPLINK_JSON_DECODER, payload, expectedDecodedMessage, converter);
+    }
+
+    @Test
+    public void testMqttDefaultEncoder() throws Exception {
+        String downlinkDir = "converters/MQTT/downlink/";
+        String msg = readResource(downlinkDir + "payload.json").orElseThrow();
+        String msgType = readResource(downlinkDir + "msgType.txt").orElseThrow().trim();
+        JsonNode expected = JacksonUtil.toJsonNode(readResource(downlinkDir + "test/default/expected.json").orElseThrow());
+        String invalidTopic = "' must not contain '/', '+', '#' or the null character.";
+
+        // metadata -> expected error text
+        Map<String, String> errorCases = new LinkedHashMap<>();
+        errorCases.put("{\"deviceType\":\"thermostat\"}", "Message metadata has no deviceName");
+        errorCases.put("{\"deviceName\":\"  \",\"deviceType\":\"thermostat\"}", "Message metadata has no deviceName");
+        errorCases.put("{\"deviceName\":\"Thermostat-01\"}", "Message metadata has no deviceType");
+        errorCases.put("{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"  \"}", "Message metadata has no deviceType");
+        errorCases.put("{\"deviceName\":\"Pump/1\",\"deviceType\":\"thermostat\"}",
+                "Invalid MQTT downlink topic: deviceName 'Pump/1' and deviceType 'thermostat" + invalidTopic);
+        errorCases.put("{\"deviceName\":\"Pump #1\",\"deviceType\":\"thermostat\"}",
+                "Invalid MQTT downlink topic: deviceName 'Pump #1' and deviceType 'thermostat" + invalidTopic);
+        errorCases.put("{\"deviceName\":\"Thermostat-01\",\"deviceType\":\"thermo+stat\"}",
+                "Invalid MQTT downlink topic: deviceName 'Thermostat-01' and deviceType 'thermo+stat" + invalidTopic);
+        errorCases.put("{\"deviceName\":\"Pump\\u00001\",\"deviceType\":\"thermostat\"}", invalidTopic);
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String encoder = readResource(downlinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // Spaces around the device name and type are not part of the command topic.
+            JsonNode response = encodeDownlink(encoder, scriptLang, msg, msgType, "{\"deviceName\":\" Thermostat-01 \",\"deviceType\":\" thermostat \"}");
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": device name and type with spaces").isEmpty();
+            softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": device name and type with spaces").isEqualTo(expected);
+
+            for (Map.Entry<String, String> errorCase : errorCases.entrySet()) {
+                String description = scriptLang + ": " + errorCase.getKey();
+                response = encodeDownlink(encoder, scriptLang, msg, msgType, errorCase.getKey());
+                softly.assertThat(response.get("output").asText()).as(description).isEqualTo("null");
+                softly.assertThat(response.get("error").asText()).as(description).contains(errorCase.getValue());
+            }
+        }
+        softly.assertAll();
     }
 
     @Test
