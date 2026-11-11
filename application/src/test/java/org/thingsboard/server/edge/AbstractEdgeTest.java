@@ -622,7 +622,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     protected void sendUplinkMsgAndVerifyNoDownlink(Consumer<UplinkMsg.Builder> customizer) throws Exception {
         edgeImitator.expectMessageAmount(1);
         sendUplinkMsgAndWaitForResponse(customizer);
-        Assert.assertFalse(edgeImitator.waitForMessages(5));
+        // edge events are polled every second, so 2 seconds cover a full poll cycle
+        Assert.assertFalse(edgeImitator.waitForMessages(2));
     }
 
     protected Device findDeviceByName(String deviceName) throws Exception {

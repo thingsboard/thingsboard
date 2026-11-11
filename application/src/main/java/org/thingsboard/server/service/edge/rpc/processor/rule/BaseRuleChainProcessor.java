@@ -28,8 +28,7 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
 
     protected Pair<Boolean, Boolean> saveOrUpdateRuleChain(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateMsg ruleChainUpdateMsg, RuleChainType ruleChainType) {
         boolean created = false;
-        checkEntityTenant(tenantId, ruleChainId);
-        RuleChain ruleChainFromDb = edgeCtx.getRuleChainService().findRuleChainById(tenantId, ruleChainId);
+        RuleChain ruleChainFromDb = findTenantEntity(tenantId, ruleChainId);
         if (ruleChainFromDb == null) {
             created = true;
         }
@@ -61,7 +60,7 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
         if (ruleChainMetadata == null) {
             throw new RuntimeException("[{" + tenantId + "}] ruleChainMetadataUpdateMsg {" + ruleChainMetadataUpdateMsg + "} cannot be converted to rule chain metadata");
         }
-        if (ruleChainMetadata.getRuleChainId() == null || !isEntityExists(tenantId, ruleChainMetadata.getRuleChainId())) {
+        if (ruleChainMetadata.getRuleChainId() == null || !isTenantEntity(tenantId, ruleChainMetadata.getRuleChainId())) {
             throw new DataValidationException("Rule chain metadata is referencing to non-existent rule chain!");
         }
         if (!ruleChainMetadata.getNodes().isEmpty()) {

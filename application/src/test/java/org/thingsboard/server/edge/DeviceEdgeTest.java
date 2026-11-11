@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RpcId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -717,6 +718,18 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testRpcV2StatusForRpcOfDifferentTenantFromEdge() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        Rpc rpc = savePersistentRpc(differentTenantId, device, RpcStatus.QUEUED);
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.SUCCESSFUL, "{\"result\":\"ok\"}");
+
+        Rpc rpcAfterUplink = rpcService.findById(differentTenantId, rpc.getId());
+        Assert.assertEquals(RpcStatus.QUEUED, rpcAfterUplink.getStatus());
+        Assert.assertNull(rpcAfterUplink.getResponse());
+    }
+
+    @Test
     public void testRpcV2DeleteFromEdge() throws Exception {
         Device device = findDeviceByName("Edge Device 1");
         Rpc rpc = savePersistentRpc(device, RpcStatus.DELIVERED);
@@ -747,8 +760,12 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     }
 
     private Rpc savePersistentRpc(Device device, RpcStatus status) {
+        return savePersistentRpc(tenantId, device, status);
+    }
+
+    private Rpc savePersistentRpc(TenantId rpcTenantId, Device device, RpcStatus status) {
         Rpc rpc = new Rpc(new RpcId(Uuids.timeBased()));
-        rpc.setTenantId(tenantId);
+        rpc.setTenantId(rpcTenantId);
         rpc.setDeviceId(device.getId());
         rpc.setExpirationTime(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1));
         rpc.setRequest(JacksonUtil.newObjectNode().put("method", "test_method"));

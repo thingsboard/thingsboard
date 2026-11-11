@@ -239,4 +239,40 @@ public class AlarmEdgeTest extends AbstractEdgeTest {
         doGet("/api/alarm/" + alarm.getUuidId()).andExpect(status().isNotFound());
     }
 
+    @Test
+    public void testSendAlarmCommentWithIdOfCommentOfAnotherAlarmToCloud() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+        Alarm firstAlarm = saveAlarm(device, "first alarm");
+        Alarm secondAlarm = saveAlarm(device, "second alarm");
+
+        AlarmComment alarmComment = new AlarmComment();
+        alarmComment.setComment(new TextNode("Original comment"));
+        alarmComment.setAlarmId(firstAlarm.getId());
+        alarmComment = doPost("/api/alarm/" + firstAlarm.getUuidId() + "/comment", alarmComment, AlarmComment.class);
+
+        AlarmComment edgeAlarmComment = new AlarmComment();
+        edgeAlarmComment.setId(alarmComment.getId());
+        edgeAlarmComment.setCreatedTime(alarmComment.getCreatedTime());
+        edgeAlarmComment.setAlarmId(secondAlarm.getId());
+        edgeAlarmComment.setComment(new TextNode("Changed comment"));
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addAlarmCommentUpdateMsg(AlarmCommentUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE)
+                .setEntity(JacksonUtil.toString(edgeAlarmComment))
+                .build()));
+
+        PageData<AlarmCommentInfo> firstAlarmComments = doGetTyped("/api/alarm/" + firstAlarm.getUuidId() + "/comment?page=0&pageSize=10", new TypeReference<>() {});
+        Assert.assertEquals(1, firstAlarmComments.getTotalElements());
+        Assert.assertEquals(alarmComment.getComment(), firstAlarmComments.getData().get(0).getComment());
+        PageData<AlarmCommentInfo> secondAlarmComments = doGetTyped("/api/alarm/" + secondAlarm.getUuidId() + "/comment?page=0&pageSize=10", new TypeReference<>() {});
+        Assert.assertEquals(0, secondAlarmComments.getTotalElements());
+    }
+
+    private Alarm saveAlarm(Device device, String type) {
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(device.getId());
+        alarm.setType(type);
+        alarm.setSeverity(AlarmSeverity.MINOR);
+        return doPost("/api/alarm", alarm, Alarm.class);
+    }
+
 }

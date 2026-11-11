@@ -300,8 +300,8 @@ public class UserEdgeTest extends AbstractEdgeTest {
 
     private void verifyNoEdgeEvents(UserId userId) {
         Awaitility.await()
-                .pollDelay(3, TimeUnit.SECONDS)
-                .atMost(10, TimeUnit.SECONDS)
+                .pollDelay(2, TimeUnit.SECONDS)
+                .atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, Long.MAX_VALUE, new TimePageLink(1000));
                     Assert.assertTrue(edgeEvents.getData().stream().noneMatch(edgeEvent -> userId.getId().equals(edgeEvent.getEntityId())));

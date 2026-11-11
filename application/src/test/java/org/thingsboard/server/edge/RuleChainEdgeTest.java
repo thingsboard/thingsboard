@@ -292,6 +292,29 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(nodesCount, metaDataAfter.getNodes().size());
     }
 
+    @Test
+    public void testSendRuleChainWithIdOfDifferentTenantToCloud() throws Exception {
+        RuleChainId ruleChainId = getDifferentTenantRootRuleChainId();
+        loginDifferentTenant();
+        String ruleChainName = doGet("/api/ruleChain/" + ruleChainId.getId(), RuleChain.class).getName();
+        loginTenantAdmin();
+
+        RuleChain edgeRuleChain = new RuleChain();
+        edgeRuleChain.setTenantId(tenantId);
+        edgeRuleChain.setId(ruleChainId);
+        edgeRuleChain.setName("Changed Rule Chain");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addRuleChainUpdateMsg(RuleChainUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE)
+                .setIdMSB(ruleChainId.getId().getMostSignificantBits())
+                .setIdLSB(ruleChainId.getId().getLeastSignificantBits())
+                .setEntity(JacksonUtil.toString(edgeRuleChain))
+                .build()));
+
+        loginDifferentTenant();
+        Assert.assertEquals(ruleChainName, doGet("/api/ruleChain/" + ruleChainId.getId(), RuleChain.class).getName());
+        loginTenantAdmin();
+    }
+
     private RuleChainId getDifferentTenantRootRuleChainId() throws Exception {
         loginDifferentTenant();
         RuleChain rootRuleChain = doGetTypedWithPageLink("/api/ruleChains?type={type}&", new TypeReference<PageData<RuleChain>>() {},

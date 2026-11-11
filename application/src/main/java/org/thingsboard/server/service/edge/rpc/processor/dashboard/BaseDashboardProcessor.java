@@ -33,9 +33,8 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
             newAssignedCustomers.addAll(dashboard.getAssignedCustomers());
         }
-        checkEntityTenant(tenantId, dashboardId);
+        Dashboard dashboardById = findTenantEntity(tenantId, dashboardId);
         dashboard.setTenantId(tenantId);
-        Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
         if (dashboardById == null) {
             created = true;
             dashboard.setId(null);
