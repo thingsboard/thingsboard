@@ -19,7 +19,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.HasOwnerId;
@@ -63,7 +62,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
-import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -71,6 +69,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.edge.EdgeEntityTenantChecker;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
@@ -96,7 +95,7 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     protected EdgeContextComponent edgeCtx;
 
     @Autowired
-    protected EntityDaoRegistry entityDaoRegistry;
+    protected EdgeEntityTenantChecker edgeEntityTenantChecker;
 
     @Autowired
     protected EdgeSynchronizationManager edgeSynchronizationManager;
@@ -420,20 +419,17 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         return customerId;
     }
 
-    protected boolean isEntityExists(TenantId tenantId, EntityId entityId) {
-        return tenantId.equals(findEntityTenantId(tenantId, entityId));
+    protected boolean isTenantEntity(TenantId tenantId, EntityId entityId) {
+        return edgeEntityTenantChecker.isTenantEntity(tenantId, entityId);
     }
 
-    protected void checkEntityTenant(TenantId tenantId, EntityId entityId) {
-        TenantId entityTenantId = findEntityTenantId(tenantId, entityId);
-        if (entityTenantId != null && !tenantId.equals(entityTenantId)) {
-            throw new DataValidationException(entityId.getEntityType() + " " + entityId.getId() + " belongs to a different tenant!");
-        }
+    // returns the existing entity of the tenant or null, throws if the id belongs to another tenant's entity
+    protected <T> T findTenantEntity(TenantId tenantId, EntityId entityId) {
+        return edgeEntityTenantChecker.findTenantEntity(tenantId, entityId);
     }
 
     private TenantId findEntityTenantId(TenantId tenantId, EntityId entityId) {
-        Object entity = entityDaoRegistry.getDao(entityId.getEntityType()).findById(tenantId, entityId.getId());
-        return entity instanceof HasTenantId hasTenantId ? hasTenantId.getTenantId() : null;
+        return edgeEntityTenantChecker.findEntityTenantId(tenantId, entityId);
     }
 
     protected void createRelationFromEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {
@@ -503,7 +499,7 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
     protected void changeOwnerIfRequired(TenantId tenantId, CustomerId customerId, EntityId entityId) throws ThingsboardException {
         EntityId newOwnerId = getOwnerId(tenantId, customerId);
-        if (!isEntityExists(tenantId, newOwnerId)) {
+        if (!isTenantEntity(tenantId, newOwnerId)) {
             throw new DataValidationException("Owner " + newOwnerId + " belongs to a different tenant!");
         }
         EntityId currentOwnerId;
@@ -565,19 +561,21 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     }
 
     protected void safeAddEntityToGroup(TenantId tenantId, EntityGroupId entityGroupId, EntityId entityId) {
-        if (entityGroupId != null && !ModelConstants.NULL_UUID.equals(entityGroupId.getId())) {
-            EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, entityGroupId);
-            if (entityGroup != null && isEntityExists(tenantId, entityGroup.getOwnerId())) {
-                edgeCtx.getEntityGroupService().addEntityToEntityGroup(tenantId, entityGroupId, entityId);
-            }
+        if (entityGroupId != null && !ModelConstants.NULL_UUID.equals(entityGroupId.getId()) && findTenantEntityGroup(tenantId, entityGroupId) != null) {
+            edgeCtx.getEntityGroupService().addEntityToEntityGroup(tenantId, entityGroupId, entityId);
         }
     }
 
     protected void safeRemoveEntityFromGroup(TenantId tenantId, EntityGroupId entityGroupId, EntityId entityId) {
-        EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, entityGroupId);
-        if (entityGroup != null && isEntityExists(tenantId, entityGroup.getOwnerId())) {
+        if (findTenantEntityGroup(tenantId, entityGroupId) != null) {
             edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, entityId);
         }
+    }
+
+    // returns the entity group if it is owned by the tenant or its customer, otherwise null
+    private EntityGroup findTenantEntityGroup(TenantId tenantId, EntityGroupId entityGroupId) {
+        EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, entityGroupId);
+        return entityGroup != null && isTenantEntity(tenantId, entityGroup.getOwnerId()) ? entityGroup : null;
     }
 
     protected boolean isSaveRequired(HasVersion current, HasVersion updated) {

@@ -25,13 +25,12 @@ public abstract class BaseApiKeyProcessor extends BaseEdgeProcessor {
                 throw new RuntimeException("[{" + tenantId + "}] apiKeyUpdateMsg for apiKey {" + apiKeyId + "} cannot be converted to apiKey");
             }
 
-            checkEntityTenant(tenantId, apiKeyId);
+            ApiKey existingApiKey = findTenantEntity(tenantId, apiKeyId);
             apiKey.setTenantId(tenantId);
-            if (apiKey.getUserId() == null || !isEntityExists(tenantId, apiKey.getUserId())) {
+            if (apiKey.getUserId() == null || !isTenantEntity(tenantId, apiKey.getUserId())) {
                 throw new DataValidationException("API key is referencing to non-existent user!");
             }
 
-            ApiKey existingApiKey = edgeCtx.getApiKeyService().findApiKeyById(tenantId, apiKeyId);
             if (existingApiKey == null) {
                 apiKey.setCreatedTime(Uuids.unixTimestamp(apiKeyId.getId()));
                 isCreated = true;

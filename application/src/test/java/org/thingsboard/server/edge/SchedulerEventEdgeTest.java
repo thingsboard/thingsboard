@@ -10,6 +10,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.SchedulerEventId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.report.ReportConfig;
@@ -316,6 +317,27 @@ public class SchedulerEventEdgeTest extends AbstractEdgeTest {
     public void testGenerateReportSchedulerEventWithUserOfDifferentTenantToCloud() throws Exception {
         loginDifferentTenant();
         loginTenantAdmin();
+        SchedulerEvent schedulerEvent = createGenerateReportSchedulerEvent(savedDifferentTenantUser.getId());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(createUplinkMsg(schedulerEvent));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        doGet("/api/schedulerEvent/" + schedulerEvent.getUuidId()).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testGenerateReportSchedulerEventToCloud() throws Exception {
+        SchedulerEvent schedulerEvent = createGenerateReportSchedulerEvent(tenantAdminUserId);
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(createUplinkMsg(schedulerEvent));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        doGet("/api/schedulerEvent/" + schedulerEvent.getUuidId()).andExpect(status().isOk());
+    }
+
+    private SchedulerEvent createGenerateReportSchedulerEvent(UserId userId) throws Exception {
         ReportTemplate reportTemplate = new ReportTemplate();
         reportTemplate.setTenantId(tenantId);
         reportTemplate.setOwnerId(tenantId);
@@ -333,18 +355,13 @@ public class SchedulerEventEdgeTest extends AbstractEdgeTest {
 
         ReportConfig reportConfig = new ReportConfig();
         reportConfig.setReportTemplateId(savedReportTemplate.getId());
-        reportConfig.setUserId(savedDifferentTenantUser.getId());
+        reportConfig.setUserId(userId);
         reportConfig.setTimezone("UTC");
         SchedulerEvent schedulerEvent = createSchedulerEvent("Edge Report Scheduler Event", tenantId);
         schedulerEvent.setId(new SchedulerEventId(UUID.randomUUID()));
         schedulerEvent.setType(GENERATE_REPORT);
         schedulerEvent.setConfiguration(JacksonUtil.valueToTree(reportConfig));
-
-        edgeImitator.expectResponsesAmount(1);
-        edgeImitator.sendUplinkMsg(createUplinkMsg(schedulerEvent));
-        Assert.assertTrue(edgeImitator.waitForResponses());
-
-        doGet("/api/schedulerEvent/" + schedulerEvent.getUuidId()).andExpect(status().isNotFound());
+        return schedulerEvent;
     }
 
 }

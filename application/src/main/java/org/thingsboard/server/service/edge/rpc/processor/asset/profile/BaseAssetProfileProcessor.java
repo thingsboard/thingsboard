@@ -31,9 +31,8 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             if (assetProfile == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetProfileUpdateMsg {" + assetProfileUpdateMsg + "} cannot be converted to asset profile");
             }
-            checkEntityTenant(tenantId, assetProfileId);
+            AssetProfile assetProfileById = findTenantEntity(tenantId, assetProfileId);
             assetProfile.setTenantId(tenantId);
-            AssetProfile assetProfileById = edgeCtx.getAssetProfileService().findAssetProfileById(tenantId, assetProfileId);
             if (assetProfileById == null) {
                 created = true;
                 assetProfile.setId(null);

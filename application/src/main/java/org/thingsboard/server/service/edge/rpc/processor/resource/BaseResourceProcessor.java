@@ -31,9 +31,8 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
                 throw new RuntimeException("[{" + tenantId + "}] resourceUpdateMsg {" + resourceUpdateMsg + " } cannot be converted to resource");
             }
             boolean created = false;
-            checkEntityTenant(tenantId, tbResourceId);
+            TbResource resourceById = findTenantEntity(tenantId, tbResourceId);
             resource.setTenantId(tenantId);
-            TbResource resourceById = edgeCtx.getResourceService().findResourceById(tenantId, tbResourceId);
             if (resourceById == null) {
                 resource.setCreatedTime(Uuids.unixTimestamp(tbResourceId.getId()));
                 created = true;

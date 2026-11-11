@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -106,12 +105,14 @@ import org.thingsboard.server.gen.edge.v1.SendSmsUplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeEntityTenantChecker;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.mail.EdgeMailRequest;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.notification.EdgeNotificationRequest;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.sms.EdgeSmsRequest;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
@@ -157,6 +158,12 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Autowired
     private EntityService entityService;
+
+    @Autowired
+    private EdgeEntityTenantChecker edgeEntityTenantChecker;
+
+    @Autowired
+    private OwnersCacheService ownersCacheService;
 
     @Autowired
     private TbEntityViewService entityViewService;
@@ -575,7 +582,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     log.warn("[{}][{}] Entity group {} is not assigned to edge, skipping request", tenantId, edge.getId(), entityGroupId);
                     return Futures.immediateFuture(null);
                 }
-                return syncEntityGroupEntities(tenantId, edge, entityGroupId, entityGroupEntitiesRequestMsg);
+                return syncEntityGroupEntities(tenantId, edge, entityGroup);
             }, dbCallbackExecutorService);
         }
         return Futures.immediateFuture(null);
@@ -591,19 +598,8 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         if (publicCustomer == null || !publicCustomer.isPublic()) {
             return false;
         }
-        EntityId publicCustomerOwnerId = publicCustomer.getOwnerId();
-        if (tenantId.equals(publicCustomerOwnerId)) {
-            return true;
-        }
-        EntityId ownerId = edge.getOwnerId();
-        while (ownerId != null && EntityType.CUSTOMER.equals(ownerId.getEntityType())) {
-            if (ownerId.equals(publicCustomerOwnerId)) {
-                return true;
-            }
-            Customer customer = findCustomer(tenantId, new CustomerId(ownerId.getId()));
-            ownerId = customer != null ? customer.getOwnerId() : null;
-        }
-        return false;
+        // the edge's owner chain (customer, parent customers, tenant)
+        return ownersCacheService.getOwners(tenantId, edge.getId(), edge).contains(publicCustomer.getOwnerId());
     }
 
     private Customer findCustomer(TenantId tenantId, CustomerId customerId) {
@@ -614,19 +610,19 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 .orElse(null);
     }
 
-    private ListenableFuture<Void> syncEntityGroupEntities(TenantId tenantId, Edge edge, EntityGroupId entityGroupId, EntityGroupRequestMsg entityGroupEntitiesRequestMsg) {
+    private ListenableFuture<Void> syncEntityGroupEntities(TenantId tenantId, Edge edge, EntityGroup entityGroup) {
+        EntityGroupId entityGroupId = entityGroup.getId();
         ListenableFuture<List<EntityId>> entityIdsFuture;
         try {
             // TODO: refactor this to pagination
             entityIdsFuture = entityGroupService.findAllEntityIdsAsync(edge.getTenantId(), entityGroupId, new PageLink(Integer.MAX_VALUE));
         } catch (IncorrectParameterException e) {
-            log.warn("[{}] Entity group not found to process entityGroupEntitiesRequestMsg {}", tenantId, entityGroupEntitiesRequestMsg, e);
+            log.warn("[{}] Entity group {} not found to process entity group entities request", tenantId, entityGroupId, e);
             return Futures.immediateFuture(null);
         }
         return Futures.transformAsync(entityIdsFuture, entityIds -> {
             if (entityIds != null && !entityIds.isEmpty()) {
-                EntityType groupType = EntityType.valueOf(entityGroupEntitiesRequestMsg.getType());
-                return switch (groupType) {
+                return switch (entityGroup.getType()) {
                     case DEVICE -> syncDevices(edge, entityIds, entityGroupId);
                     case ASSET -> syncAssets(edge, entityIds, entityGroupId);
                     case ENTITY_VIEW -> syncEntityViews(edge, entityIds, entityGroupId);
@@ -635,7 +631,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     default -> Futures.immediateFuture(null);
                 };
             } else {
-                log.trace("No entities found for the requested entity group {} [{}]", entityGroupId.getId(), entityGroupEntitiesRequestMsg.getType());
+                log.trace("No entities found for the requested entity group {} [{}]", entityGroupId.getId(), entityGroup.getType());
                 return Futures.immediateFuture(null);
             }
         }, dbCallbackExecutorService);
@@ -987,18 +983,11 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     }
 
     private boolean isTenantEntity(TenantId tenantId, EntityId entityId) {
-        try {
-            boolean tenantEntity = entityService.fetchEntity(tenantId, entityId)
-                    .map(entity -> entity instanceof HasTenantId hasTenantId && tenantId.equals(hasTenantId.getTenantId()))
-                    .orElse(false);
-            if (!tenantEntity) {
-                log.warn("[{}] Entity {} not found, skipping request", tenantId, entityId);
-            }
-            return tenantEntity;
-        } catch (IllegalArgumentException e) {
-            log.warn("[{}] Unsupported entity {}, skipping request", tenantId, entityId);
-            return false;
+        boolean tenantEntity = edgeEntityTenantChecker.isTenantEntity(tenantId, entityId);
+        if (!tenantEntity) {
+            log.warn("[{}] Entity {} not found, skipping request", tenantId, entityId);
         }
+        return tenantEntity;
     }
 
     private ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,

@@ -44,13 +44,13 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         if (alarm == null) {
             throw new RuntimeException("[{" + tenantId + "}] alarmUpdateMsg {" + alarmUpdateMsg + "} cannot be converted to alarm");
         }
-        if (alarm.getOriginator() == null || !isEntityExists(tenantId, alarm.getOriginator())) {
+        if (alarm.getOriginator() == null || !isTenantEntity(tenantId, alarm.getOriginator())) {
             log.warn("[{}] Originator not found for the alarm msg {}", tenantId, alarmUpdateMsg);
             return Futures.immediateFuture(null);
         }
         alarm.setTenantId(tenantId);
         try {
-            checkEntityTenant(tenantId, alarmId);
+            findTenantEntity(tenantId, alarmId);
             switch (alarmUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                     edgeCtx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId));

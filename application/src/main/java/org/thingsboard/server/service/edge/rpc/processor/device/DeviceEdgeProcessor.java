@@ -52,7 +52,6 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
-import org.thingsboard.server.service.edge.EdgeMsgSummaryUtils;
 
 import java.util.UUID;
 
@@ -101,7 +100,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
 
     @Override
     public ListenableFuture<Void> processDeviceCredentialsMsgFromEdge(TenantId tenantId, EdgeId edgeId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
-        log.debug("[{}] Executing processDeviceCredentialsMsgFromEdge, deviceCredentialsUpdateMsg [{}]", tenantId, EdgeMsgSummaryUtils.toSummary(deviceCredentialsUpdateMsg));
+        log.debug("[{}][{}] Executing processDeviceCredentialsMsgFromEdge", tenantId, edgeId);
         try {
             edgeSynchronizationManager.getEdgeId().set(edgeId);
 
@@ -197,7 +196,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
         SettableFuture<Void> futureToSet = SettableFuture.create();
         UUID requestUuid = new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB());
         DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
-        if (!isEntityExists(tenantId, deviceId)) {
+        if (!isTenantEntity(tenantId, deviceId)) {
             log.warn("[{}] Skipping RPC response because device doesn't exist, {}", tenantId, deviceRpcCallMsg);
             return Futures.immediateFuture(null);
         }
@@ -230,7 +229,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
 
     private ListenableFuture<Void> processDeviceRpcRequestFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
         DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
-        if (!isEntityExists(tenantId, deviceId)) {
+        if (!isTenantEntity(tenantId, deviceId)) {
             log.warn("[{}] Skipping RPC request because device doesn't exist, {}", tenantId, deviceRpcCallMsg);
             return Futures.immediateFuture(null);
         }

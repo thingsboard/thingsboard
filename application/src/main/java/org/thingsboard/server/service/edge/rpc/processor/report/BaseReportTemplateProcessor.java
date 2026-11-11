@@ -29,9 +29,8 @@ public abstract class BaseReportTemplateProcessor extends BaseEdgeProcessor {
             if (reportTemplate == null) {
                 throw new RuntimeException("[{" + tenantId + "}] reportTemplateUpdateMsg {" + reportTemplateUpdateMsg + "} cannot be converted to report template");
             }
-            checkEntityTenant(tenantId, reportTemplateId);
+            ReportTemplate reportTemplateById = findTenantEntity(tenantId, reportTemplateId);
             reportTemplate.setTenantId(tenantId);
-            ReportTemplate reportTemplateById = edgeCtx.getReportTemplateService().findReportTemplateById(tenantId, reportTemplateId);
             if (reportTemplateById == null) {
                 created = true;
                 reportTemplate.setId(null);

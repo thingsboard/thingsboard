@@ -31,10 +31,9 @@ public abstract class BaseSchedulerEventProcessor extends BaseEdgeProcessor {
             if (schedulerEvent == null) {
                 throw new RuntimeException("[{" + tenantId + "}] schedulerEventUpdateMsg {" + schedulerEventUpdateMsg + "} cannot be converted to scheduler event");
             }
-            checkEntityTenant(tenantId, schedulerEventId);
+            SchedulerEvent existingSchedulerEvent = findTenantEntity(tenantId, schedulerEventId);
             schedulerEvent.setTenantId(tenantId);
             checkReportConfig(tenantId, schedulerEvent);
-            SchedulerEvent existingSchedulerEvent = edgeCtx.getSchedulerEventService().findSchedulerEventById(tenantId, schedulerEventId);
             if (existingSchedulerEvent == null) {
                 created = true;
                 schedulerEvent.setId(null);
@@ -58,8 +57,8 @@ public abstract class BaseSchedulerEventProcessor extends BaseEdgeProcessor {
     private void checkReportConfig(TenantId tenantId, SchedulerEvent schedulerEvent) {
         if (GENERATE_REPORT.equals(schedulerEvent.getType())) {
             ReportConfig reportConfig = JacksonUtil.treeToValue(schedulerEvent.getConfiguration(), ReportConfig.class);
-            if (reportConfig == null || reportConfig.getReportTemplateId() == null || !isEntityExists(tenantId, reportConfig.getReportTemplateId())
-                    || reportConfig.getUserId() == null || !isEntityExists(tenantId, reportConfig.getUserId())) {
+            if (reportConfig == null || reportConfig.getReportTemplateId() == null || !isTenantEntity(tenantId, reportConfig.getReportTemplateId())
+                    || reportConfig.getUserId() == null || !isTenantEntity(tenantId, reportConfig.getUserId())) {
                 throw new DataValidationException("Scheduler event is referencing to non-existent report template or user!");
             }
         }

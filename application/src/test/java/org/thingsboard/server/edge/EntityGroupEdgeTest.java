@@ -39,6 +39,7 @@ import org.thingsboard.server.gen.edge.v1.EntityGroupRequestMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.GroupPermissionProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
@@ -227,6 +228,23 @@ public class EntityGroupEdgeTest extends AbstractEdgeTest {
                 .setEntityGroupIdMSB(entityGroupId.getId().getMostSignificantBits())
                 .setEntityGroupIdLSB(entityGroupId.getId().getLeastSignificantBits())
                 .setType(EntityType.DEVICE.name()).build()));
+    }
+
+    @Test
+    public void testSendDeviceUpdateWithGroupOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        Device differentTenantDevice = new Device();
+        differentTenantDevice.setName("Different Tenant Grouped Device");
+        differentTenantDevice.setType("default");
+        differentTenantDevice = doPost("/api/device", differentTenantDevice, Device.class);
+        EntityGroup deviceGroup = saveDifferentTenantGroup(EntityType.DEVICE, differentTenantDevice.getId());
+        loginTenantAdmin();
+
+        Device device = saveDevice("Group Test Device", "default");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, device, deviceGroup.getId())));
+
+        Assert.assertFalse(findGroupEntityIds(deviceGroup).contains(device.getId()));
     }
 
     private EntityGroup saveDifferentTenantGroup(EntityType groupType, EntityId entityId) throws Exception {

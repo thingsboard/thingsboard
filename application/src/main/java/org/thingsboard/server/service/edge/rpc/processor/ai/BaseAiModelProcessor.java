@@ -34,10 +34,9 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
                 throw new RuntimeException("[{" + tenantId + "}] aiModelUpdateMsg for aiModel {" + aiModelId + "} cannot be converted to aiModel");
             }
 
-            checkEntityTenant(tenantId, aiModelId);
+            AiModel aiModelById = findTenantEntity(tenantId, aiModelId);
             aiModel.setTenantId(tenantId);
-            Optional<AiModel> aiModelById = edgeCtx.getAiModelService().findAiModelById(tenantId, aiModelId);
-            if (aiModelById.isEmpty()) {
+            if (aiModelById == null) {
                 aiModel.setCreatedTime(Uuids.unixTimestamp(aiModelId.getId()));
                 isCreated = true;
                 aiModel.setId(null);
