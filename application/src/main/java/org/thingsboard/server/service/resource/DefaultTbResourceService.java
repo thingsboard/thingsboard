@@ -65,6 +65,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
                 throw new DataValidationException("Resource type can't be changed");
             }
             resource.setTenantId(existing.getTenantId());
+            resource.setCustomerId(existing.getCustomerId());
             resource.setResourceType(existing.getResourceType());
             resource.setResourceSubType(existing.getResourceSubType());
             resource.setResourceKey(existing.getResourceKey());

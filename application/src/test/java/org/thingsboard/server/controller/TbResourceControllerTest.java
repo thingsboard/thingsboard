@@ -1050,6 +1050,38 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testUpdateResourceInfoKeepsStoredCustomer() throws Exception {
+        Customer storedCustomer = saveCustomer("Stored resource customer");
+        Customer otherCustomer = saveCustomer("Other resource customer");
+
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setResourceSubType(ResourceSubType.EXTENSION);
+        resource.setTitle("Js resource");
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setEncodedData(TEST_DATA);
+        resource.setCustomerId(storedCustomer.getId());
+        TbResourceInfo savedResource = doPost("/api/resource", resource, TbResourceInfo.class);
+        assertThat(savedResource.getCustomerId()).isEqualTo(storedCustomer.getId());
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResource.getId());
+        resourceInfo.setCustomerId(otherCustomer.getId());
+        TbResourceInfo updatedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(updatedResource.getCustomerId()).isEqualTo(storedCustomer.getId());
+
+        resourceInfo.setCustomerId(null);
+        updatedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(updatedResource.getCustomerId()).isEqualTo(storedCustomer.getId());
+        assertThat(findResourceInfo(savedResource.getId()).getCustomerId()).isEqualTo(storedCustomer.getId());
+    }
+
+    private Customer saveCustomer(String title) throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle(title);
+        return doPost("/api/customer", customer, Customer.class);
+    }
+
+    @Test
     public void testGetLwm2mListObjectsPage() throws Exception {
         loginTenantAdmin();
 
