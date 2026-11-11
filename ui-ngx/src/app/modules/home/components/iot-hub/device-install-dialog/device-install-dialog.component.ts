@@ -256,30 +256,56 @@ interface HostFieldTransport {
   helpPopupText: string;
 }
 
-// Install methods whose packages get the transport fields. Other methods use the host differently
-// (a ChirpStack package builds the ThingsBoard URL from it, a gateway puts it into docker-compose)
-// and keep the resolved value until they are handled separately.
+const DIRECT_MQTT_TRANSPORT: HostFieldTransport = {
+  protocol: 'mqtt',
+  hostLabel: 'iot-hub.device-install-mqtt-host',
+  portLabel: 'iot-hub.device-install-mqtt-port',
+  hostHints: {
+    REQUEST: 'iot-hub.device-install-mqtt-host-request-hint',
+    BASE_URL: 'iot-hub.device-install-mqtt-host-base-url-hint'
+  },
+  loopbackHints: {
+    REQUEST: 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint',
+    BASE_URL: 'iot-hub.device-install-mqtt-host-base-url-loopback-hint'
+  },
+  loopbackHint: 'iot-hub.device-install-mqtt-host-loopback-hint',
+  reviewHostHint: 'iot-hub.device-install-mqtt-host-hint',
+  configuredHint: 'iot-hub.device-install-mqtt-host-configured-hint',
+  hostError: 'iot-hub.device-install-transport-host-error',
+  portError: 'iot-hub.device-install-transport-port-error',
+  helpPopupId: 'iot-hub/device-connection-host',
+  helpPopupText: 'iot-hub.device-install-which-host'
+};
+
+// A gateway runs in Docker and puts ${mqtt.host} / ${mqtt.port} into docker-compose: the host must be
+// reachable from the machine the gateway runs on, so the wording names the gateway, not the device.
+const GATEWAY_MQTT_TRANSPORT: HostFieldTransport = {
+  ...DIRECT_MQTT_TRANSPORT,
+  hostHints: {
+    REQUEST: 'iot-hub.device-install-gateway-mqtt-host-request-hint',
+    BASE_URL: 'iot-hub.device-install-gateway-mqtt-host-base-url-hint'
+  },
+  loopbackHints: {
+    REQUEST: 'iot-hub.device-install-gateway-mqtt-host-opened-via-loopback-hint',
+    BASE_URL: 'iot-hub.device-install-gateway-mqtt-host-base-url-loopback-hint'
+  },
+  loopbackHint: 'iot-hub.device-install-gateway-mqtt-host-loopback-hint',
+  reviewHostHint: 'iot-hub.device-install-gateway-mqtt-host-hint',
+  configuredHint: 'iot-hub.device-install-gateway-mqtt-host-configured-hint',
+  hostError: 'iot-hub.device-install-gateway-transport-host-error',
+  helpPopupId: 'iot-hub/gateway-connection-host'
+};
+
+// Install methods whose packages get the transport fields, when a step of the package uses the
+// host (see addTransportFields). Other methods use the host differently (a ChirpStack package builds
+// the ThingsBoard URL from it) and keep the resolved value until they are handled separately.
+// Every gateway method is listed: packages are published apart from UI releases, so one that starts
+// using ${mqtt.host} in its docker-compose gets the fields without a UI change.
 const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
-  [InstallMethod.DIRECT_MQTT, {
-    protocol: 'mqtt',
-    hostLabel: 'iot-hub.device-install-mqtt-host',
-    portLabel: 'iot-hub.device-install-mqtt-port',
-    hostHints: {
-      REQUEST: 'iot-hub.device-install-mqtt-host-request-hint',
-      BASE_URL: 'iot-hub.device-install-mqtt-host-base-url-hint'
-    },
-    loopbackHints: {
-      REQUEST: 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint',
-      BASE_URL: 'iot-hub.device-install-mqtt-host-base-url-loopback-hint'
-    },
-    loopbackHint: 'iot-hub.device-install-mqtt-host-loopback-hint',
-    reviewHostHint: 'iot-hub.device-install-mqtt-host-hint',
-    configuredHint: 'iot-hub.device-install-mqtt-host-configured-hint',
-    hostError: 'iot-hub.device-install-transport-host-error',
-    portError: 'iot-hub.device-install-transport-port-error',
-    helpPopupId: 'iot-hub/device-connection-host',
-    helpPopupText: 'iot-hub.device-install-which-host'
-  }]
+  [InstallMethod.DIRECT_MQTT, DIRECT_MQTT_TRANSPORT],
+  ...Object.values(InstallMethod)
+    .filter(method => method.startsWith('GATEWAY_'))
+    .map((method): [string, HostFieldTransport] => [method, GATEWAY_MQTT_TRANSPORT])
 ]);
 
 /**
