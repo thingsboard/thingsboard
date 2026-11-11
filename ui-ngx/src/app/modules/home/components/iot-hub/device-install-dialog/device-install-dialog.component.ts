@@ -818,7 +818,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.createdInThisWizard.add(output.id);
     }
     const entityType = this.stepTypeToEntityType(ep.step.type);
-    if (entityType && !this.packageEntityIds.some(known => known.id === output.id)) {
+    // An entity the user had before the install and chose to use is not the package's: a later update or Delete must
+    // not remove it, even after Back reruns the steps and its "use existing" mark is gone from the install state.
+    const packageOwned = resolution !== 'use-existing' || this.createdInThisWizard.has(output.id);
+    if (entityType && packageOwned && !this.packageEntityIds.some(known => known.id === output.id)) {
       this.packageEntityIds.push({ entityType, id: output.id });
     }
     const alias = stepTypeAliasMap[ep.step.type];
