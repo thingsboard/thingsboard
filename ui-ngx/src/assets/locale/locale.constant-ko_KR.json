@@ -688,13 +688,7 @@
         "mobile-settings": "모바일 설정",
         "firebase-service-account-file": "Firebase 서비스 계정 자격 증명 JSON 파일",
         "select-firebase-service-account-file": "Firebase 서비스 계정 자격 증명 파일을 끌어다 놓거나",
-        "use-system-mobile-settings": "시스템 모바일 설정 사용",
-        "trendz": "Trendz",
-        "trendz-settings": "Trendz 설정",
-        "trendz-url": "Trendz URL",
-        "trendz-url-required": "Trendz URL은 필수 항목입니다",
-        "trendz-api-key": "Trendz API 키",
-        "trendz-enable": "Trendz 사용"
+        "use-system-mobile-settings": "시스템 모바일 설정 사용"
     },
     "ai-assistant": {
         "configure-with-ai": "AI로 구성",
@@ -1583,7 +1577,6 @@
         "unassign-asset": "자산 할당 해제",
         "unassign-assets-title": "{ count, plural, =1 {자산 1개} other {자산 #개} }를 할당 해제하시겠습니까?",
         "unassign-assets-text": "확인 후 선택한 모든 자산의 할당이 해제되며 고객이 더 이상 접근할 수 없습니다.",
-        "unassign-assets-from-edge": "엣지에서 자산 할당 해제",
         "copyId": "자산 ID 복사",
         "idCopiedMessage": "자산 ID가 클립보드로 복사되었습니다",
         "select-asset": "자산 선택",
@@ -2185,7 +2178,6 @@
         "public-dashboards": "공개된 대시보드",
         "public-devices": "공개된 장치",
         "public-assets": "공개된 자산",
-        "public-edges": "공개 엣지",
         "public-entity-views": "공개된 엔티티 뷰",
         "add": "고객 추가",
         "delete": "고객 삭제",
@@ -2206,7 +2198,6 @@
         "manage-customer-assets": "고객 자산 관리",
         "manage-public-assets": "공개된 자산 관리",
         "manage-customer-edges": "고객 Edge 관리",
-        "manage-public-edges": "고객 엣지 관리",
         "add-customer-text": "고객 추가",
         "no-customers-text": "고객이 없습니다",
         "customer-details": "고객 상세 정보",
@@ -2397,7 +2388,6 @@
         "add": "대시보드 추가",
         "assign-dashboard-to-customer": "대시보드를 고객에게 할당",
         "assign-dashboard-to-customer-text": "고객에게 할당할 대시보드를 선택하세요",
-        "assign-dashboard-to-edge-title": "엣지에 대시보드 할당",
         "assign-to-customer-text": "대시보드를 할당할 고객을 선택하세요",
         "assign-to-customer": "고객에게 할당",
         "unassign-from-customer": "고객 할당 해제",
@@ -2745,8 +2735,6 @@
         "assign-to-customer": "고객에게 할당",
         "assign-device-to-customer": "장치를 고객에게 할당",
         "assign-device-to-customer-text": "고객에게 할당할 장치를 선택하십시오.",
-        "assign-device-to-edge-title": "엣지에 장치 할당",
-        "assign-device-to-edge-text": "엣지에 할당할 장치를 선택하세요",
         "make-public": "장치를 공개로 전환",
         "make-private": "장치를 비공개로 전환",
         "no-devices-text": "장치 없음",
@@ -4846,7 +4834,6 @@
         "assign-to-customer": "고객에게 할당",
         "assign-entity-view-to-customer": "고객에게 엔티티 뷰 할당",
         "assign-entity-view-to-customer-text": "고객에게 할당할 엔티티 뷰를 선택하세요",
-        "assign-entity-view-to-edge-title": "엣지에 엔티티 뷰 할당",
         "no-entity-views-text": "엔티티 뷰를 찾을 수 없음",
         "assign-to-customer-text": "엔티티 뷰를 할당할 고객을 선택하세요",
         "entity-view-details": "엔티티 뷰 상세 정보",
@@ -6328,8 +6315,7 @@
         "type-rule-chain": "규칙 체인",
         "type-rule-chain-plural": "규칙 체인",
         "type-device": "장치",
-        "type-device-plural": "장치",
-        "selected": "선택됨"
+        "type-device-plural": "장치"
     },
     "iot-hub": {
         "iot-hub": "IoT Hub",
@@ -8122,7 +8108,6 @@
         "endpoint-url-pattern": "엔드포인트 URL 패턴",
         "endpoint-url-pattern-required": "엔드포인트 URL 패턴은 필수 항목입니다.",
         "request-method": "요청 메서드",
-        "use-simple-client-http-factory": "간단한 클라이언트 HTTP 팩토리 사용",
         "ignore-request-body": "요청 본문 없음",
         "request-body-template": "요청 본문 템플릿",
         "request-body-template-hint": "메타데이터에는 <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code>을(를), 메시지 값에는 <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code>을(를) 사용하세요. 비어 있으면 메시지 페이로드가 요청 본문으로 사용됩니다. JSON이 아닌 페이로드의 경우 '일반 텍스트로 파싱'을 활성화하세요. <br/><br/> 플레이스홀더 <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>을(를) 사용하여 시크릿을 삽입할 수 있습니다. 여기서 'name'은 시크릿 식별자이고 'type'은 TEXT 또는 TEXT_FILE입니다. 이는 '시크릿 사용'을 직접 지원하지 않는 규칙 노드 구성 필드에서 유용합니다. 예: <code><span style=\"color: #000;\">$&#123;</span>secret:tenant password;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8298,7 +8283,6 @@
         "proxy-port-range": "프록시 포트를 1~65535 범위 내에서 입력하세요.",
         "proxy-user": "프록시 사용자",
         "proxy-password": "프록시 비밀번호",
-        "proxy-scheme": "프록시 스키마",
         "numbers-to-template": "받는 사람 전화번호 템플릿",
         "numbers-to-template-required": "받는 사람 전화번호 템플릿은 필수 항목입니다.",
         "numbers-to-template-hint": "쉼표로 구분된 전화번호, 메타데이터의 값에는 <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code>를 사용하고, 메시지 본문의 값에는 <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code>를 사용하세요",
@@ -10655,8 +10639,7 @@
         "copyId": "사용자 ID 복사",
         "idCopiedMessage": "사용자 ID가 클립보드에 복사되었습니다.",
         "user-list": "사용자 목록",
-        "user-list-required": "사용자 목록은 필수 항목입니다.",
-        "printable-one-time-password-hint": "이 인쇄 가능한 일회용 암호는 여행 중처럼 휴대전화를 사용할 수 없을 때 로그인할 수 있도록 해줍니다."
+        "user-list-required": "사용자 목록은 필수 항목입니다."
     },
     "value": {
         "type": "값 유형",
@@ -12703,9 +12686,7 @@
                         "hot": "HOT",
                         "esri-street": "WorldStreetMap",
                         "esri-topo": "WorldTopoMap",
-                        "esri-imagery": "WorldImagery",
-                        "cartodb-positron": "포지트론",
-                        "cartodb-dark-matter": "다크 매터"
+                        "esri-imagery": "WorldImagery"
                     },
                     "carto": {
                         "title": "CARTO",
@@ -13042,10 +13023,7 @@
             "here-map-hybrid-day": "HERE.hybridDay",
             "here-map-terrain-day": "HERE.terrainDay",
             "credentials": "자격 증명",
-            "here-app-id": "HERE 앱 ID",
-            "here-app-code": "HERE 앱 코드",
             "here-api-key": "HERE API 키",
-            "here-use-new-version-api-3": "API 버전 3 사용",
             "tencent-maps-api-key": "Tencent Maps API 키",
             "tencent-map-type-roadmap": "도로 지도",
             "tencent-map-type-satelite": "위성",
@@ -13942,7 +13920,6 @@
             "roles-and-permissions": "역할 및 권한",
             "groups": "그룹",
             "integrations": "통합",
-            "solution-templates": "솔루션 템플릿",
             "scheduler": "스케줄러",
             "white-labeling": "화이트 라벨링"
         },
@@ -13981,20 +13958,17 @@
                 "step4": {
                     "title": "기능 구성: 화이트 라벨링",
                     "content": "<p>코딩 없이, 서비스를 재시작하지 않고도 회사 또는 제품의 로고와 색상 구성표를 손쉽게 사용자 지정하세요.</p><p>방법은 문서를 참조하세요:</p>",
-                    "how-to-configure-white-labeling": "화이트 라벨링 구성 방법",
-                    "how-to-configure-2fa": "2FA 구성 방법"
+                    "how-to-configure-white-labeling": "화이트 라벨링 구성 방법"
                 },
                 "step5": {
                     "title": "기능 구성: 2FA",
                     "content": "<p>2단계 인증으로 플랫폼 계정의 보안을 강화하세요.</p><p>방법은 문서를 참조하세요:</p>",
-                    "how-to-configure-2fa": "2FA 구성 방법",
-                    "how-to-configure-oauth2": "OAuth 2 구성 방법"
+                    "how-to-configure-2fa": "2FA 구성 방법"
                 },
                 "step6": {
                     "title": "기능 구성: OAuth 2",
                     "content": "<p>OAuth 2.0을 통한 Single Sign-On 기능으로 테넌트 및 고객 사용자의 로그인을 간소화하세요.</p><p>방법은 문서를 참조하세요:</p>",
-                    "how-to-configure-oauth2": "OAuth 2 구성 방법",
-                    "how-to-configure-notifications": "Slack 구성 방법"
+                    "how-to-configure-oauth2": "OAuth 2 구성 방법"
                 },
                 "step7": {
                     "title": "기능 구성: Slack",
@@ -14045,8 +14019,7 @@
                 "step6": {
                     "title": "고객 생성 및 대시보드 공유",
                     "content": "<p>최종 사용자 대시보드를 생성하면 고객 사용자는 자신의 장치만 볼 수 있으며 다른 고객의 데이터는 숨겨집니다.</p><p>방법은 문서를 참조하세요:</p>",
-                    "how-to-create-customer-and-share-dashboard": "고객 생성 및 대시보드 공유 방법",
-                    "how-to-create-customer-and-assign-dashboard": "고객 생성 및 대시보드 할당 방법"
+                    "how-to-create-customer-and-share-dashboard": "고객 생성 및 대시보드 공유 방법"
                 }
             }
         },
@@ -14077,9 +14050,6 @@
             "delete-key": "키 삭제",
             "target-dashboard-state": "대상 대시보드 상태",
             "go-to-main-state": "기본 보기로 이동"
-        },
-        "unit-conversion": {
-            "hint": "저장된 값의 단위입니다. 변환할 원본 단위입니다. 소스 데이터에서 사용하는 기호를 입력하세요 (예: m, km, ft, in)."
         }
     },
     "color": {
