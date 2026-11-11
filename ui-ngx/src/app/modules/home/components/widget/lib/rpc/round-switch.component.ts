@@ -223,7 +223,7 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
   }
 
   private onError(error: string) {
-    this.error = error;
+    this.error = error ? error.replace(/<\/?br\s*\/?>/gi, '. ') : error;
     this.setFontSize(this.switchError, this.error, this.switchErrorContainer.height(), this.switchErrorContainer.width());
     this.ctx.detectChanges();
   }
