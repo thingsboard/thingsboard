@@ -5428,6 +5428,14 @@ tb-ai-action-detail.k-detail {
 .art-dark .file-find-n {
   background: rgba(255, 255, 255, 0.08);
 
+  b {
+    color: var(--tb-code-fg);
+  }
+
+  span {
+    color: var(--tb-code-head-fg);
+  }
+
   &.none {
     background: rgba(255, 157, 146, 0.14);
     color: #ffb4ab;

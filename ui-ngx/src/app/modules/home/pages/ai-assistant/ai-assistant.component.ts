@@ -155,6 +155,17 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  private initialSelection = (() => {
+    const params = this.route.snapshot.queryParamMap;
+    const solutionId = params.get('solutionId');
+    if (solutionId) {
+      this.solutionId.set(solutionId);
+    } else if (params.get('chatId')) {
+      this.chatId.set(params.get('chatId'));
+    }
+    return true;
+  })();
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   private browsing = false;
