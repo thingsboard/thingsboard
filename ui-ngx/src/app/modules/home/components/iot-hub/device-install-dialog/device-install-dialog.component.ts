@@ -617,9 +617,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return;
     }
     // Checks the connection unless these values already passed the check; a failed check stops here
-    const check = this.connectionCheckOf(step);
-    if (check && !(check.status === 'success' && check.checkedValues === this.checkedValuesOf(step, check))) {
-      if (check.status === 'checking' || !(await this.checkConnection(step))) {
+    if (this.needsConnectionCheck(step)) {
+      if (this.connectionChecking(step) || !(await this.checkConnection(step))) {
         return;
       }
     }
@@ -630,6 +629,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     step.completed = true;
     this.cdr.detectChanges();
     this.stepper.next();
+  }
+
+  /** True when the step checks the connection and its current values haven't passed the check yet. */
+  private needsConnectionCheck(ws: WizardStep): boolean {
+    const check = this.connectionCheckOf(ws);
+    return !!check && !(check.status === 'success' && check.checkedValues === this.checkedValuesOf(ws, check));
   }
 
   connectionCheckOf(ws: WizardStep): ConnectionCheck | undefined {
@@ -735,8 +740,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       return;
     }
-    // Forward moves can come from the stepper header, which bypasses nextStep(),
-    // so commit every step being passed over here.
+    // Forward moves can come from the stepper header, which bypasses nextStep(). A step whose connection isn't
+    // checked for these values is left as Next leaves it: back to it, and Next checks the connection and moves on
+    // only when it passes. The stepper sets the new index after this event, so the move back waits for it.
+    for (let i = event.previouslySelectedIndex; i < event.selectedIndex; i++) {
+      if (this.needsConnectionCheck(this.wizardSteps[i])) {
+        queueMicrotask(() => {
+          this.stepper.selectedIndex = i;
+          void this.nextStep();
+        });
+        return;
+      }
+    }
+    // Commit every step being passed over here
     let formValuesChanged = false;
     for (let i = event.previouslySelectedIndex; i < event.selectedIndex; i++) {
       const ws = this.wizardSteps[i];
