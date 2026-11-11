@@ -7,20 +7,35 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.iot_hub.CalculatedFieldInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
+import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,6 +63,10 @@ class DefaultIotHubServiceTest {
     private IotHubRestClient iotHubRestClient;
     @Mock
     private IotHubInstalledItemService iotHubInstalledItemService;
+    @Mock
+    private TbCalculatedFieldService tbCalculatedFieldService;
+    @Mock
+    private CalculatedFieldService calculatedFieldService;
 
     @Spy
     @InjectMocks
@@ -410,5 +429,64 @@ class DefaultIotHubServiceTest {
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.isRolledBack()).isFalse();
         assertThat(result.getErrorMessage()).contains("install failed");
+    }
+
+    @Test
+    void doInstallVersion_calculatedField_mapsTenantReferencesToInstallingTenant() throws Exception {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "CALCULATED_FIELD", "CF", "1.0"));
+        when(iotHubRestClient.getVersionFileData(versionId)).thenReturn(calculatedFieldFileData());
+        when(tbCalculatedFieldService.save(any(), eq(user))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(invocation -> invocation.getArgument(1));
+
+        service.doInstallVersion(user, versionId, null, null);
+
+        ArgumentCaptor<CalculatedField> captor = ArgumentCaptor.forClass(CalculatedField.class);
+        verify(tbCalculatedFieldService).save(captor.capture(), eq(user));
+        assertThat(((ArgumentsBasedCalculatedFieldConfiguration) captor.getValue().getConfiguration()).getArguments().get("T").getRefEntityId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    void updateItemVersion_calculatedField_mapsTenantReferencesToInstallingTenant() throws Exception {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(UUID.randomUUID());
+        CalculatedFieldInstalledItemDescriptor descriptor = new CalculatedFieldInstalledItemDescriptor();
+        descriptor.setCalculatedFieldId(calculatedFieldId);
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("CALCULATED_FIELD");
+        item.setItemVersionId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        when(iotHubRestClient.getVersionInfo(anyString()))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "CALCULATED_FIELD", "CF", "2.0"));
+        when(iotHubRestClient.getVersionFileData(versionId)).thenReturn(calculatedFieldFileData());
+        CalculatedField existing = new CalculatedField(calculatedFieldId);
+        existing.setTenantId(tenantId);
+        when(calculatedFieldService.findById(tenantId, calculatedFieldId)).thenReturn(existing);
+
+        UpdateItemVersionResult result = service.updateItemVersion(user, item.getId(), versionId, true, null);
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<CalculatedField> captor = ArgumentCaptor.forClass(CalculatedField.class);
+        verify(tbCalculatedFieldService).save(captor.capture(), eq(user));
+        assertThat(((ArgumentsBasedCalculatedFieldConfiguration) captor.getValue().getConfiguration()).getArguments().get("T").getRefEntityId()).isEqualTo(tenantId);
+    }
+
+    private byte[] calculatedFieldFileData() {
+        Argument argument = new Argument();
+        argument.setRefEntityId(TenantId.fromUUID(UUID.randomUUID()));
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        SimpleCalculatedFieldConfiguration configuration = new SimpleCalculatedFieldConfiguration();
+        configuration.setArguments(Map.of("T", argument));
+        configuration.setExpression("T");
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(new DeviceId(UUID.randomUUID()));
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("CF");
+        calculatedField.setConfiguration(configuration);
+        return JacksonUtil.toString(calculatedField).getBytes(StandardCharsets.UTF_8);
     }
 }

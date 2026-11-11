@@ -29,6 +29,7 @@ public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
             if (calculatedField == null) {
                 throw new RuntimeException("[{" + tenantId + "}] calculatedFieldUpdateMsg {" + calculatedFieldUpdateMsg + " } cannot be converted to calculatedField");
             }
+            calculatedField.setTenantId(tenantId);
 
             CalculatedField calculatedFieldById = edgeCtx.getCalculatedFieldService().findById(tenantId, calculatedFieldId);
             if (calculatedFieldById == null) {
