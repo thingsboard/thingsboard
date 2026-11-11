@@ -677,17 +677,25 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // The integration is built the way Provisioning builds it, from the values not committed yet
       this.formValues = { ...committedValues, ...values };
       body = this.resolveTemplateJson(this.zipFiles.get(check.template));
+    } catch (e) {
+      // A template that doesn't resolve fails the check, rather than leaving the form waiting for it
+      console.error('Failed to build the integration for the connection check', e);
+      body = null;
     } finally {
       this.formValues = committedValues;
     }
-    // The check requires a routing key; Provisioning adds one the same way
-    if (!body.routingKey) body.routingKey = this.generateUuid();
-    if (!body.configuration) body.configuration = {};
-    if (body.configuration.metadata == null) body.configuration.metadata = {};
-    try {
-      await firstValueFrom(this.integrationService.checkIntegrationConnection(body, { ignoreErrors: true }));
-      check.status = 'success';
-    } catch {
+    if (body) {
+      // The check requires a routing key; Provisioning adds one the same way
+      if (!body.routingKey) body.routingKey = this.generateUuid();
+      if (!body.configuration) body.configuration = {};
+      if (body.configuration.metadata == null) body.configuration.metadata = {};
+      try {
+        await firstValueFrom(this.integrationService.checkIntegrationConnection(body, { ignoreErrors: true }));
+        check.status = 'success';
+      } catch {
+        check.status = 'error';
+      }
+    } else {
       check.status = 'error';
     }
     check.checkedValues = this.checkedValuesOf(ws, check);
@@ -928,11 +936,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   // --- Variable Resolution ---
 
-  resolveVariables(content: string): string {
+  /** escape: applied to each substituted value, e.g. to keep a JSON template valid. */
+  resolveVariables(content: string, escape: (value: string) => string = value => value): string {
     return content.replace(/\$\{([^}]+)}/g, (_match, key) => {
       const res = this.resolveVariable(key);
       if (res) {
-        return res;
+        return escape(res);
       }
       return '${' + key + '}';
     });
@@ -1021,7 +1030,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       const num = Number(trimmed);
       return trimmed !== '' && Number.isInteger(num) ? String(num) : whole;
     });
-    return JSON.parse(this.resolveVariables(typed));
+    // Placeholders sit inside JSON strings (or are booleans and numbers, which escaping leaves as they are): a value
+    // with a quote, a backslash or a line break, e.g. a pasted password, must not end the string
+    return JSON.parse(this.resolveVariables(typed, value => JSON.stringify(value).slice(1, -1)));
   }
 
   private _resolveMarkdownVariable(key: string): string | undefined {
