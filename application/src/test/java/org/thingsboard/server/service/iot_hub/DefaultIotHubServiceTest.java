@@ -642,6 +642,45 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
+    void registerDeviceInstall_replace_keepsThePlacementUntilADeviceIsTracked() {
+        mockTenant();
+        String itemId = UUID.randomUUID().toString();
+        // After the update removed the entities: nothing tracked, the placement of the removed device kept.
+        ObjectNode placement = JacksonUtil.newObjectNode().put("entityGroupId", UUID.randomUUID().toString())
+                .put("customerId", UUID.randomUUID().toString());
+        DeviceInstalledItemDescriptor tracked = new DeviceInstalledItemDescriptor();
+        tracked.setInstallState(new LinkedHashMap<>(Map.of("Configuration", JacksonUtil.newObjectNode(), "$placement", placement)));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setItemId(UUID.fromString(itemId));
+        item.setDescriptor(tracked);
+        String newVersionId = UUID.randomUUID().toString();
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        when(iotHubRestClient.getVersionInfo(newVersionId)).thenReturn(version(newVersionId, itemId, "DEVICE", "Sensor", "1.0.2"));
+        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(invocation -> invocation.getArgument(1));
+        EntityId profile = new DeviceProfileId(UUID.randomUUID());
+        DeviceInstalledItemDescriptor afterProfile = new DeviceInstalledItemDescriptor();
+        afterProfile.setCreatedEntityIds(List.of(profile));
+        afterProfile.setInstallState(Map.of("Configuration", JacksonUtil.newObjectNode()));
+
+        service.registerDeviceInstall(user, newVersionId, afterProfile, item.getId());
+
+        // The wizard registered the profile only, with its own install state, and may fail before the device: the
+        // placement stays for the next update.
+        assertThat(afterProfile.getInstallState().get("$placement")).isEqualTo(placement);
+
+        EntityId device = new DeviceId(UUID.randomUUID());
+        DeviceInstalledItemDescriptor afterDevice = new DeviceInstalledItemDescriptor();
+        afterDevice.setCreatedEntityIds(List.of(profile, device));
+        afterDevice.setInstallState(Map.of("Configuration", JacksonUtil.newObjectNode()));
+
+        service.registerDeviceInstall(user, newVersionId, afterDevice, item.getId());
+
+        // The new device is tracked: the next update reads its group and customer from it.
+        assertThat(afterDevice.getInstallState()).doesNotContainKey("$placement");
+    }
+
+    @Test
     void registerDeviceInstall_replacedItemGone_savesANewItem() {
         mockTenant();
         IotHubInstalledItemId goneId = new IotHubInstalledItemId(UUID.randomUUID());

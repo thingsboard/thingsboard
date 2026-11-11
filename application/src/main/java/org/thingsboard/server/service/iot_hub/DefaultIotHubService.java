@@ -905,6 +905,18 @@ public class DefaultIotHubService implements IotHubService {
         if (descriptor.getDashboardId() == null) {
             descriptor.setDashboardId(tracked.getDashboardId());
         }
+        // PE: the wizard registers its own install state after each group of entities. The placement of the removed
+        // device stays until the new version tracks a device again, so that an update after a failure still creates it
+        // in the same group and for the same customer.
+        JsonNode placement = tracked.getInstallState() != null ? tracked.getInstallState().get(PLACEMENT_STATE) : null;
+        boolean tracksDevice = descriptor.getCreatedEntityIds() != null
+                && descriptor.getCreatedEntityIds().stream().anyMatch(id -> id.getEntityType() == EntityType.DEVICE);
+        if (placement != null && !tracksDevice) {
+            Map<String, JsonNode> installState = descriptor.getInstallState() != null
+                    ? new LinkedHashMap<>(descriptor.getInstallState()) : new LinkedHashMap<>();
+            installState.putIfAbsent(PLACEMENT_STATE, placement);
+            descriptor.setInstallState(installState);
+        }
     }
 
     private IotHubInstalledItem findDevicePackage(TenantId tenantId, IotHubInstalledItemId installedItemId) {
