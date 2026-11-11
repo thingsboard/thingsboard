@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -1709,6 +1710,12 @@ public abstract class BaseController {
             oAuth2ClientIds.add(oauth2ClientId);
         }
         return oAuth2ClientIds;
+    }
+
+    protected static String toContentDisposition(String fileName) {
+        ContentDisposition.Builder builder = ContentDisposition.attachment();
+        boolean ascii = StandardCharsets.US_ASCII.newEncoder().canEncode(fileName);
+        return (ascii ? builder.filename(fileName) : builder.filename(fileName, StandardCharsets.UTF_8)).build().toString();
     }
 
 }

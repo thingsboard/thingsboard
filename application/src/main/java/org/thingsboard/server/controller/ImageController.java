@@ -333,7 +333,7 @@ public class ImageController extends BaseController {
                 .eTag(descriptor.getEtag());
         if (!cacheKey.isPublic()) {
             result
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(fileName))
                     .header("x-filename", fileName);
         }
         if (systemImagesBrowserTtlInMinutes > 0 && imageInfo.getTenantId().isSysTenantId()) {

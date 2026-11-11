@@ -82,7 +82,7 @@ public class OtaPackageController extends BaseController {
 
         ByteArrayResource resource = new ByteArrayResource(otaPackage.getData().array());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackage.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(otaPackage.getFileName()))
                 .header("x-filename", otaPackage.getFileName())
                 .contentLength(resource.contentLength())
                 .contentType(parseMediaType(otaPackage.getContentType()))

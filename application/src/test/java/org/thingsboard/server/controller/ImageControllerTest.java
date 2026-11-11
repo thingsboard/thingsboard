@@ -9,7 +9,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -294,6 +297,38 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(downloadImage("tenant", filename)).containsExactly(PNG_IMAGE);
         resetTokens();
         assertThat(downloadPublicImage(imageInfo.getPublicResourceKey())).containsExactly(PNG_IMAGE);
+    }
+
+    @Test
+    public void testDownloadImageWithSpecialCharactersInFileName() throws Exception {
+        List<String> filenames = List.of("th, (copy).png", "a;b.png", "a\"b.png", "тест.png", "a (copy).png");
+        for (String filename : filenames) {
+            TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
+            assertThat(imageInfo.getFileName()).isEqualTo(filename);
+
+            for (String url : List.of("/api/images/tenant/{key}", "/api/images/tenant/{key}/preview")) {
+                MockHttpServletResponse response = doGet(url, imageInfo.getResourceKey())
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse();
+                assertThat(response.getContentAsByteArray()).containsExactly(PNG_IMAGE);
+
+                List<String> contentDisposition = response.getHeaders(HttpHeaders.CONTENT_DISPOSITION);
+                assertThat(contentDisposition).hasSize(1);
+                ContentDisposition parsed = ContentDisposition.parse(contentDisposition.get(0));
+                assertThat(parsed.isAttachment()).isTrue();
+                assertThat(parsed.getFilename()).isEqualTo(filename);
+            }
+        }
+    }
+
+    @Test
+    public void testPublicImageHasNoContentDisposition() throws Exception {
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "th, (copy).png", "image/png", PNG_IMAGE);
+        resetTokens();
+        MockHttpServletResponse response = doGet("/api/images/public/" + imageInfo.getPublicResourceKey())
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+        assertThat(response.getHeader(HttpHeaders.CONTENT_DISPOSITION)).isNull();
     }
 
     @Test

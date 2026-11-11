@@ -101,7 +101,7 @@ public class TbResourceController extends BaseController {
 
         ByteArrayResource resource = new ByteArrayResource(tbResource.getData());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(tbResource.getFileName()))
                 .header("x-filename", tbResource.getFileName())
                 .contentLength(resource.contentLength())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -452,7 +452,7 @@ public class TbResourceController extends BaseController {
         byte[] data = resourceService.getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
         ByteArrayResource resource = new ByteArrayResource(data);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + resourceInfo.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(resourceInfo.getFileName()))
                 .header("x-filename", resourceInfo.getFileName())
                 .contentLength(resource.contentLength())
                 .header("Content-Type", resourceInfo.getResourceType().getMediaType())
