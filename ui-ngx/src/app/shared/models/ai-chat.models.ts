@@ -245,6 +245,7 @@ export type ChatEvent = AssistantChatEvent | AssistantDeltaChatEvent | ToolExecu
   | TurnResumedEvent | TurnStoppedEvent | MessageQueuedEvent | ToolStartedEvent | ToolFinishedEvent;
 
 export enum AiAssistantViewType {
+  PAGE = 'PAGE',
   DASHBOARD = 'DASHBOARD',
   DASHBOARD_LIST = 'DASHBOARD_LIST',
   ALARM_RULE = 'ALARM_RULE',
@@ -287,6 +288,8 @@ export interface AiChatView {
   type: AiAssistantViewType;
   entityId?: EntityId;
   dashboardState?: string;
+  title?: string;
+  path?: string;
 }
 
 export interface AiChatClientContext {

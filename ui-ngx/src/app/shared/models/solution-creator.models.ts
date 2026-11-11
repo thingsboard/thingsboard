@@ -239,6 +239,8 @@ export type ChatMessage = GeneralChatMessage | ApprovalChatMessage | ActionChatM
 export interface AiStartedFrom {
   type: string;
   entityId?: EntityId;
+  title?: string;
+  path?: string;
 }
 
 export interface GeneralChatMessage {

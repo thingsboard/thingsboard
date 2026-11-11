@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import {
   Component,
   computed,
@@ -746,6 +747,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
     if (view.entityId) {
       return {type: view.type, entityId: view.entityId};
+    }
+    if (view.type === AiAssistantViewType.PAGE) {
+      return view.title || view.path ? {type: view.type, title: view.title, path: view.path} : undefined;
     }
     return view.type.endsWith('_LIST') || view.type === 'NOTIFICATION_INBOX' ? {type: view.type} : undefined;
   }

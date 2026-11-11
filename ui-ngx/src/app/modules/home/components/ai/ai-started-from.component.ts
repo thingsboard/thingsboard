@@ -99,6 +99,9 @@ export class AiStartedFromComponent {
   }
 
   private resolve(from: AiStartedFrom): Observable<AiPage | null> {
+    if (from.type === 'PAGE') {
+      return of(from.title || from.path ? {name: from.title || from.path, url: from.path} : null);
+    }
     const list = LIST_PAGES[from.type];
     if (list) {
       return of({name: this.translate.instant('ai-assistant.page.' + from.type), url: list.url});
