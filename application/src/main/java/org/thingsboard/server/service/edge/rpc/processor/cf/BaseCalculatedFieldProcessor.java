@@ -32,19 +32,18 @@ public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
                 throw new RuntimeException("[{" + tenantId + "}] calculatedFieldUpdateMsg {" + calculatedFieldUpdateMsg + " } cannot be converted to calculatedField");
             }
 
-            checkEntityTenant(tenantId, calculatedFieldId);
+            CalculatedField calculatedFieldById = findTenantEntity(tenantId, calculatedFieldId);
             calculatedField.setTenantId(tenantId);
-            if (calculatedField.getEntityId() == null || !isEntityExists(tenantId, calculatedField.getEntityId())) {
+            if (calculatedField.getEntityId() == null || !isTenantEntity(tenantId, calculatedField.getEntityId())) {
                 throw new DataValidationException("Calculated field is referencing to non-existent entity!");
             }
             if (calculatedField.getConfiguration() != null) {
                 for (EntityId referencedEntityId : calculatedField.getConfiguration().getReferencedEntities()) {
-                    if (!isEntityExists(tenantId, referencedEntityId)) {
+                    if (!isTenantEntity(tenantId, referencedEntityId)) {
                         throw new DataValidationException("Calculated field argument is referencing to non-existent entity!");
                     }
                 }
             }
-            CalculatedField calculatedFieldById = edgeCtx.getCalculatedFieldService().findById(tenantId, calculatedFieldId);
             if (calculatedFieldById == null) {
                 calculatedField.setCreatedTime(Uuids.unixTimestamp(calculatedFieldId.getId()));
                 isCreated = true;

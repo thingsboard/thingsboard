@@ -7,9 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
 import java.util.List;
+import java.util.UUID;
 
 public class EdgeMsgSummaryUtilsTest {
 
@@ -40,6 +42,21 @@ public class EdgeMsgSummaryUtilsTest {
 
         Assertions.assertEquals("[UplinkMsg[uplinkMsgId=3, deviceCredentialsUpdateMsg x1], UplinkMsg[uplinkMsgId=3, deviceCredentialsUpdateMsg x1]]", summary);
         Assertions.assertFalse(summary.contains(SECRET));
+    }
+
+    @Test
+    public void testEntityMsgSummaryHasTypeAndIdWithoutPayload() {
+        UUID deviceUuid = UUID.randomUUID();
+        DeviceUpdateMsg deviceUpdateMsg = DeviceUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE)
+                .setIdMSB(deviceUuid.getMostSignificantBits())
+                .setIdLSB(deviceUuid.getLeastSignificantBits())
+                .setEntity("{\"name\":\"" + SECRET + "\"}")
+                .build();
+
+        String summary = EdgeMsgSummaryUtils.toSummary(deviceUpdateMsg);
+
+        Assertions.assertEquals("DeviceUpdateMsg[msgType=ENTITY_UPDATED_RPC_MESSAGE, id=" + deviceUuid + "]", summary);
     }
 
 }

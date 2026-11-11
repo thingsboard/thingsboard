@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -58,7 +57,6 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
-import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -76,6 +74,7 @@ import org.thingsboard.server.gen.edge.v1.SendSmsUplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeEntityTenantChecker;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.mail.EdgeMailRequest;
 import org.thingsboard.server.service.mail.MailExecutorService;
@@ -113,7 +112,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     private RelationService relationService;
 
     @Autowired
-    private EntityService entityService;
+    private EdgeEntityTenantChecker edgeEntityTenantChecker;
 
     @Lazy
     @Autowired
@@ -644,18 +643,11 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     }
 
     private boolean isTenantEntity(TenantId tenantId, EntityId entityId) {
-        try {
-            boolean tenantEntity = entityService.fetchEntity(tenantId, entityId)
-                    .map(entity -> entity instanceof HasTenantId hasTenantId && tenantId.equals(hasTenantId.getTenantId()))
-                    .orElse(false);
-            if (!tenantEntity) {
-                log.warn("[{}] Entity {} not found, skipping request", tenantId, entityId);
-            }
-            return tenantEntity;
-        } catch (IllegalArgumentException e) {
-            log.warn("[{}] Unsupported entity {}, skipping request", tenantId, entityId);
-            return false;
+        boolean tenantEntity = edgeEntityTenantChecker.isTenantEntity(tenantId, entityId);
+        if (!tenantEntity) {
+            log.warn("[{}] Entity {} not found, skipping request", tenantId, entityId);
         }
+        return tenantEntity;
     }
 
     private ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,

@@ -270,4 +270,19 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         Assert.assertNull(calculatedFieldService.findById(tenantId, calculatedField.getId()));
     }
 
+    @Test
+    public void testSendCalculatedFieldDeleteForCalculatedFieldOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        CalculatedField calculatedField = createSimpleCalculatedField(device.getId(), new SimpleCalculatedFieldConfiguration());
+        calculatedField.setTenantId(differentTenantId);
+        loginDifferentTenant();
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        loginTenantAdmin();
+
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addCalculatedFieldUpdateMsg(
+                EdgeMsgConstructorUtils.constructCalculatedFieldDeleteMsg(savedCalculatedField.getId())));
+
+        Assert.assertNotNull(calculatedFieldService.findById(differentTenantId, savedCalculatedField.getId()));
+    }
+
 }
