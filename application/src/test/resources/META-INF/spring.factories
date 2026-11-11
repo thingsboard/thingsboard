@@ -1,0 +1,5 @@
+# Deliberate duplicate of the entry packaged in the dao test-jar (dao/src/test/resources/META-INF/spring.factories):
+# the Citus all-tests sweep must not silently stop applying to this module if that test-jar dependency or its
+# resource packaging changes. Spring dedupes the double registration (the customizer implements equals/hashCode).
+org.springframework.test.context.ContextCustomizerFactory=\
+org.thingsboard.server.dao.sql.citus.CitusAllTestsContextCustomizerFactory

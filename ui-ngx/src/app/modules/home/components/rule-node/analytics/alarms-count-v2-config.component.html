@@ -1,0 +1,34 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="alarmsCountConfigForm" class="flex flex-col">
+  <tb-output-message-type-autocomplete required formControlName="outMsgType" appearance="outline"></tb-output-message-type-autocomplete>
+  <mat-checkbox formControlName="countAlarmsForPropagationEntities">
+    {{ 'rule-node-config.count-alarms-for-propagation-entities' | translate }}
+  </mat-checkbox>
+  <div class="tb-hint" translate>rule-node-config.count-alarms-for-propagation-entities-info</div>
+  @if (alarmsCountConfigForm.get('countAlarmsForPropagationEntities').value) {
+    <div class="flex-1">
+      <label class="tb-title no-padding">{{ 'rule-node-config.propagation-entity-types' | translate }}</label>
+      <tb-entity-type-list class="flex-1" appearance="outline"
+        formControlName="propagationEntityTypes"
+        [allowedEntityTypes]="propagationEntityTypes"
+        [ignoreAuthorityFilter]="true">
+      </tb-entity-type-list>
+      <div class="tb-hint" translate>rule-node-config.propagation-entity-types-info</div>
+    </div>
+  }
+  <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel-header>
+      <mat-panel-title translate>rule-node-config.alarms-count-mappings</mat-panel-title>
+    </mat-expansion-panel-header>
+    <tb-alarms-count-mapping-table
+      required
+      formControlName="alarmsCountMappings"
+      style="padding-bottom: 15px;">
+    </tb-alarms-count-mapping-table>
+  </mat-expansion-panel>
+</section>

@@ -1,0 +1,16 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="trendz-unavailable flex flex-col">
+  <div class="trendz-unavailable-content flex flex-col gap-4">
+    <div class="trendz-unavailable-title">{{ 'trendz-analytics.service-unavailable' | translate: {name: name} }}</div>
+    <div class="trendz-unavailable-text">{{ 'trendz-analytics.service-unavailable-message' | translate: {name: name} }}</div>
+    <div class="trendz-unavailable-text">{{ 'trendz-analytics.service-unavailable-incident-reported' | translate }}</div>
+  </div>
+  <div class="trendz-unavailable-actions flex justify-end">
+    <button mat-button mat-raised-button color="primary" (click)="reportIssue()">{{ 'trendz-analytics.service-unavailable-report-issue' | translate }}</button>
+  </div>
+</div>

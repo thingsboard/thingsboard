@@ -1,0 +1,113 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../components/agent/agent-shared' as *;
+
+:host {
+  display: block;
+  width: min(720px, 95vw);
+  min-width: 0;
+  max-width: 95vw;
+}
+
+.tb-agent-install-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 400;
+    margin: 0;
+  }
+}
+
+.tb-agent-install-dialog-body {
+  padding: 16px 24px 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.instructions-section {
+  margin-top: 20px;
+
+  h3 {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+
+  > p {
+    font-size: 13px;
+    color: $agent-text-secondary;
+    line-height: 1.6;
+    margin: 0 0 12px;
+  }
+
+  .step-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 12px 0 6px;
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--tb-primary-500);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.command-block {
+  @include agent-command-block;
+  .copy-command-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    min-width: 0;
+    padding: 0 10px;
+    line-height: 28px;
+    height: 28px;
+    font-size: 12px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+  }
+}
+
+.tb-info-box {
+  @include agent-info-box;
+  @include agent-info-box-tone;
+}
+
+.tb-agent-install-dialog-footer {
+  padding: 8px 16px;
+
+  button[mat-raised-button] mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+  }
+}

@@ -1,0 +1,43 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+server:
+  # Server bind address
+  address: "0.0.0.0"
+  # Server bind port
+  port: "8383"
+
+browser:
+  # Browser launch timeout (ms)
+  launchTimeout: "60000"
+  # Default page navigation timeout (ms)
+  defaultPageNavigationTimeout: "120000"
+  # Generate report request timeout (ms)
+  generateReportTimeout: "30000"
+  # Load dashboard resources timeout (ms)
+  loadDashboardResourcesTimeout: "10000"
+  # Dashboard idle wait time (ms)
+  dashboardIdleWaitTime: "0"
+  # Max browser pages
+  maxPages: "5"
+  # This parameter determines whether to create a new page for each web report.
+  # When set to 'true', each web report will open on a separate page, providing clear separation and convenient viewing of reports.
+  #
+  # Caution:
+  # - If this parameter is enabled ('true'), data caching functionality will be disabled.
+  #   This means that data for each report will be reloaded every time the report is opened,
+  #   which may increase page load times and server load.
+  # - When this parameter is disabled ('false'), all web reports will open on a single page,
+  #   allowing caching to be used for improved performance and faster page loading.
+  useNewPage: false
+  # Used to override baseUrl when it points to localhost or 127.0.0.1
+  localhostBaseUrlOverride: ""
+logger:
+  # Sets the logging level.
+  # Available levels and their priorities:
+  # { error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6 }
+  level: "info"
+  path: "logs"
+  filename: "tb-web-report-%DATE%.log"

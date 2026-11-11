@@ -1,0 +1,138 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  background-color: var(--mat-card-elevated-container-color, #fff);
+
+  .tb-entity-table.tb-form-panel {
+    position: absolute;
+  }
+  .tb-form-row.tb-legend {
+    height: auto;
+    border-radius: 4px;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+    line-height: 20px;
+    justify-content: center;
+
+    .mat-mdc-standard-chip.mat-primary {
+      --mat-chip-elevated-container-color: #0000000A;
+      --mat-chip-label-text-color: #00000061;
+      &.mat-mdc-chip-selected {
+        --mat-chip-elevated-container-color: var(--tb-primary-50);
+        --mat-chip-label-text-color: var(--tb-primary-500);
+        --mat-chip-with-icon-selected-icon-color: var(--tb-primary-500);
+      }
+    }
+
+    .tb-legend-item-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      cursor: pointer;
+      .tb-legend-item-label-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        background-color: #fff;
+        opacity: 0.5;
+        border: 1px solid rgba(0, 0, 0, 0.16);
+
+        &.translated {
+          opacity: 1;
+        }
+
+        &.untranslated {
+          background: #D12730;
+        }
+
+        &.customized {
+          background: #198038;
+        }
+
+        &.added {
+          background: #0066FF;
+        }
+      }
+    }
+  }
+  .mat-toolbar.mat-mdc-table-toolbar{
+    height: 48px;
+    padding: 8px 12px 0;
+
+    .mat-toolbar-tools {
+      height: 40px;
+
+      .tb-entity-table-title {
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 24px;
+        letter-spacing: 0.25px;
+      }
+
+      & > button.mat-mdc-icon-button:last-child {
+        margin: 0;
+      }
+    }
+  }
+
+  .constant-value {
+    white-space: nowrap;
+
+    & > div {
+      filter: opacity(0.54);
+      white-space: normal;
+    }
+  }
+
+  .mat-mdc-table {
+    .mat-mdc-header-row {
+      .mat-mdc-header-cell:first-child {
+        padding-right: 28px;
+      }
+      &.added {
+        background: #F5F9FF;
+      }
+    }
+
+    .mat-mdc-row {
+      height: 53px;
+
+      .mat-mdc-cell {
+        padding-top: 6px;
+        padding-bottom: 6px;
+
+        &:last-child {
+          padding-top: 0;
+          padding-bottom: 0;
+        }
+      }
+
+      &.untranslated {
+        background: rgba(209, 39, 48, 0.04);
+        &:hover {
+          background: rgba(209, 39, 48, 0.08);
+        }
+      }
+
+      &.customized {
+        background: rgba(25, 128, 56, 0.04);
+        &:hover {
+          background: rgba(25, 128, 56, 0.08);
+        }
+      }
+
+      &.added {
+        background: rgba(0, 102, 255, 0.04);
+        &:hover {
+          background: rgba(0, 102, 255, 0.08);
+        }
+      }
+    }
+
+    .tb-form-row {
+      background-color: #ffffff;
+      height: min-content;
+    }
+  }
+}

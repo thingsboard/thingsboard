@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf.ctx.state.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -295,7 +283,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                     clearState(state);
                 }
                 AlarmApiCallResult clearResult = ctx.getAlarmService().clearAlarm(
-                        ctx.getTenantId(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), false
+                        ctx.getTenantId(), currentAlarm.getOriginator(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), false
                 );
                 if (clearResult.isCleared()) {
                     result = TbAlarmResult.builder()
@@ -370,6 +358,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             newAlarm.setTenantId(ctx.getTenantId());
             newAlarm.setPropagate(configuration.isPropagate());
             newAlarm.setPropagateToOwner(configuration.isPropagateToOwner());
+            newAlarm.setPropagateToOwnerHierarchy(configuration.isPropagateToOwnerHierarchy());
             newAlarm.setPropagateToTenant(configuration.isPropagateToTenant());
             if (configuration.getPropagateRelationTypes() != null) {
                 newAlarm.setPropagateRelationTypes(configuration.getPropagateRelationTypes());

@@ -1,0 +1,90 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-permission-list flex flex-col">
+  <div class="header flex flex-1 flex-row items-center lt-md:hidden">
+    <div class="flex flex-1 flex-row gap-2">
+      <span class="cell max-w-26% flex-full" translate>permission.resource.resource</span>
+      <span class="cell max-w-37% flex-full" translate>permission.operation.allowed</span>
+      <span class="cell max-w-37% flex-full" translate>permission.operation.denied</span>
+    </div>
+    <span [class.!hidden]="disabled" style="width: 48px; min-width: 48px;">&nbsp;</span>
+  </div>
+  <div class="body">
+    @for (permissionControl of permissionsFormArray.controls; track $index) {
+      <div class="row flex flex-1 flex-row items-center justify-start gt-sm:gap-2">
+        <div class="flex min-w-0 flex-1 flex-col">
+          <div class="flex flex-1 flex-col gap-2 gt-sm:flex-row gt-sm:items-center">
+            <tb-resource-type-autocomplete
+              class="cell mat-block w-full min-w-0 max-w-full gt-sm:max-w-26%"
+              required
+              inlineField
+              appearance="outline"
+              [label]="!isMobile && ('permission.resource.resource' | translate)"
+              [formControl]="permissionControl.controls.resource">
+            </tb-resource-type-autocomplete>
+            <tb-operation-type-list
+              class="cell mat-block w-full max-w-full gt-sm:max-w-37%"
+              appearance="outline"
+              [floatLabel]="!isMobile && 'always'"
+              [label]="!isMobile && ('permission.operation.allowed' | translate)"
+              [resource]="permissionControl.controls.resource.value"
+              [formControl]="permissionControl.controls.operations"
+              [emptyPlaceholder]="'permission.operation.not-set' | translate">
+            </tb-operation-type-list>
+            <tb-operation-type-list
+              class="cell mat-block w-full max-w-full gt-sm:max-w-37%"
+              appearance="outline"
+              [floatLabel]="!isMobile && 'always'"
+              [label]="!isMobile && ('permission.operation.denied' | translate)"
+              [resource]="permissionControl.controls.resource.value"
+              [formControl]="permissionControl.controls.excludedOperations"
+              [emptyPlaceholder]="'permission.operation.not-set' | translate">
+            </tb-operation-type-list>
+          </div>
+          @if (!permissionControl.controls.resource.hasError('required') && !disabled) {
+            @if (permissionControl.hasError('operationsRequired') &&
+            (permissionControl.controls.operations.touched || permissionControl.controls.excludedOperations.touched) && permissionsFormArray.controls.length !== 1) {
+              <div class="row-error">
+                {{ 'permission.operations-required' | translate }}
+              </div>
+            }
+            @if (permissionControl.hasError('operationOverlap') && (permissionControl.controls.operations.touched || permissionControl.controls.excludedOperations.touched)) {
+              <div class="row-error">
+                {{ 'permission.operation-overlap' | translate }}
+              </div>
+            }
+          }
+        </div>
+        <button mat-icon-button color="primary"
+                [class.!hidden]="disabled"
+                type="button"
+                (click)="removePermission($index)"
+                [disabled]="isLoading$ | async"
+                matTooltip="{{ 'permission.remove-permission' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    }
+    @let showRequiredError = hasRequiredError;
+    <tb-error [class]="showRequiredError ? '' : 'hidden'"
+              [error]="showRequiredError ? ('permission.permissions-required' | translate) : ''">
+    </tb-error>
+  </div>
+  <div>
+    <button mat-button mat-raised-button color="primary"
+      [class.!hidden]="disabled"
+      [disabled]="isLoading$ | async"
+      (click)="addPermission()"
+      type="button"
+      matTooltip="{{ 'permission.add-permission' | translate }}"
+      matTooltipPosition="above">
+      <mat-icon>add</mat-icon>
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</div>

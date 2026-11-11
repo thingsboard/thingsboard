@@ -1,0 +1,170 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+$tb-button-selected-color: rgb(255, 110, 64) !default;
+
+.tb-scheduler-events {
+  .tb-scheduler-events-content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    overflow: hidden;
+
+    &.tb-outlined-border {
+      box-shadow: 0 0 0 0 rgb(0 0 0 / 20%), 0 0 0 0 rgb(0 0 0 / 14%), 0 0 0 0 rgb(0 0 0 / 12%);
+      border: solid 1px #e0e0e0;
+      border-radius: 4px;
+    }
+
+    .tb-scheduler-events-title {
+      padding-right: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tb-scheduler-events-view-type-toolbar {
+      height: 55px;
+      min-height: 55px;
+      padding-right: 16px;
+      background-color: transparent;
+      box-shadow: none;
+
+      .tb-toolbar-button {
+        height: 48px;
+        button.mat-mdc-icon-button {
+          margin: 0;
+        }
+        &.tb-selected {
+          background-color: rgba(255, 255, 255, .15);
+          border-bottom: $tb-button-selected-color solid 4px;
+
+          button.mat-mdc-icon-button {
+            margin-bottom: -4px;
+
+            .mat-icon {
+              color: $tb-button-selected-color;
+              fill: $tb-button-selected-color;
+            }
+          }
+        }
+      }
+    }
+
+    .mat-toolbar-tools {
+      .tb-widget-actions {
+        .mdc-icon-button {
+          .mat-icon {
+            color: var(--mat-icon-color);
+          }
+        }
+      }
+    }
+
+    .table-container {
+      overflow: auto;
+      flex: 1 1 0;
+
+      .mat-sort-header-sorted .mat-sort-header-arrow {
+        opacity: 1 !important;
+      }
+    }
+
+    .calendar-container {
+      position: relative;
+      min-height: 0;
+      box-sizing: border-box;
+
+      .fc-event:not(.fc-list-event) {
+        border-radius: 2px;
+        box-shadow: 0 4px 20px 0 rgba(0, 0, 0, .14), 0 7px 10px -5px rgba(58, 135, 173, .4);
+      }
+
+      .fc-day-grid-event {
+        margin: 2px 5px 0;
+      }
+
+      a {
+        font-weight: inherit;
+        color: inherit;
+        text-decoration: inherit;
+        border: inherit;
+        transition: inherit;
+
+        &:hover, &:focus {
+          border: inherit;
+        }
+      }
+
+      table > tbody {
+        cursor: pointer;
+      }
+
+      .fc-event-title-container {
+        display: flex;
+      }
+    }
+
+    .mat-mdc-mini-fab.tb-scheduler-nav-button {
+      background: transparent;
+      color: inherit;
+      box-shadow: 0 3px 1px -2px #0003, 0 2px 2px 0 #00000024, 0 1px 5px 0 #0000001f;
+    }
+  }
+}
+
+.tb-event-schedule-calendar-menu.mat-mdc-menu-panel {
+  min-width: 256px;
+  max-height: 404px;
+  border-radius: 8px;
+  margin-left: -20px;
+  &.mat-menu-below {
+    margin-top: -60px;
+  }
+
+  .mat-mdc-menu-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    .tb-event-schedule-context-menu-container {
+      pointer-events: auto;
+      padding: 0 0 8px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+  }
+
+  .tb-context-menu-header {
+    display: flex;
+    box-sizing: content-box;
+    flex-direction: column;
+    height: 36px;
+    min-height: 36px;
+    padding: 8px 5px 5px 20px;
+    font-size: 14px;
+    color: #fff;
+    background-color: #3788d8;
+
+    .tb-context-menu-title {
+      font-weight: 500;
+      line-height: normal;
+    }
+
+    .tb-context-menu-subtitle {
+      font-size: 12px;
+      line-height: normal;
+    }
+  }
+}
+
+.tb-scheduler-tooltip-title {
+  padding-bottom: 16px;
+  font-weight: 600;
+  color: #000;
+}
+
+.tb-scheduler-tooltip-content {
+  padding-bottom: 8px;
+  font-size: 14px;
+  color: #555;
+}

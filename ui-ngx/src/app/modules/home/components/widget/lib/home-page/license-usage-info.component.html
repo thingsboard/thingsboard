@@ -1,0 +1,80 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-card-content flex flex-col">
+  <div class="tb-card-header">
+    <div class="tb-card-title">
+      <div class="tb-title" translate>widgets.license-info.title</div>
+    </div>
+    <a mat-button color="primary" class="tb-view-all" href="https://thingsboard.io/pricing/?product=thingsboard-pe" target="_blank">{{ 'widgets.license-info.view-all' | translate }}</a>
+  </div>
+  <div class="tb-license-info-container flex-1">
+    <div class="tb-card-header">
+      <a class="tb-plan-link" href="https://thingsboard.io/pricing/?product=thingsboard-pe" target="_blank">{{ licenseUsageInfo?.plan }}</a>
+      <a mat-stroked-button color="primary" class="tb-license-portal" href="https://license.thingsboard.io/login" target="_blank">{{ 'widgets.license-info.license-portal' | translate }}</a>
+    </div>
+    <div class="flex flex-1 flex-row gap-10" style="overflow: auto;">
+      <div class="flex flex-col gap-2">
+        <div class="tb-feature-text" [class]="statusClass(licenseUsageInfo?.devicesCount, licenseUsageInfo?.maxDevices)">
+          <span class="tb-feature-status">
+            {{ statusIcon(licenseUsageInfo?.devicesCount, licenseUsageInfo?.maxDevices) }}
+          </span>{{ 'widgets.license-info.devices-info' | translate: { count: licenseUsageInfo?.devicesCount, max: licenseUsageInfo?.maxDevices} }}
+        </div>
+        <div class="tb-feature-text" [class]="statusClass(licenseUsageInfo?.assetsCount, licenseUsageInfo?.maxAssets)">
+          <span class="tb-feature-status">
+            {{ statusIcon(licenseUsageInfo?.assetsCount, licenseUsageInfo?.maxAssets) }}
+          </span>{{ 'widgets.license-info.assets-info' | translate: { count: licenseUsageInfo?.assetsCount, max: licenseUsageInfo?.maxAssets} }}
+        </div>
+        @if (showEdges) {
+          <div class="tb-feature-text" [class]="statusClass(licenseUsageInfo?.edgesCount, licenseUsageInfo?.maxEdges)">
+          <span class="tb-feature-status">
+          {{ statusIcon(licenseUsageInfo?.edgesCount, licenseUsageInfo?.maxEdges) }}
+          </span>{{ 'widgets.license-info.edges-info' | translate: { count: licenseUsageInfo?.edgesCount, max: licenseUsageInfo?.maxEdges} }}
+          </div>
+        }
+        @if (!isMdLg) {
+          <div class="tb-feature-text ok">
+            <span class="tb-feature-status">
+              check
+            </span>{{ 'widgets.license-info.dashboards-info' | translate: { count: licenseUsageInfo?.dashboardsCount, max: 0} }}
+          </div>
+        }
+        @if (!isMdLg) {
+          <div class="tb-feature-text ok">
+            <span class="tb-feature-status">
+              check
+            </span>{{ 'widgets.license-info.integrations-info' | translate: { count: licenseUsageInfo?.integrationsCount, max: 0} }}
+          </div>
+        }
+      </div>
+      @if (!isMdLg) {
+        <div class="flex flex-col gap-2">
+          <div class="tb-feature-text ok">
+            <span class="tb-feature-status">
+              check
+            </span>{{ 'widgets.license-info.community-support' | translate }}
+          </div>
+          <div class="tb-feature-text" [class.ok]="licenseUsageInfo?.whiteLabelingEnabled"
+            [class.disabled]="!licenseUsageInfo?.whiteLabelingEnabled">
+            <span class="tb-feature-status">
+              {{ licenseUsageInfo?.whiteLabelingEnabled ? 'check' : 'close' }}
+            </span>{{ 'widgets.license-info.white-labeling' | translate }}
+          </div>
+          <div class="tb-feature-text ok">
+            <span class="tb-feature-status">
+              check
+            </span>{{ 'widgets.license-info.unlimited-datapoints-and-messages' | translate }}
+          </div>
+          <div class="tb-feature-text ok">
+            <span class="tb-feature-status">
+              check
+            </span>{{ 'widgets.license-info.unlimited-api-calls' | translate }}
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

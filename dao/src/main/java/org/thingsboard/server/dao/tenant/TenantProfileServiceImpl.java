@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.tenant;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -32,6 +20,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -102,8 +91,8 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
                     .entityId(savedTenantProfile.getId()).created(tenantProfile.getId() == null).build());
         } catch (Exception t) {
             handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefault()));
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("tenant_profile_name_unq_key")) {
+            ConstraintViolationException e = DaoUtil.extractConstraintViolationException(t).orElse(null);
+            if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "tenant_profile_name_unq_key")) {
                 throw new DataValidationException("Tenant profile with such name already exists!");
             } else {
                 throw t;
@@ -129,8 +118,8 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         try {
             tenantProfileDao.removeById(tenantId, tenantProfileId.getId());
         } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_tenant_profile")) {
+            ConstraintViolationException e = DaoUtil.extractConstraintViolationException(t).orElse(null);
+            if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_tenant_profile")) {
                 throw new DataValidationException("The tenant profile referenced by the tenants cannot be deleted!");
             } else {
                 throw t;

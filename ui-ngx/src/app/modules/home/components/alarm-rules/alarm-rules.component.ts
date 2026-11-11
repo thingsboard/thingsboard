@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, DestroyRef, inject, Inject, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -64,7 +51,7 @@ export class AlarmRulesComponent extends EntityComponent<AlarmRuleTableEntity> {
   @Input()
   entityName: string;
 
-  ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
+  ownerId: EntityId = new TenantId(getCurrentAuthUser(this.store).tenantId);
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly EntityType = EntityType;
   readonly alarmRuleEntityTypeList = alarmRuleEntityTypeList;
@@ -106,6 +93,7 @@ export class AlarmRulesComponent extends EntityComponent<AlarmRuleTableEntity> {
 
   changeEntity(entity: BaseData<EntityId>): void {
     this.entityName = entity?.name;
+    this.ownerId = entity?.ownerId ?? new TenantId(getCurrentAuthUser(this.store).tenantId);
   }
 
   buildForm(_entity?: CalculatedFieldAlarmRuleInfo): FormGroup {
@@ -179,16 +167,11 @@ export class AlarmRulesComponent extends EntityComponent<AlarmRuleTableEntity> {
     if (entityId?.entityType === EntityType.DEVICE || entityId?.entityType === EntityType.ASSET) {
       this.entityService.getEntity(entityId.entityType, entityId.id, { ignoreLoading: true, ignoreErrors: true }).subscribe(
         (entity: AssetInfo | DeviceInfo) => {
-          if (this.isAssignedToCustomer(entity)) {
-            this.ownerId = entity.customerId;
+          if (entity.ownerId) {
+            this.ownerId = entity.ownerId;
           }
         }
       );
     }
   }
-
-  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
-    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
-  }
-
 }

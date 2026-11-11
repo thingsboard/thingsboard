@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.Futures;
@@ -34,16 +22,20 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbPeContext;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -51,20 +43,24 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.converter.ConverterService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.role.RoleService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Arrays;
@@ -97,7 +93,8 @@ import static org.mockito.Mockito.when;
 public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
-            EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
+            EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD,
+            EntityType.EDGE, EntityType.USER, EntityType.CONVERTER, EntityType.ROLE);
 
     private static final String supportedEntityTypesStr = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.joining(" ,"));
 
@@ -115,6 +112,8 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     private static final EntityViewId entityViewId = new EntityViewId(UUID.fromString("39ce8d03-52a3-4aa8-b561-267d1d9d68b5"));
     private static final EdgeId edgeId = new EdgeId(UUID.fromString("dc4f9809-b6f9-48f9-8057-2737216cfdf7"));
     private static final DashboardId dashboardId = new DashboardId(UUID.fromString("fda72baa-c882-4723-9693-25995dc37bc5"));
+    private static final ConverterId converterId = new ConverterId(UUID.fromString("e572b64c-1e09-482a-84ee-1e2f31b56626"));
+    private static final RoleId roleId = new RoleId(UUID.fromString("2889d5eb-4dc5-4973-b35e-ae129f31482d"));
 
     private static Stream<Arguments> givenSupportedEntityType_whenOnMsg_thenVerifyConditions() {
         return Stream.of(
@@ -124,7 +123,9 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 Arguments.of(new EntityView(entityViewId)),
                 Arguments.of(new Edge(edgeId)),
                 Arguments.of(new Dashboard(dashboardId)),
-                Arguments.of(new Tenant(tenantId))
+                Arguments.of(new Tenant(tenantId)),
+                Arguments.of(new Converter(converterId)),
+                Arguments.of(new Role(roleId))
         );
     }
 
@@ -151,6 +152,12 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     @Mock
     private RelationService relationServiceMock;
 
+    @Mock
+    private TbPeContext peCtxMock;
+    @Mock
+    private ConverterService converterServiceMock;
+    @Mock
+    private RoleService roleServiceMock;
 
     private TbDeleteRelationNode node;
     private TbDeleteRelationNodeConfiguration config;
@@ -477,6 +484,16 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 EntityType.DASHBOARD, () -> {
                     when(ctxMock.getDashboardService()).thenReturn(dashboardServiceMock);
                     when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
+                },
+                EntityType.CONVERTER, () -> {
+                    when(ctxMock.getPeContext()).thenReturn(peCtxMock);
+                    when(peCtxMock.getConverterService()).thenReturn(converterServiceMock);
+                    when(converterServiceMock.findConverterByNameAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.empty()));
+                },
+                EntityType.ROLE, () -> {
+                    when(ctxMock.getPeContext()).thenReturn(peCtxMock);
+                    when(peCtxMock.getRoleService()).thenReturn(roleServiceMock);
+                    when(roleServiceMock.findRoleByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.empty()));
                 }
         );
     }
@@ -516,10 +533,22 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 EntityType.DASHBOARD, hasId -> {
                     var dashboard = (Dashboard) hasId;
                     when(ctxMock.getDashboardService()).thenReturn(dashboardServiceMock);
-                    when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(dashboard));
+                    when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(new DashboardInfo(dashboard)));
                 },
                 EntityType.TENANT, hasId -> {
                     // do nothing. tenantId returned by ctxMock.
+                },
+                EntityType.CONVERTER, hasId -> {
+                    var converter = (Converter) hasId;
+                    when(ctxMock.getPeContext()).thenReturn(peCtxMock);
+                    when(peCtxMock.getConverterService()).thenReturn(converterServiceMock);
+                    when(converterServiceMock.findConverterByNameAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.of(converter)));
+                },
+                EntityType.ROLE, hasId -> {
+                    var role = (Role) hasId;
+                    when(ctxMock.getPeContext()).thenReturn(peCtxMock);
+                    when(peCtxMock.getRoleService()).thenReturn(roleServiceMock);
+                    when(roleServiceMock.findRoleByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.of(role)));
                 }
         );
     }
@@ -555,6 +584,14 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                     verifyNoMoreInteractions(dashboardServiceMock);
                 },
                 EntityType.TENANT, hasId -> {
+                },
+                EntityType.CONVERTER, hasId -> {
+                    verify(converterServiceMock).findConverterByNameAsync(eq(tenantId), eq("EntityName"));
+                    verifyNoMoreInteractions(converterServiceMock, peCtxMock);
+                },
+                EntityType.ROLE, hasId -> {
+                    verify(roleServiceMock).findRoleByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
+                    verifyNoMoreInteractions(relationServiceMock, peCtxMock);
                 }
         );
     }

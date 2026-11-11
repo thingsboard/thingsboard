@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Inject, Input, OnDestroy, Optional } from '@angular/core';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import {
@@ -40,8 +27,6 @@ import { Subscription } from 'rxjs';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { PageLink } from '@shared/models/page/page-link';
 import { coerceBoolean } from '@app/shared/decorators/coercion';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
 
 @Component({
     selector: 'tb-client',
@@ -102,9 +87,6 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
     this.oauth2Service.getOAuth2Template().subscribe(templates => {
       this.initTemplates(templates);
     });
-    if (getCurrentAuthUser(this.store).authority === Authority.TENANT_ADMIN) {
-      this.platformTypes = this.platformTypes.filter(item => item !== PlatformType.WEB);
-    }
   }
 
   ngOnDestroy() {
@@ -214,6 +196,7 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
 
     this.subscriptions.push(this.entityForm.get('additionalInfo.providerName').valueChanges.subscribe((provider) => {
       this.entityForm.get('scope').setValue([]);
+      this.entityForm.get('mapperConfig.basic.userGroupsNamePattern').setValue([]);
       this.setProviderDefaultValue(provider, this.entityForm);
     }));
   }
@@ -280,7 +263,9 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
         Validators.maxLength(255)],
       defaultDashboardName: [mapperConfigBasic?.defaultDashboardName ? mapperConfigBasic.defaultDashboardName : null,
         Validators.maxLength(255)],
-      alwaysFullScreen: [isDefinedAndNotNull(mapperConfigBasic?.alwaysFullScreen) ? mapperConfigBasic.alwaysFullScreen : false]
+      alwaysFullScreen: [isDefinedAndNotNull(mapperConfigBasic?.alwaysFullScreen) ? mapperConfigBasic.alwaysFullScreen : false],
+      parentCustomerNamePattern: [mapperConfigBasic?.parentCustomerNamePattern ? mapperConfigBasic.parentCustomerNamePattern : null],
+      userGroupsNamePattern: [mapperConfigBasic?.userGroupsNamePattern ? mapperConfigBasic.userGroupsNamePattern : []]
     });
 
     if (!this.createNewDialog && !(this.isEdit || this.isAdd)) {

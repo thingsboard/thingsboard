@@ -1,0 +1,126 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="groupPermissionFormGroup" (ngSubmit)="save()" style="min-width: 600px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    <h2 translate>{{ (isAdd ? 'group-permission.add-group-permission' : 'group-permission.edit-group-permission' ) }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <section class="flex flex-col">
+        <label translate class="tb-title no-padding">role.role</label>
+        <section class="flex flex-row gap-2" formGroupName="role">
+          <mat-form-field [class.!hidden]="!isUserGroup" class="mat-block" style="width: 200px;" appearance="outline">
+            <mat-label translate>role.role-type</mat-label>
+            <mat-select matInput required formControlName="type">
+              @for (type of roleTypes; track type) {
+                <mat-option [value]="type">
+                  {{ roleTypeTranslations.get(type) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+            @if (groupPermissionFormGroup.get('role.type').hasError('required')) {
+              <mat-error>
+                {{ 'role.role-type-required' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          <tb-entity-autocomplete
+            class="flex-1"
+            [class.!hidden]="!groupPermissionFormGroup.get('role.type').value"
+            required
+            appearance="outline"
+            [entitySubtype]="groupPermissionFormGroup.get('role.type').value"
+            [entityType]="entityType.ROLE"
+            [useFullEntityId]="true"
+            formControlName="id">
+          </tb-entity-autocomplete>
+        </section>
+      </section>
+      @if (isUserGroup && groupPermissionFormGroup.get('role.type').value === roleType.GROUP) {
+        <section class="flex flex-col">
+          <label translate class="tb-title no-padding">group-permission.entity-group</label>
+          <section class="flex flex-row gap-2">
+            <tb-owner-autocomplete
+              [class.!hidden]="data.groupPermissionsMode !== 'group'"
+              formControlName="entityGroupOwnerId"
+              required
+              appearance="outline"
+              placeholderText="group-permission.group-owner"
+              notFoundText="group-permission.no-owners-matching"
+              requiredText="group-permission.target-owner-required">
+            </tb-owner-autocomplete>
+            <tb-entity-group-select
+              class="flex-1"
+              [class.!hidden]="!groupPermissionFormGroup.get('entityGroupOwnerId').value"
+              [ownerId]="groupPermissionFormGroup.get('entityGroupOwnerId').value"
+              formControlName="entityGroupId"
+              [excludeGroupTypes]="[entityType.USER]"
+              appearance="outline"
+              required
+              placeholderText="entity-group.select-entity-group"
+              notFoundText="entity-group.no-entity-groups-matching"
+              requiredText="entity-group.target-entity-group-required">
+            </tb-entity-group-select>
+          </section>
+        </section>
+      }
+      @if (!isUserGroup) {
+        <section class="flex flex-col">
+          <label translate class="tb-title no-padding">group-permission.user-group</label>
+          <section class="flex flex-row gap-2">
+            <tb-owner-autocomplete
+              formControlName="userGroupOwnerId"
+              required
+              appearance="outline"
+              placeholderText="group-permission.user-group-owner"
+              notFoundText="group-permission.no-owners-matching"
+              requiredText="group-permission.target-user-group-owner-required">
+            </tb-owner-autocomplete>
+            <tb-entity-group-select
+              class="flex-1"
+              [class.!hidden]="!groupPermissionFormGroup.get('userGroupOwnerId').value"
+              [ownerId]="groupPermissionFormGroup.get('userGroupOwnerId').value"
+              formControlName="userGroupId"
+              [allowedGroupTypes]="[entityType.USER]"
+              appearance="outline"
+              required
+              placeholderText="entity-group.select-user-group"
+              notFoundText="entity-group.no-user-groups-matching"
+              requiredText="entity-group.target-user-group-required">
+            </tb-entity-group-select>
+          </section>
+        </section>
+      }
+    </fieldset>
+  </div>
+  <div mat-dialog-actions class="flex flex-row">
+    <span class="flex-1"></span>
+    <button mat-button color="primary"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-button mat-raised-button color="primary"
+      type="submit"
+      [disabled]="(isLoading$ | async) || groupPermissionFormGroup.invalid || !groupPermissionFormGroup.dirty">
+      {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
+    </button>
+  </div>
+</form>

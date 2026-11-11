@@ -1,0 +1,85 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+:host {
+  display: flex;
+  min-width: 0;
+}
+
+.tb-agent-metrics-strip {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  &--compact {
+    gap: 8px;
+  }
+}
+
+.tb-agent-metrics-strip-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border: 1px solid $agent-divider;
+  border-radius: 999px;
+  background: $agent-surface-muted;
+  font-size: 13px;
+  line-height: 22px;
+  color: rgba(0, 0, 0, 0.78);
+
+  .tb-agent-metrics-strip--compact & {
+    padding: 2px 10px;
+    font-size: 12px;
+    line-height: 20px;
+  }
+}
+
+.tb-agent-metrics-strip-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: $agent-text-secondary;
+
+  .tb-agent-metrics-strip--compact & {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.tb-agent-metrics-strip-label {
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: rgba(0, 0, 0, 0.6);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.tb-agent-metrics-strip-value {
+  font-weight: 600;
+  color: $agent-text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-agent-metrics-strip-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &--active {
+    background: rgba(25, 118, 210, 0.08);
+    color: $agent-color-info;
+  }
+}

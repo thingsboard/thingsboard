@@ -1,0 +1,32 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../scss/constants";
+
+:host {
+  .tb-entity-group-column {
+    @media #{$mat-gt-xl} {
+      .tb-column-type {
+        min-width: 180px;
+        max-width: 180px;
+      }
+      .tb-column-value {
+        min-width: 200px;
+        max-width: 200px;
+      }
+      .tb-column-sort-order {
+        min-width: 150px;
+        max-width: 150px;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-entity-group-column {
+    .mat-mdc-form-field {
+      .mat-mdc-form-field-infix {
+        width: 0;
+      }
+    }
+  }
+}

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,7 +24,7 @@ import java.io.Serial;
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> implements HasName, HasTenantId, HasTitle, ExportableEntity<OtaPackageId> {
+public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> implements TenantEntity, HasName, HasTitle, ExportableEntity<OtaPackageId> {
 
     @Serial
     private static final long serialVersionUID = 3168391583570815419L;
@@ -128,6 +116,12 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return title;
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.OTA_PACKAGE;
     }
 
     @JsonIgnore

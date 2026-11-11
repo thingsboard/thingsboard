@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   createNgModule,
   Inject,
@@ -30,16 +17,16 @@ import {
   DOCUMENT
 } from '@angular/core';
 
-import { forkJoin, from, Observable, ReplaySubject, throwError } from 'rxjs';
+import { forkJoin, from, Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
-import { camelCase, isObject, isUndefined } from '@core/utils';
+import { camelCase, getFilenameFromHttpHeader, isObject, isUndefined } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
-import { map, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { RequestConfig } from '@core/http/http-utils';
 import { isJSResource, removeTbResourcePrefix } from '@shared/models/resource.models';
 
@@ -91,6 +78,39 @@ export const componentTypeBySelector = (modulesWithComponents: ModulesWithCompon
   }
   return found?.type;
 }
+
+// The file type of a resource URL: the extension of its last path segment, or the segment itself when it is named
+// after the type with an optional version, as in Google Maps' /maps/api/js and Google Fonts' /css and /css2.
+const resourceFileType = (url: string, baseUrl: string): string => {
+  let path: string;
+  try {
+    path = new URL(url, baseUrl).pathname;
+  } catch {
+    return undefined;
+  }
+  const segment = path.substring(path.lastIndexOf('/') + 1).toLowerCase();
+  const extensionIndex = segment.lastIndexOf('.');
+  if (extensionIndex > -1) {
+    return segment.substring(extensionIndex + 1);
+  }
+  return /^(css|js)\d*$/.exec(segment)?.[1];
+};
+
+// The file type of a resource served under a URL that does not tell it, as Google Fonts' /icon, from the Content-Type
+// of a HEAD response. Works only for same-origin URLs and servers that allow cross-origin requests.
+const resourceFileTypeFromContentType = (url: string): Observable<string> =>
+  from(fetch(url, {method: 'HEAD'})).pipe(
+    map(response => {
+      const mimeType = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
+      if (mimeType === 'text/css') {
+        return 'css';
+      } else if (/^(text|application)\/(x-)?(javascript|ecmascript)$/.test(mimeType)) {
+        return 'js';
+      }
+      return undefined;
+    }),
+    catchError(() => of(undefined))
+  );
 
 const matchesSelector = (selectors: ɵCssSelectorList, selector: string) =>
   selectors.some(s => s.some(s1 => typeof s1 === 'string' && s1 === selector));
@@ -155,17 +175,18 @@ export class ResourcesService {
       return this.loadedResources[url].asObservable();
     }
 
-    let fileType: string;
-    const match = /[./](css|less|html|htm|js)?(([?#]).*)?$/.exec(url);
-    if (match !== null) {
-      fileType = match[1];
-    }
-    if (!fileType) {
-      return throwError(() => new Error(`Unable to detect file type from url: ${url}`));
-    } else if (fileType !== 'css' && fileType !== 'js') {
-      return throwError(() => new Error(`Unsupported file type: ${fileType}`));
-    }
-    return this.loadResourceByType(fileType, url);
+    const fileType = resourceFileType(url, this.document.baseURI);
+    const fileType$ = fileType ? of(fileType) : resourceFileTypeFromContentType(url);
+    return fileType$.pipe(
+      switchMap(type => {
+        if (!type) {
+          return throwError(() => new Error(`Unable to detect file type from url: ${url}`));
+        } else if (type !== 'css' && type !== 'js') {
+          return throwError(() => new Error(`Unsupported file type: ${type}`));
+        }
+        return this.loadedResources[url] ? this.loadedResources[url].asObservable() : this.loadResourceByType(type, url);
+      })
+    );
   }
 
   public downloadResource(downloadUrl: string, config?: RequestConfig): Observable<any> {
@@ -175,7 +196,7 @@ export class ResourcesService {
     }}).pipe(
       map((response) => {
         const headers = response.headers;
-        const filename = headers.get('x-filename');
+        const filename = getFilenameFromHttpHeader(headers);
         const contentType = headers.get('content-type');
         const linkElement = document.createElement('a');
         try {
@@ -183,14 +204,8 @@ export class ResourcesService {
           const url = URL.createObjectURL(blob);
           linkElement.setAttribute('href', url);
           linkElement.setAttribute('download', filename);
-          const clickEvent = new MouseEvent('click',
-            {
-              view: window,
-              bubbles: true,
-              cancelable: false
-            }
-          );
-          linkElement.dispatchEvent(clickEvent);
+          linkElement.click();
+          setTimeout(() => URL.revokeObjectURL(url), 0);
           return null;
         } catch (e) {
           throw e;

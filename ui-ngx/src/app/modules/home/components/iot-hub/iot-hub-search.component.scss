@@ -1,25 +1,19 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 @import "./iot-hub-common";
 
 :host {
   display: flex;
   flex-direction: column;
+}
+
+// Full bleed: content rows pad themselves in by --tb-search-side-pad; the divider and the filter
+// rail reach the edge.
+.tb-search-pad {
+  padding-left: var(--tb-search-side-pad, 0px);
+  padding-right: var(--tb-search-side-pad, 0px);
 }
 
 .tb-search-results-count-mobile {
@@ -92,7 +86,7 @@
   }
 
   &.active {
-    background: $tb-primary-color;
+    background: var(--tb-primary-500);
     color: white;
   }
 }
@@ -157,38 +151,94 @@
   overflow: auto;
 }
 
-// Categories / sections
-.tb-search-categories {
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
-}
-
-// Section header
-.tb-search-section-header {
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 24px;
-  color: rgba(0, 0, 0, 0.87);
-  padding: 0;
-  margin-bottom: 12px;
-
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-  }
-}
-
 // Card grid
 .tb-search-card-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 20px;
 
-  &.tb-search-card-grid-compact {
-    grid-template-columns: repeat(3, 1fr);
+  // Zero-height probe for the column count; needs display: grid and a width to resolve tracks.
+  &.tb-search-card-grid-probe {
+    width: 100%;
+    height: 0;
+    gap: 0;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
   }
+}
+
+// Filter button, with the active count
+.tb-search-filter-btn {
+  flex-shrink: 0;
+}
+
+.tb-search-filter-count {
+  margin-left: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+// Facet sidebar beside the grid. Both columns scroll inside the given height, so neither grows
+// past the card.
+.tb-search-layout {
+  display: flex;
+  gap: 24px;
+  height: 100%;
+  min-height: 0;
+
+  .tb-results-container {
+    flex: 1;
+    min-width: 0;
+    // Only on the right: the gap to the rail already separates it on the left.
+    padding-right: var(--tb-search-side-pad, 0px);
+  }
+}
+
+.tb-search-facets-desktop {
+  width: 232px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+
+  // Starts at the card's edge so the rules across it reach it; each facet indents its own text.
+  --tb-facet-indent: var(--tb-search-side-pad, 16px);
+
+  align-self: stretch;
+  height: 100%;
+  overflow-y: auto;
+  padding-top: 20px;
+
+  @include tb-iot-hub-hover-scrollbar;
+}
+
+// The close button and heading belong to the narrow layout only.
+.tb-search-facets-header {
+  display: none;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.tb-search-facets {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 24px;
+
+  // A flush rule between filter sections, as on the type pages.
+  tb-iot-hub-facet-list + tb-iot-hub-facet-list {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+  }
+}
+
+.tb-search-facets-clear {
+  align-self: flex-start;
+  margin-left: calc(var(--tb-facet-indent, 16px) - 16px);
 }
 
 // Responsive
@@ -196,30 +246,18 @@
 @media #{$mat-gt-xxl} {
   .tb-search-card-grid {
     grid-template-columns: repeat(6, 1fr);
-
-    &.tb-search-card-grid-compact {
-      grid-template-columns: repeat(4, 1fr);
-    }
   }
 }
 
 @media #{$mat-lt-xl} {
   .tb-search-card-grid {
     grid-template-columns: repeat(4, 1fr);
-
-    &.tb-search-card-grid-compact {
-      grid-template-columns: repeat(3, 1fr);
-    }
   }
 }
 
 @media #{$mat-lt-xmd} {
   .tb-search-card-grid {
     grid-template-columns: repeat(3, 1fr);
-
-    &.tb-search-card-grid-compact {
-      grid-template-columns: repeat(2, 1fr);
-    }
   }
 }
 
@@ -242,10 +280,6 @@
 
   .tb-search-card-grid {
     grid-template-columns: repeat(2, 1fr);
-
-    &.tb-search-card-grid-compact {
-      grid-template-columns: repeat(1, 1fr);
-    }
   }
 }
 
@@ -280,5 +314,38 @@
 
   .tb-search-page-size {
     margin-left: 0;
+  }
+}
+
+// Below this width the sidebar collapses and the Filter button opens it above the results.
+@media #{$mat-lt-lg} {
+  .tb-search-layout {
+    flex-direction: column;
+  }
+
+  .tb-search-facets-desktop {
+    display: none;
+    // Above the results it is content, not a rail, so it is padded in like the rows above.
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    padding-right: 0;
+
+    &.opened {
+      display: block;
+    }
+  }
+
+  .tb-search-facets-header {
+    display: flex;
+  }
+}
+
+// The sidebar is shown, so there is nothing for the button to open.
+@media #{$mat-gt-md} {
+  .tb-search-filter-btn {
+    display: none;
   }
 }

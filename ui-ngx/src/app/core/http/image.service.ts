@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -108,6 +95,17 @@ export class ImageService {
     return this.loadImageDataUrl(imageLink, asString, emptyUrl);
   }
 
+  public getLoginImageDataUrl(imageUrl: string, faviconElseLogo: boolean,
+                              asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
+    const parts = imageUrl.split('/');
+    const type = parts[parts.length - 2];
+    const key = encodeURIComponent(parts[parts.length - 1]);
+    const imageLink = faviconElseLogo
+      ? `/api/noauth/whiteLabel/loginFavicon/${type}/${key}`
+      : `/api/noauth/whiteLabel/loginLogo/${type}/${key}`;
+    return this.loadImageDataUrl(imageLink, asString, emptyUrl);
+  }
+
   private loadImageDataUrl(imageLink: string, asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
     let request: ReplaySubject<Blob>;
     if (this.imagesLoading[imageLink]) {
@@ -167,6 +165,16 @@ export class ImageService {
     imageUrl = removeTbImagePrefix(imageUrl);
     if (isImageResourceUrl(imageUrl)) {
       return this.getImageDataUrl(imageUrl, preview, asString, emptyUrl);
+    } else {
+      return of(asString ? imageUrl : this.sanitizer.bypassSecurityTrustUrl(imageUrl));
+    }
+  }
+
+  public resolveLoginImageUrl(imageUrl: string, faviconElseLogo: boolean,
+                              asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
+    imageUrl = removeTbImagePrefix(imageUrl);
+    if (isImageResourceUrl(imageUrl)) {
+      return this.getLoginImageDataUrl(imageUrl, faviconElseLogo, asString, emptyUrl);
     } else {
       return of(asString ? imageUrl : this.sanitizer.bypassSecurityTrustUrl(imageUrl));
     }

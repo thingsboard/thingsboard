@@ -1,26 +1,13 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
+import { TbIotHubBrowseComponent } from '@home/components/iot-hub/iot-hub-browse.component';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { PageLink } from '@shared/models/page/page-link';
@@ -41,13 +28,6 @@ const PAGE_CONFIGS: Record<string, ItemTypePageConfig> = {
     descriptionKey: 'iot-hub.items-page-desc-widgets',
     image: 'assets/iot-hub/items-page-widgets-hero.svg',
     routeSegment: 'widgets'
-  },
-  DASHBOARD: {
-    type: ItemType.DASHBOARD,
-    titleKey: 'item.type-dashboard-plural',
-    descriptionKey: 'iot-hub.items-page-desc-dashboards',
-    image: 'assets/iot-hub/items-page-dashboards-hero.svg',
-    routeSegment: 'dashboards'
   },
   SOLUTION_TEMPLATE: {
     type: ItemType.SOLUTION_TEMPLATE,
@@ -97,6 +77,8 @@ export class TbIotHubItemsPageComponent implements OnInit {
   config: ItemTypePageConfig;
   installedItemsCount = 0;
 
+  @ViewChild(TbIotHubBrowseComponent) private browse: TbIotHubBrowseComponent;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -123,7 +105,7 @@ export class TbIotHubItemsPageComponent implements OnInit {
     window.open(this.iotHubApiService.baseUrl + '/signup', '_blank');
   }
 
-  private loadInstalledCount(): void {
+  loadInstalledCount(): void {
     this.iotHubApiService.getInstalledItemsCount(this.config.type, { ignoreLoading: true }).subscribe(count => {
       this.installedItemsCount = count;
     });
@@ -161,7 +143,13 @@ export class TbIotHubItemsPageComponent implements OnInit {
         'default',
         true,
         openItem.preview
-      ).subscribe();
+      ).subscribe(result => {
+        // The deep-linked dialog is opened by this page rather than by the grid, so its outcome
+        // has to be fed back in by hand — the grid then refreshes and announces the new count.
+        if (result === 'installed' || result === 'updated' || result === 'deleted') {
+          this.browse?.reloadInstalledItems();
+        }
+      });
     });
   }
 

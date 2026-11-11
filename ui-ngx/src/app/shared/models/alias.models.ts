@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitySearchDirection, RelationEntityTypeFilter } from '@shared/models/relation.models';
@@ -22,20 +9,26 @@ import { guid, isEqual } from '@core/utils';
 
 export enum AliasFilterType {
   singleEntity = 'singleEntity',
+  entityGroup = 'entityGroup',
   entityList = 'entityList',
   entityName = 'entityName',
   entityType = 'entityType',
+  entityGroupList = 'entityGroupList',
+  entityGroupName = 'entityGroupName',
+  entitiesByGroupName = 'entitiesByGroupName',
   stateEntity = 'stateEntity',
+  stateEntityOwner = 'stateEntityOwner',
   assetType = 'assetType',
   deviceType = 'deviceType',
-  edgeType = 'edgeType',
   entityViewType = 'entityViewType',
+  edgeType = 'edgeType',
   apiUsageState = 'apiUsageState',
   relationsQuery = 'relationsQuery',
   assetSearchQuery = 'assetSearchQuery',
   deviceSearchQuery = 'deviceSearchQuery',
+  entityViewSearchQuery = 'entityViewSearchQuery',
   edgeSearchQuery = 'edgeSearchQuery',
-  entityViewSearchQuery = 'entityViewSearchQuery'
+  schedulerEvent = 'schedulerEvent'
 }
 
 export const edgeAliasFilterTypes = new Array<string>(
@@ -46,25 +39,50 @@ export const edgeAliasFilterTypes = new Array<string>(
 export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
   [
     [ AliasFilterType.singleEntity, 'alias.filter-type-single-entity' ],
+    [ AliasFilterType.entityGroup, 'alias.filter-type-entity-group' ],
     [ AliasFilterType.entityList, 'alias.filter-type-entity-list' ],
     [ AliasFilterType.entityName, 'alias.filter-type-entity-name' ],
     [ AliasFilterType.entityType, 'alias.filter-type-entity-type' ],
+    [ AliasFilterType.entityGroupList, 'alias.filter-type-entity-group-list' ],
+    [ AliasFilterType.entityGroupName, 'alias.filter-type-entity-group-name' ],
+    [ AliasFilterType.entitiesByGroupName, 'alias.filter-type-entities-by-group-name' ],
     [ AliasFilterType.stateEntity, 'alias.filter-type-state-entity' ],
+    [ AliasFilterType.stateEntityOwner, 'alias.filter-type-state-entity-owner' ],
     [ AliasFilterType.assetType, 'alias.filter-type-asset-type' ],
     [ AliasFilterType.deviceType, 'alias.filter-type-device-type' ],
-    [ AliasFilterType.edgeType, 'alias.filter-type-edge-type' ],
     [ AliasFilterType.entityViewType, 'alias.filter-type-entity-view-type' ],
+    [ AliasFilterType.edgeType, 'alias.filter-type-edge-type' ],
     [ AliasFilterType.apiUsageState, 'alias.filter-type-apiUsageState' ],
     [ AliasFilterType.relationsQuery, 'alias.filter-type-relations-query' ],
     [ AliasFilterType.assetSearchQuery, 'alias.filter-type-asset-search-query' ],
     [ AliasFilterType.deviceSearchQuery, 'alias.filter-type-device-search-query' ],
+    [ AliasFilterType.entityViewSearchQuery, 'alias.filter-type-entity-view-search-query' ],
     [ AliasFilterType.edgeSearchQuery, 'alias.filter-type-edge-search-query' ],
-    [ AliasFilterType.entityViewSearchQuery, 'alias.filter-type-entity-view-search-query' ]
+    [ AliasFilterType.schedulerEvent, 'alias.filter-type-scheduler-event' ]
   ]
 );
 
+const reportAliasFilterTypeTranslationMap = new Map(aliasFilterTypeTranslationMap);
+reportAliasFilterTypeTranslationMap.set(AliasFilterType.stateEntity, 'alias.filter-type-state-entity-originator');
+reportAliasFilterTypeTranslationMap.set(AliasFilterType.stateEntityOwner, 'alias.filter-type-state-entity-owner-originator');
+export { reportAliasFilterTypeTranslationMap };
+
+const subReportAliasFilterTypeTranslationMap = new Map(aliasFilterTypeTranslationMap);
+subReportAliasFilterTypeTranslationMap.set(AliasFilterType.stateEntity, 'alias.filter-type-state-entity-master-report');
+subReportAliasFilterTypeTranslationMap.set(AliasFilterType.stateEntityOwner, 'alias.filter-type-state-entity-owner-master-report');
+export { subReportAliasFilterTypeTranslationMap };
+
 export interface SingleEntityFilter {
   singleEntity?: EntityId;
+}
+
+export interface EntityGroupFilter {
+  groupStateEntity?: boolean;
+  stateEntityParamName?: string;
+  defaultStateGroupType?: EntityType;
+  defaultStateEntityGroup?: string;
+  groupType?: EntityType;
+  entityGroup?: string;
 }
 
 export interface EntityListFilter {
@@ -81,7 +99,30 @@ export interface EntityTypeFilter {
   entityType?: EntityType;
 }
 
+export interface EntityGroupListFilter {
+  groupType?: EntityType;
+  entityGroupList?: string[];
+}
+
+export interface EntityGroupNameFilter {
+  groupType?: EntityType;
+  entityGroupNameFilter?: string;
+}
+
+export interface EntitiesByGroupNameFilter {
+  groupStateEntity?: boolean;
+  stateEntityParamName?: string;
+  groupType?: EntityType;
+  ownerId?: EntityId;
+  entityGroupNameFilter?: string;
+}
+
 export interface StateEntityFilter {
+  stateEntityParamName?: string;
+  defaultStateEntity?: EntityId;
+}
+
+export interface StateEntityOwnerFilter {
   stateEntityParamName?: string;
   defaultStateEntity?: EntityId;
 }
@@ -157,30 +198,44 @@ export interface DeviceSearchQueryFilter extends EntitySearchQueryFilter {
   deviceTypes?: string[];
 }
 
-export interface EdgeSearchQueryFilter extends EntitySearchQueryFilter {
-  edgeTypes?: string[];
-}
-
 export interface EntityViewSearchQueryFilter extends EntitySearchQueryFilter {
   entityViewTypes?: string[];
 }
 
+export interface EdgeSearchQueryFilter extends EntitySearchQueryFilter {
+  edgeTypes?: string[];
+}
+
+export interface SchedulerEventFilter {
+  originatorStateEntity?: boolean;
+  stateEntityParamName?: string;
+  defaultStateEntity?: EntityId;
+  originator?: EntityId;
+  eventType?: string;
+}
+
 export type EntityFilters =
   SingleEntityFilter &
+  EntityGroupFilter &
   EntityListFilter &
   EntityNameFilter &
   EntityTypeFilter &
+  EntityGroupListFilter &
+  EntityGroupNameFilter &
+  EntitiesByGroupNameFilter &
   StateEntityFilter &
+  StateEntityOwnerFilter &
   AssetTypeFilter &
   DeviceTypeFilter &
-  EdgeTypeFilter &
   EntityViewFilter &
+  EdgeTypeFilter &
   RelationsQueryFilter &
   AssetSearchQueryFilter &
   DeviceSearchQueryFilter &
   EntityViewSearchQueryFilter &
   EntitySearchQueryFilter &
-  EdgeSearchQueryFilter;
+  EdgeSearchQueryFilter &
+  SchedulerEventFilter;
 
 export interface EntityAliasFilter extends EntityFilters {
   type?: AliasFilterType;

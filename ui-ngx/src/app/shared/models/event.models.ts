@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -30,6 +17,8 @@ export enum EventType {
 export enum DebugEventType {
   DEBUG_RULE_NODE = 'DEBUG_RULE_NODE',
   DEBUG_RULE_CHAIN = 'DEBUG_RULE_CHAIN',
+  DEBUG_CONVERTER = 'DEBUG_CONVERTER',
+  DEBUG_INTEGRATION = 'DEBUG_INTEGRATION',
   DEBUG_CALCULATED_FIELD = 'DEBUG_CALCULATED_FIELD'
 }
 
@@ -40,7 +29,9 @@ export const eventTypeTranslations = new Map<EventType | DebugEventType, string>
     [EventType.STATS, 'event.type-stats'],
     [DebugEventType.DEBUG_RULE_NODE, 'event.type-debug-rule-node'],
     [DebugEventType.DEBUG_RULE_CHAIN, 'event.type-debug-rule-chain'],
-    [DebugEventType.DEBUG_CALCULATED_FIELD, 'event.type-debug-calculated-field'],
+    [DebugEventType.DEBUG_CONVERTER, 'event.type-debug-converter'],
+    [DebugEventType.DEBUG_INTEGRATION, 'event.type-debug-integration'],
+    [DebugEventType.DEBUG_CALCULATED_FIELD, 'event.type-debug-calculated-field']
   ]
 );
 
@@ -64,6 +55,12 @@ export interface StatsEventBody extends BaseEventBody {
   errorsOccurred: number;
 }
 
+export interface RawDataEventBody extends BaseEventBody {
+  message: string;
+  messageType: ContentType;
+  uuid: string;
+}
+
 export interface DebugRuleNodeEventBody extends BaseEventBody {
   type: string;
   entityId: string;
@@ -82,7 +79,26 @@ export interface DebugRuleChainEventBody extends BaseEventBody {
   error?: string;
 }
 
-export type EventBody = ErrorEventBody & LcEventEventBody & StatsEventBody & DebugRuleNodeEventBody & DebugRuleChainEventBody & CalculatedFieldEventBody;
+export interface DebugConverterEventBody extends BaseEventBody {
+  type: string;
+  in: string;
+  inMessageType: ContentType;
+  out: string;
+  outMessageType: ContentType;
+  metadata: string;
+  error: string;
+}
+
+export interface DebugIntegrationEventBody extends BaseEventBody {
+  type: string;
+  message: string;
+  messageType: ContentType;
+  status: string;
+  error: string;
+}
+
+export type EventBody = ErrorEventBody & LcEventEventBody & StatsEventBody & RawDataEventBody
+                        & DebugRuleNodeEventBody & DebugRuleChainEventBody & DebugConverterEventBody & DebugIntegrationEventBody & CalculatedFieldEventBody;
 
 export interface Event extends BaseData<EventId> {
   tenantId: TenantId;

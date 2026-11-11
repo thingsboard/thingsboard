@@ -1,21 +1,11 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="tb-dialog-header">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2 translate>{{ dialogTitle }}</h2>
   <span class="flex-1"></span>
   <!--  <div [tb-help]="'check-connectivity'"></div>-->
@@ -78,7 +68,7 @@
                 <ng-template matTabContent>
                   <div class="tb-form-panel no-padding no-border tb-tab-body">
                     <div class="tb-form-panel stroked">
-                      <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                      <div class="tb-form-panel-title" translate>device.connectivity.step-install-necessary-client-tools</div>
                       <div class="tb-install-instruction-text" translate>device.connectivity.install-curl-windows</div>
                     </div>
                     <ng-container
@@ -98,7 +88,7 @@
                 <ng-template matTabContent>
                   <div class="tb-form-panel no-padding no-border tb-tab-body">
                     <div class="tb-form-panel stroked">
-                      <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                      <div class="tb-form-panel-title" translate>device.connectivity.step-install-necessary-client-tools</div>
                       <div class="tb-install-instruction-text" translate>device.connectivity.install-curl-macos</div>
                     </div>
                     <ng-container
@@ -118,7 +108,7 @@
                 <ng-template matTabContent>
                   <div class="tb-form-panel no-padding no-border tb-tab-body">
                     <div class="tb-form-panel stroked">
-                      <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                      <div class="tb-form-panel-title" translate>device.connectivity.step-install-necessary-client-tools</div>
                       <tb-markdown usePlainMarkdown containerClass="tb-command-code"
                       [data]='createMarkDownCommand("sudo apt-get install curl")'></tb-markdown>
                     </div>
@@ -138,7 +128,7 @@
               <div class="tb-form-panel stroked">
                 <ng-container
               *ngTemplateOutlet="seeDocumentation; context:
-              {doc: {text: 'device.connectivity.sparkplug-command', href: 'https://thingsboard.io/docs/reference/sparkplug-api/'}}">
+              {doc: {text: 'device.connectivity.sparkplug-command', href: docsLink + 'reference/sparkplug-api/'}}">
                 </ng-container>
               </div>
             } @else {
@@ -152,11 +142,11 @@
                   <ng-template matTabContent>
                     <div class="tb-form-panel no-padding no-border tb-tab-body">
                       <div class="tb-form-panel stroked">
-                        <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                        <div class="tb-form-panel-title" translate>device.connectivity.step-install-necessary-client-tools</div>
                         <div class="tb-install-instruction-text">
                         <ng-container *ngTemplateOutlet="seeDocumentation; context:
                         {doc: {text: 'device.connectivity.install-mqtt-windows',
-                        href: 'https://thingsboard.io/docs/reference/mqtt-api/getting-connected/?connectdevice=mqtt-windows'}}">
+                        href: docsLink + 'reference/mqtt-api/getting-connected/?connectdevice=mqtt-windows'}}">
                           </ng-container>
                         </div>
                       </div>
@@ -164,7 +154,7 @@
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
-                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/reference/mqtt-api/getting-connected/#mqtt-over-tls'}}}">
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: docsLink + 'reference/mqtt-api/getting-connected/#mqtt-over-tls'}}}">
                       </ng-container>
                     </div>
                   </ng-template>
@@ -177,7 +167,7 @@
                   <ng-template matTabContent>
                     <div class="tb-form-panel no-padding no-border tb-tab-body">
                       <div class="tb-form-panel stroked">
-                        <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                        <div class="tb-form-panel-title" translate>device.connectivity.step-install-necessary-client-tools</div>
                         <tb-markdown usePlainMarkdown containerClass="tb-command-code"
                         [data]='createMarkDownCommand("brew install mosquitto")'></tb-markdown>
                       </div>
@@ -185,28 +175,28 @@
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
-                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/reference/mqtt-api/getting-connected/#mqtt-over-tls'}}}">
-                      </ng-container>
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: docsLink + 'reference/mqtt-api/getting-connected/#mqtt-over-tls'}}}">
+                    </ng-container>
+                  </div>
+                </ng-template>
+              </mat-tab>
+              <mat-tab>
+                <ng-template mat-tab-label>
+                  <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
+                  Linux
+                </ng-template>
+                <ng-template matTabContent>
+                  <div class="tb-form-panel no-padding no-border tb-tab-body">
+                    <div class="tb-form-panel stroked">
+                      <div class="tb-form-panel-title" translate>device.connectivity.step-install-necessary-client-tools</div>
+                      <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                                   [data]='createMarkDownCommand("sudo apt-get install curl mosquitto-clients")'></tb-markdown>
                     </div>
-                  </ng-template>
-                </mat-tab>
-                <mat-tab>
-                  <ng-template mat-tab-label>
-                    <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
-                    Linux
-                  </ng-template>
-                  <ng-template matTabContent>
-                    <div class="tb-form-panel no-padding no-border tb-tab-body">
-                      <div class="tb-form-panel stroked">
-                        <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
-                        <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                        [data]='createMarkDownCommand("sudo apt-get install curl mosquitto-clients")'></tb-markdown>
-                      </div>
-                      <ng-container
+                    <ng-container
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.mqtts,
-                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/reference/mqtt-api/getting-connected/#mqtt-over-tls'}}}">
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: docsLink + 'reference/mqtt-api/getting-connected/#mqtt-over-tls'}}}">
                       </ng-container>
                     </div>
                   </ng-template>
@@ -223,7 +213,7 @@
                       *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'MQTT', noSec: commands.mqtt.docker.mqtt,
                               secLabel: 'MQTTs', sec: commands.mqtt.docker.mqtts,
-                              doc: {text: 'device.connectivity.mqtts-x509-command', href: 'https://thingsboard.io/docs/reference/mqtt-api/getting-connected/#mqtt-over-tls'}}}">
+                              doc: {text: 'device.connectivity.mqtts-x509-command', href: docsLink + 'reference/mqtt-api/getting-connected/#mqtt-over-tls'}}}">
                         </ng-container>
                       </div>
                     </ng-template>
@@ -244,11 +234,11 @@
                   <div class="tb-form-panel no-padding no-border tb-tab-body">
                     @if (commands.coap.coaps !== 'Check documentation') {
                       <div class="tb-form-panel stroked">
-                        <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                        <div class="tb-form-panel-title" translate>device.connectivity.step-install-necessary-client-tools</div>
                         <div class="tb-install-instruction-text">
                       <ng-container *ngTemplateOutlet="seeDocumentation; context:
                                     {doc: {text: 'device.connectivity.install-coap-client',
-                                    href: 'https://thingsboard.io/docs/reference/coap-api/getting-connected/#access-token'}}">
+                                    href: docsLink + 'reference/coap-api/getting-connected/#access-token'}}">
                           </ng-container>
                         </div>
                       </div>
@@ -257,7 +247,7 @@
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'CoAP', noSec: commands.coap.coap,
                               secLabel: 'CoAPs', sec: commands.coap.coaps,
-                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/reference/coap-api/getting-connected/#x509-certificate'}}}">
+                              doc: {text: 'device.connectivity.coaps-x509-command', href: docsLink + 'reference/coap-api/getting-connected/#x509-certificate'}}}">
                     </ng-container>
                   </div>
                 </ng-template>
@@ -274,7 +264,7 @@
                     *ngTemplateOutlet="executeCommand; context: {cmd: {
                               noSecLabel: 'CoAP', noSec: commands.coap.docker.coap,
                               secLabel: 'CoAPs', sec: commands.coap.docker.coaps,
-                              doc: {text: 'device.connectivity.coaps-x509-command', href: 'https://thingsboard.io/docs/reference/coap-api/getting-connected/#x509-certificate'}}}">
+                              doc: {text: 'device.connectivity.coaps-x509-command', href: docsLink + 'reference/coap-api/getting-connected/#x509-certificate'}}}">
                       </ng-container>
                     </div>
                   </ng-template>
@@ -286,7 +276,7 @@
             <div class="tb-form-panel stroked">
               <ng-container
               *ngTemplateOutlet="seeDocumentation; context:
-                {doc: {text: 'device.connectivity.snmp-command', href: 'https://thingsboard.io/docs/reference/snmp-api/getting-connected/'}}">
+                {doc: {text: 'device.connectivity.snmp-command', href: docsLink + 'reference/snmp-api/getting-connected/' }}">
               </ng-container>
             </div>
           }
@@ -294,7 +284,7 @@
             <div class="tb-form-panel stroked">
               <ng-container
               *ngTemplateOutlet="seeDocumentation; context:
-                {doc: {text: 'device.connectivity.lwm2m-command', href: 'https://thingsboard.io/docs/reference/lwm2m-api/getting-started/'}}">
+                {doc: {text: 'device.connectivity.lwm2m-command', href: docsLink + 'reference/lwm2m-api/getting-started/'}}">
               </ng-container>
             </div>
           }
@@ -343,17 +333,27 @@
   }
 </div>
 <div mat-dialog-actions class="tb-dialog-actions">
-  <mat-slide-toggle [class.!hidden]="!showDontShowAgain" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
-  <span class="flex-1"></span>
-  <button mat-button
-          [disabled]="(isLoading$ | async)"
-  (click)="close()">{{ 'action.close' | translate }}</button>
+  <div class="flex-1">
+    <mat-slide-toggle [class.!hidden]="!showDontShowAgain" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
+  </div>
+  <div class="flex flex-1 justify-end">
+    <button mat-button
+            [disabled]="(isLoading$ | async)"
+            (click)="close()">{{ 'action.close' | translate }}</button>
+    <button mat-raised-button color="primary"
+            [disabled]="(isLoading$ | async)"
+            (click)="generateDashboard($event)"
+            [class.!hidden]="!isAllowedDashboardGenerate()">
+      <tb-icon matButtonIcon>mdi:creation</tb-icon>
+      <span>{{ 'solution-creator.generate-dashboard-with-ai' | translate }}</span>
+    </button>
+  </div>
 </div>
 
 <ng-template #executeCommand let-cmd="cmd">
   <div class="tb-form-panel stroked">
     <div class="flex flex-row items-center justify-between" [class.!hidden]="!(cmd.noSec || cmd.sec !== 'Check documentation')">
-      <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
+      <div class="tb-form-panel-title" translate>device.connectivity.step-execute-following-command</div>
       <tb-toggle-header #protocolType value="{{ cmd.noSec ? 'noSec' : 'sec'}}" name="protocolType" useSelectOnMdLg="false"
                         [class.!hidden]="!cmd.noSec || !cmd.sec">
         <tb-toggle-option value="noSec">{{ cmd.noSecLabel }}</tb-toggle-option>

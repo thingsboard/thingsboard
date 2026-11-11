@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.timeseries;
 
 import com.google.common.base.Function;
@@ -91,6 +79,12 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     @Autowired
     private EdqsService edqsService;
+
+    @Override
+    public ListenableFuture<TsKvEntry> findOne(TenantId tenantId, EntityId entityId, long ts, String key) {
+        validate(entityId);
+        return timeseriesDao.findOneAsync(tenantId, entityId, ts, key);
+    }
 
     @Override
     public ListenableFuture<List<ReadTsKvQueryResult>> findAllByQueries(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
@@ -176,25 +170,35 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<TimeseriesSaveResult> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         validate(entityId);
-        return doSave(tenantId, entityId, List.of(tsKvEntry), 0L, true, true);
+        return doSave(tenantId, entityId, List.of(tsKvEntry), 0L, true, true, false);
     }
 
     @Override
     public ListenableFuture<TimeseriesSaveResult> save(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl) {
-        return doSave(tenantId, entityId, tsKvEntries, ttl, true, true);
+        return doSave(tenantId, entityId, tsKvEntries, ttl, true, true, false);
+    }
+
+    @Override
+    public ListenableFuture<TimeseriesSaveResult> save(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl, boolean overwriteValue) {
+        return doSave(tenantId, entityId, tsKvEntries, ttl, true, true, overwriteValue);
     }
 
     @Override
     public ListenableFuture<TimeseriesSaveResult> saveWithoutLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl) {
-        return doSave(tenantId, entityId, tsKvEntries, ttl, false, true);
+        return doSave(tenantId, entityId, tsKvEntries, ttl, false, true, false);
+    }
+
+    @Override
+    public ListenableFuture<TimeseriesSaveResult> saveWithoutLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl, boolean overwriteValue) {
+        return doSave(tenantId, entityId, tsKvEntries, ttl, false, true, overwriteValue);
     }
 
     @Override
     public ListenableFuture<TimeseriesSaveResult> saveLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries) {
-        return doSave(tenantId, entityId, tsKvEntries, 0L, true, false);
+        return doSave(tenantId, entityId, tsKvEntries, 0L, true, false, false);
     }
 
-    private ListenableFuture<TimeseriesSaveResult> doSave(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl, boolean saveLatest, boolean saveTs) {
+    private ListenableFuture<TimeseriesSaveResult> doSave(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl, boolean saveLatest, boolean saveTs, boolean overwriteValue) {
         if (saveTs && entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             throw new IncorrectParameterException("Telemetry data can't be stored for entity view. Read only");
         }
@@ -203,7 +207,7 @@ public class BaseTimeseriesService implements TimeseriesService {
         for (TsKvEntry tsKvEntry : tsKvEntries) {
             if (saveTs) {
                 tsFutures.add(timeseriesDao.savePartition(tenantId, entityId, tsKvEntry.getTs(), tsKvEntry.getKey()));
-                tsFutures.add(timeseriesDao.save(tenantId, entityId, tsKvEntry, ttl));
+                tsFutures.add(timeseriesDao.save(tenantId, entityId, tsKvEntry, ttl, overwriteValue));
             }
             if (saveLatest) {
                 latestFutures.add(Futures.transform(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry), version -> {

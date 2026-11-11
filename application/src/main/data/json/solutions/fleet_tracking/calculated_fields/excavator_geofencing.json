@@ -1,0 +1,111 @@
+{
+  "reprocessingOrder": 0,
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "ff395d16-0c28-4985-802d-bad40f4bf4d0"
+  },
+  "type": "GEOFENCING",
+  "name": "Excavator geofencing",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "GEOFENCING",
+    "entityCoordinates": {
+      "latitudeKeyName": "latitude",
+      "longitudeKeyName": "longitude"
+    },
+    "zoneGroups": {
+      "loadingArea": {
+        "perimeterKeyName": "perimeter",
+        "reportStrategy": "REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS",
+        "createRelationsWithMatchedZones": true,
+        "refDynamicSourceConfiguration": {
+          "type": "RELATION_PATH_QUERY",
+          "levels": [
+            {
+              "direction": "TO",
+              "relationType": "MineSiteToMachine"
+            },
+            {
+              "direction": "FROM",
+              "relationType": "MineSiteToLoadingZone"
+            }
+          ]
+        },
+        "relationType": "CurrentZone",
+        "direction": "TO"
+      },
+      "mineSiteArea": {
+        "perimeterKeyName": "perimeter",
+        "reportStrategy": "REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS",
+        "createRelationsWithMatchedZones": false,
+        "refDynamicSourceConfiguration": {
+          "type": "RELATION_PATH_QUERY",
+          "levels": [
+            {
+              "direction": "TO",
+              "relationType": "MineSiteToMachine"
+            }
+          ]
+        }
+      },
+      "restrictedArea": {
+        "perimeterKeyName": "perimeter",
+        "reportStrategy": "REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS",
+        "createRelationsWithMatchedZones": true,
+        "refDynamicSourceConfiguration": {
+          "type": "RELATION_PATH_QUERY",
+          "levels": [
+            {
+              "direction": "TO",
+              "relationType": "MineSiteToMachine"
+            },
+            {
+              "direction": "FROM",
+              "relationType": "MineSiteToRestrictedZone"
+            }
+          ]
+        },
+        "relationType": "CurrentZone",
+        "direction": "TO"
+      },
+      "unloadingArea": {
+        "perimeterKeyName": "perimeter",
+        "reportStrategy": "REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS",
+        "createRelationsWithMatchedZones": true,
+        "refDynamicSourceConfiguration": {
+          "type": "RELATION_PATH_QUERY",
+          "levels": [
+            {
+              "direction": "TO",
+              "relationType": "MineSiteToMachine"
+            },
+            {
+              "direction": "FROM",
+              "relationType": "MineSiteToUnloadingZone"
+            }
+          ]
+        },
+        "relationType": "CurrentZone",
+        "direction": "TO"
+      }
+    },
+    "scheduledUpdateEnabled": true,
+    "scheduledUpdateInterval": 10,
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": true,
+        "saveLatest": true,
+        "sendWsUpdate": true,
+        "processCfs": true
+      }
+    }
+  }
+}

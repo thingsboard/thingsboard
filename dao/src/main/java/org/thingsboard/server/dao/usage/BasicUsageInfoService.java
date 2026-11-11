@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.usage;
 
 import lombok.RequiredArgsConstructor;
@@ -67,6 +55,8 @@ public class BasicUsageInfoService implements UsageInfoService {
         usageInfo.setMaxEdges(profileConfiguration.getMaxEdges());
 
         usageInfo.setMaxAlarms(profileConfiguration.getMaxCreatedAlarms());
+        usageInfo.setMaxReports(profileConfiguration.getMaxGeneratedReports());
+        usageInfo.setMaxAiCredits(profileConfiguration.getMaxAiCredits());
         usageInfo.setMaxTransportMessages(profileConfiguration.getMaxTransportMessages());
         usageInfo.setMaxJsExecutions(profileConfiguration.getMaxJSExecutions());
         usageInfo.setMaxTbelExecutions(profileConfiguration.getMaxTbelExecutions());
@@ -81,7 +71,9 @@ public class BasicUsageInfoService implements UsageInfoService {
                     ApiUsageRecordKey.TBEL_EXEC_COUNT.getApiCountKey(),
                     ApiUsageRecordKey.EMAIL_EXEC_COUNT.getApiCountKey(),
                     ApiUsageRecordKey.SMS_EXEC_COUNT.getApiCountKey(),
-                    ApiUsageRecordKey.CREATED_ALARMS_COUNT.getApiCountKey());
+                    ApiUsageRecordKey.CREATED_ALARMS_COUNT.getApiCountKey(),
+                    ApiUsageRecordKey.GENERATED_REPORTS_COUNT.getApiCountKey(),
+                    ApiUsageRecordKey.AI_CREDITS_COUNT.getApiCountKey());
             try {
                 List<TsKvEntry> entries = tsService.findLatest(tenantId, apiUsageState.getId(), keys).get();
                 usageInfo.setTransportMessages(getLongValueFromTsEntries(entries, ApiUsageRecordKey.TRANSPORT_MSG_COUNT.getApiCountKey()));
@@ -90,6 +82,8 @@ public class BasicUsageInfoService implements UsageInfoService {
                 usageInfo.setEmails(getLongValueFromTsEntries(entries, ApiUsageRecordKey.EMAIL_EXEC_COUNT.getApiCountKey()));
                 usageInfo.setSms(getLongValueFromTsEntries(entries, ApiUsageRecordKey.SMS_EXEC_COUNT.getApiCountKey()));
                 usageInfo.setAlarms(getLongValueFromTsEntries(entries, ApiUsageRecordKey.CREATED_ALARMS_COUNT.getApiCountKey()));
+                usageInfo.setReports(getLongValueFromTsEntries(entries, ApiUsageRecordKey.GENERATED_REPORTS_COUNT.getApiCountKey()));
+                usageInfo.setAiCredits(getLongValueFromTsEntries(entries, ApiUsageRecordKey.AI_CREDITS_COUNT.getApiCountKey()));
             } catch (ExecutionException | InterruptedException e) {
                 throw new RuntimeException("Failed to fetch api usage values from timeseries!");
             }

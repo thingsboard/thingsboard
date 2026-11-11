@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.collect.Lists;
@@ -25,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,12 +37,18 @@ import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sql.TbSqlQueueElement;
+import org.thingsboard.server.dao.sql.citus.CitusKvWriteQueueSupport;
+import org.thingsboard.server.dao.sql.citus.CitusQueuePartitioner;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
+import org.thingsboard.server.dao.sql.citus.routing.CitusShardRouter;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesLatestDao;
 import org.thingsboard.server.dao.util.SqlTsLatestAnyDao;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -109,8 +104,64 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Autowired
     private KeyDictionaryDao keyDictionaryDao;
 
+    @Autowired(required = false)
+    private CitusQueuePartitioner citusQueuePartitioner;
+
+    @Autowired(required = false)
+    private CitusShardRouter kvShardRouter;
+
+    @Autowired
+    private CitusSettings citusSettings;
+
+    private static final String REMOVE_LATEST_WITH_VERSION_SEQ = "DELETE FROM ts_kv_latest WHERE entity_id = ? " +
+            "AND key = ? RETURNING nextval('ts_kv_latest_version_seq')";
+    private static final String REMOVE_LATEST_WITH_VERSION_CITUS = "DELETE FROM ts_kv_latest WHERE entity_id = ? " +
+            "AND key = ? RETURNING version";
+
+    private static final String FIND_TS_KV_LATEST_BY_KEY_QUERY =
+            "SELECT entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v, version FROM ts_kv_latest WHERE entity_id = ? AND key = ?";
+    // INNER JOIN is deliberate: the plain-path query this routed read mirrors (SearchTsKvLatestRepository.FIND_ALL_BY_ENTITY_ID_QUERY)
+    // also INNER JOINs key_dictionary, so INNER JOIN here is what preserves plain-vs-routed parity. Switching to LEFT JOIN
+    // would silently diverge routed reads from plain-mode behavior. (Contrast the attribute sibling
+    // JpaAttributeDao.FIND_ATTRIBUTE_KV_WITH_STR_KEY_BY_ENTITY_AND_TYPE_QUERY, whose plain path returns rows regardless of a
+    // dictionary entry and therefore uses LEFT JOIN.)
+    private static final String FIND_ALL_TS_KV_LATEST_BY_ENTITY_QUERY =
+            "SELECT t.entity_id, t.key, t.ts, t.bool_v, t.str_v, t.long_v, t.dbl_v, t.json_v, t.version, kd.key AS str_key " +
+                    "FROM ts_kv_latest t INNER JOIN key_dictionary kd ON t.key = kd.key_id WHERE t.entity_id = ?";
+
+    static final RowMapper<TsKvLatestEntity> TS_KV_LATEST_ROW_MAPPER = (rs, rowNum) -> mapTsKvLatest(rs, null);
+    static final RowMapper<TsKvLatestEntity> TS_KV_LATEST_WITH_STR_KEY_ROW_MAPPER = (rs, rowNum) -> mapTsKvLatest(rs, rs.getString("str_key"));
+
+    private static TsKvLatestEntity mapTsKvLatest(ResultSet rs, String strKey) throws SQLException {
+        return new TsKvLatestEntity(
+                rs.getObject("entity_id", UUID.class),
+                rs.getInt("key"),
+                strKey,
+                rs.getString("str_v"),
+                rs.getObject("bool_v", Boolean.class),
+                rs.getObject("long_v", Long.class),
+                rs.getObject("dbl_v", Double.class),
+                rs.getString("json_v"),
+                rs.getObject("ts", Long.class),
+                rs.getObject("version", Long.class));
+    }
+
+    private String removeLatestWithVersionQuery;
+
+    String getRemoveLatestWithVersionQuery() {
+        return removeLatestWithVersionQuery;
+    }
+
+    // Selects the delete-with-version SQL for the active mode. Called from init() (not as its own @PostConstruct)
+    // so its ordering relative to the rest of the init is defined rather than left to bean post-processing order.
+    private void initDeleteQuery() {
+        this.removeLatestWithVersionQuery = citusSettings.isEnabled() ? REMOVE_LATEST_WITH_VERSION_CITUS : REMOVE_LATEST_WITH_VERSION_SEQ;
+    }
+
     @PostConstruct
     protected void init() {
+        initDeleteQuery();
+
         TbSqlBlockingQueueParams tsLatestParams = TbSqlBlockingQueueParams.builder()
                 .logName("TS Latest")
                 .batchSize(tsLatestBatchSize)
@@ -121,13 +172,13 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                 .withResponse(true)
                 .build();
 
-        java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
-        tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads, statsFactory);
+        tsLatestQueue = CitusKvWriteQueueSupport.buildQueue(tsLatestParams, tsLatestBatchThreads,
+                statsFactory, citusQueuePartitioner, TsKvLatestEntity::getEntityId);
 
-        tsLatestQueue.init(logExecutor,
-                v -> insertLatestTsRepository.saveOrUpdate(v),
+        Comparator<TsKvLatestEntity> comparator =
                 Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
-                        .thenComparingInt(AbstractTsKvEntity::getKey),
+                        .thenComparingInt(AbstractTsKvEntity::getKey);
+        Function<List<TbSqlQueueElement<TsKvLatestEntity, Long>>, List<TbSqlQueueElement<TsKvLatestEntity, Long>>> trueLatestFilter =
                 v -> {
                     Map<TsKey, TbSqlQueueElement<TsKvLatestEntity, Long>> trueLatest = new HashMap<>();
                     v.forEach(element -> {
@@ -136,7 +187,10 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                         trueLatest.merge(key, element, (oldElement, newElement) -> oldElement.getEntity().getTs() <= newElement.getEntity().getTs() ? newElement : oldElement);
                     });
                     return new ArrayList<>(trueLatest.values());
-                });
+                };
+
+        CitusKvWriteQueueSupport.initQueue(tsLatestQueue, logExecutor, citusQueuePartitioner, kvShardRouter,
+                insertLatestTsRepository, comparator, trueLatestFilter);
     }
 
     @PreDestroy
@@ -229,6 +283,18 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     protected TsKvEntry doFindLatestSync(EntityId entityId, String key) {
+        if (CitusShardRouter.isRouting(kvShardRouter)) {
+            int keyId = keyDictionaryDao.getOrSaveKeyId(key);
+            List<TsKvLatestEntity> rows = kvShardRouter.routedQuery(
+                    entityId.getId(), FIND_TS_KV_LATEST_BY_KEY_QUERY, TS_KV_LATEST_ROW_MAPPER,
+                    entityId.getId(), keyId);
+            if (!rows.isEmpty()) {
+                TsKvLatestEntity tsKvLatestEntity = rows.get(0);
+                tsKvLatestEntity.setStrKey(key);
+                return DaoUtil.getData(tsKvLatestEntity);
+            }
+            return null;
+        }
         TsKvLatestCompositeKey compositeKey =
                 new TsKvLatestCompositeKey(
                         entityId.getId(),
@@ -253,9 +319,14 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
             Long version = null;
             long ts = latest.getTs();
             if (ts >= query.getStartTs() && ts < query.getEndTs()) {
-                version = transactionTemplate.execute(status -> jdbcTemplate.query("DELETE FROM ts_kv_latest WHERE entity_id = ? " +
-                                "AND key = ? RETURNING nextval('ts_kv_latest_version_seq')",
-                        rs -> rs.next() ? rs.getLong(1) : null, entityId.getId(), keyDictionaryDao.getOrSaveKeyId(query.getKey())));
+                if (CitusShardRouter.isRouting(kvShardRouter)) {
+                    version = kvShardRouter.routedQuery(entityId.getId(), removeLatestWithVersionQuery,
+                            rs -> rs.next() ? rs.getObject(1, Long.class) : null,
+                            entityId.getId(), keyDictionaryDao.getOrSaveKeyId(query.getKey()));
+                } else {
+                    version = transactionTemplate.execute(status -> jdbcTemplate.query(removeLatestWithVersionQuery,
+                            rs -> rs.next() ? rs.getObject(1, Long.class) : null, entityId.getId(), keyDictionaryDao.getOrSaveKeyId(query.getKey())));
+                }
                 isRemoved = true;
                 if (query.getRewriteLatestIfDeleted()) {
                     return getNewLatestEntryFuture(tenantId, entityId, query, version);
@@ -266,6 +337,13 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     protected ListenableFuture<List<TsKvEntry>> getFindAllLatestFuture(EntityId entityId) {
+        if (CitusShardRouter.isRouting(kvShardRouter)) {
+            return service.submit(() -> {
+                List<TsKvLatestEntity> rows = kvShardRouter.routedQuery(
+                        entityId.getId(), FIND_ALL_TS_KV_LATEST_BY_ENTITY_QUERY, TS_KV_LATEST_WITH_STR_KEY_ROW_MAPPER, entityId.getId());
+                return DaoUtil.convertDataList(rows);
+            });
+        }
         return service.submit(() ->
                 DaoUtil.convertDataList(Lists.newArrayList(
                         searchTsKvLatestRepository.findAllByEntityId(entityId.getId()))));

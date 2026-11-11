@@ -1,23 +1,10 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { createDefaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { catchError, Observable, of, ReplaySubject, throwError, timeout } from 'rxjs';
-import { map, switchMap } from "rxjs/operators";
+import { Observable, of, ReplaySubject, throwError, timeout } from 'rxjs';
+import { catchError, map, switchMap } from "rxjs/operators";
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
@@ -34,10 +21,11 @@ import {
 } from '@shared/models/device.models';
 import { EntitySubtype } from '@shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
+import { sortEntitiesByIds } from '@shared/models/base-data';
 import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 import { ResourcesService } from '@core/services/resources.service';
-import { SaveEntityParams } from '@shared/models/entity.models';
+import { toSaveParams } from '@shared/models/entity.models';
 
 @Injectable({
   providedIn: 'root'
@@ -54,7 +42,7 @@ export class DeviceService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getTenantDeviceInfos(pageLink: PageLink, type: string = '',
+/*  public getTenantDeviceInfos(pageLink: PageLink, type: string = '',
                               config?: RequestConfig): Observable<PageData<DeviceInfo>> {
     return this.http.get<PageData<DeviceInfo>>(`/api/tenant/deviceInfos${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));
@@ -70,39 +58,82 @@ export class DeviceService {
                                 config?: RequestConfig): Observable<PageData<DeviceInfo>> {
     return this.http.get<PageData<DeviceInfo>>(`/api/customer/${customerId}/deviceInfos${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));
+  }*/
+
+  public getTenantDevices(pageLink: PageLink, type: string = '',
+                          config?: RequestConfig): Observable<PageData<Device>> {
+    return this.http.get<PageData<Device>>(`/api/tenant/devices${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
-  public getCustomerDeviceInfosByDeviceProfileId(customerId: string, pageLink: PageLink, deviceProfileId: string = '',
+  public getCustomerDevices(customerId: string, pageLink: PageLink, type: string = '',
+                                config?: RequestConfig): Observable<PageData<Device>> {
+    return this.http.get<PageData<Device>>(`/api/customer/${customerId}/devices${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+/*  public getCustomerDeviceInfosByDeviceProfileId(customerId: string, pageLink: PageLink, deviceProfileId: string = '',
                                                  config?: RequestConfig): Observable<PageData<DeviceInfo>> {
     return this.http.get<PageData<DeviceInfo>>(`/api/customer/${customerId}/deviceInfos${pageLink.toQuery()}&deviceProfileId=${deviceProfileId}`,
       defaultHttpOptionsFromConfig(config));
-  }
+  } */
 
   public getDevice(deviceId: string, config?: RequestConfig): Observable<Device> {
     return this.http.get<Device>(`/api/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getDevices(deviceIds: Array<string>, config?: RequestConfig): Observable<Array<Device>> {
-    return this.http.get<Array<Device>>(`/api/devices?deviceIds=${deviceIds.join(',')}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<Array<Device>>(`/api/devices?deviceIds=${deviceIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      map((devices) => sortEntitiesByIds(devices, deviceIds))
+    );
+  }
+
+  public getUserDevices(pageLink: PageLink, type: string = '', config?: RequestConfig): Observable<PageData<Device>> {
+    return this.http.get<PageData<Device>>(`/api/user/devices${pageLink.toQuery()}&type=${type}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAllDeviceInfos(includeCustomers: boolean,
+                           pageLink: PageLink, deviceProfileId: string = '', config?: RequestConfig): Observable<PageData<DeviceInfo>> {
+    let url = `/api/deviceInfos/all${pageLink.toQuery()}&deviceProfileId=${deviceProfileId}`;
+    if (includeCustomers) {
+      url += `&includeCustomers=true`;
+    }
+    return this.http.get<PageData<DeviceInfo>>(url,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getCustomerDeviceInfos(includeCustomers: boolean, customerId: string,
+                                pageLink: PageLink, deviceProfileId: string = '',
+                                config?: RequestConfig): Observable<PageData<DeviceInfo>> {
+    let url = `/api/customer/${customerId}/deviceInfos${pageLink.toQuery()}&deviceProfileId=${deviceProfileId}`;
+    if (includeCustomers) {
+      url += `&includeCustomers=true`;
+    }
+    return this.http.get<PageData<DeviceInfo>>(url,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public getDeviceInfo(deviceId: string, config?: RequestConfig): Observable<DeviceInfo> {
     return this.http.get<DeviceInfo>(`/api/device/info/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveDevice(device: Device, config?: RequestConfig): Observable<Device>;
+  public saveDevice(device: Device, entityGroupIds?: string | string[], config?: RequestConfig): Observable<Device>;
   public saveDevice(device: Device, saveParams?: SaveDeviceParams, config?: RequestConfig): Observable<Device>;
-  public saveDevice(device: Device, saveParamsOrConfig?: SaveDeviceParams | RequestConfig, config?: RequestConfig): Observable<Device> {
-    return this.http.post<Device>('/api/device', device, createDefaultHttpOptions(saveParamsOrConfig, config));
+  public saveDevice(device: Device, saveParams?: string | string[] | SaveDeviceParams, config?: RequestConfig): Observable<Device> {
+    const params = toSaveParams(saveParams);
+    return this.http.post<Device>('/api/device', device, createDefaultHttpOptions(params, config));
   }
 
-  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, config?: RequestConfig): Observable<Device>;
-  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, saveParams: SaveEntityParams, config?: RequestConfig): Observable<Device>;
-  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, saveParamsOrConfig?: SaveEntityParams | RequestConfig, config?: RequestConfig): Observable<Device> {
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, entityGroupIds?: string | string[], config?: RequestConfig): Observable<Device>;
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, saveParams?: SaveDeviceParams, config?: RequestConfig): Observable<Device>;
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, saveParams?: string | string[] | SaveDeviceParams, config?: RequestConfig): Observable<Device> {
+    const params = toSaveParams(saveParams);
     return this.http.post<Device>('/api/device-with-credentials', {
       device,
       credentials
-    }, createDefaultHttpOptions(saveParamsOrConfig, config));
+    }, createDefaultHttpOptions(params, config));
   }
 
   public deleteDevice(deviceId: string, config?: RequestConfig) {
@@ -141,7 +172,7 @@ export class DeviceService {
     return this.http.post<DeviceCredentials>('/api/device/credentials', deviceCredentials, defaultHttpOptionsFromConfig(config));
   }
 
-  public makeDevicePublic(deviceId: string, config?: RequestConfig): Observable<Device> {
+  /*public makeDevicePublic(deviceId: string, config?: RequestConfig): Observable<Device> {
     return this.http.post<Device>(`/api/customer/public/device/${deviceId}`, null, defaultHttpOptionsFromConfig(config));
   }
 
@@ -152,7 +183,7 @@ export class DeviceService {
 
   public unassignDeviceFromCustomer(deviceId: string, config?: RequestConfig) {
     return this.http.delete(`/api/customer/device/${deviceId}`, defaultHttpOptionsFromConfig(config));
-  }
+  }*/
 
   public sendOneWayRpcCommand(deviceId: string, requestBody: any, config?: RequestConfig): Observable<any> {
     return this.http.post<any>(`/api/rpc/oneway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
@@ -195,24 +226,6 @@ export class DeviceService {
 
   public unclaimDevice(deviceName: string, config?: RequestConfig) {
     return this.http.delete(`/api/customer/device/${deviceName}/claim`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public assignDeviceToEdge(edgeId: string, deviceId: string,
-                            config?: RequestConfig): Observable<Device> {
-    return this.http.post<Device>(`/api/edge/${edgeId}/device/${deviceId}`,
-      defaultHttpOptionsFromConfig(config));
-  }
-
-  public unassignDeviceFromEdge(edgeId: string, deviceId: string,
-                                config?: RequestConfig) {
-    return this.http.delete(`/api/edge/${edgeId}/device/${deviceId}`,
-      defaultHttpOptionsFromConfig(config));
-  }
-
-  public getEdgeDevices(edgeId: string, pageLink: PageLink, type: string = '',
-                        config?: RequestConfig): Observable<PageData<DeviceInfo>> {
-    return this.http.get<PageData<DeviceInfo>>(`/api/edge/${edgeId}/devices${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptionsFromConfig(config));
   }
 
   public bulkImportDevices(entitiesData: BulkImportRequest, config?: RequestConfig): Observable<BulkImportResult> {

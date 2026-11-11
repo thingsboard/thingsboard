@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.resource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,6 +20,8 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -39,8 +29,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,7 +87,11 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
             var oldEtag = getEtag(image);
             TbResourceInfo existingImage = null;
             if (image.getId() == null && isNotEmpty(image.getResourceKey())) {
-                existingImage = imageService.getImageInfoByTenantIdAndKey(tenantId, image.getResourceKey());
+                if (user.isCustomerUser()) {
+                    existingImage = imageService.getImageInfoByTenantIdAndCustomerIdAndKey(tenantId, user.getCustomerId(), image.getResourceKey());
+                } else {
+                    existingImage = imageService.getImageInfoByTenantIdAndKey(tenantId, image.getResourceKey());
+                }
                 if (existingImage != null) {
                     image.setId(existingImage.getId());
                 }
@@ -185,7 +177,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
 
     @Override
     public TbResourceInfo importImage(ResourceExportData imageData, boolean checkExisting, SecurityUser user) throws Exception {
-        TbResource image = imageService.toImage(user.getTenantId(), imageData, checkExisting);
+        TbResource image = imageService.toImage(user.getTenantId(), user.getCustomerId(), imageData, checkExisting);
         if (checkExisting && image.getId() != null) {
             accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, image.getId(), image);
             return image;

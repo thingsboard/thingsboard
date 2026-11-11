@@ -1,0 +1,36 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-report-component-library" #libraryDragOriginList cdkDropList
+     [class.no-padding]="nestedLibrary"
+     [cdkDropListConnectedTo]="context.dragDropCtx.dropLists"
+     [cdkDropListEnterPredicate]="dropListEnterPredicate"
+     [cdkDropListSortingDisabled]="true">
+  @for (id of reportComponentIds; track id) {
+    <div class="tb-report-component-library-item">
+      <div class="tb-report-component-library-item-title">{{ reportComponentsLibrary.get(id).title | translate }}</div>
+      <div cdkDrag
+           [cdkDragData]="id"
+           (cdkDragStarted)="dragStarted($event)"
+           (cdkDragEnded)="dragEnded()"
+           (cdkDragEntered)="dragEntered()"
+           (cdkDragMoved)="dragMoved($event)"
+           (cdkDragReleased)="dragReleased($event)"
+           class="tb-report-component-library-drag-item tb-draggable"
+           [class.nested-library]="nestedLibrary">
+        <div *cdkDragPlaceholder>
+            <div class="tb-report-component-placeholder"></div>
+            <div class="tb-report-component-library-drag-item" [class.nested-library]="nestedLibrary"
+                 style="display: none;">
+              <img class="tb-report-component-library-item-preview" [src]="reportComponentsLibrary.get(id).previewImage">
+            </div>
+        </div>
+        <img class="tb-report-component-library-item-preview" [src]="reportComponentsLibrary.get(id).previewImage">
+      </div>
+    </div>
+  }
+</div>
+<div class="tb-report-component-library tb-drag-active-list" [class.no-padding]="nestedLibrary" #libraryDragActiveList></div>

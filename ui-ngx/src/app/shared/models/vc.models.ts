@@ -1,25 +1,14 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityId } from '@shared/models/id/entity-id';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { ExportableEntity } from '@shared/models/base-data';
 import { EntityRelation } from '@shared/models/relation.models';
 import { Device, DeviceCredentials } from '@shared/models/device.models';
 import { RuleChain, RuleChainMetaData } from '@shared/models/rule-chain.models';
+import { EntityGroup } from '@shared/models/entity-group.models';
+import { GroupPermission } from '@shared/models/group-permission.models';
 
 export const exportableEntityTypes: Array<EntityType> = [
   EntityType.ASSET,
@@ -27,16 +16,22 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.ENTITY_VIEW,
   EntityType.DASHBOARD,
   EntityType.CUSTOMER,
+  EntityType.USER,
   EntityType.DEVICE_PROFILE,
   EntityType.ASSET_PROFILE,
   EntityType.RULE_CHAIN,
   EntityType.WIDGET_TYPE,
   EntityType.WIDGETS_BUNDLE,
+  EntityType.CONVERTER,
+  EntityType.INTEGRATION,
+  EntityType.REPORT_TEMPLATE,
+  EntityType.ROLE,
   EntityType.TB_RESOURCE,
   EntityType.OTA_PACKAGE,
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
   EntityType.NOTIFICATION_RULE,
+  EntityType.SCHEDULER_EVENT,
   EntityType.AI_MODEL,
 ];
 
@@ -44,8 +39,10 @@ export const entityTypesWithoutRelatedData = new Set<EntityType | AliasEntityTyp
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
   EntityType.NOTIFICATION_RULE,
+  EntityType.REPORT_TEMPLATE,
   EntityType.TB_RESOURCE,
   EntityType.OTA_PACKAGE,
+  EntityType.SCHEDULER_EVENT,
   EntityType.AI_MODEL,
 ]);
 
@@ -54,6 +51,8 @@ export interface VersionCreateConfig {
   saveAttributes: boolean;
   saveCredentials: boolean;
   saveCalculatedFields: boolean;
+  savePermissions: boolean;
+  saveGroupEntities: boolean;
 }
 
 export enum VersionCreateRequestType {
@@ -113,6 +112,8 @@ export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: 
       saveRelations: !entityTypesWithoutRelatedData.has(entityType),
       saveCalculatedFields: typesWithCalculatedFields.has(entityType),
       saveCredentials: true,
+      savePermissions: true,
+      saveGroupEntities: true,
       allEntities: true,
       entityIds: []
     };
@@ -125,6 +126,9 @@ export interface VersionLoadConfig {
   loadAttributes: boolean;
   loadCredentials: boolean;
   loadCalculatedFields: boolean;
+  loadPermissions: boolean;
+  loadGroupEntities: boolean;
+  autoGenerateIntegrationKey: boolean;
 }
 
 export enum VersionLoadRequestType {
@@ -138,6 +142,7 @@ export interface VersionLoadRequest {
 }
 
 export interface SingleEntityVersionLoadRequest extends VersionLoadRequest {
+  internalEntityId: EntityId;
   externalEntityId: EntityId;
   config: VersionLoadConfig;
   type: VersionLoadRequestType.SINGLE_ENTITY;
@@ -162,6 +167,9 @@ export function createDefaultEntityTypesVersionLoad(): {[entityType: string]: En
       loadRelations: !entityTypesWithoutRelatedData.has(entityType),
       loadCredentials: true,
       loadCalculatedFields: typesWithCalculatedFields.has(entityType),
+      loadPermissions: true,
+      loadGroupEntities: true,
+      autoGenerateIntegrationKey: false,
       removeOtherEntities: false,
       findExistingEntityByName: true
     };
@@ -195,11 +203,15 @@ export interface EntityTypeLoadResult {
   created: number;
   updated: number;
   deleted: number;
+  groupsCreated: number;
+  groupsUpdated: number;
+  groupsDeleted: number;
 }
 
 export enum EntityLoadErrorType {
   DEVICE_CREDENTIALS_CONFLICT = 'DEVICE_CREDENTIALS_CONFLICT',
   MISSING_REFERENCED_ENTITY = 'MISSING_REFERENCED_ENTITY',
+  INTEGRATION_ROUTING_KEY_CONFLICT = 'INTEGRATION_ROUTING_KEY_CONFLICT',
   RUNTIME = 'RUNTIME'
 }
 
@@ -207,6 +219,7 @@ export const entityLoadErrorTranslationMap = new Map<EntityLoadErrorType, string
   [
     [EntityLoadErrorType.DEVICE_CREDENTIALS_CONFLICT, 'version-control.device-credentials-conflict'],
     [EntityLoadErrorType.MISSING_REFERENCED_ENTITY, 'version-control.missing-referenced-entity'],
+    [EntityLoadErrorType.INTEGRATION_ROUTING_KEY_CONFLICT, 'version-control.integration-routing-key-conflict'],
     [EntityLoadErrorType.RUNTIME, 'version-control.runtime-failed']
   ]
 );
@@ -249,6 +262,11 @@ export interface RuleChainExportData extends EntityExportData<RuleChain> {
   metaData: RuleChainMetaData;
 }
 
+export interface EntityGroupExportData extends EntityExportData<EntityGroup> {
+  permissions: Array<GroupPermission>;
+  groupEntities: boolean;
+}
+
 export interface EntityDataDiff {
   currentVersion: EntityExportData<any>;
   otherVersion: EntityExportData<any>;
@@ -263,6 +281,17 @@ export interface EntityDataInfo {
   hasAttributes: boolean;
   hasCredentials: boolean;
   hasCalculatedFields: boolean;
+  hasPermissions: boolean;
+  hasGroupEntities: boolean;
 }
+
+export const overrideEntityTypeTranslations = new Map<EntityType | AliasEntityType, string>(
+  [
+    [
+      EntityType.USER,
+      'entity-group.user-group'
+    ]
+  ]
+);
 
 export const typesWithCalculatedFields = new Set<EntityType | AliasEntityType>([EntityType.DEVICE, EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE_PROFILE, EntityType.CUSTOMER]);

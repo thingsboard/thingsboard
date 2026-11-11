@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.mail;
 
 import jakarta.mail.MessagingException;
@@ -23,18 +11,26 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mockito;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class TbMailSenderTest {
 
@@ -54,8 +50,8 @@ public class TbMailSenderTest {
         willCallRealMethod().given(tbMailSender).doSend(any(), any());
         tbMailSender.doSend(mimeMessages.toArray(new MimeMessage[0]), null);
 
-        Mockito.verify(tbMailSender, times(1)).updateOauth2PasswordIfExpired();
-        Mockito.verify(tbMailSender, times(1)).doSendSuper(any(), any());
+        verify(tbMailSender, times(1)).updateOauth2PasswordIfExpired();
+        verify(tbMailSender, times(1)).doSendSuper(any(), any());
     }
 
     @Test
@@ -63,8 +59,79 @@ public class TbMailSenderTest {
         willCallRealMethod().given(tbMailSender).testConnection();
         tbMailSender.testConnection();
 
-        Mockito.verify(tbMailSender, times(1)).updateOauth2PasswordIfExpired();
-        Mockito.verify(tbMailSender, times(1)).testConnectionSuper();
+        verify(tbMailSender, times(1)).updateOauth2PasswordIfExpired();
+        verify(tbMailSender, times(1)).testConnectionSuper();
+    }
+
+    @Test
+    public void testGiveMailTenantSettings_noFallbackToSystem() {
+        var json = JacksonUtil.newObjectNode();
+        json.put("useSystemMailSettings", false);
+
+        AdminSettings tenantSettings = new AdminSettings();
+        tenantSettings.setKey("mail");
+        tenantSettings.setJsonValue(json);
+
+        willReturn(tenantSettings).given(tbMailSender).getAdminMailSettings(any());
+        willReturn(true).given(tbMailSender).isAllowSystemMailService();
+
+        willCallRealMethod().given(tbMailSender).getMailSettings(any());
+
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        AdminSettings result = tbMailSender.getMailSettings(tenantId);
+
+        assertSame(tenantSettings, result);
+        verify(tbMailSender, times(1)).getAdminMailSettings(eq(tenantId));
+        verify(tbMailSender, never()).getAdminMailSettings(eq(TenantId.SYS_TENANT_ID));
+    }
+
+    @Test
+    public void testFallbackToSystemMailSettings() {
+        var json = JacksonUtil.newObjectNode();
+
+        AdminSettings tenantSettings = new AdminSettings();
+        tenantSettings.setKey("mail");
+        tenantSettings.setJsonValue(json);
+
+        AdminSettings systemSettings = new AdminSettings();
+        systemSettings.setKey("mail");
+        systemSettings.setJsonValue(JacksonUtil.newObjectNode());
+
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+
+        willReturn(tenantSettings).given(tbMailSender).getAdminMailSettings(eq(tenantId));
+        willReturn(systemSettings).given(tbMailSender).getAdminMailSettings(eq(TenantId.SYS_TENANT_ID));
+        willReturn(true).given(tbMailSender).isAllowSystemMailService();
+
+        willCallRealMethod().given(tbMailSender).getMailSettings(any());
+
+        AdminSettings result = tbMailSender.getMailSettings(tenantId);
+
+        assertSame(systemSettings, result);
+        verify(tbMailSender, times(1)).getAdminMailSettings(eq(tenantId));
+        verify(tbMailSender, times(1)).getAdminMailSettings(eq(TenantId.SYS_TENANT_ID));
+    }
+
+    @Test
+    public void testFallbackNotAllowedThrowsException() {
+        var json = JacksonUtil.newObjectNode();
+        json.put("useSystemMailSettings", true);
+
+        AdminSettings tenantSettings = new AdminSettings();
+        tenantSettings.setKey("mail");
+        tenantSettings.setJsonValue(json);
+
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+
+        willReturn(tenantSettings).given(tbMailSender).getAdminMailSettings(eq(tenantId));
+        willReturn(false).given(tbMailSender).isAllowSystemMailService();
+
+        willCallRealMethod().given(tbMailSender).getMailSettings(any());
+
+        assertThrows(RuntimeException.class, () -> tbMailSender.getMailSettings(tenantId));
+
+        verify(tbMailSender, times(1)).getAdminMailSettings(eq(tenantId));
+        verify(tbMailSender, never()).getAdminMailSettings(eq(TenantId.SYS_TENANT_ID));
     }
 
     @ParameterizedTest
@@ -77,11 +144,11 @@ public class TbMailSenderTest {
         tbMailSender.updateOauth2PasswordIfExpired();
 
         if (passwordUpdateNeeded) {
-            Mockito.verify(tbMailSender, times(1)).refreshAccessToken();
-            Mockito.verify(tbMailSender, times(1)).setPassword(any());
+            verify(tbMailSender, times(1)).refreshAccessToken(any());
+            verify(tbMailSender, times(1)).setPassword(any());
         } else {
-            Mockito.verify(tbMailSender, Mockito.never()).refreshAccessToken();
-            Mockito.verify(tbMailSender, Mockito.never()).setPassword(any());
+            verify(tbMailSender, never()).refreshAccessToken(any());
+            verify(tbMailSender, never()).setPassword(any());
         }
     }
 
@@ -93,4 +160,5 @@ public class TbMailSenderTest {
                 Arguments.of(false, System.currentTimeMillis() + 5000, false)
         );
     }
+
 }

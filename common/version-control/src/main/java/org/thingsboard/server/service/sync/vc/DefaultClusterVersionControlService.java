@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.collect.Iterables;
@@ -254,39 +242,55 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void handleEntitiesContentRequest(VersionControlRequestCtx ctx, EntitiesContentRequestMsg request) throws Exception {
         var entityType = EntityType.valueOf(request.getEntityType());
-        String path = getRelativePath(entityType, null);
-        var ids = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), path)
-                .stream().skip(request.getOffset()).limit(request.getLimit()).collect(Collectors.toList());
-        if (!ids.isEmpty()) {
-            for (int i = 0; i < ids.size(); i++) {
-                VersionedEntityInfo info = ids.get(i);
-                var data = vcService.getFileContentAtCommit(ctx.getTenantId(),
-                        getRelativePath(info.getExternalId().getEntityType(), info.getExternalId().getId().toString()), request.getVersionId());
-                Iterable<String> dataChunks = StringUtils.split(data, msgChunkSize);
-                int chunksCount = Iterables.size(dataChunks);
-                AtomicInteger chunkIndex = new AtomicInteger();
-                int itemIdx = i;
-                dataChunks.forEach(chunk -> {
-                    EntitiesContentResponseMsg.Builder response = EntitiesContentResponseMsg.newBuilder()
-                            .setItemsCount(ids.size())
-                            .setItemIdx(itemIdx)
-                            .setItem(EntityContentResponseMsg.newBuilder()
-                                    .setData(chunk)
-                                    .setChunksCount(chunksCount)
-                                    .setChunkIndex(chunkIndex.getAndIncrement())
-                                    .build());
-                    reply(ctx, Optional.empty(), builder -> builder.setEntitiesContentResponse(response));
-                });
+        if (request.getIdsList().isEmpty()) {
+            var ids = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), request.getPath(), entityType, request.getGroups(), request.getRecursive())
+                    .skip(request.getOffset()).limit(request.getLimit()).collect(Collectors.toList());
+            if (!ids.isEmpty()) {
+                for (int i = 0; i < ids.size(); i++) {
+                    var info = ids.get(i);
+                    sendData(info.getPath(), request, ctx, i, ids.size());
+                }
+            } else {
+                reply(ctx, Optional.empty(), builder -> builder.setEntitiesContentResponse(
+                        EntitiesContentResponseMsg.newBuilder()
+                                .setItemsCount(0)));
             }
         } else {
-            reply(ctx, Optional.empty(), builder -> builder.setEntitiesContentResponse(
-                    EntitiesContentResponseMsg.newBuilder()
-                            .setItemsCount(0)));
+            for (int i = 0; i < request.getIdsList().size(); i++) {
+                var idProto = request.getIdsList().get(i);
+                UUID uuid = new UUID(idProto.getEntityIdMSB(), idProto.getEntityIdLSB());
+                var entityPath = getRelativePath(EntityType.valueOf(request.getEntityType()), uuid.toString());
+                sendData(entityPath, request, ctx, i, request.getIdsCount());
+            }
         }
     }
 
+    private void sendData(String entityPath, EntitiesContentRequestMsg request, VersionControlRequestCtx ctx, int itemIdx, int totalItemsCount) throws IOException {
+        entityPath = StringUtils.isNotEmpty(request.getPath()) ? request.getPath() + entityPath : entityPath;
+        var data = vcService.getFileContentAtCommit(ctx.getTenantId(), entityPath, request.getVersionId());
+
+        Iterable<String> dataChunks = StringUtils.split(data, msgChunkSize);
+        String chunkedMsgId = UUID.randomUUID().toString();
+        int chunksCount = Iterables.size(dataChunks);
+        AtomicInteger chunkIndex = new AtomicInteger();
+        dataChunks.forEach(chunk -> {
+            EntitiesContentResponseMsg.Builder response = EntitiesContentResponseMsg.newBuilder()
+                    .setItemsCount(totalItemsCount)
+                    .setItemIdx(itemIdx)
+                    .setItem(EntityContentResponseMsg.newBuilder()
+                            .setData(chunk)
+                            .setChunksCount(chunksCount)
+                            .setChunkIndex(chunkIndex.getAndIncrement())
+                            .build());
+            reply(ctx, Optional.empty(), builder -> builder.setEntitiesContentResponse(response));
+        });
+    }
+
     private void handleEntityContentRequest(VersionControlRequestCtx ctx, EntityContentRequestMsg request) throws IOException {
-        String path = getRelativePath(EntityType.valueOf(request.getEntityType()), new UUID(request.getEntityIdMSB(), request.getEntityIdLSB()).toString());
+        String path = StringUtils.isNotEmpty(request.getPath()) ? request.getPath() : "";
+        if (StringUtils.isNotEmpty(request.getEntityType())) {
+            path = path + getRelativePath(EntityType.valueOf(request.getEntityType()), new UUID(request.getEntityIdMSB(), request.getEntityIdLSB()).toString());
+        }
         log.debug("Executing handleEntityContentRequest [{}][{}]", ctx.getTenantId(), path);
         String data = vcService.getFileContentAtCommit(ctx.getTenantId(), path, request.getVersionId());
 
@@ -323,6 +327,9 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             }
             sortOrder = new SortOrder(request.getSortProperty(), direction);
         }
+        if (StringUtils.isNotEmpty(request.getPath())) {
+            path = request.getPath() + path;
+        }
         var data = vcService.listVersions(ctx.getTenantId(), request.getBranchName(), path,
                 new PageLink(request.getPageSize(), request.getPage(), request.getTextSearch(), sortOrder));
         reply(ctx, Optional.empty(), builder ->
@@ -338,11 +345,10 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void handleListEntities(VersionControlRequestCtx ctx, ListEntitiesRequestMsg request) throws Exception {
         EntityType entityType = StringUtils.isNotEmpty(request.getEntityType()) ? EntityType.valueOf(request.getEntityType()) : null;
-        var path = entityType != null ? getRelativePath(entityType, null) : null;
-        var data = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), path);
+        var data = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), "", entityType, false, false);
         reply(ctx, Optional.empty(), builder ->
                 builder.setListEntitiesResponse(ListEntitiesResponseMsg.newBuilder()
-                        .addAllEntities(data.stream().map(VersionedEntityInfo::getExternalId).map(
+                        .addAllEntities(data.map(VersionedEntityInfo::getExternalId).map(
                                 id -> VersionedEntityInfoProto.newBuilder()
                                         .setEntityType(id.getEntityType().name())
                                         .setEntityIdMSB(id.getId().getMostSignificantBits())
@@ -425,7 +431,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     }
 
     private void deleteFromCommit(VersionControlRequestCtx ctx, PendingCommit commit, DeleteMsg deleteMsg) throws IOException {
-        vcService.deleteFolderContent(commit, deleteMsg.getRelativePath());
+        vcService.deleteFolderContent(commit, deleteMsg.getFolder(), deleteMsg.getRecursively());
     }
 
     private void addToCommit(VersionControlRequestCtx ctx, PendingCommit commit, AddMsg addMsg) throws IOException {

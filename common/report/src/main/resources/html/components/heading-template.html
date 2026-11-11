@@ -1,0 +1,19 @@
+<div th:style="|display: table;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                height: ${height};|">
+  <div th:style="|display: table-cell;
+                 text-align: ${textAlignment};
+                 vertical-align: ${verticalAlignment};
+                 color: ${color};
+                 padding: 0;
+                 margin: 0;
+                 font-size: ${fontSize}pt;
+                 font-family: ${fontFamily};
+                 font-style: ${fontStyle};
+                 font-weight: ${fontWeight};|"
+      th:utext="${value}">
+    [Heading]
+  </div>
+</div>

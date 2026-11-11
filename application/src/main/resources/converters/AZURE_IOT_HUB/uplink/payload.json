@@ -1,0 +1,36 @@
+{
+  "deviceId": "8F4A2C6D",
+  "deviceType": "Packing machine",
+  "temperature": 25.5,
+  "pressure": 1013.25,
+  "vibration": {
+    "x": 0.02,
+    "y": 0.03,
+    "z": 0.015
+  },
+  "location": {
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "altitude": 10
+  },
+  "timestamp": "2023-06-09T10:30:00Z",
+  "status": "ALARM",
+  "alarms": [
+    {
+      "type": "temperature",
+      "severity": "high",
+      "message": "Temperature exceeds threshold."
+    },
+    {
+      "type": "vibration",
+      "severity": "critical",
+      "message": "Excessive vibration detected."
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "batteryLevel": 100,
+    "batteryStatus": "Charging",
+    "manufacturer": "Example corporation"
+  }
+}

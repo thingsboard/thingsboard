@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.sparkplug.attributes;
 
 import org.eclipse.paho.mqttv5.common.MqttException;
@@ -57,6 +45,7 @@ public class MqttV5ClientSparkplugBAttributesTest extends AbstractMqttV5ClientSp
     public void testClientWithCorrectAccessTokenPublishNCMD_FloatType_IfMetricFailedTypeCheck_SendValueOk() throws Exception {
         processClientWithCorrectAccessTokenPublishNCMD_FloatType_IfMetricFailedTypeCheck_SendValueOk();
     }
+
     @Test
     public void testClientWithCorrectAccessTokenPublishMetricDataTypeFromJson_SendValueOk() throws Exception {
         processClientWithCorrectAccessTokenPublishMetricDataTypeFromJson_SendValueOk();
@@ -65,6 +54,11 @@ public class MqttV5ClientSparkplugBAttributesTest extends AbstractMqttV5ClientSp
     @Test
     public void testClientWithCorrectAccessTokenPublishNCMD_DoubleType_IfMetricFailedTypeCheck_SendValueOk() throws Exception {
         processClientWithCorrectAccessTokenPublishNCMD_DoubleType_IfMetricFailedTypeCheck_SendValueOk();
+    }
+
+    @Test
+    public void testClientWithCorrectAccessTokenPublishNCMD_DoubleType_SendAndReceiveDoubleValueOk() throws Exception {
+        processClientWithCorrectAccessTokenPublishNCMD_DoubleType_SendAndReceiveDoubleValueOk();
     }
 
     @Test

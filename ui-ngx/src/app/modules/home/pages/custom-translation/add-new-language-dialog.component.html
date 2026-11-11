@@ -1,0 +1,58 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2 translate>custom-translation.add-new-language</h2>
+  <span class="flex-1"></span>
+  <div [tb-help]="'customTranslation'"></div>
+  <button mat-icon-button
+          mat-dialog-close
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content>
+  <form [formGroup]="languageForm">
+    <tb-language-autocomplete formControlName="language"
+                              [excludeLangs]="langs"></tb-language-autocomplete>
+    <div class="tb-form-panel stroked tb-slide-toggle">
+      <mat-expansion-panel class="tb-settings" hideToggle disabled
+                           [expanded]="languageForm.get('upload').value">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="upload" (click)="$event.stopPropagation()">
+              {{ 'custom-translation.upload-translation-file' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-file-input
+            formControlName="translation"
+            required
+            label="{{ 'custom-translation.translation-file' | translate}}"
+            dropLabel="{{ 'custom-translation.drop-json-file' | translate }}"
+            accept=".json,application/json"
+            allowedExtensions="json">
+          </tb-file-input>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  </form>
+</div>
+<div mat-dialog-actions class="tb-dialog-actions">
+  <button mat-button
+          color="primary"
+          [disabled]="(isLoading$ | async)"
+          mat-dialog-close>
+    {{ 'action.close' | translate }}
+  </button>
+  <button mat-raised-button
+          color="primary"
+          [disabled]="(isLoading$ | async) || languageForm.invalid"
+          (click)="addLanguage($event)">
+    {{ 'action.add' | translate }}
+  </button>
+</div>

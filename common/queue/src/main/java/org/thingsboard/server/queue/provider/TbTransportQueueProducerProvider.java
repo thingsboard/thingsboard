@@ -1,24 +1,17 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.provider;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.gen.integration.ToCoreIntegrationMsg;
+import org.thingsboard.server.gen.integration.ToIntegrationExecutorDownlinkMsg;
+import org.thingsboard.server.gen.integration.ToIntegrationExecutorNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.AgentBulkOperationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToAgentNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
@@ -36,6 +29,8 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 @Service
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
 public class TbTransportQueueProducerProvider implements TbQueueProducerProvider {
+
+    private static final String NOT_IMPLEMENTED = "Not Implemented! Should not be used by Transport!";
 
     private final TbTransportQueueFactory tbQueueProvider;
     private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> toRuleEngine;
@@ -59,7 +54,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> getTransportNotificationsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+        throw new RuntimeException(NOT_IMPLEMENTED);
     }
 
     @Override
@@ -73,8 +68,13 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     }
 
     @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToCoreIntegrationMsg>> getTbCoreIntegrationMsgProducer() {
+        throw new RuntimeException(NOT_IMPLEMENTED);
+    }
+
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> getRuleEngineNotificationsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+        throw new RuntimeException(NOT_IMPLEMENTED);
     }
 
     @Override
@@ -83,28 +83,53 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     }
 
     @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
+        throw new RuntimeException(NOT_IMPLEMENTED);
+    }
+
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> getTbEdgeMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+        throw new RuntimeException(NOT_IMPLEMENTED);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> getTbEdgeNotificationsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+        throw new RuntimeException(NOT_IMPLEMENTED);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> getTbEdgeEventsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+        throw new RuntimeException(NOT_IMPLEMENTED);
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+    public TbQueueProducer<TbProtoQueueMsg<ToAgentNotificationMsg>> getTbAgentNotificationsMsgProducer() {
+        throw new RuntimeException(NOT_IMPLEMENTED);
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<AgentBulkOperationMsg>> getTbAgentBulkOpsMsgProducer() {
+        throw new RuntimeException(NOT_IMPLEMENTED);
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
         return toUsageStats;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> getIntegrationRuleEngineMsgProducer() {
+        throw new RuntimeException(NOT_IMPLEMENTED);
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> getTbIntegrationExecutorNotificationsMsgProducer() {
+        throw new RuntimeException(NOT_IMPLEMENTED);
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> getTbIntegrationExecutorDownlinkMsgProducer() {
+        throw new RuntimeException(NOT_IMPLEMENTED);
     }
 
     @Override
@@ -120,6 +145,11 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCalculatedFieldNotificationMsg>> getCalculatedFieldsNotificationsMsgProducer() {
         throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTbReportNotificationMsg>> getTbReportNotificationsMsgProducer() {
+        throw new RuntimeException(NOT_IMPLEMENTED);
     }
 
 }

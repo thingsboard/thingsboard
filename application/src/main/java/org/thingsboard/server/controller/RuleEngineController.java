@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -41,6 +29,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.config.annotations.ApiOperation;
@@ -49,7 +38,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -58,6 +46,9 @@ import java.util.concurrent.TimeoutException;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
 
+/**
+ * Created by ashvayka on 22.03.18.
+ */
 @RestController
 @TbCoreComponent
 @RequestMapping(TbUrlConstants.RULE_ENGINE_URL_PREFIX)
@@ -73,9 +64,9 @@ public class RuleEngineController extends BaseController {
             " * **'serviceId'** to identify the platform server that received the request;\n" +
             " * **'requestUUID'** to identify the request and route possible response from the Rule Engine;\n\n" +
             "Use **'rest call reply'** rule node to push the reply from rule engine back as a REST API call response. ";
-
     @Autowired
     private RuleEngineCallService ruleEngineCallService;
+
     @Autowired
     private AccessValidator accessValidator;
 
@@ -84,7 +75,7 @@ public class RuleEngineController extends BaseController {
                     "Uses current User Id ( the one which credentials is used to perform the request) as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
                     "The default timeout of the request processing is 10 seconds."
-                    + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
+                    + "\n\n" + ControllerConstants.RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/", method = RequestMethod.POST)
     @ResponseBody
@@ -100,7 +91,7 @@ public class RuleEngineController extends BaseController {
                     "Uses specified Entity Id as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
                     "The default timeout of the request processing is 10 seconds."
-                    + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
+                    + "\n\n" + ControllerConstants.RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
@@ -120,7 +111,7 @@ public class RuleEngineController extends BaseController {
                     "Uses specified Entity Id as the Rule Engine message originator. " +
                     MSG_DESCRIPTION +
                     "The platform expects the timeout value in milliseconds."
-                    + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
+                    + "\n\n" + ControllerConstants.RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{timeout}", method = RequestMethod.POST)
     @ResponseBody
@@ -143,7 +134,7 @@ public class RuleEngineController extends BaseController {
                     MSG_DESCRIPTION +
                     "If request sent for Device/Device Profile or Asset/Asset Profile entity, specified queue will be used instead of the queue selected in the device or asset profile. " +
                     "The platform expects the timeout value in milliseconds."
-                    + "\n\n" + ControllerConstants.SECURITY_WRITE_CHECK)
+                    + "\n\n" + ControllerConstants.RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{queueName}/{timeout}", method = RequestMethod.POST)
     @ResponseBody

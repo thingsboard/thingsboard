@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.mqtt;
 
 import io.netty.channel.Channel;
@@ -68,7 +56,12 @@ public final class MqttClientConfig {
     @Getter
     private long reconnectDelay = 1L;
     @Getter
-    private int maxBytesInMessage = 8092;
+    private int maxBytesInMessage = 32368;
+
+    @Getter
+    private int backPressureHighWatermark = 450;
+    @Getter
+    private int backPressureLowWatermark = 200;
 
     @Getter
     @Setter
@@ -119,6 +112,30 @@ public final class MqttClientConfig {
             throw new IllegalArgumentException("timeoutSeconds must be > 0 or -1");
         }
         this.timeoutSeconds = timeoutSeconds;
+    }
+
+    public void setBackPressureHighWatermark(int backPressureHighWatermark) {
+        if (backPressureHighWatermark < 0) {
+            throw new IllegalArgumentException("backPressureHighWatermark must be >= 0 (0 to disable), but was " + backPressureHighWatermark);
+        }
+        if (backPressureHighWatermark > 0 && backPressureLowWatermark > 0 && backPressureHighWatermark <= backPressureLowWatermark) {
+            throw new IllegalArgumentException("backPressureHighWatermark (" + backPressureHighWatermark + ") must be > backPressureLowWatermark (" + backPressureLowWatermark + ")");
+        }
+        this.backPressureHighWatermark = backPressureHighWatermark;
+    }
+
+    public void setBackPressureLowWatermark(int backPressureLowWatermark) {
+        if (backPressureLowWatermark < 0) {
+            throw new IllegalArgumentException("backPressureLowWatermark must be >= 0 (0 to disable), but was " + backPressureLowWatermark);
+        }
+        if (backPressureLowWatermark > 0 && backPressureHighWatermark > 0 && backPressureLowWatermark >= backPressureHighWatermark) {
+            throw new IllegalArgumentException("backPressureLowWatermark (" + backPressureLowWatermark + ") must be < backPressureHighWatermark (" + backPressureHighWatermark + ")");
+        }
+        this.backPressureLowWatermark = backPressureLowWatermark;
+    }
+
+    public boolean isBackPressureEnabled() {
+        return backPressureHighWatermark > 0 && backPressureLowWatermark > 0;
     }
 
     public void setProtocolVersion(MqttVersion protocolVersion) {

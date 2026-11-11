@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -49,11 +37,12 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springdoc.core.customizers.ParameterCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
-import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -61,11 +50,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.ClassUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.query.AliasEntityType;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -120,11 +112,14 @@ public class SwaggerConfiguration {
     // Keyed by the schema name that swagger-core generates (see resolveSchemaName).
     private final Map<String, List<String>> schemaPropertyOrders = new ConcurrentHashMap<>();
     private final Map<String, Set<String>> schemaOwnProps = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> schemaNotRequiredProps = new ConcurrentHashMap<>();
     // Tracks schema name → fully-qualified class names to detect collisions.
     private final Map<String, Set<String>> schemaNameToClasses = new ConcurrentHashMap<>();
 
     @Value("${swagger.api_path:/api/**}")
     private String apiPath;
+    @Value("${swagger.exclude_api_path:/api/v1/integrations/**}")
+    private String excludeApiPath;
     @Value("${swagger.security_path_regex}")
     private String securityPathRegex;
     @Value("${swagger.non_security_path_regex}")
@@ -279,7 +274,8 @@ public class SwaggerConfiguration {
 
         var requestBody = new RequestBody().description("Refresh token request")
                 .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
-                        new MediaType().schema(new Schema<JsonNode>().addProperty("refreshToken", new Schema<>().type("string")))));
+                        new MediaType().schema(new Schema<JsonNode>().types(Set.of("object"))
+                                .addProperty("refreshToken", new Schema<>().types(Set.of("string"))))));
 
         operation.requestBody(requestBody);
 
@@ -295,9 +291,42 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
+                .pathsToExclude(excludeApiPath)
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();
+    }
+
+    // springdoc infers the parameter type from the Java type only when @Parameter(schema = @Schema(...))
+    // sets neither type nor implementation; otherwise (e.g. schema = @Schema(minimum = "1")) it falls back
+    // to "string". Restore integer/int32 or integer/int64 for int and long parameters, keeping the rest of the schema.
+    @Bean
+    public ParameterCustomizer integerParameterCustomizer() {
+        return (parameter, methodParameter) -> {
+            if (parameter == null || parameter.getSchema() == null) {
+                return parameter;
+            }
+            Schema<?> schema = parameter.getSchema();
+            boolean isString = "string".equals(schema.getType()) || Set.of("string").equals(schema.getTypes());
+            String format = integerFormat(methodParameter);
+            if (isString && format != null && schema.getFormat() == null) {
+                schema.setType("integer");
+                schema.setTypes(Set.of("integer"));
+                schema.setFormat(format);
+            }
+            return parameter;
+        };
+    }
+
+    private static String integerFormat(MethodParameter methodParameter) {
+        Class<?> type = ClassUtils.resolvePrimitiveIfNecessary(methodParameter.getParameterType());
+        if (Integer.class.equals(type)) {
+            return "int32";
+        }
+        if (Long.class.equals(type)) {
+            return "int64";
+        }
+        return null;
     }
 
     @Bean
@@ -358,6 +387,10 @@ public class SwaggerConfiguration {
                             if (!ownProps.isEmpty()) {
                                 schemaOwnProps.put(schemaName, ownProps);
                             }
+                            Set<String> notRequiredProps = computeNotRequiredPropNames(beanDesc);
+                            if (!notRequiredProps.isEmpty()) {
+                                schemaNotRequiredProps.put(schemaName, notRequiredProps);
+                            }
                         } catch (Exception e) {
                             log.debug("Failed to resolve property order for {}: {}", cls.getName(), e.getMessage());
                         }
@@ -370,9 +403,11 @@ public class SwaggerConfiguration {
         };
     }
 
+    // The document is OpenAPI 3.1 (see springDocProperties above), which serializes
+    // Schema.types; a schema built with Schema.type(...) is written without a type.
     private void addDefaultSchemas(OpenAPI openAPI) {
         Schema<?> errorCodeSchema = new Schema<>()
-                .type("integer")
+                .types(Set.of("integer"))
                 .description("Platform error code")
                 ._enum(Arrays.stream(ThingsboardErrorCode.values())
                         .map(ThingsboardErrorCode::getErrorCode)
@@ -383,11 +418,17 @@ public class SwaggerConfiguration {
         registerSchema(components, "ThingsboardErrorResponse", ThingsboardErrorResponse.class);
         registerSchema(components, "ThingsboardCredentialsExpiredResponse", ThingsboardCredentialsExpiredResponse.class);
         components.addSchemas("ThingsboardErrorCode", errorCodeSchema);
+        // AliasEntityId.entityType is a plain string, so no schema references AliasEntityType;
+        // register it to keep the alias names in the spec and in generated clients.
+        components.addSchemas("AliasEntityType", new Schema<String>()
+                .types(Set.of("string"))
+                .description("Alias for an entity of the current user, used as AliasEntityId.entityType")
+                ._enum(Arrays.stream(AliasEntityType.values()).map(Enum::name).toList()));
         registerSchema(components, "AiChatModelConfig", AiChatModelConfig.class);
     }
 
     private static void registerSchema(Components components, String name, Class<?> cls) {
-        ResolvedSchema resolved = ModelConverters.getInstance()
+        ResolvedSchema resolved = ModelConverters.getInstance(true)
                 .readAllAsResolvedSchema(new AnnotatedType().type(cls));
         components.addSchemas(name, resolved.schema);
         if (resolved.referencedSchemas != null) {
@@ -536,6 +577,8 @@ public class SwaggerConfiguration {
                     Set<String> ownProps = schemaOwnProps.getOrDefault(schemaName, Set.of());
                     deduplicateAllOfProperties(schema, schemas, ownProps);
                 });
+
+                removeNotRequiredProperties(schemas);
 
                 // Reorder properties for all component schemas. This runs after all
                 // schemas are finalized so it covers schemas the ModelConverter only
@@ -1119,6 +1162,46 @@ public class SwaggerConfiguration {
             if (jsonName != null) own.add(jsonName);
         }
         return own;
+    }
+
+    // Honour an explicit @Schema(requiredMode = NOT_REQUIRED): swagger-core skips @NotNull
+    // for such properties, but still adds the ones with @NotBlank / @NotEmpty to 'required'.
+    void removeNotRequiredProperties(Map<String, Schema> schemas) {
+        schemas.forEach((schemaName, schema) -> {
+            Set<String> notRequiredProps = schemaNotRequiredProps.getOrDefault(schemaName, Set.of());
+            removeRequiredProperties(schema, notRequiredProps);
+        });
+    }
+
+    private static Set<String> computeNotRequiredPropNames(com.fasterxml.jackson.databind.BeanDescription beanDesc) {
+        Set<String> notRequired = new LinkedHashSet<>();
+        for (var prop : beanDesc.findProperties()) {
+            var member = prop.getPrimaryMember();
+            if (member == null) continue;
+            var schemaAnnotation = member.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
+            if (schemaAnnotation != null && schemaAnnotation.requiredMode() == io.swagger.v3.oas.annotations.media.Schema.RequiredMode.NOT_REQUIRED) {
+                notRequired.add(prop.getName());
+            }
+        }
+        return notRequired;
+    }
+
+    private static void removeRequiredProperties(Schema<?> schema, Set<String> notRequiredProps) {
+        if (notRequiredProps.isEmpty()) {
+            return;
+        }
+        List<Schema> schemas = new ArrayList<>();
+        schemas.add(schema);
+        if (schema.getAllOf() != null) {
+            schemas.addAll(schema.getAllOf());
+        }
+        for (Schema<?> s : schemas) {
+            if (s.getRequired() != null && s.getRequired().stream().anyMatch(notRequiredProps::contains)) {
+                List<String> required = new ArrayList<>(s.getRequired());
+                required.removeAll(notRequiredProps);
+                s.setRequired(required.isEmpty() ? null : required);
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")

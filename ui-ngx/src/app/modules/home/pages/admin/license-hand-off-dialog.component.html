@@ -1,0 +1,39 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-dialog-content">
+  <button mat-icon-button
+          class="tb-mat-40 tb-close-button"
+          (click)="cancel()"
+          type="button">
+    <tb-icon>close</tb-icon>
+  </button>
+  <h2>{{ dialogTitle }}</h2>
+  @if (caseText) {
+    <p>{{ caseText }}</p>
+  }
+  @if (caseText2) {
+    <p>{{ caseText2 }}</p>
+  }
+  <p>{{ openPortalText }}</p>
+  <mat-checkbox class="tb-option" [(ngModel)]="notShowAgain">{{ 'action.dont-show-this-again' | translate}}</mat-checkbox>
+  <div class="dialog-footer">
+    <span class="flex-1"></span>
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-flat-button
+            color="primary"
+            type="button"
+            (click)="openPortal()">
+      {{ 'subscription.open-portal' | translate }}
+      <mat-icon matButtonIcon iconPositionEnd>open_in_new</mat-icon>
+    </button>
+  </div>
+</div>

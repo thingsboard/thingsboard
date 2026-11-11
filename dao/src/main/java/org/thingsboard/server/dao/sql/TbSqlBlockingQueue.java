@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -66,9 +54,11 @@ public class TbSqlBlockingQueue<E, R> implements TbSqlQueue<E, R> {
                     }
                     queue.drainTo(entities, batchSize - 1);
                     boolean fullPack = entities.size() == batchSize;
-                    if (log.isDebugEnabled()) {
-                        log.debug("[{}] Going to save {} entities", logName, entities.size());
-                        log.trace("[{}] Going to save entities: {}", logName, entities);
+                    log.debug("[{}] Going to save {} entities", logName, entities.size());
+                    if (log.isTraceEnabled()) {
+                        for (TbSqlQueueElement<E, R> e : entities) {
+                            log.debug("[{}] Element: {}", logName, e.getEntity());
+                        }
                     }
 
                     List<TbSqlQueueElement<E, R>> entitiesToSave = filter.apply(entities);
@@ -119,9 +109,16 @@ public class TbSqlBlockingQueue<E, R> implements TbSqlQueue<E, R> {
         });
 
         logExecutor.scheduleAtFixedRate(() -> {
-            if (!queue.isEmpty() || stats.getTotal() > 0 || stats.getSuccessful() > 0 || stats.getFailed() > 0) {
+            int queueSize = queue.size();
+            if (queueSize > 0 || stats.getTotal() > 0 || stats.getSuccessful() > 0 || stats.getFailed() > 0) {
                 log.info("Queue-{} [{}] queueSize [{}] totalAdded [{}] totalSaved [{}] totalFailed [{}]", index,
-                        params.getLogName(), queue.size(), stats.getTotal(), stats.getSuccessful(), stats.getFailed());
+                        params.getLogName(), queueSize, stats.getTotal(), stats.getSuccessful(), stats.getFailed());
+                if (queueSize > params.getBatchSize()) {
+                    // Writes are arriving faster than they drain. The queue is unbounded, so this surfaces a
+                    // storage stall well before it shows up as heap pressure.
+                    log.warn("Queue-{} [{}] is falling behind: queueSize [{}] exceeds batchSize [{}]", index,
+                            params.getLogName(), queueSize, params.getBatchSize());
+                }
                 stats.reset();
             }
         }, params.getStatsPrintIntervalMs(), params.getStatsPrintIntervalMs(), TimeUnit.MILLISECONDS);

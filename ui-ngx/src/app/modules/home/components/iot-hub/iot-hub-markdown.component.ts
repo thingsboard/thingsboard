@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   Component,
   ElementRef,
@@ -37,6 +23,14 @@ import {
 } from '@home/components/iot-hub/iot-hub-markdown.utils';
 import { DevicePackageInfo } from '@shared/models/iot-hub/device-package.models';
 import { isNotEmptyStr } from '@core/utils';
+
+// Every image the readme itself renders opens in the lightbox. Excluded is the chrome that happens
+// to be an <img>: the ${images.gallery(...)} block (it runs its own gallery), the code block
+// clipboard icon and an item link card's thumbnail. Images inside a link are excluded too: the
+// lightbox preventDefaults the click, which would swallow the navigation.
+const README_GALLERY_SELECTOR =
+  'img:not(.tb-gallery-images img):not(.clipboard-btn img):not(tb-iot-hub-item-link-card img):not(a img)';
+const README_GALLERY_IMAGE_CLASS = 'tb-readme-gallery-image';
 
 @Component({
   selector: 'tb-iot-hub-markdown',
@@ -75,6 +69,8 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
 
   readonly itemLinkCompileModules: Type<any>[] = [IotHubItemLinkModule];
 
+  readonly readmeGallerySelector = README_GALLERY_SELECTOR;
+
   constructor(
     private iotHubApiService: IotHubApiService,
     private elementRef: ElementRef<HTMLElement>
@@ -100,6 +96,8 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
 
   onReady() {
     const container = this.elementRef.nativeElement;
+    container.querySelectorAll(README_GALLERY_SELECTOR)
+      .forEach(image => image.classList.add(README_GALLERY_IMAGE_CLASS));
     this.ready.emit(container);
   }
 

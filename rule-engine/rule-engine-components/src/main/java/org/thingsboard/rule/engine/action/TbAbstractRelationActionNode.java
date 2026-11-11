@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,7 +35,8 @@ import java.util.stream.Collectors;
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
-            EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
+            EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD,
+            EntityType.EDGE, EntityType.USER, EntityType.CONVERTER, EntityType.ROLE);
 
     private static final String supportedEntityTypesStr = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.joining(" ,"));
 
@@ -89,6 +78,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                             newDevice.setName(targetEntityName);
                             newDevice.setType(deviceProfileName);
                             newDevice.setTenantId(tenantId);
+                            newDevice.setOwnerId(ctx.getPeContext().getOwner(tenantId, msg.getOriginator()));
                             var savedDevice = deviceService.saveDevice(newDevice);
                             ctx.getClusterService().onDeviceUpdated(savedDevice, null);
                             ctx.enqueue(ctx.deviceCreatedMsg(savedDevice, ctx.getSelfId()),
@@ -125,6 +115,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                             newAsset.setName(targetEntityName);
                             newAsset.setType(assetProfileName);
                             newAsset.setTenantId(tenantId);
+                            newAsset.setOwnerId(ctx.getPeContext().getOwner(tenantId, msg.getOriginator()));
                             var savedAsset = assetService.saveAsset(newAsset);
                             ctx.enqueue(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()),
                                     () -> log.trace("Pushed Asset Created message: {}", savedAsset),
@@ -158,7 +149,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                             var newCustomer = new Customer();
                             newCustomer.setTitle(targetEntityName);
                             newCustomer.setTenantId(tenantId);
-                            var savedCustomer = customerService.saveCustomer(newCustomer);
+                            newCustomer.setOwnerId(ctx.getPeContext().getOwner(tenantId, msg.getOriginator()));
+                            var savedCustomer = ctx.getCustomerService().saveCustomer(newCustomer);
                             ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
                                     () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
                                     throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
@@ -213,6 +205,24 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         return user.getId();
                     }
                     throw new NoSuchElementException("User with email '" + targetEntityName + "' doesn't exist!");
+                }, MoreExecutors.directExecutor());
+            }
+            case CONVERTER -> {
+                var converterFuture = ctx.getPeContext().getConverterService().findConverterByNameAsync(tenantId, targetEntityName);
+                return Futures.transform(converterFuture, converterOpt -> {
+                    if (converterOpt.isPresent()) {
+                        return converterOpt.get().getId();
+                    }
+                    throw new NoSuchElementException("Converter with name '" + targetEntityName + "' doesn't exist!");
+                }, MoreExecutors.directExecutor());
+            }
+            case ROLE -> {
+                var roleFuture = ctx.getPeContext().getRoleService().findRoleByTenantIdAndNameAsync(tenantId, targetEntityName);
+                return Futures.transform(roleFuture, roleOpt -> {
+                    if (roleOpt.isPresent()) {
+                        return roleOpt.get().getId();
+                    }
+                    throw new NoSuchElementException("Role with name '" + targetEntityName + "' doesn't exist!");
                 }, MoreExecutors.directExecutor());
             }
             default -> throw new IllegalArgumentException(unsupportedEntityTypeErrorMessage(entityType));

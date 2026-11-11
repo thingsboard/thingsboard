@@ -1,23 +1,11 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { cssUnit } from '@shared/models/widget-settings.models';
 import tinycolor from 'tinycolor2';
+import { plainColorFromVariable } from '@core/utils';
 
-const defaultMainColor = '#3F52DD';
+const defaultMainColor = 'var(--tb-primary-500)';
 const defaultBackgroundColor = '#FFFFFF';
 
 const hoveredFilledDarkenAmount = 6;
@@ -132,6 +120,8 @@ abstract class ButtonStateCssGenerator {
 
   constructor() {}
 
+  protected abstract get state(): WidgetButtonState;
+
   public generateStateCss(appearance: WidgetButtonAppearance): string {
     let mainColor = this.getMainColor(appearance);
     let backgroundColor = this.getBackgroundColor(appearance);
@@ -157,8 +147,6 @@ abstract class ButtonStateCssGenerator {
     }
     return css;
   }
-
-  protected abstract get state(): WidgetButtonState;
 
   protected getMainColor(appearance: WidgetButtonAppearance): string {
     return appearance.mainColor || defaultMainColor;
@@ -200,7 +188,7 @@ class PressedButtonStateCssGenerator extends ButtonStateCssGenerator {
 
   protected generateAdditionalStateCss(mainColor: string): string {
     const mainColorPressedFilled = darkenColor(mainColor, pressedFilledDarkenAmount);
-    const mainColorInstance = tinycolor(mainColor);
+    const mainColorInstance = tinycolor(plainColorFromVariable(mainColor));
     const mainColorPressedRipple = mainColorInstance.setAlpha(mainColorInstance.getAlpha() * 0.1).toRgbString();
     const mainColorPressedRippleFilled = darkenColor(mainColor, pressedRippleFilledDarkenAmount);
     return `--tb-widget-button-main-color-pressed-filled: ${mainColorPressedFilled};\n`+
@@ -260,7 +248,7 @@ export const generateWidgetButtonAppearanceCss = (appearance: WidgetButtonAppear
 };
 
 const darkenColor = (inputColor: string, amount: number): string => {
-  const input = tinycolor(inputColor);
+  const input = tinycolor(plainColorFromVariable(inputColor));
   const brightness = input.getBrightness() / 255;
   let ratio: number;
   if (brightness >= 0.4 && brightness <= 0.5) {

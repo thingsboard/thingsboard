@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.pages;
 
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +23,15 @@ public class CustomerPageHelper extends CustomerPageElements {
     private String customerEmail;
     private String customerCountry;
     private String customerCity;
+    private String headerName;
+
+    public void setCustomerHeaderName() {
+        this.headerName = headerNameCustomerView().getText();
+    }
+
+    public String getCustomerHeaderName() {
+        return headerName;
+    }
 
     public void setCustomerName() {
         this.customerName = entityTitles().get(0).getText();
@@ -138,6 +135,7 @@ public class CustomerPageHelper extends CustomerPageElements {
     }
 
     public void assignedDashboard() {
+        new DashboardPageElements(driver).openDashboardCroupBtn().get(0).click();
         plusBtn().click();
         assignedField().click();
         setDashboard();
@@ -158,7 +156,7 @@ public class CustomerPageHelper extends CustomerPageElements {
         return elementsIsNotPresent(getEntity(title));
     }
 
-    public void sortByNameDown() {
+    public void sortByTitleDown() {
         doubleClick(sortByTitleBtn());
     }
 
@@ -166,9 +164,19 @@ public class CustomerPageHelper extends CustomerPageElements {
         enterText(titleFieldAddEntityView(), keysToEnter);
     }
 
+    public boolean doneBtnIsEnable() {
+        waitUntilAttributeContains(doneBtnEditViewVisible(), "disabled", "true");
+        return doneBtnEditViewVisible().isEnabled();
+    }
+
     public void enterPhoneNumber(String number) {
+        phoneNumberEntityView().click();
         phoneNumberEntityView().sendKeys(number);
         phoneNumberEntityView().sendKeys(Keys.TAB);
+    }
+
+    public void waitUntilCustomerNotVisible(String customerName) {
+        waitUntilInvisibilityOfElementLocated(entity(customerName));
     }
 
     public void openCustomerAlarms(String customerName) {

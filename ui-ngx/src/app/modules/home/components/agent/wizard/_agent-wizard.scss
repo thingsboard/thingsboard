@@ -1,0 +1,505 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../../../../scss/constants' as *;
+@forward '../agent-shared';
+@use '../agent-shared' as *;
+
+@mixin wizard-chrome {
+  :host {
+    display: block;
+    width: min(1280px, 95vw);
+    min-width: 0;
+    max-width: 95vw;
+  }
+
+  .tb-install-wizard-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 16px;
+    min-height: 56px;
+    .tb-install-wizard-toolbar-content {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: row; align-items: center; gap: 8px;
+      h2 { font-size: 20px; font-weight: 400; margin: 0; color: inherit; }
+      span { font-size: 20px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    }
+  }
+
+  .tb-install-wizard-body.tb-install-wizard-embedded {
+    max-height: none !important;
+    overflow-y: visible !important;
+    padding: 8px 0 !important;
+  }
+
+  .tb-install-wizard-body {
+    // No vertical padding: the sticky stepper header sits flush at the top and the
+    // sticky footer flush at the bottom, with the content carrying its own spacing.
+    padding: 0 24px !important;
+    // Cap the dialog body to the viewport. Allow vertical scroll so tall step
+    // content (e.g. update/upgrade step 2 with config sections + summary card +
+    // info box + footer) can reach its buttons. The ace editors inside are
+    // clamped so they don't contribute unbounded height, and .acediff__wrap has
+    // its own overflow killed — so the only outer scrollbar that appears here
+    // is a legitimate chrome scroll when the step content genuinely overflows.
+    max-height: 85vh;
+    overflow-y: auto;
+    // Contain horizontal overscroll so two-finger trackpad swipes inside the
+    // ace editors / diff panes don't bubble up to the browser's back/forward
+    // page navigation. Also block vertical bounce from escaping the dialog.
+    overscroll-behavior: contain;
+  }
+
+  :host ::ng-deep .mat-horizontal-stepper-wrapper {
+    margin-top: 0;
+  }
+
+  :host ::ng-deep .mat-horizontal-stepper-header-container {
+    margin-top: 0;
+    // Keep the step indicators (1)…(N) pinned at the top while content scrolls.
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #fff;
+  }
+
+  :host ::ng-deep .mat-horizontal-stepper-header {
+    padding: 0 12px;
+  }
+
+  :host ::ng-deep .mat-horizontal-content-container {
+    padding: 12px 0;
+    // Material defaults this to `overflow: hidden`, which makes it a scroll
+    // container and anchors the sticky `.step-footer` here (content height, so it
+    // never sticks). `clip` still clips the sliding steps but is NOT a scroll
+    // container, so the footer anchors to the scrolling `.tb-install-wizard-body`.
+    overflow: clip;
+    max-width: 100%;
+  }
+
+  :host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+    max-width: 100%;
+
+    .tb-install-wizard-body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+  }
+
+  :host ::ng-deep .mat-step-header {
+    // Kill the hover/focus background — navigation works, but no visual fill.
+    &:hover,
+    &.cdk-program-focused,
+    &.cdk-mouse-focused,
+    &.cdk-focused {
+      background-color: transparent !important;
+    }
+  }
+
+  :host ::ng-deep .tb-steps-locked .mat-step-header[aria-selected="false"] {
+    pointer-events: none;
+    cursor: default;
+
+    .mat-step-icon {
+      background-color: rgba(0, 0, 0, 0.26) !important;
+      color: #fff !important;
+    }
+
+    .mat-step-label {
+      color: $agent-text-hint !important;
+    }
+  }
+
+  .step-footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+    padding: 12px 0; border-top: 1px solid $agent-divider-light; margin-top: 16px;
+    button mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  }
+
+  // Pin the footer to the bottom of the scrolling body so its action buttons stay
+  // visible while tall step content scrolls. Skipped in embedded mode, where the
+  // body doesn't scroll (the host dialog does) and a sticky footer would misbehave.
+  .tb-install-wizard-body:not(.tb-install-wizard-embedded) .step-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 15;
+    background: #fff;
+  }
+}
+
+@mixin wizard-step-basics {
+  .hint { font-size: 13px; color: $agent-text-secondary; margin: 0 0 16px; }
+
+  .tb-app-compose-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: $agent-warning-surface;
+    color: $agent-warning-text;
+    font-size: 12px;
+    .tb-app-compose-hint-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: $agent-warning-icon;
+    }
+  }
+
+  .loading-state, .error-state {
+    display: flex; align-items: center; gap: 12px; padding: 12px; color: $agent-text-secondary;
+  }
+
+  .error-state mat-icon { color: $agent-color-error-accent; }
+
+  // Step-input sections (backup volumes, pull images, etc.).
+  .tb-compare-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin: 8px 0;
+  }
+
+  .config-toggle {
+    display: flex; justify-content: center; margin-bottom: 16px;
+  }
+
+  .tb-agent-deploy-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--tb-primary-500) 6%, transparent);
+    font-size: 13px;
+    line-height: 1.5;
+    color: $agent-ink-76;
+
+    mat-icon {
+      flex-shrink: 0;
+      color: var(--tb-primary-500);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+@mixin wizard-type-cards {
+  .type-cards {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    @media #{$mat-lt-md} {
+      flex-direction: column;
+    }
+  }
+
+  .type-card {
+    @include agent-button-reset;
+    display: block;
+    flex: 1; border: 2px solid $agent-divider; border-radius: 8px;
+    padding: 20px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    &:hover { border-color: var(--tb-primary-400); background: color-mix(in srgb, var(--tb-primary-500) 4%, transparent); }
+    &.selected { border-color: var(--tb-primary-500); background: color-mix(in srgb, var(--tb-primary-500) 8%, transparent); }
+    &.locked-out, &:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+    mat-icon { font-size: 36px; width: 36px; height: 36px; color: var(--tb-primary-500); margin-bottom: 8px; }
+    h4 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
+    p { font-size: 13px; color: $agent-text-secondary; margin: 0; }
+  }
+}
+
+@mixin wizard-yaml-editor {
+  // Defensive: also contain overscroll on the editor hosts themselves, so even
+  // if a swipe lands directly on an ace editor (not on the body), it won't be
+  // interpreted as page navigation.
+  .diff-viewer,
+  .yaml-editor-ace {
+    overscroll-behavior: contain;
+    ::ng-deep .ace_editor,
+    ::ng-deep .ace_scroller,
+    ::ng-deep .ace_content {
+      overscroll-behavior: contain;
+    }
+  }
+
+  .tb-compose-panel {
+    box-shadow: none !important;
+    border: 1px solid $agent-divider;
+    border-radius: 4px;
+    ::ng-deep .mat-expansion-panel-body {
+      padding: 0 16px 16px;
+    }
+  }
+
+  .yaml-editor {
+    width: 100%; box-sizing: border-box; padding: 12px 14px;
+    border: 1px solid $agent-divider; border-radius: 4px;
+    background: $agent-surface-muted; color: $agent-editor-fg;
+    font-family: $agent-mono-font;
+    font-size: 12px; line-height: 1.55; letter-spacing: 0;
+    tab-size: 2; -moz-tab-size: 2;
+    resize: vertical;
+    &:focus {
+      outline: none; border-color: var(--tb-primary-400);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--tb-primary-400) 15%, transparent);
+    }
+  }
+
+  // Ace-backed single editor (install mode and detail view) sits in the same
+  // .yaml-editor box but needs padding removed and a fixed height for ace layout.
+  .yaml-editor-ace {
+    padding: 0;
+    height: clamp(220px, calc(85vh - 280px), 520px);
+    overflow: hidden;
+    ::ng-deep .ace_editor {
+      font-family: $agent-mono-font !important;
+      background: transparent;
+    }
+    ::ng-deep .ace_gutter { background: $agent-surface-soft; color: $agent-ink-42; }
+  }
+
+  .pull-images { display: block; margin-top: 12px; }
+
+  // Compact, content-width toggle (Material defaults the group to full width).
+  .pull-policy-toggle {
+    display: inline-block;
+    ::ng-deep tb-toggle-header { width: fit-content; }
+    ::ng-deep .mat-button-toggle-group { width: auto !important; }
+  }
+}
+
+@mixin wizard-config-section {
+  .config-section {
+    margin: 16px 0; padding: 16px;
+    background: $agent-surface-muted;
+    border: 1px solid $agent-divider-light; border-radius: 4px;
+    .config-section-header {
+      font-size: 14px; font-weight: 500;
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px;
+    }
+    .hint {
+      font-size: 12px; color: $agent-text-secondary;
+      margin: 0 0 12px; line-height: 1.5;
+    }
+    .volume-list { display: flex; flex-direction: column; gap: 4px; }
+    .volume-row {
+      display: flex; align-items: center; padding: 4px 0;
+      // Match the surrounding UI (hints, labels, section headers): default
+      // system font, 13px, dark text. The previous monospace treatment read
+      // like inline code, out of place next to "Backup specified volumes".
+      .volume-name {
+        font-size: 13px;
+        color: $agent-text-primary;
+        margin-left: 4px;
+      }
+    }
+    .volume-empty {
+      font-size: 12px; color: $agent-text-hint; font-style: italic;
+    }
+  }
+
+  .step-type-label {
+    font-weight: 500; color: var(--tb-accent-contrast-500, #fff);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    background: var(--tb-accent-500); padding: 2px 6px; border-radius: 3px;
+  }
+}
+
+@mixin wizard-diff {
+  .diff-header-row {
+    position: relative;
+    display: flex; margin-top: 8px;
+    border: 1px solid $agent-divider; border-bottom: none;
+    border-top-left-radius: 4px; border-top-right-radius: 4px;
+    overflow: hidden;
+    .diff-header {
+      flex: 1 1 50%; box-sizing: border-box; padding: 8px 12px; font-size: 12px; font-weight: 500;
+      letter-spacing: 0.3px;
+      & + .diff-header { border-left: 1px solid $agent-divider; padding-right: 36px; }
+      &.added { background: $agent-success-surface; color: $agent-color-success-dark; }
+      &.removed { background: #fce4ec; color: $agent-color-error-dark; }
+      &.compare { background: #eceff1; color: #37474f; }
+    }
+    .diff-readonly-chip {
+      position: absolute;
+      right: 36px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid $agent-ink-24;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: $agent-ink-60;
+      mat-icon {
+        font-size: 13px;
+        width: 13px;
+        height: 13px;
+        line-height: 13px;
+      }
+    }
+    .diff-sync-toggle {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      margin: 0;
+      border: 1px solid $agent-ink-24;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.85);
+      color: $agent-ink-60;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+      &:hover {
+        background: #fff;
+        box-shadow: 0 1px 4px $agent-divider;
+      }
+      &.active {
+        color: var(--tb-primary-500);
+        border-color: var(--tb-primary-500);
+        background: #fff;
+      }
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        line-height: 14px;
+      }
+    }
+  }
+
+  .diff-viewer {
+    position: relative;
+    overflow: hidden;
+    // Fit within the wizard body (which no longer scrolls). Chrome above/below
+    // the editor (toolbar + stepper header + name field + footer + padding) is
+    // roughly 280px; the clamp floors at 220px so very short viewports still
+    // show a usable editor and cap at 520px on large displays.
+    height: clamp(220px, calc(85vh - 280px), 520px);
+    width: 100%;
+
+    // ace-diff ships with `.acediff__wrap { overflow: auto }`. That creates an
+    // extra scrollbar wrapping the two editors + center gutter — the outer
+    // scrollbar the user sees. Force it hidden; each ace editor has its own
+    // internal scrollbar for the YAML content and that's the only one we want.
+    ::ng-deep .acediff__wrap {
+      overflow: hidden !important;
+    }
+    border: 1px solid $agent-divider;
+    border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+    background: $agent-surface-muted;
+
+    // ace-diff overrides: narrow center gutter, unified monospace styling, tight gutters.
+    // flex: 0 0 60px is ace-diff's default — must override flex-basis, not just width,
+    // otherwise the element stays 60px and its grey background leaks around the arrows.
+    ::ng-deep .acediff__gutter {
+      flex: 0 0 40px !important;
+      width: 40px !important;
+      background: #ffffff !important;
+      border-left: 1px solid $agent-divider-light !important;
+      border-right: 1px solid $agent-divider-light !important;
+      overflow: visible !important;
+      contain: layout paint style;
+      will-change: transform;
+      svg { width: 40px !important; background: transparent !important; }
+    }
+    ::ng-deep .ace_editor {
+      font-family: $agent-mono-font !important;
+    }
+    ::ng-deep .ace_gutter { width: 44px !important; background: $agent-surface-soft; color: $agent-ink-42; }
+    ::ng-deep .ace_gutter-layer { width: 44px !important; }
+
+    // Flip the right pane's gutter to the right edge. Ace lays out .ace_gutter
+    // and .ace_scroller with absolute positioning (gutter: left 0; scroller: left
+    // <gutterWidth>). Overriding both moves the line numbers against the outer
+    // edge of the right pane, mirroring the left pane — numbers end up hugging
+    // both outside edges, with code meeting in the middle at the copy arrows.
+    ::ng-deep .acediff__right .ace_gutter {
+      left: auto !important;
+      right: 0 !important;
+      border-left: 1px solid $agent-divider-light;
+    }
+    ::ng-deep .acediff__right .ace_scroller {
+      left: 0 !important;
+      right: 44px !important;
+    }
+    ::ng-deep .acediff__right .ace_scrollbar-v {
+      right: 44px !important;
+    }
+
+    // Hide the LEFT pane's vertical scrollbar — it overlaps the center gutter and
+    // covers ace-diff's copy-arrow circles. ace-diff keeps both editors scroll-
+    // synced internally, and the right pane still shows its own scrollbar, so
+    // vertical scrolling remains available via mouse wheel / right-side thumb.
+    ::ng-deep .acediff__left .ace_scrollbar,
+    ::ng-deep .acediff__left .ace_scrollbar-v {
+      display: none !important;
+      width: 0 !important;
+    }
+    // Pull the left pane's scroller flush to its right edge so no blank strip
+    // remains where the scrollbar used to sit.
+    ::ng-deep .acediff__left .ace_scroller {
+      right: 0 !important;
+    }
+    // Raise the entire center gutter above the panes so nothing from either
+    // editor can occlude the copy-arrow SVGs.
+    ::ng-deep .acediff__gutter {
+      z-index: 10;
+    }
+    ::ng-deep .acediff__gutter svg,
+    ::ng-deep .acediff__copy {
+      z-index: 11;
+      position: relative;
+    }
+    // The connector SVG paints over the copy arrows and swallows clicks.
+    // Make the whole gutter SVG click-through so the copy arrow <div>s stay hit-testable.
+    ::ng-deep .acediff__gutter svg { pointer-events: none !important; }
+    ::ng-deep .acediff__copy,
+    ::ng-deep .acediff__copy--left,
+    ::ng-deep .acediff__copy--right,
+    ::ng-deep .acediff__copy--left div,
+    ::ng-deep .acediff__copy--right div {
+      pointer-events: auto !important;
+      z-index: 12 !important;
+    }
+  }
+
+  .diff-hint {
+    font-size: 12px; color: $agent-text-secondary; margin: 6px 0 0;
+  }
+}
+
+@mixin wizard-summary {
+  .summary-card {
+    @include agent-summary-card;
+    margin-bottom: 16px;
+  }
+
+  .tb-type-badge {
+    @include agent-type-badge;
+  }
+
+  .info-box {
+    @include agent-info-box;
+    @include agent-info-box-tone;
+    margin-bottom: 16px;
+  }
+}

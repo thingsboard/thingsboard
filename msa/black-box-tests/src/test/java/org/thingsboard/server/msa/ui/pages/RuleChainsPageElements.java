@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.WebDriver;
@@ -38,6 +26,9 @@ public class RuleChainsPageElements extends OtherPageElementsHelper {
     private static final String MAKE_ROOT_FROM_VIEW = "//span[contains(text(),' Make rule chain root ')]/parent::button";
     private static final String ROOT_ACTIVE_CHECKBOXES = "//mat-icon[text() = 'check_box']";
     private static final String ALL_NAMES = "//mat-icon[contains(text(),'check')]/../../../mat-cell[contains(@class,'name')]/span";
+    private static final String HEADER_NAME_VIEW = "//header//div[@class='tb-details-title']/span";
+    private static final String EDIT_PENCIL_BTN = "//tb-entity-details-panel//mat-icon[contains(text(),'edit')]/ancestor::button";
+    private static final String DONE_BTN_EDIT_VIEW = "//mat-icon[contains(text(),'done')]/ancestor::button";
 
     public String getDeleteRuleChainFromViewBtn() {
         return DELETE_RULE_CHAIN_FROM_VIEW_BTN;
@@ -97,5 +88,22 @@ public class RuleChainsPageElements extends OtherPageElementsHelper {
 
     public WebElement createdTimeEntity(String name, String time) {
         return waitUntilElementToBeClickable(String.format(CREATED_TIME, name, time));
+    }
+
+    public WebElement ruleChainViewHeaderName() {
+        return waitUntilVisibilityOfElementLocated(HEADER_NAME_VIEW);
+    }
+
+    public WebElement editPencilRuleChainViewBtn() {
+        waitUntilVisibilityOfElementsLocated(EDIT_PENCIL_BTN);
+        return waitUntilElementToBeClickable(EDIT_PENCIL_BTN);
+    }
+
+    public WebElement doneBtnEditRuleChainView() {
+        return waitUntilElementToBeClickable(DONE_BTN_EDIT_VIEW);
+    }
+
+    public WebElement doneBtnEditRuleChainViewVisible() {
+        return waitUntilVisibilityOfElementLocated(DONE_BTN_EDIT_VIEW);
     }
 }

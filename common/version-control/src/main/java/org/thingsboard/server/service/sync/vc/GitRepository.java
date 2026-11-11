@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.collect.Iterables;
@@ -42,7 +30,9 @@ import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
+import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.GpgConfig;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -235,7 +225,7 @@ public class GitRepository {
 
     public void merge(String branch) throws IOException, GitAPIException {
         log.debug("Executing merge [{}][{}]", settings.getRepositoryUri(), branch);
-        ObjectId branchId = resolve("origin/" + branch);
+        ObjectId branchId = tryResolve("origin/" + branch);
         if (branchId == null) {
             throw new IllegalArgumentException("Branch not found");
         }
@@ -258,7 +248,7 @@ public class GitRepository {
 
     public PageData<Commit> listCommits(String branch, String path, PageLink pageLink) throws IOException, GitAPIException {
         log.debug("Executing listCommits [{}][{}][{}]", settings.getRepositoryUri(), branch, path);
-        ObjectId branchId = resolve("origin/" + branch);
+        ObjectId branchId = tryResolve("origin/" + branch);
         if (branchId == null) {
             return new PageData<>();
         }
@@ -274,7 +264,12 @@ public class GitRepository {
         return iterableToPageData(commits, this::toCommit, pageLink, revCommitComparatorFunction);
     }
 
-    public List<String> listFilesAtCommit(String commitId, String path) {
+    public List<String> listAllFilesAtCommit(String commitId) {
+        return listAllFilesAtCommit(commitId, null);
+    }
+
+    public List<String> listAllFilesAtCommit(String commitId, String path) {
+        log.debug("Executing listAllFilesAtCommit [{}][{}][{}]", settings.getRepositoryUri(), commitId, path);
         return listFilesAtCommit(commitId, path, -1).stream().map(RepoFile::path).toList();
     }
 
@@ -316,7 +311,7 @@ public class GitRepository {
         log.debug("Executing getFileContentAtCommit [{}][{}][{}]", settings.getRepositoryUri(), commit, file);
         try (TreeWalk treeWalk = TreeWalk.forPath(git.getRepository(), file, commit.getTree())) {
             if (treeWalk == null) {
-                throw new IllegalArgumentException("File not found");
+                throw new IllegalArgumentException("File " + file + " not found");
             }
             ObjectId blobId = treeWalk.getObjectId(0);
             try (ObjectReader objectReader = git.getRepository().newObjectReader()) {
@@ -365,6 +360,8 @@ public class GitRepository {
     public Commit commit(String message, String authorName, String authorEmail) throws GitAPIException {
         log.debug("Executing commit [{}][{}]", settings.getRepositoryUri(), message);
         RevCommit revCommit = execute(git.commit()
+                .setSign(false)
+                .setGpgConfig(new GpgConfig(new Config()))
                 .setAuthor(authorName, authorEmail)
                 .setMessage(message));
         return toCommit(revCommit);
@@ -465,14 +462,18 @@ public class GitRepository {
     }
 
     private ObjectId resolve(String rev) throws IOException {
-        if (settings.isLocalOnly()) {
-            rev = removeStart(rev, "origin/");
-        }
-        ObjectId result = git.getRepository().resolve(rev);
+        ObjectId result = tryResolve(rev);
         if (result == null) {
             throw new IllegalArgumentException("Failed to resolve '" + rev + "'");
         }
         return result;
+    }
+
+    private ObjectId tryResolve(String rev) throws IOException {
+        if (settings.isLocalOnly()) {
+            rev = removeStart(rev, "origin/");
+        }
+        return git.getRepository().resolve(rev);
     }
 
     @SneakyThrows

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.trendz;
 
 import lombok.RequiredArgsConstructor;
@@ -38,32 +26,35 @@ public class DefaultTrendzSettingsService implements TrendzSettingsService {
 
     private static final String SETTINGS_KEY = "trendz";
 
-    @CacheEvict(cacheNames = CacheConstants.TRENDZ_SETTINGS_CACHE, key = "#tenantId")
+    @CacheEvict(cacheNames = CacheConstants.TRENDZ_SETTINGS_CACHE, key = "'system'")
     @Override
-    public void saveTrendzSettings(TenantId tenantId, TrendzSettings settings) {
-        AdminSettings adminSettings = Optional.ofNullable(adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, SETTINGS_KEY))
+    public void saveTrendzSettings(TrendzSettings settings) {
+        log.trace("Executing saveTrendzSettings [{}]", settings);
+        AdminSettings adminSettings = Optional.ofNullable(adminSettingsService.findAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, SETTINGS_KEY))
                 .orElseGet(() -> {
                     AdminSettings newAdminSettings = new AdminSettings();
-                    newAdminSettings.setTenantId(tenantId);
+                    newAdminSettings.setTenantId(TenantId.SYS_TENANT_ID);
                     newAdminSettings.setKey(SETTINGS_KEY);
                     return newAdminSettings;
                 });
         adminSettings.setJsonValue(JacksonUtil.valueToTree(settings));
-        adminSettingsService.saveAdminSettings(tenantId, adminSettings);
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
     }
 
-    @Cacheable(cacheNames = CacheConstants.TRENDZ_SETTINGS_CACHE, key = "#tenantId")
+    @Cacheable(cacheNames = CacheConstants.TRENDZ_SETTINGS_CACHE, key = "'system'")
     @Override
-    public TrendzSettings findTrendzSettings(TenantId tenantId) {
-        return Optional.ofNullable(adminSettingsService.findAdminSettingsByTenantIdAndKey(tenantId, SETTINGS_KEY))
+    public TrendzSettings findTrendzSettings() {
+        log.trace("Executing findTrendzSettings");
+        return Optional.ofNullable(adminSettingsService.findAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, SETTINGS_KEY))
                 .map(adminSettings -> JacksonUtil.treeToValue(adminSettings.getJsonValue(), TrendzSettings.class))
-                .orElseGet(TrendzSettings::new);
+                .orElse(null);
     }
 
-    @CacheEvict(cacheNames = CacheConstants.TRENDZ_SETTINGS_CACHE, key = "#tenantId")
+    @CacheEvict(cacheNames = CacheConstants.TRENDZ_SETTINGS_CACHE, key = "'system'")
     @Override
-    public void deleteTrendzSettings(TenantId tenantId) {
-        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(tenantId, SETTINGS_KEY);
+    public void deleteTrendzSettings() {
+        log.trace("Executing deleteTrendzSettings");
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, SETTINGS_KEY);
     }
 
 }

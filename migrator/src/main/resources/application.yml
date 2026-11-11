@@ -1,0 +1,103 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+mode: ${MIGRATOR_MODE}  # TENANT_DATA_EXPORT, TENANT_DATA_IMPORT, CASSANDRA_LATEST_KV_EXPORT, POSTGRES_LATEST_KV_IMPORT
+working_directory: ${WORKING_DIRECTORY:/tb-migrator/data}  # where tenant data will be stored or read from
+# Whether to bundle the result into a single data.tar file. If enabled, individual .gz files for each table are created first, then packed into data.tar (uncompressed tar of compressed files), and original .gz files are deleted.
+# Max supported size for data.tar is about 2GB due to internal limitations.
+# Setting false will keep individual .gz files per table in the working directory.
+archive_result: ${ARCHIVE_RESULT:true}
+# Exit after migration done. Set false to sleep infinitely and prevent multiple migrator container restart by Docker or Kubernetes. Or use a container command wrapper to precisely control the lifecycle.
+exit_after_finish: ${EXIT_AFTER_FINISH:true}
+
+export:
+  tenant_id: ${EXPORTED_TENANT_ID:}
+  postgres:
+    enabled: ${POSTGRES_EXPORT_ENABLED:true}
+    batch_size: ${POSTGRES_EXPORT_BATCH_SIZE:500}
+    delay_between_queries: ${POSTGRES_EXPORT_DELAY_BETWEEN_QUERIES:0}  # in milliseconds
+  cassandra:
+    enabled: ${CASSANDRA_EXPORT_ENABLED:true}
+    ts:
+      filter:
+        # Top precedence filter to export exact partition timestamp.
+        # The idea behind this filter is to automate export by external script. Combining with workdir it is extremely useful for big databases producing separate data files with sensible size
+        # If set, no extra request to ts_partitions_cf will happen. Just a single request to ts_kv_cf with no filter by ts
+        # If set, filters below are ignored: start_ts, end_ts, partition_size_ms
+        # Partition ts value example for "Sat Nov 01 2025 00:00:00 GMT+0000" for partition size MONTH: 1761955200000
+        partition_ts: ${CASSANDRA_EXPORT_TS_FILTER_PARTITION_TS:}
+        # Timestamp bounds for exporting time-series data from Cassandra ts_kv_cf.
+        # Provide epoch millis as numbers. Leave empty to export all available data.
+        start_ts: ${CASSANDRA_EXPORT_TS_FILTER_START_TS:}
+        end_ts: ${CASSANDRA_EXPORT_TS_FILTER_END_TS:}
+        # Partition size (ms) used to compute the lower bound of partitions for startTs filtering.
+        # We will start scanning partitions from (startTs - partition_size_ms). Defaults to 31 days in ms.
+        partition_size_ms: ${CASSANDRA_EXPORT_TS_FILTER_PARTITION_SIZE_MS:${CASSANDRA_EXPORT_TS_FILTER_MONTH_MS:2678400000}}
+      order:
+        # Enforce result order by ts in the query. Disabled by default because explicit ordering is not required for export and results may be returned in any order.
+        ts: ${CASSANDRA_EXPORT_TS_ORDER_TS:false}
+
+import:
+  postgres:
+    enabled: ${POSTGRES_IMPORT_ENABLED:true}
+    delay_between_queries: ${POSTGRES_IMPORT_DELAY_BETWEEN_QUERIES:0}  # in milliseconds
+    enable_partition_creation: ${POSTGRES_IMPORT_ENABLE_PARTITION_CREATION:true}
+    update_tenant_profile: ${POSTGRES_IMPORT_UPDATE_TENANT_PROFILE:true}
+    update_ts_kv_dictionary: ${POSTGRES_IMPORT_UPDATE_TS_KV_DICTIONARY:true}
+    resolve_unknown_roles: ${POSTGRES_IMPORT_RESOLVE_UNKNOWN_ROLES:true}
+    ignore_conflicts: ${POSTGRES_IMPORT_IGNORE_CONFLICTS:false}
+  cassandra:
+    enabled: ${CASSANDRA_IMPORT_ENABLED:true}
+    ttl_days: ${CASSANDRA_IMPORT_TS_KV_TTL_DAYS:${CASSANDRA_IMPORT_TS_KV_TTL:730}}  # in days; 2 years by default
+    skip_lines: ${CASSANDRA_IMPORT_TS_KV_SKIP_LINES:0}
+
+cassandra:
+  retry:
+    # Maximum number of retry attempts for failed Cassandra queries.
+    max_retries: ${CASSANDRA_RETRY_MAX_RETRIES:10}
+    # Initial delay (ms) before the first retry attempt.
+    initial_delay: ${CASSANDRA_RETRY_INITIAL_DELAY:100}
+    # Multiplier for exponential backoff between retry attempts.
+    multiplier: ${CASSANDRA_RETRY_MULTIPLIER:2.0}
+
+skipped_tables: ${SKIPPED_TABLES:RULE_NODE_DEBUG_EVENT,STATS_EVENT,LC_EVENT}
+
+parallelism_level: ${PARALLELISM_LEVEL:12}
+stats_print_interval: ${STATS_PRINT_INTERVAL:10000}
+
+partition_sizes: # in hours
+  event: ${EVENTS_PARTITION_SIZE:168}
+  debug_event: ${DEBUG_EVENTS_PARTITION_SIZE:1}
+  edge_event: ${EDGE_EVENTS_PARTITION_SIZE:168}
+  audit_log: ${AUDIT_LOGS_PARTITION_SIZE:168}
+  blob_entity: ${BLOB_ENTITIES_PARTITION_SIZE:168}
+  report: ${REPORTS_PARTITION_SIZE:168}
+
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/thingsboard}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+
+  cassandra:
+    keyspace-name: ${CASSANDRA_KEYSPACE_NAME:thingsboard}
+    contact-points: ${CASSANDRA_URL:127.0.0.1:9042}
+    local-datacenter: ${CASSANDRA_LOCAL_DATACENTER:datacenter1}
+    request:
+      page-size: ${CASSANDRA_REQUEST_PAGE_SIZE:10000}
+      timeout: ${CASSANDRA_REQUEST_TIMEOUT:30s}
+      consistency: ${CASSANDRA_CONSISTENCY_LEVEL:local_quorum}
+    connection:
+      connect-timeout: ${CASSANDRA_REQUEST_TIMEOUT:30s}
+      init-query-timeout: ${CASSANDRA_REQUEST_TIMEOUT:30s}
+datastax-java-driver:
+  advanced:
+    request:
+      # Note: This page-size mirrors spring.cassandra.request.page-size (see above).
+      # Both are intentionally bound to CASSANDRA_REQUEST_PAGE_SIZE and must be kept in sync
+      # because different layers (Spring Cassandra config vs. underlying DataStax driver)
+      # may read from their respective namespaces.
+      page-size: ${CASSANDRA_REQUEST_PAGE_SIZE:10000}

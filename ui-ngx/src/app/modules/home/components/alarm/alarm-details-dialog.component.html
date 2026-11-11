@@ -1,22 +1,12 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="alarmFormGroup" style="width: 600px;">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ 'alarm.alarm-details' | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
@@ -35,11 +25,11 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" style="margin-bottom: 22px">
       <div class="flex flex-row gap-1.5">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>alarm.originator</mat-label>
           <input matInput formControlName="originatorName" readonly>
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>alarm.severity</mat-label>
           <input matInput formControlName="alarmSeverity" readonly
                  style="font-weight: bold"
@@ -48,24 +38,24 @@
       </div>
       <div class="flex flex-row gap-1.5">
         @if (alarmFormGroup.get('startTime').value) {
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>alarm.start-time</mat-label>
             <input matInput formControlName="startTime" readonly>
           </mat-form-field>
         }
         @if (alarmFormGroup.get('duration').value) {
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>alarm.duration</mat-label>
             <input matInput formControlName="duration" readonly>
           </mat-form-field>
         }
       </div>
       <div class="flex flex-row gap-1.5">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>alarm.type</mat-label>
           <input matInput formControlName="type" readonly>
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>alarm.status</mat-label>
           <input matInput formControlName="alarmStatus" readonly>
         </mat-form-field>

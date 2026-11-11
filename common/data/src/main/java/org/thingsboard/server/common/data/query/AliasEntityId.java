@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -24,11 +12,31 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 
+import java.util.UUID;
+
 @JsonDeserialize(using = AliasEntityIdDeserializer.class)
 @JsonSerialize(using = AliasEntityIdSerializer.class)
 @Schema
 public interface AliasEntityId extends EntityId {
 
+    // The schema follows AliasEntityIdSerializer/AliasEntityIdDeserializer rather
+    // than the getters: entityType carries either an EntityType or an
+    // AliasEntityType name, id is only required for an EntityType, and
+    // aliasEntityType is never written.
+    @Override
+    @Schema(implementation = String.class, requiredMode = Schema.RequiredMode.REQUIRED,
+            description = "Entity type: an EntityType value, or an AliasEntityType value resolved for the current user",
+            example = "DEVICE")
+    EntityType getEntityType();
+
+    @Override
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+            description = "ID of the entity, time-based UUID v1. Required for an entity type; for " +
+                    "CURRENT_CUSTOMER, the customer used when the current user does not belong to one",
+            example = "784f394c-42b6-435a-983c-b7beff2784f9")
+    UUID getId();
+
+    @Schema(hidden = true)
     AliasEntityType getAliasEntityType();
 
     EntityId defaultEntityId();

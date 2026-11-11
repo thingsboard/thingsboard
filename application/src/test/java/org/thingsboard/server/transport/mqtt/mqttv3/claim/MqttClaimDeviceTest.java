@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.mqttv3.claim;
 
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +19,7 @@ import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_CLAIM_SHORT_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_CLAIM_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_CLAIM_TOPIC;
 
@@ -58,6 +47,16 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
     }
 
     @Test
+    public void testClaimingDeviceOnShortTopic() throws Exception {
+        processTestClaimingDevice(false, DEVICE_CLAIM_SHORT_TOPIC);
+    }
+
+    @Test
+    public void testClaimingDeviceOnShortTopicWithoutSecretAndDuration() throws Exception {
+        processTestClaimingDevice(true, DEVICE_CLAIM_SHORT_TOPIC);
+    }
+
+    @Test
     public void testGatewayClaimingDevice() throws Exception {
         processTestGatewayClaimingDevice("Test claiming gateway device", false);
     }
@@ -69,6 +68,10 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
 
 
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
+        processTestClaimingDevice(emptyPayload, DEVICE_CLAIM_TOPIC);
+    }
+
+    protected void processTestClaimingDevice(boolean emptyPayload, String claimTopic) throws Exception {
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(accessToken);
         byte[] payloadBytes;
@@ -80,14 +83,14 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
             payloadBytes = "{\"secretKey\":\"value\", \"durationMs\":60000}".getBytes();
             failurePayloadBytes = "{\"secretKey\":\"value\", \"durationMs\":1}".getBytes();
         }
-        validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes);
+        validateClaimResponse(emptyPayload, client, payloadBytes, failurePayloadBytes, claimTopic);
     }
 
-    protected void validateClaimResponse(boolean emptyPayload, MqttTestClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
-        client.publishAndWait(DEVICE_CLAIM_TOPIC, failurePayloadBytes);
+    protected void validateClaimResponse(boolean emptyPayload, MqttTestClient client, byte[] payloadBytes, byte[] failurePayloadBytes, String claimTopic) throws Exception {
+        client.publishAndWait(claimTopic, failurePayloadBytes);
         awaitForClaimingInfoToBeRegistered(savedDevice.getId());
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
         ClaimRequest claimRequest;
         if (!emptyPayload) {
             claimRequest = new ClaimRequest("value");
@@ -103,7 +106,7 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
 
         assertEquals(claimResponse, ClaimResponse.FAILURE);
 
-        client.publishAndWait(DEVICE_CLAIM_TOPIC, payloadBytes);
+        client.publishAndWait(claimTopic, payloadBytes);
         client.disconnect();
         awaitForClaimingInfoToBeRegistered(savedDevice.getId());
 
@@ -134,7 +137,7 @@ public class MqttClaimDeviceTest extends AbstractMqttIntegrationTest {
         assertNotNull(savedDevice);
         awaitForClaimingInfoToBeRegistered(savedDevice.getId());
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
         ClaimRequest claimRequest;
         if (!emptyPayload) {
             claimRequest = new ClaimRequest("value");

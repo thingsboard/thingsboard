@@ -1,0 +1,108 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div mat-dialog-title class="tb-preset-dialog-header">
+  <h2 translate>agent.add-profile</h2>
+  <div tb-help="agentProfiles"></div>
+  <button mat-icon-button (click)="cancel()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content class="tb-preset-dialog-body" [class.tb-preset-body-advanced]="mode === 'advanced'">
+  @if (mode === 'advanced') {
+    <tb-agent-profile-wizard
+      [embedded]="true"
+      [showBack]="true"
+      [defaults]="advancedDefaults"
+      [lockedAppType]="data?.lockedAppType"
+      (finished)="onAdvancedFinished($event)"
+      (cancelled)="cancel()"
+      (backClicked)="onAdvancedBack()">
+    </tb-agent-profile-wizard>
+  }
+
+  @if (mode === 'preset') {
+    <form [formGroup]="form">
+      <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>agent.profile-name</mat-label>
+        <input matInput formControlName="name" required
+          (input)="onNameInput()"
+          [placeholder]="'agent.profile-name-placeholder' | translate">
+        @if (form.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'agent.profile-name-required' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+    </form>
+    <div class="tb-preset-section-label" translate>agent.preset-setup</div>
+    <div class="tb-preset-grid">
+      @for (tile of tiles; track tile.labelKey) {
+        <button type="button" class="tb-preset-tile"
+          [class.selected]="selectedTile === tile"
+          [class.disabled]="tileDisabled(tile)"
+          [disabled]="tileDisabled(tile)"
+          [attr.aria-pressed]="selectedTile === tile"
+          (click)="selectTile(tile)">
+          <mat-icon class="tile-icon">{{ tile.icon }}</mat-icon>
+          <div class="tile-title-row">
+            <span class="tile-title">{{ tile.labelKey | translate }}</span>
+          </div>
+          <span class="tile-description">{{ tile.descriptionKey | translate }}</span>
+          <div class="tile-chips">
+            @for (chip of versionChips(tile); track chip) {
+              <span class="tile-chip">{{ chip }}</span>
+            }
+          </div>
+          @if (selectedTile === tile) {
+            <mat-icon class="tile-check">check_circle</mat-icon>
+          }
+        </button>
+      }
+      <button type="button" class="tb-preset-tile advanced" (click)="advanced()">
+        <mat-icon class="tile-icon advanced-icon">tune</mat-icon>
+        <span class="tile-title" translate>agent.preset-advanced</span>
+        <span class="tile-description" translate>agent.preset-advanced-description</span>
+        <span class="tile-configure">
+          {{ 'agent.preset-advanced-configure' | translate }}
+          <mat-icon>chevron_right</mat-icon>
+        </span>
+      </button>
+    </div>
+    @if (templatesState === 'loaded' && missingTypes.length) {
+      <div class="tb-wizard-hint warn">
+        <mat-icon class="hint-icon">warning_amber</mat-icon>
+        <div>
+          <div class="hint-body">{{ 'agent.preset-templates-load-failed' | translate: { types: missingTypesLabel } }}</div>
+          <button mat-button color="primary" type="button" (click)="retryTemplates()">
+            {{ 'action.retry' | translate }}
+          </button>
+        </div>
+      </div>
+    }
+    @if (selectedTile) {
+      <div class="tb-wizard-hint">
+        <mat-icon class="hint-icon">help_outline</mat-icon>
+        <div>
+          <div class="hint-title">{{ 'agent.preset-summary-title' | translate: { label: (selectedTile.labelKey | translate) } }}</div>
+          <div class="hint-body">{{ summaryBody }}</div>
+        </div>
+      </div>
+    }
+  }
+</div>
+
+@if (mode === 'preset') {
+  <div mat-dialog-actions align="end" class="tb-preset-dialog-footer">
+    <button mat-button (click)="cancel()" [disabled]="submitting">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit">
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+}

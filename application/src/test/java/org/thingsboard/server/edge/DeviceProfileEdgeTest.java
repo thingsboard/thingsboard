@@ -1,27 +1,17 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.data.PowerMode;
@@ -41,8 +31,10 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingC
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.NoSecLwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -95,7 +87,9 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         OtaPackageInfo softwareOtaPackageInfo = saveOtaPackageInfo(deviceProfile.getId(), OtaPackageType.SOFTWARE);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        DashboardId thermostatsDashboardId = createDashboardAndAssignToEdge("Thermostats Dashboard");
+        // create dashboard entity group and assign to edge
+        EntityGroup tmpDashboardEntityGroup = createEntityGroupAndAssignToEdge(EntityType.DASHBOARD, "DeviceProfileTestDashboardGroup", tenantId);
+        DashboardId thermostatsDashboardId = createDashboardAndAssignToEdge("Thermostats Dashboard", tmpDashboardEntityGroup.getId());
 
         deviceProfile.setFirmwareId(firmwareOtaPackageInfo.getId());
         deviceProfile.setSoftwareId(softwareOtaPackageInfo.getId());
@@ -123,7 +117,23 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(deviceProfile.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
 
         unAssignFromEdgeAndDeleteRuleChain(thermostatsRuleChainId);
-        unAssignFromEdgeAndDeleteDashboard(thermostatsDashboardId);
+        unAssignFromEdgeAndDeleteDashboard(thermostatsDashboardId, tmpDashboardEntityGroup);
+    }
+
+    private void unAssignFromEdgeAndDeleteDashboard(DashboardId thermostatsDashboardId, EntityGroup tmpDashboardEntityGroup) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/dashboard/" + thermostatsDashboardId.getId())
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        unAssignEntityGroupFromEdge(tmpDashboardEntityGroup);
+    }
+
+    private DashboardId createDashboardAndAssignToEdge(String dashboardTitle, EntityGroupId tmpDashboardEntityGroupId) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        Dashboard savedDashboard = saveDashboard(dashboardTitle, tmpDashboardEntityGroupId);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        return savedDashboard.getId();
     }
 
     @Test
@@ -156,7 +166,7 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
                 .andExpect(status().isOk());
 
-        // 25 sync message
+        // 36 sync message
         // + 1 RuleChain Added
         // + 1 RuleChainMetadata Added
         // + 1 DeviceProfile Delete
@@ -245,13 +255,13 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertFalse(transportConfiguration.getBootstrap().isEmpty());
         LwM2MBootstrapServerCredential lwM2MBootstrapServerCredential = transportConfiguration.getBootstrap().get(0);
         Assert.assertTrue(lwM2MBootstrapServerCredential instanceof NoSecLwM2MBootstrapServerCredential);
-        NoSecLwM2MBootstrapServerCredential noSecLwM2MBootstrapServerCredential = (NoSecLwM2MBootstrapServerCredential) lwM2MBootstrapServerCredential;
+        NoSecLwM2MBootstrapServerCredential noSecLwM2MBootstrapSectionDmServerCredential = (NoSecLwM2MBootstrapServerCredential) lwM2MBootstrapServerCredential;
 
-        Assert.assertEquals("PUBLIC_KEY", noSecLwM2MBootstrapServerCredential.getServerPublicKey());
-        Assert.assertEquals(Integer.valueOf(123), noSecLwM2MBootstrapServerCredential.getShortServerId());
-        Assert.assertFalse(noSecLwM2MBootstrapServerCredential.isBootstrapServerIs());
-        Assert.assertEquals("localhost", noSecLwM2MBootstrapServerCredential.getHost());
-        Assert.assertEquals(Integer.valueOf(5685), noSecLwM2MBootstrapServerCredential.getPort());
+        Assert.assertEquals("PUBLIC_KEY", noSecLwM2MBootstrapSectionDmServerCredential.getServerPublicKey());
+        Assert.assertEquals(Integer.valueOf(123), noSecLwM2MBootstrapSectionDmServerCredential.getShortServerId());
+        Assert.assertFalse(noSecLwM2MBootstrapSectionDmServerCredential.isBootstrapServerIs());
+        Assert.assertEquals("localhost", noSecLwM2MBootstrapSectionDmServerCredential.getHost());
+        Assert.assertEquals(Integer.valueOf(5685), noSecLwM2MBootstrapSectionDmServerCredential.getPort());
 
         TelemetryMappingConfiguration observeAttr = transportConfiguration.getObserveAttr();
         Assert.assertEquals("batteryLevel", observeAttr.getKeyName().get("/3_1.2/0/9"));
@@ -310,11 +320,9 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
     @Test
     public void testSendDeviceProfileToCloud() throws Exception {
         RuleChainId ruleChainId = createEdgeRuleChainAndAssignToEdge("Device Profile Rule Chain");
-        DashboardId dashboardId = createDashboardAndAssignToEdge("Device Profile Dashboard");
 
         DeviceProfile deviceProfileMsg = buildDeviceProfileForUplinkMsg("Device Profile On Edge");
         deviceProfileMsg.setDefaultRuleChainId(ruleChainId);
-        deviceProfileMsg.setDefaultDashboardId(dashboardId);
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         DeviceProfileUpdateMsg.Builder deviceProfileUpdateMsgBuilder = DeviceProfileUpdateMsg.newBuilder();
@@ -352,7 +360,6 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(deviceProfile.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
 
         // cleanup
-        unAssignFromEdgeAndDeleteDashboard(dashboardId);
         unAssignFromEdgeAndDeleteRuleChain(ruleChainId);
     }
 
@@ -413,15 +420,15 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
                 JacksonUtil.fromString(AbstractLwM2MIntegrationTest.TELEMETRY_WITHOUT_OBSERVE, TelemetryMappingConfiguration.class);
         transportConfiguration.setObserveAttr(observeAttrConfiguration);
 
-        List<LwM2MBootstrapServerCredential> bootstrap = new ArrayList<>();
-        AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
-        bootstrapServerCredential.setServerPublicKey("PUBLIC_KEY");
-        bootstrapServerCredential.setShortServerId(123);
-        bootstrapServerCredential.setBootstrapServerIs(false);
-        bootstrapServerCredential.setHost("localhost");
-        bootstrapServerCredential.setPort(5685);
-        bootstrap.add(bootstrapServerCredential);
-        transportConfiguration.setBootstrap(bootstrap);
+        List<LwM2MBootstrapServerCredential> bootstrapSections = new ArrayList<>();
+        AbstractLwM2MBootstrapServerCredential bootstrapSectionServerCredential = new NoSecLwM2MBootstrapServerCredential();
+        bootstrapSectionServerCredential.setServerPublicKey("PUBLIC_KEY");
+        bootstrapSectionServerCredential.setShortServerId(123);
+        bootstrapSectionServerCredential.setBootstrapServerIs(false);
+        bootstrapSectionServerCredential.setHost("localhost");
+        bootstrapSectionServerCredential.setPort(5685);
+        bootstrapSections.add(bootstrapSectionServerCredential);
+        transportConfiguration.setBootstrap(bootstrapSections);
 
         return transportConfiguration;
     }

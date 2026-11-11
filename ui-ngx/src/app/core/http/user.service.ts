@@ -1,28 +1,16 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { ActivationLinkInfo, User, UserEmailInfo } from '@shared/models/user.model';
+import { ActivationLinkInfo, User, UserEmailInfo, UserInfo } from '@shared/models/user.model';
 import { Observable } from 'rxjs';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { isDefined } from '@core/utils';
-import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
+import { map } from 'rxjs/operators';
+import { sortEntitiesByIds } from '@shared/models/base-data';
 
 @Injectable({
   providedIn: 'root'
@@ -32,12 +20,6 @@ export class UserService {
   constructor(
     private http: HttpClient
   ) { }
-
-  public getUsers(pageLink: PageLink,
-                  config?: RequestConfig): Observable<PageData<User>> {
-    return this.http.get<PageData<User>>(`/api/users${pageLink.toQuery()}`,
-      defaultHttpOptionsFromConfig(config));
-  }
 
   public getTenantAdmins(tenantId: string, pageLink: PageLink,
                          config?: RequestConfig): Observable<PageData<User>> {
@@ -51,6 +33,12 @@ export class UserService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getAllCustomerUsers(pageLink: PageLink,
+                             config?: RequestConfig): Observable<PageData<User>> {
+    return this.http.get<PageData<User>>(`/api/customer/users${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getUsersForAssign(alarmId: string, pageLink: PageLink,
                           config?: RequestConfig): Observable<PageData<UserEmailInfo>> {
     return this.http.get<PageData<UserEmailInfo>>(`/api/users/assign/${alarmId}${pageLink.toQuery()}`,
@@ -61,14 +49,53 @@ export class UserService {
     return this.http.get<User>(`/api/user/${userId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getUsersByIds(userIds: Array<string>, config?: RequestConfig): Observable<Array<User>> {
-    return this.http.get<Array<User>>(`/api/users?userIds=${userIds.join(',')}`, defaultHttpOptionsFromConfig(config));
+  public getUserInfo(userId: string, config?: RequestConfig): Observable<UserInfo> {
+    return this.http.get<UserInfo>(`/api/user/info/${userId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getUsers(userIds: Array<string>, config?: RequestConfig): Observable<Array<User>> {
+    return this.http.get<Array<User>>(`/api/users?userIds=${userIds.join(',')}`, defaultHttpOptionsFromConfig(config)).pipe(
+      map((users) => sortEntitiesByIds(users, userIds))
+    );
+  }
+
+  public getUserUsers(pageLink: PageLink,
+                      config?: RequestConfig): Observable<PageData<User>> {
+    return this.http.get<PageData<User>>(`/api/user/users${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAllUserInfos(includeCustomers: boolean,
+                         pageLink: PageLink, config?: RequestConfig): Observable<PageData<UserInfo>> {
+    let url = `/api/userInfos/all${pageLink.toQuery()}`;
+    if (includeCustomers) {
+      url += `&includeCustomers=true`;
+    }
+    return this.http.get<PageData<UserInfo>>(url,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getCustomerUserInfos(includeCustomers: boolean, customerId: string,
+                              pageLink: PageLink, config?: RequestConfig): Observable<PageData<UserInfo>> {
+    let url = `/api/customer/${customerId}/userInfos${pageLink.toQuery()}`;
+    if (includeCustomers) {
+      url += `&includeCustomers=true`;
+    }
+    return this.http.get<PageData<UserInfo>>(url,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public saveUser(user: User, sendActivationMail: boolean = false,
+                  entityGroupIds?: string | string[],
                   config?: RequestConfig): Observable<User> {
-    let url = '/api/user';
-    url += '?sendActivationMail=' + sendActivationMail;
+    let url = `/api/user?sendActivationMail=${sendActivationMail}`;
+    if (entityGroupIds) {
+      if (Array.isArray(entityGroupIds)) {
+        url += `&entityGroupIds=${entityGroupIds.join(',')}`;
+      } else {
+        url += `&entityGroupId=${entityGroupIds}`;
+      }
+    }
     return this.http.post<User>(url, user, defaultHttpOptionsFromConfig(config));
   }
 

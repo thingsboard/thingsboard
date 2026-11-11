@@ -1,27 +1,36 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { inject, NgModule } from '@angular/core';
+import { ActivatedRouteSnapshot, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { MenuId } from '@core/services/menu.models';
 import {
   MobileQrCodeWidgetSettingsComponent
 } from '@home/pages/mobile/qr-code-widget/mobile-qr-code-widget-settings.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
+import { forkJoin, of } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { MobileApplicationService } from '@core/http/mobile-application.service';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { QrCodeSettings } from '@shared/models/mobile-app.models';
+import { LoginWhiteLabelingParams } from '@shared/models/white-labeling.models';
+
+export const qrCodeWidgetSettingsResolver: ResolveFn<{
+  mobileAppSettings: QrCodeSettings;
+  loginWhiteLabelParams: LoginWhiteLabelingParams;
+}> = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  store = inject(Store<AppState>),
+  mobileAppService = inject(MobileApplicationService),
+  wl = inject(WhiteLabelingService)
+) => forkJoin({
+  mobileAppSettings: mobileAppService.getMobileAppSettings(),
+  loginWhiteLabelParams: getCurrentAuthUser(store).authority === Authority.TENANT_ADMIN ?
+    wl.getCurrentLoginWhiteLabelParams() : of(null as LoginWhiteLabelingParams)
+});
 
 export const qrCodeWidgetRoutes: Routes = [
   {
@@ -34,6 +43,9 @@ export const qrCodeWidgetRoutes: Routes = [
       breadcrumb: {
         menuId: MenuId.mobile_qr_code_widget
       }
+    },
+    resolve: {
+      qrCodeWidgetSettings: qrCodeWidgetSettingsResolver
     }
   }
 ];

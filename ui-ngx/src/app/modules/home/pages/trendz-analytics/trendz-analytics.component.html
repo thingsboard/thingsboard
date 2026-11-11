@@ -1,0 +1,292 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-anchor #replaceComponentAnchor></tb-anchor>
+@if (trendzEnabled) {
+  @if(trendzSynced) {
+    <div class="cards-wrapper flex flex-col">
+      <div class="cards-grid">
+        <mat-card appearance="outlined" class="card flex flex-col">
+          <mat-card-header>
+            <div class="card-header flex items-start justify-center">
+              <div class="card-title-container flex flex-1 flex-col">
+                <div class="card-title flex items-center">
+                  <tb-icon color="primary">query_stats</tb-icon>
+                  <div tbTruncateWithTooltip>{{ 'trendz-analytics.anomaly-detection' | translate }}</div>
+                </div>
+                <div class="card-subtitle" tbTruncateWithTooltip>{{ 'trendz-analytics.anomaly-detection-description' | translate }}</div>
+              </div>
+              @if(trendzSummary?.anomalyModelSummaryItems.length > 0) {
+              <a mat-icon-button href="/trendz/anomalies/new" target="_blank" class="tb-mat-40 flex">
+                <mat-icon color="primary">add</mat-icon>
+              </a>
+              <a mat-button mat-raised-button color="primary" href="/trendz/anomalies" target="_blank">
+                {{ 'trendz-analytics.view-all' | translate }}
+              </a>
+            } @else {
+              <a mat-button mat-raised-button color="primary" href="/trendz/anomalies/new" target="_blank">
+                {{ 'trendz-analytics.add-new' | translate }}
+              </a>}
+            </div>
+          </mat-card-header>
+          <mat-card-content class="card-content flex flex-1">
+            @if(isLoading$ | async) {
+              <ng-container [ngTemplateOutlet]="loading" [ngTemplateOutletContext]="{loadingKey: 'trendz-analytics.loading-anomaly-model'}"></ng-container>
+            } @else if(trendzSummary?.anomalyModelSummaryItems.length > 0) {
+              <div class="entities-table flex-1">
+                @for(item of trendzSummary.anomalyModelSummaryItems; track item.modelId) {
+                  <div class="entity-item flex">
+                    <a class="entity-name flex-1" href="/trendz/anomalies/{{item.modelId}}" target="_blank" tbTruncateWithTooltip>
+                      {{ item.modelName }}
+                    </a>
+                  <span class="entity-status" [class.active]="item.enabled">{{ (item.enabled ? 'trendz-analytics.enabled' : 'trendz-analytics.disabled') | translate }}</span>
+                </div>
+                }
+              </div>
+            } @else {
+              <ng-container [ngTemplateOutlet]="noData" [ngTemplateOutletContext]="{emptyKey: 'trendz-analytics.no-anomaly-models-found'}"></ng-container>
+            }
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined" class="card flex flex-col">
+          <mat-card-header>
+            <div class="card-header flex items-start justify-center">
+              <div class="card-title-container flex flex-1 flex-col">
+                <div class="card-title flex items-center">
+                  <tb-icon color="primary">show_chart</tb-icon>
+                  <div tbTruncateWithTooltip>{{ 'trendz-analytics.metric-explorer' | translate }}</div>
+                </div>
+                <div class="card-subtitle" tbTruncateWithTooltip>{{ 'trendz-analytics.metric-explorer-description' | translate }}</div>
+              </div>
+
+                <a mat-button mat-raised-button color="primary" href="/trendz/metric-explorer" target="_blank" [disabled]="(isLoading$ | async)">
+                  {{ 'trendz-analytics.explore' | translate }}
+                </a>
+
+            </div>
+          </mat-card-header>
+          <mat-card-content class="card-content flex flex-1">
+            @if(isLoading$ | async) {
+              <ng-container [ngTemplateOutlet]="loading" [ngTemplateOutletContext]="{loadingKey: 'trendz-analytics.loading-metric-explorer'}"></ng-container>
+            } @else if(trendzSummary?.metricSummaryItems.length > 0) {
+              <div class="entities-table flex-1">
+                @for(item of trendzSummary.metricSummaryItems; track item.itemId) {
+                  <div class="entity-item flex">
+                    <a class="entity-name flex-1" [href]="getMetricLink(item)" target="_blank" tbTruncateWithTooltip>
+                      {{ item.metricData?.metricName ?? item.fieldData?.fieldName }}
+                    </a>
+                    </div>
+                }
+              </div>
+            } @else {
+              <ng-container [ngTemplateOutlet]="noData" [ngTemplateOutletContext]="{emptyKey: 'trendz-analytics.no-metrics-found'}"></ng-container>
+            }
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined" class="card flex flex-col">
+          <mat-card-header>
+            <div class="card-header flex items-start justify-center">
+              <div class="card-title-container flex flex-1 flex-col">
+                <div class="card-title flex items-center">
+                  <tb-icon color="primary">calculate</tb-icon>
+                  <div tbTruncateWithTooltip>{{ 'trendz-analytics.calculated-fields' | translate }}</div>
+                </div>
+                <div class="card-subtitle" tbTruncateWithTooltip>{{ 'trendz-analytics.calculated-fields-description' | translate }}</div>
+              </div>
+              @if(trendzSummary?.calculationFieldSummaryItems.length > 0) {
+                <a mat-icon-button href="/trendz/calculation/new" target="_blank" class="tb-mat-40 flex">
+                  <mat-icon color="primary">add</mat-icon>
+                </a>
+                <a mat-button mat-raised-button color="primary" href="/trendz/calculation" target="_blank">
+                  {{ 'trendz-analytics.view-all' | translate }}
+                </a>
+              } @else {
+                <a mat-button mat-raised-button color="primary" href="/trendz/calculation/new" target="_blank">
+                  {{ 'trendz-analytics.add-new' | translate }}
+                </a>
+              }
+            </div>
+          </mat-card-header>
+          <mat-card-content class="card-content flex flex-1">
+            @if(isLoading$ | async) {
+              <ng-container [ngTemplateOutlet]="loading" [ngTemplateOutletContext]="{loadingKey: 'trendz-analytics.loading-calculation-field'}"></ng-container>
+            } @else if(trendzSummary?.calculationFieldSummaryItems.length > 0){
+              <div class="entities-table flex-1">
+                @for(item of trendzSummary?.calculationFieldSummaryItems; track item.calculationId) {
+                  <div class="entity-item flex">
+                    <a class="entity-name flex-1" href="/trendz/calculation/{{item.calculationId}}" target="_blank" tbTruncateWithTooltip>
+                      {{ item.calculationName }}
+                    </a>
+                    <span class="entity-status" [class.active]="item.enabled">{{ (item.enabled ? 'trendz-analytics.enabled' : 'trendz-analytics.disabled') | translate }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <ng-container [ngTemplateOutlet]="noData" [ngTemplateOutletContext]="{emptyKey: 'trendz-analytics.no-calculated-fields-found'}"></ng-container>
+            }
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined" class="card flex flex-col">
+          <mat-card-header>
+            <div class="card-header flex items-start justify-center">
+              <div class="card-title-container flex flex-1 flex-col">
+                <div class="card-title flex items-center">
+                  <tb-icon color="primary">troubleshoot</tb-icon>
+                  <div tbTruncateWithTooltip>{{ 'trendz-analytics.prediction-models' | translate }}</div>
+                </div>
+                <div class="card-subtitle" tbTruncateWithTooltip>{{ 'trendz-analytics.prediction-models-description' | translate }}</div>
+              </div>
+              @if(trendzSummary?.predictionModelSummaryItems.length > 0) {
+                <a mat-icon-button href="/trendz/prediction/new" target="_blank" class="tb-mat-40 flex">
+                  <mat-icon color="primary">add</mat-icon>
+                </a>
+                <a mat-button mat-raised-button color="primary" href="/trendz/prediction" target="_blank">
+                  {{ 'trendz-analytics.view-all' | translate }}
+                </a>
+              } @else {
+                <a mat-button mat-raised-button color="primary" href="/trendz/prediction/new" target="_blank">
+                  {{ 'trendz-analytics.add-new' | translate }}
+                </a>
+              }
+            </div>
+          </mat-card-header>
+          <mat-card-content class="card-content flex flex-1">
+            @if(isLoading$ | async) {
+              <ng-container [ngTemplateOutlet]="loading" [ngTemplateOutletContext]="{loadingKey: 'trendz-analytics.loading-prediction-model'}"></ng-container>
+            } @else if(trendzSummary?.predictionModelSummaryItems.length > 0){
+              <div class="entities-table flex-1">
+                @for(item of trendzSummary?.predictionModelSummaryItems; track item.modelId) {
+                  <div class="entity-item flex">
+                    <a class="entity-name flex-1" href="/trendz/prediction/{{item.modelId}}" target="_blank" tbTruncateWithTooltip>
+                      {{ item.modelName }}
+                    </a>
+                    <span class="entity-status" [class.active]="item.enabled">{{ (item.enabled ? 'trendz-analytics.enabled' : 'trendz-analytics.disabled') | translate }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <ng-container [ngTemplateOutlet]="noData" [ngTemplateOutletContext]="{emptyKey: 'trendz-analytics.no-prediction-models-found'}"></ng-container>
+            }
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined" class="card flex flex-col">
+          <mat-card-header>
+            <div class="card-header flex items-start justify-center">
+              <div class="card-title-container flex flex-1 flex-col">
+                <div class="card-title flex items-center">
+                  <tb-icon color="primary">visibility-outline</tb-icon>
+                  <div tbTruncateWithTooltip>{{ 'trendz-analytics.views' | translate }}</div>
+                </div>
+                <div class="card-subtitle" tbTruncateWithTooltip>{{ 'trendz-analytics.views-description' | translate }}</div>
+              </div>
+              @if(trendzSummary?.viewSummaryItems.length > 0) {
+                <button mat-icon-button [matMenuTriggerFor]="viewTypeMenu" class="tb-mat-40 flex">
+                  <mat-icon color="primary">add</mat-icon>
+                </button>
+                <a mat-button mat-raised-button color="primary" href="/trendz/" target="_blank">
+                  {{ 'trendz-analytics.view-all' | translate }}
+                </a>
+              } @else {
+                <button mat-button mat-raised-button color="primary" [matMenuTriggerFor]="viewTypeMenu">
+                  {{ 'trendz-analytics.add-new' | translate }}
+                </button>
+              }
+              <mat-menu #viewTypeMenu="matMenu">
+                @for (viewType of trendzViewTypes; track viewType) {
+                <a mat-menu-item class="view-item"  href="/trendz/editConfig?viewType={{ viewType.key }}" target="_blank">
+                  {{ viewType.value | translate }}
+                </a>}
+              </mat-menu>
+            </div>
+          </mat-card-header>
+          <mat-card-content class="card-content flex flex-1">
+            @if(isLoading$ | async) {
+              <ng-container [ngTemplateOutlet]="loading" [ngTemplateOutletContext]="{loadingKey: 'trendz-analytics.loading-views'}"></ng-container>
+            } @else {
+              @if(trendzSummary?.viewSummaryItems.length > 0) {
+                <div class="entities-table flex-1">
+                  @for(item of trendzSummary.viewSummaryItems; track item.viewConfigId) {
+                    <div class="entity-item flex">
+                      <a class="entity-name flex-1" href="/trendz/editConfig/{{item.viewConfigId}}" target="_blank" tbTruncateWithTooltip>
+                        {{ item.viewName }}
+                      </a>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <ng-container [ngTemplateOutlet]="noData" [ngTemplateOutletContext]="{emptyKey: 'trendz-analytics.no-views-found'}"></ng-container>
+              }
+            }
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined" class="card flex flex-col">
+          <mat-card-header>
+            <div class="card-header flex items-start justify-center">
+              <div class="card-title-container flex flex-1 flex-col">
+                <div class="card-title flex items-center">
+                  <tb-icon color="primary">reviews</tb-icon>
+                  <div tbTruncateWithTooltip>{{ 'trendz-analytics.ai-assistant' | translate }}</div>
+                </div>
+                <div class="card-subtitle" tbTruncateWithTooltip>{{ 'trendz-analytics.ai-assistant-description' | translate }}</div>
+              </div>
+              @if(trendzSummary?.aiSummaryItems.length > 0) {
+                <a mat-icon-button href="/trendz/assistant/chats/new" target="_blank" class="tb-mat-40 flex">
+                  <mat-icon color="primary">add</mat-icon>
+                </a>
+                <a mat-button mat-raised-button color="primary" href="/trendz/assistant/chats" target="_blank">
+                  {{ 'trendz-analytics.view-all' | translate }}
+                </a>
+              } @else {
+                <a mat-button mat-raised-button color="primary" href="/trendz/assistant/chats/new" target="_blank">
+                  {{ 'trendz-analytics.add-new' | translate }}
+                </a>
+              }
+            </div>
+          </mat-card-header>
+          <mat-card-content class="card-content flex flex-1">
+            @if(isLoading$ | async) {
+              <ng-container [ngTemplateOutlet]="loading" [ngTemplateOutletContext]="{loadingKey: 'trendz-analytics.loading-ai-assistant'}"></ng-container>
+            } @else if(trendzSummary?.aiSummaryItems.length > 0){
+              <div class="entities-table flex-1">
+                @for(item of trendzSummary.aiSummaryItems; track item.chatId) {
+                  <div class="entity-item flex">
+                    <a class="entity-name flex-1" href="/trendz/assistant/chats/{{item.chatId}}" target="_blank" tbTruncateWithTooltip>
+                      {{ item.chatSummary ?? item.lastMessage }}
+                    </a>
+                  </div>
+                }
+              </div>
+            } @else {
+              <ng-container [ngTemplateOutlet]="noData" [ngTemplateOutletContext]="{emptyKey: 'trendz-analytics.no-chats-found'}"></ng-container>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  } @else {
+    <div class="trendz-unavailable">
+      <svg height="100%" width="100%" viewBox="0 0 1650 876" preserveAspectRatio="none">
+      <use [attr.xlink:href]="'/assets/trendz/homepage.svg#trendz-homepage'"></use>
+    </svg>
+  </div>
+  }
+}
+
+<ng-template #loading let-loadingKey="loadingKey">
+  <div class="tb-no-data-available gap-2">
+    <mat-spinner color="accent" diameter="65" strokeWidth="4"></mat-spinner>
+    <span class="tb-no-data-text">
+      {{ loadingKey | translate }}
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #noData let-emptyKey="emptyKey">
+  <div class="tb-no-data-available">
+    <div class="tb-no-data-bg"></div>
+    <div class="tb-no-data-text">{{ emptyKey | translate }}</div>
+  </div>
+</ng-template>

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { RuleNodeId } from '@shared/models/id/rule-node-id';
@@ -27,7 +14,6 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 import { EntityTestScriptResult, HasEntityDebugSettings } from '@shared/models/entity.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { strings } from '@angular-devkit/core';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
@@ -220,6 +206,7 @@ export enum RuleNodeType {
   ENRICHMENT = 'ENRICHMENT',
   TRANSFORMATION = 'TRANSFORMATION',
   ACTION = 'ACTION',
+  ANALYTICS = 'ANALYTICS',
   EXTERNAL = 'EXTERNAL',
   FLOW = 'FLOW',
   UNKNOWN = 'UNKNOWN',
@@ -231,6 +218,7 @@ export const ruleNodeTypesLibrary = [
   RuleNodeType.ENRICHMENT,
   RuleNodeType.TRANSFORMATION,
   RuleNodeType.ACTION,
+  RuleNodeType.ANALYTICS,
   RuleNodeType.EXTERNAL,
   RuleNodeType.FLOW,
 ];
@@ -284,6 +272,16 @@ export const ruleNodeTypeDescriptors = new Map<RuleNodeType, RuleNodeTypeDescrip
         details: 'rulenode.type-action-details',
         nodeClass: 'tb-action-type',
         icon: 'flash_on'
+      }
+    ],
+    [
+      RuleNodeType.ANALYTICS,
+      {
+        value: RuleNodeType.ANALYTICS,
+        name: 'rulenode.type-analytics',
+        details: 'rulenode.type-analytics-details',
+        nodeClass: 'tb-analytics-type',
+        icon: 'timeline'
       }
     ],
     [
@@ -418,10 +416,20 @@ export enum MessageType {
   ALARM_UNASSIGNED = 'ALARM_UNASSIGNED',
   COMMENT_CREATED = 'COMMENT_CREATED',
   COMMENT_UPDATED = 'COMMENT_UPDATED',
+  ADDED_TO_GROUP = 'ADDED_TO_GROUP',
+  REMOVED_FROM_GROUP = 'REMOVED_FROM_GROUP',
   ENTITY_ASSIGNED_FROM_TENANT = 'ENTITY_ASSIGNED_FROM_TENANT',
   ENTITY_ASSIGNED_TO_TENANT = 'ENTITY_ASSIGNED_TO_TENANT',
   TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
-  TIMESERIES_DELETED = 'TIMESERIES_DELETED'
+  TIMESERIES_DELETED = 'TIMESERIES_DELETED',
+  ADDED_TO_ENTITY_GROUP = 'ADDED_TO_ENTITY_GROUP',
+  REMOVED_FROM_ENTITY_GROUP = 'REMOVED_FROM_ENTITY_GROUP',
+  REST_API_REQUEST = 'REST_API_REQUEST',
+  FIRMWARE_UPDATED = 'FIRMWARE_UPDATED',
+  SOFTWARE_UPDATED = 'SOFTWARE_UPDATED',
+  generateReport = 'generateReport',
+  generateDashboardReport = 'generateDashboardReport',
+  OWNER_CHANGED = 'OWNER_CHANGED'
 }
 
 export const messageTypeNames = new Map<MessageType, string>(
@@ -455,10 +463,20 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.ALARM_UNASSIGNED, 'Alarm Unassigned'],
     [MessageType.COMMENT_CREATED, 'Comment Created'],
     [MessageType.COMMENT_UPDATED, 'Comment Updated'],
+    [MessageType.ADDED_TO_GROUP, 'Added to Group'],
+    [MessageType.REMOVED_FROM_GROUP, 'Removed from Group'],
     [MessageType.ENTITY_ASSIGNED_FROM_TENANT, 'Entity Assigned From Tenant'],
     [MessageType.ENTITY_ASSIGNED_TO_TENANT, 'Entity Assigned To Tenant'],
     [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
-    [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted']
+    [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted'],
+    [MessageType.ADDED_TO_ENTITY_GROUP, 'Added to Group'],
+    [MessageType.REMOVED_FROM_ENTITY_GROUP, 'Removed from Group'],
+    [MessageType.REST_API_REQUEST, 'REST API request'],
+    [MessageType.FIRMWARE_UPDATED, 'Firmware Update'],
+    [MessageType.SOFTWARE_UPDATED, 'Software Update'],
+    [MessageType.generateReport, 'Generate Report'],
+    [MessageType.generateDashboardReport, 'Generate Dashboard Report'],
+    [MessageType.OWNER_CHANGED, 'Owner Changed'],
   ]
 );
 
@@ -533,6 +551,20 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode': 'ruleNodePushToCloud',
   'org.thingsboard.rule.engine.edge.TbMsgPushToEdgeNode': 'ruleNodePushToEdge',
   'org.thingsboard.rule.engine.profile.TbDeviceProfileNode': 'ruleNodeDeviceProfile',
+  'org.thingsboard.rule.engine.integration.TbIntegrationDownlinkNode': 'ruleNodeIntegrationDownlink',
+  'org.thingsboard.rule.engine.action.TbAddToGroupNode': 'ruleNodeAddToGroup',
+  'org.thingsboard.rule.engine.action.TbRemoveFromGroupNode': 'ruleNodeRemoveFromGroup',
+  'org.thingsboard.rule.engine.transform.TbDuplicateMsgToGroupNode': 'ruleNodeDuplicateToGroup',
+  'org.thingsboard.rule.engine.transform.TbDuplicateMsgToGroupByNameNode': 'ruleNodeDuplicateToGroupByName',
+  'org.thingsboard.rule.engine.transform.TbDuplicateMsgToRelatedNode': 'ruleNodeDuplicateToRelated',
+  'org.thingsboard.rule.engine.action.TbChangeOwnerNode': 'ruleNodeChangeOwner',
+  'org.thingsboard.rule.engine.report.TbGenerateReportNode': 'ruleNodeGenerateDashboardReport',
+  'org.thingsboard.rule.engine.report.TbGenerateReportV2Node': 'ruleNodeGenerateReport',
+  'org.thingsboard.rule.engine.analytics.latest.telemetry.TbAggLatestTelemetryNodeV2': 'ruleNodeAggregateLatest',
+  'org.thingsboard.rule.engine.analytics.latest.telemetry.TbAggLatestTelemetryNode': 'ruleNodeAggregateLatestDeprecated',
+  'org.thingsboard.rule.engine.analytics.incoming.TbSimpleAggMsgNode': 'ruleNodeAggregateStream',
+  'org.thingsboard.rule.engine.analytics.latest.alarm.TbAlarmsCountNodeV2': 'ruleNodeAlarmsCount',
+  'org.thingsboard.rule.engine.analytics.latest.alarm.TbAlarmsCountNode': 'ruleNodeAlarmsCountDeprecated',
   'org.thingsboard.rule.engine.flow.TbRuleChainInputNode': 'ruleNodeRuleChain',
   'org.thingsboard.rule.engine.flow.TbRuleChainOutputNode': 'ruleNodeOutputNode',
   'org.thingsboard.rule.engine.flow.TbAckNode': 'ruleNodeAcknowledge',
@@ -541,18 +573,18 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode': 'ruleNodeRestCallReply',
   'org.thingsboard.rule.engine.notification.TbNotificationNode': 'ruleNodeSendNotification',
   'org.thingsboard.rule.engine.notification.TbSlackNode': 'ruleNodeSendSlack',
+  'org.thingsboard.rule.engine.pe.twilio.TbTwilioSmsNode': 'ruleNodeTwilioSms',
+  'org.thingsboard.rule.engine.pe.twilio.voice.TbTwilioVoiceNode': 'ruleNodeTwilioVoice'
 };
 
 export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): string {
   if (component) {
-    if (component.configurationDescriptor &&
+    if (component.clazz && ruleNodeClazzHelpLinkMap[component.clazz]) {
+      return ruleNodeClazzHelpLinkMap[component.clazz];
+    } else if (component.configurationDescriptor &&
       component.configurationDescriptor.nodeDefinition &&
       component.configurationDescriptor.nodeDefinition.docUrl) {
       return component.configurationDescriptor.nodeDefinition.docUrl;
-    } else if (component.clazz) {
-      if (ruleNodeClazzHelpLinkMap[component.clazz]) {
-        return ruleNodeClazzHelpLinkMap[component.clazz];
-      }
     }
   }
   return 'ruleEngine';

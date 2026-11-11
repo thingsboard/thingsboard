@@ -1,19 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { AiAssistantPanelConfig } from '@shared/models/ai-chat.models';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { EntitiesDataSource, EntitiesFetchFunction } from '@home/models/datasource/entity-datasource';
 import { Observable, of } from 'rxjs';
@@ -29,9 +17,17 @@ import { PageLink } from '@shared/models/page/page-link';
 import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
 import { ActivatedRoute } from '@angular/router';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, resourceByEntityType } from '@shared/models/security.models';
 import { DAY, historyInterval } from '@shared/models/time/time.models';
 import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 import { IEntityDetailsPageComponent } from '@home/models/entity/entity-details-page-component.models';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { EntityGroupParams } from '@shared/models/entity-group.models';
+import { GroupEntityComponent } from '@home/components/group/group-entity.component';
+import { GroupEntityTabsComponent } from '@home/components/group/group-entity-tabs.component';
+import { isDefinedAndNotNull } from '@core/utils';
+import { EntityInfoData } from '@shared/models/entity.models';
 
 export type EntityBooleanFunction<T extends BaseData<HasId>> = (entity: T) => boolean;
 export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => string;
@@ -46,13 +42,12 @@ export type CreateEntityOperation<T extends BaseData<HasId>> = () => Observable<
 export type EntityRowClickFunction<T extends BaseData<HasId>> = (event: Event, entity: T) => boolean;
 
 export type CellContentFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string;
+export type CellProgressBarProgressFunction<T extends BaseData<HasId>> = (entity: T, key: string) => number;
+export type CellChartContentFunction<T extends BaseData<HasId>> = (entity: T, key: string) => number[];
 export type CellTooltipFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string | undefined;
 export type HeaderCellStyleFunction<T extends BaseData<HasId>> = (key: string) => object;
 export type CellStyleFunction<T extends BaseData<HasId>> = (entity: T, key: string) => object;
 export type CopyCellContent<T extends BaseData<HasId>> = (entity: T, key: string, length: number) => object;
-
-export type EntityColumnsType = Array<Partial<EntityTableColumn<BaseData<HasId>> & EntityLinkTableColumn<BaseData<HasId>> & EntityChipsEntityTableColumn<BaseData<HasId>>>>;
-export type EntityColumnType = Partial<EntityTableColumn<BaseData<HasId>> & EntityLinkTableColumn<BaseData<HasId>> & EntityChipsEntityTableColumn<BaseData<HasId>>>;
 
 export enum CellActionDescriptorType { 'DEFAULT', 'COPY_BUTTON'}
 
@@ -78,10 +73,10 @@ export interface HeaderActionDescriptor {
   name: string;
   icon: string;
   isEnabled: () => boolean;
-  onAction: ($event: MouseEvent) => void;
+  onAction: ($event: MouseEvent, headerButton?: MatButton | MatIconButton) => void;
 }
 
-export type EntityTableColumnType = 'content' | 'action' | 'link' | 'entityChips';
+export type EntityTableColumnType = 'content' | 'action' | 'link' | 'chart' | 'progressBar' | 'entityChips';
 
 export class BaseEntityTableColumn<T extends BaseData<HasId>> {
   constructor(public type: EntityTableColumnType,
@@ -148,6 +143,28 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
   }
 }
 
+export class ChartEntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
+  constructor(public key: string,
+              public title: string,
+              public width: string = '0px',
+              public cellContentFunction: CellChartContentFunction<T> = (entity, property) => entity[property] ? entity[property] : [],
+              public chartStyleFunction: CellStyleFunction<T> = () => ({}),
+              public cellStyleFunction: CellStyleFunction<T> = () => ({})) {
+    super('chart', key, title, width, false);
+  }
+}
+
+export class ProgressBarEntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
+  constructor(public key: string,
+              public title: string,
+              public width: string = '0px',
+              public cellContentFunction: CellProgressBarProgressFunction<T> = (entity, property) => entity[property] ? entity[property] : 0,
+              public cellStyleFunction: CellStyleFunction<T> = () => ({}),
+              public progressBarStyleFunction: CellStyleFunction<T> = () => ({}),) {
+    super('progressBar', key, title, width, false);
+  }
+}
+
 export class EntityChipsEntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
   constructor(public key: string,
               public title: string,
@@ -157,11 +174,28 @@ export class EntityChipsEntityTableColumn<T extends BaseData<HasId>> extends Bas
   }
 }
 
-export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T> | EntityLinkTableColumn<T> | EntityChipsEntityTableColumn<T>;
+export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T> | EntityLinkTableColumn<T> |
+  ChartEntityTableColumn<T> | ProgressBarEntityTableColumn<T> | EntityChipsEntityTableColumn<T>;
+
+export type EntityColumnType = Omit<
+  Partial<EntityTableColumn<BaseData<HasId>> & EntityLinkTableColumn<BaseData<HasId>> & EntityChipsEntityTableColumn<BaseData<HasId>>>,
+  'cellContentFunction'
+> & { cellContentFunction?: (entity: BaseData<HasId>, key: string) => any };
+export type EntityColumnsType = Array<EntityColumnType>;
 
 export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = PageLink, L extends BaseData<HasId> = T> {
 
-  constructor() {}
+  customerId: string;
+  backNavigationCommands?: any[];
+
+  constructor(public groupParams?: EntityGroupParams) {
+    this.customerId = groupParams?.customerId;
+    this.backNavigationCommands = groupParams?.backNavigationCommands;
+  }
+
+  displayBackButton(): boolean {
+    return isDefinedAndNotNull(this.backNavigationCommands);
+  }
 
   private table: IEntitiesTableComponent = null;
   private entityDetailsPage: IEntityDetailsPageComponent = null;
@@ -183,23 +217,28 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   detailsPanelEnabled = true;
   hideDetailsTabsOnEdit = true;
   rowPointer = false;
+  aiAssistantConfig: AiAssistantPanelConfig = null;
   actionsColumnTitle = null;
   entityTranslations: EntityTypeTranslation;
   entityResources: EntityTypeResource<T>;
-  entityComponent: Type<EntityComponent<T, P, L>>;
-  entityTabsComponent: Type<EntityTabsComponent<T, P, L>>;
+  entityComponent: Type<EntityComponent<T, P, L> | GroupEntityComponent<T>>;
+  entityTabsComponent: Type<EntityTabsComponent<T, P, L> | GroupEntityTabsComponent<T>>;
   addDialogStyle = {};
   defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.DESC};
   displayPagination = true;
   pageMode = true;
   defaultPageSize = 10;
+  pageStepCount = 3;
+  pageStepIncrement: number;
   columns: Array<EntityColumn<L>> = [];
   cellActionDescriptors: Array<CellActionDescriptor<L>> = [];
   groupActionDescriptors: Array<GroupActionDescriptor<L>> = [];
   headerActionDescriptors: Array<HeaderActionDescriptor> = [];
   addActionDescriptors: Array<HeaderActionDescriptor> = [];
+  headerButtonDescriptors: Array<HeaderActionDescriptor> = [];
   headerComponent: Type<EntityTableHeaderComponent<T, P, L>>;
   addEntity: CreateEntityOperation<T> = null;
+  addDialogOwnerAndGroupWizard = true;
   dataSource: (dataLoadedFunction: (col?: number, row?: number) => void)
     => EntitiesDataSource<L> = (dataLoadedFunction: (col?: number, row?: number) => void) =>
     new EntitiesDataSource(this.entitiesFetchFunction, this.entitySelectionEnabled, dataLoadedFunction);
@@ -216,10 +255,15 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entitiesFetchFunction: EntitiesFetchFunction<L, P> = () => of(emptyPageData<L>());
   onEntityAction: EntityActionFunction<T> = () => false;
   handleRowClick: EntityRowClickFunction<L> = () => false;
-  entityTitle: EntityStringFunction<T> = (entity) => entity?.name;
+  entityTitle: EntityStringFunction<T | L> = (entity) => entity?.name;
   entityAdded: EntityVoidFunction<T> = () => {};
   entityUpdated: EntityVoidFunction<T> = () => {};
   entitiesDeleted: EntityIdsVoidFunction<T> = () => {};
+  defaultEntity: () => T = null;
+  // Invoked by the entities-table component when it is destroyed. Lets a config
+  // tear down long-lived resources (e.g. websocket subscriptions) it opened
+  // while the table was visible.
+  onDestroy: () => void = () => {};
 
   getTable(): IEntitiesTableComponent {
     return this.table;
@@ -272,3 +316,24 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
 
 export const checkBoxCell =
   (value: boolean): string => `<mat-icon class="material-icons mat-icon">${value ? 'check_box' : 'check_box_outline_blank'}</mat-icon>`;
+
+export const groupsCell =
+  (groups?: EntityInfoData[]): string => groups ? groups.map(group =>
+    `<a class="tb-group-chip" href="/entities/devices/groups">${group.name}</a>`).join('') : '';
+
+export const defaultEntityTablePermissions = (userPermissionsService: UserPermissionsService,
+                                              entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) => {
+  const resource = resourceByEntityType.get(entitiesTableConfig.entityType);
+  if (!userPermissionsService.hasGenericPermission(resource, Operation.CREATE)) {
+    entitiesTableConfig.addEnabled = false;
+  }
+
+  if (!userPermissionsService.hasGenericPermission(resource, Operation.DELETE)) {
+    entitiesTableConfig.entitiesDeleteEnabled = false;
+    entitiesTableConfig.deleteEnabled = () => false;
+  }
+
+  if (!userPermissionsService.hasGenericPermission(resource, Operation.WRITE)) {
+    entitiesTableConfig.detailsReadonly = () => true;
+  }
+};

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.msg;
 
 import lombok.Getter;
@@ -70,7 +58,6 @@ public enum TbMsgType {
     PROVISION_SUCCESS,
     PROVISION_FAILURE,
     SEND_EMAIL,
-    REST_API_REQUEST("REST API request"),
 
     // tellSelfOnly types
     GENERATOR_NODE_SELF_MSG(null, true),
@@ -81,6 +68,22 @@ public enum TbMsgType {
     DELAY_TIMEOUT_SELF_MSG(null, true),
     MSG_COUNT_SELF_MSG(null, true),
 
+    // PE only
+    TB_AGG_LATEST_SELF_MSG(null, true),
+    TB_AGG_LATEST_CLEAR_INACTIVE_ENTITIES_SELF_MSG(null, true),
+    TB_ALARMS_COUNT_SELF_MSG(null, true),
+    TB_SIMPLE_AGG_REPORT_SELF_MSG(null, true),
+    TB_SIMPLE_AGG_PERSIST_SELF_MSG(null, true),
+    TB_SIMPLE_AGG_ENTITIES_SELF_MSG(null, true),
+
+    OWNER_CHANGED("Owner changed"),
+    ADDED_TO_ENTITY_GROUP("Added to Group"),
+    REMOVED_FROM_ENTITY_GROUP("Removed from Group"),
+    REST_API_REQUEST("REST API request"),
+    generateReport("Generate Report"),
+    OPC_UA_INT_SUCCESS,
+    OPC_UA_INT_FAILURE,
+
     // Custom or N/A type:
     NA;
 
@@ -88,7 +91,7 @@ public enum TbMsgType {
             .filter(tbMsgType -> !tbMsgType.isTellSelfOnly())
             .map(TbMsgType::getRuleNodeConnection)
             .filter(connection -> !TbNodeConnectionType.OTHER.equals(connection))
-            .collect(Collectors.toUnmodifiableList());
+            .toList();
 
     @Getter
     private final String ruleNodeConnection;

@@ -1,0 +1,51 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-border h-full" [formGroup]="reportConfigForm">
+  <div class="tb-report-component-config-header">
+    <tb-toggle-select [(ngModel)]="settingsTab" [ngModelOptions]="{standalone: true}" appearance="fill">
+      <tb-toggle-option value="content">{{ 'report-template.content' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="layout">{{ 'report-template.layout' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+  <div class="tb-form-panel no-border no-padding overflow-y-auto" [class.!hidden]="settingsTab !== 'content'">
+    <div class="tb-form-row space-between">
+      <div translate>report-template.component.divider.divider-type</div>
+      <tb-toggle-select formControlName="length">
+        @for (length of borderLengths; track length) {
+          <tb-toggle-option [value]="length">{{ borderLengthTranslations.get(length) | translate }}</tb-toggle-option>
+        }
+      </tb-toggle-select>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>report-template.component.divider.line-type</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="borderType">
+          @for (type of borderTypes; track type) {
+            <mat-option [value]="type">
+              {{ borderTypeTranslations.get(type) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>report-template.component.divider.line-width</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="widthPx" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        <div matSuffix>px</div>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>color.color</div>
+      <tb-color-input asBoxInput
+                      formControlName="color">
+      </tb-color-input>
+    </div>
+  </div>
+  <tb-report-component-layout-settings class="overflow-y-auto" [class.!hidden]="settingsTab !== 'layout'" formControlName="layout">
+  </tb-report-component-layout-settings>
+</div>

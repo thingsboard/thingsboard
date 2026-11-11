@@ -1,20 +1,8 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Ace } from 'ace-builds';
+import type { LanguageProvider } from 'ace-linters';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
@@ -24,6 +12,7 @@ import { Renderer2 } from '@angular/core';
 let aceDependenciesLoaded = false;
 let aceModule: any;
 let aceDiffModule: any;
+let cssLanguageProvider: LanguageProvider;
 
 function loadAceDependencies(): Observable<any> {
   if (aceDependenciesLoaded) {
@@ -43,6 +32,7 @@ function loadAceDependencies(): Observable<any> {
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-svg')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-c_cpp')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-protobuf')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-yaml')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/java')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/css')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/json')));
@@ -94,6 +84,29 @@ export function getAceDiff(): Observable<any> {
       }),
       tap((module) => {
         aceDiffModule = module;
+      })
+    );
+  }
+}
+
+export function getCssLanguageProvider(): Observable<LanguageProvider> {
+  if (cssLanguageProvider) {
+    return of(cssLanguageProvider);
+  } else {
+    return from(import('ace-linters')).pipe(
+      map((module) => {
+        if (!cssLanguageProvider) {
+          const aceLinters: typeof module = unwrapModule(module);
+          const worker = new Worker(new URL('../../../core/worker/css-linter.worker', import.meta.url), { type: 'module' });
+          cssLanguageProvider = aceLinters.LanguageProvider.create(worker, {
+            functionality: {
+              completion: {
+                overwriteCompleters: false
+              }
+            }
+          });
+        }
+        return cssLanguageProvider;
       })
     );
   }

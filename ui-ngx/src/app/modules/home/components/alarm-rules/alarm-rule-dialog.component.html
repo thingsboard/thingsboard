@@ -1,22 +1,12 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="fieldFormGroup" class="calculated-field-dialog-container flex h-full flex-col">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ 'alarm-rule.alarm-rule' | translate}}</h2>
     <span class="flex-1"></span>
     <div tb-help="alarmRules"></div>
@@ -63,7 +53,7 @@
                             entityTypeLabel="{{ 'entity.entity-type' | translate }}"
                             [filterAllowedEntityTypes]="false"
                             [allowedEntityTypes]="alarmRuleEntityTypeList"
-                            [defaultEntityType]="EntityType.DEVICE_PROFILE"
+                            [defaultEntityType]="defaultEntityType"
                             (entityChanged)="changeEntity($event)">
           </tb-entity-select>
         }
@@ -75,6 +65,7 @@
                                                [entityId]="data.entityId || fieldFormGroup.get('entityId').value"
                                                [tenantId]="data.tenantId"
                                                [ownerId]="ownerId"
+                                               [readonly]="data.readonly"
                                                [watchKeyChange]="true"
                                                [entityName]="entityName"/>
         </div>
@@ -93,28 +84,32 @@
               <tb-cf-alarm-rule formControlName="clearRule" class="flex-1" [arguments]="arguments" [testScript]="onTestScript.bind(this)" isClearCondition>
               </tb-cf-alarm-rule>
             </div>
-            <button mat-icon-button
-                    class="button-icon"
-                    type="button"
-                    (click)="removeClearAlarmRule()"
-                    matTooltip="{{ 'action.remove' | translate }}"
-                    matTooltipPosition="above">
-              <mat-icon>delete</mat-icon>
-            </button>
+            @if (!data.readonly) {
+              <button mat-icon-button
+                      class="button-icon"
+                      type="button"
+                      (click)="removeClearAlarmRule()"
+                      matTooltip="{{ 'action.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
           </div>
           @if (!configFormGroup.get('clearRule').value) {
             <div>
               <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>
             </div>
           }
-          <div [class.!hidden]="configFormGroup.get('clearRule').value">
-            <button mat-stroked-button color="primary"
-                    [disabled]="disabledClearRuleButton"
-                    type="button"
-                    (click)="addClearAlarmRule()">
-              {{ 'alarm-rule.add-clear-alarm-rule' | translate }}
-            </button>
-          </div>
+          @if (!data.readonly) {
+            <div [class.!hidden]="configFormGroup.get('clearRule').value">
+              <button mat-stroked-button color="primary"
+                      [disabled]="disabledClearRuleButton"
+                      type="button"
+                      (click)="addClearAlarmRule()">
+                {{ 'alarm-rule.add-clear-alarm-rule' | translate }}
+              </button>
+            </div>
+          }
         </div>
         <div class="tb-form-panel no-gap">
           <mat-expansion-panel class="tb-settings" [expanded]="false">
@@ -146,6 +141,11 @@
                 </mat-slide-toggle>
               </div>
               <div class="tb-form-row">
+                <mat-slide-toggle class="mat-slide margin" formControlName="propagateToOwnerHierarchy">
+                  {{ 'alarm-rule.propagate-alarm-to-owner-hierarchy' | translate }}
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row">
                 <mat-slide-toggle class="mat-slide margin" formControlName="propagateToTenant">
                   {{ 'alarm-rule.propagate-alarm-to-tenant' | translate }}
                 </mat-slide-toggle>
@@ -164,10 +164,12 @@
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-raised-button color="primary"
-            (click)="add()"
-            [disabled]="isLoading">
-      {{ data.buttonTitle | translate }}
-    </button>
+    @if (!data.readonly) {
+      <button mat-raised-button color="primary"
+              (click)="add()"
+              [disabled]="isLoading">
+        {{ data.buttonTitle | translate }}
+      </button>
+    }
   </div>
 </div>
