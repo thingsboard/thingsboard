@@ -742,7 +742,7 @@ class DefaultIotHubServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("'Package profile' is used by 1 other device(s)")
                 .hasMessageContaining("Nothing was removed");
-        verify(tbDeviceService, never()).delete(any(), any());
+        verify(tbDeviceService, never()).delete(any(Device.class), any());
         verify(iotHubInstalledItemService, never()).save(any(), any());
     }
 
