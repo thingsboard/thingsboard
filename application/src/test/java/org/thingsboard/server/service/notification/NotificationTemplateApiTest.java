@@ -144,8 +144,7 @@ public class NotificationTemplateApiTest extends AbstractNotificationApiTest {
         rule.setTemplateId(storedTemplate.getId());
         rule.setTriggerType(triggerConfig.getTriggerType());
         rule.setTriggerConfig(triggerConfig);
-        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(triggerConfig.getTriggerType());
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(triggerConfig.getTriggerType());
         recipientsConfig.setTargets(List.of(createNotificationTarget(tenantAdminUserId).getUuidId()));
         rule.setRecipientsConfig(recipientsConfig);
 
