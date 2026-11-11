@@ -748,7 +748,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     if (view.entityId) {
       return {type: view.type, entityId: view.entityId};
     }
-    if (view.type === AiAssistantViewType.PAGE) {
+    if (view.type === AiAssistantViewType.PAGE || view.type === AiAssistantViewType.IOT_HUB) {
       return view.title || view.path ? {type: view.type, title: view.title, path: view.path} : undefined;
     }
     return view.type.endsWith('_LIST') || view.type === 'NOTIFICATION_INBOX' ? {type: view.type} : undefined;

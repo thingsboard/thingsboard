@@ -52,7 +52,8 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.NOTIFICATION_RULE_LIST]: {key: 'notifications'},
   [AiAssistantViewType.NOTIFICATION_RECIPIENT_LIST]: {key: 'notifications'},
   [AiAssistantViewType.SENT_NOTIFICATION_LIST]: {key: 'notifications'},
-  [AiAssistantViewType.NOTIFICATION_INBOX]: {key: 'notifications'}
+  [AiAssistantViewType.NOTIFICATION_INBOX]: {key: 'notifications'},
+  [AiAssistantViewType.IOT_HUB]: {key: 'iot-hub', examples: ['popular', 'alarm', 'installed']}
 };
 
 export function aiWelcome(view: AiChatView | undefined, name: string | null, config: AiAssistantPanelConfig | null,

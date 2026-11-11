@@ -94,12 +94,13 @@ export class AiAssistantPanelComponent {
     }
     const title = this.pageTitle();
     const path = this.pagePath();
-    return title || path !== '/' ? {view: {type: AiAssistantViewType.PAGE, title, path}, timeZone: getDefaultTimezone()} : undefined;
+    const type = path === '/iot-hub' || path.startsWith('/iot-hub/') ? AiAssistantViewType.IOT_HUB : AiAssistantViewType.PAGE;
+    return title || path !== '/' ? {view: {type, title, path}, timeZone: getDefaultTimezone()} : undefined;
   });
 
   promptExamples = computed<AiAssistantPromptExample[]>(() => this.panelService.config()?.promptExamples ?? []);
 
-  welcome = computed(() => aiWelcome(this.panelService.clientContext()?.view, this.panelService.viewName(), this.panelService.config(),
+  welcome = computed(() => aiWelcome(this.clientContext()?.view, this.panelService.viewName(), this.panelService.config(),
     this.translate));
 
   private chats = inject(AiChatsService);

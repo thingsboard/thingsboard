@@ -3,7 +3,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
-import { aiActionDetailView, AiDetailFact, AiDetailNames } from '@home/components/ai/ai-action-detail.models';
+import { aiActionDetailView, AiDetailFact, AiDetailNames, aiParse } from '@home/components/ai/ai-action-detail.models';
 import {
   AiAction,
   aiEntityKind,
@@ -46,8 +46,9 @@ export class AiActionLineComponent {
     if (!match) {
       return null;
     }
-    const kind = aiEntityKind(entity.entityType);
-    const base = baseDetailsPageByEntityType.get(entity.entityType as EntityType);
+    const alarmRule = entity.entityType === EntityType.CALCULATED_FIELD && this.isAlarmRule();
+    const kind = aiEntityKind(entity.entityType, alarmRule);
+    const base = alarmRule ? '/alarms/alarm-rules' : baseDetailsPageByEntityType.get(entity.entityType as EntityType);
     return {
       before: text.slice(0, match.index),
       name: match[1],
@@ -57,6 +58,15 @@ export class AiActionLineComponent {
       link: this.linkEntity() && base ? `${base}/${entity.id}` : null
     };
   });
+
+  private isAlarmRule(): boolean {
+    const action = this.action();
+    if (action.tool === 'save_alarm_rule') {
+      return true;
+    }
+    const result = aiParse(action.result) as {type?: unknown} | null;
+    return action.tool === 'install_iot_hub_item' && result?.type === 'ALARM_RULE';
+  }
 
   private runWords = computed(() => this.translate.instant(this.words().key + '.run', this.words().params));
 

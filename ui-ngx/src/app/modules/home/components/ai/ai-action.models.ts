@@ -47,6 +47,10 @@ const TOOL_WORDS: Record<string, string> = {
   read_dashboard_widget: 'read-widget',
   read_dashboard_html_page: 'read-dashboard-page',
   search_iot_hub_devices: 'search-iot-hub',
+  search_iot_hub: 'search-iot-hub',
+  read_iot_hub_item: 'read-iot-hub-item',
+  list_installed_iot_hub_items: 'list-installed-iot-hub-items',
+  install_iot_hub_item: 'install-iot-hub-item',
   read_transport_endpoints: 'read-connection-settings',
   read_device_connect_commands: 'read-connection-settings',
   search_web: 'search-web'
@@ -378,6 +382,7 @@ const ENTITY_KINDS: Record<string, AiEntityKind> = {
   CONVERTER: {icon: 'transform', palette: 'path'},
   CALCULATED_FIELD: {icon: 'functions', palette: 'path'},
   RULE_CHAIN: {icon: 'account_tree', palette: 'chain'},
+  IOT_HUB: {icon: 'hub', palette: 'solution'},
   ALARM_RULE: {icon: 'rule', palette: 'rule'},
   ALARM: {icon: 'notification_important', palette: 'rule'},
   NOTIFICATION_RULE: {icon: 'notifications_active', palette: 'rule'},

@@ -714,6 +714,25 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
         blocks: data ? (rows.length ? [{type: 'hub', rows}] : [{type: 'note', text: text('nothing-found')}]) : generic(result, 'result')
       };
     }
+    case 'search_iot_hub':
+    case 'list_installed_iot_hub_items': {
+      const data = isObject(result) && Array.isArray(result.data) ? result.data.filter(isObject) : null;
+      const rows: AiDetailHubItem[] = (data ?? []).filter(item => str(item.versionId)).map(item => ({
+        id: item.versionId, name: str(item.name) ?? item.versionId, vendor: str(item.creator), description: str(item.description)
+      }));
+      const hood = tool === 'search_iot_hub'
+        ? (str(values.query) ? text('iot-hub-query', {query: str(values.query)}) : text('iot-hub-browse'))
+        : text('iot-hub-installed');
+      return {hood, blocks: data ? (rows.length ? [{type: 'hub', rows}] : [{type: 'note', text: text('nothing-found')}]) : generic(result, 'result')};
+    }
+    case 'read_iot_hub_item': {
+      const item = isObject(result) && str(result.versionId) ? result : null;
+      return {
+        hood: text('iot-hub-read', {name: str(item?.name) ?? '…'}),
+        blocks: item ? [{type: 'hub', rows: [{id: item.versionId, name: str(item.name) ?? item.versionId, vendor: str(item.creator),
+          description: str(item.description)}]}] : generic(result, 'result')
+      };
+    }
     case 'search_entities':
       return searchEntities(values, result, names);
     case 'read_entity': {

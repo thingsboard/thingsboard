@@ -773,6 +773,9 @@
         "attachment-over-limit": "More than {{count}} files",
         "detail": {
             "iot-hub-query": "Executed '{{query}}' query against IoT Hub",
+            "iot-hub-browse": "Browsed IoT Hub",
+            "iot-hub-installed": "Listed the items installed from IoT Hub",
+            "iot-hub-read": "Read '{{name}}' in IoT Hub",
             "search": "Searched {{what}}",
             "search-one": "Looked up {{entity}}",
             "search-related-from": "Searched {{what}} that {{entity}} points to",
@@ -1128,6 +1131,18 @@
                 "run": "Searching IoT Hub",
                 "done": "Searched IoT Hub"
             },
+            "read-iot-hub-item": {
+                "run": "Reading the IoT Hub item",
+                "done": "Read the IoT Hub item"
+            },
+            "list-installed-iot-hub-items": {
+                "run": "Checking what is installed from IoT Hub",
+                "done": "Checked what is installed from IoT Hub"
+            },
+            "install-iot-hub-item": {
+                "run": "Installing from IoT Hub",
+                "done": "Installed from IoT Hub"
+            },
             "read-connection-settings": {
                 "run": "Looking up the connection settings",
                 "done": "Looked up the connection settings"
@@ -1272,6 +1287,8 @@
             "ask-again-message": "Ask me again for the same change.",
             "field": {
                 "name": "Name",
+                "version": "Version",
+                "dependencies": "Also installs",
                 "label": "Label",
                 "profile": "Profile",
                 "arguments": "Arguments",
@@ -1624,6 +1641,16 @@
                 "suggestion": "Which notifications does this user get?",
                 "example": {
                     "notifications": {"label": "Notify this user", "message": "Notify this user when a critical alarm is raised."}
+                }
+            },
+            "iot-hub": {
+                "title": "Find it ready-made in IoT Hub",
+                "line": "Widgets, calculated fields, alarm rules, rule chains and solution templates you can install in one step.",
+                "suggestion": "Find a widget that shows tank levels.",
+                "example": {
+                    "popular": {"label": "Most popular", "message": "What are the most popular items in IoT Hub?"},
+                    "alarm": {"label": "Ready-made alarms", "message": "Find a ready-made alarm rule for low battery and install it on my devices."},
+                    "installed": {"label": "What's installed", "message": "What have I installed from IoT Hub, and are there updates?"}
                 }
             },
             "rule-chains": {

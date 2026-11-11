@@ -246,6 +246,7 @@ export type ChatEvent = AssistantChatEvent | AssistantDeltaChatEvent | ToolExecu
 
 export enum AiAssistantViewType {
   PAGE = 'PAGE',
+  IOT_HUB = 'IOT_HUB',
   DASHBOARD = 'DASHBOARD',
   DASHBOARD_LIST = 'DASHBOARD_LIST',
   ALARM_RULE = 'ALARM_RULE',

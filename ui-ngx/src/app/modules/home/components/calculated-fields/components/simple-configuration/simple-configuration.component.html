@@ -87,7 +87,7 @@
   </div>
   <tb-calculate-field-output formControlName="output" [simpleMode]="!isScript" [entityId]="entityId">
     <div class="tb-form-row simpleMode"
-         [class.!hidden]="simpleConfiguration.get('output').value.type !== OutputType.Timeseries">
+         [class.!hidden]="simpleConfiguration.get('output').value?.type !== OutputType.Timeseries">
       <mat-slide-toggle class="mat-slide" formControlName="useLatestTs">
         <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.use-latest-timestamp' | translate }}" translate>
           calculated-fields.use-latest-timestamp

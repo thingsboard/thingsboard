@@ -99,7 +99,7 @@ export class AiStartedFromComponent {
   }
 
   private resolve(from: AiStartedFrom): Observable<AiPage | null> {
-    if (from.type === 'PAGE') {
+    if (from.type === 'PAGE' || from.type === 'IOT_HUB') {
       return of(from.title || from.path ? {name: from.title || from.path, url: from.path} : null);
     }
     const list = LIST_PAGES[from.type];
