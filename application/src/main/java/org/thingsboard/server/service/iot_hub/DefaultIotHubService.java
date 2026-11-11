@@ -12,6 +12,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -237,6 +238,7 @@ public class DefaultIotHubService implements IotHubService {
         }
         calculatedField.setId(null);
         calculatedField.setTenantId(tenantId);
+        mapTenantReferences(calculatedField, tenantId);
         if (data != null && data.has("entityId")) {
             EntityId entityId = JacksonUtil.treeToValue(data.get("entityId"), EntityId.class);
             calculatedField.setEntityId(entityId);
@@ -492,7 +494,16 @@ public class DefaultIotHubService implements IotHubService {
         existing.setName(newCf.getName());
         existing.setType(newCf.getType());
         existing.setConfiguration(newCf.getConfiguration());
+        mapTenantReferences(existing, tenantId);
         tbCalculatedFieldService.save(existing, user);
+    }
+
+    private void mapTenantReferences(CalculatedField calculatedField, TenantId tenantId) {
+        calculatedField.getConfiguration().getArguments().values().forEach(argument -> {
+            if (argument.getRefEntityId() != null && argument.getRefEntityId().getEntityType() == EntityType.TENANT) {
+                argument.setRefEntityId(tenantId);
+            }
+        });
     }
 
     private void updateRuleChain(TenantId tenantId, RuleChainInstalledItemDescriptor descriptor, byte[] fileData) throws Exception {
