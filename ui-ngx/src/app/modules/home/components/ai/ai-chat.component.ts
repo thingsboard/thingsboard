@@ -14,7 +14,8 @@ import {
   output,
   signal,
   untracked,
-  ViewChild
+  ViewChild,
+  viewChild
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -51,8 +52,8 @@ import {
 } from '@shared/models/ai-chat.models';
 import { aiActionWords, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, aiTurnPrompts, isHiddenAiAction, isKitCardTool } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
-import { AiFile, downloadAiFile, downloadAiFileAsPng } from '@home/components/ai/ai-file.models';
-import { AiFileBodyComponent, AiFileMarks } from '@home/components/ai/ai-file-body.component';
+import { AiFile, aiFileMark, aiFileName, aiFileOf, downloadAiFile, downloadAiFileAsPng, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
+import { AiFileBodyComponent, AiFileMarks, AiFileSaver } from '@home/components/ai/ai-file-body.component';
 import { ClipboardService } from 'ngx-clipboard';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -68,9 +69,8 @@ export type AiChatVariant = 'page' | 'panel';
   standalone: false,
   host: {
     'data-ai': '',
-    '[attr.data-type]': 'docked() ? "compact" : null',
-    '[attr.data-space]': 'docked() ? "compact" : null',
     'class': 'tb-ai-chat',
+    '[class.split]': 'split() && docked()',
     '[class.v-page]': '!docked()',
     '[class.v-panel]': 'docked()'
   }
@@ -108,6 +108,12 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   closed = output<void>();
 
+  split = input(false);
+
+  splitAvailable = input(false);
+
+  splitToggle = output<void>();
+
   recentChats = computed(() => this.chats.chats()
     .filter(chat => chat.id !== this.chatId())
     .sort((a, b) => b.createdTime - a.createdTime)
@@ -140,13 +146,13 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   private static readonly FILE_WRAP_KEY = 'tbAiFileWrap';
 
+  private static readonly UNLISTED_KEY = 'tbAiUnlistedFiles:';
+
   shownFile = signal<AiFile | null>(null);
 
   fileOpen = signal(false);
 
   private fileChat: string | undefined;
-
-  fileSource = signal(false);
 
   fileWrap = signal(AiChatComponent.storedFileWrap());
 
@@ -160,7 +166,31 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   composerQuote = signal<AiLinesQuote | null>(null);
 
-  @ViewChild(AiFileBodyComponent) fileBody: AiFileBodyComponent;
+  fileBody = viewChild(AiFileBodyComponent);
+
+  unlisted = signal<ReadonlySet<string>>(new Set());
+
+  unlisting = signal<string | null>(null);
+
+  chatFiles = computed(() => {
+    const files = new Map<string, {file: AiFile; running: boolean}>();
+    this.messages().forEach(message => {
+      if (message.from === 'ACTION' && message.data.tool === WRITE_FILE_TOOL) {
+        const file = aiFileOf(message.data.executionId, message.data.arguments, !!message.data.edited);
+        if (file) {
+          files.set(file.name, {file, running: message.data.status === 'RUNNING'});
+        }
+      }
+    });
+    const hidden = this.unlisted();
+    return [...files.values()].filter(entry => !hidden.has(entry.file.name));
+  });
+
+  readonly fileMark = aiFileMark;
+
+  readonly fileName = aiFileName;
+
+  readonly fileSaver: AiFileSaver = content => this.saveFile(content);
 
   private static stored(key: string): string | null {
     try {
@@ -179,7 +209,11 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   fileDark(file: AiFile): boolean {
-    return (!file.previewed || this.fileSource()) && this.fileTheme() === 'dark';
+    return this.fileCode(file) && this.fileTheme() === 'dark';
+  }
+
+  fileCode(file: AiFile): boolean {
+    return !file.previewed || !!this.fileBody()?.editing();
   }
 
   setFileTheme(theme: 'dark' | 'light'): void {
@@ -332,6 +366,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
         this.shownFile.set(null);
         this.fileOpen.set(false);
       }
+      this.unlisting.set(null);
+      this.unlisted.set(new Set(AiChatComponent.storedList(chatId ? AiChatComponent.UNLISTED_KEY + chatId : null)));
       this.show(chatId);
     });
   });
@@ -424,9 +460,76 @@ export class AiChatComponent implements OnInit, OnDestroy {
   showFile(file: AiFile): void {
     this.shownFile.set(file);
     this.fileChat = this.chatId();
-    this.fileSource.set(false);
     this.fileMarks.set(null);
     this.fileOpen.set(true);
+  }
+
+  isShownFile(file: AiFile): boolean {
+    return this.fileOpen() && this.shownFile()?.name === file.name;
+  }
+
+  askUnlist(file: AiFile, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.unlisting.set(file.name);
+    setTimeout(() => document.querySelector<HTMLElement>('.art-list-confirm .art-list-no')?.focus());
+  }
+
+  keepListed(event: Event): void {
+    event.stopPropagation();
+    this.unlisting.set(null);
+  }
+
+  unlist(file: AiFile, event: Event): void {
+    event.stopPropagation();
+    const chatId = this.chatId();
+    const next = new Set(this.unlisted()).add(file.name);
+    this.unlisted.set(next);
+    this.unlisting.set(null);
+    if (chatId) {
+      AiChatComponent.store(AiChatComponent.UNLISTED_KEY + chatId, JSON.stringify([...next]));
+    }
+    this.showToast(this.translate.instant('ai-assistant.file.unlisted', {name: file.name}), 'success');
+  }
+
+  onFileDiscarded(file: AiFile): void {
+    this.showToast(this.translate.instant('ai-assistant.file.discarded', {name: file.name}), 'success');
+  }
+
+  private saveFile(content: string): Promise<boolean> {
+    const chatId = this.chatId();
+    const file = this.shownFile();
+    if (!chatId || !file) {
+      return Promise.resolve(false);
+    }
+    return new Promise(resolve => this.aiChat.updatedChat(chatId, {fileEdit: {executionId: file.executionId, content}}, {ignoreLoading: true, ignoreErrors: true})
+      .subscribe({
+        next: () => {
+          this.messages.update(messages => messages.map(message => message.from === 'ACTION' && message.data.executionId === file.executionId
+            ? {...message, data: {...message.data, arguments: {...(message.data.arguments as object), content}, edited: true}} : message));
+          const saved = aiFileOf(file.executionId, {name: file.name, content, summary: file.summary}, true);
+          if (saved) {
+            this.shownFile.set(saved);
+          }
+          resolve(true);
+        },
+        error: err => {
+          this.showErrorMessage(err);
+          resolve(false);
+        }
+      }));
+  }
+
+  private static storedList(key: string | null): string[] {
+    if (!key) {
+      return [];
+    }
+    try {
+      const value = JSON.parse(localStorage.getItem(key) ?? '[]');
+      return Array.isArray(value) ? value.filter(item => typeof item === 'string') : [];
+    } catch {
+      return [];
+    }
   }
 
   toggleFileWrap(): void {

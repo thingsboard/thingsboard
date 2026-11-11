@@ -17,7 +17,9 @@ import { AiChatComponent } from '@home/components/ai/ai-chat.component';
     '[class.open]': 'isOpen',
     '[class.suppressed]': 'panelService.suppressed()',
     '[attr.inert]': 'isOpen ? null : ""',
+    '[class.split]': 'split()',
     '(transitionend)': 'onSlideEnd($event)',
+    '(window:resize)': 'fit()',
     '(click)': 'onClick($event)'
   }
 })
@@ -37,7 +39,28 @@ export class AiAssistantPanelComponent {
 
   readonly maxWidth = 480;
 
+  private static readonly SPLIT_MAX = 880;
+  private static readonly SPLIT_MIN = 540;
+  private static readonly PAGE_MIN = 560;
+  private static readonly SHEET_MAX_WINDOW = 1100;
+
   width = signal(this.defaultWidth);
+
+  room = signal(0);
+
+  splitWidth = computed(() => {
+    const room = this.room();
+    return Math.min(AiAssistantPanelComponent.SPLIT_MAX, Math.floor(room / 2), room - AiAssistantPanelComponent.PAGE_MIN);
+  });
+
+  splitAvailable = computed(() => this.room() > 0 && window.innerWidth > AiAssistantPanelComponent.SHEET_MAX_WINDOW
+    && this.splitWidth() >= AiAssistantPanelComponent.SPLIT_MIN);
+
+  split = computed(() => this.width() > this.maxWidth);
+
+  private wanted = this.defaultWidth;
+
+  private panelWidth = this.defaultWidth;
 
   chatId = signal<string | undefined>(undefined);
 
@@ -86,15 +109,44 @@ export class AiAssistantPanelComponent {
     } catch {
       stored = 0;
     }
-    this.setWidth(stored || this.defaultWidth);
+    this.wanted = stored || this.defaultWidth;
+    this.panelWidth = Math.min(this.wanted, this.maxWidth);
+    setTimeout(() => this.fit());
+  }
+
+  fit(): void {
+    this.room.set(this.elementRef.nativeElement.parentElement?.clientWidth ?? window.innerWidth);
+    this.show(this.wanted);
+  }
+
+  toggleSplit(): void {
+    if (this.split()) {
+      this.setWidth(this.panelWidth, true);
+    } else if (this.splitAvailable()) {
+      this.panelWidth = this.width();
+      this.setWidth(this.splitWidth(), true);
+    }
+  }
+
+  private widest(): number {
+    return this.splitAvailable() ? this.splitWidth() : Math.min(this.maxWidth, Math.max(this.minWidth, Math.round(this.room() / 2) || this.maxWidth));
+  }
+
+  private show(width: number): number {
+    const value = Math.round(Math.min(this.widest(), Math.max(this.minWidth, width)));
+    this.width.set(value);
+    document.documentElement.style.setProperty('--tb-ai-panel-w', value + 'px');
+    return value;
   }
 
   setWidth(width: number, keep = false): void {
-    const max = Math.min(this.maxWidth, Math.round(window.innerWidth / 2));
-    const value = Math.round(Math.min(max, Math.max(this.minWidth, width)));
-    this.width.set(value);
-    document.documentElement.style.setProperty('--tb-ai-panel-w', value + 'px');
+    this.room.set(this.elementRef.nativeElement.parentElement?.clientWidth ?? window.innerWidth);
+    const value = this.show(width);
     if (keep) {
+      this.wanted = value;
+      if (value <= this.maxWidth) {
+        this.panelWidth = value;
+      }
       try {
         if (value === this.defaultWidth) {
           localStorage.removeItem(AiAssistantPanelComponent.WIDTH_KEY);
@@ -111,6 +163,9 @@ export class AiAssistantPanelComponent {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault();
       this.setWidth(this.width() + (event.key === 'ArrowLeft' ? 16 : -16), true);
+    } else if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+      this.setWidth(event.key === 'Home' ? this.widest() : this.minWidth, true);
     }
   }
 
@@ -119,15 +174,21 @@ export class AiAssistantPanelComponent {
     const grip = event.target as HTMLElement;
     const startX = event.clientX;
     const startWidth = this.width();
+    let moved = false;
     grip.setPointerCapture(event.pointerId);
     document.body.classList.add('tb-ai-resizing');
-    const move = (e: PointerEvent) => this.setWidth(startWidth + (startX - e.clientX));
+    const move = (e: PointerEvent) => {
+      moved = true;
+      this.setWidth(startWidth + (startX - e.clientX));
+    };
     const up = () => {
       grip.removeEventListener('pointermove', move);
       grip.removeEventListener('pointerup', up);
       grip.removeEventListener('pointercancel', up);
       document.body.classList.remove('tb-ai-resizing');
-      this.setWidth(this.width(), true);
+      if (moved) {
+        this.setWidth(this.width(), true);
+      }
     };
     grip.addEventListener('pointermove', move);
     grip.addEventListener('pointerup', up);

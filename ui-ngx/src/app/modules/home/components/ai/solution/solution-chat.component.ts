@@ -118,6 +118,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   work = signal<{words: string; kind: 'think' | 'gen' | 'install'; since: number; lines?: string[]} | null>(null);
 
+  paneTalks = computed(() => this.showPane() && this.paneOpen() && !!this.making() && this.currentView() === this.making()
+    && !(this.making() === 'solution' && !!this.progressInfo()));
+
   fullscreen = signal<boolean>(false);
 
   title = signal<string>('');

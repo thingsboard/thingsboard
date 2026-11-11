@@ -136,7 +136,7 @@
             </div>
           }
           @if (work(); as current) {
-            <tb-ai-work-line class="sol-work" [words]="current.words" [kind]="current.kind" [since]="current.since"></tb-ai-work-line>
+            <tb-ai-work-line class="sol-work" [words]="paneTalks() ? (current.lines?.[0] ?? current.words) : current.words" [kind]="current.kind" [since]="current.since"></tb-ai-work-line>
           }
         </div>
       </div>
@@ -191,11 +191,11 @@
       <tb-ai-artifact-pane #pane [dark]="json()" (closed)="closePane()">
           <div artHead class="sol-views" role="group" [attr.aria-label]="'solution-creator.pane.view' | translate">
             @for (view of views(); track view.id) {
-              <button type="button" [attr.aria-pressed]="currentView() === view.id" [class.working]="view.state === 'working'"
+              <button type="button" [attr.aria-pressed]="currentView() === view.id" [class.working]="view.state === 'working' && currentView() !== view.id"
                       [disabled]="view.state === 'next'" (click)="pickView(view.id)"
                       [matTooltip]="('solution-creator.pane.view-' + view.id) | translate" matTooltipPosition="below"
                       [attr.aria-label]="('solution-creator.pane.view-' + view.id) | translate">
-                @if (view.state === 'working') {
+                @if (view.state === 'working' && currentView() !== view.id) {
                   <tb-ai-spin [kind]="view.id === 'solution' ? 'install' : 'gen'"></tb-ai-spin>
                 } @else {
                   <mat-icon aria-hidden="true">{{ view.icon }}</mat-icon>

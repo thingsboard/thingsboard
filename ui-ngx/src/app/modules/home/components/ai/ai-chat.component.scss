@@ -420,5 +420,50 @@ tb-ai-chat-title:has(.ai-chat-status) + .ai-chat-actions {
 }
 
 .art-cols.with-pane:not(.narrow) .ai-chat-col {
-  min-width: 420px;
+  min-width: var(--chat-col-min, 340px);
+}
+
+:host ::ng-deep .ai-ib.art-files-btn {
+  width: auto;
+  gap: 4px;
+  padding: 0 9px 0 8px;
+  border-radius: 10px;
+  color: var(--tb-ink-76);
+
+  &:hover {
+    color: var(--tb-ink);
+  }
+
+  &.shown, &[aria-expanded="true"] {
+    color: var(--ai-action);
+  }
+
+  &[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--ai-action) 10%, transparent);
+  }
+}
+
+:host(.v-panel.split) .ai-chat-body {
+  padding: 20px 20px 0;
+}
+
+:host(.v-panel.split) .ai-chat-log {
+  max-width: 712px;
+}
+
+:host(.v-panel.split) .ai-chat-composer,
+:host(.v-panel.split) .ai-chat-body.empty .ai-chat-composer {
+  width: 100%;
+  max-width: 760px;
+  align-self: center;
+  margin: 0;
+  padding: 12px 0 14px;
+  background: linear-gradient(color-mix(in srgb, var(--tb-surface) 0%, transparent), var(--tb-surface) 40%);
+}
+
+:host(.v-panel.split) .k-newchat {
+  width: 100%;
+  max-width: 712px;
+  margin-left: auto;
+  margin-right: auto;
 }

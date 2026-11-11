@@ -282,7 +282,7 @@ tb-ai-chat-title:has(.ai-chat-status) + .sol-head-actions {
 }
 
 .sol-cols.with-pane .sol-chat {
-  min-width: 420px;
+  min-width: var(--chat-col-min, 340px);
 }
 
 .sol-log {

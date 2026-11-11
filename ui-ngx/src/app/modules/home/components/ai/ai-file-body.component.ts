@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { AfterViewInit, Component, computed, effect, inject, ElementRef, EventEmitter, input, Output, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, computed, DestroyRef, effect, inject, ElementRef, EventEmitter, input, Output, signal, untracked, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { AiFile, aiImageSrc, downloadAiFile, downloadAiFileAsPng } from '@home/components/ai/ai-file.models';
+import { AiFile, aiFileDraftKey, aiImageSrc, downloadAiFile, downloadAiFileAsPng } from '@home/components/ai/ai-file.models';
 import {
   AiAttachmentPreviewDialogComponent,
   AiAttachmentPreviewDialogData
@@ -14,34 +14,69 @@ export interface AiFileMarks {
   to: number;
 }
 
+export interface AiFileCaret {
+  line: number;
+  col: number;
+  selected: number;
+}
+
+export type AiFileSaver = (content: string) => Promise<boolean>;
+
+const DRAFT_DELAY_MS = 400;
+const SAVED_MS = 1600;
+
 @Component({
   selector: 'tb-ai-file-body',
   template: `
-    @if (file().markdown && !source()) {
+    @if (editing()) {
+      <div #editor class="file-edit" [class.wrap]="wrap() || file().previewed" [attr.data-lang]="file().lang" (click)="focusEditor($event)">
+        <ol #gutter class="file-edit-ln" aria-hidden="true"></ol>
+        <div class="file-edit-in">
+          <pre #layer class="file-edit-hl" aria-hidden="true"></pre>
+          <textarea #area class="file-edit-ta" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="soft"
+                    [attr.aria-label]="'ai-assistant.file.editor' | translate: {name: file().name}"
+                    [value]="draft()" (input)="onEditInput(area.value)" (keydown)="onEditKey($event)"
+                    (keyup)="updateCaret()" (click)="updateCaret()" (select)="updateCaret()"></textarea>
+        </div>
+      </div>
+    } @else if (file().markdown) {
       <div class="file-md art-page agent">
         <tb-markdown usePlainMarkdown [data]="file().content" [additionalStyles]="markdownStyles"></tb-markdown>
       </div>
-    } @else if (file().image && !source()) {
-      <div class="file-img art-page">
-        <button type="button" class="file-img-open" (click)="expandImage()"
-                [matTooltip]="'ai-assistant.file.expand' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.expand' | translate">
-          <img [src]="imageSrc()" [alt]="file().name">
-        </button>
+    } @else if (file().image) {
+      <div class="file-svg">
+        @if (imageBroken()) {
+          <p class="file-svg-err"><mat-icon class="tb-mat-18" aria-hidden="true">broken_image</mat-icon>{{ 'ai-assistant.file.svg-broken' | translate }}</p>
+        } @else {
+          <button type="button" class="file-img-open" (click)="expandImage()"
+                  [matTooltip]="'ai-assistant.file.expand' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.expand' | translate">
+            <img class="file-svg-img" [src]="imageSrc()" [alt]="file().name" (error)="imageBroken.set(true)">
+          </button>
+        }
       </div>
     } @else {
       @if (finding()) {
         <div class="file-find" role="search">
-          <mat-icon class="tb-mat-18 file-find-ic" aria-hidden="true">search</mat-icon>
-          <input #findInput type="search" class="file-find-in" spellcheck="false"
-                 [placeholder]="'ai-assistant.file.find' | translate" [attr.aria-label]="'ai-assistant.file.find' | translate"
-                 [value]="query()" (input)="setQuery(findInput.value)" (keydown)="onFindKey($event)">
-          @if (query()) {
-            <span class="file-find-n" aria-live="polite">{{ matches() ? ('ai-assistant.file.match-of' | translate: {at: current() + 1, count: matches()}) : ('ai-assistant.file.no-matches' | translate) }}</span>
-          }
+          <label class="file-find-field">
+            <mat-icon class="tb-mat-18 file-find-ic" aria-hidden="true">search</mat-icon>
+            <input #findInput type="search" class="file-find-in" spellcheck="false"
+                   [placeholder]="'ai-assistant.file.find' | translate" [attr.aria-label]="'ai-assistant.file.find' | translate"
+                   [value]="query()" (input)="setQuery(findInput.value)" (keydown)="onFindKey($event)">
+            @if (query()) {
+              <span class="file-find-n" [class.none]="!matches()" aria-live="polite">
+                @if (matches()) {
+                  <b>{{ current() + 1 }}</b><span>{{ 'ai-assistant.file.of-count' | translate: {count: matches()} }}</span>
+                } @else {
+                  {{ 'ai-assistant.file.no-matches' | translate }}
+                }
+              </span>
+            }
+          </label>
           <button type="button" class="file-find-b" (click)="step(-1)" [matTooltip]="'ai-assistant.file.previous-match' | translate" matTooltipPosition="below"
                   [attr.aria-label]="'ai-assistant.file.previous-match' | translate"><mat-icon class="tb-mat-18" aria-hidden="true">keyboard_arrow_up</mat-icon></button>
           <button type="button" class="file-find-b" (click)="step(1)" [matTooltip]="'ai-assistant.file.next-match' | translate" matTooltipPosition="below"
                   [attr.aria-label]="'ai-assistant.file.next-match' | translate"><mat-icon class="tb-mat-18" aria-hidden="true">keyboard_arrow_down</mat-icon></button>
+          <span class="file-find-sep" aria-hidden="true"></span>
           <button type="button" class="file-find-b" (click)="closeFind()" [matTooltip]="'ai-assistant.file.close-find' | translate" matTooltipPosition="below"
                   [attr.aria-label]="'ai-assistant.file.close-find' | translate"><mat-icon class="tb-mat-18" aria-hidden="true">close</mat-icon></button>
         </div>
@@ -57,18 +92,37 @@ export class AiFileBodyComponent implements AfterViewInit {
 
   file = input.required<AiFile>();
   wrap = input(false);
-  source = input(false);
   whitespace = input(false);
   marks = input<AiFileMarks | null>(null);
+  saver = input<AiFileSaver | null>(null);
 
   @Output() marksChange = new EventEmitter<AiFileMarks | null>();
+  @Output() discarded = new EventEmitter<AiFile>();
 
   @ViewChild('code') code: ElementRef<HTMLElement>;
   @ViewChild('findInput') findInput: ElementRef<HTMLInputElement>;
+  @ViewChild('area') area: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('layer') layer: ElementRef<HTMLElement>;
+  @ViewChild('gutter') gutter: ElementRef<HTMLElement>;
 
   private dialog = inject(MatDialog);
+  private destroyRef = inject(DestroyRef);
 
   imageSrc = computed(() => aiImageSrc(this.file()));
+
+  imageBroken = signal(false);
+
+  editing = signal(false);
+  draft = signal('');
+  caret = signal<AiFileCaret>({line: 1, col: 1, selected: 0});
+  saving = signal(false);
+  saved = signal(false);
+
+  dirty = computed(() => this.editing() && this.draft() !== this.file().content);
+
+  private shownId: string | null = null;
+  private draftTimer: ReturnType<typeof setTimeout>;
+  private savedTimer: ReturnType<typeof setTimeout>;
 
   finding = signal(false);
   query = signal('');
@@ -97,9 +151,34 @@ export class AiFileBodyComponent implements AfterViewInit {
 
   private redraw = effect(() => {
     this.file();
-    this.source();
     this.whitespace();
+    this.editing();
     setTimeout(() => this.drawCode());
+  });
+
+  private follow = effect(() => {
+    const file = this.file();
+    untracked(() => {
+      if (file.executionId === this.shownId) {
+        return;
+      }
+      this.shownId = file.executionId;
+      this.imageBroken.set(false);
+      this.saved.set(false);
+      const stored = AiFileBodyComponent.storedDraft(file.executionId);
+      this.editing.set(stored !== null && stored !== file.content);
+      this.draft.set(stored ?? file.content);
+      if (this.editing()) {
+        setTimeout(() => this.drawEditor());
+      }
+    });
+  });
+
+  private relayout = effect(() => {
+    this.wrap();
+    if (untracked(() => this.editing())) {
+      setTimeout(() => this.drawEditor());
+    }
   });
 
   private remark = effect(() => {
@@ -109,6 +188,163 @@ export class AiFileBodyComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.drawCode();
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.draftTimer);
+      clearTimeout(this.savedTimer);
+    });
+  }
+
+  startEdit(): void {
+    const file = this.file();
+    this.draft.set(AiFileBodyComponent.storedDraft(file.executionId) ?? file.content);
+    this.editing.set(true);
+    this.saved.set(false);
+    this.closeFind();
+    setTimeout(() => {
+      this.drawEditor();
+      const area = this.area?.nativeElement;
+      area?.focus({preventScroll: true});
+      area?.setSelectionRange(0, 0);
+      this.updateCaret();
+    });
+  }
+
+  done(): void {
+    this.leaveEditor();
+  }
+
+  discard(): void {
+    const file = this.file();
+    this.leaveEditor();
+    this.discarded.emit(file);
+  }
+
+  async save(stay = false): Promise<void> {
+    const saver = this.saver();
+    if (!this.dirty()) {
+      if (!stay) {
+        this.leaveEditor();
+      }
+      return;
+    }
+    if (!saver || this.saving()) {
+      return;
+    }
+    this.saving.set(true);
+    const ok = await saver(this.draft());
+    this.saving.set(false);
+    if (!ok) {
+      return;
+    }
+    AiFileBodyComponent.storeDraft(this.file().executionId, null);
+    if (!stay) {
+      this.editing.set(false);
+    }
+    this.saved.set(true);
+    clearTimeout(this.savedTimer);
+    this.savedTimer = setTimeout(() => this.saved.set(false), SAVED_MS);
+  }
+
+  onEditInput(value: string): void {
+    this.draft.set(value);
+    this.drawEditor();
+    this.updateCaret();
+    clearTimeout(this.draftTimer);
+    const id = this.file().executionId;
+    const content = this.file().content;
+    this.draftTimer = setTimeout(() => AiFileBodyComponent.storeDraft(id, value === content ? null : value), DRAFT_DELAY_MS);
+  }
+
+  onEditKey(event: KeyboardEvent): void {
+    const area = event.target as HTMLTextAreaElement;
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      this.save(true);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!this.dirty()) {
+        this.leaveEditor();
+      }
+    } else if (event.key === 'Tab' && !event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey) {
+      event.preventDefault();
+      area.setRangeText(' '.repeat(this.file().lang === 'python' ? 4 : 2), area.selectionStart, area.selectionEnd, 'end');
+      this.onEditInput(area.value);
+    }
+  }
+
+  focusEditor(event: MouseEvent): void {
+    if (event.target === event.currentTarget || (event.target as HTMLElement).closest('.file-edit-ln')) {
+      this.area?.nativeElement.focus();
+    }
+  }
+
+  updateCaret(): void {
+    const area = this.area?.nativeElement;
+    if (!area) {
+      return;
+    }
+    const before = area.value.slice(0, area.selectionStart);
+    const line = before.split('\n').length;
+    const col = area.selectionStart - before.lastIndexOf('\n');
+    this.caret.set({line, col, selected: Math.abs(area.selectionEnd - area.selectionStart)});
+    this.gutter?.nativeElement.querySelectorAll('li').forEach((item, index) => item.classList.toggle('now', index + 1 === line));
+  }
+
+  private leaveEditor(): void {
+    clearTimeout(this.draftTimer);
+    AiFileBodyComponent.storeDraft(this.file().executionId, null);
+    this.draft.set(this.file().content);
+    this.editing.set(false);
+  }
+
+  private drawEditor(): void {
+    const layer = this.layer?.nativeElement;
+    const gutter = this.gutter?.nativeElement;
+    const area = this.area?.nativeElement;
+    if (!layer || !gutter || !area) {
+      return;
+    }
+    const text = this.draft();
+    const rows = highlightCode(this.file().lang, text).map(line => {
+      const row = document.createElement('div');
+      row.className = 'file-edit-row';
+      row.append(line, '\n');
+      return row;
+    });
+    layer.replaceChildren(...rows);
+    const numbers = rows.map((row, index) => {
+      const item = document.createElement('li');
+      item.textContent = String(index + 1);
+      return item;
+    });
+    gutter.replaceChildren(...numbers);
+    if (this.wrap() || this.file().previewed) {
+      rows.forEach((row, index) => numbers[index].style.height = row.offsetHeight + 'px');
+    }
+    area.style.height = '0px';
+    area.style.height = Math.max(area.scrollHeight, layer.offsetHeight) + 'px';
+    this.updateCaret();
+  }
+
+  private static storedDraft(executionId: string): string | null {
+    try {
+      return localStorage.getItem(aiFileDraftKey(executionId));
+    } catch {
+      return null;
+    }
+  }
+
+  private static storeDraft(executionId: string, value: string | null): void {
+    try {
+      if (value === null) {
+        localStorage.removeItem(aiFileDraftKey(executionId));
+      } else {
+        localStorage.setItem(aiFileDraftKey(executionId), value);
+      }
+    } catch {
+      return;
+    }
   }
 
   expandImage(): void {
@@ -161,7 +397,7 @@ export class AiFileBodyComponent implements AfterViewInit {
   }
 
   onKey(event: KeyboardEvent): void {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f' && !(this.file().previewed && !this.source())) {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f' && !this.file().previewed && !this.editing()) {
       event.preventDefault();
       this.openFind();
     }

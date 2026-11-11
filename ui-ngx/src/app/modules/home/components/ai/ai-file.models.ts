@@ -64,6 +64,27 @@ export interface AiFile {
   markdown: boolean;
   image: boolean;
   previewed: boolean;
+  edited: boolean;
+}
+
+export interface AiFileName {
+  base: string;
+  ext: string;
+}
+
+const MARKS: Record<string, string> = {JSON: 'data_object', YAML: 'data_object', TOML: 'data_object', XML: 'data_object', Markdown: 'article', SVG: 'image', Text: 'description', CSV: 'table_chart'};
+
+export function aiFileName(name: string): AiFileName {
+  const found = /^(.+?)(\.[A-Za-z0-9]{1,8})$/.exec(name);
+  return found ? {base: found[1], ext: found[2]} : {base: name, ext: ''};
+}
+
+export function aiFileMark(file: AiFile): string {
+  return MARKS[file.label] ?? (file.lang === 'text' ? 'description' : 'code');
+}
+
+export function aiFileDraftKey(executionId: string): string {
+  return 'tbAiFileDraft:' + executionId;
 }
 
 const PNG_SCALE = 2;
@@ -138,7 +159,7 @@ function save(blob: Blob, name: string): void {
   setTimeout(() => URL.revokeObjectURL(url));
 }
 
-export function aiFileOf(executionId: string, args: unknown): AiFile | null {
+export function aiFileOf(executionId: string, args: unknown, edited = false): AiFile | null {
   const values = (args ?? {}) as {name?: unknown; content?: unknown; summary?: unknown};
   if (typeof values.name !== 'string' || !values.name.trim() || typeof values.content !== 'string') {
     return null;
@@ -159,6 +180,7 @@ export function aiFileOf(executionId: string, args: unknown): AiFile | null {
     size: bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`,
     markdown: language.label === 'Markdown',
     image: language.label === 'SVG',
-    previewed: language.label === 'Markdown' || language.label === 'SVG'
+    previewed: language.label === 'Markdown' || language.label === 'SVG',
+    edited
   };
 }

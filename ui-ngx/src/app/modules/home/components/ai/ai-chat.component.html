@@ -15,6 +15,15 @@
   <tb-ai-chat-title [title]="chat()?.title" [placeholder]="'ai-assistant.new-chat' | translate" [level]="level()"
                     [statusTip]="statusTip()" [compact]="variant() === 'panel'" (renamed)="rename($event)"></tb-ai-chat-title>
   <div class="ai-chat-actions">
+    @if (chatFiles().length && !titleRef?.renaming()) {
+      <button type="button" class="ai-ib art-files-btn" [class.shown]="!!shownFile() && fileOpen()" [matMenuTriggerFor]="filesMenu"
+              (menuClosed)="unlisting.set(null)"
+              [matTooltip]="'ai-assistant.file.files' | translate" matTooltipPosition="above"
+              [attr.aria-label]="'ai-assistant.file.files-in-chat' | translate: {count: chatFiles().length}">
+        <span class="art-files-ic" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 8.6A1.6 1.6 0 0 1 5.6 7h6.2l3.7 3.7v8.7a1.6 1.6 0 0 1-1.6 1.6H5.6A1.6 1.6 0 0 1 4 19.4Z"/><path d="M11.6 7v2.5a1.2 1.2 0 0 0 1.2 1.2h2.7"/><path d="M8.5 7V4.6A1.6 1.6 0 0 1 10.1 3h6.2L20 6.7v8.7a1.6 1.6 0 0 1-1.6 1.6h-2.9"/></svg></span>
+        <span class="art-files-n">{{ chatFiles().length }}</span>
+      </button>
+    }
     @if (variant() === 'panel') {
       @if (!titleRef?.renaming()) {
         <button type="button" class="ai-ib more" [matMenuTriggerFor]="panelMenu"
@@ -119,16 +128,6 @@
         }
       </button>
     }
-    @if (shownFile(); as file) {
-      @if (!fileOpen()) {
-        <button type="button" class="art-tray" (click)="fileOpen.set(true)" [attr.aria-label]="'ai-assistant.file.open' | translate">
-          <mat-icon aria-hidden="true">{{ file.icon }}</mat-icon>
-          <b>{{ file.name }}</b>
-          <span class="art-tray-note">{{ 'ai-assistant.file.lines' | translate: {count: file.lines} }}</span>
-          <mat-icon class="art-tray-chev" aria-hidden="true">chevron_right</mat-icon>
-        </button>
-      }
-    }
     @if (notice(); as current) {
       <div class="k-notice k-notice-edge" [class]="'k-notice k-notice-edge ' + (current.kind === 'block' ? 'blocking' : current.kind)" [attr.role]="current.kind === 'block' ? 'alert' : 'status'">
         <mat-icon aria-hidden="true">{{ current.icon }}</mat-icon><span>{{ current.text }}</span>
@@ -186,26 +185,20 @@
 </div>
 @if (shownFile(); as file) {
   @if (fileOpen()) {
-    <tb-ai-artifact-pane [class.art-dark]="fileDark(file)" [dark]="!file.previewed || fileSource()" (closed)="fileOpen.set(false)">
-      <h2 artHead class="art-title">
-        <mat-icon class="tb-mat-20" aria-hidden="true">{{ file.icon }}</mat-icon>
-        <span>{{ file.name }}</span>
-        <small>{{ 'ai-assistant.file.meta' | translate: {label: file.label, lines: file.lines, size: file.size} }}</small>
+    <tb-ai-artifact-pane [class.art-dark]="fileDark(file)" [dark]="fileCode(file)" (closed)="fileOpen.set(false)">
+      <h2 artHead class="art-title" [matTooltip]="file.name" matTooltipPosition="below" [matTooltipShowDelay]="600">
+        <mat-icon class="tb-mat-20" aria-hidden="true">{{ fileMark(file) }}</mat-icon>
+        <span class="art-name">{{ fileName(file.name).base }}<span class="art-ext">{{ fileName(file.name).ext }}</span></span>
       </h2>
       <div artHead class="art-head-r">
-        @if (file.previewed) {
-          <button type="button" class="art-edit" role="switch" [attr.aria-checked]="fileSource()" (click)="fileSource.set(!fileSource())"
-                  [matTooltip]="(file.image ? 'ai-assistant.file.source-tip-image' : 'ai-assistant.file.source-tip') | translate" matTooltipPosition="below">
-            <mat-icon aria-hidden="true">edit</mat-icon><span class="art-edit-t">{{ 'ai-assistant.file.source' | translate }}</span>
-            <span class="art-edit-sw" aria-hidden="true"><i></i></span>
-          </button>
-        }
-        @if (!file.previewed || fileSource()) {
+        @if (!file.previewed) {
           <div class="art-tools">
-            <button type="button" class="art-tool icon-only" (click)="fileBody?.openFind()"
+            @if (!fileBody()?.editing()) {
+              <button type="button" class="art-tool icon-only" (click)="fileBody()?.openFind()"
                     [matTooltip]="'ai-assistant.file.find' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.find' | translate">
-              <mat-icon class="tb-mat-18" aria-hidden="true">search</mat-icon>
-            </button>
+                <mat-icon class="tb-mat-18" aria-hidden="true">search</mat-icon>
+              </button>
+            }
             <button type="button" class="art-tool icon-only" [class.on]="fileWrap()" [attr.aria-pressed]="fileWrap()" (click)="toggleFileWrap()"
                     [matTooltip]="'ai-assistant.file.wrap' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.wrap' | translate">
               <mat-icon class="tb-mat-18" aria-hidden="true">wrap_text</mat-icon>
@@ -217,11 +210,13 @@
           </div>
         }
         <div class="art-tools">
-          <button type="button" class="art-tool icon-only" [class.copied]="fileCopied()" (click)="copyFile(file)"
+          <button type="button" class="art-tool icon-only art-copy" [class.copied]="fileCopied()" (click)="copyFile(file)"
                   [matTooltip]="(fileCopied() ? 'ai-assistant.copied' : 'ai-assistant.file.copy') | translate" matTooltipPosition="below"
                   [attr.aria-label]="'ai-assistant.file.copy' | translate">
-            <mat-icon class="tb-mat-18" aria-hidden="true">{{ fileCopied() ? 'check' : 'content_copy' }}</mat-icon>
+            <mat-icon class="tb-mat-18 art-copy-ic" aria-hidden="true">content_copy</mat-icon>
+            <svg class="art-copy-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
           </button>
+          <span class="tb-ai-sr-only" aria-live="polite">{{ fileCopied() ? ('ai-assistant.copied' | translate) : '' }}</span>
           @if (file.image) {
             <button type="button" class="art-tool icon-only" [matMenuTriggerFor]="imageDownloads"
                     [matTooltip]="'ai-assistant.file.download' | translate" matTooltipPosition="below" [attr.aria-label]="'ai-assistant.file.download' | translate">
@@ -235,18 +230,60 @@
           }
         </div>
       </div>
-      <tb-ai-file-body [file]="file" [wrap]="fileWrap()" [source]="fileSource()" [whitespace]="fileWhitespace()"
-                       [marks]="fileMarks()" (marksChange)="fileMarks.set($event)"></tb-ai-file-body>
+      <tb-ai-file-body [file]="file" [wrap]="fileWrap()" [whitespace]="fileWhitespace()" [saver]="fileSaver"
+                       [marks]="fileMarks()" (marksChange)="fileMarks.set($event)" (discarded)="onFileDiscarded($event)"></tb-ai-file-body>
       @if (fileMarks(); as marks) {
         <footer artFoot class="art-pane-foot art-marks">
           <span class="file-marked">
-            <mat-icon class="tb-mat-16" aria-hidden="true">format_list_numbered</mat-icon>
-            {{ (marks.from === marks.to ? 'ai-assistant.file.line-marked' : 'ai-assistant.file.lines-marked') | translate: {from: marks.from, to: marks.to} }}
+            <span class="file-marked-n">{{ (marks.from === marks.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: marks.from, to: marks.to} }}</span>
+            {{ 'ai-assistant.file.marked' | translate }}
           </span>
           <span class="art-spacer"></span>
           <button mat-button type="button" (click)="fileMarks.set(null)">{{ 'ai-assistant.file.clear' | translate }}</button>
           <button mat-stroked-button type="button" (click)="copyMarked(file)"><mat-icon>content_copy</mat-icon>{{ 'action.copy' | translate }}</button>
           <button mat-flat-button type="button" class="art-ask" (click)="askAboutMarks(file)"><mat-icon>auto_awesome</mat-icon>{{ 'ai-assistant.file.ask-about' | translate }}</button>
+        </footer>
+      } @else {
+        <footer artFoot class="art-pane-foot file-bar">
+          <span class="file-bar-info">
+            @if (fileBody()?.editing()) {
+              @if (fileBody()?.dirty()) {
+                <span class="file-bar-state"><i class="file-bar-dot" aria-hidden="true"></i>{{ 'ai-assistant.file.unsaved' | translate }}</span>
+              } @else {
+                <span class="file-bar-state">{{ 'ai-assistant.file.editing' | translate }}</span>
+              }
+              @if (fileBody()?.caret(); as caret) {
+                <i class="file-bar-sep" aria-hidden="true">·</i>
+                <span class="file-bar-pos">{{ 'ai-assistant.file.position' | translate: {line: caret.line, col: caret.col} }}@if (caret.selected) { ({{ 'ai-assistant.file.selected' | translate: {count: caret.selected} }})}</span>
+              }
+            } @else if (fileBody()?.saved()) {
+              <span class="file-bar-saved"><mat-icon aria-hidden="true">check</mat-icon>{{ 'ai-assistant.file.saved' | translate }}</span>
+            } @else {
+              <span>{{ 'ai-assistant.file.lines' | translate: {count: file.lines} }}</span>
+              <i class="file-bar-sep" aria-hidden="true">·</i>
+              <span>{{ file.size }}</span>
+              @if (file.edited) {
+                <i class="file-bar-sep" aria-hidden="true">·</i>
+                <span class="file-bar-ed">{{ 'ai-assistant.file.edited-in-chat' | translate }}</span>
+              }
+            }
+          </span>
+          <span class="file-bar-acts">
+            @if (fileBody()?.editing()) {
+              @if (fileBody()?.dirty()) {
+                <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.discard()">{{ 'ai-assistant.file.discard' | translate }}</button>
+                <button mat-flat-button type="button" class="file-bar-b file-bar-save" [disabled]="loading() || fileBody()?.saving()" (click)="fileBody()?.save()">
+                  {{ 'ai-assistant.file.save' | translate }}
+                </button>
+              } @else {
+                <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.done()">{{ 'ai-assistant.file.done' | translate }}</button>
+              }
+            } @else if (chatId()) {
+              <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.startEdit()">
+                <mat-icon>edit</mat-icon>{{ 'ai-assistant.file.edit' | translate }}
+              </button>
+            }
+          </span>
         </footer>
       }
     </tb-ai-artifact-pane>
@@ -259,11 +296,13 @@
       </button>
     </mat-menu>
     <mat-menu #fileOptions="matMenu" xPosition="before" class="tb-ai-chat-menu art-opts">
-      <button mat-menu-item role="menuitemcheckbox" [attr.aria-checked]="fileWhitespace()" (click)="$event.stopPropagation(); toggleFileWhitespace()">
-        <mat-icon fontSet="material-icons-round">space_bar</mat-icon>
-        <span class="art-opt-l">{{ 'ai-assistant.file.show-whitespace' | translate }}</span>
-        <span class="art-switch" [class.on]="fileWhitespace()" aria-hidden="true"><i></i></span>
-      </button>
+      @if (!fileBody()?.editing()) {
+        <button mat-menu-item role="menuitemcheckbox" [attr.aria-checked]="fileWhitespace()" (click)="$event.stopPropagation(); toggleFileWhitespace()">
+          <mat-icon fontSet="material-icons-round">space_bar</mat-icon>
+          <span class="art-opt-l">{{ 'ai-assistant.file.show-whitespace' | translate }}</span>
+          <span class="art-switch" [class.on]="fileWhitespace()" aria-hidden="true"><i></i></span>
+        </button>
+      }
       <div class="art-opt-row" role="group" [attr.aria-label]="'ai-assistant.file.theme' | translate" (click)="$event.stopPropagation()">
         <mat-icon fontSet="material-icons-round" aria-hidden="true">contrast</mat-icon>
         <span>{{ 'ai-assistant.file.theme' | translate }}</span>
@@ -290,6 +329,12 @@
     <button mat-menu-item (click)="newChat()">
       <mat-icon fontSet="material-icons-round">add</mat-icon>
       <span>{{ 'ai-assistant.new-chat' | translate }}</span>
+    </button>
+  }
+  @if (docked() && (split() || splitAvailable())) {
+    <button mat-menu-item (click)="splitToggle.emit()">
+      <mat-icon fontSet="material-icons-round">{{ split() ? 'view_sidebar' : 'vertical_split' }}</mat-icon>
+      <span>{{ (split() ? 'ai-assistant.back-to-panel' : 'ai-assistant.split-view') | translate }}</span>
     </button>
   }
   @if (recentChats().length) {
@@ -331,4 +376,43 @@
     <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>
     <span>{{ 'action.delete' | translate }}</span>
   </button>
+</mat-menu>
+
+<mat-menu #filesMenu="matMenu" xPosition="before" class="tb-ai-chat-menu art-list">
+  <div class="tb-ai-menu-h art-list-h">{{ 'ai-assistant.file.files-in-chat' | translate: {count: chatFiles().length} }}</div>
+  @for (entry of chatFiles(); track entry.file.name) {
+    @if (unlisting() === entry.file.name) {
+      <div class="art-list-confirm" (click)="$event.stopPropagation()" (keydown.escape)="keepListed($event)">
+        <span class="art-list-ic"><mat-icon class="tb-mat-18" aria-hidden="true">{{ fileMark(entry.file) }}</mat-icon></span>
+        <span class="art-list-q"><b>{{ 'ai-assistant.file.unlist-ask' | translate }}</b>
+          <small><span class="art-name">{{ fileName(entry.file.name).base }}<span class="art-ext">{{ fileName(entry.file.name).ext }}</span></span></small></span>
+        <button type="button" class="art-list-no" (click)="keepListed($event)"
+                [matTooltip]="'ai-assistant.file.keep' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.file.keep' | translate">
+          <mat-icon class="tb-mat-18" aria-hidden="true">close</mat-icon>
+        </button>
+        <button type="button" class="art-list-yes" (click)="unlist(entry.file, $event)"
+                [matTooltip]="'ai-assistant.file.unlist-do' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.file.unlist-do' | translate">
+          <mat-icon class="tb-mat-18" aria-hidden="true">delete_outline</mat-icon>
+        </button>
+      </div>
+    } @else {
+      <div class="art-list-row">
+        <button mat-menu-item type="button" class="art-list-item" [class.on]="isShownFile(entry.file)" role="menuitemradio"
+                [attr.aria-checked]="isShownFile(entry.file)" (click)="showFile(entry.file)" (keydown.delete)="askUnlist(entry.file, $event)">
+          <span class="art-list-ic"><mat-icon class="tb-mat-18" aria-hidden="true">{{ fileMark(entry.file) }}</mat-icon></span>
+          <span class="art-list-t"><b><span class="art-name">{{ fileName(entry.file.name).base }}<span class="art-ext">{{ fileName(entry.file.name).ext }}</span></span></b></span>
+          @if (entry.running) {
+            <tb-ai-spin kind="gen"></tb-ai-spin>
+          }
+          @if (isShownFile(entry.file)) {
+            <mat-icon class="tb-mat-18 art-list-check" aria-hidden="true">check</mat-icon>
+          }
+        </button>
+        <button type="button" class="art-list-del" tabindex="-1" (click)="askUnlist(entry.file, $event)"
+                [matTooltip]="'ai-assistant.file.unlist' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.file.unlist' | translate">
+          <mat-icon class="tb-mat-18" aria-hidden="true">delete_outline</mat-icon>
+        </button>
+      </div>
+    }
+  }
 </mat-menu>

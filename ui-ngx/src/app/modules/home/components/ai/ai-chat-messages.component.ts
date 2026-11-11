@@ -34,7 +34,7 @@ import {
   UPDATE_PLAN_TOOL
 } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
-import { AiFile, aiFileOf, AiMadeFile, aiMadeFileOf, CREATE_FILE_TOOL, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
+import { AiFile, aiFileMark, aiFileName, aiFileOf, AiMadeFile, aiMadeFileOf, CREATE_FILE_TOOL, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AiResourceService } from '@core/http/ai-resource.service';
 import {
@@ -56,7 +56,7 @@ export interface AnswerReportEvent {
 }
 import { decorateCodeBlocks, decorateTables, fileLanguage } from '@home/components/ai/ai-code-block';
 import { aiDetailNames, AiDetailNames } from '@home/components/ai/ai-action-detail.models';
-import { decorateHints, decorateLinks, decorateReferences, decorateSeverities, decorateValues } from '@home/components/ai/ai-references';
+import { decorateFileChips, decorateHints, decorateLinks, decorateReferences, decorateSeverities, decorateValues } from '@home/components/ai/ai-references';
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { Router } from '@angular/router';
 
@@ -82,6 +82,16 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() work: AiWorkState | undefined;
   @Input() feedback = false;
   @Input() shownFile: string | null = null;
+
+  latestFiles = new Map<string, AiFile>();
+
+  readonly fileMark = aiFileMark;
+
+  readonly fileName = aiFileName;
+
+  shownFileName(): string | null {
+    return this.shownFile ? Object.values(this.files).find(file => file.executionId === this.shownFile)?.name ?? null : null;
+  }
   @Input() ghostFirst = false;
 
   detailNames: AiDetailNames = new Map();
@@ -204,6 +214,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     decorateLinks(answer);
     decorateHints(answer);
     decorateValues(answer, (message as GeneralChatMessage)?.readings);
+    decorateFileChips(answer, this.latestFiles, this.shownFileName());
     decorateSeverities(answer, (message as GeneralChatMessage)?.severities,
       severity => this.translate.instant(alarmSeverityTranslations.get(severity as AlarmSeverity) ?? severity));
   }
@@ -211,6 +222,13 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @HostListener('click', ['$event'])
   openInApp(event: MouseEvent): void {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    const chip = (event.target as HTMLElement)?.closest<HTMLElement>('.agent .art-chip[data-file]');
+    const chipFile = chip ? this.latestFiles.get(chip.dataset.file) : undefined;
+    if (chipFile) {
+      event.preventDefault();
+      this.openFile.emit(chipFile);
       return;
     }
     const link = (event.target as HTMLElement)?.closest('.agent a[href]') as HTMLAnchorElement | null;
@@ -314,12 +332,20 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     if (changes.messages || changes.completedExecutions || changes.loading || changes.autoApprove || changes.denyReasons) {
       this.offerIndex = this.findOffer();
     }
+    if (changes.shownFile) {
+      const shown = this.shownFileName();
+      this.elementRef.nativeElement.querySelectorAll('.art-chip[data-file]').forEach((chip: HTMLElement) => {
+        chip.classList.toggle('on', chip.dataset.file === shown);
+        chip.setAttribute('aria-pressed', String(chip.dataset.file === shown));
+      });
+    }
     if (changes.messages || changes.completedExecutions || changes.loading) {
       this.summaries = this.findSummaries();
       this.prompts = this.findPrompts();
       this.asking = this.findAsking();
       this.plans = this.findPlans();
       this.files = this.findFiles();
+      this.latestFiles = new Map(Object.values(this.files).map(file => [file.name, file]));
       this.madeFiles = this.findMadeFiles();
       this.quotes = this.findQuotes();
       this.sources = this.findSources();
@@ -613,7 +639,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     const files: Record<number, AiFile> = {};
     this.messages.forEach((message, index) => {
       if (message.from === 'ACTION' && message.data.tool === WRITE_FILE_TOOL) {
-        const file = aiFileOf(message.data.executionId, message.data.arguments);
+        const file = aiFileOf(message.data.executionId, message.data.arguments, !!message.data.edited);
         if (file) {
           files[index] = file;
         }

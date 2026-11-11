@@ -185,8 +185,9 @@
   .tb-site-main.openAiAssistant {
     margin-right: var(--tb-ai-panel-w, 364px);
 
-    @media #{$mat-lt-lg} {
+    @media (max-width: 1100px) {
       margin-right: 0;
+      padding-bottom: clamp(min(340px, 70vh), 50vh, 600px);
     }
   }
 }

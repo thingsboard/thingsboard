@@ -23,6 +23,8 @@ import { FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { AiShortcutsDialogComponent } from '@home/components/ai/ai-shortcuts-dialog.component';
 import { DomSanitizer } from '@angular/platform-browser';
 import { guid } from '@core/utils';
 import { AiResourceService } from '@core/http/ai-resource.service';
@@ -66,6 +68,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   private translate = inject(TranslateService);
   private sanitizer = inject(DomSanitizer);
   private renderer = inject(Renderer2);
+  private dialog = inject(MatDialog);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   @Input() placeholder = '';
@@ -179,9 +182,18 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     this.clearAttachments(true);
   }
 
+  openShortcuts(event: MouseEvent): void {
+    const from = event.currentTarget as HTMLElement;
+    if (this.dialog.openDialogs.some(open => open.componentInstance instanceof AiShortcutsDialogComponent)) {
+      return;
+    }
+    this.dialog.open(AiShortcutsDialogComponent, {panelClass: ['tb-dialog', 'tb-ai-keys-dialog'], autoFocus: 'dialog', restoreFocus: true})
+      .afterClosed().subscribe(() => from?.focus({preventScroll: true}));
+  }
+
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(event: KeyboardEvent): void {
-    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) {
+    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey || this.dialog.openDialogs.length) {
       return;
     }
     const target = event.target as HTMLElement;
@@ -189,7 +201,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
       return;
     }
     const visible = Array.from(document.querySelectorAll<HTMLTextAreaElement>('.tb-ai-composer textarea'))
-      .filter(textarea => textarea.offsetParent);
+      .filter(textarea => textarea.offsetParent && !textarea.closest('tb-ai-assistant-panel:not(.open)'));
     const field = this.textarea?.nativeElement;
     if (field && visible[visible.length - 1] === field) {
       event.preventDefault();

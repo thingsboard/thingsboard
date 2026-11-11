@@ -106,10 +106,10 @@
         </label>
       }
       <span class="composer-spacer"></span>
-      <button type="button" class="composer-tool"
-              [attr.aria-label]="'ai-assistant.shortcuts' | translate"
+      <button type="button" class="composer-tool" aria-haspopup="dialog"
+              [attr.aria-label]="'ai-assistant.keys.title' | translate"
               tb-popover [tbAiTip]="keysTip"
-              [tipToggle]="true">
+              (click)="openShortcuts($event)">
         <mat-icon class="tb-mat-18">keyboard</mat-icon>
       </button>
     </div>

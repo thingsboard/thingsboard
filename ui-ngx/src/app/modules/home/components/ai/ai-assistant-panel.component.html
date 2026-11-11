@@ -7,7 +7,7 @@
 <div class="tb-ai-grip" role="separator" tabindex="0" aria-orientation="vertical"
      [attr.aria-label]="'ai-assistant.resize-panel' | translate"
      [matTooltip]="'ai-assistant.resize-panel-hint' | translate" matTooltipPosition="left"
-     [attr.aria-valuemin]="minWidth" [attr.aria-valuemax]="maxWidth" [attr.aria-valuenow]="width()"
+     [attr.aria-valuemin]="minWidth" [attr.aria-valuemax]="splitAvailable() ? splitWidth() : maxWidth" [attr.aria-valuenow]="width()"
      (dblclick)="setWidth(defaultWidth, true)"
      (keydown)="onGripKey($event)"
      (pointerdown)="startResize($event)"></div>
@@ -24,6 +24,9 @@
               [startLine]="welcome().line"
               [startPlaceholder]="panelService.config()?.initialPromptPlaceholder"
               [startSuggestion]="welcome().suggestion"
+              [split]="split()"
+              [splitAvailable]="splitAvailable()"
+              (splitToggle)="toggleSplit()"
               (closed)="close()">
   </tb-ai-chat>
 </div>

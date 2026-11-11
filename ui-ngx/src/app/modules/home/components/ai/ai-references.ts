@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { AiFile, aiFileMark, aiFileName } from '@home/components/ai/ai-file.models';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { aiEntityKind } from '@home/components/ai/ai-action.models';
 import { aiSevMarkElement } from '@home/components/ai/ai-sev-mark.component';
@@ -214,6 +215,43 @@ export function decorateValues(root: HTMLElement, readings: Array<{key: string; 
       shown.append(unitEl);
     }
     chip.append(key, shown);
+    code.replaceWith(chip);
+  });
+}
+
+export function decorateFileChips(root: HTMLElement, files: ReadonlyMap<string, AiFile>, shown: string | null): void {
+  if (!files.size) {
+    return;
+  }
+  root.querySelectorAll<HTMLElement>('code').forEach(code => {
+    if (code.closest('pre, a, .k-ent, .k-tel, .art-chip') || code.children.length) {
+      return;
+    }
+    const file = files.get(code.textContent?.trim() ?? '');
+    if (!file) {
+      return;
+    }
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'art-chip' + (file.name === shown ? ' on' : '');
+    chip.dataset.file = file.name;
+    chip.setAttribute('aria-pressed', String(file.name === shown));
+    chip.setAttribute('aria-label', `${file.name}, ${file.lines} · ${file.size}`);
+    const icon = document.createElement('span');
+    icon.className = 'mat-icon notranslate material-icons-round mat-ligature-font';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = aiFileMark(file);
+    const parts = aiFileName(file.name);
+    const name = document.createElement('span');
+    name.className = 'art-name';
+    name.textContent = parts.base;
+    if (parts.ext) {
+      const ext = document.createElement('span');
+      ext.className = 'art-ext';
+      ext.textContent = parts.ext;
+      name.append(ext);
+    }
+    chip.append(icon, name);
     code.replaceWith(chip);
   });
 }

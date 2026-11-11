@@ -25,6 +25,12 @@ export interface ChatUpdate {
   pinned?: boolean;
   feedback?: AnswerFeedback;
   autoApprove?: boolean;
+  fileEdit?: FileEdit;
+}
+
+export interface FileEdit {
+  executionId: string;
+  content: string;
 }
 
 export interface ChatInfo extends ChatConfiguration {
@@ -207,6 +213,7 @@ export interface AiAction {
   durationMs?: number;
   result?: string;
   affectedEntities?: Array<EntityId>;
+  edited?: boolean;
 }
 
 export interface ApprovalResult {

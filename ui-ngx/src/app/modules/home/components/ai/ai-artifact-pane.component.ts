@@ -3,7 +3,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, inject, input, Output, signal, ViewChild } from '@angular/core';
 
 const PANE_MIN = 360;
-const CHAT_MIN = 420;
+const CHAT_MIN = 340;
 const WIDTH_KEY = 'tbSolutionPaneWidth';
 
 @Component({
