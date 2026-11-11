@@ -8,6 +8,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
@@ -33,6 +34,8 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.selfregistration.DefaultDashboardParams;
 import org.thingsboard.server.common.data.selfregistration.HomeDashboardParams;
 import org.thingsboard.server.common.data.selfregistration.V2CaptchaParams;
@@ -63,10 +66,15 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class SignUpControllerSqlTest extends AbstractControllerTest {
@@ -249,6 +257,64 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
                 eq(entityGroup.toString()),
                 eq(entityGroup.getName())
         );
+
+        removeCreatedUser(user);
+    }
+
+    @Test
+    public void testResendEmailActivationForPendingSignUpUser() throws Exception {
+        createWebSelfRegistrationSettings();
+        doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+
+        Mockito.clearInvocations(mailService);
+        doPost("/api/noauth/resendEmailActivation?email=" + CUSTOMER_TEST_EMAIL).andExpect(status().isOk());
+
+        verify(mailService, times(1)).sendActivationEmail(eq(tenantId), anyString(), anyLong(), eq(CUSTOMER_TEST_EMAIL));
+
+        removeCreatedUser(userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL));
+    }
+
+    @Test
+    public void testResendEmailActivationSendsNothingForUserOfOtherTenant() throws Exception {
+        createWebSelfRegistrationSettings();
+        createDifferentTenant();
+
+        User otherUser = new User();
+        otherUser.setAuthority(Authority.TENANT_ADMIN);
+        otherUser.setTenantId(differentTenantId);
+        otherUser.setEmail("other.tenant.user@thingsboard.org");
+        otherUser = doPost("/api/user?sendActivationMail=false", otherUser, User.class);
+
+        UserCredentials credentials = userService.findUserCredentialsByUserId(differentTenantId, otherUser.getId());
+        credentials.setPassword("abcdef123");
+        credentials = userService.saveUserCredentials(differentTenantId, credentials);
+
+        Mockito.clearInvocations(mailService);
+        doPost("/api/noauth/resendEmailActivation?email=" + otherUser.getEmail()).andExpect(status().isBadRequest());
+
+        verify(mailService, never()).sendActivationEmail(any(), anyString(), anyLong(), anyString());
+        UserCredentials credentialsAfter = userService.findUserCredentialsByUserId(differentTenantId, otherUser.getId());
+        assertThat(credentialsAfter.getActivateToken()).isEqualTo(credentials.getActivateToken());
+        assertThat(credentialsAfter.getActivateTokenExpTime()).isEqualTo(credentials.getActivateTokenExpTime());
+
+        deleteDifferentTenant();
+    }
+
+    @Test
+    public void testResendEmailActivationSendsNothingForDisabledActivatedUser() throws Exception {
+        createWebSelfRegistrationSettings();
+        doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+
+        User user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
+        UserCredentials credentials = userService.findUserCredentialsByUserId(tenantId, user.getId());
+        userService.activateUserCredentials(tenantId, credentials.getActivateToken(), credentials.getPassword());
+        userService.setUserCredentialsEnabled(tenantId, user.getId(), false);
+
+        Mockito.clearInvocations(mailService);
+        doPost("/api/noauth/resendEmailActivation?email=" + CUSTOMER_TEST_EMAIL).andExpect(status().isBadRequest());
+
+        verify(mailService, never()).sendActivationEmail(any(), anyString(), anyLong(), anyString());
+        assertThat(userService.findUserCredentialsByUserId(tenantId, user.getId()).getActivateToken()).isNull();
 
         removeCreatedUser(user);
     }
