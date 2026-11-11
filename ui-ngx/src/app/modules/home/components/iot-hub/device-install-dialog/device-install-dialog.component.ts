@@ -1341,6 +1341,28 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       ws.completed = true;
     } else {
       this.applyDefaultValueTemplates(ws, storedValues);
+      if (this.data.update && storedValues) {
+        this.markStoredConnectionChecked(ws, storedValues);
+      }
+    }
+  }
+
+  /**
+   * Update: the connection the installed version was set up with counts as checked, so an update that changes none
+   * of its fields goes to the Update step without checking it again. A changed or new connection field is checked.
+   */
+  private markStoredConnectionChecked(ws: WizardStep, storedValues: Record<string, any>): void {
+    const check = this.connectionCheckOf(ws);
+    if (!check) {
+      return;
+    }
+    const template = this.zipFiles.get(check.template) ?? '';
+    const allStored = ws.formFields
+      .filter(field => template.includes(`\${${field.key}}`))
+      .every(field => field.key in storedValues);
+    if (allStored) {
+      check.status = 'success';
+      check.checkedValues = this.checkedValuesOf(ws, check);
     }
   }
 
