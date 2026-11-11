@@ -835,10 +835,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ep.entityOutput = output;
     ep.resolution = resolution;
     ep.status = 'success';
-    if (resolution !== 'use-existing') {
+    // The connector is attributes on the gateway, not an entity of its own: its output is the gateway, which the gateway
+    // step already accounted for (created, or used as it was).
+    const connector = ep.step.type === InstallStepType.GATEWAY_CONNECTOR;
+    if (resolution !== 'use-existing' && !connector) {
       this.createdInThisWizard.add(output.id);
     }
-    const entityType = this.stepTypeToEntityType(ep.step.type);
+    const entityType = connector ? null : this.stepTypeToEntityType(ep.step.type);
     // An entity the user had before the install and chose to use is not the package's: a later update or Delete must
     // not remove it, even after Back reruns the steps and its "use existing" mark is gone from the install state.
     const packageOwned = resolution !== 'use-existing' || this.createdInThisWizard.has(output.id);

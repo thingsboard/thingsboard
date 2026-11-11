@@ -2,6 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.iot_hub;
 
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.service.rule.TbRuleChainService;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AssetProfileId;
+import static org.mockito.Mockito.lenient;
 import org.thingsboard.server.dao.converter.ConverterService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.common.data.id.IntegrationId;
@@ -79,6 +91,14 @@ class DefaultIotHubServiceTest {
     private DeviceProfileService deviceProfileService;
     @Mock
     private TbDeviceService tbDeviceService;
+    @Mock
+    private OtaPackageService otaPackageService;
+    @Mock
+    private AssetProfileService assetProfileService;
+    @Mock
+    private TbRuleChainService tbRuleChainService;
+    @Mock
+    private RuleChainService ruleChainService;
     @Mock
     private IntegrationService integrationService;
     @Mock
@@ -786,7 +806,7 @@ class DefaultIotHubServiceTest {
         assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("'Package profile' is used by 1 other device(s)")
-                .hasMessageContaining("Nothing was removed");
+                .hasMessageContaining("Change or delete them first");
         verify(tbDeviceService, never()).delete(any(Device.class), any());
         verify(iotHubInstalledItemService, never()).save(any(), any());
     }
@@ -824,12 +844,137 @@ class DefaultIotHubServiceTest {
         verify(tbDeviceProfileService).delete(profile, user);
     }
 
+    @Test
+    void removeDevicePackageEntities_rootRuleChain_refusedBeforeRemoving() {
+        mockTenant();
+        RuleChain ruleChain = packageRuleChain(true);
+        IotHubInstalledItem item = devicePackage(ruleChain.getId());
+        String newVersionId = mockNewVersion(item);
+
+        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'Package rule chain' is the root rule chain");
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void removeDevicePackageEntities_ruleChainOfAnotherProfile_refusedBeforeRemoving() {
+        mockTenant();
+        RuleChain ruleChain = packageRuleChain(false);
+        DeviceProfile other = otherProfile("User profile");
+        other.setDefaultRuleChainId(ruleChain.getId());
+        when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(other));
+        IotHubInstalledItem item = devicePackage(ruleChain.getId());
+        String newVersionId = mockNewVersion(item);
+
+        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'Package rule chain' is the rule chain of the device profile 'User profile'");
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void removeDevicePackageEntities_ruleChainOfThePackageProfile_removed() throws Exception {
+        mockTenant();
+        RuleChain ruleChain = packageRuleChain(false);
+        DeviceProfile profile = packageProfile(false);
+        profile.setDefaultRuleChainId(ruleChain.getId());
+        when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(profile));
+        when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any())).thenReturn(page());
+        IotHubInstalledItem item = devicePackage(ruleChain.getId(), profile.getId());
+        String newVersionId = mockNewVersion(item);
+
+        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
+
+        verify(tbDeviceProfileService).delete(profile, user);
+        verify(tbRuleChainService).delete(ruleChain, user);
+    }
+
+    @Test
+    void removeDevicePackageEntities_ruleChainOfAnAssetProfile_refusedBeforeRemoving() {
+        mockTenant();
+        RuleChain ruleChain = packageRuleChain(false);
+        AssetProfile assetProfile = new AssetProfile(new AssetProfileId(UUID.randomUUID()));
+        assetProfile.setName("Building");
+        assetProfile.setDefaultRuleChainId(ruleChain.getId());
+        when(assetProfileService.findAssetProfiles(eq(tenantId), any())).thenReturn(page(assetProfile));
+        IotHubInstalledItem item = devicePackage(ruleChain.getId());
+        String newVersionId = mockNewVersion(item);
+
+        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'Package rule chain' is the rule chain of the asset profile 'Building'");
+    }
+
+    @Test
+    void removeDevicePackageEntities_dashboardOfAnotherProfile_refusedBeforeRemoving() {
+        mockTenant();
+        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
+        dashboard.setTenantId(tenantId);
+        dashboard.setTitle("Package dashboard");
+        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
+        DeviceProfile other = otherProfile("User profile");
+        other.setDefaultDashboardId(dashboard.getId());
+        when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(other));
+        lenient().when(assetProfileService.findAssetProfiles(eq(tenantId), any())).thenReturn(page());
+        IotHubInstalledItem item = devicePackage(dashboard.getId());
+        String newVersionId = mockNewVersion(item);
+
+        // Deleted first (reverse order), the dashboard would fail after nothing else, and the rest after it: refused now.
+        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'Package dashboard' is the default dashboard of the device profile 'User profile'");
+        verify(tbDashboardService, never()).delete(any(), any());
+    }
+
+    @Test
+    void removeDevicePackageEntities_profileOfAFirmware_refusedBeforeRemoving() {
+        mockTenant();
+        DeviceProfile profile = packageProfile(false);
+        when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any())).thenReturn(page());
+        OtaPackageInfo firmware = new OtaPackageInfo(new OtaPackageId(UUID.randomUUID()));
+        firmware.setDeviceProfileId(profile.getId());
+        firmware.setType(OtaPackageType.FIRMWARE);
+        firmware.setTitle("fw");
+        firmware.setVersion("1.2");
+        when(otaPackageService.findTenantOtaPackagesByTenantId(eq(tenantId), any())).thenReturn(page(firmware));
+        IotHubInstalledItem item = devicePackage(profile.getId());
+        String newVersionId = mockNewVersion(item);
+
+        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("'Package profile' is used by the firmware 'fw 1.2'");
+    }
+
     private DeviceProfile packageProfile(boolean isDefault) {
         DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
         profile.setTenantId(tenantId);
         profile.setName("Package profile");
         profile.setDefault(isDefault);
         when(deviceProfileService.findDeviceProfileById(tenantId, profile.getId())).thenReturn(profile);
+        lenient().when(otaPackageService.findTenantOtaPackagesByTenantId(eq(tenantId), any())).thenReturn(page());
+        return profile;
+    }
+
+    private static <T> PageData<T> page(T... items) {
+        return new PageData<>(List.of(items), 1, items.length, false);
+    }
+
+    private RuleChain packageRuleChain(boolean root) {
+        RuleChain ruleChain = new RuleChain(new RuleChainId(UUID.randomUUID()));
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Package rule chain");
+        ruleChain.setRoot(root);
+        when(ruleChainService.findRuleChainById(tenantId, ruleChain.getId())).thenReturn(ruleChain);
+        lenient().when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page());
+        lenient().when(assetProfileService.findAssetProfiles(eq(tenantId), any())).thenReturn(page());
+        return ruleChain;
+    }
+
+    private DeviceProfile otherProfile(String name) {
+        DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
+        profile.setTenantId(tenantId);
+        profile.setName(name);
         return profile;
     }
 
