@@ -15,17 +15,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
+import org.thingsboard.server.dao.converter.ConverterService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
+import org.thingsboard.server.service.entitiy.converter.TbConverterService;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -66,6 +73,12 @@ class DefaultIotHubServiceTest {
     private TbDeviceService tbDeviceService;
     @Mock
     private TbDashboardService tbDashboardService;
+    @Mock
+    private IntegrationService integrationService;
+    @Mock
+    private ConverterService converterService;
+    @Mock
+    private TbConverterService tbConverterService;
 
     @Spy
     @InjectMocks
@@ -520,6 +533,31 @@ class DefaultIotHubServiceTest {
 
         verify(tbDeviceService).delete(knownDevice, user);
         verify(tbDashboardService, never()).delete(any(Dashboard.class), any());
+        verify(iotHubInstalledItemService).deleteById(tenantId, new IotHubInstalledItemId(id));
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_deletesItsIntegrationAndConverter() throws Exception {
+        mockTenant();
+        Integration integration = new Integration(new IntegrationId(UUID.randomUUID()));
+        integration.setTenantId(tenantId);
+        Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        converter.setTenantId(tenantId);
+        Integration unknownIntegration = new Integration(new IntegrationId(UUID.randomUUID()));
+        unknownIntegration.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        when(integrationService.findIntegrationById(tenantId, integration.getId())).thenReturn(integration);
+        when(integrationService.findIntegrationById(tenantId, unknownIntegration.getId())).thenReturn(unknownIntegration);
+        when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
+        UUID id = UUID.randomUUID();
+        IotHubInstalledItem item = installedItem(id);
+        item.setDescriptor(devicePackage(converter.getId(), integration.getId(), unknownIntegration.getId()));
+        when(iotHubInstalledItemService.findById(tenantId, new IotHubInstalledItemId(id))).thenReturn(item);
+
+        service.deleteInstalledItem(user, new IotHubInstalledItemId(id));
+
+        verify(integrationService).deleteIntegration(tenantId, integration.getId());
+        verify(integrationService, never()).deleteIntegration(tenantId, unknownIntegration.getId());
+        verify(tbConverterService).delete(converter, user);
         verify(iotHubInstalledItemService).deleteById(tenantId, new IotHubInstalledItemId(id));
     }
 }
