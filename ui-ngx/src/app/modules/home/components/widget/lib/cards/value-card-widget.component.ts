@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Input,
   OnDestroy,
@@ -12,6 +13,7 @@ import {
   TemplateRef,
   ViewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
@@ -94,7 +96,8 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -124,6 +127,12 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
+
+    if (this.showDate) {
+      this.dateFormat.formattedUpdated?.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => this.cd.detectChanges());
+    }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);

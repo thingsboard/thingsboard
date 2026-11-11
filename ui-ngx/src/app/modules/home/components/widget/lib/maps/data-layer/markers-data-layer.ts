@@ -409,7 +409,8 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
     this.marker = L.marker(location, {
       tbMarkerData: data,
       snapIgnore: !this.dataLayer.isSnappable(),
-      bubblingMouseEvents: !this.dataLayer.isEditMode()
+      bubblingMouseEvents: !this.dataLayer.isEditMode(),
+      pane: this.dataLayer.getMarkersPane()
     });
     this.updateMarkerIcon(data, dsData);
     return this.marker;
@@ -562,10 +563,20 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
 
   private markersClusterContainer: L.MarkerClusterGroup;
   private clusterMarkerColorFunction: CompiledTbFunction<ClusterMarkerColorFunction>;
+  private readonly markersPane: string;
 
   constructor(protected map: TbMap<any>,
-              inputSettings: MarkersDataLayerSettings) {
+              inputSettings: MarkersDataLayerSettings,
+              markersLayerIndex: number) {
     super(map, inputSettings);
+    this.markersPane = map.getMarkersPane(markersLayerIndex);
+    if (this.markersClusterContainer) {
+      L.Util.setOptions(this.markersClusterContainer, {clusterPane: this.markersPane});
+    }
+  }
+
+  public getMarkersPane(): string {
+    return this.markersPane;
   }
 
   public dataLayerType(): MapDataLayerType {

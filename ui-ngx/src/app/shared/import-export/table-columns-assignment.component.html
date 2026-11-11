@@ -34,6 +34,13 @@
               </mat-option>
             }
           </mat-optgroup>
+          <mat-optgroup label="{{ 'import.gateway' | translate }}">
+            @for (gatewayColumn of columnDeviceGateway; track gatewayColumn) {
+              <mat-option [value]="gatewayColumn.value" [disabled]="gatewayColumn.disabled">
+                {{ columnTypesTranslations.get(gatewayColumn.value) | translate }}
+              </mat-option>
+            }
+          </mat-optgroup>
         }
       </mat-select>
     </mat-cell>

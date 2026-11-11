@@ -5442,7 +5442,6 @@
                 "community-string": "Niz skupnosti SNMP"
             },
             "isgateway": "Je Gateway",
-            "activity-time-from-gateway-device": "Čas aktivnosti iz naprave Gateway",
             "description": "Opis",
             "edge-license-key": "Licenčni ključ",
             "cloud-endpoint": "Končna točka v oblaku",

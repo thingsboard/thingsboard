@@ -5426,7 +5426,6 @@
         "community-string": "Community string SNMP"
       },
       "isgateway": "Είναι Gateway",
-      "activity-time-from-gateway-device": "Χρόνος δραστηριότητας από συσκευή Gateway",
       "description": "Περιγραφή",
       "edge-license-key": "Κλειδί άδειας χρήσης",
       "cloud-endpoint": "Τελικό σημείο Cloud",
