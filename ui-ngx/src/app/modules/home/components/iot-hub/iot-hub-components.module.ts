@@ -22,7 +22,6 @@ import { TbIotHubSelectCfEntityDialogComponent } from './iot-hub-select-cf-entit
 import { TbIotHubUpgradeRequiredDialogComponent } from './iot-hub-upgrade-required-dialog.component';
 import { TbIotHubMarkdownComponent } from './iot-hub-markdown.component';
 import { SolutionInstallDialogComponent } from './solution-install-dialog.component';
-import { IotHubActionsService } from './iot-hub-actions.service';
 import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link.module';
 
 @NgModule({
@@ -50,9 +49,6 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     CommonModule,
     SharedModule,
     IotHubItemLinkModule
-  ],
-  providers: [
-    IotHubActionsService
   ],
   exports: [
     TbIotHubItemDetailDialogComponent,

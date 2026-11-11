@@ -269,7 +269,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     const listener = (event: MouseEvent) => {
       const chatId = this.chatId();
       const link = (event.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
-      if (!chatId || this.solutionId() || !link || !link.closest('.ai-canvas') || link.target === '_blank'
+      if (!chatId || this.solutionId() || !link || !link.closest('.ai-canvas') || link.target === '_blank' || link.getAttribute('href')?.startsWith('#')
         || link.origin !== window.location.origin || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
         || link.pathname === '/ai-assistant' || link.pathname.startsWith('/ai-assistant/')) {
         return;

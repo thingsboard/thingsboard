@@ -178,11 +178,11 @@ export class AiActionDetailComponent {
   }
 
   openHub(row: HubRow, event: MouseEvent): void {
-    if (!row.item || !this.iotHubActions) {
-      return;
-    }
     event.preventDefault();
-    this.iotHubActions.openItemDetail(row.item).subscribe();
+    event.stopPropagation();
+    if (row.item && this.iotHubActions) {
+      this.iotHubActions.openItemDetail(row.item).subscribe();
+    }
   }
 
   time(ts: number): string {
