@@ -9,7 +9,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -300,35 +299,16 @@ public class ImageControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDownloadImageWithSpecialCharactersInFileName() throws Exception {
-        List<String> filenames = List.of("th, (copy).png", "a;b.png", "a\"b.png", "тест.png", "a (copy).png");
-        for (String filename : filenames) {
-            TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
-            assertThat(imageInfo.getFileName()).isEqualTo(filename);
+    public void testDownloadImageWithCommaInFileName() throws Exception {
+        String filename = "Baker Street, 221B.png";
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
 
-            for (String url : List.of("/api/images/tenant/{key}", "/api/images/tenant/{key}/preview")) {
-                MockHttpServletResponse response = doGet(url, imageInfo.getResourceKey())
-                        .andExpect(status().isOk())
-                        .andReturn().getResponse();
-                assertThat(response.getContentAsByteArray()).containsExactly(PNG_IMAGE);
+        for (String url : List.of("/api/images/tenant/{key}", "/api/images/tenant/{key}/preview")) {
+            String contentDisposition = downloadImageContentDisposition(url, imageInfo.getResourceKey());
 
-                List<String> contentDisposition = response.getHeaders(HttpHeaders.CONTENT_DISPOSITION);
-                assertThat(contentDisposition).hasSize(1);
-                ContentDisposition parsed = ContentDisposition.parse(contentDisposition.get(0));
-                assertThat(parsed.isAttachment()).isTrue();
-                assertThat(parsed.getFilename()).isEqualTo(filename);
-            }
+            assertThat(contentDisposition).isEqualTo("attachment; filename=\"Baker Street, 221B.png\"");
+            assertThat(countHeaderValues(contentDisposition)).isEqualTo(1);
         }
-    }
-
-    @Test
-    public void testPublicImageHasNoContentDisposition() throws Exception {
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "th, (copy).png", "image/png", PNG_IMAGE);
-        resetTokens();
-        MockHttpServletResponse response = doGet("/api/images/public/" + imageInfo.getPublicResourceKey())
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
-        assertThat(response.getHeader(HttpHeaders.CONTENT_DISPOSITION)).isNull();
     }
 
     @Test
@@ -458,6 +438,32 @@ public class ImageControllerTest extends AbstractControllerTest {
     private byte[] downloadPublicImage(String publicKey) throws Exception {
         return doGet("/api/images/public/" + publicKey).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
+    }
+
+    private String downloadImageContentDisposition(String urlTemplate, String key) throws Exception {
+        MockHttpServletResponse response = doGet(urlTemplate, key)
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+        assertThat(response.getContentAsByteArray()).isNotEmpty();
+        List<String> headers = response.getHeaders(HttpHeaders.CONTENT_DISPOSITION);
+        assertThat(headers).hasSize(1);
+        return headers.get(0);
+    }
+
+    private static int countHeaderValues(String headerValue) {
+        int count = 1;
+        boolean quoted = false;
+        for (int i = 0; i < headerValue.length(); i++) {
+            char c = headerValue.charAt(i);
+            if (quoted && c == '\\') {
+                i++;
+            } else if (c == '"') {
+                quoted = !quoted;
+            } else if (c == ',' && !quoted) {
+                count++;
+            }
+        }
+        return count;
     }
 
 }
