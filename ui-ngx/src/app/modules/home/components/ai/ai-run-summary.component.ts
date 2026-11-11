@@ -78,7 +78,7 @@ const PROFILE_TYPES = new Set<string>([EntityType.DEVICE_PROFILE, EntityType.ASS
         <div class="tb-rec-row">
           <span class="tb-rec-pic" aria-hidden="true">
             @if (card.image) {
-              <img [src]="card.image | image: {preview: true, ignoreLoadingImage: true} | async" alt="">
+              <img [src]="card.image | image: {ignoreLoadingImage: true} | async" alt="">
             } @else {
               <span class="tb-rec-img" [innerHTML]="thumb()"></span>
             }
