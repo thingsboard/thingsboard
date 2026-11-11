@@ -89,10 +89,10 @@ export class SetValueActionSettingsPanelComponent extends PageComponent implemen
         action: [this.setValueSettings?.action, []],
         executeRpc: this.fb.group({
           method: [this.setValueSettings?.executeRpc?.method, [Validators.required]],
-          requestTimeout: [this.setValueSettings?.executeRpc?.requestTimeout, [Validators.required, Validators.min(5000)]],
+          requestTimeout: [this.setValueSettings?.executeRpc?.requestTimeout ?? 5000, [Validators.required, Validators.min(5000)]],
           requestPersistent: [this.setValueSettings?.executeRpc?.requestPersistent, []],
           persistentPollingInterval:
-            [this.setValueSettings?.executeRpc?.persistentPollingInterval, [Validators.required, Validators.min(1000)]]
+            [this.setValueSettings?.executeRpc?.persistentPollingInterval ?? 1000, [Validators.required, Validators.min(1000)]]
         }),
         setAttribute: this.fb.group({
           scope: [this.setValueSettings?.setAttribute?.scope, []],

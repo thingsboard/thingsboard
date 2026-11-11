@@ -140,7 +140,7 @@ export interface ConvertedInputMsgParams {
 
 export interface ConvertedInputMsgResult {
   payload: any;
-  metadata: {[key: string]: string};
+  metadata: Record<string, unknown>;
   contentType: ContentType;
   stringContent?: string;
 }
