@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -165,7 +167,10 @@ public class SchedulerEventController extends BaseController {
                     "Report scheduler event configuration should be specified!");
             checkReportTemplateId(reportConfig.getReportTemplateId(), Operation.READ);
             UserId reportUserId = checkNotNull(reportConfig.getUserId(), "Report user must be specified!");
+            checkReportUser(reportUserId);
             checkUserOwnerPermission(currentUser, reportUserId);
+        } else if (schedulerEvent.getConfiguration() != null) {
+            checkMsgReportUser(schedulerEvent.getConfiguration().path("msgBody"));
         }
     }
 

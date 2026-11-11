@@ -276,6 +276,35 @@ public class SchedulerEventControllerTest extends AbstractControllerTest {
         assertThat(reportInfos.getData()).hasSize(0);
     }
 
+    @Test
+    public void testSaveReportEventRequiresPermissionOverReportUser() throws Exception {
+        ReportTemplate template = doPost("/api/reportTemplate", buildTemplate("CSV report template", ReportTemplateType.REPORT, TbReportFormat.CSV), ReportTemplate.class);
+
+        loginCustomerAdminUser();
+        doPost("/api/schedulerEvent", createReportSchedulerEvent(template.getId(), tenantAdminUserId)).andExpect(status().isForbidden());
+        doPost("/api/schedulerEvent", createDashboardReportSchedulerEvent(tenantAdminUserId)).andExpect(status().isForbidden());
+        doPost("/api/schedulerEvent", createReportConfigMsgSchedulerEvent(tenantAdminUserId)).andExpect(status().isForbidden());
+        assertThat(findSchedulerEvents(null, null)).isEmpty();
+
+        SchedulerEvent reportEvent = createReportSchedulerEvent(template.getId(), customerAdminUserId);
+        ((ObjectNode) reportEvent.getSchedule()).put("startTime", System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+        assertThat(saveSchedulerEvent(reportEvent).getId()).isNotNull();
+        assertThat(saveSchedulerEvent(createDashboardReportSchedulerEvent(customerAdminUserId)).getId()).isNotNull();
+
+        loginTenantAdmin();
+        assertThat(saveSchedulerEvent(createDashboardReportSchedulerEvent(customerUserId)).getId()).isNotNull();
+    }
+
+    @Test
+    public void testSaveReportEventRequiresReportUser() throws Exception {
+        ReportTemplate template = doPost("/api/reportTemplate", buildTemplate("CSV report template", ReportTemplateType.REPORT, TbReportFormat.CSV), ReportTemplate.class);
+        doPost("/api/schedulerEvent", createReportSchedulerEvent(template.getId(), null)).andExpect(status().isBadRequest());
+
+        SchedulerEvent noConfigurationEvent = createReportSchedulerEvent(template.getId(), tenantAdminUserId);
+        noConfigurationEvent.setConfiguration(null);
+        doPost("/api/schedulerEvent", noConfigurationEvent).andExpect(status().isBadRequest());
+    }
+
     private ReportTemplate buildTemplate(String templateName, ReportTemplateType report, TbReportFormat format) {
         ReportTemplate template = new ReportTemplate();
         template.setName(templateName);
@@ -307,6 +336,35 @@ public class SchedulerEventControllerTest extends AbstractControllerTest {
         reportConfig.setUserId(userId);
         reportConfig.setMakePublic(makeReportPublic);
         schedulerEvent.setConfiguration(JacksonUtil.valueToTree(reportConfig));
+        return schedulerEvent;
+    }
+
+    private SchedulerEvent createDashboardReportSchedulerEvent(UserId userId) {
+        SchedulerEvent schedulerEvent = createSchedulerEvent();
+        schedulerEvent.setType("generateDashboardReport");
+        ObjectNode reportConfig = JacksonUtil.newObjectNode();
+        reportConfig.put("namePattern", "report-%d{yyyy-MM-dd_HH:mm:ss}");
+        reportConfig.put("type", "pdf");
+        reportConfig.put("useCurrentUserCredentials", false);
+        reportConfig.put("userId", userId.toString());
+        ObjectNode msgBody = JacksonUtil.newObjectNode();
+        msgBody.set("reportConfig", reportConfig);
+        msgBody.put("sendEmail", false);
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.put("msgType", "generateDashboardReport");
+        configuration.set("msgBody", msgBody);
+        schedulerEvent.setConfiguration(configuration);
+        return schedulerEvent;
+    }
+
+    private SchedulerEvent createReportConfigMsgSchedulerEvent(UserId userId) {
+        SchedulerEvent schedulerEvent = createSchedulerEvent();
+        ObjectNode msgBody = JacksonUtil.newObjectNode();
+        msgBody.set("userId", JacksonUtil.valueToTree(userId));
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.put("msgType", "Custom Msg");
+        configuration.set("msgBody", msgBody);
+        schedulerEvent.setConfiguration(configuration);
         return schedulerEvent;
     }
 
