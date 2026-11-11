@@ -1,0 +1,206 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="aggLatestMappingFormGroup" (ngSubmit)="save()" style="width: 700px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    <h2>{{ (isAdd ? 'rule-node-config.add-mapping' : 'rule-node-config.edit-mapping') | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <tb-checkbox
+        [trueValue]="latestTelemetry.LATEST_TELEMETRY"
+        [falseValue]="attributeScope.SERVER_SCOPE"
+        formControlName="sourceScope" style="display: block; margin-bottom: 16px;">
+        {{ 'rule-node-config.latest-telemetry' | translate }}
+      </tb-checkbox>
+      <div class="xs:flex-col flex flex-row gap-2">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label>{{(aggLatestMappingFormGroup.get('sourceScope').value ===
+            latestTelemetry.LATEST_TELEMETRY ? 'rule-node-config.source-telemetry'
+          : 'rule-node-config.source-attribute') | translate}}</mat-label>
+          <input matInput formControlName="source">
+        </mat-form-field>
+        @if (aggLatestMappingFormGroup.get('sourceScope').value !== latestTelemetry.LATEST_TELEMETRY) {
+          <mat-form-field class="mat-block xs:flex-1 gt-xs:max-w-50" appearance="outline">
+            <mat-label translate>rule-node-config.attribute-scope</mat-label>
+            <mat-select formControlName="sourceScope">
+              @for (scope of attributeScopes; track scope) {
+                <mat-option [value]="scope">
+                  {{ telemetryTypeTranslationMap.get(scope) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>rule-node-config.default-value</mat-label>
+          <input required type="number" matInput formControlName="defaultValue">
+          @if (aggLatestMappingFormGroup.get('defaultValue').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.default-value-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <div class="xs:flex-col flex flex-row gap-2">
+        <mat-form-field class="mat-block xs:flex-1 gt-xs:max-w-50" appearance="outline">
+          <mat-label translate>rule-node-config.math-function</mat-label>
+          <mat-select formControlName="aggFunction" required>
+            @for (mathFunction of mathFunctions; track mathFunction) {
+              <mat-option [value]="mathFunction">
+                {{ mathFunctionsTranslationMap.get(mathFunction) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>rule-node-config.target-telemetry</mat-label>
+          <input required matInput formControlName="target">
+          @if (aggLatestMappingFormGroup.get('target').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.target-telemetry-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+      </div>
+      <mat-checkbox
+        [(ngModel)]="filterEntities"
+        [ngModelOptions]="{ standalone: true}"
+        (ngModelChange)="filterEntitiesChange()" style="display: block; margin-bottom: 16px;">
+        {{ 'rule-node-config.filter-entities' | translate }}
+      </mat-checkbox>
+      @if (filterEntities) {
+        <mat-expansion-panel
+          [expanded]="true" formGroupName="filter">
+          <mat-expansion-panel-header>
+            <mat-panel-title translate>rule-node-config.entity-filter</mat-panel-title>
+          </mat-expansion-panel-header>
+          <section class="flex flex-col">
+            <label translate class="tb-title no-padding" style="padding-bottom: 10px;">rule-node-config.fetch-entity-attributes</label>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>rule-node-config.client-attributes</mat-label>
+              <mat-chip-grid #clientAttributesChipList>
+                @for (key of aggLatestMappingFormGroup.get('filter').get('clientAttributeNames').value; track key) {
+                  <mat-chip-row
+                    (removed)="removeKey(key, 'clientAttributeNames')">
+                    {{key}}
+                    <mat-icon matChipRemove>close</mat-icon>
+                  </mat-chip-row>
+                }
+                <input matInput type="text" placeholder="{{'rule-node-config.client-attributes' | translate}}"
+                  [matChipInputFor]="clientAttributesChipList"
+                  [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="addKey($event, 'clientAttributeNames')"
+                  [matChipInputAddOnBlur]="true">
+              </mat-chip-grid>
+            </mat-form-field>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>rule-node-config.shared-attributes</mat-label>
+              <mat-chip-grid #sharedAttributesChipList>
+                @for (key of aggLatestMappingFormGroup.get('filter').get('sharedAttributeNames').value; track key) {
+                  <mat-chip-row
+                    (removed)="removeKey(key, 'sharedAttributeNames')">
+                    {{key}}
+                    <mat-icon matChipRemove>close</mat-icon>
+                  </mat-chip-row>
+                }
+                <input matInput type="text" placeholder="{{'rule-node-config.shared-attributes' | translate}}"
+                  [matChipInputFor]="sharedAttributesChipList"
+                  [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="addKey($event, 'sharedAttributeNames')"
+                  [matChipInputAddOnBlur]="true">
+              </mat-chip-grid>
+            </mat-form-field>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>rule-node-config.server-attributes</mat-label>
+              <mat-chip-grid #serverAttributesChipList>
+                @for (key of aggLatestMappingFormGroup.get('filter').get('serverAttributeNames').value; track key) {
+                  <mat-chip-row
+                    (removed)="removeKey(key, 'serverAttributeNames')">
+                    {{key}}
+                    <mat-icon matChipRemove>close</mat-icon>
+                  </mat-chip-row>
+                }
+                <input matInput type="text" placeholder="{{'rule-node-config.server-attributes' | translate}}"
+                  [matChipInputFor]="serverAttributesChipList"
+                  [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="addKey($event, 'serverAttributeNames')"
+                  [matChipInputAddOnBlur]="true">
+              </mat-chip-grid>
+            </mat-form-field>
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>rule-node-config.latest-timeseries</mat-label>
+              <mat-chip-grid #latestTimeseriesChipList>
+                @for (key of aggLatestMappingFormGroup.get('filter').get('latestTsKeyNames').value; track key) {
+                  <mat-chip-row
+                    (removed)="removeKey(key, 'latestTsKeyNames')">
+                    {{key}}
+                    <mat-icon matChipRemove>close</mat-icon>
+                  </mat-chip-row>
+                }
+                <input matInput type="text" placeholder="{{'rule-node-config.latest-timeseries' | translate}}"
+                  [matChipInputFor]="latestTimeseriesChipList"
+                  [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="addKey($event, 'latestTsKeyNames')"
+                  [matChipInputAddOnBlur]="true">
+              </mat-chip-grid>
+            </mat-form-field>
+            @if (tbelEnabled && !tbelFilterFunctionOnly) {
+              <tb-script-lang formControlName="scriptLang"></tb-script-lang>
+            }
+            @if (aggLatestMappingFormGroup.get('filter').get('scriptLang').value === scriptLanguage.JS) {
+              <tb-js-func
+                formControlName="filterFunction"
+                functionName="Filter"
+                [functionArgs]="['attributes']"
+                helpId="rulenode/agg_latest_entity_filter_fn"
+                noValidate>
+              </tb-js-func>
+            }
+            @if (aggLatestMappingFormGroup.get('filter').get('scriptLang').value === scriptLanguage.TBEL) {
+              <tb-js-func
+                formControlName="tbelFilterFunction"
+                functionName="Filter"
+                [functionArgs]="['attributes']"
+                [disableUndefinedCheck]="true"
+                [scriptLanguage]="scriptLanguage.TBEL"
+                helpId="rulenode/tbel/agg_latest_entity_filter_fn"
+                noValidate>
+              </tb-js-func>
+            }
+          </section>
+        </mat-expansion-panel>
+      }
+    </fieldset>
+  </div>
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
+    <span class="flex-1"></span>
+    <button mat-button mat-raised-button color="primary"
+      type="submit"
+      [disabled]="(isLoading$ | async) || aggLatestMappingFormGroup.invalid || !aggLatestMappingFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.save') | translate }}
+    </button>
+    <button mat-button color="primary"
+      style="margin-right: 20px;"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+  </div>
+</form>

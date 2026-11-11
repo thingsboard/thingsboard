@@ -1,0 +1,61 @@
+{
+  "reprocessingOrder": 1,
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "93855be4-461e-4a35-b925-50a70d30c738"
+  },
+  "type": "SCRIPT",
+  "name": "Haul truck aggregated geofencing status",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "SCRIPT",
+    "arguments": {
+      "loadingAreaStatus": {
+        "refEntityKey": {
+          "key": "loadingAreaStatus",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "OUTSIDE"
+      },
+      "unloadingAreaStatus": {
+        "refEntityKey": {
+          "key": "unloadingAreaStatus",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "OUTSIDE"
+      },
+      "restrictedAreaStatus": {
+        "refEntityKey": {
+          "key": "restrictedAreaStatus",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "OUTSIDE"
+      },
+      "mineSiteAreaStatus": {
+        "refEntityKey": {
+          "key": "mineSiteAreaStatus",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "OUTSIDE"
+      }
+    },
+    "expression": "return {\n    geoStatus: getStatus()\n};\n\nfunction getStatus() {\n    if (mineSiteAreaStatus != 'INSIDE') {\n        return \"outsideMineSite\";\n    }\n    if (loadingAreaStatus == 'INSIDE') {\n        return \"insideLoadingZone\";\n    }\n    if (unloadingAreaStatus == 'INSIDE') {\n        return \"insideUnloadingZone\";\n    }\n    if (restrictedAreaStatus == 'INSIDE') {\n        return \"insideRestrictedZone\";\n    }\n    return \"insideMineSite\";\n}",
+    "output": {
+      "type": "TIME_SERIES",
+      "name": "",
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": true,
+        "saveLatest": true,
+        "sendWsUpdate": true,
+        "processCfs": true
+      }
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "c9163c32-76bb-49ad-aabb-7e0181dca116"
+  },
+  "type": "ALARM",
+  "name": "Discharge current",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "running": {
+        "refEntityKey": {
+          "key": "running",
+          "type": "TS_LATEST"
+        }
+      },
+      "dischargeCurrent": {
+        "refEntityKey": {
+          "key": "dischargeCurrent",
+          "type": "TS_LATEST"
+        }
+      }
+    },
+    "createRules": {
+      "WARNING": {
+        "condition": {
+          "type": "DURATION",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "running",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "dischargeCurrent",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": 190.0,
+                      "dynamicValueArgument": null
+                    }
+                  },
+                  {
+                    "type": "NUMERIC",
+                    "operation": "LESS",
+                    "value": {
+                      "staticValue": 210.0,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null,
+          "unit": "SECONDS",
+          "value": {
+            "staticValue": 5,
+            "dynamicValueArgument": null
+          }
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "CRITICAL": {
+        "condition": {
+          "type": "DURATION",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "running",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "dischargeCurrent",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": 210.0,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null,
+          "unit": "SECONDS",
+          "value": {
+            "staticValue": 3,
+            "dynamicValueArgument": null
+          }
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "dischargeCurrent",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "LESS",
+                  "value": {
+                    "staticValue": 190.0,
+                    "dynamicValueArgument": null
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

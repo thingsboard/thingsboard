@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tabs;
 
 import org.openqa.selenium.WebDriver;
@@ -32,12 +20,13 @@ public class CreateDeviceTabElements extends AbstractBasePage {
     private static final String CLEAR_PROFILE_FIELD_BTN = "//button[@aria-label='Clear']";
     private static final String ENTITY_FROM_DROPDOWN = "//div[@role = 'listbox']//span[text() = '%s']";
     private static final String ASSIGN_ON_CUSTOMER_FIELD = "//input[@formcontrolname='entity']";
-    private static final String CUSTOMER_OPTION_BNT = "//div[text() = 'Customer']/ancestor::mat-step-header";
+    private static final String OWNER_AND_GROUPS_OPTION_BNT = "//div[text() = 'Owner and groups']/ancestor::mat-step-header";
     private static final String CUSTOMER_FROM_DROPDOWN = "//div[@role='listbox']/mat-option//span[contains(text(),'%s')]";
     private static final String DEVICE_LABEL_FIELD = "//tb-device-wizard//input[@formcontrolname='label']";
     private static final String CHECKBOX_GATEWAY = "//tb-device-wizard//mat-checkbox[@formcontrolname='gateway']//label";
     private static final String CHECKBOX_OVERWRITE_ACTIVITY_TIME = "//tb-device-wizard//mat-checkbox[@formcontrolname='overwriteActivityTime']//label";
     private static final String DESCRIPTION_FIELD = "//tb-device-wizard//textarea[@formcontrolname='description']";
+    private static final String CLEAR_OWNER_FIELD_BTN = "//tb-owner-autocomplete//button[@aria-label='Clear']";
 
     public WebElement nameField() {
         return waitUntilElementToBeClickable(CREATE_DEVICE_NAME_FIELD);
@@ -71,8 +60,8 @@ public class CreateDeviceTabElements extends AbstractBasePage {
         return waitUntilElementToBeClickable(ASSIGN_ON_CUSTOMER_FIELD);
     }
 
-    public WebElement customerOptionBtn() {
-        return waitUntilElementToBeClickable(CUSTOMER_OPTION_BNT);
+    public WebElement ownerAndGroupsOptionBtn() {
+        return waitUntilElementToBeClickable(OWNER_AND_GROUPS_OPTION_BNT);
     }
 
     public WebElement customerFromDropDown(String entityName) {
@@ -93,5 +82,9 @@ public class CreateDeviceTabElements extends AbstractBasePage {
 
     public WebElement descriptionField() {
         return waitUntilElementToBeClickable(DESCRIPTION_FIELD);
+    }
+
+    public WebElement clearOwnerFieldBtn() {
+        return waitUntilElementToBeClickable(CLEAR_OWNER_FIELD_BTN);
     }
 }

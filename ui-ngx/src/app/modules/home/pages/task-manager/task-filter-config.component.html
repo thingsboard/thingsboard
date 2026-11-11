@@ -1,0 +1,72 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<button color="primary"
+  matTooltip="{{buttonDisplayValue}}"
+  matTooltipPosition="above"
+  mat-stroked-button
+  (click)="toggleJobFilterPanel($event)">
+  <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
+</button>
+<ng-template #taskFilterPanel>
+  <form class="mat-content mat-padding flex flex-col">
+    <div class="tb-form-panel tb-task-filter-config-component no-padding no-border" [formGroup]="tasksFilterConfigForm">
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" translate>task.tasks-status-list</div>
+        <mat-chip-listbox multiple formControlName="statuses">
+          @for (jobStatus of jobStatuses; track jobStatus) {
+            <mat-chip-option [value]="jobStatus">
+              {{ jobStatusTranslations.get(jobStatus) | translate }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" translate>task.tasks-type-list</div>
+        <tb-string-items-list formControlName="types"
+          subscriptSizing="dynamic"
+          appearance="outline"
+          class="flex-1"
+          fieldClass="tb-chips flex"
+          [predefinedValues]="jobTypes"
+                              placeholder="{{(tasksFilterConfigForm.get('types').value?.length ?
+                                   'task.add-task-type' : 'task.task-type.any') | translate}}">
+        </tb-string-items-list>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" translate>entity.entities</div>
+        <tb-entity-list-select formControlName="entities"
+          [allowedEntityTypes]="filteredEntityType"
+          [filterAllowedEntityTypes]="false"
+          [predefinedEntityType]="filteredEntityType[0]"
+          class="flex-1"
+          inlineField="true">
+        </tb-entity-list-select>
+      </div>
+    </div>
+    <div class="tb-panel-actions flex flex-row items-center justify-end">
+      <button type="button"
+        mat-button
+        color="primary"
+        (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button type="button"
+        mat-button
+        (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button type="button"
+        mat-raised-button
+        color="primary"
+        (click)="update()"
+        [disabled]="tasksFilterConfigForm.invalid || !tasksFilterConfigForm.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    </div>
+  </form>
+</ng-template>

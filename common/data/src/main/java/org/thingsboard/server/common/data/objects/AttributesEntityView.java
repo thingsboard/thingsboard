@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.objects;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,11 +19,11 @@ import java.util.List;
 @NoArgsConstructor
 public class AttributesEntityView implements Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of client-side attribute keys to expose", example = "[\"currentConfiguration\"]")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of client-side attribute keys to expose", example = "[\"currentConfiguration\"]")
     private List<String> cs = new ArrayList<>();
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of server-side attribute keys to expose", example = "[\"model\"]")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of server-side attribute keys to expose", example = "[\"model\"]")
     private List<String> ss = new ArrayList<>();
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of shared attribute keys to expose", example = "[\"targetConfiguration\"]")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of shared attribute keys to expose", example = "[\"targetConfiguration\"]")
     private List<String> sh = new ArrayList<>();
 
     public AttributesEntityView(List<String> cs,

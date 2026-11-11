@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ImageResourceInfo } from '@shared/models/resource.models';
 import * as svgjs from '@svgdotjs/svg.js';
 import { Box, Element, Rect, Style, SVG, Svg, Timeline } from '@svgdotjs/svg.js';
@@ -43,6 +30,7 @@ import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
 import ITooltipPosition = JQueryTooltipster.ITooltipPosition;
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 export interface ScadaSymbolData {
   imageResource: ImageResourceInfo;
@@ -1125,9 +1113,14 @@ export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion
 };
 
 export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags: string[],
-                                             customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+                                             customTranslate: CustomTranslatePipe,
+                                             wl: WhiteLabelingService): TbEditorCompletion => {
 
-  const scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
+  let scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
+  const baseUrl = wl.getHelpLinkBaseUrl();
+  if (baseUrl) {
+    scadaSymbolAnimationLink = scadaSymbolAnimationLink.replace('https://thingsboard.io', baseUrl);
+  }
   const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}" target="_blank">ScadaSymbolAnimation</a>`;
   const connectorScadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevConnectorAnimation;
   const connectorScadaSymbolAnimation = `<a href="${connectorScadaSymbolAnimationLink}" target="_blank">ConnectorScadaSymbolAnimation</a>`;

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.AccountTwoFaSettings;
 import org.thingsboard.server.common.data.security.model.mfa.account.TwoFaAccountConfig;
@@ -73,6 +64,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'MFA_CONFIGURATION_TOKEN')")
     public AccountTwoFaSettings getAccountTwoFaSettings() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.PROFILE, Operation.WRITE);
         return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user).orElse(null);
     }
 
@@ -105,6 +97,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     public TwoFaAccountConfig generateTwoFaAccountConfig(@Parameter(description = "2FA provider type to generate new account config for", schema = @Schema(defaultValue = "TOTP", requiredMode = Schema.RequiredMode.REQUIRED))
                                                          @RequestParam TwoFaProviderType providerType) throws Exception {
         SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.PROFILE, Operation.WRITE);
         return twoFactorAuthService.generateNewAccountConfig(user, providerType);
     }
 
@@ -132,6 +125,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'MFA_CONFIGURATION_TOKEN')")
     public void submitTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig) throws Exception {
         SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.PROFILE, Operation.WRITE);
         twoFactorAuthService.prepareVerificationCode(user, accountConfig, false);
     }
 
@@ -145,6 +139,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
                                                                 @RequestParam(required = false) String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.PROFILE, Operation.WRITE);
         if (twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user, accountConfig.getProviderType()).isPresent()) {
             throw new IllegalArgumentException("2FA provider is already configured");
         }
@@ -164,15 +159,16 @@ public class TwoFactorAuthConfigController extends BaseController {
 
     @ApiOperation(value = "Update 2FA account config (updateTwoFaAccountConfig)", notes =
             "Update config for a given provider type. \n" +
-            "Update request example:\n" +
-            "```\n{\n  \"useByDefault\": true\n}\n```\n" +
-            "Returns whole account's 2FA settings object.\n" +
-            ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+                    "Update request example:\n" +
+                    "```\n{\n  \"useByDefault\": true\n}\n```\n" +
+                    "Returns whole account's 2FA settings object.\n" +
+                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PutMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings updateTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType,
                                                          @RequestBody TwoFaAccountConfigUpdateRequest updateRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.PROFILE, Operation.WRITE);
 
         TwoFaAccountConfig accountConfig = twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user, providerType)
                 .orElseThrow(() -> new IllegalArgumentException("Config for " + providerType + " 2FA provider not found"));
@@ -182,20 +178,21 @@ public class TwoFactorAuthConfigController extends BaseController {
 
     @ApiOperation(value = "Delete 2FA account config (deleteTwoFaAccountConfig)", notes =
             "Delete 2FA config for a given 2FA provider type. \n" +
-            "Returns whole account's 2FA settings object.\n" +
-            ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+                    "Returns whole account's 2FA settings object.\n" +
+                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @DeleteMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings deleteTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.PROFILE, Operation.WRITE);
         return twoFaConfigManager.deleteTwoFaAccountConfig(user.getTenantId(), user, providerType);
     }
 
     @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviderTypes)", notes =
             "Get the list of provider types available for user to use (the ones configured by tenant or sysadmin).\n" +
-            "Example of response:\n" +
-            "```\n[\n  \"TOTP\",\n  \"EMAIL\",\n  \"SMS\"\n]\n```" +
-            ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
+                    "Example of response:\n" +
+                    "```\n[\n  \"TOTP\",\n  \"EMAIL\",\n  \"SMS\"\n]\n```" +
+                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
     )
     @GetMapping("/providers")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'MFA_CONFIGURATION_TOKEN')")
@@ -211,13 +208,21 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "If 2FA is not configured, then an empty response will be returned." +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/settings")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public PlatformTwoFaSettings getPlatformTwoFaSettings() throws ThingsboardException {
-        return twoFaConfigManager.getPlatformTwoFaSettings(getTenantId(), false).orElse(null);
+        SecurityUser user = getCurrentUser();
+        if (user.getAuthority() == Authority.SYS_ADMIN) {
+            accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
+        } else {
+            accessControlService.checkPermission(user, Resource.WHITE_LABELING, Operation.READ);
+        }
+        return twoFaConfigManager.getPlatformTwoFaSettings(user.getTenantId(), false).orElse(null);
     }
 
     @ApiOperation(value = "Save platform 2FA settings (savePlatformTwoFaSettings)",
             notes = "Save 2FA settings for platform. The settings have following properties:\n" +
+                    "- `useSystemTwoFactorAuthSettings` - option for tenant admins to use 2FA settings configured by sysadmin. " +
+                    "If this param is set to true, then the settings will not be validated for constraints (if it is a tenant admin; for sysadmin this param is ignored).\n" +
                     "- `providers` - the list of 2FA providers' configs. Users will only be allowed to use 2FA providers from this list. \n\n" +
                     "- `minVerificationCodeSendPeriod` - minimal period in seconds to wait after verification code send request to send next request. \n" +
                     "- `verificationCodeCheckRateLimit` - rate limit configuration for verification code checking.\n" +
@@ -236,6 +241,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "- `verificationCodeLifetime` - the same as for SMS." + NEW_LINE +
                     "Example of the settings:\n" +
                     "```\n{\n" +
+                    "  \"useSystemTwoFactorAuthSettings\": false,\n" +
                     "  \"providers\": [\n" +
                     "    {\n" +
                     "      \"providerType\": \"TOTP\",\n" +
@@ -258,16 +264,23 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "}\n```" +
                     ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/settings")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public PlatformTwoFaSettings savePlatformTwoFaSettings(@Parameter(description = "Settings value", required = true)
                                                            @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
-        return twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
+        SecurityUser user = getCurrentUser();
+        if (user.getAuthority() == Authority.SYS_ADMIN) {
+            accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.WRITE);
+        } else {
+            accessControlService.checkPermission(user, Resource.WHITE_LABELING, Operation.WRITE);
+        }
+        return twoFaConfigManager.savePlatformTwoFaSettings(user.getTenantId(), twoFaSettings);
     }
 
     @Data
     @Schema
     public static class TwoFaAccountConfigUpdateRequest {
         private boolean useByDefault;
+
     }
 
 }

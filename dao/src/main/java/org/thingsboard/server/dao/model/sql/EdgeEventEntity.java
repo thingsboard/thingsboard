@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -40,6 +28,7 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ACTION_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_BODY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_EDGE_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_GROUP_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_SEQUENTIAL_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TABLE_NAME;
@@ -83,6 +72,9 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
     @Column(name = EDGE_EVENT_UID_PROPERTY)
     private String edgeEventUid;
 
+    @Column(name = EDGE_EVENT_ENTITY_GROUP_ID_PROPERTY)
+    private UUID entityGroupId;
+
     @Column(name = TS_COLUMN)
     private long ts;
 
@@ -103,6 +95,9 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
         if (edgeEvent.getEntityId() != null) {
             this.entityId = edgeEvent.getEntityId();
         }
+        if (edgeEvent.getEntityGroupId() != null) {
+            this.entityGroupId = edgeEvent.getEntityGroupId();
+        }
         this.edgeEventType = edgeEvent.getType();
         this.edgeEventAction = edgeEvent.getAction();
         this.entityBody = edgeEvent.getBody();
@@ -117,6 +112,9 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
         edgeEvent.setEdgeId(new EdgeId(edgeId));
         if (entityId != null) {
             edgeEvent.setEntityId(entityId);
+        }
+        if (entityGroupId != null) {
+            edgeEvent.setEntityGroupId(entityGroupId);
         }
         edgeEvent.setType(edgeEventType);
         edgeEvent.setAction(edgeEventAction);

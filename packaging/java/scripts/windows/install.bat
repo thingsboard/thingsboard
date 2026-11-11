@@ -1,3 +1,9 @@
+@REM
+@REM SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+@REM SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+@REM SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@REM
+
 @ECHO OFF
 
 setlocal ENABLEEXTENSIONS
@@ -14,12 +20,6 @@ if %jver% NEQ 250 GOTO JAVA_NOT_INSTALLED
 @ECHO Java 25 found!
 @ECHO Installing thingsboard ...
 
-SET loadDemo=false
-
-if "%1" == "--loadDemo" (
-    SET loadDemo=true
-)
-
 SET BASE=%~dp0
 SET LOADER_PATH=%BASE%\conf,%BASE%\extensions
 SET SQL_DATA_FOLDER=%BASE%\data\sql
@@ -30,7 +30,6 @@ PUSHD "%BASE%\conf"
 
 java -cp "%jarfile%" -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication^
                     -Dinstall.data_dir="%installDir%"^
-                    -Dinstall.load_demo=%loadDemo%^
                     -Dspring.jpa.hibernate.ddl-auto=none^
                     -Dinstall.upgrade=false^
                     -Dlogging.config="%BASE%\install\logback.xml"^

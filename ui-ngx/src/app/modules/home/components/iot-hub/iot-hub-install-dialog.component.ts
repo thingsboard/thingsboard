@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, Inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -314,7 +300,7 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
       next: (result) => {
         if (!result.success) {
           this.state = 'error';
-          this.errorMessage = result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+          this.errorMessage = result.errorMessage || '';
           return;
         }
         this.handleInstalledDescriptor(result.descriptor);
@@ -337,20 +323,31 @@ export class TbIotHubInstallDialogComponent extends DialogComponent<TbIotHubInst
 
   private handleApiError(err: any): void {
     this.state = 'error';
-    this.errorMessage = err?.error?.message || err?.message ||
-      this.translate.instant('iot-hub.install-error', { name: this.item.name });
+    this.errorMessage = err?.error?.message || err?.message || '';
   }
 
   private handlePlanResult(result: InstallPlanResult): void {
     if (!result.success) {
       this.state = 'error';
-      let message = result.errorMessage || this.translate.instant('iot-hub.install-error', { name: this.item.name });
+      const serverError = result.errorMessage;
+      // The description above the details already names the item being installed, so nothing is rendered here when
+      // the server reported no message of its own, and only a failing dependency has to be named - and only when the
+      // server reported the failure. A missing entry carries an error message of its own, so the failing one is the
+      // entry the cascade actually tried to install.
+      let message = serverError || '';
+      const failedDependency = serverError ? (result.entries ?? []).find(
+        entry => !entry.root && entry.errorMessage && entry.status === InstallPlanEntryStatus.WILL_INSTALL) : undefined;
+      if (failedDependency) {
+        message = this.translate.instant('iot-hub.install-dependency-error',
+          { name: failedDependency.name, error: message });
+      }
       // A failed cascade rolls back the items installed so far. When something was actually being
       // installed and the rollback came back partial (rolledBack === false), some entities are left
       // behind — tell the admin so they know manual cleanup may be needed. The willInstall guard
       // avoids the misleading warning on the "empty plan" failure, where nothing was installed.
       if (!result.rolledBack && this.planSummary.willInstall > 0) {
-        message += ' ' + this.translate.instant('iot-hub.install-rollback-partial');
+        message = [message, this.translate.instant('iot-hub.install-rollback-partial')]
+          .filter(Boolean).join('\n\n');
       }
       this.errorMessage = message;
       return;

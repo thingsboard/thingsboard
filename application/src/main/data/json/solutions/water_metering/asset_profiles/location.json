@@ -1,0 +1,12 @@
+{
+  "name": "Location",
+  "description": "Represents a specific geographical location within a city where one or more water meters are installed for localized consumption monitoring and analysis.",
+  "image": null,
+  "defaultRuleChainId": null,
+  "defaultEdgeRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "externalId": null,
+  "default": false,
+  "jsonId": "83595270-c452-42d8-ab35-494d7de7cfcd"
+}

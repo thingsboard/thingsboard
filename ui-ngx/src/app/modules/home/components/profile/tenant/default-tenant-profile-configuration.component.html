@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="tenantProfileConfigurationForm" class="flex flex-col">
@@ -24,8 +14,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-devices</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxDevices"
-               type="number">
+          formControlName="maxDevices"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxDevices').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.maximum-devices-required' | translate}}
@@ -41,8 +31,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-dashboards</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxDashboards"
-               type="number">
+          formControlName="maxDashboards"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxDashboards').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.maximum-dashboards-required' | translate}}
@@ -60,8 +50,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-assets</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxAssets"
-               type="number">
+          formControlName="maxAssets"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxAssets').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.maximum-assets-required' | translate}}
@@ -77,8 +67,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-users</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxUsers"
-               type="number">
+          formControlName="maxUsers"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxUsers').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.maximum-users-required' | translate}}
@@ -92,6 +82,93 @@
         <mat-hint></mat-hint>
       </mat-form-field>
     </div>
+    <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>tenant-profile.maximum-integrations</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="maxIntegrations"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('maxIntegrations').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-integrations-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxIntegrations').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-integrations-range' | translate}}
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>tenant-profile.maximum-scheduler-events</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="maxSchedulerEvents"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('maxSchedulerEvents').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-scheduler-events-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxSchedulerEvents').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-scheduler-events-range' | translate}}
+          </mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>tenant-profile.maximum-agents</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="maxAgents"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('maxAgents').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-agents-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxAgents').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-agents-range' | translate}}
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>tenant-profile.maximum-agent-applications</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="maxAgentApplications"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('maxAgentApplications').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-agent-applications-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxAgentApplications').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-agent-applications-range' | translate}}
+          </mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>tenant-profile.maximum-reports</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="maxGeneratedReports"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('maxGeneratedReports').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-reports-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxGeneratedReports').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-reports-range' | translate}}
+          </mat-error>
+        }
+      </mat-form-field>
+      <div class="flex-1"></div>
+    </div>
     <mat-expansion-panel class="configuration-panel">
       <mat-expansion-panel-header>
         <mat-panel-description class="flex items-stretch justify-end" translate>
@@ -103,8 +180,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.maximum-customers</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxCustomers"
-                   type="number">
+              formControlName="maxCustomers"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxCustomers').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.maximum-customers-required' | translate}}
@@ -120,8 +197,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.maximum-rule-chains</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxRuleChains"
-                   type="number">
+              formControlName="maxRuleChains"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxRuleChains').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.maximum-rule-chains-required' | translate}}
@@ -136,11 +213,11 @@
           </mat-form-field>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
-          <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.maximum-edges</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxEdges"
-                   type="number">
+              formControlName="maxEdges"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxEdges').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.maximum-edges-required' | translate }}
@@ -153,7 +230,22 @@
             }
             <mat-hint></mat-hint>
           </mat-form-field>
-          <div class="flex-1"></div>
+          <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.maximum-converters</mat-label>
+            <input matInput required min="0" step="1"
+              formControlName="maxConverters"
+              type="number">
+            @if (tenantProfileConfigurationForm.get('maxConverters').hasError('required')) {
+              <mat-error>
+                {{ 'tenant-profile.maximum-converters-required' | translate}}
+              </mat-error>
+            }
+            @if (tenantProfileConfigurationForm.get('maxConverters').hasError('min')) {
+              <mat-error>
+                {{ 'tenant-profile.maximum-converters-range' | translate}}
+              </mat-error>
+            }
+          </mat-form-field>
         </div>
       </ng-template>
     </mat-expansion-panel>
@@ -167,8 +259,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-r-e-executions</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxREExecutions"
-               type="number">
+          formControlName="maxREExecutions"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxREExecutions').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-r-e-executions-required' | translate}}
@@ -184,8 +276,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-transport-messages</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxTransportMessages"
-               type="number">
+          formControlName="maxTransportMessages"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxTransportMessages').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-transport-messages-required' | translate}}
@@ -210,8 +302,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-j-s-executions</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxJSExecutions"
-                   type="number">
+              formControlName="maxJSExecutions"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxJSExecutions').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.max-j-s-executions-required' | translate}}
@@ -227,8 +319,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-tbel-executions</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxTbelExecutions"
-                   type="number">
+              formControlName="maxTbelExecutions"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxTbelExecutions').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.max-tbel-executions-required' | translate}}
@@ -246,8 +338,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-rule-node-executions-per-message</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxRuleNodeExecutionsPerMessage"
-                   type="number">
+              formControlName="maxRuleNodeExecutionsPerMessage"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxRuleNodeExecutionsPerMessage').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.max-rule-node-executions-per-message-required' | translate}}
@@ -263,8 +355,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-transport-data-points</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxTransportDataPoints"
-                   type="number">
+              formControlName="maxTransportDataPoints"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxTransportDataPoints').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.max-transport-data-points-required' | translate}}
@@ -289,8 +381,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-calculated-fields</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxCalculatedFieldsPerEntity"
-               type="number">
+          formControlName="maxCalculatedFieldsPerEntity"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxCalculatedFieldsPerEntity').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-calculated-fields-required' | translate}}
@@ -306,8 +398,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-data-points-per-rolling-arg</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxDataPointsPerRollingArg"
-               type="number">
+          formControlName="maxDataPointsPerRollingArg"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxDataPointsPerRollingArg').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-data-points-per-rolling-arg-required' | translate}}
@@ -325,8 +417,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-arguments-per-cf</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxArgumentsPerCF"
-               type="number">
+          formControlName="maxArgumentsPerCF"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxArgumentsPerCF').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-arguments-per-cf-required' | translate}}
@@ -352,8 +444,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-state-size</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxStateSizeInKBytes"
-                   type="number">
+              formControlName="maxStateSizeInKBytes"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxStateSizeInKBytes').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.max-state-size-required' | translate}}
@@ -369,8 +461,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-value-argument-size</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="maxSingleValueArgumentSizeInKBytes"
-                   type="number">
+              formControlName="maxSingleValueArgumentSizeInKBytes"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxSingleValueArgumentSizeInKBytes').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.max-value-argument-size-required' | translate}}
@@ -388,8 +480,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.max-related-level-per-argument</mat-label>
             <input matInput required min="1" step="1"
-                   formControlName="maxRelationLevelPerCfArgument"
-                   type="number">
+              formControlName="maxRelationLevelPerCfArgument"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxRelationLevelPerCfArgument').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.max-related-level-per-argument-required' | translate}}
@@ -405,8 +497,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.min-allowed-scheduled-update-interval</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="minAllowedScheduledUpdateIntervalInSecForCF"
-                   type="number">
+              formControlName="minAllowedScheduledUpdateIntervalInSecForCF"
+              type="number">
             @if (tenantProfileConfigurationForm.get('minAllowedScheduledUpdateIntervalInSecForCF').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.min-allowed-scheduled-update-interval-required' | translate}}
@@ -424,8 +516,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.min-allowed-aggregation-interval</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="minAllowedAggregationIntervalInSecForCF"
-                   type="number">
+              formControlName="minAllowedAggregationIntervalInSecForCF"
+              type="number">
             @if (tenantProfileConfigurationForm.get('minAllowedAggregationIntervalInSecForCF').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.min-allowed-aggregation-interval-required' | translate}}
@@ -441,8 +533,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.min-allowed-deduplication-interval</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="minAllowedDeduplicationIntervalInSecForCF"
-                   type="number">
+              formControlName="minAllowedDeduplicationIntervalInSecForCF"
+              type="number">
             @if (tenantProfileConfigurationForm.get('minAllowedDeduplicationIntervalInSecForCF').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.min-allowed-deduplication-interval-required' | translate}}
@@ -460,8 +552,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.intermediate-aggregation-interval</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="intermediateAggregationIntervalInSecForCF"
-                   type="number">
+              formControlName="intermediateAggregationIntervalInSecForCF"
+              type="number">
             @if (tenantProfileConfigurationForm.get('intermediateAggregationIntervalInSecForCF').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.intermediate-aggregation-interval-required' | translate}}
@@ -477,8 +569,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.reevaluation-check-interval</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="cfReevaluationCheckInterval"
-                   type="number">
+              formControlName="cfReevaluationCheckInterval"
+              type="number">
             @if (tenantProfileConfigurationForm.get('cfReevaluationCheckInterval').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.reevaluation-check-interval-required' | translate}}
@@ -496,8 +588,8 @@
           <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.relation-search-entity-limit</mat-label>
             <input matInput required min="1" step="1"
-                   formControlName="maxRelatedEntitiesToReturnPerCfArgument"
-                   type="number">
+              formControlName="maxRelatedEntitiesToReturnPerCfArgument"
+              type="number">
             @if (tenantProfileConfigurationForm.get('maxRelatedEntitiesToReturnPerCfArgument').hasError('required')) {
               <mat-error>
                 {{ 'tenant-profile.relation-search-entity-limit-required' | translate}}
@@ -518,14 +610,36 @@
 
   <fieldset class="fields-group">
     <legend class="group-title">
+      {{ 'tenant-profile.ai' | translate }}
+    </legend>
+    <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.max-ai-credits</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxAiCredits"
+               type="number">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxAiCredits').hasError('required')">
+          {{ 'tenant-profile.max-ai-credits-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxAiCredits').hasError('min')">
+          {{ 'tenant-profile.max-ai-credits-range' | translate}}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <div class="flex-1"></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
       {{ 'tenant-profile.time-to-live' | translate }} <span translate>tenant-profile.unlimited</span>
     </legend>
     <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-d-p-storage-days</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxDPStorageDays"
-               type="number">
+          formControlName="maxDPStorageDays"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxDPStorageDays').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-d-p-storage-days-required' | translate}}
@@ -541,8 +655,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.alarms-ttl-days</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="alarmsTtlDays"
-               type="number">
+          formControlName="alarmsTtlDays"
+          type="number">
         @if (tenantProfileConfigurationForm.get('alarmsTtlDays').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.alarms-ttl-days-required' | translate}}
@@ -560,8 +674,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.default-storage-ttl-days</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="defaultStorageTtlDays"
-               type="number">
+          formControlName="defaultStorageTtlDays"
+          type="number">
         @if (tenantProfileConfigurationForm.get('defaultStorageTtlDays').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.default-storage-ttl-days-required' | translate}}
@@ -577,8 +691,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.rpc-ttl-days</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="rpcTtlDays"
-               type="number">
+          formControlName="rpcTtlDays"
+          type="number">
         @if (tenantProfileConfigurationForm.get('rpcTtlDays').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.rpc-ttl-days-required' | translate}}
@@ -596,8 +710,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.queue-stats-ttl-days</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="queueStatsTtlDays"
-               type="number">
+          formControlName="queueStatsTtlDays"
+          type="number">
         @if (tenantProfileConfigurationForm.get('queueStatsTtlDays').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.queue-stats-ttl-days-required' | translate}}
@@ -613,8 +727,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.rule-engine-exceptions-ttl-days</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="ruleEngineExceptionsTtlDays"
-               type="number">
+          formControlName="ruleEngineExceptionsTtlDays"
+          type="number">
         @if (tenantProfileConfigurationForm.get('ruleEngineExceptionsTtlDays').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.rule-engine-exceptions-ttl-days-required' | translate}}
@@ -623,6 +737,42 @@
         @if (tenantProfileConfigurationForm.get('ruleEngineExceptionsTtlDays').hasError('min')) {
           <mat-error>
             {{ 'tenant-profile.rule-engine-exceptions-ttl-days-range' | translate}}
+          </mat-error>
+        }
+        <mat-hint></mat-hint>
+      </mat-form-field>
+    </div>
+    <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>tenant-profile.blob-entity-ttl-days</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="blobEntityTtlDays"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('blobEntityTtlDays').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.blob-entity-ttl-days-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('blobEntityTtlDays').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.blob-entity-ttl-days-range' | translate}}
+          </mat-error>
+        }
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>tenant-profile.report-ttl-days</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="reportTtlDays"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('reportTtlDays').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.report-ttl-days-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('reportTtlDays').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.report-ttl-days-range' | translate}}
           </mat-error>
         }
         <mat-hint></mat-hint>
@@ -638,12 +788,11 @@
       {{ 'tenant-profile.sms-enabled' | translate }}
     </mat-slide-toggle>
     @if (tenantProfileConfigurationForm.get('smsEnabled').value) {
-      <mat-form-field class="mat-block flex-1"
-                      appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-sms</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxSms"
-               type="number">
+          formControlName="maxSms"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxSms').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-sms-required' | translate}}
@@ -660,8 +809,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-emails</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxEmails"
-               type="number">
+          formControlName="maxEmails"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxEmails').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-emails-required' | translate}}
@@ -677,8 +826,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.max-created-alarms</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxCreatedAlarms"
-               type="number">
+          formControlName="maxCreatedAlarms"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxCreatedAlarms').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.max-created-alarms-required' | translate}}
@@ -696,8 +845,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.alarms-reevaluation-interval</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="alarmsReevaluationInterval"
-               type="number">
+          formControlName="alarmsReevaluationInterval"
+          type="number">
         @if (tenantProfileConfigurationForm.get('alarmsReevaluationInterval').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.alarms-reevaluation-interval-required' | translate}}
@@ -722,8 +871,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-debug-duration-min</mat-label>
         <input matInput min="0" step="1"
-               formControlName="maxDebugModeDurationMinutes"
-               type="number">
+          formControlName="maxDebugModeDurationMinutes"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxDebugModeDurationMinutes').hasError('min')) {
           <mat-error>
             {{ 'tenant-profile.maximum-debug-duration-min-range' | translate }}
@@ -743,8 +892,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-resources-sum-data-size</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxResourcesInBytes"
-               type="number">
+          formControlName="maxResourcesInBytes"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxResourcesInBytes').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.maximum-resources-sum-data-size-required' | translate}}
@@ -760,8 +909,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.maximum-ota-packages-sum-data-size</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxOtaPackagesInBytes"
-               type="number">
+          formControlName="maxOtaPackagesInBytes"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxOtaPackagesInBytes').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.maximum-ota-package-sum-data-size-required' | translate}}
@@ -779,8 +928,8 @@
       <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>tenant-profile.maximum-resource-size</mat-label>
         <input matInput required min="0" step="1"
-               formControlName="maxResourceSize"
-               type="number">
+          formControlName="maxResourceSize"
+          type="number">
         @if (tenantProfileConfigurationForm.get('maxResourceSize').hasError('required')) {
           <mat-error>
             {{ 'tenant-profile.maximum-resource-size-required' | translate}}
@@ -793,7 +942,19 @@
         }
         <mat-hint></mat-hint>
       </mat-form-field>
-      <div class="flex-1"></div>
+      <mat-form-field class="mat-block flex-1" appearance="outline">
+        <mat-label translate>tenant-profile.maximum-report-size</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxReportSizeInBytes"
+               type="number">
+        @if (tenantProfileConfigurationForm.get('maxReportSizeInBytes').hasError('required')) {
+          <mat-error>{{ 'tenant-profile.maximum-report-size-required' | translate }}</mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxReportSizeInBytes').hasError('min')) {
+          <mat-error>{{ 'tenant-profile.maximum-report-size-range' | translate }}</mat-error>
+        }
+        <mat-hint></mat-hint>
+      </mat-form-field>
     </div>
   </fieldset>
 
@@ -913,34 +1074,34 @@
     </legend>
     <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
       <tb-rate-limits class="flex-1" formControlName="transportTenantMsgRateLimit"
-                      [type]="rateLimitsType.TENANT_MESSAGES">
+        [type]="rateLimitsType.TENANT_MESSAGES">
       </tb-rate-limits>
       <tb-rate-limits class="flex-1" formControlName="transportDeviceMsgRateLimit"
-                      [type]="rateLimitsType.DEVICE_MESSAGES">
+        [type]="rateLimitsType.DEVICE_MESSAGES">
       </tb-rate-limits>
     </div>
     <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
       <tb-rate-limits class="flex-1" formControlName="transportTenantTelemetryMsgRateLimit"
-                      [type]="rateLimitsType.TENANT_TELEMETRY_MESSAGES">
+        [type]="rateLimitsType.TENANT_TELEMETRY_MESSAGES">
       </tb-rate-limits>
       <tb-rate-limits class="flex-1" formControlName="transportDeviceTelemetryMsgRateLimit"
-                      [type]="rateLimitsType.DEVICE_TELEMETRY_MESSAGES">
+        [type]="rateLimitsType.DEVICE_TELEMETRY_MESSAGES">
       </tb-rate-limits>
     </div>
     <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
       <tb-rate-limits class="flex-1" formControlName="transportGatewayMsgRateLimit"
-                      [type]="rateLimitsType.GATEWAY_MESSAGES">
+        [type]="rateLimitsType.GATEWAY_MESSAGES">
       </tb-rate-limits>
       <tb-rate-limits class="flex-1" formControlName="transportGatewayDeviceMsgRateLimit"
-                      [type]="rateLimitsType.GATEWAY_DEVICE_MESSAGES">
+        [type]="rateLimitsType.GATEWAY_DEVICE_MESSAGES">
       </tb-rate-limits>
     </div>
     <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
       <tb-rate-limits class="flex-1" formControlName="transportGatewayTelemetryMsgRateLimit"
-                      [type]="rateLimitsType.GATEWAY_TELEMETRY_MESSAGES">
+        [type]="rateLimitsType.GATEWAY_TELEMETRY_MESSAGES">
       </tb-rate-limits>
       <tb-rate-limits class="flex-1" formControlName="transportGatewayDeviceTelemetryMsgRateLimit"
-                      [type]="rateLimitsType.GATEWAY_DEVICE_TELEMETRY_MESSAGES">
+        [type]="rateLimitsType.GATEWAY_DEVICE_TELEMETRY_MESSAGES">
       </tb-rate-limits>
     </div>
     <mat-expansion-panel class="configuration-panel">
@@ -952,81 +1113,113 @@
       <ng-template matExpansionPanelContent>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="transportTenantTelemetryDataPointsRateLimit"
-                          [type]="rateLimitsType.TENANT_TELEMETRY_DATA_POINTS">
+            [type]="rateLimitsType.TENANT_TELEMETRY_DATA_POINTS">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="transportDeviceTelemetryDataPointsRateLimit"
-                          [type]="rateLimitsType.DEVICE_TELEMETRY_DATA_POINTS">
+            [type]="rateLimitsType.DEVICE_TELEMETRY_DATA_POINTS">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="transportGatewayTelemetryDataPointsRateLimit"
-                          [type]="rateLimitsType.GATEWAY_TELEMETRY_DATA_POINTS">
+            [type]="rateLimitsType.GATEWAY_TELEMETRY_DATA_POINTS">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="transportGatewayDeviceTelemetryDataPointsRateLimit"
-                          [type]="rateLimitsType.GATEWAY_DEVICE_TELEMETRY_DATA_POINTS">
+            [type]="rateLimitsType.GATEWAY_DEVICE_TELEMETRY_DATA_POINTS">
+          </tb-rate-limits>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <tb-rate-limits class="flex-1" formControlName="integrationMsgsPerTenantRateLimit"
+            [type]="rateLimitsType.INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits class="flex-1" formControlName="integrationMsgsPerDeviceRateLimit"
+            [type]="rateLimitsType.INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT">
+          </tb-rate-limits>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <div class="flex-1"></div>
+          <tb-rate-limits class="flex-1" formControlName="integrationMsgsPerAssetRateLimit"
+            [type]="rateLimitsType.INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="tenantServerRestLimitsConfiguration"
-                          [type]="rateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION">
+            [type]="rateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="customerServerRestLimitsConfiguration"
-                          [type]="rateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION">
+            [type]="rateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="tenantEntityExportRateLimit"
-                          [type]="rateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT">
+            [type]="rateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="tenantEntityImportRateLimit"
-                          [type]="rateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT">
+            [type]="rateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="cassandraWriteQueryTenantCoreRateLimits"
-                          [type]="rateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_CORE_RATE_LIMITS">
+            [type]="rateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_CORE_RATE_LIMITS">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="cassandraReadQueryTenantCoreRateLimits"
-                          [type]="rateLimitsType.CASSANDRA_READ_QUERY_TENANT_CORE_RATE_LIMITS">
+            [type]="rateLimitsType.CASSANDRA_READ_QUERY_TENANT_CORE_RATE_LIMITS">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="cassandraWriteQueryTenantRuleEngineRateLimits"
-                          [type]="rateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS">
+            [type]="rateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="cassandraReadQueryTenantRuleEngineRateLimits"
-                          [type]="rateLimitsType.CASSANDRA_READ_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS">
+            [type]="rateLimitsType.CASSANDRA_READ_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="tenantNotificationRequestsRateLimit"
-                          [type]="rateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT">
+            [type]="rateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="tenantNotificationRequestsPerRuleRateLimit"
-                          [type]="rateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT">
+            [type]="rateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="edgeEventRateLimits"
-                          [type]="rateLimitsType.EDGE_EVENTS_RATE_LIMIT">
+            [type]="rateLimitsType.EDGE_EVENTS_RATE_LIMIT">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="edgeEventRateLimitsPerEdge"
-                          [type]="rateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT">
+            [type]="rateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="edgeUplinkMessagesRateLimits"
-                          [type]="rateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT">
+            [type]="rateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT">
           </tb-rate-limits>
           <tb-rate-limits class="flex-1" formControlName="edgeUplinkMessagesRateLimitsPerEdge"
-                          [type]="rateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT">
+            [type]="rateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT">
+          </tb-rate-limits>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <tb-rate-limits class="flex-1" formControlName="agentEventRateLimits"
+            [type]="rateLimitsType.AGENT_EVENTS_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits class="flex-1" formControlName="agentEventRateLimitsPerAgent"
+            [type]="rateLimitsType.AGENT_EVENTS_PER_AGENT_RATE_LIMIT">
+          </tb-rate-limits>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <tb-rate-limits class="flex-1" formControlName="agentLogChunkRateLimits"
+            [type]="rateLimitsType.AGENT_LOG_CHUNKS_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits class="flex-1" formControlName="agentLogChunkRateLimitsPerAgent"
+            [type]="rateLimitsType.AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <tb-rate-limits class="flex-1" formControlName="wsUpdatesPerSessionRateLimit"
-                          [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
+            [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
           </tb-rate-limits>
-          <div class="flex-1"></div>
+          <tb-rate-limits class="flex-1" formControlName="aiChatRequestsPerTenantRateLimit"
+                          [type]="rateLimitsType.AI_CHAT_REQUESTS">
+          </tb-rate-limits>
         </div>
       </ng-template>
     </mat-expansion-panel>

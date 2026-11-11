@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   NotificationDeliveryMethod,
   NotificationRequest,
@@ -29,7 +16,6 @@ import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/fo
 import { NotificationService } from '@core/http/notification.service';
 import { deepTrim, guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable } from 'rxjs';
-import { EntityType } from '@shared/models/entity-type.models';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatStepper } from '@angular/material/stepper';
 import { StepperOrientation, StepperSelectionEvent } from '@angular/cdk/stepper';
@@ -43,9 +29,11 @@ import {
 import { MatButton } from '@angular/material/button';
 import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
 import { Authority } from '@shared/models/authority.enum';
-import { AuthUser } from '@shared/models/user.model';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { TranslateService } from '@ngx-translate/core';
+import { AuthState } from '@core/auth/auth.models';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Router } from '@angular/router';
 import { EditorOptions } from 'hugerte';
 import { defaultHugeRteOptions, HUGERTE_BODY_ID } from '@shared/models/hugerte/hugerte.models';
@@ -68,8 +56,6 @@ export class SentNotificationDialogComponent extends
   stepperOrientation: Observable<StepperOrientation>;
 
   isAdd = true;
-  entityType = EntityType;
-  notificationType = NotificationType;
 
   notificationRequestForm: FormGroup;
 
@@ -99,7 +85,7 @@ export class SentNotificationDialogComponent extends
     }
   });
 
-  private authUser: AuthUser = getCurrentAuthUser(this.store);
+  private authState: AuthState = getCurrentAuthState(this.store);
 
   private allowNotificationDeliveryMethods: Array<NotificationDeliveryMethod>;
 
@@ -111,7 +97,8 @@ export class SentNotificationDialogComponent extends
               protected fb: FormBuilder,
               private notificationService: NotificationService,
               private dialog: MatDialog,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private userPermissionsService: UserPermissionsService) {
     super(store, router, dialogRef, fb);
 
     this.notificationDeliveryMethods.forEach(method => {
@@ -148,6 +135,7 @@ export class SentNotificationDialogComponent extends
         this.notificationRequestForm.get('template').enable({emitEvent: false});
         this.updateDeliveryMethodsDisableState();
       }
+      this.updateValidators();
     });
 
     this.notificationRequestForm.get('additionalConfig.enabled').valueChanges.pipe(
@@ -181,6 +169,7 @@ export class SentNotificationDialogComponent extends
       this.deliveryConfiguration = this.templateNotificationForm.get('configuration.deliveryMethodsTemplates').value;
     }
     this.refreshAllowDeliveryMethod();
+    this.updateValidators();
   }
 
   ngOnDestroy() {
@@ -276,14 +265,6 @@ export class SentNotificationDialogComponent extends
     });
   }
 
-  private isSysAdmin(): boolean {
-    return this.authUser.authority === Authority.SYS_ADMIN;
-  }
-
-  private isTenantAdmin(): boolean {
-    return this.authUser.authority === Authority.TENANT_ADMIN;
-  }
-
   minDate(): Date {
     return new Date(getCurrentTime(this.notificationRequestForm.get('additionalConfig.timezone').value).format('lll'));
   }
@@ -338,7 +319,8 @@ export class SentNotificationDialogComponent extends
     if(this.isSysAdmin()) {
       return true;
     } else if (this.isTenantAdmin()) {
-      return tenantAllowConfigureDeliveryMethod.has(deliveryMethod);
+      return this.authState.whiteLabelingAllowed &&
+        this.userPermissionsService.hasGenericPermission(Resource.WHITE_LABELING, Operation.WRITE);
     }
     return false;
   }

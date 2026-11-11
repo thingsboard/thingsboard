@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,13 +12,18 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.sync.ie.AttributeExportData;
@@ -39,6 +32,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
@@ -67,15 +61,24 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     private AttributesService attributesService;
     @Autowired
     private CalculatedFieldService calculatedFieldService;
+    @Autowired
+    private AccessControlService accessControlService;
 
     @Override
-    public final D getExportData(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
-        @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
+    public final D getExportData(EntitiesExportCtx<?> ctx, E entity) throws ThingsboardException {
+        I entityId = entity.getId();
         D exportData = (D) EntityExportData.newInstance(entityId.getEntityType());
 
-        E entity = exportableEntitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entityId);
-        if (entity == null) {
-            throw new IllegalArgumentException(entityId.getEntityType() + " [" + entityId.getId() + "] not found");
+        EntityType entityType = entityId.getEntityType();
+        if (entityType == EntityType.ENTITY_GROUP) {
+            accessControlService.checkEntityGroupPermission(ctx.getUser(), Operation.READ, (EntityGroup) entity);
+        } else {
+            Resource resource = Resource.resourceFromEntityType(entityType);
+            if (resource == null) {
+                throw new ThingsboardException("Permission denied", ThingsboardErrorCode.PERMISSION_DENIED);
+            }
+            accessControlService.checkPermission(ctx.getUser(), resource, Operation.READ, entityId, (TenantEntity) entity);
         }
 
         exportData.setEntity(entity);
@@ -84,7 +87,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
             hasVersion.setVersion(null);
         }
 
-        var externalId = entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
+        var externalId = entity.getExternalId() != null ? entity.getExternalId() : entityId;
         ctx.putExternalId(entityId, externalId);
         entity.setId(externalId);
         entity.setTenantId(null);
@@ -183,7 +186,8 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         return calculatedFields;
     }
 
-    protected <ID extends EntityId> ID getExternalIdOrElseInternal(EntitiesExportCtx<?> ctx, ID internalId) {
+    @Override
+    public <ID extends EntityId> ID getExternalIdOrElseInternal(EntitiesExportCtx<?> ctx, ID internalId) {
         if (internalId == null || internalId.isNullUid()) return internalId;
         var result = ctx.getExternalId(internalId);
         if (result == null) {

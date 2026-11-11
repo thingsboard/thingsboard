@@ -1,33 +1,25 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-drawer-container hasBackdrop="false" class="tb-absolute-fill">
+<tb-anchor #replaceComponentAnchor></tb-anchor>
+<mat-drawer-container hasBackdrop="false" class="tb-absolute-fill" [class.!hidden]="!!replaceComponent">
   @if (entitiesTableConfig.detailsPanelEnabled) {
     <mat-drawer
       class="tb-details-drawer mat-elevation-z4"
       #drawer
       mode="over"
       position="end"
-      [opened]="isDetailsOpen">
+      [opened]="isDetailsOpen"
+      (openedChange)="onDetailsDrawerOpenedChange($event)">
       <tb-entity-details-panel
         #entityDetailsPanel
         [entitiesTableConfig]="entitiesTableConfig"
         [entityId]="isDetailsOpen ? dataSource.currentEntity?.id : null"
-        (closeEntityDetails)="isDetailsOpen = false; detailsPanelOpened.emit(isDetailsOpen);"
+        (closeEntityDetails)="onCloseEntityDetails()"
         (entityUpdated)="onEntityUpdated($event)"
         (entityAction)="onEntityAction($event)"
         >
@@ -40,6 +32,15 @@
         <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
             <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
+              @if (entitiesTableConfig.displayBackButton()) {
+                <button mat-icon-button
+                        matTooltip="{{ 'action.back' | translate }}"
+                        matTooltipPosition="above"
+                        (click)="goBack()"
+                        style="margin-right: 8px;">
+                  <mat-icon>arrow_back</mat-icon>
+                </button>
+              }
               @if (entitiesTableConfig.tableTitle) {
                 <span class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
               }
@@ -84,10 +85,11 @@
             </div>
             @for (actionDescriptor of headerActionDescriptors; track actionDescriptor) {
               <button mat-icon-button [disabled]="isLoading$ | async"
+                      #headerButton
                       [class.!hidden]="!actionDescriptor.isEnabled()"
                       matTooltip="{{ actionDescriptor.name }}"
                       matTooltipPosition="above"
-                      (click)="actionDescriptor.onAction($event)">
+                      (click)="actionDescriptor.onAction($event, headerButton)">
                 <tb-icon>{{actionDescriptor.icon}}</tb-icon>
               </button>
             }
@@ -104,6 +106,31 @@
                 <mat-icon>search</mat-icon>
               </button>
             }
+            @if (aiEnabled && entitiesTableConfig.aiAssistantConfig) {
+              <ng-container *ngTemplateOutlet="headerButton; context: {$implicit: configureWithAiButton}"></ng-container>
+            }
+            @for (buttonDescriptor of entitiesTableConfig.headerButtonDescriptors; track buttonDescriptor.name) {
+              <ng-container *ngTemplateOutlet="headerButton; context: {$implicit: buttonDescriptor}"></ng-container>
+            }
+            <ng-template #headerButton let-button>
+              <button class="button-label-ellipsis lt-md:!hidden"
+                      [class.!hidden]="!button.isEnabled()"
+                      mat-stroked-button color="primary"
+                      [disabled]="isLoading$ | async"
+                      (click)="button.onAction($event)">
+                <tb-icon matButtonIcon>{{ button.icon }}</tb-icon>
+                {{ button.name }}
+              </button>
+              <button class="gt-sm:!hidden"
+                      [class.!hidden]="!button.isEnabled()"
+                      mat-icon-button color="primary"
+                      [disabled]="isLoading$ | async"
+                      (click)="button.onAction($event)"
+                      matTooltip="{{ button.name }}"
+                      matTooltipPosition="above">
+                <tb-icon color="primary">{{ button.icon }}</tb-icon>
+              </button>
+            </ng-template>
             <div [class.!hidden]="!addEnabled() || !entitiesTableConfig.addAsTextButton" class="pl-3" style="--mat-fab-small-container-elevation-shadow: none;">
               @if (!entitiesTableConfig.addActionDescriptors.length) {
                 <button class="lt-sm:!hidden"
@@ -244,6 +271,18 @@
                           matTooltipPosition="above"
                           [style]="cellStyle(entity, column, row)">
                   @switch (column.type) {
+                    @case ('chart') {
+                      <tb-spark-line [chartData]="cellContent(entity, column, row)" [chartProperty]="cellChartStyle(entity, column, row)"></tb-spark-line>
+                    }
+                    @case ('progressBar') {
+                      <div class="flex items-center gap-2">
+                        <mat-progress-bar mode="determinate"
+                                          [style]="cellChartStyle(entity, column, row)"
+                                          [value]="cellContent(entity, column, row)"
+                        ></mat-progress-bar>
+                        <span style="min-width: 4.5ch">{{ cellContent(entity, column, row) }}%</span>
+                      </div>
+                    }
                     @case ('link') {
                       @if (column.entityURL(entity); as detailsPageURL) {
                         <a

@@ -1,23 +1,10 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import {
   CellActionDescriptor,
-  DateEntityTableColumn,
+  DateEntityTableColumn, defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -33,6 +20,8 @@ import { AiModelService } from '@core/http/ai-model.service';
 import { AiModelTableHeaderComponent } from '@home/pages/ai-model/ai-model-table-header.component';
 import { AIModelDialogComponent, AIModelDialogData } from '@home/components/ai-model/ai-model-dialog.component';
 import { map } from 'rxjs/operators';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
 export class AiModelsTableConfigResolver {
@@ -42,6 +31,7 @@ export class AiModelsTableConfigResolver {
   constructor(
     private datePipe: DatePipe,
     private aiModelService: AiModelService,
+    private userPermissionsService: UserPermissionsService,
     private translate : TranslateService,
     private dialog: MatDialog
   ) {
@@ -85,6 +75,7 @@ export class AiModelsTableConfigResolver {
   }
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<AiModel> {
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 
@@ -110,7 +101,8 @@ export class AiModelsTableConfigResolver {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd,
-        AIModel
+        AIModel,
+        readonly: !this.userPermissionsService.hasGenericPermission(Resource.AI_MODEL, Operation.WRITE)
       }
     }).afterClosed();
   }

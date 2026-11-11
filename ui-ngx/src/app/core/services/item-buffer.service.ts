@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { BreakpointId, Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
 import {
@@ -28,6 +15,7 @@ import {
   DatasourceType,
   TargetDeviceType,
   Widget,
+  WidgetActionsMap,
   WidgetPosition,
   WidgetSize,
   widgetType
@@ -45,6 +33,7 @@ import { findWidgetModelDefinition } from '@shared/models/widget/widget-model.de
 
 const WIDGET_ITEM = 'widget_item';
 const WIDGET_REFERENCE = 'widget_reference';
+const WIDGET_ACTIONS = 'widget_actions';
 const RULE_NODES = 'rule_nodes';
 const RULE_CHAIN_IMPORT = 'rule_chain_import';
 
@@ -178,6 +167,18 @@ export class ItemBufferService {
 
   public hasWidget(): boolean {
     return this.storeHas(WIDGET_ITEM);
+  }
+
+  public copyWidgetActions(actionsMap: WidgetActionsMap): void {
+    this.storeSet(WIDGET_ACTIONS, actionsMap);
+  }
+
+  public hasWidgetActions(): boolean {
+    return this.storeHas(WIDGET_ACTIONS);
+  }
+
+  public pasteWidgetActions(): WidgetActionsMap {
+    return this.storeGet(WIDGET_ACTIONS);
   }
 
   public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId, breakpoint: string): boolean {

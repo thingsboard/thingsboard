@@ -1,21 +1,10 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
@@ -25,9 +14,10 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -39,8 +29,12 @@ public class EdgeDataValidator extends DataValidator<Edge> {
     private final TenantService tenantService;
     private final CustomerDao customerDao;
 
+    @Lazy
+    private final SubscriptionService subscriptionService;
+
     @Override
     protected void validateCreate(TenantId tenantId, Edge edge) {
+        subscriptionService.createEdgeAllowed(edge.getTenantId());
         validateNumberOfEntitiesPerTenant(tenantId, EntityType.EDGE);
     }
 
@@ -58,6 +52,14 @@ public class EdgeDataValidator extends DataValidator<Edge> {
         }
         if (StringUtils.isEmpty(edge.getRoutingKey())) {
             throw new DataValidationException("Edge routing key should be specified!");
+        }
+        if (subscriptionService.getLicenseVersion() < 2) {
+            if (StringUtils.isEmpty(edge.getEdgeLicenseKey())) {
+                throw new DataValidationException("Edge license key should be specified!");
+            }
+            if (StringUtils.isEmpty(edge.getCloudEndpoint())) {
+                throw new DataValidationException("Cloud endpoint should be specified!");
+            }
         }
         if (edge.getTenantId() == null) {
             throw new DataValidationException("Edge should be assigned to tenant!");

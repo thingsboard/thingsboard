@@ -1,22 +1,16 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.client;
 
 import org.junit.Test;
 import org.thingsboard.client.ApiException;
+import org.thingsboard.client.api.ThingsboardApi.DeleteDeviceArgs;
+import org.thingsboard.client.api.ThingsboardApi.DeleteRpcArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetPersistedRpcArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetPersistedRpcByDeviceArgs;
+import org.thingsboard.client.api.ThingsboardApi.HandleOneWayDeviceRPCRequestV2Args;
+import org.thingsboard.client.api.ThingsboardApi.HandleTwoWayDeviceRPCRequestV2Args;
+import org.thingsboard.client.api.ThingsboardApi.SaveDeviceArgs;
 import org.thingsboard.client.model.Device;
 import org.thingsboard.client.model.Rpc;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -44,13 +38,18 @@ public class RpcV2ApiClientTest extends AbstractApiClientTest {
         String deviceId = device.getId().getId().toString();
 
         try {
-            client.handleOneWayDeviceRPCRequestV2(deviceId, PERSISTENT_BODY);
+            client.handleOneWayDeviceRPCRequestV2(HandleOneWayDeviceRPCRequestV2Args.builder()
+                    .deviceId(deviceId)
+                    .body(PERSISTENT_BODY)
+                    .build());
         } catch (ApiException e) {
             assertEquals("handleOneWayDeviceRPCRequest1 got an unexpected HTTP error: " + e.getCode(),
                     0, e.getCode());
         }
 
-        client.deleteDevice(deviceId);
+        client.deleteDevice(DeleteDeviceArgs.builder()
+                .deviceId(deviceId)
+                .build());
     }
 
     @Test
@@ -60,13 +59,18 @@ public class RpcV2ApiClientTest extends AbstractApiClientTest {
         String deviceId = device.getId().getId().toString();
 
         try {
-            client.handleTwoWayDeviceRPCRequestV2(deviceId, PERSISTENT_BODY);
+            client.handleTwoWayDeviceRPCRequestV2(HandleTwoWayDeviceRPCRequestV2Args.builder()
+                    .deviceId(deviceId)
+                    .body(PERSISTENT_BODY)
+                    .build());
         } catch (ApiException e) {
             assertEquals("handleTwoWayDeviceRPCRequest1 got an unexpected HTTP error: " + e.getCode(),
                     0, e.getCode());
         }
 
-        client.deleteDevice(deviceId);
+        client.deleteDevice(DeleteDeviceArgs.builder()
+                .deviceId(deviceId)
+                .build());
     }
 
     @Test
@@ -78,20 +82,30 @@ public class RpcV2ApiClientTest extends AbstractApiClientTest {
         String rpcId = postPersistentRpcAndGetId(deviceId);
         assertNotNull(rpcId);
 
-        Rpc rpc = client.getPersistedRpc(rpcId);
+        Rpc rpc = client.getPersistedRpc(GetPersistedRpcArgs.builder()
+                .rpcId(rpcId)
+                .build());
         assertNotNull(rpc);
         assertNotNull(rpc.getId());
 
-        client.deleteRpc(rpcId);
+        client.deleteRpc(DeleteRpcArgs.builder()
+                .rpcId(rpcId)
+                .build());
 
-        assertReturns404(() -> client.getPersistedRpc(rpcId));
+        assertReturns404(() -> client.getPersistedRpc(GetPersistedRpcArgs.builder()
+                .rpcId(rpcId)
+                .build()));
 
-        client.deleteDevice(deviceId);
+        client.deleteDevice(DeleteDeviceArgs.builder()
+                .deviceId(deviceId)
+                .build());
     }
 
     @Test
     public void testGetPersistedRpcNotFound() {
-        assertReturns404(() -> client.getPersistedRpc(UUID.randomUUID().toString()));
+        assertReturns404(() -> client.getPersistedRpc(GetPersistedRpcArgs.builder()
+                .rpcId(UUID.randomUUID().toString())
+                .build()));
     }
 
     @Test
@@ -103,20 +117,28 @@ public class RpcV2ApiClientTest extends AbstractApiClientTest {
         postPersistentRpcAndGetId(deviceId);
 
         try {
-            client.getPersistedRpcByDevice(deviceId, 100, 0, null, null, null, null);
+            client.getPersistedRpcByDevice(GetPersistedRpcByDeviceArgs.builder()
+                    .deviceId(deviceId)
+                    .pageSize(100)
+                    .page(0)
+                    .build());
         } catch (ApiException e) {
             assertEquals("getPersistedRpcByDevice got an unexpected HTTP error: " + e.getCode(),
                     0, e.getCode());
         }
 
-        client.deleteDevice(deviceId);
+        client.deleteDevice(DeleteDeviceArgs.builder()
+                .deviceId(deviceId)
+                .build());
     }
 
     private Device createNewDevice(String name) throws ApiException {
         Device device = new Device();
         device.setName(name);
         device.setType("default");
-        return client.saveDevice(device, null, null, null, null);
+        return client.saveDevice(SaveDeviceArgs.builder()
+                .device(device)
+                .build());
     }
 
     private String postPersistentRpcAndGetId(String deviceId) throws IOException, InterruptedException {

@@ -1,0 +1,190 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+@import "../../../../../../scss/constants";
+
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.tb-agent-applications-page {
+  height: 100%;
+  width: 100%;
+}
+
+.tb-agent-applications-page-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Reads as one more badge in the metrics strip: the image on the left, and on the right either the
+   upgrade action or an up-to-date marker. Metrics values are borrowed from the strip's own chip so
+   the two line up — same height, radius, border and type scale. */
+.tb-agent-image-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid $agent-divider;
+  border-radius: 999px;
+  background: $agent-surface-muted;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 22px;
+  flex: 0 1 auto;
+  min-width: 0;
+
+  .tb-agent-image-chip-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    color: rgba(0, 0, 0, 0.78);
+    min-width: 0;
+  }
+
+  .tb-agent-image-chip-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: $agent-text-secondary;
+  }
+
+  .tb-agent-image-chip-label {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    color: $agent-text-secondary;
+  }
+
+  .image-tag {
+    font-family: $agent-mono-font;
+    font-size: 12.5px;
+    color: $agent-text-primary;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 96px;
+  }
+
+  .upgrade-segment,
+  .status-segment {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 0;
+    border-left: 1px solid $agent-divider;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .upgrade-segment {
+    cursor: pointer;
+    background: #fdf0d5;
+    color: #8a5300;
+
+    &:hover {
+      background: #f8e3b3;
+    }
+  }
+
+  .status-segment {
+    background: #e8f5ec;
+    color: #2e6b45;
+  }
+}
+
+.tb-agent-errors-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border: 1px solid rgba(211, 47, 47, 0.24);
+  border-radius: 999px;
+  background: $agent-error-surface;
+  color: $agent-color-error-dark;
+  font-size: 13px;
+  line-height: 22px;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #f9d9d5;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: $agent-color-error;
+  }
+
+  .tb-agent-errors-chip-label {
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+
+  .tb-agent-errors-chip-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tb-agent-applications-page-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
+  tb-agent-metrics-strip {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  @media #{$mat-gt-xmd} {
+    flex-wrap: nowrap;
+
+    tb-agent-metrics-strip {
+      flex-shrink: 0;
+    }
+  }
+}
+
+.tb-agent-applications-page-table {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: block;
+  position: relative;
+}
+
+.tb-agent-applications-page-drawer {
+  width: 100%;
+  max-width: 100%;
+  border-left: 1px solid $agent-divider-light;
+  background: #fff;
+
+  @media #{$mat-gt-xs} {
+    width: min(540px, 90vw);
+    max-width: 640px;
+  }
+}

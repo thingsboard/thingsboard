@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.queue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,8 +8,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
@@ -32,7 +21,7 @@ import java.util.Optional;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasName, HasTenantId, QueueConfig {
+public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasName, TenantEntity, QueueConfig {
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "name")
@@ -80,6 +69,12 @@ public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasNam
         return Optional.ofNullable(getAdditionalInfo())
                 .map(info -> info.get("duplicateMsgToAllPartitions"))
                 .filter(JsonNode::isBoolean).map(JsonNode::asBoolean).orElse(false);
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.QUEUE;
     }
 
 }

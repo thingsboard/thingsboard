@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.mail;
 
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +34,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "with <code>to Email</code> Node using <code>Successful</code> chain.",
         configDirective = "tbExternalNodeSendEmailConfig",
         icon = "send",
+        hasSecrets = true,
         docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/send-email/"
 )
 public class TbSendEmailNode extends TbAbstractExternalNode {
@@ -86,9 +75,9 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
 
     private void sendEmail(TbContext ctx, TbMsg msg, TbEmail email) throws Exception {
         if (this.config.isUseSystemSmtpSettings()) {
-            ctx.getMailService(true).send(ctx.getTenantId(), msg.getCustomerId(), email);
+            ctx.getMailService().send(ctx.getTenantId(), msg.getCustomerId(), email);
         } else {
-            ctx.getMailService(false).send(ctx.getTenantId(), msg.getCustomerId(), email, this.mailSender, config.getTimeout());
+            ctx.getMailService().send(ctx.getTenantId(), msg.getCustomerId(), email, config.getTimeout(), this.mailSender);
         }
     }
 

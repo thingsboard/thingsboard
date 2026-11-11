@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ComponentRef,
@@ -45,6 +32,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { FormProperty } from '@shared/models/dynamic-form.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-widget-settings',
@@ -87,11 +75,17 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
   @Input()
   widgetConfig: WidgetConfigComponentData;
 
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
+
   private settingsDirective: string;
 
   definedDirectiveError: string;
 
   settingsForm?: FormProperty[];
+
+  settingsFormTrimDefaults?: boolean;
 
   widgetSettingsFormGroup: UntypedFormGroup;
 
@@ -107,7 +101,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
               private widgetService: WidgetService,
               private fb: UntypedFormBuilder) {
     this.widgetSettingsFormGroup = this.fb.group({
-      settings: [null, Validators.required]
+      settings: [null]
     });
   }
 
@@ -179,6 +173,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
   writeValue(value: DynamicFormData): void {
     this.widgetSettingsFormData = value;
     this.settingsForm = this.widgetSettingsFormData.settingsForm;
+    this.settingsFormTrimDefaults = this.widgetSettingsFormData.settingsFormTrimDefaults;
     if (this.changeSubscription) {
       this.changeSubscription.unsubscribe();
       this.changeSubscription = null;
@@ -242,6 +237,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
         this.definedSettingsComponent.dashboard = this.dashboard;
         this.definedSettingsComponent.widget = this.widget;
         this.definedSettingsComponent.widgetConfig = this.widgetConfig;
+        this.definedSettingsComponent.reportMode = this.reportMode;
         this.definedSettingsComponent.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
         this.changeSubscription = this.definedSettingsComponent.settingsChanged.subscribe((settings) => {
           this.updateModel(settings);

@@ -1,0 +1,96 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+:host {
+  display: block;
+  margin-bottom: 24px;
+
+  .tb-agent-app-arguments-panel {
+    box-shadow: none;
+    border: 1px solid $agent-divider;
+    border-radius: 8px;
+  }
+
+  .tb-agent-app-arguments-count {
+    color: $agent-text-secondary;
+    font-weight: 400;
+  }
+
+  .tb-agent-app-arguments-hint {
+    display: block;
+    font-size: 12px;
+    color: $agent-text-secondary;
+
+    .tb-agent-app-arguments-token {
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.06);
+      font-family: $agent-mono-font;
+    }
+  }
+
+  .tb-agent-app-arguments-table {
+    .mat-mdc-table {
+      table-layout: fixed;
+    }
+  }
+
+  .tb-form-table-row-cell-buttons {
+    width: 100%;
+    display: flex;
+    justify-content: end;
+  }
+
+  .tb-agent-app-arguments-empty-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 32px;
+    color: $agent-text-hint;
+  }
+
+  .tb-agent-app-arguments-empty-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.76);
+  }
+
+  .tb-agent-app-arguments-empty-subtitle {
+    font-size: 12px;
+    color: $agent-text-secondary;
+    text-align: center;
+    max-width: 420px;
+  }
+
+  .tb-agent-app-arguments-empty-read {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 24px 16px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .tb-agent-app-arguments-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 16px;
+    border-radius: 8px;
+    border: 1px dashed rgba(0, 0, 0, 0.18);
+
+    button {
+      margin-top: 4px;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-agent-app-arguments-table {
+    .mdc-data-table__row:last-child .mat-mdc-cell {
+      border-bottom: none;
+    }
+  }
+}

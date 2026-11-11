@@ -1,20 +1,16 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  TemplateRef,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { IAliasController } from '@core/api/widget-api.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -26,7 +22,7 @@ import {
   widgetType,
   WidgetTypeInfo
 } from '@shared/models/widget.models';
-import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { BehaviorSubject, combineLatest, forkJoin, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
@@ -34,8 +30,19 @@ import { GridEntitiesFetchFunction, ScrollGridColumns } from '@shared/components
 import { ItemSizeStrategy } from '@shared/components/grid/scroll-grid.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
-import { MpItemVersionQuery, MpItemVersionView, widgetTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, FilterParamInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  MpItemVersionQuery,
+  MpItemVersionView,
+  widgetTypeTranslations
+} from '@shared/models/iot-hub/iot-hub-version.models';
+import {
+  FilterParamInfo,
+  IOT_HUB_SORT_OPTIONS,
+  ItemType,
+  RELEVANCE_SORT_PROPERTY,
+  SortOption,
+  WidgetCategory
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -47,16 +54,19 @@ import {
   resolveIotHubItemImageUrl
 } from '@home/components/iot-hub/iot-hub-utils';
 import { IotHubBuiltInService } from '@home/components/iot-hub/iot-hub-built-in.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+
+/** The Installed list is sorted locally, and only the Hub can rank by relevance. */
+const INSTALLED_SORT_OPTIONS = IOT_HUB_SORT_OPTIONS.filter(o => o.value !== RELEVANCE_SORT_PROPERTY);
 
 type selectWidgetMode = 'installed' | 'iotHub';
 type installedSubMode = 'default' | 'allWidgets';
 type iotHubSubMode = 'default' | 'allWidgets' | 'installed' | 'category';
-
-interface WidgetSelectSortOption {
-  value: string;
-  label: string;
-  direction: Direction;
-}
 
 const LOGICAL_ALL_WIDGETS = '__logical_all_widgets__';
 const LOGICAL_INSTALLED_FROM_IOT_HUB = '__logical_installed_from_iot_hub__';
@@ -95,6 +105,9 @@ export class DashboardWidgetSelectComponent {
   private iotHubSubMode$ = new BehaviorSubject<iotHubSubMode>('default');
   private widgetsBundle$ = new BehaviorSubject<WidgetsBundle>(null);
 
+  resource = Resource;
+  operation = Operation;
+
   widgetTypes = new Set<widgetType>();
   hasDeprecated = false;
 
@@ -102,12 +115,7 @@ export class DashboardWidgetSelectComponent {
   includeDeprecated = false;
   searchFocused = false;
 
-  iotHubSortOptions: WidgetSelectSortOption[] = [
-    { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
-    { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
-    { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
-  ];
-  iotHubSelectedSortIndex = 0;
+  private iotHubSelectedSortValue = IOT_HUB_SORT_OPTIONS[0].value;
 
   @Input()
   aliasController: IAliasController;
@@ -151,6 +159,7 @@ export class DashboardWidgetSelectComponent {
         this.iotHubAppliedWidgetTypes.clear();
         this.iotHubAppliedCategories.clear();
         this.iotHubAppliedUseCases.clear();
+        this.iotHubVerifiedCreatorsOnly = false;
         this.iotHubFilterCount = 0;
       }
     }
@@ -274,6 +283,7 @@ export class DashboardWidgetSelectComponent {
   iotHubAppliedWidgetTypes = new Set<string>();
   iotHubAppliedCategories = new Set<string>();
   iotHubAppliedUseCases = new Set<string>();
+  iotHubVerifiedCreatorsOnly = false;
 
   iotHubWidgetTypeOptions: FilterParamInfo[] = [];
   iotHubCategoryOptions: FilterParamInfo[] = [];
@@ -282,12 +292,16 @@ export class DashboardWidgetSelectComponent {
   iotHubFilterSearch: Record<string, string> = {};
   iotHubFilterItemsHovered = false;
 
+  isTenantAdmin = getCurrentAuthUser(this.store).authority === Authority.TENANT_ADMIN;
+
   constructor(private widgetsService: WidgetService,
               private iotHubApiService: IotHubApiService,
               private iotHubActions: IotHubActionsService,
               private iotHubBuiltInService: IotHubBuiltInService,
               private translate: TranslateService,
-              private cd: ChangeDetectorRef) {
+              private store: Store<AppState>,
+              private cd: ChangeDetectorRef,
+              public wl: WhiteLabelingService) {
 
     this.widgetBundlesFetchFunction = (pageSize, page, filter) => {
       const pageLink = new PageLink(pageSize, page, filter, {
@@ -317,7 +331,7 @@ export class DashboardWidgetSelectComponent {
 
     this.iotHubWidgetsFetchFunction = (pageSize, page, filter) => {
       const search = typeof filter === 'string' ? filter.split('|')[0] : filter;
-      const sort = this.iotHubSortOptions[this.iotHubSelectedSortIndex];
+      const sort = this.iotHubSelectedSort;
       const sortOrder: SortOrder = { property: sort.value, direction: sort.direction };
       const pageLink = new PageLink(pageSize, page, search || null, sortOrder);
       const effectiveCategories = this.iotHubSelectedCategory
@@ -328,7 +342,8 @@ export class DashboardWidgetSelectComponent {
         categories: effectiveCategories,
         useCases: this.iotHubAppliedUseCases.size > 0 ? Array.from(this.iotHubAppliedUseCases) : undefined,
         widgetTypes: this.iotHubAppliedWidgetTypes.size > 0 ? Array.from(this.iotHubAppliedWidgetTypes) : undefined,
-        scadaFirst: this.scadaFirst ? true : undefined
+        scadaFirst: this.scadaFirst ? true : undefined,
+        creatorVerified: this.iotHubVerifiedCreatorsOnly
       });
       return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
     };
@@ -351,7 +366,8 @@ export class DashboardWidgetSelectComponent {
     this.iotHubDefaultFetchFunction = (pageSize, page, filter) => {
       const search = typeof filter === 'string' ? filter.split('|')[0] : filter;
       return this.iotHubApiService.getWidgetCategories(search || undefined,
-        this.scadaFirst ? true : undefined, { ignoreLoading: true }).pipe(
+        this.scadaFirst ? true : undefined,
+        this.iotHubVerifiedCreatorsOnly, { ignoreLoading: true }).pipe(
         map(categories => ({
           data: categories.slice(page * pageSize, page * pageSize + pageSize),
           totalPages: Math.ceil(categories.length / pageSize),
@@ -568,11 +584,19 @@ export class DashboardWidgetSelectComponent {
     this.onIotHubFiltersChanged();
   }
 
+  toggleIotHubVerifiedCreators(): void {
+    this.iotHubVerifiedCreatorsOnly = !this.iotHubVerifiedCreatorsOnly;
+    this.loadWidgetCategories();
+    this.onIotHubFiltersChanged();
+  }
+
   clearIotHubFilters(): void {
     this.iotHubAppliedWidgetTypes.clear();
     this.iotHubAppliedCategories.clear();
     this.iotHubAppliedUseCases.clear();
+    this.iotHubVerifiedCreatorsOnly = false;
     this.iotHubFilterSearch = {};
+    this.loadWidgetCategories();
     this.onIotHubFiltersChanged();
   }
 
@@ -580,13 +604,27 @@ export class DashboardWidgetSelectComponent {
     this.iotHubFilterCount =
       this.iotHubAppliedWidgetTypes.size +
       (this.iotHubSelectedCategory ? 0 : this.iotHubAppliedCategories.size) +
-      this.iotHubAppliedUseCases.size;
+      this.iotHubAppliedUseCases.size +
+      (this.iotHubVerifiedCreatorsOnly ? 1 : 0);
     this.reloadIotHubWidgets();
   }
 
-  onIotHubSortChange(index: number): void {
-    if (this.iotHubSelectedSortIndex !== index) {
-      this.iotHubSelectedSortIndex = index;
+  get iotHubSortOptions(): SortOption[] {
+    return this.iotHubSubMode === 'installed' ? INSTALLED_SORT_OPTIONS : IOT_HUB_SORT_OPTIONS;
+  }
+
+  /** The chosen sort, or the list's first option where the chosen one is not offered. */
+  get iotHubSelectedSort(): SortOption {
+    const options = this.iotHubSortOptions;
+    return options.find(o => o.value === this.iotHubSelectedSortValue) ?? options[0];
+  }
+
+  onIotHubSortChange(option: SortOption): void {
+    // Store the choice even when it is already the effective sort (the Installed list's fallback
+    // for relevance), so it survives a switch back to the IoT Hub list; reload only on a change.
+    const effective = this.iotHubSelectedSort.value;
+    this.iotHubSelectedSortValue = option.value;
+    if (effective !== option.value) {
       this.installedWidgetVersions = null;
       this.reloadIotHubWidgets();
     }
@@ -595,6 +633,9 @@ export class DashboardWidgetSelectComponent {
   get totalFilterCount(): number {
     if (this.selectWidgetMode === 'installed') {
       return (this.filterWidgetTypes?.length ?? 0) + (this.includeDeprecated ? 1 : 0);
+    }
+    if (this.iotHubSubMode === 'default') {
+      return this.iotHubVerifiedCreatorsOnly ? 1 : 0;
     }
     return this.iotHubFilterCount;
   }
@@ -605,7 +646,8 @@ export class DashboardWidgetSelectComponent {
     }
     return this.iotHubAppliedWidgetTypes.size > 0
       || this.iotHubAppliedCategories.size > 0
-      || this.iotHubAppliedUseCases.size > 0;
+      || this.iotHubAppliedUseCases.size > 0
+      || this.iotHubVerifiedCreatorsOnly;
   }
 
   clearAllFilters(): void {
@@ -644,7 +686,8 @@ export class DashboardWidgetSelectComponent {
 
   isFilterVisible(): boolean {
     if (this.selectWidgetMode === 'iotHub') {
-      return this.iotHubSubMode !== 'default';
+      // The category landing honours only the verified filter, so the button stays while it is on
+      return this.iotHubSubMode !== 'default' || this.iotHubVerifiedCreatorsOnly;
     }
     return this.installedSubMode === 'allWidgets' || this.widgetsBundle !== null;
   }
@@ -675,14 +718,15 @@ export class DashboardWidgetSelectComponent {
         return this.translate.instant('iot-hub.all-iot-hub-widgets');
       }
       return '';
+    } else {
+      if (this.widgetsBundle) {
+        return this.widgetsBundle.title;
+      }
+      if (this.installedSubMode === 'allWidgets') {
+        return this.translate.instant('widget.all-widgets');
+      }
+      return this.translate.instant('widget.select-widgets-bundle');
     }
-    if (this.widgetsBundle) {
-      return this.widgetsBundle.title;
-    }
-    if (this.installedSubMode === 'allWidgets') {
-      return this.translate.instant('widget.all-widgets');
-    }
-    return '';
   }
 
   getSearchPlaceholder(): string {
@@ -827,12 +871,15 @@ export class DashboardWidgetSelectComponent {
       return of([]);
     }
     const versionRequests = versionIds.map(id =>
-      this.iotHubApiService.getVersionInfo(id, { ignoreLoading: true })
+      this.iotHubApiService.getVersionInfo(id, { ignoreLoading: true }).pipe(catchError(() => of(null)))
     );
     return forkJoin(versionRequests).pipe(
       map(versions => {
-        this.installedWidgetVersions = versions.sort((a, b) => b.totalInstallCount - a.totalInstallCount);
-        return this.installedWidgetVersions;
+        const loaded = versions.filter(v => !!v).sort((a, b) => b.totalInstallCount - a.totalInstallCount);
+        if (loaded.length) {
+          this.installedWidgetVersions = loaded;
+        }
+        return loaded;
       })
     );
   }
@@ -852,6 +899,9 @@ export class DashboardWidgetSelectComponent {
     if (this.iotHubAppliedUseCases.size > 0) {
       filtered = filtered.filter(v => v.useCases?.some(u => this.iotHubAppliedUseCases.has(u)));
     }
+    if (this.iotHubVerifiedCreatorsOnly) {
+      filtered = filtered.filter(v => v.creatorVerified);
+    }
     filtered = this.sortInstalledVersions(filtered);
     const start = page * pageSize;
     const data = filtered.slice(start, start + pageSize);
@@ -859,7 +909,7 @@ export class DashboardWidgetSelectComponent {
   }
 
   private sortInstalledVersions(versions: MpItemVersionView[]): MpItemVersionView[] {
-    const sort = this.iotHubSortOptions[this.iotHubSelectedSortIndex];
+    const sort = this.iotHubSelectedSort;
     const sign = sort.direction === Direction.ASC ? 1 : -1;
     const copy = [...versions];
     copy.sort((a, b) => {

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 syntax = "proto3";
 
 package transport;
@@ -34,14 +22,20 @@ enum EntityTypeProto {
   ASSET                 = 5;
   DEVICE                = 6;
   ALARM                 = 7;
-  // next 3 reserved for PE;
+  ENTITY_GROUP          = 100;
+  CONVERTER             = 101;
+  INTEGRATION           = 102;
   RULE_CHAIN            = 11;
   RULE_NODE             = 12;
-  // next 2 reserved for PE;
+  SCHEDULER_EVENT       = 103;
+  BLOB_ENTITY           = 104;
+  REPORT_TEMPLATE       = 108;
+  REPORT                = 109;
   ENTITY_VIEW           = 15;
   WIDGETS_BUNDLE        = 16;
   WIDGET_TYPE           = 17;
-  // next 2 reserved for PE;
+  ROLE                  = 105;
+  GROUP_PERMISSION      = 106;
   TENANT_PROFILE        = 20;
   DEVICE_PROFILE        = 21;
   ASSET_PROFILE         = 22;
@@ -64,9 +58,17 @@ enum EntityTypeProto {
   CALCULATED_FIELD      = 39;
   // CALCULATED_FIELD_LINK = 40; - was removed in 4.3
   JOB                   = 41;
+  SECRET                = 107;
   ADMIN_SETTINGS        = 42;
   AI_MODEL              = 43;
   API_KEY               = 44;
+  AGENT                 = 110;
+  AGENT_APPLICATION     = 111;
+  AGENT_APP_EVENT       = 112;
+  AGENT_APP_UNIT        = 113;
+  AGENT_APP_PROFILE     = 114;
+  AGENT_PROFILE         = 115;
+  AGENT_BULK_ACTION     = 116;
 }
 
 enum ApiUsageRecordKeyProto {
@@ -81,11 +83,16 @@ enum ApiUsageRecordKeyProto {
   CREATED_ALARMS_COUNT = 8;
   ACTIVE_DEVICES       = 9;
   INACTIVE_DEVICES     = 10;
+  GENERATED_REPORTS_COUNT = 100;
+  AI_CREDITS_COUNT      = 101;
 }
 
 message EntityIdProto {
   int64 entityIdMSB = 1;
   int64 entityIdLSB = 2;
+  // PE legacy field. Keep for backward compatibility.
+  string entityType = 3 [deprecated = true];
+  // New canonical field.
   EntityTypeProto type = 4;
 }
 
@@ -96,6 +103,7 @@ message ServiceInfo {
   string serviceId = 1;
   repeated string serviceTypes = 2;
   repeated string transports = 6;
+  repeated string integrationTypes = 7;
   SystemInfoProto systemInfo = 10;
   repeated string assignedTenantProfiles = 11;
   string label = 12;
@@ -336,6 +344,54 @@ message TenantProto {
   optional int64 version = 17;
 }
 
+message DeviceCacheInfoProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string deviceName = 5;
+  string deviceType = 6;
+  int64 deviceProfileIdMSB = 7;
+  int64 deviceProfileIdLSB = 8;
+  optional int64 customerIdMSB = 9;
+  optional int64 customerIdLSB = 10;
+}
+
+message DeviceProfileCacheInfoProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceProfileIdMSB = 3;
+  int64 deviceProfileIdLSB = 4;
+  string name = 5;
+  optional int64 defaultRuleChainIdMSB = 6;
+  optional int64 defaultRuleChainIdLSB = 7;
+  optional string defaultQueueName = 8;
+}
+
+message AssetCacheInfoProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 assetIdMSB = 3;
+  int64 assetIdLSB = 4;
+  string assetName = 5;
+  string assetType = 6;
+  int64 assetProfileIdMSB = 7;
+  int64 assetProfileIdLSB = 8;
+  optional int64 customerIdMSB = 9;
+  optional int64 customerIdLSB = 10;
+}
+
+message AssetProfileCacheInfoProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 assetProfileIdMSB = 3;
+  int64 assetProfileIdLSB = 4;
+  string name = 5;
+  optional int64 defaultRuleChainIdMSB = 6;
+  optional int64 defaultRuleChainIdLSB = 7;
+  optional string defaultQueueName = 8;
+}
+
 message TenantProfileProto {
   int64 tenantProfileIdMSB = 1;
   int64 tenantProfileIdLSB = 2;
@@ -366,7 +422,9 @@ message TbResourceProto {
   optional int64 externalIdLSB = 16;
   optional bytes data = 17;
   optional bytes preview = 18;
-  optional string resourceSubType = 19;
+  optional int64 customerIdMSB = 19;
+  optional int64 customerIdLSB = 20;
+  optional string resourceSubType = 21;
 }
 
 message ApiUsageStateProto {
@@ -387,6 +445,8 @@ message ApiUsageStateProto {
   string smsExecState = 15;
   string alarmExecState = 16;
   int64 version = 17;
+  string reportExecState = 100;
+  string aiState = 101;
 }
 
 message RepositorySettingsProto {
@@ -425,15 +485,19 @@ message GetAttributeRequestMsg {
   repeated string clientAttributeNames = 2;
   repeated string sharedAttributeNames = 3;
   bool onlyShared = 4;
+  bool allClientAttributes = 5;
+  bool allSharedAttributes = 6;
+  bool separateScopesResponse = 7;
 }
 
 message GetAttributeResponseMsg {
   int32 requestId = 1;
   repeated TsKvProto clientAttributeList = 2;
   repeated TsKvProto sharedAttributeList = 3;
-  bool isMultipleAttributesRequest = 4;
+  bool isMultipleAttributesRequest = 4 [deprecated = true];
   string error = 5;
   bool sharedStateMsg = 6;
+  bool separateScopesResponse = 7;
 }
 
 message AttributeUpdateNotificationMsg {
@@ -471,6 +535,7 @@ message GetOrCreateDeviceFromGatewayRequestMsg {
   string deviceName = 3;
   string deviceType = 4;
   bool isSparkplug = 5;
+  string entityGroup = 6;
 }
 
 message GetOrCreateDeviceFromGatewayResponseMsg {
@@ -543,6 +608,33 @@ message ResourceCacheInvalidateMsg {
 message ImageCacheKeyProto {
   optional string resourceKey = 1;
   optional string publicResourceKey = 2;
+}
+
+message TranslationCacheInvalidateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+}
+
+message CustomMenuCacheInvalidateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 customerIdMSB = 3;
+  int64 customerIdLSB = 4;
+  int64 userIdMSB = 5;
+  int64 userIdLSB = 6;
+}
+
+/* A system-wide state change every node must reconverge on. Generic on purpose: the next such concern is an
+   enum value here rather than a new message on every envelope it has to reach. */
+enum SystemUpdateType {
+  SYSTEM_UPDATE_UNKNOWN = 0;   // proto3 requires a zero value; also the answer for an unset field
+  LICENSE = 1;
+}
+
+/* Bare on purpose: the receiver re-reads the shared state and rebuilds its own verdict from it, so a payload
+   here would be a second answer to the same question - and, for LICENSE, a secret on the queue. */
+message SystemUpdateMsg {
+  SystemUpdateType type = 1;
 }
 
 message ToEdqsCoreServiceMsg {
@@ -977,6 +1069,45 @@ message TransportToRuleEngineMsg {
   ToServerRpcRequestMsg toServerRPCCallRequest = 5;
 }
 
+message IntegrationDownlinkMsgProto {
+    int64 tenantIdMSB = 1;
+    int64 tenantIdLSB = 2;
+    int64 integrationIdMSB = 3;
+    int64 integrationIdLSB = 4;
+    msgqueue.TbMsgProto dataProto = 6;
+}
+
+message SchedulerServiceMsgProto {
+    int64 tenantIdMSB = 1;
+    int64 tenantIdLSB = 2;
+    int64 eventIdMSB = 3;
+    int64 eventIdLSB = 4;
+    bool added = 5;
+    bool updated = 6;
+    bool deleted = 7;
+}
+
+message GenericUserPermissionsProto {
+    string resource = 1;
+    repeated string operation = 2;
+}
+
+message GroupUserPermissionsProto {
+    int64 entityGroupIdMSB = 1;
+    int64 entityGroupIdLSB = 2;
+    string entityType = 3;
+    repeated string operation = 4;
+}
+
+message MergedUserPermissionsProto {
+  repeated GenericUserPermissionsProto generic = 1;
+  repeated GroupUserPermissionsProto group = 2;
+}
+
+message OwnersListProto {
+    repeated EntityIdProto entityIds = 1;
+}
+
 /**
  * TB Core Data Structures
  */
@@ -996,6 +1127,7 @@ message TbEntitySubEventProto {
   repeated string tsKeys = 12;
   bool attrAllKeys = 13;
   repeated string attrKeys = 14;
+  bool logs = 15;
 }
 
 message TbEntitySubEventCallbackProto {
@@ -1206,6 +1338,15 @@ message TbTimeSeriesUpdateProto {
   repeated TsKvProto data = 6;
 }
 
+message TbLogStreamUpdateProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string entityType = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
+  int64 latestSeq = 6;
+}
+
 // DEPRECATED. FOR REMOVAL
 message TbSubscriptionCloseProto {
   option deprecated = true;
@@ -1258,6 +1399,7 @@ message SubscriptionMgrMsgProto {
   NotificationUpdateProto notificationUpdate = 13;
   NotificationRequestUpdateProto notificationRequestUpdate = 14;
   TbEntitySubEventProto subEvent = 15;
+  TbLogStreamUpdateProto logUpdate = 16;
 }
 
 message LocalSubscriptionServiceMsgProto {
@@ -1269,6 +1411,7 @@ message LocalSubscriptionServiceMsgProto {
   TbSubUpdateProto attrUpdate = 6;
   TbAlarmSubUpdateProto alarmUpdate = 7;
   NotificationsSubUpdateProto notificationsUpdate = 8;
+  TbLogStreamUpdateProto logUpdate = 9;
 }
 
 message FromDeviceRPCResponseProto {
@@ -1320,6 +1463,8 @@ message EdgeEventMsgProto {
   optional int64 entityIdMSB = 7;
   optional int64 entityIdLSB = 8;
   optional string body = 9;
+  optional int64 entityGroupIdMSB = 10;
+  optional int64 entityGroupIdLSB = 11;
 }
 
 message EdgeNotificationMsgProto {
@@ -1335,8 +1480,31 @@ message EdgeNotificationMsgProto {
   string body = 10;
   PostTelemetryMsg postTelemetryMsg = 11;
   PostAttributeMsg postAttributesMsg = 12;
-  int64 originatorEdgeIdMSB = 13;
-  int64 originatorEdgeIdLSB = 14;
+  int64 entityGroupIdMSB = 13;
+  int64 entityGroupIdLSB = 14;
+  string entityGroupType = 15;
+  int64 originatorEdgeIdMSB = 16;
+  int64 originatorEdgeIdLSB = 17;
+}
+
+message IntegrationValidationResponseProto {
+  int64 idMSB = 1;
+  int64 idLSB = 2;
+  bytes error = 3;
+}
+
+message StackTraceElementProto {
+  string declaringClass = 1;
+  string methodName = 2;
+  string fileName = 3;
+  int32 lineNumber = 4;
+}
+
+message IntegrationValidationError {
+  string type = 1;
+  string message = 2;
+  repeated StackTraceElementProto stackTrace = 3;
+  IntegrationValidationError cause = 4;
 }
 
 message EdgeHighPriorityMsgProto {
@@ -1499,7 +1667,8 @@ message AddMsg {
 }
 
 message DeleteMsg {
-  string relativePath = 1;
+  string folder = 1;
+  bool recursively = 2;
 }
 
 message PushMsg {
@@ -1518,6 +1687,7 @@ message ListVersionsRequestMsg {
   string textSearch = 7;
   string sortProperty = 8;
   string sortDirection = 9;
+  string path = 10;
 }
 
 message EntityVersionProto {
@@ -1566,6 +1736,7 @@ message EntityContentRequestMsg {
   string entityType = 2;
   int64 entityIdMSB = 3;
   int64 entityIdLSB = 4;
+  string path = 5;
 }
 
 message EntityContentResponseMsg {
@@ -1576,9 +1747,14 @@ message EntityContentResponseMsg {
 
 message EntitiesContentRequestMsg {
   string versionId = 1;
-  string entityType = 2;
-  int32 offset = 3;
-  int32 limit = 4;
+  string path = 2;
+  string entityType = 3;
+  // Use either params 4,5,6 or 7.
+  bool groups = 4;
+  bool recursive = 5;
+  int32 offset = 6;
+  int32 limit = 7;
+  repeated EntityIdProto ids = 8;
 }
 
 message EntitiesContentResponseMsg {
@@ -1687,12 +1863,13 @@ message ToCoreMsg {
   DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
   bytes toDeviceActorNotificationMsg = 4 [deprecated = true];
-  EdgeNotificationMsgProto edgeNotificationMsg = 5 [deprecated = true];
-  DeviceActivityProto deviceActivityMsg = 6;
-  NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
-  LifecycleEventProto lifecycleEventMsg = 8;
-  ErrorEventProto errorEventMsg = 9;
-  ToDeviceActorNotificationMsgProto toDeviceActorNotification = 10;
+  SchedulerServiceMsgProto schedulerServiceMsg = 5;
+  EdgeNotificationMsgProto edgeNotificationMsg = 7 [deprecated = true];
+  DeviceActivityProto deviceActivityMsg = 8;
+  NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 9;
+  LifecycleEventProto lifecycleEventMsg = 10;
+  ErrorEventProto errorEventMsg = 11;
+  ToDeviceActorNotificationMsgProto toDeviceActorNotification = 12;
   DeviceConnectProto deviceConnectMsg = 50;
   DeviceDisconnectProto deviceDisconnectMsg = 51;
   DeviceInactivityProto deviceInactivityMsg = 52;
@@ -1707,16 +1884,21 @@ message ToCoreNotificationMsg {
   repeated QueueUpdateMsg queueUpdateMsgs = 3;
   repeated QueueDeleteMsg queueDeleteMsgs = 4;
   VersionControlResponseMsg vcResponseMsg = 5;
-  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 6;
-  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 7;
-  ComponentLifecycleMsgProto componentLifecycle = 8;
-  CoreStartupMsg coreStartupMsg = 9;
-  EdgeEventUpdateMsgProto edgeEventUpdate = 10 [deprecated = true];
-  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11 [deprecated = true];
-  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12 [deprecated = true];
-  ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
+  IntegrationDownlinkMsgProto integrationDownlinkMsg = 6;
+  RestApiCallResponseMsgProto restApiCallResponseMsg = 7;
+  IntegrationValidationResponseProto integrationValidationResponseMsg = 8;
+  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 9;
+  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 10;
+  ComponentLifecycleMsgProto componentLifecycle = 11;
+  CoreStartupMsg coreStartupMsg = 12;
+  EdgeEventUpdateMsgProto edgeEventUpdate = 13 [deprecated = true];
+  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 14 [deprecated = true];
+  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 15 [deprecated = true];
+  ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 16;
   ToEdqsCoreServiceMsg toEdqsCoreServiceMsg = 17;
-  RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
+  TranslationCacheInvalidateMsg translationCacheInvalidateMsg = 100;
+  CustomMenuCacheInvalidateMsg customMenuCacheInvalidateMsg = 101;
+  SystemUpdateMsg systemUpdateMsg = 102;
 }
 
 /* Messages to Edge queue that are handled by ThingsBoard Core Service */
@@ -1761,6 +1943,9 @@ message ToRuleEngineNotificationMsg {
   repeated QueueUpdateMsg queueUpdateMsgs = 3;
   repeated QueueDeleteMsg queueDeleteMsgs = 4;
   ComponentLifecycleMsgProto componentLifecycle = 5;
+  // PE-only, so 100 rather than the next free low number: the low range belongs to CE, and a CE field taking
+  // 6 later would re-point this one on a cluster that is mid-upgrade.
+  SystemUpdateMsg systemUpdateMsg = 100;
 }
 
 /* Messages that are handled by ThingsBoard Transport Service */
@@ -1887,6 +2072,11 @@ message EdqsEventMsg {
   bytes data = 3;
   string eventType = 4;
   optional int64 version = 5;
+  // Set by the producer on a DELETED event when row versions may restart afterwards (Citus per-row versions
+  // restart at 1 when a deleted row is re-created). Tells EDQS to drop the delete tombstone so the re-create is
+  // not rejected as stale. Absent/false means versions come from a global sequence (plain PostgreSQL) and the
+  // tombstone is retained.
+  bool versionsResetOnDelete = 6;
 }
 
 message EdqsRequestMsg {
@@ -1914,6 +2104,10 @@ message TaskResultProto {
   string value = 1;
 }
 
+message ToTbReportNotificationMsg {
+  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
+}
+
 message EntityActionEventProto {
   EntityIdProto tenantId = 1;
   EntityIdProto entityId = 2;
@@ -1931,4 +2125,51 @@ message AlarmRuleStateProto {
   int64 eventCount = 2;
   int64 firstEventTs = 3;
   int64 lastCheckTs = 4;
+}
+
+/**
+ * Agent notification messages
+ */
+message ToAgentNotificationMsg {
+  AgentAppEventNotificationProto agentAppEventNotification = 1;
+  LogStreamRequestProto logStreamRequest = 2;
+}
+
+message LogStreamRequestProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 agentIdMSB = 3;
+  int64 agentIdLSB = 4;
+  int64 agentUnitIdMSB = 5;
+  int64 agentUnitIdLSB = 6;
+  string unitIdentifier = 7;
+  string projectName = 8;
+  bool stop = 9;                 // false = StartLogStream, true = StopLogStream
+}
+
+message AgentAppEventNotificationProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 agentIdMSB = 3;
+  int64 agentIdLSB = 4;
+  int64 applicationIdMSB = 5;
+  int64 applicationIdLSB = 6;
+  int64 eventIdMSB = 7;
+  int64 eventIdLSB = 8;
+  string actionType = 9;
+  bool delivered = 10;
+  bool cancelled = 11;
+}
+
+message AgentBulkOperationMsg {
+  int64 bulkActionIdMSB = 1;
+  int64 bulkActionIdLSB = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+  int64 agentProfileIdMSB = 5;
+  int64 agentProfileIdLSB = 6;
+  int64 applicationProfileIdMSB = 7;
+  int64 applicationProfileIdLSB = 8;
+  string actionType = 9;
+  string stepInputs = 10;
 }

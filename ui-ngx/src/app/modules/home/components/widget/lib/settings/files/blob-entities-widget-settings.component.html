@@ -1,0 +1,91 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-widget-settings flex flex-col" [formGroup]="blobEntitiesWidgetSettingsForm">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.table.blob-entities-table-title</mat-label>
+    <input matInput formControlName="title">
+  </mat-form-field>
+  <mat-slide-toggle formControlName="displayCreatedTime" class="slide-block">
+    {{ 'widgets.table.display-created-time' | translate }}
+  </mat-slide-toggle>
+  <mat-slide-toggle formControlName="displayType" class="slide-block">
+    {{ 'widgets.table.display-type' | translate }}
+  </mat-slide-toggle>
+  <mat-slide-toggle formControlName="displayCustomer" class="slide-block">
+    {{ 'widgets.table.display-customer' | translate }}
+  </mat-slide-toggle>
+  <div class="tb-form-panel stroked" style="margin-bottom:8px">
+    <div class="tb-form-panel-title" translate>widgets.table.pagination</div>
+    <mat-slide-toggle class="mat-slide" formControlName="displayPagination">
+      {{ 'widgets.table.display-pagination' | translate }}
+    </mat-slide-toggle>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width !min-w-30">{{ 'widgets.table.page-step-settings' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="tb-small-label" translate>widgets.table.page-step-increment</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
+            placeholder="{{ 'widget-config.set' | translate }}">
+          @if (blobEntitiesWidgetSettingsForm.get('pageStepIncrement').invalid
+            && blobEntitiesWidgetSettingsForm.get('pageStepIncrement').touched) {
+            <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(blobEntitiesWidgetSettingsForm.get('pageStepIncrement').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-increment-format-message') | translate"
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
+        <mat-divider vertical class="xs:hidden"></mat-divider>
+        <div class="tb-small-label" translate>widgets.table.page-step-count</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
+            placeholder="{{ 'widget-config.set' | translate }}">
+          @if (blobEntitiesWidgetSettingsForm.get('pageStepCount').invalid
+            && blobEntitiesWidgetSettingsForm.get('pageStepCount').touched) {
+            <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(blobEntitiesWidgetSettingsForm.get('pageStepCount').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-count-format-message') | translate"
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.table.default-page-size</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
+          @for (size of pageStepSizeValues; track size) {
+            <mat-option [value]="size">
+              {{ size }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.table.default-sort-order</mat-label>
+    <input matInput formControlName="defaultSortOrder">
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.table.no-data-display-message</mat-label>
+    <input matInput formControlName="noDataDisplayMessage">
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>widgets.table.force-default-blob-entity-type</mat-label>
+    <input matInput formControlName="forceDefaultType">
+  </mat-form-field>
+</section>

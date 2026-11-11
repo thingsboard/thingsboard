@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { TranslateService } from '@ngx-translate/core';
 
 export interface RateLimits {
@@ -45,11 +32,19 @@ export enum RateLimitsType {
   TENANT_ENTITY_IMPORT_RATE_LIMIT = 'TENANT_ENTITY_IMPORT_RATE_LIMIT',
   TENANT_NOTIFICATION_REQUEST_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUEST_RATE_LIMIT',
   TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT',
+  INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT = 'INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT',
+  INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT = 'INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT',
+  INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT = 'INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT',
   EDGE_EVENTS_RATE_LIMIT = 'EDGE_EVENTS_RATE_LIMIT',
   EDGE_EVENTS_PER_EDGE_RATE_LIMIT = 'EDGE_EVENTS_PER_EDGE_RATE_LIMIT',
   EDGE_UPLINK_MESSAGES_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_RATE_LIMIT',
   EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT',
+  AGENT_EVENTS_RATE_LIMIT = 'AGENT_EVENTS_RATE_LIMIT',
+  AGENT_EVENTS_PER_AGENT_RATE_LIMIT = 'AGENT_EVENTS_PER_AGENT_RATE_LIMIT',
+  AGENT_LOG_CHUNKS_RATE_LIMIT = 'AGENT_LOG_CHUNKS_RATE_LIMIT',
+  AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT = 'AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT',
   CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT = 'CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT',
+  AI_CHAT_REQUESTS = 'AI_CHAT_REQUESTS'
 }
 
 export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
@@ -77,11 +72,19 @@ export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
     [RateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT, 'tenant-profile.tenant-entity-import-rate-limit'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT, 'tenant-profile.tenant-notification-request-rate-limit'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT, 'tenant-profile.tenant-notification-requests-per-rule-rate-limit'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT, 'tenant-profile.integration-msgs-per-tenant-rate-limit'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT, 'tenant-profile.integration-msgs-per-device-rate-limit'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT, 'tenant-profile.integration-msgs-per-asset-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-per-edge-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-per-edge-rate-limit'],
+    [RateLimitsType.AGENT_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.agent-events-rate-limit'],
+    [RateLimitsType.AGENT_EVENTS_PER_AGENT_RATE_LIMIT, 'tenant-profile.rate-limits.agent-events-per-agent-rate-limit'],
+    [RateLimitsType.AGENT_LOG_CHUNKS_RATE_LIMIT, 'tenant-profile.rate-limits.agent-log-chunks-rate-limit'],
+    [RateLimitsType.AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT, 'tenant-profile.rate-limits.agent-log-chunks-per-agent-rate-limit'],
     [RateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT, 'tenant-profile.rate-limits.calculated-field-debug-event-rate-limit'],
+    [RateLimitsType.AI_CHAT_REQUESTS, 'tenant-profile.rate-limits.ai-chat-requests-rate-limit'],
   ]
 );
 
@@ -110,11 +113,19 @@ export const rateLimitsDialogTitleTranslationMap = new Map<RateLimitsType, strin
     [RateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-entity-import-rate-limit-title'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-notification-request-rate-limit-title'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-notification-requests-per-rule-rate-limit-title'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-integration-msgs-per-tenant-rate-limit-title'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-integration-msgs-per-device-rate-limit-title'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT, 'tenant-profile.rate-limits.edit-integration-msgs-per-asset-rate-limit-title'],
     [RateLimitsType.EDGE_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-per-edge-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-per-edge-rate-limit'],
-    [RateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-calculated-field-debug-event-rate-limit']
+    [RateLimitsType.AGENT_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edit-agent-events-rate-limit'],
+    [RateLimitsType.AGENT_EVENTS_PER_AGENT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-agent-events-per-agent-rate-limit'],
+    [RateLimitsType.AGENT_LOG_CHUNKS_RATE_LIMIT, 'tenant-profile.rate-limits.edit-agent-log-chunks-rate-limit'],
+    [RateLimitsType.AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-agent-log-chunks-per-agent-rate-limit'],
+    [RateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-calculated-field-debug-event-rate-limit'],
+    [RateLimitsType.AI_CHAT_REQUESTS, 'tenant-profile.rate-limits.edit-ai-chat-requests-rate-limit']
   ]
 );
 

@@ -1,0 +1,129 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+:host {
+  display: block;
+  width: min(560px, 95vw);
+  min-width: 0;
+  max-width: 95vw;
+}
+
+.tb-app-delete-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+
+  .warn-icon {
+    color: $agent-color-error-accent;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  h2 {
+    flex: 1;
+    font-size: 20px;
+    font-weight: 400;
+    margin: 0;
+  }
+}
+
+.tb-app-delete-dialog-body {
+  padding: 16px 24px 24px;
+
+  .warning-text {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.74);
+    margin: 0 0 16px;
+    line-height: 1.5;
+  }
+}
+
+.app-summary {
+  @include agent-summary-card($agent-surface-muted, $agent-divider-light);
+  margin-bottom: 16px;
+}
+
+.tb-type-badge {
+  @include agent-type-badge;
+}
+
+.volume-option {
+  background: $agent-warning-surface;
+  border: 1px solid $agent-warning-border;
+  border-radius: 4px;
+  padding: 12px 16px;
+
+  .config-section-header {
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .step-type-label {
+    font-weight: 500;
+    color: var(--tb-accent-contrast-500, #fff);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--tb-accent-500);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .option-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: $agent-text-primary;
+  }
+
+  .option-hint {
+    font-size: 12px;
+    color: $agent-color-warning-strong;
+    margin-top: 4px;
+    margin-left: 28px;
+    line-height: 1.4;
+  }
+
+  .volumes-list {
+    margin-top: 8px;
+    margin-left: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    &.empty {
+      font-size: 12px;
+      color: $agent-text-hint;
+      font-style: italic;
+    }
+  }
+
+  .volume-chip {
+    display: inline-flex;
+    align-items: center;
+    background: $agent-divider-light;
+    color: rgba(0, 0, 0, 0.74);
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-family: $agent-mono-font;
+    font-size: 11px;
+  }
+}
+
+.tb-app-delete-dialog-footer {
+  padding: 8px 24px 16px;
+  gap: 8px;
+
+  button[mat-raised-button] mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+  }
+}

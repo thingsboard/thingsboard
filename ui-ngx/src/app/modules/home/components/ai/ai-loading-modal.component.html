@@ -1,0 +1,15 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-generated flex flex-col items-center justify-center">
+  <div class="panel flex max-w-full flex-col items-center gap-6 rounded-lg p-10">
+    <img [src]="data?.image || generateImage" alt="Loading">
+    <div class="flex flex-col items-center gap-1">
+      <span class="msg text-xl font-semibold" [class.text-changed]="statusMessageChanged">{{ statusMessage | translate }}</span>
+      <span class="info">{{ 'solution-creator.estimate-wait-time' | translate: {time: (data.estimateWaitTime | milliSecondsToTimeString:true : true)} }}</span>
+    </div>
+  </div>
+</div>

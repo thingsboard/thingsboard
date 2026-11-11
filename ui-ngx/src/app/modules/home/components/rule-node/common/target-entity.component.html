@@ -1,0 +1,32 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="same-width-component-row" [formGroup]="targetEntityControlGroup">
+  <tb-owner-autocomplete
+    formControlName="groupOwnerId"
+    [class.third-width]="isTypeSelected"
+    placeholderText="rule-node-config.owner"
+    requiredText="rule-node-config.owner-required"
+    required
+    appearance="outline"
+    notFoundText="rule-node-config.no-owners-matching">
+  </tb-owner-autocomplete>
+  @if (targetEntityControlGroup.get('groupOwnerId').value) {
+    <tb-entity-group-select
+      class="flex-1"
+      formControlName="entityGroupId"
+      [ownerId]="targetEntityControlGroup.get('groupOwnerId').value"
+      [allowedGroupTypes]="allowedGroupTypes"
+      [class.flex-2]="isTypeSelected"
+      (currentGroupType)="isTypeSelected = !!$event"
+      required
+      appearance="outline"
+      placeholderText="entity-group.select-entity-group"
+      notFoundText="entity-group.no-entity-groups-matching"
+      requiredText="entity-group.target-entity-group-required">
+    </tb-entity-group-select>
+  }
+</div>

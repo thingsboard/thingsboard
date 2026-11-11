@@ -1,0 +1,95 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use './agent-shared' as *;
+
+:host {
+  display: block;
+}
+
+.instructions-section {
+  h3 {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+
+  > p {
+    font-size: 13px;
+    color: $agent-text-secondary;
+    line-height: 1.6;
+    margin: 0 0 12px;
+  }
+
+  .step-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 12px 0 6px;
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--tb-primary-500);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+  }
+
+  .edge-ui-desc {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.7);
+    line-height: 1.6;
+    margin: 0;
+
+    a {
+      color: var(--tb-primary-500);
+      font-weight: 500;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.command-block {
+  @include agent-command-block;
+  .copy-command-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    min-width: 0;
+    padding: 0 10px;
+    line-height: 28px;
+    height: 28px;
+    font-size: 12px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+  }
+}
+
+.tb-info-box {
+  @include agent-info-box;
+  @include agent-info-box-tone;
+}

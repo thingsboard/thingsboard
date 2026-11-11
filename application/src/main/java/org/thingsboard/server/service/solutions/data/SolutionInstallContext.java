@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data;
 
 import lombok.Data;
@@ -30,18 +18,22 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 import org.thingsboard.server.service.solutions.data.definition.AssetDefinition;
 import org.thingsboard.server.service.solutions.data.definition.AssetProfileDefinition;
 import org.thingsboard.server.service.solutions.data.definition.CustomerDefinition;
 import org.thingsboard.server.service.solutions.data.definition.DashboardDefinition;
 import org.thingsboard.server.service.solutions.data.definition.DeviceDefinition;
-import org.thingsboard.server.service.solutions.data.definition.EdgeDefinition;
 import org.thingsboard.server.service.solutions.data.definition.DeviceProfileDefinition;
+import org.thingsboard.server.service.solutions.data.definition.EdgeDefinition;
+import org.thingsboard.server.service.solutions.data.definition.EmulatorDefinition;
 import org.thingsboard.server.service.solutions.data.definition.EntityDefinition;
 import org.thingsboard.server.service.solutions.data.definition.EntitySearchKey;
-import org.thingsboard.server.service.solutions.data.definition.EmulatorDefinition;
 import org.thingsboard.server.service.solutions.data.definition.RelationDefinition;
+import org.thingsboard.server.service.solutions.data.definition.SchedulerEventDefinition;
+import org.thingsboard.server.service.solutions.data.definition.UserDefinition;
 import org.thingsboard.server.service.solutions.data.solution.TenantSolutionTemplateInstructions;
 
 import java.nio.file.Path;
@@ -56,6 +48,7 @@ import java.util.UUID;
 public class SolutionInstallContext {
 
     private final TenantId tenantId;
+    private final String solutionId;
     private final Path tempDir;
     private final User user;
     private final TenantSolutionTemplateInstructions solutionInstructions;
@@ -63,17 +56,19 @@ public class SolutionInstallContext {
     private final Map<String, String> realIds = new HashMap<>();
     private final Map<EntitySearchKey, EntityId> entityIdMap = new HashMap<>();
     private final Map<EntityId, List<RelationDefinition>> relationDefinitions = new LinkedHashMap<>();
-    private final List<DashboardLinkInfo> dashboardLinks = new ArrayList<>();
 
     // For instructions
     private final Map<String, DeviceCredentialsInfo> createdDevices = new LinkedHashMap<>();
     private final Map<String, UserCredentialsInfo> createdUsers = new LinkedHashMap<>();
-    private final Map<String, EdgeLinkInfo> createdEdges = new LinkedHashMap<>();
     private final Map<UUID, CreatedEntityInfo> createdEntities = new LinkedHashMap<>();
     private final Map<UUID, CreatedAlarmRuleInfo> createdAlarmRules = new LinkedHashMap<>();
     private final Map<UUID, CreatedCalculatedFieldInfo> createdCalculatedFields = new LinkedHashMap<>();
-    private final String solutionId;
+    private final List<DashboardLinkInfo> dashboardLinks = new ArrayList<>();
+    private final Map<String, EdgeLinkInfo> createdEdges = new LinkedHashMap<>();
+
     private final long installTs;
+
+    // for timeseries and attributes emulation and also for CFs reprocessing
     private long oldestTelemetryTs;
     private Map<String, EmulatorDefinition> deviceEmulators;
     private Map<String, EmulatorDefinition> assetEmulators;
@@ -84,8 +79,8 @@ public class SolutionInstallContext {
         this.tempDir = tempDir;
         this.user = user;
         this.solutionInstructions = solutionInstructions;
+        put(new EntitySearchKey(tenantId, EntityType.TENANT, null, false), tenantId);
         this.installTs = System.currentTimeMillis();
-        put(new EntitySearchKey(tenantId, EntityType.TENANT, null), tenantId);
     }
 
     public void registerReferenceOnly(String referenceId, EntityId entityId) {
@@ -103,9 +98,40 @@ public class SolutionInstallContext {
         createdEntitiesList.add(entityId);
     }
 
+    public void register(CustomerDefinition definition, Customer customer) {
+        register(definition.getJsonId(), customer.getId());
+        createdEntities.put(customer.getUuidId(), new CreatedEntityInfo(customer.getName(), EntityType.CUSTOMER, "Tenant"));
+    }
+
+    public void register(CustomerDefinition cDef, UserDefinition definition, User user) {
+        register(definition.getJsonId(), user.getId());
+        createdEntities.put(user.getUuidId(), new CreatedEntityInfo(user.getName(), EntityType.USER, StringUtils.isEmpty(cDef.getName()) ? "Tenant" : cDef.getName()));
+    }
+
+    public void register(AssetDefinition definition, Asset asset) {
+        register(definition.getJsonId(), asset.getId());
+        createdEntities.put(asset.getUuidId(), new CreatedEntityInfo(asset.getName(), EntityType.ASSET, StringUtils.isEmpty(definition.getCustomer()) ? "Tenant" : definition.getCustomer()));
+    }
+
+    public void register(DeviceDefinition definition, Device device) {
+        register(definition.getJsonId(), device.getId());
+        createdEntities.put(device.getUuidId(), new CreatedEntityInfo(device.getName(), EntityType.DEVICE, StringUtils.isEmpty(definition.getCustomer()) ? "Tenant" : definition.getCustomer()));
+    }
+
+    public void register(DashboardDefinition definition, Dashboard dashboard) {
+        register(definition.getJsonId(), dashboard.getId());
+        createdEntities.put(dashboard.getUuidId(), new CreatedEntityInfo(dashboard.getName(), EntityType.DASHBOARD, StringUtils.isEmpty(definition.getCustomer()) ? "Tenant" : definition.getCustomer()));
+    }
+
     public void register(String referenceId, RuleChain ruleChain) {
         register(referenceId, ruleChain.getId());
         createdEntities.put(ruleChain.getUuidId(), new CreatedRuleChainInfo(ruleChain.getName(), ruleChain.getType(), "Tenant"));
+    }
+
+
+    public void register(Role role) {
+        register(role.getId());
+        createdEntities.put(role.getUuidId(), new CreatedEntityInfo(role.getName(), EntityType.ROLE, "Tenant"));
     }
 
     public void register(DeviceProfileDefinition definition, DeviceProfile deviceProfile) {
@@ -118,39 +144,13 @@ public class SolutionInstallContext {
         createdEntities.put(assetProfile.getUuidId(), new CreatedEntityInfo(assetProfile.getName(), EntityType.ASSET_PROFILE, "Tenant"));
     }
 
-    public void register(AssetDefinition definition, Asset asset) {
-        register(definition.getJsonId(), asset.getId());
-        createdEntities.put(asset.getUuidId(), new CreatedEntityInfo(asset.getName(), EntityType.ASSET,
-                StringUtils.isEmpty(definition.getCustomer()) ? "Tenant" : definition.getCustomer()));
-    }
-
-    public void register(DeviceDefinition definition, Device device) {
-        register(definition.getJsonId(), device.getId());
-        createdEntities.put(device.getUuidId(), new CreatedEntityInfo(device.getName(), EntityType.DEVICE,
-                StringUtils.isEmpty(definition.getCustomer()) ? "Tenant" : definition.getCustomer()));
-    }
-
-    public void register(CustomerDefinition definition, Customer customer) {
-        register(definition.getJsonId(), customer.getId());
-        createdEntities.put(customer.getUuidId(), new CreatedEntityInfo(customer.getName(), EntityType.CUSTOMER, "Tenant"));
-    }
-
-    public void register(CustomerDefinition customerDef, User user) {
-        register((String) null, user.getId());
-        createdEntities.put(user.getUuidId(), new CreatedEntityInfo(user.getName(), EntityType.USER,
-                StringUtils.isEmpty(customerDef.getName()) ? "Tenant" : customerDef.getName()));
-    }
-
     public void register(EdgeDefinition definition, Edge edge) {
         register(definition.getJsonId(), edge.getId());
-        createdEntities.put(edge.getUuidId(), new CreatedEntityInfo(edge.getName(), EntityType.EDGE,
-                StringUtils.isEmpty(definition.getCustomer()) ? "Tenant" : definition.getCustomer()));
+        createdEntities.put(edge.getUuidId(), new CreatedEntityInfo(edge.getName(), EntityType.EDGE, StringUtils.isEmpty(definition.getCustomer()) ? "Tenant" : definition.getCustomer()));
     }
 
-    public void register(DashboardDefinition definition, Dashboard dashboard) {
-        register(definition.getJsonId(), dashboard.getId());
-        createdEntities.put(dashboard.getUuidId(), new CreatedEntityInfo(dashboard.getTitle(), EntityType.DASHBOARD,
-                StringUtils.isEmpty(definition.getCustomer()) ? "Tenant" : definition.getCustomer()));
+    public void register(SchedulerEventDefinition definition, SchedulerEvent schedulerEvent) {
+        register(definition.getJsonId(), schedulerEvent.getId());
     }
 
     public void register(CalculatedField calculatedField) {
@@ -170,6 +170,10 @@ public class SolutionInstallContext {
         createdCalculatedFields.put(calculatedField.getUuidId(), CreatedCalculatedFieldInfo.from(entityId, entityInfo.getName(), calculatedField));
     }
 
+    public void put(EntitySearchKey entitySearchKey, EntityId entityId) {
+        entityIdMap.put(entitySearchKey, entityId);
+    }
+
     public void putIdToMap(EntityDefinition entityDefinition, EntityId entityId) {
         putIdToMap(entityDefinition.getEntityType(), entityDefinition.getName(), entityId);
     }
@@ -179,16 +183,22 @@ public class SolutionInstallContext {
     }
 
     public void putIdToMap(EntityId ownerId, EntityType entityType, String entityName, EntityId entityId) {
-        put(new EntitySearchKey(ownerId, entityType, entityName), entityId);
-    }
-
-    public void put(EntitySearchKey entitySearchKey, EntityId entityId) {
-        entityIdMap.put(entitySearchKey, entityId);
+        entityIdMap.put(new EntitySearchKey(ownerId, entityType, entityName, EntityType.ENTITY_GROUP.equals(entityId.getEntityType())), entityId);
     }
 
     @SuppressWarnings("unchecked")
     public <T extends EntityId> T getIdFromMap(EntityType entityType, String entityName) {
-        return (T) entityIdMap.get(new EntitySearchKey(tenantId, entityType, entityName));
+        return (T) entityIdMap.get(new EntitySearchKey(tenantId, entityType, entityName, false));
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends EntityId> T getGroupIdFromMap(EntityType entityType, String entityName) {
+        return getGroupIdFromMap(tenantId, entityType, entityName);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends EntityId> T getGroupIdFromMap(EntityId ownerId, EntityType entityType, String entityName) {
+        return (T) entityIdMap.get(new EntitySearchKey(ownerId, entityType, entityName, true));
     }
 
     public void put(EntityId entityId, List<RelationDefinition> relations) {
@@ -206,5 +216,4 @@ public class SolutionInstallContext {
     public void addEdgeLinkInfo(String edgeName, EdgeLinkInfo edgeLinkInfo) {
         createdEdges.put(edgeName, edgeLinkInfo);
     }
-
 }

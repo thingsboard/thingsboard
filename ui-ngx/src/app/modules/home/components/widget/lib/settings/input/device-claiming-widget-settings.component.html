@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section class="tb-widget-settings flex flex-col" [formGroup]="deviceClaimingWidgetSettingsForm">
@@ -80,5 +70,40 @@
       <mat-label translate>widgets.input-widgets.claim-device-secret-key-required-message</mat-label>
       <input matInput formControlName="requiredErrorSecretKey">
     </mat-form-field>
+  </fieldset>
+  <fieldset class="fields-group fields-group-slider">
+    <legend class="group-title" translate>widgets.input-widgets.relations-settings</legend>
+    <mat-expansion-panel class="tb-settings" [expanded]="deviceClaimingWidgetSettingsForm.get('relateDevice').value">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="relateDevice" (click)="$event.stopPropagation()"
+                            class="flex items-stretch justify-center">
+            {{ 'widgets.input-widgets.relate-device-to-state-entity' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section class="flex flex-row gap-2">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>widgets.input-widgets.relate-direction</mat-label>
+            <mat-select formControlName="relateDirection">
+              <mat-option [value]="'from'">
+                {{ 'widgets.input-widgets.relate-direction-from' | translate }}
+              </mat-option>
+              <mat-option [value]="'to'">
+                {{ 'widgets.input-widgets.relate-direction-to' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>widgets.input-widgets.relation-type</mat-label>
+            <input matInput formControlName="relateType">
+          </mat-form-field>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
   </fieldset>
 </section>

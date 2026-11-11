@@ -1,0 +1,36 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-border h-full" [formGroup]="reportConfigForm">
+  <div class="tb-form-panel no-border no-padding overflow-y-auto">
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.component.split-view.split-position' | translate }}</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="splitPosition" type="number" min="1" max="99" placeholder="{{ 'widget-config.set' | translate }}">
+        <div matSuffix>%</div>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.component.split-view.split-gap' | translate }}</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="splitGap" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+        <div matSuffix>pt</div>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>report-template.component.split-view.vertical-alignment</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="tb-small-label" translate>report-template.component.split-view.left</div>
+        <tb-alignment horizontal="false" formControlName="leftVerticalAlignment"></tb-alignment>
+        <mat-divider vertical></mat-divider>
+        <div class="tb-small-label" translate>report-template.component.split-view.right</div>
+        <tb-alignment horizontal="false" formControlName="rightVerticalAlignment"></tb-alignment>
+      </div>
+    </div>
+    <tb-report-component-layout-settings formControlName="layout">
+    </tb-report-component-layout-settings>
+  </div>
+</div>

@@ -1,0 +1,132 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-expansion-panel class="tb-agent-app-arguments-panel" [expanded]="expanded" (expandedChange)="expanded = $event">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <span translate>agent.arguments</span>
+      @if (arguments.length) {
+        <span class="tb-agent-app-arguments-count">&nbsp;({{ arguments.length }})</span>
+      }
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  <div class="tb-agent-app-arguments flex flex-col gap-4">
+    <span class="tb-agent-app-arguments-hint">
+      {{ 'agent.arguments-hint-prefix' | translate }}
+      <code class="tb-agent-app-arguments-token">{{ tokenExample }}</code>
+    </span>
+
+    @if (arguments.length) {
+      <div class="tb-form-panel stroked no-padding no-gap tb-agent-app-arguments-table"
+        >
+        <table mat-table [dataSource]="arguments" class="overflow-hidden bg-transparent">
+          <ng-container matColumnDef="name">
+            <mat-header-cell *matHeaderCellDef class="w-[14%]">{{ 'agent.argument-name' | translate }}</mat-header-cell>
+            <mat-cell *matCellDef="let argument" class="w-[14%]">
+              <div tbTruncateWithTooltip>{{ argument.name }}</div>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="source">
+            <mat-header-cell *matHeaderCellDef class="w-[14%]">{{ 'agent.argument-source' | translate }}</mat-header-cell>
+            <mat-cell *matCellDef="let argument" class="w-[14%]">
+              <div tbTruncateWithTooltip>{{ argumentSourceTranslationMap.get(argument.sourceType) | translate }}</div>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="target">
+            <mat-header-cell *matHeaderCellDef class="w-[14%]">{{ 'agent.argument-target-entity' | translate }}</mat-header-cell>
+            <mat-cell *matCellDef="let argument" class="w-[14%]">
+              <div tbTruncateWithTooltip>
+                @if (argument.sourceEntityId?.id) {
+                  <a
+                    [routerLink]="getEntityDetailsPageURL(argument.sourceEntityId.id, argument.sourceEntityId.entityType)">
+                    {{ entityNameMap.get(argument.sourceEntityId.id) ?? '' }}
+                  </a>
+                }
+              </div>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="type">
+            <mat-header-cell *matHeaderCellDef class="w-[14%]">{{ 'common.type' | translate }}</mat-header-cell>
+            <mat-cell *matCellDef="let argument" class="w-[14%]">
+              <div tbTruncateWithTooltip>{{ typeLabel(argument) | translate }}</div>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="key">
+            <mat-header-cell *matHeaderCellDef class="w-[14%]">{{ 'agent.argument-key' | translate }}</mat-header-cell>
+            <mat-cell *matCellDef="let argument" class="w-[14%]">
+              <div tbTruncateWithTooltip>{{ argument.key }}</div>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="default">
+            <mat-header-cell *matHeaderCellDef class="w-[14%]">{{ 'agent.argument-default-value' | translate }}</mat-header-cell>
+            <mat-cell *matCellDef="let argument" class="w-[14%]">
+              <div tbTruncateWithTooltip>{{ argument.defaultValue }}</div>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="format">
+            <mat-header-cell *matHeaderCellDef class="w-[14%]">{{ 'agent.argument-format' | translate }}</mat-header-cell>
+            <mat-cell *matCellDef="let argument" class="w-[14%]">
+              <div tbTruncateWithTooltip>{{ formatLabel(argument) | translate }}</div>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="actions" stickyEnd>
+            <mat-header-cell *matHeaderCellDef class="w-20 min-w-20" [class.!hidden]="disabled"></mat-header-cell>
+            <mat-cell *matCellDef="let argument; let i = index" [class.!hidden]="disabled">
+              <div class="tb-form-table-row-cell-buttons">
+                <button type="button" mat-icon-button #editButton
+                  [matTooltip]="'action.edit' | translate"
+                  matTooltipPosition="above"
+                  (click)="manageArgument($event, editButton, i)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button type="button" mat-icon-button
+                  [matTooltip]="'action.delete' | translate"
+                  matTooltipPosition="above"
+                  (click)="onDelete($event, i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </mat-cell>
+          </ng-container>
+          <mat-header-row *matHeaderRowDef="displayColumns"></mat-header-row>
+          <mat-row *matRowDef="let argument; columns: displayColumns"></mat-row>
+        </table>
+      </div>
+    }
+
+    @if (arguments.length && !disabled) {
+      <div>
+        <button mat-stroked-button color="primary" type="button" #addButton
+          (click)="manageArgument($event, addButton)">
+          <mat-icon>add</mat-icon>
+          <span translate>agent.argument-add</span>
+        </button>
+      </div>
+    }
+
+    @if (!arguments.length && disabled) {
+      <div class="tb-agent-app-arguments-empty-read">
+        <mat-icon class="tb-agent-app-arguments-empty-icon">data_object</mat-icon>
+        <div class="tb-agent-app-arguments-empty-title" translate>agent.arguments-empty-read-title</div>
+        <div class="tb-agent-app-arguments-empty-subtitle" translate>agent.arguments-empty-read-hint</div>
+      </div>
+    }
+
+    @if (!arguments.length && !disabled) {
+      <div class="tb-agent-app-arguments-dropzone">
+        <mat-icon class="tb-agent-app-arguments-empty-icon">data_object</mat-icon>
+        <div class="tb-agent-app-arguments-empty-title" translate>agent.arguments-empty-write-title</div>
+        <div class="tb-agent-app-arguments-empty-subtitle" translate>agent.arguments-empty-write-hint</div>
+        <button mat-stroked-button color="primary" type="button" #addButtonEmpty
+          (click)="manageArgument($event, addButtonEmpty)">
+          <mat-icon>add</mat-icon>
+          <span translate>agent.argument-add</span>
+        </button>
+      </div>
+    }
+  </div>
+</mat-expansion-panel>

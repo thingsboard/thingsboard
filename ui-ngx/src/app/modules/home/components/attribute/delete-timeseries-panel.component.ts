@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, InjectionToken, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, ElementRef, InjectionToken, OnDestroy, OnInit } from '@angular/core';
 import { OverlayRef } from '@angular/cdk/overlay';
 import {
   TimeseriesDeleteStrategy,
@@ -51,10 +38,14 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  private resizeObserver = new ResizeObserver(() => this.overlayRef.updatePosition());
+
   constructor(private overlayRef: OverlayRef,
+              private elementRef: ElementRef<HTMLElement>,
               private fb: FormBuilder) { }
 
   ngOnInit(): void {
+    this.resizeObserver.observe(this.elementRef.nativeElement);
     const today = new Date();
     this.deleteTimeseriesFormGroup = this.fb.group({
       strategy: [TimeseriesDeleteStrategy.DELETE_ALL_DATA],
@@ -86,6 +77,7 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.resizeObserver.disconnect();
     this.destroy$.next();
     this.destroy$.complete();
   }

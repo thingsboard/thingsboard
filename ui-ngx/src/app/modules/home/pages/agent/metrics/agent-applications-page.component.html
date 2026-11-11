@@ -1,0 +1,73 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-drawer-container hasBackdrop="false" class="tb-agent-applications-page tb-absolute-fill">
+  <mat-drawer #chartsDrawer
+    class="tb-agent-applications-page-drawer mat-elevation-z4"
+    mode="over"
+    position="end"
+    [opened]="chartsOpen"
+    (closedStart)="chartsOpen = false">
+    @if (agentEntityId && chartsOpen) {
+      <tb-agent-multi-entity-metrics-panel
+        [entities]="entities"
+        [hostDiskEntityId]="agentEntityId"
+        title="Applications metrics (stacked)"
+        [closeable]="true"
+        (closePanel)="closeCharts()">
+      </tb-agent-multi-entity-metrics-panel>
+    }
+  </mat-drawer>
+  <mat-drawer-content class="tb-agent-applications-page-content">
+    @if (agentEntityId) {
+      <section class="tb-agent-applications-page-strip">
+        <span class="tb-agent-image-chip">
+          <span class="tb-agent-image-chip-main" [matTooltip]="agentVersion" matTooltipPosition="above">
+            <mat-icon class="tb-agent-image-chip-icon">inventory_2</mat-icon>
+            <span class="tb-agent-image-chip-label" translate>agent.image</span>
+            <span class="image-tag">{{ agentVersion || ('agent.version-unknown' | translate) }}</span>
+          </span>
+          @if (upgradeAvailable) {
+            <button type="button" class="upgrade-segment"
+              (click)="onUpgradeAgent($event)"
+              [matTooltip]="'agent.upgrade-agent-hint' | translate" matTooltipPosition="above">
+              <mat-icon>arrow_upward</mat-icon>
+              <span>{{ 'agent.upgrade-to' | translate: {version: upgradeTargetTag} }}</span>
+            </button>
+          }
+          @if (!upgradeAvailable) {
+            <span class="status-segment"
+              [matTooltip]="'agent.upgrade-agent-hint-unavailable' | translate" matTooltipPosition="above">
+              <mat-icon>check_circle_outline</mat-icon>
+              <span translate>agent.up-to-date</span>
+            </span>
+          }
+        </span>
+        @if (errorCount > 0) {
+          <button type="button" class="tb-agent-errors-chip"
+            [matTooltip]="errorTooltip" matTooltipClass="tb-tooltip-multiline" matTooltipPosition="above"
+            (click)="goToErrorEvents()">
+            <mat-icon>warning</mat-icon>
+            <span class="tb-agent-errors-chip-label" translate>agent.app-errors</span>
+            <span class="tb-agent-errors-chip-value">{{ errorCount }}</span>
+          </button>
+        }
+        <tb-agent-metrics-strip
+          [snapshot]="snapshot"
+          [showChartsButton]="true"
+          [chartsActive]="chartsOpen"
+          (toggleCharts)="toggleCharts()">
+        </tb-agent-metrics-strip>
+      </section>
+    }
+    @if (entitiesTableConfig) {
+      <tb-entities-table
+        [entitiesTableConfig]="entitiesTableConfig"
+        class="tb-agent-applications-page-table">
+      </tb-entities-table>
+    }
+  </mat-drawer-content>
+</mat-drawer-container>

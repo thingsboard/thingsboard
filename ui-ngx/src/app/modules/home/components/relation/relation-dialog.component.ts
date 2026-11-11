@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -36,11 +23,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { EntityType } from '@shared/models/entity-type.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 export interface RelationDialogData {
   isAdd: boolean;
   direction: EntitySearchDirection;
   relation: EntityRelation;
+  readonly: boolean;
 }
 
 @Component({
@@ -59,6 +49,7 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
   isAdd: boolean;
   direction: EntitySearchDirection;
   entitySearchDirection = EntitySearchDirection;
+  readonly: boolean;
 
   additionalInfo: FormControl;
 
@@ -75,14 +66,18 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<RelationDialogComponent, boolean>,
               public fb: FormBuilder,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private userPermissionService: UserPermissionsService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
     this.direction = data.direction;
+    this.readonly = data.readonly;
   }
 
   ngOnInit(): void {
-    if (this.authUser.authority === Authority.TENANT_ADMIN) {
+    const hasRuleChainPermission = this.userPermissionService
+      .hasGenericPermission(Resource.RULE_CHAIN, this.readonly ? Operation.READ : Operation.WRITE);
+    if (this.authUser.authority === Authority.TENANT_ADMIN && hasRuleChainPermission) {
       this.additionEntityTypes = {[EntityType.RULE_CHAIN]: null};
     }
 
@@ -96,6 +91,9 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
     if (!this.isAdd) {
       this.relationFormGroup.get('type').disable();
       this.relationFormGroup.get('targetEntityIds').disable();
+    }
+    if (this.readonly) {
+      this.additionalInfo.disable();
     }
     this.additionalInfo.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)

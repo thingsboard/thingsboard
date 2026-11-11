@@ -1,24 +1,15 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.base;
 
+import io.qameta.allure.Allure;
 import lombok.SneakyThrows;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -26,6 +17,7 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.ByteArrayInputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +63,15 @@ abstract public class AbstractBasePage {
         }
     }
 
+    protected List<WebElement> waitUntilPresenceOfElementsLocated(String locator) {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(locator)));
+            return driver.findElements(By.xpath(locator));
+        } catch (WebDriverException e) {
+            return fail("No presence elements: " + locator);
+        }
+    }
+
     protected WebElement waitUntilElementToBeClickable(String locator) {
         try {
             return wait.until(ExpectedConditions.elementToBeClickable(By.xpath(locator)));
@@ -106,7 +107,7 @@ abstract public class AbstractBasePage {
     }
 
     protected void moveCursor(WebElement element) {
-        actions.moveToElement(element).perform();
+        actions.moveToElement(element).build().perform();
     }
 
     protected void doubleClick(WebElement element) {
@@ -118,6 +119,22 @@ abstract public class AbstractBasePage {
             return wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOfElementLocated(By.xpath(locator))));
         } catch (WebDriverException e) {
             return fail("Element is present: " + locator);
+        }
+    }
+
+    public boolean elementIsNotPresent(WebElement element) {
+        try {
+            return wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOf(element)));
+        } catch (WebDriverException e) {
+            throw new AssertionError("Element is present");
+        }
+    }
+
+    public void waitUntilElementNotVisibility(WebElement element) {
+        try {
+            wait.until(ExpectedConditions.not(ExpectedConditions.visibilityOf(element)));
+        } catch (WebDriverException e) {
+            fail(element.getTagName() + "is visibility");
         }
     }
 
@@ -161,6 +178,22 @@ abstract public class AbstractBasePage {
         }
     }
 
+    public void waitUntilInvisibilityOfElementLocated(WebElement element) {
+        try {
+            wait.until(ExpectedConditions.invisibilityOf(element));
+        } catch (WebDriverException e) {
+            fail("Element is visible");
+        }
+    }
+
+    protected WebElement waitUntilVisibilityOfElementLocated(WebElement element) {
+        try {
+            return wait.until(ExpectedConditions.visibilityOf(element));
+        } catch (WebDriverException e) {
+            return fail("No visibility element: " + element.getTagName());
+        }
+    }
+
     public void goToNextTab(int tabNumber) {
         waitUntilNumberOfTabToBe(tabNumber);
         ArrayList<String> tabs = new ArrayList<>(driver.getWindowHandles());
@@ -185,9 +218,15 @@ abstract public class AbstractBasePage {
     }
 
     public static char getRandomSymbol() {
-        Random rand = new Random();
         String s = "~`!@#$^&*()_+=-";
-        return s.charAt(rand.nextInt(s.length()));
+        return s.charAt(new Random().nextInt(s.length()));
+    }
+
+    public void captureScreen(WebDriver driver, String screenshotName) {
+        if (driver instanceof TakesScreenshot) {
+            Allure.addAttachment(screenshotName,
+                    new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
+        }
     }
 
     public void pull(WebElement element, int xOffset, int yOffset) {

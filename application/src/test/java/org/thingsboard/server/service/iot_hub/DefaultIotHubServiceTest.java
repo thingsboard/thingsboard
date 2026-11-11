@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,8 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
+import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -102,7 +89,7 @@ class DefaultIotHubServiceTest {
         mockTenant();
         String versionId = UUID.randomUUID().toString();
         String itemId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, itemId, "DASHBOARD", "Root", "1.0"));
+        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, itemId, "RULE_CHAIN", "Root", "1.0"));
         when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
@@ -120,7 +107,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId))
@@ -142,7 +129,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId)).thenReturn(null);
@@ -162,7 +149,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId)).thenThrow(new RuntimeException("boom"));
@@ -293,7 +280,7 @@ class DefaultIotHubServiceTest {
         when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
         IotHubInstalledItem depItem = installedItem(UUID.randomUUID());
         IotHubInstalledItem rootItem = installedItem(UUID.randomUUID());
-        DashboardInstalledItemDescriptor rootDescriptor = new DashboardInstalledItemDescriptor();
+        RuleChainInstalledItemDescriptor rootDescriptor = new RuleChainInstalledItemDescriptor();
         rootItem.setDescriptor(rootDescriptor);
         doReturn(depItem).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
         doReturn(rootItem).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
@@ -342,6 +329,64 @@ class DefaultIotHubServiceTest {
         InOrder inOrder = inOrder(service);
         inOrder.verify(service).deleteInstalledItem(user, dep2Item.getId());
         inOrder.verify(service).deleteInstalledItem(user, dep1Item.getId());
+    }
+
+    @Test
+    void installPlan_errorMessageIsTheFailureItselfWithoutAnyPrefix() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(root)), null, request);
+
+        // the sentence around the failure belongs to the dialog, which localizes it
+        assertThat(result.getErrorMessage()).isEqualTo("install failed");
+    }
+
+    @Test
+    void installPlan_dependencyFails_failureIsReportedOnTheEntryAndAsTheResultMessage() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String depVersionId = UUID.randomUUID().toString();
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry dep = willInstall(depVersionId, false);
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(dep, root)), null, request);
+
+        // the dialog names the failing dependency itself, from the entry it finds in the result
+        assertThat(result.getErrorMessage()).isEqualTo("install failed");
+        assertThat(result.getEntries()).anySatisfy(entry -> {
+            assertThat(entry.getName()).isEqualTo("Dep");
+            assertThat(entry.isRoot()).isFalse();
+            assertThat(entry.getErrorMessage()).isEqualTo("install failed");
+        });
+        verify(service, never()).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+    }
+
+    @Test
+    void installPlan_failureWithoutMessage_reportsTheExceptionType() throws Exception {
+        mockTenant();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String rootVersionId = UUID.randomUUID().toString();
+        InstallPlanEntry root = willInstall(rootVersionId, true);
+
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
+        doThrow(new NullPointerException()).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
+
+        InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(root)), null, request);
+
+        // the dialog looks the failing entry up by its error message, so it must never be blank
+        assertThat(result.getErrorMessage()).isEqualTo("NullPointerException");
+        assertThat(result.getEntries()).allSatisfy(entry ->
+                assertThat(entry.getErrorMessage()).isEqualTo("NullPointerException"));
     }
 
     @Test

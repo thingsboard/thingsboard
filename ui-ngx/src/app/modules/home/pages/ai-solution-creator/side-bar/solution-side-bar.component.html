@@ -1,0 +1,78 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="side-bar"
+     [class.expanded]="isExpanded()"
+     [class.with-transition]="enableTransition"
+     (keydown.enter)="expandSidebar()"
+     (keydown.space)="expandSidebar()"
+     (click)="expandSidebar()" role="button" tabindex="0">
+  <div class="mb-4 flex justify-end">
+    <button mat-icon-button
+            type="button"
+            (click)="toggleSidebar($event)"
+            class="tb-mat-40 icon-button"
+            matTooltip="{{ (isExpanded() ? 'solution-creator.collapse-sidebar' : 'solution-creator.expand-sidebar') | translate }}"
+            matTooltipPosition="after">
+      <tb-icon>{{ isExpanded() ? 'mdi:menu-open' : 'mdi:menu-close' }}</tb-icon>
+    </button>
+  </div>
+  @if(isExpanded()) {
+    <a mat-button routerLink="/ai-solution-creator" class="mb-5">
+      <tb-icon class="tb-mat-24" matButtonIcon>mdi:square-edit-outline</tb-icon>
+      <span translate>solution-creator.new-solution</span>
+    </a>
+    @if (solutions().length) {
+      <div class="list-chats">
+        <div class="title" translate>solution-creator.solutions</div>
+        @for (solution of solutions(); track solution.id) {
+          <a mat-button routerLink="/ai-solution-creator"
+             routerLinkActive="tb-active"
+             class="menu"
+             [class.open-menu]="menuTrigger.menuOpen"
+             [routerLinkActiveOptions]="{paths: 'subset', queryParams: 'subset', matrixParams: 'ignored', fragment: 'ignored'}"
+             [queryParams]="{solutionId: solution.id}">
+            <span>{{ solution.solutionTitle || ('solution-creator.new-solution' | translate) }}</span>
+            <button mat-icon-button
+                    type="button"
+                    class="tb-mat-32 actions"
+                    #menuTrigger="matMenuTrigger"
+                    [class.open-menu]="menuTrigger.menuOpen"
+                    (click)="$event.stopPropagation();$event.preventDefault();"
+                    [matMenuTriggerFor]="cellActionsMenu">
+              <tb-icon class="tb-mat-20">more_horiz</tb-icon>
+            </button>
+            <mat-menu #cellActionsMenu="matMenu" xPosition="before" class="solution-menu">
+              <button mat-menu-item (click)="renameSolution(solution)">
+                <mat-icon>edit</mat-icon>
+                <span>{{ 'action.rename' | translate }}</span>
+              </button>
+              @if (solution.installed) {
+                <button mat-menu-item (click)="uninstallSolution(solution)">
+                  <mat-icon>delete_sweep</mat-icon>
+                  <span>{{ 'solution-creator.uninstall-solution' | translate }}</span>
+                </button>
+              }
+              <button mat-menu-item class="delete" (click)="deleteSolution(solution)">
+                <mat-icon>delete</mat-icon>
+                <span>{{ 'action.delete' | translate }}</span>
+              </button>
+            </mat-menu>
+          </a>
+        }
+      </div>
+    }
+  } @else {
+    <a mat-icon-button routerLink="/ai-solution-creator"
+       (click)="$event.stopPropagation();"
+       class="tb-mat-40 icon-button"
+       matTooltip="{{ 'solution-creator.new-solution' | translate }}"
+       matTooltipPosition="after">
+      <tb-icon matButtonIcon>mdi:square-edit-outline</tb-icon>
+    </a>
+  }
+  <tb-ai-credits class="mt-auto block pt-3" [expanded]="isExpanded()"></tb-ai-credits>
+</div>

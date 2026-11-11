@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -59,10 +47,6 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
                 TbLwM2MSecurityInfo tbLwM2MSecurityInfo = JavaSerDesUtil.decode(data);
                 if (tbLwM2MSecurityInfo != null) {
                     if (SecurityMode.NO_SEC.equals(tbLwM2MSecurityInfo.getSecurityMode())){
-
-                        // for tests: redis connect NoSec (securityInfo == null)
-                        log.info("lwm2m redis securityStore (decode -ok). Endpoint: [{}], secMode: [NoSec] key: [{}], data [{}]", endpoint, SEC_EP, data);
-
                         return SecurityInfo.newPreSharedKeyInfo(SecurityMode.NO_SEC.toString(), SecurityMode.NO_SEC.toString(),
                                 SecurityMode.NO_SEC.toString().getBytes());
                     } else {

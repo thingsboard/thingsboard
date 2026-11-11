@@ -1,0 +1,41 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="generateDashboardReportConfigForm" class="flex flex-col gap-4">
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-row no-border no-padding"
+      tb-hint-tooltip-icon="{{ 'rule-node-config.use-system-reports-server-hint' | translate }}">
+      <mat-slide-toggle class="mat-slide" formControlName="useSystemReportsServer">
+        {{ 'rule-node-config.use-system-reports-server' | translate }}
+      </mat-slide-toggle>
+    </div>
+    @if (!generateDashboardReportConfigForm.get('useSystemReportsServer').value) {
+      <mat-form-field class="flex" appearance="outline">
+        <mat-label translate>rule-node-config.reports-server-endpoint-url</mat-label>
+        <input required matInput formControlName="reportsServerEndpointUrl">
+        @if (generateDashboardReportConfigForm.get('reportsServerEndpointUrl').hasError('required')) {
+          <mat-error>
+            {{ 'rule-node-config.reports-server-endpoint-url-is-required' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+    }
+  </div>
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-row no-border no-padding"
+      tb-hint-tooltip-icon="{{ 'rule-node-config.use-report-config-from-message-hint' | translate }}">
+      <mat-slide-toggle class="mat-slide" formControlName="useReportConfigFromMessage">
+        {{ 'rule-node-config.use-report-config-from-message' | translate }}
+      </mat-slide-toggle>
+    </div>
+    @if (!generateDashboardReportConfigForm.get('useReportConfigFromMessage').value) {
+      <tb-dashboard-report-config
+        formControlName="reportConfig"
+        [reportsServerEndpointUrl]="generateDashboardReportConfigForm.get('reportsServerEndpointUrl').value">
+      </tb-dashboard-report-config>
+    }
+  </div>
+</section>

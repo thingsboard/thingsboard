@@ -1,25 +1,13 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { FilterParamInfo, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 
 export const IOT_HUB_FILTER_GROUPING_THRESHOLD = 11;
 export const IOT_HUB_FILTER_POPULAR_LIMIT = 10;
+/** Above this many options a filter list scrolls, and the search page's facet gets a search box. */
+export const IOT_HUB_FILTER_SCROLL_THRESHOLD = 8;
 
 /**
  * Primary action offered for an IoT Hub item:
@@ -76,12 +64,30 @@ export interface IotHubFilterGroup {
   items: FilterParamInfo[];
 }
 
-export function filterIotHubItemsBySearch(items: FilterParamInfo[], search: string): FilterParamInfo[] {
-  const normalized = (search || '').toLowerCase();
+export function filterByLabel<T>(items: T[], search: string, labelOf: (item: T) => string): T[] {
+  const normalized = (search || '').trim().toLowerCase();
   if (!normalized) {
     return items;
   }
-  return items.filter(item => item.key.toLowerCase().includes(normalized));
+  return items.filter(item => labelOf(item).toLowerCase().includes(normalized));
+}
+
+export function filterIotHubItemsBySearch(items: FilterParamInfo[], search: string): FilterParamInfo[] {
+  return filterByLabel(items, search, item => item.key);
+}
+
+/** Column count of a CSS grid, from its computed tracks (`repeat(...)` before first layout). */
+export function measureGridColumns(el: HTMLElement): number {
+  void el.offsetWidth;
+  const tracks = getComputedStyle(el).gridTemplateColumns;
+  if (!tracks || tracks === 'none') {
+    return 1;
+  }
+  if (tracks.startsWith('repeat(')) {
+    const match = tracks.match(/^repeat\(\s*(\d+)\s*,/);
+    return match ? parseInt(match[1], 10) : 1;
+  }
+  return Math.max(1, tracks.trim().split(/\s+/).filter(t => t.length > 0).length);
 }
 
 export function groupIotHubFilterItems(items: FilterParamInfo[], search: string): IotHubFilterGroup[] {

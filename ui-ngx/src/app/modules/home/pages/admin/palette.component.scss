@@ -1,0 +1,39 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-palette-select {
+  --mat-option-selected-state-layer-color: color-mix(in srgb, var(--tb-primary-500) 10%, transparent);
+  &.mat-mdc-select-panel {
+    padding: 0;
+  }
+  .mdc-list-item__primary-text {
+    width: 100%;
+  }
+  .mat-mdc-option .mat-icon {
+    margin: 0;
+  }
+  .tb-palette-option {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    .tb-palette-preview {
+      display: flex;
+      width: 40px;
+      height: 28px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border-radius: 80px;
+      background: var(--tb-palette-preview-background);
+      .tb-palette-preview-text {
+        font-size: 16px;
+        color: var(--tb-palette-preview-color);
+      }
+    }
+    .tb-palette-name-text {
+      font-size: 16px;
+      font-weight: 500;
+      color: #666;
+    }
+  }
+}

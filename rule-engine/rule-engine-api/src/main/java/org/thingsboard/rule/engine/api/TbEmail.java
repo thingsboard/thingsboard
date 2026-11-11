@@ -1,23 +1,14 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.api;
 
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.BlobEntityId;
+import org.thingsboard.server.common.data.id.ReportId;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -30,6 +21,8 @@ public class TbEmail {
     private final String bcc;
     private final String subject;
     private final String body;
+    private final List<BlobEntityId> attachments;
+    private final List<ReportId> reports;
     private final Map<String, String> images;
     private final boolean html;
 

@@ -1,0 +1,33 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../agent-shared' as *;
+
+tb-agent-compose-editor {
+  display: block;
+
+  .yaml-editor {
+    width: 100%; box-sizing: border-box; padding: 12px 14px;
+    border: 1px solid $agent-divider; border-radius: 4px;
+    background: $agent-surface-muted; color: #1f2328;
+    font-family: $agent-mono-font;
+    font-size: 12px; line-height: 1.55; letter-spacing: 0;
+    tab-size: 2; -moz-tab-size: 2;
+  }
+
+  .yaml-editor-ace {
+    padding: 0;
+    height: clamp(220px, calc(85vh - 280px), 520px);
+    overflow: hidden;
+    overscroll-behavior: contain;
+    .ace_editor {
+      font-family: $agent-mono-font !important;
+      background: transparent;
+    }
+    .ace_editor,
+    .ace_scroller,
+    .ace_content {
+      overscroll-behavior: contain;
+    }
+    .ace_gutter { background: #f5f5f5; color: rgba(0, 0, 0, 0.42); }
+  }
+}

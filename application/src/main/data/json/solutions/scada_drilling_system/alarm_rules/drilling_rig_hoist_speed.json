@@ -1,0 +1,207 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "9d6dbb4c-620a-4331-811c-5c61169a88d7"
+  },
+  "type": "ALARM",
+  "name": "Hoist Speed",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "running": {
+        "refEntityKey": {
+          "key": "running",
+          "type": "TS_LATEST"
+        }
+      },
+      "lineHoistSpeed": {
+        "refEntityKey": {
+          "key": "lineHoistSpeed",
+          "type": "TS_LATEST"
+        }
+      }
+    },
+    "createRules": {
+      "WARNING": {
+        "condition": {
+          "type": "DURATION",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "running",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "lineHoistSpeed",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "COMPLEX",
+                    "operation": "OR",
+                    "predicates": [
+                      {
+                        "type": "COMPLEX",
+                        "operation": "AND",
+                        "predicates": [
+                          {
+                            "type": "NUMERIC",
+                            "operation": "GREATER_OR_EQUAL",
+                            "value": {
+                              "staticValue": 30.0,
+                              "dynamicValueArgument": null
+                            }
+                          },
+                          {
+                            "type": "NUMERIC",
+                            "operation": "LESS",
+                            "value": {
+                              "staticValue": 50.0,
+                              "dynamicValueArgument": null
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "NUMERIC",
+                        "operation": "LESS",
+                        "value": {
+                          "staticValue": 10.0,
+                          "dynamicValueArgument": null
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null,
+          "unit": "SECONDS",
+          "value": {
+            "staticValue": 1,
+            "dynamicValueArgument": null
+          }
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "CRITICAL": {
+        "condition": {
+          "type": "DURATION",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "running",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "lineHoistSpeed",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": 50.0,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null,
+          "unit": "SECONDS",
+          "value": {
+            "staticValue": 1,
+            "dynamicValueArgument": null
+          }
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "lineHoistSpeed",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "COMPLEX",
+                  "operation": "AND",
+                  "predicates": [
+                    {
+                      "type": "NUMERIC",
+                      "operation": "GREATER_OR_EQUAL",
+                      "value": {
+                        "staticValue": 10.0,
+                        "dynamicValueArgument": null
+                      }
+                    },
+                    {
+                      "type": "NUMERIC",
+                      "operation": "LESS",
+                      "value": {
+                        "staticValue": 30.0,
+                        "dynamicValueArgument": null
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

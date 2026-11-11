@@ -1,0 +1,73 @@
+/**
+ * Decodes the incoming payload and returns a structured object containing telemetry data and attributes.
+ *
+ * @param {byte[]} input - The raw payload received as an array of bytes.
+ * @returns {Object} output - The structured output with decoded telemetry and attributes.
+ */
+
+function decodePayload(input) {
+    // Initialize the output object with empty attributes and telemetry for clarity.
+    var result = { attributes: {}, telemetry: {}};
+
+    // Extract the timestamp from metadata (represented in milliseconds).
+    var timestamp = metadata.ts; // ts is the timestamp parsed from the incoming message's time, or returns the current time if it cannot be parsed.
+
+    if (metadata.payloadFormat == 'JSON') {
+        // payloadFormat is 'JSON' when ThingPark sends a pre-decoded JSON payload
+        // (DevEUI_uplink contains a "payload" object).
+        // All fields from the decoded payload object are put directly into telemetry.
+        var decoded = decodeToJson(input);
+        result.telemetry = {
+            ts: timestamp,
+            values: decoded
+        };
+        return result;
+    }
+
+    // payloadFormat is 'BINARY' when raw hex payload is received (payload_hex field).
+
+    // Decode serial number (SN) from the first 4 bytes of the payload.
+    // Press '?' icon in the top right corner to learn more about built in helper functions and capabilities.
+    result.attributes.sn = parseBytesToInt(input, 0, 4);
+
+    // Combine the timestamp with decoded values and add it to the telemetry.
+    result.telemetry = {
+        ts: timestamp,
+        values: {
+            // Decode battery level from the 5th byte of the payload.
+            battery: parseBytesToInt(input, 4, 1),
+            // Decode temperature from the 6th and 7th bytes of the payload (divided by 100).
+            temperature: parseBytesToInt(input, 5, 2) / 100.0,
+            // Decode saturation from the 8th byte of the payload.
+            saturation: parseBytesToInt(input, 7, 1)
+        }
+    };
+
+    // Return the fully constructed output object.
+    return result;
+    // Same logic, less code:
+    // return {
+    //     attributes: {
+    //         sn: parseBytesToInt(input, 0, 4)
+    //     },
+    //     telemetry: {
+    //         ts: convertDateToTimestamp(metadata.time),
+    //         values: {
+    //             battery: parseBytesToInt(input, 4, 1),
+    //             temperature: parseBytesToInt(input, 5, 2) / 100.0,
+    //             saturation: parseBytesToInt(input, 7, 1)
+    //         }
+    //     }
+    // };
+}
+
+var result = decodePayload(payload);
+// Uncomment this code block to overwrite values set in the main configuration window. Useful if you extract device/asset/customer/group names from the payload;
+// result.type = 'DEVICE'; // Entity type allows you to choose type of created entity. Can be 'DEVICE' or 'ASSET'.
+// result.name = 'Temperature Sensor'; // Device or asset name (the value must be unique)
+// result.profile = 'IndustrialSensorProfile'; // Device or asset profile name.
+// result.customer = 'MyCustomer'; // If customer is not null - created entity will be assigned to customer with such name.
+// result.group = 'SensorsGroup'; // If group is not null - created entity will be added to the entity group with such name.
+
+// Return the final result object.
+return result;

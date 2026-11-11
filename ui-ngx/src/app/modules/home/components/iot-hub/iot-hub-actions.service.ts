@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, EMPTY } from 'rxjs';
@@ -70,7 +57,7 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
-  addItem(itemType: ItemType, options?: { itemSubType?: string; entityId?: EntityId }): Observable<IotHubAddItemDialogResult> {
+  addItem(itemType: ItemType, options?: { itemSubType?: string; entityId?: EntityId; entityGroupId?: string; customerId?: string }): Observable<IotHubAddItemDialogResult> {
     return this.dialog.open(TbIotHubAddItemDialogComponent, {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog-lt-md'],
       disableClose: true,
@@ -78,7 +65,9 @@ export class IotHubActionsService {
       data: {
         itemType,
         itemSubType: options?.itemSubType,
-        entityId: options?.entityId
+        entityId: options?.entityId,
+        entityGroupId: options?.entityGroupId,
+        customerId: options?.customerId
       } as IotHubAddItemDialogData
     }).afterClosed();
   }
@@ -144,13 +133,6 @@ export class IotHubActionsService {
   }
 
   private runInstall(item: MpItemVersionView, skipConfirm = false): Observable<string> {
-    if (item.type === ItemType.ALARM_RULE) {
-      this.dialogService.alert(
-        this.translate.instant('iot-hub.alarm-rule-install-update-required'),
-        this.translate.instant('iot-hub.alarm-rule-install-update-required-text')
-      );
-      return EMPTY;
-    }
     if (item.type === ItemType.DEVICE) {
       return this.openDeviceInstallDialog(item);
     }
@@ -194,8 +176,11 @@ export class IotHubActionsService {
 
   // Reached only for items whose action mode is 'connect', i.e. never for built-in content:
   // that decision is made once, at the public entry points above.
-  installDevice(item: MpItemVersionView): Observable<string> {
-    return this.openDeviceInstallDialog(item);
+  installDevice(item: MpItemVersionView, options?: { entityGroupId?: string; customerId?: string }): Observable<string> {
+    return this.openDeviceInstallDialog(item, {
+      entityGroupId: options?.entityGroupId,
+      customerId: options?.customerId
+    });
   }
 
   reviewDevice(item: MpItemVersionView, deviceDescriptor: DeviceInstalledItemDescriptor): Observable<any> {
@@ -207,7 +192,8 @@ export class IotHubActionsService {
   }
 
   private openDeviceInstallDialog(item: MpItemVersionView,
-                                  options?: { reviewMode?: boolean; selectedInstallMethod?: string; installState?: any }): Observable<any> {
+                                  options?: { reviewMode?: boolean; selectedInstallMethod?: string; installState?: any;
+                                  entityGroupId?: string; customerId?: string}): Observable<any> {
     return this.dialog.open<TbDeviceInstallDialogComponent, DeviceInstallDialogData>(TbDeviceInstallDialogComponent, {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog-lt-md'],
       disableClose: true,

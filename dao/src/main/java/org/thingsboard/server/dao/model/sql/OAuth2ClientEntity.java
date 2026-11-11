@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,6 +13,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
@@ -51,6 +40,8 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
 
     @Column(name = ModelConstants.TENANT_ID_COLUMN)
     private UUID tenantId;
+    @Column(name = ModelConstants.CUSTOMER_ID_PROPERTY)
+    private UUID customerId;
     @Column(name = ModelConstants.OAUTH2_CLIENT_TITLE_PROPERTY)
     private String title;
     @Column(name = ModelConstants.OAUTH2_CLIENT_ID_PROPERTY)
@@ -101,6 +92,10 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
     private String defaultDashboardName;
     @Column(name = ModelConstants.OAUTH2_ALWAYS_FULL_SCREEN_PROPERTY)
     private Boolean alwaysFullScreen;
+    @Column(name = ModelConstants.OAUTH2_PARENT_CUSTOMER_NAME_PATTERN_PROPERTY)
+    private String parentCustomerNamePattern;
+    @Column(name = ModelConstants.OAUTH2_USER_GROUPS_NAME_PATTERN_PROPERTY)
+    private String userGroupsNamePattern;
     @Column(name = ModelConstants.OAUTH2_MAPPER_URL_PROPERTY)
     private String url;
     @Column(name = ModelConstants.OAUTH2_MAPPER_USERNAME_PROPERTY)
@@ -122,6 +117,9 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
         super(oAuth2Client);
         if (oAuth2Client.getTenantId() != null) {
             this.tenantId = oAuth2Client.getTenantId().getId();
+        }
+        if (oAuth2Client.getCustomerId() != null) {
+            this.customerId = oAuth2Client.getCustomerId().getId();
         }
         this.title = oAuth2Client.getTitle();
         this.clientId = oAuth2Client.getClientId();
@@ -152,6 +150,11 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
                 this.customerNamePattern = basicConfig.getCustomerNamePattern();
                 this.defaultDashboardName = basicConfig.getDefaultDashboardName();
                 this.alwaysFullScreen = basicConfig.isAlwaysFullScreen();
+                this.parentCustomerNamePattern = basicConfig.getParentCustomerNamePattern();
+                if (basicConfig.getUserGroupsNamePattern() != null && !basicConfig.getUserGroupsNamePattern().isEmpty()) {
+                    this.userGroupsNamePattern = basicConfig.getUserGroupsNamePattern().stream()
+                            .reduce((result, element) -> result + "," + element).orElse(null);
+                }
             }
             OAuth2CustomMapperConfig customConfig = mapperConfig.getCustom();
             if (customConfig != null) {
@@ -169,6 +172,7 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
         registration.setId(new OAuth2ClientId(id));
         registration.setCreatedTime(createdTime);
         registration.setTenantId(TenantId.fromUUID(tenantId));
+        registration.setCustomerId(new CustomerId(customerId));
         registration.setTitle(title);
         registration.setAdditionalInfo(additionalInfo);
         registration.setMapperConfig(
@@ -187,6 +191,8 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
                                                 .customerNamePattern(customerNamePattern)
                                                 .defaultDashboardName(defaultDashboardName)
                                                 .alwaysFullScreen(alwaysFullScreen)
+                                                .parentCustomerNamePattern(parentCustomerNamePattern)
+                                                .userGroupsNamePattern(userGroupsNamePattern != null ? Arrays.asList(userGroupsNamePattern.split(",")) : Collections.emptyList())
                                                 .build()
                                         : null
                         )

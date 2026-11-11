@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.jwt;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,22 +14,23 @@ import java.util.stream.Collectors;
 
 public class SkipPathRequestMatcher implements RequestMatcher {
 
-    private final OrRequestMatcher matchers;
-    private final RequestMatcher processingMatcher;
+    private final OrRequestMatcher skipMatchers;
+    private final OrRequestMatcher processMatchers;
 
-    public SkipPathRequestMatcher(List<String> pathsToSkip, String processingPath) {
+    public SkipPathRequestMatcher(List<String> pathsToSkip, List<String> pathsToProcess) {
         Assert.notNull(pathsToSkip, "List of paths to skip is required.");
-        List<RequestMatcher> m = pathsToSkip.stream().map(AntPathRequestMatcher::new).collect(Collectors.toList());
-        matchers = new OrRequestMatcher(m);
-        processingMatcher = new AntPathRequestMatcher(processingPath);
+        List<RequestMatcher> skip = pathsToSkip.stream().map(AntPathRequestMatcher::new).collect(Collectors.toList());
+        List<RequestMatcher> process = pathsToProcess.stream().map(AntPathRequestMatcher::new).collect(Collectors.toList());
+        skipMatchers = new OrRequestMatcher(skip);
+        processMatchers = new OrRequestMatcher(process);
     }
 
     @Override
     public boolean matches(HttpServletRequest request) {
-        if (matchers.matches(request)) {
+        if (skipMatchers.matches(request)) {
             return false;
         }
-        return processingMatcher.matches(request);
+        return processMatchers.matches(request);
     }
 
 }

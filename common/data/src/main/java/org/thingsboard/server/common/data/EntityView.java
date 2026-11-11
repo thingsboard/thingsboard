@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -36,7 +25,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class EntityView extends BaseDataWithAdditionalInfo<EntityViewId>
-        implements HasName, HasTenantId, HasCustomerId, HasVersion, ExportableEntity<EntityViewId> {
+        implements GroupEntity<EntityViewId>, ExportableEntity<EntityViewId>, HasVersion {
 
     private static final long serialVersionUID = 5582010124562018986L;
 
@@ -84,7 +73,7 @@ public class EntityView extends BaseDataWithAdditionalInfo<EntityViewId>
         this.version = entityView.getVersion();
     }
 
-    @Schema(description = "JSON object with Customer Id. Use 'assignEntityViewToCustomer' to change the Customer Id.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Customer Id. Optional on create: when omitted, defaults to the owner of the target Entity Group or to the current Customer user. Cannot be changed on update via this endpoint; use the Owner API (changeOwnerToCustomer) to re-assign an existing Entity View.")
     @Override
     public CustomerId getCustomerId() {
         return customerId;
@@ -100,6 +89,28 @@ public class EntityView extends BaseDataWithAdditionalInfo<EntityViewId>
     public TenantId getTenantId() {
         return tenantId;
     }
+
+    @Schema(description = "JSON object with Customer or Tenant Id", accessMode = Schema.AccessMode.READ_ONLY)
+    @Override
+    public EntityId getOwnerId() {
+        return customerId != null && !customerId.isNullUid() ? customerId : tenantId;
+    }
+
+    @Override
+    public void setOwnerId(EntityId entityId) {
+        if (EntityType.CUSTOMER.equals(entityId.getEntityType())) {
+            this.customerId = new CustomerId(entityId.getId());
+        } else {
+            this.customerId = new CustomerId(CustomerId.NULL_UUID);
+        }
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.ENTITY_VIEW;
+    }
+
 
     @Schema(description = "JSON object with the Entity View Id. " +
             "Specify this field to update the Entity View. " +

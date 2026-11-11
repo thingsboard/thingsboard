@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.vc;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,6 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
@@ -39,9 +28,11 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -61,32 +52,65 @@ import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfig
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.converter.ConverterType;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.ReportTemplateId;
+import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.DeviceGroupOtaPackage;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.permission.GroupPermissionInfo;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.report.ReportConfig;
+import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.report.ReportTemplateInfo;
+import org.thingsboard.server.common.data.report.ReportTemplateType;
+import org.thingsboard.server.common.data.report.TbReportFormat;
+import org.thingsboard.server.common.data.report.configuration.CsvReportTemplateConfig;
+import org.thingsboard.server.common.data.report.configuration.DataKey;
+import org.thingsboard.server.common.data.report.configuration.DataSource;
+import org.thingsboard.server.common.data.report.configuration.DataSourceType;
+import org.thingsboard.server.common.data.report.configuration.EntityAlias;
+import org.thingsboard.server.common.data.report.configuration.components.EntityTableComponent;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
+import org.thingsboard.server.common.data.scheduler.SchedulerEventWithCustomerInfo;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -98,13 +122,16 @@ import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.request.create.ComplexVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.EntityTypeVersionCreateConfig;
+import org.thingsboard.server.common.data.sync.vc.request.create.SingleEntityVersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.create.SyncStrategy;
+import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateConfig;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadRequest;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.user.UserService;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -113,24 +140,31 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.controller.TbResourceControllerTest.JS_TEST_FILE_NAME;
 import static org.thingsboard.server.controller.TbResourceControllerTest.TEST_DATA;
 
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "service.integrations.supported=ALL",
+})
 public class VersionControlTest extends AbstractControllerTest {
 
     @Autowired
     private EntitiesVersionControlService versionControlService;
     @Autowired
     private OtaPackageService otaPackageService;
+    @Autowired
+    private UserService userService;
 
     private TenantId tenantId1;
     protected User tenantAdmin1;
@@ -229,6 +263,18 @@ public class VersionControlTest extends AbstractControllerTest {
         loadVersion(versionId, EntityType.CUSTOMER);
         Customer importedCustomer = findCustomer(customer.getName());
         checkImportedEntity(tenantId1, customer, tenantId1, importedCustomer);
+        checkImportedCustomerData(customer, importedCustomer);
+    }
+
+    @Test
+    public void testCustomerAndUsersVc_betweenTenants() throws Exception {
+        Customer customer = createCustomer("Customer v1.0");
+        String versionId = createVersion("customers", EntityType.ROLE, EntityType.CUSTOMER, EntityType.USER);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.ROLE, EntityType.CUSTOMER, EntityType.USER);
+        Customer importedCustomer = findCustomer(customer.getName());
+        checkImportedEntity(tenantId1, customer, tenantId2, importedCustomer);
         checkImportedCustomerData(customer, importedCustomer);
     }
 
@@ -381,31 +427,6 @@ public class VersionControlTest extends AbstractControllerTest {
         Dashboard importedDashboard = findDashboard(dashboard.getName());
         checkImportedEntity(tenantId1, dashboard, tenantId1, importedDashboard);
         checkImportedDashboardData(dashboard, importedDashboard);
-    }
-
-    @Test
-    public void testDashboardVc_betweenTenants_withCustomer_updated() throws Exception {
-        Dashboard dashboard = createDashboard(null, "Dashboard of tenant 1");
-        String versionId = createVersion("dashboards", EntityType.DASHBOARD);
-
-        loginTenant2();
-        loadVersion(versionId, EntityType.DASHBOARD);
-        Dashboard importedDashboard = findDashboard(dashboard.getName());
-        checkImportedEntity(tenantId1, dashboard, tenantId2, importedDashboard);
-
-        loginTenant1();
-        Customer customer = createCustomer("Customer 1");
-        versionId = createVersion("customers", EntityType.CUSTOMER);
-        assignDashboardToCustomer(dashboard.getId(), customer.getId());
-        versionId = createVersion("assign dashboard", EntityType.DASHBOARD);
-
-        loginTenant2();
-        loadVersion(versionId, EntityType.DASHBOARD, EntityType.CUSTOMER);
-        Customer importedCustomer = findCustomer(customer.getName());
-        importedDashboard = findDashboard(dashboard.getName());
-        assertThat(importedDashboard.getAssignedCustomers()).hasOnlyOneElementSatisfying(customerInfo -> {
-            assertThat(customerInfo.getCustomerId()).isEqualTo(importedCustomer.getId());
-        });
     }
 
     @Test
@@ -643,6 +664,230 @@ public class VersionControlTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testIntegrationVcWithConverter_betweenTenants() throws Exception {
+        Converter converter = createConverter(ConverterType.DOWNLINK, "Converter 1");
+        Integration integration = createIntegration(converter.getId(), IntegrationType.HTTP, "Integration 1");
+        String versionId = createVersion("converters and integrations", EntityType.CONVERTER, EntityType.INTEGRATION);
+
+        loginTenant2();
+        loadVersion(versionId, config -> {
+            config.setAutoGenerateIntegrationKey(true);
+        }, EntityType.CONVERTER, EntityType.INTEGRATION);
+
+        Converter importedConverter = findConverter(converter.getName());
+        checkImportedEntity(tenantId1, converter, tenantId2, importedConverter);
+        checkImportedConverterData(converter, importedConverter);
+
+        Integration importedIntegration = findIntegration(integration.getName());
+        checkImportedEntity(tenantId1, integration, tenantId2, importedIntegration);
+        checkImportedIntegrationData(integration, importedIntegration);
+    }
+
+    @Test
+    public void testIntegrationVcWithConverter_sameTenant() throws Exception {
+        Converter converter = createConverter(ConverterType.DOWNLINK, "Converter 1");
+        Integration integration = createIntegration(converter.getId(), IntegrationType.HTTP, "Integration 1");
+        String versionId = createVersion("converters and integrations", EntityType.CONVERTER, EntityType.INTEGRATION);
+
+        loadVersion(versionId, EntityType.CONVERTER, EntityType.INTEGRATION);
+
+        Converter importedConverter = findConverter(converter.getName());
+        checkImportedEntity(tenantId1, converter, tenantId1, importedConverter);
+        checkImportedConverterData(converter, importedConverter);
+
+        Integration importedIntegration = findIntegration(integration.getName());
+        checkImportedEntity(tenantId1, integration, tenantId1, importedIntegration);
+        checkImportedIntegrationData(integration, importedIntegration);
+    }
+
+    @Test
+    public void testEntityGroupVc_betweenTenants() throws Exception {
+        List<EntityGroup> entityGroups = new ArrayList<>();
+        for (EntityType groupType : EntityGroup.groupTypes) {
+            if (groupType == EntityType.EDGE || groupType == EntityType.AGENT) {
+                continue;
+            }
+            EntityGroup entityGroup = createEntityGroup(tenantId1, groupType, groupType + " group");
+            entityGroups.add(entityGroup);
+        }
+        String versionId = createVersion("entity groups", EntityGroup.groupTypes);
+
+        loginTenant2();
+        loadVersion(versionId, EntityGroup.groupTypes);
+
+        for (EntityGroup entityGroup : entityGroups) {
+            EntityGroup importedEntityGroup = findEntityGroup(entityGroup.getName(), entityGroup.getType());
+            checkImportedEntity(tenantId1, tenantId1, entityGroup, tenantId2, tenantId2, importedEntityGroup);
+            checkImportedEntityGroupData(entityGroup, importedEntityGroup);
+        }
+    }
+
+    @Test
+    public void testEntityGroupVc_sameTenant() throws Exception {
+        List<EntityGroup> entityGroups = new ArrayList<>();
+        for (EntityType groupType : EntityGroup.groupTypes) {
+            if (groupType == EntityType.EDGE || groupType == EntityType.AGENT) {
+                continue;
+            }
+            EntityGroup entityGroup = createEntityGroup(tenantId1, groupType, groupType + " group");
+            entityGroups.add(entityGroup);
+        }
+        String versionId = createVersion("entity groups", EntityGroup.groupTypes);
+
+        loadVersion(versionId, EntityGroup.groupTypes);
+
+        for (EntityGroup entityGroup : entityGroups) {
+            EntityGroup importedEntityGroup = findEntityGroup(entityGroup.getName(), entityGroup.getType());
+            checkImportedEntity(tenantId1, tenantId1, entityGroup, tenantId1, tenantId1, importedEntityGroup);
+            checkImportedEntityGroupData(entityGroup, importedEntityGroup);
+        }
+    }
+
+    @Test
+    public void testEntityGroupVcWithPermissions_betweenTenants() throws Exception {
+        EntityGroup userGroup = createEntityGroup(tenantId1, EntityType.USER, "User group 1");
+        EntityGroup deviceGroup = createEntityGroup(tenantId1, EntityType.DEVICE, "My devices");
+        Role role = createGroupRole(null, "Role for User group 1", List.of(Operation.READ));
+        createGroupPermission(userGroup.getId(), role.getId(), deviceGroup.getId(), EntityType.DEVICE);
+        String versionId = createVersion("groups", EntityType.USER, EntityType.DEVICE, EntityType.ROLE);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.USER, EntityType.DEVICE, EntityType.ROLE);
+
+        Role importedRole = findRole(role.getName());
+        checkImportedEntity(tenantId1, role, tenantId2, importedRole);
+        assertThat(importedRole.getName()).isEqualTo(role.getName());
+        assertThat(importedRole.getPermissions()).isEqualTo(role.getPermissions());
+
+        EntityGroup importedDeviceGroup = findEntityGroup(deviceGroup.getName(), EntityType.DEVICE);
+        checkImportedEntity(tenantId1, tenantId1, deviceGroup, tenantId2, tenantId2, importedDeviceGroup);
+
+        EntityGroup importedUserGroup = findEntityGroup(userGroup.getName(), EntityType.USER);
+        checkImportedEntity(tenantId1, tenantId1, userGroup, tenantId2, tenantId2, importedUserGroup);
+
+        List<GroupPermissionInfo> importedGroupPermissions = findGroupPermissions(importedUserGroup.getId());
+        assertThat(importedGroupPermissions).singleElement().satisfies(importedGroupPermission -> {
+            assertThat(importedGroupPermission.getRoleId()).isEqualTo(importedRole.getId());
+            assertThat(importedGroupPermission.getEntityGroupId()).isEqualTo(importedDeviceGroup.getId());
+            assertThat(importedGroupPermission.getEntityGroupType()).isEqualTo(EntityType.DEVICE);
+        });
+    }
+
+    // Regression guard: USER entities are intentionally excluded from version control.
+    // User export/import is exclusively a Solution Export/Import feature; VC commits must contain
+    // neither serialized User entities nor user-group memberIds, and VC load must never create or
+    // update User entities on the target tenant.
+    @Test
+    public void testUserEntitiesExcludedFromVc_betweenTenants() throws Exception {
+        Customer customer = createCustomer("Customer with VC-excluded users");
+        EntityGroupInfo customerAdminsGroup = findCustomerAdminsGroup(customer.getId());
+
+        User customerUser = new User();
+        customerUser.setTenantId(tenantId1);
+        customerUser.setCustomerId(customer.getId());
+        customerUser.setAuthority(Authority.CUSTOMER_USER);
+        customerUser.setEmail("vc-excluded-user@example.com");
+        createUser(customerUser, "vc-excluded", customerAdminsGroup.getId());
+
+        EntityGroup standaloneUserGroup = createEntityGroup(tenantId1, EntityType.USER, "Standalone user group");
+
+        String versionId = createVersion("user-exclusion regression",
+                EntityType.ROLE, EntityType.CUSTOMER, EntityType.USER);
+
+        loginTenant2();
+        long usersOnTenant2Before = userService.findUsersByTenantId(tenantId2, new PageLink(1000)).getTotalElements();
+        Map<EntityType, EntityTypeLoadResult> result = loadVersion(versionId,
+                EntityType.ROLE, EntityType.CUSTOMER, EntityType.USER);
+        long usersOnTenant2After = userService.findUsersByTenantId(tenantId2, new PageLink(1000)).getTotalElements();
+
+        EntityTypeLoadResult userResult = result.get(EntityType.USER);
+        if (userResult != null) {
+            assertThat(userResult.getCreated()).as("VC must not create User entities").isZero();
+            assertThat(userResult.getUpdated()).as("VC must not update User entities").isZero();
+            assertThat(userResult.getDeleted()).as("VC must not delete User entities").isZero();
+        }
+        assertThat(usersOnTenant2After)
+                .as("Tenant2 user count must be unchanged by VC import")
+                .isEqualTo(usersOnTenant2Before);
+
+        EntityGroup importedStandaloneGroup = findEntityGroup(standaloneUserGroup.getName(), EntityType.USER);
+        assertThat(userService.findUsersByEntityGroupId(importedStandaloneGroup.getId(), new PageLink(100)).getData())
+                .as("VC must not embed memberIds for user groups")
+                .isEmpty();
+
+        Customer importedCustomer = findCustomer(customer.getName());
+        EntityGroupInfo importedCustomerAdminsGroup = findCustomerAdminsGroup(importedCustomer.getId());
+        assertThat(userService.findUsersByEntityGroupId(importedCustomerAdminsGroup.getId(), new PageLink(100)).getData())
+                .as("VC import must not place users into customer admin groups on the target tenant")
+                .isEmpty();
+    }
+
+    @Test
+    public void testDeviceGroupVcWithOtaPackage_betweenTenants() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile for OTA");
+        OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
+        EntityGroup deviceGroup = createEntityGroup(tenantId1, EntityType.DEVICE, "Device group for OTA");
+
+        DeviceGroupOtaPackage deviceGroupOtaPackage = new DeviceGroupOtaPackage();
+        deviceGroupOtaPackage.setGroupId(deviceGroup.getId());
+        deviceGroupOtaPackage.setOtaPackageType(OtaPackageType.FIRMWARE);
+        deviceGroupOtaPackage.setOtaPackageId(firmware.getId());
+
+        doPost("/api/deviceGroupOtaPackage", deviceGroupOtaPackage, DeviceGroupOtaPackage.class);
+
+        String versionId = createVersion("device group with ota", EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE);
+
+        EntityGroup importedDeviceGroup = findEntityGroup(deviceGroup.getName(), EntityType.DEVICE);
+        checkImportedEntity(tenantId1, tenantId1, deviceGroup, tenantId2, tenantId2, importedDeviceGroup);
+
+        DeviceProfile importedDeviceProfile = findDeviceProfile(deviceProfile.getName());
+        checkImportedEntity(tenantId1, deviceProfile, tenantId2, importedDeviceProfile);
+
+        OtaPackage importedFirmware = findOtaPackage(firmware.getTitle());
+        checkImportedEntity(tenantId1, firmware, tenantId2, importedFirmware);
+
+        DeviceGroupOtaPackage importedDeviceGroupOtaPackage = findDeviceGroupOtaPackage(importedDeviceGroup.getId(), OtaPackageType.FIRMWARE);
+        assertThat(importedDeviceGroupOtaPackage).isNotNull();
+        assertThat(importedDeviceGroupOtaPackage.getGroupId()).isEqualTo(importedDeviceGroup.getId());
+        assertThat(importedDeviceGroupOtaPackage.getOtaPackageId()).isEqualTo(importedFirmware.getId());
+        assertThat(importedDeviceGroupOtaPackage.getOtaPackageType()).isEqualTo(OtaPackageType.FIRMWARE);
+    }
+
+    @Test
+    public void testDeviceGroupVcWithoutEntities_betweenTenants() throws Exception {
+        EntityGroup deviceGroup = createEntityGroup(tenantId1, EntityType.DEVICE, "Device group");
+        Device device = createDevice("Test device", "test1");
+        assignEntityToGroup(deviceGroup.getId(), device.getId());
+
+        SingleEntityVersionCreateRequest request = new SingleEntityVersionCreateRequest();
+        request.setEntityId(deviceGroup.getId());
+        VersionCreateConfig config = new VersionCreateConfig();
+        config.setSaveGroupEntities(false);
+        config.setSaveAttributes(true);
+        config.setSaveRelations(false);
+        config.setSavePermissions(false);
+        config.setSaveCredentials(false);
+        config.setSaveCalculatedFields(false);
+        request.setConfig(config);
+        request.setVersionName("device group without entities");
+        request.setBranch(branch);
+        String versionId = createVersion(request);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.DEVICE, EntityType.DEVICE_PROFILE);
+
+        EntityGroup importedDeviceGroup = findEntityGroup(deviceGroup.getName(), EntityType.DEVICE);
+        checkImportedEntity(tenantId1, tenantId1, deviceGroup, tenantId2, tenantId2, importedDeviceGroup);
+    }
+
+    private void assignEntityToGroup(EntityGroupId id, EntityId entityId) throws Exception {
+        doPost("/api/entityGroup/" + id.getId() + "/addEntities", List.of(entityId.getId().toString()));
+    }
+
+    @Test
     public void testVcWithCalculatedFields_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
         Device device = createDevice("Device 1", "test1");
@@ -706,6 +951,68 @@ public class VersionControlTest extends AbstractControllerTest {
             assertThat(importedField.getConfiguration()).isInstanceOf(SimpleCalculatedFieldConfiguration.class);
             SimpleCalculatedFieldConfiguration simpleCfg = (SimpleCalculatedFieldConfiguration) importedField.getConfiguration();
             assertThat(simpleCfg.getArguments().get("T").getRefEntityId()).isEqualTo(importedDevice.getId());
+        });
+    }
+
+    @Test
+    public void testEntityGroupVcWithPermissions_sameTenant() throws Exception {
+        EntityGroup userGroup = createEntityGroup(tenantId1, EntityType.USER, "User group 1");
+        EntityGroup deviceGroup = createEntityGroup(tenantId1, EntityType.DEVICE, "My devices");
+        Role role = createGroupRole(null, "Role for User group 1", List.of(Operation.READ));
+        GroupPermission groupPermission = createGroupPermission(userGroup.getId(), role.getId(), deviceGroup.getId(), EntityType.DEVICE);
+        String versionId = createVersion("user groups", EntityType.USER);
+
+        loadVersion(versionId, EntityType.USER);
+
+        EntityGroup importedUserGroup = findEntityGroup(userGroup.getName(), EntityType.USER);
+        checkImportedEntity(tenantId1, tenantId1, userGroup, tenantId1, tenantId1, importedUserGroup);
+
+        List<GroupPermissionInfo> importedGroupPermissions = findGroupPermissions(importedUserGroup.getId());
+        assertThat(importedGroupPermissions).singleElement().satisfies(permission -> {
+            assertThat(new GroupPermission(permission)).isEqualTo(groupPermission);
+        });
+    }
+
+    @Test
+    public void testEntityGroupVcWithPermissions_betweenTenants_permissionsUpdated() throws Exception {
+        EntityGroup deviceGroup = createEntityGroup(tenantId1, EntityType.DEVICE, "My devices");
+        Role role = createGroupRole(null, "Role for User group 1", List.of(Operation.READ));
+        EntityGroup userGroup = createEntityGroup(tenantId1, EntityType.USER, "User group 1");
+        GroupPermission groupPermission = createGroupPermission(userGroup.getId(), role.getId(), deviceGroup.getId(), EntityType.DEVICE);
+        String versionId = createVersion("groups", EntityType.USER, EntityType.DEVICE, EntityType.ROLE);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.USER, EntityType.DEVICE, EntityType.ROLE);
+
+        Role importedRole = findRole(role.getName());
+        EntityGroup importedDeviceGroup = findEntityGroup(deviceGroup.getName(), EntityType.DEVICE);
+        EntityGroup importedUserGroup = findEntityGroup(userGroup.getName(), EntityType.USER);
+
+        List<GroupPermissionInfo> importedGroupPermissions = findGroupPermissions(importedUserGroup.getId());
+        assertThat(importedGroupPermissions).singleElement().satisfies(importedGroupPermission -> {
+            assertThat(importedGroupPermission.getRoleId()).isEqualTo(importedRole.getId());
+            assertThat(importedGroupPermission.getEntityGroupId()).isEqualTo(importedDeviceGroup.getId());
+            assertThat(importedGroupPermission.getEntityGroupType()).isEqualTo(EntityType.DEVICE);
+        });
+
+        loginTenant1();
+        doDelete("/api/groupPermission/" + groupPermission.getId()).andExpect(status().isOk());
+        assertThat(findGroupPermissions(userGroup.getId())).isEmpty();
+        role = createGenericRole(null, "Read devices", Map.of(
+                Resource.DEVICE, List.of(Operation.READ),
+                Resource.DEVICE_GROUP, List.of(Operation.READ)
+        ));
+        groupPermission = createGroupPermission(userGroup.getId(), role.getId());
+        versionId = createVersion("groups 2", EntityType.ROLE, EntityType.USER);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.ROLE, EntityType.USER);
+
+        Role newImportedRole = findRole(role.getName());
+        List<GroupPermissionInfo> updatedGroupPermissions = findGroupPermissions(importedUserGroup.getId());
+        assertThat(updatedGroupPermissions).singleElement().satisfies(newGroupPermission -> {
+            assertThat(newGroupPermission.getEntityGroupId()).matches(entityGroupId -> entityGroupId == null || entityGroupId.isNullUid());
+            assertThat(newGroupPermission.getRoleId()).isEqualTo(newImportedRole.getId());
         });
     }
 
@@ -794,6 +1101,839 @@ public class VersionControlTest extends AbstractControllerTest {
         assertThat(importedResource.getResourceType()).isEqualTo(resource.getResourceType());
     }
 
+    @Test
+    public void testSchedulerEventVc_sameTenant() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
+        SchedulerEvent schedulerEvent = createSchedulerEvent(tenantId1, deviceProfile.getId(), "General", "general", JacksonUtil.newObjectNode());
+        String versionId = createVersion("scheduler event", EntityType.SCHEDULER_EVENT);
+
+        loadVersion(versionId, EntityType.SCHEDULER_EVENT);
+        SchedulerEvent importedEvent = findSchedulerEvent(schedulerEvent.getName());
+        checkImportedEntity(tenantId1, schedulerEvent, tenantId1, importedEvent);
+        checkImportedSchedulerEventData(schedulerEvent, importedEvent);
+    }
+
+    @Test
+    public void testSchedulerEventOtaConfigForVcWithDeviceProfileOriginator_betweenTenants() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
+        OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
+        OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
+        SchedulerEvent firmwareEvent = createSchedulerEventForOtaPackageType(tenantId1, deviceProfile.getId(), "Firmware", "updateFirmware", firmware.getId());
+        SchedulerEvent softwareEvent = createSchedulerEventForOtaPackageType(tenantId1, deviceProfile.getId(), "Software", "updateSoftware", software.getId());
+        String versionId = createVersion("scheduler event with ota", EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE, EntityType.SCHEDULER_EVENT);
+
+        OtaPackage firmwareOta = findOtaPackage(firmware.getTitle());
+        OtaPackage softwareOta = findOtaPackage(software.getTitle());
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE, EntityType.SCHEDULER_EVENT);
+        OtaPackage importedFirmwareOta = findOtaPackage(firmwareOta.getTitle());
+        OtaPackage importedSoftwareOta = findOtaPackage(softwareOta.getTitle());
+        SchedulerEvent importedFirmwareEvent = findSchedulerEvent(firmwareEvent.getName());
+        SchedulerEvent importedSoftwareEvent = findSchedulerEvent(softwareEvent.getName());
+
+        checkImportedEntity(tenantId1, firmwareOta, tenantId2, importedFirmwareOta);
+        checkImportedOtaPackageData(firmwareOta, importedFirmwareOta);
+        checkImportedEntity(tenantId1, softwareOta, tenantId2, importedSoftwareOta);
+        checkImportedOtaPackageData(softwareOta, importedSoftwareOta);
+
+        checkImportedEntity(tenantId1, firmwareEvent, tenantId2, importedFirmwareEvent);
+        checkImportedSchedulerEventData(firmwareEvent, importedFirmwareEvent, importedFirmwareOta.getId());
+        checkImportedEntity(tenantId1, softwareEvent, tenantId2, importedSoftwareEvent);
+        checkImportedSchedulerEventData(softwareEvent, importedSoftwareEvent, importedSoftwareOta.getId());
+    }
+
+    @Test
+    public void testSchedulerEventOtaConfigForVcWithDeviceGroupOriginator_betweenTenants() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
+        OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
+        OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
+
+        EntityGroup deviceGroup = createEntityGroup(tenantId1, EntityType.DEVICE, "Device group for OTA");
+        DeviceGroupOtaPackage deviceGroupOtaPackageFirmware = new DeviceGroupOtaPackage();
+        deviceGroupOtaPackageFirmware.setGroupId(deviceGroup.getId());
+        deviceGroupOtaPackageFirmware.setOtaPackageType(OtaPackageType.FIRMWARE);
+        deviceGroupOtaPackageFirmware.setOtaPackageId(firmware.getId());
+        doPost("/api/deviceGroupOtaPackage", deviceGroupOtaPackageFirmware, DeviceGroupOtaPackage.class);
+
+        DeviceGroupOtaPackage deviceGroupOtaPackageSoftware = new DeviceGroupOtaPackage();
+        deviceGroupOtaPackageSoftware.setGroupId(deviceGroup.getId());
+        deviceGroupOtaPackageSoftware.setOtaPackageType(OtaPackageType.SOFTWARE);
+        deviceGroupOtaPackageSoftware.setOtaPackageId(software.getId());
+        doPost("/api/deviceGroupOtaPackage", deviceGroupOtaPackageSoftware, DeviceGroupOtaPackage.class);
+
+        SchedulerEvent firmwareEvent = createSchedulerEventForOtaPackageType(tenantId1, deviceGroup.getId(), "Firmware", "updateFirmware", firmware.getId());
+        SchedulerEvent softwareEvent = createSchedulerEventForOtaPackageType(tenantId1, deviceGroup.getId(), "Software", "updateSoftware", software.getId());
+        String versionId = createVersion("scheduler event with ota", EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE, EntityType.SCHEDULER_EVENT);
+
+        OtaPackage firmwareOta = findOtaPackage(firmware.getTitle());
+        OtaPackage softwareOta = findOtaPackage(software.getTitle());
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE, EntityType.DEVICE, EntityType.SCHEDULER_EVENT);
+        OtaPackage importedFirmwareOta = findOtaPackage(firmwareOta.getTitle());
+        OtaPackage importedSoftwareOta = findOtaPackage(softwareOta.getTitle());
+        SchedulerEvent importedFirmwareEvent = findSchedulerEvent(firmwareEvent.getName());
+        SchedulerEvent importedSoftwareEvent = findSchedulerEvent(softwareEvent.getName());
+
+        checkImportedEntity(tenantId1, firmwareOta, tenantId2, importedFirmwareOta);
+        checkImportedOtaPackageData(firmwareOta, importedFirmwareOta);
+        checkImportedEntity(tenantId1, softwareOta, tenantId2, importedSoftwareOta);
+        checkImportedOtaPackageData(softwareOta, importedSoftwareOta);
+
+        checkImportedEntity(tenantId1, firmwareEvent, tenantId2, importedFirmwareEvent);
+        checkImportedSchedulerEventData(firmwareEvent, importedFirmwareEvent, importedFirmwareOta.getId());
+        checkImportedEntity(tenantId1, softwareEvent, tenantId2, importedSoftwareEvent);
+        checkImportedSchedulerEventData(softwareEvent, importedSoftwareEvent, importedSoftwareOta.getId());
+
+        EntityGroup importedDeviceGroup = findEntityGroup(deviceGroup.getName(), EntityType.DEVICE);
+        assertThat(importedFirmwareEvent.getOriginatorId()).isEqualTo(importedDeviceGroup.getId());
+        assertThat(importedSoftwareEvent.getOriginatorId()).isEqualTo(importedDeviceGroup.getId());
+        assertThat(deviceGroup.getId()).isNotEqualTo(importedDeviceGroup.getId());
+    }
+
+    @Test
+    public void testSchedulerEventWithoutExistingDeviceGroupOriginator_betweenTenants() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
+        OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
+
+        EntityGroup deviceGroup = createEntityGroup(tenantId1, EntityType.DEVICE, "Device group for OTA");
+        DeviceGroupOtaPackage deviceGroupOtaPackageFirmware = new DeviceGroupOtaPackage();
+        deviceGroupOtaPackageFirmware.setGroupId(deviceGroup.getId());
+        deviceGroupOtaPackageFirmware.setOtaPackageType(OtaPackageType.FIRMWARE);
+        deviceGroupOtaPackageFirmware.setOtaPackageId(firmware.getId());
+        doPost("/api/deviceGroupOtaPackage", deviceGroupOtaPackageFirmware, DeviceGroupOtaPackage.class);
+
+        createSchedulerEventForOtaPackageType(tenantId1, deviceGroup.getId(), "Firmware", "updateFirmware", firmware.getId());
+
+        String versionId = createVersion("scheduler event with ota", EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE, EntityType.SCHEDULER_EVENT);
+
+        loginTenant2();
+        assertThatThrownBy(() -> loadVersion(versionId, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE, EntityType.SCHEDULER_EVENT))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageMatching("Failed to load version:.*MissingEntityException.*");
+    }
+
+    @Test
+    public void testReportTemplateVc_sameTenant() throws Exception {
+        Device device = createDevice("Device 1", "test1");
+        ReportTemplate reportTemplate = createReportTemplate(tenantId1, null, "Weekly report", device.getId());
+        String versionId = createVersion("report template", EntityType.REPORT_TEMPLATE);
+
+        loadVersion(versionId, EntityType.REPORT_TEMPLATE);
+        ReportTemplate importedTemplate = findReportTemplate(reportTemplate.getName());
+        checkImportedEntity(tenantId1, reportTemplate, tenantId1, importedTemplate);
+
+        assertThat(importedTemplate.getName()).isEqualTo(reportTemplate.getName());
+        assertThat(importedTemplate.getType()).isEqualTo(reportTemplate.getType());
+        assertThat(importedTemplate.getConfiguration()).isEqualTo(reportTemplate.getConfiguration());
+    }
+
+    @Test
+    public void testReportTemplateVc_betweenTenants() throws Exception {
+        Device device = createDevice("Device 1", "test1");
+        ReportTemplate reportTemplate = createReportTemplate(tenantId1, null, "Weekly report", device.getId());
+        String versionId = createVersion("report template", EntityType.REPORT_TEMPLATE);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.REPORT_TEMPLATE);
+        ReportTemplate importedTemplate = findReportTemplate(reportTemplate.getName());
+        checkImportedEntity(tenantId1, reportTemplate, tenantId2, importedTemplate);
+
+        assertThat(importedTemplate.getName()).isEqualTo(reportTemplate.getName());
+        assertThat(importedTemplate.getType()).isEqualTo(reportTemplate.getType());
+        assertThat(importedTemplate.getConfiguration()).isEqualTo(reportTemplate.getConfiguration());
+    }
+
+    @Test
+    public void testSchedulerEventGenerateReportForVc_betweenTenants() throws Exception {
+        Dashboard dashboard = createDashboard(null, "Test Dashboard");
+        SchedulerEvent reportEvent = createSchedulerEventForGenerateReportType(tenantId1, null, "Report", dashboard.getId());
+        String versionId = createVersion("scheduler event with report", EntityType.DASHBOARD, EntityType.SCHEDULER_EVENT);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.DASHBOARD, EntityType.SCHEDULER_EVENT);
+        Dashboard importedDashboard = findDashboard(dashboard.getTitle());
+        SchedulerEvent importedReportEvent = findSchedulerEvent(reportEvent.getName());
+
+        checkImportedEntity(tenantId1, dashboard, tenantId2, importedDashboard);
+        checkImportedDashboardData(dashboard, importedDashboard);
+
+        checkImportedEntity(tenantId1, reportEvent, tenantId2, importedReportEvent);
+        checkImportedSchedulerEventData(reportEvent, importedReportEvent, importedDashboard.getId(), tenantAdmin2.getId());
+    }
+
+    @Test
+    public void testSchedulerEventGenerateReportV2ForVc_betweenTenants() throws Exception {
+        createDeviceProfile(null, null, "Device profile v1.0");
+        Device device = createDevice("Device 1", "test1");
+        ReportTemplate reportTemplate = createReportTemplate(tenantId1, null, "Weekly report", device.getId());
+        SchedulerEvent reportEvent = createSchedulerEventForGenerateReportType(tenantId1, null, "Report V2", reportTemplate.getId(), tenantAdmin1.getId());
+        String versionId = createVersion("scheduler event with report V2", EntityType.DEVICE_PROFILE, EntityType.DEVICE, EntityType.REPORT_TEMPLATE, EntityType.SCHEDULER_EVENT);
+
+        loginTenant2();
+        loadVersion(versionId, config -> {
+            config.setLoadCredentials(false);
+        }, EntityType.DEVICE_PROFILE, EntityType.DEVICE, EntityType.REPORT_TEMPLATE, EntityType.SCHEDULER_EVENT);
+        ReportTemplate importedReportTemplate = findReportTemplate(reportTemplate.getName());
+
+        SchedulerEvent importedReportEvent = findSchedulerEvent(reportEvent.getName());
+
+        checkImportedEntity(tenantId1, reportTemplate, tenantId2, importedReportTemplate);
+        checkImportedReportTemplateData(importedReportTemplate, importedReportTemplate);
+
+        checkImportedEntity(tenantId1, reportEvent, tenantId2, importedReportEvent);
+        checkImportedSchedulerEventData(reportEvent, importedReportEvent, importedReportTemplate.getId(), tenantAdmin2.getId());
+    }
+
+    // --- VC-specific permission tests ---
+
+    @Test
+    public void testSaveEntitiesVersion_deniedOnOwnerCustomer() throws Exception {
+        // Regression test for the owner-walk leak: exporting a device whose owner is a Customer
+        // must fail if the caller lacks CUSTOMER READ. Single-entity export ctx exports related
+        // customers (SimpleEntitiesExportCtx -> exportRelatedCustomers=true), so the walk fires.
+        Customer customer = createCustomer("Owner Walk Customer");
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Owner Walk DP");
+        Device device = createDevice(deviceProfile.getId(), "Owner Walk Device", "owner-walk-token");
+        doPost("/api/owner/CUSTOMER/" + customer.getId().getId() + "/DEVICE/" + device.getId().getId())
+                .andExpect(status().isOk());
+
+        loginAsRestrictedTenantAdmin(tenantId1,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.DEVICE_PROFILE, List.of(Operation.READ),
+                        Resource.DEVICE, List.of(Operation.READ))); // no CUSTOMER READ
+
+        SingleEntityVersionCreateRequest request = new SingleEntityVersionCreateRequest();
+        request.setVersionName("owner walk version");
+        request.setBranch(branch);
+        request.setEntityId(device.getId());
+        VersionCreateConfig config = new VersionCreateConfig();
+        config.setSaveRelations(true);
+        config.setSaveAttributes(true);
+        config.setSaveCredentials(true);
+        config.setSavePermissions(true);
+        request.setConfig(config);
+
+        VersionCreationResult result = pollVersionCreate(request);
+        assertThat(result.getError()).as("Owner-walk should be blocked by missing CUSTOMER READ").isNotNull();
+        assertThat(result.getVersion()).isNull();
+        assertThat(listVersions()).extracting(EntityVersion::getName).doesNotContain("owner walk version");
+    }
+
+    @Test
+    public void testSaveEntitiesVersion_complexRequest_deniedPartial() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Complex Deny DP");
+        createDevice(deviceProfile.getId(), "Complex Deny Device", "complex-deny-token");
+        createDashboard(null, "Complex Deny Dash");
+
+        // no DASHBOARD READ — the dashboard sweep must fail.
+        loginAsRestrictedTenantAdmin(tenantId1,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.DEVICE_PROFILE, List.of(Operation.READ, Operation.CREATE, Operation.WRITE),
+                        Resource.DEVICE, List.of(Operation.READ, Operation.CREATE, Operation.WRITE)));
+
+        ComplexVersionCreateRequest request = buildComplexCreateRequest("complex partial deny",
+                EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.DASHBOARD);
+        VersionCreationResult result = pollVersionCreate(request);
+        assertThat(result.getError()).as("Complex sweep must fail when one type is denied").isNotNull();
+        assertThat(result.getVersion()).isNull();
+        assertThat(listVersions()).extracting(EntityVersion::getName).doesNotContain("complex partial deny");
+    }
+
+    @Test
+    public void testLoadVersion_reimportPass_stillEnforcesPermissions() throws Exception {
+        // Narrowed scope: instead of replicating the circular-reference reimport setup verbatim,
+        // we exercise the second-pass (UPDATE) by pre-creating both target entities on tenant2
+        // with matching externalIds. The restricted admin holds READ+CREATE but no WRITE — the
+        // import-side WRITE check fires for both types.
+        RuleChain rcA = createRuleChain("Reimport RC A");
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Reimport DP");
+        String versionId = createVersion("reimport version", EntityType.RULE_CHAIN, EntityType.DEVICE_PROFILE);
+
+        loginTenant2();
+        // Pre-create matching entities with same externalId so import enters WRITE branch.
+        RuleChain t2Rc = new RuleChain();
+        t2Rc.setName("Reimport RC A");
+        t2Rc.setType(RuleChainType.CORE);
+        t2Rc.setExternalId(rcA.getId());
+        doPost("/api/ruleChain", t2Rc, RuleChain.class);
+
+        DeviceProfile t2Dp = new DeviceProfile();
+        t2Dp.setName("Reimport DP");
+        t2Dp.setType(DeviceProfileType.DEFAULT);
+        t2Dp.setTransportType(DeviceTransportType.DEFAULT);
+        DeviceProfileData profileData = new DeviceProfileData();
+        profileData.setConfiguration(new DefaultDeviceProfileConfiguration());
+        profileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+        t2Dp.setProfileData(profileData);
+        t2Dp.setExternalId(deviceProfile.getId());
+        doPost("/api/deviceProfile", t2Dp, DeviceProfile.class);
+
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.RULE_CHAIN, List.of(Operation.READ, Operation.CREATE),
+                        Resource.DEVICE_PROFILE, List.of(Operation.READ, Operation.CREATE))); // no WRITE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.RULE_CHAIN, EntityType.DEVICE_PROFILE);
+        assertThat(result.getError()).as("WRITE denial during reimport pass must surface as error").isNotNull();
+    }
+
+    @Test
+    public void testLoadVersion_rollbackPreservesPriorState() throws Exception {
+        createRuleChain("VC Rollback RC");
+        createDashboard(null, "VC Rollback Dash");
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "VC Rollback DP");
+        Device device = createDevice(deviceProfile.getId(), "VC Rollback Device", "rollback-token");
+        String versionId = createVersion("vc rollback version",
+                EntityType.RULE_CHAIN, EntityType.DASHBOARD, EntityType.DEVICE_PROFILE, EntityType.DEVICE);
+
+        loginTenant2();
+        // Pre-create a DeviceProfile on tenant2 with same externalId so it would have been the
+        // matched WRITE target — its content should be unchanged after the rollback.
+        DeviceProfile priorDp = new DeviceProfile();
+        priorDp.setName("VC Rollback DP");
+        priorDp.setType(DeviceProfileType.DEFAULT);
+        priorDp.setTransportType(DeviceTransportType.DEFAULT);
+        priorDp.setDescription("prior description");
+        DeviceProfileData priorProfileData = new DeviceProfileData();
+        priorProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
+        priorProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+        priorDp.setProfileData(priorProfileData);
+        priorDp.setExternalId(deviceProfile.getId());
+        DeviceProfile savedPriorDp = doPost("/api/deviceProfile", priorDp, DeviceProfile.class);
+        UUID priorDpId = savedPriorDp.getUuidId();
+
+        // Pre-create the device on tenant2 with same externalId so import enters the WRITE branch
+        // (the restricted admin has CREATE but no WRITE — WRITE denial is what we want to surface).
+        Device t2Device = new Device();
+        t2Device.setName("VC Rollback Device");
+        t2Device.setType("default");
+        t2Device.setExternalId(device.getId());
+        doPost("/api/device", t2Device, Device.class);
+
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.RULE_CHAIN, List.of(Operation.READ, Operation.CREATE, Operation.WRITE),
+                        Resource.DASHBOARD, List.of(Operation.READ, Operation.CREATE, Operation.WRITE),
+                        Resource.DEVICE_PROFILE, List.of(Operation.READ, Operation.CREATE, Operation.WRITE),
+                        Resource.DEVICE, List.of(Operation.READ, Operation.CREATE))); // no DEVICE WRITE
+
+        VersionLoadResult result = pollVersionLoad(versionId,
+                EntityType.RULE_CHAIN, EntityType.DASHBOARD, EntityType.DEVICE_PROFILE, EntityType.DEVICE);
+        assertThat(result.getError()).as("Mid-flight DEVICE WRITE denial must surface as error").isNotNull();
+
+        loginTenant2();
+        // After rollback, RuleChain and Dashboard must not have been persisted.
+        assertThat(doGetTypedWithPageLink("/api/ruleChains?",
+                new TypeReference<PageData<RuleChain>>() {}, new PageLink(100, 0, "VC Rollback RC")).getData())
+                .as("RuleChain must not be persisted after rollback").isEmpty();
+        assertThat(doGetTypedWithPageLink("/api/tenant/dashboards?",
+                new TypeReference<PageData<DashboardInfo>>() {}, new PageLink(100, 0, "VC Rollback Dash")).getData())
+                .as("Dashboard must not be persisted after rollback").isEmpty();
+        // Pre-existing DeviceProfile must still exist with its prior id and prior description.
+        DeviceProfile stillThere = doGetTypedWithPageLink("/api/deviceProfiles?",
+                new TypeReference<PageData<DeviceProfile>>() {}, new PageLink(100, 0, "VC Rollback DP")).getData().get(0);
+        assertThat(stillThere.getUuidId()).isEqualTo(priorDpId);
+        assertThat(stillThere.getDescription()).isEqualTo("prior description");
+    }
+
+    // --- Per-type permission tests: DEVICE ---
+
+    @Test
+    public void testSaveEntitiesVersion_device_deniedWithoutReadPermission() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Dev VC Read Deny DP");
+        Device device = createDevice(deviceProfile.getId(), "Dev VC Read Deny", "dev-read-deny-token");
+
+        loginAsRestrictedTenantAdmin(tenantId1,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.DEVICE_PROFILE, List.of(Operation.READ))); // no DEVICE READ
+
+        VersionCreationResult result = pollVersionCreate(buildComplexCreateRequestForIds("dev vc read deny", device.getId()));
+        assertThat(result.getError()).isNotNull();
+        assertThat(result.getVersion()).isNull();
+        assertThat(listVersions()).extracting(EntityVersion::getName).doesNotContain("dev vc read deny");
+    }
+
+    @Test
+    public void testLoadVersion_device_deniedWithoutCreatePermission() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Dev VC Create Deny DP");
+        createDevice(deviceProfile.getId(), "Dev VC Create Deny", "dev-create-deny-token");
+        String versionId = createVersion("dev vc create deny", EntityType.DEVICE_PROFILE, EntityType.DEVICE);
+
+        loginTenant2();
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.DEVICE_PROFILE, List.of(Operation.READ, Operation.CREATE, Operation.WRITE),
+                        Resource.DEVICE, List.of(Operation.READ))); // no CREATE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.DEVICE_PROFILE, EntityType.DEVICE);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        assertThat(doGetTypedWithPageLink("/api/tenant/devices?",
+                new TypeReference<PageData<Device>>() {}, new PageLink(100, 0, "Dev VC Create Deny")).getData())
+                .as("Device must not be persisted on permission denial").isEmpty();
+    }
+
+    @Test
+    public void testLoadVersion_device_deniedWithoutWritePermission() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Dev VC Write Deny DP");
+        Device device = createDevice(deviceProfile.getId(), "Dev VC Write Deny", "dev-write-deny-token");
+        String versionId = createVersion("dev vc write deny", EntityType.DEVICE_PROFILE, EntityType.DEVICE);
+
+        loginTenant2();
+        Device t2Device = new Device();
+        t2Device.setName("Dev VC Write Deny");
+        t2Device.setType("default");
+        t2Device.setExternalId(device.getId());
+        Device savedT2Device = doPost("/api/device", t2Device, Device.class);
+        UUID priorId = savedT2Device.getUuidId();
+
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.DEVICE_PROFILE, List.of(Operation.READ, Operation.CREATE, Operation.WRITE),
+                        Resource.DEVICE, List.of(Operation.READ, Operation.CREATE))); // no WRITE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.DEVICE_PROFILE, EntityType.DEVICE);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        Device persisted = doGetTypedWithPageLink("/api/tenant/devices?",
+                new TypeReference<PageData<Device>>() {}, new PageLink(100, 0, "Dev VC Write Deny")).getData().get(0);
+        assertThat(persisted.getUuidId()).isEqualTo(priorId);
+        assertThat(persisted.getExternalId()).isEqualTo(device.getId());
+    }
+
+    @Test
+    public void testSaveAndLoadVersion_device_withPermissions() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Dev VC Allow DP");
+        Device device = createDevice(deviceProfile.getId(), "Dev VC Allow", "dev-allow-token");
+        String versionId = createVersion("dev vc allow", EntityType.DEVICE_PROFILE, EntityType.DEVICE);
+
+        loginTenant2();
+        // DEVICE_GROUP needed because VC import re-syncs the auto-managed "All" entity group's
+        // configuration/additionalInfo (UI columns, isPublic) — group-level WRITE.
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Set.of(),
+                Set.of(Resource.VERSION_CONTROL, Resource.DEVICE_PROFILE, Resource.DEVICE, Resource.DEVICE_GROUP));
+
+        // Credentials are tenant-globally unique by access token; skip credentials propagation here
+        // (the test verifies permission flow, not credentials).
+        Map<EntityType, EntityTypeLoadResult> loadResult = loadVersion(versionId,
+                config -> config.setLoadCredentials(false),
+                EntityType.DEVICE_PROFILE, EntityType.DEVICE);
+        assertThat(loadResult.get(EntityType.DEVICE).getCreated()).isEqualTo(1);
+
+        Device imported = findDevice(device.getName());
+        assertThat(imported.getTenantId()).isEqualTo(tenantId2);
+        assertThat(imported.getExternalId()).isEqualTo(device.getId());
+    }
+
+    // --- Per-type permission tests: ASSET_PROFILE ---
+    // (USER is intentionally excluded from VC scope — see testUserEntitiesExcludedFromVc_betweenTenants.
+    //  Permission coverage uses a tenant-level type that actually flows through VC.)
+
+    @Test
+    public void testSaveEntitiesVersion_assetProfile_deniedWithoutReadPermission() throws Exception {
+        AssetProfile assetProfile = createAssetProfile(null, null, "AP VC Read Deny");
+
+        loginAsRestrictedTenantAdmin(tenantId1,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE))); // no ASSET_PROFILE READ
+
+        VersionCreationResult result = pollVersionCreate(buildComplexCreateRequestForIds("ap vc read deny", assetProfile.getId()));
+        assertThat(result.getError()).isNotNull();
+        assertThat(result.getVersion()).isNull();
+        assertThat(listVersions()).extracting(EntityVersion::getName).doesNotContain("ap vc read deny");
+    }
+
+    @Test
+    public void testLoadVersion_assetProfile_deniedWithoutCreatePermission() throws Exception {
+        createAssetProfile(null, null, "AP VC Create Deny");
+        String versionId = createVersion("ap vc create deny", EntityType.ASSET_PROFILE);
+
+        loginTenant2();
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.ASSET_PROFILE, List.of(Operation.READ))); // no CREATE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.ASSET_PROFILE);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        assertThat(doGetTypedWithPageLink("/api/assetProfiles?",
+                new TypeReference<PageData<AssetProfile>>() {}, new PageLink(100, 0, "AP VC Create Deny")).getData())
+                .as("AssetProfile must not be persisted on permission denial").isEmpty();
+    }
+
+    @Test
+    public void testLoadVersion_assetProfile_deniedWithoutWritePermission() throws Exception {
+        AssetProfile assetProfile = createAssetProfile(null, null, "AP VC Write Deny");
+        String versionId = createVersion("ap vc write deny", EntityType.ASSET_PROFILE);
+
+        loginTenant2();
+        AssetProfile t2AssetProfile = new AssetProfile();
+        t2AssetProfile.setName("AP VC Write Deny");
+        t2AssetProfile.setExternalId(assetProfile.getId());
+        AssetProfile savedT2AssetProfile = doPost("/api/assetProfile", t2AssetProfile, AssetProfile.class);
+        UUID priorId = savedT2AssetProfile.getUuidId();
+
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.ASSET_PROFILE, List.of(Operation.READ, Operation.CREATE))); // no WRITE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.ASSET_PROFILE);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        AssetProfile persisted = findAssetProfile("AP VC Write Deny");
+        assertThat(persisted.getUuidId()).isEqualTo(priorId);
+        assertThat(persisted.getExternalId()).isEqualTo(assetProfile.getId());
+    }
+
+    @Test
+    public void testSaveAndLoadVersion_assetProfile_withPermissions() throws Exception {
+        AssetProfile assetProfile = createAssetProfile(null, null, "AP VC Allow");
+        String versionId = createVersion("ap vc allow", EntityType.ASSET_PROFILE);
+
+        loginTenant2();
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Set.of(),
+                Set.of(Resource.VERSION_CONTROL, Resource.ASSET_PROFILE));
+
+        Map<EntityType, EntityTypeLoadResult> loadResult = loadVersion(versionId, EntityType.ASSET_PROFILE);
+        assertThat(loadResult.get(EntityType.ASSET_PROFILE).getCreated()).isEqualTo(1);
+
+        AssetProfile imported = findAssetProfile(assetProfile.getName());
+        assertThat(imported.getTenantId()).isEqualTo(tenantId2);
+        assertThat(imported.getExternalId()).isEqualTo(assetProfile.getId());
+    }
+
+    // --- Per-type permission tests: RULE_CHAIN ---
+
+    @Test
+    public void testSaveEntitiesVersion_ruleChain_deniedWithoutReadPermission() throws Exception {
+        RuleChain rc = createRuleChain("RC VC Read Deny");
+
+        loginAsRestrictedTenantAdmin(tenantId1,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE))); // no RULE_CHAIN READ
+
+        VersionCreationResult result = pollVersionCreate(buildComplexCreateRequestForIds("rc vc read deny", rc.getId()));
+        assertThat(result.getError()).isNotNull();
+        assertThat(result.getVersion()).isNull();
+        assertThat(listVersions()).extracting(EntityVersion::getName).doesNotContain("rc vc read deny");
+    }
+
+    @Test
+    public void testLoadVersion_ruleChain_deniedWithoutCreatePermission() throws Exception {
+        createRuleChain("RC VC Create Deny");
+        String versionId = createVersion("rc vc create deny", EntityType.RULE_CHAIN);
+
+        loginTenant2();
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.RULE_CHAIN, List.of(Operation.READ))); // no CREATE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.RULE_CHAIN);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        assertThat(doGetTypedWithPageLink("/api/ruleChains?",
+                new TypeReference<PageData<RuleChain>>() {}, new PageLink(100, 0, "RC VC Create Deny")).getData())
+                .as("RuleChain must not be persisted on permission denial").isEmpty();
+    }
+
+    @Test
+    public void testLoadVersion_ruleChain_deniedWithoutWritePermission() throws Exception {
+        RuleChain rc = createRuleChain("RC VC Write Deny");
+        String versionId = createVersion("rc vc write deny", EntityType.RULE_CHAIN);
+
+        loginTenant2();
+        RuleChain t2Rc = new RuleChain();
+        t2Rc.setName("RC VC Write Deny");
+        t2Rc.setType(RuleChainType.CORE);
+        t2Rc.setExternalId(rc.getId());
+        RuleChain savedT2Rc = doPost("/api/ruleChain", t2Rc, RuleChain.class);
+        UUID priorId = savedT2Rc.getUuidId();
+
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.RULE_CHAIN, List.of(Operation.READ, Operation.CREATE))); // no WRITE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.RULE_CHAIN);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        RuleChain persisted = doGetTypedWithPageLink("/api/ruleChains?",
+                new TypeReference<PageData<RuleChain>>() {}, new PageLink(100, 0, "RC VC Write Deny")).getData().get(0);
+        assertThat(persisted.getUuidId()).isEqualTo(priorId);
+        assertThat(persisted.getExternalId()).isEqualTo(rc.getId());
+    }
+
+    @Test
+    public void testSaveAndLoadVersion_ruleChain_withPermissions() throws Exception {
+        RuleChain rc = createRuleChain("RC VC Allow");
+        String versionId = createVersion("rc vc allow", EntityType.RULE_CHAIN);
+
+        loginTenant2();
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Set.of(),
+                Set.of(Resource.VERSION_CONTROL, Resource.RULE_CHAIN));
+
+        Map<EntityType, EntityTypeLoadResult> loadResult = loadVersion(versionId, EntityType.RULE_CHAIN);
+        assertThat(loadResult.get(EntityType.RULE_CHAIN).getCreated()).isEqualTo(1);
+
+        RuleChain imported = findRuleChain(rc.getName());
+        assertThat(imported.getTenantId()).isEqualTo(tenantId2);
+        assertThat(imported.getExternalId()).isEqualTo(rc.getId());
+    }
+
+    // --- Per-type permission tests: INTEGRATION ---
+
+    @Test
+    public void testSaveEntitiesVersion_integration_deniedWithoutReadPermission() throws Exception {
+        Converter converter = createConverter(ConverterType.DOWNLINK, "Int VC Read Deny Converter");
+        Integration integration = createIntegration(converter.getId(), IntegrationType.HTTP, "Int VC Read Deny");
+
+        loginAsRestrictedTenantAdmin(tenantId1,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.CONVERTER, List.of(Operation.READ))); // no INTEGRATION READ
+
+        VersionCreationResult result = pollVersionCreate(buildComplexCreateRequestForIds("int vc read deny",
+                converter.getId(), integration.getId()));
+        assertThat(result.getError()).isNotNull();
+        assertThat(result.getVersion()).isNull();
+        assertThat(listVersions()).extracting(EntityVersion::getName).doesNotContain("int vc read deny");
+    }
+
+    @Test
+    public void testLoadVersion_integration_deniedWithoutCreatePermission() throws Exception {
+        Converter converter = createConverter(ConverterType.DOWNLINK, "Int VC Create Deny Converter");
+        createIntegration(converter.getId(), IntegrationType.HTTP, "Int VC Create Deny");
+        String versionId = createVersion("int vc create deny", EntityType.CONVERTER, EntityType.INTEGRATION);
+
+        loginTenant2();
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.CONVERTER, List.of(Operation.READ, Operation.CREATE, Operation.WRITE),
+                        Resource.INTEGRATION, List.of(Operation.READ))); // no CREATE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.CONVERTER, EntityType.INTEGRATION);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        assertThat(doGetTypedWithPageLink("/api/integrations?",
+                new TypeReference<PageData<Integration>>() {}, new PageLink(100, 0, "Int VC Create Deny")).getData())
+                .as("Integration must not be persisted on permission denial").isEmpty();
+    }
+
+    @Test
+    public void testLoadVersion_integration_deniedWithoutWritePermission() throws Exception {
+        Converter converter = createConverter(ConverterType.DOWNLINK, "Int VC Write Deny Converter");
+        Integration integration = createIntegration(converter.getId(), IntegrationType.HTTP, "Int VC Write Deny");
+        String versionId = createVersion("int vc write deny", EntityType.CONVERTER, EntityType.INTEGRATION);
+
+        loginTenant2();
+        Converter t2Converter = createConverter(ConverterType.DOWNLINK, "Int VC Write Deny T2 Converter");
+        Integration t2Integration = new Integration();
+        t2Integration.setName("Int VC Write Deny");
+        t2Integration.setType(IntegrationType.HTTP);
+        t2Integration.setDefaultConverterId(t2Converter.getId());
+        t2Integration.setRoutingKey("t2-vc-write-deny-rk");
+        t2Integration.setSecret("scrt");
+        t2Integration.setEnabled(false);
+        t2Integration.setConfiguration(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
+        t2Integration.setAdditionalInfo(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
+        t2Integration.setExternalId(integration.getId());
+        Integration savedT2Integration = doPost("/api/integration", t2Integration, Integration.class);
+        UUID priorId = savedT2Integration.getUuidId();
+
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.CONVERTER, List.of(Operation.READ, Operation.CREATE, Operation.WRITE),
+                        Resource.INTEGRATION, List.of(Operation.READ, Operation.CREATE))); // no WRITE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.CONVERTER, EntityType.INTEGRATION);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        Integration persisted = findIntegration("Int VC Write Deny");
+        assertThat(persisted.getUuidId()).isEqualTo(priorId);
+        assertThat(persisted.getExternalId()).isEqualTo(integration.getId());
+    }
+
+    @Test
+    public void testSaveAndLoadVersion_integration_withPermissions() throws Exception {
+        Converter converter = createConverter(ConverterType.DOWNLINK, "Int VC Allow Converter");
+        Integration integration = createIntegration(converter.getId(), IntegrationType.HTTP, "Int VC Allow");
+        String versionId = createVersion("int vc allow", EntityType.CONVERTER, EntityType.INTEGRATION);
+
+        loginTenant2();
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Set.of(),
+                Set.of(Resource.VERSION_CONTROL, Resource.CONVERTER, Resource.INTEGRATION));
+
+        Map<EntityType, EntityTypeLoadResult> loadResult = loadVersion(versionId, config -> {
+            config.setAutoGenerateIntegrationKey(true);
+        }, EntityType.CONVERTER, EntityType.INTEGRATION);
+        assertThat(loadResult.get(EntityType.INTEGRATION).getCreated()).isEqualTo(1);
+
+        Integration imported = findIntegration(integration.getName());
+        assertThat(imported.getTenantId()).isEqualTo(tenantId2);
+        assertThat(imported.getExternalId()).isEqualTo(integration.getId());
+    }
+
+    // --- Per-type permission tests: DASHBOARD ---
+
+    @Test
+    public void testSaveEntitiesVersion_dashboard_deniedWithoutReadPermission() throws Exception {
+        Dashboard dashboard = createDashboard(null, "Dash VC Read Deny");
+
+        loginAsRestrictedTenantAdmin(tenantId1,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE))); // no DASHBOARD READ
+
+        VersionCreationResult result = pollVersionCreate(buildComplexCreateRequestForIds("dash vc read deny", dashboard.getId()));
+        assertThat(result.getError()).isNotNull();
+        assertThat(result.getVersion()).isNull();
+        assertThat(listVersions()).extracting(EntityVersion::getName).doesNotContain("dash vc read deny");
+    }
+
+    @Test
+    public void testLoadVersion_dashboard_deniedWithoutCreatePermission() throws Exception {
+        createDashboard(null, "Dash VC Create Deny");
+        String versionId = createVersion("dash vc create deny", EntityType.DASHBOARD);
+
+        loginTenant2();
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.DASHBOARD, List.of(Operation.READ))); // no CREATE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.DASHBOARD);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        assertThat(doGetTypedWithPageLink("/api/tenant/dashboards?",
+                new TypeReference<PageData<DashboardInfo>>() {}, new PageLink(100, 0, "Dash VC Create Deny")).getData())
+                .as("Dashboard must not be persisted on permission denial").isEmpty();
+    }
+
+    @Test
+    public void testLoadVersion_dashboard_deniedWithoutWritePermission() throws Exception {
+        Dashboard dashboard = createDashboard(null, "Dash VC Write Deny");
+        String versionId = createVersion("dash vc write deny", EntityType.DASHBOARD);
+
+        loginTenant2();
+        Dashboard t2Dashboard = new Dashboard();
+        t2Dashboard.setTitle("Dash VC Write Deny");
+        t2Dashboard.setExternalId(dashboard.getId());
+        Dashboard savedT2Dashboard = doPost("/api/dashboard", t2Dashboard, Dashboard.class);
+        UUID priorId = savedT2Dashboard.getUuidId();
+
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Map.of(Resource.VERSION_CONTROL, List.of(Operation.READ, Operation.WRITE),
+                        Resource.DASHBOARD, List.of(Operation.READ, Operation.CREATE))); // no WRITE
+
+        VersionLoadResult result = pollVersionLoad(versionId, EntityType.DASHBOARD);
+        assertThat(result.getError()).isNotNull();
+
+        loginTenant2();
+        Dashboard persisted = findDashboard("Dash VC Write Deny");
+        assertThat(persisted.getUuidId()).isEqualTo(priorId);
+        assertThat(persisted.getExternalId()).isEqualTo(dashboard.getId());
+    }
+
+    @Test
+    public void testSaveAndLoadVersion_dashboard_withPermissions() throws Exception {
+        Dashboard dashboard = createDashboard(null, "Dash VC Allow");
+        String versionId = createVersion("dash vc allow", EntityType.DASHBOARD);
+
+        loginTenant2();
+        // DASHBOARD_GROUP needed because VC import re-syncs the auto-managed "All" entity group's
+        // configuration/additionalInfo (UI columns, sort, isPublic) — that's a group-level WRITE.
+        loginAsRestrictedTenantAdmin(tenantId2,
+                Set.of(),
+                Set.of(Resource.VERSION_CONTROL, Resource.DASHBOARD, Resource.DASHBOARD_GROUP));
+
+        Map<EntityType, EntityTypeLoadResult> loadResult = loadVersion(versionId, EntityType.DASHBOARD);
+        assertThat(loadResult.get(EntityType.DASHBOARD).getCreated()).isEqualTo(1);
+
+        Dashboard imported = findDashboard(dashboard.getTitle());
+        assertThat(imported.getTenantId()).isEqualTo(tenantId2);
+        assertThat(imported.getExternalId()).isEqualTo(dashboard.getId());
+    }
+
+    // --- Permission-test helpers (inline-poll variants that surface getError() instead of throwing) ---
+
+    private VersionCreationResult pollVersionCreate(VersionCreateRequest request) throws Exception {
+        UUID requestId = doPostAsync("/api/entities/vc/version", request, UUID.class, status().isOk());
+        return await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> doGet("/api/entities/vc/version/" + requestId + "/status", VersionCreationResult.class),
+                        VersionCreationResult::isDone);
+    }
+
+    private VersionLoadResult pollVersionLoad(String versionId, EntityType... entityTypes) throws Exception {
+        EntityTypeVersionLoadRequest request = new EntityTypeVersionLoadRequest();
+        request.setVersionId(versionId);
+        request.setRollbackOnError(true);
+        request.setEntityTypes(Arrays.stream(entityTypes).collect(Collectors.toMap(t -> t, entityType -> {
+            EntityTypeVersionLoadConfig config = new EntityTypeVersionLoadConfig();
+            config.setLoadAttributes(true);
+            config.setLoadRelations(true);
+            config.setLoadCredentials(true);
+            config.setLoadCalculatedFields(true);
+            config.setLoadPermissions(true);
+            config.setLoadGroupEntities(true);
+            config.setRemoveOtherEntities(false);
+            config.setFindExistingEntityByName(true);
+            return config;
+        })));
+        UUID requestId = doPost("/api/entities/vc/entity", request, UUID.class);
+        return await().atMost(60, TimeUnit.SECONDS)
+                .until(() -> doGet("/api/entities/vc/entity/" + requestId + "/status", VersionLoadResult.class),
+                        VersionLoadResult::isDone);
+    }
+
+    private ComplexVersionCreateRequest buildComplexCreateRequest(String name, EntityType... entityTypes) {
+        ComplexVersionCreateRequest request = new ComplexVersionCreateRequest();
+        request.setVersionName(name);
+        request.setBranch(branch);
+        request.setSyncStrategy(SyncStrategy.MERGE);
+        request.setEntityTypes(Arrays.stream(entityTypes).collect(Collectors.toMap(t -> t, entityType -> {
+            EntityTypeVersionCreateConfig config = new EntityTypeVersionCreateConfig();
+            config.setAllEntities(true);
+            config.setSaveGroupEntities(true);
+            config.setSaveRelations(true);
+            config.setSaveAttributes(true);
+            config.setSaveCredentials(true);
+            config.setSaveCalculatedFields(true);
+            config.setSavePermissions(true);
+            return config;
+        })));
+        return request;
+    }
+
+    private ComplexVersionCreateRequest buildComplexCreateRequestForIds(String name, EntityId... entityIds) {
+        ComplexVersionCreateRequest request = new ComplexVersionCreateRequest();
+        request.setVersionName(name);
+        request.setBranch(branch);
+        request.setSyncStrategy(SyncStrategy.MERGE);
+        request.setEntityTypes(new HashMap<>());
+        Map<EntityType, List<EntityId>> entitiesByType = Arrays.stream(entityIds)
+                .collect(Collectors.groupingBy(EntityId::getEntityType));
+        entitiesByType.forEach((entityType, ids) -> {
+            EntityTypeVersionCreateConfig config = new EntityTypeVersionCreateConfig();
+            config.setAllEntities(false);
+            config.setEntityIds(ids.stream().map(EntityId::getId).toList());
+            config.setSaveRelations(true);
+            config.setSaveAttributes(true);
+            config.setSaveCredentials(true);
+            config.setSavePermissions(true);
+            config.setSaveGroupEntities(true);
+            request.getEntityTypes().put(entityType, config);
+        });
+        return request;
+    }
+
     private <E extends ExportableEntity<?> & HasTenantId> void checkImportedEntity(TenantId tenantId1, E initialEntity, TenantId tenantId2, E importedEntity) {
         assertThat(initialEntity.getTenantId()).isEqualTo(tenantId1);
         assertThat(importedEntity.getTenantId()).isEqualTo(tenantId2);
@@ -803,6 +1943,27 @@ public class VersionControlTest extends AbstractControllerTest {
             assertThat(importedEntity.getId()).isEqualTo(initialEntity.getId());
         } else {
             assertThat(importedEntity.getId()).isNotEqualTo(initialEntity.getId());
+        }
+    }
+
+    protected <E extends ExportableEntity<?> & HasOwnerId> void checkImportedEntity(TenantId tenantId1, EntityId ownerId1, E initialEntity,
+                                                                                    TenantId tenantId2, EntityId ownerId2, E importedEntity) {
+        if (initialEntity instanceof HasTenantId) {
+            assertThat(((HasTenantId) initialEntity).getTenantId()).isEqualTo(tenantId1);
+            assertThat(((HasTenantId) importedEntity).getTenantId()).isEqualTo(tenantId2);
+        }
+        assertThat(initialEntity.getOwnerId()).isEqualTo(ownerId1);
+        assertThat(importedEntity.getOwnerId()).isEqualTo(ownerId2);
+
+        assertThat(importedEntity.getExternalId()).isEqualTo(initialEntity.getId());
+
+        boolean sameTenant = tenantId1.equals(tenantId2);
+        if (!sameTenant) {
+            assertThat(importedEntity.getId()).isNotEqualTo(initialEntity.getId());
+            assertThat(importedEntity.getOwnerId()).isNotEqualTo(initialEntity.getOwnerId());
+        } else {
+            assertThat(importedEntity.getId()).isEqualTo(initialEntity.getId());
+            assertThat(importedEntity.getOwnerId()).isEqualTo(initialEntity.getOwnerId());
         }
     }
 
@@ -850,6 +2011,34 @@ public class VersionControlTest extends AbstractControllerTest {
         }
     }
 
+    protected void checkImportedReportTemplateData(ReportTemplate initialTemplate, ReportTemplate importedTemplate) {
+        assertThat(importedTemplate.getName()).isEqualTo(initialTemplate.getName());
+        assertThat(importedTemplate.getConfiguration()).isEqualTo(initialTemplate.getConfiguration());
+    }
+
+    protected void checkImportedEntityGroupData(EntityGroup initialEntityGroup, EntityGroup importedEntityGroup) {
+        assertThat(importedEntityGroup.getType()).isEqualTo(initialEntityGroup.getType());
+        assertThat(importedEntityGroup.getName()).isEqualTo(initialEntityGroup.getName());
+        assertThat(importedEntityGroup.getConfiguration()).isEqualTo(initialEntityGroup.getConfiguration());
+        assertThat(importedEntityGroup.getAdditionalInfo()).isEqualTo(initialEntityGroup.getAdditionalInfo());
+    }
+
+    protected void checkImportedConverterData(Converter initialConverter, Converter importedConverter) {
+        assertThat(importedConverter.getType()).isEqualTo(initialConverter.getType());
+        assertThat(importedConverter.getName()).isEqualTo(initialConverter.getName());
+        assertThat(importedConverter.getConfiguration()).isEqualTo(initialConverter.getConfiguration());
+        assertThat(importedConverter.getAdditionalInfo()).isEqualTo(initialConverter.getAdditionalInfo());
+        assertThat(importedConverter.getDebugSettings()).isEqualTo(initialConverter.getDebugSettings());
+    }
+
+    protected void checkImportedIntegrationData(Integration initialIntegration, Integration importedIntegration) {
+        assertThat(importedIntegration.getName()).isEqualTo(initialIntegration.getName());
+        assertThat(importedIntegration.getType()).isEqualTo(initialIntegration.getType());
+        assertThat(importedIntegration.getConfiguration()).isEqualTo(initialIntegration.getConfiguration());
+        assertThat(importedIntegration.getAdditionalInfo()).isEqualTo(initialIntegration.getAdditionalInfo());
+        assertThat(importedIntegration.getSecret()).isEqualTo(initialIntegration.getSecret());
+    }
+
     private String createVersion(String name, EntityType... entityTypes) throws Exception {
         ComplexVersionCreateRequest request = new ComplexVersionCreateRequest();
         request.setVersionName(name);
@@ -858,10 +2047,13 @@ public class VersionControlTest extends AbstractControllerTest {
         request.setEntityTypes(Arrays.stream(entityTypes).collect(Collectors.toMap(t -> t, entityType -> {
             EntityTypeVersionCreateConfig config = new EntityTypeVersionCreateConfig();
             config.setAllEntities(true);
+            config.setSaveGroupEntities(true);
             config.setSaveRelations(true);
             config.setSaveAttributes(true);
             config.setSaveCredentials(true);
             config.setSaveCalculatedFields(true);
+            config.setSavePermissions(true);
+            config.setSaveGroupEntities(true);
             return config;
         })));
 
@@ -893,6 +2085,8 @@ public class VersionControlTest extends AbstractControllerTest {
             config.setSaveRelations(true);
             config.setSaveAttributes(true);
             config.setSaveCredentials(true);
+            config.setSavePermissions(true);
+            config.setSaveGroupEntities(true);
             request.getEntityTypes().put(entityType, config);
         });
 
@@ -928,6 +2122,8 @@ public class VersionControlTest extends AbstractControllerTest {
             config.setLoadRelations(true);
             config.setLoadCredentials(true);
             config.setLoadCalculatedFields(true);
+            config.setLoadPermissions(true);
+            config.setLoadGroupEntities(true);
             config.setRemoveOtherEntities(false);
             config.setFindExistingEntityByName(true);
             configModifier.accept(config);
@@ -1236,6 +2432,40 @@ public class VersionControlTest extends AbstractControllerTest {
         return config;
     }
 
+    protected EntityGroup createEntityGroup(EntityId ownerId, EntityType groupType, String name) {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setOwnerId(ownerId);
+        entityGroup.setType(groupType);
+        entityGroup.setName(name);
+        entityGroup.setAdditionalInfo(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
+        return entityGroupService.saveEntityGroup(TenantId.SYS_TENANT_ID, ownerId, entityGroup);
+    }
+
+    protected Converter createConverter(ConverterType type, String name) {
+        Converter converter = new Converter();
+        converter.setType(type);
+        converter.setName(name);
+        converter.setConfiguration(JacksonUtil.newObjectNode()
+                .<ObjectNode>set("encoder", new TextNode("b"))
+                .set("decoder", new TextNode("c")));
+        converter.setDebugSettings(DebugSettings.all());
+        converter.setAdditionalInfo(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
+        return doPost("/api/converter", converter, Converter.class);
+    }
+
+    protected Integration createIntegration(ConverterId converterId, IntegrationType type, String name) {
+        Integration integration = new Integration();
+        integration.setType(type);
+        integration.setName(name);
+        integration.setDefaultConverterId(converterId);
+        integration.setRoutingKey("abc");
+        integration.setSecret("scrt");
+        integration.setEnabled(false);
+        integration.setConfiguration(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
+        integration.setAdditionalInfo(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
+        return doPost("/api/integration", integration, Integration.class);
+    }
+
     protected void checkImportedRuleChainData(RuleChain initialRuleChain, RuleChainMetaData initialMetaData, RuleChain importedRuleChain, RuleChainMetaData importedMetaData) {
         assertThat(importedRuleChain.getType()).isEqualTo(initialRuleChain.getType());
         assertThat(importedRuleChain.getName()).isEqualTo(initialRuleChain.getName());
@@ -1253,6 +2483,149 @@ public class VersionControlTest extends AbstractControllerTest {
             assertThat(importedNode.getConfiguration()).isEqualTo(initialNode.getConfiguration());
             assertThat(importedNode.getAdditionalInfo()).isEqualTo(initialNode.getAdditionalInfo());
         }
+    }
+
+    private void checkImportedSchedulerEventData(SchedulerEvent initialEvent, SchedulerEvent importedEvent, DashboardId dashboardId, UserId currentUserId) {
+        checkImportedSchedulerEventData(initialEvent, importedEvent);
+        ObjectNode config = (ObjectNode) importedEvent.getConfiguration().path("msgBody").path("reportConfig");
+        String oldDash = config.path("dashboardId").asText(null);
+        assertThat(oldDash).isNotNull();
+        assertThat(oldDash).isEqualTo(dashboardId.toString());
+        String oldUser = config.path("userId").asText(null);
+        assertThat(oldUser).isNotNull();
+        assertThat(oldUser).isEqualTo(currentUserId.toString()); // userId on import is set to current user
+    }
+
+    private void checkImportedSchedulerEventData(SchedulerEvent initialEvent, SchedulerEvent importedEvent, ReportTemplateId templateId, UserId currentUserId) {
+        checkImportedSchedulerEventData(initialEvent, importedEvent);
+        ObjectNode config = (ObjectNode) importedEvent.getConfiguration();
+        String oldTemplate = config.path("reportTemplateId").path("id").asText(null);
+        assertThat(oldTemplate).isNotNull();
+        assertThat(oldTemplate).isEqualTo(templateId.toString());
+        String oldUser = config.path("userId").path("id").asText(null);
+        assertThat(oldUser).isNotNull();
+        assertThat(oldUser).isEqualTo(currentUserId.toString()); // userId on import is set to current user
+    }
+
+    private void checkImportedSchedulerEventData(SchedulerEvent initialEvent, SchedulerEvent importedEvent, OtaPackageId otaPackageId) {
+        checkImportedSchedulerEventData(initialEvent, importedEvent);
+        JsonNode importedConfig = importedEvent.getConfiguration();
+        ObjectNode config = (ObjectNode) importedConfig.get("msgBody");
+        OtaPackageId importedOtaPackageId = JacksonUtil.convertValue(config, OtaPackageId.class);
+        assertThat(importedOtaPackageId).isNotNull();
+        assertThat(importedOtaPackageId.getId()).isEqualTo(otaPackageId.getId());
+    }
+
+    private void checkImportedSchedulerEventData(SchedulerEvent initialEvent, SchedulerEvent importedEvent) {
+        assertThat(importedEvent.getName()).isEqualTo(initialEvent.getName());
+        assertThat(importedEvent.getType()).isEqualTo(initialEvent.getType());
+        assertThat(importedEvent.getSchedule()).isEqualTo(initialEvent.getSchedule());
+    }
+
+    private SchedulerEvent createSchedulerEvent(TenantId tenantId, EntityId originatorId, String name, String type, JsonNode configuration) {
+        SchedulerEvent schedulerEvent = new SchedulerEvent();
+        schedulerEvent.setTenantId(tenantId);
+        schedulerEvent.setOwnerId(tenantId);
+        schedulerEvent.setOriginatorId(originatorId);
+        schedulerEvent.setConfiguration(configuration);
+        schedulerEvent.setName(name);
+        schedulerEvent.setType(type);
+        ObjectNode schedule = JacksonUtil.newObjectNode();
+        schedule.put("startTime", Long.MAX_VALUE);
+        schedule.put("timezone", "UTC");
+        schedulerEvent.setSchedule(schedule);
+        return doPost("/api/schedulerEvent", schedulerEvent, SchedulerEvent.class);
+    }
+
+    private ReportTemplate createReportTemplate(TenantId tenantId, CustomerId customerId, String name, DeviceId deviceId) {
+        ReportTemplate reportTemplate = new ReportTemplate();
+        reportTemplate.setTenantId(tenantId);
+        reportTemplate.setCustomerId(customerId);
+        reportTemplate.setName(name);
+        reportTemplate.setType(ReportTemplateType.REPORT);
+        reportTemplate.setFormat(TbReportFormat.CSV);
+
+        String devicesAliasId = StringUtils.randomAlphabetic(10);
+        EntityAlias entityAlias = buildDeviceTypeEntityAlias(devicesAliasId);
+
+        EntityTableComponent tableComponent = new EntityTableComponent();
+        List<DataKey> dataKeys = List.of(
+                DataKey.builder().name("createdTime").type("entityField").label("CREATED TIME").usePostProcessing(false).build(),
+                DataKey.builder().name("name").type("entityField").label("NAME").usePostProcessing(false).build(),
+                DataKey.builder().name("type").type("entityField").label("TYPE").usePostProcessing(false).build(),
+                DataKey.builder().name("temperature").type("timeseries").label("TEMPERATURE").usePostProcessing(false).units("K").decimals(2).build(),
+                DataKey.builder().name("threshold").type("attribute").label("THRESHOLD").usePostProcessing(false).build()
+        );
+        tableComponent.setDataSources(List.of(DataSource.builder()
+                .type(DataSourceType.DEVICE)
+                .deviceId(deviceId.getId().toString())
+                .dataKeys(dataKeys)
+                .build()));
+
+        CsvReportTemplateConfig configuration = CsvReportTemplateConfig.builder()
+                .entityAliases(List.of(entityAlias))
+                .components(List.of(tableComponent))
+                .build();
+        reportTemplate.setConfiguration(configuration);
+        return doPost("/api/reportTemplate", reportTemplate, ReportTemplate.class);
+    }
+
+    private static EntityAlias buildDeviceTypeEntityAlias(String aliasId) {
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("");
+        return new EntityAlias(aliasId, "devices", filter);
+    }
+
+    private SchedulerEvent createSchedulerEventForOtaPackageType(TenantId tenantId, EntityId originatorId, String name, String type, OtaPackageId otaPackageId) {
+        ObjectNode cfg = JacksonUtil.newObjectNode();
+        cfg.put("msgType", type);
+        ObjectNode msgBody = JacksonUtil.newObjectNode();
+        msgBody.put("entityType", "OTA_PACKAGE");
+        msgBody.put("id", otaPackageId.toString());
+        cfg.set("msgBody", msgBody);
+        cfg.set("metadata", JacksonUtil.newObjectNode());
+
+        return createSchedulerEvent(tenantId, originatorId, name, type, cfg);
+    }
+
+    private SchedulerEvent createSchedulerEventForGenerateReportType(TenantId tenantId, EntityId originatorId, String name, DashboardId dashboardId) {
+        ObjectNode reportConfig = JacksonUtil.newObjectNode();
+        reportConfig.put("baseUrl", "http://localhost:8081");
+        reportConfig.put("useDashboardTimewindow", true);
+        ObjectNode history = JacksonUtil.newObjectNode();
+        history.put("historyType", 0);
+        history.put("interval", 1000);
+        history.put("timewindowMs", 86_400_000);
+        ObjectNode timewindow = JacksonUtil.newObjectNode();
+        timewindow.put("selectedTab", 1);
+        timewindow.set("history", history);
+        reportConfig.set("timewindow", timewindow);
+        reportConfig.put("namePattern", "report-%d{yyyy-MM-dd_HH:mm:ss}");
+        reportConfig.put("type", "pdf");
+        reportConfig.put("timezone", "Europe/Kiev");
+        reportConfig.put("useCurrentUserCredentials", true);
+        reportConfig.put("userId", "7a306270-4820-11f0-bc58-39b3596e763d");
+        reportConfig.put("dashboardId", dashboardId.toString());
+        reportConfig.put("state", "");
+
+        ObjectNode msgBody = JacksonUtil.newObjectNode();
+        msgBody.set("reportConfig", reportConfig);
+        msgBody.put("sendEmail", false);
+
+        ObjectNode cfg = JacksonUtil.newObjectNode();
+        cfg.set("msgBody", msgBody);
+        cfg.set("metadata", JacksonUtil.newObjectNode());
+
+        return createSchedulerEvent(tenantId, originatorId, name, "generateDashboardReport", cfg);
+    }
+
+    private SchedulerEvent createSchedulerEventForGenerateReportType(TenantId tenantId, EntityId originatorId, String name, ReportTemplateId reportTemplateId, UserId userId) {
+        ReportConfig reportConfig = new ReportConfig();
+        reportConfig.setReportTemplateId(reportTemplateId);
+        reportConfig.setTimezone("Europe/Kiev");
+        reportConfig.setUserId(userId);
+        return createSchedulerEvent(tenantId, originatorId, name, "generateReport", JacksonUtil.valueToTree(reportConfig));
     }
 
     private Dashboard assignDashboardToCustomer(DashboardId dashboardId, CustomerId customerId) {
@@ -1296,12 +2669,36 @@ public class VersionControlTest extends AbstractControllerTest {
         return doGet("/api/ruleChain/" + ruleChainId + "/metadata", RuleChainMetaData.class);
     }
 
+    private Integration findIntegration(String name) throws Exception {
+        return doGetTypedWithPageLink("/api/integrations?", new TypeReference<PageData<Integration>>() {}, new PageLink(100, 0, name)).getData().get(0);
+    }
+
+    private Converter findConverter(String name) throws Exception {
+        return doGetTypedWithPageLink("/api/converters?", new TypeReference<PageData<Converter>>() {}, new PageLink(100, 0, name)).getData().get(0);
+    }
+
+    private EntityGroup findEntityGroup(String name, EntityType groupType) throws Exception {
+        return doGetTypedWithPageLink("/api/entityGroups/" + groupType + "?", new TypeReference<PageData<EntityGroup>>() {}, new PageLink(100, 0, name)).getData().get(0);
+    }
+
+    private Role findRole(String name) throws Exception {
+        return doGetTypedWithPageLink("/api/roles?", new TypeReference<PageData<Role>>() {}, new PageLink(100, 0, name)).getData().get(0);
+    }
+
+    private List<GroupPermissionInfo> findGroupPermissions(EntityGroupId userGroupId) throws Exception {
+        return doGetTyped("/api/userGroup/" + userGroupId + "/groupPermissions?", new TypeReference<>() {});
+    }
+
     private CalculatedField findCalculatedFieldByEntityId(EntityId entityId) throws Exception {
         return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?", new TypeReference<PageData<CalculatedField>>() {}, new PageLink(100, 0)).getData().get(0);
     }
 
     private List<CalculatedField> findCalculatedFieldsByEntityId(EntityId entityId) throws Exception {
         return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?", new TypeReference<PageData<CalculatedField>>() {}, new PageLink(100, 0)).getData();
+    }
+
+    private DeviceGroupOtaPackage findDeviceGroupOtaPackage(EntityGroupId groupId, OtaPackageType otaPackageType) throws Exception {
+        return doGet("/api/deviceGroupOtaPackage/" + groupId.getId() + "/" + otaPackageType, DeviceGroupOtaPackage.class);
     }
 
     private TbResourceInfo createResource(String name) {
@@ -1320,6 +2717,23 @@ public class VersionControlTest extends AbstractControllerTest {
 
     private TbResource findResource(String name) throws Exception {
         return doGetTypedWithPageLink("/api/resource?", new TypeReference<PageData<TbResource>>() {}, new PageLink(100, 0, name)).getData().get(0);
+    }
+
+    private SchedulerEvent findSchedulerEvent(String name) throws Exception {
+        SchedulerEventWithCustomerInfo eventInfo = doGetTyped("/api/schedulerEvents?", new TypeReference<List<SchedulerEventWithCustomerInfo>>() {}).stream()
+                .filter(event -> event.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Scheduler event with name " + name + " not found"));
+        return doGet("/api/schedulerEvent/" + eventInfo.getId().getId(), SchedulerEvent.class);
+    }
+
+    private ReportTemplate findReportTemplate(String name) throws Exception {
+        ReportTemplateInfo reportTemplate = doGetTypedWithPageLink("/api/reportTemplateInfos/all?", new TypeReference<PageData<ReportTemplateInfo>>() {}, new PageLink(100, 0, name)).getData()
+                .stream()
+                .filter(template -> template.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Report template with name " + name + " not found"));
+        return doGet("/api/reportTemplate/" + reportTemplate.getId().getId(), ReportTemplate.class);
     }
 
 }

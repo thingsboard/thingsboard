@@ -1,0 +1,248 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "827d55ab-da1b-4c50-a721-32ec778182ef"
+  },
+  "type": "ALARM",
+  "name": "Body Temperature",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "bodyTemperatureAlarmEnabled": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "bodyTemperatureAlarmEnabled",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "false"
+      },
+      "minMajorBodyTemperatureThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "minMajorBodyTemperatureThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "36.0"
+      },
+      "maxMajorBodyTemperatureThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "maxMajorBodyTemperatureThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "37.0"
+      },
+      "temperature": {
+        "refEntityKey": {
+          "key": "temperature",
+          "type": "TS_LATEST"
+        }
+      },
+      "minCriticalBodyTemperatureThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "minCriticalBodyTemperatureThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "35.5"
+      },
+      "maxCriticalBodyTemperatureThreshold": {
+        "refDynamicSourceConfiguration": {
+          "type": "CURRENT_OWNER"
+        },
+        "refEntityKey": {
+          "key": "maxCriticalBodyTemperatureThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "38.0"
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "bodyTemperatureAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "temperature",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "COMPLEX",
+                    "operation": "OR",
+                    "predicates": [
+                      {
+                        "type": "NUMERIC",
+                        "operation": "GREATER_OR_EQUAL",
+                        "value": {
+                          "staticValue": null,
+                          "dynamicValueArgument": "maxCriticalBodyTemperatureThreshold"
+                        }
+                      },
+                      {
+                        "type": "NUMERIC",
+                        "operation": "LESS_OR_EQUAL",
+                        "value": {
+                          "staticValue": null,
+                          "dynamicValueArgument": "minCriticalBodyTemperatureThreshold"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "MAJOR": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "bodyTemperatureAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "temperature",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "COMPLEX",
+                    "operation": "OR",
+                    "predicates": [
+                      {
+                        "type": "NUMERIC",
+                        "operation": "GREATER_OR_EQUAL",
+                        "value": {
+                          "staticValue": null,
+                          "dynamicValueArgument": "maxMajorBodyTemperatureThreshold"
+                        }
+                      },
+                      {
+                        "type": "NUMERIC",
+                        "operation": "LESS_OR_EQUAL",
+                        "value": {
+                          "staticValue": null,
+                          "dynamicValueArgument": "minMajorBodyTemperatureThreshold"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "temperature",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "COMPLEX",
+                  "operation": "AND",
+                  "predicates": [
+                    {
+                      "type": "NUMERIC",
+                      "operation": "LESS",
+                      "value": {
+                        "staticValue": null,
+                        "dynamicValueArgument": "maxMajorBodyTemperatureThreshold"
+                      }
+                    },
+                    {
+                      "type": "NUMERIC",
+                      "operation": "GREATER",
+                      "value": {
+                        "staticValue": null,
+                        "dynamicValueArgument": "minMajorBodyTemperatureThreshold"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": true,
+    "propagateToOwner": true,
+    "propagateToTenant": true,
+    "propagateRelationTypes": [
+      "Use"
+    ],
+    "output": null
+  }
+}

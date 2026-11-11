@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.sync.ie;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -34,15 +22,20 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.report.ReportTemplate;
+import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.sync.JsonTbEntity;
 
 import java.util.Comparator;
@@ -57,29 +50,36 @@ import java.util.Map;
         @Type(name = "WIDGET_TYPE", value = WidgetTypeExportData.class),
         @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundleExportData.class),
         @Type(name = "OTA_PACKAGE", value = OtaPackageExportData.class),
-        @Type(name = "CUSTOMER", value = EntityExportData.CustomerExportData.class),
-        @Type(name = "TB_RESOURCE", value = EntityExportData.TbResourceExportData.class),
-        @Type(name = "DASHBOARD", value = EntityExportData.DashboardExportData.class),
-        @Type(name = "ASSET_PROFILE", value = EntityExportData.AssetProfileExportData.class),
+        @Type(name = "ENTITY_GROUP", value = EntityGroupExportData.class),
         @Type(name = "ASSET", value = EntityExportData.AssetExportData.class),
-        @Type(name = "DEVICE_PROFILE", value = EntityExportData.DeviceProfileExportData.class),
+        @Type(name = "DASHBOARD", value = EntityExportData.DashboardExportData.class),
+        @Type(name = "CUSTOMER", value = EntityExportData.CustomerExportData.class),
         @Type(name = "ENTITY_VIEW", value = EntityExportData.EntityViewExportData.class),
+        @Type(name = "SCHEDULER_EVENT", value = SchedulerEventExportData.class),
+        @Type(name = "TB_RESOURCE", value = EntityExportData.TbResourceExportData.class),
+        @Type(name = "ASSET_PROFILE", value = EntityExportData.AssetProfileExportData.class),
+        @Type(name = "DEVICE_PROFILE", value = EntityExportData.DeviceProfileExportData.class),
         @Type(name = "NOTIFICATION_TEMPLATE", value = EntityExportData.NotificationTemplateExportData.class),
         @Type(name = "NOTIFICATION_TARGET", value = EntityExportData.NotificationTargetExportData.class),
         @Type(name = "NOTIFICATION_RULE", value = EntityExportData.NotificationRuleExportData.class),
-        @Type(name = "AI_MODEL", value = EntityExportData.AiModelExportData.class)
+        @Type(name = "AI_MODEL", value = EntityExportData.AiModelExportData.class),
+        @Type(name = "CONVERTER", value = EntityExportData.ConverterExportData.class),
+        @Type(name = "INTEGRATION", value = EntityExportData.IntegrationExportData.class),
+        @Type(name = "ROLE", value = EntityExportData.RoleExportData.class),
+        @Type(name = "REPORT_TEMPLATE", value = EntityExportData.ReportTemplateExportData.class),
+        @Type(name = "USER", value = EntityExportData.UserExportData.class)
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(
         description = "Base export container for ThingsBoard entities",
         discriminatorProperty = "entityType",
         discriminatorMapping = {
-                @DiscriminatorMapping(value = "CUSTOMER", schema = EntityExportData.CustomerExportData.class),
                 @DiscriminatorMapping(value = "DEVICE", schema = DeviceExportData.class),
                 @DiscriminatorMapping(value = "RULE_CHAIN", schema = RuleChainExportData.class),
                 @DiscriminatorMapping(value = "WIDGET_TYPE", schema = WidgetTypeExportData.class),
                 @DiscriminatorMapping(value = "WIDGETS_BUNDLE", schema = WidgetsBundleExportData.class),
                 @DiscriminatorMapping(value = "OTA_PACKAGE", schema = OtaPackageExportData.class),
+                @DiscriminatorMapping(value = "CUSTOMER", schema = EntityExportData.CustomerExportData.class),
                 @DiscriminatorMapping(value = "TB_RESOURCE", schema = EntityExportData.TbResourceExportData.class),
                 @DiscriminatorMapping(value = "DASHBOARD", schema = EntityExportData.DashboardExportData.class),
                 @DiscriminatorMapping(value = "ASSET_PROFILE", schema = EntityExportData.AssetProfileExportData.class),
@@ -89,7 +89,14 @@ import java.util.Map;
                 @DiscriminatorMapping(value = "NOTIFICATION_TEMPLATE", schema = EntityExportData.NotificationTemplateExportData.class),
                 @DiscriminatorMapping(value = "NOTIFICATION_TARGET", schema = EntityExportData.NotificationTargetExportData.class),
                 @DiscriminatorMapping(value = "NOTIFICATION_RULE", schema = EntityExportData.NotificationRuleExportData.class),
-                @DiscriminatorMapping(value = "AI_MODEL", schema = EntityExportData.AiModelExportData.class)
+                @DiscriminatorMapping(value = "AI_MODEL", schema = EntityExportData.AiModelExportData.class),
+                @DiscriminatorMapping(value = "ENTITY_GROUP", schema = EntityGroupExportData.class),
+                @DiscriminatorMapping(value = "SCHEDULER_EVENT", schema = SchedulerEventExportData.class),
+                @DiscriminatorMapping(value = "CONVERTER", schema = EntityExportData.ConverterExportData.class),
+                @DiscriminatorMapping(value = "INTEGRATION", schema = EntityExportData.IntegrationExportData.class),
+                @DiscriminatorMapping(value = "ROLE", schema = EntityExportData.RoleExportData.class),
+                @DiscriminatorMapping(value = "REPORT_TEMPLATE", schema = EntityExportData.ReportTemplateExportData.class),
+                @DiscriminatorMapping(value = "USER", schema = EntityExportData.UserExportData.class)
         }
 )
 @Data
@@ -143,6 +150,13 @@ public abstract class EntityExportData<E extends ExportableEntity<? extends Enti
             case NOTIFICATION_TARGET -> new NotificationTargetExportData();
             case NOTIFICATION_RULE -> new NotificationRuleExportData();
             case AI_MODEL -> new AiModelExportData();
+            case CONVERTER -> new ConverterExportData();
+            case INTEGRATION -> new IntegrationExportData();
+            case ROLE -> new RoleExportData();
+            case REPORT_TEMPLATE -> new ReportTemplateExportData();
+            case ENTITY_GROUP -> new EntityGroupExportData();
+            case SCHEDULER_EVENT -> new SchedulerEventExportData();
+            case USER -> new UserExportData();
             default -> throw new IllegalArgumentException("Unsupported entity type: " + entityType);
         };
     }
@@ -183,6 +197,16 @@ public abstract class EntityExportData<E extends ExportableEntity<? extends Enti
     @JsonIgnore
     public boolean hasCalculatedFields() {
         return calculatedFields != null && !calculatedFields.isEmpty();
+    }
+
+    @JsonIgnore
+    public boolean hasPermissions() {
+        return false;
+    }
+
+    @JsonIgnore
+    public boolean hasGroupEntities() {
+        return false;
     }
 
     @Schema
@@ -270,6 +294,46 @@ public abstract class EntityExportData<E extends ExportableEntity<? extends Enti
         @Override
         public EntityType getEntityType() {
             return EntityType.AI_MODEL;
+        }
+    }
+
+    @Schema
+    public static class ConverterExportData extends EntityExportData<Converter> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.CONVERTER;
+        }
+    }
+
+    @Schema
+    public static class IntegrationExportData extends EntityExportData<Integration> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.INTEGRATION;
+        }
+    }
+
+    @Schema
+    public static class RoleExportData extends EntityExportData<Role> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.ROLE;
+        }
+    }
+
+    @Schema
+    public static class ReportTemplateExportData extends EntityExportData<ReportTemplate> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.REPORT_TEMPLATE;
+        }
+    }
+
+    @Schema
+    public static class UserExportData extends EntityExportData<User> {
+        @Override
+        public EntityType getEntityType() {
+            return EntityType.USER;
         }
     }
 

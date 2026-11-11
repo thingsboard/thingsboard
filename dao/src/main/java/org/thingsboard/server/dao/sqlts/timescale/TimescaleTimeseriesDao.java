@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sqlts.timescale;
 
 import com.google.common.util.concurrent.Futures;
@@ -38,6 +26,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
@@ -160,7 +149,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
             List<Optional<? extends AbstractTsKvEntity>> data = findAllAndAggregateAsync(entityId, query.getKey(), startTs, endTs, timeBucket, query.getAggregation());
             return getReadTsKvQueryResultFuture(query, Futures.immediateFuture(data));
         } else {
-            //TODO: @dshvaika improve according to native capabilities of Timescale.
+            //TODO: improve according to native capabilities of Timescale.
             long startPeriod = query.getStartTs();
             long endPeriod = Math.max(query.getStartTs() + 1, query.getEndTs());
             List<TimescaleTsKvEntity> timescaleTsKvEntities = new ArrayList<>();
@@ -226,6 +215,12 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         } else {
             return Collections.emptyList();
         }
+    }
+
+
+    @Override
+    public ListenableFuture<TsKvEntry> findOneAsync(TenantId tenantId, EntityId entityId, long ts, String key) {
+        return Futures.immediateFuture(DaoUtil.getData(tsKvRepository.findById(new TimescaleTsKvCompositeKey(entityId.getId(), keyDictionaryDao.getOrSaveKeyId(key), ts))));
     }
 
     private List<TimescaleTsKvEntity> switchAggregation(String key, long startTs, long endTs, long timeBucket, Aggregation aggregation, UUID entityId) {

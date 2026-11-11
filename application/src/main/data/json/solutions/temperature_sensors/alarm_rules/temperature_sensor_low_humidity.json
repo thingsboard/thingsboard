@@ -1,0 +1,92 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "f127d253-5668-42e6-9a30-d4d102f4af78"
+  },
+  "type": "ALARM",
+  "name": "Low Humidity",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "humidityAlarmFlag": {
+        "refEntityKey": {
+          "key": "humidityAlarmFlag",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        }
+      },
+      "humidity": {
+        "refEntityKey": {
+          "key": "humidity",
+          "type": "TS_LATEST"
+        }
+      },
+      "humidityAlarmThreshold": {
+        "refEntityKey": {
+          "key": "humidityAlarmThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "45.0"
+      }
+    },
+    "createRules": {
+      "MAJOR": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "humidityAlarmFlag",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "humidity",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "LESS",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "humidityAlarmThreshold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": "Current humidity = ${humidity}",
+        "dashboardId": null
+      }
+    },
+    "clearRule": null,
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

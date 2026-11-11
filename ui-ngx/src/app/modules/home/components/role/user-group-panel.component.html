@@ -1,0 +1,34 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-form-panel stroked">
+  <div class="tb-form-panel-title" translate>group-permission.user-group-roles</div>
+  <section class="flex flex-col gap-3 xs:gap-4">
+    @for (registrationControl of groupPermissionsForm.controls; track registrationControl) {
+      <div class="flex flex-1 items-center gap-2"
+        >
+        <tb-user-groups-panel-row class="flex-1" [formControl]="registrationControl"></tb-user-groups-panel-row>
+        <button type="button"
+          mat-icon-button
+          (click)="removePermission($index)"
+          matTooltip="{{ 'group-permission.delete' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    }
+  </section>
+  @if (!disabled) {
+    <section>
+      <button mat-stroked-button
+        color="primary"
+        (click)="addPermission($event)"
+        type="button">
+        {{ 'group-permission.add-group-permission' | translate }}
+      </button>
+    </section>
+  }
+</section>

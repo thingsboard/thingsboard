@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -34,9 +21,6 @@ import {
   IotHubUnpublishedWarningDialogData,
   TbIotHubUnpublishedWarningDialogComponent
 } from '@home/components/iot-hub/iot-hub-unpublished-warning-dialog.component';
-import {
-  TbIotHubPeRequiredDialogComponent
-} from '@home/components/iot-hub/iot-hub-pe-required-dialog.component';
 import {
   IotHubUpgradeRequiredDialogData,
   TbIotHubUpgradeRequiredDialogComponent
@@ -85,15 +69,11 @@ export class TbIotHubItemResolverComponent implements OnInit {
       error: err => {
         if (bySlug && err?.status === 404) {
           const body = (err?.error ?? {}) as ListingItemVersionNotFound;
-          if (body.peRequired) {
-            this.showPeRequired();
-            return;
-          }
           if (typeof body.minTbVersionRequired === 'number') {
             this.showMinTbVersionRequired(body.minTbVersionRequired);
             return;
           }
-          if (body.noMatchingVersions) {
+          if (body.peRequired || body.noMatchingVersions) {
             this.failTo('iot-hub.deep-link-not-found');
             return;
           }
@@ -103,16 +83,6 @@ export class TbIotHubItemResolverComponent implements OnInit {
           : 'iot-hub.deep-link-fetch-failed';
         this.failTo(key);
       }
-    });
-  }
-
-  private showPeRequired(): void {
-    this.router.navigate(['/iot-hub'], { replaceUrl: true }).then(() => {
-      this.dialog.open(TbIotHubPeRequiredDialogComponent, {
-        panelClass: ['tb-dialog'],
-        disableClose: true,
-        autoFocus: false
-      });
     });
   }
 

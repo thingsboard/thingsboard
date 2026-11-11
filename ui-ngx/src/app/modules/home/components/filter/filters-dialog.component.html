@@ -1,27 +1,17 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="filtersFormGroup" (ngSubmit)="save()" style="width: 700px;">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ title | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
-            (click)="cancel()"
-            type="button">
+      (click)="cancel()"
+      type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
@@ -90,15 +80,15 @@
     </button>
     <span class="flex-1"></span>
     <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()"
-            cdkFocusInitial>
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()"
+      cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || filtersFormGroup.invalid || !filtersFormGroup.dirty">
+      type="submit"
+      [disabled]="(isLoading$ | async) || filtersFormGroup.invalid || !filtersFormGroup.dirty">
       {{ 'action.save' | translate }}
     </button>
   </div>

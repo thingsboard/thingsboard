@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/public-api';
@@ -42,12 +29,20 @@ import { DeleteAttributesConfigComponent } from './delete-attributes-config.comp
 import { MathFunctionConfigComponent } from './math-function-config.component';
 import { DeviceStateConfigComponent } from './device-state-config.component';
 import { SendRestApiCallReplyConfigComponent } from './send-rest-api-call-reply-config.component';
+import { AddToGroupConfigComponent } from '@home/components/rule-node/action/add-to-group-config.component';
+import { ChangeOwnerConfigComponent } from '@home/components/rule-node/action/change-owner-config.component';
+import { GenerateDashboardReportConfigComponent } from '@home/components/rule-node/action/generate-dashboard-report-config.component';
+import {
+  IntegrationDownlinkConfigComponent
+} from '@home/components/rule-node/action/integration-downlink-config.component';
+import { RemoveFromGroupConfigComponent } from '@home/components/rule-node/action/remove-from-group-config.component';
 import {
   AdvancedProcessingSettingComponent
 } from '@home/components/rule-node/action/advanced-processing-setting.component';
 import {
   AdvancedProcessingSettingRowComponent
 } from '@home/components/rule-node/action/advanced-processing-setting-row.component';
+import { GenerateReportConfigComponent } from '@home/components/rule-node/action/generate-report-config.component';
 
 @NgModule({
   declarations: [
@@ -76,6 +71,12 @@ import {
     DeviceStateConfigComponent,
     AdvancedProcessingSettingComponent,
     AdvancedProcessingSettingRowComponent,
+    AddToGroupConfigComponent,
+    ChangeOwnerConfigComponent,
+    GenerateDashboardReportConfigComponent,
+    GenerateReportConfigComponent,
+    IntegrationDownlinkConfigComponent,
+    RemoveFromGroupConfigComponent,
   ],
   imports: [
     CommonModule,
@@ -99,14 +100,20 @@ import {
     GpsGeoActionConfigComponent,
     MsgCountConfigComponent,
     RpcReplyConfigComponent,
-    SaveToCustomTableConfigComponent,
     UnassignCustomerConfigComponent,
+    SaveToCustomTableConfigComponent,
     SendRestApiCallReplyConfigComponent,
     DeviceProfileConfigComponent,
     PushToEdgeConfigComponent,
     PushToCloudConfigComponent,
     MathFunctionConfigComponent,
-    DeviceStateConfigComponent
+    DeviceStateConfigComponent,
+    AddToGroupConfigComponent,
+    ChangeOwnerConfigComponent,
+    GenerateDashboardReportConfigComponent,
+    GenerateReportConfigComponent,
+    IntegrationDownlinkConfigComponent,
+    RemoveFromGroupConfigComponent,
   ]
 })
 export class ActionRuleNodeConfigModule {

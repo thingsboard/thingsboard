@@ -1,0 +1,16 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host ::ng-deep {
+  .mat-mdc-radio-button {
+    display: block;
+    margin-bottom: 16px;
+    .mdc-form-field {
+      width: 100%;
+      align-items: start;
+      & > label {
+        padding-top: 10px;
+        width: 100%;
+      }
+    }
+  }
+}

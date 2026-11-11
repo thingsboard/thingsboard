@@ -1,40 +1,32 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
-import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { SortOrder } from '@shared/models/page/sort-order';
 import { PageData } from '@shared/models/page/page-data';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { ItemType, FilterParamInfo, CREATOR_VISIBLE_ITEM_TYPES } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  CREATOR_VISIBLE_ITEM_TYPES,
+  FilterParamInfo,
+  IOT_HUB_SORT_OPTIONS,
+  isCompactItemType,
+  ItemType
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { widgetTypeTranslations, cfTypeTranslations, ruleChainTypeTranslations } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubInstalledItem, DeviceInstalledItemDescriptor } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
-import { filterIotHubItemsBySearch, groupIotHubFilterItems, IotHubFilterGroup } from '@home/components/iot-hub/iot-hub-utils';
-
-interface SortOption {
-  value: string;
-  label: string;
-  direction: Direction;
-}
+import {
+  filterIotHubItemsBySearch,
+  groupIotHubFilterItems,
+  IOT_HUB_FILTER_SCROLL_THRESHOLD,
+  IotHubFilterGroup,
+  measureGridColumns
+} from '@home/components/iot-hub/iot-hub-utils';
 
 @Component({
   selector: 'tb-iot-hub-browse',
@@ -48,7 +40,6 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   private static typeTabLabel(t: ItemType): string {
     switch (t) {
       case ItemType.WIDGET: return 'item.type-widget-plural';
-      case ItemType.DASHBOARD: return 'item.type-dashboard-plural';
       case ItemType.SOLUTION_TEMPLATE: return 'item.type-solution-template-plural';
       case ItemType.CALCULATED_FIELD: return 'item.type-calculated-field-plural';
       case ItemType.ALARM_RULE: return 'item.type-alarm-rule-plural';
@@ -58,6 +49,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   readonly ItemType = ItemType;
+  readonly scrollThreshold = IOT_HUB_FILTER_SCROLL_THRESHOLD;
 
   @Input() creatorId: string;
   @Input() embedded = false;
@@ -65,6 +57,11 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   @Input() mode: 'default' | 'add' = 'default';
   @Input() fixedSubType: string;
   @Output() addItem = new EventEmitter<MpItemVersionView>();
+  /**
+   * Fired whenever an install, update or delete changed what this tenant has installed, so a host
+   * page showing its own installed-items counter can refresh it instead of waiting for a reload.
+   */
+  @Output() installedItemsChanged = new EventEmitter<void>();
   @Input() set activeType(value: ItemType) {
     if (value && value !== this._activeType) {
       const wasInit = !!this._activeType;
@@ -88,15 +85,12 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   get isCompactType(): boolean {
-    return this._activeType === ItemType.CALCULATED_FIELD
-        || this._activeType === ItemType.ALARM_RULE
-        || this._activeType === ItemType.RULE_CHAIN;
+    return isCompactItemType(this._activeType);
   }
 
   get searchPlaceholderKey(): string {
     switch (this._activeType) {
       case ItemType.WIDGET: return 'iot-hub.search-widgets';
-      case ItemType.DASHBOARD: return 'iot-hub.search-dashboards';
       case ItemType.SOLUTION_TEMPLATE: return 'iot-hub.search-solution-templates';
       case ItemType.CALCULATED_FIELD: return 'iot-hub.search-calculated-fields';
       case ItemType.ALARM_RULE: return 'iot-hub.search-alarm-rules';
@@ -139,12 +133,9 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   activeConnectivity = new Set<string>();
   activeHardwareTypes = new Set<string>();
   activeVendors = new Set<string>();
+  verifiedCreatorsOnly = false;
 
-  sortOptions: SortOption[] = [
-    { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
-    { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
-    { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
-  ];
+  readonly sortOptions = IOT_HUB_SORT_OPTIONS;
 
   typeTabs: { type: ItemType; label: string }[] = CREATOR_VISIBLE_ITEM_TYPES.map(t => ({
     type: t,
@@ -231,17 +222,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     if (!el) {
       return this.probeCols;
     }
-    // Force layout so `grid-template-columns` resolves to pixel tracks, not `repeat(...)`.
-    void el.offsetWidth;
-    const tracks = getComputedStyle(el).gridTemplateColumns;
-    if (!tracks || tracks === 'none') {
-      return 1;
-    }
-    if (tracks.startsWith('repeat(')) {
-      const match = tracks.match(/^repeat\(\s*(\d+)\s*,/);
-      return match ? parseInt(match[1], 10) : 1;
-    }
-    return Math.max(1, tracks.trim().split(/\s+/).filter(t => t.length > 0).length);
+    return measureGridColumns(el);
   }
 
   private adjustPageSize(): void {
@@ -407,6 +388,12 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     this.loadItems();
   }
 
+  onVerifiedCreatorsToggle(): void {
+    this.verifiedCreatorsOnly = !this.verifiedCreatorsOnly;
+    this.pageIndex = 0;
+    this.loadItems();
+  }
+
   isVendorActive(vendor: string): boolean {
     return this.activeVendors.has(vendor);
   }
@@ -510,12 +497,14 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     this.activeConnectivity.clear();
     this.activeHardwareTypes.clear();
     this.activeVendors.clear();
+    this.verifiedCreatorsOnly = false;
   }
 
   get activeFilterCount(): number {
     const subtypeCount = this.fixedSubType ? this.getActiveSubtypesArray().length : (this.getActiveSubtypes()?.size || 0);
     return subtypeCount + this.activeCategories.size + this.activeUseCases.size +
-           this.activeConnectivity.size + this.activeHardwareTypes.size + this.activeVendors.size;
+           this.activeConnectivity.size + this.activeHardwareTypes.size + this.activeVendors.size +
+           (this.verifiedCreatorsOnly ? 1 : 0);
   }
 
   hasActiveDropdownFilters(): boolean {
@@ -523,7 +512,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     return this.activeCategories.size > 0 ||
            this.activeUseCases.size > 0 || subtypeCount > 0 ||
            this.activeConnectivity.size > 0 || this.activeHardwareTypes.size > 0 ||
-           this.activeVendors.size > 0;
+           this.activeVendors.size > 0 || this.verifiedCreatorsOnly;
   }
 
   hasActiveFilters(): boolean {
@@ -533,7 +522,6 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
   getTitle(): string {
     switch (this.activeType) {
       case ItemType.WIDGET: return 'iot-hub.title-widgets';
-      case ItemType.DASHBOARD: return 'iot-hub.title-dashboards';
       case ItemType.SOLUTION_TEMPLATE: return 'iot-hub.title-solution-templates';
       case ItemType.CALCULATED_FIELD: return 'iot-hub.title-calculated-fields';
       case ItemType.ALARM_RULE: return 'iot-hub.title-alarm-rules';
@@ -641,7 +629,11 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
-  private reloadInstalledItems(): void {
+  /**
+   * Re-reads what is installed for the active type and announces the change. Public so a host page
+   * that opens the item detail dialog itself can refresh this grid through the same path.
+   */
+  reloadInstalledItems(): void {
     const config = {ignoreLoading: true};
     const pageLink = new PageLink(10000, 0);
     if (this.activeType === ItemType.WIDGET) {
@@ -657,6 +649,7 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
         this.installedItemCounts = counts;
       });
     }
+    this.installedItemsChanged.emit();
   }
 
   private loadFilterInfo(): void {
@@ -707,7 +700,8 @@ export class TbIotHubBrowseComponent implements OnInit, AfterViewInit, OnDestroy
       ruleChainTypes: this.activeRuleChainTypes.size > 0 ? Array.from(this.activeRuleChainTypes) : undefined,
       hardwareTypes: this.activeHardwareTypes.size > 0 ? Array.from(this.activeHardwareTypes) : undefined,
       connectivity: this.activeConnectivity.size > 0 ? Array.from(this.activeConnectivity) : undefined,
-      vendors: this.activeVendors.size > 0 ? Array.from(this.activeVendors) : undefined
+      vendors: this.activeVendors.size > 0 ? Array.from(this.activeVendors) : undefined,
+      creatorVerified: this.verifiedCreatorsOnly
     });
     this.iotHubApiService.getPublishedVersions(
       query,

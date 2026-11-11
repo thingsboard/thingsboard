@@ -1,0 +1,74 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-solution-settings {
+    z-index: 2;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border-left: 1px solid rgba(0, 0, 0, 0.12);
+
+    .tb-solution-settings-toolbar {
+      height: 50px;
+      min-height: 50px;
+      padding: 0 12px;
+      justify-content: space-between;
+      --mat-toolbar-container-background-color: #fff;
+      --mat-toolbar-title-text-size: 18px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .tb-solution-settings-container {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex: 1;
+      gap: 16px;
+
+      .tb-solution-settings-container-setting {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+
+        .tb-solution-menu-container {
+          overflow: auto;
+          border-right: 1px solid rgba(0, 0, 0, 0.12);
+        }
+
+        .tb-solution-menu {
+          padding: 0;
+          --mat-list-list-item-label-text-weight: 500;
+          .mdc-list-item {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+          }
+          .mdc-list-item--selected {
+            border-bottom-color: var(--tb-primary-500);
+            &:before {
+              display: block;
+              height: auto;
+              content: "";
+              position: absolute;
+              inset: 0;
+              background: var(--tb-primary-500);
+              opacity: 0.1;
+              pointer-events: none;
+            }
+          }
+        }
+      }
+
+      &::ng-deep {
+        tb-json-object-edit .tb-json-object-panel {
+          margin-left: 0;
+        }
+      }
+    }
+  }
+}

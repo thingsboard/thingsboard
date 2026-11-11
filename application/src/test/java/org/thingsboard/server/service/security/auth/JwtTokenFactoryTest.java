@@ -1,24 +1,13 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth;
 
 import io.jsonwebtoken.Claims;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -35,6 +24,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -68,7 +58,7 @@ public class JwtTokenFactoryTest {
         jwtSettingsService = mockJwtSettingsService();
         mockJwtSettings(jwtSettings);
 
-        tokenFactory = new JwtTokenFactory(jwtSettingsService);
+        tokenFactory = new JwtTokenFactory(jwtSettingsService, Mockito.mock(UserPermissionsService.class));
     }
 
     @Test
@@ -77,7 +67,7 @@ public class JwtTokenFactoryTest {
 
         testCreateAndParseAccessJwtToken(securityUser);
 
-        securityUser = new SecurityUser(securityUser, true, new UserPrincipal(UserPrincipal.Type.PUBLIC_ID, securityUser.getEmail()));
+        securityUser = new SecurityUser(securityUser, true, new UserPrincipal(UserPrincipal.Type.PUBLIC_ID, securityUser.getEmail()), null);
         securityUser.setFirstName(null);
         securityUser.setLastName(null);
         securityUser.setCustomerId(null);
@@ -136,6 +126,29 @@ public class JwtTokenFactoryTest {
         assertThat(parsedSecurityUser.getUserPrincipal()).matches(userPrincipal -> {
             return userPrincipal.getType() == UserPrincipal.Type.USER_NAME
                     && userPrincipal.getValue().equals(securityUser.getUserPrincipal().getValue());
+        });
+    }
+
+    @Test
+    public void testGetExpirationTimeFromClaims() {
+        SecurityUser securityUser = createSecurityUser();
+
+        AccessJwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
+
+        Claims claims = accessToken.getClaims();
+        assertThat(claims.getExpiration()).matches(actualExpirationTime -> {
+            Calendar expirationTime = Calendar.getInstance();
+            expirationTime.setTime(new Date());
+            expirationTime.add(Calendar.SECOND, jwtSettings.getTokenExpirationTime());
+            if (actualExpirationTime.equals(expirationTime.getTime())) {
+                return true;
+            } else if (actualExpirationTime.before(expirationTime.getTime())) {
+                int gap = 2;
+                expirationTime.add(Calendar.SECOND, -gap);
+                return actualExpirationTime.after(expirationTime.getTime());
+            } else {
+                return false;
+            }
         });
     }
 

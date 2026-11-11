@@ -1,83 +1,235 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.thingsboard.server.common.data.trendz.TrendzConfiguration;
+import org.thingsboard.server.common.data.trendz.TrendzHealthcheckResult;
 import org.thingsboard.server.common.data.trendz.TrendzSettings;
+import org.thingsboard.server.common.data.trendz.TrendzSynchronizationResult;
+import org.thingsboard.server.common.data.trendz.TrendzSynchronizationResultType;
+import org.thingsboard.server.common.data.trendz.TrendzSynchronizationStatus;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.trendz.TrendzSettingsService;
+import org.thingsboard.server.dao.trendz.TrendzSyncService;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class TrendzControllerTest extends AbstractControllerTest {
 
-    private final String trendzUrl = "https://some.domain.com:18888/also_necessary_prefix";
-    private final String apiKey = "$2a$10$iDjfqYmnrw9gkdw4XhgzFOU.R/pVz3OKgXOdpbR2LuXaKatGcGLiG";
+    @MockitoBean
+    private TrendzSyncService trendzSyncService;
+
+    @Autowired
+    private TrendzSettingsService trendzSettingsService;
+
+    private static final String TB_URL = "https://tb.example.com";
+    private static final String TRENDZ_URL = "https://trendz.example.com";
+    private static final String TRENDZ_VERSION = "1.15.0";
 
     @Before
     public void setUp() throws Exception {
-        loginTenantAdmin();
+        loginSysAdmin();
+    }
 
-        TrendzSettings trendzSettings = new TrendzSettings();
-        trendzSettings.setEnabled(true);
-        trendzSettings.setBaseUrl(trendzUrl);
-        trendzSettings.setApiKey(apiKey);
-
-        doPost("/api/trendz/settings", trendzSettings).andExpect(status().isOk());
+    @After
+    public void tearDown() {
+        TrendzSettings settings = trendzSettingsService.findTrendzSettings();
+        if (settings != null) {
+            trendzSettingsService.deleteTrendzSettings();
+        }
     }
 
     @Test
-    public void testTrendzSettingsWhenTenant() throws Exception {
-        loginTenantAdmin();
+    public void testGetTrendzConfig_asSysAdmin() throws Exception {
+        TrendzConfiguration config = new TrendzConfiguration(TRENDZ_URL, TB_URL);
+        TrendzSynchronizationResult syncResult = new TrendzSynchronizationResult(
+                TRENDZ_VERSION, System.currentTimeMillis(),
+                TrendzSynchronizationResultType.SYNC_COMPLETED,
+                TrendzSynchronizationStatus.SYNCED
+        );
+        TrendzSettings settings = new TrendzSettings(config, syncResult);
 
-        TrendzSettings trendzSettings = doGet("/api/trendz/settings", TrendzSettings.class);
+        trendzSettingsService.saveTrendzSettings(settings);
 
-        assertThat(trendzSettings).isNotNull();
-        assertThat(trendzSettings.isEnabled()).isTrue();
-        assertThat(trendzSettings.getBaseUrl()).isEqualTo(trendzUrl);
-        trendzSettings.setApiKey(apiKey);
+        TrendzConfiguration result = doGet("/api/trendz/config", TrendzConfiguration.class);
 
-        String updatedUrl = "https://some.domain.com:18888/tenant_trendz";
-        String updatedApiKey = "$2a$10$aRR0bHa8rtzP5jRcE72vp.hRFsGQz4MGIs62oogLbfOCFK3.RIESG";
-        trendzSettings.setBaseUrl(updatedUrl);
-        trendzSettings.setApiKey(updatedApiKey);
-
-        doPost("/api/trendz/settings", trendzSettings).andExpect(status().isOk());
-
-        TrendzSettings updatedTrendzSettings = doGet("/api/trendz/settings", TrendzSettings.class);
-        assertThat(updatedTrendzSettings).isEqualTo(trendzSettings);
+        assertThat(result).isNotNull();
+        assertThat(result.trendzUrl()).isEqualTo(TRENDZ_URL);
+        assertThat(result.tbUrl()).isEqualTo(TB_URL);
     }
 
     @Test
-    public void testTrendzSettingsWhenCustomer() throws Exception {
-        loginCustomerUser();
+    public void testGetTrendzConfig_asTenantAdmin_forbidden() throws Exception {
+        loginTenantAdmin();
 
-        TrendzSettings newTrendzSettings = new TrendzSettings();
-        newTrendzSettings.setEnabled(true);
-        newTrendzSettings.setBaseUrl("https://some.domain.com:18888/customer_trendz");
-        newTrendzSettings.setApiKey("some_api_key");
+        doGet("/api/trendz/config").andExpect(status().isForbidden());
+    }
 
-        doPost("/api/trendz/settings", newTrendzSettings).andExpect(status().isForbidden());
+    @Test
+    public void testSaveTrendzConfig_asSysAdmin() {
+        TrendzConfiguration config = new TrendzConfiguration(TRENDZ_URL, TB_URL);
 
-        TrendzSettings fetchedTrendzSettings = doGet("/api/trendz/settings", TrendzSettings.class);
-        assertThat(fetchedTrendzSettings).isNotNull();
-        assertThat(fetchedTrendzSettings.isEnabled()).isTrue();
-        assertThat(fetchedTrendzSettings.getBaseUrl()).isEqualTo(trendzUrl);
-        assertThat(fetchedTrendzSettings.getApiKey()).isEqualTo(apiKey);
+        TrendzConfiguration result = doPost("/api/trendz/config", config, TrendzConfiguration.class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.trendzUrl()).isEqualTo(TRENDZ_URL);
+        assertThat(result.tbUrl()).isEqualTo(TB_URL);
+
+        TrendzSettings savedSettings = trendzSettingsService.findTrendzSettings();
+        assertThat(savedSettings).isNotNull();
+        assertThat(savedSettings.configuration().trendzUrl()).isEqualTo(TRENDZ_URL);
+        assertThat(savedSettings.configuration().tbUrl()).isEqualTo(TB_URL);
+    }
+
+    @Test
+    public void testSaveTrendzConfig_asTenantAdmin_forbidden() throws Exception {
+        loginTenantAdmin();
+
+        TrendzConfiguration config = new TrendzConfiguration(TRENDZ_URL, TB_URL);
+
+        doPost("/api/trendz/config", config).andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testGetTrendzSync_asSysAdmin_whenNotExists_thenNull() throws Exception {
+        TrendzSynchronizationResult result = doGet("/api/trendz/sync", TrendzSynchronizationResult.class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.version()).isNull();
+        assertEquals(0, result.updatedTs());
+        assertThat(result.type()).isEqualTo(TrendzSynchronizationResultType.SYNC_NOT_INITIALIZED);
+        assertThat(result.status()).isEqualTo(TrendzSynchronizationStatus.NOT_AVAILABLE);
+    }
+
+    @Test
+    public void testGetTrendzSync_asSysAdmin() throws Exception {
+        TrendzConfiguration config = new TrendzConfiguration(TRENDZ_URL, TB_URL);
+        TrendzSynchronizationResult syncResult = new TrendzSynchronizationResult(
+                TRENDZ_VERSION, System.currentTimeMillis(),
+                TrendzSynchronizationResultType.SYNC_COMPLETED,
+                TrendzSynchronizationStatus.SYNCED
+        );
+        TrendzSettings settings = new TrendzSettings(config, syncResult);
+
+        trendzSettingsService.saveTrendzSettings(settings);
+
+        TrendzSynchronizationResult result = doGet("/api/trendz/sync", TrendzSynchronizationResult.class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.version()).isEqualTo(TRENDZ_VERSION);
+        assertThat(result.type()).isEqualTo(TrendzSynchronizationResultType.SYNC_COMPLETED);
+        assertThat(result.status()).isEqualTo(TrendzSynchronizationStatus.SYNCED);
+    }
+
+    @Test
+    public void testGetTrendzSync_asTenantAdmin() throws Exception {
+        loginTenantAdmin();
+
+        TrendzConfiguration config = new TrendzConfiguration(TRENDZ_URL, TB_URL);
+        TrendzSynchronizationResult syncResult = new TrendzSynchronizationResult(
+                TRENDZ_VERSION, System.currentTimeMillis(),
+                TrendzSynchronizationResultType.SYNC_COMPLETED,
+                TrendzSynchronizationStatus.SYNCED
+        );
+        TrendzSettings settings = new TrendzSettings(config, syncResult);
+
+        trendzSettingsService.saveTrendzSettings(settings);
+
+        TrendzSynchronizationResult result = doGet("/api/trendz/sync", TrendzSynchronizationResult.class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.version()).isEqualTo(TRENDZ_VERSION);
+    }
+
+    @Test
+    public void testPerformTrendzHealthcheck_asSysAdmin() throws Exception {
+        TrendzHealthcheckResult healthcheckResult = new TrendzHealthcheckResult(
+                TRENDZ_VERSION,
+                TrendzSynchronizationResultType.SYNC_COMPLETED,
+                TrendzSynchronizationStatus.SYNCED,
+                "Healthcheck passed"
+        );
+
+        when(trendzSyncService.performHealthcheck()).thenReturn(healthcheckResult);
+
+        TrendzHealthcheckResult result = doGet("/api/trendz/healthcheck", TrendzHealthcheckResult.class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.version()).isEqualTo(TRENDZ_VERSION);
+        assertThat(result.message()).isEqualTo("Healthcheck passed");
+    }
+
+    @Test
+    public void testPerformTrendzHealthcheck_asTenantAdmin() throws Exception {
+        loginTenantAdmin();
+
+        TrendzHealthcheckResult healthcheckResult = new TrendzHealthcheckResult(
+                TRENDZ_VERSION,
+                TrendzSynchronizationResultType.SYNC_COMPLETED,
+                TrendzSynchronizationStatus.SYNCED,
+                "Healthcheck passed"
+        );
+
+        when(trendzSyncService.performHealthcheck()).thenReturn(healthcheckResult);
+
+        TrendzHealthcheckResult result = doGet("/api/trendz/healthcheck", TrendzHealthcheckResult.class);
+
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    public void testConnectToTrendz_asSysAdmin() {
+        TrendzConfiguration config = new TrendzConfiguration(TRENDZ_URL, TB_URL);
+        TrendzSynchronizationResult syncResult = new TrendzSynchronizationResult(
+                TRENDZ_VERSION, System.currentTimeMillis(),
+                TrendzSynchronizationResultType.SYNC_COMPLETED,
+                TrendzSynchronizationStatus.SYNCED
+        );
+        TrendzSettings settings = new TrendzSettings(config, syncResult);
+
+        when(trendzSyncService.performSync()).thenReturn(settings);
+
+        TrendzSynchronizationResult result = doPost("/api/trendz/connect", TrendzSynchronizationResult.class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.type()).isEqualTo(TrendzSynchronizationResultType.SYNC_COMPLETED);
+        assertThat(result.status()).isEqualTo(TrendzSynchronizationStatus.SYNCED);
+    }
+
+    @Test
+    public void testConnectToTrendz_asTenantAdmin_forbidden() throws Exception {
+        loginTenantAdmin();
+
+        doPost("/api/trendz/connect").andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testPublicConnectToTrendz() throws Exception {
+        logout();
+
+        TrendzConfiguration config = new TrendzConfiguration(TRENDZ_URL, TB_URL);
+        TrendzSynchronizationResult syncResult = new TrendzSynchronizationResult(
+                TRENDZ_VERSION, System.currentTimeMillis(),
+                TrendzSynchronizationResultType.SYNC_COMPLETED,
+                TrendzSynchronizationStatus.SYNCED
+        );
+        TrendzSettings settings = new TrendzSettings(config, syncResult);
+
+        when(trendzSyncService.performSync())
+                .thenReturn(settings);
+
+        String result = doPost("/api/trendz/public/connect", String.class);
+        assertTrue(result.isEmpty());
     }
 }

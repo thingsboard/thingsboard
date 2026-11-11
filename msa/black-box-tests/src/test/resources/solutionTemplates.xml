@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="Solution templates">
+    <listeners>
+        <listener class-name="org.thingsboard.server.msa.ui.listeners.RetryTestListener"/>
+    </listeners>
+    <test name="Solution templates install">
+        <groups>
+            <run>
+                <exclude name="broken"/>
+            </run>
+        </groups>
+        <packages>
+            <package name="org.thingsboard.server.msa.ui.tests.solutiontemplates.*"/>
+        </packages>
+    </test>
+</suite>

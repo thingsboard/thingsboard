@@ -1,26 +1,15 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -34,9 +23,9 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -44,23 +33,40 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.permission.ShareGroupRequest;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityGroupListFilter;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
-import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.dao.role.RoleService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,6 +84,8 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
     @Autowired
     private DashboardDao dashboardDao;
+    @Autowired
+    private RoleService roleService;
 
     static class Config {
         @Bean
@@ -85,6 +93,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
         public DashboardDao dashboardDao(DashboardDao dashboardDao) {
             return Mockito.mock(DashboardDao.class, AdditionalAnswers.delegatesTo(dashboardDao));
         }
+
     }
 
     @Before
@@ -111,6 +120,37 @@ public class DashboardControllerTest extends AbstractControllerTest {
         loginSysAdmin();
 
         deleteTenant(savedTenant.getId());
+    }
+
+    @Test
+    public void testSaveDashboard() throws Exception {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        testNotifyEntityEntityGroupNullAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
+
+        Assert.assertNotNull(savedDashboard);
+        Assert.assertNotNull(savedDashboard.getId());
+        Assert.assertTrue(savedDashboard.getCreatedTime() > 0);
+        Assert.assertEquals(savedTenant.getId(), savedDashboard.getTenantId());
+        Assert.assertEquals(dashboard.getTitle(), savedDashboard.getTitle());
+
+        savedDashboard.setTitle("My new dashboard");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doPost("/api/dashboard", savedDashboard, Dashboard.class);
+
+        testNotifyEntityEntityGroupNullAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
+
+        Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+        Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
     }
 
     @Test
@@ -141,9 +181,13 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/dashboard", savedDashboard, Dashboard.class, status().isForbidden());
+        String msgError = "You don't have permission to perform 'WRITE' operation with DASHBOARD 'My dashboard'";
+        doPost("/api/dashboard", savedDashboard)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityNever(savedDashboard.getId(), savedDashboard);
+        testNotifyEntityEqualsOneTimeServiceNeverError(dashboard, savedDifferentTenant.getId(), savedDifferentTenantUser.getId(),
+                DIFFERENT_TENANT_ADMIN_EMAIL, ActionType.UPDATED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
 
         deleteDifferentTenant();
     }
@@ -202,9 +246,10 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doDelete("/api/dashboard/" + savedDashboard.getId().getId().toString()).andExpect(status().isOk());
+        doDelete("/api/dashboard/" + savedDashboard.getId().getId().toString())
+                .andExpect(status().isOk());
 
-        testNotifyEntityAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(),
+        testNotifyEntityEntityGroupNullAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(),
                 savedDashboard.getTenantId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.DELETED,
                 savedDashboard.getId().getId().toString());
 
@@ -227,152 +272,6 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         testNotifyEntityEqualsOneTimeServiceNeverError(dashboard, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
-    }
-
-    @Test
-    public void testAssignUnassignDashboardToCustomer() throws Exception {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-
-        Customer customer = new Customer();
-        customer.setTitle("My customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Dashboard assignedDashboard = doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-
-        Assert.assertTrue(assignedDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
-
-        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
-                savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
-                ActionType.UPDATED, assignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
-
-        Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-        Assert.assertTrue(foundDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Dashboard unassignedDashboard =
-                doDelete("/api/customer/" + savedCustomer.getId().getId().toString() + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-
-        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
-                savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
-                ActionType.UPDATED, unassignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
-
-        Assert.assertTrue(unassignedDashboard.getAssignedCustomers() == null || unassignedDashboard.getAssignedCustomers().isEmpty());
-
-        foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-
-        Assert.assertTrue(foundDashboard.getAssignedCustomers() == null || foundDashboard.getAssignedCustomers().isEmpty());
-    }
-
-    @Test
-    public void testAssignUnassignDashboardToPublicCustomer() throws Exception {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Dashboard assignedDashboard = doPost("/api/customer/public/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-
-        CustomerId publicCustomerId = null;
-        for (ShortCustomerInfo assignedCustomer : assignedDashboard.getAssignedCustomers()) {
-            if (assignedCustomer.isPublic()) {
-                publicCustomerId = assignedCustomer.getCustomerId();
-            }
-        }
-        Assert.assertNotNull(publicCustomerId);
-        Customer publicCustomer = doGet("/api/customer/" + publicCustomerId, Customer.class);
-        Assert.assertTrue(publicCustomer.isPublic());
-
-        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
-                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
-                ActionType.UPDATED, assignedDashboard.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
-
-        Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-        Assert.assertTrue(foundDashboard.getAssignedCustomers().contains(publicCustomer.toShortCustomerInfo()));
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Dashboard unassignedDashboard =
-                doDelete("/api/customer/public/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-
-        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
-                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UNASSIGNED_FROM_CUSTOMER,
-                ActionType.UPDATED, unassignedDashboard.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
-
-        Assert.assertTrue(unassignedDashboard.getAssignedCustomers() == null || unassignedDashboard.getAssignedCustomers().isEmpty());
-
-        foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-
-        Assert.assertTrue(foundDashboard.getAssignedCustomers() == null || foundDashboard.getAssignedCustomers().isEmpty());
-    }
-
-    @Test
-    public void testAssignDashboardToNonExistentCustomer() throws Exception {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-
-        String customerIdStr = Uuids.timeBased().toString();
-        doPost("/api/customer/" + customerIdStr
-                + "/dashboard/" + savedDashboard.getId().getId().toString())
-                .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Customer", customerIdStr))));
-
-        Mockito.reset(tbClusterService, auditLogService);
-        testNotifyEntityNever(savedDashboard.getId(), savedDashboard);
-    }
-
-    @Test
-    public void testAssignDashboardToCustomerFromDifferentTenant() throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant2 = new Tenant();
-        tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = saveTenant(tenant2);
-        Assert.assertNotNull(savedTenant2);
-
-        User tenantAdmin2 = new User();
-        tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin2.setTenantId(savedTenant2.getId());
-        tenantAdmin2.setEmail("tenant3@thingsboard.org");
-        tenantAdmin2.setFirstName("Joe");
-        tenantAdmin2.setLastName("Downs");
-
-        createUserAndLogin(tenantAdmin2, "testPassword1");
-
-        Customer customer = new Customer();
-        customer.setTitle("Different customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-
-        login(tenantAdmin.getEmail(), "testPassword1");
-
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-
-        doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/dashboard/" + savedDashboard.getId().getId().toString())
-                .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
-
-        Mockito.reset(tbClusterService, auditLogService);
-        testNotifyEntityNever(savedDashboard.getId(), savedDashboard);
-
-        doDelete("/api/tenant/" + savedTenant2.getId().getId().toString())
-                .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
-
-        testNotifyEntityNever(savedDashboard.getId(), savedDashboard);
-
-        loginSysAdmin();
-
-        deleteTenant(savedTenant2.getId());
     }
 
     @Test
@@ -406,7 +305,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
-                    new TypeReference<PageData<DashboardInfo>>() {
+                    new TypeReference<>() {
                     }, pageLink);
             loadedDashboards.addAll(pageData.getData());
             if (pageData.hasNext()) {
@@ -435,7 +334,6 @@ public class DashboardControllerTest extends AbstractControllerTest {
         }
         String title2 = "Dashboard title 2";
         List<DashboardInfo> dashboardsTitle2 = new ArrayList<>();
-
         for (int i = 0; i < 112; i++) {
             Dashboard dashboard = new Dashboard();
             String suffix = StringUtils.randomAlphanumeric((int) (Math.random() * 15));
@@ -447,10 +345,10 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         List<DashboardInfo> loadedDashboardsTitle1 = new ArrayList<>();
         PageLink pageLink = new PageLink(15, 0, title1);
-        PageData<DashboardInfo> pageData = null;
+        PageData<DashboardInfo> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
-                    new TypeReference<PageData<DashboardInfo>>() {
+                    new TypeReference<>() {
                     }, pageLink);
             loadedDashboardsTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
@@ -467,7 +365,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
         pageLink = new PageLink(4, 0, title2);
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
-                    new TypeReference<PageData<DashboardInfo>>() {
+                    new TypeReference<>() {
                     }, pageLink);
             loadedDashboardsTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
@@ -493,7 +391,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
-                new TypeReference<PageData<DashboardInfo>>() {
+                new TypeReference<>() {
                 }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -505,86 +403,203 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(4, 0, title2);
         pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
-                new TypeReference<PageData<DashboardInfo>>() {
+                new TypeReference<>() {
                 }, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
 
     @Test
-    public void testFindCustomerDashboards() throws Exception {
+    public void testFindCustomerUserDashboards() throws Exception {
         Customer customer = new Customer();
-        customer.setTitle("Test customer");
-        customer = doPost("/api/customer", customer, Customer.class);
-        CustomerId customerId = customer.getId();
+        customer.setTitle("My customer");
+        customer.setTenantId(savedTenant.getTenantId());
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        EntityGroup customerUserGroup = new EntityGroup();
+        customerUserGroup.setType(EntityType.USER);
+        customerUserGroup.setName("Customer User Group");
+        customerUserGroup.setOwnerId(savedCustomer.getOwnerId());
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        int cntEntity = 173;
-        List<DashboardInfo> dashboards = new ArrayList<>();
-        for (int i = 0; i < cntEntity; i++) {
-            Dashboard dashboard = new Dashboard();
-            dashboard.setTitle("Dashboard" + i);
-            dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-            dashboards.add(new DashboardInfo(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class)));
-        }
+        customerUserGroup = doPost("/api/entityGroup", customerUserGroup, EntityGroup.class);
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Dashboard(), new Dashboard(),
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyWithGroup(customerUserGroup, customerUserGroup,
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2);
+                ActionType.ADDED, ActionType.ADDED, 1, 0, 1);
 
-        List<DashboardInfo> loadedDashboards = new ArrayList<>();
-        PageLink pageLink = new PageLink(21);
-        PageData<DashboardInfo> pageData = null;
+        EntityGroup tenantDashboardGroup = new EntityGroup();
+        tenantDashboardGroup.setType(EntityType.DASHBOARD);
+        tenantDashboardGroup.setName("Tenant Dashboard Group");
+        tenantDashboardGroup = doPost("/api/entityGroup", tenantDashboardGroup, EntityGroup.class);
+
+        Role groupRole = new Role();
+        groupRole.setTenantId(savedTenant.getId());
+        groupRole.setName("Read Group Role");
+        groupRole.setType(RoleType.GROUP);
+        ArrayNode readPermissions = JacksonUtil.newArrayNode();
+        readPermissions.add("READ");
+        groupRole.setPermissions(readPermissions);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        groupRole = doPost("/api/role", groupRole, Role.class);
+
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(groupRole, groupRole.getId(), groupRole.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, ActionType.ADDED);
+
+        GroupPermission readTenantDashboardGroupPermission = new GroupPermission();
+        readTenantDashboardGroupPermission.setRoleId(groupRole.getId());
+        readTenantDashboardGroupPermission.setUserGroupId(customerUserGroup.getId());
+        readTenantDashboardGroupPermission.setEntityGroupId(tenantDashboardGroup.getId());
+        readTenantDashboardGroupPermission.setEntityGroupType(tenantDashboardGroup.getType());
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        GroupPermission savedReadTenantDashboardGroupPermission =
+                doPost("/api/groupPermission", readTenantDashboardGroupPermission, GroupPermission.class);
+
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(savedReadTenantDashboardGroupPermission,
+                savedReadTenantDashboardGroupPermission.getId(), savedReadTenantDashboardGroupPermission.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, ActionType.ADDED);
+
+        Role genericRole = new Role();
+        genericRole.setTenantId(savedTenant.getId());
+        genericRole.setName("Read Generic Role");
+        genericRole.setType(RoleType.GENERIC);
+        ObjectNode genericPermissions = JacksonUtil.newObjectNode();
+        genericPermissions.set("ALL", readPermissions);
+        genericRole.setPermissions(genericPermissions);
+        genericRole = doPost("/api/role", genericRole, Role.class);
+
+        GroupPermission genericPermission = new GroupPermission();
+        genericPermission.setRoleId(genericRole.getId());
+        genericPermission.setUserGroupId(customerUserGroup.getId());
+        doPost("/api/groupPermission", genericPermission, GroupPermission.class);
+
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("Tenant Dashboard");
+        new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class));
+
+        Dashboard sharedDashboard = new Dashboard();
+        sharedDashboard.setTitle("Shared Dashboard");
+        new DashboardInfo(doPost("/api/dashboard?entityGroupId={entityGroupId}", sharedDashboard, Dashboard.class, tenantDashboardGroup.getId().getId().toString()));
+
+        List<DashboardInfo> tenantAdminDashboards = new ArrayList<>();
+        PageLink pageLink = new PageLink(100);
+        PageData<DashboardInfo> pageData;
         do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/dashboards?",
-                    new TypeReference<PageData<DashboardInfo>>() {
+            pageData = doGetTypedWithPageLink("/api/user/dashboards?",
+                    new TypeReference<>() {
                     }, pageLink);
-            loadedDashboards.addAll(pageData.getData());
+            tenantAdminDashboards.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
 
-        dashboards.sort(idComparator);
-        loadedDashboards.sort(idComparator);
+        // Tenant admin user must have access to both dashboards
+        Assert.assertEquals(2, tenantAdminDashboards.size());
 
-        Assert.assertEquals(dashboards, loadedDashboards);
+        User customerUser = new User();
+        customerUser.setAuthority(Authority.CUSTOMER_USER);
+        customerUser.setTenantId(savedTenant.getId());
+        customerUser.setCustomerId(savedCustomer.getId());
+        customerUser.setOwnerId(savedCustomer.getId());
+        customerUser.setEmail("customerUser@thingsboard.org");
+        User savedUser = doPost("/api/user?entityGroupId={entityGroupId}", customerUser, User.class, customerUserGroup.getId().getId().toString());
+
+        List<DashboardInfo> customerUserDashboards = new ArrayList<>();
+        do {
+            pageData = doGetTypedWithPageLink("/api/user/dashboards?userId={userId}&",
+                    new TypeReference<>() {
+                    }, pageLink, savedUser.getId().getId().toString());
+            customerUserDashboards.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        // Customer user must have access only to a shared dashboard
+        Assert.assertEquals(1, customerUserDashboards.size());
     }
 
     @Test
-    public void testAssignDashboardToEdge() throws Exception {
-        Edge edge = constructEdge("My edge", "default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
+    public void testReShareDashboardToChild() throws Exception {
+        loginTenantAdmin();
+        EntityGroup dashboardGroup = new EntityGroup();
+        dashboardGroup.setType(EntityType.DASHBOARD);
+        dashboardGroup.setName("Dashboard Group");
+        dashboardGroup.setOwnerId(tenantId);
+
+        dashboardGroup = doPost("/api/entityGroup", dashboardGroup, EntityGroup.class);
 
         Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("My dashboard");
-        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+        dashboard.setTitle("Tenant Dashboard");
+        dashboard = doPost("/api/dashboard?entityGroupId={entityGroupId}", dashboard, Dashboard.class, dashboardGroup.getId().getId().toString());
 
-        Mockito.reset(tbClusterService, auditLogService);
+        //share group for customer
+        var shareGroupRequest = new ShareGroupRequest(customerId, true, null, false, Collections.emptyList());
+        doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, dashboardGroup.getId().toString());
 
-        doPost("/api/edge/" + savedEdge.getId().getId().toString()
-                + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+        loginCustomerAdminUser();
+        Dashboard foundDashboard = doGet("/api/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class);
+        Assert.assertNotNull(foundDashboard);
 
-        testNotifyEntityAllOneTime(savedDashboard, savedDashboard.getId(), savedDashboard.getId(), savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_EDGE,
-                savedDashboard.getId().getId().toString(), savedEdge.getId().getId().toString(), savedEdge.getName());
+        //reshare to child customer
+        EntityGroup childAllUserGroup = entityGroupService.findEntityGroupByTypeAndName(tenantId, subCustomerId, EntityType.USER, "All").get();
+        Role role = new Role();
+        role.setTenantId(tenantId);
+        role.setCustomerId(customerId);
+        role.setType(RoleType.GROUP);
+        role.setName("Role to read dashboard");
+        role.setPermissions(JacksonUtil.toJsonNode("[\"READ\"]"));
 
-        PageData<Dashboard> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/dashboards?",
-                new TypeReference<PageData<Dashboard>>() {
-                }, new PageLink(100));
+        Role readRole = roleService.saveRole(tenantId, role);
 
-        Assert.assertEquals(1, pageData.getData().size());
+        doPost("/api/entityGroup/" + dashboardGroup.getId().toString() + "/" + childAllUserGroup.getId().toString() + "/" + readRole.getId().toString() + "/share");
 
-        doDelete("/api/edge/" + savedEdge.getId().getId().toString()
-                + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+        loginSubCustomerAdminUser();
+        Dashboard foundDashboard2 = doGet("/api/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class);
+        Assert.assertNotNull(foundDashboard2);
+    }
 
-        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/dashboards?",
-                new TypeReference<PageData<Dashboard>>() {
-                }, new PageLink(100));
+    @Test
+    public void testReShareDashboardToChildViaV2Api() throws Exception {
+        loginTenantAdmin();
+        EntityGroup dashboardGroup = new EntityGroup();
+        dashboardGroup.setType(EntityType.DASHBOARD);
+        dashboardGroup.setName("Dashboard Group");
+        dashboardGroup.setOwnerId(tenantId);
 
-        Assert.assertEquals(0, pageData.getData().size());
+        dashboardGroup = doPost("/api/entityGroup", dashboardGroup, EntityGroup.class);
+
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("Tenant Dashboard");
+        dashboard = doPost("/api/dashboard?entityGroupId={entityGroupId}", dashboard, Dashboard.class, dashboardGroup.getId().getId().toString());
+
+        //share group for customer
+        Role roleToReadAndShare = roleService.findOrCreateRole(tenantId, null, RoleType.GROUP, "Role to read and share dashboard groups",
+                JacksonUtil.toJsonNode("[\"READ\", \"RPC_CALL\", \"READ_CREDENTIALS\", \"READ_ATTRIBUTES\",\"READ_TELEMETRY\",\"SHARE_GROUP\"]"), null);
+        var shareGroupRequest = new ShareGroupRequest(customerId, true, null, false, List.of(roleToReadAndShare.getId()));
+        doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, dashboardGroup.getId().toString()).andExpect(status().isOk());
+
+        loginCustomerAdminUser();
+        Dashboard foundDashboard = doGet("/api/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class);
+        Assert.assertNotNull(foundDashboard);
+
+        //should not reshare with WRITE permission to child customer
+        var reshareWithWritePermission = new ShareGroupRequest(subCustomerId, true, null, false, Collections.emptyList());
+        doPost("/api/v2/entityGroup/{entityGroupId}/share", reshareWithWritePermission, dashboardGroup.getId().toString()).andExpect(status().isForbidden());
+
+        //should reshare with READ operation
+        var reshareWithReadPermission = new ShareGroupRequest(subCustomerId, true, null, true, Collections.emptyList());
+        doPost("/api/v2/entityGroup/{entityGroupId}/share", reshareWithReadPermission, dashboardGroup.getId().toString()).andExpect(status().isOk());
+
+        loginSubCustomerAdminUser();
+        Dashboard foundDashboard2 = doGet("/api/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class);
+        Assert.assertNotNull(foundDashboard2);
     }
 
     @Test
@@ -593,6 +608,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsOk(savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
     }
 
+    @Ignore
     @Test
     public void testDeleteDashboardExceptionWithRelationsTransactional() throws Exception {
         DashboardId dashboardId = createDashboard("Dashboard for Test WithRelations Transactional Exception").getId();
@@ -627,6 +643,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
     @Test
     public void testExportImportDashboardWithResources() throws Exception {
+        loginTenantAdmin();
         TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "image12", "image/png", ImageControllerTest.PNG_IMAGE);
         TbResource resource = new TbResource();
         resource.setResourceKey("gateway-management-extension.js");
@@ -697,6 +714,15 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         TbResourceInfo importedResourceInfo = doGet("/api/resource/js_module/tenant/" + newResourceKey + "/info", TbResourceInfo.class);
         assertThat(importedResourceInfo.getEtag()).isEqualTo(resourceInfo.getEtag());
+
+        loginCustomerAdminUser();
+        exportedDashboard.setCustomerId(customerId);
+        importedDashboard = doPost("/api/dashboard", exportedDashboard, Dashboard.class);
+        imageRef = importedDashboard.getConfiguration().get("someImage").asText();
+        assertThat(imageRef).isEqualTo("tb-image;/api/images/tenant/image12_(1)"); // new image is created
+        resourceRef = importedDashboard.getConfiguration().get("widgets").get("xxx").get("config")
+                .get("actions").get("elementClick").get(0).get("customResources").get(0).get("url").asText();
+        assertThat(resourceRef).isEqualTo("tb-resource;/api/resource/js_module/tenant/" + newResourceKey); // left unchanged, using existing tenant resource
     }
 
     private Dashboard createDashboard(String title) {

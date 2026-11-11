@@ -1,23 +1,17 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.client;
 
 import org.junit.Test;
+import org.thingsboard.client.api.ThingsboardApi.DeleteEdgeArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetAllEdgeInfosArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetEdgeByIdArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetEdgeListArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetTenantEdgeByNameArgs;
+import org.thingsboard.client.api.ThingsboardApi.GetTenantEdgesArgs;
+import org.thingsboard.client.api.ThingsboardApi.SaveEdgeArgs;
 import org.thingsboard.client.model.Edge;
-import org.thingsboard.client.model.EdgeInfo;
 import org.thingsboard.client.model.PageDataEdge;
 import org.thingsboard.client.model.PageDataEdgeInfo;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -37,7 +31,6 @@ public class EdgeApiClientTest extends AbstractApiClientTest {
         long timestamp = System.currentTimeMillis();
         List<Edge> createdEdges = new ArrayList<>();
 
-        // create 5 edges
         for (int i = 0; i < 5; i++) {
             Edge edge = new Edge();
             edge.setName(TEST_PREFIX + "Edge_" + timestamp + "_" + i);
@@ -45,8 +38,12 @@ public class EdgeApiClientTest extends AbstractApiClientTest {
             edge.setLabel("Test Edge " + i);
             edge.setRoutingKey("routing_key_" + timestamp + "_" + i);
             edge.setSecret("secret_key_" + timestamp + "_" + i);
+            edge.setEdgeLicenseKey("license_key_" + timestamp + "_" + i);
+            edge.setCloudEndpoint("http://localhost:8080");
 
-            Edge created = client.saveEdge(edge);
+            Edge created = client.saveEdge(SaveEdgeArgs.builder()
+                    .edge(edge)
+                    .build());
             assertNotNull(created);
             assertNotNull(created.getId());
             assertEquals(edge.getName(), created.getName());
@@ -57,84 +54,76 @@ public class EdgeApiClientTest extends AbstractApiClientTest {
             createdEdges.add(created);
         }
 
-        // list tenant edges with text search
-        PageDataEdge filteredEdges = client.getTenantEdges(100, 0, null,
-                TEST_PREFIX + "Edge_" + timestamp, null, null);
+        PageDataEdge filteredEdges = client.getTenantEdges(GetTenantEdgesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX + "Edge_" + timestamp)
+                .build());
         assertNotNull(filteredEdges);
         assertEquals(5, filteredEdges.getData().size());
 
-        // list tenant edges with type filter
-        PageDataEdge typedEdges = client.getTenantEdges(100, 0, "gateway",
-                TEST_PREFIX + "Edge_" + timestamp, null, null);
+        PageDataEdge typedEdges = client.getTenantEdges(GetTenantEdgesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .type("gateway")
+                .textSearch(TEST_PREFIX + "Edge_" + timestamp)
+                .build());
         assertEquals(5, typedEdges.getData().size());
 
-        // get tenant edge infos
-        PageDataEdgeInfo edgeInfos = client.getTenantEdgeInfos(100, 0, null,
-                TEST_PREFIX + "Edge_" + timestamp, null, null);
+        PageDataEdgeInfo edgeInfos = client.getAllEdgeInfos(GetAllEdgeInfosArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .includeCustomers(true)
+                .type("gateway")
+                .textSearch(TEST_PREFIX + "Edge_" + timestamp)
+                .build());
         assertEquals(5, edgeInfos.getData().size());
 
-        // get edge by id
         Edge searchEdge = createdEdges.get(2);
-        Edge fetchedEdge = client.getEdgeById(searchEdge.getId().getId().toString());
+        Edge fetchedEdge = client.getEdgeById(GetEdgeByIdArgs.builder()
+                .edgeId(searchEdge.getId().getId().toString())
+                .build());
         assertEquals(searchEdge.getName(), fetchedEdge.getName());
         assertEquals(searchEdge.getType(), fetchedEdge.getType());
         assertEquals(searchEdge.getRoutingKey(), fetchedEdge.getRoutingKey());
 
-        // get edge by name
-        Edge fetchedByName = client.getTenantEdgeByName(searchEdge.getName());
+        Edge fetchedByName = client.getTenantEdgeByName(GetTenantEdgeByNameArgs.builder()
+                .edgeName(searchEdge.getName())
+                .build());
         assertEquals(searchEdge.getId().getId(), fetchedByName.getId().getId());
 
-        // get edges by list of ids
         List<String> idsToFetch = List.of(
                 createdEdges.get(0).getId().getId().toString(),
                 createdEdges.get(1).getId().getId().toString()
         );
-        List<Edge> edgeList = client.getEdgeList(idsToFetch);
+        List<Edge> edgeList = client.getEdgeList(GetEdgeListArgs.builder()
+                .edgeIds(idsToFetch)
+                .build());
         assertEquals(2, edgeList.size());
 
-        // update edge
         Edge edgeToUpdate = createdEdges.get(3);
         edgeToUpdate.setLabel("Updated Label");
-        Edge updatedEdge = client.saveEdge(edgeToUpdate);
+        Edge updatedEdge = client.saveEdge(SaveEdgeArgs.builder()
+                .edge(edgeToUpdate)
+                .build());
         assertEquals("Updated Label", updatedEdge.getLabel());
 
-        // assign edge to customer
-        String customerId = savedClientCustomer.getId().getId().toString();
-        String edgeId = createdEdges.get(1).getId().getId().toString();
-        Edge assignedEdge = client.assignEdgeToCustomer(customerId, edgeId);
-        assertNotNull(assignedEdge.getCustomerId());
-
-        // get customer edges
-        PageDataEdge customerEdges = client.getCustomerEdges(customerId, 100, 0,
-                null, TEST_PREFIX + "Edge_" + timestamp, null, null);
-        assertEquals(1, customerEdges.getData().size());
-
-        // get customer edge infos
-        PageDataEdgeInfo customerEdgeInfos = client.getCustomerEdgeInfos(customerId, 100, 0,
-                null, TEST_PREFIX + "Edge_" + timestamp, null, null);
-        assertEquals(1, customerEdgeInfos.getData().size());
-        EdgeInfo edgeInfo = customerEdgeInfos.getData().get(0);
-        assertNotNull(edgeInfo.getCustomerTitle());
-
-        // unassign edge from customer
-        Edge unassignedEdge = client.unassignEdgeFromCustomer(edgeId);
-        assertNotNull(unassignedEdge);
-
-        PageDataEdge customerEdgesAfter = client.getCustomerEdges(customerId, 100, 0,
-                null, TEST_PREFIX + "Edge_" + timestamp, null, null);
-        assertEquals(0, customerEdgesAfter.getData().size());
-
-        // delete edge
         UUID edgeToDeleteId = createdEdges.get(0).getId().getId();
-        client.deleteEdge(edgeToDeleteId.toString());
+        client.deleteEdge(DeleteEdgeArgs.builder()
+                .edgeId(edgeToDeleteId.toString())
+                .build());
 
-        // verify deletion
         assertReturns404(() ->
-                client.getEdgeById(edgeToDeleteId.toString())
+                client.getEdgeById(GetEdgeByIdArgs.builder()
+                        .edgeId(edgeToDeleteId.toString())
+                        .build())
         );
 
-        PageDataEdge edgesAfterDelete = client.getTenantEdges(100, 0, null,
-                TEST_PREFIX + "Edge_" + timestamp, null, null);
+        PageDataEdge edgesAfterDelete = client.getTenantEdges(GetTenantEdgesArgs.builder()
+                .pageSize(100)
+                .page(0)
+                .textSearch(TEST_PREFIX + "Edge_" + timestamp)
+                .build());
         assertEquals(4, edgesAfterDelete.getData().size());
     }
 

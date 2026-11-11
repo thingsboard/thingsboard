@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edqs;
 
 import com.google.protobuf.ByteString;
@@ -50,10 +38,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.ota.DeviceGroupOtaPackage;
 import org.thingsboard.server.common.msg.edqs.EdqsApiService;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 import org.thingsboard.server.edqs.processor.EdqsProducer;
 import org.thingsboard.server.edqs.state.EdqsPartitionService;
 import org.thingsboard.server.edqs.util.DefaultEdqsMapper;
@@ -93,6 +83,7 @@ public class DefaultEdqsService implements EdqsService {
     private final EdqsPartitionService edqsPartitionService;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final DiscoveryService discoveryService;
+    private final CitusSettings citusSettings;
     @Autowired @Lazy
     private TbClusterService clusterService;
     @Autowired @Lazy
@@ -295,7 +286,7 @@ public class DefaultEdqsService implements EdqsService {
     public void onUpdate(TenantId tenantId, EntityId entityId, Object entity) {
         EntityType entityType = entityId.getEntityType();
         ObjectType objectType = ObjectType.fromEntityType(entityType);
-        if (!isEdqsType(tenantId, objectType)) {
+        if (ignoreEvent(tenantId, entity, objectType)) {
             log.trace("[{}][{}] Ignoring update event, type {} not supported", tenantId, entityId, entityType);
             return;
         }
@@ -308,14 +299,18 @@ public class DefaultEdqsService implements EdqsService {
     }
 
     @Override
-    public void onDelete(TenantId tenantId, EntityId entityId) {
+    public void onDelete(TenantId tenantId, EntityId entityId, Object entity) {
         EntityType entityType = entityId.getEntityType();
         ObjectType objectType = ObjectType.fromEntityType(entityType);
-        if (!isEdqsType(tenantId, objectType)) {
+        if (ignoreEvent(tenantId, entity, objectType)) {
             log.trace("[{}][{}] Ignoring deletion event, type {} not supported", tenantId, entityId, entityType);
             return;
         }
         onDelete(tenantId, objectType, new Entity(entityType, entityId.getId(), Long.MAX_VALUE));
+    }
+
+    private boolean ignoreEvent(TenantId tenantId, Object entity, ObjectType objectType) {
+        return !isEdqsType(tenantId, objectType) || entity instanceof DeviceGroupOtaPackage;
     }
 
     @Override
@@ -334,6 +329,12 @@ public class DefaultEdqsService implements EdqsService {
                         .setEventType(eventType.name());
                 if (version != null) {
                     eventMsg.setVersion(version);
+                }
+                // On Citus, per-row versions restart at 1 when a deleted row is re-created, so a DELETED event must
+                // tell EDQS to drop the delete tombstone (otherwise the re-create at a lower version would be rejected
+                // as stale). Read from CitusSettings so this fact has a single binding point.
+                if (eventType == EdqsEventType.DELETED && citusSettings.isEnabled()) {
+                    eventMsg.setVersionsResetOnDelete(true);
                 }
                 eventsProducer.send(tenantId, objectType, key, ToEdqsMsg.newBuilder()
                         .setTenantIdMSB(tenantId.getId().getMostSignificantBits())

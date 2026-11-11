@@ -1,24 +1,12 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import {
   CellActionDescriptor,
   checkBoxCell,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityChipsEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
@@ -43,8 +31,10 @@ import {
 } from '@home/pages/mobile/bundes/mobile-app-configuration-dialog.component';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
+import { getCurrentAuthUser, selectUserSettingsProperty } from '@core/auth/auth.selectors';
 import { forkJoin, Observable, of, switchMap } from 'rxjs';
+import { Authority } from '@shared/models/authority.enum';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
 export class MobileBundleTableConfigResolver {
@@ -59,7 +49,8 @@ export class MobileBundleTableConfigResolver {
     private translate : TranslateService,
     private dialog: MatDialog,
     private router: Router,
-    private store: Store<AppState>
+    private store: Store<AppState>,
+    private userPermissionsService: UserPermissionsService,
   ) {
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.MOBILE_APP_BUNDLE;
@@ -72,16 +63,6 @@ export class MobileBundleTableConfigResolver {
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.config.addEntity = () => this.editBundle(null, true);
-
-    this.config.columns.push(
-      new DateEntityTableColumn<MobileAppBundleInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
-      new EntityTableColumn<MobileAppBundleInfo>('title', 'mobile.title', '25%'),
-      new EntityChipsEntityTableColumn<MobileAppBundleInfo>('oauth2ClientInfos', 'mobile.oauth-clients', '35%'),
-      new EntityChipsEntityTableColumn<MobileAppBundleInfo>('androidPkg', 'mobile.android-app', '20%'),
-      new EntityChipsEntityTableColumn<MobileAppBundleInfo>('iosPkg', 'mobile.ios-app', '20%'),
-      new EntityTableColumn<MobileAppBundleInfo>('oauth2Enabled', 'mobile.enable-oauth', '140px',
-        entity => checkBoxCell(entity.oauth2Enabled))
-    )
 
     this.config.deleteEnabled = bundle => !(bundle.iosAppId || bundle.androidAppId);
     this.config.deleteEntityTitle = (bundle) => this.translate.instant('mobile.delete-applications-bundle-title', {bundleName: bundle.name});
@@ -139,6 +120,25 @@ export class MobileBundleTableConfigResolver {
   }
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<MobileAppBundleInfo> {
+    const authUser = getCurrentAuthUser(this.store);
+
+    this.config.columns = [
+      new DateEntityTableColumn<MobileAppBundleInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
+      new EntityTableColumn<MobileAppBundleInfo>('title', 'mobile.title', '25%'),
+      new EntityChipsEntityTableColumn<MobileAppBundleInfo>('oauth2ClientInfos', 'mobile.oauth-clients', '35%'),
+      new EntityChipsEntityTableColumn<MobileAppBundleInfo>('androidPkg', 'mobile.android-app', '20%'),
+      new EntityChipsEntityTableColumn<MobileAppBundleInfo>('iosPkg', 'mobile.ios-app', '20%'),
+      new EntityTableColumn<MobileAppBundleInfo>('oauth2Enabled', 'mobile.enable-oauth', '140px',
+        entity => checkBoxCell(entity.oauth2Enabled))
+    ];
+
+    if (authUser.authority !== Authority.SYS_ADMIN) {
+      this.config.columns.push(
+        new EntityTableColumn<MobileAppBundleInfo>('selfRegistrationParams.enabled', 'mobile.enable-self-registration', '140px',
+          entity => checkBoxCell(entity.selfRegistrationParams?.enabled), () => ({}), false),
+      )
+    }
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 
