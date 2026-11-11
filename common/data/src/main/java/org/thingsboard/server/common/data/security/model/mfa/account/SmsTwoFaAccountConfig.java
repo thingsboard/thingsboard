@@ -14,6 +14,7 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProvi
 @Data
 public class SmsTwoFaAccountConfig extends OtpBasedTwoFaAccountConfig {
 
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     @NotBlank
     @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "is not of E.164 format")
     private String phoneNumber;
