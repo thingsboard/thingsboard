@@ -7,6 +7,7 @@
 <section [formGroup]="generateReportFormGroup">
   <div formGroupName="msgBody" class="tb-form-panel no-border no-padding flex flex-col">
     <tb-dashboard-report-config
+      rebindCurrentUser
       formControlName="reportConfig">
     </tb-dashboard-report-config>
     <div class="tb-form-panel stroked">
