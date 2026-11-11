@@ -84,6 +84,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
@@ -719,6 +720,9 @@ public class DefaultIotHubService implements IotHubService {
      * and the ones the user had before and the package took as they were (use existing).
      * A kept integration loses the metadata entries the package added.
      */
+    private static final Map<EntityType, Integer> DELETE_ORDER = Map.of(EntityType.DEVICE, 0, EntityType.DEVICE_PROFILE, 1,
+            EntityType.DASHBOARD, 2, EntityType.RULE_CHAIN, 3, EntityType.INTEGRATION, 4, EntityType.CONVERTER, 5);
+
     private void deleteDevicePackageEntities(TenantId tenantId, IotHubInstalledItemId installedItemId,
                                              DeviceInstalledItemDescriptor descriptor, SecurityUser user) {
         List<EntityId> createdEntityIds = descriptor.getCreatedEntityIds();
@@ -728,9 +732,12 @@ public class DefaultIotHubService implements IotHubService {
         Set<UUID> usedExisting = usedExistingIds(descriptor);
         List<DeviceInstalledItemDescriptor> otherPackages = new ArrayList<>();
         Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, otherPackages);
-        List<EntityId> reversed = new ArrayList<>(createdEntityIds);
-        Collections.reverse(reversed);
-        for (EntityId entityId : reversed) {
+        // An entity goes before what it refers to: a device before its profile, a profile before its default dashboard
+        // and rule chain, an integration before its converters. Within a type, the reverse of the creation order.
+        List<EntityId> ordered = new ArrayList<>(createdEntityIds);
+        Collections.reverse(ordered);
+        ordered.sort(Comparator.comparingInt(id -> DELETE_ORDER.getOrDefault(id.getEntityType(), DELETE_ORDER.size())));
+        for (EntityId entityId : ordered) {
             if (usedExisting.contains(entityId.getId())) {
                 log.info("[{}] Kept {} {}: the package took it as it was", tenantId, entityId.getEntityType(), entityId.getId());
                 removeIntegrationMetadata(tenantId, entityId, descriptor, otherPackages);
