@@ -63,6 +63,13 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public static final String DEFAULT_DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
     public static final String HTTP_DEFAULT_PORT = "80";
     public static final String HTTPS_DEFAULT_PORT = "443";
+    private static final Map<String, String> STANDARD_PORTS = Map.of(
+            HTTP, HTTP_DEFAULT_PORT,
+            HTTPS, HTTPS_DEFAULT_PORT,
+            MQTT, "1883",
+            MQTTS, "8883",
+            COAP, "5683",
+            COAPS, "5684");
 
     private final Map<String, Resource> certs = new ConcurrentHashMap<>();
 
@@ -164,7 +171,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             return null;
         }
         try {
-            String mqttType = isEnabled(MQTTS) ? MQTTS : MQTT;
+            String mqttType = resolveGatewayMqttType();
             DeviceConnectivityInfo properties = getConnectivity(mqttType);
             String host = DeviceConnectivityUtil.getHost(baseUrl, properties, mqttType);
             return DeviceConnectivityUtil.isLocalhost(host) ? DeviceConnectivityUtil.HOST_DOCKER_INTERNAL : host;
@@ -172,6 +179,16 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             log.warn("Failed to resolve gateway host for baseUrl [{}]", baseUrl, e);
             return null;
         }
+    }
+
+    @Override
+    public String resolveGatewayPort() {
+        DeviceConnectivityInfo properties = getConnectivity(resolveGatewayMqttType());
+        return properties == null ? null : StringUtils.trimToNull(getPort(properties));
+    }
+
+    private String resolveGatewayMqttType() {
+        return isEnabled(MQTTS) ? MQTTS : MQTT;
     }
 
     private DeviceConnectivityInfo getConnectivity(String protocol) {
@@ -189,17 +206,16 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     }
 
     @Override
-    public JsonNode getConnectivityInfo(String baseUrl) throws URISyntaxException {
+    public JsonNode getConnectivityInfo(String baseUrl, DeviceConnectivityHostSource baseUrlSource) throws URISyntaxException {
         String[] protocols = {HTTP, HTTPS, MQTT, MQTTS, COAP, COAPS};
-        Map<String, DeviceConnectivityInfo> result = new LinkedHashMap<>();
+        Map<String, ResolvedDeviceConnectivityInfo> result = new LinkedHashMap<>();
         for (String protocol : protocols) {
             DeviceConnectivityInfo info = getConnectivity(protocol);
             if (info != null && info.isEnabled()) {
-                DeviceConnectivityInfo resolved = new DeviceConnectivityInfo();
-                resolved.setEnabled(true);
-                resolved.setHost(getHost(baseUrl, info, protocol));
-                resolved.setPort(getPort(info));
-                result.put(protocol, resolved);
+                result.put(protocol, new ResolvedDeviceConnectivityInfo(true,
+                        getHost(baseUrl, info, protocol),
+                        StringUtils.isBlank(info.getPort()) ? STANDARD_PORTS.get(protocol) : info.getPort(),
+                        StringUtils.isNotBlank(info.getHost()) ? DeviceConnectivityHostSource.DEVICE_CONNECTIVITY : baseUrlSource));
             }
         }
         return JacksonUtil.valueToTree(result);

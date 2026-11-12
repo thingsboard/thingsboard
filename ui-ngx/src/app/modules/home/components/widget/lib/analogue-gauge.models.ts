@@ -4,13 +4,14 @@
 import * as CanvasGauges from 'canvas-gauges';
 import { FontSettings, getFontFamily } from '@home/components/widget/lib/settings.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import tinycolor from 'tinycolor2';
 import { TbUnit } from '@shared/models/unit.models';
 import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import { UnitService } from '@core/services/unit.service';
 import { DataKey } from '@shared/models/widget.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
 import Highlight = CanvasGauges.Highlight;
 import BaseGauge = CanvasGauges.BaseGauge;
 import GenericOptions = CanvasGauges.GenericOptions;
@@ -61,6 +62,9 @@ interface BaseGaugeModel extends BaseGauge {
   _value?: number;
 }
 
+export const getGaugeValueText = (value: any): string =>
+  !isDefinedAndNotNull(value) || value === '' ? 'N/A' : !isNumeric(value) ? NOT_SUPPORTED : '';
+
 export abstract class TbBaseGauge<S, O extends GenericOptions> {
 
   private gauge: BaseGaugeModel;
@@ -80,20 +84,23 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
   update() {
     if (this.ctx.data.length > 0) {
       const cellData = this.ctx.data[0];
-      if (cellData.data.length > 0) {
-        const tvPair = cellData.data[cellData.data.length - 1];
-        let value = parseFloat(tvPair[1]);
-        if (this.formatValue) {
-          value = parseFloat(this.formatValue.format(value));
+      const origValue = cellData.data.length > 0 ? cellData.data[cellData.data.length - 1][1] : null;
+      let value = parseFloat(origValue);
+      if (this.formatValue) {
+        value = parseFloat(this.formatValue.format(value));
+      }
+      const valueText = getGaugeValueText(origValue);
+      if (this.gauge.options.valueText !== valueText) {
+        this.gauge.update({valueText} as GenericOptions);
+      }
+      const gaugeValue = valueText ? this.gauge.options.minValue : value;
+      if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
+        if (!this.gauge.options.animation) {
+          this.gauge._value = gaugeValue;
+        } else {
+          delete this.gauge._value;
         }
-        if (value !== this.gauge.value) {
-          if (!this.gauge.options.animation) {
-            this.gauge._value = value;
-          } else {
-            delete this.gauge._value;
-          }
-          this.gauge.value = value;
-        }
+        this.gauge.value = gaugeValue;
       }
     }
   }

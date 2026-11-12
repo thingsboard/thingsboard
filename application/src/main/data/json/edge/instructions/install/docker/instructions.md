@@ -24,7 +24,7 @@ Add the following lines to the yml file:
 services:
   mytbedge:
     restart: always
-    image: "thingsboard/tb-edge-pe:${TB_EDGE_VERSION}"
+    image: "thingsboard/${TB_EDGE_REPO}:${TB_EDGE_VERSION}"
     ports:
       - "8080:8080"
       - "1883:1883"

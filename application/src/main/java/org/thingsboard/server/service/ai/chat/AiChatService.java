@@ -22,7 +22,10 @@ public interface AiChatService {
     void deleteChat(UUID chatId, SecurityUser user);
 
     Flux<ServerSentEvent<String>> sendChatMessage(
-            UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, SecurityUser user
+            UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, String clientOrigin,
+            SecurityUser user
     );
+
+    Flux<ServerSentEvent<String>> resumeChat(UUID chatId, String tbAccessToken, String acceptLanguage, String clientOrigin, SecurityUser user);
 
 }

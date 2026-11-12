@@ -199,8 +199,8 @@ public class TenantActor extends RuleChainManagerActor {
 
     private void forwardToCfActor(TenantAwareMsg msg, boolean priority) {
         if (cfActor == null) {
-            if (msg instanceof CalculatedFieldStateRestoreMsg) {
-                log.warn("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
+            if (msg instanceof CalculatedFieldStateRestoreMsg restoreMsg) {
+                log.warn("[{}] CF Actor is not initialized. Skipping CF state restore: [{}]", tenantId, restoreMsg.getId());
             } else {
                 log.debug("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
             }
@@ -285,7 +285,7 @@ public class TenantActor extends RuleChainManagerActor {
                         log.info("[{}] Failed to init CF Actor.", tenantId, e);
                     }
                 }
-                if (!ruleChainsInitialized) {
+                if (!ruleChainsInitialized && getApiUsageState().isReExecEnabled()) {
                     log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
                     initRuleChains();
                 }
@@ -319,12 +319,17 @@ public class TenantActor extends RuleChainManagerActor {
         if (entityType.equals(EntityType.API_USAGE_STATE)) {
             ApiUsageState old = getApiUsageState();
             apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
-            if (old.isReExecEnabled() && !apiUsageState.isReExecEnabled()) {
-                log.info("[{}] Received API state update. Going to DISABLE Rule Engine execution.", tenantId);
-                destroyRuleChains();
-            } else if (!old.isReExecEnabled() && apiUsageState.isReExecEnabled()) {
-                log.info("[{}] Received API state update. Going to ENABLE Rule Engine execution.", tenantId);
-                initRuleChains();
+            // Rule chains are initialized only on the rule engine service that manages the tenant, with the same checks
+            // (isRuleEngine, isManagedByCurrentService, isReExecEnabled) as in init() and onPartitionChangeMsg()
+            if (isRuleEngine) {
+                if (old.isReExecEnabled() && !apiUsageState.isReExecEnabled()) {
+                    log.info("[{}] Received API state update. Going to DISABLE Rule Engine execution.", tenantId);
+                    destroyRuleChains();
+                } else if (!old.isReExecEnabled() && apiUsageState.isReExecEnabled()
+                        && systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                    log.info("[{}] Received API state update. Going to ENABLE Rule Engine execution.", tenantId);
+                    initRuleChains();
+                }
             }
         }
         if (msg.getEntityId().getEntityType() == EntityType.DEVICE && ComponentLifecycleEvent.DELETED == msg.getEvent() && isMyPartition(msg.getEntityId())) {

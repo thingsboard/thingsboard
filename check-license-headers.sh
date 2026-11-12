@@ -8,21 +8,18 @@ set -euo pipefail
 
 usage() {
     echo "Checks SPDX license headers against CE provenance."
-    echo "usage: $0 <ce-ref> [--fix] [--ce-remote <url>] [--output target/...]"
-    echo "    ce-ref       CE branch, tag or commit matching this PE branch, e.g. lts-4.2;"
-    echo "                 fetched from the CE repository on every run"
+    echo "usage: $0 [--fix] [--ce-ref <ref>] [--ce-remote <url>] [--output target/...]"
     echo "    --fix        restamp files whose expected header the check determined"
-    echo "    --ce-remote  CE repository to fetch from (default: https://github.com/thingsboard/thingsboard.git)"
+    echo "                 and remove redundant or orphaned curations"
+    echo "    --ce-ref     CE branch, tag or commit that this branch integrates, fetched on every run;"
+    echo "                 without it, CE is the history that does not contain the relicensing commit"
+    echo "    --ce-remote  CE repository to fetch --ce-ref from (default: https://github.com/thingsboard/thingsboard.git)"
 }
 
-if [[ $# -eq 0 || "$1" == "-h" || "$1" == "--help" || "$1" == -* ]]; then
+if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
     usage
-    [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]] && exit 0
-    exit 2
+    exit 0
 fi
 
-ce_ref="$1"
-shift
-
 cd "$(git rev-parse --show-toplevel)"
-exec python3 tools/src/main/python/license-headers/check_license_headers.py check --ce-ref "$ce_ref" "$@"
+exec python3 tools/src/main/python/license-headers/check_license_headers.py check "$@"

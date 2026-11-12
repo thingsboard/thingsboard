@@ -69,15 +69,6 @@
         [showDetailsPageLink]="resource.ASSET_PROFILE | hasGenericPermission : operation.READ"
         (assetProfileUpdated)="onAssetProfileUpdated()">
       </tb-asset-profile-autocomplete>
-      @if (isAdd) {
-        <tb-entity-autocomplete
-          useFullEntityId
-          formControlName="customerId"
-          labelText="asset.assign-to-customer"
-          appearance="outline"
-          [entityType]="entityType.CUSTOMER">
-        </tb-entity-autocomplete>
-      }
       <div formGroupName="additionalInfo">
         <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>asset.description</mat-label>

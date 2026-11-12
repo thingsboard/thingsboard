@@ -546,7 +546,7 @@ public class EdgeController extends BaseController {
             @PathVariable(ENTITY_GROUP_ID) String strEntityGroupId,
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
             @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
             @RequestParam int page,
             @Parameter(description = EDGE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -665,6 +665,35 @@ public class EdgeController extends BaseController {
         log.debug("Activating instance [{}], [{}]", licenseSecret, releaseDate);
         try {
             return edgeLicenseService.activateInstance(licenseSecret, releaseDate);
+        } catch (Exception e) {
+            log.error("Error occurred: [{}]", e.getMessage(), e);
+            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
+    }
+
+    @ApiOperation(value = "Check edge license (checkInstance)",
+            notes = "Checks license request (V1/V2) from edge service by forwarding request to license portal.")
+    @PostMapping(value = "/v2/license/checkInstance")
+    public ResponseEntity<JsonNode> checkInstanceV2(@RequestBody JsonNode request) throws ThingsboardException {
+        log.debug("Checking instance [{}]", request);
+        try {
+            return edgeLicenseService.checkInstanceV2(request);
+        } catch (Exception e) {
+            log.error("Error occurred: [{}]", e.getMessage(), e);
+            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
+    }
+
+    @ApiOperation(value = "Activate edge instance (activateInstance)",
+            notes = "Activates edge license (V1/V2) on license portal.")
+    @PostMapping(value = "/v2/license/activateInstance", params = {"licenseSecret", "releaseDate", "clusterId"})
+    public ResponseEntity<JsonNode> activateInstanceV2(@RequestParam String licenseSecret,
+                                                       @RequestParam String releaseDate,
+                                                       @RequestParam String clusterId,
+                                                       @RequestParam(required = false) String protocolVersion) throws ThingsboardException {
+        log.debug("Activating instance [{}], [{}], [{}], [{}]", licenseSecret, releaseDate, clusterId, protocolVersion);
+        try {
+            return edgeLicenseService.activateInstanceV2(licenseSecret, releaseDate, clusterId, protocolVersion);
         } catch (Exception e) {
             log.error("Error occurred: [{}]", e.getMessage(), e);
             throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);

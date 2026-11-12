@@ -1,11 +1,12 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @for (subEntity of subEntities; track subEntity) {
-  <a class="tb-entity-chip"
+  <a class="tb-entity-chip" [tbTruncateWithTooltip]="subEntity.name | customTranslate"
      routerLink="{{entityDetailsPrefixUrl}}/{{subEntity.id.id}}" (click)="$event.stopPropagation();">
     {{ subEntity.name | customTranslate }}
   </a>

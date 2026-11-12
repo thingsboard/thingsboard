@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 :host {
@@ -116,39 +117,8 @@
 .tb-type-calc-field { color: #3db5e0; background: rgba(61, 181, 224, 0.06); }
 .tb-type-alarm-rule { color: #d7702f; background: rgba(215, 112, 47, 0.06); }
 .tb-type-rule-chain { color: #aa5be3; background: rgba(170, 91, 227, 0.06); }
-.tb-type-dashboard { color: #607d8b; background: rgba(96, 125, 139, 0.06); }
 
-// "vX.X.X Available" button — Design: border rgba(0,0,0,0.12), rounded-4, px-12 py-6, gap-8
-.tb-installed-version-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  letter-spacing: 0.25px;
-  color: rgba(0, 0, 0, 0.76);
-  background: none;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-family: inherit;
-
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-    color: inherit !important;
-    --mat-icon-color: currentColor;
-  }
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.04);
-  }
-}
-
-// "Update" button — Design: same height as available btn, border matches text color
+// "vX.X.X available" and "Update to" buttons: border matches the text color
 .tb-installed-update-btn.mat-mdc-outlined-button {
   font-size: 14px;
   font-weight: 500;
@@ -157,6 +127,11 @@
   padding: 6px 12px;
   height: auto;
   --mat-button-outlined-outline-color: var(--mat-button-outlined-label-text-color);
+
+  mat-icon {
+    color: inherit !important;
+    --mat-icon-color: currentColor;
+  }
 }
 
 // "Up to date" — Design: 14px Medium, #198038, gap-8, py-6

@@ -429,14 +429,23 @@ js:
       # Interval of logging for remote JS executor stats
       print_interval_ms: "${TB_JS_REMOTE_STATS_PRINT_INTERVAL_MS:10000}"
 
-# JSON converter parameters
-# Controls JSON telemetry/attribute parsing behaviour, including type casting and maximum string value length.
+# JSON converter and SSL certificate reload parameters
+# Controls JSON telemetry/attribute parsing behaviour, including type casting and maximum string value length, and real-time reload of CoAP DTLS certificates.
 transport:
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
     # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
+  ssl:
+    # SSL/TLS settings
+    certificate:
+      # X.509 certificate configuration to auto-detect and reload certificate used by the CoAP server (DTLS) in real-time
+      reload:
+        # Enable/disable automatic SSL certificates reload
+        enabled: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_ENABLED:true}"
+        # Check interval in seconds for certificates reload
+        check_interval_seconds: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_CHECK_INTERVAL_SECONDS:60}"
 
 # Cache parameters
 # Configures the cache backend type (Caffeine or Redis) and per-cache TTL and size limits.

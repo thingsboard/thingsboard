@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.4.1-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -39,6 +39,7 @@
              the command line. -->
         <yarn.test.skip>${skip.yarn}</yarn.test.skip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
+        <sbom.image.scanExclude></sbom.image.scanExclude>
     </properties>
 
     <dependencies>
@@ -91,7 +92,7 @@
                             <goal>install-node-and-yarn</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v22.22.2</nodeVersion>
+                            <nodeVersion>v22.23.4</nodeVersion>
                             <yarnVersion>v1.22.22</yarnVersion>
                         </configuration>
                     </execution>
@@ -102,6 +103,16 @@
                         </goals>
                         <configuration>
                             <arguments>install --non-interactive --check-files --network-concurrency 4 --network-timeout 100000 --mutex network</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate sbom</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${sbom.yarn.skip}</skip>
+                            <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
                         </configuration>
                     </execution>
                     <execution>
@@ -169,6 +180,10 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
             </plugin>
@@ -208,6 +223,31 @@
                                 <argument>${docker.repo}/${docker.name}:latest</argument>
                                 <argument>${docker.repo}/${docker.name}:${project.version}</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- After exec-maven-plugin: the image SBOM is made in the phase that pushes the image, once it is pushed -->
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sbom-metadata</id>
+                        <configuration>
+                            <targetFile>${project.build.directory}/sbom/${pkg.name}.cdx.json</targetFile>
+                            <skip>${skip.yarn}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>image-sbom</id>
+                        <configuration>
+                            <components combine.self="override">
+                                <component>
+                                    <sbom>${project.build.directory}/sbom/${pkg.name}.cdx.json</sbom>
+                                    <installDir>${pkg.installFolder}</installDir>
+                                </component>
+                            </components>
                         </configuration>
                     </execution>
                 </executions>

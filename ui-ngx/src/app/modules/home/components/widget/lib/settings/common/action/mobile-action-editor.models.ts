@@ -37,7 +37,7 @@ const processImageFunctionTemplate: TbFunction =
   '  imageDialogTemplate =\n' +
   '    \'<div aria-label="Image">\' +\n' +
   '    \'<form #theForm="ngForm">\' +\n' +
-  '    \'<mat-toolbar class="flex flex-row" color="primary">\' +\n' +
+  '    \'<mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">\' +\n' +
   '    \'<h2>{{title}}</h2>\' +\n' +
   '    \'<span class="flex-1"></span>\' +\n' +
   '    \'<button mat-icon-button (click)="close()">\' +\n' +
@@ -55,7 +55,7 @@ const processImageFunctionTemplate: TbFunction =
   '    \'</div>\' +\n' +
   '    \'<div mat-dialog-actions class="flex flex-row">\' +\n' +
   '    \'<span class="flex-1"></span>\' +\n' +
-  '    \'<button mat-button (click)="close()" style="margin-right:20px;">Close</button>\' +\n' +
+  '    \'<button mat-button color="primary" (click)="close()">Close</button>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</form>\' +\n' +
   '    \'</div>\';\n' +

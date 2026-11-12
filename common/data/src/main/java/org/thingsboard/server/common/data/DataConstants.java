@@ -160,6 +160,11 @@ public class DataConstants {
     public static final String CF_QUEUE_NAME = "CalculatedFields";
     public static final String CF_STATES_QUEUE_NAME = "CalculatedFieldStates";
 
+    public static final String PRIVACY_POLICY_ACCEPTED = "privacyPolicyAccepted";
+    public static final String PRIVACY_POLICY_ACCEPTED_TS = "privacyPolicyAcceptedTs";
+    public static final String TERMS_OF_USE_ACCEPTED = "termsOfUseAccepted";
+    public static final String TERMS_OF_USE_ACCEPTED_TS = "termsOfUseAcceptedTs";
+
     public static final String LATEST_TELEMETRY_SCOPE = "LATEST_TELEMETRY";
 
 }

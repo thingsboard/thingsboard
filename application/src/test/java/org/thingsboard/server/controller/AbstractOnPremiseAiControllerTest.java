@@ -3,7 +3,6 @@
 package org.thingsboard.server.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.ai.common.client.TbAiClient;
@@ -17,13 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 @TestPropertySource(properties = {
-        "TB_AI_JWT_SIGNING_KEY=",
-        "TB_CORE_BASE_URL=" + AbstractOnPremiseAiControllerTest.ORIGIN
+        "ai.jwt.signing_key="
 })
 public abstract class AbstractOnPremiseAiControllerTest extends AbstractAiControllerTest {
 
     protected static final String AI_TOKEN = "on-premise-ai-token";
-    protected static final String ORIGIN = "https://tb.example.org";
 
     @MockitoSpyBean
     protected SubscriptionService subscriptionService;
@@ -40,8 +37,7 @@ public abstract class AbstractOnPremiseAiControllerTest extends AbstractAiContro
         assertThat(tokenProvider.getAdditionalInfo()).containsExactlyInAnyOrderEntriesOf(Map.of(
                 TbAiHeaders.USER_ID, tenantAdminUserId.getId().toString(),
                 TbAiHeaders.TENANT_ID, tenantId.getId().toString(),
-                TbAiHeaders.TB_VERSION, projectInfo.getProjectVersion(),
-                HttpHeaders.ORIGIN, ORIGIN
+                TbAiHeaders.TB_VERSION, projectInfo.getProjectVersion()
         ));
     }
 

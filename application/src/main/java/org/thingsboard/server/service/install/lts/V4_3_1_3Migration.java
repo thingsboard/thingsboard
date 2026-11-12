@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 @Component
 @TbCoreComponent
 @RequiredArgsConstructor
-public class V4_3_1_3Migration implements LtsMigration {
+public class V4_3_1_3Migration implements Migration {
 
     // Match on the bundle ALIAS, not the JSON filename stem.
     // The "industrial_widgets" bundle shipped in a misspelled file (industial_widgets.json),
@@ -77,7 +77,7 @@ public class V4_3_1_3Migration implements LtsMigration {
     @Override
     public void applyAfterCommit() {
         // Heavy per-tenant backfill: runs outside the schema transaction so it never holds the schema-change
-        // locks while walking tenants (see LtsMigration#applyAfterCommit).
+        // locks while walking tenants (see Migration#applyAfterCommit).
         migrateLegacySolutionTemplatesToIotHub();
     }
 

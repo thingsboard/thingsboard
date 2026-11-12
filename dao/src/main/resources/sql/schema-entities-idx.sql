@@ -181,3 +181,5 @@ CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_tenant_id ON iot_hub_insta
 CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_item_type ON iot_hub_installed_item(tenant_id, item_type);
 
 CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_item_id ON iot_hub_installed_item(tenant_id, item_id);
+
+CREATE INDEX IF NOT EXISTS idx_calculated_field_tenant_id_id ON calculated_field(tenant_id, id);

@@ -32,7 +32,7 @@ import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.DbUpgradeExecutorService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
-import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.install.lts.MigrationService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * The CE-to-PE conversion is a step on the way to the package version, not an alternative to it: the LTS data
+ * The CE-to-PE conversion is a step on the way to the package version, not an alternative to it: the migration data
  * migrations have to run on a converted CE database too, or the conversion silently skips every data migration
  * between the CE source version and the package version.
  */
@@ -88,34 +88,34 @@ class DefaultDataUpdateServiceTest {
     @Mock
     private DatabaseSchemaSettingsService schemaSettingsService;
     @Mock
-    private LtsMigrationService ltsMigrationService;
+    private MigrationService migrationService;
 
     @InjectMocks
     private DefaultDataUpdateService service;
 
     @Test
-    void ceToPeUpgradeRunsTheLtsDataMigrationsAfterTheConversion() throws Exception {
+    void ceToPeUpgradeRunsTheDataMigrationsAfterTheConversion() throws Exception {
         givenAnEmptyDatabase();
 
         service.updateData(true);
 
-        InOrder inOrder = inOrder(tenantService, ltsMigrationService);
+        InOrder inOrder = inOrder(tenantService, migrationService);
         inOrder.verify(tenantService, atLeastOnce()).findTenants(any(PageLink.class));
-        inOrder.verify(ltsMigrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, false);
+        inOrder.verify(migrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, false);
     }
 
     @Test
-    void peUpgradeRunsOnlyTheLtsDataMigrations() throws Exception {
+    void peUpgradeRunsOnlyTheDataMigrations() throws Exception {
         givenAnEmptyDatabase();
 
         service.updateData(false);
 
         verify(tenantService, never()).findTenants(any(PageLink.class));
-        verify(ltsMigrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, false);
+        verify(migrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, false);
     }
 
     @Test
-    void aForcedReUpgradeIsCarriedIntoTheLtsMigrations() throws Exception {
+    void aForcedReUpgradeIsCarriedIntoTheMigrations() throws Exception {
         // The only test that can tell the flag apart from a hard-coded false: everywhere else it is Mockito's
         // default that the assertion reads back.
         givenAnEmptyDatabase();
@@ -123,7 +123,7 @@ class DefaultDataUpdateServiceTest {
 
         service.updateData(false);
 
-        verify(ltsMigrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, true);
+        verify(migrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, true);
     }
 
     private void givenAnEmptyDatabase() {

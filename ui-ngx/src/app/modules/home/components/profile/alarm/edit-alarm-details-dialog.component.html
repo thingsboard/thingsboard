@@ -22,7 +22,7 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <div class="flex flex-1 flex-col">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <textarea matInput formControlName="alarmDetails" rows="5"
           placeholder="{{ 'device-profile.alarm-rule-additional-info-placeholder' | translate }}"></textarea>
           <mat-hint [innerHTML]="'device-profile.alarm-rule-additional-info-hint' | translate | safe: 'html'"></mat-hint>

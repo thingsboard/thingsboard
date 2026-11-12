@@ -145,6 +145,10 @@
   &.dlg-preview-carousel {
     aspect-ratio: 1.5;
   }
+
+  img {
+    cursor: zoom-in;
+  }
 }
 
 .dlg-preview-img {

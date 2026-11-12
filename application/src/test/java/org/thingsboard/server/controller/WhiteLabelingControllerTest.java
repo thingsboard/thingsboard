@@ -36,7 +36,11 @@ public class WhiteLabelingControllerTest extends AbstractControllerTest {
     WhiteLabelingDao whiteLabelingDao;
 
     @After
-    public void afterTest() {
+    public void afterTest() throws Exception {
+        // System-level login/white-labeling params are shared by every test class in the same DB;
+        // restore defaults so the base URL set here (e.g. "https://domain.com") does not leak.
+        resetSysAdminWhiteLabelingSettings();
+
         if (tenantId != null) {
             WhiteLabelingCompositeKey key = new WhiteLabelingCompositeKey(tenantId, WhiteLabelingType.MAIL_TEMPLATES);
             if (whiteLabelingDao.findById(SYS_TENANT_ID, key) != null) {

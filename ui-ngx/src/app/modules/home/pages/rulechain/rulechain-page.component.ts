@@ -1989,7 +1989,6 @@ export interface AddRuleNodeLinkDialogData {
     selector: 'tb-add-rule-node-link-dialog',
     templateUrl: './add-rule-node-link-dialog.component.html',
     providers: [{ provide: ErrorStateMatcher, useExisting: AddRuleNodeLinkDialogComponent }],
-    styleUrls: ['./add-rule-node-link-dialog.component.scss'],
     standalone: false
 })
 export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeLinkDialogComponent, FcRuleEdge>

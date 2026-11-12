@@ -6,6 +6,8 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.LongNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -249,6 +251,34 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements GroupEnt
     @JsonIgnore
     public boolean isCustomerUser() {
         return !isSystemAdmin() && !isTenantAdmin();
+    }
+
+    @JsonIgnore
+    public boolean isPrivacyPolicyAccepted() {
+        return getAdditionalInfoField(DataConstants.PRIVACY_POLICY_ACCEPTED, JsonNode::asBoolean, false);
+    }
+
+    public void setPrivacyPolicyAccepted() {
+        setPrivacyPolicyAccepted(System.currentTimeMillis());
+    }
+
+    public void setPrivacyPolicyAccepted(long acceptedTs) {
+        setAdditionalInfoField(DataConstants.PRIVACY_POLICY_ACCEPTED, BooleanNode.TRUE);
+        setAdditionalInfoField(DataConstants.PRIVACY_POLICY_ACCEPTED_TS, LongNode.valueOf(acceptedTs));
+    }
+
+    @JsonIgnore
+    public boolean isTermsOfUseAccepted() {
+        return getAdditionalInfoField(DataConstants.TERMS_OF_USE_ACCEPTED, JsonNode::asBoolean, false);
+    }
+
+    public void setTermsOfUseAccepted() {
+        setTermsOfUseAccepted(System.currentTimeMillis());
+    }
+
+    public void setTermsOfUseAccepted(long acceptedTs) {
+        setAdditionalInfoField(DataConstants.TERMS_OF_USE_ACCEPTED, BooleanNode.TRUE);
+        setAdditionalInfoField(DataConstants.TERMS_OF_USE_ACCEPTED_TS, LongNode.valueOf(acceptedTs));
     }
 
     @JsonIgnore

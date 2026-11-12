@@ -176,6 +176,17 @@ public class AdminControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetTenantAdminSettings() throws Exception {
+        loginTenantAdmin();
+        for (String key : new String[]{"jwt", "mail", "general"}) {
+            AdminSettings adminSettings = doGet("/api/admin/settings/" + key + "?systemByDefault=true", AdminSettings.class);
+            assertThat(adminSettings.getTenantId()).isEqualTo(tenantId);
+            assertThat(adminSettings.getKey()).isEqualTo(key);
+            assertThat(adminSettings.getJsonValue().isEmpty()).isTrue();
+        }
+    }
+
+    @Test
     public void testGetAndSaveDefaultJwtSettings() throws Exception {
         JwtSettings jwtSettings;
         loginSysAdmin();

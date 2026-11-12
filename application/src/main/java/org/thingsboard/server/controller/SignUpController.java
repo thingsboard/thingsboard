@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -34,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
@@ -116,10 +116,6 @@ public class SignUpController extends BaseController {
     private static final String INVALID_APP_SECRET = "Invalid Application Secret!";
 
     private static final String MOBILE_APP_BUNDLE_WAS_NOT_FOUND = "Mobile app bundle was not found";
-
-    private static final String PRIVACY_POLICY_ACCEPTED = "privacyPolicyAccepted";
-
-    private static final String TERMS_OF_USE_ACCEPTED = "termsOfUseAccepted";
 
     private RestTemplate restTemplate;
 
@@ -345,7 +341,7 @@ public class SignUpController extends BaseController {
 
     @ApiOperation(value = "Mobile Login redirect (mobileLogin)",
             notes = "This method generates redirect to the special link that is handled by mobile application. Useful for email verification flow on mobile app.")
-    @GetMapping(value = "/noauth/login", params = {"pkgName, platform"})
+    @GetMapping(value = "/noauth/login", params = {"pkgName", "platform"})
     public ResponseEntity<String> mobileLogin(
             @Parameter(description = "Mobile app package name. Used to identify the application and build the redirect link.", required = true)
             @RequestParam(value = "pkgName") String pkgName,
@@ -402,15 +398,18 @@ public class SignUpController extends BaseController {
         String encodedPassword = userCredentials.getPassword();
         UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, emailCode, encodedPassword);
         User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
-        setPrivacyPolicyAccepted(user);
-        setTermsOfUseAccepted(user);
+        long acceptedTs = System.currentTimeMillis();
+        user.setPrivacyPolicyAccepted(acceptedTs);
+        user.setTermsOfUseAccepted(acceptedTs);
         user = userService.saveUser(tenantId, user);
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
         SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal, getMergedUserPermissions(user, false));
         String baseUrl = MiscUtils.constructBaseUrl(request);
         String loginUrl;
         if (!StringUtils.isEmpty(pkgName)) {
-            loginUrl = String.format("%s/api/noauth/login?pkgName=%s", baseUrl, pkgName);
+            loginUrl = UriComponentsBuilder.fromUriString(baseUrl).path("/api/noauth/login")
+                    .queryParam("pkgName", pkgName).queryParam("platform", platform)
+                    .encode().toUriString();
         } else {
             loginUrl = String.format("%s/login", baseUrl);
         }
@@ -428,23 +427,6 @@ public class SignUpController extends BaseController {
         return tokenFactory.createTokenPair(securityUser);
     }
 
-    private void setPrivacyPolicyAccepted(User user) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (!(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.newObjectNode();
-        }
-        ((ObjectNode) additionalInfo).put(PRIVACY_POLICY_ACCEPTED, true);
-        user.setAdditionalInfo(additionalInfo);
-    }
-
-    private boolean isPrivacyPolicyAccepted(User user) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (additionalInfo != null && additionalInfo.has(PRIVACY_POLICY_ACCEPTED)) {
-            return additionalInfo.get(PRIVACY_POLICY_ACCEPTED).asBoolean();
-        }
-        return false;
-    }
-
     @ApiOperation(value = "Check privacy policy (privacyPolicyAccepted)",
             notes = "Checks that current user accepted the privacy policy.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -453,43 +435,23 @@ public class SignUpController extends BaseController {
     Boolean privacyPolicyAccepted() throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-        return isPrivacyPolicyAccepted(user);
+        return user.isPrivacyPolicyAccepted();
     }
 
     @ApiOperation(value = "Accept privacy policy (acceptPrivacyPolicy)",
-            notes = "Accept privacy policy by the current user.")
+            notes = "Accept privacy policy by the current user. " +
+                    "Stores the acceptance flag 'privacyPolicyAccepted' and the acceptance time 'privacyPolicyAcceptedTs' (epoch milliseconds) " +
+                    "in the user's additional info. Repeated acceptance overwrites the stored time.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/signup/acceptPrivacyPolicy")
-    public JsonNode acceptPrivacyPolicy() throws ThingsboardException {
+    public JwtPair acceptPrivacyPolicy() throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-        setPrivacyPolicyAccepted(user);
+        user.setPrivacyPolicyAccepted();
         user = userService.saveUser(securityUser.getTenantId(), user);
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
         securityUser = new SecurityUser(user, true, principal, getMergedUserPermissions(user, false));
-        JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
-
-        ObjectNode tokenObject = JacksonUtil.newObjectNode();
-        tokenObject.put("token", tokenPair.getToken());
-        tokenObject.put("refreshToken", tokenPair.getRefreshToken());
-        return tokenObject;
-    }
-
-    private void setTermsOfUseAccepted(User user) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (!(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.newObjectNode();
-        }
-        ((ObjectNode) additionalInfo).put(TERMS_OF_USE_ACCEPTED, true);
-        user.setAdditionalInfo(additionalInfo);
-    }
-
-    private boolean isTermsOfUseAccepted(User user) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (additionalInfo != null && additionalInfo.has(TERMS_OF_USE_ACCEPTED)) {
-            return additionalInfo.get(TERMS_OF_USE_ACCEPTED).asBoolean();
-        }
-        return false;
+        return tokenFactory.createTokenPair(securityUser);
     }
 
     @ApiOperation(value = "Check Terms Of User (termsOfUseAccepted)",
@@ -500,26 +462,23 @@ public class SignUpController extends BaseController {
     Boolean termsOfUseAccepted() throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-        return isTermsOfUseAccepted(user);
+        return user.isTermsOfUseAccepted();
     }
 
     @ApiOperation(value = "Accept Terms of Use (acceptTermsOfUse)",
-            notes = "Accept Terms of Use by the current user.")
+            notes = "Accept Terms of Use by the current user. " +
+                    "Stores the acceptance flag 'termsOfUseAccepted' and the acceptance time 'termsOfUseAcceptedTs' (epoch milliseconds) " +
+                    "in the user's additional info. Repeated acceptance overwrites the stored time.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/signup/acceptTermsOfUse")
-    public JsonNode acceptTermsOfUse() throws ThingsboardException {
+    public JwtPair acceptTermsOfUse() throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
-        setTermsOfUseAccepted(user);
+        user.setTermsOfUseAccepted();
         user = userService.saveUser(securityUser.getTenantId(), user);
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
         securityUser = new SecurityUser(user, true, principal, getMergedUserPermissions(user, false));
-        JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
-
-        ObjectNode tokenObject = JacksonUtil.newObjectNode();
-        tokenObject.put("token", tokenPair.getToken());
-        tokenObject.put("refreshToken", tokenPair.getRefreshToken());
-        return tokenObject;
+        return tokenFactory.createTokenPair(securityUser);
     }
 
     private void validateReCaptcha(String userResponse, String ipAddress, String recaptchaSecretKey) throws ThingsboardException {
