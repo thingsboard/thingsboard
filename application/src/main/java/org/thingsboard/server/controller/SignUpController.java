@@ -613,6 +613,7 @@ public class SignUpController extends BaseController {
 
         List<GroupPermission> permissions = selfRegistrationParams.getPermissions();
         for (GroupPermission permission : permissions) {
+            permission.setId(null);
             permission.setTenantId(tenantId);
             permission.setUserGroupId(usersEntityGroup.getId());
             if (permission.getEntityGroupId() != null) {

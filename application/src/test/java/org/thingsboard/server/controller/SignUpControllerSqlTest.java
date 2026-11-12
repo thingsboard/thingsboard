@@ -38,6 +38,10 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.permission.GroupPermissionInfo;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.selfregistration.DefaultDashboardParams;
@@ -173,6 +177,41 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         User user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
         assertThat(user).isNotNull();
         assertThat(user.getEmail()).isEqualTo(CUSTOMER_TEST_EMAIL);
+
+        removeCreatedUser(user);
+    }
+
+    @Test
+    public void testSelfRegisterUserCreatesNewGroupPermissions() throws Exception {
+        EntityGroup userGroup = new EntityGroup();
+        userGroup.setType(EntityType.USER);
+        userGroup.setName("Existing permission users");
+        userGroup = doPost("/api/entityGroup", userGroup, EntityGroup.class);
+        Role role = new Role();
+        role.setName("Existing permission role");
+        role.setType(RoleType.GENERIC);
+        role = doPost("/api/role", role, Role.class);
+        GroupPermission existingPermission = new GroupPermission();
+        existingPermission.setUserGroupId(userGroup.getId());
+        existingPermission.setRoleId(role.getId());
+        existingPermission = doPost("/api/groupPermission", existingPermission, GroupPermission.class);
+
+        GroupPermission selfRegistrationPermission = new GroupPermission(existingPermission);
+        createWebSelfRegistrationSettings(List.of(selfRegistrationPermission));
+        String email = "signup-permissions@thingsboard.org";
+        doSignUp(createWebSignUpRequest(email));
+
+        GroupPermission storedPermission = doGet("/api/groupPermission/" + existingPermission.getUuidId(), GroupPermission.class);
+        assertThat(storedPermission.getUserGroupId()).isEqualTo(userGroup.getId());
+
+        User user = userService.findUserByEmail(tenantId, email);
+        EntityGroup selfRegistrationGroup = entityGroupService.findEntityGroupByTypeAndName(tenantId, user.getCustomerId(), EntityType.USER,
+                "Self Registration Users").orElseThrow();
+        List<GroupPermissionInfo> selfRegistrationPermissions = doGetTyped("/api/userGroup/" + selfRegistrationGroup.getUuidId() + "/groupPermissions",
+                new TypeReference<>() {});
+        assertThat(selfRegistrationPermissions).hasSize(1);
+        assertThat(selfRegistrationPermissions.get(0).getId()).isNotEqualTo(existingPermission.getId());
+        assertThat(selfRegistrationPermissions.get(0).getRoleId()).isEqualTo(role.getId());
 
         removeCreatedUser(user);
     }
@@ -428,7 +467,7 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         String activateToken = userService.findUserCredentialsByUserId(tenantId, user.getId()).getActivateToken();
 
         createDifferentTenant();
-        createWebSelfRegistrationParams(OTHER_HOST);
+        createWebSelfRegistrationParams(OTHER_HOST, Collections.emptyList());
 
         mockMvc.perform(post("/api/noauth/activateByEmailCode")
                         .param("emailCode", activateToken)
@@ -536,12 +575,16 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
     }
 
     private void createWebSelfRegistrationSettings() {
-        createWebSelfRegistrationParams("localhost");
+        createWebSelfRegistrationSettings(Collections.emptyList());
+    }
+
+    private void createWebSelfRegistrationSettings(List<GroupPermission> permissions) {
+        createWebSelfRegistrationParams("localhost", permissions);
         createNotificationTemplate(NotificationType.USER_ACTIVATED, "User activated", "User ${userEmail} was activated", NotificationDeliveryMethod.WEB);
         createNotificationTemplate(NotificationType.USER_REGISTERED, "User registered", "User ${userEmail} was registered", NotificationDeliveryMethod.WEB);
     }
 
-    private void createWebSelfRegistrationParams(String domainName) {
+    private void createWebSelfRegistrationParams(String domainName, List<GroupPermission> permissions) {
         Domain domain = constructDomain(domainName);
         Domain savedDomain = doPost("/api/domain", domain, Domain.class);
 
@@ -555,7 +598,7 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         selfRegistrationParams.setShowPrivacyPolicy(true);
         selfRegistrationParams.setDomainId(savedDomain.getId());
         selfRegistrationParams.setNotificationRecipient(createNotificationTarget(currentUserId).getId());
-        selfRegistrationParams.setPermissions(Collections.emptyList());
+        selfRegistrationParams.setPermissions(permissions);
 
         doPost("/api/selfRegistration/selfRegistrationParams",
                 selfRegistrationParams, JsonNode.class);
