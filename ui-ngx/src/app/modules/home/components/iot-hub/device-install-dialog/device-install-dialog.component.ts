@@ -2609,7 +2609,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   /**
    * The key of the step's install state: its id, or else its type and name, so that two steps of an install method
    * never share it. A form without an id keeps its name, which no entity step's type-and-name key equals; a step id
-   * equal to a form's name is caught by the duplicate check.
+   * equal to a form's name is caught by the duplicate check on install, and by the server on update.
    * The server keys the steps of an update the same way.
    */
   private stateKeyOf(step: DeviceInstallStep): string {

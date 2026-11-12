@@ -498,6 +498,20 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void stepWithTheKeyOfAForm_isRejected() {
+        DeviceUpdateRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
+        step.setId("Settings");
+        DeviceUpdateRequest request = request(step);
+        request.setInstallState(Map.of("Settings", JacksonUtil.newObjectNode().set("formValues", JacksonUtil.newObjectNode().put("interval", 10))));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Duplicate update step: Settings");
+        verify(transactionTemplate, never()).execute(any());
+    }
+
+    @Test
     void stepsOfOneNameAndAnotherType_eachKeepTheirOwnState() {
         // Installed when the state was keyed by name: the integration's state replaced the converter's
         ConverterId converterId = new ConverterId(UUID.randomUUID());

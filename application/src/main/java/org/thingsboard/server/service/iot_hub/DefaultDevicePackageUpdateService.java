@@ -209,7 +209,8 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             throw new IllegalArgumentException("The update has no steps");
         }
         Set<UUID> ownedIds = ownedIds(devicePackage.descriptor());
-        Set<String> stateKeys = new HashSet<>();
+        // A form's values are saved under its key too, so an entity step may not share it
+        Set<String> stateKeys = request.getInstallState() != null ? new HashSet<>(request.getInstallState().keySet()) : new HashSet<>();
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
             if (step.getName() == null || step.getAction() == null || !isKnownType(step.getType())) {
                 throw new IllegalArgumentException("Invalid update step: " + step.getName());
