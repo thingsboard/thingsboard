@@ -773,6 +773,11 @@
         "attachment-over-limit": "More than {{count}} files",
         "detail": {
             "check-dashboard-access": "Checked what {{customer}} can see on {{dashboard}}",
+            "notification-status": {
+                "sent": "Sent",
+                "scheduled": "Scheduled",
+                "processing": "Sending"
+            },
             "not-visible": "{{count}} not visible to the customer",
             "all-visible": "The customer can see every entity this dashboard shows.",
             "state-aliases": "Resolved only when the dashboard opens: {{aliases}}",
@@ -922,6 +927,11 @@
             "no": "No",
             "fact": {
                 "permissions": "Permissions",
+                "status": "Status",
+                "sends-at": "Sends at",
+                "recipients": "Recipients",
+                "delivered": "Delivered",
+                "error": "Error",
                 "dashboard": "Dashboard",
                 "entities-checked": "Entities checked",
                 "email": "Email",
@@ -1304,6 +1314,34 @@
                 "run": "Taking back the role",
                 "done": "Took back the role"
             },
+            "send-notification": {
+                "run": "Sending the notification",
+                "done": "Sent the notification"
+            },
+            "read-notifications": {
+                "run": "Reading notifications",
+                "done": "Read notifications"
+            },
+            "mark-notifications-read": {
+                "run": "Marking notifications as read",
+                "done": "Marked notifications as read"
+            },
+            "save-notification-settings": {
+                "run": "Changing notification delivery",
+                "done": "Changed notification delivery"
+            },
+            "save-notification-preferences": {
+                "run": "Changing notification preferences",
+                "done": "Changed notification preferences"
+            },
+            "delete-sent-notification": {
+                "run": "Deleting the sent notification",
+                "done": "Deleted the sent notification"
+            },
+            "delete-inbox-notification": {
+                "run": "Deleting the notification",
+                "done": "Deleted the notification"
+            },
             "delete-other": {
                 "run": "Deleting",
                 "done": "Deleted"
@@ -1418,6 +1456,9 @@
                 "template": "Template",
                 "recipients": "Recipients",
                 "delivery": "Delivery",
+                "when": "Sends at",
+                "slack": "Slack",
+                "mobileApp": "Mobile app",
                 "body": "Message",
                 "keys": "Keys",
                 "scope": "Scope"
@@ -1440,7 +1481,10 @@
                 "DASHBOARD_WIDGET": "Widget",
                 "DASHBOARD_STATE": "Dashboard state",
                 "DASHBOARD_ENTITY_ALIAS": "Entity alias",
-                "DASHBOARD_FILTER": "Dashboard filter"
+                "DASHBOARD_FILTER": "Dashboard filter",
+                "NOTIFICATION": "Notification",
+                "NOTIFICATION_SETTINGS": "Notification delivery",
+                "NOTIFICATION_PREFERENCES": "Notification preferences"
             }
         },
         "record": {

@@ -59,7 +59,12 @@ const TOOL_WORDS: Record<string, string> = {
   check_dashboard_access: 'check-dashboard-access',
   read_transport_endpoints: 'read-connection-settings',
   read_device_connect_commands: 'read-connection-settings',
-  search_web: 'search-web'
+  search_web: 'search-web',
+  send_notification: 'send-notification',
+  read_notifications: 'read-notifications',
+  mark_notifications_read: 'mark-notifications-read',
+  save_notification_settings: 'save-notification-settings',
+  save_notification_preferences: 'save-notification-preferences'
 };
 
 const GENERATING_TOOLS: Record<string, string> = {
@@ -95,6 +100,8 @@ const DELETED_TARGETS: Record<string, string> = {
   NOTIFICATION_RULE: 'delete-notification-rule',
   NOTIFICATION_TARGET: 'delete-notification-target',
   NOTIFICATION_TEMPLATE: 'delete-notification-template',
+  NOTIFICATION_REQUEST: 'delete-sent-notification',
+  NOTIFICATION: 'delete-inbox-notification',
   DASHBOARD: 'delete-dashboard',
   DASHBOARD_WIDGET: 'delete-widget',
   DASHBOARD_STATE: 'delete-dashboard-state',

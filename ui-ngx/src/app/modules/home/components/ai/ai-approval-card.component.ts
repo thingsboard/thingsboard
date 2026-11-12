@@ -51,7 +51,7 @@ const VALUE_TOKENS: Record<string, string[]> = {
 
 const CODE_FIELDS = new Set(['arguments', 'expression', 'output']);
 
-const OWN_TYPE_LABELS = new Set(['DASHBOARD_WIDGET', 'DASHBOARD_STATE', 'DASHBOARD_ENTITY_ALIAS', 'DASHBOARD_FILTER']);
+const OWN_TYPE_LABELS = new Set(['DASHBOARD_WIDGET', 'DASHBOARD_STATE', 'DASHBOARD_ENTITY_ALIAS', 'DASHBOARD_FILTER', 'NOTIFICATION', 'NOTIFICATION_SETTINGS', 'NOTIFICATION_PREFERENCES']);
 
 const PROFILE_TYPES = new Set<string>([EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE]);
 
@@ -295,6 +295,9 @@ export class AiApprovalCardComponent implements OnChanges {
   private value(field: AiReviewField, value: string | undefined): string {
     if (value === undefined || value === null) {
       return this.translate.instant('ai-assistant.review.not-set');
+    }
+    if (field.id === 'when' && !isNaN(Date.parse(value))) {
+      return new Date(value).toLocaleString();
     }
     if (field.id && VALUE_TOKENS[field.id]?.includes(value)) {
       return this.translate.instant(`ai-assistant.review.value.${field.id}-${value}`);

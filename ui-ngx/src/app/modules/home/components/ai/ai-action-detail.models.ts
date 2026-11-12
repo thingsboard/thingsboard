@@ -789,6 +789,35 @@ function permissionsText(permissions: unknown): string | undefined {
   return undefined;
 }
 
+function sentNotification(result: unknown): AiDetailBlock[] {
+  if (!isObject(result) || !str(result.requestId)) {
+    return generic(result, 'result');
+  }
+  const rows: AiDetailFact[] = [];
+  if (str(result.status)) {
+    rows.push({label: K + 'fact.status', value: K + 'notification-status.' + String(result.status).toLowerCase()});
+  }
+  if (str(result.sendsAt)) {
+    rows.push({label: K + 'fact.sends-at', raw: true, value: new Date(result.sendsAt).toLocaleString()});
+  }
+  if (str(result.usersTargetName)) {
+    rows.push({label: K + 'fact.recipients', raw: true, value: result.usersTargetName});
+  }
+  if (isObject(result.sent)) {
+    rows.push({label: K + 'fact.delivered', raw: true,
+      value: Object.entries(result.sent).map(([method, count]) => `${aiHumanize(method)} ${count}`).join(', ')});
+  }
+  if (isObject(result.errors)) {
+    Object.entries(result.errors).filter(([, byRecipient]) => isObject(byRecipient)).forEach(([method, byRecipient]) =>
+      Object.entries(byRecipient as Record<string, unknown>).forEach(([recipient, error]) =>
+        rows.push({label: aiHumanize(method), raw: true, value: `${recipient}: ${aiValueText(error)}`})));
+  }
+  if (str(result.error)) {
+    rows.push({label: K + 'fact.error', raw: true, value: result.error});
+  }
+  return rows.length ? [{type: 'facts', rows}] : [];
+}
+
 function createdUser(user: unknown): AiDetailBlock[] {
   if (!isObject(user)) {
     return [];
@@ -814,6 +843,8 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
   const target = of(values.entityId, values.entityType);
   const dashboard = of(values.dashboardId, 'DASHBOARD');
   switch (tool) {
+    case 'send_notification':
+      return {blocks: sentNotification(result)};
     case 'check_dashboard_access':
       return {hood: text('check-dashboard-access', {dashboard, customer: of(values.customerId, 'CUSTOMER')}), blocks: accessBlocks(result)};
     case 'change_owner':
