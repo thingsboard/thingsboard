@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.iot_hub;
 
+import org.thingsboard.server.common.data.Dashboard;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -62,10 +67,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -377,6 +384,14 @@ public class DefaultIotHubService implements IotHubService {
             String itemType = installedItem.getItemType();
             IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
 
+            if ("DEVICE".equals(itemType)) {
+                // A device package needs the user's input to install (gateway name, credentials and so on), so the
+                // server cannot install the new version alone: the install wizard of the new version does the update
+                // (removeDevicePackageEntities, then registerDeviceInstall with this item). Refuse instead of removing
+                // the package here: a client that reads this as an update would report success with nothing installed.
+                throw new IllegalArgumentException("A device package is updated through the install wizard of its new version.");
+            }
+
             // Skip checksum validation for solution templates
             if (!"SOLUTION_TEMPLATE".equals(itemType)) {
                 JsonNode installedVersionInfo = iotHubRestClient.getVersionInfo(installedItem.getItemVersionId().toString());
@@ -419,12 +434,6 @@ public class DefaultIotHubService implements IotHubService {
                 case "CALCULATED_FIELD" -> updateCalculatedField(user, tenantId, (CalculatedFieldInstalledItemDescriptor) descriptor, fileData);
                 case "ALARM_RULE" -> updateAlarmRule(user, tenantId, (AlarmRuleInstalledItemDescriptor) descriptor, fileData);
                 case "RULE_CHAIN" -> updateRuleChain(tenantId, (RuleChainInstalledItemDescriptor) descriptor, fileData);
-                case "DEVICE" -> {
-                    DeviceInstalledItemDescriptor dd = (DeviceInstalledItemDescriptor) descriptor;
-                    deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
-                    dd.setCreatedEntityIds(null);
-                    dd.setDashboardId(null);
-                }
                 case "SOLUTION_TEMPLATE" -> {
                     SolutionTemplateInstalledItemDescriptor stDescriptor = (SolutionTemplateInstalledItemDescriptor) descriptor;
                     solutionService.deleteSolution(tenantId, stDescriptor, user);
@@ -615,7 +624,8 @@ public class DefaultIotHubService implements IotHubService {
     }
 
     @Override
-    public InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor) {
+    public InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor,
+                                                          IotHubInstalledItemId replaceInstalledItemId) {
         TenantId tenantId = user.getTenantId();
         log.info("[{}] Registering device package install for version: {}", tenantId, versionId);
 
@@ -630,76 +640,292 @@ public class DefaultIotHubService implements IotHubService {
             UUID itemId = UUID.fromString(versionInfo.get("itemId").asText());
             String version = versionInfo.get("version").asText();
 
-            IotHubInstalledItem installedItem = new IotHubInstalledItem();
-            installedItem.setTenantId(tenantId);
+            // An item replaced in the meantime (deleted from another tab) leaves a new one: the entities stay tracked.
+            IotHubInstalledItem installedItem = replaceInstalledItemId != null
+                    ? iotHubInstalledItemService.findById(tenantId, replaceInstalledItemId) : null;
+            boolean newItem = installedItem == null;
+            if (newItem) {
+                installedItem = new IotHubInstalledItem();
+                installedItem.setTenantId(tenantId);
+            } else {
+                checkDevicePackage(installedItem);
+                checkSameItem(installedItem, itemId);
+                keepTracking((DeviceInstalledItemDescriptor) installedItem.getDescriptor(), descriptor);
+            }
             installedItem.setItemId(itemId);
             installedItem.setItemVersionId(UUID.fromString(versionId));
             installedItem.setItemName(itemName);
             installedItem.setItemType("DEVICE");
             installedItem.setVersion(version);
             installedItem.setDescriptor(descriptor);
-            try {
-                iotHubInstalledItemService.save(tenantId, installedItem);
-            } catch (Exception e) {
-                log.error("[{}] Failed to save IoT Hub installed-item tracking row for device package {} (version {}); rolling back created entities",
-                        tenantId, itemName, version, e);
-                try {
-                    deleteEntityForDescriptor(user, tenantId, descriptor, null);
-                } catch (Exception rb) {
-                    log.error("[{}] Compensating delete after failed tracking save threw — device package entities may remain orphaned",
-                            tenantId, rb);
-                }
-                throw e;
-            }
+            // Not rolled back when the save fails: the wizard shows the error, and Retry registers the same entities again.
+            installedItem = iotHubInstalledItemService.save(tenantId, installedItem);
 
-            try {
-                InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(),
-                        projectInfo.getProjectVersion(), projectInfo.getProductType());
-                iotHubRestClient.reportVersionInstalled(versionId, report);
-            } catch (Exception e) {
-                log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
+            // Reported once per install, as before: the wizard registers again after each group of entities, on Retry
+            // and on an update.
+            if (newItem) {
+                try {
+                    InstallReport report = buildInstallReport(tenantId.getId(), user.getId().getId(),
+                            projectInfo.getProjectVersion(), projectInfo.getProductType());
+                    iotHubRestClient.reportVersionInstalled(versionId, report);
+                } catch (Exception e) {
+                    log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
+                }
             }
             log.info("[{}] Registered device package install: {} (version {})", tenantId, itemName, version);
 
-            return InstallItemVersionResult.success(descriptor);
+            return InstallItemVersionResult.success(descriptor, installedItem.getId().getId());
         } catch (Exception e) {
             log.error("[{}] Failed to register device package install: {}", tenantId, versionId, e);
             return InstallItemVersionResult.error(e.getMessage());
         }
     }
 
-    private void deleteDevicePackageEntities(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
-        if (createdEntityIds == null || createdEntityIds.isEmpty()) {
+    @Override
+    public void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId) {
+        TenantId tenantId = user.getTenantId();
+        IotHubInstalledItem installedItem = findDevicePackage(tenantId, installedItemId);
+        // Checked before anything is removed: the registration of the new version checks the same and would fail.
+        JsonNode versionInfo;
+        try {
+            versionInfo = iotHubRestClient.getVersionInfo(versionId);
+        } catch (RestClientException e) {
+            throw new IllegalArgumentException("Failed to get version info from IoT Hub: " + e.getMessage(), e);
+        }
+        if (versionInfo == null) {
+            throw new IllegalArgumentException("Failed to get version info from IoT Hub");
+        }
+        String itemId = optText(versionInfo, FIELD_ITEM_ID);
+        if (itemId == null) {
+            throw new IllegalArgumentException("IoT Hub returned the version without its item");
+        }
+        checkSameItem(installedItem, UUID.fromString(itemId));
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        checkPackageEntitiesCanBeRemoved(tenantId, packageOwnedEntityIds(descriptor));
+        // Refusals above are a 400 and remove nothing. Any failure from here on is not a 400, so the wizard knows that
+        // entities may already be gone (each delete is committed on its own).
+        Map<EntityId, String> failed;
+        try {
+            failed = deleteDevicePackageEntities(tenantId, packageOwnedEntityIds(descriptor), user);
+            // An entity that could not be removed stays tracked, so that Retry, a later update or Delete removes it. The ones
+            // the user chose to use as they were are neither removed nor tracked any more.
+            descriptor.setCreatedEntityIds(failed.isEmpty() ? null : new ArrayList<>(failed.keySet()));
+            if (descriptor.getDashboardId() != null && !failed.containsKey(descriptor.getDashboardId())) {
+                descriptor.setDashboardId(null);
+            }
+            // Keep what the user entered in the forms (the wizard of the new version starts from it), drop the outputs of
+            // the removed entities: their ids, links and tokens no longer exist.
+            if (descriptor.getInstallState() != null) {
+                descriptor.setInstallState(stripEntityOutputs(descriptor.getInstallState()));
+            }
+            iotHubInstalledItemService.save(tenantId, installedItem);
+        } catch (RuntimeException e) {
+            // Without the cause: BaseController answers 400 for an IncorrectParameterException cause, and a 400 tells the
+            // wizard that nothing was removed.
+            log.warn("[{}] Removing the entities of device package {} failed", tenantId, installedItem.getItemName(), e);
+            throw new IllegalStateException("Removing the entities failed: " + e.getMessage());
+        }
+        if (!failed.isEmpty()) {
+            // The wizard must not create the new version's entities next to the ones left: it shows this and Retry.
+            throw new IllegalStateException("not removed: " + String.join(", ", failed.values()));
+        }
+        log.info("[{}] Removed the entities of device package {} for its update", tenantId, installedItem.getItemName());
+    }
+
+    private static Map<String, JsonNode> stripEntityOutputs(Map<String, JsonNode> installState) {
+        Map<String, JsonNode> stripped = new LinkedHashMap<>();
+        installState.forEach((step, state) -> {
+            JsonNode formValues = state != null ? state.get("formValues") : null;
+            if (formValues != null) {
+                stripped.put(step, JacksonUtil.newObjectNode().set("formValues", formValues));
+            }
+        });
+        return stripped;
+    }
+
+    private static void checkSameItem(IotHubInstalledItem installedItem, UUID itemId) {
+        if (!itemId.equals(installedItem.getItemId())) {
+            throw new IllegalArgumentException("The new version belongs to another IoT Hub item.");
+        }
+    }
+
+    /**
+     * The new descriptor keeps tracking every entity the item tracks: the wizard registers again after each group of
+     * entities, and an entity left out would stay in the tenant with nothing to remove it. An update registers only
+     * after removing the entities of the installed version, so it tracks none of them any more.
+     */
+    private static void keepTracking(DeviceInstalledItemDescriptor tracked, DeviceInstalledItemDescriptor descriptor) {
+        if (tracked.getCreatedEntityIds() != null) {
+            List<EntityId> ids = descriptor.getCreatedEntityIds() != null ? new ArrayList<>(descriptor.getCreatedEntityIds()) : new ArrayList<>();
+            tracked.getCreatedEntityIds().stream().filter(id -> !ids.contains(id)).forEach(ids::add);
+            descriptor.setCreatedEntityIds(ids);
+        }
+        if (descriptor.getDashboardId() == null) {
+            descriptor.setDashboardId(tracked.getDashboardId());
+        }
+    }
+
+    private IotHubInstalledItem findDevicePackage(TenantId tenantId, IotHubInstalledItemId installedItemId) {
+        IotHubInstalledItem installedItem = iotHubInstalledItemService.findById(tenantId, installedItemId);
+        if (installedItem == null) {
+            throw new IllegalArgumentException("Installed item not found");
+        }
+        checkDevicePackage(installedItem);
+        return installedItem;
+    }
+
+    private static void checkDevicePackage(IotHubInstalledItem installedItem) {
+        if (!"DEVICE".equals(installedItem.getItemType()) || !(installedItem.getDescriptor() instanceof DeviceInstalledItemDescriptor)) {
+            throw new IllegalArgumentException("Installed item is not a device package");
+        }
+    }
+
+    /**
+     * The update removes the package's entities one by one. ThingsBoard refuses to delete a device profile that is the
+     * default one or that devices outside the package use; a dashboard that a profile outside the package uses as its
+     * default dashboard; and a rule chain that is the root one or the default rule chain of a profile outside the package.
+     * (The firmware and software of a profile are deleted with it.) Found after the first deletes, such a refusal would
+     * leave the package half removed and fail every Retry the same way, so it is checked before anything is removed.
+     */
+    private void checkPackageEntitiesCanBeRemoved(TenantId tenantId, List<EntityId> packageEntityIds) {
+        if (packageEntityIds == null || packageEntityIds.isEmpty()) {
             return;
         }
-        List<EntityId> reversed = new ArrayList<>(createdEntityIds);
-        Collections.reverse(reversed);
-        for (EntityId entityId : reversed) {
+        Set<UUID> owned = new HashSet<>();
+        packageEntityIds.forEach(id -> owned.add(id.getId()));
+        List<String> blockers = new ArrayList<>();
+        for (EntityId entityId : packageEntityIds) {
+            if (entityId.getEntityType() == EntityType.DEVICE_PROFILE) {
+                DeviceProfile profile = deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId()));
+                if (!isOwnedBy(profile, tenantId)) {
+                    continue;
+                }
+                if (profile.isDefault()) {
+                    blockers.add("the device profile '" + profile.getName() + "' is the default device profile");
+                }
+                long otherDevices = 0;
+                for (DeviceId deviceId : new PageDataIterable<>(link -> deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(
+                        tenantId, profile.getId(), link), 1000)) {
+                    if (!owned.contains(deviceId.getId())) {
+                        otherDevices++;
+                    }
+                }
+                if (otherDevices > 0) {
+                    blockers.add("the device profile '" + profile.getName() + "' is used by " + otherDevices + " other device(s)");
+                }
+            } else if (entityId.getEntityType() == EntityType.DASHBOARD) {
+                Dashboard dashboard = dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId()));
+                if (!isOwnedBy(dashboard, tenantId)) {
+                    continue;
+                }
+                for (DeviceProfile profile : new PageDataIterable<>(link -> deviceProfileService.findDeviceProfiles(tenantId, link), 1000)) {
+                    if (dashboard.getId().equals(profile.getDefaultDashboardId()) && !owned.contains(profile.getId().getId())) {
+                        blockers.add("the dashboard '" + dashboard.getTitle() + "' is the default dashboard of the device profile '" + profile.getName() + "'");
+                    }
+                }
+                for (AssetProfile profile : new PageDataIterable<>(link -> assetProfileService.findAssetProfiles(tenantId, link), 1000)) {
+                    if (dashboard.getId().equals(profile.getDefaultDashboardId())) {
+                        blockers.add("the dashboard '" + dashboard.getTitle() + "' is the default dashboard of the asset profile '" + profile.getName() + "'");
+                    }
+                }
+            } else if (entityId.getEntityType() == EntityType.RULE_CHAIN) {
+                RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
+                if (!isOwnedBy(ruleChain, tenantId)) {
+                    continue;
+                }
+                if (ruleChain.isRoot()) {
+                    blockers.add("the rule chain '" + ruleChain.getName() + "' is the root rule chain");
+                }
+                for (DeviceProfile profile : new PageDataIterable<>(link -> deviceProfileService.findDeviceProfiles(tenantId, link), 1000)) {
+                    if (ruleChain.getId().equals(profile.getDefaultRuleChainId()) && !owned.contains(profile.getId().getId())) {
+                        blockers.add("the rule chain '" + ruleChain.getName() + "' is the rule chain of the device profile '" + profile.getName() + "'");
+                    }
+                }
+                for (AssetProfile profile : new PageDataIterable<>(link -> assetProfileService.findAssetProfiles(tenantId, link), 1000)) {
+                    if (ruleChain.getId().equals(profile.getDefaultRuleChainId())) {
+                        blockers.add("the rule chain '" + ruleChain.getName() + "' is the rule chain of the asset profile '" + profile.getName() + "'");
+                    }
+                }
+            }
+        }
+        if (!blockers.isEmpty()) {
+            // Not "nothing was removed": an earlier attempt may have removed part of the package already.
+            throw new IllegalArgumentException("The package can't be updated: " + String.join("; ", blockers)
+                    + ". Change or delete them first.");
+        }
+    }
+
+    /**
+     * The entities the package created: the tracked ones without those the user chose, on a name conflict, to use as they
+     * were (the install state keeps that choice). The default device profile, for example, is never the package's.
+     */
+    private static List<EntityId> packageOwnedEntityIds(DeviceInstalledItemDescriptor descriptor) {
+        List<EntityId> tracked = descriptor.getCreatedEntityIds();
+        if (tracked == null || descriptor.getInstallState() == null) {
+            return tracked;
+        }
+        Set<String> usedExisting = new HashSet<>();
+        descriptor.getInstallState().values().forEach(state -> {
+            if (state != null && "use-existing".equals(optText(state, "resolution"))) {
+                JsonNode output = state.get("entityOutput");
+                String id = output != null ? optText(output, "id") : null;
+                if (id != null) {
+                    usedExisting.add(id);
+                }
+            }
+        });
+        return tracked.stream().filter(id -> !usedExisting.contains(id.getId().toString())).toList();
+    }
+
+    private static final Map<EntityType, Integer> DELETE_ORDER = Map.of(EntityType.DEVICE, 0, EntityType.DEVICE_PROFILE, 1,
+            EntityType.DASHBOARD, 2, EntityType.RULE_CHAIN, 3);
+
+    /** Removes the entities, each before what it refers to. Returns the ones that failed, in order of creation, with the reason. */
+    private Map<EntityId, String> deleteDevicePackageEntities(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
+        Map<EntityId, String> failed = new LinkedHashMap<>();
+        if (createdEntityIds == null || createdEntityIds.isEmpty()) {
+            return failed;
+        }
+        // An entity goes before what it refers to: a device before its profile, a profile before its default dashboard
+        // and rule chain. Within a type, the reverse of the creation order.
+        List<EntityId> ordered = new ArrayList<>(createdEntityIds);
+        Collections.reverse(ordered);
+        ordered.sort(Comparator.comparingInt(id -> DELETE_ORDER.getOrDefault(id.getEntityType(), DELETE_ORDER.size())));
+        for (EntityId entityId : ordered) {
             try {
                 deleteDevicePackageEntity(tenantId, entityId, user);
             } catch (Exception e) {
                 log.error("[{}] Failed to delete device package entity: {}", tenantId, entityId, e);
+                failed.put(entityId, entityId.getEntityType() + " (" + e.getMessage() + ")");
             }
         }
+        Map<EntityId, String> inCreationOrder = new LinkedHashMap<>();
+        createdEntityIds.stream().filter(failed::containsKey).forEach(id -> inCreationOrder.put(id, failed.get(id)));
+        return inCreationOrder;
+    }
+
+    /** The ids come from what the client registered: never delete an entity of another tenant. */
+    private static boolean isOwnedBy(HasTenantId entity, TenantId tenantId) {
+        return entity != null && tenantId.equals(entity.getTenantId());
     }
 
     private void deleteDevicePackageEntity(TenantId tenantId, EntityId entityId, SecurityUser user) {
         switch (entityId.getEntityType()) {
             case DEVICE -> {
                 var device = deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
-                if (device != null) tbDeviceService.delete(device, user);
+                if (isOwnedBy(device, tenantId)) tbDeviceService.delete(device, user);
             }
             case DEVICE_PROFILE -> {
                 var profile = deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId()));
-                if (profile != null) tbDeviceProfileService.delete(profile, user);
+                if (isOwnedBy(profile, tenantId)) tbDeviceProfileService.delete(profile, user);
             }
             case DASHBOARD -> {
                 var dashboard = dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId()));
-                if (dashboard != null) tbDashboardService.delete(dashboard, user);
+                if (isOwnedBy(dashboard, tenantId)) tbDashboardService.delete(dashboard, user);
             }
             case RULE_CHAIN -> {
                 var ruleChain = ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
-                if (ruleChain != null) tbRuleChainService.delete(ruleChain, user);
+                if (isOwnedBy(ruleChain, tenantId)) tbRuleChainService.delete(ruleChain, user);
             }
             default -> log.warn("[{}] Unsupported entity type for device package delete: {}", tenantId, entityId.getEntityType());
         }
@@ -750,7 +976,7 @@ public class DefaultIotHubService implements IotHubService {
                 }
             }
         } else if (descriptor instanceof DeviceInstalledItemDescriptor dd) {
-            deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
+            deleteDevicePackageEntities(tenantId, packageOwnedEntityIds(dd), user);
         } else if (descriptor instanceof SolutionTemplateInstalledItemDescriptor st) {
             try {
                 solutionService.deleteSolution(tenantId, st, user);

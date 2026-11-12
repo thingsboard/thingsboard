@@ -13,7 +13,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityId } from '@shared/models/id/entity-id';
 import { IotHubActionsService } from './iot-hub-actions.service';
-import { isBuiltInItem } from './iot-hub-utils';
+import { iotHubErrorMessage, isBuiltInItem } from './iot-hub-utils';
 import {
   IotHubSelectCfEntityDialogData,
   TbIotHubSelectCfEntityDialogComponent
@@ -120,7 +120,7 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
       },
       error: (err) => {
         this.isInstalling = false;
-        const message = err?.error?.message || err?.message || this.translate.instant('iot-hub.install-error', { name: item.name });
+        const message = iotHubErrorMessage(err, this.translate, this.translate.instant('iot-hub.install-error', { name: item.name }));
         this.dialogService.alert(
           this.translate.instant('iot-hub.install-error-title'),
           message
