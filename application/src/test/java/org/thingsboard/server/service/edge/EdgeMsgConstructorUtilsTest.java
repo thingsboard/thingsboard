@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -23,14 +24,18 @@ import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode;
 import org.thingsboard.rule.engine.telemetry.TbCalculatedFieldsNode;
 import org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode;
 import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.EXCLUDED_NODES_BY_EDGE_VERSION;
@@ -140,6 +145,31 @@ public class EdgeMsgConstructorUtilsTest {
 
         Assertions.assertTrue(isNodeExcluded,
                 String.format("For EdgeVersion '%s', ruleNode '%s' should not be included.", edgeVersion, ruleNode.getType()));
+    }
+
+    @Test
+    public void testUserCredentialsUpdatedMsgWithoutTokens() {
+        UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setUserId(new UserId(UUID.randomUUID()));
+        userCredentials.setEnabled(true);
+        userCredentials.setPassword("$2a$10$passwordHash");
+        userCredentials.setActivateToken("activateToken");
+        userCredentials.setActivateTokenExpTime(System.currentTimeMillis());
+        userCredentials.setResetToken("resetToken");
+        userCredentials.setResetTokenExpTime(System.currentTimeMillis());
+
+        UserCredentialsUpdateMsg userCredentialsUpdateMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials);
+        UserCredentials sentUserCredentials = JacksonUtil.fromString(userCredentialsUpdateMsg.getEntity(), UserCredentials.class, true);
+
+        Assertions.assertNotNull(sentUserCredentials);
+        Assertions.assertEquals(userCredentials.getUserId(), sentUserCredentials.getUserId());
+        Assertions.assertEquals(userCredentials.getPassword(), sentUserCredentials.getPassword());
+        Assertions.assertTrue(sentUserCredentials.isEnabled());
+        Assertions.assertNull(sentUserCredentials.getActivateToken());
+        Assertions.assertNull(sentUserCredentials.getActivateTokenExpTime());
+        Assertions.assertNull(sentUserCredentials.getResetToken());
+        Assertions.assertNull(sentUserCredentials.getResetTokenExpTime());
+        Assertions.assertEquals("resetToken", userCredentials.getResetToken());
     }
 
 }
