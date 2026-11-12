@@ -63,7 +63,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
                     if (userUpdateMsg.hasEntityGroupIdMSB() && userUpdateMsg.hasEntityGroupIdLSB()) {
                         EntityGroupId entityGroupId = new EntityGroupId(
                                 new UUID(userUpdateMsg.getEntityGroupIdMSB(), userUpdateMsg.getEntityGroupIdLSB()));
-                        edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, userId);
+                        safeRemoveEntityFromGroup(tenantId, entityGroupId, userId);
                         yield Futures.immediateFuture(null);
                     } else if (EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
                         deleteUserAndPushEntityDeletedEventToRuleEngine(tenantId, userId, edge);
