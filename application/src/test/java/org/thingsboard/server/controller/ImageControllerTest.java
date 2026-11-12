@@ -311,6 +311,18 @@ public class ImageControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testUploadImageWithEncodedQuotesInFileName() throws Exception {
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "%22Baker Street%22, 221B.png", "image/png", PNG_IMAGE);
+
+        assertThat(imageInfo.getFileName()).isEqualTo("\"Baker Street\", 221B.png");
+        assertThat(imageInfo.getTitle()).isEqualTo("\"Baker Street\", 221B.png");
+        assertThat(imageInfo.getResourceKey()).isEqualTo("\"Baker Street\", 221B.png");
+
+        doGet("/api/images/tenant/{key}", imageInfo.getResourceKey()).andExpect(status().isOk());
+        doGet("/api/images/tenant/{key}/preview", imageInfo.getResourceKey()).andExpect(status().isOk());
+    }
+
+    @Test
     public void testMakeImagePublic() throws Exception {
         String filename = "my_public_image.png";
         TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);

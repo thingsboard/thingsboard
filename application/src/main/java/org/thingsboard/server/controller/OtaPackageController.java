@@ -149,7 +149,7 @@ public class OtaPackageController extends BaseController {
         ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
         byte[] data = file.getBytes();
         return tbOtaPackageService.saveOtaPackageData(otaPackageInfo, checksum, checksumAlgorithm,
-                data, file.getOriginalFilename(), file.getContentType(), getCurrentUser());
+                data, getFileName(file), file.getContentType(), getCurrentUser());
     }
 
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",
