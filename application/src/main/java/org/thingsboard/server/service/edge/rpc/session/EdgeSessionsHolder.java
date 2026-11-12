@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.session;
 
 import lombok.Data;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -36,11 +38,14 @@ public class EdgeSessionsHolder {
         unique.forEach(consumer);
     }
 
-    public void put(EdgeGrpcSessionManager session) {
+    /**
+     * Registers the session as the current one for its edge and returns the session it replaced, or null.
+     */
+    public EdgeGrpcSessionManager put(EdgeGrpcSessionManager session) {
         UUID sessionId = session.getState().getSessionId();
         EdgeId edgeId = session.getState().getEdgeId();
         sessionsById.put(sessionId, session);
-        sessions.put(edgeId, session);
+        return sessions.put(edgeId, session);
     }
 
     public EdgeGrpcSessionManager getByEdgeId(EdgeId id) {
@@ -86,6 +91,22 @@ public class EdgeSessionsHolder {
             return null;
         });
         return removed.get();
+    }
+
+    /**
+     * Runs the action only if no session is registered for the edge, as one atomic step with {@link #put}.
+     * Returns whether it ran. The action holds the bin lock of {@link #sessions}, so it must be cheap and non-blocking.
+     */
+    public boolean runIfNoSession(EdgeId id, Runnable action) {
+        AtomicBoolean ran = new AtomicBoolean();
+        sessions.compute(id, (edgeId, current) -> {
+            if (current == null) {
+                action.run();
+                ran.set(true);
+            }
+            return current;
+        });
+        return ran.get();
     }
 
     public EdgeGrpcSessionManager removeBySessionId(UUID sessionId) {

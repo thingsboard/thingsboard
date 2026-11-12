@@ -1,0 +1,25 @@
+{
+  "deviceName": "Sigfox-2203961",
+  "deviceType": "Sigfox device",
+  "groupName": "Control room devices",
+  "attributes": {
+    "sigfoxId": "2203961",
+    "deviceTypeId": "630ceaea10d051194ec0246e",
+    "autoCalibration": "on",
+    "zeroPointAdjusted": false,
+    "transmitPower": "full",
+    "powerControl": "off",
+    "fwVersion": 2
+  },
+  "telemetry": {
+    "ts": "1686298419000",
+    "values": {
+      "temperature": 28.7,
+      "humidity": 33,
+      "co2": 582,
+      "co2Baseline": 420,
+      "customData1": "37",
+      "customData2": "2"
+    }
+  }
+}

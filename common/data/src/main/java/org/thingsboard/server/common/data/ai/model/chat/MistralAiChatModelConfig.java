@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
@@ -19,7 +20,7 @@ import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 @Builder
 public record MistralAiChatModelConfig(
         @Schema(ref = "#/components/schemas/MistralAiProviderConfig")
-        @NotNull @Valid MistralAiProviderConfig providerConfig,
+        @With @NotNull @Valid MistralAiProviderConfig providerConfig,
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,
         @Positive @Max(1) Double topP,
@@ -33,6 +34,11 @@ public record MistralAiChatModelConfig(
     @Override
     public AiProvider provider() {
         return AiProvider.MISTRAL_AI;
+    }
+
+    @Override
+    public MistralAiChatModelConfig withoutProviderConfig() {
+        return withProviderConfig(null);
     }
 
     @Override

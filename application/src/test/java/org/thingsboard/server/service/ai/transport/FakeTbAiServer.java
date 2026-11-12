@@ -3,6 +3,7 @@
 package org.thingsboard.server.service.ai.transport;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.handler.codec.http.HttpHeaders;
 import org.thingsboard.ai.common.channel.ChannelError;
 import org.thingsboard.ai.common.channel.ChannelFrame;
 import org.thingsboard.ai.common.channel.ChannelFrameCodec;
@@ -36,12 +37,14 @@ class FakeTbAiServer implements AutoCloseable {
     final List<ChannelFrame> received = new CopyOnWriteArrayList<>();
     final AtomicInteger connections = new AtomicInteger();
     final AtomicInteger openConnections = new AtomicInteger();
+    final List<HttpHeaders> handshakeHeaders = new CopyOnWriteArrayList<>();
     private final DisposableServer server;
 
-    private FakeTbAiServer(Script script) {
+    private FakeTbAiServer(List<String> capabilities, Script script) {
         server = HttpServer.create().host("127.0.0.1").port(0)
                 .route(routes -> routes.ws(ChannelProtocol.WS_PATH, (inbound, outbound) -> {
                     connections.incrementAndGet();
+                    handshakeHeaders.add(inbound.headers());
                     openConnections.incrementAndGet();
                     var connection = new Connection();
                     inbound.receive().asString().subscribe(text -> {
@@ -49,7 +52,7 @@ class FakeTbAiServer implements AutoCloseable {
                         received.add(frame);
                         if (ChannelProtocol.HELLO.equals(frame.type())) {
                             connection.send(ChannelFrame.of(ChannelProtocol.HELLO, codec.toPayload(
-                                    new ChannelHello(1, null, null, (long) TbAiChannelClient.DEFAULT_MAX_FRAME_BYTES))));
+                                    new ChannelHello(1, capabilities, null, (long) TbAiChannelClient.DEFAULT_MAX_FRAME_BYTES))));
                         } else {
                             script.onFrame(connection, frame);
                         }
@@ -63,7 +66,11 @@ class FakeTbAiServer implements AutoCloseable {
     }
 
     static FakeTbAiServer start(Script script) {
-        return new FakeTbAiServer(script);
+        return new FakeTbAiServer(null, script);
+    }
+
+    static FakeTbAiServer start(List<String> capabilities, Script script) {
+        return new FakeTbAiServer(capabilities, script);
     }
 
     static FakeTbAiServer rejecting(int status) {

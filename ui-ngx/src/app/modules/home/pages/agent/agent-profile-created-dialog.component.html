@@ -34,11 +34,11 @@
       <pre>{{ dockerCommand }}</pre>
     </div>
 
-    <div class="tb-info-box info">
-      <mat-icon>info</mat-icon>
+    <div class="tb-form-hint tb-primary-fill mt-3">
+      <mat-icon>info_outline</mat-icon>
       <div>
-        <p translate>agent.agent-profile-created-hint</p>
-        <ol>
+        <div translate>agent.agent-profile-created-hint</div>
+        <ol class="mb-0 mt-1.5 pl-5">
           <li translate>agent.agent-profile-created-step-1</li>
           <li translate>agent.agent-profile-created-step-2</li>
           @if (autoInstallEnabled) {
@@ -48,15 +48,15 @@
       </div>
     </div>
 
-    <div class="tb-info-box muted">
-      <mat-icon>help_outline</mat-icon>
+    <div class="tb-form-hint tb-primary-fill mt-3">
+      <mat-icon>info_outline</mat-icon>
       <div>
-        <p class="muted-title">
+        <div class="font-medium">
           {{ 'agent.provisioning-strategy-label' | translate: {
           strategy: agentProvisionTypeTranslationMap.get(agentProfile?.provisionType) | translate
           } }}
-        </p>
-        <p>{{ agentProvisionTypeDescriptionMap.get(agentProfile?.provisionType) | translate }}</p>
+        </div>
+        <div>{{ agentProvisionTypeDescriptionMap.get(agentProfile?.provisionType) | translate }}</div>
       </div>
     </div>
   </section>

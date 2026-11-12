@@ -28,9 +28,11 @@
         <pkg.type>js</pkg.type>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
+        <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
+        <sbom.image.scanExclude></sbom.image.scanExclude>
     </properties>
 
     <dependencies>
@@ -86,7 +88,7 @@
                             <goal>install-node-and-yarn</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v22.22.2</nodeVersion>
+                            <nodeVersion>v22.23.4</nodeVersion>
                             <yarnVersion>v1.22.22</yarnVersion>
                         </configuration>
                     </execution>
@@ -100,6 +102,16 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>generate sbom</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${sbom.ui.skip}</skip>
+                            <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>yarn pkg</id>
                         <goals>
                             <goal>yarn</goal>
@@ -107,6 +119,17 @@
                         <phase>compile</phase>
                         <configuration>
                             <arguments>--mutex network run pkg</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>sbom check</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <skip>${sbom.ui.skip}</skip>
+                            <arguments>run sbom-check</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -153,12 +176,37 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <id>read-bundled-versions</id>
+                        <phase>${sbom.package.phase}</phase>
+                        <goals>
+                            <goal>read-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <files>
+                                <file>${project.build.directory}/sbom/bundled-versions.properties</file>
+                            </files>
+                            <!-- "sbom check" writes the file only when SBOMs are made -->
+                            <quiet>true</quiet>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -192,6 +240,176 @@
                                 <argument>${docker.repo}/${docker.name}:latest</argument>
                                 <argument>${docker.repo}/${docker.name}:${project.version}</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- After exec-maven-plugin: the image SBOM is made in the phase that pushes the image, once it is pushed -->
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sbom-metadata</id>
+                        <configuration>
+                            <targetFile>${project.build.directory}/sbom/tb-web-report.cdx.json</targetFile>
+                            <skip>${skip.ui.build}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>package-sbom</id>
+                        <configuration>
+                            <sourceFile>${project.build.directory}/sbom/tb-web-report.cdx.json</sourceFile>
+                            <skip>${skip.ui.build}</skip>
+                            <packages combine.self="override">
+                                <package>
+                                    <id>deb</id>
+                                    <file>${project.build.directory}/${pkg.name}.deb</file>
+                                    <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=amd64</purl>
+                                    <skip>${pkg.skip.deb}</skip>
+                                </package>
+                                <package>
+                                    <id>rpm</id>
+                                    <file>${project.build.directory}/${pkg.name}.rpm</file>
+                                    <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=x86_64</purl>
+                                    <skip>${pkg.skip.rpm}</skip>
+                                </package>
+                                <package>
+                                    <id>zip</id>
+                                    <file>${project.build.directory}/${pkg.name}-windows.zip</file>
+                                    <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
+                                    <skip>${pkg.skip.zip}</skip>
+                                </package>
+                            </packages>
+                            <components combine.children="append">
+                                <component>
+                                    <type>application</type>
+                                    <name>node</name>
+                                    <version>${node.linux.version}</version>
+                                    <description>Node.js runtime embedded in the ${pkg.name} executable by pkg (base binary from yao-pkg/pkg-fetch).</description>
+                                    <purl>pkg:github/nodejs/node@v${node.linux.version}?os=linux</purl>
+                                    <cpe>cpe:2.3:a:nodejs:node.js:${node.linux.version}:*:*:*:*:*:*:*</cpe>
+                                    <license>MIT</license>
+                                    <supplier>
+                                        <name>OpenJS Foundation</name>
+                                        <urls>
+                                            <url>https://nodejs.org</url>
+                                        </urls>
+                                    </supplier>
+                                    <packages>
+                                        <package>deb</package>
+                                        <package>rpm</package>
+                                    </packages>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>node</name>
+                                    <version>${node.windows.version}</version>
+                                    <description>Node.js runtime embedded in the ${pkg.name} executable by pkg (base binary from yao-pkg/pkg-fetch).</description>
+                                    <purl>pkg:github/nodejs/node@v${node.windows.version}?os=windows</purl>
+                                    <cpe>cpe:2.3:a:nodejs:node.js:${node.windows.version}:*:*:*:*:*:*:*</cpe>
+                                    <license>MIT</license>
+                                    <supplier>
+                                        <name>OpenJS Foundation</name>
+                                        <urls>
+                                            <url>https://nodejs.org</url>
+                                        </urls>
+                                    </supplier>
+                                    <packages>
+                                        <package>zip</package>
+                                    </packages>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>chrome-for-testing</name>
+                                    <version>${chromium.version}</version>
+                                    <description>Chrome for Testing build downloaded by Playwright, used to render reports.</description>
+                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=linux</purl>
+                                    <cpe>cpe:2.3:a:google:chrome:${chromium.version}:*:*:*:*:*:*:*</cpe>
+                                    <supplier>
+                                        <name>Google LLC</name>
+                                        <urls>
+                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
+                                        </urls>
+                                    </supplier>
+                                    <file>${pkg.linux.dist}/chromium/chrome</file>
+                                    <packages>
+                                        <package>deb</package>
+                                        <package>rpm</package>
+                                    </packages>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>chrome-for-testing</name>
+                                    <version>${chromium.version}</version>
+                                    <description>Chrome for Testing build downloaded by Playwright, used to render reports.</description>
+                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=windows</purl>
+                                    <cpe>cpe:2.3:a:google:chrome:${chromium.version}:*:*:*:*:*:*:*</cpe>
+                                    <supplier>
+                                        <name>Google LLC</name>
+                                        <urls>
+                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
+                                        </urls>
+                                    </supplier>
+                                    <file>${pkg.win.dist}/chromium/chrome.exe</file>
+                                    <packages>
+                                        <package>zip</package>
+                                    </packages>
+                                </component>
+                            </components>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>image-sbom</id>
+                        <configuration>
+                            <components combine.self="override">
+                                <component>
+                                    <sbom>${project.build.directory}/sbom/tb-web-report.cdx.json</sbom>
+                                    <installDir>${pkg.installFolder}</installDir>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>chrome-for-testing</name>
+                                    <version>${chromium.version}</version>
+                                    <description>Chrome for Testing build downloaded by Playwright to /ms-playwright, used to render reports.</description>
+                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=linux&amp;arch=@{architecture}</purl>
+                                    <cpe>cpe:2.3:a:google:chrome:${chromium.version}:*:*:*:*:*:*:*</cpe>
+                                    <supplier>
+                                        <name>Google LLC</name>
+                                        <urls>
+                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
+                                        </urls>
+                                    </supplier>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>chrome-headless-shell</name>
+                                    <version>${chromium-headless-shell.version}</version>
+                                    <description>Chrome Headless Shell build downloaded by Playwright to /ms-playwright.</description>
+                                    <purl>pkg:generic/google/chrome-headless-shell@${chromium-headless-shell.version}?os=linux&amp;arch=@{architecture}</purl>
+                                    <cpe>cpe:2.3:a:google:chrome:${chromium-headless-shell.version}:*:*:*:*:*:*:*</cpe>
+                                    <supplier>
+                                        <name>Google LLC</name>
+                                        <urls>
+                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
+                                        </urls>
+                                    </supplier>
+                                </component>
+                                <component>
+                                    <type>application</type>
+                                    <name>playwright-ffmpeg</name>
+                                    <version>${ffmpeg.revision}</version>
+                                    <description>FFmpeg build by Playwright (revision ${ffmpeg.revision}), downloaded to /ms-playwright.</description>
+                                    <purl>pkg:generic/microsoft/playwright-ffmpeg@${ffmpeg.revision}?os=linux&amp;arch=@{architecture}</purl>
+                                    <license>LGPL-2.1-or-later</license>
+                                    <supplier>
+                                        <name>Microsoft Corporation</name>
+                                        <urls>
+                                            <url>https://playwright.dev</url>
+                                        </urls>
+                                    </supplier>
+                                </component>
+                            </components>
                         </configuration>
                     </execution>
                 </executions>

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -212,7 +213,7 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
 
   private setFontSize(element: JQuery<HTMLElement>, text: string, fontSize: number, maxWidth: number) {
     let textWidth = this.measureTextWidth(text, fontSize);
-    while (textWidth > maxWidth) {
+    while (textWidth > maxWidth && fontSize > 1) {
       fontSize--;
       textWidth = this.measureTextWidth(text, fontSize);
     }
@@ -226,7 +227,7 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private onError(error: string) {
-    this.error = error;
+    this.error = error ? error.replace(/<\/?br\s*\/?>/gi, '. ') : error;
     this.setFontSize(this.ledError, this.error, this.ledErrorContainer.height(), this.ledErrorContainer.width());
     this.ctx.detectChanges();
   }

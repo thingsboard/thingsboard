@@ -5,6 +5,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import org.thingsboard.server.service.ai.solution.AiSolutionService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER;
@@ -61,15 +63,26 @@ public class AiSolutionController extends BaseController {
         return aiSolutionService.getSolutions(user);
     }
 
+    @Deprecated(forRemoval = true)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/{solutionId}/{step}/chat")
     public JsonNode chat(@PathVariable UUID solutionId,
                          @PathVariable SolutionStep step,
                          @RequestBody String message) throws ThingsboardException {
+        return sendMessage(solutionId, step, new SolutionChatMessage(message, null));
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping(value = "/{solutionId}/{step}/messages", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public JsonNode sendMessage(@PathVariable UUID solutionId,
+                                @PathVariable SolutionStep step,
+                                @RequestBody SolutionChatMessage request) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        return aiSolutionService.chat(solutionId, step, message, user);
+        return aiSolutionService.chat(solutionId, step, request.message(), request.resources(), user);
     }
+
+    record SolutionChatMessage(String message, List<UUID> resources) {}
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/{solutionId}/create")

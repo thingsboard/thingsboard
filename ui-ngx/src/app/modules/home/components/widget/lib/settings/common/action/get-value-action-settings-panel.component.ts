@@ -110,10 +110,10 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
         defaultValue: [this.getValueSettings?.defaultValue, [Validators.required]],
         executeRpc: this.fb.group({
           method: [this.getValueSettings?.executeRpc?.method, [Validators.required]],
-          requestTimeout: [this.getValueSettings?.executeRpc?.requestTimeout, [Validators.required, Validators.min(5000)]],
+          requestTimeout: [this.getValueSettings?.executeRpc?.requestTimeout ?? 5000, [Validators.required, Validators.min(5000)]],
           requestPersistent: [this.getValueSettings?.executeRpc?.requestPersistent, []],
           persistentPollingInterval:
-            [this.getValueSettings?.executeRpc?.persistentPollingInterval, [Validators.required, Validators.min(1000)]],
+            [this.getValueSettings?.executeRpc?.persistentPollingInterval ?? 1000, [Validators.required, Validators.min(1000)]],
           params: this.fb.group({
             type: [this.getValueSettings?.executeRpc?.params?.type ?? RpcParamsType.NONE, [Validators.required]],
             constantValue: [this.getValueSettings?.executeRpc?.params?.constantValue, [Validators.required]],

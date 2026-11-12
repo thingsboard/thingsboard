@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -33,18 +34,21 @@ import org.thingsboard.server.service.ai.transport.TbAiChannelRejectedException;
 import org.thingsboard.server.service.ai.transport.TbAiChannelUnavailableException;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnLink;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -163,6 +167,22 @@ class DefaultTbAiServiceTest {
         then(call).should(never()).apply(any());
         then(apiUsageStateService).shouldHaveNoInteractions();
         then(apiUsageReportClient).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"400, BAD_REQUEST_PARAMS", "413, BAD_REQUEST_PARAMS", "403, GENERAL", "404, ITEM_NOT_FOUND",
+            "409, VERSION_CONFLICT", "429, TOO_MANY_REQUESTS", "401, GENERAL", "500, GENERAL", "0, GENERAL"})
+    void shouldKeepTheStatusOfTheAiService_whenProcessAndResponseIsFailure(int status, ThingsboardErrorCode errorCode) {
+        // GIVEN
+        given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
+        given(call.apply(any())).willReturn(TbAiResponse.builder().success(false).status(status).error("The file is not UTF-8 text: notes.txt").build());
+
+        // WHEN
+        Throwable thrown = catchThrowable(() -> service.process(call, user, true));
+
+        // THEN
+        assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("The file is not UTF-8 text: notes.txt");
+        assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(errorCode);
     }
 
     @Test
@@ -491,6 +511,54 @@ class DefaultTbAiServiceTest {
     private DefaultTbAiService newService(boolean enabled, Optional<TbAiTokenProvider> tokenProvider) {
         return new DefaultTbAiService(apiUsageStateService, apiUsageReportClient, tokenProvider,
                 new TbAiSettings(enabled, sseInactivityTimeoutSeconds, sseLogMaxDataLength), operations);
+    }
+
+    @Test
+    void shouldTellTheTurnTheBrowserLeft_andStillReportCredits_whenClientCancelsMidStream() {
+        // GIVEN
+        given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
+        upstream = Sinks.many().unicast().onBackpressureBuffer();
+        AtomicBoolean left = new AtomicBoolean();
+        TbAiTurnLink link = new TbAiTurnLink();
+        link.onClientLeft(() -> left.set(true));
+        Disposable client = service.processStream(chatId, tokenProvider -> upstream.asFlux(), user, link, true).subscribe();
+        upstream.tryEmitNext(assistantMessage("hello"));
+
+        // WHEN
+        client.dispose();
+        upstream.tryEmitNext(creditsUsedEvent(150));
+        upstream.tryEmitComplete();
+
+        // THEN
+        assertThat(left).isTrue();
+        then(apiUsageReportClient).should().report(tenantId, customerId, ApiUsageRecordKey.AI_CREDITS_COUNT, 150L);
+    }
+
+    @Test
+    void shouldNotTellTheTurnTheBrowserLeft_whenTheStreamEnds() {
+        // GIVEN
+        given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
+        AtomicBoolean left = new AtomicBoolean();
+        TbAiTurnLink link = new TbAiTurnLink();
+        link.onClientLeft(() -> left.set(true));
+
+        // WHEN
+        service.processStream(chatId, tokenProvider -> Flux.just(assistantMessage("hello")), user, link, true)
+                .collectList().block(Duration.ofSeconds(5));
+
+        // THEN
+        assertThat(left).isFalse();
+    }
+
+    @Test
+    void shouldFollowTheTurnWithoutLookingAtCredits_whenCreditsAreNotChecked() {
+        // WHEN
+        List<ServerSentEvent<String>> events = service.processStream(chatId, tokenProvider -> Flux.just(assistantMessage("hello")), user,
+                new TbAiTurnLink(), false).collectList().block(Duration.ofSeconds(5));
+
+        // THEN
+        assertThat(events).extracting(ServerSentEvent::event).containsExactly("assistantMessage");
+        then(apiUsageStateService).shouldHaveNoInteractions();
     }
 
     private SecurityUser newUser(TenantId tenant) {

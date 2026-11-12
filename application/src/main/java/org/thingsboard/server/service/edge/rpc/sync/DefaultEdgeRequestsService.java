@@ -10,12 +10,23 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MessagingErrorCode;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.notification.FirebaseService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -28,7 +39,9 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -44,6 +57,11 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.settings.MobileAppNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
+import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackFile;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.permission.GroupPermission;
@@ -58,15 +76,18 @@ import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.role.RoleService;
+import org.thingsboard.server.dao.secret.SecretConfigurationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
@@ -78,18 +99,32 @@ import org.thingsboard.server.gen.edge.v1.EntityGroupRequestMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
+import org.thingsboard.server.gen.edge.v1.SendEmailUplinkMsg;
+import org.thingsboard.server.gen.edge.v1.SendNotificationUplinkMsg;
+import org.thingsboard.server.gen.edge.v1.SendSmsUplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeEntityTenantChecker;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.executors.NotificationExecutorService;
+import org.thingsboard.server.service.mail.EdgeMailRequest;
+import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.notification.EdgeNotificationRequest;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
+import org.thingsboard.server.service.sms.EdgeSmsRequest;
+import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -122,6 +157,15 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     private DashboardService dashboardService;
 
     @Autowired
+    private EntityService entityService;
+
+    @Autowired
+    private EdgeEntityTenantChecker edgeEntityTenantChecker;
+
+    @Autowired
+    private OwnersCacheService ownersCacheService;
+
+    @Autowired
     private TbEntityViewService entityViewService;
 
     @Autowired
@@ -145,6 +189,44 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
 
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private SmsService smsService;
+
+    @Autowired
+    private SlackService slackService;
+
+    @Autowired
+    private FirebaseService firebaseService;
+
+    @Autowired
+    private NotificationSettingsService notificationSettingsService;
+
+    @Autowired
+    private SecretConfigurationService secretConfigurationService;
+
+    @Autowired
+    private MailExecutorService mailExecutor;
+
+    @Autowired
+    private SmsExecutorService smsExecutor;
+
+    @Autowired
+    private NotificationExecutorService notificationExecutor;
+
+    @Value("${edges.rpc.delegated_send_timeout_sec:20}")
+    private int delegatedSendTimeoutSec;
+
+    private final ScheduledExecutorService sendTimeoutScheduler =
+            ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-delegated-send-watchdog");
+
+    @PreDestroy
+    public void destroy() {
+        sendTimeoutScheduler.shutdownNow();
+    }
+
     @Override
     public ListenableFuture<Void> processRuleChainMetadataRequestMsg(TenantId tenantId, Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg) {
         log.trace("[{}] processRuleChainMetadataRequestMsg [{}][{}]", tenantId, edge.getName(), ruleChainMetadataRequestMsg);
@@ -152,6 +234,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         RuleChainId ruleChainId = new RuleChainId(new UUID(ruleChainMetadataRequestMsg.getRuleChainIdMSB(), ruleChainMetadataRequestMsg.getRuleChainIdLSB()));
+        if (!isTenantEntity(tenantId, ruleChainId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN_METADATA, EdgeEventActionType.ADDED, ruleChainId, null);
     }
 
@@ -164,6 +249,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         final EdgeEventType entityType = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
         if (entityType == null) {
             log.warn("[{}] Type doesn't supported {}", tenantId, entityId.getEntityType());
+            return Futures.immediateFuture(null);
+        }
+        if (!isTenantEntity(tenantId, entityId)) {
             return Futures.immediateFuture(null);
         }
         String scope = attributesRequestMsg.getScope();
@@ -262,6 +350,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(relationRequestMsg.getEntityType()),
                 new UUID(relationRequestMsg.getEntityIdMSB(), relationRequestMsg.getEntityIdLSB()));
+        if (!isTenantEntity(tenantId, entityId)) {
+            return Futures.immediateFuture(null);
+        }
 
         List<ListenableFuture<List<EntityRelation>>> futures = new ArrayList<>();
         futures.add(findRelationByQuery(tenantId, edge, entityId, EntitySearchDirection.FROM));
@@ -385,6 +476,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsRequestMsg.getDeviceIdMSB(), deviceCredentialsRequestMsg.getDeviceIdLSB()));
+        if (!isTenantEntity(tenantId, deviceId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE,
                 EdgeEventActionType.CREDENTIALS_UPDATED, deviceId, null);
     }
@@ -396,6 +490,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         UserId userId = new UserId(new UUID(userCredentialsRequestMsg.getUserIdMSB(), userCredentialsRequestMsg.getUserIdLSB()));
+        if (!isTenantEntity(tenantId, userId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.USER,
                 EdgeEventActionType.CREDENTIALS_UPDATED, userId, null);
     }
@@ -408,7 +505,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         if (widgetBundleTypesRequestMsg.getWidgetBundleIdMSB() != 0 && widgetBundleTypesRequestMsg.getWidgetBundleIdLSB() != 0) {
             WidgetsBundleId widgetsBundleId = new WidgetsBundleId(new UUID(widgetBundleTypesRequestMsg.getWidgetBundleIdMSB(), widgetBundleTypesRequestMsg.getWidgetBundleIdLSB()));
             WidgetsBundle widgetsBundleById = widgetsBundleService.findWidgetsBundleById(tenantId, widgetsBundleId);
-            if (widgetsBundleById != null) {
+            if (widgetsBundleById != null && (TenantId.SYS_TENANT_ID.equals(widgetsBundleById.getTenantId()) || tenantId.equals(widgetsBundleById.getTenantId()))) {
                 List<WidgetType> widgetTypesToPush =
                         widgetTypeService.findWidgetTypesByWidgetsBundleId(widgetsBundleById.getTenantId(), widgetsBundleId);
                 for (WidgetType widgetType : widgetTypesToPush) {
@@ -474,32 +571,70 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         log.trace("[{}] processEntityGroupEntitiesRequest [{}][{}]", tenantId, edge.getName(), entityGroupEntitiesRequestMsg);
         if (entityGroupEntitiesRequestMsg.getEntityGroupIdMSB() != 0 && entityGroupEntitiesRequestMsg.getEntityGroupIdLSB() != 0) {
             EntityGroupId entityGroupId = new EntityGroupId(new UUID(entityGroupEntitiesRequestMsg.getEntityGroupIdMSB(), entityGroupEntitiesRequestMsg.getEntityGroupIdLSB()));
-            ListenableFuture<List<EntityId>> entityIdsFuture;
-            try {
-                // TODO: refactor this to pagination
-                entityIdsFuture = entityGroupService.findAllEntityIdsAsync(edge.getTenantId(), entityGroupId, new PageLink(Integer.MAX_VALUE));
-            } catch (IncorrectParameterException e) {
-                log.warn("[{}] Entity group not found to process entityGroupEntitiesRequestMsg {}", tenantId, entityGroupEntitiesRequestMsg, e);
+            EntityGroup entityGroup = entityGroupService.findEntityGroupById(tenantId, entityGroupId);
+            if (entityGroup == null || !isTenantEntity(tenantId, entityGroup.getOwnerId())) {
                 return Futures.immediateFuture(null);
             }
-            return Futures.transformAsync(entityIdsFuture, entityIds -> {
-                if (entityIds != null && !entityIds.isEmpty()) {
-                    EntityType groupType = EntityType.valueOf(entityGroupEntitiesRequestMsg.getType());
-                    return switch (groupType) {
-                        case DEVICE -> syncDevices(edge, entityIds, entityGroupId);
-                        case ASSET -> syncAssets(edge, entityIds, entityGroupId);
-                        case ENTITY_VIEW -> syncEntityViews(edge, entityIds, entityGroupId);
-                        case DASHBOARD -> syncDashboards(edge, entityIds, entityGroupId);
-                        case USER -> syncUsers(edge, entityIds, entityGroupId);
-                        default -> Futures.immediateFuture(null);
-                    };
-                } else {
-                    log.trace("No entities found for the requested entity group {} [{}]", entityGroupId.getId(), entityGroupEntitiesRequestMsg.getType());
+            ListenableFuture<Boolean> assignedFuture =
+                    entityGroupService.checkEntityGroupAssignedToEdgeAsync(tenantId, edge.getId(), entityGroupId, entityGroup.getType());
+            return Futures.transformAsync(assignedFuture, assigned -> {
+                if (!Boolean.TRUE.equals(assigned) && !isEdgePublicUsersGroup(tenantId, edge, entityGroup)) {
+                    log.warn("[{}][{}] Entity group {} is not assigned to edge, skipping request", tenantId, edge.getId(), entityGroupId);
                     return Futures.immediateFuture(null);
                 }
+                return syncEntityGroupEntities(tenantId, edge, entityGroup);
             }, dbCallbackExecutorService);
         }
         return Futures.immediateFuture(null);
+    }
+
+    // Public Users groups are sent to the edge on sync without an edge assignment
+    private boolean isEdgePublicUsersGroup(TenantId tenantId, Edge edge, EntityGroup entityGroup) {
+        if (!EntityType.USER.equals(entityGroup.getType()) || !EntityGroup.GROUP_PUBLIC_USERS_NAME.equals(entityGroup.getName())
+                || !EntityType.CUSTOMER.equals(entityGroup.getOwnerId().getEntityType())) {
+            return false;
+        }
+        Customer publicCustomer = findCustomer(tenantId, new CustomerId(entityGroup.getOwnerId().getId()));
+        if (publicCustomer == null || !publicCustomer.isPublic()) {
+            return false;
+        }
+        // the edge's owner chain (customer, parent customers, tenant)
+        return ownersCacheService.getOwners(tenantId, edge.getId(), edge).contains(publicCustomer.getOwnerId());
+    }
+
+    private Customer findCustomer(TenantId tenantId, CustomerId customerId) {
+        return entityService.fetchEntity(tenantId, customerId)
+                .filter(Customer.class::isInstance)
+                .map(Customer.class::cast)
+                .filter(customer -> tenantId.equals(customer.getTenantId()))
+                .orElse(null);
+    }
+
+    private ListenableFuture<Void> syncEntityGroupEntities(TenantId tenantId, Edge edge, EntityGroup entityGroup) {
+        EntityGroupId entityGroupId = entityGroup.getId();
+        ListenableFuture<List<EntityId>> entityIdsFuture;
+        try {
+            // TODO: refactor this to pagination
+            entityIdsFuture = entityGroupService.findAllEntityIdsAsync(edge.getTenantId(), entityGroupId, new PageLink(Integer.MAX_VALUE));
+        } catch (IncorrectParameterException e) {
+            log.warn("[{}] Entity group {} not found to process entity group entities request", tenantId, entityGroupId, e);
+            return Futures.immediateFuture(null);
+        }
+        return Futures.transformAsync(entityIdsFuture, entityIds -> {
+            if (entityIds != null && !entityIds.isEmpty()) {
+                return switch (entityGroup.getType()) {
+                    case DEVICE -> syncDevices(edge, entityIds, entityGroupId);
+                    case ASSET -> syncAssets(edge, entityIds, entityGroupId);
+                    case ENTITY_VIEW -> syncEntityViews(edge, entityIds, entityGroupId);
+                    case DASHBOARD -> syncDashboards(edge, entityIds, entityGroupId);
+                    case USER -> syncUsers(edge, entityIds, entityGroupId);
+                    default -> Futures.immediateFuture(null);
+                };
+            } else {
+                log.trace("No entities found for the requested entity group {} [{}]", entityGroupId.getId(), entityGroup.getType());
+                return Futures.immediateFuture(null);
+            }
+        }, dbCallbackExecutorService);
     }
 
     @Override
@@ -691,6 +826,170 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         return Futures.immediateFuture(null);
     }
 
+    @Override
+    public ListenableFuture<Void> processSendEmailMsg(TenantId tenantId, Edge edge, SendEmailUplinkMsg sendEmailUplinkMsg) {
+        return submitEdgeSend(tenantId, edge, "email", mailExecutor, () -> sendEmailForEdge(tenantId, sendEmailUplinkMsg));
+    }
+
+    private void sendEmailForEdge(TenantId tenantId, SendEmailUplinkMsg sendEmailUplinkMsg) throws Exception {
+        EdgeMailRequest request = parseSendRequest(sendEmailUplinkMsg.getRequest(), EdgeMailRequest.class);
+        if (request == null || request.getMethod() == null) {
+            log.warn("[{}] Received empty send email request from edge", tenantId);
+            return;
+        }
+        switch (request.getMethod()) {
+            case SEND_BASIC ->
+                    mailService.sendEmail(tenantId, request.getTo(), request.getSubject(), request.getMessage());
+            case SEND_TB_EMAIL ->
+                    mailService.send(tenantId, null, request.getTbEmail());
+            case ACTIVATION ->
+                    mailService.sendActivationEmail(tenantId, request.getActivationLink(), request.getTtlMs(), request.getTo());
+            case ACCOUNT_ACTIVATED ->
+                    mailService.sendAccountActivatedEmail(tenantId, request.getLoginLink(), request.getTo());
+            case RESET_PASSWORD ->
+                    mailService.sendResetPasswordEmail(tenantId, request.getPasswordResetLink(), request.getTtlMs(), request.getTo());
+            case PASSWORD_WAS_RESET ->
+                    mailService.sendPasswordWasResetEmail(tenantId, request.getLoginLink(), request.getTo());
+            case TWO_FA ->
+                    mailService.sendTwoFaVerificationEmail(tenantId, request.getTo(), request.getVerificationCode(), request.getExpirationTimeSeconds());
+            case ACCOUNT_LOCKOUT ->
+                    mailService.sendAccountLockoutEmail(tenantId, request.getLockoutEmail(), request.getTo(), request.getMaxFailedLoginAttempts());
+            case API_USAGE_STATE ->
+                    mailService.sendApiFeatureStateEmail(tenantId, request.getApiFeature(), request.getStateValue(), request.getTo(), request.getRecordState());
+            case TEST_MAIL ->
+                    mailService.sendTestMail(tenantId, request.getTestConfig(), request.getTo());
+        }
+    }
+
+    @Override
+    public ListenableFuture<Void> processSendSmsMsg(TenantId tenantId, Edge edge, SendSmsUplinkMsg sendSmsUplinkMsg) {
+        return submitEdgeSend(tenantId, edge, "sms", smsExecutor, () -> sendSmsForEdge(tenantId, sendSmsUplinkMsg));
+    }
+
+    private void sendSmsForEdge(TenantId tenantId, SendSmsUplinkMsg sendSmsUplinkMsg) throws Exception {
+        EdgeSmsRequest request = parseSendRequest(sendSmsUplinkMsg.getRequest(), EdgeSmsRequest.class);
+        if (request == null || request.getMethod() == null) {
+            log.warn("[{}] Received empty send sms request from edge", tenantId);
+            return;
+        }
+        switch (request.getMethod()) {
+            case SEND_SMS ->
+                    smsService.sendSms(tenantId, null, request.getNumbers(), request.getMessage());
+            case SEND_TEST_SMS ->
+                    smsService.sendTestSms(tenantId, request.getTestSmsRequest());
+        }
+    }
+
+    @Override
+    public ListenableFuture<Void> processSendNotificationMsg(TenantId tenantId, Edge edge, SendNotificationUplinkMsg sendNotificationUplinkMsg) {
+        return submitEdgeSend(tenantId, edge, "notification", notificationExecutor, () -> sendNotificationForEdge(tenantId, sendNotificationUplinkMsg));
+    }
+
+    private ListenableFuture<Void> submitEdgeSend(TenantId tenantId, Edge edge, String what,
+                                                  ListeningExecutor executor, EdgeSendTask task) {
+        log.trace("[{}] processing edge-delegated {} send [{}]", tenantId, what, edge.getName());
+        ListenableFuture<Void> future = Futures.withTimeout(executor.submit(() -> {
+            task.execute();
+            return null;
+        }), delegatedSendTimeoutSec, TimeUnit.SECONDS, sendTimeoutScheduler);
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] Failed to send {} requested by edge [{}]", tenantId, what, edge.getName(), t);
+            }
+        }, dbCallbackExecutorService);
+        return future;
+    }
+
+    private void sendNotificationForEdge(TenantId tenantId, SendNotificationUplinkMsg sendNotificationUplinkMsg) throws Exception {
+        EdgeNotificationRequest request = parseSendRequest(sendNotificationUplinkMsg.getRequest(), EdgeNotificationRequest.class);
+        if (request == null || request.getMethod() == null) {
+            log.warn("[{}] Received empty send notification request from edge", tenantId);
+            return;
+        }
+        switch (request.getMethod()) {
+            case SEND_SLACK -> sendSlackForEdge(tenantId, request);
+            case SEND_MOBILE_PUSH -> sendMobilePushForEdge(tenantId, request);
+        }
+    }
+
+    private void sendSlackForEdge(TenantId tenantId, EdgeNotificationRequest request) {
+        SlackNotificationDeliveryMethodConfig config = getSlackConfig(tenantId);
+        if (config == null) {
+            log.warn("[{}] Slack is not configured on the cloud; dropping edge-delegated notification", tenantId);
+            return;
+        }
+        List<SlackFile> files = null;
+        if (request.getFiles() != null) {
+            files = request.getFiles().stream()
+                    .map(file -> SlackFile.builder().name(file.getName()).type(file.getType()).data(file.getData()).build())
+                    .toList();
+        }
+        slackService.sendMessage(tenantId, config.getBotToken(), request.getConversationId(), request.getMessage(), files);
+    }
+
+    private void sendMobilePushForEdge(TenantId tenantId, EdgeNotificationRequest request) throws Exception {
+        MobileAppNotificationDeliveryMethodConfig config = getMobileAppConfig(tenantId);
+        if (config == null || request.getFcmTokens() == null) {
+            log.warn("[{}] Mobile app notifications are not configured on the cloud; dropping edge-delegated push", tenantId);
+            return;
+        }
+        String credentials = config.getFirebaseServiceAccountCredentials();
+        for (String fcmToken : request.getFcmTokens()) {
+            try {
+                firebaseService.sendMessage(tenantId, credentials, fcmToken, request.getSubject(), request.getBody(), request.getData(), request.getBadge());
+            } catch (FirebaseMessagingException e) {
+                MessagingErrorCode errorCode = e.getMessagingErrorCode();
+                if (MessagingErrorCode.UNREGISTERED == errorCode || MessagingErrorCode.INVALID_ARGUMENT == errorCode
+                        || MessagingErrorCode.SENDER_ID_MISMATCH == errorCode) {
+                    log.debug("[{}] Edge-delegated push rejected, FCM token is no longer valid: {}", tenantId, errorCode);
+                    continue;
+                }
+                throw e;
+            }
+        }
+    }
+
+    private SlackNotificationDeliveryMethodConfig getSlackConfig(TenantId tenantId) {
+        NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
+        SlackNotificationDeliveryMethodConfig config = (SlackNotificationDeliveryMethodConfig) settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);
+        if (config == null) {
+            return null;
+        }
+        return secretConfigurationService.replaceSecretUsages(tenantId, config, SlackNotificationDeliveryMethodConfig.class);
+    }
+
+    private MobileAppNotificationDeliveryMethodConfig getMobileAppConfig(TenantId tenantId) {
+        NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
+        boolean isSystem = false;
+        var config = (MobileAppNotificationDeliveryMethodConfig) settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.MOBILE_APP);
+        if (!tenantId.isSysTenantId() && (config == null || config.isUseSystemSettings())) {
+            settings = notificationSettingsService.findNotificationSettings(TenantId.SYS_TENANT_ID);
+            config = (MobileAppNotificationDeliveryMethodConfig) settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.MOBILE_APP);
+            isSystem = true;
+        }
+        if (config == null) {
+            return null;
+        }
+        return secretConfigurationService.replaceSecretUsages(isSystem ? TenantId.SYS_TENANT_ID : tenantId, config, MobileAppNotificationDeliveryMethodConfig.class);
+    }
+
+    private static <T> T parseSendRequest(String request, Class<T> clazz) throws IOException {
+        return request != null ? JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER.readValue(request, clazz) : null;
+    }
+
+    private boolean isTenantEntity(TenantId tenantId, EntityId entityId) {
+        boolean tenantEntity = edgeEntityTenantChecker.isTenantEntity(tenantId, entityId);
+        if (!tenantEntity) {
+            log.warn("[{}] Entity {} not found, skipping request", tenantId, entityId);
+        }
+        return tenantEntity;
+    }
+
     private ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
                                                  EdgeId edgeId,
                                                  EdgeEventType type,
@@ -711,6 +1010,11 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 tenantId, edgeId, type, action, entityId, body, entityGroupId);
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body, entityGroupId);
         return edgeEventService.saveAsync(edgeEvent);
+    }
+
+    @FunctionalInterface
+    private interface EdgeSendTask {
+        void execute() throws Exception;
     }
 
 }

@@ -39,10 +39,22 @@ class ChannelTbAiTransport implements TbAiTransport {
     private final TbAiRequestExecutor requestExecutor;
 
     @Override
-    public Flux<ServerSentEvent<String>> sendChatMessage(UUID chatId, JsonNode request, TbAiTurnContext context) {
+    public Flux<ServerSentEvent<String>> sendChatMessage(UUID chatId, JsonNode request, TbAiTurnContext context, TbAiTurnLink link) {
+        return turn(ChannelProtocol.CHAT_SEND, chatId, request, context, link);
+    }
+
+    @Override
+    public Flux<ServerSentEvent<String>> resumeChat(UUID chatId, TbAiTurnContext context, TbAiTurnLink link) {
+        return turn(ChannelProtocol.CHAT_RESUME, chatId, null, context, link);
+    }
+
+    private Flux<ServerSentEvent<String>> turn(String type, UUID chatId, JsonNode request, TbAiTurnContext context, TbAiTurnLink link) {
         return Flux.create(sink -> {
-            var turn = new ChannelTurn(chatId, request, context, sink);
+            var turn = new ChannelTurn(type, chatId, request, context, sink);
             sink.onDispose(turn::abandon);
+            if (link != null) {
+                link.onClientLeft(turn::detach);
+            }
             turn.start(false);
         });
     }
@@ -56,6 +68,7 @@ class ChannelTbAiTransport implements TbAiTransport {
 
     private final class ChannelTurn implements TbAiChannelExchange {
 
+        private final String type;
         private final UUID chatId;
         private final JsonNode request;
         private final TbAiTurnContext context;
@@ -65,8 +78,10 @@ class ChannelTbAiTransport implements TbAiTransport {
         private volatile String op;
         private volatile boolean frameSeen;
         private volatile boolean retried;
+        private volatile boolean detached;
 
-        private ChannelTurn(UUID chatId, JsonNode request, TbAiTurnContext context, FluxSink<ServerSentEvent<String>> sink) {
+        private ChannelTurn(String type, UUID chatId, JsonNode request, TbAiTurnContext context, FluxSink<ServerSentEvent<String>> sink) {
+            this.type = type;
             this.chatId = chatId;
             this.request = request;
             this.context = context;
@@ -96,6 +111,23 @@ class ChannelTbAiTransport implements TbAiTransport {
                 }
             }
             end(null);
+        }
+
+        void detach() {
+            detached = true;
+            sendDetach();
+        }
+
+        private void sendDetach() {
+            TbAiPooledConnection current = connection;
+            if (finished.get() || current == null || !current.supports(ChannelProtocol.TURN_RESUME_CAPABILITY)) {
+                return;
+            }
+            try {
+                current.send(new ChannelFrame(ChannelProtocol.CHAT_DETACH, null, null, null, op));
+            } catch (ChannelException e) {
+                log.debug("[{}] Failed to detach from the AI turn: {}", chatId, e.getMessage());
+            }
         }
 
         @Override
@@ -153,13 +185,21 @@ class ChannelTbAiTransport implements TbAiTransport {
                 acquired.unreserve(System.nanoTime());
                 return;
             }
-            ChannelFrame start = ChannelFrame.request(ChannelProtocol.CHAT_SEND,
+            if (ChannelProtocol.CHAT_RESUME.equals(type) && !acquired.supports(ChannelProtocol.TURN_RESUME_CAPABILITY)) {
+                acquired.unreserve(System.nanoTime());
+                end(null);
+                return;
+            }
+            ChannelFrame start = ChannelFrame.request(type,
                     acquired.codec().toPayload(new ChatTurnRequest(chatId, request, context.acceptLanguage())))
                     .withOrigin(context.clientOrigin());
             op = start.id();
             connection = acquired;
             try {
                 acquired.start(this, start);
+                if (detached) {
+                    sendDetach();
+                }
             } catch (ChannelException e) {
                 connection = null;
                 acquired.finish(op, System.nanoTime());

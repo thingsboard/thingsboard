@@ -14,7 +14,7 @@ base {
 // OS Package plugin configuration
 ospackage {
     packageName = pkgName
-    version = "${project.version}"
+    version = pkgVersion
     release = 1
     os = LINUX
     type = BINARY
@@ -69,7 +69,6 @@ buildRpm {
 
     arch = X86_64
 
-    archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
     preInstall file("${buildDir}/control/rpm/preinst")
