@@ -27,14 +27,22 @@ import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.converter.ConverterService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
+import org.thingsboard.server.service.entitiy.converter.TbConverterService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
+import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
@@ -79,6 +87,14 @@ class DefaultIotHubServiceTest {
     private TbDashboardService tbDashboardService;
     @Mock
     private IntegrationService integrationService;
+    @Mock
+    private DeviceProfileService deviceProfileService;
+    @Mock
+    private TbDeviceProfileService tbDeviceProfileService;
+    @Mock
+    private ConverterService converterService;
+    @Mock
+    private TbConverterService tbConverterService;
 
     @Spy
     @InjectMocks
@@ -441,6 +457,34 @@ class DefaultIotHubServiceTest {
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.isRolledBack()).isFalse();
         assertThat(result.getErrorMessage()).contains("install failed");
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_removesEachEntityBeforeWhatItRefersTo() throws Exception {
+        mockTenant();
+        DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
+        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
+        profile.setDefaultDashboardId(dashboard.getId());
+        Integration integration = new Integration(new IntegrationId(UUID.randomUUID()));
+        Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        // The profile and the integration listed first: in reverse order of creation, the dashboard would go before the
+        // profile that refers to it, and the converter before the integration that uses it.
+        IotHubInstalledItem deleted = devicePackage(profile.getId(), dashboard.getId(), integration.getId(), converter.getId());
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        when(deviceProfileService.findDeviceProfileById(tenantId, profile.getId())).thenReturn(profile);
+        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
+        when(integrationService.findIntegrationById(tenantId, integration.getId())).thenReturn(integration);
+        when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        InOrder order = inOrder(tbDeviceProfileService, tbDashboardService, integrationService, tbConverterService);
+        order.verify(tbDeviceProfileService).delete(profile, user);
+        order.verify(tbDashboardService).delete(dashboard, user);
+        order.verify(integrationService).deleteIntegration(tenantId, integration.getId());
+        order.verify(tbConverterService).delete(converter, user);
     }
 
     @Test
