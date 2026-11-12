@@ -13,8 +13,8 @@
   <mat-icon>filter_list</mat-icon>{{ buttonDisplayValue() }}
 </button>
 <ng-template #filterPanel>
-  <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
-    <div class="tb-filter-button-panel-content tb-form-panel no-padding no-border">
+  <form class="mat-content mat-padding flex flex-col" cdkTrapFocus cdkTrapFocusAutoCapture (ngSubmit)="update()">
+    <div class="tb-filter-button-panel-content tb-form-panel no-padding no-border outline-none" tabindex="-1" cdkFocusInitial>
       <ng-container *ngTemplateOutlet="panelContent(); context: {$implicit: filterControl}"></ng-container>
     </div>
     <div class="tb-panel-actions flex flex-row items-center justify-end">

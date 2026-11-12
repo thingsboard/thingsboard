@@ -17,6 +17,7 @@
   <input matInput type="text"
     #assetProfileInput
     formControlName="assetProfile"
+    [attr.aria-label]="inlineField ? ('asset-profile.asset-profile' | translate) : null"
     (focusin)="onFocus()"
     [required]="required"
     (keydown)="assetProfileEnter($event)"

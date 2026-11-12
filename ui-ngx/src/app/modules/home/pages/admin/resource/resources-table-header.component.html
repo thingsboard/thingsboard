@@ -14,7 +14,7 @@
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>resource.resource-type</div>
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <mat-select [formControl]="control">
+        <mat-select [formControl]="control" [aria-label]="'resource.resource-type' | translate">
           <mat-option value="">{{ 'resource.all-types' | translate }}</mat-option>
           @for (resourceType of resourceTypes; track resourceType) {
             <mat-option [value]="resourceType">

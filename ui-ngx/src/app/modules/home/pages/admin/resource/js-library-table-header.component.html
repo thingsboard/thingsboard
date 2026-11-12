@@ -14,7 +14,7 @@
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>javascript.script-type</div>
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <mat-select [formControl]="control">
+        <mat-select [formControl]="control" [aria-label]="'javascript.script-type' | translate">
           <mat-option value="">{{ 'javascript.all-types' | translate }}</mat-option>
           @for (jsResourceSubType of jsResourceSubTypes; track jsResourceSubType) {
             <mat-option [value]="jsResourceSubType">

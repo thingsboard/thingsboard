@@ -18,10 +18,13 @@ import {
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { FocusMonitor, InputModalityDetector } from '@angular/cdk/a11y';
+import { ESCAPE, hasModifierKey } from '@angular/cdk/keycodes';
+import { MatButton } from '@angular/material/button';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { fromEvent, isObservable, Observable, of, Subscription } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, filter, switchMap } from 'rxjs/operators';
 import { POSITION_MAP } from '@shared/models/overlay.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -57,6 +60,8 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
   private elementRef = inject(ElementRef);
   private viewContainerRef = inject(ViewContainerRef);
   private destroyRef = inject(DestroyRef);
+  private focusMonitor = inject(FocusMonitor);
+  private inputModality = inject(InputModalityDetector);
 
   emptyLabel = input.required<string>();
   valueLabel = input<FilterButtonValueLabelFn<T>>(value => String(value));
@@ -64,6 +69,7 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
 
   panelContent = contentChild.required<TemplateRef<FilterButtonPanelContext<T>>>(TemplateRef);
   private panelTemplate = viewChild.required<TemplateRef<any>>('filterPanel');
+  private filterButton = viewChild.required(MatButton, {read: ElementRef});
 
   disabled = signal(false);
 
@@ -99,7 +105,7 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
   private propagateChange = (_: any) => {};
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.closePanel());
+    this.destroyRef.onDestroy(() => this.closePanel(false));
   }
 
   registerOnChange(fn: any): void {
@@ -138,7 +144,13 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
       .withPositions([POSITION_MAP.bottomLeft]);
 
     this.overlayRef = this.overlay.create(config);
-    this.overlayRef.backdropClick().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.cancel());
+    this.overlayRef.backdropClick().subscribe(() => this.cancel());
+    this.overlayRef.keydownEvents()
+      .pipe(filter(event => event.keyCode === ESCAPE && !hasModifierKey(event)))
+      .subscribe(event => {
+        event.preventDefault();
+        this.cancel();
+      });
     this.overlayRef.attach(new TemplatePortal(this.panelTemplate(), this.viewContainerRef));
     this.resizeWindows = fromEvent(window, 'resize').subscribe(() => this.overlayRef.updatePosition());
   }
@@ -163,11 +175,16 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
     }
   }
 
-  private closePanel() {
+  private closePanel(restoreFocus = true) {
     this.resizeWindows?.unsubscribe();
     this.resizeWindows = null;
-    this.overlayRef?.dispose();
-    this.overlayRef = null;
+    if (this.overlayRef) {
+      this.overlayRef.dispose();
+      this.overlayRef = null;
+      if (restoreFocus) {
+        this.focusMonitor.focusVia(this.filterButton(), this.inputModality.mostRecentModality ?? 'program');
+      }
+    }
   }
 
   private isEmpty(value: T): boolean {

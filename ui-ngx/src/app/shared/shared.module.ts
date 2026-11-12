@@ -66,6 +66,7 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { TimewindowComponent } from '@shared/components/time/timewindow.component';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { A11yModule } from '@angular/cdk/a11y';
 import { TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
 import { TimeintervalComponent } from '@shared/components/time/timeinterval.component';
 import { DatetimePeriodComponent } from '@shared/components/time/datetime-period.component';
@@ -594,6 +595,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FormsModule,
     ReactiveFormsModule,
     OverlayModule,
+    A11yModule,
     ShareButtonDirective,
     HotkeyModule,
     ColorPickerModule,
@@ -729,6 +731,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FormsModule,
     ReactiveFormsModule,
     OverlayModule,
+    A11yModule,
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselComponent,

@@ -14,7 +14,8 @@
   @if (showLabel) {
     <mat-label>{{ entitySubtypeTitle | translate }}</mat-label>
   }
-  <mat-select [class.!hidden]="!subTypesLoaded" class="tb-entity-subtype-select" formControlName="subType">
+  <mat-select [class.!hidden]="!subTypesLoaded" class="tb-entity-subtype-select" formControlName="subType"
+              [aria-label]="showLabel ? '' : (entitySubtypeTitle | translate)">
     @for (subType of subTypesOptions | async; track subType) {
       <mat-option [value]="subType">
         {{ displaySubTypeFn(subType) }}
