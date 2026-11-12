@@ -36,8 +36,8 @@
     font-size: 14px;
 
     &.inactive {
-      color: $tb-error-color;
-      background-color: rgba($tb-error-color, 0.08);
+      color: var(--tb-crit);
+      background-color: color-mix(in srgb, var(--tb-crit) 8%, transparent);
     }
   }
 

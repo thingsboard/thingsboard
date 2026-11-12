@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ElementRef,
@@ -224,7 +225,7 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
         const text = calloutMatch[2];
         const icons: Record<string, string> = { note: 'info_outline', warn: 'warning', error: 'error_outline' };
         const modifiers: Record<string, string> = { note: '', warn: ' tb-form-hint-warning', error: ' tb-form-hint-error' };
-        return `<div class="tb-form-hint tb-primary-fill${modifiers[type]} my-3"><i class="mat-icon material-icons notranslate">${icons[type]}</i><span>${text}</span></div>`;
+        return `<div class="tb-form-hint tb-primary-fill${modifiers[type]} my-3"><i class="mat-icon material-icons notranslate" aria-hidden="true">${icons[type]}</i><span>${text}</span></div>`;
       }
 
       // Special variables

@@ -1,7 +1,5 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-@import "../../../../../../scss/constants";
-
 :host {
   min-width: 100%;
   max-width: 100%;
@@ -58,7 +56,7 @@
     padding: 4px 12px !important;
 
     &.warn {
-      background-color: rgba($tb-warning-color, 0.12);
+      background-color: color-mix(in srgb, var(--tb-warning) 12%, transparent);
       color: #c76a00 !important;
 
       ::ng-deep .mat-badge-content {
@@ -68,11 +66,11 @@
     }
 
     &.error {
-      background-color: rgba($tb-error-color, 0.08);
-      color: $tb-error-color !important;
+      background-color: color-mix(in srgb, var(--tb-crit) 8%, transparent);
+      color: var(--tb-crit) !important;
 
       ::ng-deep .mat-badge-content {
-        background-color: $tb-error-color;
+        background-color: var(--tb-crit);
         color: #fff;
       }
     }

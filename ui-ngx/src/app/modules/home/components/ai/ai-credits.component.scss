@@ -1,7 +1,5 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-@import "../../../../../scss/constants";
-
 :host {
   .ai-credits-donut,
   .mat-mdc-icon-button {
@@ -9,13 +7,13 @@
     --_donut-track: rgba(0, 0, 0, 0.12);
 
     &.WARNING {
-      --_donut-color: #{$tb-warning-color};
-      --_donut-track: #{rgba($tb-warning-color, 0.2)};
+      --_donut-color: var(--tb-warning);
+      --_donut-track: color-mix(in srgb, var(--tb-warning) 20%, transparent);
     }
 
     &.DISABLED {
-      --_donut-color: #{$tb-error-color};
-      --_donut-track: #{rgba($tb-error-color, 0.2)};
+      --_donut-color: var(--tb-crit);
+      --_donut-track: color-mix(in srgb, var(--tb-crit) 20%, transparent);
     }
   }
 

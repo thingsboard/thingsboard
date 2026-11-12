@@ -40,7 +40,7 @@
       line-height: 16px;
       text-align: center;
       mat-icon {
-        color: $tb-error-color;
+        color: var(--tb-crit);
       }
     }
 
@@ -56,7 +56,7 @@
       }
 
       .failed {
-        color: $tb-error-color
+        color: var(--tb-crit)
       }
 
       &.info {
@@ -69,7 +69,7 @@
     .task-result-bg {
       background: rgba(0, 0, 0, 0.04);
       .warn {
-        color: $tb-warning-color;
+        color: var(--tb-warning);
       }
     }
 

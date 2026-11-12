@@ -1,7 +1,5 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-@import "../../../../../../scss/constants";
-
 :host {
   display: block;
 }
@@ -38,7 +36,7 @@
     letter-spacing: 0.04em;
 
     &.section-error {
-      color: $tb-error-color;
+      color: var(--tb-crit);
     }
 
     &.section-warn {
@@ -71,7 +69,7 @@
     }
 
     &.error .severity-icon {
-      color: $tb-error-color;
+      color: var(--tb-crit);
     }
 
     &.warn .severity-icon {

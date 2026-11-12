@@ -201,10 +201,10 @@
         }
       }
       &.tb-form-hint-warning > .mat-icon {
-        color: $tb-warning-color;
+        color: var(--tb-caution);
       }
       &.tb-form-hint-error > .mat-icon {
-        color: $tb-error-color;
+        color: var(--tb-crit);
       }
     }
   }

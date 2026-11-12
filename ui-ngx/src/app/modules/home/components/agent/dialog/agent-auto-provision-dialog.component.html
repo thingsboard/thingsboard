@@ -80,13 +80,13 @@
               </div>
             }
             @case ('invalid-strategy') {
-              <div class="tb-form-hint tb-primary-fill tb-form-hint-error">
+              <div class="validation-msg invalid">
                 <mat-icon>error_outline</mat-icon>
                 <span translate>edge.auto-provision-invalid-strategy</span>
               </div>
             }
             @case ('invalid-no-edge-app') {
-              <div class="tb-form-hint tb-primary-fill tb-form-hint-error">
+              <div class="validation-msg invalid">
                 <mat-icon>error_outline</mat-icon>
                 <span>{{ invalidNoAppKey | translate }}</span>
                 <button mat-button color="primary" type="button" (click)="assignProfileToSelected($event)">
