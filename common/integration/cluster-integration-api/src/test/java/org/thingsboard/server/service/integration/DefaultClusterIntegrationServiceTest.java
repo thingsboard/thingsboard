@@ -12,13 +12,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IntegrationId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.integration.IntegrationType;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.integration.ToIntegrationExecutorDownlinkMsg;
 import org.thingsboard.server.gen.integration.ToIntegrationExecutorNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.QueueDeleteMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.QueueUpdateMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -30,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -39,6 +51,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,11 +69,17 @@ class DefaultClusterIntegrationServiceTest {
     @Mock
     private IntegrationManagerService integrationManagerService;
     @Mock
+    private PartitionService partitionService;
+    @Mock
+    private TbCallback callback;
+    @Mock
     private TbQueueConsumer<TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> mqttConsumer;
     @Mock
     private TbQueueConsumer<TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> httpConsumer;
 
     private DefaultClusterIntegrationService service;
+
+    private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
 
     @BeforeEach
     @SuppressWarnings("unchecked")
@@ -70,7 +89,7 @@ class DefaultClusterIntegrationServiceTest {
                 .thenReturn(mock(TbQueueConsumer.class));
         when(queueFactory.createToIntegrationExecutorDownlinkMsgConsumer(IntegrationType.MQTT)).thenReturn(mqttConsumer);
         when(queueFactory.createToIntegrationExecutorDownlinkMsgConsumer(IntegrationType.HTTP)).thenReturn(httpConsumer);
-        service = new DefaultClusterIntegrationService(serviceInfoProvider, settings, queueFactory, integrationManagerService) {
+        service = new DefaultClusterIntegrationService(serviceInfoProvider, settings, queueFactory, integrationManagerService, partitionService) {
             @Override
             protected void launchMainConsumers() {
             }
@@ -144,6 +163,80 @@ class DefaultClusterIntegrationServiceTest {
         verify(integrationManagerService, timeout(TIMEOUT_MS)).refresh(IntegrationType.MQTT, tpis(2));
         verify(mqttConsumer, timeout(TIMEOUT_MS)).subscribe(tpis(2));
         verify(integrationManagerService, never()).refresh(IntegrationType.MQTT, tpis(0));
+    }
+
+    @Test
+    void givenQueueUpdateNotification_whenHandled_thenQueuesAreUpdatedInPartitionService() {
+        QueueUpdateMsg queueUpdateMsg = QueueUpdateMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setQueueName("Main")
+                .setQueueTopic("tb_rule_engine.main")
+                .setPartitions(3)
+                .build();
+
+        handle(ToIntegrationExecutorNotificationMsg.newBuilder().addQueueUpdateMsgs(queueUpdateMsg).build());
+
+        verify(partitionService).updateQueues(List.of(queueUpdateMsg));
+        verify(integrationManagerService, never()).handleComponentLifecycleMsg(any());
+        verify(callback).onSuccess();
+    }
+
+    @Test
+    void givenQueueDeleteNotification_whenHandled_thenQueuesAreRemovedFromPartitionService() {
+        QueueDeleteMsg queueDeleteMsg = QueueDeleteMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setQueueName("Main")
+                .build();
+
+        handle(ToIntegrationExecutorNotificationMsg.newBuilder().addQueueDeleteMsgs(queueDeleteMsg).build());
+
+        verify(partitionService).removeQueues(List.of(queueDeleteMsg));
+        verify(integrationManagerService, never()).handleComponentLifecycleMsg(any());
+        verify(callback).onSuccess();
+    }
+
+    @Test
+    void givenTenantUpdated_whenHandled_thenTenantRoutingInfoIsEvictedAfterTenantProfileCaches() {
+        handle(lifecycleNotification(tenantId, tenantId));
+
+        // the routing info is re-read from the tenant profile cache, so it must be evicted after that cache
+        InOrder inOrder = inOrder(integrationManagerService, partitionService);
+        inOrder.verify(integrationManagerService).handleComponentLifecycleMsg(any());
+        inOrder.verify(partitionService).evictTenantInfo(tenantId);
+        verify(callback).onSuccess();
+    }
+
+    @Test
+    void givenTenantProfileUpdated_whenHandled_thenRoutingInfoOfItsTenantsIsEvictedAfterTenantProfileCaches() {
+        TenantProfileId tenantProfileId = new TenantProfileId(UUID.randomUUID());
+
+        handle(lifecycleNotification(TenantId.SYS_TENANT_ID, tenantProfileId));
+
+        InOrder inOrder = inOrder(integrationManagerService, partitionService);
+        inOrder.verify(integrationManagerService).handleComponentLifecycleMsg(any());
+        inOrder.verify(partitionService).evictTenantProfileInfo(tenantProfileId);
+        verify(callback).onSuccess();
+    }
+
+    @Test
+    void givenIntegrationUpdated_whenHandled_thenRoutingInfoIsKept() {
+        handle(lifecycleNotification(tenantId, new IntegrationId(UUID.randomUUID())));
+
+        verify(integrationManagerService).handleComponentLifecycleMsg(any());
+        verifyNoInteractions(partitionService);
+        verify(callback).onSuccess();
+    }
+
+    private ToIntegrationExecutorNotificationMsg lifecycleNotification(TenantId tenantId, EntityId entityId) {
+        ComponentLifecycleMsg msg = new ComponentLifecycleMsg(tenantId, entityId, ComponentLifecycleEvent.UPDATED);
+        return ToIntegrationExecutorNotificationMsg.newBuilder().setComponentLifecycle(ProtoUtils.toProto(msg)).build();
+    }
+
+    private void handle(ToIntegrationExecutorNotificationMsg nf) {
+        UUID id = UUID.randomUUID();
+        service.handleNotification(id, new TbProtoQueueMsg<>(id, nf), callback);
     }
 
     private static PartitionChangeEvent partitionChangeEvent(Integer... partitions) {
