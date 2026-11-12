@@ -49,9 +49,14 @@ while the Mycila version and configuration in the root `pom.xml`, the templates
 and the check itself stay the same; anything else starts a new cache, and the
 check normalizes again instead of using the old one. Pass `--no-cache` to
 normalize every CE file again, or `--cache` to keep the cache elsewhere.
+The check keeps the caches of the three most recent signatures, so switching
+between branches does not start over; set `LICENSE_HEADERS_CACHE_SIGNATURES`
+to keep another number. If SQLite cannot use the cache, for example because
+another run holds its lock, the run continues without it.
 
 In GitHub Actions, pushes and manual runs save the cache and pull requests only
 read it: a pull request takes the cache of its base branch, then of `master`.
+CI keeps only the current signature, so the saved cache holds one database.
 
 ## Check only changed files
 

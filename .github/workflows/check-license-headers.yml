@@ -46,9 +46,12 @@ jobs:
           java-version: 21
           cache: maven
 
-      # Header-free CE contents from earlier runs. A pull request reads the cache of its base branch, then of master;
-      # only pushes and manual runs write one, so a pull request never feeds the cache that other runs trust.
+      # Header-free CE contents from earlier runs. A pull request reads the cache of its base branch, then of master.
+      # What keeps a pull request from feeding the cache that other runs trust is GitHub's cache scoping, not the `if:`
+      # on the save step: a pull request runs its own copy of this workflow, and whatever it saved would be restorable
+      # only by that pull request. The `if:` keeps pull requests from spending the repository's cache storage.
       - name: Restore normalized CE contents
+        id: restore-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: target/license-headers-cache
@@ -68,6 +71,8 @@ jobs:
           # The runner does nothing else: use every CPU, not all but one as on a workstation.
           LICENSE_HEADERS_JOBS="$(nproc)"
           export LICENSE_HEADERS_JOBS
+          # A run uses the cache of one signature; older ones would only make every save and restore larger.
+          export LICENSE_HEADERS_CACHE_SIGNATURES=1
           ./check-license-headers.sh ${SINCE:+--since "$SINCE"} 2>&1 | tee target/license-provenance/console.log
 
       # Saved even when the check finds problems, but only when the run normalized something the cache lacked.
@@ -78,7 +83,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: target/license-headers-cache
-          key: license-headers-ce-v1-${{ github.ref_name }}-${{ github.run_id }}
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
 
       - name: Add findings to the job summary
         if: failure() && hashFiles('target/license-provenance/console.log') != ''

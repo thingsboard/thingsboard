@@ -71,10 +71,14 @@ REPEATED_HEADERS = 3
 HEADER_WINDOW = 4096
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 JOBS_VARIABLE = "LICENSE_HEADERS_JOBS"
+CACHE_SIGNATURES_VARIABLE = "LICENSE_HEADERS_CACHE_SIGNATURES"
 CACHE_DIRECTORY = "target/license-headers-cache"
 CACHE_FORMAT = "1"
 CACHE_UPDATED = ".updated"
 CACHE_SIGNATURES_KEPT = 3
+CACHE_FILE = re.compile(r"[0-9a-f]{32}\.sqlite")
+# Git's minimum similarity for a copy, in percent: the -C threshold and the size filter in front of it.
+COPY_SIMILARITY = 50
 
 
 @dataclass(frozen=True)
@@ -142,14 +146,18 @@ class Console:
 console = Console()
 
 
+def positive_setting(variable, default):
+    configured = os.environ.get(variable, "")
+    if not configured:
+        return default
+    if not configured.isdigit() or int(configured) < 1:
+        raise Failure(f"{variable} must be a positive number, not {configured!r}")
+    return int(configured)
+
+
 def jobs():
     """Parallel subprocesses: LICENSE_HEADERS_JOBS when set, otherwise all CPUs but one to keep the machine responsive."""
-    configured = os.environ.get(JOBS_VARIABLE, "")
-    if configured:
-        if not configured.isdigit() or int(configured) < 1:
-            raise Failure(f"{JOBS_VARIABLE} must be a positive number, not {configured!r}")
-        return int(configured)
-    return max(1, (os.cpu_count() or 1) - 1)
+    return positive_setting(JOBS_VARIABLE, max(1, (os.cpu_count() or 1) - 1))
 
 
 def parallel(function, items):
@@ -766,7 +774,7 @@ def normalized_copies(mycila, source_refs, names, nonempty):
     before = stage(mycila, sources)
     after = stage(mycila, destinations)
     raw = git(mycila.root, "diff-tree", "--no-commit-id", "-r", "--raw", "--no-abbrev", "-z",
-              "-C50%", "--find-copies-harder", "-l0", before, after)
+              f"-C{COPY_SIMILARITY}%", "--find-copies-harder", "-l0", before, after)
     keys = {path: key for key, path in mycila.paths.items()}
     copies = defaultdict(list)
     for source, destination, similarity in parse_copies(raw):
@@ -778,9 +786,14 @@ def normalized_copies(mycila, source_refs, names, nonempty):
     return dict(copies)
 
 
+def staged(content):
+    """What stage() hands to Git: the size filter in front of the copy search measures exactly this."""
+    return content.replace(b"\r\n", b"\n")
+
+
 def stage(mycila, keys):
     for key in keys:
-        mycila.write(key, mycila.contents[key].replace(b"\r\n", b"\n"))
+        mycila.write(key, staged(mycila.contents[key]))
     pathspec = "".join(mycila.paths[key] + "\0" for key in sorted(keys)).encode("utf-8")
     run(["git", "--literal-pathspecs", "add", "-f", "--pathspec-from-file=-", "--pathspec-file-nul"],
         mycila.root, data=pathspec)
@@ -913,34 +926,60 @@ class Comparison:
 
 class NormalizationCache:
     """Header-free contents of CE inputs from earlier runs, keyed by content and file name (Mycila styles follow the
-    name). One SQLite file per normalization signature: a different Mycila setup, template or check misses the cache."""
+    name). One SQLite file per normalization signature: a different Mycila setup, template or check misses the cache.
+    The cache only ever costs or saves time: when SQLite fails, the run continues without it."""
 
     def __init__(self, directory, signature):
         self.directory = directory
         self.lock = threading.Lock()
         self.added = 0
         self.hits = 0
+        self.database = None
+        self.unavailable = None
         directory.mkdir(parents=True, exist_ok=True)
         (directory / CACHE_UPDATED).unlink(missing_ok=True)
         self.path = directory / f"{signature}.sqlite"
         try:
-            self.database = self.open()
-        except sqlite3.DatabaseError:
-            # A damaged cache only costs time: start it again instead of failing the check.
-            self.path.unlink()
-            self.database = self.open()
+            try:
+                self.database = self.open()
+            except sqlite3.OperationalError:
+                raise  # locked by another run or unreadable: not damage, so the file stays
+            except sqlite3.DatabaseError:
+                # A damaged cache only costs time: start it again instead of failing the check.
+                self.path.unlink()
+                self.database = self.open()
+        except sqlite3.Error as exc:
+            self.disable(exc)
+            return
         os.utime(self.path)
-        for stale in sorted(directory.glob("*.sqlite"), key=lambda path: path.stat().st_mtime)[:-CACHE_SIGNATURES_KEPT]:
+        # Only files named like this cache's own: --cache may point at a directory that holds other SQLite files.
+        own = [path for path in directory.iterdir() if CACHE_FILE.fullmatch(path.name)]
+        kept = positive_setting(CACHE_SIGNATURES_VARIABLE, CACHE_SIGNATURES_KEPT)
+        for stale in sorted(own, key=lambda path: path.stat().st_mtime)[:-kept]:
             stale.unlink()
 
     def open(self):
         database = sqlite3.connect(self.path, check_same_thread=False)
-        database.execute("CREATE TABLE IF NOT EXISTS normalized (input TEXT PRIMARY KEY, content BLOB NOT NULL)")
-        # Opening reads only the schema: a file damaged below it would fail on the first lookup instead.
-        if database.execute("PRAGMA quick_check").fetchone()[0] != "ok":
-            database.close()
-            raise sqlite3.DatabaseError(f"{self.path} is damaged")
+        try:
+            database.execute("CREATE TABLE IF NOT EXISTS normalized (input TEXT PRIMARY KEY, content BLOB NOT NULL)")
+            # Opening reads only the schema: a file damaged below it would fail on the first lookup instead.
+            if database.execute("PRAGMA quick_check").fetchone()[0] != "ok":
+                raise sqlite3.DatabaseError(f"{self.path} is damaged")
+        except BaseException:
+            database.close()  # before any unlink: Windows cannot remove an open file
+            raise
         return database
+
+    def disable(self, exc):
+        """Continues the run without the cache; what earlier puts committed stays valid. Reported by close(), so
+        that a progress line in the middle of the run stays intact."""
+        self.unavailable = self.unavailable or str(exc)
+        if self.database is not None:
+            try:
+                self.database.close()
+            except sqlite3.Error:
+                pass
+        self.database = None
 
     @staticmethod
     def input(name, raw):
@@ -949,25 +988,43 @@ class NormalizationCache:
     def get(self, inputs):
         found = {}
         with self.lock:
-            for key, raw in inputs.items():
-                row = self.database.execute("SELECT content FROM normalized WHERE input = ?",
-                                            (self.input(key[0], raw),)).fetchone()
-                if row is not None:
-                    found[key] = bytes(row[0])
+            if self.database is None:
+                return found
+            try:
+                for key, raw in inputs.items():
+                    row = self.database.execute("SELECT content FROM normalized WHERE input = ?",
+                                                (self.input(key[0], raw),)).fetchone()
+                    if row is not None:
+                        found[key] = bytes(row[0])
+            except sqlite3.Error as exc:
+                self.disable(exc)
+                return {}
             self.hits += len(found)
         return found
 
     def put(self, entries):
         with self.lock:
-            self.database.executemany("INSERT OR IGNORE INTO normalized VALUES (?, ?)",
-                                      [(self.input(key[0], raw), content) for key, raw, content in entries])
+            if self.database is None:
+                return
+            try:
+                self.database.executemany("INSERT OR IGNORE INTO normalized VALUES (?, ?)",
+                                          [(self.input(key[0], raw), content) for key, raw, content in entries])
+                # Committed at once: the write lock is held only briefly, so another run on the same cache can add too.
+                self.database.commit()
+            except sqlite3.Error as exc:
+                self.disable(exc)
+                return
             self.added += len(entries)
 
     def close(self):
-        self.database.commit()
-        self.database.close()
+        if self.database is not None:
+            self.database.close()
+            self.database = None
         if self.added:
             (self.directory / CACHE_UPDATED).touch()
+        if self.unavailable:
+            console.line(f"The cache in {self.directory} was unavailable ({self.unavailable}); "
+                         "the run continued without it", "dim")
 
 
 class NoCache:
@@ -1011,17 +1068,18 @@ def normalize(repo, plugin, cache, inputs):
 
 
 def staged_size(content):
-    return len(content.replace(b"\r\n", b"\n"))
+    return len(staged(content))
 
 
 def could_be_copy(size, destinations):
-    """Git scores a pair 0 unless the smaller blob is at least half the larger (diffcore-rename estimate_similarity)."""
-    return any(2 * min(size, other) >= max(size, other) for other in destinations)
+    """Git scores a pair 0 unless the smaller blob is at least COPY_SIMILARITY % of the larger (diffcore-rename
+    estimate_similarity)."""
+    return any(100 * min(size, other) >= COPY_SIMILARITY * max(size, other) for other in destinations)
 
 
 def could_shrink_to_copy(raw_size, destinations):
-    """Normalizing never grows a file: below half the smallest destination it stays out of Git's reach."""
-    return 2 * raw_size >= min(destinations)
+    """Normalizing never grows a file: below COPY_SIMILARITY % of the smallest destination it stays out of Git's reach."""
+    return 100 * raw_size >= COPY_SIMILARITY * min(destinations)
 
 
 def compare(repo, plugin, lineage, contents, cache, in_scope):

@@ -4,9 +4,11 @@
 #
 
 from contextlib import redirect_stderr, redirect_stdout
+import hashlib
 import io
 import json
 import os
+import sqlite3
 from pathlib import Path
 import tempfile
 import textwrap
@@ -15,6 +17,19 @@ from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import check_license_headers as p
+
+
+CONNECT = sqlite3.connect
+
+
+def impatient_sqlite():
+    """SQLite that waits 0.1 s instead of 5 s for another connection's lock."""
+    return patch.object(sqlite3, "connect", lambda *args, **kwargs: CONNECT(*args, **kwargs | {"timeout": 0.1}))
+
+
+def signature(label):
+    """A cache signature as cache_signature() shapes it: 32 hex characters."""
+    return hashlib.sha256(label.encode()).hexdigest()[:32]
 
 
 def temporary_directory(test):
@@ -1300,7 +1315,7 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(shutil_tree, sorted(path.name for path in self.cache().iterdir()))
 
     def test_entries_are_keyed_by_content_and_file_name(self):
-        cache = p.NormalizationCache(temporary_directory(self), "signature")
+        cache = p.NormalizationCache(temporary_directory(self), signature("signature"))
         cache.put([(("A.java", "a"), b"// header\nbody\n", b"body\n")])
         self.assertEqual({("moved/A.java", "b"): b"body\n"}, cache.get({("moved/A.java", "b"): b"// header\nbody\n"}))
         self.assertEqual({}, cache.get({("B.java", "b"): b"// header\nbody\n"}))
@@ -1326,56 +1341,130 @@ class CacheTests(unittest.TestCase):
     def test_only_recent_signatures_are_kept_and_the_update_mark_is_fresh(self):
         directory = temporary_directory(self)
         for index in range(p.CACHE_SIGNATURES_KEPT + 2):
-            stale = directory / f"old{index}.sqlite"
+            stale = directory / f"{signature(f'old{index}')}.sqlite"
             stale.write_bytes(b"")
             os.utime(stale, (index, index))
         (directory / p.CACHE_UPDATED).touch()
-        cache = p.NormalizationCache(directory, "current")
+        cache = p.NormalizationCache(directory, signature("current"))
         self.assertFalse((directory / p.CACHE_UPDATED).exists())
         kept = sorted(path.name for path in directory.glob("*.sqlite"))
         self.assertEqual(p.CACHE_SIGNATURES_KEPT, len(kept))
-        self.assertIn("current.sqlite", kept)
+        self.assertIn(f"{signature('current')}.sqlite", kept)
         cache.close()
         self.assertFalse((directory / p.CACHE_UPDATED).exists())
 
     def test_a_damaged_cache_is_started_again(self):
         directory = temporary_directory(self)
-        (directory / "damaged.sqlite").write_bytes(b"not a database, cut off by a failed restore")
-        cache = p.NormalizationCache(directory, "damaged")
+        (directory / f"{signature('damaged')}.sqlite").write_bytes(b"not a database, cut off by a failed restore")
+        cache = p.NormalizationCache(directory, signature("damaged"))
         self.assertEqual({}, cache.get({("A.java", "a"): b"raw"}))
         cache.put([(("A.java", "a"), b"raw", b"normalized")])
         cache.close()
         self.assertEqual({("A.java", "a"): b"normalized"},
-                         p.NormalizationCache(directory, "damaged").get({("A.java", "a"): b"raw"}))
+                         p.NormalizationCache(directory, signature("damaged")).get({("A.java", "a"): b"raw"}))
 
     def test_a_cache_damaged_after_its_schema_is_started_again(self):
         directory = temporary_directory(self)
-        cache = p.NormalizationCache(directory, "damaged")
+        cache = p.NormalizationCache(directory, signature("damaged"))
         cache.put([((f"F{index}.java", "a"), f"raw {index}".encode(), b"normalized" * 400) for index in range(300)])
         cache.close()
-        database = directory / "damaged.sqlite"
+        database = directory / f"{signature('damaged')}.sqlite"
         page = 4096
         with database.open("r+b") as file:
             # The schema and the root pages stay readable, so the file opens; every lookup below them fails.
             file.seek(4 * page)
             file.write(b"\xff" * (database.stat().st_size - 4 * page))
-        cache = p.NormalizationCache(directory, "damaged")
+        cache = p.NormalizationCache(directory, signature("damaged"))
         self.assertEqual({}, cache.get({("F0.java", "a"): b"raw 0"}))
         cache.put([(("A.java", "a"), b"raw", b"normalized")])
         cache.close()
         self.assertEqual({("A.java", "a"): b"normalized"},
-                         p.NormalizationCache(directory, "damaged").get({("A.java", "a"): b"raw"}))
+                         p.NormalizationCache(directory, signature("damaged")).get({("A.java", "a"): b"raw"}))
 
     def test_the_cache_of_a_branch_checked_long_ago_survives_newer_signatures(self):
         directory = temporary_directory(self)
-        p.NormalizationCache(directory, "revisited").close()
-        os.utime(directory / "revisited.sqlite", (1, 1))
+        p.NormalizationCache(directory, signature("revisited")).close()
+        os.utime(directory / f"{signature('revisited')}.sqlite", (1, 1))
         for index in range(p.CACHE_SIGNATURES_KEPT):
-            (directory / f"newer{index}.sqlite").write_bytes(b"")
-        cache = p.NormalizationCache(directory, "revisited")
+            (directory / f"{signature(f'newer{index}')}.sqlite").write_bytes(b"")
+        cache = p.NormalizationCache(directory, signature("revisited"))
         cache.put([(("A.java", "a"), b"raw", b"normalized")])
         cache.close()
-        self.assertTrue((directory / "revisited.sqlite").exists())
+        self.assertTrue((directory / f"{signature('revisited')}.sqlite").exists())
+
+    def test_pruning_leaves_files_the_cache_did_not_create(self):
+        directory = temporary_directory(self)
+        foreign = [directory / name for name in ("notes.sqlite", "ABCDEF0123456789ABCDEF0123456789.sqlite", "other.db")]
+        for path in foreign:
+            path.write_bytes(b"")
+            os.utime(path, (1, 1))
+        for index in range(p.CACHE_SIGNATURES_KEPT):
+            (directory / f"{signature(f'newer{index}')}.sqlite").write_bytes(b"")
+        p.NormalizationCache(directory, signature("current")).close()
+        self.assertTrue(all(path.exists() for path in foreign))
+        self.assertEqual(p.CACHE_SIGNATURES_KEPT, len([path for path in directory.iterdir()
+                                                       if p.CACHE_FILE.fullmatch(path.name)]))
+
+    def test_the_number_of_signatures_kept_can_be_set(self):
+        directory = temporary_directory(self)
+        for index in range(2):
+            stale = directory / f"{signature(f'old{index}')}.sqlite"
+            stale.write_bytes(b"")
+            os.utime(stale, (index, index))
+        with patch.dict(os.environ, {p.CACHE_SIGNATURES_VARIABLE: "1"}):
+            p.NormalizationCache(directory, signature("current")).close()
+        self.assertEqual([f"{signature('current')}.sqlite"], [path.name for path in directory.glob("*.sqlite")])
+        with patch.dict(os.environ, {p.CACHE_SIGNATURES_VARIABLE: "0"}), self.assertRaises(p.Failure):
+            p.NormalizationCache(directory, signature("current"))
+
+    def test_entries_are_committed_at_once_so_another_run_can_add_its_own(self):
+        directory = temporary_directory(self)
+        first = p.NormalizationCache(directory, signature("shared"))
+        second = p.NormalizationCache(directory, signature("shared"))
+        first.put([(("A.java", "a"), b"raw a", b"a")])
+        second.put([(("B.java", "b"), b"raw b", b"b")])
+        self.assertEqual({("B.java", "b"): b"b"}, first.get({("B.java", "b"): b"raw b"}))
+        self.assertEqual({("A.java", "a"): b"a"}, second.get({("A.java", "a"): b"raw a"}))
+        first.close()
+        second.close()
+
+    def test_a_cache_locked_by_another_run_is_skipped_and_kept(self):
+        directory = temporary_directory(self)
+        path = directory / f"{signature('locked')}.sqlite"
+        p.NormalizationCache(directory, signature("locked")).close()
+        other = sqlite3.connect(path, timeout=0)
+        other.execute("BEGIN EXCLUSIVE")
+        try:
+            with impatient_sqlite():
+                cache = p.NormalizationCache(directory, signature("locked"))
+            self.assertEqual({}, cache.get({("A.java", "a"): b"raw"}))
+            cache.put([(("A.java", "a"), b"raw", b"normalized")])
+            output = io.StringIO()
+            with redirect_stderr(output):
+                cache.close()
+            self.assertIn("continued without it", output.getvalue())
+            self.assertFalse((directory / p.CACHE_UPDATED).exists())
+        finally:
+            other.rollback()
+            other.close()
+        self.assertTrue(path.exists())
+
+    def test_a_lock_after_opening_downgrades_the_run_to_no_cache(self):
+        directory = temporary_directory(self)
+        path = directory / f"{signature('busy')}.sqlite"
+        with impatient_sqlite():
+            cache = p.NormalizationCache(directory, signature("busy"))
+        other = sqlite3.connect(path, timeout=0)
+        other.execute("BEGIN EXCLUSIVE")
+        try:
+            cache.put([(("A.java", "a"), b"raw", b"normalized")])
+            self.assertEqual({}, cache.get({("A.java", "a"): b"raw"}))
+            with redirect_stderr(io.StringIO()):
+                cache.close()
+        finally:
+            other.rollback()
+            other.close()
+        self.assertEqual(0, cache.added)
 
 
 @unittest.skipUnless(os.environ.get("LICENSE_HEADERS_MAVEN_TESTS") == "1", "opt-in Maven fixtures")
