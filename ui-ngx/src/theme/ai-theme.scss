@@ -6052,11 +6052,19 @@ tb-ai-record-card {
   }
 }
 
-tb-ai-action-detail.k-detail .k-detail-recs.k-detail-hub {
+tb-ai-action-detail.k-detail .k-detail-recs:is(.k-detail-hub, .k-detail-list) {
   width: auto;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  margin-left: 24px;
+
+  > .tb-more {
+    justify-self: start;
+  }
+
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
-  margin-left: 0;
 
   .tb-rec.line {
     width: fit-content;
@@ -6083,4 +6091,8 @@ tb-ai-action-detail.k-detail .k-detail-recs.k-detail-hub {
       border-top: 1px solid rgba(0, 0, 0, 0.06);
     }
   }
+}
+
+tb-ai-action-detail.k-detail .k-detail-recs:is(.k-detail-hub, .k-detail-list) ~ .k-detail-more {
+  margin-left: 24px;
 }

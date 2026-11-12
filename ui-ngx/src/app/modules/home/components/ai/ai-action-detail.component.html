@@ -11,9 +11,12 @@
   @switch (block.type) {
     @case ('hub') {
       <div class="k-detail-recs k-detail-hub tb-list-body" role="list">
-        @for (rec of hub(); track rec.key) {
+        @for (rec of shown(hub(), 'hub'); track rec.key) {
           <tb-ai-record role="listitem" [entityType]="rec.entityType" [alarmRule]="rec.alarmRule" [name]="rec.name" [url]="rec.url"
                         [hub]="rec.hub"></tb-ai-record>
+        }
+        @if (hub().length > LIST_SHOWN) {
+          <ng-container *ngTemplateOutlet="moreToggle; context: {key: 'hub', count: hub().length - LIST_SHOWN}"></ng-container>
         }
       </div>
     }
@@ -21,8 +24,8 @@
       @if (block.label) {
         <div class="k-detail-label">{{ say(block.label) }}</div>
       }
-      <div class="k-detail-recs">
-        @for (row of block.rows; track $index) {
+      <div class="k-detail-recs k-detail-list tb-list-body" role="list">
+        @for (row of shown(block.rows, 'records' + $index); track $index) {
           <div class="tb-rec line" [attr.data-pal]="kind(row.entityType).palette">
             <span class="tb-rec-tile"><mat-icon aria-hidden="true">{{ kind(row.entityType).icon }}</mat-icon></span>
             @if (recordUrl(row); as url) {
@@ -34,6 +37,9 @@
               <span class="tb-rec-meta">{{ row.meta }}</span>
             }
           </div>
+        }
+        @if (block.rows.length > LIST_SHOWN) {
+          <ng-container *ngTemplateOutlet="moreToggle; context: {key: 'records' + $index, count: block.rows.length - LIST_SHOWN}"></ng-container>
         }
       </div>
       @if (more(block); as rest) {
@@ -136,3 +142,10 @@
     }
   }
 }
+
+<ng-template #moreToggle let-key="key" let-count="count">
+  <button type="button" class="tb-more" [attr.aria-expanded]="isOpen(key)" (click)="toggleMore(key)">
+    <mat-icon class="tb-mat-16" aria-hidden="true">{{ isOpen(key) ? 'expand_less' : 'expand_more' }}</mat-icon>
+    {{ isOpen(key) ? ('ai-assistant.summary.fewer' | translate) : ('ai-assistant.summary.more' | translate: {count}) }}
+  </button>
+</ng-template>

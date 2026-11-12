@@ -42,7 +42,7 @@ const THINGS: Record<string, string> = {
   NOTIFICATION_TEMPLATE: 'notification-template'
 };
 
-const MAX_HUB = 10;
+const MAX_HUB = 50;
 
 const PROTOCOL_KEY = 'tb-ai-code-protocol';
 
@@ -75,6 +75,26 @@ export class AiActionDetailComponent {
   private hubItems = signal<ReadonlyMap<string, MpItemVersionView>>(new Map());
 
   revealed = signal<ReadonlySet<string>>(new Set());
+
+  readonly LIST_SHOWN = 8;
+
+  private opened = signal<ReadonlySet<string>>(new Set());
+
+  isOpen(key: string): boolean {
+    return this.opened().has(key);
+  }
+
+  toggleMore(key: string): void {
+    const next = new Set(this.opened());
+    if (!next.delete(key)) {
+      next.add(key);
+    }
+    this.opened.set(next);
+  }
+
+  shown<T>(rows: T[], key: string): T[] {
+    return this.isOpen(key) ? rows : rows.slice(0, this.LIST_SHOWN);
+  }
 
   hood = computed(() => {
     const hood = this.view().hood;
