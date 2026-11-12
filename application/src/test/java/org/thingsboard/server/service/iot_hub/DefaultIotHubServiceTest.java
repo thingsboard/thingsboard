@@ -564,9 +564,10 @@ class DefaultIotHubServiceTest {
         assertThat(descriptor.getInstallState().get("$placement").get("entityGroupId").asText()).isEqualTo(entityGroupId.toString());
         assertThat(descriptor.getInstallState().get("$placement").get("customerId").asText()).isEqualTo(customerId.toString());
 
-        // A retry after the device is gone: the wizard sends the kept placement again, and it stays.
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
+        // A retry after the device is gone: the wizard sends the same placement again, and it stays.
+        service.removeDevicePackageEntities(user, item.getId(), newVersionId, entityGroupId, customerId);
         assertThat(descriptor.getInstallState()).containsOnlyKeys("Configuration", "$placement");
+        assertThat(descriptor.getInstallState().get("$placement").get("entityGroupId").asText()).isEqualTo(entityGroupId.toString());
         assertThat(descriptor.getInstallState().get("$placement").get("customerId").asText()).isEqualTo(customerId.toString());
     }
 
