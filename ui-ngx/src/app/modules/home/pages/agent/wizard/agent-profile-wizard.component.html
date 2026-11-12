@@ -46,15 +46,15 @@
             }
           </mat-select>
         </mat-form-field>
-        <div class="tb-wizard-hint">
-          <mat-icon class="hint-icon">help_outline</mat-icon>
+        <div class="tb-form-hint tb-primary-fill mb-4 mt-1">
+          <mat-icon>info_outline</mat-icon>
           <div>
-            <div class="hint-title">
+            <div class="font-medium">
               {{ 'agent.provisioning-strategy-label' | translate: {
               strategy: agentProvisionTypeTranslationMap.get(step1Form.get('provisionType').value) | translate
               } }}
             </div>
-            <div class="hint-body">
+            <div>
               {{ agentProvisionTypeDescriptionMap.get(step1Form.get('provisionType').value) | translate }}
             </div>
           </div>
@@ -64,20 +64,20 @@
 
     <mat-step [label]="'agent.add-profile-step-app-profiles' | translate">
       <form [formGroup]="step2Form" autocomplete="off">
-        <div class="tb-wizard-hint">
-          <mat-icon class="hint-icon">help_outline</mat-icon>
+        <div class="tb-form-hint tb-primary-fill mb-4 mt-1">
+          <mat-icon>info_outline</mat-icon>
           <div>
-            <div class="hint-title">{{ 'agent.add-profile-app-profiles-hint-title' | translate }}</div>
-            <div class="hint-body">
+            <div class="font-medium">{{ 'agent.add-profile-app-profiles-hint-title' | translate }}</div>
+            <div>
               {{ 'agent.add-profile-app-profiles-hint' | translate: { profileName: step1Form.get('name').value } }}
             </div>
           </div>
         </div>
         @if (assignmentsLoadState === 'failed') {
-          <div class="tb-wizard-hint">
-            <mat-icon class="hint-icon">warning_amber</mat-icon>
+          <div class="tb-form-hint tb-primary-fill tb-form-hint-warning mb-4 mt-1">
+            <mat-icon>warning</mat-icon>
             <div>
-              <div class="hint-body">{{ 'agent.add-profile-assignments-load-failed' | translate }}</div>
+              <div>{{ 'agent.add-profile-assignments-load-failed' | translate }}</div>
               <button mat-button color="primary" type="button" (click)="loadAssignedAppProfiles()">
                 {{ 'action.retry' | translate }}
               </button>

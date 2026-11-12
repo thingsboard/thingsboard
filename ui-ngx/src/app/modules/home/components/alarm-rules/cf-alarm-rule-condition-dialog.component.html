@@ -124,7 +124,8 @@
           </tb-toggle-select>
         </div>
         @if (isNoData) {
-          <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
+          <div class="tb-form-hint tb-primary-fill">
+            <mat-icon>info_outline</mat-icon>
             <span>{{ 'alarm-rule.condition-type-hint' | translate }}</span>
           </div>
         }

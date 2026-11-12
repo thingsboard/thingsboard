@@ -14,9 +14,10 @@
 
 <div mat-dialog-content class="tb-bulk-dialog-body">
 
-  <p class="tb-bulk-hint">
-    {{ 'agent.profiles-bulk-hint' | translate: { appProfile: profile?.name, agentProfile: agentProfile?.name } }}
-  </p>
+  <div class="tb-form-hint tb-primary-fill mb-3">
+    <mat-icon>info_outline</mat-icon>
+    <span>{{ 'agent.profiles-bulk-hint' | translate: { appProfile: profile?.name, agentProfile: agentProfile?.name } }}</span>
+  </div>
 
   <!-- Action summary -->
   <div class="tb-bulk-summary">
@@ -123,87 +124,95 @@
         }
       </div>
       @if (skippedCount(SkipReason.VERSION_MISMATCH)) {
-        <div class="tb-bulk-skipped-block">
-          <div class="tb-bulk-skipped-header">
-            <mat-icon>info_outline</mat-icon>
-            <span translate>agent.bulk-skipped-version-mismatch</span>
-            <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.VERSION_MISMATCH) }}</span>
+        <div class="tb-form-hint tb-primary-fill tb-form-hint-warning mt-2.5">
+          <mat-icon>warning</mat-icon>
+          <div>
+            <div class="tb-bulk-skipped-header">
+              <span translate>agent.bulk-skipped-version-mismatch</span>
+              <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.VERSION_MISMATCH) }}</span>
+            </div>
+            <ul class="tb-bulk-skipped-list">
+              @for (s of skippedByReasonMap[SkipReason.VERSION_MISMATCH]; track s.applicationId.id) {
+                <li>
+                  <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
+                </li>
+              }
+              @if (skippedExtraCount(SkipReason.VERSION_MISMATCH)) {
+                <li class="tb-bulk-skipped-more">
+                  {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.VERSION_MISMATCH) } }}
+                </li>
+              }
+            </ul>
           </div>
-          <ul>
-            @for (s of skippedByReasonMap[SkipReason.VERSION_MISMATCH]; track s.applicationId.id) {
-              <li>
-                <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
-              </li>
-            }
-            @if (skippedExtraCount(SkipReason.VERSION_MISMATCH)) {
-              <li class="tb-bulk-skipped-more">
-                {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.VERSION_MISMATCH) } }}
-              </li>
-            }
-          </ul>
         </div>
       }
       @if (skippedCount(SkipReason.ACTIVE_EVENT)) {
-        <div class="tb-bulk-skipped-block">
-          <div class="tb-bulk-skipped-header">
-            <mat-icon>hourglass_empty</mat-icon>
-            <span translate>agent.bulk-skipped-active-event</span>
-            <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.ACTIVE_EVENT) }}</span>
+        <div class="tb-form-hint tb-primary-fill tb-form-hint-warning mt-2.5">
+          <mat-icon>warning</mat-icon>
+          <div>
+            <div class="tb-bulk-skipped-header">
+              <span translate>agent.bulk-skipped-active-event</span>
+              <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.ACTIVE_EVENT) }}</span>
+            </div>
+            <ul class="tb-bulk-skipped-list">
+              @for (s of skippedByReasonMap[SkipReason.ACTIVE_EVENT]; track s.applicationId.id) {
+                <li>
+                  <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
+                </li>
+              }
+              @if (skippedExtraCount(SkipReason.ACTIVE_EVENT)) {
+                <li class="tb-bulk-skipped-more">
+                  {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.ACTIVE_EVENT) } }}
+                </li>
+              }
+            </ul>
           </div>
-          <ul>
-            @for (s of skippedByReasonMap[SkipReason.ACTIVE_EVENT]; track s.applicationId.id) {
-              <li>
-                <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
-              </li>
-            }
-            @if (skippedExtraCount(SkipReason.ACTIVE_EVENT)) {
-              <li class="tb-bulk-skipped-more">
-                {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.ACTIVE_EVENT) } }}
-              </li>
-            }
-          </ul>
         </div>
       }
       @if (skippedCount(SkipReason.RATE_LIMIT_EXCEEDED)) {
-        <div class="tb-bulk-skipped-block">
-          <div class="tb-bulk-skipped-header">
-            <mat-icon>speed</mat-icon>
-            <span translate>agent.bulk-skipped-rate-limit</span>
-            <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.RATE_LIMIT_EXCEEDED) }}</span>
+        <div class="tb-form-hint tb-primary-fill tb-form-hint-warning mt-2.5">
+          <mat-icon>warning</mat-icon>
+          <div>
+            <div class="tb-bulk-skipped-header">
+              <span translate>agent.bulk-skipped-rate-limit</span>
+              <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.RATE_LIMIT_EXCEEDED) }}</span>
+            </div>
+            <ul class="tb-bulk-skipped-list">
+              @for (s of skippedByReasonMap[SkipReason.RATE_LIMIT_EXCEEDED]; track s.applicationId.id) {
+                <li>
+                  <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
+                </li>
+              }
+              @if (skippedExtraCount(SkipReason.RATE_LIMIT_EXCEEDED)) {
+                <li class="tb-bulk-skipped-more">
+                  {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.RATE_LIMIT_EXCEEDED) } }}
+                </li>
+              }
+            </ul>
           </div>
-          <ul>
-            @for (s of skippedByReasonMap[SkipReason.RATE_LIMIT_EXCEEDED]; track s.applicationId.id) {
-              <li>
-                <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
-              </li>
-            }
-            @if (skippedExtraCount(SkipReason.RATE_LIMIT_EXCEEDED)) {
-              <li class="tb-bulk-skipped-more">
-                {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.RATE_LIMIT_EXCEEDED) } }}
-              </li>
-            }
-          </ul>
         </div>
       }
       @if (skippedCount(SkipReason.ERROR)) {
-        <div class="tb-bulk-skipped-block">
-          <div class="tb-bulk-skipped-header error">
-            <mat-icon>error_outline</mat-icon>
-            <span translate>agent.bulk-skipped-error</span>
-            <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.ERROR) }}</span>
+        <div class="tb-form-hint tb-primary-fill tb-form-hint-error mt-2.5">
+          <mat-icon>error_outline</mat-icon>
+          <div>
+            <div class="tb-bulk-skipped-header">
+              <span translate>agent.bulk-skipped-error</span>
+              <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.ERROR) }}</span>
+            </div>
+            <ul class="tb-bulk-skipped-list">
+              @for (s of skippedByReasonMap[SkipReason.ERROR]; track s.applicationId.id) {
+                <li>
+                  <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
+                </li>
+              }
+              @if (skippedExtraCount(SkipReason.ERROR)) {
+                <li class="tb-bulk-skipped-more">
+                  {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.ERROR) } }}
+                </li>
+              }
+            </ul>
           </div>
-          <ul>
-            @for (s of skippedByReasonMap[SkipReason.ERROR]; track s.applicationId.id) {
-              <li>
-                <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
-              </li>
-            }
-            @if (skippedExtraCount(SkipReason.ERROR)) {
-              <li class="tb-bulk-skipped-more">
-                {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.ERROR) } }}
-              </li>
-            }
-          </ul>
         </div>
       }
       <ng-template #skippedRow let-s="s">

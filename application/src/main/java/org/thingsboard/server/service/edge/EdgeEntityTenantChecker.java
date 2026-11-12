@@ -5,6 +5,7 @@ package org.thingsboard.server.service.edge;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,7 +36,13 @@ public class EdgeEntityTenantChecker {
         }
         try {
             return entityService.fetchEntity(tenantId, entityId)
-                    .map(entity -> entity instanceof HasTenantId hasTenantId && tenantId.equals(hasTenantId.getTenantId()))
+                    .map(entity -> {
+                        if (entity instanceof HasTenantId hasTenantId) {
+                            return tenantId.equals(hasTenantId.getTenantId());
+                        }
+                        // entities without own tenant id (entity groups) belong to the tenant of their owner
+                        return entity instanceof HasOwnerId hasOwnerId && isTenantEntity(tenantId, hasOwnerId.getOwnerId());
+                    })
                     .orElse(false);
         } catch (IllegalArgumentException e) {
             log.warn("[{}] Unsupported entity type of {}", tenantId, entityId);
