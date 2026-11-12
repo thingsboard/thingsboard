@@ -1237,8 +1237,8 @@ class CopySearchTests(unittest.TestCase):
         for category, name in p.TEMPLATES.items():
             git.write(name, f"fixture {category}\n")
         git.write(p.CURATIONS, '{"schemaVersion": 1, "curations": []}')
-        # Sorted CE sources: a/ (small), b/Alpha, c/ (small), e/Gamma. Among all inputs Gamma takes slot 12 and
-        # Alpha slot 3, so Gamma comes first in the copy search and wins the tie between the identical sources.
+        # Sorted CE sources: a/ (small), b/Alpha, c/ (small), e/Gamma. Alpha and Gamma are identical: Alpha ranks first
+        # among all CE files and wins the tie, whichever sources the size filter drops and whatever else is checked.
         for name in ("a/Small0.java", "a/Small1.java", *(f"c/Small{index}.java" for index in range(2, 10))):
             git.write(name, fixture("apache") + "x\n")
         git.write("b/Alpha.java", fixture("apache") + self.BODY)
@@ -1251,15 +1251,107 @@ class CopySearchTests(unittest.TestCase):
 
     def test_size_filter_keeps_the_copy_search_result(self):
         _, filtered, output = self.check()
-        with (patch.object(p, "could_shrink_to_copy", return_value=True),
-              patch.object(p, "could_be_copy", return_value=True)):
+        with patch.object(p, "size_filter_holds", return_value=False):
             _, unfiltered, unfiltered_output = self.check()
-        self.assertEqual(unfiltered, filtered)
+        self.assertEqual(unfiltered["files"], filtered["files"])
+        self.assertEqual(({"sizeFilter": True}, {"sizeFilter": False}),
+                         (filtered["copySearch"], unfiltered["copySearch"]))
+        self.assertNotIn("and the size rule of the copy search disagree", output)
+        self.assertIn("and the size rule of the copy search disagree", unfiltered_output)
         row = self.rows(filtered)["d/Delta.java"]
         self.assertEqual(("unresolved", "apache"), (row["status"], row["suggestedHeader"]))
-        self.assertEqual(["e/Gamma.java"], [copy["path"] for copy in row["copyCandidates"]])
+        self.assertEqual(["b/Alpha.java"], [copy["path"] for copy in row["copyCandidates"]])
         self.assertIn("2 of 12 other CE files searched for copies", output)
         self.assertIn("12 of 12 other CE files searched for copies", unfiltered_output)
+
+    def test_since_reports_the_copy_a_full_run_reports_among_equally_similar_sources(self):
+        # TB files beside the new one shift where the checked inputs sit among all inputs of a full run.
+        others = [f"t/Tb{index}.java" for index in range(7)]
+        self.git("reset", "-q", "--hard", "HEAD~1")
+        for name in others:
+            self.git.write(name, fixture(p.NON_CE) + f"TB source {name}\n")
+        self.relicensing = self.git.commit("relicensing with TB files")
+        self.git("checkout", "-q", "-b", "feature")
+        self.git.write("d/Delta.java", fixture(p.NON_CE) + self.BODY)
+        self.git.commit("copy of a CE file under a new path")
+        scope = sorted(others + ["d/Delta.java"])
+        _, full, _ = self.check(scope=scope)
+        _, since, _ = self.check("--since", "master", scope=scope)
+        self.assertEqual(["d/Delta.java"], [row["path"] for row in since["files"]])
+        row = self.rows(full)["d/Delta.java"]
+        self.assertEqual(("unresolved", 1), (row["status"], len(row["copyCandidates"])))
+        self.assertEqual("b/Alpha.java", row["copyCandidates"][0]["path"])
+        self.assertEqual(row, self.rows(since)["d/Delta.java"])
+
+    def test_without_the_size_filter_git_searches_every_ce_file(self):
+        searched = []
+        copies = p.normalized_copies
+
+        def spy(mycila, source_refs, names, nonempty):
+            if "d/Delta.java" in names:  # not the size probe
+                searched.append(sorted(key[0] for key in source_refs))
+            return copies(mycila, source_refs, names, nonempty)
+
+        with patch.object(p, "normalized_copies", spy):
+            self.check()
+            with patch.object(p, "size_filter_holds", return_value=False):
+                self.check()
+        filtered, unfiltered = searched
+        self.assertEqual(["b/Alpha.java", "e/Gamma.java"], filtered)
+        self.assertEqual(12, len(unfiltered))
+
+    def probe(self):
+        return p.size_filter_holds(this_repository(), fixture_plugin())
+
+    def test_size_filter_holds_for_the_installed_git(self):
+        self.assertTrue(self.probe())
+
+    def test_a_python_rule_that_no_longer_matches_git_turns_the_size_filter_off(self):
+        stricter = lambda size, destinations: any(100 * min(size, other) > p.COPY_SIMILARITY * max(size, other)
+                                                  for other in destinations)
+        with patch.object(p, "could_be_copy", stricter):
+            self.assertFalse(self.probe())
+
+    def test_report_marks_the_size_filter_only_when_copies_were_searched(self):
+        _, report, _ = self.check()
+        self.assertEqual({"sizeFilter": True}, report["copySearch"])
+        self.git.write("d/Delta.java", fixture("apache") + "base implementation\n")
+        self.git.commit("Delta in CE as well")
+        with patch.object(p, "RELICENSING_COMMIT", "0" * 40), patch.object(p, "relicensed_ce_bases",
+                                                                           return_value=[self.git("rev-parse", "HEAD")]):
+            _, report, output = self.check()
+        self.assertEqual({"sizeFilter": None}, report["copySearch"])
+        self.assertNotIn("and the size rule of the copy search disagree", output)
+
+    def test_size_filter_is_off_when_git_answers_otherwise_on_either_side_of_the_boundary(self):
+        boundary = 1000 * p.COPY_SIMILARITY // 100 + 100 * p.COPY_SIMILARITY // 100  # 100 lines of 11 bytes
+
+        def git(at_boundary, below):
+            return lambda repo, plugin, source, destination: at_boundary if len(source) == boundary else below
+
+        for at_boundary, below, holds in ((True, False, True),    # Git follows the rule
+                                          (True, True, False),    # looser: a CE file below the boundary matches
+                                          (False, False, False),  # the boundary pair does not match either
+                                          (False, True, False)):
+            with patch.object(p, "git_finds_copy", git(at_boundary, below)):
+                self.assertEqual(holds, self.probe(), (at_boundary, below))
+
+    def test_probe_pairs_sit_on_both_sides_of_the_boundary(self):
+        sizes = []
+        def finds(repo, plugin, source, destination):
+            sizes.append((len(source), len(destination)))
+            return len(source) % 2 == 0
+
+        with patch.dict(os.environ, {p.JOBS_VARIABLE: "1"}), patch.object(p, "git_finds_copy", finds):
+            self.assertTrue(self.probe())
+        (boundary, destination), (below, _) = sizes
+        self.assertEqual((boundary * 100, below), (p.COPY_SIMILARITY * destination, boundary - 1))
+
+    def test_size_filter_follows_the_configured_similarity(self):
+        with patch.object(p, "COPY_SIMILARITY", 60):
+            self.assertTrue(self.probe())
+            self.assertTrue(p.could_be_copy(600, [1000]))
+            self.assertFalse(p.could_be_copy(599, [1000]))
 
     def test_a_file_grown_by_normalizing_fails_the_check(self):
         def strip_headers(tool):

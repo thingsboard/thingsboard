@@ -903,6 +903,7 @@ class Comparison:
     copies: dict
     merges: dict
     ce_directories: frozenset
+    size_filter: bool | None = None
 
     def classify(self, name, curation):
         key = ("head", name)
@@ -1073,6 +1074,34 @@ def could_be_copy(size, destinations):
     return any(100 * min(size, other) >= COPY_SIMILARITY * max(size, other) for other in destinations)
 
 
+def git_finds_copy(repo, plugin, source, destination):
+    """Whether the copy search, normalized_copies itself, matches destination, a new path, to source, a CE file."""
+    with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
+        staging = Mycila(repo, Path(temporary), plugin)
+        staging.add(("Source.java", "probe"), "Source.java", source)
+        staging.add(("head", "Destination.java"), "Destination.java", destination)
+        found = normalized_copies(staging, {("Source.java", "probe"): "probe"}, {"Destination.java"}, staging.nonempty())
+        return "Destination.java" in found
+
+
+def size_filter_holds(repo, plugin):
+    """Whether the installed Git still never matches a source that could_be_copy rules out. The filter relies on Git
+    measuring similarity against the larger blob (estimate_similarity divides by the larger size, and diffcore-delta.c
+    counts at most the smaller blob as copied), so a source below COPY_SIMILARITY % of a destination can never reach
+    the threshold. The probe asks the real copy search twice: a source of exactly COPY_SIMILARITY % of a destination
+    must be found, the same source one byte shorter must not. That catches a Git that measures against anything but
+    the larger blob; nothing else in this repository would notice such a change, and the filter would then drop CE
+    files Git matches. Both answers are compared with could_be_copy itself, so a change of the Python rule that no
+    longer matches Git turns the filter off as well. Each case runs in its own repository, so a found boundary pair
+    cannot hide the other answer."""
+    destination = b"".join(b"line %05d\n" % index for index in range(100))
+    boundary = destination[:len(destination) * COPY_SIMILARITY // 100]
+    sources = [boundary, boundary[:-1]]
+    rule = [could_be_copy(len(source), [len(destination)]) for source in sources]
+    answers = parallel(lambda source: git_finds_copy(repo, plugin, source, destination), sources)
+    return rule == answers == [True, False]
+
+
 def could_shrink_to_copy(raw_size, destinations):
     """Normalizing never grows a file: below COPY_SIMILARITY % of the smallest destination it stays out of Git's reach."""
     return 100 * raw_size >= COPY_SIMILARITY * min(destinations)
@@ -1093,10 +1122,10 @@ def compare(repo, plugin, lineage, contents, cache, in_scope):
         for key in comparable_ce_files(files, copy_source_types).items():
             sources.setdefault(key, base)
     versions = {(name, oid) for name in names for _, oid in lineage.versions(name)}
-    # Every input keeps the slot it has among all inputs, so the copy search sees the same paths, and Git breaks
-    # ties between equally similar sources the same way, however many sources the size filter drops.
-    slots = {("head", name): index for index, name in enumerate(names)}
-    slots |= {key: len(names) + index for index, key in enumerate(sorted(sources))}
+    # Git breaks ties between equally similar copy sources by path. Sources are staged in key order, padded so that
+    # paths sort like ranks: --since, a full run and the size filter all present any two sources in the same order.
+    slots = {("head", name): f"{index:08d}" for index, name in enumerate(sorted(names))}
+    slots |= {key: f"{index:08d}" for index, key in enumerate(sorted(sources))}
     bytes_by_id = blobs(repo, [oid for _, oid in sources])
     with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
         mycila = Mycila(repo, Path(temporary), plugin)
@@ -1113,8 +1142,8 @@ def compare(repo, plugin, lineage, contents, cache, in_scope):
         destinations = {name: mycila.contents[("head", name)] for name in sorted(new_paths)
                         if mycila.contents[("head", name)].strip()}
     normalized = head_hashes | {key: comparison_hash(content) for key, content in copy_sources.items()}
-    copies, searched = copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id,
-                                       destinations, copy_sources)
+    copies, searched, size_filter = copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id,
+                                                    destinations, copy_sources)
     normalized |= searched
     merges = clean_merges(repo, plugin, cache, lineage, names, normalized)
     console.end(f"done ({len(normalized)} file versions, {len(searched)} of {len(sources) - len(versions)} "
@@ -1128,17 +1157,21 @@ def compare(repo, plugin, lineage, contents, cache, in_scope):
         merges=merges,
         ce_directories=frozenset(str(parent) for files in lineage.trees.values()
                                  for path in files for parent in PurePosixPath(path).parents),
+        size_filter=size_filter,
     )
 
 
 def copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id, destinations, copy_sources):
-    """CE files similar to the paths that CE does not have, normalized only when Git could match them by size, and
-    the comparison hashes of the other CE files searched for them."""
+    """CE files similar to the paths that CE does not have, normalized only when Git could match them by size; the
+    comparison hashes of the other CE files searched for them; and whether the size filter was used, None when there
+    was nothing to search for."""
     if not destinations:
-        return {}, {}
+        return {}, {}, None
     sizes = [staged_size(content) for content in destinations.values()]
+    # Slower, never wrong: when the installed Git disagrees with the size rule, every CE file is searched.
+    size_filter = size_filter_holds(repo, plugin)
     others = sorted(key for key in sources if key not in versions
-                    and could_shrink_to_copy(len(bytes_by_id[key[1]]), sizes))
+                    and (not size_filter or could_shrink_to_copy(len(bytes_by_id[key[1]]), sizes)))
     found = normalize(repo, plugin, cache, {key: bytes_by_id[key[1]] for key in others})
     searched = {key: comparison_hash(content) for key, content in found.items()}
     with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
@@ -1148,8 +1181,8 @@ def copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id, 
         for name, content in destinations.items():
             staging.add(("head", name), name, content, slots[("head", name)])
         reachable = {key: sources[key] for key in [*others, *copy_sources]
-                     if could_be_copy(staged_size(staging.contents[key]), sizes)}
-        return normalized_copies(staging, reachable, set(destinations), staging.nonempty()), searched
+                     if not size_filter or could_be_copy(staged_size(staging.contents[key]), sizes)}
+        return normalized_copies(staging, reachable, set(destinations), staging.nonempty()), searched, size_filter
 
 
 def clean_merges(repo, plugin, cache, lineage, names, normalized):
@@ -1266,6 +1299,10 @@ def select_changes(repo, since, bases, ce_bases, plugin, curations):
         name for name in set(previous) | set(curations) if previous.get(name) != curations.get(name)}
     paths = frozenset(changed | curated)
     return Selection(since, base, paths, f"{len(paths)} changed paths")
+
+
+def git_version():
+    return run(["git", "--version"], Path.cwd()).stdout.decode().strip().removeprefix("git version ")
 
 
 def current_branch(repo):
@@ -1523,6 +1560,7 @@ def check(args):
         console.line(f"Checking {len(checked)} of {len(scope.eligible)} files in scope", "dim")
     contents = {name: (repo / name).read_bytes() for name in checked}
     rows = []
+    size_filter = None
     if contents:
         cache = (NoCache() if args.no_cache
                  else NormalizationCache((repo / args.cache).resolve(), cache_signature(repo, plugin)))
@@ -1531,7 +1569,12 @@ def check(args):
         finally:
             cache.close()
         rows = [comparison.classify(name, curations.get(name)) for name in checked]
+        size_filter = comparison.size_filter
     console.line()
+    if size_filter is False:
+        console.line(f"Git's copy detection (git {git_version()}) and the size rule of the copy search disagree; "
+                     "every CE file was searched for copies. Report this to the maintainers of the check.", "red")
+        console.line()
     orphaned = [{"path": name, "status": "stale-curation", "reason": "file is no longer in scope"}
                 for name in sorted(set(curations) - set(scope.eligible))]
     ensure_inputs_unchanged(repo, lineage, curation_path, curation_bytes, contents)
@@ -1547,6 +1590,7 @@ def check(args):
         "ce": ce | {"bases": list(lineage.bases)},
         "scope": {"supported": len(scope.eligible), "unknown": scope.unknown, "modules": scope.modules},
         "selection": selection.report() if selection is not None else None,
+        "copySearch": {"sizeFilter": size_filter},
         "summary": dict(summary),
         "restamped": sorted(row["path"] for row in rows if "previousHeader" in row),
         "removedCurations": removed,
