@@ -418,7 +418,7 @@ class ModbusPollingIntegrationTest {
     @Test
     void oneWayRpcReportsDelivered() {
         ModbusSessionContext session = activeWriteSession();
-        var msg = TransportProtos.ToDeviceRpcRequestMsg.newBuilder().setRequestId(9).setMethodName("resetEnergy").setParams("true").setOneway(true).build();
+        var msg = TransportProtos.ToDeviceRpcRequestMsg.newBuilder().setRequestId(9).setMethodName("resetEnergy").setParams("true").setPersisted(true).setOneway(true).build();
 
         downlink().onToDeviceRpcRequest(session, msg);
 

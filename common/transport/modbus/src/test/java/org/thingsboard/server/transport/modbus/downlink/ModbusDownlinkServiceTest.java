@@ -45,6 +45,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  * Downlink decisions against a scripted client: no network, every response completes on the calling thread.
@@ -142,8 +143,8 @@ class ModbusDownlinkServiceTest {
     }
 
     @Test
-    void deliveredOneWayRpcReportsActivity() {
-        ToDeviceRpcRequestMsg msg = rpc("setSetpoint", "5").setOneway(true).build();
+    void deliveredPersistentOneWayRpcReportsStatusAndActivity() {
+        ToDeviceRpcRequestMsg msg = rpc("setSetpoint", "5").setOneway(true).setPersisted(true).build();
 
         downlink.onToDeviceRpcRequest(session, msg);
 
@@ -151,13 +152,34 @@ class ModbusDownlinkServiceTest {
     }
 
     @Test
-    void failedOneWayRpcReportsFailed() {
-        client.failure = new ModbusResponseException(6, 2);
+    void deliveredNonPersistentOneWayRpcOnlyRecordsActivity() {
+        // core has already forgotten a non-persistent one-way RPC: a status for it would only log a warning there
         ToDeviceRpcRequestMsg msg = rpc("setSetpoint", "5").setOneway(true).build();
 
         downlink.onToDeviceRpcRequest(session, msg);
 
-        verify(transportService).process(eq(session.getSessionInfo()), eq(msg), eq(RpcStatus.FAILED), any());
+        assertThat(client.calls).isEqualTo(1);
+        verify(transportService).recordActivity(session.getSessionInfo());
+        verifyNoMoreInteractions(transportService);
+    }
+
+    @Test
+    void failedNonPersistentOneWayRpcReportsNothing() {
+        client.failure = new ModbusResponseException(6, 2);
+
+        downlink.onToDeviceRpcRequest(session, rpc("setSetpoint", "5").setOneway(true).build());
+
+        verifyNoInteractions(transportService);
+    }
+
+    @Test
+    void failedPersistentOneWayRpcReportsFailed() {
+        client.failure = new ModbusResponseException(6, 2);
+        ToDeviceRpcRequestMsg msg = rpc("setSetpoint", "5").setOneway(true).setPersisted(true).build();
+
+        downlink.onToDeviceRpcRequest(session, msg);
+
+        verify(transportService).process(eq(session.getSessionInfo()), eq(msg), eq(RpcStatus.FAILED), eq(false), any());
     }
 
     @Test

@@ -217,8 +217,7 @@ public class ModbusDownlinkService {
 
     private void respondSuccess(ModbusSessionContext session, ToDeviceRpcRequestMsg msg, String payload) {
         if (msg.getOneway()) {
-            // reportActivity: the device answered. A two-way response records activity on its own.
-            transportService.process(session.getSessionInfo(), msg, RpcStatus.DELIVERED, true, TransportServiceCallback.EMPTY);
+            reportOneWayStatus(session, msg, RpcStatus.DELIVERED);
         } else {
             transportService.process(session.getSessionInfo(), ToDeviceRpcResponseMsg.newBuilder()
                     .setRequestId(msg.getRequestId())
@@ -234,12 +233,26 @@ public class ModbusDownlinkService {
     private void respondError(ModbusSessionContext session, ToDeviceRpcRequestMsg msg, String error) {
         log.debug("[{}] RPC '{}' failed: {}", session.getDeviceId(), msg.getMethodName(), error);
         if (msg.getOneway()) {
-            transportService.process(session.getSessionInfo(), msg, RpcStatus.FAILED, TransportServiceCallback.EMPTY);
+            reportOneWayStatus(session, msg, RpcStatus.FAILED);
         } else {
             transportService.process(session.getSessionInfo(), ToDeviceRpcResponseMsg.newBuilder()
                     .setRequestId(msg.getRequestId())
                     .setError(errorJson(error))
                     .build(), TransportServiceCallback.EMPTY);
+        }
+    }
+
+    /**
+     * A one-way RPC has no response, only a status, and core keeps track of it only when the RPC is persistent:
+     * a non-persistent one is forgotten as soon as it is sent, so a status for it would just log a warning there.
+     * A delivered write still counts as device activity (a two-way response records activity on its own).
+     */
+    private void reportOneWayStatus(ModbusSessionContext session, ToDeviceRpcRequestMsg msg, RpcStatus status) {
+        boolean delivered = status == RpcStatus.DELIVERED;
+        if (msg.getPersisted()) {
+            transportService.process(session.getSessionInfo(), msg, status, delivered, TransportServiceCallback.EMPTY);
+        } else if (delivered) {
+            transportService.recordActivity(session.getSessionInfo());
         }
     }
 
