@@ -527,7 +527,7 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
     protected void safeAddEntityToGroup(TenantId tenantId, EntityGroupId entityGroupId, EntityId entityId) {
         if (entityGroupId != null && !ModelConstants.NULL_UUID.equals(entityGroupId.getId())) {
-            EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, entityGroupId);
+            EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupInfoByTenantIdAndId(tenantId, entityGroupId);
             if (entityGroup != null) {
                 edgeCtx.getEntityGroupService().addEntityToEntityGroup(tenantId, entityGroupId, entityId);
             }
@@ -592,6 +592,13 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         } catch (Exception e) {
             log.warn("[{}] Can't delete entity from edge {} 'All' group, entity id [{}]", tenantId, entityType, entityId, e);
             throw new RuntimeException(e);
+        }
+    }
+
+    protected void safeRemoveEntityFromGroup(TenantId tenantId, EntityGroupId entityGroupId, EntityId entityId) {
+        EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupInfoByTenantIdAndId(tenantId, entityGroupId);
+        if (entityGroup != null) {
+            edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, entityId);
         }
     }
 
