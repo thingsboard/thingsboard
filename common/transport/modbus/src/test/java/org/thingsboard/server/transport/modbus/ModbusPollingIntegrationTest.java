@@ -8,12 +8,14 @@ import com.digitalpetri.modbus.server.ProcessImage;
 import com.digitalpetri.modbus.server.ReadWriteModbusServices;
 import com.digitalpetri.modbus.tcp.server.NettyRtuServerTransport;
 import com.digitalpetri.modbus.tcp.server.NettyTcpServerTransport;
+import com.google.gson.JsonParser;
 import io.netty.channel.ChannelOption;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.data.ModbusDeviceTransportConfiguration;
@@ -23,6 +25,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
+import org.thingsboard.server.common.data.transport.modbus.ModbusByteOrder;
 import org.thingsboard.server.common.data.transport.modbus.ModbusDataType;
 import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
 import org.thingsboard.server.common.data.transport.modbus.ModbusMapping;
@@ -122,6 +125,65 @@ class ModbusPollingIntegrationTest {
         var attributes = captureAttributes(1);
         assertThat(value(attributes, "serial").getStringV()).isEqualTo("SN12345");
         verify(transportService, timeout(WAIT_MS).atLeastOnce()).recordActivity(session.getSessionInfo());
+        service.stopPolling(session);
+    }
+
+    @Test
+    void decodesCoilsDiscreteInputsRegisterBitsBytesAndWordOrderOverTheWire() {
+        images.get(1).with(tx -> {
+            tx.writeCoils(coils -> coils.put(5, true));
+            tx.writeDiscreteInputs(inputs -> inputs.put(6, true));
+            tx.writeHoldingRegisters(regs -> {
+                regs.put(70, new byte[]{0x00, 0x08}); // bit 3 set
+                regs.put(80, new byte[]{0x01, 0x02});
+                regs.put(81, new byte[]{(byte) 0xAB, (byte) 0xCD});
+            });
+            // 123456 = 0x0001E240, low word first (word order LITTLE)
+            tx.writeInputRegisters(regs -> {
+                regs.put(20, new byte[]{(byte) 0xE2, 0x40});
+                regs.put(21, new byte[]{0x00, 0x01});
+            });
+        });
+        ModbusDeviceProfileTransportConfiguration profile = profile(false, 100L);
+        profile.setWordOrder(ModbusByteOrder.LITTLE);
+        ModbusMapping flag = mapping("flag", ModbusDataType.BITS, ModbusFunctionCode.READ_HOLDING_REGISTERS, 70, null);
+        flag.setBit(3);
+        ModbusMapping energy = mapping("energy", ModbusDataType.UINT32, ModbusFunctionCode.READ_INPUT_REGISTERS, 20, null);
+        energy.setMultiplier(0.1);
+        profile.setTimeseries(List.of(
+                mapping("relay", ModbusDataType.BITS, ModbusFunctionCode.READ_COILS, 5, null),
+                mapping("alarm", ModbusDataType.BITS, ModbusFunctionCode.READ_DISCRETE_INPUTS, 6, null),
+                flag,
+                mapping("raw", ModbusDataType.BYTES, ModbusFunctionCode.READ_HOLDING_REGISTERS, 80, 2),
+                energy));
+        profile.setAttributes(List.of());
+        ModbusSessionContext session = session(1, profile);
+
+        service.startPolling(session);
+
+        var telemetry = captureTelemetry(1);
+        assertThat(value(telemetry, "relay").getBoolV()).isTrue();
+        assertThat(value(telemetry, "alarm").getBoolV()).isTrue();
+        assertThat(value(telemetry, "flag").getBoolV()).isTrue();
+        assertThat(value(telemetry, "raw").getStringV()).isEqualTo("0102abcd"); // word order applies to numbers only
+        assertThat(value(telemetry, "energy").getDoubleV()).isEqualTo(12345.6);
+        service.stopPolling(session);
+    }
+
+    @Test
+    void separateAttributesPeriodPollsAttributesLessOften() {
+        writeInputFloat(1, 0, 5f);
+        writeHoldingString(1, 64, "SN1");
+        ModbusDeviceProfileTransportConfiguration profile = profile(false, 100L);
+        profile.setAttributesPollPeriodMs(400L);
+        ModbusSessionContext session = session(1, profile);
+
+        service.startPolling(session);
+
+        assertThat(session.getPollLoops()).hasSize(2);
+        assertThat(value(captureAttributes(1), "serial").getStringV()).isEqualTo("SN1");
+        verify(transportService, timeout(WAIT_MS).atLeast(8)).process(any(TransportProtos.SessionInfoProto.class), any(TransportProtos.PostTelemetryMsg.class), any());
+        assertThat(invocations(TransportProtos.PostAttributeMsg.class)).isLessThan(invocations(TransportProtos.PostTelemetryMsg.class) / 2);
         service.stopPolling(session);
     }
 
@@ -288,6 +350,22 @@ class ModbusPollingIntegrationTest {
     }
 
     @Test
+    void sharedAttributeUpdateWritesMultipleRegisters() {
+        ModbusSessionContext session = activeWriteSession();
+
+        downlink().onAttributeUpdate(session, TransportProtos.AttributeUpdateNotificationMsg.newBuilder()
+                .addSharedUpdated(TransportProtos.TsKvProto.newBuilder().setKv(TransportProtos.KeyValueProto.newBuilder()
+                        .setKey("limit").setType(TransportProtos.KeyValueType.DOUBLE_V).setDoubleV(231.5))).build());
+
+        byte[] expected = ByteBuffer.allocate(4).putFloat(231.5f).array();
+        Awaitility.await().atMost(Duration.ofMillis(WAIT_MS)).untilAsserted(() -> {
+            assertThat(holdingRegister(1, 40)).containsExactly(expected[0], expected[1]);
+            assertThat(holdingRegister(1, 41)).containsExactly(expected[2], expected[3]);
+        });
+        service.stopPolling(session);
+    }
+
+    @Test
     void rpcWritesCoilReadsRegisterAndMaskWritesBit() {
         ModbusSessionContext session = activeWriteSession();
         images.get(1).with(tx -> tx.writeHoldingRegisters(regs -> {
@@ -300,7 +378,7 @@ class ModbusPollingIntegrationTest {
 
         assertThat(rpc(session, 2, "getSetpoint", "{}").getPayload()).isEqualTo("{\"value\":7}");
 
-        assertThat(rpc(session, 3, "remoteControl", "{\"value\": true}").getError()).isEmpty();
+        assertThat(errorOf(rpc(session, 3, "remoteControl", "{\"value\": true}"))).isEmpty();
         assertThat(holdingRegister(1, 100)).containsExactly(0, 0x8A); // bit 7 set, bits 1 and 3 kept
         service.stopPolling(session);
     }
@@ -323,9 +401,9 @@ class ModbusPollingIntegrationTest {
     void rpcErrorsGoToErrorField() {
         ModbusSessionContext session = activeWriteSession();
 
-        assertThat(rpc(session, 1, "nope", "1").getError()).isEqualTo("Unknown RPC method 'nope'");
-        assertThat(rpc(session, 2, "setSetpoint", "{}").getError()).startsWith("Value is required");
-        assertThat(rpc(session, 3, "setSetpoint", "70000").getError()).contains("out of range for UINT16");
+        assertThat(errorOf(rpc(session, 1, "nope", "1"))).isEqualTo("Unknown RPC method 'nope'");
+        assertThat(errorOf(rpc(session, 2, "setSetpoint", "{}"))).startsWith("Value is required");
+        assertThat(errorOf(rpc(session, 3, "setSetpoint", "70000"))).contains("out of range for UINT16");
         service.stopPolling(session);
     }
 
@@ -333,7 +411,7 @@ class ModbusPollingIntegrationTest {
     void rpcToUnitThatDoesNotAnswerTimesOut() {
         ModbusSessionContext session = activeWriteSession(5); // the server knows units 1 and 2 only and stays silent for others
 
-        assertThat(rpc(session, 1, "getSetpoint", "{}").getError()).isEqualTo("Device did not respond in time");
+        assertThat(errorOf(rpc(session, 1, "getSetpoint", "{}"))).isEqualTo("Device did not respond in time");
         service.stopPolling(session);
     }
 
@@ -389,7 +467,9 @@ class ModbusPollingIntegrationTest {
         ModbusDeviceProfileTransportConfiguration profile = profile(false, 1000L);
         ModbusMapping remote = mapping("remoteControl", ModbusDataType.BITS, ModbusFunctionCode.MASK_WRITE_REGISTER, 100, 1);
         remote.setBit(7);
-        profile.setAttributeUpdates(List.of(mapping("ctRatio", ModbusDataType.UINT16, ModbusFunctionCode.WRITE_SINGLE_REGISTER, 20, null)));
+        profile.setAttributeUpdates(List.of(
+                mapping("ctRatio", ModbusDataType.UINT16, ModbusFunctionCode.WRITE_SINGLE_REGISTER, 20, null),
+                mapping("limit", ModbusDataType.FLOAT32, ModbusFunctionCode.WRITE_MULTIPLE_REGISTERS, 40, null)));
         profile.setRpc(List.of(
                 mapping("resetEnergy", ModbusDataType.BITS, ModbusFunctionCode.WRITE_SINGLE_COIL, 1, 1),
                 mapping("getSetpoint", ModbusDataType.UINT16, ModbusFunctionCode.READ_HOLDING_REGISTERS, 30, null),
@@ -414,6 +494,19 @@ class ModbusPollingIntegrationTest {
                     .orElseThrow(() -> new AssertionError("No response yet for request " + requestId)));
         });
         return response.get();
+    }
+
+    /** The message inside the {@code {"error": "…"}} body of a failed RPC, or "" when the RPC succeeded. */
+    private static String errorOf(TransportProtos.ToDeviceRpcResponseMsg response) {
+        return response.getError().isEmpty() ? "" : JsonParser.parseString(response.getError()).getAsJsonObject().get("error").getAsString();
+    }
+
+    /** How many messages of a type were posted so far. */
+    private long invocations(Class<?> messageType) {
+        return Mockito.mockingDetails(transportService).getInvocations().stream()
+                .filter(invocation -> invocation.getMethod().getName().equals("process"))
+                .filter(invocation -> invocation.getArguments().length > 1 && messageType.isInstance(invocation.getArguments()[1]))
+                .count();
     }
 
     private byte[] holdingRegister(int unitId, int address) {

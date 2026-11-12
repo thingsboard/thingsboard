@@ -136,6 +136,66 @@ class ModbusConnectionTest {
     }
 
     @Test
+    void newerRequestTakesThePlaceOfTheWaitingOneWithTheSameKey() {
+        FakeClient client = new FakeClient();
+        ModbusConnection connection = new ModbusConnection("tcp://h:502", "framing=MBAP", 1, 100, Duration.ofSeconds(1), t -> client);
+        read(connection); // in flight
+        var first = connection.executeLatest("k", write(20), true);
+        var other = connection.executeLatest("other", write(21), true);
+        var second = connection.executeLatest("k", write(22), true);
+
+        assertThat(first).failsWithin(Duration.ZERO).withThrowableOfType(ExecutionException.class)
+                .withCauseInstanceOf(ModbusConnection.SupersededException.class);
+        client.pending.get(0).complete(new byte[]{0, 0});
+
+        assertThat(client.writes).containsExactly("register@22", "register@21"); // sent in the place of the first one
+        assertThat(second).isCompleted();
+        assertThat(other).isCompleted();
+    }
+
+    @Test
+    void retryGivesWayToTheWaitingRequestWithTheSameKey() {
+        FakeClient client = new FakeClient();
+        ModbusConnection connection = new ModbusConnection("tcp://h:502", "framing=MBAP", 1, 100, Duration.ofSeconds(1), t -> client);
+        read(connection); // in flight
+        var waiting = connection.executeLatest("k", write(20), true);
+
+        var retry = connection.executeLatest("k", write(22), false);
+        client.pending.get(0).complete(new byte[]{0, 0});
+
+        assertThat(retry).failsWithin(Duration.ZERO).withThrowableOfType(ExecutionException.class)
+                .withCauseInstanceOf(ModbusConnection.SupersededException.class);
+        assertThat(client.writes).containsExactly("register@20");
+        assertThat(waiting).isCompleted();
+    }
+
+    @Test
+    void keyIsFreeAgainOnceItsRequestIsSent() {
+        FakeClient client = new FakeClient();
+        ModbusConnection connection = new ModbusConnection("tcp://h:502", "framing=MBAP", 1, 100, Duration.ofSeconds(1), t -> client);
+
+        connection.executeLatest("k", write(20), true);
+        connection.executeLatest("k", write(22), false);
+
+        assertThat(client.writes).containsExactly("register@20", "register@22");
+    }
+
+    @Test
+    void closeFailsTheLatestRequestOfAKey() {
+        FakeClient client = new FakeClient();
+        ModbusConnection connection = new ModbusConnection("tcp://h:502", "framing=MBAP", 1, 100, Duration.ofSeconds(1), t -> client);
+        read(connection); // in flight
+        connection.executeLatest("k", write(20), true);
+        var latest = connection.executeLatest("k", write(22), true);
+
+        connection.close();
+
+        assertThat(latest).failsWithin(Duration.ZERO).withThrowableOfType(ExecutionException.class)
+                .withMessageContaining("is closed");
+        assertThat(client.writes).isEmpty();
+    }
+
+    @Test
     void longRunOfExpiredRequestsIsDrainedWithoutNesting() {
         assertQueueOfImmediatelyFailingRequestsIsDrained(c -> c.read(1, ModbusFunctionCode.READ_HOLDING_REGISTERS, 0, 1), System.currentTimeMillis() - 1);
     }
@@ -164,6 +224,10 @@ class ModbusConnectionTest {
         assertThat(failing).allMatch(CompletableFuture::isCompletedExceptionally);
         read(connection);
         assertThat(client.pending).hasSize(2); // the slot is free again: the next request reaches the device
+    }
+
+    private static Function<ModbusClientAdapter, CompletionStage<byte[]>> write(int address) {
+        return c -> c.writeRegisters(1, ModbusFunctionCode.WRITE_SINGLE_REGISTER, address, new byte[]{0, 1}).thenApply(v -> new byte[0]);
     }
 
     private static CompletableFuture<byte[]> read(ModbusConnection connection) {

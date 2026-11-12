@@ -3,6 +3,7 @@
 package org.thingsboard.server.transport.modbus.downlink;
 
 import com.digitalpetri.modbus.exceptions.ModbusResponseException;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -29,6 +30,7 @@ import org.thingsboard.server.transport.modbus.connection.ModbusConnection;
 import org.thingsboard.server.transport.modbus.session.ModbusSessionContext;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -40,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -69,7 +72,7 @@ class ModbusDownlinkServiceTest {
 
         downlink.onToDeviceRpcRequest(session, rpc("setSetpoint", "5").build());
 
-        assertThat(response().getError()).isEqualTo("Device session is not active");
+        assertThat(response().getError()).isEqualTo("{\"error\":\"Device session is not active\"}"); // JSON, so REST callers get the text
         assertThat(client.calls).isZero();
     }
 
@@ -89,7 +92,7 @@ class ModbusDownlinkServiceTest {
 
         downlink.onToDeviceRpcRequest(session, rpc("setSetpoint", "5").build());
 
-        assertThat(response().getError()).isEqualTo("Device is not connected");
+        assertThat(errorOf(response())).isEqualTo("Device is not connected");
     }
 
     @Test
@@ -108,7 +111,7 @@ class ModbusDownlinkServiceTest {
 
         downlink.onToDeviceRpcRequest(session, rpc("getSetpoint", "{}").build());
 
-        assertThat(response().getError()).isEqualTo("Device did not respond in time");
+        assertThat(errorOf(response())).isEqualTo("Device did not respond in time");
         assertThat(client.calls).isEqualTo(3); // first attempt + 2 retries
     }
 
@@ -118,7 +121,7 @@ class ModbusDownlinkServiceTest {
 
         downlink.onToDeviceRpcRequest(session, rpc("setSetpoint", "5").build());
 
-        assertThat(response().getError()).isEqualTo("Modbus exception 02 (ILLEGAL_DATA_ADDRESS)");
+        assertThat(errorOf(response())).isEqualTo("Modbus exception 02 (ILLEGAL_DATA_ADDRESS)");
         assertThat(client.calls).isEqualTo(1);
     }
 
@@ -126,7 +129,7 @@ class ModbusDownlinkServiceTest {
     void expiredRpcIsAnsweredWithErrorAndNeverSent() {
         downlink.onToDeviceRpcRequest(session, rpc("setSetpoint", "5").setExpirationTime(System.currentTimeMillis() - 1000).build());
 
-        assertThat(response().getError()).isEqualTo("Request expired before it was sent");
+        assertThat(errorOf(response())).isEqualTo("Request expired before it was sent");
         assertThat(client.calls).isZero();
     }
 
@@ -178,13 +181,109 @@ class ModbusDownlinkServiceTest {
         downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 1)); // in flight, never answered
         downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 2)); // waiting
 
-        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 3));
+        downlink.onAttributeUpdate(session, attributeUpdate("ptRatio", 3)); // another attribute needs a place of its own
 
         ArgumentCaptor<Throwable> error = ArgumentCaptor.forClass(Throwable.class);
         verify(transportService).errorEvent(eq(session.getTenantId()), eq(session.getDeviceId()),
                 eq(ModbusDownlinkService.ATTRIBUTE_UPDATE_ERROR), error.capture());
         assertThat(error.getValue()).hasMessageContaining("is overloaded: 1 requests are already waiting");
         assertThat(stuck.calls).isEqualTo(1);
+    }
+
+    @Test
+    void waitingAttributeWriteIsReplacedByNewerValue() {
+        FakeClient slow = hangingClient(100);
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 1)); // in flight
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 2)); // waiting
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 3)); // replaces 2
+
+        slow.hanging.get(0).complete(null);
+        slow.hanging.get(1).complete(null);
+
+        assertThat(slow.written).containsExactly(1, 3);
+        verify(transportService, times(2)).recordActivity(session.getSessionInfo());
+        verify(transportService, never()).errorEvent(any(), any(), any(), any());
+    }
+
+    @Test
+    void newerValueReplacesWaitingOneEvenWhenQueueIsFull() {
+        FakeClient slow = hangingClient(1);
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 1)); // in flight
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 2)); // waiting, the queue is full
+
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 3));
+        slow.hanging.get(0).complete(null);
+
+        assertThat(slow.written).containsExactly(1, 3);
+        verify(transportService, never()).errorEvent(any(), any(), any(), any());
+    }
+
+    @Test
+    void differentAttributesAreNotCoalesced() {
+        FakeClient slow = hangingClient(100);
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 1)); // in flight
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 2));
+        downlink.onAttributeUpdate(session, attributeUpdate("ptRatio", 3));
+
+        slow.hanging.get(0).complete(null);
+        slow.hanging.get(1).complete(null);
+
+        assertThat(slow.written).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void sameAttributeOfAnotherDeviceIsNotCoalesced() {
+        FakeClient slow = hangingClient(100);
+        ModbusSessionContext other = session(2);
+        other.setConnection(session.getConnection()); // both devices behind one endpoint
+        other.activate(() -> {});
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 1)); // in flight
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 2));
+        downlink.onAttributeUpdate(other, attributeUpdate("ctRatio", 3));
+
+        slow.hanging.get(0).complete(null);
+        slow.hanging.get(1).complete(null);
+
+        assertThat(slow.written).containsExactly(1, 2, 3);
+    }
+
+    @Test
+    void timedOutAttributeWriteIsNotRetriedOverNewerValue() {
+        FakeClient slow = hangingClient(100);
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 1)); // in flight
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 2)); // waiting
+
+        slow.hanging.get(0).completeExceptionally(new TimeoutException("request timed out"));
+        slow.hanging.get(1).complete(null);
+
+        assertThat(slow.written).containsExactly(1, 2); // 1 is not sent again
+        verify(transportService, never()).errorEvent(any(), any(), any(), any());
+    }
+
+    @Test
+    void timedOutAttributeWriteIsRetried() {
+        client.timeouts = 2;
+
+        downlink.onAttributeUpdate(session, attributeUpdate("ctRatio", 200));
+
+        assertThat(client.calls).isEqualTo(3);
+        verify(transportService).recordActivity(session.getSessionInfo());
+        verify(transportService, never()).errorEvent(any(), any(), any(), any());
+    }
+
+    @Test
+    void rpcWritesAreNotCoalesced() {
+        FakeClient slow = hangingClient(100);
+        downlink.onToDeviceRpcRequest(session, rpc("setSetpoint", "1").build()); // in flight
+        downlink.onToDeviceRpcRequest(session, rpc("setSetpoint", "2").build());
+        downlink.onToDeviceRpcRequest(session, rpc("setSetpoint", "3").build());
+
+        slow.hanging.get(0).complete(null);
+        slow.hanging.get(1).complete(null);
+        slow.hanging.get(2).complete(null);
+
+        assertThat(slow.written).containsExactly(1, 2, 3);
+        verify(transportService, times(3)).process(eq(session.getSessionInfo()), any(ToDeviceRpcResponseMsg.class), any());
     }
 
     @Test
@@ -195,10 +294,23 @@ class ModbusDownlinkServiceTest {
         verifyNoInteractions(transportService);
     }
 
+    /** Replaces the session's connection with one whose client answers only when the test completes {@code hanging}. */
+    private FakeClient hangingClient(int maxQueueSize) {
+        FakeClient slow = new FakeClient();
+        slow.hang = true;
+        session.setConnection(new ModbusConnection("tcp://h:502", "framing=MBAP", 1, maxQueueSize, Duration.ofSeconds(1), t -> slow));
+        return slow;
+    }
+
     private ToDeviceRpcResponseMsg response() {
         ArgumentCaptor<ToDeviceRpcResponseMsg> captor = ArgumentCaptor.forClass(ToDeviceRpcResponseMsg.class);
         verify(transportService).process(eq(session.getSessionInfo()), captor.capture(), any());
         return captor.getValue();
+    }
+
+    /** The message inside the {@code {"error": "…"}} body of a failed RPC, or "" when the RPC succeeded. */
+    private static String errorOf(ToDeviceRpcResponseMsg response) {
+        return response.getError().isEmpty() ? "" : JsonParser.parseString(response.getError()).getAsJsonObject().get("error").getAsString();
     }
 
     private static ToDeviceRpcRequestMsg.Builder rpc(String method, String params) {
@@ -217,7 +329,9 @@ class ModbusDownlinkServiceTest {
         profile.setTimeoutMs(1000);
         profile.setRetries(retries);
         profile.setPollPeriodMs(1000L);
-        profile.setAttributeUpdates(List.of(mapping("ctRatio", ModbusFunctionCode.WRITE_SINGLE_REGISTER, 20)));
+        profile.setAttributeUpdates(List.of(
+                mapping("ctRatio", ModbusFunctionCode.WRITE_SINGLE_REGISTER, 20),
+                mapping("ptRatio", ModbusFunctionCode.WRITE_SINGLE_REGISTER, 21)));
         profile.setRpc(List.of(
                 mapping("setSetpoint", ModbusFunctionCode.WRITE_SINGLE_REGISTER, 30),
                 mapping("getSetpoint", ModbusFunctionCode.READ_HOLDING_REGISTERS, 30)));
@@ -255,18 +369,26 @@ class ModbusDownlinkServiceTest {
         return mapping;
     }
 
-    /** Answers every operation the same way: never if {@code hang}, else {@code timeouts} timeouts first, then {@code failure} if set, else success. */
+    /**
+     * Answers every operation the same way: when the test completes {@code hanging} if {@code hang},
+     * else {@code timeouts} timeouts first, then {@code failure} if set, else success.
+     */
     private static class FakeClient implements ModbusClientAdapter {
 
         int calls;
         int timeouts;
         Throwable failure;
         boolean hang;
+        final List<CompletableFuture<?>> hanging = new ArrayList<>();
+        /** Values of single-register writes, in the order they reached the device. */
+        final List<Integer> written = new ArrayList<>();
 
         private <T> CompletionStage<T> answer(T value) {
             calls++;
             if (hang) {
-                return new CompletableFuture<>();
+                CompletableFuture<T> future = new CompletableFuture<>();
+                hanging.add(future);
+                return future;
             }
             if (timeouts > 0) {
                 timeouts--;
@@ -297,6 +419,7 @@ class ModbusDownlinkServiceTest {
 
         @Override
         public CompletionStage<Void> writeRegisters(int unitId, ModbusFunctionCode functionCode, int address, byte[] registerBytes) {
+            written.add(((registerBytes[0] & 0xFF) << 8) | (registerBytes[1] & 0xFF));
             return answer(null);
         }
 

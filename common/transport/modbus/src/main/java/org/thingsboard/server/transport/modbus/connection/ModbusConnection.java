@@ -10,7 +10,9 @@ import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -26,6 +28,7 @@ import java.util.function.Function;
  * <p>
  * Requests are queued and at most {@code maxInFlight} are outstanding at a time. At most {@code maxQueueSize} wait in the
  * queue: beyond that new requests fail at once, so an unreachable device cannot pile up writes without limit.
+ * Requests queued with a coalesce key ({@link #executeLatest}) take one place per key: a newer one replaces the one waiting.
  * The request timeout belongs to the client,
  * so the connection uses the highest timeout among its sessions and rebuilds the client when a session needs a higher one.
  */
@@ -55,6 +58,11 @@ public class ModbusConnection {
      */
     private final Object requestQueueLock = new Object();
     private final ArrayDeque<PendingRequest> queue = new ArrayDeque<>();
+    /**
+     * Latest waiting request per coalesce key, guarded by {@code requestQueueLock}. The queue keeps the request that
+     * was queued first for the key and so holds its place; the one in this map is sent when that place comes up.
+     */
+    private final Map<Object, PendingRequest> activeWriteMap = new HashMap<>();
     /** Calls to {@link #dispatch} not yet accounted for; non-zero while a dispatch loop is running. */
     private final AtomicInteger dispatchCalls = new AtomicInteger();
 
@@ -118,21 +126,59 @@ public class ModbusConnection {
      * @param deadlineMs epoch millis after which the operation is dropped instead of sent (e.g. an expired RPC), or {@link #NO_DEADLINE}
      */
     public CompletableFuture<byte[]> execute(Function<ModbusClientAdapter, CompletionStage<byte[]>> operation, long deadlineMs) {
-        PendingRequest request = new PendingRequest(operation, deadlineMs, new CompletableFuture<>());
+        var futureResponse = new CompletableFuture<byte[]>();
+        enqueue(new PendingRequest(operation, deadlineMs, futureResponse, null), false);
+        return futureResponse;
+    }
+
+    /**
+     * Like {@link #execute}, but at most one request per {@code coalesceKey} waits in the queue, in the place of the one
+     * queued first. Meant for values where only the latest matters, e.g. a shared attribute of one device.
+     * The request that loses fails with {@link SupersededException}; a request already sent is not affected.
+     *
+     * @param coalesceKey     identifies the value across all devices of this connection, so it must include the device
+     * @param replaceWaiting  {@code true} for a new value: it replaces the request waiting for the key;
+     *                        {@code false} for a retry of an older value: it gives way to the request waiting for the key
+     */
+    public CompletableFuture<byte[]> executeLatest(Object coalesceKey, Function<ModbusClientAdapter, CompletionStage<byte[]>> operation,
+                                                   boolean replaceWaiting) {
+        var futureResponse = new CompletableFuture<byte[]>();
+        enqueue(new PendingRequest(operation, NO_DEADLINE, futureResponse, coalesceKey), replaceWaiting);
+        return futureResponse;
+    }
+
+    private void enqueue(PendingRequest request, boolean replaceWaiting) {
+        Object coalesceKey = request.coalesceKey();
+        PendingRequest superseded = null;
         synchronized (requestQueueLock) {
             if (closed) {
                 request.future().completeExceptionally(new IllegalStateException("Modbus connection " + key + " is closed"));
-                return request.future();
+                return;
             }
-            if (queue.size() >= maxQueueSize) {
+            PendingRequest waiting = coalesceKey != null ? activeWriteMap.get(coalesceKey) : null;
+            if (waiting != null) {
+                // takes no new place in the queue, so it is allowed even when the queue is full
+                if (replaceWaiting) {
+                    activeWriteMap.put(coalesceKey, request);
+                    superseded = waiting;
+                } else {
+                    superseded = request;
+                }
+            } else if (queue.size() >= maxQueueSize) {
                 request.future().completeExceptionally(new IllegalStateException(
                         "Modbus connection " + key + " is overloaded: " + maxQueueSize + " requests are already waiting"));
-                return request.future();
+                return;
+            } else {
+                if (coalesceKey != null) {
+                    activeWriteMap.put(coalesceKey, request);
+                }
+                queue.add(request);
             }
-            queue.add(request);
+        }
+        if (superseded != null) {
+            superseded.future().completeExceptionally(new SupersededException());
         }
         dispatch();
-        return request.future();
     }
 
     public void close() {
@@ -143,8 +189,12 @@ public class ModbusConnection {
                 return;
             }
             closed = true;
-            pending = new ArrayList<>(queue);
+            pending = new ArrayList<>(queue.size());
+            for (PendingRequest request : queue) {
+                pending.add(latest(request));
+            }
             queue.clear();
+            activeWriteMap.clear();
             old = client;
         }
         IllegalStateException error = new IllegalStateException("Modbus connection " + key + " is closed");
@@ -190,7 +240,10 @@ public class ModbusConnection {
 
         synchronized (requestQueueLock) {
             while (!closed && inFlight < maxInFlight && !queue.isEmpty()) {
-                PendingRequest request = queue.poll();
+                PendingRequest request = latest(queue.poll());
+                if (request.coalesceKey() != null) {
+                    activeWriteMap.remove(request.coalesceKey());
+                }
                 if (request.deadlineMs() != NO_DEADLINE && now > request.deadlineMs()) {
                     if (expired == null) {
                         expired = new ArrayList<>();
@@ -231,6 +284,11 @@ public class ModbusConnection {
         });
     }
 
+    /** The request to send in the place of a queued one: for a coalesce key, the latest one queued for it. Call under {@code requestQueueLock}. */
+    private PendingRequest latest(PendingRequest queued) {
+        return queued.coalesceKey() != null ? activeWriteMap.get(queued.coalesceKey()) : queued;
+    }
+
     private ModbusClientAdapter newClient(Duration requestTimeout) {
         ModbusClientAdapter newClient = clientFactory.apply(requestTimeout);
         newClient.connect().whenComplete((r, e) -> {
@@ -252,6 +310,15 @@ public class ModbusConnection {
     private record Dispatch(PendingRequest request, ModbusClientAdapter client) {}
 
     private record PendingRequest(Function<ModbusClientAdapter, CompletionStage<byte[]>> operation, long deadlineMs,
-                                  CompletableFuture<byte[]> future) {}
+                                  CompletableFuture<byte[]> future, Object coalesceKey) {}
+
+    /** Outcome of a request queued with {@link #executeLatest} that was not sent because a newer one took its place. */
+    public static class SupersededException extends RuntimeException {
+
+        public SupersededException() {
+            super("Superseded by a newer request", null, false, false);
+        }
+
+    }
 
 }

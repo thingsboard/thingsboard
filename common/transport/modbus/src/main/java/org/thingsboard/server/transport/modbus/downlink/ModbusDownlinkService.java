@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
 import org.thingsboard.server.common.data.transport.modbus.ModbusMapping;
@@ -36,13 +37,15 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * Writes shared attribute updates and executes RPCs against Modbus devices, through the same per-connection queue as polling.
  * <ul>
  *     <li>Shared attributes: every updated key with a mapping in {@code attributeUpdates} is written; failures become error events,
- *     a successful write counts as device activity.</li>
+ *     a successful write counts as device activity. Only the latest value of an attribute waits in the queue: a newer one
+ *     replaces it, and the replaced value is dropped silently.</li>
  *     <li>RPC: the method name selects a mapping in {@code rpc} by tag. A read function code answers {@code {"value": …}},
  *     a write answers {@code {"result": "ok"}}. Errors go to the response's {@code error} field, so core marks the RPC failed.
  *     An RPC that expires while waiting in the queue is never sent.</li>
@@ -71,8 +74,11 @@ public class ModbusDownlinkService {
             if (value == null) {
                 continue;
             }
-            write(session, mapping, value, ModbusConnection.NO_DEADLINE).whenComplete((r, e) -> {
-                if (e != null) {
+            var coalesceKey = new AttributeWriteKey(session.getDeviceId(), mapping.getTag());
+            write(session, mapping, value, ModbusConnection.NO_DEADLINE, coalesceKey).whenComplete((r, e) -> {
+                if (e != null && unwrap(e) instanceof ModbusConnection.SupersededException) {
+                    log.trace("[{}] Write of attribute '{}' was replaced by a newer value", session.getDeviceId(), mapping.getTag());
+                } else if (e != null) {
                     log.debug("[{}] Failed to write attribute '{}'", session.getDeviceId(), mapping.getTag(), e);
                     transportService.errorEvent(session.getTenantId(), session.getDeviceId(), ATTRIBUTE_UPDATE_ERROR,
                             new RuntimeException("Failed to write '" + mapping.getTag() + "': " + describe(e), unwrap(e)));
@@ -99,7 +105,7 @@ public class ModbusDownlinkService {
         CompletableFuture<String> result;
         try {
             result = mapping.get().getFunctionCode().isWrite()
-                    ? write(session, mapping.get(), valueOf(msg.getParams()), deadlineOf(msg)).thenApply(r -> "{\"result\":\"ok\"}")
+                    ? write(session, mapping.get(), valueOf(msg.getParams()), deadlineOf(msg), null).thenApply(r -> "{\"result\":\"ok\"}")
                     : read(session, mapping.get(), deadlineOf(msg));
         } catch (Exception e) {
             result = CompletableFuture.failedFuture(e);
@@ -114,16 +120,23 @@ public class ModbusDownlinkService {
         });
     }
 
-    /** Never throws: encoding errors and a missing connection come back as a failed future. */
-    private CompletableFuture<byte[]> write(ModbusSessionContext session, ModbusMapping mapping, JsonElement value, long deadlineMs) {
+    /**
+     * Never throws: encoding errors and a missing connection come back as a failed future.
+     *
+     * @param coalesceKey if not {@code null}, only the latest write with this key waits in the queue (see
+     *                    {@link ModbusConnection#executeLatest}); {@code deadlineMs} is not used then
+     */
+    private CompletableFuture<byte[]> write(ModbusSessionContext session, ModbusMapping mapping, JsonElement value, long deadlineMs,
+                                            AttributeWriteKey coalesceKey) {
         try {
-            return encodeAndQueueWrite(session, mapping, value, deadlineMs);
+            return encodeAndQueueWrite(session, mapping, value, deadlineMs, coalesceKey);
         } catch (Exception e) {
             return CompletableFuture.failedFuture(e);
         }
     }
 
-    private CompletableFuture<byte[]> encodeAndQueueWrite(ModbusSessionContext session, ModbusMapping mapping, JsonElement value, long deadlineMs) {
+    private CompletableFuture<byte[]> encodeAndQueueWrite(ModbusSessionContext session, ModbusMapping mapping, JsonElement value, long deadlineMs,
+                                                          AttributeWriteKey coalesceKey) {
         var profileConfig = session.getProfileConfig();
         ModbusFunctionCode functionCode = mapping.getFunctionCode();
         int address = mapping.getAddress();
@@ -145,8 +158,13 @@ public class ModbusDownlinkService {
             }
             default -> throw new IllegalArgumentException("Function code " + functionCode.getCode() + " is not a write function code");
         };
-        return withRetries(session, connection -> connection.execute(
-                client -> operation.apply(client).thenApply(v -> NO_DATA), deadlineMs), retries(session));
+        Function<ModbusClientAdapter, CompletionStage<byte[]>> queued = client -> operation.apply(client).thenApply(v -> NO_DATA);
+        // a retry carries an older value: it must not replace a newer one that is already waiting
+        return withRetries(session,
+                (connection, isRetryRun) -> coalesceKey == null
+                        ? connection.execute(queued, deadlineMs)
+                        : connection.executeLatest(coalesceKey, queued, !isRetryRun),
+                retries(session));
     }
 
     private CompletableFuture<String> read(ModbusSessionContext session, ModbusMapping mapping, long deadlineMs) {
@@ -156,8 +174,10 @@ public class ModbusDownlinkService {
         ReadBlock block = new ReadBlock(mapping.getFunctionCode(), mapping.getAddress(), mapping.getEffectiveObjectsCount(),
                 List.of(new PollItem(mapping, PollItem.Target.TELEMETRY)));
 
-        return withRetries(session, connection -> connection.execute(
-                        client -> client.read(unitId, block.functionCode(), block.address(), block.count()), deadlineMs), retries(session))
+        BiFunction<ModbusConnection, Boolean, CompletableFuture<byte[]>> readOp = (connection, isRetryRun) ->
+                connection.execute(client -> client.read(unitId, block.functionCode(), block.address(), block.count()), deadlineMs);
+
+        return withRetries(session, readOp, retries(session))
                 .thenApply(data -> {
                     Object value = RegisterCodec.decode(data, block, mapping, profileConfig.getByteOrder(), profileConfig.getWordOrder());
                     JsonObject response = new JsonObject();
@@ -168,7 +188,13 @@ public class ModbusDownlinkService {
 
     /** Each attempt takes the session's connection at that moment: a restart of polling may replace or clear it in between. */
     private CompletableFuture<byte[]> withRetries(
-            ModbusSessionContext session, Function<ModbusConnection, CompletableFuture<byte[]>> attempt, int attemptsLeft) {
+            ModbusSessionContext session, BiFunction<ModbusConnection, Boolean, CompletableFuture<byte[]>> attempt, int attemptsLeft) {
+        boolean isFirstRunRetry = false;
+        return withRetries(session, attempt, attemptsLeft, isFirstRunRetry);
+    }
+
+    private CompletableFuture<byte[]> withRetries(
+            ModbusSessionContext session, BiFunction<ModbusConnection, Boolean, CompletableFuture<byte[]>> attemptOp, int attemptsLeft, boolean isRetryRun) {
 
         ModbusConnection connection = session.getConnection();
         if (connection == null) {
@@ -176,14 +202,17 @@ public class ModbusDownlinkService {
         }
         CompletableFuture<byte[]> result;
         try {
-            result = attempt.apply(connection);
+            result = attemptOp.apply(connection, isRetryRun);
         } catch (Exception e) {
             return CompletableFuture.failedFuture(e);
         }
 
-        return result.exceptionallyCompose(error -> attemptsLeft > 0 && unwrap(error) instanceof TimeoutException
-                ? withRetries(session, attempt, attemptsLeft - 1)
-                : CompletableFuture.failedFuture(error));
+        boolean isNextRetry = true;
+        return result.exceptionallyCompose(
+                error -> attemptsLeft > 0 && unwrap(error) instanceof TimeoutException
+                        ? withRetries(session, attemptOp, attemptsLeft - 1, isNextRetry)
+                        : CompletableFuture.failedFuture(error)
+        );
     }
 
     private void respondSuccess(ModbusSessionContext session, ToDeviceRpcRequestMsg msg, String payload) {
@@ -198,6 +227,10 @@ public class ModbusDownlinkService {
         }
     }
 
+    /**
+     * Two-way errors go out as {@code {"error": "…"}}: core hands the error text to the REST caller only if it is JSON
+     * (plain text ends as an empty 406), and stores it as the response of a persistent RPC marked FAILED.
+     */
     private void respondError(ModbusSessionContext session, ToDeviceRpcRequestMsg msg, String error) {
         log.debug("[{}] RPC '{}' failed: {}", session.getDeviceId(), msg.getMethodName(), error);
         if (msg.getOneway()) {
@@ -205,9 +238,15 @@ public class ModbusDownlinkService {
         } else {
             transportService.process(session.getSessionInfo(), ToDeviceRpcResponseMsg.newBuilder()
                     .setRequestId(msg.getRequestId())
-                    .setError(error)
+                    .setError(errorJson(error))
                     .build(), TransportServiceCallback.EMPTY);
         }
+    }
+
+    static String errorJson(String error) {
+        JsonObject body = new JsonObject();
+        body.addProperty("error", error);
+        return body.toString();
     }
 
     /** Accepts a bare value ({@code 50.0}, {@code true}) or {@code {"value": …}}, which dashboard widgets send. */
@@ -259,6 +298,9 @@ public class ModbusDownlinkService {
         }
         return cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
     }
+
+    /** One shared attribute of one device: the connection is shared by all devices of its endpoint, so the tag alone is not enough. */
+    private record AttributeWriteKey(DeviceId deviceId, String tag) {}
 
     private static Throwable unwrap(Throwable error) {
         Throwable current = error;
