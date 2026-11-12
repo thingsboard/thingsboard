@@ -180,6 +180,9 @@ import {
 import {
   SnmpDeviceProfileTransportModule
 } from '@home/components/profile/device/snmp/snmp-device-profile-transport.module';
+import {
+  ModbusDeviceProfileTransportModule
+} from '@home/components/profile/device/modbus/modbus-device-profile-transport.module';
 import { DeviceCredentialsModule } from '@home/components/device/device-credentials.module';
 import { DeviceProfileCommonModule } from '@home/components/profile/device/common/device-profile-common.module';
 import {
@@ -480,6 +483,7 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
     BasicWidgetConfigModule,
     Lwm2mProfileComponentsModule,
     SnmpDeviceProfileTransportModule,
+    ModbusDeviceProfileTransportModule,
     StatesControllerModule,
     DeviceCredentialsModule,
     DeviceProfileCommonModule,

@@ -37,6 +37,12 @@
           formControlName="configuration">
         </tb-snmp-device-transport-configuration>
       }
+      @case (deviceTransportType.MODBUS) {
+        <tb-modbus-device-transport-configuration
+          [required]="required"
+          formControlName="configuration">
+        </tb-modbus-device-transport-configuration>
+      }
     }
   </div>
 </div>
