@@ -19,17 +19,21 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
@@ -51,6 +55,7 @@ import static org.thingsboard.server.service.security.permission.Resource.NOTIFI
 public class NotificationRuleController extends BaseController {
 
     private final NotificationRuleService notificationRuleService;
+    private final NotificationTemplateService notificationTemplateService;
 
     @ApiOperation(value = "Save notification rule (saveNotificationRule)",
             notes = "Creates or updates notification rule. " + NEW_LINE +
@@ -109,6 +114,15 @@ public class NotificationRuleController extends BaseController {
         NotificationRuleTriggerType triggerType = notificationRule.getTriggerType();
         if ((user.isTenantAdmin() && !triggerType.isTenantLevel()) || (user.isSystemAdmin() && triggerType.isTenantLevel())) {
             throw new IllegalArgumentException("Trigger type " + triggerType + " is not available");
+        }
+        NotificationTemplate template = notificationTemplateService.findNotificationTemplateById(user.getTenantId(), notificationRule.getTemplateId());
+        if (template == null || !(template.getTenantId().equals(user.getTenantId()) || template.getTenantId().isSysTenantId())) {
+            throw new IllegalArgumentException("Notification template not found");
+        }
+        for (List<UUID> targets : notificationRule.getRecipientsConfig().getTargetsTable().values()) {
+            for (UUID targetId : targets) {
+                checkNotificationTargetId(new NotificationTargetId(targetId), Operation.READ);
+            }
         }
 
         return doSaveAndLog(EntityType.NOTIFICATION_RULE, notificationRule, notificationRuleService::saveNotificationRule);
