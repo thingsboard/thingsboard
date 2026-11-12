@@ -220,6 +220,29 @@ public class EdgeControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveEdgeWithIdOfDifferentTenant() throws Exception {
+        Edge savedEdge = doPost("/api/edge", constructEdge("My edge", "default"), Edge.class);
+
+        loginDifferentTenant();
+        try {
+            Edge edge = constructEdge("Different tenant edge", "other");
+            edge.setId(savedEdge.getId());
+            doPost("/api/edge", edge)
+                    .andExpect(status().isForbidden())
+                    .andExpect(statusReason(containsString("You don't have permission to perform")));
+        } finally {
+            deleteDifferentTenant();
+        }
+
+        loginTenantAdmin();
+        Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
+        Assert.assertEquals(tenantId, foundEdge.getTenantId());
+        Assert.assertEquals(savedEdge.getName(), foundEdge.getName());
+        Assert.assertEquals(savedEdge.getRoutingKey(), foundEdge.getRoutingKey());
+        Assert.assertEquals(savedEdge.getSecret(), foundEdge.getSecret());
+    }
+
+    @Test
     public void testFindEdgeById() throws Exception {
         Edge edge = constructEdge("My edge", "default");
         Edge savedEdge = doPost("/api/edge", edge, Edge.class);
@@ -1000,9 +1023,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
         Assert.assertTrue(popRuleChainMetadataMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, getEdgeRootRuleChainId(edgeImitator)));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "general"));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "mail"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "connectivity"));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "jwt"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));

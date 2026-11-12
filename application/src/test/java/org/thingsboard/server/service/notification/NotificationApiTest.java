@@ -1014,6 +1014,42 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(getErrorMessage(result)).contains("can only be configured by system administrator");
     }
 
+    @Test
+    public void testNotificationRequest_templateOfOtherTenant_returnsBadRequest() throws Exception {
+        loginDifferentTenant();
+        NotificationTemplate otherTemplate = createNotificationTemplate(NotificationType.GENERAL, "Subject", "Text", NotificationDeliveryMethod.WEB);
+        loginTenantAdmin();
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+        long requestsCount = findNotificationRequests().getTotalElements();
+
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .targets(List.of(target.getUuidId()))
+                .templateId(otherTemplate.getId())
+                .additionalConfig(new NotificationRequestConfig())
+                .build();
+        doPost("/api/notification/request", notificationRequest).andExpect(status().isBadRequest());
+
+        assertThat(findNotificationRequests().getTotalElements()).isEqualTo(requestsCount);
+    }
+
+    @Test
+    public void testNotificationRequest_systemTemplate_isDelivered() throws Exception {
+        loginSysAdmin();
+        NotificationTemplate systemTemplate = createNotificationTemplate(NotificationType.GENERAL, "Subject", "Text", NotificationDeliveryMethod.WEB);
+        loginTenantAdmin();
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .tenantId(tenantId)
+                .templateId(systemTemplate.getId())
+                .originatorEntityId(tenantAdminUserId)
+                .targets(List.of(target.getUuidId()))
+                .build();
+        NotificationRequestStats stats = submitNotificationRequestAndWait(notificationRequest);
+        assertThat(stats.getErrors()).isEmpty();
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.WEB).get()).isOne();
+    }
+
     private NotificationRequestStats submitNotificationRequestAndWait(NotificationRequest notificationRequest) throws Exception {
         SettableFuture<NotificationRequestStats> future = SettableFuture.create();
         notificationCenter.processNotificationRequest(notificationRequest.getTenantId(), notificationRequest, new FutureCallback<>() {

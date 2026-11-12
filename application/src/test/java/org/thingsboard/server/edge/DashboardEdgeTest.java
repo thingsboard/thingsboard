@@ -26,6 +26,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -301,6 +302,23 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         dashboard.setTitle(DASHBOARD_TITLE);
         dashboard.setAssignedCustomers(Sets.newHashSet(new ShortCustomerInfo(savedCustomer.getId(), savedCustomer.getTitle(), savedCustomer.isPublic())));
         return dashboard;
+    }
+
+    @Test
+    public void testSendDashboardUpdateForDashboardOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("Different Tenant Dashboard");
+        dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+        loginTenantAdmin();
+
+        Dashboard dashboardUpdate = new Dashboard(dashboard);
+        dashboardUpdate.setTitle("Updated Title");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDashboardUpdateMsg(
+                EdgeMsgConstructorUtils.constructDashboardUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, dashboardUpdate)));
+
+        loginDifferentTenant();
+        Assert.assertEquals(dashboard.getTitle(), doGet("/api/dashboard/" + dashboard.getUuidId(), Dashboard.class).getTitle());
     }
 
 }
