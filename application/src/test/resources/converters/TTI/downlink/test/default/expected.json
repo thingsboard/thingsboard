@@ -1,0 +1,5 @@
+{
+  "contentType": "JSON",
+  "data": "{\"downlinks\":[{\"f_port\":1,\"confirmed\":false,\"frm_payload\":\"b24=\",\"priority\":\"NORMAL\"}]}",
+  "metadata": {}
+}
