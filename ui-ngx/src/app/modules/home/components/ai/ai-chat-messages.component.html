@@ -141,8 +141,9 @@
               <p class="lead">{{ msg.lead }}</p>
             }
             <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.done !== undefined ? withoutDoneMark(msg.content) : msg.content)" (ready)="decorateCode(answer, msg)"></tb-markdown>
+            @let madeHere = made[$index] ?? [];
             @for (shown of records[$index] ?? []; track $index) {
-              <tb-ai-records class="agent-records" [shown]="shown" (compose)="compose.emit($event)"></tb-ai-records>
+              <tb-ai-records class="agent-records" [shown]="shown" [made]="madeHere" (compose)="compose.emit($event)"></tb-ai-records>
             }
             @if (summaries[$index]; as entities) {
               <tb-ai-run-summary [entities]="entities"></tb-ai-run-summary>

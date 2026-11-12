@@ -129,7 +129,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { catchError, distinctUntilChanged, map, skip, tap, share } from 'rxjs/operators';
+import { buffer, catchError, debounceTime, distinctUntilChanged, map, skip, tap, share } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -143,6 +143,8 @@ import { HttpStatusCode } from '@angular/common/http';
 import { HomeService } from '@core/services/home.service';
 
 // @dynamic
+const AI_RELOAD_DEBOUNCE_MS = 1000;
+
 @Component({
     selector: 'tb-dashboard-page',
     templateUrl: './dashboard-page.component.html',
@@ -430,7 +432,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     ));
     if (this.aiAssistantPanelEnabled) {
       this.rxSubscriptions.push(
-        this.panelService.updatedData$.subscribe(affected => {
+        this.panelService.updatedData$.pipe(
+          buffer(this.panelService.updatedData$.pipe(debounceTime(AI_RELOAD_DEBOUNCE_MS))),
+          map(batches => batches.flat())
+        ).subscribe(affected => {
           const dashboards = affected.filter(entityId => entityId.entityType === EntityType.DASHBOARD);
           if (dashboards.length) {
             if (dashboards.some(dashboard => dashboard.id === this.currentDashboardId)) {

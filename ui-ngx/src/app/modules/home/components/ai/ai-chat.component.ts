@@ -58,6 +58,7 @@ import { AiFileBodyComponent, AiFileMarks, AiFileSaver } from '@home/components/
 import { ClipboardService } from 'ngx-clipboard';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
+import { EntityType } from '@shared/models/entity-type.models';
 import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
 
@@ -928,6 +929,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
         this.completedExecutions.update(map => ({...map, [event.data.executionId]: event.data}));
         if (event.data.affectedEntities?.length) {
           this.affectedEntities.push(...event.data.affectedEntities);
+          this.emitDashboards(event.data.affectedEntities);
         }
         break;
       case 'toolStarted':
@@ -1006,9 +1008,17 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.messages.update(list => [...list, {from: 'ACTION', data: action}]);
   }
 
+  private emitDashboards(entities: EntityId[]): void {
+    const dashboards = entities.filter(entity => entity.entityType === EntityType.DASHBOARD);
+    if (dashboards.length) {
+      this.panelService.emitUpdatedData(dashboards);
+    }
+  }
+
   private finishAction(finished: ToolFinished): void {
     if (finished.affectedEntities?.length) {
       this.affectedEntities.push(...finished.affectedEntities);
+      this.emitDashboards(finished.affectedEntities);
     }
     this.messages.update(list => list.map(message => message.from === 'ACTION' && message.data.executionId === finished.executionId
       ? {from: 'ACTION', data: {...message.data, status: finished.status, durationMs: finished.durationMs, result: finished.result,

@@ -34,7 +34,7 @@ import {
   UPDATE_PLAN_TOOL
 } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
-import { AiShownRecords, aiShownRecordsOf, SHOW_RECORDS_TOOL } from '@home/components/ai/ai-record.models';
+import { aiRecordKey, AiShownRecords, aiShownRecordsOf, SHOW_RECORDS_TOOL } from '@home/components/ai/ai-record.models';
 import { AiCardAction } from '@home/components/ai/ai-card-actions.component';
 import { decorateSections } from '@home/components/ai/ai-disclosure.component';
 import { AiFile, aiFileMark, aiFileName, aiFileOf, AiMadeFile, aiMadeFileOf, CREATE_FILE_TOOL, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
@@ -137,6 +137,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   sources: Record<number, AiSource[]> = {};
 
   records: Record<number, AiShownRecords[]> = {};
+
+  made: Record<number, string[]> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
 
   private keptAsking = new Set<number>();
@@ -363,6 +365,21 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.quotes = this.findQuotes();
       this.sources = this.findSources();
       this.records = this.findRecords();
+      this.made = {};
+      Object.entries(this.records).forEach(([index, shown]) => {
+        const entities = this.summaries[Number(index)];
+        if (!entities?.length) {
+          return;
+        }
+        const keys = new Set(shown.flatMap(item => item.refs.map(aiRecordKey)));
+        this.made[Number(index)] = entities.map(entity => `${entity.entityType}:${entity.id}`);
+        const rest = entities.filter(entity => !keys.has(`${entity.entityType}:${entity.id}`));
+        if (rest.length) {
+          this.summaries[Number(index)] = rest;
+        } else {
+          delete this.summaries[Number(index)];
+        }
+      });
       this.answersAt = this.findAnswers();
       this.retryIndex = this.findRetry();
       this.stoppedSteps = this.findStoppedSteps();

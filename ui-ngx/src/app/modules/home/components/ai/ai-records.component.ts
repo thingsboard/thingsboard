@@ -56,6 +56,8 @@ export class AiRecordsComponent {
 
   compose = output<string>();
 
+  made = input<string[]>([]);
+
   views = signal<AiRecordView[]>([]);
 
   allShown = signal(false);
@@ -72,7 +74,13 @@ export class AiRecordsComponent {
 
   single = computed(() => this.views()[0] ?? null);
 
-  primary = computed<AiRecordPrimary>(() => this.single()?.hubItem ? 'install' : null);
+  primary = computed<AiRecordPrimary>(() => {
+    const single = this.single();
+    if (single?.hubItem) {
+      return 'install';
+    }
+    return single && this.made().includes(single.key) ? 'open' : null;
+  });
 
   cardActions = computed<AiCardAction[]>(() => {
     const item = this.single()?.hubItem;
