@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -28,7 +29,11 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         if (entityView == null) {
             throw new RuntimeException("[{" + tenantId + "}] entityViewUpdateMsg {" + entityViewUpdateMsg + "} cannot be converted to entity view");
         }
-        EntityView entityViewById = edgeCtx.getEntityViewService().findEntityViewById(tenantId, entityViewId);
+        EntityView entityViewById = findTenantEntity(tenantId, entityViewId);
+        entityView.setTenantId(tenantId);
+        if (entityView.getEntityId() == null || !isTenantEntity(tenantId, entityView.getEntityId())) {
+            throw new DataValidationException("Entity view is referencing to non-existent entity!");
+        }
         if (entityViewById == null) {
             created = true;
             entityView.setId(null);

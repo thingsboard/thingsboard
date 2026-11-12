@@ -48,7 +48,7 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor implements 
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     EntityView entityViewToDelete = edgeCtx.getEntityViewService().findEntityViewById(tenantId, entityViewId);
-                    if (entityViewToDelete != null) {
+                    if (entityViewToDelete != null && tenantId.equals(entityViewToDelete.getTenantId())) {
                         edgeCtx.getEntityViewService().unassignEntityViewFromEdge(tenantId, entityViewId, edge.getId());
                     }
                     return Futures.immediateFuture(null);
