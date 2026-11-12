@@ -13,11 +13,28 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
+import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
+import org.thingsboard.server.dao.converter.ConverterService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
+import org.thingsboard.server.service.entitiy.converter.TbConverterService;
+import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
+import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
@@ -48,6 +65,20 @@ class DefaultIotHubServiceTest {
     private IotHubRestClient iotHubRestClient;
     @Mock
     private IotHubInstalledItemService iotHubInstalledItemService;
+    @Mock
+    private DeviceService deviceService;
+    @Mock
+    private DashboardService dashboardService;
+    @Mock
+    private TbDeviceService tbDeviceService;
+    @Mock
+    private TbDashboardService tbDashboardService;
+    @Mock
+    private IntegrationService integrationService;
+    @Mock
+    private ConverterService converterService;
+    @Mock
+    private TbConverterService tbConverterService;
 
     @Spy
     @InjectMocks
@@ -410,5 +441,123 @@ class DefaultIotHubServiceTest {
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.isRolledBack()).isFalse();
         assertThat(result.getErrorMessage()).contains("install failed");
+    }
+
+    private Dashboard dashboard(TenantId owner) {
+        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
+        dashboard.setTenantId(owner);
+        return dashboard;
+    }
+
+    private Device device(TenantId owner) {
+        Device device = new Device(new DeviceId(UUID.randomUUID()));
+        device.setTenantId(owner);
+        return device;
+    }
+
+    private DeviceInstalledItemDescriptor devicePackage(EntityId... createdEntityIds) {
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.of(createdEntityIds));
+        return descriptor;
+    }
+
+    @Test
+    void registerDeviceInstall_unknownEntity_rejectedAndNotSaved() {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "DEVICE", "Pkg", "1.0"));
+        Device knownDevice = device(tenantId);
+        Dashboard unknownDashboard = dashboard(TenantId.fromUUID(UUID.randomUUID()));
+        when(deviceService.findDeviceById(tenantId, knownDevice.getId())).thenReturn(knownDevice);
+        when(dashboardService.findDashboardById(tenantId, unknownDashboard.getId())).thenReturn(unknownDashboard);
+
+        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId,
+                devicePackage(knownDevice.getId(), unknownDashboard.getId()));
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+        verify(tbDeviceService, never()).delete(any(Device.class), any());
+        verify(tbDashboardService, never()).delete(any(Dashboard.class), any());
+    }
+
+    @Test
+    void registerDeviceInstall_unknownDashboardId_rejectedAndNotSaved() {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "DEVICE", "Pkg", "1.0"));
+        Dashboard unknownDashboard = dashboard(TenantId.fromUUID(UUID.randomUUID()));
+        when(dashboardService.findDashboardById(tenantId, unknownDashboard.getId())).thenReturn(unknownDashboard);
+        DeviceInstalledItemDescriptor descriptor = devicePackage();
+        descriptor.setDashboardId(unknownDashboard.getId());
+
+        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, descriptor);
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void registerDeviceInstall_knownEntities_saved() {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "DEVICE", "Pkg", "1.0"));
+        Device knownDevice = device(tenantId);
+        Dashboard knownDashboard = dashboard(tenantId);
+        when(deviceService.findDeviceById(tenantId, knownDevice.getId())).thenReturn(knownDevice);
+        when(dashboardService.findDashboardById(tenantId, knownDashboard.getId())).thenReturn(knownDashboard);
+        DeviceInstalledItemDescriptor descriptor = devicePackage(knownDevice.getId(), knownDashboard.getId());
+        descriptor.setDashboardId(knownDashboard.getId());
+
+        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, descriptor);
+
+        assertThat(result.isSuccess()).isTrue();
+        verify(iotHubInstalledItemService).save(eq(tenantId), any(IotHubInstalledItem.class));
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_skipsEntityNotFound() throws Exception {
+        mockTenant();
+        Device knownDevice = device(tenantId);
+        Dashboard unknownDashboard = dashboard(TenantId.fromUUID(UUID.randomUUID()));
+        when(deviceService.findDeviceById(tenantId, knownDevice.getId())).thenReturn(knownDevice);
+        when(dashboardService.findDashboardById(tenantId, unknownDashboard.getId())).thenReturn(unknownDashboard);
+        UUID id = UUID.randomUUID();
+        IotHubInstalledItem item = installedItem(id);
+        item.setDescriptor(devicePackage(knownDevice.getId(), unknownDashboard.getId()));
+        when(iotHubInstalledItemService.findById(tenantId, new IotHubInstalledItemId(id))).thenReturn(item);
+
+        service.deleteInstalledItem(user, new IotHubInstalledItemId(id));
+
+        verify(tbDeviceService).delete(knownDevice, user);
+        verify(tbDashboardService, never()).delete(any(Dashboard.class), any());
+        verify(iotHubInstalledItemService).deleteById(tenantId, new IotHubInstalledItemId(id));
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_deletesItsIntegrationAndConverter() throws Exception {
+        mockTenant();
+        Integration integration = new Integration(new IntegrationId(UUID.randomUUID()));
+        integration.setTenantId(tenantId);
+        Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        converter.setTenantId(tenantId);
+        Integration unknownIntegration = new Integration(new IntegrationId(UUID.randomUUID()));
+        unknownIntegration.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        when(integrationService.findIntegrationById(tenantId, integration.getId())).thenReturn(integration);
+        when(integrationService.findIntegrationById(tenantId, unknownIntegration.getId())).thenReturn(unknownIntegration);
+        when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
+        UUID id = UUID.randomUUID();
+        IotHubInstalledItem item = installedItem(id);
+        item.setDescriptor(devicePackage(converter.getId(), integration.getId(), unknownIntegration.getId()));
+        when(iotHubInstalledItemService.findById(tenantId, new IotHubInstalledItemId(id))).thenReturn(item);
+
+        service.deleteInstalledItem(user, new IotHubInstalledItemId(id));
+
+        verify(integrationService).deleteIntegration(tenantId, integration.getId());
+        verify(integrationService, never()).deleteIntegration(tenantId, unknownIntegration.getId());
+        verify(tbConverterService).delete(converter, user);
+        verify(iotHubInstalledItemService).deleteById(tenantId, new IotHubInstalledItemId(id));
     }
 }
