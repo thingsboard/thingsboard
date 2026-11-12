@@ -17,17 +17,3 @@
     }
   }
 }
-
-:host-context(.login-logo) {
-  width: 280px;
-  height: 60px;
-  a {
-    text-decoration: none;
-    border: none;
-    transform: none;
-
-    &:focus {
-      outline: 0;
-    }
-  }
-}
