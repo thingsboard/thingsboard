@@ -5452,7 +5452,6 @@
         "community-string": "SNMP कम्युनिटी स्ट्रिंग"
       },
       "isgateway": "Gateway है",
-      "activity-time-from-gateway-device": "Gateway डिवाइस से गतिविधि समय",
       "description": "विवरण",
       "edge-license-key": "Edge लाइसेंस कुंजी",
       "cloud-endpoint": "क्लाउड एंडपॉइंट",
