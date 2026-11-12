@@ -22,9 +22,9 @@
             #rla="routerLinkActive"
             mat-tab-link
             [active]="rla.isActive">
-            @if (tab.outlinedIcon !== null) {
+            @if (tab.outlinedIcon) {
               <tb-icon class="tb-mat-18">{{tab.outlinedIcon}}</tb-icon>
-            } @else if (tab.icon !== null) {
+            } @else if (tab.icon) {
               <tb-icon class="tb-mat-18">{{tab.icon}}</tb-icon>
             }
             <span>{{ tab.customTranslate ? (tab.name | customTranslate) : (tab.name | translate) }}</span>

@@ -28,6 +28,8 @@ import org.thingsboard.server.service.security.permission.UserPermissionsService
 
 import java.util.UUID;
 
+import java.util.Objects;
+
 @Slf4j
 public abstract class BaseUserProcessor extends BaseEdgeProcessor {
 
@@ -44,7 +46,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         try {
             User user = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
             if (user == null) {
-                throw new IllegalArgumentException(String.format("[%s] Failed to parse User from UserUpdateMsg: %s", tenantId, userUpdateMsg));
+                throw new IllegalArgumentException(String.format("[%s] Failed to parse User from UserUpdateMsg for user %s", tenantId, userId));
             }
             if (user.getAuthority() != Authority.TENANT_ADMIN && user.getAuthority() != Authority.CUSTOMER_USER) {
                 throw new DataValidationException("User authority " + user.getAuthority() + " is not allowed!");
@@ -80,7 +82,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             }
             safeAddToEntityGroup(tenantId, userUpdateMsg, userId);
         } catch (Exception e) {
-            log.error("[{}] Failed to process user update msg [{}]", tenantId, userUpdateMsg, e);
+            log.error("[{}] Failed to process user update msg for user [{}]", tenantId, userId, e);
             throw new RuntimeException(e);
         }
 
@@ -97,7 +99,8 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
 
     private boolean updateUserEmailIfDuplicateExists(TenantId tenantId, UserId userId, User user) {
         String email = user.getEmail();
-        User userByEmail = edgeCtx.getUserService().findUserByTenantIdAndEmail(tenantId, email);
+        // email is unique across all tenants
+        User userByEmail = edgeCtx.getUserService().findUserByEmail(tenantId, email);
 
         if (userByEmail != null && !userByEmail.getId().equals(user.getId())) {
             String[] splitEmail = email.split("@");
@@ -137,27 +140,50 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
     }
 
     protected void updateUserCredentials(TenantId tenantId, UserCredentialsUpdateMsg updateMsg) {
-        UserCredentials userCredentials = JacksonUtil.fromString(updateMsg.getEntity(), UserCredentials.class, true);
-        if (userCredentials == null) {
-            throw new IllegalArgumentException(String.format("[%s] Failed to parse UserCredentials from updateMsg: %s", tenantId, updateMsg));
+        UserCredentials edgeUserCredentials = JacksonUtil.fromString(updateMsg.getEntity(), UserCredentials.class, true);
+        if (edgeUserCredentials == null) {
+            throw new IllegalArgumentException(String.format("[%s] Failed to parse UserCredentials from UserCredentialsUpdateMsg", tenantId));
         }
-        User user = edgeCtx.getUserService().findUserById(tenantId, userCredentials.getUserId());
+        User user = edgeCtx.getUserService().findUserById(tenantId, edgeUserCredentials.getUserId());
         if (user == null || !tenantId.equals(user.getTenantId())) {
-            log.warn("[{}] Can't find user by id [{}] skipping credentials update. UserCredentialsUpdateMsg [{}]",
-                    tenantId, userCredentials.getUserId(), updateMsg);
+            log.warn("[{}] Can't find user by id [{}] skipping credentials update", tenantId, edgeUserCredentials.getUserId());
             return;
         }
-        log.debug("[{}] Updating user credentials for user [{}]. New credentials Id [{}], enabled [{}]",
-                tenantId, user.getName(), userCredentials.getId(), userCredentials.isEnabled());
-        try {
-            UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
-            if (userCredentialsByUserId != null && !userCredentialsByUserId.getId().equals(userCredentials.getId())) {
-                edgeCtx.getUserService().deleteUserCredentials(tenantId, userCredentialsByUserId);
+        if (edgeUserCredentials.getId() != null) {
+            UserCredentials userCredentialsById = edgeCtx.getUserService().findUserCredentialsById(tenantId, edgeUserCredentials.getId());
+            if (userCredentialsById != null && !user.getId().equals(userCredentialsById.getUserId())) {
+                log.warn("[{}] User credentials [{}] belong to a different user, skipping credentials update", tenantId, edgeUserCredentials.getId());
+                return;
             }
-            edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentials, false);
+        }
+        log.debug("[{}] Updating user credentials for user [{}]. New credentials Id [{}], enabled [{}]",
+                tenantId, user.getName(), edgeUserCredentials.getId(), edgeUserCredentials.isEnabled());
+        try {
+            UserCredentials savedUserCredentials = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
+            if (savedUserCredentials != null && !savedUserCredentials.getId().equals(edgeUserCredentials.getId())) {
+                edgeCtx.getUserService().deleteUserCredentials(tenantId, savedUserCredentials);
+            }
+            // only password and enabled flag come from edge, tokens, login attempts and password history stay as on cloud
+            UserCredentials updatedUserCredentials = savedUserCredentials != null ? savedUserCredentials : new UserCredentials();
+            boolean passwordChanged = !Objects.equals(updatedUserCredentials.getPassword(), edgeUserCredentials.getPassword());
+            updatedUserCredentials.setId(edgeUserCredentials.getId());
+            updatedUserCredentials.setUserId(user.getId());
+            updatedUserCredentials.setEnabled(edgeUserCredentials.isEnabled());
+            updatedUserCredentials.setPassword(edgeUserCredentials.getPassword());
+            if (passwordChanged && updatedUserCredentials.getPassword() != null) {
+                edgeCtx.getUserService().updatePasswordHistory(updatedUserCredentials);
+            }
+            if (updatedUserCredentials.isEnabled()) {
+                // user is activated on edge
+                updatedUserCredentials.setActivateToken(null);
+                updatedUserCredentials.setActivateTokenExpTime(null);
+            } else if (edgeUserCredentials.getActivateToken() != null && updatedUserCredentials.getActivateToken() == null) {
+                // user activation is pending on edge, cloud uses its own token
+                edgeCtx.getUserService().generateUserActivationToken(updatedUserCredentials);
+            }
+            edgeCtx.getUserService().saveUserCredentials(tenantId, updatedUserCredentials, false);
         } catch (Exception e) {
-            log.error("[{}] Can't update user credentials for user [{}], userCredentialsUpdateMsg [{}]",
-                    tenantId, user.getName(), updateMsg, e);
+            log.error("[{}] Can't update user credentials for user [{}]", tenantId, user.getName(), e);
             throw new RuntimeException(e);
         }
     }

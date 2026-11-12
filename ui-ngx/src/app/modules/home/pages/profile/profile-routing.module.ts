@@ -48,7 +48,7 @@ export const profileRoutes: Routes = [
       title: 'profile.profile',
       breadcrumb: {
         label: 'profile.profile',
-        icon: 'account_circle'
+        icon: 'mdi:account-circle-outline'
       }
     },
     resolve: {
