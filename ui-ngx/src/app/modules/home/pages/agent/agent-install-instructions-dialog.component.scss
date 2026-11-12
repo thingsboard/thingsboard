@@ -96,11 +96,6 @@
   }
 }
 
-.tb-info-box {
-  @include agent-info-box;
-  @include agent-info-box-tone;
-}
-
 .tb-agent-install-dialog-footer {
   padding: 8px 16px;
 

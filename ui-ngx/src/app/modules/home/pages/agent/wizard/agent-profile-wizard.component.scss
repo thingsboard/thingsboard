@@ -61,49 +61,4 @@
       }
     }
   }
-
-  .tb-wizard-hint {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 16px;
-    margin: 4px 0 16px;
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 4px;
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 13px;
-    line-height: 1.5;
-
-    .hint-icon {
-      flex-shrink: 0;
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-      color: $agent-text-hint;
-    }
-
-    > div {
-      min-width: 0;
-      flex: 1 1 auto;
-      overflow-wrap: anywhere;
-    }
-
-    div, p, span {
-      font-size: inherit;
-      line-height: inherit;
-    }
-
-    .hint-title {
-      font-weight: 500;
-      color: $agent-text-primary;
-      margin-bottom: 2px;
-      font-size: inherit;
-      line-height: inherit;
-    }
-
-    .hint-body {
-      font-size: inherit;
-      line-height: inherit;
-    }
-  }
 }

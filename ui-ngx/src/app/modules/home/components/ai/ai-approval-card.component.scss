@@ -21,8 +21,8 @@
   }
 
   &.error {
-    color: #D12730;
-    background-color: rgba(209, 39, 48, 0.08);
+    color: var(--tb-crit);
+    background-color: color-mix(in srgb, var(--tb-crit) 8%, transparent);
   }
 
   .approval-title {
