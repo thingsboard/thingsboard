@@ -53,6 +53,7 @@ import {
   finalize,
   map,
   switchMap,
+  take,
   takeUntil,
   tap
 } from 'rxjs/operators';
@@ -111,6 +112,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   isReadyStep = signal<boolean>(false);
+  private static readonly DESIGN_POLL_MS = 4000;
+
+  private static readonly DESIGN_POLL_LIMIT = 150;
+
   skipInterviewAllowed = signal<boolean>(false);
   solutionStep = signal<SolutionStep>(SolutionStep.INITIAL_CONFIGURATION);
   creatorStep = signal<'chat' | 'result' | null>('chat');
@@ -1480,6 +1485,47 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     if (this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION && dashboardState?.pendingChanges?.length) {
       this.sendDashboardConfigurationMsg('<sync/>');
     }
+    if (this.designStillRunning()) {
+      this.waitForDesign();
+    }
+  }
+
+  private designStillRunning(): boolean {
+    if (this.solutionStep() !== SolutionStep.INITIAL_CONFIGURATION || this.isReadyStep()) {
+      return false;
+    }
+    const last = this.messages().at(-1) as GeneralChatMessage | undefined;
+    return last?.from === 'AI' && /^\s*(✅|🛠️|🛠)/u.test(last.content ?? '');
+  }
+
+  private waitForDesign(): void {
+    const solutionId = this.solutionId;
+    this.skipInterviewAllowed.set(false);
+    this.isGenerating.set(true);
+    this.startWork([{text: 'solution-creator.work-thinking', delay: 0}], 'think');
+    timer(SolutionChatComponent.DESIGN_POLL_MS, SolutionChatComponent.DESIGN_POLL_MS).pipe(
+      take(SolutionChatComponent.DESIGN_POLL_LIMIT),
+      switchMap(() => this.solutionCreator.getSolutionById(solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(catchError(() => EMPTY))),
+      filter(solution => solution.states?.[SolutionStep.INITIAL_CONFIGURATION]?.status === SolutionStepStatus.READY),
+      take(1),
+      takeUntil(this.cancelPending$),
+      finalize(() => {
+        if (this.solutionId === solutionId) {
+          this.isGenerating.set(false);
+          this.clearWork();
+        }
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(solution => {
+      if (this.solutionId !== solutionId) {
+        return;
+      }
+      this.isGenerating.set(false);
+      this.clearWork();
+      this.solutionInfo = solution;
+      this.aiSolutions.upsert(solution);
+      this.initPredefinedSolution();
+    });
   }
 
   private initGenerateState(kind: 'design' | 'sync' | 'create') {
