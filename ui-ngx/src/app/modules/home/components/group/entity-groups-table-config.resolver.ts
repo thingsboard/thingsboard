@@ -74,6 +74,12 @@ export class EntityGroupsTableConfigResolver  {
     if (config.groupType === EntityType.ASSET) {
       config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.ASSET_GROUP_LIST, AiAssistantViewType.ASSET_GROUP);
     }
+    if (config.groupType === EntityType.CUSTOMER) {
+      config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CUSTOMER_GROUP_LIST, AiAssistantViewType.CUSTOMER_GROUP);
+    }
+    if (config.groupType === EntityType.USER) {
+      config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.USER_GROUP_LIST, AiAssistantViewType.USER_GROUP);
+    }
 
     if (config.customerId && resolveCustomer) {
       if (config.edgeId) {

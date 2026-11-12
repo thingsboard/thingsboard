@@ -92,7 +92,9 @@ export class UserGroupConfigFactory implements EntityGroupStateConfigFactory<Use
         }
       );
     }
-    config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.USER_LIST, AiAssistantViewType.USER);
+    config.aiAssistantConfig = config.entityGroup && !config.entityGroup.groupAll
+      ? this.aiAssistantConfigService.tableConfig(AiAssistantViewType.USER_GROUP, AiAssistantViewType.USER, config.entityGroup.id)
+      : this.aiAssistantConfigService.tableConfig(AiAssistantViewType.USER_LIST, AiAssistantViewType.USER);
     return this.groupConfigTableConfigService.prepareConfiguration(params, config);
   }
 

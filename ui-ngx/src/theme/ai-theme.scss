@@ -6096,3 +6096,8 @@ tb-ai-action-detail.k-detail .k-detail-recs:is(.k-detail-hub, .k-detail-list) {
 tb-ai-action-detail.k-detail .k-detail-recs:is(.k-detail-hub, .k-detail-list) ~ .k-detail-more {
   margin-left: 24px;
 }
+
+tb-ai-action-detail.k-detail .tb-codeblock pre.tb-code {
+  max-height: 320px;
+  overflow: auto;
+}

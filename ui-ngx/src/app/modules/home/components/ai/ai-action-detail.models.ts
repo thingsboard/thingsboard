@@ -17,6 +17,7 @@ export interface AiDetailText {
 
 export interface AiDetailRecord {
   entityType: string;
+  groupType?: string;
   id?: string;
   name: string;
   meta?: string;
@@ -409,7 +410,9 @@ function searchEntities(values: Values, result: unknown, names: AiDetailNames): 
       }
       continue;
     }
-    const rows = data.filter(isObject).map(row => recordOf(row, entityType)).filter(Boolean).slice(0, MAX_ROWS);
+    const groupType = entityType === 'ENTITY_GROUP' ? str(filter.groupType)?.toUpperCase() : undefined;
+    const rows = data.filter(isObject).map(row => recordOf(row, entityType)).filter(Boolean).slice(0, MAX_ROWS)
+      .map(row => groupType ? {...row, groupType} : row);
     const total = typeof section.page.totalElements === 'number' ? section.page.totalElements : data.length;
     blocks.push(rows.length
       ? {type: 'records', label: sections.length > 1 ? text('what-found.' + (SEARCHED[entityType] ?? 'entities')) : undefined, rows, total}
@@ -699,11 +702,141 @@ export function aiActionDetailView(action: AiAction, names: AiDetailNames): AiDe
   return view;
 }
 
+function accessBlocks(report: unknown): AiDetailBlock[] {
+  if (!isObject(report)) {
+    return [];
+  }
+  const hidden = Array.isArray(report.notVisibleToCustomer) ? report.notVisibleToCustomer.filter(isObject) : [];
+  const blocks: AiDetailBlock[] = [{type: 'facts', rows: [
+    ...(str(report.dashboard) ? [{label: K + 'fact.dashboard', value: report.dashboard}] : []),
+    {label: K + 'fact.entities-checked', value: String(report.entitiesChecked ?? 0)}
+  ]}];
+  if (hidden.length) {
+    blocks.push({type: 'records', label: text('not-visible', {count: hidden.length}), rows: hidden.map(item => ({
+      entityType: str(item.entityType) ?? 'DEVICE', id: str(item.id), name: str(item.name) ?? '—',
+      meta: [str(item.owner), ...(Array.isArray(item.groups) ? item.groups.filter(str) : [])].filter(Boolean).join(' · ') || undefined
+    }))});
+  } else {
+    blocks.push({type: 'note', text: text('all-visible')});
+  }
+  if (Array.isArray(report.aliasesResolvedOnlyOnTheDashboard) && report.aliasesResolvedOnlyOnTheDashboard.length) {
+    blocks.push({type: 'note', text: text('state-aliases', {aliases: report.aliasesResolvedOnlyOnTheDashboard.filter(str).join(', ')})});
+  }
+  if (str(report.truncated)) {
+    blocks.push({type: 'note', text: text('access-truncated')});
+  }
+  return blocks;
+}
+
+function grantMeta(grant: Values): string | undefined {
+  return [str(grant.role), str(grant.appliesTo) ?? [str(grant.userGroup), str(grant.userGroupOwner)].filter(Boolean).join(' · ')]
+    .filter(Boolean).join(' · ') || undefined;
+}
+
+function groupRows(groups: unknown): AiDetailRecord[] {
+  return (Array.isArray(groups) ? groups.filter(isObject) : []).map(group => ({
+    entityType: 'ENTITY_GROUP', id: str(group.id), name: str(group.name) ?? '—',
+    meta: (Array.isArray(group.grants) ? group.grants.filter(isObject) : []).map(grantMeta).filter(Boolean).join('; ') || undefined
+  }));
+}
+
+function readAccess(target: string | undefined, result: unknown): AiDetailBlock[] {
+  if (!isObject(result)) {
+    return generic(result, 'result');
+  }
+  const blocks: AiDetailBlock[] = [];
+  const fact = (key: string, value: unknown) => str(value) ? [{label: K + 'fact.' + key, value: String(value)}] : [];
+  switch (target) {
+    case 'USER':
+      blocks.push({type: 'facts', rows: [...fact('email', result.email), ...fact('owner', result.owner)]});
+      blocks.push({type: 'records', label: text('user-groups'), rows: groupRows(result.userGroups)});
+      break;
+    case 'USER_GROUP':
+      blocks.push({type: 'facts', rows: [...fact('owner', result.owner), ...fact('members', String(result.memberCount ?? ''))]});
+      blocks.push({type: 'records', label: text('grants'), rows: (Array.isArray(result.grants) ? result.grants.filter(isObject) : [])
+        .map(grant => ({entityType: 'ROLE', name: str(grant.role) ?? '—', meta: str(grant.appliesTo)}))});
+      blocks.push({type: 'records', label: text('members'), rows: (Array.isArray(result.members) ? result.members.filter(isObject) : [])
+        .map(member => ({entityType: 'USER', id: str(member.id), name: str(member.email) ?? '—'}))});
+      break;
+    case 'ENTITY_GROUP':
+      blocks.push({type: 'facts', rows: [...fact('type', result.type), ...fact('owner', result.owner)]});
+      blocks.push({type: 'records', label: text('shared-with'), rows: (Array.isArray(result.sharedWith) ? result.sharedWith.filter(isObject) : [])
+        .map(grant => ({entityType: 'ENTITY_GROUP', name: str(grant.userGroup) ?? '—', meta: [str(grant.userGroupOwner), str(grant.role)].filter(Boolean).join(' · ') || undefined}))});
+      break;
+    case 'CUSTOMER':
+      blocks.push({type: 'records', label: text('user-groups'), rows: groupRows(result.userGroups)});
+      break;
+    case 'ROLES':
+      blocks.push({type: 'records', label: text('roles'), rows: (Array.isArray(result.roles) ? result.roles.filter(isObject) : []).map(role => ({
+        entityType: 'ROLE', id: str(role.id), name: str(role.name) ?? '—',
+        meta: [str(role.type), permissionsText(role.permissions)].filter(Boolean).join(' · ') || undefined
+      }))});
+      break;
+    default:
+      return generic(result, 'result');
+  }
+  return blocks.filter(block => block.type !== 'records' || block.rows.length);
+}
+
+function permissionsText(permissions: unknown): string | undefined {
+  if (Array.isArray(permissions)) {
+    return permissions.filter(str).join(', ');
+  }
+  if (isObject(permissions)) {
+    return Object.entries(permissions).map(([resource, operations]) =>
+      resource + ': ' + (Array.isArray(operations) ? operations.join(', ') : '')).join('; ');
+  }
+  return undefined;
+}
+
+function createdUser(user: unknown): AiDetailBlock[] {
+  if (!isObject(user)) {
+    return [];
+  }
+  const activation = isObject(user.activation) ? user.activation : null;
+  const rows: AiDetailFact[] = [];
+  if (str(user.email)) {
+    rows.push({label: K + 'fact.email', value: user.email});
+  }
+  if (Array.isArray(user.userGroups) && user.userGroups.length) {
+    rows.push({label: K + 'fact.user-groups', value: user.userGroups.filter(str).join(', ')});
+  }
+  if (activation?.emailSent) {
+    rows.push({label: K + 'fact.activation', value: K + 'activation-email'});
+  } else if (str(activation?.link)) {
+    rows.push({label: K + 'fact.activation-link', value: activation.link, mono: true});
+  }
+  return rows.length ? [{type: 'facts', rows}] : [];
+}
+
 function describe(tool: string, values: Values, result: unknown, names: AiDetailNames): AiDetailView {
   const of = (id: unknown, type?: unknown) => entity(id, type, names);
   const target = of(values.entityId, values.entityType);
   const dashboard = of(values.dashboardId, 'DASHBOARD');
   switch (tool) {
+    case 'check_dashboard_access':
+      return {hood: text('check-dashboard-access', {dashboard, customer: of(values.customerId, 'CUSTOMER')}), blocks: accessBlocks(result)};
+    case 'change_owner':
+    case 'share_entity_group': {
+      const outcome = isObject(result) && str(result.result) ? [{type: 'text' as const, text: result.result.replace(/^OK:\s*/i, '')}] : generic(result, 'result');
+      const reports = isObject(result) ? (Array.isArray(result.dashboardAccess) ? result.dashboardAccess : result.dashboardAccess ? [result.dashboardAccess] : []) : [];
+      return {blocks: [...outcome, ...reports.flatMap(accessBlocks)]};
+    }
+    case 'save_entity_group':
+    case 'grant_role':
+    case 'update_group_members':
+      return {blocks: []};
+    case 'save_role': {
+      const permissions = permissionsText(values.permissions);
+      return {blocks: permissions ? [{type: 'facts', rows: [{label: K + 'fact.permissions', value: permissions}]}] : []};
+    }
+    case 'read_access':
+      return {blocks: readAccess(str(values.target)?.toUpperCase(), result)};
+    case 'save_user':
+      return {blocks: isObject(result) && str(result.userId) ? createdUser(result) : generic(result, 'result')};
+    case 'save_customer':
+      return {blocks: isObject(result) && str(result.customerId) ? [...createdUser(result.user),
+        ...(str(result.userError) ? [{type: 'note' as const, text: text('user-error', {reason: result.userError})}] : [])] : generic(result, 'result')};
     case 'search_iot_hub_devices': {
       const data = isObject(result) && Array.isArray(result.data) ? result.data.filter(isObject) : null;
       const rows: AiDetailHubItem[] = (data ?? []).filter(item => str(item.id)).map(item => ({

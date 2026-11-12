@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { catchError, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AiRecordLoaderService } from '@home/components/ai/ai-record-loader.service';
 import { AiRecordView } from '@home/components/ai/ai-record.models';
+import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { aiActionDetailView, AiDetailFact, AiDetailNames, aiParse } from '@home/components/ai/ai-action-detail.models';
@@ -42,6 +43,17 @@ export class AiActionLineComponent {
     return typeof id === 'string' && id ? id : null;
   });
 
+  private groupId = computed(() => {
+    const affected = this.action().status === 'SUCCESS' ? this.action().affectedEntities ?? [] : [];
+    const entity = this.action().tool === 'update_group_members' ? affected.find(item => item.entityType === EntityType.ENTITY_GROUP) : affected[0];
+    return entity?.entityType === EntityType.ENTITY_GROUP ? entity.id : null;
+  });
+
+  private groupView = toSignal(toObservable(this.groupId).pipe(
+    distinctUntilChanged(),
+    switchMap(id => id ? this.loader.entity({entityType: EntityType.ENTITY_GROUP, id} as EntityId).pipe(catchError(() => of(null))) : of(null))
+  ), {initialValue: null as AiRecordView | null});
+
   listing = toSignal(toObservable(this.hubVersionId).pipe(
     distinctUntilChanged(),
     switchMap(id => id ? this.loader.hub(id).pipe(catchError(() => of(null))) : of(null))
@@ -58,7 +70,10 @@ export class AiActionLineComponent {
   linkEntity = input(true);
 
   outcomeChip = computed(() => {
-    const entity = this.action().affectedEntities?.[0];
+    const affected = this.action().affectedEntities ?? [];
+    const entity = this.action().tool === 'update_group_members'
+      ? affected.find(item => item.entityType === EntityType.ENTITY_GROUP) ?? affected[0]
+      : affected[0];
     const text = this.outcome();
     const match = entity && this.action().status === 'SUCCESS' ? /'([^']{1,120})'/.exec(text) : null;
     if (!match) {
@@ -67,13 +82,14 @@ export class AiActionLineComponent {
     const alarmRule = entity.entityType === EntityType.CALCULATED_FIELD && this.isAlarmRule();
     const kind = aiEntityKind(entity.entityType, alarmRule);
     const base = alarmRule ? '/alarms/alarm-rules' : baseDetailsPageByEntityType.get(entity.entityType as EntityType);
+    const groupUrl = entity.entityType === EntityType.ENTITY_GROUP ? this.groupView()?.url : undefined;
     return {
       before: text.slice(0, match.index),
       name: match[1],
       after: text.slice(match.index + match[0].length),
       icon: kind.icon,
       palette: kind.palette,
-      link: this.linkEntity() && base ? `${base}/${entity.id}` : null
+      link: this.linkEntity() ? (groupUrl ?? (base ? `${base}/${entity.id}` : null)) : null
     };
   });
 

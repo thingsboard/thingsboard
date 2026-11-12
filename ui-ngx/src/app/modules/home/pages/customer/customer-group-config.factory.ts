@@ -161,7 +161,9 @@ export class CustomerGroupConfigFactory implements EntityGroupStateConfigFactory
       );
     }
 
-    config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CUSTOMER_LIST, AiAssistantViewType.CUSTOMER);
+    config.aiAssistantConfig = config.entityGroup && !config.entityGroup.groupAll
+      ? this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CUSTOMER_GROUP, AiAssistantViewType.CUSTOMER, config.entityGroup.id)
+      : this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CUSTOMER_LIST, AiAssistantViewType.CUSTOMER);
     return this.groupConfigTableConfigService.prepareConfiguration(params, config);
   }
 

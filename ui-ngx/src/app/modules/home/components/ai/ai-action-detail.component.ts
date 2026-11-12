@@ -6,7 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeTranslations, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -177,6 +177,10 @@ export class AiActionDetailComponent {
   }
 
   recordUrl(record: AiDetailRecord): string | null {
+    if (record.entityType === EntityType.ENTITY_GROUP) {
+      const base = record.id && record.groupType ? baseDetailsPageByEntityType.get(record.groupType as EntityType) : undefined;
+      return base ? `${base.replace(/\/all$/, '/groups')}/${record.id}` : null;
+    }
     return this.urlOf(record.id, record.entityType);
   }
 

@@ -772,6 +772,18 @@
         "attachment-svg-failed": "This SVG can't be converted to an image",
         "attachment-over-limit": "More than {{count}} files",
         "detail": {
+            "check-dashboard-access": "Checked what {{customer}} can see on {{dashboard}}",
+            "not-visible": "{{count}} not visible to the customer",
+            "all-visible": "The customer can see every entity this dashboard shows.",
+            "state-aliases": "Resolved only when the dashboard opens: {{aliases}}",
+            "access-truncated": "Only the first 50 entities were checked.",
+            "user-groups": "User groups",
+            "grants": "Roles it gives",
+            "members": "Members",
+            "shared-with": "Shared with",
+            "roles": "Roles",
+            "user-error": "The user was not created: {{reason}}",
+            "activation-email": "Activation email sent",
             "iot-hub-query": "Executed '{{query}}' query against IoT Hub",
             "iot-hub-browse": "Browsed IoT Hub",
             "iot-hub-installed": "Listed the items installed from IoT Hub",
@@ -909,6 +921,15 @@
             "yes": "Yes",
             "no": "No",
             "fact": {
+                "permissions": "Permissions",
+                "dashboard": "Dashboard",
+                "entities-checked": "Entities checked",
+                "email": "Email",
+                "owner": "Owner",
+                "members": "Members",
+                "user-groups": "User groups",
+                "activation": "Activation",
+                "activation-link": "Activation link",
                 "resolves": "Resolves",
                 "entities": "Entities",
                 "entity": "Entity",
@@ -1207,6 +1228,82 @@
                 "run": "Deleting the device",
                 "done": "Deleted the device"
             },
+            "create-customer": {
+                "run": "Creating the customer",
+                "done": "Created the customer"
+            },
+            "update-customer": {
+                "run": "Updating the customer",
+                "done": "Updated the customer"
+            },
+            "create-user": {
+                "run": "Creating the user",
+                "done": "Created the user"
+            },
+            "update-user": {
+                "run": "Updating the user",
+                "done": "Updated the user"
+            },
+            "create-entity-group": {
+                "run": "Creating the group",
+                "done": "Created the group"
+            },
+            "update-entity-group": {
+                "run": "Renaming the group",
+                "done": "Renamed the group"
+            },
+            "create-role": {
+                "run": "Creating the role",
+                "done": "Created the role"
+            },
+            "update-role": {
+                "run": "Updating the role",
+                "done": "Updated the role"
+            },
+            "update-group-members": {
+                "run": "Changing the group's members",
+                "done": "Changed the group's members"
+            },
+            "change-owner": {
+                "run": "Changing the owner",
+                "done": "Changed the owner"
+            },
+            "share-group": {
+                "run": "Sharing the group",
+                "done": "Shared the group"
+            },
+            "grant-role": {
+                "run": "Giving the role",
+                "done": "Gave the role"
+            },
+            "read-access": {
+                "run": "Reading who can do what",
+                "done": "Read who can do what"
+            },
+            "check-dashboard-access": {
+                "run": "Checking what the customer can see",
+                "done": "Checked what the customer can see"
+            },
+            "delete-customer": {
+                "run": "Deleting the customer",
+                "done": "Deleted the customer"
+            },
+            "delete-user": {
+                "run": "Deleting the user",
+                "done": "Deleted the user"
+            },
+            "delete-entity-group": {
+                "run": "Deleting the group",
+                "done": "Deleted the group"
+            },
+            "delete-role": {
+                "run": "Deleting the role",
+                "done": "Deleted the role"
+            },
+            "delete-grant": {
+                "run": "Taking back the role",
+                "done": "Took back the role"
+            },
             "delete-other": {
                 "run": "Deleting",
                 "done": "Deleted"
@@ -1286,6 +1383,25 @@
             "ask-again": "Ask again",
             "ask-again-message": "Ask me again for the same change.",
             "field": {
+                "email": "Email",
+                "firstName": "First name",
+                "lastName": "Last name",
+                "phone": "Phone",
+                "city": "City",
+                "address": "Address",
+                "user": "User",
+                "userGroups": "User groups",
+                "activation": "Activation",
+                "owner": "Owner",
+                "groups": "Groups",
+                "sharedWith": "Shared with",
+                "access": "Access",
+                "role": "Role",
+                "appliesTo": "Applies to",
+                "permissions": "Permissions",
+                "description": "Description",
+                "added": "Added",
+                "removed": "Removed",
                 "name": "Name",
                 "version": "Version",
                 "dependencies": "Also installs",
@@ -1314,6 +1430,8 @@
                 "shared-attributes": "shared attributes"
             },
             "type": {
+                "ENTITY_GROUP": "Group",
+                "ROLE": "Role",
                 "ALARM_RULE": "Alarm rule",
                 "DASHBOARD_WIDGET": "Widget",
                 "DASHBOARD_STATE": "Dashboard state",
@@ -1322,6 +1440,7 @@
             }
         },
         "record": {
+            "group-of": "{{type}} group",
             "on": "on {{name}}",
             "on-profile": "on profile {{name}}",
             "active": "Active",
@@ -1431,6 +1550,9 @@
             "ASSET_PROFILE_LIST": "Asset profiles",
             "CUSTOMER_LIST": "Customers",
             "USER_LIST": "Users",
+            "CUSTOMER_GROUP_LIST": "Customer groups",
+            "USER_GROUP_LIST": "User groups",
+            "ROLE_LIST": "Roles",
             "RULE_CHAIN_LIST": "Rule chains",
             "INTEGRATION_LIST": "Integrations",
             "CONVERTER_LIST": "Converters"
@@ -1631,37 +1753,94 @@
             },
             "customers": {
                 "title": "Ask about your customers",
-                "line": "Their devices and dashboards, or how their equipment is doing.",
-                "suggestion": "Which customers have devices with active alarms?",
+                "line": "Add customers and their users, share devices and dashboards with them, or see how their equipment is doing.",
+                "suggestion": "Create customer bob@acme.com",
                 "example": {
+                    "create": {"label": "Add a customer", "message": "Create a customer Acme with an administrator user bob@acme.com."},
                     "find": {"label": "Find customers with alarms", "message": "Which customers have devices with active alarms?"}
                 }
             },
             "customer": {
                 "title": "Ask about {{name}}",
                 "title-unnamed": "Ask about this customer",
-                "line": "Its devices, alarms and dashboards.",
-                "suggestion": "How are this customer's devices doing?",
+                "line": "Its users, what it can see, its devices and dashboards.",
+                "suggestion": "Add a user to this customer",
                 "example": {
-                    "devices": {"label": "List its devices", "message": "Which devices does this customer own?"},
-                    "dashboard": {"label": "Build its dashboard", "message": "Build a dashboard for this customer's devices."}
+                    "user": {"label": "Add a user", "message": "Add a read-only user to this customer."},
+                    "share": {"label": "Share a dashboard", "message": "Share a dashboard with this customer, with the devices it shows."},
+                    "devices": {"label": "List its devices", "message": "Which devices does this customer own?"}
+                }
+            },
+            "customer-groups": {
+                "title": "Ask about your customer groups",
+                "line": "Group customers to manage them together, or see what each group holds.",
+                "suggestion": "Which customer groups do I have?",
+                "example": {
+                    "create": {"label": "Create a group", "message": "Create a customer group for my retail customers."}
+                }
+            },
+            "customer-group": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this customer group",
+                "line": "Its customers, or what to set up for all of them.",
+                "suggestion": "Which customers are in this group?",
+                "example": {
+                    "list": {"label": "List its customers", "message": "Which customers are in this group?"}
                 }
             },
             "users": {
                 "title": "Ask about your users",
-                "line": "Who gets notified, and how notifications reach them.",
-                "suggestion": "Who gets notified when an alarm is raised?",
+                "line": "Add users, give them the right access, or see who gets notified.",
+                "suggestion": "Add a user john@acme.com to customer Acme",
                 "example": {
+                    "invite": {"label": "Add a user", "message": "Add a tenant administrator user."},
                     "find": {"label": "Find who gets alarms", "message": "Which users receive alarm notifications?"}
                 }
             },
             "user": {
                 "title": "Ask about {{name}}",
                 "title-unnamed": "Ask about this user",
-                "line": "The notifications this user gets.",
-                "suggestion": "Which notifications does this user get?",
+                "line": "What this user can see and do, and the notifications it gets.",
+                "suggestion": "What can this user see and do?",
                 "example": {
+                    "access": {"label": "Check their access", "message": "What can this user see and do?"},
                     "notifications": {"label": "Notify this user", "message": "Notify this user when a critical alarm is raised."}
+                }
+            },
+            "user-groups": {
+                "title": "Ask about your user groups",
+                "line": "Groups give users their roles: create one, or see what each can do.",
+                "suggestion": "What can the users in each group do?",
+                "example": {
+                    "create": {"label": "Create a group", "message": "Create a user group of operators who can only see devices and send commands."}
+                }
+            },
+            "user-group": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this user group",
+                "line": "Its users, the roles it gives, and what they apply to.",
+                "suggestion": "What can the users in this group do?",
+                "example": {
+                    "access": {"label": "Check its access", "message": "What can the users in this group do?"},
+                    "add": {"label": "Add a user", "message": "Add a user to this group."}
+                }
+            },
+            "roles": {
+                "title": "Ask about your roles",
+                "line": "What each role allows, or a new role for what your users need.",
+                "suggestion": "Which roles do I have, and what do they allow?",
+                "example": {
+                    "create": {"label": "Create a role", "message": "Create a role that can see devices and dashboards but change nothing."},
+                    "explain": {"label": "Explain the roles", "message": "Which roles do I have, and what do they allow?"}
+                }
+            },
+            "role": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this role",
+                "line": "What it allows, and who has it.",
+                "suggestion": "What does this role allow, and who has it?",
+                "example": {
+                    "explain": {"label": "Explain it", "message": "What does this role allow, and who has it?"}
                 }
             },
             "iot-hub": {

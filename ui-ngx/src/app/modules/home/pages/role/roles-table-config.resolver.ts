@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 
 import { Router } from '@angular/router';
 import {
@@ -24,6 +26,8 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 export class RolesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<Role> = new EntityTableConfig<Role>();
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private roleService: RoleService,
               private userPermissionsService: UserPermissionsService,
@@ -69,6 +73,7 @@ export class RolesTableConfigResolver  {
   resolve(): EntityTableConfig<Role> {
     this.config.tableTitle = this.translate.instant('role.roles');
     defaultEntityTablePermissions(this.userPermissionsService, this.config);
+    this.config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.ROLE_LIST, AiAssistantViewType.ROLE);
     return this.config;
   }
 

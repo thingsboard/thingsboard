@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
-import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { baseDetailsPageByEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { NotificationService } from '@core/http/notification.service';
@@ -151,6 +151,21 @@ export class AiRecordLoaderService {
             key, entityType, alarmRule: false, name, url,
             meta: this.meta(this.typeLabel(entityType), name !== user.email ? user.email : null),
             state: invited ? {tone: 'wait', label: this.translate.instant('ai-assistant.record.invited')} : undefined
+          };
+        }));
+      case EntityType.ENTITY_GROUP:
+        return this.entityService.getEntity(entityType, entity.id, CONFIG).pipe(map(found => {
+          const group = found as {name?: string; type?: EntityType};
+          if (!group?.name) {
+            return null;
+          }
+          const base = group.type ? baseDetailsPageByEntityType.get(group.type) : undefined;
+          const typeKey = group.type ? entityTypeTranslations.get(group.type)?.type : undefined;
+          return {
+            key, entityType, alarmRule: false, name: group.name,
+            url: base ? `${base.replace(/\/all$/, '/groups')}/${entity.id}` : undefined,
+            meta: typeKey ? this.translate.instant('ai-assistant.record.group-of', {type: this.translate.instant(typeKey)})
+              : this.typeLabel(entityType)
           };
         }));
       case EntityType.NOTIFICATION_RULE:

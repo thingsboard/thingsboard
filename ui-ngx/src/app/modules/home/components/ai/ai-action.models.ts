@@ -51,6 +51,12 @@ const TOOL_WORDS: Record<string, string> = {
   read_iot_hub_item: 'read-iot-hub-item',
   list_installed_iot_hub_items: 'list-installed-iot-hub-items',
   install_iot_hub_item: 'install-iot-hub-item',
+  update_group_members: 'update-group-members',
+  change_owner: 'change-owner',
+  share_entity_group: 'share-group',
+  grant_role: 'grant-role',
+  read_access: 'read-access',
+  check_dashboard_access: 'check-dashboard-access',
   read_transport_endpoints: 'read-connection-settings',
   read_device_connect_commands: 'read-connection-settings',
   search_web: 'search-web'
@@ -68,7 +74,11 @@ const SAVED_KINDS: Record<string, [string, string]> = {
   save_alarm_rule: ['alarm-rule', 'alarmRule'],
   save_notification_target: ['notification-target', 'target'],
   save_notification_template: ['notification-template', 'template'],
-  save_notification_rule: ['notification-rule', 'rule']
+  save_notification_rule: ['notification-rule', 'rule'],
+  save_customer: ['customer', ''],
+  save_user: ['user', ''],
+  save_entity_group: ['entity-group', ''],
+  save_role: ['role', '']
 };
 
 const SEARCHED_TYPES: Record<string, string> = {
@@ -90,7 +100,12 @@ const DELETED_TARGETS: Record<string, string> = {
   DASHBOARD_STATE: 'delete-dashboard-state',
   DASHBOARD_ENTITY_ALIAS: 'delete-entity-alias',
   DASHBOARD_FILTER: 'delete-dashboard-filter',
-  DEVICE: 'delete-device'
+  DEVICE: 'delete-device',
+  CUSTOMER: 'delete-customer',
+  USER: 'delete-user',
+  ENTITY_GROUP: 'delete-entity-group',
+  ROLE: 'delete-role',
+  GROUP_PERMISSION: 'delete-grant'
 };
 
 const ACTION_PREFIX = 'ai-assistant.action.';
@@ -400,7 +415,10 @@ const ENTITY_KINDS: Record<string, AiEntityKind> = {
   WIDGET_TYPE: {icon: 'widgets', palette: 'view'},
   CUSTOMER: {icon: 'supervisor_account', palette: 'people'},
   USER: {icon: 'account_circle', palette: 'people'},
-  TENANT: {icon: 'business', palette: 'people'}
+  TENANT: {icon: 'business', palette: 'people'},
+  ENTITY_GROUP: {icon: 'folder_shared', palette: 'people'},
+  ROLE: {icon: 'admin_panel_settings', palette: 'people'},
+  GROUP_PERMISSION: {icon: 'key', palette: 'people'}
 };
 
 export function aiEntityKind(entityType: string, alarmRule = false): AiEntityKind {
