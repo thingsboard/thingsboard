@@ -56,7 +56,8 @@ another run holds its lock, the run continues without it.
 
 In GitHub Actions, pushes and manual runs save the cache and pull requests only
 read it: a pull request takes the cache of its base branch, then of `master`.
-CI keeps only the current signature, so the saved cache holds one database.
+CI keeps only the current signature, so the saved cache holds one database, and
+saves it only when the run changed it.
 
 ## Check only changed files
 

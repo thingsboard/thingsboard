@@ -1296,12 +1296,14 @@ class CacheTests(unittest.TestCase):
     def test_a_second_run_takes_ce_inputs_from_the_cache_and_reports_the_same(self):
         first, second = [], []
         _, cold, _ = self.check(normalizer=self.normalizer(first))
-        self.assertTrue((self.cache() / p.CACHE_UPDATED).exists())
+        databases = {path.name: path.read_bytes() for path in self.cache().glob("*.sqlite")}
         _, warm, output = self.check(normalizer=self.normalizer(second))
         self.assertEqual(cold, warm)
         self.assertTrue(any(key[0] != "head" for batch in first for key in batch))
         self.assertEqual({"head"}, {key[0] for batch in second for key in batch})
-        self.assertFalse((self.cache() / p.CACHE_UPDATED).exists())
+        # CI saves the cache only when its bytes changed: a run that only reads it must leave them as they were.
+        self.assertTrue(databases)
+        self.assertEqual(databases, {path.name: path.read_bytes() for path in self.cache().glob("*.sqlite")})
         self.assertRegex(output, r"[1-9][0-9]* from the cache")
 
     def test_without_the_cache_nothing_is_read_or_written(self):
@@ -1338,20 +1340,17 @@ class CacheTests(unittest.TestCase):
         (repo / p.TEMPLATES["apache"]).write_text("reworded\n")
         self.assertNotEqual(signature, p.cache_signature(repo, fixture_plugin("1")))
 
-    def test_only_recent_signatures_are_kept_and_the_update_mark_is_fresh(self):
+    def test_only_recent_signatures_are_kept(self):
         directory = temporary_directory(self)
         for index in range(p.CACHE_SIGNATURES_KEPT + 2):
             stale = directory / f"{signature(f'old{index}')}.sqlite"
             stale.write_bytes(b"")
             os.utime(stale, (index, index))
-        (directory / p.CACHE_UPDATED).touch()
         cache = p.NormalizationCache(directory, signature("current"))
-        self.assertFalse((directory / p.CACHE_UPDATED).exists())
         kept = sorted(path.name for path in directory.glob("*.sqlite"))
         self.assertEqual(p.CACHE_SIGNATURES_KEPT, len(kept))
         self.assertIn(f"{signature('current')}.sqlite", kept)
         cache.close()
-        self.assertFalse((directory / p.CACHE_UPDATED).exists())
 
     def test_a_damaged_cache_is_started_again(self):
         directory = temporary_directory(self)
@@ -1443,7 +1442,7 @@ class CacheTests(unittest.TestCase):
             with redirect_stderr(output):
                 cache.close()
             self.assertIn("continued without it", output.getvalue())
-            self.assertFalse((directory / p.CACHE_UPDATED).exists())
+            self.assertEqual(0, cache.added)
         finally:
             other.rollback()
             other.close()

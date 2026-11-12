@@ -74,7 +74,6 @@ JOBS_VARIABLE = "LICENSE_HEADERS_JOBS"
 CACHE_SIGNATURES_VARIABLE = "LICENSE_HEADERS_CACHE_SIGNATURES"
 CACHE_DIRECTORY = "target/license-headers-cache"
 CACHE_FORMAT = "1"
-CACHE_UPDATED = ".updated"
 CACHE_SIGNATURES_KEPT = 3
 CACHE_FILE = re.compile(r"[0-9a-f]{32}\.sqlite")
 # Git's minimum similarity for a copy, in percent: the -C threshold and the size filter in front of it.
@@ -937,7 +936,6 @@ class NormalizationCache:
         self.database = None
         self.unavailable = None
         directory.mkdir(parents=True, exist_ok=True)
-        (directory / CACHE_UPDATED).unlink(missing_ok=True)
         self.path = directory / f"{signature}.sqlite"
         try:
             try:
@@ -1020,8 +1018,6 @@ class NormalizationCache:
         if self.database is not None:
             self.database.close()
             self.database = None
-        if self.added:
-            (self.directory / CACHE_UPDATED).touch()
         if self.unavailable:
             console.line(f"The cache in {self.directory} was unavailable ({self.unavailable}); "
                          "the run continued without it", "dim")
@@ -1118,9 +1114,10 @@ def compare(repo, plugin, lineage, contents, cache, in_scope):
                         if mycila.contents[("head", name)].strip()}
     normalized = head_hashes | {key: comparison_hash(content) for key, content in copy_sources.items()}
     copies, searched = copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id,
-                                       destinations, copy_sources, normalized)
+                                       destinations, copy_sources)
+    normalized |= searched
     merges = clean_merges(repo, plugin, cache, lineage, names, normalized)
-    console.end(f"done ({len(normalized)} file versions, {searched} of {len(sources) - len(versions)} "
+    console.end(f"done ({len(normalized)} file versions, {len(searched)} of {len(sources) - len(versions)} "
                 f"other CE files searched for copies, {cache.hits} from the cache)")
     return Comparison(
         lineage=lineage,
@@ -1134,16 +1131,16 @@ def compare(repo, plugin, lineage, contents, cache, in_scope):
     )
 
 
-def copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id, destinations, copy_sources,
-                    normalized):
-    """CE files similar to the paths that CE does not have, normalized only when Git could match them by size."""
+def copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id, destinations, copy_sources):
+    """CE files similar to the paths that CE does not have, normalized only when Git could match them by size, and
+    the comparison hashes of the other CE files searched for them."""
     if not destinations:
-        return {}, 0
+        return {}, {}
     sizes = [staged_size(content) for content in destinations.values()]
     others = sorted(key for key in sources if key not in versions
                     and could_shrink_to_copy(len(bytes_by_id[key[1]]), sizes))
     found = normalize(repo, plugin, cache, {key: bytes_by_id[key[1]] for key in others})
-    normalized |= {key: comparison_hash(content) for key, content in found.items()}
+    searched = {key: comparison_hash(content) for key, content in found.items()}
     with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
         staging = Mycila(repo, Path(temporary), plugin)
         for key, content in (found | copy_sources).items():
@@ -1152,7 +1149,7 @@ def copy_candidates(repo, plugin, cache, sources, versions, slots, bytes_by_id, 
             staging.add(("head", name), name, content, slots[("head", name)])
         reachable = {key: sources[key] for key in [*others, *copy_sources]
                      if could_be_copy(staged_size(staging.contents[key]), sizes)}
-        return normalized_copies(staging, reachable, set(destinations), staging.nonempty()), len(others)
+        return normalized_copies(staging, reachable, set(destinations), staging.nonempty()), searched
 
 
 def clean_merges(repo, plugin, cache, lineage, names, normalized):

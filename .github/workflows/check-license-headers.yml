@@ -60,14 +60,19 @@ jobs:
             license-headers-ce-v1-${{ github.base_ref || github.ref_name }}-
             license-headers-ce-v1-
 
+      # What the restore brought, to save the cache below only when this run changed it. A run that only reads the
+      # cache leaves its bytes as they were; the check needs no marker for this.
+      - name: Fingerprint restored CE contents
+        id: cache-fingerprint
+        if: github.event_name != 'pull_request'
+        run: echo "hash=${{ hashFiles('target/license-headers-cache/*.sqlite') }}" >> "$GITHUB_OUTPUT"
+
       - name: Check license headers
         env:
           # Pull requests check only the files they change; pushes and manual runs check every file.
           SINCE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
         run: |
           mkdir -p target/license-provenance
-          # A restored cache carries the marker of the run that saved it; only this run's additions may set it.
-          rm -f target/license-headers-cache/.updated
           # The runner does nothing else: use every CPU, not all but one as on a workstation.
           LICENSE_HEADERS_JOBS="$(nproc)"
           export LICENSE_HEADERS_JOBS
@@ -75,11 +80,12 @@ jobs:
           export LICENSE_HEADERS_CACHE_SIGNATURES=1
           ./check-license-headers.sh ${SINCE:+--since "$SINCE"} 2>&1 | tee target/license-provenance/console.log
 
-      # Saved even when the check finds problems, but only when the run normalized something the cache lacked.
+      # Saved even when the check finds problems, but only when the run changed the cache: it normalized something
+      # the cache lacked, or it pruned the databases of other signatures.
       - name: Save normalized CE contents
         if: >-
           always() && github.event_name != 'pull_request'
-          && hashFiles('target/license-headers-cache/.updated') != ''
+          && hashFiles('target/license-headers-cache/*.sqlite') != steps.cache-fingerprint.outputs.hash
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: target/license-headers-cache
