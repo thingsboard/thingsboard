@@ -10,20 +10,10 @@
 @for (block of view().blocks; track $index) {
   @switch (block.type) {
     @case ('hub') {
-      <div class="k-detail-recs">
-        @for (row of hub(); track row.id) {
-          <div class="tb-rec line type-device k-hub" data-pal="device" [matTooltip]="row.description" matTooltipPosition="above" [matTooltipShowDelay]="400">
-            <span class="tb-rec-tile"><mat-icon aria-hidden="true">memory</mat-icon></span>
-            @if (row.item) {
-              <a class="tb-rec-name" href="#" (click)="openHub(row, $event)">{{ row.name }}</a>
-            } @else {
-              <span class="tb-rec-name">{{ row.name }}</span>
-            }
-            <span class="tb-rec-meta">
-              <span class="tb-hub-ic" [matTooltip]="'ai-assistant.detail.on-iot-hub' | translate" matTooltipPosition="above"><mat-icon class="tb-mat-16" aria-hidden="true">hub</mat-icon></span>
-              {{ 'ai-assistant.detail.hub-device' | translate }}@if (row.maker) { · {{ row.maker }}}@if (row.verified) {<mat-icon class="k-ver" aria-hidden="true">verified</mat-icon>}@if (row.installs) { · {{ row.installs }}}
-            </span>
-          </div>
+      <div class="k-detail-recs k-detail-hub tb-list-body" role="list">
+        @for (rec of hub(); track rec.key) {
+          <tb-ai-record role="listitem" [entityType]="rec.entityType" [alarmRule]="rec.alarmRule" [name]="rec.name" [url]="rec.url"
+                        [hub]="rec.hub"></tb-ai-record>
         }
       </div>
     }

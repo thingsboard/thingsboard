@@ -34,6 +34,9 @@ import {
   UPDATE_PLAN_TOOL
 } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
+import { AiShownRecords, aiShownRecordsOf, SHOW_RECORDS_TOOL } from '@home/components/ai/ai-record.models';
+import { AiCardAction } from '@home/components/ai/ai-card-actions.component';
+import { decorateSections } from '@home/components/ai/ai-disclosure.component';
 import { AiFile, aiFileMark, aiFileName, aiFileOf, AiMadeFile, aiMadeFileOf, CREATE_FILE_TOOL, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AiResourceService } from '@core/http/ai-resource.service';
@@ -107,6 +110,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Output() changePlan = new EventEmitter<void>();
   @Output() openFile = new EventEmitter<AiFile>();
   @Output() prompt = new EventEmitter<string>();
+
+  @Output() compose = new EventEmitter<string>();
   @Output() answer = new EventEmitter<string>();
   @Output() resourceError = new EventEmitter<any>();
 
@@ -130,6 +135,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   madeFiles: Record<number, AiMadeFile> = {};
   quotes: Record<number, {name: string; icon: string; from: number; to: number; message: string}> = {};
   sources: Record<number, AiSource[]> = {};
+
+  records: Record<number, AiShownRecords[]> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
 
   private keptAsking = new Set<number>();
@@ -210,6 +217,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   decorateCode(answer: HTMLElement, message?: ChatMessage): void {
     decorateCodeBlocks(answer, this.translate, text => this.clipboard.copyFromContent(text));
     decorateTables(answer);
+    decorateSections(answer, this.sectionScope(message));
     decorateReferences(answer, (message as GeneralChatMessage)?.references);
     decorateLinks(answer);
     decorateHints(answer);
@@ -217,6 +225,11 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     decorateFileChips(answer, this.latestFiles, this.shownFileName());
     decorateSeverities(answer, (message as GeneralChatMessage)?.severities,
       severity => this.translate.instant(alarmSeverityTranslations.get(severity as AlarmSeverity) ?? severity));
+  }
+
+  private sectionScope(message?: ChatMessage): string {
+    const general = message as GeneralChatMessage;
+    return String(general?.time ?? '');
   }
 
   @HostListener('click', ['$event'])
@@ -349,6 +362,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.madeFiles = this.findMadeFiles();
       this.quotes = this.findQuotes();
       this.sources = this.findSources();
+      this.records = this.findRecords();
       this.answersAt = this.findAnswers();
       this.retryIndex = this.findRetry();
       this.stoppedSteps = this.findStoppedSteps();
@@ -602,6 +616,58 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       }
     }
     return null;
+  }
+
+  private findRecords(): Record<number, AiShownRecords[]> {
+    const records: Record<number, AiShownRecords[]> = {};
+    let answer = -1;
+    let pending: AiShownRecords[] = [];
+    const place = () => {
+      if (pending.length && answer >= 0) {
+        records[answer] = [...(records[answer] ?? []), ...pending];
+        pending = [];
+      }
+    };
+    this.messages.forEach((message, index) => {
+      if (message.from === 'USER') {
+        place();
+        answer = -1;
+        pending = [];
+      } else if (message.from === 'AI' && !message.status) {
+        answer = index;
+        place();
+      } else if (message.from === 'ACTION' && message.data.tool === SHOW_RECORDS_TOOL && message.data.status !== 'FAILURE') {
+        const shown = aiShownRecordsOf(message.data.arguments);
+        if (shown) {
+          pending.push(shown);
+        }
+        place();
+      }
+    });
+    return records;
+  }
+
+  offerActions(): AiCardAction[] {
+    return [
+      {id: 'approve-rest', icon: 'bolt', label: this.translate.instant('ai-assistant.offer.approve-rest')},
+      {id: 'keep-asking', quiet: true, label: this.translate.instant('ai-assistant.offer.keep-asking')}
+    ];
+  }
+
+  offerAct(id: string): void {
+    if (id === 'approve-rest') {
+      this.autoApproveRest.emit();
+    } else {
+      this.keepAsking();
+    }
+  }
+
+  resumeActions(): AiCardAction[] {
+    return [{id: 'resume', icon: 'play_arrow', label: this.translate.instant('ai-assistant.resume')}];
+  }
+
+  chipActions(chips: Array<{id: string; label: string; icon?: string}>): AiCardAction[] {
+    return chips.map(option => ({id: option.id, label: option.label, icon: option.icon}));
   }
 
   private findSources(): Record<number, AiSource[]> {

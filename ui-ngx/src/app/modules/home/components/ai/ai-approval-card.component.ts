@@ -27,6 +27,8 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 export type ApprovalCardState = 'pending' | 'approved' | 'auto' | 'denied' | 'expired';
 
 import { AiDetailFact } from '@home/components/ai/ai-action-detail.models';
+import { AiRecordLoaderService } from '@home/components/ai/ai-record-loader.service';
+import { AiRecordView } from '@home/components/ai/ai-record.models';
 
 export interface AiReviewRow {
   label: string;
@@ -88,7 +90,14 @@ export class AiApprovalCardComponent implements OnChanges {
   private readonly cd = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
 
+  private readonly loader = inject(AiRecordLoaderService);
+
+  listing: AiRecordView | null = null;
+
+  private listingId: string | null = null;
+
   ngOnChanges(changes: SimpleChanges): void {
+    this.loadListing();
     if ((this.data?.autoApproved || this.autoApprove) && this.state === 'pending' && !this.completedExecution) {
       this.autoApproved = true;
       this.denying = false;
@@ -159,7 +168,15 @@ export class AiApprovalCardComponent implements OnChanges {
     return this.review?.change === 'CREATE';
   }
 
+  get hubVersionId(): string | null {
+    const id = this.data?.tool === 'install_iot_hub_item' ? (this.data.arguments as {versionId?: unknown})?.versionId : null;
+    return typeof id === 'string' && id ? id : null;
+  }
+
   get approveLabel(): string {
+    if (this.hubVersionId) {
+      return 'ai-assistant.record.install';
+    }
     if (this.isDestructive) {
       return 'ai-assistant.review.delete';
     }
@@ -194,7 +211,11 @@ export class AiApprovalCardComponent implements OnChanges {
   }
 
   get facts(): AiReviewRow[] {
-    return this.rows('FACT').slice(0, MAX_FIELDS);
+    const rows = this.rows('FACT').slice(0, MAX_FIELDS);
+    if (this.listing && this.review?.target) {
+      rows.push({label: this.translate.instant('ai-assistant.record.set-up-on'), labelCode: false, valueCode: false, value: this.review.target});
+    }
+    return rows;
   }
 
   private reviewFacts(): AiDetailFact[] {
@@ -242,6 +263,21 @@ export class AiApprovalCardComponent implements OnChanges {
 
   closeDeny(): void {
     this.denying = false;
+  }
+
+  private loadListing(): void {
+    const id = this.hubVersionId;
+    if (!id || id === this.listingId) {
+      return;
+    }
+    this.listingId = id;
+    this.loader.hub(id).subscribe({
+      next: listing => {
+        this.listing = listing;
+        this.cd.markForCheck();
+      },
+      error: () => this.listing = null
+    });
   }
 
   private rows(kind: AiReviewField['kind']): AiReviewRow[] {

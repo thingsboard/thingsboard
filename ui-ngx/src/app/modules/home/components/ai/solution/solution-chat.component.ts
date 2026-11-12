@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { AiCardAction } from '@home/components/ai/ai-card-actions.component';
 import { AiNotice } from '@shared/models/ai-chat.models';
 import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.component';
 import {
@@ -1587,6 +1588,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   toggleMoreExamples(): void {
     this.showMoreExamples.update(v => !v);
+  }
+
+  skipActions(): AiCardAction[] {
+    return [{id: 'skip', icon: 'fast_forward', label: this.translate.instant('solution-creator.skip-interview')}];
   }
 
   skipInterview(): void {

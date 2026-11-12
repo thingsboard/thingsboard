@@ -48,11 +48,16 @@
   color: var(--tb-crit);
 }
 
-.tb-disc.tb-disc-details {
+.action-details {
+  display: block;
   margin: 4px 0 0 28px;
 
-  > summary {
-    color: var(--tb-ink-76);
+  ::ng-deep .tb-disc.tb-disc-details {
+    margin: 0;
+
+    > summary {
+      color: var(--tb-ink-76);
+    }
   }
 
   .records {

@@ -14,7 +14,10 @@
      [class.expired]="state === 'expired'"
      [class.danger]="isDestructive">
   <div class="k-head"><mat-icon aria-hidden="true">{{ headIcon }}</mat-icon>{{ headText }}</div>
-  @if (review) {
+  @if (listing; as hub) {
+    <tb-ai-record [entityType]="hub.entityType" [alarmRule]="hub.alarmRule" [name]="hub.name" [url]="hub.url" [hub]="hub.hub"
+ [class.closed]="recordClosed"></tb-ai-record>
+  } @else if (review) {
     <tb-ai-record [entityType]="review.entityType" [alarmRule]="alarmRule" [name]="review.name" [meta]="meta"
                   [class.closed]="recordClosed" [class.planned]="planned"></tb-ai-record>
   }

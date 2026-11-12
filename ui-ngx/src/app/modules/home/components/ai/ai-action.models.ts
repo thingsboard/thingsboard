@@ -153,7 +153,7 @@ export function aiSourcesOf(args: unknown): AiSource[] {
 
 export const UPDATE_PLAN_TOOL = 'update_plan';
 
-const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file', 'create_file', CITE_SOURCES_TOOL]);
+const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file', 'create_file', CITE_SOURCES_TOOL, 'show_records']);
 
 export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);
 
@@ -375,6 +375,10 @@ export interface AiEntityKind {
 
 const ENTITY_KINDS: Record<string, AiEntityKind> = {
   DEVICE: {icon: 'memory', palette: 'device'},
+  GATEWAY: {icon: 'lan', palette: 'device'},
+  ENTITY_VIEW: {icon: 'view_quilt', palette: 'device'},
+  EDGE: {icon: 'router', palette: 'device'},
+  SOLUTION_TEMPLATE: {icon: 'dashboard_customize', palette: 'solution'},
   DEVICE_PROFILE: {icon: 'category', palette: 'device'},
   ASSET: {icon: 'domain', palette: 'device'},
   ASSET_PROFILE: {icon: 'category', palette: 'device'},

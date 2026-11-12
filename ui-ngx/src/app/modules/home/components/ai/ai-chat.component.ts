@@ -458,6 +458,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
     setTimeout(() => this.focus());
   }
 
+  composeText(text: string): void {
+    this.promptInput?.setValue(text);
+  }
+
   ask(message: string): void {
     this.sendMsgFromUser({message, resources: []});
   }

@@ -28,6 +28,10 @@ import { AiRunSummaryComponent } from '@home/components/ai/ai-run-summary.compon
 import { AiStartedFromComponent } from '@home/components/ai/ai-started-from.component';
 import { AiAssistantButtonComponent } from '@home/components/ai/ai-assistant-button.component';
 import { AiRecordComponent } from '@home/components/ai/ai-record.component';
+import { AiRecordCardComponent } from '@home/components/ai/ai-record-card.component';
+import { AiRecordsComponent } from '@home/components/ai/ai-records.component';
+import { AiCardActionsComponent } from '@home/components/ai/ai-card-actions.component';
+import { AiDisclosureComponent } from '@home/components/ai/ai-disclosure.component';
 import { AiQuestionComponent } from '@home/components/ai/ai-question.component';
 import { AiPlanComponent } from '@home/components/ai/ai-plan.component';
 import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.component';
@@ -57,6 +61,10 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiStartedFromComponent,
     AiAssistantButtonComponent,
     AiRecordComponent,
+    AiRecordCardComponent,
+    AiRecordsComponent,
+    AiCardActionsComponent,
+    AiDisclosureComponent,
     AiSparkComponent,
     AiQuestionComponent,
     AiPlanComponent,
@@ -93,7 +101,12 @@ import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
     AiQuestionComponent,
     AiPlanComponent,
     AiArtifactPaneComponent,
-    AiFileBodyComponent
+    AiFileBodyComponent,
+    AiRecordComponent,
+    AiRecordCardComponent,
+    AiRecordsComponent,
+    AiCardActionsComponent,
+    AiDisclosureComponent
   ]
 })
 export class AiModule {}

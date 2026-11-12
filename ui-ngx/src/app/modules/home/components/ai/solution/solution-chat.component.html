@@ -100,12 +100,7 @@
             }
           }
           @if (skipInterviewAllowed() && !loading() && !isGenerating() && !pendingQuestions().length) {
-            <div class="k-chips sol-chips">
-              <button type="button" class="ob-chip" (click)="skipInterview()">
-                <mat-icon fontSet="material-icons-round" aria-hidden="true">fast_forward</mat-icon>
-                {{ 'solution-creator.skip-interview' | translate }}
-              </button>
-            </div>
+            <tb-ai-card-actions class="sol-chips" [actions]="skipActions()" (act)="skipInterview()"></tb-ai-card-actions>
           }
           @if (creatorStep() === 'chat' && uninstalledAt(); as at) {
             <div class="k-hint note sol-hint">

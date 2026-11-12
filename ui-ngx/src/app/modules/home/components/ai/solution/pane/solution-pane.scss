@@ -433,20 +433,7 @@ table.sol-table td code.k-ent, table.sol-table td .k-sev, table.sol-table td .so
 }
 
 .sol-facts {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 2px 16px;
-  margin: 0;
   padding: 10px 0 0;
-
-  dt {
-    color: var(--tb-ink-60);
-  }
-
-  dd {
-    margin: 0;
-    color: var(--tb-ink);
-  }
 }
 
 .sol-keys-seg {

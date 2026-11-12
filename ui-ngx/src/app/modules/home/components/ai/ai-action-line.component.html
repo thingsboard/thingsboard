@@ -19,16 +19,18 @@
         <span class="dur">{{ duration() }}</span>
       }
     </div>
+    @if (listing(); as hub) {
+      <div class="k-recs k-out-recs">
+        <tb-ai-record [entityType]="hub.entityType" [alarmRule]="hub.alarmRule" [name]="hub.name" [url]="hub.url" [hub]="hub.hub"></tb-ai-record>
+      </div>
+    }
     @if (hasDetails()) {
-      <details class="tb-disc tb-disc-details" (toggle)="opened.set($any($event.target).open)">
-        <summary>{{ 'ai-assistant.action.details' | translate }}</summary>
-        @if (opened()) {
-          @if (records().length) {
-            <tb-ai-run-summary class="records" [entities]="records()"></tb-ai-run-summary>
-          }
-          <tb-ai-action-detail [view]="detail()" [names]="names()"></tb-ai-action-detail>
+      <tb-ai-disclosure class="action-details" variant="details" [summary]="'ai-assistant.action.details' | translate" [key]="'action:' + action().executionId">
+        @if (records().length) {
+          <tb-ai-run-summary class="records" [entities]="records()"></tb-ai-run-summary>
         }
-      </details>
+        <tb-ai-action-detail [view]="detail()" [names]="names()"></tb-ai-action-detail>
+      </tb-ai-disclosure>
     }
   }
 }

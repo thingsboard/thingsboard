@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
+import { catchError, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { AiRecordLoaderService } from '@home/components/ai/ai-record-loader.service';
+import { AiRecordView } from '@home/components/ai/ai-record.models';
 import { TranslateService } from '@ngx-translate/core';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { aiActionDetailView, AiDetailFact, AiDetailNames, aiParse } from '@home/components/ai/ai-action-detail.models';
@@ -28,6 +33,19 @@ export class AiActionLineComponent {
   action = input.required<AiAction>();
 
   private translate = inject(TranslateService);
+
+  private loader = inject(AiRecordLoaderService);
+
+  hubVersionId = computed(() => {
+    const action = this.action();
+    const id = action.tool === 'install_iot_hub_item' && action.status !== 'RUNNING' ? (action.arguments as {versionId?: unknown})?.versionId : null;
+    return typeof id === 'string' && id ? id : null;
+  });
+
+  listing = toSignal(toObservable(this.hubVersionId).pipe(
+    distinctUntilChanged(),
+    switchMap(id => id ? this.loader.hub(id).pipe(catchError(() => of(null))) : of(null))
+  ), {initialValue: null as AiRecordView | null});
 
   words = computed(() => aiActionWords(this.action().tool, this.action().arguments));
 
@@ -102,8 +120,6 @@ export class AiActionLineComponent {
     const facts = this.facts();
     return facts.length ? {...view, blocks: [...view.blocks, {type: 'facts' as const, rows: facts}]} : view;
   });
-
-  opened = signal(false);
 
   records = computed(() => this.action().status === 'SUCCESS' ? this.action().affectedEntities ?? [] : []);
 

@@ -10,7 +10,8 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { EntityService } from '@core/http/entity.service';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
+import { AiRecordLoaderService } from '@home/components/ai/ai-record-loader.service';
+import { AiRecordView } from '@home/components/ai/ai-record.models';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { aiEntityKind } from '@home/components/ai/ai-action.models';
 import { codeTabsBlock, decorateCodeBlocks } from '@home/components/ai/ai-code-block';
@@ -45,15 +46,6 @@ const MAX_HUB = 10;
 
 const PROTOCOL_KEY = 'tb-ai-code-protocol';
 
-interface HubRow {
-  id: string;
-  name: string;
-  maker?: string;
-  installs?: string;
-  description?: string;
-  verified?: boolean;
-  item?: MpItemVersionView;
-}
 
 @Component({
   selector: 'tb-ai-action-detail',
@@ -73,7 +65,7 @@ export class AiActionDetailComponent {
   private translate = inject(TranslateService);
   private entityService = inject(EntityService);
   private iotHubApi = inject(IotHubApiService);
-  private iotHubActions = inject(IotHubActionsService, {optional: true});
+  private recordLoader = inject(AiRecordLoaderService);
   private destroyRef = inject(DestroyRef);
   private host = inject(ElementRef<HTMLElement>);
   private clipboard = inject(ClipboardService);
@@ -90,7 +82,7 @@ export class AiActionDetailComponent {
     return hood ? this.say(hood) : '';
   });
 
-  hub = computed<HubRow[]>(() => {
+  hub = computed<AiRecordView[]>(() => {
     const block = this.view().blocks.find(item => item.type === 'hub');
     const items = this.hubItems();
     if (block?.type !== 'hub') {
@@ -98,15 +90,14 @@ export class AiActionDetailComponent {
     }
     return block.rows.map(row => {
       const item = items.get(row.id);
-      const installs = item?.totalInstallCount ?? item?.installCount;
+      if (item) {
+        const view = this.recordLoader.hubView(item);
+        return {...view, description: row.description ?? view.description};
+      }
       return {
-        id: row.id,
-        name: item?.name ?? row.name,
-        maker: item?.creatorDisplayName ?? row.vendor,
-        installs: installs != null ? this.translate.instant('ai-assistant.detail.installs', {count: installs.toLocaleString()}) : undefined,
-        description: row.description ?? item?.description,
-        verified: item?.creatorVerified,
-        item
+        key: `HUB:${row.id}`, entityType: 'SOLUTION_TEMPLATE', alarmRule: false, name: row.name, meta: '',
+        url: `/iot-hub/version/${row.id}`, description: row.description,
+        hub: {type: '', creator: row.vendor}
       };
     });
   });
@@ -175,14 +166,6 @@ export class AiActionDetailComponent {
 
   more(block: AiDetailBlock): number {
     return block.type === 'records' && block.total ? Math.max(block.total - block.rows.length, 0) : 0;
-  }
-
-  openHub(row: HubRow, event: MouseEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    if (row.item && this.iotHubActions) {
-      this.iotHubActions.openItemDetail(row.item).subscribe();
-    }
   }
 
   time(ts: number): string {

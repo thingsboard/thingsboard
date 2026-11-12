@@ -213,7 +213,7 @@
             @if (open() === key) {
               <tr class="sol-exp">
                 <td colspan="3">
-                  <dl class="sol-facts">
+                  <dl class="tb-facts sol-facts">
                     <dt>{{ 'solution-creator.pane.profiles' | translate }}</dt>
                     <dd>
                       <div class="sol-chips">
@@ -239,7 +239,7 @@
 </div>
 
 <ng-template #profileDetail let-profile>
-  <dl class="sol-facts">
+  <dl class="tb-facts sol-facts">
     @if (profile.scope) {
       <dt>{{ 'solution-creator.pane.scope' | translate }}</dt>
       <dd>{{ profile.scope }}</dd>

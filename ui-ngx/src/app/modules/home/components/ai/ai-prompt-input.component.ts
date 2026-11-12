@@ -264,7 +264,9 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     this.message.setValue(value);
     this.hasText.set(!!value);
     setTimeout(() => {
-      this.textarea?.nativeElement.focus();
+      const field = this.textarea?.nativeElement;
+      field?.focus();
+      field?.setSelectionRange(field.value.length, field.value.length);
       this.resize();
     });
   }

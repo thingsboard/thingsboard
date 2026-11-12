@@ -106,12 +106,7 @@
         <div class="k-offer" role="group" [attr.aria-label]="'ai-assistant.offer.label' | translate">
           <span class="k-offer-ic" aria-hidden="true"><mat-icon>bolt</mat-icon></span>
           <span>{{ 'ai-assistant.offer.text' | translate }}</span>
-          <span class="k-chips">
-            <button type="button" class="ob-chip" (click)="autoApproveRest.emit()">
-              <mat-icon aria-hidden="true">bolt</mat-icon>{{ 'ai-assistant.offer.approve-rest' | translate }}
-            </button>
-            <button type="button" class="ob-chip k-chip-quiet" (click)="keepAsking()">{{ 'ai-assistant.offer.keep-asking' | translate }}</button>
-          </span>
+          <tb-ai-card-actions [actions]="offerActions()" (act)="offerAct($event)"></tb-ai-card-actions>
         </div>
       </div>
     }
@@ -134,11 +129,7 @@
           <tb-ai-run-summary class="summary" [entities]="entities"></tb-ai-run-summary>
         }
         @if (msg.status === 'STOPPED' && $last && !loading) {
-          <div class="k-chips">
-            <button type="button" class="ob-chip" (click)="resume.emit()">
-              <mat-icon aria-hidden="true">play_arrow</mat-icon>{{ 'ai-assistant.resume' | translate }}
-            </button>
-          </div>
+          <tb-ai-card-actions [actions]="resumeActions()" (act)="resume.emit()"></tb-ai-card-actions>
         }
       } @else {
         <div class="agent" [class.done]="msg.done" [class.streaming]="msg.streaming" #answer>
@@ -150,6 +141,9 @@
               <p class="lead">{{ msg.lead }}</p>
             }
             <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.done !== undefined ? withoutDoneMark(msg.content) : msg.content)" (ready)="decorateCode(answer, msg)"></tb-markdown>
+            @for (shown of records[$index] ?? []; track $index) {
+              <tb-ai-records class="agent-records" [shown]="shown" (compose)="compose.emit($event)"></tb-ai-records>
+            }
             @if (summaries[$index]; as entities) {
               <tb-ai-run-summary [entities]="entities"></tb-ai-run-summary>
             }
@@ -230,13 +224,7 @@
           </div>
         }
         @if (msg.chips?.length) {
-          <div class="k-chips agent-chips">
-            @for (option of msg.chips; track option.id) {
-              <button type="button" class="ob-chip" (click)="chip.emit(option.id)">
-                <mat-icon aria-hidden="true">{{ option.icon }}</mat-icon>{{ option.label }}
-              </button>
-            }
-          </div>
+          <tb-ai-card-actions class="agent-chips" [actions]="chipActions(msg.chips)" (act)="chip.emit($event)"></tb-ai-card-actions>
         }
         @if (reportingIndex === $index) {
           <div class="k-report" role="group" [attr.aria-label]="'ai-assistant.feedback.report' | translate">

@@ -85,6 +85,7 @@
       [ghostFirst]="true"
       (openFile)="showFile($event)"
       (prompt)="ask($event)"
+      (compose)="composeText($event)"
       (answer)="ask($event)"
       (editMessage)="promptInput?.setValue($event)">
     </tb-ai-chat-messages>
