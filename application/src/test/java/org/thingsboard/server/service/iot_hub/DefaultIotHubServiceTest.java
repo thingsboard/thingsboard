@@ -618,6 +618,12 @@ class DefaultIotHubServiceTest {
         when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
         when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
                 .thenReturn(new PageData<>(List.of(checked, first, second, unrelated), 1, 4, false));
+        DeviceProfile sharedProfile = new DeviceProfile(sharedProfileId);
+        sharedProfile.setTenantId(tenantId);
+        when(deviceProfileService.findDeviceProfileById(tenantId, sharedProfileId)).thenReturn(sharedProfile);
+        Dashboard sharedDashboard = new Dashboard(sharedDashboardId);
+        sharedDashboard.setTenantId(tenantId);
+        when(dashboardService.findDashboardById(tenantId, sharedDashboardId)).thenReturn(sharedDashboard);
         when(entityService.fetchEntityName(tenantId, sharedProfileId)).thenReturn(Optional.of("Shared profile"));
         when(entityService.fetchEntityName(tenantId, sharedDashboardId)).thenReturn(Optional.of("Shared dashboard"));
 
@@ -658,6 +664,9 @@ class DefaultIotHubServiceTest {
         when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
         when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
                 .thenReturn(new PageData<>(List.of(checked), 1, 1, false));
+        Dashboard usersDashboard = new Dashboard(usersDashboardId);
+        usersDashboard.setTenantId(tenantId);
+        when(dashboardService.findDashboardById(tenantId, usersDashboardId)).thenReturn(usersDashboard);
         when(entityService.fetchEntityName(tenantId, usersDashboardId)).thenReturn(Optional.of("My dashboard"));
 
         InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
@@ -841,6 +850,63 @@ class DefaultIotHubServiceTest {
         verify(integrationService, never()).deleteIntegration(tenantId, unknownIntegration.getId());
         verify(tbConverterService).delete(converter, user);
         verify(iotHubInstalledItemService).deleteById(tenantId, new IotHubInstalledItemId(id));
+    }
+
+    @Test
+    void registerDeviceInstall_usedExistingEntityOfAnotherTenant_rejectedAndNotSaved() {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "DEVICE", "Pkg", "1.0"));
+        Device knownDevice = device(tenantId);
+        when(deviceService.findDeviceById(tenantId, knownDevice.getId())).thenReturn(knownDevice);
+        Dashboard otherTenantDashboard = dashboard(TenantId.fromUUID(UUID.randomUUID()));
+        when(dashboardService.findDashboardById(tenantId, otherTenantDashboard.getId())).thenReturn(otherTenantDashboard);
+        DeviceInstalledItemDescriptor descriptor = devicePackageDescriptor(knownDevice.getId());
+        descriptor.setUsedExistingEntityIds(List.of(otherTenantDashboard.getId()));
+
+        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, descriptor);
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_leavesTheIntegrationOfAnotherTenantAsItIs() {
+        mockTenant();
+        IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(integrationId);
+        setIntegrationState(deleted, integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        ((DeviceInstalledItemDescriptor) deleted.getDescriptor()).setUsedExistingEntityIds(List.of(integrationId));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        Integration otherTenantIntegration = integration(integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        otherTenantIntegration.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(otherTenantIntegration);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        verify(integrationService, never()).saveIntegration(any());
+        verify(integrationService, never()).deleteIntegration(any(), any());
+    }
+
+    @Test
+    void findKeptEntities_devicePackage_namesNoEntityOfAnotherTenant() {
+        DashboardId otherTenantDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem checked = devicePackage(new DeviceId(UUID.randomUUID()), otherTenantDashboardId);
+        ((DeviceInstalledItemDescriptor) checked.getDescriptor()).setUsedExistingEntityIds(List.of(otherTenantDashboardId));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked), 1, 1, false));
+        Dashboard otherTenantDashboard = new Dashboard(otherTenantDashboardId);
+        otherTenantDashboard.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        when(dashboardService.findDashboardById(tenantId, otherTenantDashboardId)).thenReturn(otherTenantDashboard);
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).containsExactly(new InstalledItemKeptEntities.KeptEntity(otherTenantDashboardId, null));
+        verify(entityService, never()).fetchEntityName(any(), any());
     }
 
 }
