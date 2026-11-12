@@ -985,6 +985,50 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual(["New.java"], self.checked(report))
         self.assertEqual([], report["curationIssues"])
 
+    def test_since_finds_a_copy_of_a_ce_file_with_another_extension_as_a_full_run_does(self):
+        # CE sources of the copy search follow the extensions of every path CE lacks: New.java brings .java in.
+        self.pull_request()
+        self.git.write("Copy.kt", fixture(p.NON_CE) + self.body)
+        self.git.commit("copy a CE file into another language")
+        scope = self.scope + ["Copy.kt"]
+        _, full, _ = self.check(scope=scope)
+        code, since, _ = self.check("--since", "master", scope=scope)
+        self.assertEqual(1, code)
+        self.assertEqual(["Copy.kt"], self.checked(since))
+        row = self.rows(since)["Copy.kt"]
+        self.assertEqual(self.rows(full)["Copy.kt"], row)
+        self.assertEqual(("unresolved", ["Source.java"]),
+                         (row["status"], [copy["path"] for copy in row["copyCandidates"]]))
+
+    def test_since_checks_every_file_when_the_merge_base_has_no_ce_bases(self):
+        self.pull_request()
+        _, report, output = self.check("--since", "lts-4.3")
+        self.assertEqual(sorted(self.scope), self.checked(report))
+        self.assertEqual("the CE commits merged at the merge base cannot be resolved", report["selection"]["reason"])
+
+    def test_since_checks_every_curated_file_when_the_target_curations_cannot_be_read(self):
+        self.git.write(p.CURATIONS, "not JSON")
+        self.git.commit("damage curations.json")
+        self.pull_request()
+        curation = dict(path="Source.java", header="apache", reason="Reviewed",
+                        contentHash=p.raw_hash((self.repo / "Source.java").read_bytes()))
+        self.git.write(p.CURATIONS, json.dumps(dict(schemaVersion=1, curations=[curation])))
+        self.git.commit("repair curations.json")
+        code, report, _ = self.check("--since", "master")
+        self.assertEqual(0, code)
+        self.assertEqual(["Source.java"], self.checked(report))
+        self.assertEqual(["Source.java"], report["redundantCurations"])
+
+    def test_since_does_not_check_every_file_when_only_the_readme_or_curations_of_the_check_change(self):
+        self.pull_request()
+        self.git.write(p.README, "notes\n")
+        self.git.write(p.CURATIONS, '{"schemaVersion": 1, "curations": [] }')
+        self.git.commit("document the check")
+        code, report, _ = self.check("--since", "master")
+        self.assertEqual((0, []), (code, report["files"]))
+        self.assertEqual({"since": "master", "mergeBase": self.git("rev-parse", "master"), "full": False,
+                          "reason": "2 changed paths"}, report["selection"])
+
     def test_since_needs_shared_history(self):
         self.git("checkout", "-q", "--orphan", "unrelated")
         self.git.write("Other.java", "other\n")

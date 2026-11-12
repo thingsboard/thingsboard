@@ -1024,15 +1024,19 @@ def could_shrink_to_copy(raw_size, destinations):
     return 2 * raw_size >= min(destinations)
 
 
-def compare(repo, plugin, lineage, contents, cache):
+def compare(repo, plugin, lineage, contents, cache, in_scope):
     names = list(contents)
     new_paths = {name for name in names if not lineage.versions(name)}
+    # Copy sources follow every path in scope that CE lacks, not only the checked ones: with --since they would
+    # otherwise depend on the files a pull request changes and miss copies that a full run finds. Without new paths
+    # nothing is searched for copies, so no CE file needs to be read for it.
+    copy_source_types = {name for name in in_scope if not lineage.versions(name)} if new_paths else set()
     sources = {}
     for base, files in lineage.trees.items():
         for name in names:
             if name in files:
                 sources.setdefault((name, files[name]), base)
-        for key in comparable_ce_files(files, new_paths).items():
+        for key in comparable_ce_files(files, copy_source_types).items():
             sources.setdefault(key, base)
     versions = {(name, oid) for name in names for _, oid in lineage.versions(name)}
     # Every input keeps the slot it has among all inputs, so the copy search sees the same paths, and Git breaks
@@ -1468,7 +1472,7 @@ def check(args):
         cache = (NoCache() if args.no_cache
                  else NormalizationCache((repo / args.cache).resolve(), cache_signature(repo, plugin)))
         try:
-            comparison = compare(repo, plugin, lineage, contents, cache)
+            comparison = compare(repo, plugin, lineage, contents, cache, scope.eligible)
         finally:
             cache.close()
         rows = [comparison.classify(name, curations.get(name)) for name in checked]

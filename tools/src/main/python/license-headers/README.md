@@ -67,7 +67,9 @@ are still reported for the whole repository.
 
 The check falls back to every file when a change can move the verdict of an
 unchanged file: new CE commits merged into the branch, a changed Mycila
-configuration in the root `pom.xml`, or a change to the check itself.
+configuration in the root `pom.xml`, or a change to the check itself. Other
+changes to the Mycila scope, such as a module added to `<modules>`, do not
+trigger it: the files they bring into scope are checked by the next push.
 
 ## Fix automatically
 

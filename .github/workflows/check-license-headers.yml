@@ -63,6 +63,8 @@ jobs:
           SINCE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
         run: |
           mkdir -p target/license-provenance
+          # A restored cache carries the marker of the run that saved it; only this run's additions may set it.
+          rm -f target/license-headers-cache/.updated
           # The runner does nothing else: use every CPU, not all but one as on a workstation.
           LICENSE_HEADERS_JOBS="$(nproc)"
           export LICENSE_HEADERS_JOBS
