@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.ReportTemplateId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
@@ -101,6 +102,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -824,6 +827,35 @@ public class ReportControllerTest extends AbstractControllerTest {
         ReportRequest request = new ReportRequest();
         request.setReportTemplateConfig(configuration);
         doPost("/api/v2/report/test", request).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testTestReportRequiresPermissionOverReportUser() throws Exception {
+        loginDifferentTenant();
+        UserId otherTenantUserId = savedDifferentTenantUser.getId();
+        loginTenantAdmin();
+
+        ReportRequest request = new ReportRequest();
+        request.setReportTemplateConfig(buildReportTemplate(TbReportFormat.CSV).getConfiguration());
+        request.setUserId(otherTenantUserId.toString());
+        doPost("/api/v2/report/test", request).andExpect(status().isForbidden());
+
+        verify(tbReportService, never()).generateTestReport(any());
+    }
+
+    @Test
+    public void testRequestReportRequiresPermissionOverReportUser() throws Exception {
+        loginDifferentTenant();
+        UserId otherTenantUserId = savedDifferentTenantUser.getId();
+        loginTenantAdmin();
+
+        ReportTemplate reportTemplate = doPost("/api/reportTemplate", buildReportTemplate(TbReportFormat.CSV), ReportTemplate.class);
+        ReportRequest request = new ReportRequest();
+        request.setReportTemplateId(reportTemplate.getId());
+        request.setUserId(otherTenantUserId.toString());
+        doPost("/api/v2/report/request", request).andExpect(status().isForbidden());
+
+        assertThat(findJobs(List.of(JobType.REPORT), List.of(reportTemplate.getId().getId()))).isEmpty();
     }
 
     private TimeseriesTableComponent buildTimeseriesTableComponent(String devicesAliasId) {

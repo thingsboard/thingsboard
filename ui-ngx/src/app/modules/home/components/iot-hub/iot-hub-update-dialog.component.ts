@@ -15,6 +15,7 @@ import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SolutionInstallDialogComponent } from '@home/components/iot-hub/solution-install-dialog.component';
+import { iotHubErrorMessage } from './iot-hub-utils';
 
 export interface IotHubUpdateDialogData {
   installedItemId: string;
@@ -95,7 +96,7 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
       },
       error: (err) => {
         this.state = 'error';
-        this.errorMessage = err?.error?.message || err?.message || this.translate.instant('iot-hub.update-error', { name: this.data.itemName });
+        this.errorMessage = iotHubErrorMessage(err, this.translate, this.translate.instant('iot-hub.update-error', { name: this.data.itemName }));
       }
     });
   }
