@@ -36,7 +36,7 @@ import {
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, merge, Observable, of, shareReplay } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { catchError, debounceTime, distinctUntilChanged, filter, map, share, skip, take, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, share, skip, tap } from 'rxjs/operators';
 import { PageLink, PageQueryParam } from '@shared/models/page/page-link';
 import { SchedulerEventService } from '@core/http/scheduler-event.service';
 import { MatPaginator } from '@angular/material/paginator';
@@ -356,6 +356,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     this.router.navigate(this.backNavigationCommands, { relativeTo: this.route }).then(() => {});
   }
 
+  // Do not remove: called by the scheduler widget's controller script (self.onResize). FullCalendar v7 resizes itself.
   resize(): void {}
 
   updateMode(mode: SchedulerEventMode, updateRouterQueryParams: boolean = true): void {

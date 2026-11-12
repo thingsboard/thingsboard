@@ -459,6 +459,10 @@ class ModulesMap implements IModulesMap {
     '@fullcalendar/angular/interaction': interactionPlugin,
     '@fullcalendar/angular/themes/classic': classicThemePlugin,
     '@fullcalendar/angular': FullCalendar,
+    '@fullcalendar/daygrid': dayGridPlugin,
+    '@fullcalendar/list': listPlugin,
+    '@fullcalendar/timegrid': timeGridPlugin,
+    '@fullcalendar/interaction': interactionPlugin,
     'canvas-gauges': CanvasGauges,
     'ngx-hm-carousel': NgxHmCarousel,
 
