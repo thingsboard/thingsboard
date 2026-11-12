@@ -14,7 +14,12 @@ import org.thingsboard.server.dao.model.sql.EntityGroupInfoEntity;
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.sql.group.EntityGroupRepository.TENANT_ID_FILTER;
+
 public interface EntityGroupInfoRepository extends JpaRepository<EntityGroupInfoEntity, UUID> {
+
+    @Query("SELECT e FROM EntityGroupInfoEntity e WHERE e.id = :entityGroupId AND " + TENANT_ID_FILTER)
+    EntityGroupInfoEntity findByTenantIdAndId(@Param("tenantId") UUID tenantId, @Param("entityGroupId") UUID entityGroupId);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(e.id, 'ENTITY_GROUP', e.name) " +
             "FROM EntityGroupEntity e " +
@@ -65,16 +70,20 @@ public interface EntityGroupInfoRepository extends JpaRepository<EntityGroupInfo
 
     @Query("SELECT e FROM EntityGroupInfoEntity e " +
             "WHERE e.id IN :entityGroupIds " +
+            "AND " + TENANT_ID_FILTER + " " +
             "AND (:textSearch IS NULL OR ilike(e.name, CONCAT('%', :textSearch, '%')) = true)")
-    Page<EntityGroupInfoEntity> findEntityGroupsByIds(@Param("entityGroupIds") List<UUID> entityGroupIds,
+    Page<EntityGroupInfoEntity> findEntityGroupsByIds(@Param("tenantId") UUID tenantId,
+                                                      @Param("entityGroupIds") List<UUID> entityGroupIds,
                                                       @Param("textSearch") String textSearch,
                                                       Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(e.id, 'ENTITY_GROUP', e.name) " +
             "FROM EntityGroupEntity e " +
             "WHERE e.id IN :entityGroupIds " +
+            "AND " + TENANT_ID_FILTER + " " +
             "AND (:textSearch IS NULL OR ilike(e.name, CONCAT('%', :textSearch, '%')) = true)")
-    Page<EntityInfo> findEntityGroupEntityInfosByIds(@Param("entityGroupIds") List<UUID> entityGroupIds,
+    Page<EntityInfo> findEntityGroupEntityInfosByIds(@Param("tenantId") UUID tenantId,
+                                                     @Param("entityGroupIds") List<UUID> entityGroupIds,
                                                      @Param("textSearch") String textSearch,
                                                      Pageable pageable);
 
