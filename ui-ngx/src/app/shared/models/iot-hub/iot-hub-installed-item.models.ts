@@ -9,11 +9,6 @@ export interface WidgetInstalledItemDescriptor {
   widgetTypeId: { id: string };
 }
 
-export interface DashboardInstalledItemDescriptor {
-  type: 'DASHBOARD';
-  dashboardId: { id: string };
-}
-
 export interface CalculatedFieldInstalledItemDescriptor {
   type: 'CALCULATED_FIELD';
   calculatedFieldId: { id: string };
@@ -50,7 +45,6 @@ export interface SolutionTemplateInstalledItemDescriptor {
 
 export type IotHubInstalledItemDescriptor =
   | WidgetInstalledItemDescriptor
-  | DashboardInstalledItemDescriptor
   | CalculatedFieldInstalledItemDescriptor
   | AlarmRuleInstalledItemDescriptor
   | RuleChainInstalledItemDescriptor
@@ -140,10 +134,6 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
     case 'WIDGET':
       entityId = descriptor.widgetTypeId?.id;
       entityType = EntityType.WIDGET_TYPE;
-      break;
-    case 'DASHBOARD':
-      entityId = descriptor.dashboardId?.id;
-      entityType = EntityType.DASHBOARD;
       break;
     case 'CALCULATED_FIELD':
     case 'ALARM_RULE':

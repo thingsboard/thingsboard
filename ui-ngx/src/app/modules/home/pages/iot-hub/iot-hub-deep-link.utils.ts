@@ -12,7 +12,6 @@ export function isUUID(s: string | null | undefined): s is string {
 export function typeSegment(t: ItemType): string | undefined {
   switch (t) {
     case ItemType.WIDGET: return 'widgets';
-    case ItemType.DASHBOARD: return 'dashboards';
     case ItemType.SOLUTION_TEMPLATE: return 'solution-templates';
     case ItemType.CALCULATED_FIELD: return 'calculated-fields';
     case ItemType.ALARM_RULE: return 'alarm-rules';

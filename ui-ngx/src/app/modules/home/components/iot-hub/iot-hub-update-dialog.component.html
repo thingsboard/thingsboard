@@ -8,11 +8,11 @@
   @switch (state) {
     @case ('confirm') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-confirm-title' | translate:{ name: data.itemName } }}</h2>
-      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.update-desc' | translate }}</p>
+      <p class="tb-iot-hub-install-desc">{{ updateDescKey | translate }}</p>
     }
     @case ('updating') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-confirm-title' | translate:{ name: data.itemName } }}</h2>
-      <p class="tb-iot-hub-install-desc">{{ 'iot-hub.update-desc' | translate }}</p>
+      <p class="tb-iot-hub-install-desc">{{ updateDescKey | translate }}</p>
     }
     @case ('success') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-success-title' | translate }}</h2>
