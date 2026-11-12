@@ -236,6 +236,26 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testShareGroupV2WithUserGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantUserGroup = new EntityGroup();
+        otherTenantUserGroup.setName("Other Tenant User Group");
+        otherTenantUserGroup.setType(EntityType.USER);
+        otherTenantUserGroup = doPost("/api/entityGroup", otherTenantUserGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        EntityGroup deviceGroup = new EntityGroup();
+        deviceGroup.setName("Shared Device Group");
+        deviceGroup.setType(EntityType.DEVICE);
+        deviceGroup = doPost("/api/entityGroup", deviceGroup, EntityGroup.class);
+
+        ShareGroupRequest shareGroupRequest = new ShareGroupRequest(tenantId, false, otherTenantUserGroup.getId(), true, null);
+        doPost("/api/v2/entityGroup/" + deviceGroup.getId().getId() + "/share", shareGroupRequest)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(not(containsString(otherTenantUserGroup.getName()))));
+    }
+
+    @Test
     public void testShareGroupToChildOwnerUserGroupWithGroupsOfOtherTenantReturnsNotFound() throws Exception {
         loginDifferentTenant();
         EntityGroup otherTenantUserGroup = new EntityGroup();
