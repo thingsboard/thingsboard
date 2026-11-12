@@ -20,11 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -37,7 +39,8 @@ import java.util.function.Consumer;
  * back to 1 s once connected (the same schedule as the library).
  * <p>
  * Sending: a frame goes out at once when connected; during a connect attempt it waits for that attempt, at most the
- * request timeout; between attempts (device unreachable) it fails at once. A request is therefore never written after
+ * request timeout; between attempts (device unreachable) it fails at once. Both failures are "Not connected" errors,
+ * never a timeout. A request is therefore never written after
  * the client has already given up on it, and no timeout is spent waiting for a device that is known to be down.
  *
  * @param <F> frame type exchanged with the digitalpetri client
@@ -169,9 +172,16 @@ abstract class TcpClientTransport<F> {
             // copy: the timeout must not complete the attempt itself, which other senders and the reconnect logic share
             return pendingAttempt.copy()
                     .orTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS)
+                    .exceptionallyCompose(e -> CompletableFuture.failedFuture(notConnected(e)))
                     .thenCompose(connected -> write(connected, frame));
         }
         return CompletableFuture.failedFuture(new IllegalStateException("Not connected to " + address()));
+    }
+
+    private IllegalStateException notConnected(Throwable cause) {
+        Throwable root = cause instanceof CompletionException && cause.getCause() != null ? cause.getCause() : cause;
+        String reason = root instanceof TimeoutException ? "still connecting" : root.getMessage();
+        return new IllegalStateException("Not connected to " + address() + ": " + reason, root);
     }
 
     public void receive(Consumer<F> frameReceiver) {

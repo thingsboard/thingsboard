@@ -128,6 +128,25 @@ class TcpClientTransportTest {
     }
 
     @Test
+    void sendDuringAnAttemptThatDoesNotCompleteFailsAsNotConnectedNotAsTimeout() throws Exception {
+        // 192.0.2.1 (TEST-NET-1) is never assigned: the connect attempt hangs until the connect timeout. On a network
+        // that rejects it at once the request fails between attempts instead, with the same kind of error.
+        var unanswered = new MbapTcpClientTransport("192.0.2.1", 502, Duration.ofSeconds(3), Duration.ofMillis(200),
+                eventLoopGroup, executor, Duration.ofMillis(50), Duration.ofMillis(200));
+        try {
+            unanswered.connect();
+
+            CompletableFuture<Void> sent = unanswered.send(frame()).toCompletableFuture();
+
+            assertThat(sent).failsWithin(Duration.ofSeconds(2)).withThrowableOfType(ExecutionException.class)
+                    .withCauseInstanceOf(IllegalStateException.class)
+                    .withMessageContaining("Not connected to 192.0.2.1:502");
+        } finally {
+            unanswered.disconnect().get();
+        }
+    }
+
+    @Test
     void disconnectStopsReconnecting() throws Exception {
         CompletableFuture<Void> firstAttempt = transport.connect();
         Awaitility.await().atMost(WAIT).until(firstAttempt::isDone);
