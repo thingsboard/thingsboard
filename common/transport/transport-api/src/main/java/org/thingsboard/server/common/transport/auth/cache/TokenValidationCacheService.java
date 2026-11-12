@@ -13,8 +13,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.cache.CacheSpecs;
+import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsValidationResult;
 import org.thingsboard.server.gen.transport.TransportProtos.TokenValidationCacheEntryProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
@@ -23,6 +26,7 @@ import org.thingsboard.server.queue.util.TbTransportComponent;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.concurrent.Executor;
@@ -35,7 +39,8 @@ import java.util.function.Supplier;
 
 /**
  * Transport-side cache of device credentials validation results.
- * L1 is an in-process Caffeine cache in front of a remote (Redis) L2, the shared {@code TokenValidationCache}.
+ * L1 is an in-process Caffeine cache ({@code cache.specs.transportTokenValidationLocal}) in front of a remote (Redis) L2,
+ * the shared {@code TokenValidationCache} ({@code cache.specs.transportTokenValidation}).
  * L1 reads are pure in-memory and run on the calling thread; all L2 I/O runs on a small dedicated bounded executor,
  * so a slow L2 never occupies the transport callback executor or the queue request template thread, and L1 hits
  * keep working while the executor is saturated; a saturated executor degrades to a cache miss.
@@ -55,13 +60,16 @@ public class TokenValidationCacheService {
      * to outlive an in-flight transport-api round trip (10 s request timeout by default).
      */
     public static final long TOMBSTONE_TTL_SEC = 30;
-    private static final long MAX_L1_SIZE = 100_000;
+    /**
+     * Lifetime of a cached "credentials not found" result, enforced as its Redis expiry, so unauthenticated junk-token
+     * traffic cannot keep more than ~rate x TTL keys alive in the shared cache.
+     */
+    static final long NEGATIVE_TTL_SEC = 30;
+    private static final long NEGATIVE_TTL_MS = TimeUnit.SECONDS.toMillis(NEGATIVE_TTL_SEC);
     private static final long WARN_INTERVAL_MS = 60_000;
 
     private final TbTransactionalCache<String, TokenValidationCacheEntryProto> l2;
     private final boolean enabled;
-    private final long negativeTtlSec;
-    private final long negativeTtlMs;
     private final Cache<String, TokenValidationCacheEntryProto> l1;
     private final ExecutorService ioExecutorService;
 
@@ -75,19 +83,39 @@ public class TokenValidationCacheService {
             @Autowired(required = false) @Qualifier("TokenValidationCache") Optional<TbTransactionalCache<String, TokenValidationCacheEntryProto>> l2,
             @Value("${cache.type:caffeine}") String cacheType,
             @Value("${transport.validation_cache.enabled:false}") boolean enabled,
-            @Value("${transport.validation_cache.negative_ttl_sec:30}") int negativeTtlSec,
-            @Value("${transport.validation_cache.local_ttl_sec:20}") int localTtlSec) {
+            CacheSpecsMap cacheSpecsMap) {
+        this(l2, cacheType, enabled, localTtl(cacheSpecsMap), localMaxSize(cacheSpecsMap));
+    }
+
+    /**
+     * @param localTtl     L1 expire-after-write; zero disables L1 (never "never expires": L1 delays revocation on this pod)
+     * @param localMaxSize L1 maximum entries; zero disables L1
+     */
+    public TokenValidationCacheService(Optional<TbTransactionalCache<String, TokenValidationCacheEntryProto>> l2,
+                                       String cacheType, boolean enabled, Duration localTtl, long localMaxSize) {
         this.l2 = l2 != null ? l2.orElse(null) : null;
         this.enabled = enabled && this.l2 != null;
-        this.negativeTtlSec = Math.max(negativeTtlSec, 0);
-        this.negativeTtlMs = TimeUnit.SECONDS.toMillis(this.negativeTtlSec);
         // L1 only makes sense in front of a remote cache; in front of a local Caffeine L2 it would only add staleness
-        this.l1 = this.enabled && "redis".equalsIgnoreCase(cacheType) && localTtlSec > 0 ?
-                Caffeine.newBuilder().expireAfterWrite(localTtlSec, TimeUnit.SECONDS).maximumSize(MAX_L1_SIZE).build() : null;
+        this.l1 = this.enabled && "redis".equalsIgnoreCase(cacheType) && localTtl.toMillis() > 0 && localMaxSize > 0 ?
+                Caffeine.newBuilder().expireAfterWrite(localTtl).maximumSize(localMaxSize).build() : null;
         this.ioExecutorService = this.enabled ? new ThreadPoolExecutor(IO_THREADS, IO_THREADS, 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>(IO_QUEUE_CAPACITY), ThingsBoardThreadFactory.forName("transport-token-validation-cache"),
                 new ThreadPoolExecutor.AbortPolicy()) : null;
         this.ioExecutor = ioExecutorService;
+    }
+
+    private static Optional<CacheSpecs> localSpecs(CacheSpecsMap cacheSpecsMap) {
+        return Optional.ofNullable(cacheSpecsMap)
+                .map(CacheSpecsMap::getSpecs)
+                .map(specs -> specs.get(CacheConstants.TRANSPORT_TOKEN_VALIDATION_LOCAL_CACHE));
+    }
+
+    private static Duration localTtl(CacheSpecsMap cacheSpecsMap) {
+        return Duration.ofMinutes(localSpecs(cacheSpecsMap).map(CacheSpecs::getTimeToLiveInMinutes).orElse(0));
+    }
+
+    private static long localMaxSize(CacheSpecsMap cacheSpecsMap) {
+        return localSpecs(cacheSpecsMap).map(CacheSpecs::getMaxSize).orElse(0);
     }
 
     @PreDestroy
@@ -180,7 +208,7 @@ public class TokenValidationCacheService {
         if (response.hasDeviceInfo() && result != CredentialsValidationResult.VALIDATION_INTERNAL_ERROR) {
             toCache = response.toBuilder().clearDeviceProfile().build();
             positive = true;
-        } else if (!response.hasDeviceInfo() && result == CredentialsValidationResult.CREDENTIALS_NOT_FOUND && negativeTtlMs > 0) {
+        } else if (!response.hasDeviceInfo() && result == CredentialsValidationResult.CREDENTIALS_NOT_FOUND) {
             toCache = response;
             positive = false;
         } else {
@@ -235,10 +263,10 @@ public class TokenValidationCacheService {
                 // produced; L1 is not populated here, so the next lookup reads (and caches) whatever won in L2
                 l2.putIfAbsent(key, entry);
             } else {
-                // negatives carry their own short expiry (enforced in Redis, not only logically), so unauthenticated
-                // junk-token traffic cannot keep ~rate x TTL keys alive in the shared cache; putIfAbsent so a late
-                // negative cannot overwrite a tombstone written by the core right after credentials were created
-                l2.putIfAbsent(key, entry, negativeTtlSec);
+                // negatives carry their own short expiry (enforced in Redis, not only logically, see NEGATIVE_TTL_SEC);
+                // putIfAbsent so a late negative cannot overwrite a tombstone written by the core right after
+                // credentials were created
+                l2.putIfAbsent(key, entry, NEGATIVE_TTL_SEC);
             }
             log.debug("[{}] Token validation cache store: {}", key, describe(entry));
         } catch (Exception e) {
@@ -296,7 +324,7 @@ public class TokenValidationCacheService {
         if (entry.getRevoked() || entry.getResponse().hasDeviceInfo()) {
             return false;
         }
-        return clock.get() - entry.getCreatedTime() > negativeTtlMs;
+        return clock.get() - entry.getCreatedTime() > NEGATIVE_TTL_MS;
     }
 
     private static String describe(TokenValidationCacheEntryProto entry) {

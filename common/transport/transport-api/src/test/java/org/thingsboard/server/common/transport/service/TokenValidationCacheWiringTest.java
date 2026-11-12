@@ -21,6 +21,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -51,7 +52,7 @@ class TokenValidationCacheWiringTest {
     @BeforeEach
     void setUp() {
         l2 = new InMemoryTransactionalCache<>();
-        cacheService = new TokenValidationCacheService(Optional.of(l2), "redis", true, 30, 20);
+        cacheService = new TokenValidationCacheService(Optional.of(l2), "redis", true, Duration.ofSeconds(20), 100_000);
 
         DeviceProfile profile = new DeviceProfile(profileId);
         profile.setTransportType(DeviceTransportType.DEFAULT);

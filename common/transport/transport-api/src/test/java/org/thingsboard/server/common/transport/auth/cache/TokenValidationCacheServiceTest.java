@@ -8,16 +8,21 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.thingsboard.server.cache.CacheSpecs;
+import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsValidationResult;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceProfileProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TokenValidationCacheEntryProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceCredentialsResponseMsg;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -42,6 +47,8 @@ import static org.mockito.Mockito.when;
 class TokenValidationCacheServiceTest {
 
     private static final String TOKEN = "secret-token";
+    private static final Duration LOCAL_TTL = Duration.ofSeconds(20);
+    private static final long LOCAL_MAX_SIZE = 100_000;
     private static final String KEY = TokenValidationCacheService.cacheKey(TOKEN);
     private static final Executor REJECTING = r -> {
         throw new RejectedExecutionException("saturated");
@@ -63,12 +70,28 @@ class TokenValidationCacheServiceTest {
         created.forEach(TokenValidationCacheService::destroy);
     }
 
-    private TokenValidationCacheService service(boolean enabled, int negativeTtlSec, int localTtlSec) {
-        return service("redis", enabled, negativeTtlSec, localTtlSec);
+    private TokenValidationCacheService service(boolean enabled, int localTtlSec) {
+        return service("redis", enabled, localTtlSec);
     }
 
-    private TokenValidationCacheService service(String cacheType, boolean enabled, int negativeTtlSec, int localTtlSec) {
-        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(l2), cacheType, enabled, negativeTtlSec, localTtlSec);
+    private TokenValidationCacheService service(String cacheType, boolean enabled, int localTtlSec) {
+        return withTestExecutor(new TokenValidationCacheService(Optional.of(l2), cacheType, enabled, Duration.ofSeconds(localTtlSec), LOCAL_MAX_SIZE));
+    }
+
+    private TokenValidationCacheService serviceFromSpecs(Map<String, CacheSpecs> specs) {
+        CacheSpecsMap specsMap = new CacheSpecsMap();
+        specsMap.setSpecs(specs);
+        return withTestExecutor(new TokenValidationCacheService(Optional.of(l2), "redis", true, specsMap));
+    }
+
+    private static CacheSpecs specs(int ttlMinutes, int maxSize) {
+        CacheSpecs specs = new CacheSpecs();
+        specs.setTimeToLiveInMinutes(ttlMinutes);
+        specs.setMaxSize(maxSize);
+        return specs;
+    }
+
+    private TokenValidationCacheService withTestExecutor(TokenValidationCacheService s) {
         created.add(s);
         s.clock = now::get;
         s.ioExecutor = MoreExecutors.directExecutor();
@@ -106,7 +129,7 @@ class TokenValidationCacheServiceTest {
 
     @Test
     void givenCacheDisabled_whenProcess_thenKafkaPathAndNoCacheCalls() throws Exception {
-        TokenValidationCacheService s = service(false, 30, 20);
+        TokenValidationCacheService s = service(false, 20);
         assertThat(s.isEnabled()).isFalse();
         assertThat(s.lookup(TOKEN)).isEmpty();
         assertThat(s.lookupAsync(TOKEN).get()).isEmpty();
@@ -116,7 +139,7 @@ class TokenValidationCacheServiceTest {
 
     @Test
     void givenNoCacheBean_thenDisabled() {
-        TokenValidationCacheService s = new TokenValidationCacheService(Optional.empty(), "redis", true, 30, 20);
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.empty(), "redis", true, LOCAL_TTL, LOCAL_MAX_SIZE);
         created.add(s);
         assertThat(s.isEnabled()).isFalse();
         assertThat(s.lookup(TOKEN)).isEmpty();
@@ -126,7 +149,7 @@ class TokenValidationCacheServiceTest {
     void givenPositiveEntryInL2_whenLookup_thenHitAndL1Populated() {
         TokenValidationCacheEntryProto e = entry(now.get(), positive());
         l2Returns(e);
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
 
         assertThat(s.lookup(TOKEN)).contains(e);
         assertThat(s.lookup(TOKEN)).contains(e);
@@ -137,7 +160,7 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenCaffeineCacheType_whenLookup_thenNoL1() {
         l2Returns(entry(now.get(), positive()));
-        TokenValidationCacheService s = service("caffeine", true, 30, 20);
+        TokenValidationCacheService s = service("caffeine", true, 20);
 
         assertThat(s.lookup(TOKEN)).isPresent();
         assertThat(s.lookup(TOKEN)).isPresent();
@@ -148,7 +171,7 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenL1TtlZero_whenLookup_thenAlwaysL2() {
         l2Returns(entry(now.get(), positive()));
-        TokenValidationCacheService s = service(true, 30, 0);
+        TokenValidationCacheService s = service(true, 0);
 
         assertThat(s.lookup(TOKEN)).isPresent();
         assertThat(s.lookup(TOKEN)).isPresent();
@@ -157,10 +180,36 @@ class TokenValidationCacheServiceTest {
     }
 
     @Test
+    void givenLocalSpec_whenLookupTwice_thenSecondIsL1Hit() {
+        l2Returns(entry(now.get(), positive()));
+        TokenValidationCacheService s = serviceFromSpecs(Map.of(CacheConstants.TRANSPORT_TOKEN_VALIDATION_LOCAL_CACHE, specs(1, 100)));
+
+        assertThat(s.lookup(TOKEN)).isPresent();
+        assertThat(s.lookup(TOKEN)).isPresent();
+
+        verify(l2, times(1)).get(KEY);
+    }
+
+    @Test
+    void givenNoLocalSpecOrZeroTtlOrZeroMaxSize_whenLookup_thenNoL1() {
+        l2Returns(entry(now.get(), positive()));
+        for (Map<String, CacheSpecs> specs : List.of(
+                Map.<String, CacheSpecs>of(),
+                Map.of(CacheConstants.TRANSPORT_TOKEN_VALIDATION_LOCAL_CACHE, specs(0, 100)),
+                Map.of(CacheConstants.TRANSPORT_TOKEN_VALIDATION_LOCAL_CACHE, specs(1, 0)))) {
+            TokenValidationCacheService s = serviceFromSpecs(specs);
+            assertThat(s.lookup(TOKEN)).isPresent();
+            assertThat(s.lookup(TOKEN)).isPresent();
+        }
+
+        verify(l2, times(6)).get(KEY);
+    }
+
+    @Test
     void givenNegativeEntryInL2_whenLookupTwice_thenNotKeptInL1() {
         TokenValidationCacheEntryProto e = entry(now.get(), withResult(CredentialsValidationResult.CREDENTIALS_NOT_FOUND));
         l2Returns(e);
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
 
         assertThat(s.lookup(TOKEN)).contains(e);
         assertThat(s.lookup(TOKEN)).contains(e);
@@ -173,7 +222,7 @@ class TokenValidationCacheServiceTest {
         // markers stay out of L1 so a re-created credential (core replaces the marker in L2 with a tombstone)
         // takes effect on this pod within one L2 read, not after the L1 TTL
         l2Returns(TokenValidationCacheService.revokedMarker(now.get()));
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
 
         assertThat(s.lookup(TOKEN)).isPresent();
         assertThat(s.lookup(TOKEN)).isPresent();
@@ -184,7 +233,7 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenTombstoneInL2_whenLookup_thenMissAndNotKeptInL1() {
         l2Returns(TokenValidationCacheService.tombstoneMarker(now.get()));
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
 
         assertThat(s.lookup(TOKEN)).isEmpty();
         assertThat(s.lookup(TOKEN)).isEmpty();
@@ -197,7 +246,7 @@ class TokenValidationCacheServiceTest {
         InMemoryTransactionalCache<String, TokenValidationCacheEntryProto> store = new InMemoryTransactionalCache<>();
         TokenValidationCacheEntryProto tombstone = TokenValidationCacheService.tombstoneMarker(now.get());
         store.map.put(KEY, tombstone);
-        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, 30, 20);
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, LOCAL_TTL, LOCAL_MAX_SIZE);
         created.add(s);
         s.ioExecutor = MoreExecutors.directExecutor();
 
@@ -212,27 +261,27 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenL2Miss_whenLookup_thenEmpty() {
         when(l2.get(KEY)).thenReturn(null);
-        assertThat(service(true, 30, 20).lookup(TOKEN)).isEmpty();
+        assertThat(service(true, 20).lookup(TOKEN)).isEmpty();
     }
 
     @Test
     void givenNegativeEntryYoungerThanTtl_whenLookup_thenNegativeHit() {
         TokenValidationCacheEntryProto e = entry(now.get() - 29_000, withResult(CredentialsValidationResult.CREDENTIALS_NOT_FOUND));
         l2Returns(e);
-        assertThat(service(true, 30, 0).lookup(TOKEN)).contains(e);
+        assertThat(service(true, 0).lookup(TOKEN)).contains(e);
     }
 
     @Test
     void givenNegativeEntryOlderThanTtl_whenLookup_thenEmpty() {
         l2Returns(entry(now.get() - 31_000, withResult(CredentialsValidationResult.CREDENTIALS_NOT_FOUND)));
-        assertThat(service(true, 30, 0).lookup(TOKEN)).isEmpty();
+        assertThat(service(true, 0).lookup(TOKEN)).isEmpty();
     }
 
     @Test
     void givenRevokedMarkerOlderThanNegativeTtl_whenLookup_thenStillHit() {
         TokenValidationCacheEntryProto marker = TokenValidationCacheService.revokedMarker(now.get() - 3_600_000);
         l2Returns(marker);
-        Optional<TokenValidationCacheEntryProto> res = service(true, 30, 0).lookup(TOKEN);
+        Optional<TokenValidationCacheEntryProto> res = service(true, 0).lookup(TOKEN);
         assertThat(res).contains(marker);
         assertThat(res.get().getRevoked()).isTrue();
         assertThat(res.get().getResponse().getResult()).isEqualTo(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
@@ -241,7 +290,7 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenCacheThrows_whenLookup_thenFallsBackToKafka() {
         when(l2.get(anyString())).thenThrow(new RuntimeException("redis down"));
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
         assertThat(s.lookup(TOKEN)).isEmpty();
         assertThat(s.lookup(TOKEN)).isEmpty();
     }
@@ -249,19 +298,19 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenCacheThrows_whenStore_thenNoExceptionPropagates() {
         doThrow(new RuntimeException("redis down")).when(l2).putIfAbsent(anyString(), any());
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
         assertThatCode(() -> s.store(TOKEN, positive())).doesNotThrowAnyException();
     }
 
     @Test
     void givenEmptyResponseWithoutResultCode_thenNotCached() {
-        service(true, 30, 20).store(TOKEN, ValidateDeviceCredentialsResponseMsg.getDefaultInstance());
+        service(true, 20).store(TOKEN, ValidateDeviceCredentialsResponseMsg.getDefaultInstance());
         verifyNothingWritten();
     }
 
     @Test
     void givenInternalErrorResult_thenNotCached() {
-        service(true, 30, 20).store(TOKEN, withResult(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR));
+        service(true, 20).store(TOKEN, withResult(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR));
         verifyNothingWritten();
     }
 
@@ -269,13 +318,13 @@ class TokenValidationCacheServiceTest {
     void givenInternalErrorWithDeviceInfo_whenStore_thenNotCached() {
         ValidateDeviceCredentialsResponseMsg r = positive().toBuilder()
                 .setResult(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR).build();
-        service(true, 30, 20).store(TOKEN, r);
+        service(true, 20).store(TOKEN, r);
         verifyNothingWritten();
     }
 
     @Test
     void givenNotFoundResult_thenNegativeCachedIfAbsentWithOwnRedisTtl() {
-        service(true, 30, 20).store(TOKEN, withResult(CredentialsValidationResult.CREDENTIALS_NOT_FOUND));
+        service(true, 20).store(TOKEN, withResult(CredentialsValidationResult.CREDENTIALS_NOT_FOUND));
         ArgumentCaptor<TokenValidationCacheEntryProto> c = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
         verify(l2).putIfAbsent(eq(KEY), c.capture(), eq(30L));
         verify(l2, never()).put(anyString(), any());
@@ -286,14 +335,8 @@ class TokenValidationCacheServiceTest {
     }
 
     @Test
-    void givenNegativeTtlZero_thenNotFoundNotCached() {
-        service(true, 0, 20).store(TOKEN, withResult(CredentialsValidationResult.CREDENTIALS_NOT_FOUND));
-        verifyNothingWritten();
-    }
-
-    @Test
     void givenPositiveResponseWithProfile_whenStore_thenPutIfAbsentWithoutProfile() {
-        service(true, 30, 20).store(TOKEN, positive());
+        service(true, 20).store(TOKEN, positive());
         ArgumentCaptor<TokenValidationCacheEntryProto> c = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
         verify(l2).putIfAbsent(eq(KEY), c.capture());
         verify(l2, never()).put(anyString(), any());
@@ -309,7 +352,7 @@ class TokenValidationCacheServiceTest {
         InMemoryTransactionalCache<String, TokenValidationCacheEntryProto> store = new InMemoryTransactionalCache<>();
         TokenValidationCacheEntryProto marker = TokenValidationCacheService.revokedMarker(now.get());
         store.map.put(KEY, marker);
-        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, 30, 20);
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, LOCAL_TTL, LOCAL_MAX_SIZE);
         created.add(s);
         s.ioExecutor = MoreExecutors.directExecutor();
 
@@ -323,7 +366,7 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenStoredPositive_whenLookup_thenReadFromL2NotFromStoreSideL1() {
         InMemoryTransactionalCache<String, TokenValidationCacheEntryProto> store = new InMemoryTransactionalCache<>();
-        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, 30, 20);
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, LOCAL_TTL, LOCAL_MAX_SIZE);
         created.add(s);
         s.ioExecutor = MoreExecutors.directExecutor();
 
@@ -339,7 +382,7 @@ class TokenValidationCacheServiceTest {
         // L1 is consulted on the calling thread, so in-memory hits keep working while the I/O executor is saturated
         TokenValidationCacheEntryProto e = entry(now.get(), positive());
         l2Returns(e);
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
         assertThat(s.lookup(TOKEN)).contains(e); // populates L1
         s.ioExecutor = REJECTING;
 
@@ -352,7 +395,7 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenBrokenEntry_whenEvictAsync_thenGoneFromL1AndL2() {
         InMemoryTransactionalCache<String, TokenValidationCacheEntryProto> store = new InMemoryTransactionalCache<>();
-        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, 30, 20);
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, LOCAL_TTL, LOCAL_MAX_SIZE);
         created.add(s);
         s.ioExecutor = MoreExecutors.directExecutor();
         TokenValidationCacheEntryProto e = entry(now.get(), positive());
@@ -368,13 +411,13 @@ class TokenValidationCacheServiceTest {
     @Test
     void givenCacheThrows_whenEvictAsync_thenNoExceptionPropagates() {
         doThrow(new RuntimeException("redis down")).when(l2).evict(anyString());
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
         assertThatCode(() -> s.evictAsync(TOKEN)).doesNotThrowAnyException();
     }
 
     @Test
     void givenRejectingExecutor_whenLookupAsync_thenImmediateMissWithoutCacheAccess() throws Exception {
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
         s.ioExecutor = REJECTING;
 
         ListenableFuture<Optional<TokenValidationCacheEntryProto>> f = s.lookupAsync(TOKEN);
@@ -386,7 +429,7 @@ class TokenValidationCacheServiceTest {
 
     @Test
     void givenRejectingExecutor_whenStore_thenDroppedWithoutException() {
-        TokenValidationCacheService s = service(true, 30, 20);
+        TokenValidationCacheService s = service(true, 20);
         s.ioExecutor = REJECTING;
 
         assertThatCode(() -> s.store(TOKEN, positive())).doesNotThrowAnyException();
@@ -400,7 +443,7 @@ class TokenValidationCacheServiceTest {
             release.await();
             return null;
         });
-        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(l2), "redis", true, 30, 20);
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(l2), "redis", true, LOCAL_TTL, LOCAL_MAX_SIZE);
         created.add(s);
         try {
             for (int i = 0; i < TokenValidationCacheService.IO_THREADS + TokenValidationCacheService.IO_QUEUE_CAPACITY; i++) {
@@ -420,7 +463,7 @@ class TokenValidationCacheServiceTest {
     void givenPositiveEntry_whenLookupAsyncOnRealExecutor_thenHit() throws Exception {
         TokenValidationCacheEntryProto e = entry(now.get(), positive());
         l2Returns(e);
-        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(l2), "redis", true, 30, 20);
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(l2), "redis", true, LOCAL_TTL, LOCAL_MAX_SIZE);
         created.add(s);
 
         assertThat(s.lookupAsync(TOKEN).get(5, TimeUnit.SECONDS)).contains(e);
