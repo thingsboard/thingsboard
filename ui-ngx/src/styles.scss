@@ -693,10 +693,14 @@ pre.tb-highlight {
   }
 
   .mat-padding {
-    padding: 8px;
+    padding: $tb-content-spacing;
     @media #{$mat-gt-sm} {
-      padding: 16px;
+      padding: $tb-content-spacing-gt-sm;
     }
+  }
+
+  .tb-content-card {
+    @include tb-content-card;
   }
 
   .mat-content {

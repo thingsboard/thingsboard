@@ -5,14 +5,8 @@
 :host {
 
   .mat-mdc-card.license-management {
-    margin: 16px;
     padding: 24px;
     display: block;
-
-    @media #{$mat-gt-sm} {
-      width: 720px;
-      margin: 16px auto;
-    }
 
     ::ng-deep {
       button {
@@ -466,15 +460,9 @@
       padding: 12px 16px;
       font-size: 15px;
       color: var(--tb-ink);
-      margin: 16px auto 8px;
-      @media #{$mat-gt-sm} {
-        margin: 16px auto 8px;
-      }
+      margin-bottom: $tb-content-spacing;
       + .mat-mdc-card.license-management {
-        margin: 8px auto 16px;
-        @media #{$mat-gt-sm} {
-          margin: 8px auto 16px;
-        }
+        margin-top: $tb-content-spacing;
       }
       > svg {
         flex: none;
@@ -493,10 +481,6 @@
       align-items: center;
       gap: 16px;
       padding: 16px 20px;
-      margin: 34px 16px 16px;
-      @media #{$mat-gt-sm} {
-        margin: 34px auto 16px;
-      }
 
       .keydisc {
         flex: none;
