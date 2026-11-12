@@ -238,6 +238,26 @@ class ModbusPollingIntegrationTest {
     }
 
     @Test
+    void unreachableDeviceReportsEachBlockOncePerOutage() throws Exception {
+        server.stop();
+        writeInputFloat(1, 0, 3f);
+        ModbusSessionContext session = session(1, profile(false, 50L)); // two read blocks: voltage and serial
+
+        service.startPolling(session);
+
+        verify(transportService, after(1500).times(2)).errorEvent(any(), any(), anyString(), any()); // ~30 failed cycles, 2 events
+
+        startServer();
+        verifyVoltagePolled(3.0, RECOVERY_MS);
+        server.stop();
+
+        Awaitility.await().atMost(Duration.ofMillis(WAIT_MS)).until(() -> invocations("errorEvent") >= 4);
+        // the second outage is reported again: once or twice per block (a request in flight may time out before the connection is seen as lost), then silence
+        verify(transportService, after(1500).atMost(6)).errorEvent(any(), any(), anyString(), any());
+        service.stopPolling(session);
+    }
+
+    @Test
     void pollingResumesAfterServerRestart() throws Exception {
         writeInputFloat(1, 0, 1f);
         ModbusSessionContext session = session(1, profile(false, 100L));
@@ -507,6 +527,11 @@ class ModbusPollingIntegrationTest {
                 .filter(invocation -> invocation.getMethod().getName().equals("process"))
                 .filter(invocation -> invocation.getArguments().length > 1 && messageType.isInstance(invocation.getArguments()[1]))
                 .count();
+    }
+
+    private long invocations(String method) {
+        return Mockito.mockingDetails(transportService).getInvocations().stream()
+                .filter(invocation -> invocation.getMethod().getName().equals(method)).count();
     }
 
     private byte[] holdingRegister(int unitId, int address) {

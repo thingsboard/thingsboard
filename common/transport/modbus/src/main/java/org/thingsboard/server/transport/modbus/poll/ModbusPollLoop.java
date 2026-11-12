@@ -17,6 +17,7 @@ import org.thingsboard.server.transport.modbus.session.ModbusSessionContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,6 +46,14 @@ public class ModbusPollLoop {
     private final TransportService transportService;
     /** Last value posted per target and key, used when the profile sends data only on change. */
     private final Map<String, JsonElement> lastValues = new ConcurrentHashMap<>();
+
+    /**
+     * How each block that is failing now failed last. An error event is reported when a block starts failing or fails
+     * in a different way, not on every cycle: an unreachable device would otherwise flood the device's events.
+     */
+    private final Map<ReadBlock, Failure> failingBlocks = new ConcurrentHashMap<>();
+    /** Keys whose value could not be decoded in the last cycle; reported once until they decode again. */
+    private final Set<String> failingDecodes = ConcurrentHashMap.newKeySet();
 
     private volatile boolean stopped;
     private volatile ScheduledFuture<?> scheduled;
@@ -93,6 +102,9 @@ public class ModbusPollLoop {
                     onBlockError(block, unwrap(error));
                     return false;
                 }
+                if (failingBlocks.remove(block) != null) {
+                    log.debug("[{}] Read {} works again", session.getDeviceId(), block);
+                }
                 decodeInto(block, data, telemetry, attributes);
                 return true;
             }));
@@ -133,7 +145,11 @@ public class ModbusPollLoop {
                 synchronized (target) {
                     target.add(item.mapping().getTag(), toJson(value));
                 }
+                failingDecodes.remove(item.target() + ":" + item.mapping().getTag());
             } catch (Exception e) {
+                if (!failingDecodes.add(item.target() + ":" + item.mapping().getTag())) {
+                    continue; // already reported, still failing
+                }
                 log.debug("[{}] Failed to decode {}", session.getDeviceId(), item.mapping().getTag(), e);
                 transportService.errorEvent(session.getTenantId(), session.getDeviceId(), ERROR_METHOD,
                         new IllegalArgumentException("Failed to decode '" + item.mapping().getTag() + "': " + e.getMessage(), e));
@@ -147,7 +163,13 @@ public class ModbusPollLoop {
                 && block.items().size() > 1
                 && blocks.remove(block)) {
             log.info("[{}] Device rejected merged read {} with exception 02, polling its mappings one by one", session.getDeviceId(), block);
+            failingBlocks.remove(block);
             blocks.addAll(block.splitPerItem());
+            return;
+        }
+        Failure failure = Failure.of(error);
+        if (failure.equals(failingBlocks.put(block, failure))) {
+            log.trace("[{}] Still failing to read {}: {}", session.getDeviceId(), block, error.toString());
             return;
         }
         log.debug("[{}] Failed to read {}: {}", session.getDeviceId(), block, error.toString());
@@ -179,6 +201,27 @@ public class ModbusPollLoop {
             }
         });
         return result;
+    }
+
+    /**
+     * What went wrong with a read, without the wording: two failures that are equal belong to the same outage.
+     * Connection errors read differently from attempt to attempt ("Connection refused", "Not connected"), so they
+     * are all {@link Kind#NOT_CONNECTED}; device exceptions are told apart by their code.
+     */
+    private record Failure(Kind kind, int exceptionCode) {
+
+        enum Kind {NOT_CONNECTED, NO_RESPONSE, DEVICE_EXCEPTION}
+
+        static Failure of(Throwable error) {
+            if (error instanceof ModbusResponseException deviceException) {
+                return new Failure(Kind.DEVICE_EXCEPTION, deviceException.getExceptionCode());
+            }
+            if (error instanceof TimeoutException) {
+                return new Failure(Kind.NO_RESPONSE, 0);
+            }
+            return new Failure(Kind.NOT_CONNECTED, 0);
+        }
+
     }
 
     private static JsonElement toJson(Object value) {
