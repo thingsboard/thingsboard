@@ -86,9 +86,6 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     public void fetchAlarms() {
-        if (stopped) {
-            return;
-        }
         alarmInvocationAttempts++;
         log.trace("[{}] Fetching alarms: {}", cmdId, alarmInvocationAttempts);
         if (alarmInvocationAttempts <= maxAlarmQueriesPerRefreshInterval) {
@@ -99,6 +96,9 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     private void doFetchAlarms() {
+        if (stopped) {
+            return;
+        }
         AlarmDataUpdate update;
         if (!entitiesMap.isEmpty()) {
             long start = System.currentTimeMillis();

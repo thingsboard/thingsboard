@@ -66,6 +66,7 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
 
     @Override
     public void clearSubscriptions() {
+        super.clearSubscriptions();
         clearAlarmSubscriptions();
     }
 

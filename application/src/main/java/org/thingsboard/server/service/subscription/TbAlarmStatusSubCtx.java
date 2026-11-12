@@ -43,14 +43,8 @@ public class TbAlarmStatusSubCtx extends TbAbstractSubCtx {
     }
 
     @Override
-    public void stop() {
-        lifecycleLock.lock();
-        try {
-            super.stop();
-            localSubscriptionService.cancelSubscription(getTenantId(), sessionRef.getSessionId(), subscription.getSubscriptionId());
-        } finally {
-            lifecycleLock.unlock();
-        }
+    protected void onStop() {
+        localSubscriptionService.cancelSubscription(getTenantId(), sessionRef.getSessionId(), subscription.getSubscriptionId());
     }
 
     public void createSubscription(AlarmStatusCmd cmd) {

@@ -9,8 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -81,9 +79,7 @@ public class TbAbstractSubCtxTest {
         when(wsService.hasSession(SESSION_ID)).thenReturn(true);
         CountDownLatch registrationEntered = new CountDownLatch(1);
         CountDownLatch releaseRegistration = new CountDownLatch(1);
-        List<String> events = new CopyOnWriteArrayList<>();
         willAnswer(invocation -> {
-            events.add("register");
             registrationEntered.countDown();
             releaseRegistration.await(10, TimeUnit.SECONDS);
             return null;
@@ -93,19 +89,19 @@ public class TbAbstractSubCtxTest {
         registrar.start();
         assertThat(registrationEntered.await(10, TimeUnit.SECONDS)).isTrue();
 
-        Thread stopper = new Thread(() -> {
-            subCtx.stop();
-            events.add("stop");
-        });
+        Thread stopper = new Thread(subCtx::stop);
         stopper.start();
-        stopper.join(200);
-        assertThat(stopper.isAlive()).as("stop() must wait for the in-flight registration").isTrue();
+        long deadline = System.currentTimeMillis() + 10_000;
+        while (!subCtx.lifecycleLock.hasQueuedThreads() && System.currentTimeMillis() < deadline) {
+            Thread.onSpinWait();
+        }
+        assertThat(subCtx.lifecycleLock.hasQueuedThreads()).as("stop() must queue on the lifecycle lock").isTrue();
+        assertThat(subCtx.isStopped()).as("stop() must not mark the context stopped while a registration holds the lock").isFalse();
 
         releaseRegistration.countDown();
         registrar.join(10_000);
         stopper.join(10_000);
 
-        assertThat(events).containsExactly("register", "stop");
         assertThat(subCtx.isStopped()).isTrue();
 
         subCtx.registerSubscription(subscription);

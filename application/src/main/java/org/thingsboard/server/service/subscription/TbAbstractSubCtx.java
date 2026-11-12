@@ -79,13 +79,21 @@ public abstract class TbAbstractSubCtx {
 
     public abstract boolean isDynamic();
 
-    public void stop() {
+    public final void stop() {
         lifecycleLock.lock();
         try {
             stopped = true;
+            onStop();
         } finally {
             lifecycleLock.unlock();
         }
+    }
+
+    /**
+     * Cancels this context's tasks and subscriptions. Called by {@link #stop()} with {@link #lifecycleLock} held and
+     * after {@code stopped} is set, so overrides must not take the lock themselves and must not register anything.
+     */
+    protected void onStop() {
     }
 
     /**

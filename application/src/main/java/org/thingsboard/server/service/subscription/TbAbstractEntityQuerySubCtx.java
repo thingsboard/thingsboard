@@ -73,15 +73,10 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
         clearDynamicValueSubscriptions();
     }
 
-    public void stop() {
-        lifecycleLock.lock();
-        try {
-            super.stop();
-            cancelTasks();
-            clearSubscriptions();
-        } finally {
-            lifecycleLock.unlock();
-        }
+    @Override
+    protected void onStop() {
+        cancelTasks();
+        clearSubscriptions();
     }
 
     public void setAndResolveQuery(T query) {
