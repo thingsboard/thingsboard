@@ -37,7 +37,7 @@ public class ModbusConnectionPool {
     private int responseProcessingParallelism;
     @Value("${transport.modbus.max_in_flight_per_endpoint:1}")
     private int maxInFlightPerEndpoint;
-    @Value("${transport.modbus.max_queue_size_per_endpoint:10000}")
+    @Value("${transport.modbus.max_queue_size_per_endpoint:1000}")
     private int maxQueueSizePerEndpoint;
     @Value("${transport.modbus.connect_timeout_ms:5000}")
     private long connectTimeoutMs;
