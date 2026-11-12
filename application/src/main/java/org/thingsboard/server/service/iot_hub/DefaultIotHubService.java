@@ -341,6 +341,7 @@ public class DefaultIotHubService implements IotHubService {
         }
         alarmRule.setId(null);
         alarmRule.setTenantId(tenantId);
+        mapTenantReferences(alarmRule, tenantId);
         if (data != null && data.has("entityId")) {
             EntityId entityId = JacksonUtil.treeToValue(data.get("entityId"), EntityId.class);
             alarmRule.setEntityId(entityId);
@@ -621,6 +622,7 @@ public class DefaultIotHubService implements IotHubService {
         existing.setName(newCf.getName());
         existing.setType(newCf.getType());
         existing.setConfiguration(newCf.getConfiguration());
+        mapTenantReferences(existing, tenantId);
         tbCalculatedFieldService.save(existing, user);
     }
 
