@@ -481,10 +481,6 @@
       align-items: center;
       gap: 16px;
       padding: 16px 20px;
-      margin: 34px 16px 16px;
-      @media #{$mat-gt-sm} {
-        margin: 34px auto 16px;
-      }
 
       .keydisc {
         flex: none;
