@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { Directive } from '@angular/core';
 import { AbstractReportComponentPreview } from '@home/pages/reporting/template/components/report-component.component';
-import { BorderType, TableReportCellSettings, TableReportColumnSettings, TableReportComponentConfig } from '@shared/models/report-component.models';
+import { borderCssWidth, TableReportCellSettings, TableReportColumnSettings, TableReportComponentConfig } from '@shared/models/report-component.models';
 import { ComponentStyle, Font, textStyle } from '@shared/models/widget-settings.models';
 import { deepClone } from '@core/utils';
 import { DataKey } from '@shared/models/widget.models';
@@ -119,7 +119,8 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
     if (cellSettings.borderWidth == null && cellSettings.borderColor == null && cellSettings.borderType == null) {
       return;
     }
-    const width = (cellSettings.borderWidth ?? DEFAULT_TABLE_BORDER_WIDTH_PX) + 'px';
+    const lineWidth = cellSettings.borderWidth ?? DEFAULT_TABLE_BORDER_WIDTH_PX;
+    const width = (cellSettings.borderType ? borderCssWidth(cellSettings.borderType, lineWidth) : lineWidth) + 'px';
     const sides = ['Right', 'Bottom'];
     if (firstColumn) {
       sides.push('Left');

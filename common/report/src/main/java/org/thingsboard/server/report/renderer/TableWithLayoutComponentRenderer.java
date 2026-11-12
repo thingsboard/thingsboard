@@ -317,7 +317,8 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
             if (borderWidth == null && borderType == null && borderColor == null) {
                 return;
             }
-            int width = borderWidth != null ? borderWidth : DEFAULT_BORDER_WIDTH_PX;
+            int lineWidth = borderWidth != null ? borderWidth : DEFAULT_BORDER_WIDTH_PX;
+            int width = borderType != null ? borderType.toCssWidth(lineWidth) : lineWidth;
             List<String> sides = new ArrayList<>();
             sides.add("right");
             sides.add("bottom");

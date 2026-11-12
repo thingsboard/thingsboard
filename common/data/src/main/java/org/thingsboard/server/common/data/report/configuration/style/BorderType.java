@@ -22,6 +22,18 @@ public enum BorderType {
         return value;
     }
 
+    /**
+     * Converts the configured width into the CSS border-width.
+     * <p>
+     * The configured width is the thickness of a single line. For {@link #DOUBLE} the border is drawn as
+     * two lines of that thickness with an equal gap between them, so the CSS width is three times larger.
+     * This matches how Word stores the width of double borders (LibreOffice multiplies it by 3 when importing
+     * Word documents). CSS uses the total width instead, so a "1px double" border would render as a single solid line.
+     */
+    public int toCssWidth(int lineWidth) {
+        return this == DOUBLE ? lineWidth * 3 : lineWidth;
+    }
+
     @JsonCreator
     public static BorderType fromLabel(String value) {
         for (BorderType type : values()) {

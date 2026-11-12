@@ -151,6 +151,14 @@ export const borderTypeTranslations = new Map<BorderType, string>(
   ]
 );
 
+/**
+ * Converts the configured width (thickness of a single line) into the CSS border-width.
+ * A double border is two lines of that thickness with an equal gap between them (the same model Word uses),
+ * so its CSS width is three times larger. Mirrors BorderType.toCssWidth() on the backend.
+ */
+export const borderCssWidth = (type: BorderType, lineWidth: number): number =>
+  type === BorderType.double ? lineWidth * 3 : lineWidth;
+
 export interface TableReportCellSettings {
   font?: Font;
   color?: string;
@@ -251,8 +259,6 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
     name: '{i18n:report-template.border}',
     subLabel: '{i18n:report-template.width}',
     fieldSuffix: 'px',
-    hint: '{i18n:report-template.double-border-min-width-hint}',
-    validator: `return model.borderType === 'double' && value != null && value < 3 ? '{i18n:report-template.double-border-min-width}' : null;`,
     min: 0,
     step: 1,
     default: null
@@ -275,6 +281,15 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
     name: '{i18n:report-template.border}',
     default: null
   },
+  {
+    id: 'doubleBorderHint',
+    type: FormPropertyType.htmlSection,
+    name: '',
+    htmlClassList: ['tb-form-hint', 'tb-primary-fill'],
+    htmlContent: '{i18n:report-template.double-border-width-hint}',
+    condition: `return model.borderType === '${BorderType.double}';`,
+    default: null
+  }
 ]);
 
 const severityReportCellSettings = (): FormProperty[] => {
