@@ -10,13 +10,38 @@ import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.UUID;
+
 public interface IotHubService {
 
     InstallItemVersionResult installItemVersion(SecurityUser user, String versionId, JsonNode data, HttpServletRequest request);
 
     UpdateItemVersionResult updateItemVersion(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId, boolean force, HttpServletRequest request);
 
-    InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor);
+    /**
+     * Records a device package installed by the install wizard. With {@code replaceInstalledItemId} (an update), that
+     * installed item takes the new version instead of a new installed item being created.
+     */
+    InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor,
+                                                   IotHubInstalledItemId replaceInstalledItemId);
+
+    /**
+     * First step of a device package update: removes the entities the package created and keeps the installed item at
+     * its current version, so it is never shown with a version that is not installed. The item keeps that version even
+     * when its entities are gone and the new version is never registered (the wizard was closed): Update installs it
+     * again. An entity that could not be removed stays tracked and the call fails, so repeating it removes the rest.
+     * Refused with an {@link IllegalArgumentException} (a 400), before anything is removed, when the item is not a device
+     * package, {@code versionId} (the version to install) is not a version of that item, or IoT Hub does not answer. A failure once removing started is an
+     * {@link IllegalStateException}: entities may already be removed.
+     * PE: the entity group and the customer of the removed device are kept in the install state ({@code $placement}),
+     * so the new version's device is created there even when the update is retried after the device is gone.
+     */
+    void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId,
+                                     UUID entityGroupId, UUID customerId);
+
+    default void removeDevicePackageEntities(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId) {
+        removeDevicePackageEntities(user, installedItemId, versionId, null, null);
+    }
 
     void deleteInstalledItem(SecurityUser user, IotHubInstalledItemId installedItemId);
 

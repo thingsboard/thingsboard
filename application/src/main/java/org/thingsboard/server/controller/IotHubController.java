@@ -89,10 +89,24 @@ public class IotHubController extends BaseController {
     @ResponseBody
     public InstallItemVersionResult registerDeviceInstall(
             @RequestParam String versionId,
+            @RequestParam(required = false) UUID replaceInstalledItemId,
             @RequestBody JsonNode body) throws ThingsboardException {
         checkAllPermissions();
         DeviceInstalledItemDescriptor descriptor = JacksonUtil.treeToValue(body, DeviceInstalledItemDescriptor.class);
-        return iotHubService.registerDeviceInstall(getCurrentUser(), versionId, descriptor);
+        return iotHubService.registerDeviceInstall(getCurrentUser(), versionId, descriptor,
+                replaceInstalledItemId != null ? new IotHubInstalledItemId(replaceInstalledItemId) : null);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/installedItems/{installedItemId}/device/removeEntities")
+    @ResponseBody
+    public void removeDevicePackageEntities(@PathVariable UUID installedItemId,
+                                            @RequestParam String versionId,
+                                            @RequestParam(required = false) UUID entityGroupId,
+                                            @RequestParam(required = false) UUID customerId) throws ThingsboardException {
+        checkAllPermissions();
+        iotHubService.removeDevicePackageEntities(getCurrentUser(), new IotHubInstalledItemId(installedItemId), versionId,
+                entityGroupId, customerId);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
