@@ -1383,6 +1383,8 @@
             "ask-again": "Ask again",
             "ask-again-message": "Ask me again for the same change.",
             "field": {
+                "defaultDashboard": "Default dashboard",
+                "homeDashboard": "Home dashboard",
                 "email": "Email",
                 "firstName": "First name",
                 "lastName": "Last name",

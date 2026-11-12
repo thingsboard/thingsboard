@@ -90,7 +90,8 @@ export class AiAssistantPanelComponent {
   clientContext = computed<AiChatClientContext | undefined>(() => {
     const context = this.panelService.clientContext();
     if (context) {
-      return context;
+      const name = this.panelService.viewName();
+      return context.view?.entityId && name && !context.view.title ? {...context, view: {...context.view, title: name}} : context;
     }
     const title = this.pageTitle();
     const path = this.pagePath();
