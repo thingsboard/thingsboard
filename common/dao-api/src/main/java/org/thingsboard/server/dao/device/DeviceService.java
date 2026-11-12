@@ -88,8 +88,9 @@ public interface DeviceService extends EntityDaoService {
     PageData<DeviceId> findDeviceIdsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
     /**
-     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
-     * use {@link #findProfileEntityIdInfosByTenantId(TenantId, int, Consumer)} instead. Scheduled for removal in the next major release.
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows.
+     * There is no all-tenant replacement: to read every tenant, iterate the tenants and call
+     * {@link #findProfileEntityIdInfosByTenantId(TenantId, int, Consumer)} for each one. Scheduled for removal in the next major release.
      */
     @Deprecated(since = "4.4", forRemoval = true)
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);

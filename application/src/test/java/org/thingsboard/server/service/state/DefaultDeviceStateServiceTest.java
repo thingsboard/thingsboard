@@ -1169,26 +1169,31 @@ class DefaultDeviceStateServiceTest {
             deviceIds.add(id);
             given(partitionService.resolve(ServiceType.TB_CORE, tenantId, id)).willReturn(tpi);
         }
-        List<Integer> packSizesSeenDuringScan = new ArrayList<>();
+        List<Integer> fetchedPackSizes = new ArrayList<>();
+        List<Integer> fetchesDoneAfterEachPage = new ArrayList<>();
         willAnswer(invocation -> {
             Consumer<List<DeviceIdInfo>> pageConsumer = invocation.getArgument(1);
             // pages of 700 do not line up with the 1000-device packs
             for (List<DeviceId> page : Lists.partition(deviceIds, 700)) {
                 pageConsumer.accept(page.stream().map(id -> new DeviceIdInfo(tenantId.getId(), null, id.getId())).toList());
+                fetchesDoneAfterEachPage.add(fetchedPackSizes.size());
             }
             return null;
         }).given(deviceService).findAllDeviceIdInfos(eq(50000), any());
         given(entityQueryRepository.findEntityDataByQueryInternal(any())).willAnswer(invocation -> {
             EntityDataQuery query = invocation.getArgument(0);
-            packSizesSeenDuringScan.add(((EntityListFilter) query.getEntityFilter()).getEntityList().size());
+            fetchedPackSizes.add(((EntityListFilter) query.getEntityFilter()).getEntityList().size());
             return PageData.emptyPageData();
         });
 
         // WHEN
         var fetchTasks = service.onAddedPartitions(Set.of(tpi));
 
-        // THEN full packs of 1000 are fetched while the pages are read, the remainder after the last page
-        assertThat(packSizesSeenDuringScan).containsExactly(1000, 1000, 500);
+        // THEN a pack is fetched as soon as it is full, while the next pages are still being read:
+        // 700 -> no full pack yet, 1400 -> 1st pack, 2100 -> 2nd pack, 2500 -> 500 left in the current pack
+        assertThat(fetchesDoneAfterEachPage).containsExactly(0, 1, 2, 2);
+        // and the remaining 500 are fetched after the last page
+        assertThat(fetchedPackSizes).containsExactly(1000, 1000, 500);
         assertThat(fetchTasks.get(tpi)).hasSize(3);
     }
 
