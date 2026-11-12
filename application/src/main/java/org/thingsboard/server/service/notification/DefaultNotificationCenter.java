@@ -103,6 +103,9 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationTemplate notificationTemplate;
         if (request.getTemplateId() != null) {
             notificationTemplate = notificationTemplateService.findNotificationTemplateById(tenantId, request.getTemplateId());
+            if (notificationTemplate != null && !isTenantOrSystem(tenantId, notificationTemplate.getTenantId())) {
+                notificationTemplate = null;
+            }
         } else {
             notificationTemplate = request.getTemplate();
         }
@@ -115,7 +118,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         List<NotificationTarget> targets = new ArrayList<>();
         for (UUID targetId : request.getTargets()) {
             NotificationTarget target = notificationTargetService.findNotificationTargetById(tenantId, new NotificationTargetId(targetId));
-            if (target != null) {
+            if (target != null && tenantId.equals(target.getTenantId())) {
                 targets.add(target);
             } else {
                 log.debug("Unknown notification target {} in request {}", targetId, request);
@@ -478,6 +481,10 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     @Override
     protected String getExecutorPrefix() {
         return "notification";
+    }
+
+    private static boolean isTenantOrSystem(TenantId tenantId, TenantId ownerId) {
+        return tenantId.equals(ownerId) || ownerId.isSysTenantId();
     }
 
     @Autowired
