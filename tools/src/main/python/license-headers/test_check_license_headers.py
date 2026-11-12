@@ -1304,6 +1304,24 @@ class CacheTests(unittest.TestCase):
         self.assertEqual({("A.java", "a"): b"normalized"},
                          p.NormalizationCache(directory, "damaged").get({("A.java", "a"): b"raw"}))
 
+    def test_a_cache_damaged_after_its_schema_is_started_again(self):
+        directory = temporary_directory(self)
+        cache = p.NormalizationCache(directory, "damaged")
+        cache.put([((f"F{index}.java", "a"), f"raw {index}".encode(), b"normalized" * 400) for index in range(300)])
+        cache.close()
+        database = directory / "damaged.sqlite"
+        page = 4096
+        with database.open("r+b") as file:
+            # The schema and the root pages stay readable, so the file opens; every lookup below them fails.
+            file.seek(4 * page)
+            file.write(b"\xff" * (database.stat().st_size - 4 * page))
+        cache = p.NormalizationCache(directory, "damaged")
+        self.assertEqual({}, cache.get({("F0.java", "a"): b"raw 0"}))
+        cache.put([(("A.java", "a"), b"raw", b"normalized")])
+        cache.close()
+        self.assertEqual({("A.java", "a"): b"normalized"},
+                         p.NormalizationCache(directory, "damaged").get({("A.java", "a"): b"raw"}))
+
     def test_the_cache_of_a_branch_checked_long_ago_survives_newer_signatures(self):
         directory = temporary_directory(self)
         p.NormalizationCache(directory, "revisited").close()

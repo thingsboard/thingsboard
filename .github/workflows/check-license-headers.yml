@@ -54,7 +54,7 @@ jobs:
           path: target/license-headers-cache
           key: license-headers-ce-v1-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
-            license-headers-ce-v1-${{ github.ref_name }}-
+            license-headers-ce-v1-${{ github.base_ref || github.ref_name }}-
             license-headers-ce-v1-
 
       - name: Check license headers

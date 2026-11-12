@@ -936,6 +936,10 @@ class NormalizationCache:
     def open(self):
         database = sqlite3.connect(self.path, check_same_thread=False)
         database.execute("CREATE TABLE IF NOT EXISTS normalized (input TEXT PRIMARY KEY, content BLOB NOT NULL)")
+        # Opening reads only the schema: a file damaged below it would fail on the first lookup instead.
+        if database.execute("PRAGMA quick_check").fetchone()[0] != "ok":
+            database.close()
+            raise sqlite3.DatabaseError(f"{self.path} is damaged")
         return database
 
     @staticmethod
