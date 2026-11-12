@@ -211,6 +211,13 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     }
 
     @Override
+    public UserCredentials findUserCredentialsById(TenantId tenantId, UserCredentialsId userCredentialsId) {
+        log.trace("Executing findUserCredentialsById [{}]", userCredentialsId);
+        validateId(userCredentialsId, id -> INCORRECT_USER_CREDENTIALS_ID + id);
+        return userCredentialsDao.findById(tenantId, userCredentialsId.getId());
+    }
+
+    @Override
     public UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId) {
         log.trace("Executing findUserCredentialsByUserId [{}]", userId);
         validateId(userId, id -> INCORRECT_USER_ID + id);
@@ -623,7 +630,8 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     }
 
-    private void updatePasswordHistory(UserCredentials userCredentials) {
+    @Override
+    public void updatePasswordHistory(UserCredentials userCredentials) {
         JsonNode additionalInfo = userCredentials.getAdditionalInfo();
         if (!(additionalInfo instanceof ObjectNode)) {
             additionalInfo = JacksonUtil.newObjectNode();
