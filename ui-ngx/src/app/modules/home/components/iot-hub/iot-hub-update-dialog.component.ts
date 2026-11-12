@@ -41,14 +41,6 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
   state: UpdateState = 'confirm';
   errorMessage = '';
   entityDetailsUrl: string | null = null;
-  /** A device package is reinstalled: its entities and their data are removed, as on Remove. */
-  readonly reinstalls: boolean;
-  /**
-   * Updating a solution template is a delete + reinstall of every entity it created, and unlike the other item
-   * types it is not stopped by the modified-entity check, so the tenant's own edits to those dashboards, devices
-   * and rule chains are lost. Say that instead of the generic "replace the current version" wording.
-   */
-  readonly updateDescKey: string;
 
   constructor(
     protected store: Store<AppState>,
@@ -61,9 +53,6 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
     private iotHubApiService: IotHubApiService
   ) {
     super(store, router, dialogRef);
-    this.reinstalls = data.itemType === ItemType.DEVICE;
-    this.updateDescKey = data.itemType === ItemType.SOLUTION_TEMPLATE ? 'iot-hub.update-desc-solution-template'
-      : this.reinstalls ? 'iot-hub.update-desc-device' : 'iot-hub.update-desc';
   }
 
   getTypeLabel(): string {
@@ -71,12 +60,18 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
     return key ? this.translate.instant(key) : '';
   }
 
+  /**
+   * Updating a solution template is a delete + reinstall of every entity it created, and unlike the other item
+   * types it is not stopped by the modified-entity check, so the tenant's own edits to those dashboards, devices
+   * and rule chains are lost. Say that instead of the generic "replace the current version" wording.
+   */
+  get updateDescKey(): string {
+    return this.data?.itemType === ItemType.SOLUTION_TEMPLATE
+      ? 'iot-hub.update-desc-solution-template'
+      : 'iot-hub.update-desc';
+  }
+
   update(force = false): void {
-    if (this.reinstalls) {
-      // The install wizard of the new version does the update: it needs the user's input.
-      this.dialogRef.close('reinstall');
-      return;
-    }
     this.state = 'updating';
     this.iotHubApiService.updateItemVersion(this.data.installedItemId, this.data.versionId, { ignoreLoading: true }, force).subscribe({
       next: (result) => {
