@@ -562,6 +562,27 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     .composer-foot > .composer-add:first-child {
       margin-left: -7.5px;
     }
+
+    @container k-col (min-width: 481px) {
+      border-top: 0;
+      background: none;
+
+      .composer-field, .composer-field:not(:focus-within) {
+        border: 1px solid var(--tb-line);
+        border-radius: 14px;
+        background: var(--tb-surface);
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 10px 28px rgba(16, 24, 40, 0.10);
+
+        &:focus-within {
+          border-color: var(--ai-focus);
+          box-shadow: 0 0 0 3px var(--ai-focus-shadow), 0 10px 28px rgba(16, 24, 40, 0.10);
+        }
+      }
+
+      .composer-foot {
+        border-radius: 0 0 14px 14px;
+      }
+    }
   }
 }
 

@@ -468,3 +468,38 @@ tb-ai-chat-title:has(.ai-chat-status) + .ai-chat-actions {
   margin-right: auto;
 }
 
+
+@container k-col (min-width: 481px) {
+  :host(.v-panel:not(.split)) {
+    .ai-chat-body {
+      padding: 20px 24px 0;
+    }
+
+    .ai-chat-log {
+      max-width: var(--chat-read-log);
+      margin-bottom: 64px;
+    }
+
+    .ai-chat-composer, .ai-chat-body.empty .ai-chat-composer {
+      margin: 0 -24px;
+      padding: 0 24px 16px;
+      background: var(--tb-surface);
+      pointer-events: none;
+
+      > * {
+        pointer-events: auto;
+      }
+
+      > tb-ai-prompt-input {
+        max-width: var(--chat-read);
+        margin: 0 auto;
+      }
+    }
+
+    .ai-chat-body:not(.empty) .ai-chat-composer {
+      margin-top: -32px;
+      padding-top: 32px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--tb-surface) 0%, transparent), var(--tb-surface) 32px);
+    }
+  }
+}
