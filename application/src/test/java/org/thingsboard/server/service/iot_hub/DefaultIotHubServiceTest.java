@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,13 +14,19 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +40,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -48,6 +56,10 @@ class DefaultIotHubServiceTest {
     private IotHubRestClient iotHubRestClient;
     @Mock
     private IotHubInstalledItemService iotHubInstalledItemService;
+    @Mock
+    private EntityGroupService entityGroupService;
+    @Mock
+    private AccessControlService accessControlService;
 
     @Spy
     @InjectMocks
@@ -410,5 +422,30 @@ class DefaultIotHubServiceTest {
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.isRolledBack()).isFalse();
         assertThat(result.getErrorMessage()).contains("install failed");
+    }
+
+    @Test
+    void installItemVersion_dashboardWithGroupOfAnotherTenant_reportsGroupNotFound() throws Exception {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "DASHBOARD", "Dashboard", "1.0"));
+        when(iotHubRestClient.getVersionFileData(versionId)).thenReturn("{\"title\":\"Dashboard\"}".getBytes(StandardCharsets.UTF_8));
+
+        TenantId otherTenantId = TenantId.fromUUID(UUID.randomUUID());
+        EntityGroupInfo otherTenantGroup = new EntityGroupInfo();
+        otherTenantGroup.setId(new EntityGroupId(UUID.randomUUID()));
+        otherTenantGroup.setTenantId(otherTenantId);
+        otherTenantGroup.setOwnerId(otherTenantId);
+        otherTenantGroup.setType(EntityType.DASHBOARD);
+        otherTenantGroup.setName("Dashboards");
+        lenient().when(entityGroupService.findEntityGroupInfoById(tenantId, otherTenantGroup.getId())).thenReturn(otherTenantGroup);
+        JsonNode data = JacksonUtil.newObjectNode().put("entityGroupId", otherTenantGroup.getId().getId().toString());
+
+        InstallItemVersionResult result = service.installItemVersion(user, versionId, data, null);
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Entity group with id [" + otherTenantGroup.getId() + "] is not found");
+        verify(accessControlService, never()).checkEntityGroupInfoPermission(any(), any(), any());
     }
 }

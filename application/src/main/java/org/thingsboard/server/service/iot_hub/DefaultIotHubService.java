@@ -297,7 +297,7 @@ public class DefaultIotHubService implements IotHubService {
     }
 
     private EntityGroupInfo checkEntityGroup(SecurityUser user, EntityGroupId entityGroupId) throws ThingsboardException {
-        EntityGroupInfo entityGroup = entityGroupService.findEntityGroupInfoById(user.getTenantId(), entityGroupId);
+        EntityGroupInfo entityGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(user.getTenantId(), entityGroupId);
         if (entityGroup == null) {
             throw new IllegalArgumentException("Entity group with id [" + entityGroupId + "] is not found");
         }
