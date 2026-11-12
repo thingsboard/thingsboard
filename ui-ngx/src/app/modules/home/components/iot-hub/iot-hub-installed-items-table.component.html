@@ -43,7 +43,7 @@
         <td mat-cell *matCellDef="let item">
           @if (updatesChecked) {
             @let pubInfo = getPublishedVersionInfo(item);
-            @if (pubInfo && pubInfo.publishedVersionId !== item.itemVersionId) {
+            @if (pubInfo?.publishedVersionId && pubInfo.publishedVersionId !== item.itemVersionId) {
               <div class="flex items-center gap-3">
                 @if (!itemVersion) {
                   <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateItem(item, pubInfo)">
