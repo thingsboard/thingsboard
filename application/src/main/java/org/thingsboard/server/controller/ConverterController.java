@@ -5,7 +5,6 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -63,6 +62,7 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.subscription.PlatformFeature;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.converter.ConverterDefaultsService;
 import org.thingsboard.server.service.entitiy.converter.TbConverterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -82,17 +82,6 @@ import static org.thingsboard.server.controller.ControllerConstants.CONVERTER_ID
 import static org.thingsboard.server.controller.ControllerConstants.CONVERTER_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.CONVERTER_TYPE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEDICATED_CONVERTER_DEFINITION;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_AZURE_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_CHIRPSTACK_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_SIGFOX_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_SIGFOX_UPLINK_CONVERTER_METADATA;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_THINGSPARK_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_TPE_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_TTN_UPLINK_CONVERTER_MESSAGE;
 import static org.thingsboard.server.controller.ControllerConstants.INCLUDE_GATEWAY_INFO;
 import static org.thingsboard.server.controller.ControllerConstants.INTEGRATION_NAME;
 import static org.thingsboard.server.controller.ControllerConstants.INTEGRATION_NAME_PARAM_DESCRIPTION;
@@ -122,25 +111,7 @@ public class ConverterController extends AutoCommitController {
     private final JsInvokeService jsInvokeService;
     private final Optional<TbelInvokeService> tbelInvokeService;
     private final TbConverterService tbConverterService;
-
-    private static final Map<IntegrationType, String> converterDefaultMessages = ImmutableMap.<IntegrationType, String>builder()
-            .put(IntegrationType.LORIOT, DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.SIGFOX, DEFAULT_SIGFOX_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.TTI, DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.TTN, DEFAULT_TTN_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.CHIRPSTACK, DEFAULT_CHIRPSTACK_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.AZURE_IOT_HUB, DEFAULT_AZURE_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.AZURE_EVENT_HUB, DEFAULT_AZURE_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.AZURE_SERVICE_BUS, DEFAULT_AZURE_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.AWS_IOT, DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.KPN, DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.THINGPARK, DEFAULT_THINGSPARK_UPLINK_CONVERTER_MESSAGE)
-            .put(IntegrationType.TPE, DEFAULT_TPE_UPLINK_CONVERTER_MESSAGE)
-            .build();
-
-    private final static Map<IntegrationType, String> converterDefaultMetadatas = Map.of(
-            IntegrationType.SIGFOX, DEFAULT_SIGFOX_UPLINK_CONVERTER_METADATA
-    );
+    private final ConverterDefaultsService converterDefaultsService;
 
     public static final String CONVERTER_ID = "converterId";
 
@@ -258,8 +229,9 @@ public class ConverterController extends AutoCommitController {
     }
 
     private JsonNode createDefaultDebugIn(Converter converter, String converterType, String integrationType, String integrationName, Integer converterVersion) throws ThingsboardException {
-        if ((converter == null && !ConverterType.UPLINK.name().equals(converterType)) ||
-                (converter != null && !ConverterType.UPLINK.equals(converter.getType()))) {
+        boolean isUplink = converter != null ? ConverterType.UPLINK.equals(converter.getType()) : ConverterType.UPLINK.name().equals(converterType);
+        boolean isDownlink = converter != null ? ConverterType.DOWNLINK.equals(converter.getType()) : ConverterType.DOWNLINK.name().equals(converterType);
+        if (!isUplink && !isDownlink) {
             return null;
         }
 
@@ -271,6 +243,16 @@ public class ConverterController extends AutoCommitController {
         IntegrationType targetIntegrationType = targetIntegrationInfo.getFirst();
         if (StringUtils.isBlank(integrationName)) {
             integrationName = targetIntegrationInfo.getSecond();
+        }
+
+        if (isDownlink) {
+            Optional<String> downlinkMetadata = converterDefaultsService.getMetadata(targetIntegrationType, ConverterType.DOWNLINK);
+            Optional<String> downlinkPayload = converterDefaultsService.getPayload(targetIntegrationType, ConverterType.DOWNLINK);
+            Optional<String> downlinkMsgType = converterDefaultsService.getDownlinkMsgType(targetIntegrationType);
+            if (downlinkMetadata.isEmpty() && downlinkPayload.isEmpty() && downlinkMsgType.isEmpty()) {
+                return null;
+            }
+            return createDownlinkDebugIn(integrationName, downlinkMetadata, downlinkPayload, downlinkMsgType);
         }
 
         if (converterVersion == null) {
@@ -288,10 +270,9 @@ public class ConverterController extends AutoCommitController {
 
         String inContent;
         ContentType contentType;
-        inContent = converterDefaultMessages.get(targetIntegrationType);
-        if (converterDefaultMetadatas.containsKey(targetIntegrationType)) {
-            metadata.setAll(JacksonUtil.fromString(converterDefaultMetadatas.get(targetIntegrationType), ObjectNode.class));
-        }
+        inContent = converterDefaultsService.getPayload(targetIntegrationType, ConverterType.UPLINK).orElse(null);
+        converterDefaultsService.getMetadata(targetIntegrationType, ConverterType.UPLINK)
+                .ifPresent(defaultMetadata -> metadata.setAll(JacksonUtil.fromString(defaultMetadata, ObjectNode.class)));
         contentType = ContentType.JSON;
 
         debugIn.put("inMetadata", JacksonUtil.toString(metadata));
@@ -299,6 +280,21 @@ public class ConverterController extends AutoCommitController {
         debugIn.put("inContentType", contentType.name());
 
         return debugIn.isEmpty() ? null : debugIn;
+    }
+
+    private JsonNode createDownlinkDebugIn(String integrationName, Optional<String> metadata, Optional<String> payload, Optional<String> msgType) {
+        ObjectNode debugIn = JacksonUtil.newObjectNode();
+        metadata.ifPresent(value -> debugIn.put("inMetadata", JacksonUtil.toString(JacksonUtil.fromString(value, ObjectNode.class))));
+        payload.ifPresent(value -> {
+            debugIn.put("inContent", value);
+            debugIn.put("inContentType", ContentType.JSON.name());
+        });
+        msgType.ifPresent(value -> debugIn.put("inMsgType", value));
+        ObjectNode integrationMetadata = JacksonUtil.newObjectNode();
+        integrationMetadata.put(INTEGRATION_NAME, integrationName);
+        debugIn.put("inIntegrationMetadata", JacksonUtil.toString(integrationMetadata));
+
+        return debugIn;
     }
 
     private Pair<IntegrationType, String> getTargetIntegrationTypeAndName(Converter converter, String integrationType) throws ThingsboardException {
@@ -319,7 +315,8 @@ public class ConverterController extends AutoCommitController {
         }
 
         if (targetIntegrationType != null && StringUtils.isBlank(targetIntegrationName)) {
-            targetIntegrationName = "Test " + targetIntegrationType.getDirectory();
+            targetIntegrationName = converterDefaultsService.getIntegrationName(targetIntegrationType)
+                    .orElse("Test " + targetIntegrationType.getDirectory());
         }
 
         return (targetIntegrationType == null) ? null : Pair.of(targetIntegrationType, targetIntegrationName);

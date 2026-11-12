@@ -1,0 +1,64 @@
+{
+  "end_device_ids": {
+    "device_id": "am308-office",
+    "application_ids": {
+      "application_id": "my-app"
+    },
+    "dev_eui": "24E124707C481005",
+    "join_eui": "24E124C0002A0001",
+    "dev_addr": "260B1234"
+  },
+  "received_at": "2026-10-28T10:00:00.123Z",
+  "uplink_message": {
+    "f_port": 85,
+    "f_cnt": 12,
+    "frm_payload": "AXVk",
+    "decoded_payload": {
+      "battery": 95,
+      "temperature": 24.5,
+      "co2": 560,
+      "history": [
+        {
+          "timestamp": 1793170000,
+          "temperature": 24.1,
+          "co2": 550
+        }
+      ]
+    },
+    "rx_metadata": [
+      {
+        "gateway_ids": {
+          "gateway_id": "ug56"
+        },
+        "rssi": -60,
+        "snr": 9.5,
+        "channel_index": 2
+      }
+    ],
+    "settings": {
+      "data_rate": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreading_factor": 7,
+          "coding_rate": "4/5"
+        }
+      },
+      "frequency": "868100000"
+    },
+    "received_at": "2026-10-28T10:00:00.100Z",
+    "consumed_airtime": "0.061696s",
+    "version_ids": {
+      "brand_id": "milesight-iot",
+      "model_id": "am308",
+      "hardware_version": "1.0",
+      "firmware_version": "1.0",
+      "band_id": "EU_863_870"
+    },
+    "network_ids": {
+      "net_id": "000013",
+      "tenant_id": "ttn",
+      "cluster_id": "eu1",
+      "cluster_address": "eu1.cloud.thethings.network"
+    }
+  }
+}
