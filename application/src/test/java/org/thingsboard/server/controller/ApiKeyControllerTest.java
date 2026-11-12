@@ -127,6 +127,46 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
         doDelete("/api/apiKey/" + savedApiKey.getId().getId()).andExpect(status().isOk());
     }
 
+    @Test
+    public void testCustomerUserListsOwnApiKeys() throws Exception {
+        loginCustomerUser();
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
+        apiKeyInfo.setUserId(customerUserId);
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + customerUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(customerUserId, pageData.getData().get(0).getUserId());
+    }
+
+    @Test
+    public void testTenantAdminListsCustomerUserApiKeys() throws Exception {
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
+        apiKeyInfo.setUserId(customerUserId);
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + customerUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(customerUserId, pageData.getData().get(0).getUserId());
+    }
+
+    @Test
+    public void testCustomerUserCannotListOtherUserApiKeys() throws Exception {
+        loginCustomerUser();
+        doGet("/api/apiKeys/" + secondCustomerUserId + "?pageSize=10&page=0").andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testCustomerUserCannotReadOtherUserApiKeyRelations() throws Exception {
+        loginSecondCustomerUser();
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
+        apiKeyInfo.setUserId(secondCustomerUserId);
+        ApiKey apiKey = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        loginCustomerUser();
+        doGet("/api/relations?fromId=" + apiKey.getId().getId() + "&fromType=API_KEY").andExpect(status().isForbidden());
+    }
+
     private ApiKeyInfo constructApiKeyInfo(String description, boolean enabled) {
         ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
         apiKeyInfo.setDescription(description);
