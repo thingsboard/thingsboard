@@ -779,8 +779,8 @@ public class DefaultIotHubService implements IotHubService {
             return;
         }
         try {
-            Integration integration = integrationService.findIntegrationById(tenantId, new IntegrationId(entityId.getId()));
-            if (integration == null || !(integration.getConfiguration() != null
+            // Only an integration of this tenant: the id comes from the stored descriptor
+            if (!(findDevicePackageEntity(tenantId, entityId) instanceof Integration integration) || !(integration.getConfiguration() != null
                     && integration.getConfiguration().get("metadata") instanceof ObjectNode metadata)
                     || keys.stream().noneMatch(metadata::has)) {
                 return;
@@ -826,7 +826,9 @@ public class DefaultIotHubService implements IotHubService {
                 Set<IotHubInstalledItemId> usedBy = usedByOtherPackages.get(entityId.getId());
                 boolean taken = usedExisting.contains(entityId.getId());
                 if (usedBy != null || taken) {
-                    kept.add(new InstalledItemKeptEntities.KeptEntity(entityId, entityService.fetchEntityName(tenantId, entityId).orElse(null)));
+                    String name = findDevicePackageEntity(tenantId, entityId) != null
+                            ? entityService.fetchEntityName(tenantId, entityId).orElse(null) : null;
+                    kept.add(new InstalledItemKeptEntities.KeptEntity(entityId, name));
                 }
                 if (usedBy != null) {
                     usedByItems.addAll(usedBy);
@@ -880,6 +882,9 @@ public class DefaultIotHubService implements IotHubService {
         }
         if (descriptor.getDashboardId() != null) {
             entityIds.add(descriptor.getDashboardId());
+        }
+        if (descriptor.getUsedExistingEntityIds() != null) {
+            entityIds.addAll(descriptor.getUsedExistingEntityIds());
         }
         for (EntityId entityId : entityIds) {
             if (entityId == null || findDevicePackageEntity(tenantId, entityId) == null) {
