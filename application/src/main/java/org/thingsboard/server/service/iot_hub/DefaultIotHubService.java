@@ -885,7 +885,7 @@ public class DefaultIotHubService implements IotHubService {
             case RULE_CHAIN -> ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
             default -> null;
         };
-        return entity != null && tenantId.equals(entity.getTenantId()) ? entity : null;
+        return isOwnedBy(entity, tenantId) ? entity : null;
     }
 
     private void deleteDevicePackageEntity(TenantId tenantId, EntityId entityId, SecurityUser user) {
