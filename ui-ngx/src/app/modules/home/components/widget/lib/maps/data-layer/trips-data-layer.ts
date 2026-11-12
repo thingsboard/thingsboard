@@ -197,8 +197,20 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
         return;
       }
       const dsData = this.dataLayer.getMap().getData();
+      const location = this.dataLayer.dataProcessor.extractLocation(this.pointData, dsData);
+      if (!location) {
+        if (this.layer.hasLayer(this.marker)) {
+          this.layer.removeLayer(this.marker);
+        }
+        return;
+      }
+      if (!this.layer.hasLayer(this.marker)) {
+        this.marker.addTo(this.layer);
+      }
       this.marker.options.tbMarkerData = this.pointData;
-      this.updateMarkerLocation(this.pointData, dsData);
+      if (!this.marker.getLatLng().equals(location)) {
+        this.marker.setLatLng(location);
+      }
       if (this.settings.tooltip.show) {
         updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
           this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
@@ -211,7 +223,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.settings.showPath) {
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const locations = this.extractValidLocations(formattedRouteData, dsData).map(entry => entry.location);
+      const locations = this.extractPathLocations(formattedRouteData, dsData);
       const pathStyle = this.dataLayer.getPathStyle(this.pointData, dsData);
       this.polyline = L.polyline(locations, pathStyle);
       this.polyline.addTo(this.layer);
@@ -226,7 +238,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.settings.showPath) {
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const locations = this.extractValidLocations(formattedRouteData, dsData).map(entry => entry.location);
+      const locations = this.extractPathLocations(formattedRouteData, dsData);
       this.polyline.setLatLngs(locations);
       if (this.settings.usePathDecorator) {
         this.polylineDecorator.setPaths(this.polyline);
@@ -235,12 +247,8 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     }
   }
 
-  private extractValidLocations(data: FormattedData<TbMapDatasource>[], dsData: FormattedData<TbMapDatasource>[]):
-      {location: L.LatLng; data: FormattedData<TbMapDatasource>}[] {
-    return data.map(item => ({
-      location: this.dataLayer.dataProcessor.extractLocation(item, dsData),
-      data: item
-    })).filter(entry => !!entry.location);
+  private extractPathLocations(data: FormattedData<TbMapDatasource>[], dsData: FormattedData<TbMapDatasource>[]): L.LatLng[] {
+    return data.map(item => this.dataLayer.dataProcessor.extractLocation(item, dsData)).filter(location => !!location);
   }
 
   private updatePoints() {
@@ -251,7 +259,10 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
       }
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const pointsData = this.extractValidLocations(formattedRouteData, dsData);
+      const pointsData = formattedRouteData.map(data => ({
+        location: this.dataLayer.dataProcessor.extractLocation(data, dsData),
+        data
+      })).filter(pData => !!pData.location);
       const toDelete = new Set(Array.from(this.points.keys()));
       for (const pData of pointsData) {
         let pointData = pData.data;
@@ -308,13 +319,6 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
       if (this.settings.usePathDecorator) {
         this.polylineDecorator.setPatterns(this.dataLayer.getPathDecoratorStyle(pathStyle.color).patterns)
       }
-    }
-  }
-
-  private updateMarkerLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    const location = this.dataLayer.dataProcessor.extractLocation(data, dsData);
-    if (location && !this.marker.getLatLng().equals(location)) {
-      this.marker.setLatLng(location);
     }
   }
 
@@ -626,25 +630,22 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   private clearIncorrectFirsLastDatapoint(dataSource: FormattedData<TbMapDatasource>[]): FormattedData<TbMapDatasource>[] {
-    const firstHistoricalDataIndexCoordinate = dataSource.findIndex(this.findFirstHistoricalDataIndexCoordinate);
-    if (firstHistoricalDataIndexCoordinate === -1) {
+    const firstValidIndex = dataSource.findIndex(this.hasValidLocation);
+    if (firstValidIndex === -1) {
       return [];
     }
-    let lastIndex = dataSource.length - 1;
-    for (lastIndex; lastIndex > 0; lastIndex--) {
-      if (this.findFirstHistoricalDataIndexCoordinate(dataSource[lastIndex])) {
-        lastIndex++;
-        break;
-      }
+    let lastValidIndex = dataSource.length - 1;
+    while (lastValidIndex > firstValidIndex && !this.hasValidLocation(dataSource[lastValidIndex])) {
+      lastValidIndex--;
     }
-    if (firstHistoricalDataIndexCoordinate > 0 || lastIndex < dataSource.length) {
-      return dataSource.slice(firstHistoricalDataIndexCoordinate, lastIndex);
+    if (firstValidIndex > 0 || lastValidIndex < dataSource.length - 1) {
+      return dataSource.slice(firstValidIndex, lastValidIndex + 1);
     }
     return dataSource;
   }
 
-  private findFirstHistoricalDataIndexCoordinate = (item: FormattedData<TbMapDatasource>): boolean => {
-    return isDefined(item[this.settings.xKey.label]) && isDefined(item[this.settings.yKey.label]);
+  private hasValidLocation = (item: FormattedData<TbMapDatasource>): boolean => {
+    return !!this.dataProcessor.extractLocationData(item);
   }
 
 }
