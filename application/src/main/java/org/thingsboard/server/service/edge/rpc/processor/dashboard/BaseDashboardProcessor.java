@@ -31,7 +31,8 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         if (dashboard == null) {
             throw new RuntimeException("[{" + tenantId + "}] dashboardUpdateMsg {" + dashboardUpdateMsg + "} cannot be converted to dashboard");
         }
-        Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
+        Dashboard dashboardById = findTenantEntity(tenantId, dashboardId);
+        dashboard.setTenantId(tenantId);
         if (dashboardById == null) {
             created = true;
             dashboard.setId(null);
@@ -68,7 +69,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
     protected void deleteDashboard(TenantId tenantId, Edge edge, DashboardId dashboardId) {
         Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
-        if (dashboardById != null) {
+        if (dashboardById != null && tenantId.equals(dashboardById.getTenantId())) {
             edgeCtx.getDashboardService().deleteDashboard(tenantId, dashboardId);
             pushEntityEventToRuleEngine(tenantId, edge, dashboardById, TbMsgType.ENTITY_DELETED);
         }

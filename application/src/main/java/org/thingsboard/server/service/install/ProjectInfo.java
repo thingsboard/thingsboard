@@ -6,6 +6,7 @@ package org.thingsboard.server.service.install;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.TbVersionUtils;
 
 import java.util.Optional;
 
@@ -18,7 +19,7 @@ public class ProjectInfo {
     public ProjectInfo(Optional<BuildProperties> buildProperties) {
         this.version = buildProperties
                 .map(BuildProperties::getVersion)
-                .map(v -> v.replaceAll("[^\\d.]", ""))
+                .map(TbVersionUtils::extractStartingDigits)
                 .orElse(null);
     }
 
