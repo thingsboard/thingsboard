@@ -4,6 +4,7 @@
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.AlarmRuleInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.CalculatedFieldInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
@@ -42,6 +44,8 @@ import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemD
 import org.thingsboard.server.common.data.iot_hub.WidgetInstalledItemDescriptor;
 import org.thingsboard.server.common.data.subscription.SubscriptionException;
 import org.thingsboard.server.exception.EntitiesLimitExceededException;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.service.solutions.SolutionService;
 import org.thingsboard.server.service.solutions.data.solution.SolutionInstallResponse;
 import org.thingsboard.server.common.data.permission.Operation;
@@ -58,6 +62,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -79,10 +84,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -118,6 +126,7 @@ public class DefaultIotHubService implements IotHubService {
     private final CalculatedFieldService calculatedFieldService;
     private final DeviceProfileService deviceProfileService;
     private final DeviceService deviceService;
+    private final EntityService entityService;
     private final TbDeviceService tbDeviceService;
     private final SolutionService solutionService;
     private final EntityGroupService entityGroupService;
@@ -127,6 +136,7 @@ public class DefaultIotHubService implements IotHubService {
     private final ConverterService converterService;
     private final TbConverterService tbConverterService;
     private final ProjectInfo projectInfo;
+    private final DevicePackageEntities devicePackageEntities;
 
     // Field names of the marketplace version JSON payload. Both the install path and the
     // install-plan resolver parse the same shape, so the contract lives here in one place.
@@ -410,6 +420,10 @@ public class DefaultIotHubService implements IotHubService {
             }
 
             String itemType = installedItem.getItemType();
+            if ("DEVICE".equals(itemType)) {
+                // Updated in one transaction from the install wizard of the new version, see DevicePackageUpdateService
+                throw new IllegalArgumentException("A device package is updated by the install wizard of the new version");
+            }
             IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
 
             // Skip checksum validation for solution templates
@@ -454,12 +468,6 @@ public class DefaultIotHubService implements IotHubService {
                 case "CALCULATED_FIELD" -> updateCalculatedField(user, tenantId, (CalculatedFieldInstalledItemDescriptor) descriptor, fileData);
                 case "ALARM_RULE" -> updateAlarmRule(user, tenantId, (AlarmRuleInstalledItemDescriptor) descriptor, fileData);
                 case "RULE_CHAIN" -> updateRuleChain(tenantId, (RuleChainInstalledItemDescriptor) descriptor, fileData);
-                case "DEVICE" -> {
-                    DeviceInstalledItemDescriptor dd = (DeviceInstalledItemDescriptor) descriptor;
-                    deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
-                    dd.setCreatedEntityIds(null);
-                    dd.setDashboardId(null);
-                }
                 case "SOLUTION_TEMPLATE" -> {
                     SolutionTemplateInstalledItemDescriptor stDescriptor = (SolutionTemplateInstalledItemDescriptor) descriptor;
                     solutionService.deleteSolution(tenantId, stDescriptor, user);
@@ -673,6 +681,8 @@ public class DefaultIotHubService implements IotHubService {
             installedItem.setItemName(itemName);
             installedItem.setItemType("DEVICE");
             installedItem.setVersion(version);
+            // So that an update can tell whether someone changed an entity since
+            devicePackageEntities.addChecksums(tenantId, descriptor);
             installedItem.setDescriptor(descriptor);
             try {
                 iotHubInstalledItemService.save(tenantId, installedItem);
@@ -704,19 +714,154 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
-    private void deleteDevicePackageEntities(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
+    private static final Map<EntityType, Integer> DELETE_ORDER = Map.of(EntityType.DEVICE, 0, EntityType.DEVICE_PROFILE, 1,
+            EntityType.DASHBOARD, 2, EntityType.RULE_CHAIN, 3, EntityType.INTEGRATION, 4, EntityType.CONVERTER, 5);
+
+    /**
+     * Deletes what a device package created, except the entities another installed device package
+     * also uses (e.g. an integration it took over with Overwrite): deleting those would break that package,
+     * and the ones the user had before and the package took as they were (use existing).
+     * A kept integration loses the metadata entries the package added.
+     */
+    private void deleteDevicePackageEntities(TenantId tenantId, IotHubInstalledItemId installedItemId,
+                                             DeviceInstalledItemDescriptor descriptor, SecurityUser user) {
+        List<EntityId> createdEntityIds = descriptor.getCreatedEntityIds();
         if (createdEntityIds == null || createdEntityIds.isEmpty()) {
             return;
         }
-        List<EntityId> reversed = new ArrayList<>(createdEntityIds);
-        Collections.reverse(reversed);
-        for (EntityId entityId : reversed) {
+        Set<UUID> usedExisting = usedExistingIds(descriptor);
+        List<DeviceInstalledItemDescriptor> otherPackages = new ArrayList<>();
+        Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, otherPackages);
+        // An entity goes before what it refers to: a device before its profile, a profile before its default dashboard
+        // and rule chain, an integration before its converters. Within a type, the reverse of the creation order.
+        List<EntityId> ordered = new ArrayList<>(createdEntityIds);
+        Collections.reverse(ordered);
+        ordered.sort(Comparator.comparingInt(id -> DELETE_ORDER.getOrDefault(id.getEntityType(), DELETE_ORDER.size())));
+        for (EntityId entityId : ordered) {
+            if (usedExisting.contains(entityId.getId())) {
+                log.info("[{}] Kept {} {}: the package took it as it was", tenantId, entityId.getEntityType(), entityId.getId());
+                removeIntegrationMetadata(tenantId, entityId, descriptor, otherPackages);
+                continue;
+            }
+            Set<IotHubInstalledItemId> usedBy = usedByOtherPackages.get(entityId.getId());
+            if (usedBy != null) {
+                log.info("[{}] Kept {} {}: installed device packages {} use it", tenantId, entityId.getEntityType(), entityId.getId(), usedBy);
+                removeIntegrationMetadata(tenantId, entityId, descriptor, otherPackages);
+                continue;
+            }
             try {
                 deleteDevicePackageEntity(tenantId, entityId, user);
             } catch (Exception e) {
                 log.error("[{}] Failed to delete device package entity: {}", tenantId, entityId, e);
             }
         }
+    }
+
+    /**
+     * Removes from the kept integration's metadata the entries the package added, e.g. the profile name its converter
+     * reads, so that a later package of that model gets the default profile again. An entry another installed package
+     * also added stays.
+     */
+    private void removeIntegrationMetadata(TenantId tenantId, EntityId entityId, DeviceInstalledItemDescriptor descriptor,
+                                           List<DeviceInstalledItemDescriptor> otherPackages) {
+        if (entityId.getEntityType() != EntityType.INTEGRATION) {
+            return;
+        }
+        Set<String> keys = addedMetadataKeys(descriptor, entityId.getId());
+        otherPackages.forEach(other -> keys.removeAll(addedMetadataKeys(other, entityId.getId())));
+        if (keys.isEmpty()) {
+            return;
+        }
+        try {
+            Integration integration = integrationService.findIntegrationById(tenantId, new IntegrationId(entityId.getId()));
+            if (integration == null || !(integration.getConfiguration() != null
+                    && integration.getConfiguration().get("metadata") instanceof ObjectNode metadata)
+                    || keys.stream().noneMatch(metadata::has)) {
+                return;
+            }
+            // A copy: the integration read may be the cache's own instance
+            Integration copy = new Integration(integration);
+            ((ObjectNode) copy.getConfiguration().get("metadata")).remove(keys);
+            integrationService.saveIntegration(copy);
+            log.info("[{}] Removed metadata entries {} of the deleted device package from integration {}", tenantId, keys, entityId.getId());
+        } catch (Exception e) {
+            log.error("[{}] Failed to remove the deleted device package's metadata entries from integration {}", tenantId, entityId.getId(), e);
+        }
+    }
+
+    /** The metadata entries the package's steps on the integration added, as its install state records them. */
+    private static Set<String> addedMetadataKeys(DeviceInstalledItemDescriptor descriptor, UUID integrationId) {
+        Set<String> keys = new HashSet<>();
+        if (descriptor.getInstallState() != null) {
+            descriptor.getInstallState().values().forEach(state -> {
+                if (state != null && integrationId.toString().equals(state.path("entityOutput").path("id").asText())
+                        && state.get("metadata") instanceof ObjectNode metadata) {
+                    metadata.fieldNames().forEachRemaining(keys::add);
+                }
+            });
+        }
+        return keys;
+    }
+
+    /** The delete dialog shows these before the user confirms, so they must match what {@link #deleteDevicePackageEntities} keeps. */
+    @Override
+    public InstalledItemKeptEntities findKeptEntities(TenantId tenantId, IotHubInstalledItemId installedItemId) {
+        IotHubInstalledItem installedItem = iotHubInstalledItemService.findById(tenantId, installedItemId);
+        if (installedItem == null) {
+            throw new IllegalArgumentException("Installed item not found");
+        }
+        List<InstalledItemKeptEntities.KeptEntity> kept = new ArrayList<>();
+        Set<IotHubInstalledItemId> usedByItems = new HashSet<>();
+        int usedExistingCount = 0;
+        if (installedItem.getDescriptor() instanceof DeviceInstalledItemDescriptor dd && dd.getCreatedEntityIds() != null) {
+            Set<UUID> usedExisting = usedExistingIds(dd);
+            Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, new ArrayList<>());
+            for (EntityId entityId : dd.getCreatedEntityIds()) {
+                Set<IotHubInstalledItemId> usedBy = usedByOtherPackages.get(entityId.getId());
+                boolean taken = usedExisting.contains(entityId.getId());
+                if (usedBy != null || taken) {
+                    kept.add(new InstalledItemKeptEntities.KeptEntity(entityId, entityService.fetchEntityName(tenantId, entityId).orElse(null)));
+                }
+                if (usedBy != null) {
+                    usedByItems.addAll(usedBy);
+                }
+                if (taken) {
+                    usedExistingCount++;
+                }
+            }
+        }
+        return new InstalledItemKeptEntities(kept, usedByItems.size(), usedExistingCount);
+    }
+
+    /** The entities the package took as they were at install (use existing); none for installs before 4.4.1 kept them. */
+    private static Set<UUID> usedExistingIds(DeviceInstalledItemDescriptor descriptor) {
+        Set<UUID> ids = new HashSet<>();
+        if (descriptor.getUsedExistingEntityIds() != null) {
+            descriptor.getUsedExistingEntityIds().forEach(id -> ids.add(id.getId()));
+        }
+        return ids;
+    }
+
+    /** The other installed device packages' entities, by id; the packages' descriptors go to {@code otherPackages}. */
+    private Map<UUID, Set<IotHubInstalledItemId>> findEntitiesOfOtherDevicePackages(TenantId tenantId, IotHubInstalledItemId installedItemId,
+                                                                                    List<DeviceInstalledItemDescriptor> otherPackages) {
+        Map<UUID, Set<IotHubInstalledItemId>> usedBy = new HashMap<>();
+        PageLink pageLink = new PageLink(100);
+        PageData<IotHubInstalledItem> page;
+        do {
+            page = iotHubInstalledItemService.findByTenantId(tenantId, List.of("DEVICE"), null, pageLink);
+            for (IotHubInstalledItem item : page.getData()) {
+                if (item.getId().equals(installedItemId) || !(item.getDescriptor() instanceof DeviceInstalledItemDescriptor dd)) {
+                    continue;
+                }
+                otherPackages.add(dd);
+                if (dd.getCreatedEntityIds() != null) {
+                    dd.getCreatedEntityIds().forEach(id -> usedBy.computeIfAbsent(id.getId(), k -> new HashSet<>()).add(item.getId()));
+                }
+            }
+            pageLink = pageLink.nextPageLink();
+        } while (page.hasNext());
+        return usedBy;
     }
 
     private void deleteDevicePackageEntity(TenantId tenantId, EntityId entityId, SecurityUser user) throws ThingsboardException {
@@ -797,7 +942,7 @@ public class DefaultIotHubService implements IotHubService {
                 }
             }
         } else if (descriptor instanceof DeviceInstalledItemDescriptor dd) {
-            deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
+            deleteDevicePackageEntities(tenantId, installedItemId, dd, user);
         } else if (descriptor instanceof SolutionTemplateInstalledItemDescriptor st) {
             try {
                 solutionService.deleteSolution(tenantId, st, user);

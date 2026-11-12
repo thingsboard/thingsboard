@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.adaptor;
 
 import com.google.gson.JsonParser;
@@ -9,6 +10,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
+
+import java.util.Set;
 
 @Isolated("JsonConverter static settings being modified")
 public class JsonConverterTest {
@@ -92,6 +97,42 @@ public class JsonConverterTest {
         Assertions.assertThrows(JsonSyntaxException.class, () -> {
             JsonConverter.convertToTelemetry(JsonParser.parseString("{\"meterReadingDelta\": 9.9701010061400066E19}"), 0L);
         });
+    }
+
+    @Test
+    public void testParseAttributesProtoWithNoCastKeys() {
+        var json = JsonParser.parseString("{\"devAddr\": \"01020304\", \"fCnt\": \"42\", \"rssi\": -110}");
+        var kvList = JsonConverter.convertToAttributesProto(json, Set.of("devAddr")).getKvList();
+        assertKv(kvList.get(0), KeyValueType.STRING_V, "01020304");
+        assertKv(kvList.get(1), KeyValueType.LONG_V, "42");
+        assertKv(kvList.get(2), KeyValueType.LONG_V, "-110");
+    }
+
+    @Test
+    public void testParseTelemetryProtoWithNoCastKeys() {
+        var json = JsonParser.parseString("{\"ts\": 1000, \"values\": {\"eui\": \"1000000000000001\", \"fCnt\": \"42\", \"snr\": 9.5}}");
+        var tsKvList = JsonConverter.convertToTelemetryProto(json, Set.of("eui")).getTsKvList(0);
+        Assertions.assertEquals(1000L, tsKvList.getTs());
+        assertKv(tsKvList.getKv(0), KeyValueType.STRING_V, "1000000000000001");
+        assertKv(tsKvList.getKv(1), KeyValueType.LONG_V, "42");
+        assertKv(tsKvList.getKv(2), KeyValueType.DOUBLE_V, "9.5");
+    }
+
+    @Test
+    public void testParseAttributesProtoCastsNumericStrings() {
+        var kvList = JsonConverter.convertToAttributesProto(JsonParser.parseString("{\"devAddr\": \"01020304\"}")).getKvList();
+        assertKv(kvList.get(0), KeyValueType.LONG_V, "1020304");
+    }
+
+    private static void assertKv(KeyValueProto kv, KeyValueType type, String value) {
+        Assertions.assertEquals(type, kv.getType());
+        String actual = switch (type) {
+            case STRING_V -> kv.getStringV();
+            case LONG_V -> String.valueOf(kv.getLongV());
+            case DOUBLE_V -> String.valueOf(kv.getDoubleV());
+            default -> throw new IllegalArgumentException("Unexpected type: " + type);
+        };
+        Assertions.assertEquals(value, actual);
     }
 
 }

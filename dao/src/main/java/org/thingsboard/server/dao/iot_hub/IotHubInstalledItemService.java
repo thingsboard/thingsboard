@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.iot_hub;
 
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
@@ -18,6 +19,9 @@ public interface IotHubInstalledItemService {
     IotHubInstalledItem save(TenantId tenantId, IotHubInstalledItem item);
 
     IotHubInstalledItem findById(TenantId tenantId, IotHubInstalledItemId id);
+
+    // Locks the item until the end of the current transaction, so concurrent updates of it run one after another
+    IotHubInstalledItem findByIdForUpdate(TenantId tenantId, IotHubInstalledItemId id);
 
     PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink);
 

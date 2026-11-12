@@ -189,6 +189,10 @@ public class EdgeController extends BaseController {
 
         Operation operation = created ? Operation.CREATE : Operation.WRITE;
 
+        if (!created) {
+            checkEdgeId(edge.getId(), Operation.WRITE);
+        }
+
         if (!entityGroupIds.isEmpty()) {
             for (EntityGroupId entityGroupId : entityGroupIds) {
                 accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation,

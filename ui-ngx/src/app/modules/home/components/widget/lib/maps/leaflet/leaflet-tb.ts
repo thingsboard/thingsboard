@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import L, { TB } from 'leaflet';
 import { guid, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
+import { GestureHandling } from 'leaflet-gesture-handling';
 import { Map as MapLibreGLMap, setWorkerUrl } from 'maplibre-gl';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
@@ -13,6 +15,24 @@ import { of } from 'rxjs';
 import { WEBGL_ERROR_EVENT } from '@shared/models/widget/maps/map.models';
 
 L.MarkerCluster = L.MarkerCluster.mergeOptions({ pmIgnore: true });
+
+const gestureProto = GestureHandling.prototype as any;
+const originalHandleScroll = gestureProto._handleScroll;
+gestureProto._enableInteractions = function(this: any) {
+  this._map.dragging.enable();
+  if (this._map.options.scrollWheelZoom) {
+    this._map.scrollWheelZoom.enable();
+  }
+  if (this._map.tap) {
+    this._map.tap.enable();
+  }
+};
+gestureProto._handleScroll = function(this: any, e: Event) {
+  if (!this._map.options.scrollWheelZoom) {
+    return;
+  }
+  originalHandleScroll.call(this, e);
+};
 
 L.Map.addInitHook(function () {
   this._patterns = {};

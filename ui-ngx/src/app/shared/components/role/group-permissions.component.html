@@ -73,7 +73,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div [class.flex-1]="groupPermissionsMode === 'group'" class="table-container">
+    <div class="table-container flex-1">
       <table mat-table [dataSource]="dataSource"
         matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
