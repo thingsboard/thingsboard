@@ -2615,11 +2615,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return step.id ?? (step.type === InstallStepType.SHOW_FORM ? step.name : `${step.type}:${step.name}`);
   }
 
-  /** A key two steps of the install method share, so one's install state would overwrite the other's; null when none. */
+  /**
+   * A key two entity steps of the install method share, so one's install state would overwrite the other's; null when
+   * none. Forms are left out: their values are merged, so a shared form key loses nothing.
+   */
   private duplicateStateKey(): string | null {
     const keys = new Set<string>();
     for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
-      if (step.type !== InstallStepType.SHOW_FORM && !ENTITY_STEP_TYPES.has(step.type)) {
+      if (!ENTITY_STEP_TYPES.has(step.type)) {
         continue;
       }
       const key = this.stateKeyOf(step);

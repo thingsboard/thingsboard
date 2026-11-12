@@ -62,7 +62,8 @@ export interface DeviceUpdateStep {
   serverAttributes?: any;
   sharedAttributes?: any;
   resolution?: string;
-  // The package step's stable id, so that a next version can rename the step
+  // The package step's stable id, so that a next version can rename the step. When set it is also the step's install
+  // state key: the default converter update sends the stored key here to write the state back under it
   id?: string;
   // INTEGRATION: the step's metadata entries, which a KEEP merges into the integration; null removes an entry
   metadata?: Record<string, string | null>;

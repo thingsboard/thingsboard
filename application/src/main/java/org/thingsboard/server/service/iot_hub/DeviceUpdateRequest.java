@@ -38,7 +38,8 @@ public class DeviceUpdateRequest {
     @Data
     public static class Step {
         private String name;
-        // The package step's stable id, so that a next version can rename the step
+        // The package step's stable id, so that a next version can rename the step. It is also the step's install state
+        // key when set, which the default converter update relies on to write the state back under the stored key
         private String id;
         // InstallStepType of the package: DEVICE_PROFILE, DEVICE, GATEWAY, GATEWAY_CONNECTOR, DASHBOARD, RULE_CHAIN,
         // UPLINK_CONVERTER, DOWNLINK_CONVERTER, INTEGRATION
