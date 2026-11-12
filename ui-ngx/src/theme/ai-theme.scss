@@ -6101,3 +6101,40 @@ tb-ai-action-detail.k-detail .tb-codeblock pre.tb-code {
   max-height: 320px;
   overflow: auto;
 }
+
+@property --ai-h {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 172;
+}
+
+@keyframes tb-ai-mark-hue {
+  from { --ai-h: calc(var(--ai-hue) - 8); }
+  to { --ai-h: calc(var(--ai-hue) + 120); }
+}
+
+.tb-ai-assistant-button {
+  position: relative;
+
+  .tb-ai-assistant-cue {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--tb-surface, #fff);
+    pointer-events: none;
+  }
+
+  &[data-cue="running"] .mat-icon {
+    color: oklch(0.45 0.12 var(--ai-h));
+    animation: tb-ai-mark-hue 1.6s ease-in-out infinite alternate;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-cue="running"] .mat-icon {
+      animation: none;
+    }
+  }
+}

@@ -44,6 +44,8 @@ const DETAIL_TOKENS = new Set(['server-attributes', 'shared-attributes']);
 
 const VALUE_TOKENS: Record<string, string[]> = {
   undo: ['none'],
+  defaultDashboard: ['none'],
+  homeDashboard: ['none'],
   clears: ['yes', 'no']
 };
 

@@ -155,6 +155,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   private static readonly FOLD_CHARS = 600;
 
   private releaseBottom: () => void;
+  private releaseAsk: () => void;
 
   lastAnswerIndex = -1;
 
@@ -286,17 +287,50 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   }
 
   private revealReport(): void {
-    const report = this.elementRef.nativeElement.querySelector<HTMLElement>('.k-report');
-    const scroller = report?.closest<HTMLElement>('.ai-chat-body');
+    this.reveal(this.elementRef.nativeElement.querySelector<HTMLElement>('.k-report'));
+  }
+
+  private keepAskInView(): void {
+    const ask = this.elementRef.nativeElement.querySelector<HTMLElement>('.ai.ask');
+    if (!ask) {
+      return;
+    }
+    this.releaseAsk?.();
+    const scroller = this.scroller;
+    const show = () => this.reveal(ask, 'auto');
+    const observer = new ResizeObserver(show);
+    observer.observe(this.elementRef.nativeElement);
+    const release = () => {
+      observer.disconnect();
+      clearTimeout(timeout);
+      scroller.removeEventListener('wheel', release);
+      scroller.removeEventListener('touchstart', release);
+      scroller.removeEventListener('keydown', release);
+      scroller.removeEventListener('pointerdown', release);
+      this.releaseAsk = undefined;
+    };
+    const timeout = setTimeout(release, AiChatMessagesComponent.PIN_TO_BOTTOM_MS);
+    scroller.addEventListener('wheel', release, {passive: true});
+    scroller.addEventListener('touchstart', release, {passive: true});
+    scroller.addEventListener('keydown', release);
+    scroller.addEventListener('pointerdown', release, {passive: true});
+    this.releaseAsk = release;
+    this.reveal(ask);
+  }
+
+  private reveal(report: HTMLElement | null, behavior: ScrollBehavior = 'smooth'): void {
+    const scroller = report?.closest<HTMLElement>('.ai-chat-body') ?? (report ? this.scroller : null);
     if (!report || !scroller) {
       return;
     }
     const composer = scroller.querySelector<HTMLElement>('.ai-chat-composer');
     const cover = composer?.querySelector<HTMLElement>('.k-pill') ?? composer;
     const limit = Math.min(scroller.getBoundingClientRect().bottom, cover?.getBoundingClientRect().top ?? Infinity) - 12;
-    const overflow = report.getBoundingClientRect().bottom - limit;
+    const rect = report.getBoundingClientRect();
+    const top = scroller.getBoundingClientRect().top + 12;
+    const overflow = Math.min(rect.bottom - limit, rect.top - top);
     if (overflow > 0) {
-      scroller.scrollBy({top: overflow, behavior: 'smooth'});
+      scroller.scrollBy({top: overflow, behavior: this.motion(behavior)});
     }
   }
 
@@ -357,7 +391,11 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     if (changes.messages || changes.completedExecutions || changes.loading) {
       this.summaries = this.findSummaries();
       this.prompts = this.findPrompts();
+      const asked = this.asking?.index;
       this.asking = this.findAsking();
+      if (this.asking && this.asking.index !== asked && !changes.messages?.firstChange) {
+        setTimeout(() => this.keepAskInView());
+      }
       this.plans = this.findPlans();
       this.files = this.findFiles();
       this.latestFiles = new Map(Object.values(this.files).map(file => [file.name, file]));
@@ -829,6 +867,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     clearTimeout(this.copiedTimeout);
     clearTimeout(this.dayTimer);
     this.releaseBottom?.();
+    this.releaseAsk?.();
   }
 
   private pinToBottom(): void {

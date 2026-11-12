@@ -30,6 +30,10 @@ export class AiChatService {
     return this.http.get<Array<ChatInfo>>(`/api/ai/chats`, defaultHttpOptionsFromConfig(config))
   }
 
+  public listChatStatuses(config?: RequestConfig): Observable<Array<ChatInfo>> {
+    return this.http.get<Array<ChatInfo>>(`/api/ai/chats/status`, defaultHttpOptionsFromConfig(config));
+  }
+
   public createChat(chat: ChatConfiguration, config?: RequestConfig): Observable<string> {
     return this.http.post<string>(`/api/ai/chats`, chat, defaultHttpOptionsFromConfig(config));
   }

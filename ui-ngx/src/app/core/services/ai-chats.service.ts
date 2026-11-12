@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { inject, Injectable, signal, untracked, WritableSignal } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { computed, DestroyRef, effect, inject, Injectable, Injector, signal, untracked, WritableSignal } from '@angular/core';
+import { interval, Observable, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { AiChatService } from '@core/http/ai-chat.service';
@@ -16,6 +16,8 @@ export class AiChatsService {
   private panelService = inject(AiAssistantPanelService);
   private dialog = inject(DialogService);
   private translate = inject(TranslateService);
+  private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
 
   private _chats = signal<ChatInfo[]>([]);
   readonly chats = this._chats.asReadonly();
@@ -31,6 +33,64 @@ export class AiChatsService {
   private _open = signal<ReadonlySet<string>>(new Set());
 
   private _failed = signal<ReadonlyMap<string, string>>(new Map());
+
+  private static readonly STATUS_POLL_MS = 15000;
+
+  private _statuses = signal<ChatInfo[]>([]);
+
+  readonly statusChats = computed(() => this._loaded() ? this._chats() : this._statuses());
+
+  private watching = false;
+
+  private polling = false;
+
+  watchStatus(): void {
+    if (this.watching) {
+      return;
+    }
+    this.watching = true;
+    this.pollStatus();
+    let wasOpen = untracked(this.panelService.open);
+    const panelWatch = effect(() => {
+      const open = this.panelService.open();
+      if (wasOpen && !open) {
+        this.pollStatus();
+      }
+      wasOpen = open;
+    }, {injector: this.injector});
+    const poll = interval(AiChatsService.STATUS_POLL_MS).subscribe(() => {
+      if (!untracked(this.panelService.open) && document.visibilityState === 'visible'
+        && untracked(this.statusChats).some(chat => this.levelOf(chat) === 'running')) {
+        this.pollStatus();
+      }
+    });
+    this.destroyRef.onDestroy(() => {
+      panelWatch.destroy();
+      poll.unsubscribe();
+    });
+  }
+
+  private pollStatus(): void {
+    if (this.polling) {
+      return;
+    }
+    this.polling = true;
+    this.aiChat.listChatStatuses({ignoreLoading: true, ignoreErrors: true}).subscribe({
+      next: statuses => {
+        this.polling = false;
+        this._statuses.set(statuses);
+        if (untracked(this._loaded)) {
+          const byId = new Map(statuses.map(chat => [chat.id, chat]));
+          this._chats.update(list => list.map(chat => {
+            const live = byId.get(chat.id);
+            return live?.status === chat.status && live?.statusReason === chat.statusReason
+              ? chat : {...chat, status: live?.status, statusReason: live?.statusReason};
+          }));
+        }
+      },
+      error: () => this.polling = false
+    });
+  }
 
   levelOf(chat: ChatInfo): ChatLevel | null {
     if (this._waiting().has(chat.id)) {

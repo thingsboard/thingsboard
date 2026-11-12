@@ -51,6 +51,12 @@ class DefaultAiChatService implements AiChatService {
     }
 
     @Override
+    public JsonNode listChatStatuses(SecurityUser user) {
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_STATUS, null), user, tokenProvider), user, false);
+    }
+
+    @Override
     public JsonNode getChatMessages(UUID chatId, SecurityUser user) {
         return tbAiService.process(tokenProvider -> operations.execute(
                 new TbAiOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, TOOL_CARDS)), user, tokenProvider), user, false);

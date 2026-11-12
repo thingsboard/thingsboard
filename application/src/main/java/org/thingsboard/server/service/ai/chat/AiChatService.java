@@ -19,6 +19,8 @@ public interface AiChatService {
 
     JsonNode listChats(SecurityUser user);
 
+    JsonNode listChatStatuses(SecurityUser user);
+
     JsonNode getChatMessages(UUID chatId, SecurityUser user);
 
     void deleteChat(UUID chatId, SecurityUser user);

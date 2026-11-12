@@ -51,7 +51,7 @@ import {
   ToolFinished,
   ToolStarted
 } from '@shared/models/ai-chat.models';
-import { aiActionWords, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, aiTurnPrompts, isHiddenAiAction, isKitCardTool } from '@home/components/ai/ai-action.models';
+import { aiActionWords, aiQuestionsOf, AiPlanStep, AiSpinKind, AiWorkMoment, AiWorkState, aiTurnPrompts, isHiddenAiAction, isKitCardTool, ASK_USER_TOOL } from '@home/components/ai/ai-action.models';
 import { AiPlanRun } from '@home/components/ai/ai-plan.component';
 import { AiFile, aiFileMark, aiFileName, aiFileOf, downloadAiFile, downloadAiFileAsPng, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
 import { AiFileBodyComponent, AiFileMarks, AiFileSaver } from '@home/components/ai/ai-file-body.component';
@@ -316,6 +316,23 @@ export class AiChatComponent implements OnInit, OnDestroy {
       .find(message => !completed[message.data.executionId] && !answered.has(message.data.executionId) && message.data.needsApproval);
   });
 
+  private awaitingAnswer = computed(() => {
+    if (this.loading()) {
+      return false;
+    }
+    const messages = this.messages();
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.from === 'USER') {
+        return false;
+      }
+      if (message.from === 'ACTION' && message.data.tool === ASK_USER_TOOL) {
+        return aiQuestionsOf(message.data.arguments).length > 0;
+      }
+    }
+    return false;
+  });
+
   suggestion = computed(() => {
     if (this.loading() || this.waitingApproval()) {
       return null;
@@ -394,7 +411,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   private waitingEffect = effect(onCleanup => {
     const chatId = this.chatId();
-    const waiting = !!this.waitingApproval();
+    const waiting = !!this.waitingApproval() || this.awaitingAnswer();
     untracked(() => this.chats.setWaiting(chatId, waiting));
     onCleanup(() => untracked(() => this.chats.setWaiting(chatId, false)));
   });
