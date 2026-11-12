@@ -334,6 +334,22 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testRotateInternalApiKey_oldValueEvictedFromCache() {
+        ApiKeyInfo apiKeyInfo = createInternalApiKeyInfo("Internal key for rotation cache eviction");
+        ApiKey savedApiKey = apiKeyService.saveApiKey(TenantId.SYS_TENANT_ID, apiKeyInfo);
+        String originalValue = savedApiKey.getValue();
+        // authentication resolves the key by value and caches the lookup
+        Assert.assertNotNull(apiKeyService.findApiKeyByValue(originalValue));
+
+        ApiKey rotatedApiKey = apiKeyService.rotateInternalApiKey(TenantId.SYS_TENANT_ID, savedApiKey);
+
+        Assert.assertNull("Old API key value must not resolve after rotation", apiKeyService.findApiKeyByValue(originalValue));
+        ApiKey foundByNewValue = apiKeyService.findApiKeyByValue(rotatedApiKey.getValue());
+        Assert.assertNotNull(foundByNewValue);
+        Assert.assertEquals(savedApiKey.getId(), foundByNewValue.getId());
+    }
+
+    @Test
     public void testRotateRegularApiKey_shouldFail() {
         ApiKeyInfo apiKeyInfo = createApiKeyInfo("Regular API key");
         ApiKey savedApiKey = apiKeyService.saveApiKey(tenantId, apiKeyInfo);
