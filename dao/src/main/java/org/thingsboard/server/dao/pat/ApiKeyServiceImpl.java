@@ -90,7 +90,12 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
             var savedApiKey = apiKeyDao.save(tenantId, apiKey);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedApiKey.getId()).entity(savedApiKey).created(apiKey.getId() == null).build());
             if (isPublishEvictRequired(old, apiKey)) {
-                publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
+                // the cache is keyed by value, so the entry to evict is the one the old value still resolves to
+                publishEvictEvent(new ApiKeyEvictEvent(old.getValue()));
+            }
+            if (value != null && (old == null || !value.equals(old.getValue()))) {
+                // a failed authentication attempt may have cached a miss for the explicitly provided value (edge sync)
+                publishEvictEvent(new ApiKeyEvictEvent(value));
             }
             return savedApiKey;
         } catch (Exception e) {
@@ -219,17 +224,19 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     }
 
     /**
-     * Whether an update changed anything the cached copy of the key is read for. A newly created key has nothing
-     * cached yet, hence the null check on the previous state.
+     * Whether an update changed anything the cached copy of the key is read for, so the entry under the old value
+     * must be evicted. Null old means create: there is no previous value to evict; a cached miss for an explicitly
+     * provided value is evicted separately in saveApiKey.
      * <p>
      * Authentication resolves a key by value straight from the cache and builds the caller's effective permissions
-     * from the cached instance, so both the enabled flag and the permissions must trigger an eviction. The value
-     * itself is not compared: an update preserves it, and a rotation evicts unconditionally.
+     * from the cached instance, so the enabled flag, the permissions and the value must all trigger an eviction.
+     * A rotation evicts unconditionally.
      */
     private static boolean isPublishEvictRequired(ApiKey old, ApiKey apiKey) {
         return old != null
                && (old.isEnabled() != apiKey.isEnabled()
-                   || !Objects.equals(old.getPermissions(), apiKey.getPermissions()));
+                   || !Objects.equals(old.getPermissions(), apiKey.getPermissions())
+                   || !Objects.equals(old.getValue(), apiKey.getValue()));
     }
 
     @Override
