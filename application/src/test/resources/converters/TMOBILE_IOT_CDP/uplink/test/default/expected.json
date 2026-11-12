@@ -1,0 +1,23 @@
+[
+  {
+    "deviceName": "NB-IoT-866425033313638",
+    "deviceType": "NB-IoT sensor",
+    "attributes": {
+      "serialNumber": "IMEI:866425033313638",
+      "subscriptionId": "fa37d89c-a7e2-4f3d-b12f-6002a3642b4c",
+      "resourcePath": "uplinkMsg/0/data",
+      "model": "Comfort Sensor"
+    },
+    "telemetry": {
+      "ts": 1600439712734,
+      "values": {
+        "status": 0,
+        "batteryVoltage": 3.44,
+        "temperature": 26.35,
+        "humidity": 46.29,
+        "co2": 979,
+        "presence": true
+      }
+    }
+  }
+]

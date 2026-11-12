@@ -1,0 +1,53 @@
+// Decode an IoT Creators callback
+// payload - array of bytes (the callback body)
+// metadata - key/value object
+
+/** Decoder **/
+
+var data = decodeToJson(payload);
+var reports = data.reports != null ? data.reports : [];
+var result = [];
+
+for (var i = 0; i < reports.size(); i++) {
+  var report = reports[i];
+
+  // Decode only device uplinks.
+  if (report.resourcePath == "uplinkMsg/0/data" && report.value != null) {
+    // The device payload is a hex string.
+    var bytes = hexToBytes(report.value);
+
+    // The Comfort Sensor payload is 19 bytes long.
+    if (bytes.size() >= 19) {
+      // IoT Creators identifies the device by "IMEI:<imei>".
+      var serialNumber = "" + report.serialNumber;
+      var imei = serialNumber.replace("IMEI:", "");
+
+      var entry = {
+        deviceName: "NB-IoT-" + imei,
+        deviceType: "NB-IoT sensor",
+        attributes: {
+          serialNumber: serialNumber,
+          subscriptionId: report.subscriptionId,
+          resourcePath: report.resourcePath,
+          model: "Comfort Sensor"
+        },
+        telemetry: {
+          ts: report.timestamp,
+          values: {
+            status: bytes[8] & 0xFF,
+            batteryVoltage: (((bytes[9] & 0xFF) << 8) | (bytes[10] & 0xFF)) / 100.0,
+            temperature: (((bytes[12] & 0xFF) << 8) | (bytes[13] & 0xFF)) / 100.0,
+            humidity: (((bytes[14] & 0xFF) << 8) | (bytes[15] & 0xFF)) / 100.0,
+            co2: ((bytes[16] & 0xFF) << 8) | (bytes[17] & 0xFF),
+            presence: (bytes[18] & 0xFF) == 1
+          }
+        }
+      };
+      result.add(entry);
+    }
+  }
+}
+
+/** Helper functions 'decodeToJson' and 'hexToBytes' are already built-in **/
+
+return result;
