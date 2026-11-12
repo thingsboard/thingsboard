@@ -227,7 +227,7 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private onError(error: string) {
-    this.error = error;
+    this.error = error ? error.replace(/<\/?br\s*\/?>/gi, '. ') : error;
     this.setFontSize(this.ledError, this.error, this.ledErrorContainer.height(), this.ledErrorContainer.width());
     this.ctx.detectChanges();
   }

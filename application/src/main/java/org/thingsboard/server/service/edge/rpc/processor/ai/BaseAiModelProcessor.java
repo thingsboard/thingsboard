@@ -47,7 +47,7 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
                 aiModel.setId(aiModelId);
                 // edge versions without customer access support do not send this field
                 if (!aiModelJson.has("customerAccessEnabled")) {
-                    aiModel.setCustomerAccessEnabled(aiModelById.get().isCustomerAccessEnabled());
+                    aiModel.setCustomerAccessEnabled(aiModelById.isCustomerAccessEnabled());
                 }
             }
 
