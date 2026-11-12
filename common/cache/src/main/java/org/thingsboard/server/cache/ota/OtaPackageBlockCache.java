@@ -4,6 +4,7 @@ package org.thingsboard.server.cache.ota;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Ticker;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.stats.StatsFactory;
 
@@ -40,25 +41,38 @@ public class OtaPackageBlockCache {
     private final LoadingCache<BlockKey, byte[]> cache;
     private final Set<String> warnedKeys = ConcurrentHashMap.newKeySet();
 
-    public OtaPackageBlockCache(long maxBytes, Duration expireAfterAccess, int blockSize,
+    /**
+     * @param timeToLive expire-after-write per block, like every {@code cache.specs} entry; zero means blocks never expire
+     */
+    public OtaPackageBlockCache(long maxBytes, Duration timeToLive, int blockSize,
                                 BlockFetcher blockFetcher, LengthFetcher lengthFetcher,
                                 StatsFactory statsFactory) {
+        this(maxBytes, timeToLive, blockSize, blockFetcher, lengthFetcher, statsFactory, Ticker.systemTicker());
+    }
+
+    OtaPackageBlockCache(long maxBytes, Duration timeToLive, int blockSize,
+                         BlockFetcher blockFetcher, LengthFetcher lengthFetcher,
+                         StatsFactory statsFactory, Ticker ticker) {
         if (maxBytes > 0) {
             if (blockSize <= 0) {
                 throw new IllegalArgumentException("OTA block cache block size must be positive, got " + blockSize);
             }
-            if (expireAfterAccess == null || expireAfterAccess.isZero() || expireAfterAccess.isNegative()) {
-                throw new IllegalArgumentException("OTA block cache expire-after-access must be positive, got " + expireAfterAccess);
+            if (timeToLive == null || timeToLive.isNegative()) {
+                throw new IllegalArgumentException("OTA block cache time to live must not be negative, got " + timeToLive);
             }
         }
         this.maxBytes = maxBytes;
         this.blockSize = blockSize;
         this.lengthFetcher = lengthFetcher;
-        this.cache = Caffeine.newBuilder()
+        Caffeine<BlockKey, byte[]> builder = Caffeine.newBuilder()
                 .maximumWeight(maxBytes)
                 .weigher((BlockKey k, byte[] v) -> v.length)
-                .expireAfterAccess(expireAfterAccess)
-                .recordStats()
+                .ticker(ticker)
+                .recordStats();
+        if (timeToLive != null && !timeToLive.isZero()) {
+            builder.expireAfterWrite(timeToLive);
+        }
+        this.cache = builder
                 .build(k -> {
                     byte[] block = blockFetcher.fetch(k.key(), k.block());
                     return block == null || block.length == 0 ? null : block; // null: nothing is stored
@@ -94,7 +108,7 @@ public class OtaPackageBlockCache {
             byte[] block = loadBlock(key, (int) b);
             if (block == null) {
                 if (out.size() > 0 && !isEofAtBlockBoundary(key, b)) {
-                    // A warm L1 block was followed by a block Redis no longer has (key lost or being refilled).
+                    // A cached block was followed by a block Redis no longer has (key lost or being refilled).
                     // A short non-empty chunk would look like EOF to the device and flash a truncated image,
                     // so drop the stale blocks and answer empty, exactly like the legacy GETRANGE path.
                     evict(key);
@@ -153,7 +167,7 @@ public class OtaPackageBlockCache {
     private byte[] loadBlock(String key, int blockIndex) {
         if ((long) (blockIndex + 1) * blockSize > maxBytes && warnedKeys.add(key)) {
             log.warn("OTA package [{}] exceeds the transport block cache budget, blocks will be evicted before reuse. " +
-                    "Increase CACHE_OTA_L1_MAX_BYTES.", key);
+                    "Increase CACHE_SPECS_OTA_PACKAGES_DATA_BLOCKS_MAX_SIZE.", key);
         }
         return cache.get(new BlockKey(key, blockIndex));
     }

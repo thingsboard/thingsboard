@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -126,15 +127,38 @@ class OtaPackageBlockCacheTest {
     }
 
     @Test
-    void constructor_rejectsZeroExpireAfterAccess() {
-        assertThatThrownBy(() -> new OtaPackageBlockCache(1024, Duration.ZERO, BLOCK_SIZE, this::fetchBlock,
+    void constructor_rejectsNegativeTimeToLive() {
+        assertThatThrownBy(() -> new OtaPackageBlockCache(1024, Duration.ofMinutes(-1), BLOCK_SIZE, this::fetchBlock,
                 key -> 0, mock(StatsFactory.class))).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void constructor_rejectsNegativeExpireAfterAccess() {
-        assertThatThrownBy(() -> new OtaPackageBlockCache(1024, Duration.ofMinutes(-1), BLOCK_SIZE, this::fetchBlock,
-                key -> 0, mock(StatsFactory.class))).isInstanceOf(IllegalArgumentException.class);
+    void block_expiresAfterWrite_evenWhenReadContinuously() {
+        AtomicLong nanos = new AtomicLong();
+        OtaPackageBlockCache cache = new OtaPackageBlockCache(1024, Duration.ofMinutes(10), BLOCK_SIZE, this::fetchBlock,
+                key -> store.getOrDefault(key, new byte[0]).length, mock(StatsFactory.class), nanos::get);
+
+        cache.getChunk(KEY_A, 4, 0);
+        nanos.addAndGet(TimeUnit.MINUTES.toNanos(6));
+        cache.getChunk(KEY_A, 4, 0); // a read does not extend the block's life
+        assertThat(fetchCount.get()).isEqualTo(1);
+
+        nanos.addAndGet(TimeUnit.MINUTES.toNanos(6)); // 12 min after the load
+        assertThat(cache.getChunk(KEY_A, 4, 0)).containsExactly(Arrays.copyOfRange(data20, 0, 4));
+        assertThat(fetchCount.get()).isEqualTo(2);
+    }
+
+    @Test
+    void zeroTimeToLive_blocksNeverExpire() {
+        AtomicLong nanos = new AtomicLong();
+        OtaPackageBlockCache cache = new OtaPackageBlockCache(1024, Duration.ZERO, BLOCK_SIZE, this::fetchBlock,
+                key -> store.getOrDefault(key, new byte[0]).length, mock(StatsFactory.class), nanos::get);
+
+        cache.getChunk(KEY_A, 4, 0);
+        nanos.addAndGet(TimeUnit.DAYS.toNanos(30));
+        cache.getChunk(KEY_A, 4, 0);
+
+        assertThat(fetchCount.get()).isEqualTo(1);
     }
 
     @Test
