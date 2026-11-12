@@ -11,6 +11,8 @@ import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.thingsboard.server.common.data.StringUtils;
 
+import java.time.Duration;
+
 @Configuration
 @ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
 @ConditionalOnProperty(prefix = "redis.connection", value = "type", havingValue = "cluster")
@@ -24,6 +26,9 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
 
     @Value("${redis.cluster.useDefaultPoolConfig:true}")
     private boolean useDefaultPoolConfig;
+
+    @Value("${redis.cluster.topology-refresh-period-sec:30}")
+    private long topologyRefreshPeriodSec;
 
     @Value("${redis.username:}")
     private String username;
@@ -40,7 +45,8 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
         clusterConfiguration.setMaxRedirects(maxRedirects);
         clusterConfiguration.setUsername(username);
         clusterConfiguration.setPassword(password);
-        return new JedisConnectionFactory(clusterConfiguration, buildClientConfig());
+        Duration topologyRefreshPeriod = topologyRefreshPeriodSec > 0 ? Duration.ofSeconds(topologyRefreshPeriodSec) : null;
+        return new TbJedisClusterConnectionFactory(clusterConfiguration, buildClientConfig(), topologyRefreshPeriod);
     }
 
     private JedisClientConfiguration buildClientConfig() {

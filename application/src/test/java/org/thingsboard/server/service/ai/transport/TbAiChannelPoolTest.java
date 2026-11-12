@@ -4,7 +4,9 @@ package org.thingsboard.server.service.ai.transport;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.client.TbAiHeaders;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -24,6 +26,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 class TbAiChannelPoolTest {
+
+    static final String TB_VERSION = "4.4.0";
 
     AtomicLong now = new AtomicLong(1_000_000_000L);
     FakeTbAiServer server = FakeTbAiServer.start((connection, frame) -> {});
@@ -51,6 +55,37 @@ class TbAiChannelPoolTest {
         assertThat(join(first)).isSameAs(join(second));
         assertThat(server.connections.get()).isEqualTo(1);
         assertThat(pool.pooledConnections()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldSendTbVersionAndAcceptLanguage_whenOpeningChannel() {
+        // GIVEN
+        pool = pool(10);
+        TbAiTurnContext context = new TbAiTurnContext(user(), null, "de-DE", () -> "token", "https://tb.example.com");
+
+        // WHEN
+        join(pool.acquire(context, false));
+
+        // THEN
+        assertThat(server.handshakeHeaders).singleElement().satisfies(headers -> {
+            assertThat(headers.get(TbAiHeaders.TB_VERSION)).isEqualTo(TB_VERSION);
+            assertThat(headers.get(HttpHeaders.ACCEPT_LANGUAGE)).isEqualTo("de-DE");
+        });
+    }
+
+    @Test
+    void shouldSendTbVersionWithoutAcceptLanguage_whenContextHasNoLanguage() {
+        // GIVEN
+        pool = pool(10);
+
+        // WHEN
+        join(pool.acquire(context(user(), "https://tb.example.com"), false));
+
+        // THEN
+        assertThat(server.handshakeHeaders).singleElement().satisfies(headers -> {
+            assertThat(headers.get(TbAiHeaders.TB_VERSION)).isEqualTo(TB_VERSION);
+            assertThat(headers.contains(HttpHeaders.ACCEPT_LANGUAGE)).isFalse();
+        });
     }
 
     @Test
@@ -212,7 +247,7 @@ class TbAiChannelPoolTest {
     }
 
     TbAiChannelPool pool(int maxConnections) {
-        return new TbAiChannelPool(server.client(), maxConnections, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), now::get, false);
+        return new TbAiChannelPool(server.client(), TB_VERSION, maxConnections, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), now::get, false);
     }
 
     static TbAiPooledConnection join(CompletableFuture<TbAiPooledConnection> future) {

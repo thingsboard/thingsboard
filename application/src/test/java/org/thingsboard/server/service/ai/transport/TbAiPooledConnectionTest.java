@@ -30,7 +30,7 @@ import static org.mockito.Mockito.never;
 class TbAiPooledConnectionTest {
 
     ChannelFrameCodec codec = new ChannelFrameCodec(new ObjectMapper());
-    TbAiChannelPool pool = new TbAiChannelPool(mock(TbAiChannelClient.class), 10, 20, Duration.ofSeconds(60),
+    TbAiChannelPool pool = new TbAiChannelPool(mock(TbAiChannelClient.class), "4.4.0", 10, 20, Duration.ofSeconds(60),
             Duration.ofMinutes(10), System::nanoTime, false);
     TbAiChannelPool.PoolKey key = new TbAiChannelPool.PoolKey(TenantId.fromUUID(UUID.randomUUID()), new UserId(UUID.randomUUID()));
 

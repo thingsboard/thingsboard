@@ -754,6 +754,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
     @Test
     public void testDefaultDownlinkConverters() throws Exception {
         Resource[] expectedFiles = new PathMatchingResourcePatternResolver().getResources("classpath*:converters/*/downlink/test/*/expected.json");
+        assertThat(expectedFiles).isNotEmpty();
 
         SoftAssertions softly = new SoftAssertions();
         for (Resource expectedFile : expectedFiles) {

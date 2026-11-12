@@ -258,13 +258,6 @@ pre.tb-highlight {
   }
 }
 
-.tb-notice {
-  padding: 15px;
-  font-size: 16px;
-  background-color: #f7f7f7;
-  border: 1px solid #ccc;
-}
-
 .ace_editor {
   font-size: 16px !important;
   letter-spacing: normal;
@@ -693,10 +686,14 @@ pre.tb-highlight {
   }
 
   .mat-padding {
-    padding: 8px;
+    padding: $tb-content-spacing;
     @media #{$mat-gt-sm} {
-      padding: 16px;
+      padding: $tb-content-spacing-gt-sm;
     }
+  }
+
+  .tb-content-card {
+    @include tb-content-card;
   }
 
   .mat-content {
