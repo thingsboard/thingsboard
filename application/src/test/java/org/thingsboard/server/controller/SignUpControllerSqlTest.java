@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.selfregistration.SignUpFieldId;
 import org.thingsboard.server.common.data.selfregistration.WebSelfRegistrationParams;
 import org.thingsboard.server.common.data.signup.SignUpRequest;
 import org.thingsboard.server.common.data.signup.SignUpResult;
+import org.thingsboard.server.common.data.wl.WhiteLabelingType;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.menu.CustomMenuDao;
@@ -438,6 +439,27 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
 
         deleteDifferentTenant();
         removeCreatedUser(user);
+    }
+
+    @Test
+    public void testSaveSelfRegistrationParamsWithDomainOfOtherTenantIsForbidden() throws Exception {
+        String domainName = "signup-other-tenant.example.com";
+        Domain savedDomain = doPost("/api/domain", constructDomain(domainName), Domain.class);
+
+        loginDifferentTenant();
+        WebSelfRegistrationParams selfRegistrationParams = new WebSelfRegistrationParams();
+        selfRegistrationParams.setTitle("Please sign up");
+        selfRegistrationParams.setPrivacyPolicy("Privacy policy");
+        selfRegistrationParams.setTermsOfUse("Terms of use");
+        selfRegistrationParams.setDomainId(savedDomain.getId());
+        selfRegistrationParams.setPermissions(Collections.emptyList());
+
+        doPost("/api/selfRegistration/selfRegistrationParams", selfRegistrationParams)
+                .andExpect(status().isForbidden());
+
+        assertThat(whiteLabelingService.findWhiteLabelingByDomainAndType(domainName, WhiteLabelingType.SELF_REGISTRATION)).isNull();
+        assertThat(whiteLabelingService.findWhiteLabelingByDomainAndType(domainName, WhiteLabelingType.PRIVACY_POLICY)).isNull();
+        assertThat(whiteLabelingService.findWhiteLabelingByDomainAndType(domainName, WhiteLabelingType.TERMS_OF_USE)).isNull();
     }
 
     protected SignUpRequest createWebSignUpRequest(String email) {

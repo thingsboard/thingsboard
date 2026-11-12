@@ -16,6 +16,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -243,10 +244,44 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testHandleRuleEngineRequestRequiresPermissionOverReportUser() throws Exception {
+        loginCustomerAdminUser();
+
+        doPost("/api/rule-engine/", (Object) reportRequestBody(tenantAdminUserId))
+                .andExpect(status().isForbidden());
+        doPost("/api/rule-engine/", (Object) reportConfigRequestBody(tenantAdminUserId))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(ruleEngineCallService);
+
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(customerAdminUserId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
+        mockRestApiCallToRuleEngine(responseMsg);
+
+        String ownReportRequestBody = reportRequestBody(customerAdminUserId);
+        doPostAsyncWithTypedResponse("/api/rule-engine/", ownReportRequestBody, new TypeReference<JsonNode>() {
+        }, status().isOk());
+        ArgumentCaptor<TbMsg> requestMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ruleEngineCallService).processRestApiCallToRuleEngine(eq(tenantId), any(UUID.class), requestMsgCaptor.capture(), eq(false), any(Consumer.class));
+        assertThat(requestMsgCaptor.getValue().getData()).isEqualTo(ownReportRequestBody);
+    }
+
+    @Test
     public void testHandleRuleEngineRequestUnauthorized() throws Exception {
         doPost("/api/rule-engine/", (Object) REQUEST_BODY)
                 .andExpect(status().isUnauthorized())
                 .andExpect(statusReason(containsString("Authentication failed")));
+    }
+
+    private String reportRequestBody(UserId userId) {
+        return "{\"reportConfig\":{\"userId\":\"" + userId.getId() + "\"}}";
+    }
+
+    private String reportConfigRequestBody(UserId userId) {
+        return "{\"userId\":{\"id\":\"" + userId.getId() + "\"}}";
     }
 
     private void mockRestApiCallToRuleEngine(TbMsg responseMsg) {
