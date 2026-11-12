@@ -7,6 +7,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
@@ -14,12 +15,15 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.permission.AllowedPermissionsInfo;
 import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.permission.GroupPermissionInfo;
+import org.thingsboard.server.common.data.permission.ShareGroupRequest;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
@@ -34,6 +38,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 public class GroupPermissionControllerTest extends AbstractControllerTest {
+
+    @Autowired
+    private GroupPermissionService groupPermissionService;
 
     private IdComparator<GroupPermission> idComparator;
     private Tenant savedTenant;
@@ -276,6 +283,97 @@ public class GroupPermissionControllerTest extends AbstractControllerTest {
                 new TypeReference<>() {});
         assertEquals(1, loadedGroupPermissionsInfo.size());
         checkPermissionOwners(loadedGroupPermissionsInfo, List.of(subCustomerId));
+    }
+
+    @Test
+    public void testLoadUserGroupPermissionInfosReturnsOnlyOwnTenantData() throws Exception {
+        loginDifferentTenant();
+        Role otherTenantRole = doPost("/api/role", newRole("Other Tenant Role", RoleType.GROUP), Role.class);
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setType(EntityType.DEVICE);
+        otherTenantGroup.setName("Other Tenant Device Group");
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        Role ownRole = doPost("/api/role", newRole("Own Role", RoleType.GROUP), Role.class);
+
+        GroupPermission otherTenantRolePermission = new GroupPermission();
+        otherTenantRolePermission.setRoleId(otherTenantRole.getId());
+        GroupPermission otherTenantGroupPermission = new GroupPermission();
+        otherTenantGroupPermission.setRoleId(ownRole.getId());
+        otherTenantGroupPermission.setEntityGroupId(otherTenantGroup.getId());
+
+        List<GroupPermissionInfo> infos = doPostWithTypedResponse("/api/userGroup/groupPermissions/info",
+                List.of(otherTenantRolePermission, otherTenantGroupPermission), new TypeReference<>() {});
+        assertThat(infos).isEmpty();
+    }
+
+    @Test
+    public void testLoadUserGroupPermissionInfosReturnsOnlyReadableGroups() throws Exception {
+        loginTenantAdmin();
+        Role role = doPost("/api/role", newRole("Group Role", RoleType.GROUP), Role.class);
+        EntityGroup tenantGroup = new EntityGroup();
+        tenantGroup.setType(EntityType.DEVICE);
+        tenantGroup.setName("Tenant Device Group");
+        tenantGroup = doPost("/api/entityGroup", tenantGroup, EntityGroup.class);
+
+        loginCustomerAdminUser();
+        EntityGroup customerGroup = new EntityGroup();
+        customerGroup.setType(EntityType.DEVICE);
+        customerGroup.setName("Customer Device Group");
+        customerGroup.setOwnerId(customerId);
+        customerGroup = doPost("/api/entityGroup", customerGroup, EntityGroup.class);
+
+        GroupPermission tenantGroupPermission = new GroupPermission();
+        tenantGroupPermission.setRoleId(role.getId());
+        tenantGroupPermission.setEntityGroupId(tenantGroup.getId());
+        GroupPermission customerGroupPermission = new GroupPermission();
+        customerGroupPermission.setRoleId(role.getId());
+        customerGroupPermission.setEntityGroupId(customerGroup.getId());
+
+        List<GroupPermissionInfo> infos = doPostWithTypedResponse("/api/userGroup/groupPermissions/info",
+                List.of(tenantGroupPermission, customerGroupPermission), new TypeReference<>() {});
+        assertThat(infos).extracting(GroupPermissionInfo::getEntityGroupId).containsExactly(customerGroup.getId());
+    }
+
+    @Test
+    public void testLoadUserGroupPermissionInfosKeepsSystemRoles() throws Exception {
+        loginTenantAdmin();
+        EntityGroup tenantAdminsGroup = findGroupByOwnerIdTypeAndName(tenantId, EntityType.USER, EntityGroup.GROUP_TENANT_ADMINS_NAME);
+        List<GroupPermissionInfo> storedInfos = doGetTyped("/api/userGroup/" + tenantAdminsGroup.getId() + "/groupPermissions",
+                new TypeReference<>() {});
+        assertThat(storedInfos).isNotEmpty();
+        assertThat(storedInfos).allSatisfy(info -> assertThat(info.getRole().getTenantId().isSysTenantId()).isTrue());
+
+        List<GroupPermission> permissions = storedInfos.stream().map(GroupPermission::new).toList();
+        List<GroupPermissionInfo> infos = doPostWithTypedResponse("/api/userGroup/groupPermissions/info", permissions, new TypeReference<>() {});
+        assertThat(infos).hasSameSizeAs(permissions);
+        assertThat(infos).allSatisfy(info -> assertThat(info.getRole()).isNotNull());
+    }
+
+    @Test
+    public void testShareGroupWithRoleOfOtherTenantIsRejected() throws Exception {
+        loginDifferentTenant();
+        Role otherTenantRole = doPost("/api/role", newRole("Other Tenant Role", RoleType.GROUP), Role.class);
+
+        loginTenantAdmin();
+        EntityGroup deviceGroup = new EntityGroup();
+        deviceGroup.setType(EntityType.DEVICE);
+        deviceGroup.setName("Shared Device Group");
+        deviceGroup = doPost("/api/entityGroup", deviceGroup, EntityGroup.class);
+
+        ShareGroupRequest shareGroupRequest = new ShareGroupRequest(tenantId, true, null, false, List.of(otherTenantRole.getId()));
+        doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, deviceGroup.getId().toString())
+                .andExpect(status().isBadRequest());
+
+        assertThat(groupPermissionService.findGroupPermissionByTenantIdAndRoleId(tenantId, otherTenantRole.getId(), new PageLink(10)).getData()).isEmpty();
+    }
+
+    private Role newRole(String roleName, RoleType roleType) {
+        Role role = new Role();
+        role.setName(roleName);
+        role.setType(roleType);
+        return role;
     }
 
     private void checkPermissionOwners(List<GroupPermissionInfo> groupPermissionsInfos, List<? extends EntityId> ownerIds) {

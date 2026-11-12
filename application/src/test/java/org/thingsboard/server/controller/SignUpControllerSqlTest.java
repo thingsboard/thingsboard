@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.CustomerInfo;
 import org.thingsboard.server.common.data.Dashboard;
@@ -34,6 +35,9 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.selfregistration.DefaultDashboardParams;
@@ -48,6 +52,7 @@ import org.thingsboard.server.common.data.signup.SignUpRequest;
 import org.thingsboard.server.common.data.signup.SignUpResult;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.menu.CustomMenuDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -116,6 +121,9 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
 
     @Autowired
     protected WhiteLabelingService whiteLabelingService;
+
+    @Autowired
+    private GroupPermissionService groupPermissionService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -262,6 +270,31 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSelfRegisterUserSkipsPermissionForGroupOfOtherTenant() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setName("Other Tenant Device Group");
+        otherTenantGroup.setType(EntityType.DEVICE);
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        Role role = new Role();
+        role.setName("Self Registration Group Role");
+        role.setType(RoleType.GROUP);
+        role.setPermissions(JacksonUtil.toJsonNode("[\"READ\"]"));
+        role = doPost("/api/role", role, Role.class);
+        GroupPermission permission = new GroupPermission();
+        permission.setRoleId(role.getId());
+        permission.setEntityGroupId(otherTenantGroup.getId());
+        createWebSelfRegistrationSettings(List.of(permission));
+
+        doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+
+        assertThat(groupPermissionService.findGroupPermissionByTenantIdAndRoleId(tenantId, role.getId(), new PageLink(10)).getData()).isEmpty();
+        removeCreatedUser(userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL));
+    }
+
+    @Test
     public void testResendEmailActivationForPendingSignUpUser() throws Exception {
         createWebSelfRegistrationSettings();
         doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
@@ -372,6 +405,10 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
     }
 
     private void createWebSelfRegistrationSettings() {
+        createWebSelfRegistrationSettings(Collections.emptyList());
+    }
+
+    private void createWebSelfRegistrationSettings(List<GroupPermission> permissions) {
         Domain domain = constructDomain("localhost");
         Domain savedDomain = doPost("/api/domain", domain, Domain.class);
 
@@ -385,7 +422,7 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         selfRegistrationParams.setShowPrivacyPolicy(true);
         selfRegistrationParams.setDomainId(savedDomain.getId());
         selfRegistrationParams.setNotificationRecipient(createNotificationTarget(currentUserId).getId());
-        selfRegistrationParams.setPermissions(Collections.emptyList());
+        selfRegistrationParams.setPermissions(permissions);
 
         doPost("/api/selfRegistration/selfRegistrationParams",
                 selfRegistrationParams, JsonNode.class);
