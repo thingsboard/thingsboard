@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ImageDescriptor;
@@ -28,10 +29,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.resource.TbResourceRepository;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -299,14 +303,22 @@ public class ImageControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDownloadImageWithCommaInFileName() throws Exception {
-        String filename = "Baker Street, 221B.png";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
+    public void testDownloadImageWithSpecialCharactersInFileName() throws Exception {
+        Map<String, String> expectedHeaders = Map.of(
+                "Baker Street, 221B.png", "attachment; filename=\"Baker Street, 221B.png\"",
+                "\"Baker Street\", 221B.png", "attachment; filename=\"\\\"Baker Street\\\", 221B.png\"",
+                "Хрещатик, 22.png", "attachment; filename=\"=?UTF-8?Q?=D0=A5=D1=80=D0=B5=D1=89=D0=B0=D1=82=D0=B8=D0=BA,_22.png?=\"; " +
+                        "filename*=UTF-8''%D0%A5%D1%80%D0%B5%D1%89%D0%B0%D1%82%D0%B8%D0%BA%2C%2022.png"
+        );
 
-        for (String url : List.of("/api/images/tenant/{key}", "/api/images/tenant/{key}/preview")) {
-            String contentDisposition = downloadImageContentDisposition(url, imageInfo.getResourceKey());
+        for (Map.Entry<String, String> entry : expectedHeaders.entrySet()) {
+            TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", entry.getKey(), "image/png", PNG_IMAGE);
 
-            assertThat(contentDisposition).isEqualTo("attachment; filename=\"Baker Street, 221B.png\"");
+            for (String url : List.of("/api/images/tenant/{key}", "/api/images/tenant/{key}/preview")) {
+                String contentDisposition = downloadImageContentDisposition(url, imageInfo.getResourceKey());
+
+                assertThat(contentDisposition).as(entry.getKey()).isEqualTo(entry.getValue());
+            }
         }
     }
 
@@ -452,7 +464,9 @@ public class ImageControllerTest extends AbstractControllerTest {
     }
 
     private String downloadImageContentDisposition(String urlTemplate, String key) throws Exception {
-        MockHttpServletResponse response = doGet(urlTemplate, key)
+        MockHttpServletRequestBuilder request = get(urlTemplate, key).characterEncoding(StandardCharsets.UTF_8);
+        setJwtToken(request);
+        MockHttpServletResponse response = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn().getResponse();
         assertThat(response.getContentAsByteArray()).isNotEmpty();
