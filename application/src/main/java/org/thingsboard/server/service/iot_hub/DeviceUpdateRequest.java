@@ -38,7 +38,7 @@ public class DeviceUpdateRequest {
     @Data
     public static class Step {
         private String name;
-        // The package step's id, which keys its install state; the name when not set
+        // The package step's stable id, so that a next version can rename the step
         private String id;
         // InstallStepType of the package: DEVICE_PROFILE, DEVICE, GATEWAY, GATEWAY_CONNECTOR, DASHBOARD, RULE_CHAIN,
         // UPLINK_CONVERTER, DOWNLINK_CONVERTER, INTEGRATION
@@ -66,6 +66,14 @@ public class DeviceUpdateRequest {
         private JsonNode metadata;
         // UPLINK_CONVERTER: the step takes ThingsBoard's default converter, which the install state records for the update check
         private boolean defaultConverter;
+
+        /**
+         * The key of the step's install state: its id, or else its type and name, so that two steps of an install
+         * method never share it. The install wizard keys the steps of an install the same way.
+         */
+        public String stateKey() {
+            return id != null ? id : type + ":" + name;
+        }
     }
 
 }

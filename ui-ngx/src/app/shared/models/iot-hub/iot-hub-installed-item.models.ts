@@ -62,7 +62,7 @@ export interface DeviceUpdateStep {
   serverAttributes?: any;
   sharedAttributes?: any;
   resolution?: string;
-  // The package step's id, which keys its install state; the name when not set
+  // The package step's stable id, so that a next version can rename the step
   id?: string;
   // INTEGRATION: the step's metadata entries, which a KEEP merges into the integration; null removes an entry
   metadata?: Record<string, string | null>;
@@ -80,12 +80,13 @@ export interface DeviceUpdateRequest {
   steps: DeviceUpdateStep[];
 }
 
-/** All of the update was applied, or none of it: failedStep names the step that failed, if one did. */
+/** All of the update was applied, or none of it: failedStep is the install state key of the step that failed, if one did. */
 export interface DeviceUpdateResult {
   success: boolean;
   errorMessage?: string;
   failedStep?: string;
   descriptor?: DeviceInstalledItemDescriptor;
+  // By install state key of the step
   outputs?: Record<string, any>;
 }
 
