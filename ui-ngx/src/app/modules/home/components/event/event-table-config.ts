@@ -344,8 +344,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               icon: 'content_paste',
               style: {
                 padding: '4px',
-                'font-size': '16px',
-                color: 'rgba(0,0,0,.87)'
+                'font-size': '16px'
               },
               isEnabled: () => true,
               onAction: ($event, entity) => entity.body.entityId,
@@ -362,8 +361,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               icon: 'content_paste',
               style: {
                 padding: '4px',
-                'font-size': '16px',
-                color: 'rgba(0,0,0,.87)'
+                'font-size': '16px'
               },
               isEnabled: () => true,
               onAction: ($event, entity) => entity.body.msgId,
@@ -449,8 +447,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               icon: 'content_copy',
               style: {
                 padding: '4px',
-                'font-size': '16px',
-                color: 'rgba(0,0,0,.87)'
+                'font-size': '16px'
               },
               isEnabled: () => true,
               onAction: ($event, entity) => entity.body.entityId,
@@ -469,8 +466,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               icon: 'content_copy',
               style: {
                 padding: '4px',
-                'font-size': '16px',
-                color: 'rgba(0,0,0,.87)'
+                'font-size': '16px'
               },
               isEnabled: (entity) => !!entity.body.msgId,
               onAction: (_, entity) => entity.body.msgId,

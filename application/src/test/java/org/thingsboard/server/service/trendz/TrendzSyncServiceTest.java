@@ -21,6 +21,9 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.trendz.TrendzConfiguration;
 import org.thingsboard.server.common.data.trendz.TrendzHealthcheckResult;
 import org.thingsboard.server.common.data.trendz.TrendzSettings;
@@ -32,6 +35,8 @@ import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -219,6 +224,10 @@ public class TrendzSyncServiceTest extends AbstractControllerTest {
         assertNotNull(apiKeyByDescription);
         assertTrue(apiKeyByDescription.isInternal());
         assertEquals(DefaultTrendzSyncService.TRENDZ_API_KEY_DESCRIPTION, apiKeyByDescription.getDescription());
+        assertEquals(Set.of(Operation.READ, Operation.INVOKE),
+                apiKeyByDescription.getPermissions().getPermissionsForAuthority(Authority.TENANT_ADMIN).get(Resource.AI_MODEL));
+        assertEquals(Set.of(Operation.INVOKE),
+                apiKeyByDescription.getPermissions().getPermissionsForAuthority(Authority.CUSTOMER_USER).get(Resource.AI_MODEL));
     }
 
     @Test

@@ -27,7 +27,6 @@
       <div class="flex flex-row items-center justify-start">
         <pre class="tb-highlight flex-1"><code>{{ activationLink }}</code></pre>
         <button mat-icon-button
-                color="primary"
                 ngxClipboard
                 cbContent="{{ activationLink }}"
                 (cbOnSuccess)="onActivationLinkCopied()"
