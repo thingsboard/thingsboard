@@ -241,6 +241,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   isMobileApp = this.mobileService.isMobileApp();
   isFullscreen = false;
   isEdit = false;
+
+  private editedWhileEmpty = false;
   isEditingWidget = false;
   isEditingWidgetClosed = true;
   isMobile = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
@@ -513,8 +515,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       });
     });
     this.dashboardResize$.observe(this.dashboardContainer.nativeElement);
-    if (!this.widgetEditMode && !this.readonly && !this.openAiAssistant && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
+    const aiAtWork = this.openAiAssistant || (this.aiAssistantPanelEnabled && (this.panelService.open() || this.panelService.hasCarriedChat()));
+    if (!this.widgetEditMode && !this.readonly && !aiAtWork && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
       this.setEditMode(true, false);
+      this.editedWhileEmpty = true;
     }
     if (this.openAiAssistant && this.aiAssistantPanelEnabled) {
       this.panelService.openPanel();
@@ -626,6 +630,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   private reloadDashboard(): void {
+    const emptyEdit = this.isEdit && this.editedWhileEmpty && this.dashboardUtils.isEmptyDashboard(this.dashboard);
+    if (emptyEdit) {
+      this.setEditMode(false, false);
+    }
     if (!this.currentDashboardId || this.isEdit) {
       return;
     }
@@ -649,6 +657,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         });
         this.dashboardCtx.stateController.reInit();
         this.updateBreadcrumbs.emit();
+        if (emptyEdit && !this.readonly && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
+          this.setEditMode(true, false);
+          this.editedWhileEmpty = true;
+        }
         this.runChangeDetection();
       },
       error: (err) => {
@@ -1320,6 +1332,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private setEditMode(isEdit: boolean, revert: boolean) {
     this.isEdit = isEdit;
+    this.editedWhileEmpty = false;
     if (this.isEdit) {
       this.dashboardCtx.stateController.preserveState();
       this.prevDashboard = deepClone(this.dashboard);
