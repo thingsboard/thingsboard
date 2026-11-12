@@ -26,6 +26,7 @@ import { switchMap } from 'rxjs/operators';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import {
+  canReviewDeviceInstall,
   DeviceInstalledItemDescriptor,
   getInstalledItemUrl,
   IotHubInstalledItem,
@@ -184,9 +185,13 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
 
   private openDeviceReviewDialog(item: IotHubInstalledItem): void {
     const descriptor = item.descriptor as DeviceInstalledItemDescriptor;
-    if (!descriptor.installState || !descriptor.selectedInstallMethod) {
+    if (!canReviewDeviceInstall(descriptor)) {
       this.iotHubApiService.getVersionInfo(item.itemVersionId, {ignoreLoading: true}).subscribe(versionView => {
-        this.iotHubActions.openItemDetail(versionView, item).subscribe();
+        this.iotHubActions.openItemDetail(versionView, item).subscribe(result => {
+          if (result === 'updated' || result === 'deleted') {
+            this.loadData();
+          }
+        });
       });
       return;
     }
