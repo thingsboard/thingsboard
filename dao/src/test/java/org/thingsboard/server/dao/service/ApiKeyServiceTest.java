@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.service;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -9,6 +10,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -128,6 +130,57 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
         Assert.assertEquals(savedApiKey.getDescription(), foundApiKey.getDescription());
         Assert.assertEquals(savedApiKey.isEnabled(), foundApiKey.isEnabled());
         Assert.assertEquals(savedApiKey.getValue(), foundApiKey.getValue());
+    }
+
+    @Test
+    public void testSaveApiKeyWithNewValue_oldValueEvictedFromCache() {
+        ApiKeyInfo apiKeyInfo = createApiKeyInfo(TEST_API_KEY_DESCRIPTION);
+        ApiKey savedApiKey = apiKeyService.saveApiKey(tenantId, apiKeyInfo);
+        String originalValue = savedApiKey.getValue();
+        // authentication resolves the key by value and caches the lookup
+        Assert.assertNotNull(apiKeyService.findApiKeyByValue(originalValue));
+
+        String newValue = "new-api-key-value-" + StringUtils.randomAlphanumeric(32);
+        apiKeyService.saveApiKey(tenantId, savedApiKey, newValue, false);
+
+        Assert.assertNull("Old API key value must not resolve after the value changed", apiKeyService.findApiKeyByValue(originalValue));
+        ApiKey foundByNewValue = apiKeyService.findApiKeyByValue(newValue);
+        Assert.assertNotNull(foundByNewValue);
+        Assert.assertEquals(savedApiKey.getId(), foundByNewValue.getId());
+    }
+
+    @Test
+    public void testSaveApiKeyWithNewValue_cachedMissForNewValueEvicted() {
+        ApiKeyInfo apiKeyInfo = createApiKeyInfo(TEST_API_KEY_DESCRIPTION);
+        ApiKey savedApiKey = apiKeyService.saveApiKey(tenantId, apiKeyInfo);
+
+        String newValue = "new-api-key-value-" + StringUtils.randomAlphanumeric(32);
+        // a failed authentication attempt caches the miss for the not-yet-saved value
+        Assert.assertNull(apiKeyService.findApiKeyByValue(newValue));
+
+        apiKeyService.saveApiKey(tenantId, savedApiKey, newValue, false);
+
+        ApiKey foundByNewValue = apiKeyService.findApiKeyByValue(newValue);
+        Assert.assertNotNull("New API key value must resolve after it is saved", foundByNewValue);
+        Assert.assertEquals(savedApiKey.getId(), foundByNewValue.getId());
+    }
+
+    @Test
+    public void testCreateApiKeyWithExplicitValue_cachedMissForValueEvicted() {
+        String value = "edge-api-key-value-" + StringUtils.randomAlphanumeric(32);
+        // a failed authentication attempt caches the miss before the edge uplink delivers the key
+        Assert.assertNull(apiKeyService.findApiKeyByValue(value));
+
+        // the edge uplink creates the key on the cloud with a preset id and the value generated on the edge
+        ApiKeyInfo apiKeyInfo = createApiKeyInfo(TEST_API_KEY_DESCRIPTION);
+        ApiKeyId apiKeyId = new ApiKeyId(Uuids.timeBased());
+        apiKeyInfo.setId(apiKeyId);
+        apiKeyInfo.setCreatedTime(Uuids.unixTimestamp(apiKeyId.getId()));
+        ApiKey savedApiKey = apiKeyService.saveApiKey(tenantId, apiKeyInfo, value, false);
+
+        ApiKey foundByValue = apiKeyService.findApiKeyByValue(value);
+        Assert.assertNotNull("API key value must resolve after the key is created with it", foundByValue);
+        Assert.assertEquals(savedApiKey.getId(), foundByValue.getId());
     }
 
     @Test
