@@ -307,7 +307,6 @@ public class ImageControllerTest extends AbstractControllerTest {
             String contentDisposition = downloadImageContentDisposition(url, imageInfo.getResourceKey());
 
             assertThat(contentDisposition).isEqualTo("attachment; filename=\"Baker Street, 221B.png\"");
-            assertThat(countHeaderValues(contentDisposition)).isEqualTo(1);
         }
     }
 
@@ -448,22 +447,6 @@ public class ImageControllerTest extends AbstractControllerTest {
         List<String> headers = response.getHeaders(HttpHeaders.CONTENT_DISPOSITION);
         assertThat(headers).hasSize(1);
         return headers.get(0);
-    }
-
-    private static int countHeaderValues(String headerValue) {
-        int count = 1;
-        boolean quoted = false;
-        for (int i = 0; i < headerValue.length(); i++) {
-            char c = headerValue.charAt(i);
-            if (quoted && c == '\\') {
-                i++;
-            } else if (c == '"') {
-                quoted = !quoted;
-            } else if (c == ',' && !quoted) {
-                count++;
-            }
-        }
-        return count;
     }
 
 }
