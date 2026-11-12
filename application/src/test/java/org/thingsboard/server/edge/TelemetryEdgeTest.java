@@ -13,11 +13,13 @@ import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
@@ -342,6 +344,49 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
                     Assert.assertEquals("value1", sharedAttributes.get(0).get("value").asText());
                     JsonNode serverAttributes = doGetAsync(valuesUrl + DataConstants.SERVER_SCOPE, JsonNode.class);
                     Assert.assertTrue(serverAttributes.findValuesAsText("key").contains("key2"));
+                });
+    }
+
+    @Test
+    public void testSendEntityGroupAttributesAndTelemetryToCloud() throws Exception {
+        EntityGroup entityGroup = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "TelemetryDeviceGroup", tenantId);
+
+        long ts = System.currentTimeMillis();
+        EntityDataProto entityData = EntityDataProto.newBuilder()
+                .setEntityIdMSB(entityGroup.getUuidId().getMostSignificantBits())
+                .setEntityIdLSB(entityGroup.getUuidId().getLeastSignificantBits())
+                .setEntityType(entityGroup.getId().getEntityType().name())
+                .setAttributesUpdatedMsg(TransportProtos.PostAttributeMsg.newBuilder()
+                        .addKv(TransportProtos.KeyValueProto.newBuilder()
+                                .setKey("groupKey")
+                                .setType(TransportProtos.KeyValueType.STRING_V)
+                                .setStringV("groupValue").build())
+                        .build())
+                .setPostAttributeScope(DataConstants.SERVER_SCOPE)
+                .setPostTelemetryMsg(TransportProtos.PostTelemetryMsg.newBuilder()
+                        .addTsKvList(TransportProtos.TsKvListProto.newBuilder()
+                                .setTs(ts)
+                                .addKv(TransportProtos.KeyValueProto.newBuilder()
+                                        .setKey("groupTemperature")
+                                        .setType(TransportProtos.KeyValueType.LONG_V)
+                                        .setLongV(25).build())
+                                .build())
+                        .build())
+                .build();
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityData(entityData));
+
+        String valuesUrl = "/api/plugins/telemetry/ENTITY_GROUP/" + entityGroup.getUuidId() + "/values/";
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode attributes = doGetAsync(valuesUrl + "attributes/" + DataConstants.SERVER_SCOPE, JsonNode.class);
+                    Assert.assertEquals(1, attributes.size());
+                    Assert.assertEquals("groupKey", attributes.get(0).get("key").asText());
+                    Assert.assertEquals("groupValue", attributes.get(0).get("value").asText());
+                    JsonNode timeseries = doGetAsync(valuesUrl + "timeseries?keys=groupTemperature", JsonNode.class);
+                    Assert.assertEquals(1, timeseries.get("groupTemperature").size());
+                    Assert.assertEquals(ts, timeseries.get("groupTemperature").get(0).get("ts").asLong());
+                    Assert.assertEquals("25", timeseries.get("groupTemperature").get(0).get("value").asText());
                 });
     }
 
