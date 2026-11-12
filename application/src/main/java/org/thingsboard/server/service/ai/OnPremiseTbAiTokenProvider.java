@@ -12,6 +12,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Map;
@@ -26,6 +27,7 @@ import java.util.function.Supplier;
 class OnPremiseTbAiTokenProvider implements TbAiTokenProvider {
 
     private final SubscriptionService subscriptionService;
+    private final ProjectInfo projectInfo;
 
     @Override
     public String getToken(SecurityUser user) {
@@ -63,7 +65,8 @@ class OnPremiseTbAiTokenProvider implements TbAiTokenProvider {
     private Map<String, String> additionalInfo(UUID userId, TenantId tenantId) {
         return Map.of(
                 TbAiHeaders.USER_ID, userId.toString(),
-                TbAiHeaders.TENANT_ID, tenantId.getId().toString()
+                TbAiHeaders.TENANT_ID, tenantId.getId().toString(),
+                TbAiHeaders.TB_VERSION, projectInfo.getProjectVersion()
         );
     }
 
