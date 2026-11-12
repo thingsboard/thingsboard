@@ -62,12 +62,13 @@
     (closed)="onPanelClosed()"
     #assetProfileAutocomplete="matAutocomplete"
     [displayWith]="displayAssetProfileFn">
-    @for (assetProfile of filteredAssetProfiles | async; track assetProfile) {
+    @let assetProfiles = filteredAssetProfiles | async;
+    @for (assetProfile of assetProfiles; track assetProfile) {
       <mat-option [value]="assetProfile">
         <span [innerHTML]="assetProfile.name | highlight:searchText"></span>
       </mat-option>
     }
-    @if (!(filteredAssetProfiles | async)?.length) {
+    @if (assetProfiles && !assetProfiles.length) {
       <mat-option [value]="null" class="tb-not-found">
         <div class="tb-not-found-content" (click)="$event.stopPropagation()">
           @if (!textIsNotEmpty(searchText) || !addNewProfile) {

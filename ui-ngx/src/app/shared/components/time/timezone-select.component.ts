@@ -10,8 +10,7 @@ import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { getDefaultTimezoneInfo, getTimezoneInfo, getTimezones, TimezoneInfo } from '@shared/models/time/time.models';
-import { deepClone } from '@core/utils';
+import { getTimezoneInfo, getTimezones, TimezoneInfo } from '@shared/models/time/time.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TimeService } from '@core/services/time.service';
 
@@ -222,6 +221,7 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
     this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: true});
     setTimeout(() => {
       this.timezoneInputTrigger.openPanel();
+      this.ignoreClosePanel = false;
     }, 0);
   }
 

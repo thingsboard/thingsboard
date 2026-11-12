@@ -157,9 +157,9 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.subTypeFormGroup.disable();
+      this.subTypeFormGroup.disable({emitEvent: false});
     } else {
-      this.subTypeFormGroup.enable();
+      this.subTypeFormGroup.enable({emitEvent: false});
     }
   }
 

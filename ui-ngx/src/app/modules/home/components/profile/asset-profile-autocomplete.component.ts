@@ -13,7 +13,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { defer, merge, Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
@@ -310,6 +310,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
     setTimeout(() => {
       this.assetProfileInput.nativeElement.blur();
       this.assetProfileInput.nativeElement.focus();
+      this.ignoreClosedPanel = false;
     }, 0);
   }
 
