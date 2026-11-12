@@ -31,7 +31,8 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
             if (deviceProfile == null) {
                 throw new RuntimeException("[{" + tenantId + "}] deviceProfileUpdateMsg {" + deviceProfileUpdateMsg + "} cannot be converted to device profile");
             }
-            DeviceProfile deviceProfileById = edgeCtx.getDeviceProfileService().findDeviceProfileById(tenantId, deviceProfileId);
+            DeviceProfile deviceProfileById = findTenantEntity(tenantId, deviceProfileId);
+            deviceProfile.setTenantId(tenantId);
             if (deviceProfileById == null) {
                 created = true;
                 deviceProfile.setId(null);
