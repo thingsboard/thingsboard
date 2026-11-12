@@ -58,7 +58,7 @@ export class UserMenuComponent {
 
   userEmail$ = this.store.pipe(
     select(selectUserDetails),
-    map((user) => user?.email)
+    map((user) => this.splitEmail(user?.email))
   );
 
   constructor(private store: Store<AppState>,
@@ -116,6 +116,17 @@ export class UserMenuComponent {
     } else {
       return '?';
     }
+  }
+
+  private splitEmail(email: string): {full: string; local: string; domain: string} {
+    if (!email) {
+      return null;
+    }
+    const atIndex = email.lastIndexOf('@');
+    if (atIndex <= 0) {
+      return {full: email, local: email, domain: ''};
+    }
+    return {full: email, local: email.substring(0, atIndex), domain: email.substring(atIndex)};
   }
 
   openAccount(): void {

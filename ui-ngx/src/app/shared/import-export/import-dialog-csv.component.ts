@@ -123,7 +123,7 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
   ngAfterViewInit() {
     let columns = this.columnsAssignmentComponent.columnTypes;
     if (this.entityType === EntityType.DEVICE) {
-      columns = columns.concat(this.columnsAssignmentComponent.columnDeviceCredentials);
+      columns = columns.concat(this.columnsAssignmentComponent.columnDeviceCredentials, this.columnsAssignmentComponent.columnDeviceGateway);
     }
     this.allowAssignColumn = columns.map(column => column.value);
   }
