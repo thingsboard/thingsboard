@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync;
 
 import jakarta.annotation.PreDestroy;
@@ -150,7 +151,7 @@ public class DefaultGitSyncService implements GitSyncService {
     private Path getRepoDirectory(RepositorySettings settings) {
         // using uri to define folder name in case repo url is changed
         String name = URI.create(settings.getRepositoryUri()).getPath().replaceAll("[^a-zA-Z]", "");
-        return Path.of(repositoriesFolder, name);
+        return GitRepository.resolveDirectory(repositoriesFolder, name);
     }
 
     private RevCommit getLastCommit(String key) {

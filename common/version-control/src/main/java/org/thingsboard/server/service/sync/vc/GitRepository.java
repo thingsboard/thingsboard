@@ -476,6 +476,15 @@ public class GitRepository {
         return git.getRepository().resolve(rev);
     }
 
+    public static Path resolveDirectory(String repositoriesFolder, String directoryName) {
+        Path root = Path.of(repositoriesFolder).toAbsolutePath().normalize();
+        Path directory = root.resolve(directoryName).normalize();
+        if (!root.equals(directory.getParent()) || !directoryName.equals(directory.getFileName().toString())) {
+            throw new IllegalArgumentException("Repository directory name must be a single path segment");
+        }
+        return directory;
+    }
+
     @SneakyThrows
     public static boolean exists(String directory) {
         File gitDirectory = Path.of(directory, ".git").toFile();
