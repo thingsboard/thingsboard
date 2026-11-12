@@ -92,7 +92,7 @@
           <tr>
             <th></th>
             @for (legendKey of legendKeys; track legendKey) {
-              <th class="tb-time-series-chart-legend-type-label right">
+              <th>
                 <ng-container *ngTemplateOutlet="legendItem; context:{legendKey: legendKey}"></ng-container>
               </th>
             }

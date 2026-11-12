@@ -48,7 +48,7 @@ export interface TimeSeriesChartWidgetSettings extends TimeSeriesChartSettings {
   legendValueFont: Font;
   legendValueColor: string;
   legendConfig: LegendConfig;
-  legendItemsDirection?: LegendDirection;
+  legendItemsDirection?: LegendDirection | null;
   legendView?: LegendView;
   background: BackgroundSettings;
   padding: string;
@@ -85,6 +85,7 @@ export const timeSeriesChartWidgetDefaultSettings: TimeSeriesChartWidgetSettings
     },
     legendValueColor: 'rgba(0, 0, 0, 0.87)',
     legendConfig: {...defaultLegendConfig(widgetType.timeseries), position: LegendPosition.top},
+    legendItemsDirection: null,
     legendView: LegendView.table,
     background: {
       type: BackgroundType.color,

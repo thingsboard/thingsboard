@@ -186,7 +186,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       legendValueFont: [settings.legendValueFont, []],
       legendValueColor: [settings.legendValueColor, []],
       legendConfig: [settings.legendConfig, []],
-      legendItemsDirection: [settings.legendItemsDirection, []],
+      legendItemsDirection: [settings.legendItemsDirection ?? null, []],
       legendView: [settings.legendView, []],
 
       showTooltip: [settings.showTooltip, []],

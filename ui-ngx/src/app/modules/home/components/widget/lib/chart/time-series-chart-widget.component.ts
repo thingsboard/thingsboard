@@ -126,7 +126,7 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
         this.legendClass = `legend-${this.legendConfig.position} legend-view-card`;
       } else {
         const legendItemsDirection = this.resolveLegendItemsDirection();
-        this.legendTableHorizontal = legendItemsDirection === LegendDirection.column;
+        this.legendTableHorizontal = this.settings.legendItemsDirection === LegendDirection.row;
         this.legendClass = `legend-${this.legendConfig.position} legend-direction-${legendItemsDirection}`;
       }
       this.legendColumnTitleStyle = textStyle(this.settings.legendColumnTitleFont);

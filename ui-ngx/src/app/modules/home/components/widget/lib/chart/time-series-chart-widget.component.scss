@@ -123,7 +123,7 @@ $maxLegendHeight: 35%;
       .tb-time-series-chart-legend-table {
         border-spacing: 0;
         table-layout: fixed;
-        &.vertical, &.horizontal {
+        &.vertical {
           width: 100%;
           table-layout: auto;
           tbody {
