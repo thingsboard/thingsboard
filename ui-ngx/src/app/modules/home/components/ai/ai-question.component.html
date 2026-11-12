@@ -15,7 +15,7 @@
     @for (item of answers; track item.question.id) {
       <div class="k-q">
         <span class="k-qt">{{ item.question.question }}</span>
-        <span class="k-opts"><button type="button" class="ob-chip" aria-pressed="true" disabled>{{ item.answer }}</button></span>
+        <span class="k-opts"><button type="button" class="ob-chip" aria-pressed="true" disabled>{{ shown(item) }}</button></span>
       </div>
     }
   </div>
@@ -78,12 +78,18 @@
   <div class="k-ask-a">
     @if (isFree(step)) {
       <div class="k-optcards list">
-        <div class="k-optcard other free" (click)="freeArea.focus()">
+        <div class="k-optcard other free" (click)="$any($event.currentTarget).querySelector('.k-opt-input')?.focus()">
           <span class="k-optbody">
             <b>{{ 'ai-assistant.question.your-answer' | translate }}</b>
-            <textarea #freeArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
-                      [value]="otherText(step)" [placeholder]="'ai-assistant.question.type-answer' | translate"
-                      [attr.aria-label]="step.question" (input)="type(step, freeArea)" (keydown.enter)="onEnter($event)"></textarea>
+            @if (step.secret) {
+              <input #secretInput class="k-opt-input" type="password" autocomplete="new-password" spellcheck="false" [disabled]="disabled()"
+                     [value]="otherText(step)" [placeholder]="'ai-assistant.question.type-secret' | translate"
+                     [attr.aria-label]="step.question" (input)="type(step, secretInput)" (keydown.enter)="onEnter($event)">
+            } @else {
+              <textarea #freeArea class="k-opt-input" rows="1" spellcheck="false" [disabled]="disabled()"
+                        [value]="otherText(step)" [placeholder]="'ai-assistant.question.type-answer' | translate"
+                        [attr.aria-label]="step.question" (input)="type(step, freeArea)" (keydown.enter)="onEnter($event)"></textarea>
+            }
           </span>
         </div>
       </div>

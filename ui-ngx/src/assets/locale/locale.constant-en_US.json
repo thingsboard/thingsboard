@@ -705,7 +705,8 @@
             "none": "None",
             "no-answer": "No answer",
             "your-answer": "Your answer",
-            "type-answer": "Type the answer"
+            "type-answer": "Type the answer",
+            "type-secret": "Paste it here; it stays hidden"
         },
         "ai-assistant": "AI Assistant",
         "configure-with-ai": "Configure with AI",
@@ -1459,6 +1460,7 @@
                 "when": "Sends at",
                 "slack": "Slack",
                 "mobileApp": "Mobile app",
+                "sms": "SMS",
                 "body": "Message",
                 "keys": "Keys",
                 "scope": "Scope"

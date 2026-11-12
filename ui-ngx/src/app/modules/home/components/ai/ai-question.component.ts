@@ -133,11 +133,17 @@ export class AiQuestionComponent {
     }
   }
 
-  type(question: AiQuestion, area: HTMLTextAreaElement): void {
+  type(question: AiQuestion, area: HTMLTextAreaElement | HTMLInputElement): void {
     this.pickOther(question);
     this.typed.update(values => ({...values, [question.id]: area.value}));
-    area.style.height = 'auto';
-    area.style.height = area.scrollHeight + 'px';
+    if (area instanceof HTMLTextAreaElement) {
+      area.style.height = 'auto';
+      area.style.height = area.scrollHeight + 'px';
+    }
+  }
+
+  shown(item: {question: AiQuestion; answer: string}): string {
+    return item.question.secret && item.answer ? '••••••••' : item.answer;
   }
 
   next(): void {

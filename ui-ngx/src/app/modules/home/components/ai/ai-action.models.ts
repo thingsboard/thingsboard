@@ -241,7 +241,8 @@ export function aiQuestionsOf(args: unknown): AiQuestion[] {
         .slice(0, 6)
         .map(option => ({label: option.label.trim(), hint: typeof option.hint === 'string' ? option.hint : undefined})),
       recommended: Array.isArray(question.recommended) ? question.recommended.filter(label => typeof label === 'string') : undefined,
-      multiple: question.multiple === true
+      multiple: question.multiple === true,
+      secret: question.secret === true && !(Array.isArray(question.options) && question.options.length)
     }));
 }
 
