@@ -8,10 +8,6 @@
     padding: 24px;
     display: block;
 
-    @media #{$mat-gt-sm} {
-      width: 720px;
-    }
-
     ::ng-deep {
       button {
         &.mat-mdc-outlined-button:not(:disabled) {
@@ -464,6 +460,10 @@
       padding: 12px 16px;
       font-size: 15px;
       color: var(--tb-ink);
+      margin-bottom: $tb-content-spacing;
+      + .mat-mdc-card.license-management {
+        margin-top: $tb-content-spacing;
+      }
       > svg {
         flex: none;
         width: 26px;

@@ -54,3 +54,11 @@
 
   @return $x1;
 }
+
+@mixin tb-content-card() {
+  margin: $tb-content-spacing;
+  @media #{$mat-gt-sm} {
+    width: $tb-content-card-width;
+    margin: $tb-content-spacing-gt-sm auto;
+  }
+}

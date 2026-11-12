@@ -5,7 +5,7 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-card appearance="outlined" class="settings-card tb-content-card">
+<mat-card appearance="outlined" class="settings-card">
   <mat-card-header>
     <mat-card-title>
       <span class="mat-headline-5" translate>admin.sms-provider-settings</span>
@@ -54,7 +54,7 @@
   </mat-card-content>
 </mat-card>
 <form [formGroup]="notificationSettingsForm" (ngSubmit)="saveNotification()">
-  <mat-card appearance="outlined" formGroupName="deliveryMethodsConfigs" class="settings-card tb-content-card">
+  <mat-card appearance="outlined" formGroupName="deliveryMethodsConfigs" class="settings-card">
     <mat-card-header>
       <mat-card-title>
         <span class="mat-headline-5" translate>admin.slack-settings</span>

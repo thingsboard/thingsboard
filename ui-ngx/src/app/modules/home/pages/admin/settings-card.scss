@@ -2,9 +2,12 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "constants";
+@import "mixins";
 
 :host {
  .mat-mdc-card.settings-card {
+   @include tb-content-card;
+
    mat-card-header.mat-mdc-card-header {
      align-items: center;
    }

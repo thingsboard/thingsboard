@@ -585,11 +585,7 @@ pre.tb-highlight {
   }
 
   .tb-content-card {
-    margin: $tb-content-spacing;
-    @media #{$mat-gt-sm} {
-      width: $tb-content-card-width;
-      margin: $tb-content-spacing-gt-sm auto;
-    }
+    @include tb-content-card;
   }
 
   .mat-content {
