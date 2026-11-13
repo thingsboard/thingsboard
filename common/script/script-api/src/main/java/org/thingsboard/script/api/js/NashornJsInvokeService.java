@@ -65,6 +65,22 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     private int maxBlackListDurationSec;
 
     @Getter
+    @Value("${js.local.timeout_storm.enabled:false}")
+    private boolean timeoutStormEnabled;
+
+    @Getter
+    @Value("${js.local.timeout_storm.window_ms:10000}")
+    private long timeoutStormWindowMs;
+
+    @Getter
+    @Value("${js.local.timeout_storm.min_scripts:3}")
+    private int timeoutStormMinScripts;
+
+    @Getter
+    @Value("${js.local.timeout_storm.max_duration_ms:60000}")
+    private long timeoutStormMaxDurationMs;
+
+    @Getter
     @Value("${js.local.max_requests_timeout:0}")
     private long maxInvokeRequestsTimeout;
 
