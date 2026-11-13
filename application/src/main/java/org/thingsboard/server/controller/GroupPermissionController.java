@@ -116,6 +116,7 @@ public class GroupPermissionController extends BaseController {
                         .checkPermission(getCurrentUser(), Resource.GROUP_PERMISSION, Operation.CREATE, null, groupPermission);
             } else {
                 oldGroupPermission = checkGroupPermissionId(groupPermission.getId(), Operation.WRITE);
+                checkGroupPermissionManageable(oldGroupPermission);
             }
 
             if (groupPermission.isPublic()) {
@@ -168,17 +169,7 @@ public class GroupPermissionController extends BaseController {
         try {
             GroupPermissionId groupPermissionId = new GroupPermissionId(toUUID(strGroupPermissionId));
             GroupPermission groupPermission = checkGroupPermissionId(groupPermissionId, Operation.DELETE);
-            if (groupPermission.isPublic()) {
-                throw permissionDenied();
-            }
-
-            checkRoleId(groupPermission.getRoleId(), Operation.READ);
-            if (groupPermission.getUserGroupId() != null && !groupPermission.getUserGroupId().isNullUid()) {
-                checkEntityGroupId(groupPermission.getUserGroupId(), Operation.WRITE);
-            }
-            if (groupPermission.getEntityGroupId() != null && !groupPermission.getEntityGroupId().isNullUid()) {
-                checkEntityGroupId(groupPermission.getEntityGroupId(), Operation.WRITE);
-            }
+            checkGroupPermissionManageable(groupPermission);
 
             groupPermissionService.deleteGroupPermission(getTenantId(), groupPermissionId);
             userPermissionsService.onGroupPermissionDeleted(groupPermission);
@@ -253,6 +244,19 @@ public class GroupPermissionController extends BaseController {
             }
         }
         return groupPermissions;
+    }
+
+    private void checkGroupPermissionManageable(GroupPermission groupPermission) throws ThingsboardException {
+        if (groupPermission.isPublic()) {
+            throw permissionDenied();
+        }
+        checkRoleId(groupPermission.getRoleId(), Operation.READ);
+        if (groupPermission.getUserGroupId() != null && !groupPermission.getUserGroupId().isNullUid()) {
+            checkEntityGroupId(groupPermission.getUserGroupId(), Operation.WRITE);
+        }
+        if (groupPermission.getEntityGroupId() != null && !groupPermission.getEntityGroupId().isNullUid()) {
+            checkEntityGroupId(groupPermission.getEntityGroupId(), Operation.WRITE);
+        }
     }
 
     private boolean isAlreadyAssigned(TenantId tenantId, GroupPermission groupPermission) {
