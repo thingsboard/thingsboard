@@ -124,7 +124,6 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
     ).subscribe((font: Font) => {
       if (this.fontFormGroup.valid) {
         this.updatePreviewStyle(font);
-        setTimeout(() => {this.popover?.updatePosition();}, 0);
       }
     });
     this.filteredFontFamilies = this.fontFormGroup.get('family').valueChanges

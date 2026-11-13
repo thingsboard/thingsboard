@@ -32,7 +32,10 @@
 <form [formGroup]="entityForm" class="mat-padding" tb-toast toastTarget="integrationRoot">
   <fieldset [disabled]="(isLoading$ | async)">
     @if (isEdgeTemplate) {
-      <div translate class="tb-hint tb-hint-edge">integration.edge-placeholder-hint</div>
+      <div class="tb-form-hint tb-primary-fill mb-2">
+        <mat-icon>info_outline</mat-icon>
+        <span translate>integration.edge-placeholder-hint</span>
+      </div>
     }
     <div class="flex flex-row xs:flex-col gt-xs:gap-2">
       <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-2">
@@ -134,7 +137,7 @@
               <mat-label translate>integration.integration-key</mat-label>
               <input matInput formControlName="routingKey">
             </mat-form-field>
-            <button mat-icon-button ngxClipboard type="button" color="primary"
+            <button mat-icon-button ngxClipboard type="button"
               (cbOnSuccess)="onIntegrationInfoCopied('key')"
               [cbContent]="entityForm?.get('routingKey').value"
               matTooltip="{{'integration.copy-integration-key' | translate}}">
@@ -146,7 +149,7 @@
               <mat-label translate>integration.integration-secret</mat-label>
               <input matInput formControlName="secret">
             </mat-form-field>
-            <button mat-icon-button ngxClipboard type="button" color="primary"
+            <button mat-icon-button ngxClipboard type="button"
               (cbOnSuccess)="onIntegrationInfoCopied('secret')"
               [cbContent]="entityForm?.get('secret').value"
               matTooltip="{{'integration.copy-integration-secret' | translate}}">

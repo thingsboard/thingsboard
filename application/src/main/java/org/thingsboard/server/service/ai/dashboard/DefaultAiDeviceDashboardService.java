@@ -6,7 +6,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.DashboardOperationRequest;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.UUID;
@@ -17,11 +22,13 @@ import java.util.UUID;
 class DefaultAiDeviceDashboardService implements AiDeviceDashboardService {
 
     private final TbAiService tbAiService;
+    private final TbAiOperations operations;
 
     @Override
-    public JsonNode generateDashboard(UUID deviceId, JsonNode request, String tbAccessToken, SecurityUser user) {
-        return tbAiService.process((client, tokenProvider) ->
-                client.generateDashboard(deviceId, request, tbAccessToken, tokenProvider), user);
+    public JsonNode generateDashboard(UUID deviceId, JsonNode request, String tbAccessToken, String clientOrigin, SecurityUser user) {
+        return tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.DASHBOARD_GENERATE, new DashboardOperationRequest(deviceId, request)),
+                new TbAiTurnContext(user, tbAccessToken, null, tokenProvider, clientOrigin)), user);
     }
 
 }

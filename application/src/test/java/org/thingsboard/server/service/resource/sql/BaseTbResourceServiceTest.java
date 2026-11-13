@@ -359,6 +359,21 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveTbResourceWithUnknownIdIsRefused() {
+        TbResourceId resourceId = new TbResourceId(Uuids.timeBased());
+        TbResource resource = new TbResource();
+        resource.setId(resourceId);
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setTitle("My resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
+
+        assertThatThrownBy(() -> tbResourceService.save(resource))
+                .isInstanceOf(ThingsboardException.class)
+                .hasMessageContaining("wasn't found");
+        assertThat(resourceService.findResourceInfoById(TenantId.SYS_TENANT_ID, resourceId)).isNull();
+    }
+
+    @Test
     public void testSaveLwm2mTbResourceWithXXE() {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);

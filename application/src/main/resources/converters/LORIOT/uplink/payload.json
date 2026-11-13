@@ -1,0 +1,17 @@
+{
+    "cmd": "rx",
+    "seqno": 3040,
+    "EUI": "1000000000000001",
+    "ts": 1684478801936,
+    "fcnt": 2,
+    "port": 85,
+    "freq": 867500000,
+    "rssi": -21,
+    "snr": 10,
+    "toa": 206,
+    "dr": "SF9 BW125 4/5",
+    "ack": false,
+    "bat": 94,
+    "offline": false,
+    "data": "01ed03335f0e4c63"
+}

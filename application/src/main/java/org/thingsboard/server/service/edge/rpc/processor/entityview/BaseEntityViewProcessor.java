@@ -15,6 +15,7 @@ import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -34,10 +35,10 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         if (entityView == null) {
             throw new RuntimeException("[{" + tenantId + "}] entityViewUpdateMsg {" + entityViewUpdateMsg + "} cannot be converted to entity view");
         }
+        EntityView entityViewById = findTenantEntity(tenantId, entityViewId);
         entityView.setTenantId(tenantId);
-        EntityView entityViewById = edgeCtx.getEntityViewService().findEntityViewById(tenantId, entityViewId);
-        if (entityViewById != null && !tenantId.equals(entityViewById.getTenantId())) {
-            throw new RuntimeException("[{" + tenantId + "}] entity view {" + entityViewId + "} belongs to another tenant");
+        if (entityView.getEntityId() == null || !isTenantEntity(tenantId, entityView.getEntityId())) {
+            throw new DataValidationException("Entity view is referencing to non-existent entity!");
         }
         if (entityViewById == null) {
             created = true;
@@ -88,7 +89,7 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
 
     protected void deleteEntityView(TenantId tenantId, Edge edge, EntityViewId entityViewId) {
         EntityView entityViewById = edgeCtx.getEntityViewService().findEntityViewById(tenantId, entityViewId);
-        if (entityViewById != null) {
+        if (entityViewById != null && tenantId.equals(entityViewById.getTenantId())) {
             edgeCtx.getEntityViewService().deleteEntityView(tenantId, entityViewId);
             pushEntityEventToRuleEngine(tenantId, edge, entityViewById, TbMsgType.ENTITY_DELETED);
         }

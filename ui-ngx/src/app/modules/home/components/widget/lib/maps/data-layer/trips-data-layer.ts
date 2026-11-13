@@ -87,7 +87,8 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   public updateAppearance() {
     this.updatePathAppearance();
     const dsData = this.dataLayer.getMap().getData();
-    if (this.settings.showMarker && this.settings.tooltip?.show) {
+    this.createMarker();
+    if (this.settings.showMarker && this.markerTooltip && this.settings.tooltip?.show) {
       updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
         this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
     }
@@ -149,9 +150,12 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   }
 
   private createMarker() {
-    if (this.settings.showMarker) {
+    if (this.settings.showMarker && !this.marker) {
       const dsData = this.dataLayer.getMap().getData();
       const location = this.dataLayer.dataProcessor.extractLocation(this.pointData, dsData);
+      if (!location) {
+        return;
+      }
       this.marker = L.marker(location, {
         tbMarkerData: this.pointData,
         snapIgnore: true
@@ -175,9 +179,25 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   private updateMarker() {
     if (this.settings.showMarker) {
+      this.createMarker();
+      if (!this.marker) {
+        return;
+      }
       const dsData = this.dataLayer.getMap().getData();
+      const location = this.dataLayer.dataProcessor.extractLocation(this.pointData, dsData);
+      if (!location) {
+        if (this.layer.hasLayer(this.marker)) {
+          this.layer.removeLayer(this.marker);
+        }
+        return;
+      }
+      if (!this.layer.hasLayer(this.marker)) {
+        this.marker.addTo(this.layer);
+      }
       this.marker.options.tbMarkerData = this.pointData;
-      this.updateMarkerLocation(this.pointData, dsData);
+      if (!this.marker.getLatLng().equals(location)) {
+        this.marker.setLatLng(location);
+      }
       if (this.settings.tooltip.show) {
         updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
           this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
@@ -190,7 +210,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.settings.showPath) {
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const locations = formattedRouteData.map(data => this.dataLayer.dataProcessor.extractLocation(data, dsData));
+      const locations = this.extractPathLocations(formattedRouteData, dsData);
       const pathStyle = this.dataLayer.getPathStyle(this.pointData, dsData);
       this.polyline = L.polyline(locations, pathStyle);
       this.polyline.addTo(this.layer);
@@ -205,13 +225,17 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.settings.showPath) {
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const locations = formattedRouteData.map(data => this.dataLayer.dataProcessor.extractLocation(data, dsData));
+      const locations = this.extractPathLocations(formattedRouteData, dsData);
       this.polyline.setLatLngs(locations);
       if (this.settings.usePathDecorator) {
         this.polylineDecorator.setPaths(this.polyline);
       }
       this.updatePathAppearance();
     }
+  }
+
+  private extractPathLocations(data: FormattedData<TbMapDatasource>[], dsData: FormattedData<TbMapDatasource>[]): L.LatLng[] {
+    return data.map(item => this.dataLayer.dataProcessor.extractLocation(item, dsData)).filter(location => !!location);
   }
 
   private updatePoints() {
@@ -285,15 +309,8 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     }
   }
 
-  private updateMarkerLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    const location = this.dataLayer.dataProcessor.extractLocation(data, dsData);
-    if (!this.marker.getLatLng().equals(location)) {
-      this.marker.setLatLng(location);
-    }
-  }
-
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    if (this.settings.showMarker) {
+    if (this.settings.showMarker && this.marker) {
       this.dataLayer.dataProcessor.createMarkerIcon(data, dsData, data.rotationAngle).subscribe(
         (iconInfo) => {
           const options = deepClone(iconInfo.icon.options);
@@ -600,25 +617,22 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   private clearIncorrectFirsLastDatapoint(dataSource: FormattedData<TbMapDatasource>[]): FormattedData<TbMapDatasource>[] {
-    const firstHistoricalDataIndexCoordinate = dataSource.findIndex(this.findFirstHistoricalDataIndexCoordinate);
-    if (firstHistoricalDataIndexCoordinate === -1) {
+    const firstValidIndex = dataSource.findIndex(this.hasValidLocation);
+    if (firstValidIndex === -1) {
       return [];
     }
-    let lastIndex = dataSource.length - 1;
-    for (lastIndex; lastIndex > 0; lastIndex--) {
-      if (this.findFirstHistoricalDataIndexCoordinate(dataSource[lastIndex])) {
-        lastIndex++;
-        break;
-      }
+    let lastValidIndex = dataSource.length - 1;
+    while (lastValidIndex > firstValidIndex && !this.hasValidLocation(dataSource[lastValidIndex])) {
+      lastValidIndex--;
     }
-    if (firstHistoricalDataIndexCoordinate > 0 || lastIndex < dataSource.length) {
-      return dataSource.slice(firstHistoricalDataIndexCoordinate, lastIndex);
+    if (firstValidIndex > 0 || lastValidIndex < dataSource.length - 1) {
+      return dataSource.slice(firstValidIndex, lastValidIndex + 1);
     }
     return dataSource;
   }
 
-  private findFirstHistoricalDataIndexCoordinate = (item: FormattedData<TbMapDatasource>): boolean => {
-    return isDefined(item[this.settings.xKey.label]) && isDefined(item[this.settings.yKey.label]);
+  private hasValidLocation = (item: FormattedData<TbMapDatasource>): boolean => {
+    return !!this.dataProcessor.extractLocationData(item);
   }
 
 }

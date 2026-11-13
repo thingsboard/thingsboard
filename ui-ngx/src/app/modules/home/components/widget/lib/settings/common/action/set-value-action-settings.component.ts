@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -18,7 +19,7 @@ import { SetValueAction, SetValueSettings, ValueToDataType } from '@shared/model
 import { TranslateService } from '@ngx-translate/core';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isObject } from '@core/utils';
 import {
   SetValueActionSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
@@ -136,6 +137,9 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
         break;
       case ValueToDataType.CONSTANT:
         value = this.modelValue.valueToData.constantValue;
+        if (isObject(value)) {
+          value = JSON.stringify(value);
+        }
         break;
       case ValueToDataType.FUNCTION:
         value = 'f(value)';

@@ -8,14 +8,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
@@ -25,14 +31,18 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.wl.WhiteLabelingService;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.UserPermissionsService;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -199,6 +209,82 @@ public class DefaultSystemSecurityServiceTest {
 
         verify(userService).setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
         verify(mailService).sendAccountLockoutEmail(eq(tenantId), eq(username), eq(notificationEmail), eq(5));
+    }
+
+    @Test
+    public void resolveBaseUrlTakesRequestUrlWhenDifferentUrlsAreAllowed() {
+        givenGeneralSettings("https://tb.example.com", false);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("http://192.168.1.10:8080");
+        assertThat(baseUrl.fromRequest()).isTrue();
+    }
+
+    @Test
+    public void resolveBaseUrlTakesSettingsUrlWhenDifferentUrlsAreProhibited() {
+        givenGeneralSettings("https://tb.example.com", true);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("https://tb.example.com");
+        assertThat(baseUrl.fromRequest()).isFalse();
+    }
+
+    @Test
+    public void resolveBaseUrlFallsBackToRequestWhenSettingsUrlIsEmpty() {
+        givenGeneralSettings("", true);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("http://192.168.1.10:8080");
+        assertThat(baseUrl.fromRequest()).isTrue();
+        assertThat(systemSecurityService.getBaseUrl(tenantId, null, request())).isEqualTo(baseUrl.url());
+    }
+
+    private void givenGeneralSettings(String baseUrl, boolean prohibitDifferentUrl) {
+        AdminSettings generalSettings = new AdminSettings();
+        generalSettings.setJsonValue(JacksonUtil.newObjectNode()
+                .put("baseUrl", baseUrl)
+                .put("prohibitDifferentUrl", prohibitDifferentUrl));
+        when(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "general")).thenReturn(generalSettings);
+    }
+
+    private static MockHttpServletRequest request() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setScheme("http");
+        request.setServerName("192.168.1.10");
+        request.setServerPort(8080);
+        return request;
+    }
+
+    @Test
+    public void testCreateUserAccessTokenForUserOfSameTenant() throws Exception {
+        User user = createUser(tenantId);
+        when(userService.findUserById(tenantId, userId)).thenReturn(user);
+        when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(userCredentials);
+        when(userPermissionsService.getMergedPermissions(user, false)).thenReturn(mock(MergedUserPermissions.class));
+        AccessJwtToken token = mock(AccessJwtToken.class);
+        when(tokenFactory.createAccessJwtToken(any(SecurityUser.class))).thenReturn(token);
+
+        assertThat(systemSecurityService.createUserAccessToken(tenantId, userId)).isSameAs(token);
+    }
+
+    @Test
+    public void testCreateUserAccessTokenForUserOfOtherTenantFails() {
+        when(userService.findUserById(tenantId, userId)).thenReturn(createUser(TenantId.fromUUID(UUID.randomUUID())));
+
+        assertThatThrownBy(() -> systemSecurityService.createUserAccessToken(tenantId, userId))
+                .isInstanceOfSatisfying(ThingsboardException.class, e -> assertThat(e.getErrorCode()).isEqualTo(ThingsboardErrorCode.BAD_REQUEST_PARAMS));
+
+        verify(tokenFactory, never()).createAccessJwtToken(any());
+    }
+
+    private User createUser(TenantId userTenantId) {
+        User user = new User(userId);
+        user.setTenantId(userTenantId);
+        user.setEmail(username);
+        return user;
     }
 
 }

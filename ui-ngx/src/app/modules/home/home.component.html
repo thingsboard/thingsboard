@@ -67,7 +67,7 @@
             <mat-icon>menu</mat-icon>
           </button>
           <button mat-icon-button
-                  [class.!hidden]="!forceFullscreen || displaySearchMode"
+                  [class.!hidden]="!forceFullscreen || displaySearchMode()"
                   (click)="goBack()">
             <mat-icon>arrow_back</mat-icon>
           </button>

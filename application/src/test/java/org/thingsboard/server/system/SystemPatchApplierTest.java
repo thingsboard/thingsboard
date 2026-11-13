@@ -29,7 +29,7 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.InstallScripts;
-import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.install.lts.MigrationService;
 import org.thingsboard.server.service.system.SystemPatchApplier;
 
 import java.nio.charset.StandardCharsets;
@@ -84,7 +84,7 @@ public class SystemPatchApplierTest {
     private ImageService imageService;
 
     @Mock
-    private LtsMigrationService ltsMigrationService;
+    private MigrationService migrationService;
 
     @InjectMocks
     private SystemPatchApplier reconciler;
@@ -492,7 +492,7 @@ public class SystemPatchApplierTest {
         // nested back inside that callback (round-1's defect), none of the three calls below would happen at all,
         // so this also proves the legs are NOT reached through it.
         List<String> appliedVersions = List.of("4.3.1.0");
-        when(ltsMigrationService.applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), any())).thenReturn(appliedVersions);
+        when(migrationService.applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), any())).thenReturn(appliedVersions);
 
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
@@ -500,12 +500,12 @@ public class SystemPatchApplierTest {
         // call returns and strictly before recordVersions and the final stamp, so a sync failure still blocks the
         // stamp instead of racing past it. Each leg's signal sits on a different mock, so one InOrder pins all three
         // at once.
-        InOrder inOrder = inOrder(ltsMigrationService, widgetTypeService, widgetsBundleService, imageService, schemaSettingsService);
-        inOrder.verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), any());
+        InOrder inOrder = inOrder(migrationService, widgetTypeService, widgetsBundleService, imageService, schemaSettingsService);
+        inOrder.verify(migrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), any());
         inOrder.verify(widgetTypeService).saveWidgetType(argThat(w -> "new_widget".equals(w.getFqn())));
         inOrder.verify(widgetsBundleService).saveWidgetsBundle(argThat(b -> "New Title".equals(b.getTitle())));
         inOrder.verify(imageService).createOrUpdateSystemImage(eq("new_icon.svg"), eq(imageBytes));
-        inOrder.verify(ltsMigrationService).recordVersions(appliedVersions);
+        inOrder.verify(migrationService).recordVersions(appliedVersions);
         inOrder.verify(schemaSettingsService).updateSchemaVersion();
     }
 
@@ -524,7 +524,7 @@ public class SystemPatchApplierTest {
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
         ArgumentCaptor<Runnable> betweenPhases = ArgumentCaptor.forClass(Runnable.class);
-        verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), betweenPhases.capture());
+        verify(migrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), betweenPhases.capture());
 
         String schemaViewsSql = Resources.toString(Resources.getResource("sql/schema-views.sql"), StandardCharsets.UTF_8);
         String schemaFunctionsSql = Resources.toString(Resources.getResource("sql/schema-functions.sql"), StandardCharsets.UTF_8);
@@ -558,7 +558,7 @@ public class SystemPatchApplierTest {
 
         assertThrows(RuntimeException.class, () -> ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded"));
 
-        verify(ltsMigrationService, never()).recordVersions(any());
+        verify(migrationService, never()).recordVersions(any());
         verify(schemaSettingsService, never()).updateSchemaVersion();
     }
 
@@ -602,8 +602,8 @@ public class SystemPatchApplierTest {
 
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
-        InOrder inOrder = inOrder(ltsMigrationService, schemaSettingsService);
-        inOrder.verify(ltsMigrationService).applyMigrations(eq("4.3.1.0"), eq("4.3.2.0"), eq(false), any());
+        InOrder inOrder = inOrder(migrationService, schemaSettingsService);
+        inOrder.verify(migrationService).applyMigrations(eq("4.3.1.0"), eq("4.3.2.0"), eq(false), any());
         inOrder.verify(schemaSettingsService).updateSchemaVersion();
     }
 
