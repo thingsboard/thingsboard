@@ -1,54 +1,109 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+const fs = require('fs');
 const fse = require('fs-extra');
 const path = require('path');
-const { execFileSync } = require('child_process');
 const crypto = require('crypto');
+const { Transform } = require('stream');
+const { pipeline } = require('stream/promises');
+// The helpers that Playwright downloads its browsers with: httpRequest follows HTTPS_PROXY and redirects, extractZip needs no unzip tool
+const { httpRequest, extractZip } = require('playwright-core/lib/coreBundle').utils;
 const snapshot = require('./chromium-snapshot');
 
 const PLATFORMS = {
-    linux: { ...snapshot.linux, binary: 'tb-web-report', pkgOutput: 'thingsboard-web-report-linux' },
-    windows: { ...snapshot.windows, binary: 'tb-web-report.exe', pkgOutput: 'thingsboard-web-report-win.exe' }
+    linux: {
+        ...snapshot.linux, binary: 'tb-web-report', pkgOutput: 'thingsboard-web-report-linux',
+        // The version is written into the executable
+        hasVersion: dir => fileContains(path.join(dir, 'chrome'), snapshot.version)
+    },
+    windows: {
+        ...snapshot.windows, binary: 'tb-web-report.exe', pkgOutput: 'thingsboard-web-report-win.exe',
+        hasVersion: dir => fse.pathExists(path.join(dir, `${snapshot.version}.manifest`))
+    }
 };
 
 (async() => {
-    const expected = fse.readJsonSync(path.join(path.dirname(require.resolve('playwright-core/package.json')), 'browsers.json'))
-        .browsers.find(b => b.name === 'chromium').browserVersion;
-    // The last number counts the fixes on the release branch, which a snapshot build never has
-    const build = version => version.split('.').slice(0, 3).join('.');
-    if (build(expected) !== build(snapshot.version)) {
-        throw new Error(`playwright-core expects Chromium ${expected}, the snapshot builds in chromium-snapshot.js are ${snapshot.version}`);
-    }
-    for (const [targetDir, platform] of Object.entries(PLATFORMS)) {
-        const downloadDir = path.join(projectRoot(), 'target', 'chromium-' + targetDir);
-        await installChromium(platform, downloadDir);
-        const chromiumDir = path.join(targetPackageDir(targetDir), 'chromium');
-        await fse.emptyDir(chromiumDir);
-        await fse.copy(path.join(downloadDir, platform.chromeDir), chromiumDir);
+    checkPlaywrightVersion();
+    await Promise.all(Object.entries(PLATFORMS).map(async ([targetDir, platform]) => {
+        await installChromium(platform, path.join(projectRoot(), 'target', 'chromium-' + targetDir),
+            path.join(targetPackageDir(targetDir), 'chromium'));
         await fse.move(path.join(projectRoot(), 'target', platform.pkgOutput),
             path.join(targetPackageDir(targetDir), 'bin', platform.binary),
             {overwrite: true});
-    }
+    }));
 })().catch(e => {
     console.error(e);
     process.exit(1);
 });
 
-async function installChromium(platform, downloadDir) {
+function checkPlaywrightVersion() {
+    const browsers = fse.readJsonSync(path.join(path.dirname(require.resolve('playwright-core/package.json')), 'browsers.json')).browsers;
+    const chromium = browsers.find(browser => browser.name === 'chromium');
+    if (!chromium) {
+        throw new Error('playwright-core/browsers.json does not list chromium');
+    }
+    // The last number counts the fixes on the release branch, which a snapshot build never has
+    const build = version => version.split('.').slice(0, 3).join('.');
+    if (build(chromium.browserVersion) !== build(snapshot.version)) {
+        throw new Error(`playwright-core expects Chromium ${chromium.browserVersion}, the snapshot builds in chromium-snapshot.js are ${snapshot.version}`);
+    }
+}
+
+async function installChromium(platform, downloadDir, chromiumDir) {
     await fse.emptyDir(downloadDir);
     const archive = path.join(downloadDir, 'chromium.zip');
-    const response = await fetch(`${snapshot.baseUrl}/${platform.path}`);
-    if (!response.ok) {
-        throw new Error(`Cannot download ${platform.path}: HTTP ${response.status}`);
+    await download(`${snapshot.baseUrl}/${platform.path}`, archive, platform.sha256);
+    await extractZip(archive, { dir: downloadDir });
+    const unpacked = path.join(downloadDir, path.basename(platform.path, '.zip'));
+    for (const file of platform.exclude || []) {
+        await fse.remove(path.join(unpacked, file));
     }
-    const content = Buffer.from(await response.arrayBuffer());
-    const sha256 = crypto.createHash('sha256').update(content).digest('hex');
-    if (sha256 !== platform.sha256) {
-        throw new Error(`${platform.path} has SHA-256 ${sha256}, expected ${platform.sha256}`);
+    if (!await platform.hasVersion(unpacked)) {
+        throw new Error(`${platform.path} is not Chromium ${snapshot.version}; check the build number in chromium-snapshot.js`);
     }
-    await fse.writeFile(archive, content);
-    execFileSync('unzip', ['-q', archive, '-d', downloadDir, ...platform.exclude.flatMap(file => ['-x', file])], { stdio: 'inherit' });
-    await fse.remove(archive);
+    await fse.move(unpacked, chromiumDir, { overwrite: true });
+    await fse.remove(downloadDir);
+}
+
+// Writes the file while it is downloaded, and fails unless its SHA-256 is the expected one
+function download(url, file, sha256) {
+    return new Promise((resolve, reject) => {
+        httpRequest({ url, socketTimeout: 60000 }, response => {
+            if (response.statusCode !== 200) {
+                response.resume();
+                reject(new Error(`Cannot download ${url}: HTTP ${response.statusCode}`));
+                return;
+            }
+            const hash = crypto.createHash('sha256');
+            const hashing = new Transform({
+                transform(chunk, encoding, callback) {
+                    hash.update(chunk);
+                    callback(null, chunk);
+                }
+            });
+            pipeline(response, hashing, fs.createWriteStream(file)).then(() => {
+                const actual = hash.digest('hex');
+                if (actual === sha256) {
+                    resolve();
+                } else {
+                    reject(new Error(`${url} has SHA-256 ${actual}, expected ${sha256}`));
+                }
+            }, reject);
+        }, reject);
+    });
+}
+
+async function fileContains(file, text) {
+    const needle = Buffer.from(text);
+    let tail = Buffer.alloc(0);
+    for await (const chunk of fs.createReadStream(file)) {
+        const data = Buffer.concat([tail, chunk]);
+        if (data.includes(needle)) {
+            return true;
+        }
+        tail = data.subarray(data.length - needle.length + 1);
+    }
+    return false;
 }
 
 function projectRoot() {
