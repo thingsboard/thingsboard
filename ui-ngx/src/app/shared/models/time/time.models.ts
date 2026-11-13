@@ -22,6 +22,15 @@ export const AVG_QUARTER = Math.floor(DAY * 365.2425 / 4);
 
 export const YEAR = DAY * 365;
 
+const durationUnits: [string, number][] = [
+  ['years', YEAR], ['days', DAY], ['hours', HOUR], ['minutes', MINUTE], ['seconds', SECOND]
+];
+
+export const largestDurationUnit = (ms: number): { unit: string; count: number } => {
+  const [unit, size] = durationUnits.find(([, unitMs]) => ms >= unitMs) ?? ['seconds', SECOND];
+  return { unit, count: Math.floor(ms / size) };
+};
+
 export type ComparisonDuration = moment_.unitOfTime.DurationConstructor | 'previousInterval' | 'customInterval';
 
 export enum TimewindowType {
