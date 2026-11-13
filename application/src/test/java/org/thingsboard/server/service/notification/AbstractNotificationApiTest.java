@@ -68,6 +68,8 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     @Autowired
     protected NotificationRuleService notificationRuleService;
     @Autowired
+    protected NotificationRulesCache notificationRulesCache;
+    @Autowired
     protected NotificationTemplateService notificationTemplateService;
     @Autowired
     protected NotificationTargetService notificationTargetService;
@@ -83,8 +85,6 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     protected SecretService secretService;
     @Autowired
     protected EncryptionService encryptionService;
-    @Autowired
-    protected NotificationRulesCache notificationRulesCache;
 
     public static final String DEFAULT_NOTIFICATION_SUBJECT = "Just a test";
     public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.GENERAL;
