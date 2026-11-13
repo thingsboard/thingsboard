@@ -727,6 +727,34 @@ public class CustomMenuControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testCustomMenuAssigneeListContainsOnlyUsersOfMenuTenant() throws Exception {
+        loginTenantAdmin();
+        CustomMenu userMenu = new CustomMenu();
+        userMenu.setName(RandomStringUtils.randomAlphabetic(10));
+        userMenu.setScope(CMScope.TENANT);
+        userMenu.setAssigneeType(CMAssigneeType.USERS);
+        userMenu = doPost("/api/customMenu?assignToList=" + tenantAdminUserId, userMenu, CustomMenu.class);
+
+        loginDifferentTenant();
+        User otherTenantUser = new User();
+        otherTenantUser.setAuthority(Authority.TENANT_ADMIN);
+        otherTenantUser.setTenantId(differentTenantId);
+        otherTenantUser.setEmail("othertenantuser@thingsboard.org");
+        otherTenantUser.setCustomMenuId(userMenu.getId());
+        otherTenantUser = doPost("/api/user", otherTenantUser, User.class);
+        assertThat(otherTenantUser.getCustomMenuId()).isEqualTo(userMenu.getId());
+
+        loginTenantAdmin();
+        List<EntityInfo> assigneeList = doGetTyped("/api/customMenu/" + userMenu.getId() + "/assigneeList", new TypeReference<>() {});
+        assertThat(assigneeList).extracting(EntityInfo::getId).containsExactly(tenantAdminUserId);
+        doDelete("/api/customMenu/" + userMenu.getId() + "?force=true").andExpect(status().isOk());
+
+        loginDifferentTenant();
+        User otherTenantUserAfterDelete = doGet("/api/user/" + otherTenantUser.getId(), User.class);
+        assertThat(otherTenantUserAfterDelete.getCustomMenuId()).isEqualTo(userMenu.getId());
+    }
+
+    @Test
     public void testTenantUserGetsAssignedSystemMenu() throws Exception {
         loginSysAdmin();
         CustomMenu systemMenu = new CustomMenu();
