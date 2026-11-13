@@ -23,6 +23,7 @@ import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Operation, Resource } from '@shared/models/security.models';
 import { AiAssistantPanelConfig, AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { Authority } from '@shared/models/authority.enum';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -804,6 +805,51 @@ export const singleNotificationTypeTemplate = (type: NotificationType) => {
          type === NotificationType.USER_REGISTERED ||
          type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST;
 }
+
+const sysAdminNotificationTypes: ReadonlySet<NotificationType> = new Set([
+  NotificationType.ENTITIES_LIMIT,
+  NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
+  NotificationType.ADDON_ACCESS_REQUEST,
+  NotificationType.ADDON_ACCESS_ERROR,
+  NotificationType.PLAN_UPGRADE_REQUEST,
+  NotificationType.API_USAGE_LIMIT,
+  NotificationType.NEW_PLATFORM_VERSION,
+  NotificationType.RATE_LIMITS,
+  NotificationType.TASK_PROCESSING_FAILURE,
+  NotificationType.RESOURCES_SHORTAGE
+]);
+
+const adminRequestNotificationTypes: ReadonlySet<NotificationType> = new Set([
+  NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
+  NotificationType.ADDON_ACCESS_REQUEST,
+  NotificationType.ADDON_ACCESS_ERROR,
+  NotificationType.PLAN_UPGRADE_REQUEST
+]);
+
+const edgeNotificationTypes: ReadonlySet<NotificationType> = new Set([
+  NotificationType.EDGE_CONNECTION,
+  NotificationType.EDGE_COMMUNICATION_FAILURE
+]);
+
+export const isSysAdminNotificationType = (type: NotificationType | TriggerType): boolean =>
+  sysAdminNotificationTypes.has(type as NotificationType);
+
+export const isNotificationTypeReceivable = (type: NotificationType, authority: Authority, edgesSupportEnabled: boolean): boolean => {
+  switch (authority) {
+    case Authority.SYS_ADMIN:
+      return type === NotificationType.GENERAL || sysAdminNotificationTypes.has(type);
+    case Authority.CUSTOMER_USER:
+      if (adminRequestNotificationTypes.has(type)) {
+        return false;
+      }
+      break;
+    default:
+      if (type === NotificationType.PLAN_UPGRADE_REQUEST) {
+        return false;
+      }
+  }
+  return edgesSupportEnabled || !edgeNotificationTypes.has(type);
+};
 
 export function notificationAiAssistantConfig(store: Store<AppState>,
                                               userPermissionsService: UserPermissionsService,
