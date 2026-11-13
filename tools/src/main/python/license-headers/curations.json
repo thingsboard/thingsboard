@@ -596,6 +596,12 @@
       "contentHash": "sha256:b8053ea556c7f0c3208c6113358952109653bdc53101db3946925d2ba26dd750"
     },
     {
+      "path": "common/transport/transport-api/src/main/java/org/thingsboard/server/common/transport/auth/cache/TokenValidationRedisCache.java",
+      "header": "busl",
+      "reason": "Transport token validation cache added in b221f8a827a for the lts-4.4 transport validation cache, which has no counterpart in CE. The candidate CE dao/src/main/java/org/thingsboard/server/dao/dashboard/DashboardTitlesRedisCache.java shares only the Caffeine or Redis cache boilerplate and caches a different key and value type. Reviewed candidate at 269bc8dc73a (blob 4c1bf7dedbe).",
+      "contentHash": "sha256:6a675f1551b6829bbbca3892349331523b42875cf8a1b4138476032eba5f299f"
+    },
+    {
       "path": "dao/src/main/java/org/thingsboard/server/dao/agent/AgentSessionCaffeineCache.java",
       "header": "busl",
       "reason": "PE agent cache added in 0860d0b3960 as part of the PE agent feature introduced on lts-4.4, which has no counterpart in CE. The candidate CE common/cache/src/main/java/org/thingsboard/server/cache/edge/RelatedEdgesCaffeineCache.java shares only the Caffeine or Redis cache boilerplate and caches a different key and value type. Reviewed candidate at a0aff29ef42d3636473b017115a9334b48d54d15 (blob 5227ae6ab4b).",

@@ -21,6 +21,22 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
 
     void putIfAbsent(K key, V value);
 
+    /**
+     * Same as {@link #put(Object, Object)}, but the entry expires after {@code ttlSec} seconds where the backing
+     * store supports per-entry expiry (Redis). Stores without per-entry expiry (Caffeine) fall back to the
+     * cache-wide TTL, so callers must tolerate the longer lifetime. {@code ttlSec <= 0} means the cache-wide TTL.
+     */
+    default void put(K key, V value, long ttlSec) {
+        put(key, value);
+    }
+
+    /**
+     * Same as {@link #putIfAbsent(Object, Object)}, with the per-entry expiry semantics of {@link #put(Object, Object, long)}.
+     */
+    default void putIfAbsent(K key, V value, long ttlSec) {
+        putIfAbsent(key, value);
+    }
+
     void evict(K key);
 
     void evict(Collection<K> keys);

@@ -66,5 +66,7 @@ public final class CacheConstants {
     public static final String ENTITY_GROUP_CACHE = "entityGroups";
     public static final String SECRETS_CACHE = "secrets";
     public static final String MAIL_OAUTH2_STATE_CACHE = "mailOauth2State";
+    public static final String TRANSPORT_TOKEN_VALIDATION_CACHE = "transportTokenValidation";
+    public static final String TRANSPORT_TOKEN_VALIDATION_LOCAL_CACHE = "transportTokenValidationLocal";
 
 }
