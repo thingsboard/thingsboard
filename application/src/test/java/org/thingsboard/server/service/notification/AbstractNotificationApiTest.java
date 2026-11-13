@@ -44,7 +44,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
-import org.thingsboard.server.service.notification.rule.cache.NotificationRulesCache;
+import org.thingsboard.server.service.notification.rule.cache.DefaultNotificationRulesCache;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -68,7 +68,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     @Autowired
     protected NotificationRuleService notificationRuleService;
     @Autowired
-    protected NotificationRulesCache notificationRulesCache;
+    protected DefaultNotificationRulesCache notificationRulesCache;
     @Autowired
     protected NotificationTemplateService notificationTemplateService;
     @Autowired
