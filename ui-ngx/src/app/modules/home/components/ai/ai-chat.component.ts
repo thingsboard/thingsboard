@@ -30,6 +30,8 @@ import { AppState } from '@core/core.state';
 import { AiChatService } from '@core/http/ai-chat.service';
 import { AiChatsService } from '@core/services/ai-chats.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { aiParse } from '@home/components/ai/ai-action-detail.models';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { ActionChatMessage, AiStartedFrom, ApprovalChatMessage, ChatMessage, GeneralChatMessage } from '@shared/models/solution-creator.models';
@@ -357,6 +359,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private aiChat = inject(AiChatService);
   private chats = inject(AiChatsService);
   private panelService = inject(AiAssistantPanelService);
+  private whiteLabelingService = inject(WhiteLabelingService);
   private translate = inject(TranslateService);
   private clipboard = inject(ClipboardService);
   private store = inject(Store<AppState>);
@@ -947,6 +950,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
         break;
       case 'toolExecutionResult':
         this.completedExecutions.update(map => ({...map, [event.data.executionId]: event.data}));
+        if (event.data.executionStatus === 'SUCCESS') {
+          const approval = this.messages().find(message => message.from === 'APPROVAL' && message.data.executionId === event.data.executionId);
+          this.applySideEffects(approval?.from === 'APPROVAL' ? approval.data.tool : undefined, approval?.from === 'APPROVAL' ? approval.data.arguments : undefined);
+        }
         if (event.data.affectedEntities?.length) {
           this.affectedEntities.push(...event.data.affectedEntities);
           this.emitDashboards(event.data.affectedEntities);
@@ -1035,7 +1042,24 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
   }
 
+  private applySideEffects(tool: string | undefined, args: unknown): void {
+    if (tool !== 'save_white_labeling') {
+      return;
+    }
+    const target = (aiParse(args) as {target?: string})?.target === 'LOGIN' ? 'LOGIN' : 'GENERAL';
+    if (target === 'GENERAL') {
+      this.whiteLabelingService.loadUserWhiteLabelingParams().subscribe();
+    }
+    this.panelService.emitWhiteLabelingSaved(target);
+  }
+
   private finishAction(finished: ToolFinished): void {
+    if (finished.status === 'SUCCESS') {
+      const started = this.messages().find(message => message.from === 'ACTION' && message.data.executionId === finished.executionId);
+      if (started?.from === 'ACTION') {
+        this.applySideEffects(started.data.tool, started.data.arguments);
+      }
+    }
     if (finished.affectedEntities?.length) {
       this.affectedEntities.push(...finished.affectedEntities);
       this.emitDashboards(finished.affectedEntities);

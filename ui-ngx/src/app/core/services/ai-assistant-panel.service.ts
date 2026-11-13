@@ -355,6 +355,13 @@ export class AiAssistantPanelService implements OnDestroy {
     this._updatedData$.complete();
   }
 
+  private _whiteLabelingSaved$ = new Subject<'GENERAL' | 'LOGIN'>();
+  readonly whiteLabelingSaved$ = this._whiteLabelingSaved$.asObservable();
+
+  emitWhiteLabelingSaved(target: 'GENERAL' | 'LOGIN'): void {
+    this._whiteLabelingSaved$.next(target);
+  }
+
   emitUpdatedData(affectedEntities: Array<EntityId>): void {
     this._updatedData$.next(affectedEntities);
   }

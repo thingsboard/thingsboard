@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, inject, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
@@ -23,10 +23,11 @@ import { isDefined, isEqual, isUndefinedOrNull } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { CustomCssDialogComponent, CustomCssDialogData } from '@home/pages/admin/custom-css-dialog.component';
 import { UiSettingsService } from '@core/http/ui-settings.service';
-import { share } from 'rxjs/operators';
+import { filter, share } from 'rxjs/operators';
 import { WINDOW } from '@core/services/window.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
 import { DomainDialogComponent } from '@home/pages/admin/oauth2/domains/domain-dialog.component';
@@ -53,6 +54,8 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
 
   readonly = !this.userPermissionsService.hasGenericPermission(Resource.WHITE_LABELING, Operation.WRITE);
   isLoginWl: boolean = this.route.snapshot.data.isLoginWl;
+
+  private aiAssistantPanelService = inject(AiAssistantPanelService);
 
   uiHelpBaseUrlPlaceholder$ = this.uiSettingsService.getHelpBaseUrl().pipe(
     share()
@@ -116,6 +119,10 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
   ngOnInit() {
     this.buildWhiteLabelingSettingsForm();
     this.loadWhiteLabelingParams();
+    this.aiAssistantPanelService.whiteLabelingSaved$.pipe(
+      filter(target => (target === 'LOGIN') === !!this.isLoginWl && !this.wlSettings.dirty),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.loadWhiteLabelingParams());
   }
 
   onLogoHeightKeydown(event: KeyboardEvent): void {
