@@ -1168,8 +1168,7 @@ public class EntityGroupController extends AutoCommitController {
 
             EntityGroupInfo userGroup;
             if (shareGroupRequest.isAllUserGroup()) {
-                Optional<EntityGroupInfo> userGroupOptional = entityGroupService.findEntityGroupInfoByTypeAndName(getTenantId(), shareGroupRequest.getOwnerId(),
-                        EntityType.USER, EntityGroup.GROUP_ALL_NAME);
+                Optional<EntityGroupInfo> userGroupOptional = findAllUserGroup(shareGroupRequest.getOwnerId());
                 if (userGroupOptional.isPresent()) {
                     userGroup = userGroupOptional.get();
                 } else {
@@ -1317,8 +1316,7 @@ public class EntityGroupController extends AutoCommitController {
     private EntityGroupInfo resolveUserGroup(ShareGroupRequest shareGroupRequest) throws ThingsboardException {
         EntityGroupInfo userGroup;
         if (shareGroupRequest.isAllUserGroup()) {
-            Optional<EntityGroupInfo> userGroupOptional = entityGroupService.findEntityGroupInfoByTypeAndName(getTenantId(), shareGroupRequest.getOwnerId(),
-                    EntityType.USER, EntityGroup.GROUP_ALL_NAME);
+            Optional<EntityGroupInfo> userGroupOptional = findAllUserGroup(shareGroupRequest.getOwnerId());
             if (userGroupOptional.isPresent()) {
                 userGroup = userGroupOptional.get();
             } else {
@@ -1331,6 +1329,12 @@ public class EntityGroupController extends AutoCommitController {
             throw new ThingsboardException("Specified user group wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
         return userGroup;
+    }
+
+    private Optional<EntityGroupInfo> findAllUserGroup(EntityId ownerId) throws ThingsboardException {
+        TenantId tenantId = getTenantId();
+        return entityGroupService.findEntityGroupInfoByTypeAndName(tenantId, ownerId, EntityType.USER, EntityGroup.GROUP_ALL_NAME)
+                .map(group -> entityGroupService.findEntityGroupInfoByTenantIdAndId(tenantId, group.getId()));
     }
 
     private List<Role> resolveRoles(ShareGroupRequest shareGroupRequest) throws ThingsboardException {

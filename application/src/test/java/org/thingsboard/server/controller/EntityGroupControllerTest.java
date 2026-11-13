@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -266,6 +267,66 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
         doPost("/api/v2/entityGroup/" + deviceGroup.getId().getId() + "/share", shareGroupRequest)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(not(containsString(otherTenantUserGroup.getName()))));
+    }
+
+    @Test
+    public void testShareGroupWithAllUsersGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Shared Device Group", tenantId);
+
+        ShareGroupRequest unknownOwnerRequest = new ShareGroupRequest(TenantId.fromUUID(UUID.randomUUID()), true, null, true, null);
+        doPost("/api/entityGroup/{entityGroupId}/share", unknownOwnerRequest, deviceGroup.getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+        ShareGroupRequest otherTenantRequest = new ShareGroupRequest(differentTenantId, true, null, true, null);
+        doPost("/api/entityGroup/{entityGroupId}/share", otherTenantRequest, deviceGroup.getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+        assertThat(findSharedUserGroupIds(deviceGroup)).isEmpty();
+    }
+
+    @Test
+    public void testShareGroupWithAllUsersGroupOfOwnCustomerSharesWithThatGroup() throws Exception {
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Shared Device Group", tenantId);
+        EntityGroup customerAllUsersGroup = entityGroupService.findEntityGroupByTypeAndName(tenantId, customerId,
+                EntityType.USER, EntityGroup.GROUP_ALL_NAME).get();
+
+        ShareGroupRequest shareGroupRequest = new ShareGroupRequest(customerId, true, null, true, null);
+        doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, deviceGroup.getId().toString())
+                .andExpect(status().isOk());
+        assertThat(findSharedUserGroupIds(deviceGroup)).containsExactly(customerAllUsersGroup.getId());
+    }
+
+    @Test
+    public void testShareGroupV2WithAllUsersGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Shared Device Group", tenantId);
+
+        ShareGroupRequest unknownOwnerRequest = new ShareGroupRequest(TenantId.fromUUID(UUID.randomUUID()), true, null, true, null);
+        doPost("/api/v2/entityGroup/{entityGroupId}/share", unknownOwnerRequest, deviceGroup.getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+        ShareGroupRequest otherTenantRequest = new ShareGroupRequest(differentTenantId, true, null, true, null);
+        doPost("/api/v2/entityGroup/{entityGroupId}/share", otherTenantRequest, deviceGroup.getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+        assertThat(findSharedUserGroupIds(deviceGroup)).isEmpty();
+    }
+
+    @Test
+    public void testShareGroupV2WithAllUsersGroupOfOwnCustomerSharesWithThatGroup() throws Exception {
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Shared Device Group", tenantId);
+        EntityGroup customerAllUsersGroup = entityGroupService.findEntityGroupByTypeAndName(tenantId, customerId,
+                EntityType.USER, EntityGroup.GROUP_ALL_NAME).get();
+
+        ShareGroupRequest shareGroupRequest = new ShareGroupRequest(customerId, true, null, true, null);
+        doPost("/api/v2/entityGroup/{entityGroupId}/share", shareGroupRequest, deviceGroup.getId().toString())
+                .andExpect(status().isOk());
+        assertThat(findSharedUserGroupIds(deviceGroup)).containsExactly(customerAllUsersGroup.getId());
     }
 
     @Test
@@ -718,6 +779,11 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
     private List<RoleId> findSharedRoleIds(EntityGroup entityGroup) {
         return groupPermissionService.findGroupPermissionByTenantIdAndEntityGroupId(tenantId, entityGroup.getId(), new PageLink(100))
                 .getData().stream().map(GroupPermission::getRoleId).collect(Collectors.toList());
+    }
+
+    private List<EntityGroupId> findSharedUserGroupIds(EntityGroup entityGroup) {
+        return groupPermissionService.findGroupPermissionByTenantIdAndEntityGroupId(tenantId, entityGroup.getId(), new PageLink(100))
+                .getData().stream().map(GroupPermission::getUserGroupId).collect(Collectors.toList());
     }
 
 }
