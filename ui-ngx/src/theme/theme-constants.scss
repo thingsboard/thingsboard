@@ -261,6 +261,11 @@ $mat-tb-accent: (
 
   div.tb-dashboard-page.mobile-app {
     @include mat-fab-toolbar-inverse-theme($theme);
+
+    tb-dashboard-toolbar {
+      --tb-primary-background-color: #fff;
+      --tb-primary-text-color: rgba(0, 0, 0, 0.87);
+    }
   }
 
   ::-webkit-scrollbar {
