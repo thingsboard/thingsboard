@@ -1309,7 +1309,7 @@ audit-log:
       "group_permission": "${AUDIT_LOG_MASK_GROUP_PERMISSION:W}" # Group permission logging levels.
       "report_template": "${AUDIT_LOG_MASK_REPORT_TEMPLATE:W}" # Report template logging levels.
   sink:
-    # Type of external sink. possible options: none, elasticsearch
+    # Type of external sink. possible options: none, elasticsearch (compatible with OpenSearch)
     type: "${AUDIT_LOG_SINK_TYPE:none}"
     # Name of the index where audit logs are stored
     # Index name could contain next placeholders (not mandatory):
@@ -1324,6 +1324,11 @@ audit-log:
     port: "${AUDIT_LOG_SINK_PORT:9200}" # Port of external sink system
     user_name: "${AUDIT_LOG_SINK_USER_NAME:}" # Username used to access external sink system
     password: "${AUDIT_LOG_SINK_PASSWORD:}" # Password used to access external sink system
+    # Index API used to store audit logs. Possible options:
+    # auto - detect from the server version: typed for Elasticsearch < 8 and OpenSearch 1.x, typeless otherwise
+    # typed - legacy "/{index}/audit_log" endpoint (Elasticsearch < 8, OpenSearch 1.x)
+    # typeless - "/{index}/_doc" endpoint (Elasticsearch 7+, OpenSearch)
+    index_api: "${AUDIT_LOG_SINK_INDEX_API:auto}"
 
 # Device state parameters
 # Sets device inactivity timeouts, state persistence mode (attributes vs. telemetry), device state fetch batch size, and rule node rate limits.
