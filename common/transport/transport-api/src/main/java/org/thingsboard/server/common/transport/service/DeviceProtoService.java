@@ -115,6 +115,26 @@ public class DeviceProtoService {
     }
 
     public TransportProtos.GetDeviceIdsByTransportTypeResponseMsg getDevicesIds(DeviceTransportType transportType, int page, int pageSize) {
-        return transportService.getDeviceIdsByTransportType(transportType, page, pageSize);
+        TransportProtos.GetDeviceIdsByTransportTypeResponseMsg response = transportService.getDeviceIdsByTransportType(transportType, page, pageSize);
+        if (response != null) {
+            return response;
+        }
+        if (transportType == DeviceTransportType.SNMP) {
+            // The core is older than this transport (rolling upgrade): it knows only the SNMP request.
+            return getSnmpDevicesIds(page, pageSize);
+        }
+        throw new IllegalStateException("The core service did not return " + transportType + " device ids: it does not support this request");
+    }
+
+    @SuppressWarnings("deprecation")
+    private TransportProtos.GetDeviceIdsByTransportTypeResponseMsg getSnmpDevicesIds(int page, int pageSize) {
+        TransportProtos.GetSnmpDevicesResponseMsg response = transportService.getSnmpDevicesIds(TransportProtos.GetSnmpDevicesRequestMsg.newBuilder()
+                .setPage(page)
+                .setPageSize(pageSize)
+                .build());
+        return TransportProtos.GetDeviceIdsByTransportTypeResponseMsg.newBuilder()
+                .addAllIds(response.getIdsList())
+                .setHasNextPage(response.getHasNextPage())
+                .build();
     }
 }

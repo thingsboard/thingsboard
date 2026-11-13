@@ -69,6 +69,10 @@ public interface TransportService {
     @Deprecated
     GetSnmpDevicesResponseMsg getSnmpDevicesIds(GetSnmpDevicesRequestMsg requestMsg);
 
+    /**
+     * @return one page of device ids, or {@code null} if the core service does not support this request
+     * (a core older than this transport during a rolling upgrade)
+     */
     GetDeviceIdsByTransportTypeResponseMsg getDeviceIdsByTransportType(DeviceTransportType transportType, int page, int pageSize);
 
     GetDeviceResponseMsg getDevice(GetDeviceRequestMsg requestMsg);

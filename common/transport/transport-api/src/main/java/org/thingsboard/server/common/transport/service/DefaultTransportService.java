@@ -317,7 +317,8 @@ public class DefaultTransportService extends TransportActivityManager implements
 
         try {
             TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
-            return response.getValue().getDeviceIdsByTransportTypeResponseMsg();
+            // A core that does not know this request (older version, during a rolling upgrade) answers with an empty response
+            return response.getValue().hasDeviceIdsByTransportTypeResponseMsg() ? response.getValue().getDeviceIdsByTransportTypeResponseMsg() : null;
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
