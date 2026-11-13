@@ -64,11 +64,11 @@ import _moment from 'moment';
 import * as momentTz from 'moment-timezone';
 import * as tslib from 'tslib';
 
-import * as dayGridPlugin from '@fullcalendar/daygrid';
-import * as listPlugin from '@fullcalendar/list';
-import * as timeGridPlugin from '@fullcalendar/timegrid';
-import * as momentPlugin from '@fullcalendar/moment';
-import * as interactionPlugin from '@fullcalendar/interaction';
+import * as dayGridPlugin from '@fullcalendar/angular/daygrid';
+import * as listPlugin from '@fullcalendar/angular/list';
+import * as timeGridPlugin from '@fullcalendar/angular/timegrid';
+import * as interactionPlugin from '@fullcalendar/angular/interaction';
+import * as classicThemePlugin from '@fullcalendar/angular/themes/classic';
 import * as FullCalendar from '@fullcalendar/angular';
 import * as CanvasGauges from 'canvas-gauges';
 import * as NgxHmCarousel from 'ngx-hm-carousel';
@@ -453,12 +453,16 @@ class ModulesMap implements IModulesMap {
     'moment-timezone': momentTz,
     tslib,
 
+    '@fullcalendar/angular/daygrid': dayGridPlugin,
+    '@fullcalendar/angular/list': listPlugin,
+    '@fullcalendar/angular/timegrid': timeGridPlugin,
+    '@fullcalendar/angular/interaction': interactionPlugin,
+    '@fullcalendar/angular/themes/classic': classicThemePlugin,
+    '@fullcalendar/angular': FullCalendar,
     '@fullcalendar/daygrid': dayGridPlugin,
     '@fullcalendar/list': listPlugin,
     '@fullcalendar/timegrid': timeGridPlugin,
-    '@fullcalendar/moment': momentPlugin,
     '@fullcalendar/interaction': interactionPlugin,
-    '@fullcalendar/angular': FullCalendar,
     'canvas-gauges': CanvasGauges,
     'ngx-hm-carousel': NgxHmCarousel,
 
