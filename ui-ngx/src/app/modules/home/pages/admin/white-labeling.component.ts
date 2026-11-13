@@ -120,7 +120,7 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
     this.buildWhiteLabelingSettingsForm();
     this.loadWhiteLabelingParams();
     this.aiAssistantPanelService.whiteLabelingSaved$.pipe(
-      filter(target => (target === 'LOGIN') === !!this.isLoginWl && !this.wlSettings.dirty),
+      filter(target => (target === 'LOGIN') === !!this.isLoginWl),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.loadWhiteLabelingParams());
   }

@@ -376,6 +376,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private shownChatId: string | undefined;
   private replyingChatId: string | undefined;
   private affectedEntities: EntityId[] = [];
+  private appliedEffects = new Set<string>();
   private logScrollBottom: number | undefined;
 
   private newTurnsEffect = effect(() => {
@@ -951,8 +952,11 @@ export class AiChatComponent implements OnInit, OnDestroy {
       case 'toolExecutionResult':
         this.completedExecutions.update(map => ({...map, [event.data.executionId]: event.data}));
         if (event.data.executionStatus === 'SUCCESS') {
-          const approval = this.messages().find(message => message.from === 'APPROVAL' && message.data.executionId === event.data.executionId);
-          this.applySideEffects(approval?.from === 'APPROVAL' ? approval.data.tool : undefined, approval?.from === 'APPROVAL' ? approval.data.arguments : undefined);
+          const call = this.messages().find(message => (message.from === 'APPROVAL' || message.from === 'ACTION')
+            && message.data.executionId === event.data.executionId);
+          if (call?.from === 'APPROVAL' || call?.from === 'ACTION') {
+            this.applySideEffects(event.data.executionId, call.data.tool, call.data.arguments);
+          }
         }
         if (event.data.affectedEntities?.length) {
           this.affectedEntities.push(...event.data.affectedEntities);
@@ -1042,10 +1046,11 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
   }
 
-  private applySideEffects(tool: string | undefined, args: unknown): void {
-    if (tool !== 'save_white_labeling') {
+  private applySideEffects(executionId: string, tool: string | undefined, args: unknown): void {
+    if (tool !== 'save_white_labeling' || this.appliedEffects.has(executionId)) {
       return;
     }
+    this.appliedEffects.add(executionId);
     const target = (aiParse(args) as {target?: string})?.target === 'LOGIN' ? 'LOGIN' : 'GENERAL';
     if (target === 'GENERAL') {
       this.whiteLabelingService.loadUserWhiteLabelingParams().subscribe();
@@ -1057,7 +1062,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     if (finished.status === 'SUCCESS') {
       const started = this.messages().find(message => message.from === 'ACTION' && message.data.executionId === finished.executionId);
       if (started?.from === 'ACTION') {
-        this.applySideEffects(started.data.tool, started.data.arguments);
+        this.applySideEffects(finished.executionId, started.data.tool, started.data.arguments);
       }
     }
     if (finished.affectedEntities?.length) {

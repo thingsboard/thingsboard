@@ -83,7 +83,13 @@ export type AiDetailBlock =
   | {type: 'code'; label: string; text: string}
   | {type: 'note'; text: AiDetailText}
   | {type: 'text'; text: string}
-  | {type: 'json'; label: string; text: string};
+  | {type: 'json'; label: string; text: string}
+  | {type: 'images'; rows: AiDetailImage[]};
+
+export interface AiDetailImage {
+  label?: AiDetailText;
+  url: string;
+}
 
 export interface AiDetailView {
   hood?: AiDetailText;
@@ -207,6 +213,16 @@ function entity(id: unknown, entityType: unknown, names: AiDetailNames): AiDetai
   const type = str(entityType) ?? (isObject(id) ? str(id.entityType) : undefined);
   const known = key ? names.get(key) : undefined;
   return {id: key, entityType: type ?? known?.entityType, name: known?.name};
+}
+
+function galleryImage(value: unknown): string | undefined {
+  const url = str(value);
+  return url && /^(tb-image;)?\/api\/images\//.test(url) ? url : undefined;
+}
+
+function images(rows: {label?: AiDetailText; value: unknown}[]): AiDetailBlock[] {
+  const found: AiDetailImage[] = rows.map(row => ({label: row.label, url: galleryImage(row.value)})).filter(row => !!row.url);
+  return found.length ? [{type: 'images', rows: found}] : [];
 }
 
 function text(key: string, params?: Record<string, AiDetailParam>): AiDetailText {
@@ -1124,7 +1140,8 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       if (saved.tested === true) {
         rows.push({label: K + 'fact.tested', value: K + 'yes'});
       }
-      return {hood: text('save', {what: K + 'kind.' + kind, name}), blocks: rows.length ? [{type: 'facts', rows}] : generic(result, 'result')};
+      const pictures = images([{value: values.image}]);
+      return {hood: text('save', {what: K + 'kind.' + kind, name}), blocks: rows.length ? [{type: 'facts', rows}, ...pictures] : [...generic(result, 'result'), ...pictures]};
     }
     case 'save_relations': {
       if (!isObject(result)) {
@@ -1171,12 +1188,38 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
     }
     case 'read_white_labeling':
       return {hood: text('read-white-labeling'), blocks: json('settings', result)};
+    case 'read_website_brand': {
+      const site = str(isObject(result) ? result.url : undefined) ?? str(values.url) ?? '—';
+      if (!isObject(result)) {
+        return {hood: text('read-website-brand', {site}), blocks: generic(result, 'result')};
+      }
+      const blocks: AiDetailBlock[] = [];
+      if (str(result.pageNotRead)) {
+        blocks.push({type: 'note', text: text('website-not-read')});
+      }
+      const colors = [str(result.themeColor) ? `${result.themeColor} · theme-color` : undefined,
+        ...(Array.isArray(result.iconColors) ? result.iconColors.filter(isObject).map(color => `${color.color} · icon ${color.percent}%`) : []),
+        ...Object.entries(isObject(result.colorVariables) ? result.colorVariables : {}).map(([name, color]) => `${color} · ${name}`),
+        ...(Array.isArray(result.colors) ? result.colors.filter(isObject).map(color => `${color.color} · ×${color.uses}`) : [])]
+        .filter(Boolean).slice(0, MAX_ROWS);
+      if (colors.length) {
+        blocks.push({type: 'list', label: text('website-colors'), rows: colors});
+      }
+      const logos = (Array.isArray(result.logos) ? result.logos.filter(isObject) : [])
+        .map(logo => str(logo.url) ?? `<svg> · ${logo.source}`).slice(0, MAX_ROWS);
+      if (logos.length) {
+        blocks.push({type: 'list', label: text('website-logos'), rows: logos});
+      }
+      return {hood: text('read-website-brand', {site}), blocks};
+    }
     case 'save_white_labeling': {
       const {target, reset, ...changes} = values;
       if (reset) {
         return {hood: text(target === 'LOGIN' ? 'reset-white-labeling-login' : 'reset-white-labeling'), blocks: []};
       }
-      return {hood: text(target === 'LOGIN' ? 'save-white-labeling-login' : 'save-white-labeling'), blocks: [{type: 'facts', rows: facts(changes)}]};
+      return {hood: text(target === 'LOGIN' ? 'save-white-labeling-login' : 'save-white-labeling'), blocks: [{type: 'facts', rows: facts(changes)},
+        ...images([{label: text('image-logo'), value: values.logoImage}, {label: text('image-collapsed-logo'), value: values.collapsedLogoImage},
+          {label: text('image-favicon'), value: values.favicon}])]};
     }
     case 'read_ota': {
       if (!isObject(result)) {
@@ -1278,7 +1321,8 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
     case 'save_image': {
       const saved = isObject(result) ? result : {};
       const rows: AiDetailFact[] = str(saved.link) ? [{label: K + 'fact.link', value: saved.link, mono: true}] : [];
-      return {hood: text('save-image', {name: str(saved.title) ?? str(values.title) ?? '—'}), blocks: rows.length ? [{type: 'facts', rows}] : generic(result, 'result')};
+      return {hood: text('save-image', {name: str(saved.title) ?? str(values.title) ?? '—'}),
+        blocks: rows.length ? [{type: 'facts', rows}, ...images([{value: saved.link}])] : generic(result, 'result')};
     }
     case 'reprocess_calculated_field':
       return {hood: text('reprocess', {entity: of(values.calculatedFieldId, 'CALCULATED_FIELD'), from: dateText(values.startTime ?? values.startTs), to: endText(values.endTime ?? values.endTs)}), blocks: generic(result, 'result')};

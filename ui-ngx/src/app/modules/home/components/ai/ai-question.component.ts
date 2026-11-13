@@ -1,10 +1,19 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, computed, EventEmitter, inject, input, Output, signal } from '@angular/core';
+import { Component, computed, EventEmitter, inject, input, Output, Renderer2, signal, ViewContainerRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AiQuestion, AiQuestionAnswer } from '@shared/models/solution-creator.models';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
+import tinycolor from 'tinycolor2';
 
 const MULTI_SEPARATOR = ', ';
+
+const HEX_COLOR = /#[0-9a-f]{6}(?![0-9a-z])|#[0-9a-f]{3}(?![0-9a-z])/i;
+
+export function aiColorOf(text: string | undefined): string | null {
+  return text?.match(HEX_COLOR)?.[0] ?? null;
+}
 
 export function aiAnswersText(answers: AiQuestionAnswer[]): string {
   return answers.map(item => item.question.question.trim() + ' ' + item.answer.trim()).join('\n');
@@ -60,6 +69,11 @@ export class AiQuestionComponent {
   @Output() skip = new EventEmitter<AiQuestionAnswer[]>();
 
   private translate = inject(TranslateService);
+  private popoverService = inject(TbPopoverService);
+  private renderer = inject(Renderer2);
+  private viewContainerRef = inject(ViewContainerRef);
+
+  colorOf = aiColorOf;
 
   at = signal(0);
   move = signal<'next' | 'back' | null>(null);
@@ -124,7 +138,7 @@ export class AiQuestionComponent {
   }
 
   isChipRow(question: AiQuestion): boolean {
-    return !question.multiple && question.options.length >= 2 && question.options.length <= 4
+    return !question.multiple && question.options.length >= 2 && question.options.length <= (this.isColor(question) ? 6 : 4)
       && question.options.every(option => option.label.length <= 24);
   }
 
@@ -135,6 +149,50 @@ export class AiQuestionComponent {
 
   pick(question: AiQuestion, label: string): void {
     this.picked.update(values => ({...values, [question.id]: label}));
+  }
+
+  isColor(question: AiQuestion): boolean {
+    return !question.multiple && !question.secret
+      && (!!question.color || (!!question.options?.length && question.options.every(option => !!aiColorOf(option.label))));
+  }
+
+  pickColor(question: AiQuestion, trigger: HTMLElement): void {
+    if (this.disabled()) {
+      return;
+    }
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+      return;
+    }
+    const current = aiColorOf(this.isOther(question) ? this.otherText(question) : this.valueOf(question)) ?? '#305680';
+    const popover = this.popoverService.displayPopover({
+      trigger,
+      renderer: this.renderer,
+      hostView: this.viewContainerRef,
+      componentType: ColorPickerPanelComponent,
+      preferredPlacement: ['bottomLeft', 'bottom', 'topLeft', 'top'],
+      context: {color: current, disableAlpha: true, colorCancelButton: true},
+      showCloseButton: false,
+      popoverContentStyle: {padding: '12px 4px 12px 12px'},
+      isModal: true
+    });
+    popover.tbComponentRef.instance.popover = popover;
+    popover.tbComponentRef.instance.colorSelected.subscribe((color: string) => {
+      popover.hide();
+      const hex = tinycolor(color).toHexString();
+      if (!question.options?.length) {
+        this.typed.update(values => ({...values, [question.id]: hex}));
+        return;
+      }
+      const option = question.options.find(item => aiColorOf(item.label)?.toLowerCase() === hex);
+      if (option) {
+        this.pick(question, option.label);
+      } else {
+        this.picked.update(values => ({...values, [question.id]: null}));
+        this.typed.update(values => ({...values, [question.id]: hex}));
+      }
+    });
+    popover.tbComponentRef.instance.colorCancelDialog.subscribe(() => popover.hide());
   }
 
   pickOther(question: AiQuestion): void {

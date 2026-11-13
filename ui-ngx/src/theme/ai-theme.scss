@@ -4363,6 +4363,21 @@ cursor: pointer;
   }
 }
 
+.k-ask .k-swatch {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
+  vertical-align: -3px;
+}
+
+.k-ask .k-optbody b .k-swatch {
+  margin-right: 8px;
+}
+
 .k-ask .k-opthint {
   margin: 8px 0 0;
   font-size: 14px;
@@ -4589,6 +4604,41 @@ tb-ai-action-detail.k-detail {
   .k-detail-label + .k-tels,
   .k-detail-label + .k-made {
     margin-top: 0;
+  }
+
+  .k-detail-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 4px 0;
+
+    figure {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      margin: 0;
+    }
+
+    img {
+      display: block;
+      max-width: 160px;
+      max-height: 64px;
+      min-width: 24px;
+      min-height: 24px;
+      padding: 6px;
+      box-sizing: content-box;
+      object-fit: contain;
+      border: 1px solid var(--tb-line);
+      border-radius: 8px;
+      background: var(--tb-surface);
+    }
+
+    figcaption {
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--k-grey);
+    }
   }
 
   .k-detail-more,

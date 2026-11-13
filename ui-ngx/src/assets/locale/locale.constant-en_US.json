@@ -693,6 +693,8 @@
     "ai-assistant": {
         "question": {
             "other-chip": "Other…",
+            "other-color": "Other color…",
+            "pick-color": "Pick a color",
             "needs-answer": "Needs an answer",
             "count": "{{at}} of {{of}}",
             "other": "Something else",
@@ -888,6 +890,13 @@
             "read-ota": "{ count, plural, =1 {Checked the update of one device} other {Checked the update of # devices} }",
             "read-ota-packages": "Read the OTA packages",
             "read-white-labeling": "Read the white labeling",
+            "read-website-brand": "Read the brand of {{site}}",
+            "website-colors": "Colors",
+            "website-logos": "Logo candidates",
+            "image-logo": "Logo",
+            "image-collapsed-logo": "Collapsed logo",
+            "image-favicon": "Favicon",
+            "website-not-read": "The site blocked automated reading, so only its icon was read",
             "save-white-labeling": "Changed the platform's white labeling",
             "save-white-labeling-login": "Changed the login page's white labeling",
             "reset-white-labeling": "Reset the platform's white labeling to the defaults",
@@ -1313,6 +1322,10 @@
                 "run": "Reading the white labeling",
                 "done": "Read the white labeling"
             },
+            "read-website-brand": {
+                "run": "Reading the website's brand",
+                "done": "Read the website's brand"
+            },
             "save-white-labeling": {
                 "run": "Saving the white labeling",
                 "done": "Saved the white labeling"
@@ -1669,6 +1682,9 @@
                 "pageBackgroundColor": "Page background",
                 "darkForeground": "Dark text",
                 "showNameBottom": "Name below the form",
+                "domain": "Domain",
+                "baseUrl": "Base URL",
+                "prohibitDifferentUrl": "Base URL only",
                 "url": "URL",
                 "tag": "Tag",
                 "entities": "Entities",

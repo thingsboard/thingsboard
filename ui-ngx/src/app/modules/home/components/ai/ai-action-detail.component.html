@@ -130,6 +130,18 @@
         <tb-markdown usePlainMarkdown [data]="block.text"></tb-markdown>
       </div>
     }
+    @case ('images') {
+      <div class="k-detail-images">
+        @for (image of block.rows; track image.url) {
+          <figure>
+            <img [src]="image.url | image: {preview: true} | async" [alt]="image.label ? say(image.label) : ''">
+            @if (image.label) {
+              <figcaption>{{ say(image.label) }}</figcaption>
+            }
+          </figure>
+        }
+      </div>
+    }
     @case ('note') {
       <p class="k-detail-note">{{ say(block.text) }}</p>
     }

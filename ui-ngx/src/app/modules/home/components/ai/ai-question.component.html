@@ -15,7 +15,7 @@
     @for (item of answers; track item.question.id) {
       <div class="k-q">
         <span class="k-qt">{{ item.question.question }}</span>
-        <span class="k-opts"><button type="button" class="ob-chip" aria-pressed="true" disabled>{{ shown(item) }}</button></span>
+        <span class="k-opts"><button type="button" class="ob-chip" aria-pressed="true" disabled>@if (!item.question.secret && colorOf(item.answer); as color) {<span class="k-swatch" [style.background]="color" aria-hidden="true"></span>}{{ shown(item) }}</button></span>
       </div>
     }
   </div>
@@ -76,7 +76,18 @@
     }
   </div>
   <div class="k-ask-a">
-    @if (isFree(step)) {
+    @if (isFree(step) && isColor(step)) {
+      <div class="k-optrow">
+        <button #freeColor type="button" class="ob-chip" [attr.aria-pressed]="!!otherText(step)" [disabled]="disabled()"
+                (click)="pickColor(step, freeColor)">
+          @if (colorOf(otherText(step)); as color) {
+            <span class="k-swatch" [style.background]="color" aria-hidden="true"></span>{{ color }}
+          } @else {
+            <mat-icon aria-hidden="true">palette</mat-icon>{{ 'ai-assistant.question.pick-color' | translate }}
+          }
+        </button>
+      </div>
+    } @else if (isFree(step)) {
       <div class="k-optcards list">
         <div class="k-optcard other free" (click)="$any($event.currentTarget).querySelector('.k-opt-input')?.focus()">
           <span class="k-optbody">
@@ -100,7 +111,7 @@
           <button type="button" role="checkbox" class="k-optcard multi" [attr.aria-checked]="isChosen(step, option.label)"
                   [disabled]="disabled()" (click)="toggle(step, option.label)">
             <span class="k-optdot"><mat-icon aria-hidden="true">check</mat-icon></span>
-            <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
+            <span class="k-optbody"><b>@if (colorOf(option.label); as color) {<span class="k-swatch" [style.background]="color" aria-hidden="true"></span>}{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
           </button>
         }
         <div class="k-optcard multi other" role="checkbox" [attr.aria-checked]="isOther(step)" (click)="multiArea.focus()">
@@ -119,12 +130,23 @@
         @for (option of step.options; track option.label) {
           <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
                   [attr.aria-pressed]="!isOther(step) && valueOf(step) === option.label"
-                  [disabled]="disabled()" (click)="pick(step, option.label)">{{ option.label }}</button>
+                  [disabled]="disabled()" (click)="pick(step, option.label)">@if (colorOf(option.label); as color) {<span class="k-swatch" [style.background]="color" aria-hidden="true"></span>}{{ option.label }}</button>
         }
-        <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="isOther(step)" [attr.aria-pressed]="isOther(step)"
-                [disabled]="disabled()" (click)="pickOther(step)">{{ 'ai-assistant.question.other-chip' | translate }}</button>
+        @if (isColor(step)) {
+          <button #otherColor type="button" role="radio" class="ob-chip" [attr.aria-checked]="isOther(step)" [attr.aria-pressed]="isOther(step)"
+                  [disabled]="disabled()" (click)="pickColor(step, otherColor)">
+            @if (isOther(step) && colorOf(otherText(step)); as color) {
+              <span class="k-swatch" [style.background]="color" aria-hidden="true"></span>{{ color }}
+            } @else {
+              <mat-icon aria-hidden="true">palette</mat-icon>{{ 'ai-assistant.question.other-color' | translate }}
+            }
+          </button>
+        } @else {
+          <button type="button" role="radio" class="ob-chip" [attr.aria-checked]="isOther(step)" [attr.aria-pressed]="isOther(step)"
+                  [disabled]="disabled()" (click)="pickOther(step)">{{ 'ai-assistant.question.other-chip' | translate }}</button>
+        }
       </div>
-      @if (isOther(step)) {
+      @if (isOther(step) && !isColor(step)) {
         <textarea #rowArea class="k-opt-input k-other-area" rows="1" spellcheck="false" [disabled]="disabled()"
                   [value]="otherText(step)" [placeholder]="'ai-assistant.question.other-hint' | translate"
                   [attr.aria-label]="step.question + ' · ' + ('ai-assistant.question.other' | translate)"
@@ -139,7 +161,7 @@
           <button type="button" role="radio" class="k-optcard" [attr.aria-checked]="!isOther(step) && valueOf(step) === option.label"
                   [disabled]="disabled()" (click)="pick(step, option.label)">
             <span class="k-optdot"></span>
-            <span class="k-optbody"><b>{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
+            <span class="k-optbody"><b>@if (colorOf(option.label); as color) {<span class="k-swatch" [style.background]="color" aria-hidden="true"></span>}{{ option.label }}</b>@if (option.hint) {<span>{{ option.hint }}</span>}</span>
           </button>
         }
         <div class="k-optcard other" role="radio" [attr.aria-checked]="isOther(step)" (click)="otherArea.focus()">

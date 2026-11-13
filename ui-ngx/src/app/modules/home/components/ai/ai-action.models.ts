@@ -68,6 +68,7 @@ const TOOL_WORDS: Record<string, string> = {
   read_gateway_status: 'read-gateway-status',
   read_ota: 'read-ota',
   read_white_labeling: 'read-white-labeling',
+  read_website_brand: 'read-website-brand',
   save_white_labeling: 'save-white-labeling',
   save_ota_package: 'save-ota-package',
   assign_ota_package: 'assign-ota-package',
