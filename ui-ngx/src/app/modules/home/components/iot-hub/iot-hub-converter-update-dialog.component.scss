@@ -43,6 +43,23 @@
   color: rgba(0, 0, 0, 0.54);
 }
 
+// The rest of the packages slide open with Material's standard curve, as an expansion panel does
+.tb-converter-update-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 225ms cubic-bezier(0.4, 0, 0.2, 1);
+  > ul {
+    overflow: hidden;
+    min-height: 0;
+  }
+  &.expanded {
+    grid-template-rows: 1fr;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
 .tb-converter-update-toggle {
   align-self: flex-start;
   padding: 0;

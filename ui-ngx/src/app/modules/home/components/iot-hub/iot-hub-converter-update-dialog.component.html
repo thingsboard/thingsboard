@@ -11,13 +11,24 @@
     <div class="tb-converter-update-name">{{ data.update.converter.name }}</div>
     @if (data.usedBy.length) {
       <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">{{ 'iot-hub.device-update-shared' | translate }}</span>
-      <ul class="tb-converter-update-packages">
-        @for (name of shownUsedBy; track $index) {
-          <li>{{ name }}</li>
+      <div>
+        <ul class="tb-converter-update-packages">
+          @for (name of data.usedBy.slice(0, usedByLimit); track $index) {
+            <li>{{ name }}</li>
+          }
+        </ul>
+        @if (data.usedBy.length > usedByLimit) {
+          <div class="tb-converter-update-more" [class.expanded]="usedByExpanded" [attr.aria-hidden]="!usedByExpanded">
+            <ul class="tb-converter-update-packages">
+              @for (name of data.usedBy.slice(usedByLimit); track $index) {
+                <li>{{ name }}</li>
+              }
+            </ul>
+          </div>
         }
-      </ul>
+      </div>
       @if (data.usedBy.length > usedByLimit) {
-        <button type="button" class="tb-converter-update-toggle" (click)="usedByExpanded = !usedByExpanded">
+        <button type="button" class="tb-converter-update-toggle" [attr.aria-expanded]="usedByExpanded" (click)="usedByExpanded = !usedByExpanded">
           @if (usedByExpanded) {
             {{ 'iot-hub.device-update-shared-less' | translate }}
           } @else {

@@ -51,10 +51,6 @@ export class TbIotHubConverterUpdateDialogComponent extends DialogComponent<TbIo
     super(store, router, dialogRef);
   }
 
-  get shownUsedBy(): string[] {
-    return this.usedByExpanded ? this.data.usedBy : this.data.usedBy.slice(0, this.usedByLimit);
-  }
-
   downloadCurrent(): void {
     downloadEntityJson(this.data.update.converter, this.data.update.converter.name);
   }
