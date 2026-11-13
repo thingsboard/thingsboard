@@ -32,6 +32,8 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
 
   // A device package keeps the entities other installed packages use, and the dialog lists them before the user confirms
   keptReferences: ResourceReferences | null = null;
+  keptTitle: string;
+  keptReason: string;
 
   constructor(
     protected store: Store<AppState>,
@@ -42,15 +44,15 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     private translate: TranslateService
   ) {
     super(store, router, dialogRef);
+    this.description = this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
     const kept = data.keptEntities;
     if (kept?.entities.length) {
       this.keptReferences = kept.entities.map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
       // Kept because other packages use them, because the user had them before the package, or both
-      const key = !kept.usedExistingCount ? 'iot-hub.remove-desc-kept' :
-        !kept.usedByItemsCount ? 'iot-hub.remove-desc-kept-own' : 'iot-hub.remove-desc-kept-own-or-used';
-      this.description = this.translate.instant(key, { count: kept.usedByItemsCount, kept: kept.entities.length });
-    } else {
-      this.description = this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
+      const reasonKey = !kept.usedExistingCount ? 'iot-hub.remove-kept-used' :
+        !kept.usedByItemsCount ? 'iot-hub.remove-kept-own' : 'iot-hub.remove-kept-own-or-used';
+      this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: kept.entities.length });
+      this.keptReason = this.translate.instant(reasonKey, { kept: kept.entities.length });
     }
   }
 
