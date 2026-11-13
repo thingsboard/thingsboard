@@ -33,8 +33,7 @@
       overflow: auto;
       &-block {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) repeat(var(--tb-notification-delivery-methods-count), minmax(120px, max-content));
-        min-width: 720px;
+        grid-template-columns: minmax(240px, 1fr) repeat(var(--tb-notification-delivery-methods-count), max-content);
       }
       .notification-header {
         position: sticky;

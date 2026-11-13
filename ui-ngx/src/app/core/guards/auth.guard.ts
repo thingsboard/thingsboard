@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable, NgZone } from '@angular/core';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Data, Params, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
@@ -154,46 +154,53 @@ export class AuthGuard  {
             } else if (data.requiredMenuLink) {
               return this.menuService.isMenuLinkAvailable(data.requiredMenuLink).pipe(
                 take(1),
-                map((allow) => {
-                  if (!allow) {
+                mergeMap((available) => {
+                  if (!available) {
                     this.dialogService.forbidden();
+                    return of(false);
                   }
-                  return allow;
-                })
-              );
-            } else if (isDefined(data.canActivate$)) {
-              return (data.canActivate$ as (userPermissionsService: UserPermissionsService, params: any) => Observable<boolean>)(this.userPermissionsService, params).pipe(
-                catchError(() => of(false)),
-                map((allow) => {
-                  if (!allow) {
-                    this.dialogService.forbidden();
-                  }
-                  return allow;
-                })
-              );
-            } else if (isDefined(data.canActivate) && !data.canActivate(this.userPermissionsService)) {
-              this.dialogService.forbidden();
-              return of(false);
-            } else if (data.redirectTo) {
-              let redirect;
-              if (isObject(data.redirectTo)) {
-                redirect = data.redirectTo[authority];
-              } else {
-                redirect = data.redirectTo;
-              }
-              return this.menuService.getRedirectPath(path, redirect).pipe(
-                map((redirectPath) => {
-                  return this.router.parseUrl(redirectPath);
+                  return this.checkRouteData(data, params, path, authority);
                 })
               );
             } else {
-              return of(true);
+              return this.checkRouteData(data, params, path, authority);
             }
           }
         }
       }),
       catchError((err => { console.error(err); return of(false); } ))
     );
+  }
+
+  private checkRouteData(data: Data, params: Params, path: string, authority: Authority): Observable<boolean | UrlTree> {
+    if (isDefined(data.canActivate$)) {
+      return (data.canActivate$ as (userPermissionsService: UserPermissionsService, params: any) => Observable<boolean>)(this.userPermissionsService, params).pipe(
+        catchError(() => of(false)),
+        map((allow) => {
+          if (!allow) {
+            this.dialogService.forbidden();
+          }
+          return allow;
+        })
+      );
+    } else if (isDefined(data.canActivate) && !data.canActivate(this.userPermissionsService)) {
+      this.dialogService.forbidden();
+      return of(false);
+    } else if (data.redirectTo) {
+      let redirect;
+      if (isObject(data.redirectTo)) {
+        redirect = data.redirectTo[authority];
+      } else {
+        redirect = data.redirectTo;
+      }
+      return this.menuService.getRedirectPath(path, redirect).pipe(
+        map((redirectPath) => {
+          return this.router.parseUrl(redirectPath);
+        })
+      );
+    } else {
+      return of(true);
+    }
   }
 
   canActivateChild(

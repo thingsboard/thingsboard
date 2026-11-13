@@ -21,6 +21,7 @@ import {
             multi: true
         }
     ],
+    host: { class: 'contents' },
     standalone: false
 })
 export class NotificationSettingFormComponent implements ControlValueAccessor, OnInit, OnDestroy {

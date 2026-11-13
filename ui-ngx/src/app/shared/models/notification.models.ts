@@ -806,7 +806,7 @@ export const singleNotificationTypeTemplate = (type: NotificationType) => {
          type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST;
 }
 
-export const sysAdminNotificationTypes: ReadonlySet<NotificationType> = new Set([
+const sysAdminNotificationTypes: ReadonlySet<NotificationType> = new Set([
   NotificationType.ENTITIES_LIMIT,
   NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
   NotificationType.ADDON_ACCESS_REQUEST,
@@ -819,18 +819,14 @@ export const sysAdminNotificationTypes: ReadonlySet<NotificationType> = new Set(
   NotificationType.RESOURCES_SHORTAGE
 ]);
 
-export const adminRequestNotificationTypes: ReadonlySet<NotificationType> = new Set([
+const adminRequestNotificationTypes: ReadonlySet<NotificationType> = new Set([
   NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
   NotificationType.ADDON_ACCESS_REQUEST,
   NotificationType.ADDON_ACCESS_ERROR,
   NotificationType.PLAN_UPGRADE_REQUEST
 ]);
 
-export const sysAdminRequestNotificationTypes: ReadonlySet<NotificationType> = new Set([
-  NotificationType.PLAN_UPGRADE_REQUEST
-]);
-
-export const edgeNotificationTypes: ReadonlySet<NotificationType> = new Set([
+const edgeNotificationTypes: ReadonlySet<NotificationType> = new Set([
   NotificationType.EDGE_CONNECTION,
   NotificationType.EDGE_COMMUNICATION_FAILURE
 ]);
@@ -848,7 +844,7 @@ export const isNotificationTypeReceivable = (type: NotificationType, authority: 
       }
       break;
     default:
-      if (sysAdminRequestNotificationTypes.has(type)) {
+      if (type === NotificationType.PLAN_UPGRADE_REQUEST) {
         return false;
       }
   }
