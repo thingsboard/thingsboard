@@ -1,0 +1,59 @@
+/** Decoder **/
+
+// Decode the Kafka message payload into a JSON object.
+var payloadJson = decodeToJson(payload);
+
+// Use the EUI value as the ThingsBoard device name.
+var deviceName = payloadJson.EUI;
+
+// Assign the same device type to all devices created by this integration.
+var deviceType = 'Monitoring sensor';
+
+// Build the object expected by the ThingsBoard integration.
+var result = {
+  deviceName: deviceName,
+  deviceType: deviceType,
+  // No device attributes are extracted from the incoming message.
+  attributes: {},
+  // Create a timestamped telemetry entry.
+  telemetry: {
+    // Use the timestamp provided in the Kafka message.
+    ts: payloadJson.ts,
+    values: {
+      // Read the first byte from the hexadecimal data field.
+      Temperature: hexToInt(payloadJson.data.substring(0, 2)),
+      // Read the second byte from the hexadecimal data field.
+      Humidity: hexToInt(payloadJson.data.substring(2, 4)),
+      // Read the third byte from the hexadecimal data field.
+      Fan: hexToInt(payloadJson.data.substring(4, 6)),
+      // Copy message metadata directly to telemetry.
+      Port: payloadJson.port,
+      Freq: payloadJson.freq,
+      // Read the fourth byte from the hexadecimal data field.
+      Pressure: hexToInt(payloadJson.data.substring(6, 8)),
+      // Copy signal strength and serial number to telemetry.
+      rssi: payloadJson.rssi,
+      serial: payloadJson.serial
+    }
+  }
+};
+
+/** Helper functions **/
+
+// Converts the incoming byte array into a UTF-8-compatible string.
+function decodeToString(payload) {
+  return String.fromCharCode.apply(String, payload);
+}
+
+// Converts the incoming byte array into a string and parses it as a JSON object.
+function decodeToJson(payload) {
+  var str = decodeToString(payload);
+  return JSON.parse(str);
+}
+
+// Converts a hexadecimal string into an integer.
+function hexToInt(hex) {
+  return parseInt(hex, 16);
+}
+
+return result;
