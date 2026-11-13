@@ -1143,6 +1143,36 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('save-relations'), blocks};
     }
+    case 'read_versions': {
+      const versions = isObject(result) && Array.isArray(result.versions) ? result.versions.filter(isObject) : undefined;
+      if (!versions) {
+        return {hood: text('read-versions'), blocks: generic(result, 'result')};
+      }
+      const rows = versions.slice(0, MAX_ROWS).map(version => [str(version.name), str(version.author),
+        str(version.time) ? new Date(version.time).toLocaleString() : undefined].filter(Boolean).join(' · '));
+      return {hood: text('read-versions'), blocks: rows.length ? [{type: 'list', rows}] : []};
+    }
+    case 'commit_version': {
+      const saved = isObject(result) ? result : {};
+      const rows: AiDetailFact[] = [];
+      if (str(saved.versionId)) {
+        rows.push({label: K + 'fact.version', value: saved.versionId, mono: true});
+      }
+      if (str(saved.branch)) {
+        rows.push({label: K + 'fact.branch', value: saved.branch});
+      }
+      for (const field of ['added', 'modified', 'removed']) {
+        if (typeof saved[field] === 'number') {
+          rows.push({label: K + 'fact.' + field, value: String(saved[field])});
+        }
+      }
+      return {hood: text('commit-version', {name: str(values.name) ?? '—'}), blocks: rows.length ? [{type: 'facts', rows}] : generic(result, 'result')};
+    }
+    case 'restore_version': {
+      const types = isObject(result) && Array.isArray(result.result) ? result.result.filter(isObject) : undefined;
+      const rows = (types ?? []).map(type => `${type.entityType}: +${type.created} · ~${type.updated} · −${type.deleted}`);
+      return {hood: text('restore-version', {version: String(values.versionId ?? '').slice(0, 8)}), blocks: types ? [{type: 'list', rows}] : generic(result, 'result')};
+    }
     case 'read_platform_settings':
       return {hood: text('read-platform-settings'), blocks: json('settings', result)};
     case 'save_platform_settings':

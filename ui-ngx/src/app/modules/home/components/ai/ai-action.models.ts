@@ -64,6 +64,7 @@ const TOOL_WORDS: Record<string, string> = {
   save_image: 'save-image',
   read_platform_settings: 'read-platform-settings',
   save_relations: 'save-relations',
+  read_versions: 'read-versions',
   save_platform_settings: 'save-platform-settings',
   read_device_connect_commands: 'read-connection-settings',
   search_web: 'search-web',
@@ -77,6 +78,8 @@ const TOOL_WORDS: Record<string, string> = {
 const GENERATING_TOOLS: Record<string, string> = {
   set_dashboard_html_page: 'lay-out-dashboard',
   reprocess_calculated_field: 'recalculate-history',
+  commit_version: 'commit-version',
+  restore_version: 'restore-version',
   research_device_connectivity: 'research-device'
 };
 

@@ -880,6 +880,9 @@
             "relations-added": "Added",
             "relations-removed": "Removed",
             "relations-failed": "Failed",
+            "read-versions": "Read the saved versions",
+            "commit-version": "Saved the version '{{name}}'",
+            "restore-version": "Restored from version {{version}}",
             "read-platform-settings": "Read the platform settings",
             "save-platform-settings": "Saved the platform settings",
             "usage": {
@@ -975,6 +978,11 @@
             "no": "No",
             "fact": {
                 "link": "Link",
+                "version": "Version",
+                "branch": "Branch",
+                "added": "Added",
+                "modified": "Modified",
+                "removed": "Removed",
                 "comment": "Comment",
                 "reference": "Reference",
                 "tested": "Tested before saving",
@@ -1273,6 +1281,18 @@
             "save-relations": {
                 "run": "Changing the relations",
                 "done": "Changed the relations"
+            },
+            "read-versions": {
+                "run": "Reading the versions",
+                "done": "Read the versions"
+            },
+            "commit-version": {
+                "run": "Saving a version",
+                "done": "Saved a version"
+            },
+            "restore-version": {
+                "run": "Restoring from the version",
+                "done": "Restored from the version"
             },
             "create-entity-view": {
                 "run": "Creating the entity view",
@@ -1590,6 +1610,9 @@
             "ask-again-message": "Ask me again for the same change.",
             "field": {
                 "source": "Source",
+                "entities": "Entities",
+                "includes": "Also saves",
+                "removeOthers": "Delete what the version lacks",
                 "assignee": "Assignee",
                 "comment": "Comment",
                 "timeseries": "Telemetry",
@@ -1665,6 +1688,7 @@
             },
             "type": {
                 "IMAGE": "Image",
+                "VERSION": "Version",
                 "RELATION": "Relations",
                 "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
@@ -2417,7 +2441,11 @@
             "version-control": {
                 "title": "Ask about version control",
                 "line": "Keep your entities in Git and restore earlier versions.",
-                "suggestion": "How do I save my dashboards to Git?"
+                "suggestion": "How do I save my dashboards to Git?",
+                "example": {
+                    "save": {"label": "Save a version", "message": "Save a version of all my dashboards."},
+                    "history": {"label": "Recent versions", "message": "What versions were saved this week, and by whom?"}
+                }
             },
             "task-manager": {
                 "title": "Ask about the task manager",

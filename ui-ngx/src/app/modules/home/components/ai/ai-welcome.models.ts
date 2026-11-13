@@ -87,7 +87,7 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.SELF_REGISTRATION]: {key: 'self-registration'},
   [AiAssistantViewType.SECRETS]: {key: 'secrets', examples: ['create']},
   [AiAssistantViewType.AUDIT_LOGS]: {key: 'audit-logs', examples: ['changes', 'logins']},
-  [AiAssistantViewType.VERSION_CONTROL]: {key: 'version-control'},
+  [AiAssistantViewType.VERSION_CONTROL]: {key: 'version-control', examples: ['save', 'history']},
   [AiAssistantViewType.TASK_MANAGER]: {key: 'task-manager', examples: ['failed']},
   [AiAssistantViewType.SCHEDULER]: {key: 'scheduler'},
   [AiAssistantViewType.HOME_SETTINGS]: {key: 'home-settings', examples: ['set']},
