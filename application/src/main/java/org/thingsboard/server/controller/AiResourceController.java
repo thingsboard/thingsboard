@@ -5,7 +5,6 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,7 +26,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.resource.AiResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -41,7 +39,7 @@ class AiResourceController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/config")
-    public JsonNode getConfig() throws ThingsboardException {
+    public JsonNode getAiResourcesConfig() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.READ);
         return aiResourceService.getConfig(user);
@@ -50,7 +48,7 @@ class AiResourceController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public JsonNode uploadResource(@RequestPart("file") MultipartFile file) throws ThingsboardException {
+    public JsonNode uploadAiResource(@RequestPart("file") MultipartFile file) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
         return aiResourceService.upload(file, user);
@@ -58,28 +56,22 @@ class AiResourceController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/{resourceId}")
-    public ResponseEntity<byte[]> downloadResource(@PathVariable UUID resourceId) throws ThingsboardException {
+    public ResponseEntity<byte[]> downloadAiResource(@PathVariable UUID resourceId) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.READ);
         AiResourceService.AiResourceContent content = aiResourceService.download(resourceId, user);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(content.mediaType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, disposition(content.name()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(content.name()))
                 .header("X-Content-Type-Options", "nosniff")
                 .cacheControl(CacheControl.maxAge(Duration.ofHours(1)).cachePrivate())
                 .body(content.data());
     }
 
-    private static String disposition(String name) {
-        ContentDisposition.Builder builder = ContentDisposition.attachment();
-        boolean ascii = StandardCharsets.US_ASCII.newEncoder().canEncode(name);
-        return (ascii ? builder.filename(name) : builder.filename(name, StandardCharsets.UTF_8)).build().toString();
-    }
-
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @DeleteMapping("/{resourceId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteResource(@PathVariable UUID resourceId) throws ThingsboardException {
+    public void deleteAiResource(@PathVariable UUID resourceId) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
         aiResourceService.delete(resourceId, user);

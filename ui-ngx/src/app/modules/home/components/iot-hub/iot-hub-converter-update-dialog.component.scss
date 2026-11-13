@@ -1,0 +1,97 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  max-width: 600px;
+}
+
+.tb-converter-update-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: 0.1px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.tb-converter-update-text {
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.2px;
+  color: rgba(0, 0, 0, 0.54);
+  margin: 0;
+}
+
+.tb-converter-update-box {
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+}
+
+.tb-converter-update-name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.tb-converter-update-packages {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+// Material expansion-panel timing
+.tb-converter-update-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 225ms cubic-bezier(0.4, 0, 0.2, 1);
+  > ul {
+    overflow: hidden;
+    min-height: 0;
+  }
+  &.expanded {
+    grid-template-rows: 1fr;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.tb-converter-update-toggle {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--tb-primary-500);
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+.tb-converter-update-link {
+  color: #305680;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tb-progress-alert-msg {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+
+  &.tb-progress-alert-msg-warning {
+    color: #f66716;
+  }
+
+  &.tb-progress-alert-msg-error {
+    color: #dd2c00;
+  }
+}

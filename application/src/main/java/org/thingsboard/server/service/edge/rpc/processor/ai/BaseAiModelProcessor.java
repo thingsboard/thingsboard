@@ -34,11 +34,12 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
             JsonNode aiModelJson = JacksonUtil.toJsonNode(aiModelUpdateMsg.getEntity());
             AiModel aiModel = JacksonUtil.treeToValueIgnoringUnknown(aiModelJson, AiModel.class);
             if (aiModel == null) {
-                throw new RuntimeException("[{" + tenantId + "}] aiModelUpdateMsg {" + aiModelUpdateMsg + " } cannot be converted to aiModel");
+                throw new RuntimeException("[{" + tenantId + "}] aiModelUpdateMsg for aiModel {" + aiModelId + "} cannot be converted to aiModel");
             }
 
-            Optional<AiModel> aiModelById = edgeCtx.getAiModelService().findAiModelById(tenantId, aiModelId);
-            if (aiModelById.isEmpty()) {
+            AiModel aiModelById = findTenantEntity(tenantId, aiModelId);
+            aiModel.setTenantId(tenantId);
+            if (aiModelById == null) {
                 aiModel.setCreatedTime(Uuids.unixTimestamp(aiModelId.getId()));
                 isCreated = true;
                 aiModel.setId(null);
@@ -46,7 +47,7 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
                 aiModel.setId(aiModelId);
                 // edge versions without customer access support do not send this field
                 if (!aiModelJson.has("customerAccessEnabled")) {
-                    aiModel.setCustomerAccessEnabled(aiModelById.get().isCustomerAccessEnabled());
+                    aiModel.setCustomerAccessEnabled(aiModelById.isCustomerAccessEnabled());
                 }
             }
 
@@ -68,7 +69,7 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
 
             edgeCtx.getAiModelService().save(aiModel, false);
         } catch (Exception e) {
-            log.error("[{}] Failed to process aiModel update msg [{}]", tenantId, aiModelUpdateMsg, e);
+            log.error("[{}] Failed to process aiModel update msg for aiModel [{}]", tenantId, aiModelId, e);
             throw e;
         }
         return Pair.of(isCreated, isNameUpdated);

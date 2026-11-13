@@ -30,9 +30,65 @@ export interface RuleChainInstalledItemDescriptor {
 export interface DeviceInstalledItemDescriptor {
   type: 'DEVICE';
   createdEntityIds?: { entityType: string; id: string }[];
+  // Of createdEntityIds, the entities the user chose to use as they were: the package doesn't own them
+  usedExistingEntityIds?: { entityType: string; id: string }[];
   dashboardId?: { id: string };
   selectedInstallMethod?: string;
   installState?: Record<string, any>;
+}
+
+/** An entity of an installed device package as the server finds it before an update. */
+export interface DevicePackageEntityState {
+  stepName: string;
+  entityId: { entityType: string; id: string };
+  exists: boolean;
+  version?: number;
+  // Changed since the package installed or last updated it; null when the server has no checksum of it
+  modified?: boolean | null;
+  shared: boolean;
+}
+
+/** A step of a device package update, with its entity resolved from the template of the new version. */
+export interface DeviceUpdateStep {
+  name: string;
+  type: string;
+  action: 'KEEP' | 'OVERWRITE' | 'CREATE';
+  entityId?: string;
+  expectedVersion?: number;
+  confirmed?: boolean;
+  entity?: any;
+  credentials?: any;
+  // OVERWRITE and CREATE: the attributes the saved entity gets, as at install
+  serverAttributes?: any;
+  sharedAttributes?: any;
+  resolution?: string;
+  // The package step's stable id, so that a next version can rename the step. When set it is also the step's install
+  // state key: the default converter update sends the stored key here to write the state back under it
+  id?: string;
+  // INTEGRATION: the step's metadata entries, which a KEEP merges into the integration; null removes an entry
+  metadata?: Record<string, string | null>;
+  // The step takes ThingsBoard's default converter: its install state says so, for the update check
+  defaultConverter?: boolean;
+}
+
+export interface DeviceUpdateRequest {
+  versionId: string;
+  // The version installed when the update was planned: the server refuses the update if the package changed since
+  fromVersionId?: string;
+  // The install method of the new version's steps
+  selectedInstallMethod?: string;
+  installState: Record<string, any>;
+  steps: DeviceUpdateStep[];
+}
+
+/** All of the update was applied, or none of it: failedStep is the install state key of the step that failed, if one did. */
+export interface DeviceUpdateResult {
+  success: boolean;
+  errorMessage?: string;
+  failedStep?: string;
+  descriptor?: DeviceInstalledItemDescriptor;
+  // By install state key of the step
+  outputs?: Record<string, any>;
 }
 
 export interface SolutionTemplateInstalledItemDescriptor {
@@ -103,6 +159,19 @@ export interface ItemPublishedVersionInfo {
   publishedVersion: string;
 }
 
+/** An entity that deleting an installed item keeps, because other installed items use it too. */
+export interface IotHubKeptEntity {
+  entityId: { id: string; entityType: string };
+  name: string;
+}
+
+export interface IotHubInstalledItemKeptEntities {
+  entities: IotHubKeptEntity[];
+  usedByItemsCount: number;
+  // Of the kept entities, the ones the user had before and the package took as they were
+  usedExistingCount: number;
+}
+
 export interface IotHubInstalledItem extends BaseData<{id: string}> {
   itemId: string;
   itemVersionId: string;
@@ -112,7 +181,8 @@ export interface IotHubInstalledItem extends BaseData<{id: string}> {
   descriptor: IotHubInstalledItemDescriptor;
 }
 
-export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null => {
+/** The entity the Open action of an installed item opens, and its URL. */
+export const getInstalledItemTarget = (descriptor?: IotHubInstalledItemDescriptor): { url: string; entityType: EntityType } | null => {
   if (!descriptor) {
     return null;
   }
@@ -125,10 +195,12 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
         entityId = descriptor.dashboardId?.id;
         entityType = EntityType.DASHBOARD;
       } else if (descriptor.createdEntityIds) {
-        const found = descriptor.createdEntityIds.find(id => id.entityType === EntityType.DEVICE);
+        // A gateway package (e.g. TTN) creates no device, only a converter and an integration
+        const found = descriptor.createdEntityIds.find(id => id.entityType === EntityType.DEVICE)
+          ?? descriptor.createdEntityIds.find(id => id.entityType === EntityType.INTEGRATION);
         if (found) {
           entityId = found.id;
-          entityType = EntityType.DEVICE;
+          entityType = found.entityType as EntityType;
         }
       }
       break;
@@ -160,7 +232,10 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
     } else {
        url = getEntityDetailsPageURL(entityId, entityType);
     }
-    return url;
+    return url ? { url, entityType } : null;
   }
   return null;
 }
+
+export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null =>
+  getInstalledItemTarget(descriptor)?.url ?? null;

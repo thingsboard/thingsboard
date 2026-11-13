@@ -256,7 +256,7 @@ class ChannelTbAiTransportTest {
     }
 
     TbAiChannelPool pool() {
-        return new TbAiChannelPool(server.client(), 10, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), System::nanoTime, false);
+        return new TbAiChannelPool(server.client(), "4.4.0", 10, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), System::nanoTime, false);
     }
 
     void stubExecutor() {

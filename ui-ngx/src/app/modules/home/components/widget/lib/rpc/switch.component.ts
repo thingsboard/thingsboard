@@ -255,7 +255,7 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
   }
 
   private onError(error: string) {
-    this.error = error;
+    this.error = error ? error.replace(/<\/?br\s*\/?>/gi, '. ') : error;
     if (this.switchType === 'switch') {
       this.setFontSize(this.switchError, this.error, this.switchErrorContainer.height(), this.switchErrorContainer.width());
     }
@@ -280,10 +280,6 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
       },
       () => {
         const errorText = this.ctx.defaultSubscription.rpcErrorText;
-        if (this.switchType === 'slide-toggle') {
-          this.ctx.defaultSubscription.rpcErrorText = null;
-          this.ctx.hideToast(this.ctx.toastTargetId);
-        }
         this.onError(errorText);
       }
     );
@@ -310,10 +306,6 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
       () => {
         this.executingUpdateValue = false;
         const errorText = this.ctx.defaultSubscription.rpcErrorText;
-        if (this.switchType === 'slide-toggle') {
-          this.ctx.defaultSubscription.rpcErrorText = null;
-          this.ctx.hideToast(this.ctx.toastTargetId);
-        }
         this.onError(errorText);
       }
     );
