@@ -273,8 +273,6 @@
             "account-lockout": "Missatge de bloqueig del compte",
             "reset-password": "Missatge per a restabliment de contrasenya",
             "password-was-reset": "Missatge de contrasenya restablerta",
-            "user-activated": "Missatge activat per l'usuari",
-            "user-registered": "Missatge registrat de l'usuari",
             "api-usage-state-enabled": "Estat d'ús de l'API activat",
             "api-usage-state-warning": "Avís d'estat d'ús de l'API",
             "api-usage-state-disabled": "Estat d'ús de l'API desactivat",
@@ -1611,9 +1609,7 @@
         "originator-state-entity": "Utilitza l'entitat de l'estat del tauler com a originador",
         "originator-from-originator-entity": "Utilitza l'entitat originadora com a originador de l'esdeveniment",
         "originator-master-report-entity": "Utilitza l'entitat de l'informe principal com a originador",
-        "scheduler-event-type": "Tipus d'esdeveniment del planificador",
-        "type-assigned-to-edge": "Assignat a vora",
-        "type-unassigned-from-edge": "Sense assignar des de vores"
+        "scheduler-event-type": "Tipus d'esdeveniment del planificador"
     },
     "asset": {
         "all": "Tots",
@@ -1703,8 +1699,7 @@
         "unassign-asset-from-edge-text": "Després de la confirmació, l'actiu es desassignarà i l'Edge no hi podrà accedir.",
         "unassign-assets-from-edge-title": "Esteu segur que voleu desassignar { count, plural, one {1 actiu} other {# actius} }?",
         "unassign-assets-from-edge-text": "Després de la confirmació, tots els actius seleccionats es desassignaran i l'Edge no hi podrà accedir.",
-        "assign-asset-to-edge-text": "Seleccioneu els actius que voleu assignar a l'Edge",
-        "unassign-assets-from-edge-action-title": "Anul·lar assignació {count, plural, =1 {1 activo} other {# activos} } des de la vora"
+        "assign-asset-to-edge-text": "Seleccioneu els actius que voleu assignar a l'Edge"
     },
     "attribute": {
         "attributes": "Atributs",
@@ -1830,7 +1825,6 @@
         "transport-data-points-hourly-activity": "Activitat horària dels punts de dades de transport",
         "transport-data-points-daily-activity": "Activitat diària dels punts de dades de transport",
         "transport-data-points-monthly-activity": "Activitat mensual dels punts de dades de transport",
-        "transport-hourly-activity": "Activitat horària de transport",
         "transport-messages": "Missatges de transport",
         "transport-messages-hourly-activity": "Activitat horària dels missatges de transport",
         "transport-data-point-hourly-activity": "Activitat horària dels punts de dades de transport",
@@ -1863,10 +1857,8 @@
         "ai-credits-hourly-activity": "Activitat horària de crèdits d'IA",
         "ai-credits-daily-activity": "Activitat diària de crèdits d'IA",
         "ai-credits-monthly-activity": "Activitat mensual de crèdits d'IA",
-        "transport-monthly-activity": "Activitat mensual de transport",
         "view-details": "Mostra els detalls",
         "view-statistics": "Mostra les estadístiques",
-        "email-messages-hourly-activity": "Activitat horària de Correus electrònics",
         "sms-messages-hourly-activity": "Activitat horària de missatges SMS"
     },
     "api-limit": {
@@ -2258,9 +2250,7 @@
         "edges": "Instàncies d'Edge del client",
         "manage-edges": "Gestiona les instàncies d'Edge",
         "manage-agents": "Gestiona els Agents",
-        "public-edges": "Vores públiques",
-        "manage-customer-edges": "Gestiona les instàncies d'Edge del client",
-        "manage-public-edges": "Administrar vores públiques"
+        "manage-customer-edges": "Gestiona les instàncies d'Edge del client"
     },
     "customers-hierarchy": {
         "customers-hierarchy": "Jerarquia dels clients",
@@ -2329,8 +2319,7 @@
         "set-access-token": "Defineix el token d'accés",
         "menu-conflict": "Conflicte de menú",
         "menu-conflict-message": "Ja hi ha un altre menú personalitzat per defecte amb l'àmbit <b>{{scope}}</b>. Esteu segur que voleu substituir-lo pel vostre menú personalitzat?",
-        "replace": "Substitueix",
-        "custom-menu-hint": "Definiu el menú personalitzat JSON a continuació. Aquest JSON conté una llista d'elements de menú personalitzats."
+        "replace": "Substitueix"
     },
     "custom-translation": {
         "add-new-key": "Afegeix una clau nova",
@@ -2407,7 +2396,6 @@
         "add": "Afegeix un tauler",
         "assign-dashboard-to-customer": "Assigna tauler(s) al client",
         "assign-dashboard-to-customer-text": "Seleccioneu els taulers que voleu assignar al client",
-        "assign-dashboard-to-edge-title": "Assignar panell(s) a Vora",
         "assign-to-customer-text": "Seleccioneu el client al qual voleu assignar el tauler o els taulers",
         "assign-to-customer": "Assigna al client",
         "unassign-from-customer": "Desassigna del client",
@@ -2755,8 +2743,6 @@
         "assign-to-customer": "Assigna al client",
         "assign-device-to-customer": "Assigna dispositiu(s) al client",
         "assign-device-to-customer-text": "Seleccioneu els dispositius que voleu assignar al client",
-        "assign-device-to-edge-title": "Assignar Dispositiu(s) a Vora",
-        "assign-device-to-edge-text": "Selecciona els dispositius a assignar a la Vora",
         "make-public": "Fes públic el dispositiu",
         "make-private": "Fes privat el dispositiu",
         "no-devices-text": "No s'ha trobat cap dispositiu",
@@ -3589,11 +3575,6 @@
         "manage-devices": "Gestiona els dispositius",
         "manage-entity-views": "Gestiona les vistes d'entitat",
         "manage-dashboards": "Gestiona els taulers",
-        "edge-assets": "Gestionar actius de vores",
-        "edge-devices": "Gestionar dispositius de vora",
-        "edge-entity-views": "Gestionar vistes d'entitat de vora",
-        "edge-dashboards": "Administrar panells de vora",
-        "edge-rulechains": "Cadenes de regles de vora",
         "assets": "Actius de l'Edge",
         "devices": "Dispositius de l'Edge",
         "entity-views": "Vistes d'entitat de l'Edge",
@@ -4365,8 +4346,7 @@
         "action-type-removed-from-entity-group": "S'ha eliminat del grup d'entitats",
         "action-type-change-owner": "Canvi de propietari",
         "connected": "Connectat",
-        "disconnected": "Desconnectat",
-        "action-type-relations-deleted": "S'han suprimit les relacions"
+        "disconnected": "Desconnectat"
     },
     "error": {
         "data-export-failed": "Ha fallat l'exportació de dades: no s'ha pogut determinar el mode de desplegament. Torneu-ho a provar.",
@@ -4913,9 +4893,7 @@
         "unable-entity-view-device-alias-title": "No es pot suprimir l'àlies de vista d'entitat",
         "unable-entity-view-device-alias-text": "L'àlies de dispositiu '{{entityViewAlias}}' no es pot suprimir perquè l'utilitzen els ginys següents:<br/>{{widgetsList}}",
         "select-entity-view": "Selecciona una vista d'entitat",
-        "start-date": "Data d'inici",
         "start-ts": "Hora d'inici",
-        "end-date": "Data de finalització",
         "end-ts": "Hora de fi",
         "date-limits": "Límits de data",
         "client-attributes": "Atributs de client",
@@ -5006,8 +4984,7 @@
         "clear-request-text": "Esteu segur que voleu esborrar tots els esdeveniments?",
         "started": "Iniciat",
         "updated": "Actualitzat",
-        "stopped": "Aturat",
-        "type-edge-event": "Enllaç descendent"
+        "stopped": "Aturat"
     },
     "extension": {
         "extensions": "Extensions",
@@ -5289,13 +5266,9 @@
         "function": "Funció"
     },
     "gateway": {
-        "gateway-exists": "Ja existeix un dispositiu amb el mateix nom.",
         "gateway-name": "Nom del Gateway",
         "gateway-name-required": "El nom del Gateway és obligatori.",
         "gateways": "Gateways",
-        "gateway-saved": "Configuració de gateway gravada satisfactòriament.",
-        "gateway": "Gateway",
-        "launch-gateway": "Llançar gateway",
         "launch-command": "Ordre d'execució",
         "launch-choose-subtitle": "Trieu com voleu executar l'IoT Gateway per a {{name}} amb les credencials del dispositiu seleccionat.",
         "launch-recommended": "Recomanat",
@@ -5491,8 +5464,7 @@
             "select-file": "Seleccioneu un fitxer",
             "configuration": "Configuració de la importació",
             "column-type": "Seleccioneu el tipus de columnes",
-            "creat-entities": "S'estan creant entitats noves",
-            "done": "Fet"
+            "creat-entities": "S'estan creant entitats noves"
         },
         "message": {
             "create-entities": "S'han creat correctament {{count}} entitats noves.",
@@ -5758,7 +5730,6 @@
         "type-aws-sqs-description": "Servei de cues de missatges totalment gestionat.",
         "type-aws-kinesis": "AWS Kinesis",
         "type-aws-kinesis-description": "Servei per a fluxos de vídeo i dades en temps real.",
-        "type-ibm-watson-iot": "IBM Watson IoT",
         "type-ttn": "The Things Stack Sandbox",
         "type-ttn-description": "Xarxa LoRaWAN oberta i descentralitzada.",
         "type-tti": "The Things Stack Cloud & Enterprise",
@@ -6000,8 +5971,7 @@
         "downlink-connection-string": "Cadena de connexió de l'enllaç descendent",
         "downlink-connection-string-required": "La cadena de connexió de l'enllaç descendent és obligatòria",
         "downlink-topic-name": "Nom del tema de l'enllaç descendent",
-        "downlink-topic-name-required": "El nom del tema de l'enllaç descendent és obligatori",
-        "type-ffb": "FFB"
+        "downlink-topic-name-required": "El nom del tema de l'enllaç descendent és obligatori"
     },
     "scada": {
         "symbols": "Símbols SCADA",
@@ -6354,8 +6324,7 @@
         "type-rule-chain": "Cadena de regles",
         "type-rule-chain-plural": "Cadenes de regles",
         "type-device": "Dispositiu",
-        "type-device-plural": "Dispositius",
-        "selected": "Seleccionat"
+        "type-device-plural": "Dispositius"
     },
     "iot-hub": {
         "advanced-settings": "Configuració avançada",
@@ -6794,7 +6763,6 @@
         "create-account": "Crea un compte",
         "sign-in-with": "Inicia la sessió amb {{name}}",
         "sign-in-to-your-account": "Inicieu la sessió al vostre compte",
-        "login-with": "Iniciar sessió amb {{name}}",
         "or": "o",
         "error": "Error d'inici de sessió",
         "verify-your-identity": "Verifiqueu la vostra identitat",
@@ -7455,7 +7423,6 @@
         "copy-jwt-token": "Copia el token JWT",
         "jwt-token": "Token JWT",
         "token-valid-till": "El token és vàlid fins a",
-        "valid-till": "Vàlid per a {{expirationData}}",
         "tokenCopiedSuccessMessage": "El token JWT s'ha copiat al porta-retalls",
         "tokenCopiedWarnMessage": "El token JWT ha caducat! Actualitzeu la pàgina."
     },
@@ -7760,11 +7727,7 @@
         "note-background-color": "Color de fons",
         "note-border": "Vora",
         "note-apply-default-markdown-style": "Aplica l'estil Markdown per defecte",
-        "note-custom-css": "CSS del contingut de la nota",
-        "assign-rulechains": "Assignar cadenes de regles",
-        "delete-rulechains": "Eliminar cadenes de regles",
-        "unassign-rulechain": "Anul·lar assignació de cadena de regles",
-        "unassign-rulechains-from-edge-action-title": "Anul·lar assignació {count, plural, =1 {1 cadena de regles} other {# cadenes de regles} } des vores"
+        "note-custom-css": "CSS del contingut de la nota"
     },
     "rulenode": {
         "rule-node-events": "Esdeveniments del node de regla",
@@ -9080,10 +9043,7 @@
         "originator": "Originador",
         "single-entity": "Entitat única",
         "group-entities": "Entitats del grup",
-        "group-of-entities": "Grup d'entitats",
         "entities-group-owner": "Propietari del grup d'entitats",
-        "single-device": "Dispositiu únic",
-        "group-of-devices": "Grup de dispositius",
         "devices-group-owner": "Propietari del grup de dispositius",
         "message-body": "Cos del missatge",
         "target": "Destinació",
@@ -9109,13 +9069,11 @@
         "rpc-settings": "Configuració RPC",
         "enabled": "Activa el planificador",
         "enable": "Activa",
-        "disable": "Desactiva",
-        "assigned_customer": "Client assignat"
+        "disable": "Desactiva"
     },
     "report": {
         "general-report-settings": "Configuració general de l'informe",
         "target-dashboard": "Tauler de destinació",
-        "report-config": "Configuració de l'informe",
         "email-config": "Configuració del correu electrònic",
         "dashboard-state-param": "Valor del paràmetre d'estat del tauler",
         "base-url": "URL base",
@@ -9126,7 +9084,6 @@
         "name-pattern": "Patró del nom de l'informe",
         "name-pattern-required": "El patró del nom de l'informe és obligatori",
         "type": "Tipus d'informe",
-        "use-current-user-credentials": "Utilizar credencials d'usuari actuals",
         "customer-user-credentials": "Credencials de l'usuari del client",
         "customer-user-credentials-required": "Les credencials de l'usuari del client són obligatòries",
         "generate-test-report": "Genera un informe de prova",
@@ -9436,8 +9393,7 @@
         "delete-blob-entity-title": "Esteu segur que voleu suprimir el fitxer '{{blobEntityName}}'?",
         "delete-blob-entity-text": "Aneu amb compte: després de la confirmació, les dades del fitxer seran irrecuperables.",
         "delete-blob-entities-title": "Esteu segur que voleu suprimir { count, plural, one {1 fitxer} other {# fitxers} }?",
-        "delete-blob-entities-text": "Aneu amb compte: després de la confirmació, tots els fitxers seleccionats s'eliminaran i totes les dades relacionades es tornaran irrecuperables.",
-        "assigned_customer": "Client assignat"
+        "delete-blob-entities-text": "Aneu amb compte: després de la confirmació, tots els fitxers seleccionats s'eliminaran i totes les dades relacionades es tornaran irrecuperables."
     },
     "timezone": {
         "timezone": "Zona horària",
@@ -9451,10 +9407,8 @@
         "no-queues-found": "No s'ha trobat cap cua.",
         "no-queues-matching": "No s'ha trobat cap cua que coincideixi amb '{{queue}}'.",
         "select-name": "Seleccioneu el nom de la cua",
-        "select_name": "Seleccioneu el nom de la cua",
         "name": "Nom",
         "name-required": "El nom de la cua és obligatori!",
-        "name_required": "Cal especificar el nom de cua",
         "name-unique": "El nom de cua ja existeix!",
         "name-pattern": "El nom de la cua conté un caràcter diferent dels alfanumèrics ASCII, '.', '_' i '-'!",
         "queue-required": "La cua és obligatòria!",
@@ -9595,9 +9549,7 @@
         "search": "Cerca inquilins",
         "allow-white-labeling": "Permet la marca blanca",
         "allow-customer-white-labeling": "Permet la marca blanca del client",
-        "isolated-tb-core": "Processant en contenidor aïllat",
         "isolated-tb-rule-engine": "Utilitza cues aïllades del motor de regles de ThingsBoard",
-        "isolated-tb-core-details": "Requereix microserveis separats per propietari aïllat",
         "isolated-tb-rule-engine-details": "Cada inquilí tindrà cues dedicades del motor de regles"
     },
     "tenant-profile": {
@@ -9801,9 +9753,6 @@
         "max-emails-required": "El nombre màxim de correus electrònics enviats és obligatori.",
         "max-emails-range": "El nombre màxim de correus electrònics enviats no pot ser negatiu",
         "sms-enabled": "SMS activat",
-        "max-correus electrònics": "Nº Màxim de correus electrònics (0 - sense límit)",
-        "max-correus electrònics-required": "Cal Nº Màxim de correus electrònics.",
-        "max-correus electrònics-range": "Nº Màxim de correus electrònics no pot ser negatiu",
         "max-sms": "Nombre màxim d'SMS enviats",
         "max-sms-required": "El nombre màxim d'SMS enviats és obligatori.",
         "max-sms-range": "El nombre màxim d'SMS enviats no pot ser negatiu",
@@ -9823,7 +9772,6 @@
         "cassandra-read-tenant-core-limits-configuration": "Consultes de lectura a Cassandra de l'API REST i de telemetria WS",
         "cassandra-write-tenant-rule-engine-limits-configuration": "Consultes d'escriptura a Cassandra de telemetria del motor de regles",
         "cassandra-read-tenant-rule-engine-limits-configuration": "Consultes de lectura a Cassandra de telemetria del motor de regles",
-        "cassandra-tenant-limits-configuration": "Límit de taxa de consultes de Cassandra per al llogater",
         "ws-limit-max-sessions-per-tenant": "Nombre màxim de sessions de WS per inquilí",
         "ws-limit-max-sessions-per-customer": "Nombre màxim de sessions de WS per client",
         "ws-limit-max-sessions-per-regular-user": "Nombre màxim de sessions de WS per usuari normal",
@@ -10885,8 +10833,6 @@
         "move": "Mou el giny",
         "save-widget-as": "Desa el giny com a",
         "save-widget-as-text": "Introduïu el títol nou del giny",
-        "save-widget-type-as": "Guardar tipus de widget com",
-        "save-widget-type-as-text": "Per favor, introduïu un nou títol i/o seleccioneu un paquet de destinació.",
         "toggle-fullscreen": "Commuta la pantalla completa",
         "run": "Executa el giny",
         "widget-title": "Títol del giny",
@@ -10906,9 +10852,6 @@
         "settings-form": "Formulari de configuració",
         "data-key-settings-form": "Formulari de configuració de la clau de dades",
         "latest-data-key-settings-form": "Formulari de configuració de la clau de dades dels últims valors",
-        "settings-schema": "Esquema de configuració",
-        "datakey-settings-schema": "Esquema de configuració de clau de dades",
-        "latest-datakey-settings-schema": "Esquema de darrers valors",
         "widget-settings": "Configuració del giny",
         "description": "Descripció",
         "tags": "Etiquetes",
@@ -10931,7 +10874,6 @@
         "delete-widgets-title": "Esteu segur que voleu suprimir { count, plural, one {# giny} other {# ginys} }?",
         "delete-widgets-text": "Aneu amb compte: després de la confirmació, tots els ginys seleccionats s'eliminaran i totes les dades relacionades seran irrecuperables.",
         "delete-widget": "Suprimeix el giny",
-        "add-widget-type": "Afegir nou tipus de widget",
         "widget-template-load-failed-error": "No s'ha pogut carregar la plantilla del giny!",
         "details": "Detalls",
         "widget-details": "Detalls del giny",
@@ -11339,10 +11281,7 @@
         "export": "Exporta el tipus de giny",
         "export-failed-error": "No es pot exportar el giny: {{error}}",
         "widget-file": "Fitxer del giny",
-        "invalid-widget-file-error": "No es pot importar el giny: l'estructura de dades del giny no és vàlida.",
-        "create-new-widget-type": "Crear nou tipus de widget",
-        "widget-type-file": "Arxiu de tipus de widget",
-        "invalid-widget-type-file-error": "No es pot importar tipus de widget: Estructura de dades del tipus de widget és invàlida."
+        "invalid-widget-file-error": "No es pot importar el giny: l'estructura de dades del giny no és vàlida."
     },
     "self-registration": {
         "self-registration": "Autoregistre",
@@ -11519,22 +11458,6 @@
         "ai-credits-usage": "Crèdits d'IA: {{ used }} de {{ max }} utilitzats",
         "ai-credits-description": "Heu utilitzat <strong>{{ used }}</strong> dels vostres <strong>{{ max }}</strong> crèdits d'IA aquest mes. El límit es restableix el {{ date }}. Per augmentar la vostra quota de crèdits d'IA, contacteu amb l'administrador del sistema."
     },
-    "solution-template": {
-        "solution-template": "Plantilla de solució",
-        "solution-templates": "Plantilles de solució",
-        "management": "Gestionar plantilles de solució",
-        "details": "Detalls",
-        "install": "Instal·lar",
-        "level": "Nivell",
-        "install-title": "La plantilla de solució s'ha instal·lat correctament",
-        "install-failed-title": "La instal·lació de la plantilla de solució ha fallat",
-        "instructions": "Instruccions",
-        "goto-main-dashboard": "Vés al tauler principal",
-        "delete": "Suprimeix",
-        "delete-solution-title": "Esteu segur que voleu suprimir la solució '{{solutionTitle}}'?",
-        "delete-solution-text": "Aneu amb compte, després de la confirmació, la solució i totes les dades relacionades es tornaran irrecuperables.",
-        "installing": "Instal·lació de la plantilla de solució..."
-    },
     "markdown": {
         "edit": "Edita",
         "preview": "Vista prèvia",
@@ -11551,18 +11474,8 @@
         "app-title": "Títol de l'aplicació",
         "favicon": "Icona del lloc web",
         "favicon-desc": "Icona a la pestanya del navegador i als preferits. PNG o ICO, es recomana 32×32 px",
-        "favicon-description": "Imatge *.ico, *.gif o *.png amb grandària màxima {{kbSize}} KBytes.",
-        "favicon-size-error": "Imatge del lloc web és molt gran. Mesura màxima permesa de la imatge del lloc web {{kbSize}} KBytes.",
-        "favicon-type-error": "Formato de arxiu de imagen de lloc WEB invàlid. Solamente es aceptan imágenes ICO, GIF o PNG.",
-        "drop-favicon-image": "Colocar la imagen del icona de un lloc WEB o haga clic per seleccionar un arxiu per carregar .",
-        "no-favicon-image": "Icona no seleccionat",
         "logo": "Logotip",
         "logo-desc": "SVG o PNG, alçada d'almenys 96 px, fins a 200 KB",
-        "logo-description": "Alguna imagen amb grandària màxima {{kbSize}} KBytes.",
-        "logo-size-error": "L'imatge del logo és molt gran. Mida màxima permesa de la imatge del logo {{kbSize}} KBytes.",
-        "logo-type-error": "Format darxiu del logotip invàlid. Només és accepten imatges.",
-        "drop-logo-image": "Colocar una imagen del logotipo o fes clic per seleccionar un arxiu per carregar .",
-        "no-logo-image": "Logo no seleccionat",
         "logo-height": "Alçada del logotip",
         "logo-height-desc": "Escala el logotip proporcionalment i el centra. Augmenteu l'alçada (fins a 200 px) per a logotips alts",
         "collapsed-logo": "Logotip de la barra lateral replegada",
@@ -12368,26 +12281,6 @@
             "no-gpio-leds": "No hi ha cap LED de GPIO configurat",
             "add-gpio-led": "Afegeix un LED de GPIO"
         },
-        "gpi": {
-            "pin": "Pin",
-            "label": "Etiqueta",
-            "row": "Fila",
-            "column": "Columna",
-            "color": "Color",
-            "panell-settings": "Paràmetres de panell",
-            "background-color": "Color de fons",
-            "gpio-switches": "switches GPIO",
-            "no-gpio-switches": "No hi ha switches GPIO configurats",
-            "add-gpio-switch": "Afegeix switch GPIO",
-            "gpio-status-request": "Sol·licitud estat GPIO",
-            "method-name": "Nom del mètode RPC",
-            "method-body": "Cos del mètode RPC",
-            "gpio-status-change-request": "Sol·licitud de canvi d'estat GPIO",
-            "parse-gpio-status-function": "Funció de parsejat d'estat GPIO",
-            "gpio-leds": "Leds GPIO",
-            "no-gpio-leds": "No hi ha Leds GPIO configurats",
-            "add-gpio-led": "Afegir led GPIO"
-        },
         "html-card": {
             "html": "HTML",
             "css": "CSS"
@@ -12610,7 +12503,6 @@
             "label-position": "Posició (percentatge relatiu al fons)",
             "x-pos": "X",
             "y-pos": "Y",
-            "i-pos": "Y",
             "background-color": "Color de fons",
             "font-settings": "Configuració de la font",
             "background-image": "Imatge de fons",
@@ -12767,9 +12659,7 @@
             "led-status-value-timeseries": "Sèries temporals del dispositiu que contenen el valor de l'estat del LED",
             "check-status-method": "Mètode RPC per revisar l'estat del dispositiu",
             "parse-led-status-value-function": "Funció d'anàlisi del valor d'estat del LED",
-            "knob-title": "Títol del regulador",
-            "min-value": "Valor mínim",
-            "max-value": "Valor màxim"
+            "knob-title": "Títol del regulador"
         },
         "maps": {
             "map-type": {
@@ -13202,8 +13092,6 @@
             "here-map-terrain-day": "HERE.terrainDay",
             "credentials": "Credencials",
             "here-api-key": "Clau de l'API de HERE",
-            "here-app-id": "HERE app id",
-            "here-app-code": "HERE app code",
             "tencent-maps-api-key": "Clau de l'API de Tencent Maps",
             "tencent-map-type-roadmap": "Mapa de carreteres",
             "tencent-map-type-satelite": "Satèl·lit",
@@ -13290,14 +13178,12 @@
             "circle-label-pattern": "Etiqueta del cercle (exemples de patró: '${entityName}', '${entityName}: (Text ${keyName} unitats.)' )",
             "circle-label-function": "Funció d'etiqueta de cercle",
             "circle-tooltip": "Indicador de funció del cercle",
-            "cercle-tooltip": "Suggeriments de cercle",
             "show-circle-tooltip": "Mostra indicadors de funció del cercle",
             "auto-close-circle-tooltips": "Tanca automàticament els indicadors de funció del cercle",
             "use-circle-tooltip-function": "Utilitza la funció de l'indicador de funció del cercle",
             "circle-tooltip-pattern": "Indicador de funció (p. ex. 'Text ${keyName} unitats.' o <link-act name='my-action'>Text de l'enllaç</link-act>')",
             "circle-tooltip-function": "Funció de l'indicador de funció del cercle",
             "circle-fill-color": "Color d'emplenament del cercle",
-            "cercle-fill-color": "Color de farciment cercle",
             "circle-fill-color-opacity": "Opacitat del color d'emplenament del cercle",
             "use-circle-fill-color-function": "Utilitza la funció de color d'emplenament del cercle",
             "circle-fill-color-function": "Funció de color d'emplenament del cercle",
@@ -14232,25 +14118,6 @@
             "delete-key": "Suprimeix la clau",
             "target-dashboard-state": "Estat del tauler de destinació",
             "go-to-main-state": "Vés a la vista per defecte"
-        },
-        "subscription": {
-            "entity-limit-text": "Tanmateix, podeu actualitzar el vostre pla de subscripció per augmentar els vostres límits.",
-            "upgrade-your-plan": "Actualitza el pla de subscripció",
-            "white-labeling-feature": "Característica d'etiqueta blanca",
-            "white-labeling-text-full": "Canvia la marca de la interfície web de la plataforma ThingsBoard amb el logotip i l'esquema de colors de la teva empresa o producte en 2 minuts.<br><br>Elimineu 'Powered By' al peu de pàgina del tauler.<br>No cal codificar ni reiniciar el servei. Permet als vostres clients també marcar en blanc la seva interfície.",
-            "enable-white-labeling": "Activa ara la funció d'etiqueta blanca actualitzant el teu pla de subscripció!",
-            "read-more": "Read more",
-            "white-labeling-video-text": "Vegeu el vídeo tutorial a continuació per veure com funciona aquesta funció!"
-        },
-        "subscription-error": {
-            "title": "Incompliment de la subscripció",
-            "warning-title": "Avís de subscripció",
-            "upgrade-subscription-plan": "Si us plau, actualitzeu el vostre pla de subscripció",
-            "upgrade-subscription-plan-to-install-solution-template": "Per tal d'instal·lar <b>{{solutionTemplateName}}</b> solució, heu d'actualitzar la vostra subscripció almenys al <b>{{planName}}</b> pla!",
-            "limit-reached": {
-                "device-count": "Heu arribat al màxim de dispositius ({{value}}) permisos per al vostre pla de subscripció!",
-                "asset-count": "Heu assolit el màxim d'actius ({{value}}) permisos per al vostre pla de subscripció!"
-            }
         }
     },
     "icon": {
