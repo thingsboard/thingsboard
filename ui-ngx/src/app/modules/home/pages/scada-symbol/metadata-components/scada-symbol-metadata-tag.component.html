@@ -14,27 +14,32 @@
       </mat-chip>
     </mat-chip-set>
   </div>
+  @let tag = tagFormGroup.get('tag').value;
   <div class="tb-state-render-function-field">
     @if (!disabled || tagFormGroup.get('stateRenderFunction').value) {
+      @let stateRenderActionKey = disabled ? 'action.view' : (tagFormGroup.get('stateRenderFunction').value ? 'action.edit' : 'action.add');
       <button
         #editStateRenderFunctionButton
         mat-button
         color="primary"
+        [attr.aria-label]="(stateRenderActionKey | translate) + ' ' + ('scada.state-render-function' | translate) + ': ' + tag"
         (click)="editTagStateRenderFunction()">
         <mat-icon>{{ disabled ? 'visibility' :  (tagFormGroup.get('stateRenderFunction').value ? 'edit' : 'add') }}</mat-icon>
-        <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('stateRenderFunction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
+        <span>{{ stateRenderActionKey | translate }}</span>
       </button>
     }
   </div>
-  <div class="tb-on-click-action-field">
-    @if (!disabled || tagFormGroup.get('clickAction').value) {
+  <div class="tb-actions-field">
+    @if (!disabled || actionsCount) {
+      @let actionsKey = disabled ? 'action.view' : (actionsCount ? 'action.edit' : 'action.add');
       <button
-        #editClickActionButton
+        #editActionsButton
         mat-button
         color="primary"
-        (click)="editClickAction()">
-        <mat-icon>{{ disabled ? 'visibility' : (tagFormGroup.get('clickAction').value ? 'edit' : 'add') }}</mat-icon>
-        <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('clickAction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
+        [attr.aria-label]="(actionsKey | translate) + ' ' + ('scada.tag.actions' | translate) + ': ' + tag"
+        (click)="editActions()">
+        <mat-icon>{{ disabled ? 'visibility' : (actionsCount ? 'edit' : 'add') }}</mat-icon>
+        <span>{{ actionsKey | translate }}@if (actionsCount) { ({{ actionsCount }})}</span>
       </button>
     }
   </div>

@@ -7,10 +7,10 @@
   .tb-state-render-function-field {
     flex: 1 1 15%;
   }
-  .tb-on-click-action-field {
+  .tb-actions-field {
     flex: 1 1 15%;
   }
-  .tb-state-render-function-field, .tb-on-click-action-field {
+  .tb-state-render-function-field, .tb-actions-field {
     display: flex;
     justify-content: flex-end;
     .mdc-button {

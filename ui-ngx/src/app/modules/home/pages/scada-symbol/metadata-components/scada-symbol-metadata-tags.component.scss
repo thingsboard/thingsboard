@@ -10,10 +10,10 @@
     &.tb-state-render-function-header {
       flex: 1 1 15%;
     }
-    &.tb-on-click-action-header {
+    &.tb-actions-header {
       flex: 1 1 15%;
     }
-    &.tb-state-render-function-header, &.tb-on-click-action-header {
+    &.tb-state-render-function-header, &.tb-actions-header {
       display: flex;
       justify-content: flex-end;
     }

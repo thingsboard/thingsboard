@@ -33,7 +33,7 @@ import {
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tags.component';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import {
-  clickActionFunctionCompletions,
+  actionFunctionCompletions,
   elementStateRenderFunctionCompletions,
   generalStateRenderFunctionCompletions,
   scadaSymbolContextCompletion,
@@ -110,7 +110,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
 
   generalStateRenderFunctionCompleter: TbEditorCompleter;
   elementStateRenderFunctionCompleter: TbEditorCompleter;
-  clickActionFunctionCompleter: TbEditorCompleter;
+  actionFunctionCompleter: TbEditorCompleter;
 
   highlightRules = scadaSymbolGeneralStateHighlightRules;
 
@@ -194,9 +194,9 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     this.symbolMetadataTags.editTagStateRenderFunction(tag);
   }
 
-  editTagClickAction(tag: string): void {
+  editTagActions(tag: string): void {
     this.selectedOption = 'tags';
-    this.symbolMetadataTags.editTagClickAction(tag);
+    this.symbolMetadataTags.editTagActions(tag);
   }
 
   public validate(c: UntypedFormControl) {
@@ -229,11 +229,11 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     } else {
       this.elementStateRenderFunctionCompleter.updateCompletions(elementStateRender);
     }
-    const clickAction = clickActionFunctionCompletions(contextCompleter);
-    if (!this.clickActionFunctionCompleter) {
-      this.clickActionFunctionCompleter = new TbEditorCompleter(clickAction);
+    const actionFunction = actionFunctionCompletions(contextCompleter);
+    if (!this.actionFunctionCompleter) {
+      this.actionFunctionCompleter = new TbEditorCompleter(actionFunction);
     } else {
-      this.clickActionFunctionCompleter.updateCompletions(clickAction);
+      this.actionFunctionCompleter.updateCompletions(actionFunction);
     }
   }
 }

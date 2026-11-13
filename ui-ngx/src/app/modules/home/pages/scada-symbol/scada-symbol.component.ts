@@ -22,6 +22,7 @@ import {
   parseScadaSymbolMetadataFromContent,
   ScadaSymbolMetadata,
   ScadaSymbolObjectSettings,
+  ScadaSymbolTagActions,
   updateScadaSymbolMetadataInContent
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -329,21 +330,17 @@ export class ScadaSymbolComponent extends PageComponent
     return false;
   }
 
-  tagHasClickAction(tag: string): boolean {
+  tagActions(tag: string): ScadaSymbolTagActions {
     const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
-    if (metadata.tags) {
-      const found = metadata.tags.find(t => t.tag === tag);
-      return !!found?.actions?.click?.actionFunction;
-    }
-    return false;
+    return metadata.tags?.find(t => t.tag === tag)?.actions ?? null;
   }
 
   editTagStateRenderFunction(tag: string) {
     this.symbolMetadata.editTagStateRenderFunction(tag);
   }
 
-  editTagClickAction(tag: string) {
-    this.symbolMetadata.editTagClickAction(tag);
+  editTagActions(tag: string) {
+    this.symbolMetadata.editTagActions(tag);
   }
 
   onSymbolEditObjectDirty(dirty: boolean) {

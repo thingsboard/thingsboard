@@ -11,7 +11,6 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import {
-  AbstractControl,
   ControlValueAccessor,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -20,9 +19,12 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { ScadaSymbolTag } from '@home/components/widget/lib/scada/scada-symbol.models';
+import { activeActionTriggers, ScadaSymbolTag } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { MatButton } from '@angular/material/button';
+import {
+  ScadaSymbolMetadataTagActionsPanelComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag-actions-panel.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   ScadaSymbolMetadataTagFunctionPanelComponent
@@ -52,8 +54,8 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   @ViewChild('editStateRenderFunctionButton')
   editStateRenderFunctionButton: MatButton;
 
-  @ViewChild('editClickActionButton')
-  editClickActionButton: MatButton;
+  @ViewChild('editActionsButton')
+  editActionsButton: MatButton;
 
   @Input()
   disabled: boolean;
@@ -62,7 +64,9 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   elementStateRenderFunctionCompleter: TbEditorCompleter;
 
   @Input()
-  clickActionFunctionCompleter: TbEditorCompleter;
+  actionFunctionCompleter: TbEditorCompleter;
+
+  actionsCount = 0;
 
   tagFormGroup: UntypedFormGroup;
 
@@ -79,8 +83,7 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   ngOnInit() {
     this.tagFormGroup = this.fb.group({
       tag: [null, []],
-      stateRenderFunction: [null, []],
-      clickAction: [null, []]
+      stateRenderFunction: [null, []]
     });
   }
 
@@ -102,14 +105,13 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
 
   writeValue(value: ScadaSymbolTag): void {
     this.modelValue = value;
-    const clickAction = value?.actions?.click?.actionFunction;
     this.tagFormGroup.patchValue(
       {
         tag: value?.tag,
-        stateRenderFunction: value?.stateRenderFunction,
-        clickAction
+        stateRenderFunction: value?.stateRenderFunction
       }, {emitEvent: false}
     );
+    this.updateActionsCount();
   }
 
   public validate(_c: UntypedFormControl) {
@@ -122,29 +124,44 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   }
 
   editTagStateRenderFunction(): void {
-    this.openTagFunction('renderFunction', this.editStateRenderFunctionButton);
+    this.openTagFunction(this.editStateRenderFunctionButton);
   }
 
-  editClickAction(): void {
-    this.openTagFunction('clickAction', this.editClickActionButton);
+  editActions(): void {
+    const trigger = this.editActionsButton._elementRef.nativeElement;
+    trigger.scrollIntoView();
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const actionsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: ScadaSymbolMetadataTagActionsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          tag: this.tagFormGroup.get('tag').value,
+          actions: this.modelValue?.actions,
+          completer: this.actionFunctionCompleter,
+          disabled: this.disabled
+        },
+        isModal: true
+      });
+      actionsPanelPopover.tbComponentRef.instance.popover = actionsPanelPopover;
+      actionsPanelPopover.tbComponentRef.instance.actionsApplied.subscribe((actions) => {
+        actionsPanelPopover.hide();
+        this.updateModel(actions);
+      });
+    }
   }
 
-  private openTagFunction(tagFunctionType: 'renderFunction' | 'clickAction',
-                          button: MatButton) {
+  private openTagFunction(button: MatButton) {
     const trigger = button._elementRef.nativeElement;
     trigger.scrollIntoView();
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      let tagFunctionControl: AbstractControl;
-      let completer: TbEditorCompleter;
-      if (tagFunctionType === 'renderFunction') {
-        tagFunctionControl = this.tagFormGroup.get('stateRenderFunction');
-        completer = this.elementStateRenderFunctionCompleter;
-      } else if (tagFunctionType === 'clickAction') {
-        tagFunctionControl = this.tagFormGroup.get('clickAction');
-        completer = this.clickActionFunctionCompleter;
-      }
+      const tagFunctionControl = this.tagFormGroup.get('stateRenderFunction');
       const scadaSymbolTagFunctionPanelPopover =  this.popoverService.displayPopover({
         trigger,
         renderer: this.renderer,
@@ -153,9 +170,8 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
         preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
         context: {
           tagFunction: tagFunctionControl.value,
-          tagFunctionType,
           tag: this.tagFormGroup.get('tag').value,
-          completer,
+          completer: this.elementStateRenderFunctionCompleter,
           disabled: this.disabled
         },
         isModal: true
@@ -169,21 +185,18 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
     }
   }
 
-  private updateModel() {
+  private updateModel(actions = this.modelValue?.actions) {
     const value = this.tagFormGroup.value;
     this.modelValue = {
       tag: value.tag,
-      stateRenderFunction: value.stateRenderFunction
+      stateRenderFunction: value.stateRenderFunction,
+      actions
     };
-    if (value.clickAction) {
-      this.modelValue.actions = {
-        click: {
-          actionFunction: value.clickAction
-        }
-      };
-    } else {
-      this.modelValue.actions = null;
-    }
+    this.updateActionsCount();
     this.propagateChange(this.modelValue);
+  }
+
+  private updateActionsCount() {
+    this.actionsCount = activeActionTriggers(this.modelValue?.actions).length;
   }
 }
