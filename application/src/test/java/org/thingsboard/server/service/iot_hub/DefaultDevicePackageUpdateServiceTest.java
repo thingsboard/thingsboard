@@ -206,7 +206,7 @@ class DefaultDevicePackageUpdateServiceTest {
         assertThat(installedItem.getItemVersionId()).isEqualTo(UUID.fromString(versionId));
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
         // Of the saved dashboard, not read back by id: inside the transaction that may come from the cache
-        assertThat(descriptor.getInstallState().get("Dashboard").get("checksum").asText())
+        assertThat(descriptor.getInstallState().get("DASHBOARD:Dashboard").get("checksum").asText())
                 .isEqualTo(EntityChecksum.of(savedDashboard.getValue()));
         assertThat(descriptor.getCreatedEntityIds()).contains(profileId, deviceId, dashboardId);
     }
@@ -225,7 +225,7 @@ class DefaultDevicePackageUpdateServiceTest {
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        assertThat(descriptor.getInstallState().get("Dashboard").get("checksum").asText()).isEqualTo("installed");
+        assertThat(descriptor.getInstallState().get("DASHBOARD:Dashboard").get("checksum").asText()).isEqualTo("installed");
         assertThat(descriptor.getSelectedInstallMethod()).isEqualTo("INTEGRATION_CHIRPSTACK");
         verify(dashboardService, never()).saveDashboard(any(Dashboard.class));
     }
@@ -245,7 +245,7 @@ class DefaultDevicePackageUpdateServiceTest {
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
         assertThat(descriptor.getInstallState().get("main-dashboard").get("checksum").asText()).isEqualTo("installed");
-        assertThat(descriptor.getInstallState()).doesNotContainKeys("Dashboard", "Overview");
+        assertThat(descriptor.getInstallState()).containsOnlyKeys("main-dashboard");
     }
 
     @Test
@@ -260,7 +260,7 @@ class DefaultDevicePackageUpdateServiceTest {
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        assertThat(descriptor.getInstallState().get("Dashboard").has("checksum")).isFalse();
+        assertThat(descriptor.getInstallState().get("DASHBOARD:Dashboard").has("checksum")).isFalse();
     }
 
     @Test
@@ -273,7 +273,7 @@ class DefaultDevicePackageUpdateServiceTest {
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        assertThat(descriptor.getInstallState().get("Overview").get("resolution").asText()).isEqualTo("created");
+        assertThat(descriptor.getInstallState().get("DASHBOARD:Overview").get("resolution").asText()).isEqualTo("created");
         assertThat(descriptor.getCreatedEntityIds()).contains(dashboardId);
     }
 
@@ -289,7 +289,7 @@ class DefaultDevicePackageUpdateServiceTest {
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        assertThat(descriptor.getInstallState().get("Dashboard").get("resolution").asText()).isEqualTo("use-existing");
+        assertThat(descriptor.getInstallState().get("DASHBOARD:Dashboard").get("resolution").asText()).isEqualTo("use-existing");
     }
 
     @Test
@@ -334,7 +334,7 @@ class DefaultDevicePackageUpdateServiceTest {
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        assertThat(descriptor.getInstallState().get("Dashboard").get("resolution").asText()).isEqualTo("created");
+        assertThat(descriptor.getInstallState().get("DASHBOARD:Dashboard").get("resolution").asText()).isEqualTo("created");
     }
 
     @Test
@@ -395,7 +395,7 @@ class DefaultDevicePackageUpdateServiceTest {
         // A copy is saved: the integration read, possibly the cache's own instance, stays as it is until the commit
         assertThat(saved.getValue()).isNotSameAs(current);
         assertThat(current.getConfiguration().get("metadata").has("profile.lansitec-badge")).isFalse();
-        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN");
+        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("INTEGRATION:TTN");
         assertThat(state.get("resolution").asText()).isEqualTo("use-existing");
         // The entries the step added, which a delete of the package removes; not the one it removed
         assertThat(state.get("metadata")).isEqualTo(JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge"));
@@ -450,7 +450,7 @@ class DefaultDevicePackageUpdateServiceTest {
         // entries from it (DefaultIotHubServiceTest#deleteInstalledItem_devicePackage_removesItsMetadataEntriesFromTheIntegrationItTookAsItWas)
         assertThat(descriptor.getCreatedEntityIds()).containsOnlyOnce(tenantsIntegrationId);
         assertThat(descriptor.getUsedExistingEntityIds()).containsExactly(tenantsIntegrationId);
-        JsonNode state = descriptor.getInstallState().get("TTN");
+        JsonNode state = descriptor.getInstallState().get("INTEGRATION:TTN");
         assertThat(state.get("resolution").asText()).isEqualTo("use-existing");
         assertThat(state.get("metadata")).isEqualTo(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
     }
@@ -488,6 +488,75 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void twoStepsOfOneTypeAndName_areRejected() {
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+                keep("Dashboard", "DASHBOARD", dashboardId), keep("Dashboard", "DASHBOARD", dashboardId)));
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Duplicate update step: DASHBOARD:Dashboard");
+        verify(transactionTemplate, never()).execute(any());
+    }
+
+    @Test
+    void stepWithTheKeyOfAForm_isRejected() {
+        DeviceUpdateRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
+        step.setId("Settings");
+        DeviceUpdateRequest request = request(step);
+        request.setInstallState(Map.of("Settings", JacksonUtil.newObjectNode().set("formValues", JacksonUtil.newObjectNode().put("interval", 10))));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Duplicate update step: Settings");
+        verify(transactionTemplate, never()).execute(any());
+    }
+
+    @Test
+    void stepsOfOneNameAndAnotherType_eachKeepTheirOwnState() {
+        // Installed when the state was keyed by name: the integration's state replaced the converter's
+        ConverterId converterId = new ConverterId(UUID.randomUUID());
+        Converter converter = new Converter(converterId);
+        converter.setTenantId(tenantId);
+        converter.setName("TTN my-app");
+        when(converterService.findConverterById(tenantId, converterId)).thenReturn(converter);
+        Integration integration = new Integration(integrationId);
+        integration.setTenantId(tenantId);
+        integration.setName("TTN my-app");
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.set("metadata", JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+        integration.setConfiguration(configuration);
+        when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(integration);
+        DeviceInstalledItemDescriptor installed = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        installed.setCreatedEntityIds(List.of(profileId, deviceId, converterId, integrationId));
+        ObjectNode legacy = stateOf(integrationId, "created").put("checksum", "installed");
+        legacy.set("metadata", JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+        installed.setInstallState(Map.of("${integrationName}", legacy, "${profileName}", stateOf(profileId, "created"),
+                "Configuration", JacksonUtil.newObjectNode().set("formValues", JacksonUtil.newObjectNode().put("integrationName", "TTN my-app"))));
+        DeviceUpdateRequest.Step uplink = keep("${integrationName}", "UPLINK_CONVERTER", converterId);
+        uplink.setDefaultConverter(true);
+        DeviceUpdateRequest.Step ttn = keep("${integrationName}", "INTEGRATION", integrationId);
+        ttn.setMetadata(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+        DeviceUpdateRequest request = request(uplink, ttn);
+        request.setInstallState(Map.of("Configuration", installed.getInstallState().get("Configuration")));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+
+        assertThat(result.isSuccess()).isTrue();
+        Map<String, JsonNode> state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState();
+        // The state under the name is gone: each step's is under its own key now
+        assertThat(state).containsOnlyKeys("Configuration", "UPLINK_CONVERTER:${integrationName}", "INTEGRATION:${integrationName}");
+        JsonNode converterState = state.get("UPLINK_CONVERTER:${integrationName}");
+        assertThat(converterState.get("entityOutput").get("id").asText()).isEqualTo(converterId.getId().toString());
+        assertThat(converterState.get("defaultConverter").asBoolean()).isTrue();
+        JsonNode integrationState = state.get("INTEGRATION:${integrationName}");
+        assertThat(integrationState.get("entityOutput").get("id").asText()).isEqualTo(integrationId.getId().toString());
+        assertThat(integrationState.get("checksum").asText()).isEqualTo("installed");
+        assertThat(integrationState.get("metadata")).isEqualTo(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+        assertThat(result.getOutputs().get("UPLINK_CONVERTER:${integrationName}").get("id").asText()).isEqualTo(converterId.getId().toString());
+        assertThat(result.getOutputs().get("INTEGRATION:${integrationName}").get("id").asText()).isEqualTo(integrationId.getId().toString());
+    }
+
+    @Test
     void failedStep_rollsBackAndReportsTheStep() {
         when(deviceProfileService.findDeviceProfileById(tenantId, profileId)).thenReturn(profile(3L, "AM308"));
         when(deviceProfileService.saveDeviceProfile(any())).thenAnswer(i -> i.getArgument(0));
@@ -499,7 +568,7 @@ class DefaultDevicePackageUpdateServiceTest {
                 overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d"))));
 
         assertThat(result.isSuccess()).isFalse();
-        assertThat(result.getFailedStep()).isEqualTo("Dashboard");
+        assertThat(result.getFailedStep()).isEqualTo("DASHBOARD:Dashboard");
         assertThat(result.getErrorMessage()).isEqualTo("Dashboards limit reached");
         assertThat(rolledBack).hasSize(1);
         verify(installedItemService, never()).save(any(), any());
@@ -515,7 +584,7 @@ class DefaultDevicePackageUpdateServiceTest {
                 overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d"))));
 
         assertThat(result.isSuccess()).isFalse();
-        assertThat(result.getFailedStep()).isEqualTo("Dashboard");
+        assertThat(result.getFailedStep()).isEqualTo("DASHBOARD:Dashboard");
         assertThat(result.getErrorMessage()).contains("Check the update again");
         verify(dashboardService, never()).saveDashboard(any(Dashboard.class));
     }
@@ -550,7 +619,7 @@ class DefaultDevicePackageUpdateServiceTest {
         // The devices keep sending to the same endpoint
         assertThat(saved.getValue().getRoutingKey()).isEqualTo("routing-key");
         assertThat(saved.getValue().getName()).isEqualTo("TTN my-app");
-        assertThat(result.getOutputs().get("TTN").get("routingKey").asText()).isEqualTo("routing-key");
+        assertThat(result.getOutputs().get("INTEGRATION:TTN").get("routingKey").asText()).isEqualTo("routing-key");
     }
 
     @Test
@@ -579,7 +648,7 @@ class DefaultDevicePackageUpdateServiceTest {
         DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isTrue();
-        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("Uplink");
+        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("UPLINK_CONVERTER:Uplink");
         assertThat(state.get("defaultConverter").asBoolean()).isTrue();
         // The other packages keep what they recorded: check() takes the checksum of any installed package
         assertThat(created.get("checksum").asText()).isEqualTo("before");
@@ -631,7 +700,7 @@ class DefaultDevicePackageUpdateServiceTest {
         DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("Dashboard", "DASHBOARD", dashboardId)));
 
         assertThat(result.isSuccess()).isTrue();
-        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState()).containsOnlyKeys("Dashboard");
+        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState()).containsOnlyKeys("DASHBOARD:Dashboard");
     }
 
     @Test
