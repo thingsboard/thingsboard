@@ -14,6 +14,8 @@ ENV DOCKER_MODE true
 ENV CHROME_EXECUTABLE=/usr/bin/chromium
 
 COPY start-web-report.sh /tmp/
+# The pinned chromium package of Debian, written by install.js from chromium.js
+COPY chromium.env /tmp/
 
 WORKDIR ${pkg.installFolder}
 
@@ -26,10 +28,13 @@ COPY src/api ./api
 COPY src/config ./config
 COPY src/inspectorShim.js src/server.js ./
 
-RUN apt-get update \
-    && apt-get install -yq --no-install-recommends chromium fontconfig fonts-noto-cjk-extra fonts-roboto fonts-noto-color-emoji fonts-unifont \
+RUN . /tmp/chromium.env \
+    && echo "deb [check-valid-until=no] ${CHROMIUM_DEBIAN_ARCHIVE} bookworm-security main" > /etc/apt/sources.list.d/chromium.list \
+    && apt-get update --error-on=any \
+    && apt-get install -yq --no-install-recommends chromium=${CHROMIUM_DEBIAN_VERSION} chromium-common=${CHROMIUM_DEBIAN_VERSION} fontconfig fonts-noto-cjk-extra fonts-roboto fonts-noto-color-emoji fonts-unifont \
     xfonts-scalable fonts-liberation fonts-ipafont-gothic fonts-wqy-zenhei fonts-tlwg-loma-otf fonts-freefont-ttf \
     && rm -rf /var/lib/apt/lists/* \
+    && rm /etc/apt/sources.list.d/chromium.list /tmp/chromium.env \
     && chmod a+x /tmp/*.sh \
     && mv /tmp/start-web-report.sh /usr/bin \
     && chown -R node:node ${pkg.installFolder} \
