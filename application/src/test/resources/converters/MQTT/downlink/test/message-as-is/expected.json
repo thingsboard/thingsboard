@@ -1,0 +1,7 @@
+{
+  "contentType": "JSON",
+  "data": "{\"method\":\"setInterval\",\"params\":60}",
+  "metadata": {
+    "topic": "tb/devices/thermostat/Thermostat-01/commands"
+  }
+}

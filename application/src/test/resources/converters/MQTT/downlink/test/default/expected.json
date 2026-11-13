@@ -1,0 +1,7 @@
+{
+  "contentType": "JSON",
+  "data": "{\"temperatureUploadFrequency\":60,\"humidityUploadFrequency\":30}",
+  "metadata": {
+    "topic": "tb/devices/thermostat/Thermostat-01/commands"
+  }
+}
