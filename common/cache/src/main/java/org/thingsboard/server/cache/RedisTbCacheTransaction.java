@@ -32,6 +32,7 @@ public class RedisTbCacheTransaction<K extends Serializable, V extends Serializa
             return result;
         } catch (InvalidDataAccessApiUsageException e) {
             if (!(e.getCause() instanceof JedisNoScriptException)) {
+                cache.recordFailure(e);
                 throw e;
             }
             // The node has not loaded the script yet, e.g. a replica that a failover just promoted, and a script
@@ -40,6 +41,9 @@ public class RedisTbCacheTransaction<K extends Serializable, V extends Serializa
             log.debug("[{}] Transaction failed with NOSCRIPT, loading the cache scripts on the node", cache.getCacheName());
             cache.loadScripts(connection);
             return false;
+        } catch (RuntimeException e) {
+            cache.recordFailure(e);
+            throw e;
         } finally {
             connection.close();
         }
