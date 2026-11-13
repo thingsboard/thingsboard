@@ -10,6 +10,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
@@ -21,10 +22,13 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = EntityViewDataValidator.class)
@@ -119,6 +123,33 @@ class EntityViewDataValidatorTest {
         assertThatThrownBy(() -> validator.validateDataImpl(tenantId, entityView))
                 .isInstanceOf(DataValidationException.class)
                 .hasMessage("Entity view should be assigned to entity!");
+    }
+
+    @Test
+    void testValidateUpdateWithSameNameReturnsViewFoundByName() {
+        EntityViewId entityViewId = new EntityViewId(UUID.fromString("5d2a7c1e-8b4f-4e6a-9c3d-1f0e2b7a6c58"));
+        EntityView entityView = newEntityView(deviceId);
+        entityView.setId(entityViewId);
+        EntityView stored = newEntityView(deviceId);
+        stored.setId(entityViewId);
+        willReturn(Optional.of(stored)).given(entityViewDao).findEntityViewByTenantIdAndName(tenantId.getId(), "view");
+
+        assertThat(validator.validateUpdate(tenantId, entityView)).isSameAs(stored);
+        verify(entityViewDao, never()).findById(any(), any());
+    }
+
+    @Test
+    void testValidateUpdateWithNewNameReturnsViewFoundById() {
+        EntityViewId entityViewId = new EntityViewId(UUID.fromString("5d2a7c1e-8b4f-4e6a-9c3d-1f0e2b7a6c58"));
+        EntityView entityView = newEntityView(deviceId);
+        entityView.setId(entityViewId);
+        entityView.setName("new view");
+        EntityView stored = newEntityView(deviceId);
+        stored.setId(entityViewId);
+        willReturn(Optional.empty()).given(entityViewDao).findEntityViewByTenantIdAndName(tenantId.getId(), "new view");
+        willReturn(stored).given(entityViewDao).findById(tenantId, entityViewId.getId());
+
+        assertThat(validator.validateUpdate(tenantId, entityView)).isSameAs(stored);
     }
 
     private EntityView newEntityView(DeviceId entityId) {

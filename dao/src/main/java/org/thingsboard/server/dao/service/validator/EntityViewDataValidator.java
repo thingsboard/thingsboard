@@ -18,6 +18,8 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
+import java.util.Optional;
+
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Component
@@ -40,13 +42,13 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
 
     @Override
     protected EntityView validateUpdate(TenantId tenantId, EntityView entityView) {
-        entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
-                .ifPresent(e -> {
-                    if (!e.getUuidId().equals(entityView.getUuidId())) {
-                        throw new DataValidationException("Entity view with such name already exists!");
-                    }
-                });
-        return entityViewDao.findById(entityView.getTenantId(), entityView.getUuidId());
+        Optional<EntityView> sameName = entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName());
+        sameName.ifPresent(e -> {
+            if (!e.getUuidId().equals(entityView.getUuidId())) {
+                throw new DataValidationException("Entity view with such name already exists!");
+            }
+        });
+        return sameName.orElseGet(() -> entityViewDao.findById(entityView.getTenantId(), entityView.getUuidId()));
     }
 
     @Override
