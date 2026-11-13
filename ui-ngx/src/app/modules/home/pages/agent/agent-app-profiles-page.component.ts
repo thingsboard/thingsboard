@@ -33,49 +33,7 @@ import { AgentAppProfile } from '@shared/models/agent.models';
       }
     </div>
     `,
-  styles: [`
-    :host {
-      display: block;
-      height: 100%;
-      width: 100%;
-    }
-    .tb-app-profiles-page {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
-    }
-    .tb-app-profiles-page-quick-start {
-      flex: 0 0 auto;
-      display: grid;
-      grid-template-rows: 1fr;
-      margin: 16px 16px 0;
-      opacity: 1;
-      visibility: visible;
-      transition: grid-template-rows 400ms cubic-bezier(0.25, 0.8, 0.25, 1),
-                  margin 400ms cubic-bezier(0.25, 0.8, 0.25, 1),
-                  opacity 400ms cubic-bezier(0.25, 0.8, 0.25, 1),
-                  visibility 0s linear 0s;
-    }
-    .tb-app-profiles-page-quick-start.collapsed {
-      grid-template-rows: 0fr;
-      margin-top: 0;
-      opacity: 0;
-      pointer-events: none;
-      visibility: hidden;
-      transition: none;
-    }
-    .tb-app-profiles-page-quick-start-inner {
-      min-height: 0;
-      overflow: hidden;
-    }
-    .tb-app-profiles-page-table {
-      flex: 1 1 auto;
-      min-height: 0;
-      display: block;
-      position: relative;
-    }
-  `],
+  styleUrls: ['./agent-app-profiles-page.component.scss'],
   standalone: false
 })
 export class AgentAppProfilesPageComponent implements OnInit, OnDestroy {

@@ -56,7 +56,7 @@ function showImageDialog(title, imageUrl) {
 var imageDialogTemplate =
     '<div aria-label="Image">' +
     '<form #theForm="ngForm">' +
-    '<mat-toolbar class="flex flex-row" color="primary">' +
+    '<mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">' +
     '<h2>{{title}}</h2>' +
     '<span class="flex-1"></span>' +
     '<button mat-icon-button (click)="close()">' +
@@ -74,7 +74,7 @@ var imageDialogTemplate =
     '</div>' +
     '<div mat-dialog-actions class="flex flex-row">' +
     '<span class="flex-1"></span>' +
-    '<button mat-button (click)="close()" style="margin-right:20px;">Close</button>' +
+    '<button mat-button color="primary" (click)="close()">Close</button>' +
     '</div>' +
     '</form>' +
     '</div>';

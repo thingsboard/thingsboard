@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
@@ -18,15 +19,21 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.group.EntityGroupInfo;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IdBased;
+import org.thingsboard.server.common.data.id.RoleId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.permission.GroupPermissionInfo;
 import org.thingsboard.server.common.data.permission.ShareGroupRequest;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.role.RoleService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -45,6 +52,12 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private GroupPermissionService groupPermissionService;
+
+    private static final String GROUP_MANAGER_PERMISSIONS =
+            "{\"DEVICE_GROUP\":[\"READ\",\"WRITE\"],\"USER_GROUP\":[\"READ\",\"WRITE\"],\"GROUP_PERMISSION\":[\"CREATE\"],\"ROLE\":[\"READ\"]}";
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -407,6 +420,161 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
         loginSubCustomerAdminUser();
         Dashboard foundDashboard2 = doGet("/api/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertNotNull(foundDashboard2);
+    }
+
+    @Test
+    public void testShareEntityGroupWithGroupRole() throws Exception {
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Device Group", tenantId);
+        Role groupRole = createRole(tenantId, null, "Read role", RoleType.GROUP, "[\"READ\"]");
+
+        shareWithRoles(deviceGroup, customerId, groupRole.getId())
+                .andExpect(status().isOk());
+
+        assertThat(findSharedRoleIds(deviceGroup)).containsExactly(groupRole.getId());
+    }
+
+    @Test
+    public void testShareEntityGroupRejectsGenericRole() throws Exception {
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Device Group", tenantId);
+        Role genericRole = createRole(tenantId, null, "Generic role", RoleType.GENERIC, "{\"DEVICE\":[\"READ\"]}");
+
+        shareWithRoles(deviceGroup, customerId, genericRole.getId())
+                .andExpect(status().isBadRequest());
+
+        assertThat(findSharedRoleIds(deviceGroup)).isEmpty();
+    }
+
+    @Test
+    public void testShareEntityGroupRequiresReadableRole() throws Exception {
+        createDifferentTenant();
+        Role otherTenantRole = createRole(differentTenantId, null, "Read role", RoleType.GROUP, "[\"READ\"]");
+
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Device Group", tenantId);
+
+        shareWithRoles(deviceGroup, customerId, otherTenantRole.getId())
+                .andExpect(status().isForbidden());
+
+        assertThat(findSharedRoleIds(deviceGroup)).isEmpty();
+    }
+
+    @Test
+    public void testShareEntityGroupSavesNothingWhenAnyRoleRejected() throws Exception {
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Device Group", tenantId);
+        Role groupRole = createRole(tenantId, null, "Read role", RoleType.GROUP, "[\"READ\"]");
+        Role genericRole = createRole(tenantId, null, "Generic role", RoleType.GENERIC, "{\"DEVICE\":[\"READ\"]}");
+
+        shareWithRoles(deviceGroup, customerId, groupRole.getId(), genericRole.getId())
+                .andExpect(status().isBadRequest());
+
+        assertThat(findSharedRoleIds(deviceGroup)).isEmpty();
+    }
+
+    @Test
+    public void testShareEntityGroupRequiresRoleOperationsHeldByUser() throws Exception {
+        loginTenantAdmin();
+        User manager = createGroupManager(createCustomerUserGroup(), GROUP_MANAGER_PERMISSIONS);
+        EntityGroup deviceGroup = createDeviceGroup("Customer Device Group", customerId);
+        Role readRole = createRole(tenantId, customerId, "Read role", RoleType.GROUP, "[\"READ\"]");
+        Role rpcRole = createRole(tenantId, customerId, "Read and RPC role", RoleType.GROUP, "[\"READ\",\"RPC_CALL\"]");
+
+        login(manager.getEmail(), "manager");
+        shareWithRoles(deviceGroup, customerId, rpcRole.getId())
+                .andExpect(status().isForbidden());
+        assertThat(findSharedRoleIds(deviceGroup)).isEmpty();
+
+        shareWithRoles(deviceGroup, customerId, readRole.getId())
+                .andExpect(status().isOk());
+        assertThat(findSharedRoleIds(deviceGroup)).containsExactly(readRole.getId());
+    }
+
+    @Test
+    public void testShareEntityGroupAllowsRoleOperationsHeldOnEntities() throws Exception {
+        loginTenantAdmin();
+        User manager = createGroupManager(createCustomerUserGroup(),
+                "{\"DEVICE_GROUP\":[\"READ\",\"WRITE\"],\"DEVICE\":[\"RPC_CALL\"],\"USER_GROUP\":[\"READ\",\"WRITE\"],\"GROUP_PERMISSION\":[\"CREATE\"],\"ROLE\":[\"READ\"]}");
+        EntityGroup deviceGroup = createDeviceGroup("Customer Device Group", customerId);
+        Role rpcRole = createRole(tenantId, customerId, "Read and RPC role", RoleType.GROUP, "[\"READ\",\"RPC_CALL\"]");
+
+        login(manager.getEmail(), "manager");
+        shareWithRoles(deviceGroup, customerId, rpcRole.getId())
+                .andExpect(status().isOk());
+        assertThat(findSharedRoleIds(deviceGroup)).containsExactly(rpcRole.getId());
+    }
+
+    @Test
+    public void testShareEntityGroupAllowsRoleOperationsHeldOnSharedGroup() throws Exception {
+        loginTenantAdmin();
+        EntityGroup managers = createCustomerUserGroup();
+        User manager = createGroupManager(managers, GROUP_MANAGER_PERMISSIONS);
+        EntityGroup deviceGroup = createDeviceGroup("Customer Device Group", customerId);
+        Role groupRpcRole = createRole(tenantId, customerId, "RPC role", RoleType.GROUP, "[\"RPC_CALL\"]");
+        GroupPermission groupRpcPermission = new GroupPermission();
+        groupRpcPermission.setRoleId(groupRpcRole.getId());
+        groupRpcPermission.setUserGroupId(managers.getId());
+        groupRpcPermission.setEntityGroupId(deviceGroup.getId());
+        groupRpcPermission.setEntityGroupType(deviceGroup.getType());
+        doPost("/api/groupPermission", groupRpcPermission, GroupPermission.class);
+        Role rpcRole = createRole(tenantId, customerId, "Read and RPC role", RoleType.GROUP, "[\"READ\",\"RPC_CALL\"]");
+
+        login(manager.getEmail(), "manager");
+        shareWithRoles(deviceGroup, customerId, rpcRole.getId())
+                .andExpect(status().isOk());
+        assertThat(findSharedRoleIds(deviceGroup)).contains(rpcRole.getId());
+    }
+
+    private EntityGroup createCustomerUserGroup() throws Exception {
+        EntityGroup userGroup = new EntityGroup();
+        userGroup.setType(EntityType.USER);
+        userGroup.setName("Group managers");
+        userGroup.setOwnerId(customerId);
+        return doPost("/api/entityGroup", userGroup, EntityGroup.class);
+    }
+
+    private User createGroupManager(EntityGroup userGroup, String permissions) throws Exception {
+        Role managerRole = createRole(tenantId, customerId, "Group manager", RoleType.GENERIC, permissions);
+        GroupPermission managerPermission = new GroupPermission();
+        managerPermission.setRoleId(managerRole.getId());
+        managerPermission.setUserGroupId(userGroup.getId());
+        doPost("/api/groupPermission", managerPermission, GroupPermission.class);
+
+        User manager = new User();
+        manager.setAuthority(Authority.CUSTOMER_USER);
+        manager.setTenantId(tenantId);
+        manager.setCustomerId(customerId);
+        manager.setEmail("groupmanager@thingsboard.org");
+        return createUser(manager, "manager", userGroup.getId());
+    }
+
+    private EntityGroup createDeviceGroup(String name, EntityId ownerId) throws Exception {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setType(EntityType.DEVICE);
+        entityGroup.setName(name);
+        entityGroup.setOwnerId(ownerId);
+        return doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+    }
+
+    private Role createRole(TenantId roleTenantId, CustomerId roleCustomerId, String name, RoleType type, String permissions) {
+        Role role = new Role();
+        role.setTenantId(roleTenantId);
+        role.setCustomerId(roleCustomerId);
+        role.setType(type);
+        role.setName(name);
+        role.setPermissions(JacksonUtil.toJsonNode(permissions));
+        return roleService.saveRole(roleTenantId, role);
+    }
+
+    private ResultActions shareWithRoles(EntityGroup entityGroup, CustomerId targetCustomerId, RoleId... roleIds) throws Exception {
+        var shareGroupRequest = new ShareGroupRequest(targetCustomerId, true, null, false, List.of(roleIds));
+        return doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, entityGroup.getId().toString());
+    }
+
+    private List<RoleId> findSharedRoleIds(EntityGroup entityGroup) {
+        return groupPermissionService.findGroupPermissionByTenantIdAndEntityGroupId(tenantId, entityGroup.getId(), new PageLink(100))
+                .getData().stream().map(GroupPermission::getRoleId).collect(Collectors.toList());
     }
 
 }

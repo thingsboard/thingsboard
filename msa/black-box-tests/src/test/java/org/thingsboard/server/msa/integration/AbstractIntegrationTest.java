@@ -102,12 +102,15 @@ public abstract class AbstractIntegrationTest extends AbstractContainerTest {
         testRestClient.setRootRuleChain(defaultRuleChainId);
         if (device != null) {
             testRestClient.deleteDevice(device.getId());
-            if (integration.getId() != null) {
-                testRestClient.deleteIntegration(integration.getId());
-            }
-            testRestClient.deleteConverter(integration.getDefaultConverterId());
-            if (integration.getDownlinkConverterId() != null) {
-                testRestClient.deleteConverter(integration.getDownlinkConverterId());
+            if (integration != null) {
+                if (integration.getId() != null) {
+                    testRestClient.deleteIntegration(integration.getId());
+                }
+                testRestClient.deleteConverter(integration.getDefaultConverterId());
+                if (integration.getDownlinkConverterId() != null) {
+                    testRestClient.deleteConverter(integration.getDownlinkConverterId());
+                }
+                integration = null;
             }
             if (secret != null) {
                 testRestClient.deleteSecret(secret.getId());

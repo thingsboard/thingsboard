@@ -69,7 +69,7 @@ class V4_3_1_5MigrationTest {
     }
 
     /**
-     * {@link LtsMigration#apply()} re-runs when a node crashes before the version is recorded, so a key that already
+     * {@link Migration#apply()} re-runs when a node crashes before the version is recorded, so a key that already
      * carries the operation must not be written again.
      */
     @Test

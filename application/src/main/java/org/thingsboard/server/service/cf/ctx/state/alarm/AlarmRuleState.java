@@ -4,6 +4,8 @@ package org.thingsboard.server.service.cf.ctx.state.alarm;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.KvUtil;
@@ -38,6 +40,8 @@ public class AlarmRuleState {
 
     private final AlarmSeverity severity;
     private AlarmRule alarmRule;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private AlarmCalculatedFieldState state;
 
     private AlarmCondition condition;

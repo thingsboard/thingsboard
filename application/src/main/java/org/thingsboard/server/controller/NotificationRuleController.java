@@ -111,6 +111,9 @@ public class NotificationRuleController extends BaseController {
                                                  @AuthenticationPrincipal SecurityUser user) throws Exception {
         notificationRule.setTenantId(user.getTenantId());
         checkEntity(notificationRule.getId(), notificationRule, NOTIFICATION);
+        if (notificationRule.getTemplateId() != null) {
+            checkTemplateReportUser(notificationTemplateService.findNotificationTemplateById(user.getTenantId(), notificationRule.getTemplateId()));
+        }
 
         NotificationRuleTriggerType triggerType = notificationRule.getTriggerType();
         if ((user.isTenantAdmin() && !triggerType.isTenantLevel()) || (user.isSystemAdmin() && triggerType.isTenantLevel())) {

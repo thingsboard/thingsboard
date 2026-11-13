@@ -43,6 +43,8 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     @Getter
     private volatile String lastMsg;
+    @Getter
+    private volatile Integer closeCode;
     private volatile CountDownLatch reply;
     private volatile CountDownLatch update;
 
@@ -82,6 +84,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int i, String s, boolean b) {
+        closeCode = i;
         log.info("CLOSED.");
         closeLatch.countDown();
     }

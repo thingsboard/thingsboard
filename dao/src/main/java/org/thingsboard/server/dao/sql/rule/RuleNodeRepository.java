@@ -45,6 +45,10 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
                                                            @Param("version") int version,
                                                            Pageable pageable);
 
+    // One array parameter instead of an IN list: a constant statement shape for any batch size, served by rule_node_pkey.
+    @Query(nativeQuery = true, value = "SELECT * FROM rule_node WHERE id = ANY(:ids)")
+    List<RuleNodeEntity> findRuleNodesByIds(@Param("ids") UUID[] ids);
+
     List<RuleNodeEntity> findRuleNodesByRuleChainIdAndExternalIdIn(UUID ruleChainId, List<UUID> externalIds);
 
     @Transactional

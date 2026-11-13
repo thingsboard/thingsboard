@@ -835,18 +835,18 @@ Key selectors: `mat-toolbar.details-toolbar`, `button[mat-fab][color="accent"]`,
 <div class="mat-padding">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="isEntityReadonly">
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label><!-- translated label --></mat-label>
         <input matInput formControlName="name">
         <mat-error><!-- validation message --></mat-error>
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label><!-- translated label --></mat-label>
         <input matInput formControlName="label">
       </mat-form-field>
-      <tb-entity-autocomplete formControlName="someEntityId"/>
+      <tb-entity-autocomplete appearance="outline" formControlName="someEntityId"/>
       <mat-slide-toggle formControlName="gateway"><!-- label --></mat-slide-toggle>
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <textarea matInput formControlName="description"></textarea>
       </mat-form-field>
     </fieldset>
@@ -860,7 +860,7 @@ Key selectors: `input[formControlName="name"]`, `mat-slide-toggle[formControlNam
 
 ```html
 <form style="width: 750px;">
-  <mat-toolbar color="primary">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
     <h2 translate><!-- dialog title --></h2>
     <span class="flex-1"></span>
     <button mat-icon-button><!-- close --></button>
@@ -870,13 +870,13 @@ Key selectors: `input[formControlName="name"]`, `mat-slide-toggle[formControlNam
     <!-- form content -->
   </div>
   <div mat-dialog-actions>
-    <button mat-button><!-- Cancel --></button>
-    <button mat-raised-button type="submit"><!-- Add/Save --></button>
+    <button mat-button color="primary"><!-- Cancel --></button>
+    <button mat-button mat-raised-button color="primary" type="submit"><!-- Add/Save --></button>
   </div>
 </form>
 ```
 
-Key selectors: `[mat-dialog-content]`, `[mat-dialog-actions]`, `button[type="submit"]`, `mat-toolbar[color="primary"] h2`.
+Key selectors: `[mat-dialog-content]`, `[mat-dialog-actions]`, `button[type="submit"]`, `mat-toolbar[color="tb-primary"] h2`.
 
 ### Common Material Selector Patterns
 

@@ -2,22 +2,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.DashboardOperationRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DaoSqlTest
 public class AiDeviceDashboardControllerOnPremiseTest extends AbstractOnPremiseAiControllerTest {
@@ -39,16 +37,15 @@ public class AiDeviceDashboardControllerOnPremiseTest extends AbstractOnPremiseA
         // GIVEN
         givenSubscriptionProvidesAiToken();
         ObjectNode request = JacksonUtil.newObjectNode();
-        given(tbAiClient.generateDashboard(eq(device.getUuidId()), eq(request), eq("Bearer " + token), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(JacksonUtil.newObjectNode().put("dashboardId", UUID.randomUUID().toString())));
+        givenOperation(ChannelProtocol.DASHBOARD_GENERATE, new DashboardOperationRequest(device.getUuidId(), request), success(JacksonUtil.newObjectNode().put("dashboardId", UUID.randomUUID().toString())));
 
         // WHEN
         doPost("/api/ai/devices/" + device.getUuidId() + "/dashboard", request, JsonNode.class);
 
         // THEN
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).generateDashboard(eq(device.getUuidId()), eq(request), eq("Bearer " + token), tokenProvider.capture());
-        assertTokenProviderBelongsToTenantAdmin(tokenProvider.getValue());
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.DASHBOARD_GENERATE, new DashboardOperationRequest(device.getUuidId(), request));
+        assertThat(context.tbAccessToken()).isEqualTo("Bearer " + token);
+        assertTokenProviderBelongsToTenantAdmin(context.tokenProvider());
     }
 
 }

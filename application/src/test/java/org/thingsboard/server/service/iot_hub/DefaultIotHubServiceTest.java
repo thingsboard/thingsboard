@@ -3,24 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
-import org.thingsboard.server.dao.asset.AssetProfileService;
-import org.thingsboard.server.service.rule.TbRuleChainService;
-import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.asset.AssetProfile;
-import org.thingsboard.server.common.data.id.AssetProfileId;
-import static org.mockito.Mockito.lenient;
-import org.thingsboard.server.dao.converter.ConverterService;
-import org.thingsboard.server.service.entitiy.converter.TbConverterService;
-import org.thingsboard.server.dao.integration.IntegrationService;
-import org.thingsboard.server.common.data.id.IntegrationId;
-import org.thingsboard.server.common.data.id.ConverterId;
-import org.thingsboard.server.common.data.integration.Integration;
-import org.thingsboard.server.common.data.converter.Converter;
-import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.DeviceProfile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,20 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.ResourceAccessException;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.converter.Converter;
-import org.thingsboard.server.common.data.id.ConverterId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.IntegrationId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
@@ -61,29 +31,43 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.Geofencing
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IntegrationId;
+import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.AlarmRuleInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.CalculatedFieldInstalledItemDescriptor;
-import org.thingsboard.server.common.data.iot_hub.DashboardInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
-import org.thingsboard.server.dao.converter.ConverterService;
+import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.converter.ConverterService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
-import org.thingsboard.server.service.entitiy.converter.TbConverterService;
-import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
-import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
-import org.thingsboard.server.service.entitiy.device.TbDeviceService;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
+import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
+import org.thingsboard.server.service.entitiy.converter.TbConverterService;
+import org.thingsboard.server.service.entitiy.device.TbDeviceService;
+import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -118,27 +102,25 @@ class DefaultIotHubServiceTest {
     @Mock
     private DeviceService deviceService;
     @Mock
-    private DashboardService dashboardService;
+    private EntityService entityService;
     @Mock
     private TbDeviceService tbDeviceService;
     @Mock
+    private DashboardService dashboardService;
+    @Mock
     private TbDashboardService tbDashboardService;
+    @Mock
+    private IntegrationService integrationService;
     @Mock
     private DeviceProfileService deviceProfileService;
     @Mock
-    private AssetProfileService assetProfileService;
-    @Mock
-    private TbRuleChainService tbRuleChainService;
-    @Mock
-    private RuleChainService ruleChainService;
-    @Mock
-    private IntegrationService integrationService;
+    private TbDeviceProfileService tbDeviceProfileService;
     @Mock
     private ConverterService converterService;
     @Mock
     private TbConverterService tbConverterService;
     @Mock
-    private TbDeviceProfileService tbDeviceProfileService;
+    private DevicePackageEntities devicePackageEntities;
 
     @Spy
     @InjectMocks
@@ -180,7 +162,7 @@ class DefaultIotHubServiceTest {
         mockTenant();
         String versionId = UUID.randomUUID().toString();
         String itemId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, itemId, "DASHBOARD", "Root", "1.0"));
+        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, itemId, "RULE_CHAIN", "Root", "1.0"));
         when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
 
         InstallPlan plan = service.resolveInstallPlan(user, versionId);
@@ -198,7 +180,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId))
@@ -220,7 +202,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId)).thenReturn(null);
@@ -240,7 +222,7 @@ class DefaultIotHubServiceTest {
         String versionId = UUID.randomUUID().toString();
         String rootItemId = UUID.randomUUID().toString();
         String relatedItemId = UUID.randomUUID().toString();
-        ObjectNode root = version(versionId, rootItemId, "DASHBOARD", "Root", "1.0");
+        ObjectNode root = version(versionId, rootItemId, "RULE_CHAIN", "Root", "1.0");
         root.putArray("relatedItems").add(relatedItemId);
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(root);
         when(iotHubRestClient.getPublishedVersionByItemId(relatedItemId)).thenThrow(new RuntimeException("boom"));
@@ -371,7 +353,7 @@ class DefaultIotHubServiceTest {
         when(iotHubInstalledItemService.findInstalledItemIdsByTenantIdAndItemIdIn(eq(tenantId), any())).thenReturn(List.of());
         IotHubInstalledItem depItem = installedItem(UUID.randomUUID());
         IotHubInstalledItem rootItem = installedItem(UUID.randomUUID());
-        DashboardInstalledItemDescriptor rootDescriptor = new DashboardInstalledItemDescriptor();
+        RuleChainInstalledItemDescriptor rootDescriptor = new RuleChainInstalledItemDescriptor();
         rootItem.setDescriptor(rootDescriptor);
         doReturn(depItem).when(service).doInstallVersion(eq(user), eq(depVersionId), any(), any());
         doReturn(rootItem).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
@@ -648,6 +630,274 @@ class DefaultIotHubServiceTest {
         return JacksonUtil.toString(calculatedField).getBytes(StandardCharsets.UTF_8);
     }
 
+    @Test
+    void deleteInstalledItem_devicePackage_removesEachEntityBeforeWhatItRefersTo() throws Exception {
+        mockTenant();
+        DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
+        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
+        profile.setDefaultDashboardId(dashboard.getId());
+        Integration integration = new Integration(new IntegrationId(UUID.randomUUID()));
+        Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        profile.setTenantId(tenantId);
+        dashboard.setTenantId(tenantId);
+        integration.setTenantId(tenantId);
+        converter.setTenantId(tenantId);
+        // The profile and the integration listed first: in reverse order of creation, the dashboard would go before the
+        // profile that refers to it, and the converter before the integration that uses it.
+        IotHubInstalledItem deleted = devicePackage(profile.getId(), dashboard.getId(), integration.getId(), converter.getId());
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        when(deviceProfileService.findDeviceProfileById(tenantId, profile.getId())).thenReturn(profile);
+        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
+        when(integrationService.findIntegrationById(tenantId, integration.getId())).thenReturn(integration);
+        when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        InOrder order = inOrder(tbDeviceProfileService, tbDashboardService, integrationService, tbConverterService);
+        order.verify(tbDeviceProfileService).delete(profile, user);
+        order.verify(tbDashboardService).delete(dashboard, user);
+        order.verify(integrationService).deleteIntegration(tenantId, integration.getId());
+        order.verify(tbConverterService).delete(converter, user);
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_keepsEntitiesAnotherDevicePackageUses() {
+        mockTenant();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId sharedDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(deviceId, sharedDashboardId);
+        IotHubInstalledItem other = devicePackage(sharedDashboardId);
+        other.setItemName("Other package");
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted, other), 1, 2, false));
+        Device device = new Device(deviceId);
+        device.setTenantId(tenantId);
+        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        verify(tbDeviceService).delete(device, user);
+        verify(dashboardService, never()).findDashboardById(any(), any());
+        verify(tbDashboardService, never()).delete(any(), any());
+        verify(iotHubInstalledItemService).deleteById(tenantId, deleted.getId());
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_removesItsMetadataEntriesFromTheKeptIntegration() {
+        mockTenant();
+        IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(integrationId);
+        setIntegrationState(deleted, integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        IotHubInstalledItem other = devicePackage(integrationId);
+        setIntegrationState(other, integrationId, Map.of("profile.lansitec-badge", "Badge"));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted, other), 1, 2, false));
+        Integration current = integration(integrationId, Map.of("profile.milesight-iot-am308", "am308-custom",
+                "profile.lansitec-badge", "Badge", "profile.added-by-user", "Mine"));
+        when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(current);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        ArgumentCaptor<Integration> saved = ArgumentCaptor.forClass(Integration.class);
+        verify(integrationService).saveIntegration(saved.capture());
+        verify(integrationService, never()).deleteIntegration(any(), any());
+        JsonNode metadata = saved.getValue().getConfiguration().get("metadata");
+        assertThat(metadata.has("profile.milesight-iot-am308")).isFalse();
+        assertThat(metadata.get("profile.lansitec-badge").asText()).isEqualTo("Badge");
+        assertThat(metadata.get("profile.added-by-user").asText()).isEqualTo("Mine");
+        // A copy is saved: the integration read may be the cache's own instance
+        assertThat(current.getConfiguration().get("metadata").has("profile.milesight-iot-am308")).isTrue();
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_keepsTheMetadataEntryAnotherPackageAddedToo() {
+        mockTenant();
+        IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(integrationId);
+        setIntegrationState(deleted, integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        IotHubInstalledItem other = devicePackage(integrationId);
+        setIntegrationState(other, integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted, other), 1, 2, false));
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        // Nothing is left to remove once the other package's entry is subtracted: the integration isn't even read
+        verify(integrationService, never()).findIntegrationById(any(), any());
+        verify(integrationService, never()).saveIntegration(any());
+        verify(integrationService, never()).deleteIntegration(any(), any());
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_removesItsMetadataEntriesFromTheIntegrationItTookAsItWas() {
+        mockTenant();
+        IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(integrationId);
+        setIntegrationState(deleted, integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        ((DeviceInstalledItemDescriptor) deleted.getDescriptor()).setUsedExistingEntityIds(List.of(integrationId));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        when(integrationService.findIntegrationById(tenantId, integrationId))
+                .thenReturn(integration(integrationId, Map.of("profile.milesight-iot-am308", "am308-custom", "profile.added-by-user", "Mine")));
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        ArgumentCaptor<Integration> saved = ArgumentCaptor.forClass(Integration.class);
+        verify(integrationService).saveIntegration(saved.capture());
+        verify(integrationService, never()).deleteIntegration(any(), any());
+        JsonNode metadata = saved.getValue().getConfiguration().get("metadata");
+        assertThat(metadata.has("profile.milesight-iot-am308")).isFalse();
+        assertThat(metadata.get("profile.added-by-user").asText()).isEqualTo("Mine");
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_leavesTheKeptIntegrationWithoutItsEntriesAsItIs() {
+        mockTenant();
+        IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(integrationId);
+        setIntegrationState(deleted, integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        ((DeviceInstalledItemDescriptor) deleted.getDescriptor()).setUsedExistingEntityIds(List.of(integrationId));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        when(integrationService.findIntegrationById(tenantId, integrationId))
+                .thenReturn(integration(integrationId, Map.of("profile.lansitec-badge", "Badge")));
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        verify(integrationService, never()).saveIntegration(any());
+        verify(integrationService, never()).deleteIntegration(any(), any());
+    }
+
+    @Test
+    void findKeptEntities_devicePackage_namesTheSharedEntitiesAndCountsTheOtherPackages() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId sharedDashboardId = new DashboardId(UUID.randomUUID());
+        DeviceProfileId sharedProfileId = new DeviceProfileId(UUID.randomUUID());
+        IotHubInstalledItem checked = devicePackage(sharedProfileId, deviceId, sharedDashboardId);
+        IotHubInstalledItem first = devicePackage(sharedProfileId, sharedDashboardId);
+        IotHubInstalledItem second = devicePackage(sharedDashboardId);
+        IotHubInstalledItem unrelated = devicePackage(new DeviceId(UUID.randomUUID()));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked, first, second, unrelated), 1, 4, false));
+        DeviceProfile sharedProfile = new DeviceProfile(sharedProfileId);
+        sharedProfile.setTenantId(tenantId);
+        when(deviceProfileService.findDeviceProfileById(tenantId, sharedProfileId)).thenReturn(sharedProfile);
+        Dashboard sharedDashboard = new Dashboard(sharedDashboardId);
+        sharedDashboard.setTenantId(tenantId);
+        when(dashboardService.findDashboardById(tenantId, sharedDashboardId)).thenReturn(sharedDashboard);
+        when(entityService.fetchEntityName(tenantId, sharedProfileId)).thenReturn(Optional.of("Shared profile"));
+        when(entityService.fetchEntityName(tenantId, sharedDashboardId)).thenReturn(Optional.of("Shared dashboard"));
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).containsExactly(
+                new InstalledItemKeptEntities.KeptEntity(sharedProfileId, "Shared profile"),
+                new InstalledItemKeptEntities.KeptEntity(sharedDashboardId, "Shared dashboard"));
+        assertThat(kept.getUsedByItemsCount()).isEqualTo(2);
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_keepsEntitiesTheUserHadBefore() {
+        mockTenant();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId usersDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(deviceId, usersDashboardId);
+        ((DeviceInstalledItemDescriptor) deleted.getDescriptor()).setUsedExistingEntityIds(List.of(usersDashboardId));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        Device device = new Device(deviceId);
+        device.setTenantId(tenantId);
+        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        verify(tbDeviceService).delete(device, user);
+        verify(tbDashboardService, never()).delete(any(), any());
+    }
+
+    @Test
+    void findKeptEntities_devicePackage_namesTheEntitiesTheUserHadBefore() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId usersDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem checked = devicePackage(deviceId, usersDashboardId);
+        ((DeviceInstalledItemDescriptor) checked.getDescriptor()).setUsedExistingEntityIds(List.of(usersDashboardId));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked), 1, 1, false));
+        Dashboard usersDashboard = new Dashboard(usersDashboardId);
+        usersDashboard.setTenantId(tenantId);
+        when(dashboardService.findDashboardById(tenantId, usersDashboardId)).thenReturn(usersDashboard);
+        when(entityService.fetchEntityName(tenantId, usersDashboardId)).thenReturn(Optional.of("My dashboard"));
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).containsExactly(new InstalledItemKeptEntities.KeptEntity(usersDashboardId, "My dashboard"));
+        assertThat(kept.getUsedByItemsCount()).isZero();
+        assertThat(kept.getUsedExistingCount()).isEqualTo(1);
+    }
+
+    @Test
+    void findKeptEntities_devicePackageSharingNothing_keepsNothing() {
+        IotHubInstalledItem checked = devicePackage(new DeviceId(UUID.randomUUID()));
+        IotHubInstalledItem other = devicePackage(new DeviceId(UUID.randomUUID()));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked, other), 1, 2, false));
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).isEmpty();
+        assertThat(kept.getUsedByItemsCount()).isZero();
+    }
+
+    @Test
+    void updateItemVersion_devicePackage_deletesNothing() {
+        mockTenant();
+        IotHubInstalledItem installed = devicePackage(new DeviceId(UUID.randomUUID()), new DashboardId(UUID.randomUUID()));
+        installed.setItemType("DEVICE");
+        when(iotHubInstalledItemService.findById(tenantId, installed.getId())).thenReturn(installed);
+
+        UpdateItemVersionResult result = service.updateItemVersion(user, installed.getId(), UUID.randomUUID().toString(), true, null);
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(tbDeviceService, never()).delete(any(Device.class), any());
+        verify(tbDashboardService, never()).delete(any(), any());
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
+    private void setIntegrationState(IotHubInstalledItem item, IntegrationId integrationId, Map<String, String> addedMetadata) {
+        ObjectNode state = JacksonUtil.newObjectNode().put("resolution", "created");
+        state.set("entityOutput", JacksonUtil.newObjectNode().put("id", integrationId.getId().toString()));
+        state.set("metadata", JacksonUtil.valueToTree(addedMetadata));
+        ((DeviceInstalledItemDescriptor) item.getDescriptor()).setInstallState(Map.of("TTN", state));
+    }
+
+    private Integration integration(IntegrationId id, Map<String, String> metadata) {
+        Integration integration = new Integration(id);
+        integration.setTenantId(tenantId);
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.set("metadata", JacksonUtil.valueToTree(metadata));
+        integration.setConfiguration(configuration);
+        return integration;
+    }
+
+    private IotHubInstalledItem devicePackage(EntityId... createdEntityIds) {
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.of(createdEntityIds));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        return item;
+    }
+
     private Dashboard dashboard(TenantId owner) {
         Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
         dashboard.setTenantId(owner);
@@ -677,7 +927,8 @@ class DefaultIotHubServiceTest {
         when(deviceService.findDeviceById(tenantId, knownDevice.getId())).thenReturn(knownDevice);
         when(dashboardService.findDashboardById(tenantId, unknownDashboard.getId())).thenReturn(unknownDashboard);
 
-        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, devicePackageDescriptor(knownDevice.getId(), unknownDashboard.getId()), null);
+        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId,
+                devicePackageDescriptor(knownDevice.getId(), unknownDashboard.getId()));
 
         assertThat(result.isSuccess()).isFalse();
         verify(iotHubInstalledItemService, never()).save(any(), any());
@@ -696,31 +947,9 @@ class DefaultIotHubServiceTest {
         DeviceInstalledItemDescriptor descriptor = devicePackageDescriptor();
         descriptor.setDashboardId(unknownDashboard.getId());
 
-        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, descriptor, null);
+        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, descriptor);
 
         assertThat(result.isSuccess()).isFalse();
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
-    @Test
-    void updateItemVersion_device_refusedAndRemovesNothing() {
-        mockTenant();
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(new DeviceId(UUID.randomUUID())));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemVersionId(UUID.randomUUID());
-        item.setDescriptor(descriptor);
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-
-        // The install wizard of the new version does the update. A client that called this as an update before
-        // got success while the package was removed and nothing was installed again.
-        UpdateItemVersionResult result = service.updateItemVersion(user, item.getId(), UUID.randomUUID().toString(), true, null);
-
-        assertThat(result.isSuccess()).isFalse();
-        assertThat(result.getErrorMessage()).contains("install wizard");
-        verify(tbDeviceService, never()).delete(any(Device.class), any());
-        verify(iotHubInstalledItemService, never()).deleteById(any(), any());
         verify(iotHubInstalledItemService, never()).save(any(), any());
     }
 
@@ -736,13 +965,9 @@ class DefaultIotHubServiceTest {
         when(dashboardService.findDashboardById(tenantId, knownDashboard.getId())).thenReturn(knownDashboard);
         DeviceInstalledItemDescriptor descriptor = devicePackageDescriptor(knownDevice.getId(), knownDashboard.getId());
         descriptor.setDashboardId(knownDashboard.getId());
-        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(inv -> {
-            IotHubInstalledItem saved = inv.getArgument(1);
-            saved.setId(new IotHubInstalledItemId(UUID.randomUUID()));
-            return saved;
-        });
+        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(inv -> inv.getArgument(1));
 
-        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, descriptor, null);
+        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, descriptor);
 
         assertThat(result.isSuccess()).isTrue();
         verify(iotHubInstalledItemService).save(eq(tenantId), any(IotHubInstalledItem.class));
@@ -759,6 +984,8 @@ class DefaultIotHubServiceTest {
         IotHubInstalledItem item = installedItem(id);
         item.setDescriptor(devicePackageDescriptor(knownDevice.getId(), unknownDashboard.getId()));
         when(iotHubInstalledItemService.findById(tenantId, new IotHubInstalledItemId(id))).thenReturn(item);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(item), 1, 1, false));
 
         service.deleteInstalledItem(user, new IotHubInstalledItemId(id));
 
@@ -783,6 +1010,8 @@ class DefaultIotHubServiceTest {
         IotHubInstalledItem item = installedItem(id);
         item.setDescriptor(devicePackageDescriptor(converter.getId(), integration.getId(), unknownIntegration.getId()));
         when(iotHubInstalledItemService.findById(tenantId, new IotHubInstalledItemId(id))).thenReturn(item);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(item), 1, 1, false));
 
         service.deleteInstalledItem(user, new IotHubInstalledItemId(id));
 
@@ -793,694 +1022,60 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
-    void removeDevicePackageEntities_removesTheDeviceBeforeTheDashboardAndKeepsTheItemVersion() throws Exception {
+    void registerDeviceInstall_usedExistingEntityOfAnotherTenant_rejectedAndNotSaved() {
         mockTenant();
-        Device device = new Device(new DeviceId(UUID.randomUUID()));
-        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(device.getId(), dashboard.getId()));
-        descriptor.setDashboardId(dashboard.getId());
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        UUID versionId = UUID.randomUUID();
-        item.setItemVersionId(versionId);
-        item.setVersion("1.0.1");
-        item.setDescriptor(descriptor);
-        descriptor.setInstallState(new LinkedHashMap<>(Map.of(
-                "Configuration", JacksonUtil.toJsonNode("{\"formValues\":{\"gatewayName\":\"GW\"}}"),
-                "Gateway", JacksonUtil.toJsonNode("{\"entityOutput\":{\"id\":\"x\"},\"resolution\":\"created\"}"))));
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        String newVersionId = UUID.randomUUID().toString();
-        item.setItemId(UUID.randomUUID());
-        when(iotHubRestClient.getVersionInfo(newVersionId))
-                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
-        device.setTenantId(tenantId);
-        dashboard.setTenantId(tenantId);
-        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
-        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
-
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
-
-        InOrder order = inOrder(tbDashboardService, tbDeviceService, iotHubInstalledItemService);
-        order.verify(tbDeviceService).delete(device, user);
-        order.verify(tbDashboardService).delete(dashboard, user);
-        order.verify(iotHubInstalledItemService).save(tenantId, item);
-        // The item keeps its version until the wizard registers the new one, and lists nothing to remove again.
-        assertThat(item.getItemVersionId()).isEqualTo(versionId);
-        assertThat(item.getVersion()).isEqualTo("1.0.1");
-        assertThat(descriptor.getCreatedEntityIds()).isNull();
-        assertThat(descriptor.getDashboardId()).isNull();
-        // The form values stay for the wizard of the new version; the removed entities' outputs go.
-        assertThat(descriptor.getInstallState()).containsOnlyKeys("Configuration");
-        assertThat(descriptor.getInstallState().get("Configuration").get("formValues").get("gatewayName").asText()).isEqualTo("GW");
-        verify(iotHubInstalledItemService, never()).deleteById(any(), any());
-    }
-
-    @Test
-    void removeDevicePackageEntities_keepsThePlacementOfTheRemovedDeviceForARetry() throws Exception {
-        mockTenant();
-        Device device = new Device(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenantId);
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(device.getId()));
-        descriptor.setInstallState(new LinkedHashMap<>(Map.of(
-                "Configuration", JacksonUtil.toJsonNode("{\"formValues\":{\"gatewayName\":\"GW\"}}"))));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemId(UUID.randomUUID());
-        item.setDescriptor(descriptor);
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(newVersionId))
-                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
-        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
-        UUID entityGroupId = UUID.randomUUID();
-        UUID customerId = UUID.randomUUID();
-
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId, entityGroupId, customerId);
-
-        verify(tbDeviceService).delete(device, user);
-        assertThat(descriptor.getInstallState()).containsOnlyKeys("Configuration", "$placement");
-        assertThat(descriptor.getInstallState().get("$placement").get("entityGroupId").asText()).isEqualTo(entityGroupId.toString());
-        assertThat(descriptor.getInstallState().get("$placement").get("customerId").asText()).isEqualTo(customerId.toString());
-
-        // A retry after the device is gone: the wizard sends the same placement again, and it stays.
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId, entityGroupId, customerId);
-        assertThat(descriptor.getInstallState()).containsOnlyKeys("Configuration", "$placement");
-        assertThat(descriptor.getInstallState().get("$placement").get("entityGroupId").asText()).isEqualTo(entityGroupId.toString());
-        assertThat(descriptor.getInstallState().get("$placement").get("customerId").asText()).isEqualTo(customerId.toString());
-    }
-
-    @Test
-    void registerDeviceInstall_replace_updatesTheSameItemToTheNewVersion() {
-        mockTenant();
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemVersionId(UUID.randomUUID());
-        item.setVersion("1.0.1");
-        item.setDescriptor(new DeviceInstalledItemDescriptor());
-        String newVersionId = UUID.randomUUID().toString();
-        String itemId = UUID.randomUUID().toString();
-        item.setItemId(UUID.fromString(itemId));
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        when(iotHubRestClient.getVersionInfo(newVersionId)).thenReturn(version(newVersionId, itemId, "DEVICE", "Gateway", "1.0.2"));
-        Device newDevice = device(tenantId);
-        when(deviceService.findDeviceById(tenantId, newDevice.getId())).thenReturn(newDevice);
-        DeviceInstalledItemDescriptor newDescriptor = new DeviceInstalledItemDescriptor();
-        newDescriptor.setCreatedEntityIds(List.<EntityId>of(newDevice.getId()));
-
-        when(iotHubInstalledItemService.save(tenantId, item)).thenReturn(item);
-
-        InstallItemVersionResult result = service.registerDeviceInstall(user, newVersionId, newDescriptor, item.getId());
-
-        assertThat(result.isSuccess()).isTrue();
-        assertThat(result.getInstalledItemId()).isEqualTo(item.getId().getId());
-        verify(iotHubInstalledItemService).save(tenantId, item);
-        assertThat(item.getId()).isNotNull();
-        assertThat(item.getItemVersionId()).isEqualTo(UUID.fromString(newVersionId));
-        assertThat(item.getVersion()).isEqualTo("1.0.2");
-        assertThat(item.getDescriptor()).isSameAs(newDescriptor);
-    }
-
-    @Test
-    void removeDevicePackageEntities_notADevicePackage_refused() {
-        mockTenant();
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("RULE_CHAIN");
-        item.setDescriptor(new RuleChainInstalledItemDescriptor());
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), UUID.randomUUID().toString()))
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
-    @Test
-    void registerDeviceInstall_replace_keepsTrackingTheEntitiesTheItemTracks() {
-        mockTenant();
-        String itemId = UUID.randomUUID().toString();
-        EntityId gateway = new DeviceId(UUID.randomUUID());
-        DashboardId dashboard = new DashboardId(UUID.randomUUID());
-        DeviceInstalledItemDescriptor tracked = new DeviceInstalledItemDescriptor();
-        tracked.setCreatedEntityIds(List.of(gateway, dashboard));
-        tracked.setDashboardId(dashboard);
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemId(UUID.fromString(itemId));
-        item.setDescriptor(tracked);
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        when(iotHubRestClient.getVersionInfo(newVersionId)).thenReturn(version(newVersionId, itemId, "DEVICE", "Gateway", "1.0.2"));
-        when(iotHubInstalledItemService.save(tenantId, item)).thenReturn(item);
-        Device nextDevice = device(tenantId);
-        when(deviceService.findDeviceById(tenantId, nextDevice.getId())).thenReturn(nextDevice);
-        EntityId device = nextDevice.getId();
-        DeviceInstalledItemDescriptor next = new DeviceInstalledItemDescriptor();
-        next.setCreatedEntityIds(List.of(device));
-
-        InstallItemVersionResult result = service.registerDeviceInstall(user, newVersionId, next, item.getId());
-
-        // A registration that leaves tracked entities out (another group, another connection method) still tracks them.
-        assertThat(result.isSuccess()).isTrue();
-        assertThat(next.getCreatedEntityIds()).containsExactlyInAnyOrder(device, gateway, dashboard);
-        assertThat(next.getDashboardId()).isEqualTo(dashboard);
-    }
-
-    @Test
-    void registerDeviceInstall_replace_keepsThePlacementUntilADeviceIsTracked() {
-        mockTenant();
-        String itemId = UUID.randomUUID().toString();
-        // After the update removed the entities: nothing tracked, the placement of the removed device kept.
-        ObjectNode placement = JacksonUtil.newObjectNode().put("entityGroupId", UUID.randomUUID().toString())
-                .put("customerId", UUID.randomUUID().toString());
-        DeviceInstalledItemDescriptor tracked = new DeviceInstalledItemDescriptor();
-        tracked.setInstallState(new LinkedHashMap<>(Map.of("Configuration", JacksonUtil.newObjectNode(), "$placement", placement)));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemId(UUID.fromString(itemId));
-        item.setDescriptor(tracked);
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        when(iotHubRestClient.getVersionInfo(newVersionId)).thenReturn(version(newVersionId, itemId, "DEVICE", "Sensor", "1.0.2"));
-        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(invocation -> invocation.getArgument(1));
-        DeviceProfile packageProfile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
-        packageProfile.setTenantId(tenantId);
-        when(deviceProfileService.findDeviceProfileById(tenantId, packageProfile.getId())).thenReturn(packageProfile);
-        EntityId profile = packageProfile.getId();
-        DeviceInstalledItemDescriptor afterProfile = new DeviceInstalledItemDescriptor();
-        afterProfile.setCreatedEntityIds(List.of(profile));
-        afterProfile.setInstallState(Map.of("Configuration", JacksonUtil.newObjectNode()));
-
-        service.registerDeviceInstall(user, newVersionId, afterProfile, item.getId());
-
-        // The wizard registered the profile only, with its own install state, and may fail before the device: the
-        // placement stays for the next update.
-        assertThat(afterProfile.getInstallState().get("$placement")).isEqualTo(placement);
-
-        Device packageDevice = device(tenantId);
-        when(deviceService.findDeviceById(tenantId, packageDevice.getId())).thenReturn(packageDevice);
-        EntityId device = packageDevice.getId();
-        DeviceInstalledItemDescriptor afterDevice = new DeviceInstalledItemDescriptor();
-        afterDevice.setCreatedEntityIds(List.of(profile, device));
-        afterDevice.setInstallState(Map.of("Configuration", JacksonUtil.newObjectNode()));
-
-        service.registerDeviceInstall(user, newVersionId, afterDevice, item.getId());
-
-        // The new device is tracked: the next update reads its group and customer from it.
-        assertThat(afterDevice.getInstallState()).doesNotContainKey("$placement");
-    }
-
-    @Test
-    void registerDeviceInstall_replacedItemGone_savesANewItem() {
-        mockTenant();
-        IotHubInstalledItemId goneId = new IotHubInstalledItemId(UUID.randomUUID());
         String versionId = UUID.randomUUID().toString();
         when(iotHubRestClient.getVersionInfo(versionId))
-                .thenReturn(version(versionId, UUID.randomUUID().toString(), "DEVICE", "Gateway", "1.0.2"));
-        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(inv -> {
-            IotHubInstalledItem saved = inv.getArgument(1);
-            saved.setId(new IotHubInstalledItemId(UUID.randomUUID()));
-            return saved;
-        });
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "DEVICE", "Pkg", "1.0"));
+        Device knownDevice = device(tenantId);
+        when(deviceService.findDeviceById(tenantId, knownDevice.getId())).thenReturn(knownDevice);
+        Dashboard otherTenantDashboard = dashboard(TenantId.fromUUID(UUID.randomUUID()));
+        when(dashboardService.findDashboardById(tenantId, otherTenantDashboard.getId())).thenReturn(otherTenantDashboard);
+        DeviceInstalledItemDescriptor descriptor = devicePackageDescriptor(knownDevice.getId());
+        descriptor.setUsedExistingEntityIds(List.of(otherTenantDashboard.getId()));
 
-        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, new DeviceInstalledItemDescriptor(), goneId);
-
-        // Deleted from another tab during the update: the new entities are tracked by a new item, Retry is not stuck.
-        assertThat(result.isSuccess()).isTrue();
-        assertThat(result.getInstalledItemId()).isNotEqualTo(goneId.getId());
-    }
-
-    @Test
-    void registerDeviceInstall_replace_versionOfAnotherItem_refused() {
-        mockTenant();
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemId(UUID.randomUUID());
-        item.setDescriptor(new DeviceInstalledItemDescriptor());
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        when(iotHubRestClient.getVersionInfo(newVersionId))
-                .thenReturn(version(newVersionId, UUID.randomUUID().toString(), "DEVICE", "Other", "2.0.0"));
-
-        InstallItemVersionResult result = service.registerDeviceInstall(user, newVersionId, new DeviceInstalledItemDescriptor(), item.getId());
+        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, descriptor);
 
         assertThat(result.isSuccess()).isFalse();
         verify(iotHubInstalledItemService, never()).save(any(), any());
     }
 
     @Test
-    void registerDeviceInstall_replace_nextGroupWithAllTrackedEntities_updatesTheItem() {
+    void deleteInstalledItem_devicePackage_leavesTheIntegrationOfAnotherTenantAsItIs() {
         mockTenant();
-        String itemId = UUID.randomUUID().toString();
-        Device gatewayDevice = device(tenantId);
-        Dashboard packageDashboard = dashboard(tenantId);
-        when(deviceService.findDeviceById(tenantId, gatewayDevice.getId())).thenReturn(gatewayDevice);
-        when(dashboardService.findDashboardById(tenantId, packageDashboard.getId())).thenReturn(packageDashboard);
-        EntityId gateway = gatewayDevice.getId();
-        EntityId dashboard = packageDashboard.getId();
-        DeviceInstalledItemDescriptor firstGroup = new DeviceInstalledItemDescriptor();
-        firstGroup.setCreatedEntityIds(List.of(gateway));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemId(UUID.fromString(itemId));
-        item.setDescriptor(firstGroup);
-        String versionId = UUID.randomUUID().toString();
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, itemId, "DEVICE", "Gateway", "1.0.2"));
-        when(iotHubInstalledItemService.save(tenantId, item)).thenReturn(item);
-        // The wizard registers after each group of entities with everything it created so far.
-        DeviceInstalledItemDescriptor bothGroups = new DeviceInstalledItemDescriptor();
-        bothGroups.setCreatedEntityIds(List.of(gateway, dashboard));
+        IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(integrationId);
+        setIntegrationState(deleted, integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        ((DeviceInstalledItemDescriptor) deleted.getDescriptor()).setUsedExistingEntityIds(List.of(integrationId));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        Integration otherTenantIntegration = integration(integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        otherTenantIntegration.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(otherTenantIntegration);
 
-        InstallItemVersionResult result = service.registerDeviceInstall(user, versionId, bothGroups, item.getId());
+        service.deleteInstalledItem(user, deleted.getId());
 
-        assertThat(result.isSuccess()).isTrue();
-        assertThat(item.getDescriptor()).isSameAs(bothGroups);
+        verify(integrationService, never()).saveIntegration(any());
+        verify(integrationService, never()).deleteIntegration(any(), any());
     }
 
     @Test
-    void removeDevicePackageEntities_entityOfAnotherTenant_notDeleted() {
-        mockTenant();
-        Device foreignDevice = new Device(new DeviceId(UUID.randomUUID()));
-        foreignDevice.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(foreignDevice.getId()));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setDescriptor(descriptor);
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        String newVersionId = UUID.randomUUID().toString();
-        item.setItemId(UUID.randomUUID());
-        when(iotHubRestClient.getVersionInfo(newVersionId))
-                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
-        when(deviceService.findDeviceById(tenantId, foreignDevice.getId())).thenReturn(foreignDevice);
+    void findKeptEntities_devicePackage_namesNoEntityOfAnotherTenant() {
+        DashboardId otherTenantDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem checked = devicePackage(new DeviceId(UUID.randomUUID()), otherTenantDashboardId);
+        ((DeviceInstalledItemDescriptor) checked.getDescriptor()).setUsedExistingEntityIds(List.of(otherTenantDashboardId));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked), 1, 1, false));
+        Dashboard otherTenantDashboard = new Dashboard(otherTenantDashboardId);
+        otherTenantDashboard.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        when(dashboardService.findDashboardById(tenantId, otherTenantDashboardId)).thenReturn(otherTenantDashboard);
 
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
 
-        verify(tbDeviceService, never()).delete(any(Device.class), any());
+        assertThat(kept.getEntities()).containsExactly(new InstalledItemKeptEntities.KeptEntity(otherTenantDashboardId, null));
+        verify(entityService, never()).fetchEntityName(any(), any());
     }
 
-    @Test
-    void removeDevicePackageEntities_entityNotRemoved_staysTrackedAndFails() throws Exception {
-        mockTenant();
-        Device device = new Device(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenantId);
-        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
-        dashboard.setTenantId(tenantId);
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(device.getId(), dashboard.getId()));
-        descriptor.setDashboardId(dashboard.getId());
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setVersion("1.0.1");
-        item.setItemId(UUID.randomUUID());
-        item.setDescriptor(descriptor);
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(newVersionId))
-                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
-        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
-        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
-        doThrow(new RuntimeException("dashboard is in use")).when(tbDashboardService).delete(dashboard, user);
-
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .hasMessage("not removed: DASHBOARD (dashboard is in use)");
-
-        // The rest is removed; the one left stays tracked, so Retry, a later update or Delete removes it.
-        verify(tbDeviceService).delete(device, user);
-        verify(iotHubInstalledItemService).save(tenantId, item);
-        assertThat(descriptor.getCreatedEntityIds()).containsExactly(dashboard.getId());
-        assertThat(descriptor.getDashboardId()).isEqualTo(dashboard.getId());
-        assertThat(item.getVersion()).isEqualTo("1.0.1");
-    }
-
-    @Test
-    void removeDevicePackageEntities_saveFailsAfterRemoving_notARefusal() throws Exception {
-        mockTenant();
-        Device device = new Device(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenantId);
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(device.getId()));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setVersion("1.0.1");
-        item.setItemId(UUID.randomUUID());
-        item.setDescriptor(descriptor);
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(newVersionId))
-                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
-        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
-        doThrow(new IllegalArgumentException("invalid item")).when(iotHubInstalledItemService).save(tenantId, item);
-
-        // The device is already removed: the failure must not look like a refusal (a 400) to the wizard.
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("invalid item");
-        verify(tbDeviceService).delete(device, user);
-    }
-
-    @Test
-    void removeDevicePackageEntities_profileUsedByAnotherDevice_refusedBeforeRemoving() {
-        mockTenant();
-        Device device = new Device(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenantId);
-        DeviceProfile profile = packageProfile(false);
-        IotHubInstalledItem item = devicePackage(profile.getId(), device.getId());
-        DeviceId otherDevice = new DeviceId(UUID.randomUUID());
-        when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any()))
-                .thenReturn(new PageData<>(List.of(device.getId(), otherDevice), 1, 2, false));
-        String newVersionId = mockNewVersion(item);
-
-        // Deleting the profile would fail after the device is gone, and every Retry the same way: nothing is touched.
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("'Package profile' is used by 1 other device(s)")
-                .hasMessageContaining("Change or delete them first");
-        verify(tbDeviceService, never()).delete(any(Device.class), any());
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
-    @Test
-    void removeDevicePackageEntities_defaultProfile_refusedBeforeRemoving() {
-        mockTenant();
-        DeviceProfile profile = packageProfile(true);
-        IotHubInstalledItem item = devicePackage(profile.getId());
-        when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any()))
-                .thenReturn(new PageData<>(List.of(), 0, 0, false));
-        String newVersionId = mockNewVersion(item);
-
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("'Package profile' is the default device profile");
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
-    @Test
-    void removeDevicePackageEntities_profileUsedOnlyByThePackageDevice_removed() throws Exception {
-        mockTenant();
-        Device device = new Device(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenantId);
-        DeviceProfile profile = packageProfile(false);
-        IotHubInstalledItem item = devicePackage(profile.getId(), device.getId());
-        when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any()))
-                .thenReturn(new PageData<>(List.of(device.getId()), 1, 1, false));
-        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
-        String newVersionId = mockNewVersion(item);
-
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
-
-        verify(tbDeviceService).delete(device, user);
-        verify(tbDeviceProfileService).delete(profile, user);
-    }
-
-    @Test
-    void removeDevicePackageEntities_rootRuleChain_refusedBeforeRemoving() {
-        mockTenant();
-        RuleChain ruleChain = packageRuleChain(true);
-        IotHubInstalledItem item = devicePackage(ruleChain.getId());
-        String newVersionId = mockNewVersion(item);
-
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("'Package rule chain' is the root rule chain");
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
-    @Test
-    void removeDevicePackageEntities_ruleChainOfAnotherProfile_refusedBeforeRemoving() {
-        mockTenant();
-        RuleChain ruleChain = packageRuleChain(false);
-        DeviceProfile other = otherProfile("User profile");
-        other.setDefaultRuleChainId(ruleChain.getId());
-        when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(other));
-        IotHubInstalledItem item = devicePackage(ruleChain.getId());
-        String newVersionId = mockNewVersion(item);
-
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("'Package rule chain' is the rule chain of the device profile 'User profile'");
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
-    @Test
-    void removeDevicePackageEntities_ruleChainOfThePackageProfile_removed() throws Exception {
-        mockTenant();
-        RuleChain ruleChain = packageRuleChain(false);
-        DeviceProfile profile = packageProfile(false);
-        profile.setDefaultRuleChainId(ruleChain.getId());
-        when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(profile));
-        when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any())).thenReturn(page());
-        // The rule chain listed last: in reverse order of creation it would go before the profile that refers to it
-        IotHubInstalledItem item = devicePackage(profile.getId(), ruleChain.getId());
-        String newVersionId = mockNewVersion(item);
-
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
-
-        InOrder order = inOrder(tbDeviceProfileService, tbRuleChainService);
-        order.verify(tbDeviceProfileService).delete(profile, user);
-        order.verify(tbRuleChainService).delete(ruleChain, user);
-    }
-
-    @Test
-    void removeDevicePackageEntities_ruleChainOfAnAssetProfile_refusedBeforeRemoving() {
-        mockTenant();
-        RuleChain ruleChain = packageRuleChain(false);
-        AssetProfile assetProfile = new AssetProfile(new AssetProfileId(UUID.randomUUID()));
-        assetProfile.setName("Building");
-        assetProfile.setDefaultRuleChainId(ruleChain.getId());
-        when(assetProfileService.findAssetProfiles(eq(tenantId), any())).thenReturn(page(assetProfile));
-        IotHubInstalledItem item = devicePackage(ruleChain.getId());
-        String newVersionId = mockNewVersion(item);
-
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("'Package rule chain' is the rule chain of the asset profile 'Building'");
-    }
-
-    @Test
-    void removeDevicePackageEntities_dashboardOfAnotherProfile_refusedBeforeRemoving() {
-        mockTenant();
-        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
-        dashboard.setTenantId(tenantId);
-        dashboard.setTitle("Package dashboard");
-        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
-        DeviceProfile other = otherProfile("User profile");
-        other.setDefaultDashboardId(dashboard.getId());
-        when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(other));
-        lenient().when(assetProfileService.findAssetProfiles(eq(tenantId), any())).thenReturn(page());
-        IotHubInstalledItem item = devicePackage(dashboard.getId());
-        String newVersionId = mockNewVersion(item);
-
-        // Deleted first (reverse order), the dashboard would fail after nothing else, and the rest after it: refused now.
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("'Package dashboard' is the default dashboard of the device profile 'User profile'");
-        verify(tbDashboardService, never()).delete(any(), any());
-    }
-
-    @Test
-    void removeDevicePackageEntities_dashboardOfThePackageProfile_profileDeletedFirst() throws Exception {
-        mockTenant();
-        DeviceProfile profile = packageProfile(false);
-        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
-        dashboard.setTenantId(tenantId);
-        dashboard.setTitle("Package dashboard");
-        profile.setDefaultDashboardId(dashboard.getId());
-        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
-        when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page(profile));
-        lenient().when(assetProfileService.findAssetProfiles(eq(tenantId), any())).thenReturn(page());
-        when(deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(eq(tenantId), eq(profile.getId()), any())).thenReturn(page());
-        // Created in this order by the wizard: the profile, then the dashboard
-        IotHubInstalledItem item = devicePackage(profile.getId(), dashboard.getId());
-        String newVersionId = mockNewVersion(item);
-
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
-
-        // The profile refers to the dashboard: deleting the dashboard first would fail on fk_default_dashboard_device_profile
-        InOrder order = inOrder(tbDeviceProfileService, tbDashboardService);
-        order.verify(tbDeviceProfileService).delete(profile, user);
-        order.verify(tbDashboardService).delete(dashboard, user);
-    }
-
-    private DeviceProfile packageProfile(boolean isDefault) {
-        DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
-        profile.setTenantId(tenantId);
-        profile.setName("Package profile");
-        profile.setDefault(isDefault);
-        when(deviceProfileService.findDeviceProfileById(tenantId, profile.getId())).thenReturn(profile);
-        return profile;
-    }
-
-    private static <T> PageData<T> page(T... items) {
-        return new PageData<>(List.of(items), 1, items.length, false);
-    }
-
-    private RuleChain packageRuleChain(boolean root) {
-        RuleChain ruleChain = new RuleChain(new RuleChainId(UUID.randomUUID()));
-        ruleChain.setTenantId(tenantId);
-        ruleChain.setName("Package rule chain");
-        ruleChain.setRoot(root);
-        when(ruleChainService.findRuleChainById(tenantId, ruleChain.getId())).thenReturn(ruleChain);
-        lenient().when(deviceProfileService.findDeviceProfiles(eq(tenantId), any())).thenReturn(page());
-        lenient().when(assetProfileService.findAssetProfiles(eq(tenantId), any())).thenReturn(page());
-        return ruleChain;
-    }
-
-    private DeviceProfile otherProfile(String name) {
-        DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
-        profile.setTenantId(tenantId);
-        profile.setName(name);
-        return profile;
-    }
-
-    @Test
-    void removeDevicePackageEntities_converterUsedByAnotherIntegration_refusedBeforeRemoving() {
-        mockTenant();
-        Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
-        converter.setTenantId(tenantId);
-        converter.setName("Package converter");
-        Integration own = new Integration(new IntegrationId(UUID.randomUUID()));
-        Integration other = new Integration(new IntegrationId(UUID.randomUUID()));
-        other.setName("Another integration");
-        IotHubInstalledItem item = devicePackage(converter.getId(), own.getId());
-        when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
-        when(integrationService.findIntegrationsByConverterId(tenantId, converter.getId())).thenReturn(List.of(own, other));
-        String newVersionId = mockNewVersion(item);
-
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("'Package converter' is used by the integration 'Another integration'");
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
-    @Test
-    void removeDevicePackageEntities_integrationRemovedBeforeItsConverter() throws Exception {
-        mockTenant();
-        Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
-        converter.setTenantId(tenantId);
-        converter.setName("Package converter");
-        Integration integration = new Integration(new IntegrationId(UUID.randomUUID()));
-        integration.setTenantId(tenantId);
-        when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
-        when(integrationService.findIntegrationsByConverterId(tenantId, converter.getId())).thenReturn(List.of(integration));
-        when(integrationService.findIntegrationById(tenantId, integration.getId())).thenReturn(integration);
-        // The converter listed last: in reverse order of creation it would go before the integration that uses it
-        IotHubInstalledItem item = devicePackage(integration.getId(), converter.getId());
-        String newVersionId = mockNewVersion(item);
-
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
-
-        InOrder order = inOrder(integrationService, tbConverterService);
-        order.verify(integrationService).deleteIntegration(tenantId, integration.getId());
-        order.verify(tbConverterService).delete(converter, user);
-    }
-
-    private IotHubInstalledItem devicePackage(EntityId... created) {
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.of(created));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setVersion("1.0.1");
-        item.setItemId(UUID.randomUUID());
-        item.setDescriptor(descriptor);
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        return item;
-    }
-
-    private String mockNewVersion(IotHubInstalledItem item) {
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(newVersionId))
-                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
-        return newVersionId;
-    }
-
-    @Test
-    void removeDevicePackageEntities_entityUsedAsItWas_neitherRemovedNorTracked() throws Exception {
-        mockTenant();
-        Device device = new Device(new DeviceId(UUID.randomUUID()));
-        device.setTenantId(tenantId);
-        DeviceProfileId defaultProfileId = new DeviceProfileId(UUID.randomUUID());
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(defaultProfileId, device.getId()));
-        descriptor.setInstallState(new LinkedHashMap<>(Map.of(
-                "default", JacksonUtil.toJsonNode("{\"entityOutput\":{\"id\":\"" + defaultProfileId.getId() + "\"},\"resolution\":\"use-existing\"}"),
-                "Gateway", JacksonUtil.toJsonNode("{\"entityOutput\":{\"id\":\"" + device.getId().getId() + "\"},\"resolution\":\"created\"}"))));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemId(UUID.randomUUID());
-        item.setDescriptor(descriptor);
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(newVersionId))
-                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
-        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
-
-        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
-
-        // The profile the user chose to use as it was (here the default one, which cannot be removed) is the user's.
-        verify(tbDeviceService).delete(device, user);
-        verify(deviceProfileService, never()).findDeviceProfileById(any(), any());
-        assertThat(descriptor.getCreatedEntityIds()).isNull();
-    }
-
-    @Test
-    void deleteInstalledItem_devicePackage_keepsEntityUsedAsItWas() {
-        mockTenant();
-        DeviceProfileId usersProfileId = new DeviceProfileId(UUID.randomUUID());
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(usersProfileId));
-        descriptor.setInstallState(new LinkedHashMap<>(Map.of(
-                "Profile", JacksonUtil.toJsonNode("{\"entityOutput\":{\"id\":\"" + usersProfileId.getId() + "\"},\"resolution\":\"use-existing\"}"))));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setDescriptor(descriptor);
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-
-        service.deleteInstalledItem(user, item.getId());
-
-        verify(deviceProfileService, never()).findDeviceProfileById(any(), any());
-        verify(iotHubInstalledItemService).deleteById(tenantId, item.getId());
-    }
-
-    @Test
-    void removeDevicePackageEntities_versionOfAnotherItem_refusedBeforeRemoving() {
-        mockTenant();
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(new DeviceId(UUID.randomUUID())));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemId(UUID.randomUUID());
-        item.setDescriptor(descriptor);
-        String otherVersionId = UUID.randomUUID().toString();
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        when(iotHubRestClient.getVersionInfo(otherVersionId))
-                .thenReturn(version(otherVersionId, UUID.randomUUID().toString(), "DEVICE", "Other", "2.0.0"));
-
-        // The registration of that version would be refused: nothing may be removed for it.
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), otherVersionId))
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(tbDeviceService, never()).delete(any(Device.class), any());
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
-    @Test
-    void removeDevicePackageEntities_iotHubUnavailable_refusedBeforeRemoving() {
-        mockTenant();
-        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
-        descriptor.setCreatedEntityIds(List.<EntityId>of(new DeviceId(UUID.randomUUID())));
-        IotHubInstalledItem item = installedItem(UUID.randomUUID());
-        item.setItemType("DEVICE");
-        item.setItemId(UUID.randomUUID());
-        item.setDescriptor(descriptor);
-        String newVersionId = UUID.randomUUID().toString();
-        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
-        when(iotHubRestClient.getVersionInfo(newVersionId)).thenThrow(new ResourceAccessException("Connection refused"));
-
-        // A 400: nothing was removed, so the wizard does not warn that entities are gone.
-        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(tbDeviceService, never()).delete(any(Device.class), any());
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
 }

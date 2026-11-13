@@ -85,6 +85,11 @@ export interface ChatTitleGeneratedEvent extends BaseChatEvent {
   };
 }
 
+export interface TurnResumedEvent extends BaseChatEvent {
+  event: 'turnResumed';
+  data: Record<string, never>;
+}
+
 export interface ApprovalResult {
   executionId: string;
   approved: boolean;
@@ -97,7 +102,8 @@ export enum ToolApprovalResult {
   TIMEOUT = 'TIMEOUT'
 }
 
-export type ChatEvent = AssistantChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent;
+export type ChatEvent = AssistantChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
+  | TurnResumedEvent;
 
 export enum AiAssistantViewType {
   DASHBOARD = 'DASHBOARD',
@@ -132,7 +138,32 @@ export interface AiChatClientContext {
 export interface SendChatMessageRequest {
   message: string;
   clientContext?: AiChatClientContext;
+  resources?: string[];
 }
+
+export interface AiResourceInfo {
+  id: string;
+  name: string;
+  mediaType: string;
+  size: number;
+}
+
+export interface AiResourceConfig {
+  maxSize: number;
+  maxPerMessage: number;
+  mediaTypes: string[];
+  extensions: string[];
+}
+
+export interface AiPromptMessage {
+  message: string;
+  resources: AiResourceInfo[];
+}
+
+export const AI_IMAGE_MEDIA_TYPES: readonly string[] = ['image/png', 'image/jpeg', 'image/webp'];
+
+export const isAiImageResource = (resource: Pick<AiResourceInfo, 'mediaType'>): boolean =>
+  AI_IMAGE_MEDIA_TYPES.includes(resource.mediaType);
 
 export interface AiAssistantViewConfig {
   listView: AiAssistantViewType;

@@ -15,7 +15,9 @@ class AgentApplicationTypeTest {
             "thingsboard/tb-edge-pe:4.2.0",
             "registry.example.com/thingsboard/tb-edge-pe:4.2.0",
             "registry.example.com:5000/thingsboard/tb-edge-pe:4.2.0",
-            "my-mirror/proxy/thingsboard/tb-edge-pe:4.2.0"
+            "my-mirror/proxy/thingsboard/tb-edge-pe:4.2.0",
+            "thingsboard/tb-edge:4.5.0EDGE",
+            "registry.example.com/thingsboard/tb-edge:4.5.0EDGE"
     })
     void edgePatternAcceptsDockerHubAndMirroredImages(String image) {
         assertThat(AgentApplicationType.EDGE.getMainImagePattern().matcher(image).matches()).isTrue();
@@ -33,8 +35,10 @@ class AgentApplicationTypeTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "thingsboard/tb-edge-pe",
-            "thingsboard/tb-edge:4.2.0",
+            "thingsboard/tb-edge",
+            "thingsboard/tb-edge-foo:4.2.0",
             "someone/tb-edge-pe:4.2.0",
+            "someone/tb-edge:4.5.0EDGE",
             "registry.example.com/thingsboard/tb-gateway:3.8.0"
     })
     void edgePatternStillRejectsAnythingButTheEdgeImage(String image) {
