@@ -41,7 +41,7 @@ class AiResourceController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/config")
-    public JsonNode getConfig() throws ThingsboardException {
+    public JsonNode getAiResourcesConfig() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.READ);
         return aiResourceService.getConfig(user);
@@ -50,7 +50,7 @@ class AiResourceController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public JsonNode uploadResource(@RequestPart("file") MultipartFile file) throws ThingsboardException {
+    public JsonNode uploadAiResource(@RequestPart("file") MultipartFile file) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
         return aiResourceService.upload(file, user);
@@ -58,7 +58,7 @@ class AiResourceController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/{resourceId}")
-    public ResponseEntity<byte[]> downloadResource(@PathVariable UUID resourceId) throws ThingsboardException {
+    public ResponseEntity<byte[]> downloadAiResource(@PathVariable UUID resourceId) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.READ);
         AiResourceService.AiResourceContent content = aiResourceService.download(resourceId, user);
@@ -79,7 +79,7 @@ class AiResourceController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @DeleteMapping("/{resourceId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteResource(@PathVariable UUID resourceId) throws ThingsboardException {
+    public void deleteAiResource(@PathVariable UUID resourceId) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
         aiResourceService.delete(resourceId, user);
