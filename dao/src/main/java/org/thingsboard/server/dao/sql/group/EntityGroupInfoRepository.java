@@ -14,11 +14,12 @@ import org.thingsboard.server.dao.model.sql.EntityGroupInfoEntity;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.sql.group.EntityGroupRepository.TENANT_ID_FILTER;
-
 public interface EntityGroupInfoRepository extends JpaRepository<EntityGroupInfoEntity, UUID> {
 
-    @Query("SELECT e FROM EntityGroupInfoEntity e WHERE e.id = :entityGroupId AND " + TENANT_ID_FILTER)
+    String OWNED_WITHIN_TENANT = "((e.ownerId = :tenantId AND e.ownerType = 'TENANT') OR " +
+            "(e.ownerType = 'CUSTOMER' AND EXISTS (SELECT 1 FROM CustomerEntity c WHERE c.id = e.ownerId AND c.tenantId = :tenantId)))";
+
+    @Query("SELECT e FROM EntityGroupInfoEntity e WHERE e.id = :entityGroupId AND " + OWNED_WITHIN_TENANT)
     EntityGroupInfoEntity findByTenantIdAndId(@Param("tenantId") UUID tenantId, @Param("entityGroupId") UUID entityGroupId);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(e.id, 'ENTITY_GROUP', e.name) " +
@@ -70,7 +71,7 @@ public interface EntityGroupInfoRepository extends JpaRepository<EntityGroupInfo
 
     @Query("SELECT e FROM EntityGroupInfoEntity e " +
             "WHERE e.id IN :entityGroupIds " +
-            "AND " + TENANT_ID_FILTER + " " +
+            "AND " + OWNED_WITHIN_TENANT + " " +
             "AND (:textSearch IS NULL OR ilike(e.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<EntityGroupInfoEntity> findEntityGroupsByIds(@Param("tenantId") UUID tenantId,
                                                       @Param("entityGroupIds") List<UUID> entityGroupIds,
@@ -80,7 +81,7 @@ public interface EntityGroupInfoRepository extends JpaRepository<EntityGroupInfo
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(e.id, 'ENTITY_GROUP', e.name) " +
             "FROM EntityGroupEntity e " +
             "WHERE e.id IN :entityGroupIds " +
-            "AND " + TENANT_ID_FILTER + " " +
+            "AND " + OWNED_WITHIN_TENANT + " " +
             "AND (:textSearch IS NULL OR ilike(e.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<EntityInfo> findEntityGroupEntityInfosByIds(@Param("tenantId") UUID tenantId,
                                                      @Param("entityGroupIds") List<UUID> entityGroupIds,
