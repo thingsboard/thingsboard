@@ -1051,7 +1051,25 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private void reportActivity() {
-        clientContext.getLwM2mClients().forEach(client -> reportActivityAndRegister(client.getSession()));
+        int active = 0;
+        int activeDtls = 0;
+        for (LwM2mClient client : clientContext.getLwM2mClients()) {
+            reportActivityAndRegister(client.getSession());
+            Registration registration = client.getRegistration();
+            if (LwM2MClientState.REGISTERED.equals(client.getState()) && registration != null) {
+                if (isSecure(registration)) {
+                    activeDtls++;
+                } else {
+                    active++;
+                }
+            }
+        }
+        context.updateActiveSessions(active, activeDtls);
+    }
+
+    private static boolean isSecure(Registration registration) {
+        var transportData = registration.getClientTransportData();
+        return transportData != null && transportData.getIdentity() != null && transportData.getIdentity().isSecure();
     }
 
     /**
