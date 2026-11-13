@@ -62,6 +62,11 @@ public class BaseConverterService extends AbstractEntityService implements Conve
     private JpaExecutorService executor;
 
     @Override
+    protected boolean isUpdateTransactional() {
+        return false; // entry points had no @Transactional before the fix, update stays without an ambient transaction
+    }
+
+    @Override
     public Converter saveConverter(Converter converter) {
         return saveEntity(converter, () -> doSaveConverter(converter));
     }
@@ -77,7 +82,7 @@ public class BaseConverterService extends AbstractEntityService implements Conve
         try {
             updateDebugSettings(tenantId, converter, System.currentTimeMillis());
 
-            Converter savedConverter = converterDao.save(converter.getTenantId(), converter);
+            Converter savedConverter = converterDao.saveAndFlush(converter.getTenantId(), converter);
             if (converter.getId() == null) {
                 entityCountService.publishCountEntityEvictEvent(converter.getTenantId(), EntityType.CONVERTER);
             }

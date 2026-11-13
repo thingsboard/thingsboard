@@ -5,18 +5,22 @@ package org.thingsboard.server.dao.service;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.SchedulerEventId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.scheduler.SchedulerEventService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @DaoSqlTest
 public class SchedulerEventServiceTest extends AbstractServiceTest {
@@ -109,6 +113,26 @@ public class SchedulerEventServiceTest extends AbstractServiceTest {
         pageData = schedulerEventService.findSchedulerEventsByTenantIdAndEdgeId(tenantId, savedEdge.getId(), pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testSaveSchedulerEventWithExistingExternalId() {
+        SchedulerEventId externalSchedulerEventId = new SchedulerEventId(UUID.randomUUID());
+
+        SchedulerEvent schedulerEvent = createSchedulerEvent();
+        schedulerEvent.setTenantId(tenantId);
+        schedulerEvent.setExternalId(externalSchedulerEventId);
+        SchedulerEvent savedSchedulerEvent = schedulerEventService.saveSchedulerEvent(schedulerEvent);
+
+        SchedulerEvent anotherSchedulerEvent = createSchedulerEvent();
+        anotherSchedulerEvent.setTenantId(tenantId);
+        anotherSchedulerEvent.setExternalId(externalSchedulerEventId);
+
+        DataValidationException e = Assertions.assertThrows(DataValidationException.class,
+                () -> schedulerEventService.saveSchedulerEvent(anotherSchedulerEvent));
+        Assert.assertEquals("SchedulerEvent with such external id already exists!", e.getMessage());
+
+        schedulerEventService.deleteSchedulerEvent(tenantId, savedSchedulerEvent.getId());
     }
 
     private SchedulerEvent createSchedulerEvent() {
