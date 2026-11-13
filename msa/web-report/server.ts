@@ -5,8 +5,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import config from 'config';
 import { _logger } from './config/logger';
-import { chromium } from 'playwright-chromium';
-import { Browser, LaunchOptions } from 'playwright-core';
+import { Browser, chromium, LaunchOptions } from 'playwright-core';
 import { route } from './api/routes/tbWebReportRoutes';
 import { TbWebReportPageQueue } from './api/controllers/tbWebReportPageQueue';
 

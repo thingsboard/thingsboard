@@ -321,15 +321,16 @@
                                 </component>
                                 <component>
                                     <type>application</type>
-                                    <name>chrome-for-testing</name>
+                                    <name>chromium</name>
                                     <version>${chromium.version}</version>
-                                    <description>Chrome for Testing build downloaded by Playwright, used to render reports.</description>
-                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=linux</purl>
+                                    <description>Chromium snapshot build of the Chromium project, used to render reports.</description>
+                                    <purl>pkg:generic/chromium/chromium@${chromium.version}?os=linux</purl>
                                     <cpe>cpe:2.3:a:google:chrome:${chromium.version}:*:*:*:*:*:*:*</cpe>
+                                    <license>BSD-3-Clause</license>
                                     <supplier>
-                                        <name>Google LLC</name>
+                                        <name>The Chromium Authors</name>
                                         <urls>
-                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
+                                            <url>https://www.chromium.org</url>
                                         </urls>
                                     </supplier>
                                     <file>${pkg.linux.dist}/chromium/chrome</file>
@@ -340,15 +341,16 @@
                                 </component>
                                 <component>
                                     <type>application</type>
-                                    <name>chrome-for-testing</name>
+                                    <name>chromium</name>
                                     <version>${chromium.version}</version>
-                                    <description>Chrome for Testing build downloaded by Playwright, used to render reports.</description>
-                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=windows</purl>
+                                    <description>Chromium snapshot build of the Chromium project, used to render reports.</description>
+                                    <purl>pkg:generic/chromium/chromium@${chromium.version}?os=windows</purl>
                                     <cpe>cpe:2.3:a:google:chrome:${chromium.version}:*:*:*:*:*:*:*</cpe>
+                                    <license>BSD-3-Clause</license>
                                     <supplier>
-                                        <name>Google LLC</name>
+                                        <name>The Chromium Authors</name>
                                         <urls>
-                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
+                                            <url>https://www.chromium.org</url>
                                         </urls>
                                     </supplier>
                                     <file>${pkg.win.dist}/chromium/chrome.exe</file>
@@ -366,48 +368,6 @@
                                 <component>
                                     <sbom>${project.build.directory}/sbom/tb-web-report.cdx.json</sbom>
                                     <installDir>${pkg.installFolder}</installDir>
-                                </component>
-                                <component>
-                                    <type>application</type>
-                                    <name>chrome-for-testing</name>
-                                    <version>${chromium.version}</version>
-                                    <description>Chrome for Testing build downloaded by Playwright to /ms-playwright, used to render reports.</description>
-                                    <purl>pkg:generic/google/chrome-for-testing@${chromium.version}?os=linux&amp;arch=@{architecture}</purl>
-                                    <cpe>cpe:2.3:a:google:chrome:${chromium.version}:*:*:*:*:*:*:*</cpe>
-                                    <supplier>
-                                        <name>Google LLC</name>
-                                        <urls>
-                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
-                                        </urls>
-                                    </supplier>
-                                </component>
-                                <component>
-                                    <type>application</type>
-                                    <name>chrome-headless-shell</name>
-                                    <version>${chromium-headless-shell.version}</version>
-                                    <description>Chrome Headless Shell build downloaded by Playwright to /ms-playwright.</description>
-                                    <purl>pkg:generic/google/chrome-headless-shell@${chromium-headless-shell.version}?os=linux&amp;arch=@{architecture}</purl>
-                                    <cpe>cpe:2.3:a:google:chrome:${chromium-headless-shell.version}:*:*:*:*:*:*:*</cpe>
-                                    <supplier>
-                                        <name>Google LLC</name>
-                                        <urls>
-                                            <url>https://googlechromelabs.github.io/chrome-for-testing/</url>
-                                        </urls>
-                                    </supplier>
-                                </component>
-                                <component>
-                                    <type>application</type>
-                                    <name>playwright-ffmpeg</name>
-                                    <version>${ffmpeg.revision}</version>
-                                    <description>FFmpeg build by Playwright (revision ${ffmpeg.revision}), downloaded to /ms-playwright.</description>
-                                    <purl>pkg:generic/microsoft/playwright-ffmpeg@${ffmpeg.revision}?os=linux&amp;arch=@{architecture}</purl>
-                                    <license>LGPL-2.1-or-later</license>
-                                    <supplier>
-                                        <name>Microsoft Corporation</name>
-                                        <urls>
-                                            <url>https://playwright.dev</url>
-                                        </urls>
-                                    </supplier>
                                 </component>
                             </components>
                         </configuration>
