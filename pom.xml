@@ -104,7 +104,8 @@
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
-        <cassandra.version>4.17.0</cassandra.version>
+        <cassandra.version>4.18.0</cassandra.version>
+        <jcip-annotations.version>1.0-1</jcip-annotations.version>
         <metrics.version>4.2.25</metrics.version>
         <cassandra-all.version>5.0.7</cassandra-all.version> <!-- tools; 5.0.7 fixes CVE-2026-27314 -->
         <guava.version>33.7.2-jre</guava.version> <!-- to fix CVE-2026-102554 -->
@@ -1840,28 +1841,20 @@
                 <classifier>osx-x86_64</classifier>
             </dependency>
             <dependency>
-                <groupId>com.datastax.oss</groupId>
+                <groupId>org.apache.cassandra</groupId>
                 <artifactId>java-driver-core</artifactId>
                 <version>${cassandra.version}</version>
-                <exclusions>
-                    <!-- Annotations that matter only when the driver itself is compiled; LGPL-2.1 -->
-                    <exclusion>
-                        <groupId>com.github.spotbugs</groupId>
-                        <artifactId>spotbugs-annotations</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
-                <groupId>com.datastax.oss</groupId>
+                <groupId>org.apache.cassandra</groupId>
                 <artifactId>java-driver-query-builder</artifactId>
                 <version>${cassandra.version}</version>
-                <exclusions>
-                    <!-- Annotations that matter only when the driver itself is compiled; LGPL-2.1 -->
-                    <exclusion>
-                        <groupId>com.github.spotbugs</groupId>
-                        <artifactId>spotbugs-annotations</artifactId>
-                    </exclusion>
-                </exclusions>
+            </dependency>
+            <dependency>
+                <!-- The driver declares it provided: its classes carry these annotations, which compiling against them needs -->
+                <groupId>com.github.stephenc.jcip</groupId>
+                <artifactId>jcip-annotations</artifactId>
+                <version>${jcip-annotations.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
