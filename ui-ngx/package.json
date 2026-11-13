@@ -145,7 +145,6 @@
     "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "eslint-plugin-tailwindcss": "^3.18.3",
-    "ngrx-store-freeze": "^0.2.4",
     "normalize-package-data": "8.0.0",
     "packageurl-js": "2.0.1",
     "patch-package": "^8.0.1",
