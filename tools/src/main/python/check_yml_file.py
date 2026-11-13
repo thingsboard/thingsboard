@@ -113,6 +113,7 @@ if __name__ == '__main__':
                       "transport/coap/src/main/resources/tb-coap-transport.yml",
                       "transport/lwm2m/src/main/resources/tb-lwm2m-transport.yml",
                       "transport/snmp/src/main/resources/tb-snmp-transport.yml",
+                      "transport/modbus/src/main/resources/tb-modbus-transport.yml",
                       "msa/vc-executor/src/main/resources/tb-vc-executor.yml",
                       "integration/executor/src/main/resources/tb-integration-executor.yml"]
 
