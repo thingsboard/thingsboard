@@ -56,7 +56,7 @@ public interface ReportComponent extends Serializable {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     ReportComponentType getType();
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     ReportComponentSubType getSubType();
 
 }

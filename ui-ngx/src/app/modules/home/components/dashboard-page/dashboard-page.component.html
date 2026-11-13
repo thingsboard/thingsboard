@@ -422,7 +422,7 @@
             }
           </mat-drawer-content>
         </mat-drawer-container>
-        @if (hideToolbar && hideMainToolbar && !widgetEditMode) {
+        @if (hideToolbar && hideMainToolbar && !widgetEditMode && !isMobileApp) {
           <section data-html2canvas-ignore class="tb-header-buttons tb-side-menu-toggle">
             <button color="tb-primary"
                     mat-mini-fab

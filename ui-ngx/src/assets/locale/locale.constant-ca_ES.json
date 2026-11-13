@@ -2821,7 +2821,6 @@
                 "lwm2m-server-public-key-id": "ID o clau pública del servidor LwM2M"
             },
             "isgateway": "Es Gateway",
-            "activity-time-from-gateway-device": "Data d'activitat des del dispositiu gateway",
             "description": "Descripció",
             "edge-license-key": "Clau de llicència",
             "cloud-endpoint": "Punt final del núvol",
@@ -3049,8 +3048,8 @@
         "type-aws-sqs": "AWS SQS",
         "type-aws-kinesis": "AWS Kinesis",
         "type-ibm-watson-iot": "IBM Watson IoT",
-        "type-ttn": "The Things Stack Community",
-        "type-tti": "The Things Stack Industries",
+        "type-ttn": "The Things Stack Sandbox",
+        "type-tti": "The Things Stack Cloud & Enterprise",
         "type-chirpstack": "ChirpStack",
         "type-azure-event-hub": "Azure Event Hub",
         "type-azure-iot-hub": "Azure IoT Hub",
@@ -3836,7 +3835,8 @@
                 "ADD_TO_GROUP": "Afegeix al grup",
                 "REMOVE_FROM_GROUP": "Elimina del grup",
                 "SHARE_GROUP": "Comparteix el grup",
-                "ASSIGN_TO_TENANT": "Assigna a l'arrendatari"
+                "ASSIGN_TO_TENANT": "Assigna a l'arrendatari",
+                "INVOKE": "Invoca"
             }
         }
     },

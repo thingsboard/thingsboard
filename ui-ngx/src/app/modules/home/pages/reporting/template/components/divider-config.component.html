@@ -39,6 +39,9 @@
         <div matSuffix>px</div>
       </mat-form-field>
     </div>
+    @if (reportConfigForm.get('borderType').value === BorderType.double) {
+      <div class="tb-form-hint tb-primary-fill">{{ 'report-template.double-border-width-hint' | translate }}</div>
+    }
     <div class="tb-form-row space-between">
       <div translate>color.color</div>
       <tb-color-input asBoxInput

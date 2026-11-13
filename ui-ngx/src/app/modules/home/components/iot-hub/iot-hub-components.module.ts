@@ -11,6 +11,7 @@ import { TbIotHubAddItemDialogComponent } from './iot-hub-add-item-dialog.compon
 import { TbIotHubInstallDialogComponent } from './iot-hub-install-dialog.component';
 import { TbIotHubUpdateDialogComponent } from './iot-hub-update-dialog.component';
 import { TbIotHubDeleteDialogComponent } from './iot-hub-delete-dialog.component';
+import { TbIotHubConverterUpdateDialogComponent } from './iot-hub-converter-update-dialog.component';
 import { TbIotHubUnpublishedWarningDialogComponent } from './iot-hub-unpublished-warning-dialog.component';
 import { TbDeviceInstallDialogComponent } from './device-install-dialog/device-install-dialog.component';
 import { InstallFormRendererComponent } from './device-install-dialog/install-form-renderer/install-form-renderer.component';
@@ -26,6 +27,7 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
 
 @NgModule({
   declarations: [
+    TbIotHubConverterUpdateDialogComponent,
     TbIotHubItemDetailDialogComponent,
     TbIotHubBrowseComponent,
     TbIotHubItemCardComponent,

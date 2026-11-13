@@ -20,11 +20,11 @@
     <mat-step [completed]="canProceed()"
       [label]="stepSelectKey | translate">
 
-      <div class="tb-info-box info">
-        <mat-icon>auto_awesome</mat-icon>
+      <div class="tb-form-hint tb-primary-fill mb-4">
+        <mat-icon>info_outline</mat-icon>
         <div>
-          <p class="info-title">{{ infoTitleKey | translate }}</p>
-          <p>{{ infoBodyKey | translate }}</p>
+          <div class="font-medium">{{ infoTitleKey | translate }}</div>
+          <div>{{ infoBodyKey | translate }}</div>
         </div>
       </div>
 
@@ -135,19 +135,15 @@
             </button>
             <pre>{{ dockerCommand }}</pre>
           </div>
-          <div class="tb-info-box info">
-            <mat-icon>info</mat-icon>
-            <div>
-              <p>{{ infoBodyKey | translate }}</p>
-            </div>
+          <div class="tb-form-hint tb-primary-fill mb-4">
+            <mat-icon>info_outline</mat-icon>
+            <span>{{ infoBodyKey | translate }}</span>
           </div>
         </section>
       } @else {
-        <div class="tb-info-box invalid">
+        <div class="tb-form-hint tb-primary-fill tb-form-hint-error mb-4">
           <mat-icon>error_outline</mat-icon>
-          <div>
-            <p translate>edge.auto-provision-no-script</p>
-          </div>
+          <span translate>edge.auto-provision-no-script</span>
         </div>
       }
 
