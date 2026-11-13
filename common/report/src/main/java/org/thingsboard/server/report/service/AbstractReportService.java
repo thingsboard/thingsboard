@@ -11,7 +11,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -39,6 +38,8 @@ import org.thingsboard.server.common.data.report.configuration.timewindow.TimeWi
 import org.thingsboard.server.report.context.ComponentData;
 import org.thingsboard.server.report.context.TbReportCtx;
 import org.thingsboard.server.report.datasource.ReportDataService;
+import org.thingsboard.server.report.util.ReportTimeRangeResolver;
+import org.thingsboard.server.report.util.ReportTimeRangeResolver.ReportTimeRange;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,6 +75,8 @@ public abstract class AbstractReportService implements ReportService {
 
     public static final int DEFAULT_ENTITIES_PAGE_SIZE = 1024;
 
+    private static final String REPORT_TIME_RANGE = "reportTimeRange";
+
     private static final Map<String, String> ALARM_FIELD_ALIASES_MAP = Map.of(
             "startTime", "startTs",
             "endTime", "endTs",
@@ -87,6 +90,9 @@ public abstract class AbstractReportService implements ReportService {
     @Lazy
     @Autowired
     protected ReportDataService dataService;
+
+    @Autowired
+    protected ReportTimeRangeResolver timeRangeResolver;
 
     protected List<EntityData> fetchEntities(TbReportCtx ctx, DataSource dataSource, EntityId stateEntityId) {
         return fetchEntities(ctx, dataSource, stateEntityId, DEFAULT_SORT_ORDER);
@@ -129,7 +135,7 @@ public abstract class AbstractReportService implements ReportService {
         List<DataKey> dataKeys = dataSource.getDataKeys();
         if (dataKeys != null) {
             return dataKeys.stream()
-                    .filter(dataKey -> (dataKey.getAggregationType() != null && dataKey.getAggregationType() != Aggregation.NONE))
+                    .filter(DataKey::isAggregated)
                     .toList();
         }
         return Collections.emptyList();
@@ -307,9 +313,32 @@ public abstract class AbstractReportService implements ReportService {
         return entities;
     }
 
+    protected ReportTimeRangeVariables resolveReportTimeRange(TbReportCtx ctx) {
+        return (ReportTimeRangeVariables) ctx.getParams().computeIfAbsent(REPORT_TIME_RANGE, key -> {
+            ReportTimeRange timeRange = timeRangeResolver.resolve(ctx.getConfiguration(), ctx);
+            String timeDataPattern = ctx.getConfiguration().getTimeDataPattern();
+            return ReportTimeRangeVariables.of(
+                    formatTimestamp(timeRange.startTs(), timeDataPattern, ctx, timeRange.timezone()),
+                    formatTimestamp(timeRange.endTs(), timeDataPattern, ctx, timeRange.timezone()));
+        });
+    }
+
     protected void populateReportVars(ComponentData componentData, TbReportCtx ctx) {
         Map<String, Object> variables = componentData.getVariables();
         variables.put("reportCreatedTime", ctx.getReportCreatedTime());
+        ReportTimeRangeVariables timeRange = resolveReportTimeRange(ctx);
+        variables.put("reportStartTime", timeRange.startTime());
+        variables.put("reportEndTime", timeRange.endTime());
+        variables.put("reportTimeRange", timeRange.timeRange());
+    }
+
+    protected record ReportTimeRangeVariables(String startTime, String endTime, String timeRange) {
+
+        static ReportTimeRangeVariables of(String startTime, String endTime) {
+            String timeRange = startTime.isEmpty() || endTime.isEmpty() ? "" : startTime + " – " + endTime;
+            return new ReportTimeRangeVariables(startTime, endTime, timeRange);
+        }
+
     }
 
     private void putLatestValues(List<DataKey> dataKeys, Map<String, String> data, Map<EntityKeyType, Map<String, TsValue>> latest, TbReportCtx ctx, String timezone) {
@@ -317,8 +346,7 @@ public abstract class AbstractReportService implements ReportService {
             return;
         }
         for (DataKey dataKey : dataKeys) {
-            var agg = dataKey.getAggregationType();
-            if (agg != null && agg != Aggregation.NONE) {
+            if (dataKey.isAggregated()) {
                 continue;
             }
             Map<String, TsValue> keyValueMap = latest.get(EntityKeyType.fromName(dataKey.getType()));
@@ -339,8 +367,7 @@ public abstract class AbstractReportService implements ReportService {
             return;
         }
         for (DataKey dk : dataKeys) {
-            var agg = dk.getAggregationType();
-            if (agg == null || agg == Aggregation.NONE) {
+            if (!dk.isAggregated()) {
                 continue;
             }
 
