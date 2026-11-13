@@ -65,6 +65,7 @@ const TOOL_WORDS: Record<string, string> = {
   read_platform_settings: 'read-platform-settings',
   save_relations: 'save-relations',
   read_versions: 'read-versions',
+  read_gateway_status: 'read-gateway-status',
   save_platform_settings: 'save-platform-settings',
   read_device_connect_commands: 'read-connection-settings',
   search_web: 'search-web',

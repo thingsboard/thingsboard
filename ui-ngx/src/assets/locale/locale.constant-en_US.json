@@ -881,6 +881,10 @@
             "relations-removed": "Removed",
             "relations-failed": "Failed",
             "read-versions": "Read the saved versions",
+            "read-gateway-status": "Checked gateway {{name}}",
+            "gateway-online": "Online",
+            "gateway-offline": "Offline",
+            "gateway-connectors": "Connectors",
             "commit-version": "Saved the version '{{name}}'",
             "restore-version": "Restored from version {{version}}",
             "read-platform-settings": "Read the platform settings",
@@ -978,6 +982,7 @@
             "no": "No",
             "fact": {
                 "link": "Link",
+                "last-connect": "Last connected",
                 "version": "Version",
                 "branch": "Branch",
                 "added": "Added",
@@ -1285,6 +1290,10 @@
             "read-versions": {
                 "run": "Reading the versions",
                 "done": "Read the versions"
+            },
+            "read-gateway-status": {
+                "run": "Checking the gateway",
+                "done": "Checked the gateway"
             },
             "commit-version": {
                 "run": "Saving a version",

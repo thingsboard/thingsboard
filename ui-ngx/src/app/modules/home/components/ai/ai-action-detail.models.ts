@@ -1143,6 +1143,32 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('save-relations'), blocks};
     }
+    case 'read_gateway_status': {
+      if (!isObject(result)) {
+        return {hood: text('read-gateway-status'), blocks: generic(result, 'result')};
+      }
+      const rows: AiDetailFact[] = [{label: K + 'fact.status', value: K + (result.online ? 'gateway-online' : 'gateway-offline')}];
+      if (str(result.version)) {
+        rows.push({label: K + 'fact.version', value: result.version});
+      }
+      if (str(result.lastConnect)) {
+        rows.push({label: K + 'fact.last-connect', value: new Date(result.lastConnect).toLocaleString()});
+      }
+      const blocks: AiDetailBlock[] = [{type: 'facts', rows}];
+      const connectors = Array.isArray(result.connectors) ? result.connectors.filter(isObject) : [];
+      if (connectors.length) {
+        blocks.push({type: 'list', label: text('gateway-connectors'), rows: connectors.map(connector => [
+          `${connector.name} (${connector.type})`, connector.active ? '●' : '○',
+          connector.applied === true ? '✓' : connector.applied === false ? '…' : undefined, str(connector.problem)
+        ].filter(Boolean).join(' '))});
+      }
+      for (const [key, lines] of Object.entries(isObject(result.logs) ? result.logs : {})) {
+        if (Array.isArray(lines) && lines.length) {
+          blocks.push({type: 'code', label: key, text: lines.map(String).join('\n')});
+        }
+      }
+      return {hood: text('read-gateway-status', {name: str(result.name) ?? '—'}), blocks};
+    }
     case 'read_versions': {
       const versions = isObject(result) && Array.isArray(result.versions) ? result.versions.filter(isObject) : undefined;
       if (!versions) {
