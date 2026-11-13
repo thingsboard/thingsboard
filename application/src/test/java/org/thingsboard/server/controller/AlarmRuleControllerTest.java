@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -96,6 +97,32 @@ public class AlarmRuleControllerTest extends AbstractControllerTest {
 
         doDelete("/api/alarm/rule/" + saved.getId().getId())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithOtherTenantReference() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        AlarmRuleDefinition alarmRule = createTestAlarmRule(testDevice.getId(), "High Temperature");
+        alarmRule.getConfiguration().getArguments().get("temperature").setRefEntityId(tenantId);
+
+        doPost("/api/alarm/rule", alarmRule).andExpect(status().isForbidden());
+
+        PageData<AlarmRuleDefinition> alarmRules = doGetTypedWithPageLink(
+                "/api/alarm/rules/" + EntityType.DEVICE + "/" + testDevice.getUuidId() + "?",
+                new TypeReference<>() {}, new PageLink(10));
+        assertThat(alarmRules.getData()).isEmpty();
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithOwnTenantReference() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        AlarmRuleDefinition alarmRule = createTestAlarmRule(testDevice.getId(), "High Temperature");
+        alarmRule.getConfiguration().getArguments().get("temperature").setRefEntityId(savedTenant.getId());
+
+        AlarmRuleDefinition saved = saveAlarmRule(alarmRule);
+
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getConfiguration().getArguments().get("temperature").getRefEntityId()).isEqualTo(savedTenant.getId());
     }
 
     @Test
