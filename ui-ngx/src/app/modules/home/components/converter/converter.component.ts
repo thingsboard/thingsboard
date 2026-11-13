@@ -268,7 +268,7 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
       }
       this.updateForm(converter, false);
     } else {
-      this.entityForm.get('name').patchValue('', {emitEvent: false});
+      this.entityForm.get('name').patchValue(this.predefinedConverterName ?? '', {emitEvent: false});
     }
   }
 

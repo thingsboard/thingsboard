@@ -1244,12 +1244,6 @@
       "contentHash": "sha256:03445abafd2f4f71cd541c2ee3c33e195e37ad711630971fc35fd393c66419ff"
     },
     {
-      "path": "ui-ngx/src/app/modules/home/components/converter/converter-dialog.component.html",
-      "header": "busl",
-      "reason": "PE view template converter-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/components/entity/add-entity-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 955f8f58be2d9d462570164005f4a2ee693b0dd7).",
-      "contentHash": "sha256:845e3846f9f41be29dc209df6c28c8870c3886886018155735affb0c49c5a9f9"
-    },
-    {
       "path": "ui-ngx/src/app/modules/home/components/converter/converter-test-dialog.component.scss",
       "header": "busl",
       "reason": "New PE file implementing a PE feature. It was written by adapting CE ui-ngx/src/app/shared/components/dialog/node-script-test-dialog.component.scss, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
