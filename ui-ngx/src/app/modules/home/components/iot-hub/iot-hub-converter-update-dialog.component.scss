@@ -70,6 +70,11 @@
   line-height: 16px;
   color: var(--tb-primary-500);
   cursor: pointer;
+  // A link, as the "here" link below it
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
 }
 
 .tb-converter-update-link {
