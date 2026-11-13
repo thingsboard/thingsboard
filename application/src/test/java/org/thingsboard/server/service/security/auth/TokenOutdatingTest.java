@@ -102,7 +102,11 @@ public class TokenOutdatingTest {
         when(userAuthDetailsCache.getUserAuthDetails(any(), eq(userId))).thenReturn(new UserAuthDetails(user, true));
 
         accessTokenAuthenticationProvider = new JwtAuthenticationProvider(tokenFactory, tokenOutdatingService);
-        refreshTokenAuthenticationProvider = new RefreshTokenAuthenticationProvider(tokenFactory, userAuthDetailsCache, userPermissionsService, mock(CustomerService.class), tokenOutdatingService);
+        org.thingsboard.server.config.SysAdminAllowlistProperties allowlistProperties =
+                new org.thingsboard.server.config.SysAdminAllowlistProperties(java.util.List.of(), java.util.List.of());
+        allowlistProperties.init();
+        refreshTokenAuthenticationProvider = new RefreshTokenAuthenticationProvider(tokenFactory, userAuthDetailsCache, userPermissionsService, mock(CustomerService.class), tokenOutdatingService,
+                new org.thingsboard.server.service.security.ip.SysAdminIpPolicy(allowlistProperties));
     }
 
     @Test

@@ -54,7 +54,14 @@ public class Oauth2AuthenticationSuccessHandlerTest {
     private final SystemSecurityService systemSecurityService = mock(SystemSecurityService.class);
     private final Oauth2AuthenticationSuccessHandler successHandler = new Oauth2AuthenticationSuccessHandler(
             tokenFactory, oauth2ClientMapperProvider, oAuth2ClientService, oAuth2AuthorizedClientService,
-            mock(HttpCookieOAuth2AuthorizationRequestRepository.class), systemSecurityService);
+            mock(HttpCookieOAuth2AuthorizationRequestRepository.class), systemSecurityService, disabledSysAdminIpPolicy());
+
+    private static org.thingsboard.server.service.security.ip.SysAdminIpPolicy disabledSysAdminIpPolicy() {
+        org.thingsboard.server.config.SysAdminAllowlistProperties properties =
+                new org.thingsboard.server.config.SysAdminAllowlistProperties(java.util.List.of(), java.util.List.of());
+        properties.init();
+        return new org.thingsboard.server.service.security.ip.SysAdminIpPolicy(properties);
+    }
 
     private HttpServletRequest request;
     private HttpServletResponse response;
