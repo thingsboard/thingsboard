@@ -16,6 +16,7 @@
   --tb-commercial: #00695c;
   --tb-noncommercial: #1560b4;
   --tb-development: #f36900;
+  --tb-warning: #FAA405;
   --tb-caution: #b26500;
   --tb-caution-tint: rgb(255 167 38 / 0.16);
   --tb-crit: #D12730;
@@ -260,6 +261,11 @@ $mat-tb-accent: (
 
   div.tb-dashboard-page.mobile-app {
     @include mat-fab-toolbar-inverse-theme($theme);
+
+    tb-dashboard-toolbar {
+      --tb-primary-background-color: #fff;
+      --tb-primary-text-color: rgba(0, 0, 0, 0.87);
+    }
   }
 
   ::-webkit-scrollbar {

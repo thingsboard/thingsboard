@@ -54,7 +54,7 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor implements 
                     if (entityViewUpdateMsg.hasEntityGroupIdMSB() && entityViewUpdateMsg.hasEntityGroupIdLSB()) {
                         EntityGroupId entityGroupId = new EntityGroupId(
                                 new UUID(entityViewUpdateMsg.getEntityGroupIdMSB(), entityViewUpdateMsg.getEntityGroupIdLSB()));
-                        edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, entityViewId);
+                        safeRemoveEntityFromGroup(tenantId, entityGroupId, entityViewId);
                     } else if (EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
                         deleteEntityView(tenantId, edge, entityViewId);
                     } else {

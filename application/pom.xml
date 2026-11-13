@@ -27,6 +27,7 @@
         <pkg.type>java</pkg.type>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
+        <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
         <pkg.name>thingsboard</pkg.name>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
@@ -582,6 +583,10 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
             </plugin>
@@ -596,6 +601,83 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <!-- The gateway extension and its SBOM are committed together and must match. The package SBOM
+                         checks it too, but only with -Dsbom.skip=false, which would be at the release. -->
+                    <execution>
+                        <id>check-gateway-extension-sbom</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <evaluateBeanshell>
+                                    <condition><![CDATA[
+                                        new String(java.nio.file.Files.readAllBytes(new java.io.File(new java.net.URI("${project.baseUri}src/main/sbom/gateway-management-extension.cdx.json")).toPath()), "UTF-8")
+                                            .contains(org.apache.commons.codec.digest.DigestUtils.sha256Hex(java.nio.file.Files.readAllBytes(new java.io.File(new java.net.URI("${project.baseUri}src/main/data/resources/js_extensions/gateway-management-extension.js")).toPath())))
+                                    ]]></condition>
+                                    <message>src/main/sbom/gateway-management-extension.cdx.json does not describe src/main/data/resources/js_extensions/gateway-management-extension.js: it does not contain the SHA-256 of that file. Take both files from the same build in the gateway-management-extensions-dist repository.</message>
+                                </evaluateBeanshell>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>merge-ui-sbom</id>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                            <host>org.thingsboard:ui-ngx</host>
+                            <skip>${skip.ui.build}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>package-sbom</id>
+                        <configuration>
+                            <components combine.children="append">
+                                <component>
+                                    <sbom>${project.basedir}/src/main/sbom/gateway-management-extension.cdx.json</sbom>
+                                    <file>${project.build.directory}/data/resources/js_extensions/gateway-management-extension.js</file>
+                                </component>
+                                <component>
+                                    <type>data</type>
+                                    <name>lwm2m-registry</name>
+                                    <description>LwM2M object model XML files from the OMNA LwM2M Registry. Licenses vary per file, mostly BSD-3-Clause.</description>
+                                    <supplier>
+                                        <name>Open Mobile Alliance</name>
+                                        <urls>
+                                            <url>https://github.com/OpenMobileAlliance/lwm2m-registry</url>
+                                        </urls>
+                                    </supplier>
+                                    <file>${project.build.directory}/data/lwm2m-registry</file>
+                                </component>
+                                <component>
+                                    <type>cryptographic-asset</type>
+                                    <name>DigiCert Global Root G2</name>
+                                    <description>Root CA certificate for Azure IoT Hub connections.</description>
+                                    <supplier>
+                                        <name>DigiCert, Inc.</name>
+                                        <urls>
+                                            <url>https://www.digicert.com</url>
+                                        </urls>
+                                    </supplier>
+                                    <file>${project.build.directory}/data/certs/azure/DigiCertGlobalRootG2.crt.pem</file>
+                                </component>
+                            </components>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>

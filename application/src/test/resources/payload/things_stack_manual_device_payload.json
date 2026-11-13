@@ -1,0 +1,34 @@
+{
+  "end_device_ids": {
+    "device_id": "manual-node",
+    "application_ids": {
+      "application_id": "my-app"
+    },
+    "dev_eui": "70B3D57ED006F370"
+  },
+  "received_at": "2026-10-28T10:00:00.123Z",
+  "uplink_message": {
+    "f_port": 1,
+    "f_cnt": 3,
+    "frm_payload": "Ae0DM18OTGM=",
+    "rx_metadata": [
+      {
+        "gateway_ids": {
+          "gateway_id": "ug56"
+        },
+        "rssi": -70,
+        "snr": 7
+      }
+    ],
+    "settings": {
+      "data_rate": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreading_factor": 9
+        }
+      },
+      "frequency": "868300000"
+    },
+    "received_at": "2026-10-28T10:00:00.100Z"
+  }
+}

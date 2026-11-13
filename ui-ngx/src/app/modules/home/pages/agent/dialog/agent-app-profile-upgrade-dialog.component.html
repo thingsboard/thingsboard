@@ -56,9 +56,10 @@
       [syncScroll]="diffSyncScroll" (rightChange)="composeYaml = $event"></tb-agent-compose-diff>
     <p class="diff-hint" translate>agent.app-upgrade-diff-hint</p>
     @if (isComposeYamlInvalid()) {
-      <p class="diff-hint" style="color:#c62828;" translate>
-        agent.app-compose-invalid-yaml
-      </p>
+      <div class="tb-form-hint tb-primary-fill tb-form-hint-error mt-2">
+        <mat-icon>error_outline</mat-icon>
+        <span translate>agent.app-compose-invalid-yaml</span>
+      </div>
     }
     <div class="step-footer">
       <button mat-button (click)="cancel()" [disabled]="submitting">
