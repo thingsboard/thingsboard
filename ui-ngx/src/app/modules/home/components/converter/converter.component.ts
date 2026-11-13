@@ -197,16 +197,14 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
   }
 
   private updateIntegrationsInfo(): void {
-    const integrationTypeControl = this.entityForm.get('integrationType');
-    // Start from the current integration type: a converter opened with a preset integration type
-    // (e.g. Create new converter from the integration form) never changes it.
+    const typeControl = this.entityForm.get('integrationType');
+    // The type can be set before the template subscribes (e.g. preset from the integration form)
     this.integrationInfo$ = combineLatest([
       this.integrationService.getIntegrationsConvertersInfoCached(),
-      defer(() => integrationTypeControl.valueChanges.pipe(startWith(integrationTypeControl.value)))
+      defer(() => typeControl.valueChanges.pipe(startWith(typeControl.value)))
     ]).pipe(
-      filter(([, integrationType]) => !!integrationType),
-      map(([integrationsConvertersInfo, integrationType]: [IntegrationsConvertersInfo, IntegrationType]) =>
-        integrationsConvertersInfo?.[integrationType]),
+      filter(([, type]) => !!type),
+      map(([info, type]) => info?.[type]),
       shareReplay(1)
     );
   }
