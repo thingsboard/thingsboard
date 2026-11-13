@@ -39,6 +39,7 @@ export class ConverterDialogComponent extends DialogComponent<ConverterDialogCom
   isEdit: boolean;
   dialogTitle:string;
   converter: Converter;
+  converterName: string;
 
   @ViewChild('converterComponent', {static: true}) converterComponent: ConverterComponent;
 
@@ -55,6 +56,7 @@ export class ConverterDialogComponent extends DialogComponent<ConverterDialogCom
   ngOnInit() {
     const {disabledIntegrationType, ...converterInfo} = this.data.convertor
     this.converter = converterInfo as Converter;
+    this.converterName = this.isEdit ? null : this.converter.name;
   }
 
   ngAfterViewInit() {

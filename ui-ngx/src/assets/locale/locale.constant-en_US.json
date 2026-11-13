@@ -6594,6 +6594,8 @@
         "device-update-no-changes": "No changes",
         "device-update-new": "New",
         "device-update-shared": "Used by other packages. The update affects them.",
+        "device-update-shared-more": "and {{count}} more",
+        "device-update-shared-less": "Show less",
         "device-update-new-default-converter": "ThingsBoard has a new version of the default converter used by this package.",
         "device-update-modified": "Has local changes. You can download the current version <a>here</a>.",
         "device-install-unexpected-error": "Something went wrong. Try again.",
