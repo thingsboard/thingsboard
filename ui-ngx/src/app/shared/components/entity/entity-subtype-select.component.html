@@ -1,14 +1,21 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-form-field [formGroup]="subTypeFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
+<mat-form-field [formGroup]="subTypeFormGroup"
+  [class.tb-inline-field]="inlineField"
+  [class.flex]="inlineField"
+  class="mat-block"
+  [appearance]="inlineField ? 'outline' : 'fill'"
+  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
   @if (showLabel) {
     <mat-label>{{ entitySubtypeTitle | translate }}</mat-label>
   }
-  <mat-select [class.!hidden]="!subTypesLoaded" class="tb-entity-subtype-select" formControlName="subType">
+  <mat-select [class.!hidden]="!subTypesLoaded" class="tb-entity-subtype-select" formControlName="subType"
+              [aria-label]="showLabel ? '' : (entitySubtypeTitle | translate)">
     @for (subType of subTypesOptions | async; track subType) {
       <mat-option [value]="subType">
         {{ displaySubTypeFn(subType) }}

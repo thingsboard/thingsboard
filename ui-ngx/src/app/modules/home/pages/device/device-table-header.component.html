@@ -5,10 +5,15 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="flex flex-row items-center justify-start">
-  <tb-device-info-filter [ngModel]="entitiesTableConfig.componentsData.deviceInfoFilter"
-                         (ngModelChange)="deviceInfoFilterChanged($event)">
-  </tb-device-info-filter>
+<div class="flex min-w-0 flex-row items-center justify-start">
+  <tb-filter-button emptyLabel="device.device-filter-title"
+                    [valueLabel]="deviceInfoFilterLabel"
+                    [ngModel]="entitiesTableConfig.componentsData.deviceInfoFilter"
+                    (ngModelChange)="deviceInfoFilterChanged($event)">
+    <ng-template let-control>
+      <tb-device-info-filter [buttonMode]="false" [formControl]="control"></tb-device-info-filter>
+    </ng-template>
+  </tb-filter-button>
   <mat-slide-toggle
     style="margin-left: 32px;"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
