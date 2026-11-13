@@ -43,6 +43,38 @@
   color: rgba(0, 0, 0, 0.54);
 }
 
+// Material expansion-panel timing
+.tb-converter-update-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 225ms cubic-bezier(0.4, 0, 0.2, 1);
+  > ul {
+    overflow: hidden;
+    min-height: 0;
+  }
+  &.expanded {
+    grid-template-rows: 1fr;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.tb-converter-update-toggle {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--tb-primary-500);
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
 .tb-converter-update-link {
   color: #305680;
   text-decoration: underline;
