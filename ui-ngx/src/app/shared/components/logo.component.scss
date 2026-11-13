@@ -7,27 +7,13 @@
     border: none;
     color: currentColor;
     img {
-      width: 100%;
+      width: auto;
       height: 100%;
     }
     ::ng-deep svg {
       width: 100%;
       height: 100%;
       fill: currentColor;
-    }
-  }
-}
-
-:host-context(.login-logo) {
-  width: 280px;
-  height: 60px;
-  a {
-    text-decoration: none;
-    border: none;
-    transform: none;
-
-    &:focus {
-      outline: 0;
     }
   }
 }
