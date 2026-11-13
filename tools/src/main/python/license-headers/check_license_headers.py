@@ -231,7 +231,7 @@ def merged_ce_bases(repo, head, baseline):
 
 
 def merge_blobs(repo, ours, base, theirs):
-    result = run(["git", "merge-file", "-p", "--object-id", ours, base, theirs], repo, ok=range(0, 256))
+    result = run(["git", "merge-file", "-p", "--object-id", ours, base, theirs], repo, ok=range(0, 128))
     return result.stdout if result.returncode == 0 else None
 
 

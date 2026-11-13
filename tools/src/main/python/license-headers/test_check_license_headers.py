@@ -663,6 +663,14 @@ class GitHistoryTests(unittest.TestCase):
         self.assertEqual(b"ONE\ntwo\nthree\nfour\nFIVE\n", p.merge_blobs(git.root, ours, base, theirs))
         self.assertIsNone(p.merge_blobs(git.root, ours, base, blob("uno\ntwo\nthree\nfour\nfive\n")))
 
+    def test_merge_blobs_fails_when_git_cannot_merge(self):
+        git = GitFixture(temporary_directory(self), "main")
+        git.write("File.java", "one\n")
+        git.commit("base")
+        blob = git("rev-parse", "HEAD:File.java")
+        with self.assertRaises(p.Failure):
+            p.merge_blobs(git.root, blob, blob, "no-such-object")
+
     def test_ignore_filter_keeps_tracked_and_unignored_files(self):
         repo = temporary_directory(self)
         p.git(repo, "init")
