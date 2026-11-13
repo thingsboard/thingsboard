@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.exception.DataValidationException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -1051,6 +1052,22 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setFileName(fileName);
         resource.setEncodedData(TEST_DATA);
         return new TbResourceInfo(save(resource));
+    }
+
+    @Test
+    public void testUploadResourceWithEncodedQuotesInFileName() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setFileName("%22Baker Street%22, 221B.js");
+        resource.setData("export const value = 1;".getBytes(StandardCharsets.UTF_8));
+
+        TbResourceInfo savedResource = save(resource);
+
+        assertThat(savedResource.getFileName()).isEqualTo("\"Baker Street\", 221B.js");
+        assertThat(savedResource.getTitle()).isEqualTo("\"Baker Street\", 221B.js");
+        assertThat(savedResource.getResourceKey()).isEqualTo("\"Baker Street\", 221B.js");
+
+        doGet("/api/resource/js_module/tenant/{key}/info", savedResource.getResourceKey()).andExpect(status().isOk());
     }
 
     private TbResourceInfo save(TbResource tbResource) throws Exception {
