@@ -159,7 +159,7 @@
         <antlr.version>3.5.3</antlr.version>
         <amazon-kinesis-producer>0.15.12</amazon-kinesis-producer>
         <org.json.version>20250517</org.json.version> <!-- Transitive dependency by amazon-kinesis-producer 0.15.10, 0.15.12 to address CVE-2023-5072 -->
-        <amazon-kinesis-client>3.0.1</amazon-kinesis-client>
+        <amazon-kinesis-client>3.1.2</amazon-kinesis-client>
         <apache-avro.version>1.11.4</apache-avro.version> <!--vulnerability fix, related to the kinesis client-->
         <aws.sdk.version>1.12.701</aws.sdk.version>
         <aws.sdk2.version>2.31.62</aws.sdk2.version>
