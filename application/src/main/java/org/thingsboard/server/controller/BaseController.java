@@ -1140,7 +1140,11 @@ public abstract class BaseController {
         for (EntityId referencedEntityId : calculatedFieldConfig.getReferencedEntities()) {
             EntityType refEntityType = referencedEntityId.getEntityType();
             switch (refEntityType) {
-                case TENANT -> {}
+                case TENANT -> {
+                    if (!getTenantId().equals(referencedEntityId)) {
+                        throw permissionDenied();
+                    }
+                }
                 case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
                 default -> throw new IllegalArgumentException("Unsupported referenced entity type: '" + refEntityType + "'.");
             }
