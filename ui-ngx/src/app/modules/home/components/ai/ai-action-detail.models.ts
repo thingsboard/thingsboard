@@ -1172,7 +1172,10 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
     case 'read_white_labeling':
       return {hood: text('read-white-labeling'), blocks: json('settings', result)};
     case 'save_white_labeling': {
-      const {target, ...changes} = values;
+      const {target, reset, ...changes} = values;
+      if (reset) {
+        return {hood: text(target === 'LOGIN' ? 'reset-white-labeling-login' : 'reset-white-labeling'), blocks: []};
+      }
       return {hood: text(target === 'LOGIN' ? 'save-white-labeling-login' : 'save-white-labeling'), blocks: [{type: 'facts', rows: facts(changes)}]};
     }
     case 'read_ota': {

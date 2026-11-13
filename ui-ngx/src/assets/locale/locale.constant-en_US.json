@@ -890,6 +890,8 @@
             "read-white-labeling": "Read the white labeling",
             "save-white-labeling": "Changed the platform's white labeling",
             "save-white-labeling-login": "Changed the login page's white labeling",
+            "reset-white-labeling": "Reset the platform's white labeling to the defaults",
+            "reset-white-labeling-login": "Reset the login page's white labeling to the defaults",
             "save-ota-package": "Created the OTA package {{name}}",
             "assign-ota-package": "Assigned the OTA package",
             "clear-ota-package": "Cleared the OTA package",
@@ -1592,6 +1594,7 @@
             "details": "Details",
             "request": "Request",
             "result": "Result",
+            "settings": "Settings",
             "try-again": "Try again",
             "try-again-prompt": "Try that again"
         },
