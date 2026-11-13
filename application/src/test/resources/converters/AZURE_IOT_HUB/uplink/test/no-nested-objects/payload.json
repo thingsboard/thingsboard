@@ -1,0 +1,9 @@
+{
+  "deviceId": "8F4A2C6D",
+  "deviceType": "Packing machine",
+  "temperature": 25.5,
+  "pressure": 1013.25,
+  "timestamp": "2026-10-14T10:30:00Z",
+  "status": "OK",
+  "alarms": []
+}
