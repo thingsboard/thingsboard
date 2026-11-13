@@ -21,12 +21,12 @@ export interface IotHubConverterUpdateDialogData {
   usedBy: string[];
 }
 
+const USED_BY_SHOWN = 3;
+
 /**
  * Brings an installed device package's default converter to ThingsBoard's default converter now, without a new version of
  * the package. Closes with true once it is updated.
  */
-const USED_BY_SHOWN = 3;
-
 @Component({
   selector: 'tb-iot-hub-converter-update-dialog',
   standalone: false,
