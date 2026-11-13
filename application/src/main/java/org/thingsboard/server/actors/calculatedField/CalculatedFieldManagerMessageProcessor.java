@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldEventType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.ComputeOn;
 import org.thingsboard.server.common.data.cf.configuration.HasRelationPathLevel;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -406,6 +407,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             if (cf == null) {
                 log.debug("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
+            } else if (!isComputedHere(cf)) {
+                log.debug("[{}][{}] CF is not computed on this side [{}]", tenantId, cfId, cf.getComputeOn());
+                callback.onSuccess();
             } else {
                 var cfCtx = getCfCtx(cf);
                 try {
@@ -437,6 +441,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             if (newCf == null) {
                 log.debug("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
+            } else if (!isComputedHere(newCf)) {
+                log.debug("[{}][{}] CF is no longer computed on this side [{}]", tenantId, cfId, newCf.getComputeOn());
+                onCfDeleted(msg, callback);
             } else {
                 var newCfCtx = getCfCtx(newCf);
                 try {
@@ -791,6 +798,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(pageLink -> cfDaoService.findCalculatedFieldsByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         cfs.forEach(cf -> {
             log.trace("Processing calculated field record: {}", cf);
+            if (!isComputedHere(cf)) {
+                log.debug("[{}][{}] Skipping CF that is not computed on this side [{}]", tenantId, cf.getId(), cf.getComputeOn());
+                return;
+            }
             try {
                 initCalculatedField(cf);
                 initCalculatedFieldLinks(cf);
@@ -908,6 +919,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             cfsReevaluationTask.cancel(true);
             cfsReevaluationTask = null;
         }
+    }
+
+    private boolean isComputedHere(CalculatedField cf) {
+        return ComputeOn.isComputedHere(cf.getComputeOn());
     }
 
 }
