@@ -4,6 +4,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.CustomerInfo;
 import org.thingsboard.server.common.data.Dashboard;
@@ -28,6 +30,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.menu.CMAssigneeType;
 import org.thingsboard.server.common.data.menu.CMScope;
 import org.thingsboard.server.common.data.menu.CustomMenu;
@@ -67,6 +70,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,6 +89,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -100,6 +105,8 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
 
     public static final String CUSTOMER_TEST_EMAIL = "signup-customer@thingsboard.org";
     public static final String CUSTOMER_TITLE_PREFIX = "Prefix-";
+    public static final String CONFIGURED_BASE_URL = "https://configured.example.com";
+    public static final String OTHER_HOST = "other.example.com";
     private static List<UUID> idsToRemove = new ArrayList<>();
 
     private EntityGroup customerGroup;
@@ -455,6 +462,119 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testActivationEmailLinkUsesConfiguredBaseUrl() throws Exception {
+        createWebSelfRegistrationSettings();
+        AdminSettings generalSettings = setGeneralBaseUrl(CONFIGURED_BASE_URL);
+        try {
+            Mockito.clearInvocations(mailService);
+            doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+
+            assertThat(captureActivationLink()).startsWith(CONFIGURED_BASE_URL + "/api/noauth/activateEmail?emailCode=");
+        } finally {
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
+        }
+        removeCreatedUser(userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL));
+    }
+
+    @Test
+    public void testActivationEmailLinkUsesRequestBaseUrlWhenGeneralBaseUrlIsMissing() throws Exception {
+        createWebSelfRegistrationSettings();
+        AdminSettings generalSettings = setGeneralBaseUrl(null);
+        try {
+            Mockito.clearInvocations(mailService);
+            doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+
+            assertThat(captureActivationLink()).startsWith("http://localhost:80/api/noauth/activateEmail?emailCode=");
+        } finally {
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
+        }
+        removeCreatedUser(userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL));
+    }
+
+    @Test
+    public void testResendActivationEmailLinkUsesConfiguredBaseUrl() throws Exception {
+        String appSecret = StringUtils.randomAlphanumeric(24);
+        String mobilePkgName = "my.test.android.app";
+        createMobileSelfRegistrationSettings(mobilePkgName, appSecret, PlatformType.ANDROID, createDashboard(), createDashboard());
+        AdminSettings generalSettings = setGeneralBaseUrl(CONFIGURED_BASE_URL);
+        try {
+            doSignUp(createMobileSignUpRequest(CUSTOMER_TEST_EMAIL, mobilePkgName, appSecret, PlatformType.ANDROID));
+
+            Mockito.clearInvocations(mailService);
+            mockMvc.perform(post("/api/noauth/resendEmailActivation")
+                            .param("email", CUSTOMER_TEST_EMAIL)
+                            .param("pkgName", mobilePkgName)
+                            .param("platform", PlatformType.ANDROID.name())
+                            .header("Host", OTHER_HOST))
+                    .andExpect(status().isOk());
+
+            assertThat(captureActivationLink()).startsWith(CONFIGURED_BASE_URL + "/api/noauth/activateEmail?emailCode=");
+        } finally {
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
+        }
+        removeCreatedUser(userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL));
+    }
+
+    @Test
+    public void testAccountActivatedEmailLinkUsesConfiguredBaseUrl() throws Exception {
+        createWebSelfRegistrationSettings();
+        AdminSettings generalSettings = setGeneralBaseUrl(CONFIGURED_BASE_URL);
+        User user;
+        try {
+            doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+            user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
+            String activateToken = userService.findUserCredentialsByUserId(tenantId, user.getId()).getActivateToken();
+
+            Mockito.clearInvocations(mailService);
+            doPost("/api/noauth/activateByEmailCode?emailCode=" + activateToken).andExpect(status().isOk());
+
+            verify(mailService, times(1)).sendAccountActivatedEmail(eq(tenantId), eq(CONFIGURED_BASE_URL + "/login"), eq(CUSTOMER_TEST_EMAIL));
+        } finally {
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
+        }
+        removeCreatedUser(user);
+    }
+
+    @Test
+    public void testActivationEmailLinkUsesHttpSchemeForNonHttpForwardedProto() throws Exception {
+        createWebSelfRegistrationSettings();
+
+        Mockito.clearInvocations(mailService);
+        mockMvc.perform(post("/api/noauth/signup")
+                        .contentType(contentType)
+                        .content(json(createWebSignUpRequest(CUSTOMER_TEST_EMAIL)))
+                        .header("X-Forwarded-Proto", "ftp"))
+                .andExpect(status().isOk());
+
+        URI activationLink = URI.create(captureActivationLink());
+        assertThat(activationLink.getScheme()).isEqualTo("http");
+        assertThat(activationLink.getHost()).isEqualTo("localhost");
+
+        removeCreatedUser(userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL));
+    }
+
+    @Test
+    public void testActivationByEmailCodeOnOtherTenantSettingsIsRejected() throws Exception {
+        createWebSelfRegistrationSettings();
+        doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+        User user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
+        String activateToken = userService.findUserCredentialsByUserId(tenantId, user.getId()).getActivateToken();
+
+        createDifferentTenant();
+        createWebSelfRegistrationParams(OTHER_HOST, Collections.emptyList());
+
+        mockMvc.perform(post("/api/noauth/activateByEmailCode")
+                        .param("emailCode", activateToken)
+                        .header("Host", OTHER_HOST))
+                .andExpect(status().isBadRequest());
+
+        assertThat(userService.findUserCredentialsByUserId(tenantId, user.getId()).isEnabled()).isFalse();
+
+        deleteDifferentTenant();
+        removeCreatedUser(user);
+    }
+
+    @Test
     public void testSaveSelfRegistrationParamsWithDomainOfOtherTenantIsForbidden() throws Exception {
         String domainName = "signup-other-tenant.example.com";
         Domain savedDomain = doPost("/api/domain", constructDomain(domainName), Domain.class);
@@ -543,12 +663,39 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         Assert.assertNull("Expected that created user is deleted but one found!", found);
     }
 
+    private String captureActivationLink() throws Exception {
+        ArgumentCaptor<String> activationLink = ArgumentCaptor.forClass(String.class);
+        verify(mailService, times(1)).sendActivationEmail(eq(tenantId), activationLink.capture(), anyLong(), eq(CUSTOMER_TEST_EMAIL));
+        return activationLink.getValue();
+    }
+
+    private AdminSettings setGeneralBaseUrl(String baseUrl) {
+        AdminSettings generalSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "general");
+        AdminSettings updatedSettings = new AdminSettings(generalSettings);
+        ObjectNode jsonValue = generalSettings.getJsonValue().deepCopy();
+        if (baseUrl != null) {
+            jsonValue.put("baseUrl", baseUrl);
+        } else {
+            jsonValue.remove("baseUrl");
+        }
+        jsonValue.put("prohibitDifferentUrl", true);
+        updatedSettings.setJsonValue(jsonValue);
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, updatedSettings);
+        return generalSettings;
+    }
+
     private void createWebSelfRegistrationSettings() {
         createWebSelfRegistrationSettings(Collections.emptyList());
     }
 
     private void createWebSelfRegistrationSettings(List<GroupPermission> permissions) {
-        Domain domain = constructDomain("localhost");
+        createWebSelfRegistrationParams("localhost", permissions);
+        createNotificationTemplate(NotificationType.USER_ACTIVATED, "User activated", "User ${userEmail} was activated", NotificationDeliveryMethod.WEB);
+        createNotificationTemplate(NotificationType.USER_REGISTERED, "User registered", "User ${userEmail} was registered", NotificationDeliveryMethod.WEB);
+    }
+
+    private void createWebSelfRegistrationParams(String domainName, List<GroupPermission> permissions) {
+        Domain domain = constructDomain(domainName);
         Domain savedDomain = doPost("/api/domain", domain, Domain.class);
 
         WebSelfRegistrationParams selfRegistrationParams = new WebSelfRegistrationParams();
@@ -565,9 +712,6 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
 
         doPost("/api/selfRegistration/selfRegistrationParams",
                 selfRegistrationParams, JsonNode.class);
-
-        createNotificationTemplate(NotificationType.USER_ACTIVATED, "User activated", "User ${userEmail} was activated", NotificationDeliveryMethod.WEB);
-        createNotificationTemplate(NotificationType.USER_REGISTERED, "User registered", "User ${userEmail} was registered", NotificationDeliveryMethod.WEB);
     }
 
     private void createMobileSelfRegistrationSettings(String mobilePkgName, String appSecret, PlatformType platformType,
