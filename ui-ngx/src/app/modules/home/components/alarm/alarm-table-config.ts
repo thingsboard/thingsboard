@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import {
   CellActionDescriptorType,
   DateEntityTableColumn,
@@ -209,7 +210,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   showAlarmDetails(entity: AlarmInfo) {
-    this.dialog.open<AlarmDetailsDialogComponent, AlarmDetailsDialogData, boolean>
+    const dialog$ = this.dialog.open<AlarmDetailsDialogComponent, AlarmDetailsDialogData, boolean>
     (AlarmDetailsDialogComponent,
       {
         disableClose: true,
@@ -222,7 +223,12 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           displayDetails: true,
           allowAssign: true
         }
-      }).afterClosed().subscribe(
+      }).afterClosed();
+    const closed$ = this.aiAssistantConfig
+      ? this.viewContainerRef.injector.get(AiAssistantPanelService).focusWhile(
+          {type: AiAssistantViewType.ALARM, entityId: entity.id}, entity.type, dialog$)
+      : dialog$;
+    closed$.subscribe(
       (res) => {
         if (res) {
           this.updateData();

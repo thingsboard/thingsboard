@@ -1105,6 +1105,7 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       const kind = tool.replace(/^save_/, '').replace(/_/g, '-');
       return {hood: text('save', {what: K + 'kind.' + kind, name: str(saved.name) ?? str(saved.title) ?? '—'}), blocks: [{type: 'facts', rows: savedFacts(saved, names)}]};
     }
+    case 'save_asset':
     case 'save_entity_view':
     case 'save_asset_profile':
     case 'save_secret':
@@ -1125,10 +1126,51 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('save', {what: K + 'kind.' + kind, name}), blocks: rows.length ? [{type: 'facts', rows}] : generic(result, 'result')};
     }
+    case 'save_relations': {
+      if (!isObject(result)) {
+        return {hood: text('save-relations'), blocks: generic(result, 'result')};
+      }
+      const blocks: AiDetailBlock[] = [];
+      for (const [field, label] of [['added', 'relations-added'], ['removed', 'relations-removed']] as const) {
+        const rows = Array.isArray(result[field]) ? result[field].map(String) : [];
+        if (rows.length) {
+          blocks.push({type: 'list', label: text(label), rows: rows.slice(0, MAX_ROWS)});
+        }
+      }
+      const failed = Array.isArray(result.failed) ? result.failed.filter(isObject) : [];
+      if (failed.length) {
+        blocks.push({type: 'list', label: text('relations-failed'), rows: failed.slice(0, MAX_ROWS).map(row => `${row.relation}: ${row.error}`)});
+      }
+      return {hood: text('save-relations'), blocks};
+    }
     case 'read_platform_settings':
       return {hood: text('read-platform-settings'), blocks: json('settings', result)};
     case 'save_platform_settings':
       return {hood: text('save-platform-settings'), blocks: json('settings', result)};
+    case 'update_alarms': {
+      const action = String(values.action ?? '').toLowerCase();
+      const count = Array.isArray(values.alarmIds) ? values.alarmIds.length : 0;
+      if (!isObject(result)) {
+        return {hood: text('update-alarms.' + action, {count}), blocks: generic(result, 'result')};
+      }
+      const blocks: AiDetailBlock[] = [];
+      const done = Array.isArray(result.done) ? result.done.map(String) : [];
+      const skipped = Array.isArray(result.skipped) ? result.skipped.map(String) : [];
+      const failed = Array.isArray(result.failed) ? result.failed.filter(isObject) : [];
+      if (done.length) {
+        blocks.push({type: 'list', label: text('alarms-done'), rows: done.slice(0, MAX_ROWS)});
+      }
+      if (skipped.length) {
+        blocks.push({type: 'list', label: text('alarms-skipped'), rows: skipped.slice(0, MAX_ROWS)});
+      }
+      if (failed.length) {
+        blocks.push({type: 'list', label: text('alarms-failed'), rows: failed.slice(0, MAX_ROWS).map(row => `${row.alarm}: ${row.error}`)});
+      }
+      if (str(values.comment)) {
+        blocks.push({type: 'facts', rows: [{label: K + 'fact.comment', value: values.comment}]});
+      }
+      return {hood: text('update-alarms.' + action, {count}), blocks};
+    }
     case 'read_api_usage':
       return {hood: text('read-api-usage'), blocks: apiUsageBlocks(result)};
     case 'read_audit_logs':

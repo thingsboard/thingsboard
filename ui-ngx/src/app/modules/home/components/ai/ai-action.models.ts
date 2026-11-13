@@ -63,6 +63,7 @@ const TOOL_WORDS: Record<string, string> = {
   read_tasks: 'read-tasks',
   save_image: 'save-image',
   read_platform_settings: 'read-platform-settings',
+  save_relations: 'save-relations',
   save_platform_settings: 'save-platform-settings',
   read_device_connect_commands: 'read-connection-settings',
   search_web: 'search-web',
@@ -91,6 +92,7 @@ const SAVED_KINDS: Record<string, [string, string]> = {
   save_entity_group: ['entity-group', ''],
   save_role: ['role', ''],
   save_entity_view: ['entity-view', ''],
+  save_asset: ['asset', ''],
   save_asset_profile: ['asset-profile', ''],
   save_secret: ['secret', ''],
   save_ai_model: ['ai-model', ''],
@@ -124,6 +126,8 @@ const DELETED_TARGETS: Record<string, string> = {
   ENTITY_GROUP: 'delete-entity-group',
   ROLE: 'delete-role',
   GROUP_PERMISSION: 'delete-grant',
+  ALARM: 'delete-alarm',
+  ASSET: 'delete-asset',
   IMAGE: 'delete-image',
   ENTITY_VIEW: 'delete-entity-view',
   ASSET_PROFILE: 'delete-asset-profile',
@@ -308,6 +312,8 @@ export function aiActionWords(tool: string, args: unknown): AiActionWords {
       return {key: ACTION_PREFIX + (Array.isArray(values.widgets) && values.widgets.length === 1 ? 'add-widget' : 'add-widgets'), kind: 'think'};
     case 'search_entities':
       return {key: ACTION_PREFIX + searchedWords(values), kind: 'think'};
+    case 'update_alarms':
+      return {key: ACTION_PREFIX + 'update-alarms.' + String(values.action ?? 'other').toLowerCase(), kind: 'think'};
     case 'read_timeseries':
       return {key: ACTION_PREFIX + telemetryWords(values), kind: 'think'};
     case 'delete':

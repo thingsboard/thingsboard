@@ -866,6 +866,20 @@
             "read-audit-logs-of": "Read the audit log of {{entity}}",
             "read-tasks": "Read the task manager",
             "save-image": "Added image {{name}} to the image gallery",
+            "update-alarms": {
+                "acknowledge": "{ count, plural, =1 {Acknowledged an alarm} other {Acknowledged # alarms} }",
+                "clear": "{ count, plural, =1 {Cleared an alarm} other {Cleared # alarms} }",
+                "assign": "{ count, plural, =1 {Assigned an alarm} other {Assigned # alarms} }",
+                "unassign": "{ count, plural, =1 {Unassigned an alarm} other {Unassigned # alarms} }",
+                "comment": "{ count, plural, =1 {Commented on an alarm} other {Commented on # alarms} }"
+            },
+            "alarms-done": "Done",
+            "alarms-skipped": "Already in that state",
+            "alarms-failed": "Failed",
+            "save-relations": "Changed relations",
+            "relations-added": "Added",
+            "relations-removed": "Removed",
+            "relations-failed": "Failed",
             "read-platform-settings": "Read the platform settings",
             "save-platform-settings": "Saved the platform settings",
             "usage": {
@@ -918,6 +932,7 @@
             "kind": {
                 "calculated-field": "calculated field",
                 "entity-view": "entity view",
+                "asset": "asset",
                 "asset-profile": "asset profile",
                 "secret": "secret",
                 "ai-model": "AI model",
@@ -960,6 +975,7 @@
             "no": "No",
             "fact": {
                 "link": "Link",
+                "comment": "Comment",
                 "reference": "Reference",
                 "tested": "Tested before saving",
                 "permissions": "Permissions",
@@ -1229,6 +1245,34 @@
             "save-image": {
                 "run": "Adding the image",
                 "done": "Added the image"
+            },
+            "update-alarms": {
+                "acknowledge": {"run": "Acknowledging the alarms", "done": "Acknowledged the alarms"},
+                "clear": {"run": "Clearing the alarms", "done": "Cleared the alarms"},
+                "assign": {"run": "Assigning the alarms", "done": "Assigned the alarms"},
+                "unassign": {"run": "Unassigning the alarms", "done": "Unassigned the alarms"},
+                "comment": {"run": "Commenting on the alarms", "done": "Commented on the alarms"},
+                "other": {"run": "Updating the alarms", "done": "Updated the alarms"}
+            },
+            "delete-alarm": {
+                "run": "Deleting the alarm",
+                "done": "Deleted the alarm"
+            },
+            "create-asset": {
+                "run": "Creating the asset",
+                "done": "Created the asset"
+            },
+            "update-asset": {
+                "run": "Updating the asset",
+                "done": "Updated the asset"
+            },
+            "delete-asset": {
+                "run": "Deleting the asset",
+                "done": "Deleted the asset"
+            },
+            "save-relations": {
+                "run": "Changing the relations",
+                "done": "Changed the relations"
             },
             "create-entity-view": {
                 "run": "Creating the entity view",
@@ -1546,6 +1590,8 @@
             "ask-again-message": "Ask me again for the same change.",
             "field": {
                 "source": "Source",
+                "assignee": "Assignee",
+                "comment": "Comment",
                 "timeseries": "Telemetry",
                 "attributes": "Attributes",
                 "window": "Time window",
@@ -1619,6 +1665,7 @@
             },
             "type": {
                 "IMAGE": "Image",
+                "RELATION": "Relations",
                 "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
                 "ROLE": "Role",
@@ -1862,7 +1909,8 @@
                 "line": "Their telemetry and alarms, or a dashboard to watch them.",
                 "suggestion": "Build a dashboard for my assets.",
                 "example": {
-                    "find": {"label": "Find assets with alarms", "message": "Which of my assets have active alarms?"}
+                    "find": {"label": "Find assets with alarms", "message": "Which of my assets have active alarms?"},
+                    "hierarchy": {"label": "Build a hierarchy", "message": "Create an asset for each of my buildings and put their devices under them."}
                 }
             },
             "asset": {
@@ -2164,7 +2212,21 @@
             "alarms": {
                 "title": "Ask about your alarms",
                 "line": "What is active, why it fired, or what to do about it.",
-                "suggestion": "Which alarms need attention?"
+                "suggestion": "Which alarms need attention?",
+                "example": {
+                    "attention": {"label": "What needs attention", "message": "Which alarms need attention right now?"},
+                    "triage": {"label": "Acknowledge the critical ones", "message": "Acknowledge all active critical alarms and tell me what caused them."}
+                }
+            },
+            "alarm": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this alarm",
+                "line": "Why it fired, whether it still matters, and what to do with it.",
+                "suggestion": "Why was this alarm raised?",
+                "example": {
+                    "explain": {"label": "Why it fired", "message": "Why was this alarm raised, and is the problem still there?"},
+                    "acknowledge": {"label": "Acknowledge it", "message": "Acknowledge this alarm and comment that I'm looking into it."}
+                }
             },
             "calculated-fields": {
                 "title": "Ask about calculated fields",

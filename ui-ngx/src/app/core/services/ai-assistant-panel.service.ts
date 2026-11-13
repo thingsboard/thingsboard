@@ -196,6 +196,7 @@ export class AiAssistantPanelService implements OnDestroy {
       case AiAssistantViewType.ALARM_RULE:
       case AiAssistantViewType.ALARM_RULE_LIST:
       case AiAssistantViewType.ALARM_LIST:
+      case AiAssistantViewType.ALARM:
         return 'ALARM_RULE';
       case AiAssistantViewType.CALCULATED_FIELD:
       case AiAssistantViewType.CALCULATED_FIELD_LIST:
@@ -292,6 +293,10 @@ export class AiAssistantPanelService implements OnDestroy {
   readonly viewName = this._viewName.asReadonly();
 
   setViewName(name: string | null): void {
+    if (this._focus) {
+      this._focus.previousName = name?.trim() || null;
+      return;
+    }
     this._viewName.set(name?.trim() || null);
   }
 
@@ -303,7 +308,14 @@ export class AiAssistantPanelService implements OnDestroy {
     this._detailsOpen.set(open);
   }
 
+  private _focus: {context: AiChatClientContext; previous: AiChatClientContext; previousName: string | null} | null = null;
+
   setClientContext(ctx: AiChatClientContext | null): void {
+    if (this._focus && ctx) {
+      this._focus.previous = ctx;
+      return;
+    }
+    this._focus = null;
     this._clientContext.set(ctx);
   }
 
@@ -317,14 +329,15 @@ export class AiAssistantPanelService implements OnDestroy {
       if (!previous || !view.entityId?.id) {
         return until;
       }
-      const previousName = this._viewName();
-      const focused: AiChatClientContext = {view, timeZone: getDefaultTimezone()};
-      this._clientContext.set(focused);
-      this.setViewName(name ?? null);
+      const focus = {context: {view, timeZone: getDefaultTimezone()}, previous, previousName: this._viewName()};
+      this._focus = focus;
+      this._clientContext.set(focus.context);
+      this._viewName.set(name?.trim() || null);
       return until.pipe(finalize(() => {
-        if (this._clientContext() === focused) {
-          this._clientContext.set(previous);
-          this._viewName.set(previousName);
+        if (this._focus === focus) {
+          this._focus = null;
+          this._clientContext.set(focus.previous);
+          this._viewName.set(focus.previousName);
         }
       }));
     });
@@ -349,6 +362,7 @@ export class AiAssistantPanelService implements OnDestroy {
   teardown(): void {
     this._enabled.set(false);
     this._detailsOpen.set(false);
+    this._focus = null;
     this._clientContext.set(null);
     this._viewName.set(null);
     this._sentClientContextByChat.clear();
