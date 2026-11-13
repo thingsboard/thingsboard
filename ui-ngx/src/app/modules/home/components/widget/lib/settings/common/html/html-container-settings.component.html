@@ -12,8 +12,8 @@
         <tb-toggle-option [value]="HtmlContainerWidgetType.ANGULAR">{{ 'widgets.html-container.type-angular' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
-    <div class="tb-html-container-settings-panel flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen">
-      <div class="tb-action-expand-button flex flex-row items-center justify-end">
+    <div class="tb-code-tabs-panel flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen">
+      <div class="tb-code-tabs-toolbar flex flex-row items-center justify-end gap-1">
         <button mat-stroked-button
                 matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
                 matTooltipPosition="above"
@@ -22,7 +22,7 @@
           <span>{{ (fullscreen ? 'fullscreen.exit' : 'fullscreen.fullscreen') | translate }}</span>
         </button>
       </div>
-      <div class="flex flex-1">
+      <div class="flex min-h-0 flex-1">
         <mat-tab-group #leftPanel
                        [mat-stretch-tabs]="fullscreen"
                        [selectedIndex]="fullscreen ? 2 : 3"

@@ -4,56 +4,51 @@
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<div class="tb-custom-action-pretty" tb-fullscreen [fullscreen]="fullscreen">
-  <div class="tb-action-expand-button flex flex-row items-center justify-end" [class.tb-fullscreen-editor]="fullscreen">
-    <button *ngIf="!fullscreen"
-            class="lt-md:!hidden"
-            mat-icon-button
-            matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
-            matTooltipPosition="above"
-            (click)="fullscreen = true">
-      <mat-icon>fullscreen</mat-icon>
-    </button>
-    <button *ngIf="fullscreen"
-            mat-button
-            matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
-            matTooltipPosition="above"
-            (click)="fullscreen = false">
-      <mat-icon>fullscreen_exit</mat-icon>
-      <span translate>widget.toggle-fullscreen</span>
-    </button>
-  </div>
-  <div class="tb-custom-action-editor" [class.tb-fullscreen-editor]="fullscreen">
-    <div *ngIf="!fullscreen; else fullscreenEditor">
-      <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="true"
-                                              [helpId]="helpId"
-                                              [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
-      </tb-custom-action-pretty-resources-tabs>
+<div class="tb-code-tabs-panel flex flex-col" tb-fullscreen [fullscreen]="fullscreen">
+  <div class="tb-code-tabs-toolbar flex flex-row items-center justify-end gap-1">
+    <div [tb-help-popup]="helpId"
+         tb-help-popup-placement="bottomRight"
+         [tb-help-popup-style]="{width: '900px'}">
     </div>
-    <ng-template #fullscreenEditor>
-      <div class="tb-fullscreen-panel tb-layout-fill flex flex-row">
-        <div #leftPanel class="tb-split tb-content left-panel">
-          <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="false"
-                                                  [helpId]="helpId"
-                                                  [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
-          </tb-custom-action-pretty-resources-tabs>
-        </div>
-        <div #rightPanel class="tb-split tb-content right-panel">
-          <tb-js-func
-            [(ngModel)]="action.customFunction"
-            (ngModelChange)="onActionUpdated()"
-            withModules
-            [fillHeight]="true"
-            [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
-            [disableUndefinedCheck]="true"
-            [validationArgs]="[]"
-            [editorCompleter]="customPrettyActionEditorCompleter"
-            functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
-            [helpId]="helpId"
-            [helpPopupStyle]="{width: '900px'}">
-          </tb-js-func>
-        </div>
-      </div>
-    </ng-template>
+    <button mat-stroked-button
+            type="button"
+            matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
+            matTooltipPosition="above"
+            (click)="toggleFullScreen()">
+      <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      <span>{{ (fullscreen ? 'fullscreen.exit' : 'fullscreen.fullscreen') | translate }}</span>
+    </button>
   </div>
+  @if (!fullscreen) {
+    <tb-custom-action-pretty-resources-tabs class="h-80"
+                                            [action]="action"
+                                            (codeValidityChange)="onCodeValidityChange($event)"
+                                            (actionUpdated)="onActionUpdated($event)">
+    </tb-custom-action-pretty-resources-tabs>
+  } @else {
+    <div class="flex min-h-0 flex-1">
+      <div #leftPanel class="tb-content flex">
+        <tb-custom-action-pretty-resources-tabs class="flex-1"
+                                                fullscreen
+                                                [action]="action"
+                                                (codeValidityChange)="onCodeValidityChange($event)"
+                                                (actionUpdated)="onActionUpdated($event)">
+        </tb-custom-action-pretty-resources-tabs>
+      </div>
+      <div #rightPanel class="tb-content flex">
+        <tb-js-func class="flex-1"
+                    [fillHeight]="true"
+                    #jsModel="ngModel"
+                    [(ngModel)]="action.customFunction"
+                    (ngModelChange)="onCodeChange('customFunction', jsModel)"
+                    withModules
+                    [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
+                    [disableUndefinedCheck]="true"
+                    [validationArgs]="[]"
+                    [editorCompleter]="customPrettyActionEditorCompleter"
+                    functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}">
+        </tb-js-func>
+      </div>
+    </div>
+  }
 </div>
