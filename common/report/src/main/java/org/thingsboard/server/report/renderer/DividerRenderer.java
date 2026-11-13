@@ -22,10 +22,10 @@ public class DividerRenderer extends ReportComponentWithLayoutRenderer<DividerCo
     protected String renderContent(DividerComponent component, ComponentData reportDataSource) {
         HashMap<String, Object> componentVariables = new HashMap<>();
         componentVariables.put("width", component.getLength() != null && component.getLength() == SHORT ? "50%" : "100%");
-        String borderWidth = component.getWidthPx() != null ? component.getWidthPx() + "px" : "1px";
+        BorderType borderType = component.getBorderType() != null ? component.getBorderType() : BorderType.SOLID;
+        String borderWidth = borderType.toCssWidth(component.getWidthPx() != null ? component.getWidthPx() : 1) + "px";
         String borderColor = component.getColor() != null ? ColorUtils.normalizeCssColor(component.getColor()) : "#000";
-        String borderType = component.getBorderType() != null ? component.getBorderType().getValue() : BorderType.SOLID.getValue();
-        componentVariables.put("borderStyle", borderWidth + " " + borderType + " " + borderColor);
+        componentVariables.put("borderStyle", borderWidth + " " + borderType.getValue() + " " + borderColor);
 
         return ThymeleafUtil.renderFromHtmlTemplate("html/components/divider-template", componentVariables);
     }

@@ -1882,6 +1882,8 @@
     "model": "Model",
     "name": "Navn",
     "ai-provider": "AI-udbyder",
+    "customer-access": "Kundeadgang",
+    "customer-access-hint": "Giver kundebrugere mulighed for at sende chatforespørgsler til denne model, f.eks. fra Trendz Analytics. Modellens konfiguration og legitimationsoplysninger vises aldrig.",
     "no-found": "Ingen AI-modeller fundet",
     "list": "{ count, plural, =1 {Én model} other {Liste med # modeller} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# modeller} } valgt",
@@ -5424,7 +5426,6 @@
         "community-string": "SNMP-community-streng"
       },
       "isgateway": "Er Gateway",
-      "activity-time-from-gateway-device": "Aktivitetstid fra gateway-enhed",
       "description": "Beskrivelse",
       "edge-license-key": "Licensnøgle",
       "cloud-endpoint": "Cloud Endpoint",
@@ -5692,9 +5693,9 @@
     "type-aws-sqs-description": "Fuldadministreret beskedkøtjeneste.",
     "type-aws-kinesis": "AWS Kinesis",
     "type-aws-kinesis-description": "Tjeneste til realtids video- og datastrømme.",
-    "type-ttn": "The Things Stack Community",
+    "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Åbent og decentraliseret LoRaWAN-netværk.",
-    "type-tti": "The Things Stack Industries",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "Software til drift af private LoRaWAN-netværk i stor skala.",
     "type-things-stack": "The Things Stack",
     "type-chirpstack": "ChirpStack",
@@ -8850,7 +8851,8 @@
         "SHARE_GROUP": "Del gruppe",
         "ASSIGN_TO_TENANT": "Tildel til lejer",
         "READ_CALCULATED_FIELD": "Læs beregnede felter og alarmregler",
-        "WRITE_CALCULATED_FIELD": "Skriv beregnede felter og alarmregler"
+        "WRITE_CALCULATED_FIELD": "Skriv beregnede felter og alarmregler",
+        "INVOKE": "Kald"
       }
     }
   },

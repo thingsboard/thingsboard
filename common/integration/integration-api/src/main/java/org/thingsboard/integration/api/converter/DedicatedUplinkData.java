@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 
+import java.util.Set;
+
 @Builder
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -22,6 +24,10 @@ public class DedicatedUplinkData {
     private final String group;
     private final JsonElement telemetry;
     private final JsonElement attributes;
+    @JsonIgnore
+    private final Set<String> telemetryNoCastKeys;
+    @JsonIgnore
+    private final Set<String> attributesNoCastKeys;
 
     @JsonRawValue
     public String getTelemetry() {

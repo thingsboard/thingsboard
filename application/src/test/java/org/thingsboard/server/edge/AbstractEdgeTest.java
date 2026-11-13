@@ -212,6 +212,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @After
     public void teardownEdgeTest() {
         try {
+            deleteDifferentTenant();
             loginTenantAdmin();
             customMenuDao.removeAllByIds(idsToRemove);
             idsToRemove = new ArrayList<>();
@@ -647,6 +648,23 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         compareHasVersionEntities(deviceCredentials, deviceCredentialsMsg);
 
         return savedDevice;
+    }
+
+    protected Device saveDifferentTenantDevice() throws Exception {
+        loginDifferentTenant();
+        Device device = new Device();
+        device.setName("Different Tenant Device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        loginTenantAdmin();
+        return savedDevice;
+    }
+
+    protected void sendUplinkMsgAndVerifyNoDownlink(Consumer<UplinkMsg.Builder> customizer) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        sendUplinkMsgAndWaitForResponse(customizer);
+        // edge events are polled every second, so 2 seconds cover a full poll cycle
+        Assert.assertFalse(edgeImitator.waitForMessages(2));
     }
 
     protected Device saveDevice(String deviceName, String type) {

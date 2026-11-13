@@ -157,7 +157,8 @@ public enum Resource {
         operationsByResource.put(Resource.SECRET, Operation.crudOperations);
         operationsByResource.put(Resource.REPORT_TEMPLATE, Operation.crudOperations);
         operationsByResource.put(Resource.REPORT, Operation.crudOperations);
-        operationsByResource.put(Resource.AI_MODEL, Operation.crudOperations);
+        operationsByResource.put(Resource.AI_MODEL, Set.of(Operation.ALL, Operation.READ, Operation.WRITE,
+                Operation.CREATE, Operation.DELETE, Operation.INVOKE));
         operationsByResource.put(Resource.AI, Set.of(Operation.ALL));
         operationsByResource.put(Resource.CUSTOM_MENU, Set.of(Operation.ALL, Operation.READ, Operation.WRITE, Operation.DELETE));
         operationsByResource.put(Resource.API_KEY, Operation.crudOperations);
@@ -283,7 +284,8 @@ public enum Resource {
                 Resource.REPORT_TEMPLATE,
                 Resource.REPORT,
                 Resource.JOB,
-                Resource.API_KEY
+                Resource.API_KEY,
+                Resource.AI_MODEL
         ));
 
     }

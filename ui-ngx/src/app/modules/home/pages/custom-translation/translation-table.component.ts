@@ -27,6 +27,9 @@ import { UserPermissionsService } from '@core/http/user-permissions.service';
     selector: 'tb-translation-table',
     templateUrl: './translation-table.component.html',
     styleUrls: ['../../components/entity/entities-table.component.scss', './translation-table.component.scss'],
+    host: {
+        'class': 'tb-content-card'
+    },
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })

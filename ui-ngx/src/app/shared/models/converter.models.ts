@@ -16,66 +16,66 @@ export enum ConverterType {
 }
 
 export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string>([
-  [IntegrationType.CHIRPSTACK, '/assets/converters/tbel-chirpstack-decoder.raw'],
-  [IntegrationType.LORIOT, '/assets/converters/tbel-loriot-decoder.raw'],
-  [IntegrationType.TTI,'/assets/converters/tbel-tti-decoder.raw'],
-  [IntegrationType.TTN, '/assets/converters/tbel-ttn-decoder.raw'],
-  [IntegrationType.SIGFOX, '/assets/converters/tbel-sigfox-decoder.raw'],
-  [IntegrationType.AZURE_IOT_HUB, '/assets/converters/tbel-azure-decoder.raw'],
-  [IntegrationType.AZURE_EVENT_HUB, '/assets/converters/tbel-azure-decoder.raw'],
-  [IntegrationType.AZURE_SERVICE_BUS, '/assets/converters/tbel-azure-decoder.raw'],
-  [IntegrationType.AWS_IOT, '/assets/converters/tbel-aws-iot-decoder.raw'],
-  [IntegrationType.KPN, '/assets/converters/tbel-kpn-decoder.raw'],
-  [IntegrationType.THINGPARK, '/assets/converters/tbel-thingpark-decoder.raw'],
-  [IntegrationType.TPE, '/assets/converters/tbel-tpe-decoder.raw'],
-  [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-decoder.raw']
+  [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/uplink/tbel.raw'],
+  [IntegrationType.LORIOT, '/assets/converters/LORIOT/uplink/tbel.raw'],
+  [IntegrationType.TTI,'/assets/converters/TTI/uplink/tbel.raw'],
+  [IntegrationType.TTN, '/assets/converters/TTN/uplink/tbel.raw'],
+  [IntegrationType.SIGFOX, '/assets/converters/SIGFOX/uplink/tbel.raw'],
+  [IntegrationType.AZURE_IOT_HUB, '/assets/converters/AZURE_IOT_HUB/uplink/tbel.raw'],
+  [IntegrationType.AZURE_EVENT_HUB, '/assets/converters/AZURE_EVENT_HUB/uplink/tbel.raw'],
+  [IntegrationType.AZURE_SERVICE_BUS, '/assets/converters/AZURE_SERVICE_BUS/uplink/tbel.raw'],
+  [IntegrationType.AWS_IOT, '/assets/converters/AWS_IOT/uplink/tbel.raw'],
+  [IntegrationType.KPN, '/assets/converters/KPN/uplink/tbel.raw'],
+  [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/tbel.raw'],
+  [IntegrationType.TPE, '/assets/converters/TPE/uplink/tbel.raw'],
+  [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/tbel.raw']
 ]);
 
 export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>([
-  [IntegrationType.CHIRPSTACK, '/assets/converters/js-chirpstack-decoder.raw'],
-  [IntegrationType.LORIOT, '/assets/converters/js-loriot-decoder.raw'],
-  [IntegrationType.TTI,'/assets/converters/js-tti-decoder.raw'],
-  [IntegrationType.TTN, '/assets/converters/js-ttn-decoder.raw'],
-  [IntegrationType.THINGPARK, '/assets/converters/js-thingpark-decoder.raw'],
-  [IntegrationType.TPE, '/assets/converters/js-tpe-decoder.raw'],
-  [IntegrationType.MQTT, '/assets/converters/js-mqtt-decoder.raw']
+  [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/uplink/js.raw'],
+  [IntegrationType.LORIOT, '/assets/converters/LORIOT/uplink/js.raw'],
+  [IntegrationType.TTI,'/assets/converters/TTI/uplink/js.raw'],
+  [IntegrationType.TTN, '/assets/converters/TTN/uplink/js.raw'],
+  [IntegrationType.THINGPARK, '/assets/converters/THINGPARK/uplink/js.raw'],
+  [IntegrationType.TPE, '/assets/converters/TPE/uplink/js.raw'],
+  [IntegrationType.MQTT, '/assets/converters/MQTT/uplink/js.raw']
 ]);
 
 export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string>([
-  [IntegrationType.OPC_UA, '/assets/converters/tbel-opc-ua-encoder.raw'],
-  [IntegrationType.TTI, '/assets/converters/tbel-ttn-tti-encoder.raw'],
-  [IntegrationType.TTN, '/assets/converters/tbel-ttn-tti-encoder.raw'],
-  [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-encoder.raw'],
-  [IntegrationType.CHIRPSTACK, '/assets/converters/tbel-chirpstack-encoder.raw'],
-  [IntegrationType.LORIOT, '/assets/converters/tbel-loriot-encoder.raw']
+  [IntegrationType.OPC_UA, '/assets/converters/OPC_UA/downlink/tbel.raw'],
+  [IntegrationType.TTI, '/assets/converters/TTI/downlink/tbel.raw'],
+  [IntegrationType.TTN, '/assets/converters/TTN/downlink/tbel.raw'],
+  [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/tbel.raw'],
+  [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/downlink/tbel.raw'],
+  [IntegrationType.LORIOT, '/assets/converters/LORIOT/downlink/tbel.raw']
 ])
 
 export const IntegrationJSDefaultEncodersUrl = new Map<IntegrationType, string>([
-  [IntegrationType.TTI, '/assets/converters/js-ttn-tti-encoder.raw'],
-  [IntegrationType.TTN, '/assets/converters/js-ttn-tti-encoder.raw'],
-  [IntegrationType.MQTT, '/assets/converters/js-mqtt-encoder.raw'],
-  [IntegrationType.CHIRPSTACK, '/assets/converters/js-chirpstack-encoder.raw'],
-  [IntegrationType.LORIOT, '/assets/converters/js-loriot-encoder.raw']
+  [IntegrationType.TTI, '/assets/converters/TTI/downlink/js.raw'],
+  [IntegrationType.TTN, '/assets/converters/TTN/downlink/js.raw'],
+  [IntegrationType.MQTT, '/assets/converters/MQTT/downlink/js.raw'],
+  [IntegrationType.CHIRPSTACK, '/assets/converters/CHIRPSTACK/downlink/js.raw'],
+  [IntegrationType.LORIOT, '/assets/converters/LORIOT/downlink/js.raw']
 ])
 
 export const jsDefaultConvertersUrl = new Map<ConverterType, string>([
-  [ConverterType.UPLINK, '/assets/converters/js-decoder.raw' ],
-  [ConverterType.DOWNLINK, '/assets/converters/js-encoder.raw'],
+  [ConverterType.UPLINK, '/assets/converters/default/uplink/js.raw' ],
+  [ConverterType.DOWNLINK, '/assets/converters/default/downlink/js.raw'],
 ]);
 
 export const jsDefaultConvertersV2Url = new Map<ConverterType, string>([
-  [ConverterType.UPLINK, '/assets/converters/js-decoder-v2.raw'],
-  [ConverterType.DOWNLINK, '/assets/converters/js-encoder.raw'],
+  [ConverterType.UPLINK, '/assets/converters/default/uplink/js-v2.raw'],
+  [ConverterType.DOWNLINK, '/assets/converters/default/downlink/js.raw'],
 ]);
 
 export const tbelDefaultConvertersUrl = new Map<ConverterType, string>([
-  [ConverterType.UPLINK, '/assets/converters/tbel-decoder.raw' ],
-  [ConverterType.DOWNLINK, '/assets/converters/tbel-encoder.raw'],
+  [ConverterType.UPLINK, '/assets/converters/default/uplink/tbel.raw' ],
+  [ConverterType.DOWNLINK, '/assets/converters/default/downlink/tbel.raw'],
 ]);
 
 export const tbelDefaultConvertersV2Url = new Map<ConverterType, string>([
-  [ConverterType.UPLINK, '/assets/converters/tbel-decoder.raw' ],
-  [ConverterType.DOWNLINK, '/assets/converters/tbel-encoder.raw'],
+  [ConverterType.UPLINK, '/assets/converters/default/uplink/tbel.raw' ],
+  [ConverterType.DOWNLINK, '/assets/converters/default/downlink/tbel.raw'],
 ]);
 
 export const DefaultUpdateOnlyKeysValue = ['manufacturer'];
@@ -140,7 +140,7 @@ export interface ConvertedInputMsgParams {
 
 export interface ConvertedInputMsgResult {
   payload: any;
-  metadata: {[key: string]: string};
+  metadata: Record<string, unknown>;
   contentType: ContentType;
   stringContent?: string;
 }

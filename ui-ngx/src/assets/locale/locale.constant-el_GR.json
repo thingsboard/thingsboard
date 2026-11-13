@@ -1882,6 +1882,8 @@
     "model": "Μοντέλο",
     "name": "Όνομα",
     "ai-provider": "Πάροχος AI",
+    "customer-access": "Πρόσβαση πελατών",
+    "customer-access-hint": "Επιτρέπει σε χρήστες πελατών να στέλνουν αιτήματα συνομιλίας σε αυτό το μοντέλο, π.χ. από το Trendz Analytics. Η διαμόρφωση του μοντέλου και τα διαπιστευτήρια δεν εκτίθενται ποτέ.",
     "no-found": "Δεν βρέθηκαν μοντέλα AI",
     "list": "{ count, plural, =1 {Ένα μοντέλο} other {Λίστα με # μοντέλα} }",
     "selected-fields": "{ count, plural, =1 {1 μοντέλο επιλεγμένο} other {# μοντέλα επιλεγμένα} }",
@@ -5424,7 +5426,6 @@
         "community-string": "Community string SNMP"
       },
       "isgateway": "Είναι Gateway",
-      "activity-time-from-gateway-device": "Χρόνος δραστηριότητας από συσκευή Gateway",
       "description": "Περιγραφή",
       "edge-license-key": "Κλειδί άδειας χρήσης",
       "cloud-endpoint": "Τελικό σημείο Cloud",
@@ -5701,9 +5702,9 @@
     "type-aws-sqs-description": "Διαχειριζόμενη υπηρεσία ουράς μηνυμάτων.",
     "type-aws-kinesis": "AWS Kinesis",
     "type-aws-kinesis-description": "Υπηρεσία ροής δεδομένων και βίντεο σε πραγματικό χρόνο.",
-    "type-ttn": "The Things Stack Community",
+    "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Ανοιχτό και αποκεντρωμένο δίκτυο LoRaWAN.",
-    "type-tti": "The Things Stack Industries",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "Λογισμικό για τη λειτουργία ιδιωτικών δικτύων LoRaWAN σε μεγάλη κλίμακα.",
     "type-things-stack": "The Things Stack",
     "type-chirpstack": "ChirpStack",
@@ -8862,7 +8863,8 @@
         "SHARE_GROUP": "Κοινή χρήση ομάδας",
         "ASSIGN_TO_TENANT": "Ανάθεση σε ενοικιαστή",
         "READ_CALCULATED_FIELD": "Ανάγνωση υπολογιζόμενων πεδίων και κανόνων συναγερμού",
-        "WRITE_CALCULATED_FIELD": "Εγγραφή υπολογιζόμενων πεδίων και κανόνων συναγερμού"
+        "WRITE_CALCULATED_FIELD": "Εγγραφή υπολογιζόμενων πεδίων και κανόνων συναγερμού",
+        "INVOKE": "Κλήση"
       }
     }
   },

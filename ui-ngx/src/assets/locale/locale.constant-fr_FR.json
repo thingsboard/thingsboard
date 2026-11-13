@@ -1880,6 +1880,8 @@
     "model": "Modèle",
     "name": "Nom",
     "ai-provider": "Fournisseur d’IA",
+    "customer-access": "Accès client",
+    "customer-access-hint": "Permet aux utilisateurs clients d’envoyer des requêtes de chat à ce modèle, par exemple depuis Trendz Analytics. La configuration du modèle et les identifiants ne sont jamais exposés.",
     "no-found": "Aucun modèle d’IA trouvé",
     "list": "{ count, plural, =1 {Un modèle} one {Liste de # modèle} other {Liste de # modèles} }",
     "selected-fields": "{ count, plural, one {# modèle sélectionné} other {# modèles sélectionnés} }",
@@ -5422,7 +5424,6 @@
         "community-string": "Chaîne de communauté SNMP"
       },
       "isgateway": "Est une Gateway",
-      "activity-time-from-gateway-device": "Heure d’activité depuis l’appareil Gateway",
       "description": "Description",
       "edge-license-key": "Clé de licence",
       "cloud-endpoint": "Point de terminaison Cloud",
@@ -5690,9 +5691,9 @@
     "type-aws-sqs-description": "Service de gestion de files d’attente de messages.",
     "type-aws-kinesis": "AWS Kinesis",
     "type-aws-kinesis-description": "Service pour le traitement de flux vidéo et de données en temps réel.",
-    "type-ttn": "The Things Stack Community",
+    "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Réseau LoRaWAN ouvert et décentralisé.",
-    "type-tti": "The Things Stack Industries",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "Logiciel pour exploiter des réseaux LoRaWAN privés à grande échelle.",
     "type-things-stack": "The Things Stack",
     "type-chirpstack": "ChirpStack",
@@ -8848,7 +8849,8 @@
         "SHARE_GROUP": "Partager le groupe",
         "ASSIGN_TO_TENANT": "Assigner à un locataire",
         "READ_CALCULATED_FIELD": "Lire le champ calculé et les règles d’alarme",
-        "WRITE_CALCULATED_FIELD": "Écrire le champ calculé et les règles d’alarme"
+        "WRITE_CALCULATED_FIELD": "Écrire le champ calculé et les règles d’alarme",
+        "INVOKE": "Invoquer"
       }
     }
   },
