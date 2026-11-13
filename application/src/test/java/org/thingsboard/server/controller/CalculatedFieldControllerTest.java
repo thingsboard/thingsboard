@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,9 +19,12 @@ import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -114,26 +118,67 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         doGet("/api/calculatedField/" + savedCalculatedField.getId().getId()).andExpect(status().isNotFound());
     }
 
+    @Test
+    public void testSaveCalculatedFieldWithOtherTenantReference() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), Map.of("T", getArgument(tenantId)));
+
+        doPost("/api/calculatedField", calculatedField).andExpect(status().isForbidden());
+
+        PageData<CalculatedField> calculatedFields = doGetTyped("/api/DEVICE/" + testDevice.getId().getId() + "/calculatedFields?pageSize=10&page=0",
+                new TypeReference<>() {});
+        assertThat(calculatedFields.getData()).isEmpty();
+    }
+
+    @Test
+    public void testSaveCalculatedFieldWithOwnTenantReference() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), Map.of("T", getArgument(savedTenant.getId())));
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        assertThat(savedCalculatedField.getId()).isNotNull();
+        assertThat(savedCalculatedField.getConfiguration().getReferencedEntities()).containsExactly(savedTenant.getId());
+    }
+
+    @Test
+    public void testSaveCalculatedFieldChecksEveryReference() throws Exception {
+        loginTenantAdmin();
+        Device otherTenantDevice = createDevice("Other device", "0987654321");
+        login("tenant2@thingsboard.org", "testPassword1");
+
+        Device testDevice = createDevice("Test device", "1234567890");
+        Map<String, Argument> arguments = new LinkedHashMap<>();
+        arguments.put("T", getArgument(savedTenant.getId()));
+        arguments.put("H", getArgument(otherTenantDevice.getId()));
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), arguments);
+
+        doPost("/api/calculatedField", calculatedField).andExpect(status().isNotFound());
+    }
+
     private CalculatedField getCalculatedField(DeviceId deviceId) {
+        return getCalculatedField(deviceId, Map.of("T", getArgument(null)));
+    }
+
+    private CalculatedField getCalculatedField(DeviceId deviceId, Map<String, Argument> arguments) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(deviceId);
         calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(getCalculatedFieldConfig());
+        calculatedField.setConfiguration(getCalculatedFieldConfig(arguments));
         calculatedField.setVersion(1L);
         return calculatedField;
     }
 
     private CalculatedFieldConfiguration getCalculatedFieldConfig() {
+        return getCalculatedFieldConfig(Map.of("T", getArgument(null)));
+    }
+
+    private CalculatedFieldConfiguration getCalculatedFieldConfig(Map<String, Argument> arguments) {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        Argument argument = new Argument();
-        argument.setRefEntityId(null);
-        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
-        argument.setRefEntityKey(refEntityKey);
-
-        config.setArguments(Map.of("T", argument));
+        config.setArguments(arguments);
 
         config.setExpression("T - (100 - H) / 5");
 
@@ -144,6 +189,13 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         config.setOutput(output);
 
         return config;
+    }
+
+    private Argument getArgument(EntityId refEntityId) {
+        Argument argument = new Argument();
+        argument.setRefEntityId(refEntityId);
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        return argument;
     }
 
 }
