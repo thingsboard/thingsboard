@@ -24,6 +24,10 @@ import {
   ActivationLinkDialogComponent,
   ActivationLinkDialogData
 } from '@home/pages/user/activation-link-dialog.component';
+import {
+  PasswordResetLinkDialogComponent,
+  PasswordResetLinkDialogData
+} from '@home/pages/user/password-reset-link-dialog.component';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -147,6 +151,24 @@ export class UserGroupConfigFactory implements EntityGroupStateConfigFactory<Use
     );
   }
 
+  displayPasswordResetLink($event: Event, user: UserInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.userService.getPasswordResetLinkInfo(user.id.id).subscribe(
+      (passwordResetLinkInfo) => {
+        this.dialog.open<PasswordResetLinkDialogComponent, PasswordResetLinkDialogData,
+          void>(PasswordResetLinkDialogComponent, {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            passwordResetLinkInfo
+          }
+        });
+      }
+    );
+  }
+
   resendActivation($event: Event, user: UserInfo) {
     if ($event) {
       $event.stopPropagation();
@@ -197,6 +219,9 @@ export class UserGroupConfigFactory implements EntityGroupStateConfigFactory<Use
         return true;
       case 'displayActivationLink':
         this.displayActivationLink(action.event, action.entity);
+        return true;
+      case 'displayPasswordResetLink':
+        this.displayPasswordResetLink(action.event, action.entity);
         return true;
       case 'resendActivation':
         this.resendActivation(action.event, action.entity);
