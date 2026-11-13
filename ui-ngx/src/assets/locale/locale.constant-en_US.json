@@ -887,6 +887,9 @@
             "gateway-connectors": "Connectors",
             "read-ota": "{ count, plural, =1 {Checked the update of one device} other {Checked the update of # devices} }",
             "read-ota-packages": "Read the OTA packages",
+            "read-white-labeling": "Read the white labeling",
+            "save-white-labeling": "Changed the platform's white labeling",
+            "save-white-labeling-login": "Changed the login page's white labeling",
             "save-ota-package": "Created the OTA package {{name}}",
             "assign-ota-package": "Assigned the OTA package",
             "clear-ota-package": "Cleared the OTA package",
@@ -1304,6 +1307,14 @@
                 "run": "Checking the OTA updates",
                 "done": "Checked the OTA updates"
             },
+            "read-white-labeling": {
+                "run": "Reading the white labeling",
+                "done": "Read the white labeling"
+            },
+            "save-white-labeling": {
+                "run": "Saving the white labeling",
+                "done": "Saved the white labeling"
+            },
             "save-ota-package": {
                 "run": "Creating the OTA package",
                 "done": "Created the OTA package"
@@ -1640,6 +1651,21 @@
             "ask-again-message": "Ask me again for the same change.",
             "field": {
                 "source": "Source",
+                "appTitle": "Title",
+                "platformName": "Platform name",
+                "logoImageUrl": "Logo",
+                "logoImageHeight": "Logo height",
+                "collapsedLogoImageUrl": "Collapsed logo",
+                "favicon": "Favicon",
+                "paletteSettings": "Colors",
+                "primaryColorPanels": "Colored panels",
+                "showNameVersion": "Show name and version",
+                "enableHelpLinks": "Help links",
+                "helpLinkBaseUrl": "Help links URL",
+                "customCss": "Custom CSS",
+                "pageBackgroundColor": "Page background",
+                "darkForeground": "Dark text",
+                "showNameBottom": "Name below the form",
                 "url": "URL",
                 "tag": "Tag",
                 "entities": "Entities",
@@ -1721,6 +1747,7 @@
             "type": {
                 "IMAGE": "Image",
                 "VERSION": "Version",
+                "WHITE_LABELING": "White labeling",
                 "RELATION": "Relations",
                 "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
@@ -2394,12 +2421,18 @@
             "white-labeling": {
                 "title": "Ask about white labeling",
                 "line": "Your logo, colors and title across the platform.",
-                "suggestion": "How do I change the logo and colors of the platform?"
+                "suggestion": "How do I change the logo and colors of the platform?",
+                "example": {
+                    "brand": {"label": "Apply my brand", "message": "Use our brand color #0f7b6c and the title Acme IoT."}
+                }
             },
             "login-white-labeling": {
                 "title": "Ask about the login page",
                 "line": "Its look, its domain, and what users see before they sign in.",
-                "suggestion": "How do I give the login page our own look?"
+                "suggestion": "How do I give the login page our own look?",
+                "example": {
+                    "match": {"label": "Match the platform", "message": "Give the login page the same colors and logo as the platform."}
+                }
             },
             "mail-templates": {
                 "title": "Ask about mail templates",

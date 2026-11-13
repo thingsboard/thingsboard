@@ -1169,6 +1169,12 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('read-gateway-status', {name: str(result.name) ?? '—'}), blocks};
     }
+    case 'read_white_labeling':
+      return {hood: text('read-white-labeling'), blocks: json('settings', result)};
+    case 'save_white_labeling': {
+      const {target, ...changes} = values;
+      return {hood: text(target === 'LOGIN' ? 'save-white-labeling-login' : 'save-white-labeling'), blocks: [{type: 'facts', rows: facts(changes)}]};
+    }
     case 'read_ota': {
       if (!isObject(result)) {
         return {hood: text('read-ota'), blocks: generic(result, 'result')};
