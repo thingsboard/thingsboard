@@ -173,6 +173,7 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
       this.defaultUpdateOnlyKeysByIntegrationType = value.updateOnlyKeys;
       this.defaultConverterV2Configuration = value.converterV2Config;
       this.integrationsConvertersInfo = value.integrationsConvertersInfo;
+      this.applyLoadedDefaults();
     })
 
     this.updateIntegrationsInfo();
@@ -448,6 +449,33 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
     }
   }
 
+  // The converter version, predefined keys and default configuration depend on the data loaded in the constructor.
+  // A converter whose integration type was set before that data arrived (e.g. a converter opened from
+  // the integration form right after a page load) gets them again here.
+  private applyLoadedDefaults(): void {
+    const integrationType: IntegrationType = this.entityForm.get('integrationType').value;
+    if (!integrationType) {
+      return;
+    }
+    if (!this.isAdd) {
+      // An existing converter keeps its version; only the predefined keys depend on the loaded data.
+      this.updatedPredefinedConverterKeys();
+      return;
+    }
+    if (this.entityForm.get('converterLibrary').value) {
+      return;
+    }
+    const converterType: ConverterType = this.entityForm.get('type').value;
+    const prevConverterVersion: ConverterVersion = this.entityForm.get('converterVersion').value;
+    this.updateConverterVersion();
+    if (this.entityForm.get('converterVersion').value !== prevConverterVersion) {
+      this.onConverterTypeChanged(converterType);
+    }
+    if (converterType === ConverterType.UPLINK) {
+      this.updateDefaultConfiguration(integrationType);
+    }
+  }
+
   private updateConverterVersion() {
     const integrationType: IntegrationType = this.entityForm.get('integrationType').value;
     if (isNotEmptyStr(integrationType)) {
@@ -489,8 +517,9 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
       const converterType: ConverterType = this.entityForm.get('type').value;
       const integrationType: IntegrationType = this.entityForm.get('integrationType').value;
       const converterInfo: ConverterInfo = this.integrationsConvertersInfo?.[integrationType]?.[converterType.toLocaleLowerCase()];
-      this.predefinedConverterKeys = converterInfo.keys.map(value => ({name: value, value}));
-      this.predefinedKeys = deepClone(converterInfo.keys);
+      const keys: string[] = converterInfo?.keys ?? [];
+      this.predefinedConverterKeys = keys.map(value => ({name: value, value}));
+      this.predefinedKeys = deepClone(keys);
     } else {
       this.predefinedConverterKeys = null;
       this.predefinedKeys = [];
