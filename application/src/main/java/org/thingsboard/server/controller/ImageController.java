@@ -98,11 +98,11 @@ public class ImageController extends BaseController {
         image.setCustomerId(user.getCustomerId());
         resourceValidator.validateResourceSize(user.getTenantId(), null, file.getSize());
 
-        image.setFileName(file.getOriginalFilename());
+        image.setFileName(getFileName(file));
         if (StringUtils.isNotEmpty(title)) {
             image.setTitle(title);
         } else {
-            image.setTitle(file.getOriginalFilename());
+            image.setTitle(getFileName(file));
         }
 
         ResourceSubType subType = ResourceSubType.IMAGE;
@@ -132,7 +132,7 @@ public class ImageController extends BaseController {
 
         TbResource image = new TbResource(imageInfo);
         image.setData(file.getBytes());
-        image.setFileName(file.getOriginalFilename());
+        image.setFileName(getFileName(file));
         image.updateDescriptor(ImageDescriptor.class, descriptor -> {
             descriptor.setMediaType(file.getContentType());
             return descriptor;
@@ -333,7 +333,7 @@ public class ImageController extends BaseController {
                 .eTag(descriptor.getEtag());
         if (!cacheKey.isPublic()) {
             result
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(fileName))
                     .header("x-filename", fileName);
         }
         if (systemImagesBrowserTtlInMinutes > 0 && imageInfo.getTenantId().isSysTenantId()) {
