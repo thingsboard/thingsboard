@@ -945,7 +945,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         triggerConfig.setNotifyOn(Set.of(AlarmAction.CREATED));
         alarmRule.setTriggerConfig(triggerConfig);
         EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ALARM);
         recipientsConfig.setEscalationTable(Map.of(
                 0, List.of(ownTarget.getUuidId()),
                 60, List.of(otherTarget.getUuidId())
@@ -1036,8 +1035,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         rule.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
         rule.setTriggerConfig(triggerConfig);
 
-        DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-        recipientsConfig.setTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(NotificationRuleTriggerType.ENTITY_ACTION);
         recipientsConfig.setTargets(targets);
         rule.setRecipientsConfig(recipientsConfig);
         return rule;
