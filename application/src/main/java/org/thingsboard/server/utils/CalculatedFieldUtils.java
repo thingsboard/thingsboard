@@ -263,10 +263,10 @@ public class CalculatedFieldUtils {
 
         proto.getSingleValueArgumentsList().forEach(argProto ->
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
+        proto.getRollingValueArgumentsList().forEach(argProto ->
+                state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
 
         switch (type) {
-            case SCRIPT -> proto.getRollingValueArgumentsList().forEach(argProto ->
-                    state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
             case GEOFENCING -> proto.getGeofencingArgumentsList().forEach(argProto ->
                     state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
             case PROPAGATION -> {
