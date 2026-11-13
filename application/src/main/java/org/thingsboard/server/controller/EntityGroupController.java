@@ -965,7 +965,11 @@ public class EntityGroupController extends AutoCommitController {
         for (String strEntityGroupId : strEntityGroupIds) {
             entityGroupIds.add(new EntityGroupId(toUUID(strEntityGroupId)));
         }
-        return checkNotNull(entityGroupService.findEntityGroupEntityInfosByIds(tenantId, entityGroupIds, new PageLink(Integer.MAX_VALUE)).getData());
+        List<EntityGroupInfo> entityGroups = checkNotNull(
+                entityGroupService.findEntityGroupInfosByIds(tenantId, entityGroupIds, new PageLink(Integer.MAX_VALUE)).getData());
+        return filterEntityGroupsByReadPermission(entityGroups).stream()
+                .map(entityGroup -> new EntityInfo(entityGroup.getId(), entityGroup.getName()))
+                .toList();
     }
 
     @ApiOperation(value = "Get Owners (getOwners)",
@@ -1164,15 +1168,14 @@ public class EntityGroupController extends AutoCommitController {
 
             EntityGroupInfo userGroup;
             if (shareGroupRequest.isAllUserGroup()) {
-                Optional<EntityGroupInfo> userGroupOptional = entityGroupService.findEntityGroupInfoByTypeAndName(getTenantId(), shareGroupRequest.getOwnerId(),
-                        EntityType.USER, EntityGroup.GROUP_ALL_NAME);
+                Optional<EntityGroupInfo> userGroupOptional = findAllUserGroup(shareGroupRequest.getOwnerId());
                 if (userGroupOptional.isPresent()) {
                     userGroup = userGroupOptional.get();
                 } else {
                     throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
                 }
             } else {
-                userGroup = checkNotNull(entityGroupService.findEntityGroupInfoById(getTenantId(), shareGroupRequest.getUserGroupId()));
+                userGroup = checkNotNull(entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), shareGroupRequest.getUserGroupId()));
             }
             accessControlService.checkEntityGroupInfoPermission(getCurrentUser(), Operation.WRITE, userGroup);
 
@@ -1250,7 +1253,7 @@ public class EntityGroupController extends AutoCommitController {
         checkParameter("userGroupId", strUserGroupId);
         checkParameter("roleId", strRoleId);
         EntityGroupId userGroupId = new EntityGroupId(toUUID(strUserGroupId));
-        EntityGroup userGroup = entityGroupService.findEntityGroupById(getTenantId(), userGroupId);
+        EntityGroup userGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), userGroupId);
         if (userGroup == null) {
             throw new ThingsboardException("User group with requested id: " + userGroupId + " wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -1303,7 +1306,7 @@ public class EntityGroupController extends AutoCommitController {
 
     private EntityGroup resolveEntityGroup(UUID entityGroupUuid) throws ThingsboardException {
         EntityGroupId entityGroupId = new EntityGroupId(entityGroupUuid);
-        EntityGroup entityGroup = entityGroupService.findEntityGroupById(getTenantId(), entityGroupId);
+        EntityGroup entityGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), entityGroupId);
         if (entityGroup == null) {
             throw new ThingsboardException("Entity group with requested id: " + entityGroupId + " wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -1313,20 +1316,25 @@ public class EntityGroupController extends AutoCommitController {
     private EntityGroupInfo resolveUserGroup(ShareGroupRequest shareGroupRequest) throws ThingsboardException {
         EntityGroupInfo userGroup;
         if (shareGroupRequest.isAllUserGroup()) {
-            Optional<EntityGroupInfo> userGroupOptional = entityGroupService.findEntityGroupInfoByTypeAndName(getTenantId(), shareGroupRequest.getOwnerId(),
-                    EntityType.USER, EntityGroup.GROUP_ALL_NAME);
+            Optional<EntityGroupInfo> userGroupOptional = findAllUserGroup(shareGroupRequest.getOwnerId());
             if (userGroupOptional.isPresent()) {
                 userGroup = userGroupOptional.get();
             } else {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
         } else {
-            userGroup = entityGroupService.findEntityGroupInfoById(getTenantId(), shareGroupRequest.getUserGroupId());
+            userGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), shareGroupRequest.getUserGroupId());
         }
         if (userGroup == null) {
             throw new ThingsboardException("Specified user group wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
         return userGroup;
+    }
+
+    private Optional<EntityGroupInfo> findAllUserGroup(EntityId ownerId) throws ThingsboardException {
+        TenantId tenantId = getTenantId();
+        return entityGroupService.findEntityGroupInfoByTypeAndName(tenantId, ownerId, EntityType.USER, EntityGroup.GROUP_ALL_NAME)
+                .map(group -> entityGroupService.findEntityGroupInfoByTenantIdAndId(tenantId, group.getId()));
     }
 
     private List<Role> resolveRoles(ShareGroupRequest shareGroupRequest) throws ThingsboardException {

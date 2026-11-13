@@ -1295,7 +1295,7 @@ public abstract class BaseController {
     protected EntityGroupInfo checkEntityGroupId(EntityGroupId entityGroupId, Operation operation) throws ThingsboardException {
         try {
             validateId(entityGroupId, id -> "Incorrect entityGroupId " + id);
-            EntityGroupInfo entityGroup = entityGroupService.findEntityGroupInfoById(getTenantId(), entityGroupId);
+            EntityGroupInfo entityGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), entityGroupId);
             checkNotNull(entityGroup, "Entity group with id [" + entityGroupId + "] is not found");
             accessControlService.checkEntityGroupInfoPermission(getCurrentUser(), operation, entityGroup);
             return entityGroup;

@@ -274,7 +274,7 @@ public class DefaultSchedulerService extends AbstractPartitionBasedService<Tenan
                                     deviceService.saveDevice(device);
                                     break;
                                 case ENTITY_GROUP:
-                                    EntityGroup deviceGroup = entityGroupService.findEntityGroupById(tenantId, (EntityGroupId) originatorId);
+                                    EntityGroup deviceGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(tenantId, (EntityGroupId) originatorId);
                                     if (deviceGroup == null) {
                                         throw new RuntimeException("Failed to process event: Device group with id [" + originatorId + "] not found!");
                                     }

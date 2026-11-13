@@ -680,6 +680,61 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testSendDeviceToCloudAddsDeviceOnlyToGroupOfEdgeTenant() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setType(EntityType.DEVICE);
+        otherTenantGroup.setName("Other Tenant Device Group");
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+        loginTenantAdmin();
+
+        Device deviceMsg = buildDeviceForUplinkMsg("Edge Device In Group", "test");
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        DeviceUpdateMsg.Builder deviceUpdateMsgBuilder = DeviceUpdateMsg.newBuilder();
+        deviceUpdateMsgBuilder.setIdMSB(deviceMsg.getUuidId().getMostSignificantBits());
+        deviceUpdateMsgBuilder.setIdLSB(deviceMsg.getUuidId().getLeastSignificantBits());
+        deviceUpdateMsgBuilder.setEntityGroupIdMSB(otherTenantGroup.getUuidId().getMostSignificantBits());
+        deviceUpdateMsgBuilder.setEntityGroupIdLSB(otherTenantGroup.getUuidId().getLeastSignificantBits());
+        deviceUpdateMsgBuilder.setEntity(JacksonUtil.toString(deviceMsg));
+        deviceUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        uplinkMsgBuilder.addDeviceUpdateMsg(deviceUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        Device device = doGet("/api/device/" + deviceMsg.getId().getId(), Device.class);
+        Assert.assertNotNull(device);
+        Assert.assertFalse(entityGroupService.isEntityInGroup(differentTenantId, device.getId(), otherTenantGroup.getId()));
+    }
+
+    @Test
+    public void testDeleteDeviceFromGroupOnCloudKeepsGroupsOfOtherTenant() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setType(EntityType.DEVICE);
+        otherTenantGroup.setName("Other Tenant Device Group");
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+        Device otherTenantDevice = saveDevice("Other Tenant Device", "test", otherTenantGroup.getId());
+        loginTenantAdmin();
+
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        DeviceUpdateMsg.Builder deviceUpdateMsgBuilder = DeviceUpdateMsg.newBuilder();
+        deviceUpdateMsgBuilder.setIdMSB(otherTenantDevice.getUuidId().getMostSignificantBits());
+        deviceUpdateMsgBuilder.setIdLSB(otherTenantDevice.getUuidId().getLeastSignificantBits());
+        deviceUpdateMsgBuilder.setEntityGroupIdMSB(otherTenantGroup.getUuidId().getMostSignificantBits());
+        deviceUpdateMsgBuilder.setEntityGroupIdLSB(otherTenantGroup.getUuidId().getLeastSignificantBits());
+        deviceUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE);
+        uplinkMsgBuilder.addDeviceUpdateMsg(deviceUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        Assert.assertTrue(entityGroupService.isEntityInGroup(differentTenantId, otherTenantDevice.getId(), otherTenantGroup.getId()));
+    }
+
+    @Test
     public void testRpcCall() throws Exception {
         Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 

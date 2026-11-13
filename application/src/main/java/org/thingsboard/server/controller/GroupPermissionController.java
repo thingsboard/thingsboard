@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.GroupPermissionId;
@@ -209,7 +210,8 @@ public class GroupPermissionController extends BaseController {
             @RequestBody List<GroupPermission> permissions) throws ThingsboardException, ExecutionException, InterruptedException {
         TenantId tenantId = getCurrentUser().getTenantId();
         accessControlService.checkPermission(getCurrentUser(), Resource.GROUP_PERMISSION, Operation.READ);
-        List<GroupPermissionInfo> permissionInfoList = groupPermissionService.loadUserGroupPermissionInfoListAsync(tenantId, permissions).get();
+        List<GroupPermission> readablePermissions = permissions.stream().filter(this::isReadableEntityGroup).toList();
+        List<GroupPermissionInfo> permissionInfoList = groupPermissionService.loadUserGroupPermissionInfoListAsync(tenantId, readablePermissions).get();
         return applyPermissionInfo(permissionInfoList);
     }
 
@@ -256,6 +258,19 @@ public class GroupPermissionController extends BaseController {
         }
         if (groupPermission.getEntityGroupId() != null && !groupPermission.getEntityGroupId().isNullUid()) {
             checkEntityGroupId(groupPermission.getEntityGroupId(), Operation.WRITE);
+        }
+    }
+
+    private boolean isReadableEntityGroup(GroupPermission groupPermission) {
+        EntityGroupId entityGroupId = groupPermission.getEntityGroupId();
+        if (entityGroupId == null || entityGroupId.isNullUid()) {
+            return true;
+        }
+        try {
+            EntityGroupInfo entityGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), entityGroupId);
+            return entityGroup != null && accessControlService.hasEntityGroupInfoPermission(getCurrentUser(), Operation.READ, entityGroup);
+        } catch (ThingsboardException e) {
+            return false;
         }
     }
 
