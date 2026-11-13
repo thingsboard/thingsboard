@@ -1,0 +1,67 @@
+/** Decoder **/
+
+function decodeToString(bytes) {
+    return String.fromCharCode.apply(String, bytes);
+}
+
+function flatten(obj, result, excludeList, prefix) {
+    prefix = prefix || "";
+    for (var key in obj) {
+        if (excludeList.indexOf(key) !== -1) continue;
+
+        var value = obj[key];
+        var fullKey = prefix ? prefix + "." + key : key;
+
+        if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+            flatten(value, result, excludeList, fullKey);
+        } else {
+            result[fullKey] = value;
+        }
+    }
+}
+
+var data = JSON.parse(decodeToString(payload));
+
+var eventData = JSON.parse(data.data);
+
+var deviceName = data.coreid;
+var deviceType = eventData.deviceType != null ? eventData.deviceType : "Particle";
+var groupName = "Particle devices";
+
+var timestamp = Date.now();
+if (data.published_at != null) {
+    timestamp = new Date(data.published_at).getTime();
+}
+
+var attributes = {
+    integrationName: metadata["integrationName"],
+    particleDeviceId: data.coreid
+};
+
+if (eventData.firmwareVersion != null) {
+    attributes.firmwareVersion = eventData.firmwareVersion;
+}
+if (eventData.hardwareModel != null) {
+    attributes.hardwareModel = eventData.hardwareModel;
+}
+
+var excludeFromTelemetryList = [
+    "deviceType",
+    "deviceName",
+    "firmwareVersion",
+    "hardwareModel"
+];
+
+var telemetry = {};
+flatten(eventData, telemetry, excludeFromTelemetryList);
+
+return {
+    deviceName: deviceName,
+    deviceType: deviceType,
+    groupName: groupName,
+    attributes: attributes,
+    telemetry: {
+        ts: timestamp,
+        values: telemetry
+    }
+};
