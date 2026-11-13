@@ -863,9 +863,9 @@ public class DefaultWebSocketService implements WebSocketService {
 
     private void cleanupSessionById(TenantId tenantId, String sessionId) {
         wsSessionsMap.remove(sessionId);
+        entityDataSubService.cancelAllSessionSubscriptions(sessionId);
         oldSubService.cancelAllSessionSubscriptions(tenantId, sessionId);
         sessionCmdMap.remove(sessionId);
-        entityDataSubService.cancelAllSessionSubscriptions(sessionId);
     }
 
     private boolean validateSubscriptionCmd(WebSocketSessionRef sessionRef, EntityDataCmd cmd) {
