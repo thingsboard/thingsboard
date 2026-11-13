@@ -133,12 +133,41 @@ export interface ReportDataKeySettings {
   type: ReportDataKeySettingsType;
 }
 
+export enum BorderType {
+  solid = 'solid',
+  dashed = 'dashed',
+  dotted = 'dotted',
+  double = 'double'
+}
+
+export const borderTypes = Object.keys(BorderType) as BorderType[];
+
+export const borderTypeTranslations = new Map<BorderType, string>(
+  [
+    [BorderType.solid, 'report-template.component.divider.line-type-solid'],
+    [BorderType.dashed, 'report-template.component.divider.line-type-dashed'],
+    [BorderType.dotted, 'report-template.component.divider.line-type-dotted'],
+    [BorderType.double, 'report-template.component.divider.line-type-double']
+  ]
+);
+
+/**
+ * Converts the configured width (thickness of a single line) into the CSS border-width.
+ * A double border is two lines of that thickness with an equal gap between them (the same model Word uses),
+ * so its CSS width is three times larger. Mirrors BorderType.toCssWidth() on the backend.
+ */
+export const borderCssWidth = (type: BorderType, lineWidth: number): number =>
+  type === BorderType.double ? lineWidth * 3 : lineWidth;
+
 export interface TableReportCellSettings {
   font?: Font;
   color?: string;
   backgroundColor?: string;
   textAlignment?: alignment;
   verticalAlignment?: alignment;
+  borderType?: BorderType;
+  borderColor?: string;
+  borderWidth?: number;
 }
 
 export interface TableReportColumnSettings extends ReportDataKeySettings {
@@ -223,6 +252,43 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
       }
     ],
     default: 'middle'
+  },
+  {
+    id: 'borderWidth',
+    type: FormPropertyType.number,
+    name: '{i18n:report-template.border}',
+    subLabel: '{i18n:report-template.width}',
+    fieldSuffix: 'px',
+    min: 0,
+    step: 1,
+    default: null
+  },
+  {
+    id: 'borderType',
+    type: FormPropertyType.select,
+    name: '{i18n:report-template.border}',
+    subLabel: '{i18n:report-template.style}',
+    fieldClass: 'standard-width',
+    items: borderTypes.map(type => ({
+      label: `{i18n:${borderTypeTranslations.get(type)}}`,
+      value: type
+    })),
+    default: BorderType.solid
+  },
+  {
+    id: 'borderColor',
+    type: FormPropertyType.color,
+    name: '{i18n:report-template.border}',
+    default: null
+  },
+  {
+    id: 'doubleBorderHint',
+    type: FormPropertyType.htmlSection,
+    name: '',
+    htmlClassList: ['tb-form-hint', 'tb-primary-fill'],
+    htmlContent: '{i18n:report-template.double-border-width-hint}',
+    condition: `return model.borderType === '${BorderType.double}';`,
+    default: null
   }
 ]);
 
@@ -984,22 +1050,6 @@ export const borderLengthTranslations = new Map<BorderLength, string>(
   [
     [BorderLength.LONG, 'report-template.component.divider.divider-type-long'],
     [BorderLength.SHORT, 'report-template.component.divider.divider-type-short']
-  ]
-);
-
-export enum BorderType {
-  solid = 'solid',
-  dashed = 'dashed',
-  dotted = 'dotted'
-}
-
-export const borderTypes = Object.keys(BorderType) as BorderType[];
-
-export const borderTypeTranslations = new Map<BorderType, string>(
-  [
-    [BorderType.solid, 'report-template.component.divider.line-type-solid'],
-    [BorderType.dashed, 'report-template.component.divider.line-type-dashed'],
-    [BorderType.dotted, 'report-template.component.divider.line-type-dotted']
   ]
 );
 

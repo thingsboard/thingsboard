@@ -29,23 +29,6 @@
   .mat-mdc-form-field:has(.tb-app-upgrade-hint) {
     margin-bottom: 12px;
   }
-  .tb-app-compose-hint {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 8px;
-    padding: 6px 10px;
-    border-radius: 4px;
-    background: $agent-warning-surface;
-    color: $agent-warning-text;
-    font-size: 12px;
-    .tb-app-compose-hint-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      color: #c79100;
-    }
-  }
   .tb-mat-label {
     display: block;
     margin-bottom: 8px;

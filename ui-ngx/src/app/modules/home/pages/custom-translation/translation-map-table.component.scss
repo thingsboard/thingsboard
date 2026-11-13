@@ -43,7 +43,7 @@
         }
 
         &.untranslated {
-          background: #D12730;
+          background: var(--tb-crit);
         }
 
         &.customized {
@@ -109,9 +109,9 @@
       }
 
       &.untranslated {
-        background: rgba(209, 39, 48, 0.04);
+        background: color-mix(in srgb, var(--tb-crit) 4%, transparent);
         &:hover {
-          background: rgba(209, 39, 48, 0.08);
+          background: color-mix(in srgb, var(--tb-crit) 8%, transparent);
         }
       }
 

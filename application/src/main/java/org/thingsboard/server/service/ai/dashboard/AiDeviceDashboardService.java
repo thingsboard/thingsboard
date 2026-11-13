@@ -9,6 +9,6 @@ import java.util.UUID;
 
 public interface AiDeviceDashboardService {
 
-    JsonNode generateDashboard(UUID deviceId, JsonNode request, String tbAccessToken, SecurityUser user);
+    JsonNode generateDashboard(UUID deviceId, JsonNode request, String tbAccessToken, String clientOrigin, SecurityUser user);
 
 }

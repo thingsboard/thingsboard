@@ -19,6 +19,7 @@ export class AiChatMessagesComponent implements OnChanges {
   @Input() completedExecutions: Record<string, ToolExecutionResult> = {};
   @Input() autoApprove = false;
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
+  @Output() resourceError = new EventEmitter<any>();
 
   waitApproval = false;
 

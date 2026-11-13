@@ -58,11 +58,11 @@
     }
     <!-- Error banner -->
     @if (hasError) {
-      <div class="tb-progress-error-banner">
+      <div class="tb-form-hint tb-primary-fill tb-form-hint-error mb-5">
         <mat-icon>error_outline</mat-icon>
-        <div class="error-body">
-          <div class="error-label" translate>agent.app-event-error-title</div>
-          <div class="error-text">{{ event.errorMessage }}</div>
+        <div>
+          <div class="font-medium" translate>agent.app-event-error-title</div>
+          <div class="whitespace-pre-wrap break-words">{{ event.errorMessage }}</div>
         </div>
       </div>
     }

@@ -54,6 +54,15 @@ public class TestProperties {
         return System.getProperty("integrationExecutor.httpUrl", "http://localhost:8082");
     }
 
+    public static String getChirpStackRestUrl(){
+        if (instance.isActive()) {
+            String host = instance.getTestContainer().getServiceHost("chirpstack-rest-api", 8090);
+            Integer port = instance.getTestContainer().getServicePort("chirpstack-rest-api", 8090);
+            return "http://" + host + ":" + port;
+        }
+        return System.getProperty("chirpstack.restUrl", "http://localhost:8090");
+    }
+
     public static String getMqttBrokerUrl(){
         if (instance.isActive()) {
             String host = instance.getTestContainer().getServiceHost("broker", 1883);

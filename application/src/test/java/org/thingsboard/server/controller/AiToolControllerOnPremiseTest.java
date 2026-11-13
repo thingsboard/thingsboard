@@ -2,21 +2,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 @DaoSqlTest
 public class AiToolControllerOnPremiseTest extends AbstractOnPremiseAiControllerTest {
@@ -29,8 +25,7 @@ public class AiToolControllerOnPremiseTest extends AbstractOnPremiseAiController
 
         ObjectNode request = decision(true);
         ObjectNode response = approvedResponse();
-        given(tbAiClient.resolveToolApproval(eq(request), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(response));
+        givenOperation(ChannelProtocol.TOOL_APPROVAL_RESOLVE, request, success(response));
 
         // WHEN
         JsonNode result = doPost("/api/ai/tools/resolve-approval", request, JsonNode.class);
@@ -38,9 +33,8 @@ public class AiToolControllerOnPremiseTest extends AbstractOnPremiseAiController
         // THEN
         assertThat(result).isEqualTo(response);
 
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).resolveToolApproval(eq(request), tokenProvider.capture());
-        assertTokenProviderBelongsToTenantAdmin(tokenProvider.getValue());
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.TOOL_APPROVAL_RESOLVE, request);
+        assertTokenProviderBelongsToTenantAdmin(context.tokenProvider());
     }
 
     private static ObjectNode decision(boolean approved) {

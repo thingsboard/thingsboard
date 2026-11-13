@@ -19,30 +19,30 @@ import java.util.UUID;
  * Registration-only migration with no {@link #apply()} (no data migration), plus an {@link #applyAfterCommit()}
  * backfill that closes the pre-existing legacy stuck-RPC backlog.
  * <p>
- * {@link LtsMigrationService} selects migrations from the injected {@link LtsMigration} beans, not from the
+ * {@link MigrationService} selects migrations from the injected {@link Migration} beans, not from the
  * on-disk {@code data/upgrade/lts/<version>/} directories. So this bean is what makes the runner discover
  * version {@code 4.4.0.0} and execute its {@code data/upgrade/lts/4.4.0.0/schema_update.sql}, which -- among the
  * other 4.4 changes -- adds the nullable {@code rpc.request_id} and {@code rpc.oneway} columns.
  * <p>
  * The RPC change rides the {@code 4.4.0.0} slot rather than a 4.3/4.2-family one because it ships in 4.4 only.
  * {@code 4.3.1.4} is already released (and, in PE, already carries the {@code entity_alarm.originator_id}
- * backfill), and {@link LtsVersion#isInRange} is exclusive at the lower bound -- so an installation already on
+ * backfill), and {@link Version#isInRange} is exclusive at the lower bound -- so an installation already on
  * {@code 4.3.1.4} would never re-run that version. Every supported upgrade source ({@code 4.3.0.x},
  * {@code 4.3.1.x}) is below {@code 4.4.0.0}, so all of them select this migration exactly once.
  * <p>
- * The dir/bean consistency (both ways) is guarded by a test in {@code LtsMigrationIntegrationTest}.
+ * The dir/bean consistency (both ways) is guarded by a test in {@code MigrationIntegrationTest}.
  * <p>
  * {@link #applyAfterCommit()} closes rows left stuck by earlier server versions that predate {@code request_id}
  * tracking: any {@code rpc} row with {@code request_id IS NULL} that is past its expiration and still sitting in
  * {@code SENT} or {@code TIMEOUT}, or in {@code DELIVERED} for a two-way call (one-way {@code DELIVERED} is already terminal
  * success), is force-closed to {@code EXPIRED} with a canned response. It walks the {@code rpc} table by primary
  * key in keyset-paginated, self-committing batches so it never holds a long transaction or blocks concurrent
- * readers/writers; see the class-level backfill contract on {@link LtsMigration#applyAfterCommit()}.
+ * readers/writers; see the class-level backfill contract on {@link Migration#applyAfterCommit()}.
  */
 @Slf4j
 @Component
 @TbCoreComponent
-public class V4_4_0_0Migration implements LtsMigration {
+public class V4_4_0_0Migration implements Migration {
 
     // Same wording as DeviceActorMessageProcessor.LEGACY_UNTRACKED_MESSAGE, so a row closed by this one-time
     // backfill reads identically to one closed live by the actor on reload.

@@ -208,16 +208,6 @@ export class CustomersTableConfigResolver  {
         }
       );
     }
-    if (this.userPermissionsService.hasGenericPermission(Resource.AGENT, Operation.READ)) {
-      actions.push(
-        {
-          name: this.translate.instant('customer.manage-customer-agents'),
-          icon: 'memory',
-          isEnabled: (customer) => true,
-          onAction: ($event, entity) => this.manageCustomerAgents($event, entity, config)
-        }
-      );
-    }
     if (this.userPermissionsService.hasGenericPermission(Resource.DASHBOARD, Operation.READ)) {
       actions.push(
         {

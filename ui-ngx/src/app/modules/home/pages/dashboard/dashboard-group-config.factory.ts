@@ -253,6 +253,16 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
       });
   }
 
+  importDashboardFile($event: Event, dashboard: DashboardInfo, config: GroupEntityTableConfig<DashboardInfo>) {
+    this.homeDialogs.importDashboardFile($event, dashboard).subscribe(
+      (res) => {
+        if (res) {
+          config.updateData();
+        }
+      }
+    );
+  }
+
   manageOwnerAndGroups($event: Event, dashboard: DashboardInfo, config: GroupEntityTableConfig<DashboardInfo>) {
     this.homeDialogs.manageOwnerAndGroups($event, dashboard).subscribe(
       (res) => {
@@ -271,6 +281,9 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
         return true;
       case 'export':
         this.exportDashboard(action.event, action.entity);
+        return true;
+      case 'import':
+        this.importDashboardFile(action.event, action.entity, config);
         return true;
       case 'manageOwnerAndGroups':
         this.manageOwnerAndGroups(action.event, action.entity, config);

@@ -1,0 +1,49 @@
+// Encode downlink data from incoming Rule Engine message
+// Shared by the TTN and TTI integrations (The Things Stack).
+
+// msg - JSON message payload downlink message json
+// msgType - type of message, for ex. 'ATTRIBUTES_UPDATED', 'POST_TELEMETRY_REQUEST', etc.
+// metadata - list of key-value pairs with additional data about the message
+// integrationMetadata - list of key-value pairs with additional data defined in Integration executing this converter
+
+/** Encoder **/
+
+// Target device identifier used to build the TTN/TTI downlink topic (devId is assumed to be added via Originator fields rule node)
+var devId = metadata.devId;
+// LoRaWAN frame port the downlink is scheduled on (cs_fPort is assumed to be added via Originator attributes rule node, prefix 'cs_' (client-side) is added by rule node)
+// Default port to 1 when the device fPort attribute is missing or empty. parseInt keeps f_port a number, as the TTN/TTI API expects.
+var fPort = (metadata.cs_fPort != null && metadata.cs_fPort != '')
+    ? parseInt(metadata.cs_fPort)
+    : 1;
+
+// EXAMPLE — replace this: it encodes a single field ('powerState') from the downlink message.
+// Swap 'powerState' (and the 'unspecified' fallback) for the field(s) and encoding your device expects;
+// as written, any downlink without a 'powerState' field sends the constant value 'unspecified'.
+var base64Payload = (msg.powerState != null)
+    ? btoa(msg.powerState)          // if powerState is present, encode it to base64
+    : btoa('unspecified');          // fall back to 'unspecified' when absent
+
+// The Things Stack (TTN/TTI) expects a 'downlinks' array; each entry is a single scheduled downlink.
+var data = {
+  downlinks: [{
+    // Frame port to deliver the payload on (must match the device's expected port).
+    f_port: fPort,
+    // false - best-effort downlink; set to true to request an acknowledgement from the device.
+    confirmed: false,
+    // Downlink payload, base64-encoded as required by the TTN/TTI API.
+    frm_payload: base64Payload,
+    // Scheduling priority for the network server: LOWEST, LOW, BELOW_NORMAL, NORMAL, ABOVE_NORMAL, HIGH, HIGHEST.
+    priority: "NORMAL"
+  }]
+};
+
+// Result object with encoded downlink payload
+var result = {
+  contentType: "JSON",
+  data: JSON.stringify(data),
+  metadata: {
+    devId: devId
+  }
+};
+
+return result;

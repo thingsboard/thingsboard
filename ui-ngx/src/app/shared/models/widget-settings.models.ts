@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
+  deepClone,
   isDefinedAndNotNull,
   isNotEmptyStr,
   isNumber,
@@ -20,15 +21,15 @@ import {
   TargetDeviceType,
   widgetType
 } from '@shared/models/widget.models';
-import { EventEmitter, Injector } from '@angular/core';
+import { EventEmitter, Injector, NgZone } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import { DateAgoPipe, nextAgoChangeDelay } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
-import { EMPTY, Observable, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, of, Subscription, timer } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
-import { map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, share, switchMap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
   AVG_MONTH,
@@ -188,6 +189,28 @@ export interface ColorRangeSettings extends AdvancedColorMode {
   range?: ColorRange[];
   rangeAdvanced?: AdvancedColorRange[];
 }
+
+/**
+ * Converts any stored rangeList shape to ColorRangeSettings. Always returns a new deep copy (null/undefined pass through),
+ * so callers may mutate the result freely.
+ */
+export const normalizeColorRangeSettings = (rangeList: ColorRangeSettings | ColorRange[]): ColorRangeSettings => {
+  if (!isDefinedAndNotNull(rangeList)) {
+    return rangeList as ColorRangeSettings;
+  }
+  if (Array.isArray(rangeList)) {
+    return {advancedMode: false, range: deepClone(rangeList)};
+  }
+  const result: ColorRangeSettings = deepClone(rangeList);
+  result.advancedMode = result.advancedMode ?? false;
+  // Unwraps the legacy corrupted shape {range: {advancedMode, range: [...]}} (possibly nested several levels deep)
+  let range: any = result.range;
+  while (isDefinedAndNotNull(range) && !Array.isArray(range)) {
+    range = range.range;
+  }
+  result.range = range;
+  return result;
+};
 
 export interface ColorGradientSettings extends AdvancedColorMode {
   gradient?: string[];
@@ -515,9 +538,9 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
 
 class RangeColorProcessor extends AdvancedModeColorProcessor {
 
-  constructor(protected settings: ColorSettings,
-              protected ctx: WidgetContext) {
-    super(settings, ctx);
+  constructor(settings: ColorSettings,
+              ctx: WidgetContext) {
+    super({...settings, rangeList: normalizeColorRangeSettings(settings.rangeList)}, ctx);
   }
 
   update(value: any): void {
@@ -561,15 +584,8 @@ class RangeColorProcessor extends AdvancedModeColorProcessor {
   }
 
   private computeFromRange(value: any): string {
-    let rangeList: any = this.settings.rangeList as Array<ColorRange>;
-    let advancedMode = false;
-
-    if (isDefinedAndNotNull(this.settings.rangeList?.advancedMode)) {
-      advancedMode = this.settings.rangeList.advancedMode;
-      rangeList = advancedMode ?
-        this.settings.rangeList.rangeAdvanced as Array<AdvancedColorRange> :
-        this.settings.rangeList.range as Array<ColorRange>;
-    }
+    const advancedMode = this.settings.rangeList?.advancedMode ?? false;
+    const rangeList: any = advancedMode ? this.settings.rangeList?.rangeAdvanced : this.settings.rangeList?.range;
 
     if (rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);
@@ -829,6 +845,8 @@ export abstract class DateFormatProcessor {
                         protected settings: DateFormatSettings) {
   }
 
+  formattedUpdated?: Observable<void>;
+
   abstract update(ts: string | number | Date, interval?: Interval): string;
 
 }
@@ -858,27 +876,56 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
 
   private dateAgoPipe: DateAgoPipe;
   private translate: TranslateService;
+  private ngZone: NgZone;
+  private readonly ts$ = new BehaviorSubject<number>(null);
+
+  readonly formattedUpdated: Observable<void> = this.ts$.pipe(
+    distinctUntilChanged(),
+    switchMap(ts => this.agoTicks(ts)),
+    map(() => this.format(this.ts$.value)),
+    filter(text => text !== this.formatted),
+    map(text => {
+      this.formatted = text;
+    }),
+    share()
+  );
 
   constructor(protected $injector: Injector,
               protected settings: DateFormatSettings) {
     super($injector, settings);
     this.dateAgoPipe = $injector.get(DateAgoPipe);
     this.translate = $injector.get(TranslateService);
+    this.ngZone = $injector.get(NgZone);
   }
 
-  update(ts: string| number | Date): string {
-    if (ts) {
-      const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
-      if (this.settings.hideLastUpdatePrefix) {
-        this.formatted = agoText;
-      } else {
-        this.formatted = this.translate.instant('date.last-update-n-ago-text',
-          {agoText});
-      }
-    } else {
-      this.formatted = '&nbsp;';
-    }
+  update(ts: string | number | Date): string {
+    this.ts$.next(ts ? +new Date(ts) : null);
+    this.formatted = ts ? this.format(ts) : '&nbsp;';
     return this.formatted;
+  }
+
+  private format(ts: string | number | Date): string {
+    const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
+    return this.settings.hideLastUpdatePrefix
+      ? agoText
+      : this.translate.instant('date.last-update-n-ago-text', {agoText});
+  }
+
+  private agoTicks(ts: number): Observable<void> {
+    return new Observable<void>(subscriber => {
+      let tick: Subscription;
+      const schedule = () => {
+        const delay = nextAgoChangeDelay(ts);
+        if (delay !== null) {
+          tick = timer(delay).subscribe(() => {
+            subscriber.next();
+            schedule();
+          });
+        }
+      };
+      this.ngZone.runOutsideAngular(schedule);
+      return () => tick?.unsubscribe();
+    });
   }
 
 }

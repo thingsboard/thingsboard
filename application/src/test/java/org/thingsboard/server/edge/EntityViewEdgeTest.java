@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
@@ -25,6 +26,7 @@ import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -302,6 +304,21 @@ public class EntityViewEdgeTest extends AbstractEdgeTest {
         entityView.setType("test");
         entityView.setEntityId(device.getId());
         return entityView;
+    }
+
+    @Test
+    public void testSendEntityViewForEntityOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        EntityView entityView = new EntityView();
+        entityView.setId(new EntityViewId(Uuids.timeBased()));
+        entityView.setTenantId(tenantId);
+        entityView.setName("Edge Entity View");
+        entityView.setType("default");
+        entityView.setEntityId(device.getId());
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityViewUpdateMsg(
+                EdgeMsgConstructorUtils.constructEntityViewUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, entityView, null)));
+
+        doGet("/api/entityView/" + entityView.getUuidId()).andExpect(status().isNotFound());
     }
 
 }

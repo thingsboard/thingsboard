@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.EdgeUpgradeMessageV2;
 import org.thingsboard.server.common.data.agent.AgentApplicationType;
 import org.thingsboard.server.common.data.agent.config.AgentAppConfigType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
+import org.thingsboard.server.dao.edge.EdgeEditionStyle;
 import org.thingsboard.server.dao.sql.agent.AppTemplateRegistry;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -39,8 +40,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,7 +71,8 @@ public class AgentAppTemplateSyncService {
     private static final int APP_TYPE_GROUP_NUM = 1;
     private static final int CONFIG_TYPE_GROUP_NUM = 2;
     private static final String REPO_KEY = "agent-app-templates";
-    private static final String EDGE_IMAGE_VERSION_SUFFIX = "EDGEPE";
+    // <basePath>/since/<version>/ holds templates that replace the same-named base ones from that platform version on
+    private static final String SINCE_DIR = "since";
     private static final Duration UPDATE_SERVER_CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration UPDATE_SERVER_READ_TIMEOUT = Duration.ofSeconds(30);
 
@@ -125,7 +129,7 @@ public class AgentAppTemplateSyncService {
                     continue;
                 }
                 MaterializationResult result = materializer.materialize(
-                        rawTemplate, appType, configType, descriptors, composeLoader());
+                        rawTemplate, appType, configType, descriptors, composeLoader(), folderLister());
                 if (result.getByVersion().isEmpty()) {
                     log.warn("Materialized no versions for {}-{} (the version graph is empty or unreachable); " +
                             "keeping the previously registered templates", appType, configType);
@@ -147,10 +151,45 @@ public class AgentAppTemplateSyncService {
         return new RestTemplate(factory);
     }
 
-    private List<RepoFile> getTemplateFiles() {
-        return gitSyncService.listFiles(REPO_KEY, basePath, 1, FileType.FILE).stream()
+    /**
+     * Base templates overridden per file name by {@code since/<version>/} ones, taking the newest folder whose version
+     * is not above the platform version. Servers older than a {@code since} folder only list the base folder, so the
+     * templates there are free to rely on newer materialization variables.
+     */
+    List<RepoFile> getTemplateFiles() {
+        String platform = TbVersionUtils.extractStartingDigits(projectInfo.getProjectVersion());
+        Map<String, List<RepoFile>> sinceFilesByVersion = listTemplateFiles(basePath + "/" + SINCE_DIR, 2).stream()
+                .collect(Collectors.groupingBy(AgentAppTemplateSyncService::sinceVersion));
+        Map<String, RepoFile> byName = new LinkedHashMap<>();
+        for (String version : VersionFolders.applicableTo(sinceFilesByVersion.keySet(), platform)) {
+            sinceFilesByVersion.get(version).forEach(file -> byName.putIfAbsent(file.name(), file));
+        }
+        listTemplateFiles(basePath, 1).forEach(file -> byName.putIfAbsent(file.name(), file));
+        return new ArrayList<>(byName.values());
+    }
+    // Template files the given number of folders below path
+    private List<RepoFile> listTemplateFiles(String path, int levels) {
+        return gitSyncService.listFiles(REPO_KEY, path, depthBelow(path, levels), FileType.FILE).stream()
                 .filter(file -> RegexUtils.matches(file.name(), TEMPLATE_FILE_PATTERN))
                 .collect(Collectors.toList());
+    }
+
+    // Name of the folder holding the file, e.g. templates/since/4.4.1/template-EDGE-DOCKER_COMPOSE.json -> 4.4.1
+    // Tree depth of the entries the given number of folders below path (root entries are at depth 0)
+    private static int depthBelow(String path, int levels) {
+        return path.split("/").length - 1 + levels;
+    }
+
+    private static String sinceVersion(RepoFile file) {
+        String folder = file.path().substring(0, file.path().lastIndexOf('/'));
+        return folder.substring(folder.lastIndexOf('/') + 1);
+    }
+
+    // Names of the folders directly under a repo path, cached per template since every version lists the same folders
+    private Function<String, List<String>> folderLister() {
+        Map<String, List<String>> cache = new HashMap<>();
+        return path -> cache.computeIfAbsent(path, p -> gitSyncService.listFiles(REPO_KEY, p, depthBelow(p, 1), FileType.DIRECTORY)
+                .stream().map(RepoFile::name).toList());
     }
 
     private Function<String, JsonNode> composeLoader() {
@@ -169,8 +208,8 @@ public class AgentAppTemplateSyncService {
 
     private List<AppVersionDescriptor> resolveDescriptors(AgentApplicationType appType) {
         return switch (appType) {
-            case EDGE -> appendVersionSuffix(filterCurrentlySupportedVersions(
-                    filterVersionsWithoutTemplates(edgeDescriptors(), minSupportedEdgeVersion, appType)), EDGE_IMAGE_VERSION_SUFFIX);
+            case EDGE -> appendEdgeVersionSuffix(filterCurrentlySupportedVersions(
+                    filterVersionsWithoutTemplates(edgeDescriptors(), minSupportedEdgeVersion, appType)));
             case GATEWAY -> filterVersionsWithoutTemplates(
                     buildDescriptors(gatewayVersionGraph(), "gatewayVersions", "nextGatewayVersion", false),
                     minSupportedGatewayVersion, appType);
@@ -178,16 +217,21 @@ public class AgentAppTemplateSyncService {
         };
     }
 
-    static List<AppVersionDescriptor> appendVersionSuffix(List<AppVersionDescriptor> descriptors, String suffix) {
+    // edge image tags carry an edition suffix that depends on the version itself (e.g. 4.4.0EDGEPE vs 4.4.1EDGE)
+    static List<AppVersionDescriptor> appendEdgeVersionSuffix(List<AppVersionDescriptor> descriptors) {
         if (CollectionsUtil.isEmpty(descriptors)) {
             return descriptors;
         }
         return descriptors.stream()
                 .map(d -> new AppVersionDescriptor(
-                        d.getVersion() + suffix,
-                        d.getNextVersion() == null ? null : d.getNextVersion() + suffix,
+                        withEdgeVersionSuffix(d.getVersion()),
+                        withEdgeVersionSuffix(d.getNextVersion()),
                         d.isRequiresUpdateDb()))
                 .collect(Collectors.toList());
+    }
+
+    private static String withEdgeVersionSuffix(String version) {
+        return version == null ? null : EdgeEditionStyle.withVersionSuffix(version);
     }
 
     List<AppVersionDescriptor> filterCurrentlySupportedVersions(List<AppVersionDescriptor> descriptors) {

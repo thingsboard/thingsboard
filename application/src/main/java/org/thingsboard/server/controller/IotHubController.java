@@ -32,10 +32,17 @@ import java.util.UUID;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.dao.device.DeviceConnectivityHostSource;
 import org.thingsboard.server.dao.device.DeviceConnectivityService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.system.ResolvedBaseUrl;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
+import org.thingsboard.server.service.iot_hub.DevicePackageEntityState;
+import org.thingsboard.server.service.iot_hub.DevicePackageUpdateService;
+import org.thingsboard.server.service.iot_hub.DeviceUpdateRequest;
+import org.thingsboard.server.service.iot_hub.DeviceUpdateResult;
+import org.thingsboard.server.service.iot_hub.InstalledItemKeptEntities;
 import org.thingsboard.server.service.iot_hub.InstallItemVersionResult;
 import org.thingsboard.server.service.iot_hub.InstallPlan;
 import org.thingsboard.server.service.iot_hub.InstallPlanResult;
@@ -51,6 +58,7 @@ import org.thingsboard.server.service.iot_hub.IotHubService;
 public class IotHubController extends BaseController {
 
     private final IotHubService iotHubService;
+    private final DevicePackageUpdateService devicePackageUpdateService;
     private final IotHubInstalledItemService iotHubInstalledItemService;
     private final DeviceConnectivityService deviceConnectivityService;
     private final SystemSecurityService systemSecurityService;
@@ -89,24 +97,27 @@ public class IotHubController extends BaseController {
     @ResponseBody
     public InstallItemVersionResult registerDeviceInstall(
             @RequestParam String versionId,
-            @RequestParam(required = false) UUID replaceInstalledItemId,
             @RequestBody JsonNode body) throws ThingsboardException {
         checkAllPermissions();
         DeviceInstalledItemDescriptor descriptor = JacksonUtil.treeToValue(body, DeviceInstalledItemDescriptor.class);
-        return iotHubService.registerDeviceInstall(getCurrentUser(), versionId, descriptor,
-                replaceInstalledItemId != null ? new IotHubInstalledItemId(replaceInstalledItemId) : null);
+        return iotHubService.registerDeviceInstall(getCurrentUser(), versionId, descriptor);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @PostMapping("/installedItems/{installedItemId}/device/removeEntities")
+    @GetMapping("/installedItems/{installedItemId}/deviceUpdate/check")
     @ResponseBody
-    public void removeDevicePackageEntities(@PathVariable UUID installedItemId,
-                                            @RequestParam String versionId,
-                                            @RequestParam(required = false) UUID entityGroupId,
-                                            @RequestParam(required = false) UUID customerId) throws ThingsboardException {
+    public List<DevicePackageEntityState> checkDeviceUpdate(@PathVariable UUID installedItemId) throws ThingsboardException {
         checkAllPermissions();
-        iotHubService.removeDevicePackageEntities(getCurrentUser(), new IotHubInstalledItemId(installedItemId), versionId,
-                entityGroupId, customerId);
+        return devicePackageUpdateService.check(getCurrentUser(), new IotHubInstalledItemId(installedItemId));
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/installedItems/{installedItemId}/deviceUpdate")
+    @ResponseBody
+    public DeviceUpdateResult updateDevicePackage(@PathVariable UUID installedItemId,
+                                                  @RequestBody DeviceUpdateRequest request) throws ThingsboardException {
+        checkAllPermissions();
+        return devicePackageUpdateService.apply(getCurrentUser(), new IotHubInstalledItemId(installedItemId), request);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -168,12 +179,21 @@ public class IotHubController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/installedItems/{installedItemId}/keptEntities")
+    @ResponseBody
+    public InstalledItemKeptEntities getInstalledItemKeptEntities(@PathVariable UUID installedItemId) throws ThingsboardException {
+        checkAllPermissions();
+        return iotHubService.findKeptEntities(getTenantId(), new IotHubInstalledItemId(installedItemId));
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/connectivity")
     @ResponseBody
     public JsonNode getConnectivitySettings(HttpServletRequest request) throws Exception {
         checkAllPermissions();
-        String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
-        return deviceConnectivityService.getConnectivityInfo(baseUrl);
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
+        return deviceConnectivityService.getConnectivityInfo(baseUrl.url(),
+                baseUrl.fromRequest() ? DeviceConnectivityHostSource.REQUEST : DeviceConnectivityHostSource.BASE_URL);
     }
 
     private void checkAllPermissions() throws ThingsboardException {
