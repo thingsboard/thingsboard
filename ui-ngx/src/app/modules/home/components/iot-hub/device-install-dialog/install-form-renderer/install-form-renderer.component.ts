@@ -2,11 +2,28 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
-import { FormFieldDefinition, FormFieldType } from '@shared/models/iot-hub/device-package.models';
+import { AbstractControl, UntypedFormGroup } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { cleanFormFieldValue, FormFieldDefinition, FormFieldType, pastedPortOf } from '@shared/models/iot-hub/device-package.models';
 import { generateSecret } from '@core/utils';
 
 const DEFAULT_RANDOM_SIZE = 20;
+
+/**
+ * Fields shown on one line. When one of them has a help popup (outside review mode), the row shows
+ * the field's hint in a box under it, next to the popup trigger, and its fields don't reserve space
+ * for a hint or an error, so the box sits right under them.
+ */
+interface FormRow {
+  fields: FormFieldDefinition[];
+  hasHintBox: boolean;
+}
+
+/** Consecutive rows of one group, shown in a panel with the group as its title; no title for ungrouped fields. */
+interface FormSection {
+  title?: string;
+  rows: FormRow[];
+}
 
 /**
  * Reusable form renderer for the device install dialog's SHOW_FORM step. Consumes
@@ -32,21 +49,31 @@ export class InstallFormRendererComponent implements OnChanges {
   @Input() resolveImagePath?: (path: string) => string;
   /** When true, PASSWORD inputs render unmasked by default (used by review mode). */
   @Input() reviewMode = false;
+  /** Update: the fields the installed version's form didn't have, highlighted as new. */
+  @Input() newFieldKeys?: Set<string>;
 
   passwordVisible: Record<string, boolean> = {};
+  // Fields in render order: consecutive fields of a group form a section, and consecutive fields
+  // with the same `row` share one line
+  sections: FormSection[] = [];
+  // The same for the fields of the collapsed Advanced settings panel
+  advancedSections: FormSection[] = [];
+  private focusedControl: AbstractControl | null = null;
+  private keepFocusedError = false;
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.fields || changes.reviewMode) {
-      this.passwordVisible = {};
-      if (this.reviewMode) {
-        for (const f of this.fields) {
-          if (f.type === FormFieldType.PASSWORD) {
-            this.passwordVisible[f.key] = true;
-          }
-        }
+  /**
+   * A new error shows only after the user leaves the field, so a value is not called wrong while it
+   * is typed. An error already shown when the user enters the field stays until the value is valid.
+   */
+  readonly errorStateMatcher: ErrorStateMatcher = {
+    isErrorState: (control, form) => {
+      if (control && control === this.focusedControl) {
+        this.keepFocusedError = this.keepFocusedError && control.invalid;
+        return this.keepFocusedError;
       }
+      return !!control?.invalid && (control.touched || !!form?.submitted);
     }
-  }
+  };
 
   readonly FormFieldType = FormFieldType;
 
@@ -57,11 +84,47 @@ export class InstallFormRendererComponent implements OnChanges {
     return field.secretSupport === true;
   }
 
-  /** True when the previous field belonged to a different group (for header rendering). */
-  shouldRenderGroupHeader(field: FormFieldDefinition, index: number): boolean {
-    if (!field.group) return false;
-    if (index === 0) return true;
-    return this.fields[index - 1].group !== field.group;
+  ngOnChanges(changes: SimpleChanges): void {
+    // The hint boxes and the unmasked passwords depend on reviewMode too
+    if (changes.fields || changes.reviewMode) {
+      const fields = this.fields ?? [];
+      this.sections = this.buildSections(fields.filter(field => field.section !== 'advanced'));
+      this.advancedSections = this.buildSections(fields.filter(field => field.section === 'advanced'));
+      this.passwordVisible = {};
+      if (this.reviewMode) {
+        for (const field of fields) {
+          if (field.type === FormFieldType.PASSWORD) {
+            this.passwordVisible[field.key] = true;
+          }
+        }
+      }
+    }
+  }
+
+  private buildSections(fields: FormFieldDefinition[]): FormSection[] {
+    const sections: FormSection[] = [];
+    let previous: FormFieldDefinition | undefined;
+    for (const field of fields) {
+      if (!previous || field.group !== previous.group) {
+        sections.push({ title: field.group, rows: [] });
+      }
+      const rows = sections[sections.length - 1].rows;
+      const last = rows[rows.length - 1];
+      const hasHintBox = !!field.helpPopupId && !this.reviewMode;
+      if (field.row && last?.fields[0].row === field.row) {
+        last.fields.push(field);
+        last.hasHintBox ||= hasHintBox;
+      } else {
+        rows.push({ fields: [field], hasHintBox });
+      }
+      previous = field;
+    }
+    return sections;
+  }
+
+  /** The hint of a field that a defaultValueTemplate fills describes the filled value. */
+  helpTextOf(field: FormFieldDefinition): string | undefined {
+    return field.defaultValueTemplate && field.defaultValueTemplateHelpText ? field.defaultValueTemplateHelpText : field.helpText;
   }
 
   togglePasswordVisible(key: string): void {
@@ -75,11 +138,54 @@ export class InstallFormRendererComponent implements OnChanges {
     control.markAsDirty();
   }
 
+  /** A resettable field the user changed shows a button that puts its defaultValue back. */
+  canResetToDefault(field: FormFieldDefinition): boolean {
+    const control = this.formGroup.controls[field.key];
+    return !!field.resettable && !!control?.enabled && control.value !== (field.defaultValue ?? '');
+  }
+
+  resetToDefault(field: FormFieldDefinition): void {
+    const control = this.formGroup.controls[field.key];
+    control.setValue(field.defaultValue ?? '');
+    control.markAsDirty();
+  }
+
+  onFocus(field: FormFieldDefinition): void {
+    const control = this.formGroup.controls[field.key];
+    this.focusedControl = control ?? null;
+    this.keepFocusedError = !!control?.invalid && control.touched;
+  }
+
+  onBlur(field: FormFieldDefinition): void {
+    this.focusedControl = null;
+    const control = this.formGroup.controls[field.key];
+    const port = pastedPortOf(field, control?.value);
+    const portControl = field.portField ? this.formGroup.controls[field.portField] : undefined;
+    if (port !== undefined && portControl) {
+      portControl.setValue(port);
+      portControl.markAsDirty();
+    }
+    const cleaned = cleanFormFieldValue(field, control?.value);
+    if (control && cleaned !== control.value) {
+      control.setValue(cleaned);
+    }
+  }
+
   getPatternErrorMessage(field: FormFieldDefinition): string {
     return field.validators?.[0]?.message || 'Invalid format';
   }
 
+  /** True when the field fails a validator other than required and pattern (one the dialog added). */
+  hasFieldError(field: FormFieldDefinition): boolean {
+    const errors = this.formGroup.controls[field.key]?.errors;
+    return !!errors && Object.keys(errors).some(key => key !== 'required' && key !== 'pattern');
+  }
+
   imagePath(path: string): string {
     return this.resolveImagePath ? this.resolveImagePath(path) : path;
+  }
+
+  isNewField(field: FormFieldDefinition): boolean {
+    return !!this.newFieldKeys?.has(field.key);
   }
 }

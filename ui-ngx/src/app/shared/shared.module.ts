@@ -56,6 +56,7 @@ import { HUGERTE_ASSETS_PATH } from '@shared/models/hugerte/hugerte.models';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { AutofocusDirective } from '@shared/directives/auto-focus.directive';
 import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
+import { PopoverContentResizeDirective } from '@shared/directives/popover-content-resize.directive';
 import { ContextMenuDirective } from '@shared/directives/context-menu.directive';
 import { ChipOverflowDirective } from '@shared/directives/chip-overflow.directive';
 import { NospacePipe } from '@shared/pipe/nospace.pipe';
@@ -459,6 +460,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ChipOverflowDirective,
     PhotoSwipeGalleryDirective,
     AutocompleteAutoScrollRepositionDirective,
+    PopoverContentResizeDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -774,6 +776,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ChipOverflowDirective,
     PhotoSwipeGalleryDirective,
     AutocompleteAutoScrollRepositionDirective,
+    PopoverContentResizeDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

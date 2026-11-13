@@ -6,12 +6,12 @@
 
 -->
 <div>
-  <mat-card appearance="outlined" class="profile-card">
+  <mat-card appearance="outlined" class="profile-card tb-content-card">
     <mat-card-header>
-      <div class="flex flex-1 flex-row items-start justify-between xs:flex-col xs:justify-start xs:gap-2">
-        <div class="flex flex-1 flex-col">
+      <div class="flex min-w-0 flex-1 flex-row items-start justify-between gap-4 xs:flex-col xs:justify-start xs:gap-2">
+        <div class="flex min-w-0 max-w-full flex-1 flex-col">
           <span class="mat-headline-5" translate>profile.profile</span>
-          <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>
+          <span class="profile-email" style='opacity: 0.7;' tbTruncateWithTooltip>{{ profile ? profile.get('email').value : '' }}</span>
         </div>
         <div class="flex flex-col">
           <span class="mat-mdc-subheader" translate>profile.last-login-time</span>

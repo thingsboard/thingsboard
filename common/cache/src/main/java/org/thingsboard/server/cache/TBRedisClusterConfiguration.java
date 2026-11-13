@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +11,8 @@ import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.thingsboard.server.common.data.StringUtils;
+
+import java.time.Duration;
 
 @Configuration
 @ConditionalOnMissingBean(TbCaffeineCacheConfiguration.class)
@@ -24,6 +27,9 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
 
     @Value("${redis.cluster.useDefaultPoolConfig:true}")
     private boolean useDefaultPoolConfig;
+
+    @Value("${redis.cluster.topology-refresh-period-sec:30}")
+    private long topologyRefreshPeriodSec;
 
     @Value("${redis.username:}")
     private String username;
@@ -40,7 +46,8 @@ public class TBRedisClusterConfiguration extends TBRedisCacheConfiguration {
         clusterConfiguration.setMaxRedirects(maxRedirects);
         clusterConfiguration.setUsername(username);
         clusterConfiguration.setPassword(password);
-        return new JedisConnectionFactory(clusterConfiguration, buildClientConfig());
+        Duration topologyRefreshPeriod = topologyRefreshPeriodSec > 0 ? Duration.ofSeconds(topologyRefreshPeriodSec) : null;
+        return new TbJedisClusterConnectionFactory(clusterConfiguration, buildClientConfig(), topologyRefreshPeriod);
     }
 
     private JedisClientConfiguration buildClientConfig() {

@@ -4,9 +4,10 @@
 
 :host {
   width: 100%;
-  padding-top: 16px;
+  padding-top: $tb-content-spacing;
   padding-bottom: 48px;
   @media #{$mat-gt-sm} {
+    padding-top: $tb-content-spacing-gt-sm;
     padding-left: 16px;
     padding-right: 16px;
   }

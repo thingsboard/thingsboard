@@ -22,6 +22,8 @@ import org.thingsboard.ai.common.channel.SolutionStepRequest;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.exception.ThingsboardRuntimeException;
 import org.thingsboard.server.service.ai.TbAiService;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
@@ -29,10 +31,12 @@ import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -121,6 +125,17 @@ class DefaultAiSolutionServiceTest {
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
+    @Test
+    void shouldRejectWithoutCallingTheAiService_whenAMessageHasNeitherTextNorFiles() {
+        // WHEN
+        Throwable thrown = catchThrowable(() -> service.chat(UUID.randomUUID(), SolutionStep.INITIAL_CONFIGURATION, null, List.of(), user));
+
+        // THEN
+        assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("Message cannot be blank");
+        assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        then(tbAiService).shouldHaveNoInteractions();
+    }
+
     @ParameterizedTest
     @EnumSource(SolutionStep.class)
     void shouldProcessWithCreditCheckAndDelegateToClient_whenChatCalled(SolutionStep step) {
@@ -131,7 +146,7 @@ class DefaultAiSolutionServiceTest {
         given(tbAiService.process(any(), same(user))).willReturn(expectedResponse);
 
         // WHEN
-        JsonNode result = service.chat(solutionId, step, message, user);
+        JsonNode result = service.chat(solutionId, step, message, List.of(), user);
 
         // THEN
         assertThat(result).isSameAs(expectedResponse);

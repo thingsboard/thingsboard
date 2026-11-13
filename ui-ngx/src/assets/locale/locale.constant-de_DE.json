@@ -1880,6 +1880,8 @@
     "model": "Modell",
     "name": "Name",
     "ai-provider": "KI-Anbieter",
+    "customer-access": "Kundenzugriff",
+    "customer-access-hint": "Erlaubt Kundenbenutzern, Chat-Anfragen an dieses Modell zu senden, z. B. aus Trendz Analytics. Die Modellkonfiguration und die Zugangsdaten werden nie offengelegt.",
     "no-found": "Keine KI-Modelle gefunden",
     "list": "{ count, plural, one {Ein Modell} other {Liste von # Modellen} }",
     "selected-fields": "{ count, plural, one {# Modell} other {# Modelle} } ausgewählt",
@@ -5422,7 +5424,6 @@
         "community-string": "SNMP-Community-String"
       },
       "isgateway": "Ist Gateway",
-      "activity-time-from-gateway-device": "Aktivitätszeit vom Gateway-Gerät",
       "description": "Beschreibung",
       "edge-license-key": "Lizenzschlüssel",
       "cloud-endpoint": "Cloud-Endpunkt",
@@ -5690,9 +5691,9 @@
     "type-aws-sqs-description": "Vollständig verwalteter Nachrichtenwarteschlangen-Dienst.",
     "type-aws-kinesis": "AWS Kinesis",
     "type-aws-kinesis-description": "Dienst für Echtzeit-Video- und Datenströme.",
-    "type-ttn": "The Things Stack Community",
+    "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Offenes und dezentrales LoRaWAN-Netzwerk.",
-    "type-tti": "The Things Stack Industries",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "Software zum Betrieb privater LoRaWAN-Netzwerke im großen Maßstab.",
     "type-things-stack": "The Things Stack",
     "type-chirpstack": "ChirpStack",
@@ -8848,7 +8849,8 @@
         "SHARE_GROUP": "Gruppe teilen",
         "ASSIGN_TO_TENANT": "Mandanten zuweisen",
         "READ_CALCULATED_FIELD": "Berechnetes Feld lesen",
-        "WRITE_CALCULATED_FIELD": "Berechnetes Feld schreiben"
+        "WRITE_CALCULATED_FIELD": "Berechnetes Feld schreiben",
+        "INVOKE": "Aufrufen"
       }
     }
   },
