@@ -11,7 +11,8 @@
   .mat-mdc-card.settings-card {
     min-height: 0;
     @media #{$mat-gt-sm} {
-      width: 800px;
+      width: fit-content;
+      min-width: min(800px, 100%);
       max-width: 100%;
     }
     .mat-mdc-card-content {
