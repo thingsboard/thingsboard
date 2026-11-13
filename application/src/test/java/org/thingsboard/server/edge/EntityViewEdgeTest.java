@@ -18,6 +18,7 @@ import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -189,6 +190,69 @@ public class EntityViewEdgeTest extends AbstractEdgeTest {
         EntityView entityView = doGet("/api/entityView/" + entityViewMsg.getUuidId(), EntityView.class);
         Assert.assertNotNull(entityView);
         Assert.assertNotEquals(entityViewOnCloudName, entityView.getName());
+    }
+
+    @Test
+    public void testEntityViewFromEdgeSavedInEdgeTenant() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        EntityView entityViewMsg = buildEntityViewForUplinkMsg(device, "Edge EntityView 3");
+        entityViewMsg.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        EntityViewUpdateMsg.Builder entityViewUpdateMsgBuilder = EntityViewUpdateMsg.newBuilder();
+        entityViewUpdateMsgBuilder.setIdMSB(entityViewMsg.getUuidId().getMostSignificantBits());
+        entityViewUpdateMsgBuilder.setIdLSB(entityViewMsg.getUuidId().getLeastSignificantBits());
+        entityViewUpdateMsgBuilder.setEntity(JacksonUtil.toString(entityViewMsg));
+        entityViewUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        uplinkMsgBuilder.addEntityViewUpdateMsg(entityViewUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        EntityView entityView = doGet("/api/entityView/" + entityViewMsg.getUuidId(), EntityView.class);
+        Assert.assertEquals(tenantId, entityView.getTenantId());
+    }
+
+    @Test
+    public void testEntityViewFromEdgeWithIdOfOtherTenantViewNotSaved() throws Exception {
+        Device edgeDevice = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        loginDifferentTenant();
+        Device otherTenantDevice = new Device();
+        otherTenantDevice.setName("Other tenant device");
+        otherTenantDevice.setType("default");
+        otherTenantDevice = doPost("/api/device", otherTenantDevice, Device.class);
+        EntityView otherTenantView = saveEntityView("Other tenant EntityView", otherTenantDevice.getId(), null);
+        loginTenantAdmin();
+
+        EntityView entityViewMsg = buildEntityViewForUplinkMsg(edgeDevice, "Edge EntityView 4");
+        entityViewMsg.setId(otherTenantView.getId());
+
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        EntityViewUpdateMsg.Builder entityViewUpdateMsgBuilder = EntityViewUpdateMsg.newBuilder();
+        entityViewUpdateMsgBuilder.setIdMSB(entityViewMsg.getUuidId().getMostSignificantBits());
+        entityViewUpdateMsgBuilder.setIdLSB(entityViewMsg.getUuidId().getLeastSignificantBits());
+        entityViewUpdateMsgBuilder.setEntity(JacksonUtil.toString(entityViewMsg));
+        entityViewUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE);
+        uplinkMsgBuilder.addEntityViewUpdateMsg(entityViewUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertFalse(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        loginDifferentTenant();
+        EntityView storedView = doGet("/api/entityView/" + otherTenantView.getUuidId(), EntityView.class);
+        Assert.assertEquals(differentTenantId, storedView.getTenantId());
+        Assert.assertEquals("Other tenant EntityView", storedView.getName());
+        Assert.assertEquals(otherTenantDevice.getId(), storedView.getEntityId());
+        Assert.assertEquals(otherTenantView.getCustomerId(), storedView.getCustomerId());
+        Assert.assertEquals(otherTenantView.getOwnerId(), storedView.getOwnerId());
+        loginTenantAdmin();
     }
 
     @Test
