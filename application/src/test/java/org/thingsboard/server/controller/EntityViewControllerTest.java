@@ -354,6 +354,94 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveEntityViewWithEntityOfOtherTenant() throws Exception {
+        loginDifferentTenant();
+
+        String name = "Entity view of other tenant device";
+        EntityView entityView = createEntityView(name, 0, 0);
+        doPost("/api/entityView", entityView)
+                .andExpect(status().is4xxClientError());
+
+        doGet("/api/tenant/entityViews?entityViewName=" + name)
+                .andExpect(status().isNotFound());
+
+        deleteDifferentTenant();
+    }
+
+    @Test
+    public void testUpdateEntityViewByCustomerUserToEntityNotAssignedToCustomer() throws Exception {
+        EntityView savedView = getNewSavedEntityView("Customer entity view");
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/ENTITY_VIEW/" + savedView.getId().getId()).andExpect(status().isOk());
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + testDevice.getId().getId()).andExpect(status().isOk());
+
+        Device otherDevice = new Device();
+        otherDevice.setName("Device not assigned to customer");
+        otherDevice.setType("default");
+        otherDevice = doPost("/api/device", otherDevice, Device.class);
+
+        loginCustomerAdminUser();
+
+        EntityView customerView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
+        customerView.setEntityId(otherDevice.getId());
+        doPost("/api/entityView", customerView)
+                .andExpect(status().isForbidden());
+
+        EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
+        assertEquals(testDevice.getId(), foundView.getEntityId());
+    }
+
+    @Test
+    public void testUpdateEntityViewByCustomerUserKeepingEntity() throws Exception {
+        EntityView savedView = getNewSavedEntityView("Customer entity view");
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/ENTITY_VIEW/" + savedView.getId().getId()).andExpect(status().isOk());
+
+        loginCustomerAdminUser();
+
+        EntityView customerView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
+        customerView.setName("Customer entity view renamed");
+        EntityView updatedView = doPost("/api/entityView", customerView, EntityView.class);
+
+        assertEquals("Customer entity view renamed", updatedView.getName());
+        assertEquals(testDevice.getId(), updatedView.getEntityId());
+    }
+
+    @Test
+    public void testUpdateEntityViewKeysByCustomerUserWithEntityNotAssignedToCustomer() throws Exception {
+        EntityView savedView = getNewSavedEntityView("Customer entity view");
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/ENTITY_VIEW/" + savedView.getId().getId()).andExpect(status().isOk());
+
+        loginCustomerAdminUser();
+
+        EntityView customerView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
+        customerView.setKeys(new TelemetryEntityView(List.of("tsKey1"), new AttributesEntityView()));
+        doPost("/api/entityView", customerView)
+                .andExpect(status().isForbidden());
+
+        customerView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
+        customerView.setStartTimeMs(1L);
+        doPost("/api/entityView", customerView)
+                .andExpect(status().isForbidden());
+
+        EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId(), EntityView.class);
+        assertEquals(telemetry, foundView.getKeys());
+        assertEquals(0L, foundView.getStartTimeMs());
+    }
+
+    @Test
+    public void testFindEntityViewByOldNameAfterRename() throws Exception {
+        String oldName = "Entity view old name";
+        EntityView savedView = getNewSavedEntityView(oldName);
+        doGet("/api/tenant/entityViews?entityViewName=" + oldName)
+                .andExpect(status().isOk());
+
+        savedView.setName("Entity view new name");
+        doPost("/api/entityView", savedView, EntityView.class);
+
+        doGet("/api/tenant/entityViews?entityViewName=" + oldName)
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     public void testDeleteEntityView() throws Exception {
         Customer customer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
 
@@ -380,6 +468,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     public void testSaveEntityViewWithEmptyName() throws Exception {
         EntityView entityView = new EntityView();
         entityView.setType("default");
+        entityView.setEntityId(testDevice.getId());
 
         Mockito.reset(tbClusterService, auditLogService);
 
