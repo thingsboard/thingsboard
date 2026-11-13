@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { AiAssistantViewType, AiChatClientContext } from '@shared/models/ai-chat.models';
+import { aiPageView, AiChatClientContext } from '@shared/models/ai-chat.models';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
 import { BreadCrumb } from '@shared/components/breadcrumb';
 import { UtilsService } from '@core/services/utils.service';
@@ -9,7 +9,8 @@ import { filter, map, startWith } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, NavigationEnd } from '@angular/router';
 import { aiWelcome } from '@home/components/ai/ai-welcome.models';
-import { Component, computed, effect, ElementRef, inject, signal, untracked, ViewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, NgZone, signal, untracked, ViewChild } from '@angular/core';
+import { MatTooltip } from '@angular/material/tooltip';
 import { AiAssistantPromptExample } from '@shared/models/ai-chat.models';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +29,8 @@ import { AiChatComponent } from '@home/components/ai/ai-chat.component';
     '[class.split]': 'split()',
     '(transitionend)': 'onSlideEnd($event)',
     '(window:resize)': 'fit()',
-    '(click)': 'onClick($event)'
+    '(click)': 'onClick($event)',
+    '(keydown.escape)': '$event.stopPropagation()'
   }
 })
 export class AiAssistantPanelComponent {
@@ -38,6 +40,14 @@ export class AiAssistantPanelComponent {
   private translate = inject(TranslateService);
 
   @ViewChild(AiChatComponent) chat: AiChatComponent;
+
+  @ViewChild('gripTip', {read: MatTooltip}) gripTip: MatTooltip;
+
+  private zone = inject(NgZone);
+
+  private static readonly PAGE_REFLOW_MS = 50;
+
+  resizing = signal(false);
 
   get isOpen() { return this.panelService.open(); }
 
@@ -95,7 +105,7 @@ export class AiAssistantPanelComponent {
     }
     const title = this.pageTitle();
     const path = this.pagePath();
-    const type = path === '/iot-hub' || path.startsWith('/iot-hub/') ? AiAssistantViewType.IOT_HUB : AiAssistantViewType.PAGE;
+    const type = aiPageView(path);
     return title || path !== '/' ? {view: {type, title, path}, timeZone: getDefaultTimezone()} : undefined;
   });
 
@@ -110,6 +120,12 @@ export class AiAssistantPanelComponent {
   private static readonly WIDTH_KEY = 'tbAiPanelWidth';
 
   private lastContextKey: string | null = null;
+
+  private dockedEffect = effect(onCleanup => {
+    const docked = this.panelService.open() && !this.panelService.suppressed();
+    document.documentElement.classList.toggle('tb-ai-docked', docked);
+    onCleanup(() => document.documentElement.classList.remove('tb-ai-docked'));
+  });
 
   private openEffect = effect(() => {
     if (this.panelService.open()) {
@@ -216,28 +232,57 @@ export class AiAssistantPanelComponent {
 
   startResize(event: PointerEvent): void {
     event.preventDefault();
+    this.gripTip?.hide(0);
+    this.resizing.set(true);
     const grip = event.target as HTMLElement;
+    const host = this.elementRef.nativeElement as HTMLElement;
+    const root = document.documentElement;
     const startX = event.clientX;
     const startWidth = this.width();
-    let moved = false;
-    grip.setPointerCapture(event.pointerId);
-    document.body.classList.add('tb-ai-resizing');
-    const move = (e: PointerEvent) => {
-      moved = true;
-      this.setWidth(startWidth + (startX - e.clientX));
+    this.room.set(host.parentElement?.clientWidth ?? window.innerWidth);
+    const widest = this.widest();
+    let current = startWidth;
+    let frame = 0;
+    let pageTimer: ReturnType<typeof setTimeout> | undefined;
+    let pageAt = 0;
+    const reflowPage = () => {
+      pageTimer = undefined;
+      pageAt = performance.now();
+      root.style.setProperty('--tb-ai-panel-w', current + 'px');
     };
-    const up = () => {
-      grip.removeEventListener('pointermove', move);
-      grip.removeEventListener('pointerup', up);
-      grip.removeEventListener('pointercancel', up);
-      document.body.classList.remove('tb-ai-resizing');
-      if (moved) {
-        this.setWidth(this.width(), true);
+    const paint = () => {
+      frame = 0;
+      host.style.width = current + 'px';
+      if (!pageTimer) {
+        pageTimer = setTimeout(reflowPage, Math.max(0, AiAssistantPanelComponent.PAGE_REFLOW_MS - (performance.now() - pageAt)));
       }
     };
-    grip.addEventListener('pointermove', move);
-    grip.addEventListener('pointerup', up);
-    grip.addEventListener('pointercancel', up);
+    grip.setPointerCapture(event.pointerId);
+    document.body.classList.add('tb-ai-resizing');
+    this.zone.runOutsideAngular(() => {
+      const move = (e: PointerEvent) => {
+        current = Math.round(Math.min(widest, Math.max(this.minWidth, startWidth + (startX - e.clientX))));
+        if (!frame) {
+          frame = requestAnimationFrame(paint);
+        }
+      };
+      const up = () => {
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        cancelAnimationFrame(frame);
+        clearTimeout(pageTimer);
+        document.body.classList.remove('tb-ai-resizing');
+        host.style.width = '';
+        this.zone.run(() => {
+          this.resizing.set(false);
+          this.setWidth(current, current !== startWidth);
+        });
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
   }
 
   private crumbLabel(crumb: BreadCrumb): string {

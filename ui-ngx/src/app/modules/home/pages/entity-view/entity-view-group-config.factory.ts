@@ -70,7 +70,7 @@ export class EntityViewGroupConfigFactory implements EntityGroupStateConfigFacto
 
     config.onEntityAction = action => this.onEntityViewAction(action, config, params);
 
-    config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.ENTITY_VIEW_LIST, AiAssistantViewType.ENTITY_VIEW);
+    config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.ENTITY_VIEW_GROUP, AiAssistantViewType.ENTITY_VIEW, config.entityGroup.id);
     return this.groupConfigTableConfigService.prepareConfiguration(params, config);
   }
 

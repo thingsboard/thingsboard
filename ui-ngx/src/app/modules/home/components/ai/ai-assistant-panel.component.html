@@ -4,9 +4,9 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div class="tb-ai-grip" role="separator" tabindex="0" aria-orientation="vertical"
+<div #gripTip class="tb-ai-grip" role="separator" tabindex="0" aria-orientation="vertical"
      [attr.aria-label]="'ai-assistant.resize-panel' | translate"
-     [matTooltip]="'ai-assistant.resize-panel-hint' | translate" matTooltipPosition="left"
+     [matTooltip]="'ai-assistant.resize-panel-hint' | translate" matTooltipPosition="left" [matTooltipDisabled]="resizing()"
      [attr.aria-valuemin]="minWidth" [attr.aria-valuemax]="splitAvailable() ? splitWidth() : maxWidth" [attr.aria-valuenow]="width()"
      (dblclick)="setWidth(defaultWidth, true)"
      (keydown)="onGripKey($event)"

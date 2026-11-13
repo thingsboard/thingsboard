@@ -1605,7 +1605,9 @@
             "ROLE_LIST": "Roles",
             "RULE_CHAIN_LIST": "Rule chains",
             "INTEGRATION_LIST": "Integrations",
-            "CONVERTER_LIST": "Converters"
+            "CONVERTER_LIST": "Converters",
+            "DASHBOARD_GROUP_LIST": "Dashboard groups",
+            "ENTITY_VIEW_GROUP_LIST": "Entity view groups"
         },
         "copy-answer": "Copy the answer",
         "feedback": {
@@ -1733,6 +1735,7 @@
             },
             "asset-groups": {
                 "title": "Ask about your asset groups",
+                "title-customer": "Ask about this customer's asset groups",
                 "line": "Watch a group's assets on a dashboard or set up alarms for them.",
                 "suggestion": "Build a dashboard for one of my asset groups.",
                 "example": {
@@ -1825,6 +1828,7 @@
             },
             "customer-groups": {
                 "title": "Ask about your customer groups",
+                "title-customer": "Ask about this customer's customer groups",
                 "line": "Group customers to manage them together, or see what each group holds.",
                 "suggestion": "Which customer groups do I have?",
                 "example": {
@@ -1861,6 +1865,7 @@
             },
             "user-groups": {
                 "title": "Ask about your user groups",
+                "title-customer": "Ask about this customer's user groups",
                 "line": "Groups give users their roles: create one, or see what each can do.",
                 "suggestion": "What can the users in each group do?",
                 "example": {
@@ -1984,6 +1989,7 @@
             },
             "device-groups": {
                 "title": "Ask about your device groups",
+                "title-customer": "Ask about this customer's device groups",
                 "line": "What is in them, or how to organize your devices.",
                 "suggestion": "Which device groups do I have?"
             },
@@ -2033,6 +2039,237 @@
                 "title": "Ask about notifications",
                 "line": "Who is told, about what, and how.",
                 "suggestion": "Explain how notifications work in ThingsBoard."
+            },
+            "notification-template": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this notification template",
+                "line": "What it says, where it goes, and when it is used.",
+                "suggestion": "Explain what this template sends.",
+                "example": {
+                    "explain": {"label": "Explain it", "message": "Explain what this template sends and through which channels."},
+                    "slack": {"label": "Add Slack", "message": "Also send this template's notifications to Slack."}
+                }
+            },
+            "notification-rule": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this notification rule",
+                "line": "What triggers it, who is told, and how.",
+                "suggestion": "When does this rule fire?",
+                "example": {
+                    "explain": {"label": "Explain it", "message": "When does this rule fire, and who is notified?"},
+                    "escalate": {"label": "Add escalation", "message": "Add an escalation to this rule if the alarm is not acknowledged in 15 minutes."}
+                }
+            },
+            "notification-recipient": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this recipient group",
+                "line": "Who is in it and which rules notify it.",
+                "suggestion": "Which rules notify these recipients?",
+                "example": {
+                    "rules": {"label": "Rules using it", "message": "Which notification rules send to these recipients?"}
+                }
+            },
+            "dashboard-groups": {
+                "title": "Ask about your dashboard groups",
+                "title-customer": "Ask about this customer's dashboard groups",
+                "line": "Who can see which dashboards, and how to organize them.",
+                "suggestion": "Share a dashboard group with a customer.",
+                "example": {
+                    "share": {"label": "Share a group", "message": "Share one of my dashboard groups with a customer, read-only."}
+                }
+            },
+            "dashboard-group": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this dashboard group",
+                "line": "Its dashboards and who can open them.",
+                "suggestion": "Who can open the dashboards in this group?",
+                "example": {
+                    "access": {"label": "Who can open it", "message": "Who can open the dashboards in this group?"}
+                }
+            },
+            "entity-view-groups": {
+                "title": "Ask about your entity view groups",
+                "title-customer": "Ask about this customer's entity view groups",
+                "line": "What they expose, and to whom.",
+                "suggestion": "Which entity view groups do I have?"
+            },
+            "entity-view-group": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this entity view group",
+                "line": "Its entity views and what they expose.",
+                "suggestion": "What do the entity views in this group show?",
+                "example": {
+                    "list": {"label": "List its views", "message": "What do the entity views in this group show?"}
+                }
+            },
+            "customer-hierarchy": {
+                "title": "Ask about your customer hierarchy",
+                "line": "Which customers sit under which, and what each one owns.",
+                "suggestion": "How are my customers organized?",
+                "example": {
+                    "move": {"label": "Move a customer", "message": "Move a customer under another customer."}
+                }
+            },
+            "gateways": {
+                "title": "Ask about your gateways",
+                "line": "Connect field devices through a gateway, or check how it is doing.",
+                "suggestion": "Which of my gateways are offline?",
+                "example": {
+                    "modbus": {"label": "Connect Modbus devices", "message": "Help me connect Modbus devices through my gateway."},
+                    "status": {"label": "Check gateways", "message": "Which of my gateways are active, and what is connected to them?"}
+                }
+            },
+            "ota-updates": {
+                "title": "Ask about firmware updates",
+                "line": "How OTA updates work, and how to roll one out.",
+                "suggestion": "How do I roll out new firmware to my devices?"
+            },
+            "white-labeling": {
+                "title": "Ask about white labeling",
+                "line": "Your logo, colors and title across the platform.",
+                "suggestion": "How do I change the logo and colors of the platform?"
+            },
+            "login-white-labeling": {
+                "title": "Ask about the login page",
+                "line": "Its look, its domain, and what users see before they sign in.",
+                "suggestion": "How do I give the login page our own look?"
+            },
+            "mail-templates": {
+                "title": "Ask about mail templates",
+                "line": "The emails the platform sends, such as activation and password reset.",
+                "suggestion": "Which emails can I change here?"
+            },
+            "custom-translation": {
+                "title": "Ask about custom translation",
+                "line": "Your own wording and languages for the platform.",
+                "suggestion": "How do I change a label in the UI for one language?"
+            },
+            "custom-menu": {
+                "title": "Ask about custom menus",
+                "line": "Which menu items your users see, and where.",
+                "suggestion": "How do I hide menu items from a customer's users?"
+            },
+            "images": {
+                "title": "Ask about your images",
+                "line": "Images for dashboards, widgets and white labeling.",
+                "suggestion": "How do I use an image as a dashboard background?"
+            },
+            "javascript-library": {
+                "title": "Ask about the JavaScript library",
+                "line": "Shared JavaScript modules for widgets and actions.",
+                "suggestion": "How do I use a JavaScript module in a widget?"
+            },
+            "resources-library": {
+                "title": "Ask about the resources library",
+                "line": "Files the platform uses, such as LwM2M models.",
+                "suggestion": "What can I keep in the resources library?"
+            },
+            "two-factor-auth": {
+                "title": "Ask about two-factor authentication",
+                "line": "Which methods your users can use, and how to set them up.",
+                "suggestion": "How do I require two-factor authentication for my users?"
+            },
+            "oauth2-domains": {
+                "title": "Ask about OAuth 2.0 domains",
+                "line": "Which domains sign users in through an external provider.",
+                "suggestion": "How do I let users sign in with Google on my domain?"
+            },
+            "oauth2-clients": {
+                "title": "Ask about OAuth 2.0 clients",
+                "line": "The external identity providers your users sign in with.",
+                "suggestion": "How do I set up sign-in with Microsoft Entra ID?"
+            },
+            "self-registration": {
+                "title": "Ask about self-registration",
+                "line": "Let new users sign up on their own, and choose what they get.",
+                "suggestion": "How do I let customers sign up on their own?"
+            },
+            "secrets": {
+                "title": "Ask about secrets",
+                "line": "Keep credentials out of rule chains, integrations and settings.",
+                "suggestion": "How do I use a secret in a rule node?"
+            },
+            "audit-logs": {
+                "title": "Ask about the audit log",
+                "line": "Who changed what, and when.",
+                "suggestion": "What does the audit log record?"
+            },
+            "version-control": {
+                "title": "Ask about version control",
+                "line": "Keep your entities in Git and restore earlier versions.",
+                "suggestion": "How do I save my dashboards to Git?"
+            },
+            "task-manager": {
+                "title": "Ask about the task manager",
+                "line": "Long-running jobs, such as reprocessing, and how they went.",
+                "suggestion": "What does the task manager show?"
+            },
+            "scheduler": {
+                "title": "Ask about the scheduler",
+                "line": "Run actions on a schedule: update attributes, send commands, generate reports.",
+                "suggestion": "How do I send a command to my devices every night?"
+            },
+            "home-settings": {
+                "title": "Ask about the home page",
+                "line": "Which dashboard your users see first.",
+                "suggestion": "How do I set a dashboard as the home page for my users?"
+            },
+            "mail-server-settings": {
+                "title": "Ask about your mail server",
+                "line": "How the platform sends email through your own server.",
+                "suggestion": "Set up sending email through my mail server.",
+                "example": {
+                    "setup": {"label": "Set up email", "message": "Set up sending email through my mail server."}
+                }
+            },
+            "notification-settings": {
+                "title": "Ask about notification delivery",
+                "line": "Slack, SMS, Microsoft Teams and the mobile app as ways to notify.",
+                "suggestion": "Connect Slack so I can get notifications there.",
+                "example": {
+                    "slack": {"label": "Connect Slack", "message": "Connect Slack so I can get notifications there."},
+                    "sms": {"label": "Set up SMS", "message": "Set up SMS delivery for notifications."}
+                }
+            },
+            "repository-settings": {
+                "title": "Ask about the Git repository",
+                "line": "Where version control keeps your entities.",
+                "suggestion": "How do I connect a GitHub repository?"
+            },
+            "auto-commit-settings": {
+                "title": "Ask about auto-commit",
+                "line": "Which entities are saved to Git each time they change.",
+                "suggestion": "How does auto-commit work?"
+            },
+            "ai-models": {
+                "title": "Ask about AI models",
+                "line": "The models that rule nodes and other features use.",
+                "suggestion": "How do I add an OpenAI model?"
+            },
+            "api-usage": {
+                "title": "Ask about API usage",
+                "line": "What your tenant uses, against its limits.",
+                "suggestion": "What do these API usage numbers mean?"
+            },
+            "mobile-bundles": {
+                "title": "Ask about mobile bundles",
+                "line": "Your mobile app's layout, sign-in and branding.",
+                "suggestion": "How do I set up a mobile app for my customers?"
+            },
+            "mobile-apps": {
+                "title": "Ask about mobile apps",
+                "line": "The Android and iOS apps that connect to the platform.",
+                "suggestion": "How do I connect my own mobile app?"
+            },
+            "mobile-qr-code": {
+                "title": "Ask about the mobile QR code",
+                "line": "The QR code that opens the mobile app on your platform.",
+                "suggestion": "How do users sign in with the QR code?"
+            },
+            "trendz": {
+                "title": "Ask about Trendz Analytics",
+                "line": "Analytics, predictions and anomaly detection on your data.",
+                "suggestion": "What can Trendz do with my data?"
             }
         },
         "artifact": {

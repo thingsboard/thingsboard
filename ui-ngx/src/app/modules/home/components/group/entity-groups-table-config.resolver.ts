@@ -24,7 +24,16 @@ import { Operation, Resource } from '@shared/models/security.models';
 import { deviceAiAssistantConfig } from '@shared/models/device.models';
 import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
 import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { CustomerId } from '@shared/models/id/customer-id';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+
+const GROUP_LIST_VIEWS = new Map<EntityType, [AiAssistantViewType, AiAssistantViewType]>([
+  [EntityType.ASSET, [AiAssistantViewType.ASSET_GROUP_LIST, AiAssistantViewType.ASSET_GROUP]],
+  [EntityType.ENTITY_VIEW, [AiAssistantViewType.ENTITY_VIEW_GROUP_LIST, AiAssistantViewType.ENTITY_VIEW_GROUP]],
+  [EntityType.DASHBOARD, [AiAssistantViewType.DASHBOARD_GROUP_LIST, AiAssistantViewType.DASHBOARD_GROUP]],
+  [EntityType.CUSTOMER, [AiAssistantViewType.CUSTOMER_GROUP_LIST, AiAssistantViewType.CUSTOMER_GROUP]],
+  [EntityType.USER, [AiAssistantViewType.USER_GROUP_LIST, AiAssistantViewType.USER_GROUP]]
+]);
 
 @Injectable()
 export class EntityGroupsTableConfigResolver  {
@@ -66,19 +75,15 @@ export class EntityGroupsTableConfigResolver  {
       params
     );
 
+    const owner = config.customerId && !config.edgeId ? new CustomerId(config.customerId) : undefined;
     if (config.groupType === EntityType.DEVICE) {
       config.aiAssistantConfig = deviceAiAssistantConfig(this.store, this.userPermissionsService, this.translate,
         this.userPermissionsService.hasGenericPermission(Resource.DEVICE, Operation.WRITE),
-        AiAssistantViewType.DEVICE_GROUP, AiAssistantViewType.DEVICE_GROUP_LIST);
+        AiAssistantViewType.DEVICE_GROUP, AiAssistantViewType.DEVICE_GROUP_LIST, owner);
     }
-    if (config.groupType === EntityType.ASSET) {
-      config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.ASSET_GROUP_LIST, AiAssistantViewType.ASSET_GROUP);
-    }
-    if (config.groupType === EntityType.CUSTOMER) {
-      config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CUSTOMER_GROUP_LIST, AiAssistantViewType.CUSTOMER_GROUP);
-    }
-    if (config.groupType === EntityType.USER) {
-      config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.USER_GROUP_LIST, AiAssistantViewType.USER_GROUP);
+    const groupViews = GROUP_LIST_VIEWS.get(config.groupType);
+    if (groupViews) {
+      config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(groupViews[0], groupViews[1], owner);
     }
 
     if (config.customerId && resolveCustomer) {

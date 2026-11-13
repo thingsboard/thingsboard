@@ -25,7 +25,8 @@ import {
 } from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { DatePipe } from '@angular/common';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { Observable } from 'rxjs';
@@ -36,6 +37,8 @@ import { UserPermissionsService } from '@core/http/user-permissions.service';
 export class RecipientTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationTarget> = new EntityTableConfig<NotificationTarget>();
+
+  private panelService = inject(AiAssistantPanelService);
 
   constructor(private store: Store<AppState>,
               private notificationService: NotificationService,
@@ -93,7 +96,8 @@ export class RecipientTableConfigResolver  {
 
   private editTarget($event: Event, target: NotificationTarget): void {
     $event?.stopPropagation();
-    this.notificationTargetDialog(target).subscribe(res => res ? this.config.updateData() : null);
+    this.panelService.focusWhile({type: AiAssistantViewType.NOTIFICATION_RECIPIENT, entityId: target?.id}, target?.name,
+      this.notificationTargetDialog(target)).subscribe(res => res ? this.config.updateData() : null);
   }
 
   private notificationTargetDialog(target: NotificationTarget, isAdd = false): Observable<NotificationTarget> {

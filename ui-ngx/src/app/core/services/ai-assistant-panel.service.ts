@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { computed, DestroyRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
-import { Subject } from 'rxjs';
-import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { defer, Observable, Subject } from 'rxjs';
+import { distinctUntilChanged, filter, finalize, map } from 'rxjs/operators';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -72,8 +72,10 @@ export class AiAssistantPanelService implements OnDestroy {
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(event => {
-      const openHere = this._openOnArrival && !AiAssistantPanelService.withoutPanel(event.urlAfterRedirects);
-      if (!AiAssistantPanelService.withoutPanel(event.urlAfterRedirects)) {
+      const suppressed = AiAssistantPanelService.withoutPanel(event.urlAfterRedirects);
+      this._suppressed.set(suppressed);
+      const openHere = this._openOnArrival && !suppressed;
+      if (!suppressed) {
         this._openOnArrival = false;
       }
       if (openHere) {
@@ -213,6 +215,12 @@ export class AiAssistantPanelService implements OnDestroy {
       case AiAssistantViewType.ENTITY_VIEW:
       case AiAssistantViewType.ENTITY_VIEW_LIST:
         return 'ENTITY_VIEW';
+      case AiAssistantViewType.ENTITY_VIEW_GROUP:
+      case AiAssistantViewType.ENTITY_VIEW_GROUP_LIST:
+        return 'ENTITY_VIEW_GROUP';
+      case AiAssistantViewType.DASHBOARD_GROUP:
+      case AiAssistantViewType.DASHBOARD_GROUP_LIST:
+        return 'DASHBOARD_GROUP';
       case AiAssistantViewType.DEVICE_PROFILE:
       case AiAssistantViewType.DEVICE_PROFILE_LIST:
         return 'DEVICE_PROFILE';
@@ -239,6 +247,9 @@ export class AiAssistantPanelService implements OnDestroy {
       case AiAssistantViewType.NOTIFICATION_TEMPLATE_LIST:
       case AiAssistantViewType.NOTIFICATION_RECIPIENT_LIST:
       case AiAssistantViewType.NOTIFICATION_RULE_LIST:
+      case AiAssistantViewType.NOTIFICATION_TEMPLATE:
+      case AiAssistantViewType.NOTIFICATION_RULE:
+      case AiAssistantViewType.NOTIFICATION_RECIPIENT:
         return 'NOTIFICATION';
       default:
         return view.type;
@@ -298,6 +309,25 @@ export class AiAssistantPanelService implements OnDestroy {
 
   setClientContextForView(view: AiChatView): void {
     this.setClientContext({view, timeZone: getDefaultTimezone()});
+  }
+
+  focusWhile<T>(view: AiChatView, name: string | null | undefined, until: Observable<T>): Observable<T> {
+    return defer(() => {
+      const previous = this._clientContext();
+      if (!previous || !view.entityId?.id) {
+        return until;
+      }
+      const previousName = this._viewName();
+      const focused: AiChatClientContext = {view, timeZone: getDefaultTimezone()};
+      this._clientContext.set(focused);
+      this.setViewName(name ?? null);
+      return until.pipe(finalize(() => {
+        if (this._clientContext() === focused) {
+          this._clientContext.set(previous);
+          this._viewName.set(previousName);
+        }
+      }));
+    });
   }
 
   getSentClientContext(chatId: string): AiChatClientContext | undefined {

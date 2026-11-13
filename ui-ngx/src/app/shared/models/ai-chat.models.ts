@@ -249,6 +249,8 @@ export enum AiAssistantViewType {
   IOT_HUB = 'IOT_HUB',
   DASHBOARD = 'DASHBOARD',
   DASHBOARD_LIST = 'DASHBOARD_LIST',
+  DASHBOARD_GROUP_LIST = 'DASHBOARD_GROUP_LIST',
+  DASHBOARD_GROUP = 'DASHBOARD_GROUP',
   ALARM_RULE = 'ALARM_RULE',
   ALARM_RULE_LIST = 'ALARM_RULE_LIST',
   ALARM_LIST = 'ALARM_LIST',
@@ -264,6 +266,8 @@ export enum AiAssistantViewType {
   ASSET_GROUP = 'ASSET_GROUP',
   ENTITY_VIEW_LIST = 'ENTITY_VIEW_LIST',
   ENTITY_VIEW = 'ENTITY_VIEW',
+  ENTITY_VIEW_GROUP_LIST = 'ENTITY_VIEW_GROUP_LIST',
+  ENTITY_VIEW_GROUP = 'ENTITY_VIEW_GROUP',
   DEVICE_PROFILE_LIST = 'DEVICE_PROFILE_LIST',
   DEVICE_PROFILE = 'DEVICE_PROFILE',
   ASSET_PROFILE_LIST = 'ASSET_PROFILE_LIST',
@@ -288,8 +292,84 @@ export enum AiAssistantViewType {
   NOTIFICATION_RULE_LIST = 'NOTIFICATION_RULE_LIST',
   NOTIFICATION_RECIPIENT_LIST = 'NOTIFICATION_RECIPIENT_LIST',
   SENT_NOTIFICATION_LIST = 'SENT_NOTIFICATION_LIST',
-  NOTIFICATION_INBOX = 'NOTIFICATION_INBOX'
+  NOTIFICATION_INBOX = 'NOTIFICATION_INBOX',
+  NOTIFICATION_TEMPLATE = 'NOTIFICATION_TEMPLATE',
+  NOTIFICATION_RULE = 'NOTIFICATION_RULE',
+  NOTIFICATION_RECIPIENT = 'NOTIFICATION_RECIPIENT',
+  CUSTOMER_HIERARCHY = 'CUSTOMER_HIERARCHY',
+  GATEWAYS = 'GATEWAYS',
+  OTA_UPDATES = 'OTA_UPDATES',
+  WHITE_LABELING = 'WHITE_LABELING',
+  LOGIN_WHITE_LABELING = 'LOGIN_WHITE_LABELING',
+  MAIL_TEMPLATES = 'MAIL_TEMPLATES',
+  CUSTOM_TRANSLATION = 'CUSTOM_TRANSLATION',
+  CUSTOM_MENU = 'CUSTOM_MENU',
+  IMAGES = 'IMAGES',
+  JAVASCRIPT_LIBRARY = 'JAVASCRIPT_LIBRARY',
+  RESOURCES_LIBRARY = 'RESOURCES_LIBRARY',
+  TWO_FACTOR_AUTH = 'TWO_FACTOR_AUTH',
+  OAUTH2_DOMAINS = 'OAUTH2_DOMAINS',
+  OAUTH2_CLIENTS = 'OAUTH2_CLIENTS',
+  SELF_REGISTRATION = 'SELF_REGISTRATION',
+  SECRETS = 'SECRETS',
+  AUDIT_LOGS = 'AUDIT_LOGS',
+  VERSION_CONTROL = 'VERSION_CONTROL',
+  TASK_MANAGER = 'TASK_MANAGER',
+  SCHEDULER = 'SCHEDULER',
+  HOME_SETTINGS = 'HOME_SETTINGS',
+  MAIL_SERVER_SETTINGS = 'MAIL_SERVER_SETTINGS',
+  NOTIFICATION_SETTINGS = 'NOTIFICATION_SETTINGS',
+  REPOSITORY_SETTINGS = 'REPOSITORY_SETTINGS',
+  AUTO_COMMIT_SETTINGS = 'AUTO_COMMIT_SETTINGS',
+  AI_MODELS = 'AI_MODELS',
+  API_USAGE = 'API_USAGE',
+  MOBILE_BUNDLES = 'MOBILE_BUNDLES',
+  MOBILE_APPS = 'MOBILE_APPS',
+  MOBILE_QR_CODE = 'MOBILE_QR_CODE',
+  TRENDZ = 'TRENDZ'
 }
+
+const AI_PAGE_VIEWS: Array<[string, AiAssistantViewType]> = [
+  ['/iot-hub', AiAssistantViewType.IOT_HUB],
+  ['/customers/hierarchy', AiAssistantViewType.CUSTOMER_HIERARCHY],
+  ['/entities/gateways', AiAssistantViewType.GATEWAYS],
+  ['/features/otaUpdates', AiAssistantViewType.OTA_UPDATES],
+  ['/white-labeling/whiteLabel', AiAssistantViewType.WHITE_LABELING],
+  ['/white-labeling/loginWhiteLabel', AiAssistantViewType.LOGIN_WHITE_LABELING],
+  ['/white-labeling/mail-template', AiAssistantViewType.MAIL_TEMPLATES],
+  ['/white-labeling/customTranslation', AiAssistantViewType.CUSTOM_TRANSLATION],
+  ['/white-labeling/customMenu', AiAssistantViewType.CUSTOM_MENU],
+  ['/resources/images', AiAssistantViewType.IMAGES],
+  ['/resources/javascript-library', AiAssistantViewType.JAVASCRIPT_LIBRARY],
+  ['/resources/resources-library', AiAssistantViewType.RESOURCES_LIBRARY],
+  ['/security-settings/2fa', AiAssistantViewType.TWO_FACTOR_AUTH],
+  ['/security-settings/oauth2/domains', AiAssistantViewType.OAUTH2_DOMAINS],
+  ['/security-settings/oauth2/clients', AiAssistantViewType.OAUTH2_CLIENTS],
+  ['/security-settings/selfRegistration', AiAssistantViewType.SELF_REGISTRATION],
+  ['/security-settings/secrets', AiAssistantViewType.SECRETS],
+  ['/security-settings/auditLogs', AiAssistantViewType.AUDIT_LOGS],
+  ['/features/vc', AiAssistantViewType.VERSION_CONTROL],
+  ['/features/taskManager', AiAssistantViewType.TASK_MANAGER],
+  ['/features/scheduler', AiAssistantViewType.SCHEDULER],
+  ['/settings/home', AiAssistantViewType.HOME_SETTINGS],
+  ['/settings/outgoing-mail', AiAssistantViewType.MAIL_SERVER_SETTINGS],
+  ['/settings/notifications', AiAssistantViewType.NOTIFICATION_SETTINGS],
+  ['/settings/repository', AiAssistantViewType.REPOSITORY_SETTINGS],
+  ['/settings/auto-commit', AiAssistantViewType.AUTO_COMMIT_SETTINGS],
+  ['/settings/ai-models', AiAssistantViewType.AI_MODELS],
+  ['/usage', AiAssistantViewType.API_USAGE],
+  ['/mobile-center/bundles', AiAssistantViewType.MOBILE_BUNDLES],
+  ['/mobile-center/applications', AiAssistantViewType.MOBILE_APPS],
+  ['/mobile-center/qr-code-widget', AiAssistantViewType.MOBILE_QR_CODE],
+  ['/analytics', AiAssistantViewType.TRENDZ]
+];
+
+const AI_TITLED_VIEWS = new Set<string>([AiAssistantViewType.PAGE, ...AI_PAGE_VIEWS.map(([, type]) => type)]);
+
+export const aiPageView = (path: string): AiAssistantViewType =>
+  AI_PAGE_VIEWS.find(([prefix]) => path === prefix || path.startsWith(prefix + '/'))?.[1] ?? AiAssistantViewType.PAGE;
+
+export const isAiTitledView = (type: string): boolean => AI_TITLED_VIEWS.has(type);
 
 export interface AiChatView {
   type: AiAssistantViewType;

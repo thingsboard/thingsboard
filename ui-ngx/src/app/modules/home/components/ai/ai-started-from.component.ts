@@ -11,6 +11,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { RequestConfig } from '@core/http/http-utils';
 import { AiStartedFrom } from '@shared/models/solution-creator.models';
+import { isAiTitledView } from '@shared/models/ai-chat.models';
 import { aiEntityKind } from '@home/components/ai/ai-action.models';
 
 interface AiPage {
@@ -24,12 +25,14 @@ const LIST_PAGES: Record<string, {entityType: string; url: string}> = {
   DEVICE_LIST: {entityType: EntityType.DEVICE, url: '/entities/devices'},
   DEVICE_GROUP_LIST: {entityType: EntityType.DEVICE, url: '/entities/devices/groups'},
   DASHBOARD_LIST: {entityType: EntityType.DASHBOARD, url: '/dashboards'},
+  DASHBOARD_GROUP_LIST: {entityType: EntityType.DASHBOARD, url: '/dashboards/groups'},
   ALARM_LIST: {entityType: 'ALARM', url: '/alarms/alarms'},
   ALARM_RULE_LIST: {entityType: 'ALARM_RULE', url: '/alarms/alarm-rules'},
   CALCULATED_FIELD_LIST: {entityType: EntityType.CALCULATED_FIELD, url: '/calculatedFields'},
   ASSET_LIST: {entityType: EntityType.ASSET, url: '/entities/assets/all'},
   ASSET_GROUP_LIST: {entityType: EntityType.ASSET, url: '/entities/assets/groups'},
   ENTITY_VIEW_LIST: {entityType: EntityType.ENTITY_VIEW, url: '/entities/entityViews/all'},
+  ENTITY_VIEW_GROUP_LIST: {entityType: EntityType.ENTITY_VIEW, url: '/entities/entityViews/groups'},
   DEVICE_PROFILE_LIST: {entityType: EntityType.DEVICE_PROFILE, url: '/profiles/deviceProfiles'},
   ASSET_PROFILE_LIST: {entityType: EntityType.ASSET_PROFILE, url: '/profiles/assetProfiles'},
   CUSTOMER_LIST: {entityType: EntityType.CUSTOMER, url: '/customers/all'},
@@ -102,11 +105,11 @@ export class AiStartedFromComponent {
   }
 
   private resolve(from: AiStartedFrom): Observable<AiPage | null> {
-    if (from.type === 'PAGE' || from.type === 'IOT_HUB') {
+    if (isAiTitledView(from.type)) {
       return of(from.title || from.path ? {name: from.title || from.path, url: from.path} : null);
     }
     const list = LIST_PAGES[from.type];
-    if (list) {
+    if (list && !from.entityId?.id) {
       return of({name: this.translate.instant('ai-assistant.page.' + from.type), url: list.url});
     }
     const entityId = from.entityId;

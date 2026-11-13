@@ -1383,7 +1383,19 @@
   margin-top: 10px;
 }
 
-body.tb-ai-resizing, body.tb-ai-resizing * {
+@media (min-width: 1101px) {
+  html.tb-ai-docked .cdk-overlay-container {
+    .cdk-overlay-dark-backdrop {
+      right: var(--tb-ai-panel-w, 364px);
+    }
+
+    .cdk-global-overlay-wrapper:has(.mat-mdc-dialog-container) {
+      width: calc(100% - var(--tb-ai-panel-w, 364px));
+    }
+  }
+}
+
+body.tb-ai-resizing {
   cursor: ew-resize !important;
   user-select: none;
 }

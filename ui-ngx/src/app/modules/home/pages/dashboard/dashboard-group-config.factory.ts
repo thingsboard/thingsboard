@@ -8,7 +8,9 @@ import {
   EntityGroupStateInfo,
   GroupEntityTableConfig
 } from '@home/models/group/group-entities-table-config.models';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, inject, Injectable } from '@angular/core';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { MatDialog } from '@angular/material/dialog';
@@ -43,6 +45,8 @@ import {
 // @dynamic
 @Injectable()
 export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactory<DashboardInfo> {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private groupConfigTableConfigService: GroupConfigTableConfigService<DashboardInfo>,
               private userPermissionsService: UserPermissionsService,
@@ -155,6 +159,7 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
         );
       }
     }
+    config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.DASHBOARD_GROUP, undefined, config.entityGroup.id);
     return this.groupConfigTableConfigService.prepareConfiguration(params, config);
   }
 
