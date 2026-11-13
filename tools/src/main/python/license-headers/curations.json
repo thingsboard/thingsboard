@@ -1716,6 +1716,12 @@
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate ui-ngx/src/app/shared/models/id/asset-id.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 86ca874a92346a950b6912d78116f1f7ee6bb654).",
       "contentHash": "sha256:5427b1c6bf59f9e9372c47717fee96bf94bddeaf65ad920b77647b16539bf5f9"
+    },
+    {
+      "path": "common/queue/src/main/java/org/thingsboard/server/queue/util/TbModbusTransportComponent.java",
+      "header": "ce-modified",
+      "reason": "Copy of the CE annotation TbSnmpTransportComponent with the SNMP names and property replaced by Modbus ones; the structure and the condition expression are the CE implementation. Reviewed against CE common/queue/src/main/java/org/thingsboard/server/queue/util/TbSnmpTransportComponent.java at 5954190c32f.",
+      "contentHash": "sha256:67f5af76b5c6c01208af252adfc080c675bc241b457a8e991b5730fe3d26796a"
     }
   ]
 }
