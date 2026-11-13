@@ -80,6 +80,12 @@
       "contentHash": "sha256:4a62288ebd1233f5e8c7b35e5f4b95193cc5f4fd5b35629d0a2ff0e8501b6dcc"
     },
     {
+      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/V4_4_2_0Migration.java",
+      "header": "busl",
+      "reason": "New migration bean that registers version 4.4.2.0; the path does not exist in CE. It resembles application/src/main/java/org/thingsboard/server/service/install/lts/V4_3_1_6Migration.java at 181a9ef22ee only through the shared migration bean boilerplate (annotations and getVersion()).",
+      "contentHash": "sha256:1575eba1d44442edb0ab1fe92e238c4993ef4d6a6e78608ff4da411fe8944532"
+    },
+    {
       "path": "application/src/main/java/org/thingsboard/server/service/install/lts/Version.java",
       "header": "ce-modified",
       "reason": "CE class application/src/main/java/org/thingsboard/server/service/install/lts/LtsVersion.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsVersion.java at 5954190c32f (blob fa59efcc5a2d50079e495e42c141139fc57f178b); a renamed CE file stays CE-derived.",
