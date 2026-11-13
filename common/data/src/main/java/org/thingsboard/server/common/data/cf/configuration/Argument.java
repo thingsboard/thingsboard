@@ -35,7 +35,7 @@ public class Argument {
     }
 
     public boolean hasTsRollingArgument() {
-        return ArgumentType.TS_ROLLING.equals(refEntityKey.getType());
+        return refEntityKey != null && ArgumentType.TS_ROLLING.equals(refEntityKey.getType());
     }
 
 }
