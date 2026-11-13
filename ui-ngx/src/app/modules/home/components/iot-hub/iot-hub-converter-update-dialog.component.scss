@@ -43,6 +43,18 @@
   color: rgba(0, 0, 0, 0.54);
 }
 
+.tb-converter-update-toggle {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--tb-primary-500);
+  cursor: pointer;
+}
+
 .tb-converter-update-link {
   color: #305680;
   text-decoration: underline;

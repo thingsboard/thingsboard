@@ -34,6 +34,9 @@ export interface IotHubConverterUpdateDialogData {
 export class TbIotHubConverterUpdateDialogComponent extends DialogComponent<TbIotHubConverterUpdateDialogComponent, boolean> {
 
   readonly modifiedHint = splitTextWithLink(this.translate.instant('iot-hub.device-update-modified'));
+  // A long list of packages would push the Update button down: the first few are shown, the rest on request
+  readonly usedByLimit = 3;
+  usedByExpanded = false;
   updating = false;
   errorMessage: string | null = null;
 
@@ -46,6 +49,10 @@ export class TbIotHubConverterUpdateDialogComponent extends DialogComponent<TbIo
     private translate: TranslateService
   ) {
     super(store, router, dialogRef);
+  }
+
+  get shownUsedBy(): string[] {
+    return this.usedByExpanded ? this.data.usedBy : this.data.usedBy.slice(0, this.usedByLimit);
   }
 
   downloadCurrent(): void {

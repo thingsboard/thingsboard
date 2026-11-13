@@ -12,10 +12,19 @@
     @if (data.usedBy.length) {
       <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">{{ 'iot-hub.device-update-shared' | translate }}</span>
       <ul class="tb-converter-update-packages">
-        @for (name of data.usedBy; track $index) {
+        @for (name of shownUsedBy; track $index) {
           <li>{{ name }}</li>
         }
       </ul>
+      @if (data.usedBy.length > usedByLimit) {
+        <button type="button" class="tb-converter-update-toggle" (click)="usedByExpanded = !usedByExpanded">
+          @if (usedByExpanded) {
+            {{ 'iot-hub.device-update-shared-less' | translate }}
+          } @else {
+            {{ 'iot-hub.device-update-shared-more' | translate:{ count: data.usedBy.length - usedByLimit } }}
+          }
+        </button>
+      }
     }
     @if (data.modified) {
       <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">
