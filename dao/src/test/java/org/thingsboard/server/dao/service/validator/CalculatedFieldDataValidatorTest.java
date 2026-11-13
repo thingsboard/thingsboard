@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -20,12 +21,9 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.asset.AssetDao;
-import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
-import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.device.DeviceDao;
-import org.thingsboard.server.dao.device.DeviceProfileDao;
+import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.usagerecord.DefaultApiLimitService;
 
@@ -36,6 +34,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 @SpringBootTest(classes = CalculatedFieldDataValidator.class)
 public class CalculatedFieldDataValidatorTest {
@@ -51,20 +50,15 @@ public class CalculatedFieldDataValidatorTest {
     @MockitoBean
     private DefaultApiLimitService apiLimitService;
     @MockitoBean
-    private CustomerDao customerDao;
-    @MockitoBean
-    private AssetDao assetDao;
-    @MockitoBean
-    private DeviceDao deviceDao;
-    @MockitoBean
-    private AssetProfileDao assetProfileDao;
-    @MockitoBean
-    private DeviceProfileDao deviceProfileDao;
+    private EntityDaoRegistry entityDaoRegistry;
     @MockitoSpyBean
     private CalculatedFieldDataValidator validator;
 
+    private final DeviceDao deviceDao = mock(DeviceDao.class);
+
     @BeforeEach
     public void setUp() {
+        given(entityDaoRegistry.<Device>getDao(EntityType.DEVICE)).willReturn(deviceDao);
         given(deviceDao.findById(TENANT_ID, DEVICE_ID.getId())).willReturn(getDevice(DEVICE_ID, TENANT_ID));
     }
 
