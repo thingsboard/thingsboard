@@ -1247,7 +1247,7 @@
       "path": "ui-ngx/src/app/modules/home/components/converter/converter-dialog.component.html",
       "header": "busl",
       "reason": "PE view template converter-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/components/entity/add-entity-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 955f8f58be2d9d462570164005f4a2ee693b0dd7).",
-      "contentHash": "sha256:845e3846f9f41be29dc209df6c28c8870c3886886018155735affb0c49c5a9f9"
+      "contentHash": "sha256:d66640c8359f2341173ab63f009062a7b6382c58c4677ff754024a5fa2534c95"
     },
     {
       "path": "ui-ngx/src/app/modules/home/components/converter/converter-test-dialog.component.scss",
