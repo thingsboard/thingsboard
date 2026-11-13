@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 :host {
@@ -10,10 +11,13 @@
   overflow: hidden;
 
   .settings-card {
-    margin: 8px;
+    margin: $tb-content-spacing;
+    @media #{$mat-gt-sm} {
+      margin: $tb-content-spacing-gt-sm;
+    }
     padding: 0;
-    width: 100%;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
 

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.event;
 
 import org.springframework.data.domain.Page;
@@ -47,9 +48,9 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
                     "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
                     "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
-                    "AND (:eventEntityId IS NULL OR e.e_entity_id = uuid(:eventEntityId)) " +
+                    "AND (:eventEntityId IS NULL OR e.e_entity_id = :eventEntityId) " +
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
-                    "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
+                    "AND (:msgId IS NULL OR e.e_msg_id = :msgId) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
                     "AND (:relationType IS NULL OR e.e_relation_type ILIKE concat('%', :relationType, '%')) " +
                     "AND (:data IS NULL OR e.e_data ILIKE concat('%', :data, '%')) " +
@@ -64,9 +65,9 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
                     "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
                     "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
-                    "AND (:eventEntityId IS NULL OR e.e_entity_id = uuid(:eventEntityId)) " +
+                    "AND (:eventEntityId IS NULL OR e.e_entity_id = :eventEntityId) " +
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
-                    "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
+                    "AND (:msgId IS NULL OR e.e_msg_id = :msgId) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
                     "AND (:relationType IS NULL OR e.e_relation_type ILIKE concat('%', :relationType, '%')) " +
                     "AND (:data IS NULL OR e.e_data ILIKE concat('%', :data, '%')) " +
@@ -80,9 +81,9 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                                               @Param("endTime") Long endTime,
                                               @Param("serviceId") String server,
                                               @Param("eventType") String type,
-                                              @Param("eventEntityId") String eventEntityId,
+                                              @Param("eventEntityId") UUID eventEntityId,
                                               @Param("eventEntityType") String eventEntityType,
-                                              @Param("msgId") String eventMsgId,
+                                              @Param("msgId") UUID eventMsgId,
                                               @Param("msgType") String eventMsgType,
                                               @Param("relationType") String relationType,
                                               @Param("data") String data,

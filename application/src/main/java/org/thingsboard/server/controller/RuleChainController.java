@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -43,6 +44,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenant;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
@@ -60,10 +63,10 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -84,6 +87,7 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RULE_CHAIN_TYPE_DESCRIPTION;
@@ -283,6 +287,7 @@ public class RuleChainController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         RuleChainType type = RuleChainType.CORE;
@@ -402,6 +407,7 @@ public class RuleChainController extends BaseController {
             @Parameter(description = "A limit of rule chains to export.", required = true)
             @RequestParam("limit") int limit) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
+        accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, Operation.READ);
         PageLink pageLink = new PageLink(limit);
         return checkNotNull(ruleChainService.exportTenantRuleChains(tenantId, pageLink));
     }
@@ -415,6 +421,7 @@ public class RuleChainController extends BaseController {
             @Parameter(description = "Enables overwrite for existing rule chains with the same name.")
             @RequestParam(required = false, defaultValue = "false") boolean overwrite) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
+        accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, Operation.WRITE);
         return ruleChainService.importTenantRuleChains(tenantId, ruleChainData, overwrite, tbRuleChainService::updateRuleNodeConfiguration);
     }
 
@@ -554,12 +561,13 @@ public class RuleChainController extends BaseController {
         return tbRuleChainService.unsetAutoAssignToEdgeRuleChain(getTenantId(), ruleChain, getCurrentUser());
     }
 
-    // TODO: @voba refactor this - add new config to edge rule chain to set it as auto-assign
+    // TODO: refactor this - add new config to edge rule chain to set it as auto-assign
     @ApiOperation(value = "Get Auto Assign To Edge Rule Chains (getAutoAssignToEdgeRuleChains)",
             notes = "Returns a list of Rule Chains that will be assigned to a newly created edge. " + RULE_CHAIN_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/ruleChain/autoAssignToEdgeRuleChains")
     public List<RuleChain> getAutoAssignToEdgeRuleChains() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         List<RuleChain> result = new ArrayList<>();
         PageDataIterableByTenant<RuleChain> autoAssignRuleChainsIterator =
@@ -573,18 +581,34 @@ public class RuleChainController extends BaseController {
     @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/ruleChains", params = {"ruleChainIds"})
-    public List<RuleChain> getRuleChainsByIdsV1(@RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
-        TenantId tenantId = getCurrentUser().getTenantId();
+    public List<RuleChain> getRuleChainsByIdsV1(
+            @RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
+        if (!accessControlService.hasPermission(getCurrentUser(), Resource.RULE_CHAIN, Operation.READ)) {
+            return Collections.emptyList();
+        }
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
         List<RuleChainId> ruleChainIds = new ArrayList<>();
         for (UUID ruleChainUUID : ruleChainUUIDs) {
             ruleChainIds.add(new RuleChainId(ruleChainUUID));
         }
-        return ruleChainService.findRuleChainsByIds(tenantId, ruleChainIds);
+        List<RuleChain> ruleChains = ruleChainService.findRuleChainsByIds(tenantId, ruleChainIds);
+        return filterRuleChainsByReadPermission(ruleChains);
+    }
+
+    private List<RuleChain> filterRuleChainsByReadPermission(List<RuleChain> ruleChains) {
+        return ruleChains.stream().filter(ruleChain -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.RULE_CHAIN, Operation.READ, ruleChain.getId(), ruleChain);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).toList();
     }
 
     @ApiOperation(value = "Get Rule Chains By Ids (getRuleChainsByIds)",
             notes = "Requested rule chains must be owned by tenant which is performing the request. " +
-                    NEW_LINE)
+                    NEW_LINE + RBAC_READ_CHECK)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/ruleChains/list")
     public List<RuleChain> getRuleChainsByIds(

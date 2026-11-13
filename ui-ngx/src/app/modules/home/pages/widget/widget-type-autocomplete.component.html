@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-form-field [formGroup]="selectWidgetTypeFormGroup" class="mat-block" [floatLabel]="floatLabel"
@@ -57,10 +58,14 @@
       </mat-option>
     }
   </mat-autocomplete>
-  <mat-error>
-    <ng-content select="[tb-error]"></ng-content>
-  </mat-error>
-  <mat-hint>
-    <ng-content select="[tb-hint]"></ng-content>
-  </mat-hint>
+  @if (showError) {
+    <mat-error>
+      <ng-content select="[tb-error]"></ng-content>
+    </mat-error>
+  }
+  @if (showHint) {
+    <mat-hint>
+      <ng-content select="[tb-hint]"></ng-content>
+    </mat-hint>
+  }
 </mat-form-field>

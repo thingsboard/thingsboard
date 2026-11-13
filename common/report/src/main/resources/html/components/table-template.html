@@ -1,0 +1,41 @@
+<table class="tb-report-table">
+    <colgroup>
+        <col th:each="colKey : ${columns.keySet()}"
+             th:attrappend="width=${columns.get(colKey).width != null ? columns.get(colKey).width : null}">
+    </colgroup>
+    <thead>
+    <tr th:if="${showTableHeading}"
+        th:style="|height: ${headingHeight};|">
+        <th class="tb-report-table-heading"
+            th:colspan="${columns.size()}"
+            th:style="|text-align: ${headingTextAlignment};
+                 vertical-align: ${headingVerticalAlignment};
+                 color: ${headingColor};
+                 padding: 0;
+                 margin: 0;
+                 font-size: ${headingFontSize}pt;
+                 font-family: ${headingFontFamily};
+                 font-style: ${headingFontStyle};
+                 font-weight: ${headingFontWeight};|"
+            th:utext="${headingText}">Title</th>
+    </tr>
+    <tr>
+        <th th:each="label : ${columns.keySet()}"
+            th:style="${columns.get(label).style}"
+            th:text="${label}">Header</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${rows}">
+        <td th:each="label : ${columns.keySet()}"
+            th:style="${row.get(label).style}"
+            th:utext="${row.get(label).value}">[Value]</td>
+    </tr>
+    <!-- Empty table fallback row -->
+    <tr th:if="${#lists.isEmpty(rows)}">
+        <td style="text-align: center;"
+            th:colspan="${columns.size()}"
+            th:text="${noDataMessage}">Table content is empty</td>
+    </tr>
+    </tbody>
+</table>

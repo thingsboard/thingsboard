@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -312,6 +313,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       [cdkConnectedOverlayOpen]="visible"
       [cdkConnectedOverlayPush]="!strictPosition"
       [cdkConnectedOverlayFlexibleDimensions]="strictPosition"
+      [cdkConnectedOverlayGrowAfterOpen]="strictPosition"
       (overlayOutsideClick)="onClickOutside($event)"
       (detach)="hide()"
       (positionChange)="onPositionChange($event)"

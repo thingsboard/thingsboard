@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import '../../../../../scss/constants';
 
 :host {
@@ -83,21 +84,22 @@
       .tb-two-factor-auth-login-card {
         button.mat-mdc-icon-button {
           .mat-icon {
-            color: rgba(255, 255, 255, 0.8);
+            color: inherit;
           }
         }
       }
       .mat-mdc-form-field .mat-mdc-form-field-hint-wrapper {
-        color: rgba(255, 255, 255, 0.8);
+        color: inherit;
       }
     }
 
     button.provider, button.navigation {
       text-align: start;
       font-weight: 400;
-      color: rgba(255, 255, 255, 0.8);
+      color: inherit;
+      background-color: var(--tb-login-primary-500);
       &:not([disabled][disabled]) {
-        border-color: rgba(255, 255, 255, .8);
+        border-color: inherit;
       }
     }
   }

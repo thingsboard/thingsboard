@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Inject, Pipe, PipeTransform } from '@angular/core';
 import { DAY, HOUR, MINUTE, SECOND, WEEK, YEAR } from '@shared/models/time/time.models';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +13,36 @@ const intervals = {
   hr: HOUR,
   min: MINUTE,
   sec: SECOND
+};
+
+const intervalsLong = {
+  years: YEAR,
+  months: DAY * 30,
+  weeks: WEEK,
+  days: DAY,
+  hours: HOUR,
+  minutes: MINUTE,
+  seconds: SECOND
+};
+
+const JUST_NOW_THRESHOLD = 29 * SECOND;
+
+export const nextAgoChangeDelay = (ts: number): number | null => {
+  if (!Number.isFinite(ts)) {
+    return null;
+  }
+  const age = Date.now() - ts;
+  if (age < JUST_NOW_THRESHOLD) {
+    return Math.min(JUST_NOW_THRESHOLD - age, DAY);
+  }
+  let largerUnit = Infinity;
+  for (const unit of Object.values(intervals)) {
+    if (age >= unit) {
+      return Math.min(unit - age % unit, largerUnit - age, DAY);
+    }
+    largerUnit = unit;
+  }
+  return null;
 };
 
 @Pipe({
@@ -28,15 +59,19 @@ export class DateAgoPipe implements PipeTransform {
     if (value) {
       const applyAgo = !!args?.applyAgo;
       const short = !!args?.short;
+      const long = !!args?.long;
       const textPart = !!args?.textPart;
       const ms = Math.floor((+new Date() - +new Date(value)));
-      if (ms < 29 * SECOND) { // less than 30 seconds ago will show as 'Just now'
+      if (ms < JUST_NOW_THRESHOLD) {
         return this.translate.instant(textPart ? 'timewindow.just-now-lower' : 'timewindow.just-now');
       }
       let counter;
       // eslint-disable-next-line guard-for-in
-      for (const i in intervals) {
-        counter = Math.floor(ms / intervals[i]);
+
+      const targetIntervals = long ? intervalsLong : intervals;
+
+      for (const i in targetIntervals) {
+        counter = Math.floor(ms / targetIntervals[i]);
         if (counter > 0) {
           let res = this.translate.instant(`timewindow.${i+(short ? '-short' : '')}`, {[i]: counter});
           if (applyAgo) {

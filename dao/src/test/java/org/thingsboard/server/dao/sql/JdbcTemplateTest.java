@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql;
 
 import org.junit.Test;
@@ -12,7 +13,7 @@ import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestPropertySource(properties = {
-        "spring.jpa.properties.javax.persistence.query.timeout=500"
+        "spring.jpa.properties.jakarta.persistence.query.timeout=500"
 })
 public class JdbcTemplateTest extends AbstractJpaDaoTest {
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.processor.cf;
 
@@ -10,8 +10,10 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
@@ -30,7 +32,18 @@ public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
                 throw new RuntimeException("[{" + tenantId + "}] calculatedFieldUpdateMsg {" + calculatedFieldUpdateMsg + " } cannot be converted to calculatedField");
             }
 
-            CalculatedField calculatedFieldById = edgeCtx.getCalculatedFieldService().findById(tenantId, calculatedFieldId);
+            CalculatedField calculatedFieldById = findTenantEntity(tenantId, calculatedFieldId);
+            calculatedField.setTenantId(tenantId);
+            if (calculatedField.getEntityId() == null || !isTenantEntity(tenantId, calculatedField.getEntityId())) {
+                throw new DataValidationException("Calculated field is referencing to non-existent entity!");
+            }
+            if (calculatedField.getConfiguration() != null) {
+                for (EntityId referencedEntityId : calculatedField.getConfiguration().getReferencedEntities()) {
+                    if (!isTenantEntity(tenantId, referencedEntityId)) {
+                        throw new DataValidationException("Calculated field argument is referencing to non-existent entity!");
+                    }
+                }
+            }
             if (calculatedFieldById == null) {
                 calculatedField.setCreatedTime(Uuids.unixTimestamp(calculatedFieldId.getId()));
                 isCreated = true;

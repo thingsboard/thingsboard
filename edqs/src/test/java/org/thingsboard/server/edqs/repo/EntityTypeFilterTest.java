@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.repo;
 
 import org.junit.After;
@@ -64,7 +65,7 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
     @Test
     public void testFindTenantDeviceEntities() {
         // find all tenant devices
-        var result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.DEVICE,  null), false);
+        var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE, null), false);
 
         Assert.assertEquals(3, result.getTotalElements());
         var first = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("LoRa-1")).findAny();
@@ -75,28 +76,28 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
 
         // find all tenant devices with filter by name
         KeyFilter keyFilter = getDeviceNameKeyFilter(StringFilterPredicate.StringOperation.CONTAINS, "Lora", true);
-        result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.DEVICE,  List.of(keyFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE, List.of(keyFilter)), false);
         Assert.assertEquals(2, result.getTotalElements());
 
         // find asset entities
-        result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.ASSET,  null),  false);
+        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.ASSET, null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         // find all tenant devices with filter by temperature
         KeyFilter tempFilter = getTemperatureFilter(NumericFilterPredicate.NumericOperation.GREATER_OR_EQUAL, 20.0);
-        result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.DEVICE,  List.of(tempFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE, List.of(tempFilter)), false);
         Assert.assertEquals(2, result.getTotalElements());
     }
 
     @Test
     public void testFindCustomerDeviceEntities() {
-        var result = repository.findEntityDataByQuery(tenantId, customerId, getEntityTypeQuery(EntityType.DEVICE,  null),  false);
+        var result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE, null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         device.setCustomerId(customerId);
         addOrUpdate(EntityType.DEVICE, device);
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, getEntityTypeQuery(EntityType.DEVICE,  null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE, null), false);
 
         Assert.assertEquals(1, result.getTotalElements());
         var first = result.getData().get(0);
@@ -105,7 +106,7 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
         Assert.assertEquals("42", first.getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue());
         Assert.assertEquals("enabled", first.getLatest().get(EntityKeyType.TIME_SERIES).get("state").getValue());
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, getEntityTypeQuery(EntityType.ASSET,  null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.ASSET, null), false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 

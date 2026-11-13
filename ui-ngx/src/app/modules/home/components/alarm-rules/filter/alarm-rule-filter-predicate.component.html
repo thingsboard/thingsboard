@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="flex flex-1 flex-row items-center justify-start gap-4" [formGroup]="filterPredicateFormGroup">
@@ -59,7 +60,7 @@
                   (click)="openComplexFilterDialog()">
             <div class="flex items-center gap-2">
               <span class="w-full text-start" translate>filter.complex-filter</span>
-              <mat-icon class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">{{ disabled ? 'visibility' : 'edit' }} </mat-icon>
+              <mat-icon class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">{{ disabled ? 'visibility' : 'edit' }}</mat-icon>
             </div>
           </button>
         </div>

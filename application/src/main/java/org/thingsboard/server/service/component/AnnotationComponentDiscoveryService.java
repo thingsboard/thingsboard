@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -177,6 +178,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             scannedComponent.setScope(ruleNodeAnnotation.scope());
             scannedComponent.setClusteringMode(ruleNodeAnnotation.clusteringMode());
             scannedComponent.setHasQueueName(ruleNodeAnnotation.hasQueueName());
+            scannedComponent.setHasSecrets(ruleNodeAnnotation.hasSecrets());
             NodeDefinition nodeDefinition = prepareNodeDefinition(clazz, ruleNodeAnnotation);
             ObjectNode configurationDescriptor = JacksonUtil.newObjectNode();
             JsonNode node = JacksonUtil.valueToTree(nodeDefinition);
@@ -290,4 +292,5 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         });
         return Collections.unmodifiableList(result);
     }
+
 }

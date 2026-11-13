@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -37,6 +38,7 @@ export class ChangeOriginatorConfigComponent extends RuleNodeConfigurationCompon
   protected onConfigurationSet(configuration: RuleNodeConfiguration) {
     this.changeOriginatorConfigForm = this.fb.group({
       originatorSource: [configuration ? configuration.originatorSource : null, [Validators.required]],
+      preserveOriginatorIfCustomer: [configuration ? configuration?.preserveOriginatorIfCustomer : false, []],
       entityType: [configuration ? configuration.entityType : null, []],
       entityNamePattern: [configuration ? configuration.entityNamePattern : null, []],
       relationsQuery: [configuration ? configuration.relationsQuery : null, []]

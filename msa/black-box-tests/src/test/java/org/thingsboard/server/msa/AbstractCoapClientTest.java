@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.config.CoapConfig;
@@ -12,7 +14,7 @@ import org.eclipse.californium.elements.config.IntegerDefinition;
 import org.eclipse.californium.elements.config.TcpConfig;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.msg.session.FeatureType;
-
+@Slf4j
 public abstract class AbstractCoapClientTest extends AbstractContainerTest{
 
     private static final String CONTAINER_COAP_BASE_URL = "coap://localhost:5683/api/v1/";
@@ -43,10 +45,16 @@ public abstract class AbstractCoapClientTest extends AbstractContainerTest{
         Configuration.addDefaultModule(MODULE_DEFINITIONS_PROVIDER);
         String featureTokenUrl = CONTAINER_COAP_BASE_URL + FeatureType.PROVISION.name().toLowerCase();
         client = new CoapClient(featureTokenUrl);
-        return client.setTimeout(CLIENT_REQUEST_TIMEOUT)
-                .post(provisionRequestMsg.getBytes(), MediaTypeRegistry.APPLICATION_JSON)
-                .getPayload();
+        try {
+            return client.setTimeout(CLIENT_REQUEST_TIMEOUT)
+                    .post(provisionRequestMsg.getBytes(), MediaTypeRegistry.APPLICATION_JSON)
+                    .getPayload();
+        } catch (NullPointerException e){
+            log.error("createCoapClientAndPublish, deviceName [{}], provisionRequestMsg: [{}]", deviceName, provisionRequestMsg);
+            return null;
+        }
     }
+
 
     protected void disconnect() {
         if (client != null) {

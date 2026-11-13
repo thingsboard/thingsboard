@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.jwt;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,22 +14,23 @@ import java.util.stream.Collectors;
 
 public class SkipPathRequestMatcher implements RequestMatcher {
 
-    private final OrRequestMatcher matchers;
-    private final RequestMatcher processingMatcher;
+    private final OrRequestMatcher skipMatchers;
+    private final OrRequestMatcher processMatchers;
 
-    public SkipPathRequestMatcher(List<String> pathsToSkip, String processingPath) {
+    public SkipPathRequestMatcher(List<String> pathsToSkip, List<String> pathsToProcess) {
         Assert.notNull(pathsToSkip, "List of paths to skip is required.");
-        List<RequestMatcher> m = pathsToSkip.stream().map(AntPathRequestMatcher::new).collect(Collectors.toList());
-        matchers = new OrRequestMatcher(m);
-        processingMatcher = new AntPathRequestMatcher(processingPath);
+        List<RequestMatcher> skip = pathsToSkip.stream().map(AntPathRequestMatcher::new).collect(Collectors.toList());
+        List<RequestMatcher> process = pathsToProcess.stream().map(AntPathRequestMatcher::new).collect(Collectors.toList());
+        skipMatchers = new OrRequestMatcher(skip);
+        processMatchers = new OrRequestMatcher(process);
     }
 
     @Override
     public boolean matches(HttpServletRequest request) {
-        if (matchers.matches(request)) {
+        if (skipMatchers.matches(request)) {
             return false;
         }
-        return processingMatcher.matches(request);
+        return processMatchers.matches(request);
     }
 
 }

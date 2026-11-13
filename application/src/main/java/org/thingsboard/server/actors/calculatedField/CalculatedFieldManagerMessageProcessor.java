@@ -1,10 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.calculatedField;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.function.TriConsumer;
-import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -56,12 +55,12 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.settings.TbQueueCalculatedFieldSettings;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
-import org.thingsboard.server.service.cf.OwnerService;
 import org.thingsboard.server.service.cf.cache.TenantEntityProfileCache;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,7 +103,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final TbAssetProfileCache assetProfileCache;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TenantEntityProfileCache entityProfileCache;
-    private final OwnerService ownerService;
+    private final OwnersCacheService ownersCacheService;
     private final TbQueueCalculatedFieldSettings cfSettings;
     protected final TenantId tenantId;
 
@@ -124,7 +123,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         this.assetProfileCache = systemContext.getAssetProfileCache();
         this.deviceProfileCache = systemContext.getDeviceProfileCache();
         this.entityProfileCache = new TenantEntityProfileCache();
-        this.ownerService = systemContext.getOwnerService();
+        this.ownersCacheService = systemContext.getOwnersCacheService();
         this.cfSettings = systemContext.getCalculatedFieldSettings();
         this.tenantId = tenantId;
     }
@@ -841,7 +840,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.trace("Processing device record: {}", idInfo);
             try {
                 entityProfileCache.add(idInfo.getProfileId(), idInfo.getEntityId());
-                ownerEntities.computeIfAbsent(idInfo.getOwnerId(), __ -> new HashSet<>()).add(idInfo.getEntityId());
+                EntityId ownerId = idInfo.getOwnerId();
+                if (ownerId != null) {
+                    ownerEntities.computeIfAbsent(ownerId, __ -> new HashSet<>()).add(idInfo.getEntityId());
+                }
             } catch (Exception e) {
                 log.error("Failed to process device record: {}", idInfo, e);
             }
@@ -852,7 +854,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.trace("Processing asset record: {}", idInfo);
             try {
                 entityProfileCache.add(idInfo.getProfileId(), idInfo.getEntityId());
-                ownerEntities.computeIfAbsent(idInfo.getOwnerId(), __ -> new HashSet<>()).add(idInfo.getEntityId());
+                EntityId ownerId = idInfo.getOwnerId();
+                if (ownerId != null) {
+                    ownerEntities.computeIfAbsent(ownerId, __ -> new HashSet<>()).add(idInfo.getEntityId());
+                }
             } catch (Exception e) {
                 log.error("Failed to process asset record: {}", idInfo, e);
             }
@@ -862,7 +867,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         for (Customer customer : customers) {
             log.trace("Processing customer record: {}", customer);
             try {
-                ownerEntities.computeIfAbsent(customer.getTenantId(), __ -> new HashSet<>()).add(customer.getId());
+                EntityId ownerId = customer.getOwnerId();
+                if (ownerId != null) {
+                    ownerEntities.computeIfAbsent(ownerId, __ -> new HashSet<>()).add(customer.getId());
+                }
             } catch (Exception e) {
                 log.error("Failed to process customer record: {}", customer, e);
             }
@@ -871,7 +879,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void updateEntityOwner(EntityId entityId) {
         ownerEntities.values().forEach(entities -> entities.remove(entityId));
-        EntityId owner = ownerService.getOwner(tenantId, entityId);
+        EntityId owner = ownersCacheService.getOwner(tenantId, entityId);
+        if (owner == null) {
+            // Owner can't be resolved (e.g. entity removed mid-update). Skip rather than file the
+            // entity under a null bucket where it would be unreachable from real-owner lookups.
+            return;
+        }
         ownerEntities.computeIfAbsent(owner, ownerId -> new HashSet<>()).add(entityId);
     }
 

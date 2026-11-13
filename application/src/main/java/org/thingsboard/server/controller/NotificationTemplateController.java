@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,25 +23,24 @@ import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
-import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationType;
-import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
-import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.permission.Resource.NOTIFICATION;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
@@ -50,7 +50,6 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DE
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.service.security.permission.Resource.NOTIFICATION;
 
 @RestController
 @TbCoreComponent
@@ -139,7 +138,7 @@ public class NotificationTemplateController extends BaseController {
                                                                    @Parameter(description = "Comma-separated list of notification types to filter the templates", array = @ArraySchema(schema = @Schema(type = "string")))
                                                                    @RequestParam(required = false) NotificationType[] notificationTypes,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        // PE: generic permission
+        accessControlService.checkPermission(user, NOTIFICATION, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (notificationTypes == null || notificationTypes.length == 0) {
             notificationTypes = NotificationType.values();
@@ -168,16 +167,18 @@ public class NotificationTemplateController extends BaseController {
     public List<SlackConversation> listSlackConversations(@RequestParam SlackConversationType type,
                                                           @Parameter(description = "Slack bot token. If absent - system Slack settings will be used")
                                                           @RequestParam(required = false) String token,
-                                                          @AuthenticationPrincipal SecurityUser user) {
-        // PE: generic permission
+                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        accessControlService.checkPermission(user, NOTIFICATION, Operation.READ);
         if (StringUtils.isEmpty(token)) {
-            NotificationSettings settings = notificationSettingsService.findNotificationSettings(user.getTenantId());
-            SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)
-                    settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);
-            if (slackConfig == null) {
+            if (user.isSystemAdmin()) {
+                accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
+            } else {
+                accessControlService.checkPermission(user, Resource.WHITE_LABELING, Operation.READ);
+            }
+            token = slackService.getToken(user.getTenantId());
+            if (token == null) {
                 throw new IllegalArgumentException("Slack is not configured");
             }
-            token = slackConfig.getBotToken();
         }
 
         return slackService.listConversations(user.getTenantId(), token, type);

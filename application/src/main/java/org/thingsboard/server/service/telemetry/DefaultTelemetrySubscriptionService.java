@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.telemetry;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
@@ -27,8 +29,11 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -145,11 +150,11 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<TimeseriesSaveResult> resultFuture;
 
         if (strategy.saveTimeseries() && strategy.saveLatest()) {
-            resultFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl());
+            resultFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl(), request.isOverwriteValue());
         } else if (strategy.saveLatest()) {
             resultFuture = tsService.saveLatest(tenantId, entityId, request.getEntries());
         } else if (strategy.saveTimeseries()) {
-            resultFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
+            resultFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl(), request.isOverwriteValue());
         } else {
             resultFuture = Futures.immediateFuture(TimeseriesSaveResult.EMPTY);
         }
@@ -210,6 +215,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                             tenantId, new DeviceId(entityId.getId()), newInactivityTimeout, TbCallback.EMPTY)
                     )
             );
+        }
+
+        if (strategy.saveAttributes() && entityId.getEntityType() == EntityType.EDGE) {
+            addMainCallback(resultFuture, success -> {
+                try {
+                    var edgeId = new EdgeId(entityId.getId());
+                    clusterService.sendNotificationMsgToEdge(
+                            tenantId, edgeId, edgeId, JacksonUtil.writeValueAsString(request.getEntries()),
+                            EdgeEventType.EDGE, EdgeEventActionType.ATTRIBUTES_UPDATED, null
+                    );
+                } catch (Exception e) {
+                    log.warn("[{}][{}] Can't send edge attributes updated event [{}]", tenantId, entityId.getId(), request.getEntries(), e);
+                }
+            });
         }
 
         if (strategy.sendWsUpdate()) {
@@ -353,7 +372,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                             .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
                                             .callback(new FutureCallback<>() {
                                                 @Override
-                                                public void onSuccess(@Nullable Void tmp) {}
+                                                public void onSuccess(@Nullable Void tmp) {
+                                                }
 
                                                 @Override
                                                 public void onFailure(Throwable t) {
@@ -441,7 +461,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             }
 
             @Override
-            public void onFailure(Throwable t) {}
+            public void onFailure(Throwable t) {
+            }
         };
     }
 

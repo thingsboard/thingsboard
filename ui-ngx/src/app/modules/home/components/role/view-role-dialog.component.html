@@ -1,0 +1,78 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="roleFormGroup" style="width: 800px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    <h2 translate>role.view</h2>
+    <span class="flex-1"></span>
+    <div [tb-help]="'roles'"></div>
+    <button mat-icon-button
+      (click)="close()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <fieldset [disabled]="true">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>role.name</mat-label>
+        <input matInput formControlName="name" required>
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>role.role-type</mat-label>
+        <mat-select matInput formControlName="type" required>
+          @for (type of roleTypes; track type) {
+            <mat-option [value]="type">
+              {{roleTypeTranslations.get(type) | translate}}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <div formGroupName="additionalInfo" class="flex flex-col">
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>role.description</mat-label>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
+        </mat-form-field>
+      </div>
+      <mat-expansion-panel [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div class="tb-panel-title" translate>role.permissions</div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <section [class.!hidden]="roleFormGroup.get('type').value !== roleType.GENERIC">
+          <tb-permission-list
+            formControlName="genericPermissions">
+          </tb-permission-list>
+        </section>
+        <section [class.!hidden]="roleFormGroup.get('type').value !== roleType.GROUP" class="flex flex-col">
+          <label class="tb-title tb-required" translate>permission.operation.operations</label>
+          <tb-operation-type-list
+            appearance="outline"
+            formControlName="groupPermissions"
+            [required]="roleFormGroup.get('type').value === roleType.GROUP"
+            groupRoleOperations>
+          </tb-operation-type-list>
+        </section>
+      </mat-expansion-panel>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions class="flex flex-row">
+    <span class="flex-1"></span>
+    <button mat-button color="primary"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="close()" cdkFocusInitial>
+      {{ 'action.close' | translate }}
+    </button>
+  </div>
+</form>

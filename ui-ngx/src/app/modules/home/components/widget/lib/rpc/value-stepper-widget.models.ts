@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataToValueType,
   GetValueAction,
@@ -13,7 +14,8 @@ import { BackgroundSettings, BackgroundType, cssUnit, Font } from '@shared/model
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { TbUnit } from '@shared/models/unit.models';
 
-const defaultMainColor = '#305680';
+
+const defaultMainColor = '#00695C';
 
 export enum ValueStepperType {
   simplified = 'simplified',
@@ -116,7 +118,7 @@ export const valueStepperButtonDefaultAppearance: ValueStepperButtonAppearance =
   iconSize: 24,
   iconSizeUnit: 'px',
 
-  mainColorOn: '#3F52DD',
+  mainColorOn: '#00695C',
   backgroundColorOn: '#FFFFFF',
   mainColorOff: '#A2A2A2',
   backgroundColorOff: '#FFFFFF',

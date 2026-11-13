@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { defaultTimewindowStyle, TimewindowStyle } from '@shared/models/widget-settings.models';
@@ -63,7 +64,6 @@ export class TimewindowStylePanelComponent extends PageComponent implements OnIn
     ).subscribe((timewindowStyle: TimewindowStyle) => {
       if (this.timewindowStyleFormGroup.valid) {
         this.updatePreviewStyle(timewindowStyle);
-        setTimeout(() => {this.popover?.updatePosition();}, 0);
       }
     });
     this.timewindowStyleFormGroup.get('showIcon').valueChanges.pipe(

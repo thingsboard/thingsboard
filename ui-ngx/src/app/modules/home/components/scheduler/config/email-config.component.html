@@ -1,0 +1,60 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="emailConfigFormGroup" class="flex flex-col">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>report.from</mat-label>
+    <input matInput formControlName="from" required/>
+    @if (emailConfigFormGroup.get('from').hasError('required')) {
+      <mat-error>
+        {{ 'report.from-required' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>report.to</mat-label>
+    <textarea matInput formControlName="to" class="resize-y" cdkTextareaAutosize required rows="1"></textarea>
+    @if (emailConfigFormGroup.get('to').hasError('required')) {
+      <mat-error>
+        {{ 'report.to-required' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>report.cc</mat-label>
+    <textarea matInput formControlName="cc" class="resize-y" cdkTextareaAutosize rows="1"></textarea>
+    <mat-icon matSuffix class="mat-primary cursor-pointer"
+      matTooltip="{{'report.cc-description' | translate}}" matTooltipPosition="above">
+      help
+    </mat-icon>
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>report.bcc</mat-label>
+    <textarea matInput formControlName="bcc" class="resize-y" cdkTextareaAutosize rows="1"></textarea>
+    <mat-icon matSuffix class="mat-primary cursor-pointer"
+      matTooltip="{{'report.bcc-description' | translate}}" matTooltipPosition="above">
+      help
+    </mat-icon>
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>report.subject</mat-label>
+    <textarea matInput formControlName="subject" class="resize-y" cdkTextareaAutosize required rows="1"></textarea>
+    @if (emailConfigFormGroup.get('subject').hasError('required')) {
+      <mat-error>
+        {{ 'report.subject-required' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>report.body</mat-label>
+    <textarea matInput formControlName="body" class="resize-y" cdkTextareaAutosize required rows="5"></textarea>
+    @if (emailConfigFormGroup.get('body').hasError('required')) {
+      <mat-error>
+        {{ 'report.body-required' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+</section>

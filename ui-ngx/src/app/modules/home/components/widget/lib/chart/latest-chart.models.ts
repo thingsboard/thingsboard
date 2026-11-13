@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { DataKey, Datasource, LegendPosition } from '@shared/models/widget.models';
 import { BackgroundSettings, BackgroundType, Font, ValueFormatProcessor } from '@shared/models/widget-settings.models';

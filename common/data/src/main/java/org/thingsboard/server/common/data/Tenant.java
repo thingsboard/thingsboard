@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -16,7 +17,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @Schema
 @EqualsAndHashCode(callSuper = true)
-public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTitle, HasVersion {
+public class Tenant extends ContactBased<TenantId> implements TenantEntity, HasTitle, HasVersion {
 
     private static final long serialVersionUID = 8057243243859922101L;
 
@@ -63,6 +64,11 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
     @JsonIgnore
     public TenantId getTenantId() {
         return getId();
+    }
+
+    @Override
+    public void setTenantId(TenantId tenantId) {
+        this.setId(tenantId);
     }
 
     @Override
@@ -195,5 +201,12 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         builder.append("]");
         return builder.toString();
     }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.TENANT;
+    }
+
 
 }

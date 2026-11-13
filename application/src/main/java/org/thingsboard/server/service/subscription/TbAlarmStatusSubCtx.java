@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.subscription;
 
@@ -43,8 +43,7 @@ public class TbAlarmStatusSubCtx extends TbAbstractSubCtx {
     }
 
     @Override
-    public void stop() {
-        super.stop();
+    protected void onStop() {
         localSubscriptionService.cancelSubscription(getTenantId(), sessionRef.getSessionId(), subscription.getSubscriptionId());
     }
 
@@ -60,7 +59,7 @@ public class TbAlarmStatusSubCtx extends TbAbstractSubCtx {
                 .severityList(cmd.getSeverityList())
                 .updateProcessor(this::handleAlarmStatusSubscriptionUpdate)
                 .build();
-        localSubscriptionService.addSubscription(subscription, sessionRef);
+        registerSubscription(subscription);
     }
 
     public void sendUpdate() {

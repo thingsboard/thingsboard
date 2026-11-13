@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -10,16 +12,30 @@ import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by ashvayka on 25.04.17.
+ *
+ * <p><b>Write-path convention.</b> Every relation-mutating path (implemented here and orchestrated by the relation
+ * service) must run inside a {@code @Transactional} boundary and take the appropriate {@link RelationWriteLock} before
+ * its DML — the advisory lock and the DML must share one transaction/connection. See {@link RelationWriteLock} for the
+ * full locking contract (per-endpoint {@code lockEntities}, covering locks, lock-acquisition order, and the transaction
+ * assertion that fails fast in both Citus and plain-PostgreSQL modes).
  */
 public interface RelationDao {
 
     List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 
     List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from);
+
+    /**
+     * Finds the relations of the given type group that originate from any of the given entities of one entity type,
+     * in a single query. Callers are expected to bound the size of {@code fromIds}.
+     */
+    List<EntityRelation> findAllByFromIds(TenantId tenantId, Collection<UUID> fromIds, EntityType fromType, RelationTypeGroup typeGroup);
 
     List<EntityRelation> findAllByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
 

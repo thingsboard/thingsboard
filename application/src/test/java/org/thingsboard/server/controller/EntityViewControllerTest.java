@@ -1,8 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,12 +35,10 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
@@ -50,12 +48,10 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
-import org.thingsboard.server.exception.DataValidationException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,8 +99,6 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     }
 
     static final TypeReference<PageData<EntityView>> PAGE_DATA_ENTITY_VIEW_TYPE_REF = new TypeReference<>() {
-    };
-    static final TypeReference<PageData<EntityViewInfo>> PAGE_DATA_ENTITY_VIEW_INFO_TYPE_REF = new TypeReference<>() {
     };
 
     private Device testDevice;
@@ -264,19 +258,106 @@ public class EntityViewControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
+        String msgError = msgErrorPermissionWrite + "ENTITY_VIEW" + " '" + savedView.getName() + "'!";
         doPost("/api/entityView", savedView)
                 .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
+                .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityNever(savedView.getId(), savedView);
+        testNotifyEntityEqualsOneTimeServiceNeverError(savedView, savedDifferentTenant.getId(), savedDifferentTenantUser.getId(),
+                DIFFERENT_TENANT_ADMIN_EMAIL, ActionType.UPDATED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+
+        deleteDifferentTenant();
+    }
+
+    @Test
+    public void testSaveEntityViewWithDuplicateExternalId() throws Exception {
+        // Per-tenant entity view external_id uniqueness is enforced at the application layer
+        // (EntityViewDataValidator), the only guard under Citus where entity_view_external_id_unq_key is dropped.
+        EntityViewId externalId = new EntityViewId(UUID.randomUUID());
+
+        EntityView view = createEntityView("Entity view with external id", 0, 0);
+        view.setExternalId(externalId);
+        EntityView saved = doPost("/api/entityView", view, EntityView.class);
+        assertThat(saved.getExternalId()).isEqualTo(externalId);
+
+        EntityView duplicate = createEntityView("Another entity view with the same external id", 0, 0);
+        duplicate.setExternalId(externalId);
+        doPost("/api/entityView", duplicate)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Entity view with such external id already exists!")));
+    }
+
+    @Test
+    public void testSaveEntityViewWithNonExistingPresetIdFails() throws Exception {
+        // A save with a client-supplied id that does not exist is rejected: the WRITE permission check
+        // resolves the id before saving and fails with a not-found error, matching the device/asset controllers.
+        EntityView view = createEntityView("Entity view with preset id", 0, 0);
+        EntityViewId presetId = new EntityViewId(UUID.randomUUID());
+        view.setId(presetId);
+        doPost("/api/entityView", view)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound(EntityType.ENTITY_VIEW.getNormalName(), presetId.getId().toString()))));
+    }
+
+    @Test
+    public void testUpdateEntityViewWithSameNameAsExistingFails() throws Exception {
+        // Per-tenant entity view name uniqueness is enforced at the application layer (EntityViewDataValidator),
+        // the only guard under Citus where the entity_view_name_unq_key DB constraint is dropped.
+        getNewSavedEntityView("Entity view A");
+        EntityView savedViewB = getNewSavedEntityView("Entity view B");
+
+        savedViewB.setName("Entity view A");
+        doPost("/api/entityView", savedViewB)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Entity view with such name already exists!")));
+    }
+
+    @Test
+    public void testSaveEntityViewWithUnchangedNameSucceeds() throws Exception {
+        EntityView savedView = getNewSavedEntityView("My entity view");
+
+        // Re-saving the same entity view unchanged must not trip the name uniqueness check.
+        EntityView resaved = doPost("/api/entityView", savedView, EntityView.class);
+        Assert.assertEquals(savedView.getId(), resaved.getId());
+        Assert.assertEquals("My entity view", resaved.getName());
+
+        // Modifying a non-name field (time range) and re-saving must also succeed.
+        resaved.setStartTimeMs(1000L);
+        EntityView updated = doPost("/api/entityView", resaved, EntityView.class);
+        Assert.assertEquals(savedView.getId(), updated.getId());
+        Assert.assertEquals("My entity view", updated.getName());
+        Assert.assertEquals(1000L, updated.getStartTimeMs());
+    }
+
+    @Test
+    public void testSameEntityViewNameAllowedAcrossTenants() throws Exception {
+        getNewSavedEntityView("Shared entity view name");
+
+        loginDifferentTenant();
+        Device differentTenantDevice = new Device();
+        differentTenantDevice.setName("Different tenant device 4view");
+        differentTenantDevice.setType("default");
+        Device savedDifferentTenantDevice = doPost("/api/device", differentTenantDevice, Device.class);
+
+        EntityView differentTenantView = new EntityView();
+        differentTenantView.setEntityId(savedDifferentTenantDevice.getId());
+        differentTenantView.setName("Shared entity view name");
+        differentTenantView.setType("default");
+        differentTenantView.setKeys(telemetry);
+        differentTenantView.setStartTimeMs(0);
+        differentTenantView.setEndTimeMs(0);
+        EntityView savedDifferentTenantView = doPost("/api/entityView", differentTenantView, EntityView.class);
+        Assert.assertNotNull(savedDifferentTenantView);
+        Assert.assertEquals("Shared entity view name", savedDifferentTenantView.getName());
 
         deleteDifferentTenant();
     }
 
     @Test
     public void testDeleteEntityView() throws Exception {
-        EntityView view = getNewSavedEntityView("Test entity view");
         Customer customer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
+
+        EntityView view = createEntityView("Test entity view", 0, 0);
         view.setCustomerId(customer.getId());
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
 
@@ -313,225 +394,13 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAssignAndUnassignEntityViewToCustomer() throws Exception {
-        EntityView view = getNewSavedEntityView("Test entity view");
-        Customer savedCustomer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        EntityView savedView = doPost("/api/entityView", view, EntityView.class);
-
-        testBroadcastEntityStateChangeEventTime(savedView.getId(), tenantId, 1);
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(savedView, savedView,
-                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UPDATED, 1, 1, 5);
-        Mockito.reset(tbClusterService, auditLogService);
-
-        EntityView assignedView = doPost(
-                "/api/customer/" + savedCustomer.getId().getId().toString() + "/entityView/" + savedView.getId().getId().toString(),
-                EntityView.class);
-        assertEquals(savedCustomer.getId(), assignedView.getCustomerId());
-
-        EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        assertEquals(savedCustomer.getId(), foundView.getCustomerId());
-
-        testBroadcastEntityStateChangeEventTime(foundView.getId(), foundView.getTenantId(), 1);
-        testNotifyAssignUnassignEntityAllOneTime(foundView, foundView.getId(), foundView.getId(),
-                tenantId, foundView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED,
-                foundView.getId().getId().toString(), foundView.getCustomerId().getId().toString(), savedCustomer.getTitle());
-
-        EntityView unassignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        assertEquals(ModelConstants.NULL_UUID, unassignedView.getCustomerId().getId());
-
-        foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
-
-        testBroadcastEntityStateChangeEventTime(foundView.getId(), foundView.getTenantId(), 1);
-        testNotifyAssignUnassignEntityAllOneTime(unassignedView, unassignedView.getId(), unassignedView.getId(),
-                tenantId, savedCustomer.getId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED,
-                assignedView.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
-    }
-
-    @Test
-    public void testAssignAndUnAssignedEntityViewToPublicCustomer() throws Exception {
-        EntityView savedView = getNewSavedEntityView("Test entity view");
-        Mockito.reset(tbClusterService, auditLogService);
-
-        EntityView assignedView = doPost(
-                "/api/customer/public/entityView/" + savedView.getId().getId().toString(),
-                EntityView.class);
-        Customer publicCustomer = doGet("/api/customer/" + assignedView.getCustomerId(), Customer.class);
-        Assert.assertTrue(publicCustomer.isPublic());
-
-        testBroadcastEntityStateChangeEventTime(assignedView.getId(), assignedView.getTenantId(), 1);
-        testNotifyAssignUnassignEntityAllOneTime(assignedView, assignedView.getId(), assignedView.getId(),
-                tenantId, assignedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED,
-                assignedView.getId().getId().toString(), assignedView.getCustomerId().getId().toString(), publicCustomer.getTitle());
-
-        EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        assertEquals(publicCustomer.getId(), foundView.getCustomerId());
-
-        EntityView unAssignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        assertEquals(ModelConstants.NULL_UUID, unAssignedView.getCustomerId().getId());
-
-        foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
-
-        testBroadcastEntityStateChangeEventTime(assignedView.getId(), assignedView.getTenantId(), 1);
-        testNotifyAssignUnassignEntityAllOneTime(unAssignedView, unAssignedView.getId(), unAssignedView.getId(),
-                tenantId, publicCustomer.getId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED,
-                unAssignedView.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
-    }
-
-    @Test
-    public void testAssignEntityViewToNonExistentCustomer() throws Exception {
-        EntityView savedView = getNewSavedEntityView("Test entity view");
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        String customerIdStr = Uuids.timeBased().toString();
-        String msgError = msgErrorNoFound("Customer", customerIdStr);
-        doPost("/api/customer/" + customerIdStr + "/device/" + savedView.getId().getId().toString())
-                .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgError)));
-
-        testNotifyEntityNever(savedView.getId(), savedView);
-    }
-
-    @Test
-    public void testAssignEntityViewToCustomerFromDifferentTenant() throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant2 = getNewTenant("Different tenant");
-        Tenant savedTenant2 = saveTenant(tenant2);
-        Assert.assertNotNull(savedTenant2);
-
-        User tenantAdmin2 = new User();
-        tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin2.setTenantId(savedTenant2.getId());
-        tenantAdmin2.setEmail("tenant3@thingsboard.org");
-        tenantAdmin2.setFirstName("Joe");
-        tenantAdmin2.setLastName("Downs");
-        createUserAndLogin(tenantAdmin2, "testPassword1");
-
-        Customer customer = getNewCustomer("Different customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-
-        login(TENANT_ADMIN_EMAIL, TENANT_ADMIN_PASSWORD);
-
-        EntityView savedView = getNewSavedEntityView("Test entity view");
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/customer/" + savedCustomer.getId().getId().toString() + "/entityView/" + savedView.getId().getId().toString())
-                .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
-
-        testNotifyEntityNever(savedView.getId(), savedView);
-
-        loginSysAdmin();
-
-        deleteTenant(savedTenant2.getId());
-    }
-
-    @Test
-    public void testGetCustomerEntityViews() throws Exception {
-        Customer customer = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class);
-        CustomerId customerId = customer.getId();
-        String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViewInfos?";
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        int cntEntity = 128;
-        List<ListenableFuture<EntityViewInfo>> viewFutures = new ArrayList<>(cntEntity);
-        for (int i = 0; i < cntEntity; i++) {
-            String entityName = "Test entity view " + i;
-            viewFutures.add(executor.submit(() ->
-                    new EntityViewInfo(doPost("/api/customer/" + customerId.getId().toString() + "/entityView/"
-                            + getNewSavedEntityView(entityName).getId().getId().toString(), EntityView.class),
-                            customer.getTitle(), customer.isPublic())));
-        }
-        List<EntityViewInfo> entityViewInfos = Futures.allAsList(viewFutures).get(TIMEOUT, SECONDS);
-        List<EntityViewInfo> loadedViews = loadListOfInfo(new PageLink(23), urlTemplate);
-
-        assertThat(entityViewInfos).containsExactlyInAnyOrderElementsOf(loadedViews);
-
-        testNotifyEntityBroadcastEntityStateChangeEventMany(new EntityView(), new EntityView(),
-                tenantId, tenantAdminCustomerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ADDED, ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2, 0);
-
-        testNotifyEntityBroadcastEntityStateChangeEventMany(new EntityView(), new EntityView(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED, cntEntity, cntEntity,
-                cntEntity * 2, 3);
-    }
-
-    @Test
-    public void testGetCustomerEntityViewsByName() throws Exception {
-        CustomerId customerId = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class).getId();
-        String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViews?";
-
-        String name1 = "Entity view name1";
-        List<EntityView> namesOfView1 = Futures.allAsList(fillListByTemplate(125, name1, "/api/customer/" + customerId.getId().toString()
-                + "/entityView/")).get(TIMEOUT, SECONDS);
-        List<EntityView> loadedNamesOfView1 = loadListOf(new PageLink(15, 0, name1), urlTemplate);
-        assertThat(namesOfView1).as(name1).containsExactlyInAnyOrderElementsOf(loadedNamesOfView1);
-
-        String name2 = "Entity view name2";
-        List<EntityView> namesOfView2 = Futures.allAsList(fillListByTemplate(143, name2, "/api/customer/" + customerId.getId().toString()
-                + "/entityView/")).get(TIMEOUT, SECONDS);
-        List<EntityView> loadedNamesOfView2 = loadListOf(new PageLink(4, 0, name2), urlTemplate);
-        assertThat(namesOfView2).as(name2).containsExactlyInAnyOrderElementsOf(loadedNamesOfView2);
-
-        deleteFutures.clear();
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        int cntEntity = loadedNamesOfView1.size();
-        for (EntityView view : loadedNamesOfView1) {
-            deleteFutures.add(executor.submit(() ->
-                    doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk())));
-        }
-        Futures.allAsList(deleteFutures).get(TIMEOUT, SECONDS);
-
-        testBroadcastEntityStateChangeEventTime(loadedNamesOfView1.get(0).getId(), loadedNamesOfView1.get(0).getTenantId(), cntEntity);
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new EntityView(), new EntityView(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED, cntEntity, cntEntity, 3);
-
-        PageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate, PAGE_DATA_ENTITY_VIEW_TYPE_REF,
-                new PageLink(4, 0, name1));
-        Assert.assertFalse(pageData.hasNext());
-        assertEquals(0, pageData.getData().size());
-
-        deleteFutures.clear();
-        for (EntityView view : loadedNamesOfView2) {
-            deleteFutures.add(executor.submit(() ->
-                    doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk())));
-        }
-        Futures.allAsList(deleteFutures).get(TIMEOUT, SECONDS);
-
-        pageData = doGetTypedWithPageLink(urlTemplate, PAGE_DATA_ENTITY_VIEW_TYPE_REF,
-                new PageLink(4, 0, name2));
-        Assert.assertFalse(pageData.hasNext());
-        assertEquals(0, pageData.getData().size());
-    }
-
-    @Test
     public void testGetTenantEntityViews() throws Exception {
-        List<ListenableFuture<EntityViewInfo>> entityViewInfoFutures = new ArrayList<>(178);
+        List<ListenableFuture<EntityView>> entityViewInfoFutures = new ArrayList<>(178);
         for (int i = 0; i < 178; i++) {
-            ListenableFuture<EntityView> entityViewFuture = getNewSavedEntityViewAsync("Test entity view" + i);
-            entityViewInfoFutures.add(Futures.transform(entityViewFuture,
-                    view -> new EntityViewInfo(view, null, false),
-                    MoreExecutors.directExecutor()));
+            entityViewInfoFutures.add(getNewSavedEntityViewAsync("Test entity view" + i));
         }
-        List<EntityViewInfo> entityViewInfos = Futures.allAsList(entityViewInfoFutures).get(TIMEOUT, SECONDS);
-        List<EntityViewInfo> loadedViews = loadListOfInfo(new PageLink(23), "/api/tenant/entityViewInfos?");
+        List<EntityView> entityViewInfos = Futures.allAsList(entityViewInfoFutures).get(TIMEOUT, SECONDS);
+        List<EntityView> loadedViews = loadListOf(new PageLink(23), "/api/tenant/entityViews?");
         assertThat(entityViewInfos).containsExactlyInAnyOrderElementsOf(loadedViews);
     }
 
@@ -685,8 +554,6 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     }
 
     private void uploadTelemetry(String strKvs, String accessToken) throws Exception {
-        String viewDeviceId = testDevice.getId().getId().toString();
-
         String clientId = MqttAsyncClient.generateClientId();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
 
@@ -788,22 +655,6 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         return customer;
     }
 
-    private Tenant getNewTenant(String title) {
-        Tenant tenant = new Tenant();
-        tenant.setTitle(title);
-        return tenant;
-    }
-
-    private List<ListenableFuture<EntityView>> fillListByTemplate(int limit, String partOfName, String urlTemplate) {
-        List<ListenableFuture<EntityView>> futures = new ArrayList<>(limit);
-        for (ListenableFuture<EntityView> viewFuture : fillListOf(limit, partOfName)) {
-            futures.add(Futures.transform(viewFuture, view ->
-                            doPost(urlTemplate + view.getId().getId().toString(), EntityView.class),
-                    MoreExecutors.directExecutor()));
-        }
-        return futures;
-    }
-
     private List<ListenableFuture<EntityView>> fillListOf(int limit, String partOfName) {
         List<ListenableFuture<EntityView>> viewNameFutures = new ArrayList<>(limit);
         for (int i = 0; i < limit; i++) {
@@ -816,7 +667,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
             viewNameFutures.add(Futures.transform(customerFuture, customerId -> {
                 String fullName = partOfName + ' ' + StringUtils.randomAlphanumeric(15);
                 fullName = even ? fullName.toLowerCase() : fullName.toUpperCase();
-                EntityView view = getNewSavedEntityView(fullName);
+                EntityView view = createEntityView(fullName, 0, 0);
                 view.setCustomerId(customerId);
                 return doPost("/api/entityView", view, EntityView.class);
             }, MoreExecutors.directExecutor()));
@@ -836,47 +687,6 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         } while (pageData.hasNext());
 
         return loadedItems;
-    }
-
-    private List<EntityViewInfo> loadListOfInfo(PageLink pageLink, String urlTemplate) throws Exception {
-        List<EntityViewInfo> loadedItems = new ArrayList<>();
-        PageData<EntityViewInfo> pageData;
-        do {
-            pageData = doGetTypedWithPageLink(urlTemplate, PAGE_DATA_ENTITY_VIEW_INFO_TYPE_REF, pageLink);
-            loadedItems.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        return loadedItems;
-    }
-
-    @Test
-    public void testAssignEntityViewToEdge() throws Exception {
-        Edge edge = constructEdge("My edge", "default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-
-        EntityView savedEntityView = getNewSavedEntityView("My entityView");
-
-        doPost("/api/edge/" + savedEdge.getId().getId().toString()
-                + "/device/" + testDevice.getId().getId().toString(), Device.class);
-
-        doPost("/api/edge/" + savedEdge.getId().getId().toString()
-                + "/entityView/" + savedEntityView.getId().getId().toString(), EntityView.class);
-
-        PageData<EntityView> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/entityViews?",
-                PAGE_DATA_ENTITY_VIEW_TYPE_REF, new PageLink(100));
-
-        Assert.assertEquals(1, pageData.getData().size());
-
-        doDelete("/api/edge/" + savedEdge.getId().getId().toString()
-                + "/entityView/" + savedEntityView.getId().getId().toString(), EntityView.class);
-
-        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/entityViews?",
-                PAGE_DATA_ENTITY_VIEW_TYPE_REF, new PageLink(100));
-
-        Assert.assertEquals(0, pageData.getData().size());
     }
 
     @Test

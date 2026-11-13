@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.common;
 
 import lombok.Builder;
@@ -147,7 +148,6 @@ public class PartitionedQueueResponseTemplate<Request extends TbQueueMsg, Respon
 
     private void sendErrorResponse(UUID requestId, TopicPartitionInfo tpi, Request request, Throwable cause) {
         Response errorResponseMsg = handler.constructErrorResponseMsg(request, cause);
-
         if (errorResponseMsg != null) {
             errorResponseMsg.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
             responseProducer.send(tpi, errorResponseMsg, null);

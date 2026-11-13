@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, Inject } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, Inject, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -11,10 +12,13 @@ import { DashboardId } from '@shared/models/id/dashboard-id';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import html2canvas from 'html2canvas';
-import { map, share } from 'rxjs/operators';
+import { map, share, switchMap } from 'rxjs/operators';
 import { BehaviorSubject, from } from 'rxjs';
 import { isNumber } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DevelopmentService } from '@core/http/development.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 export interface DashboardImageDialogData {
   dashboardId: DashboardId;
@@ -33,6 +37,9 @@ export interface DashboardImageDialogResult {
     standalone: false
 })
 export class DashboardImageDialogComponent extends DialogComponent<DashboardImageDialogComponent, DashboardImageDialogResult> {
+
+  private destroyRef = inject(DestroyRef);
+  private translate = inject(TranslateService);
 
   takingScreenshotSubject = new BehaviorSubject(false);
 
@@ -53,6 +60,7 @@ export class DashboardImageDialogComponent extends DialogComponent<DashboardImag
               public dialogRef: MatDialogRef<DashboardImageDialogComponent, DashboardImageDialogResult>,
               private dashboardService: DashboardService,
               private sanitizer: DomSanitizer,
+              private developmentService: DevelopmentService,
               private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
@@ -91,6 +99,7 @@ export class DashboardImageDialogComponent extends DialogComponent<DashboardImag
     return result;
   }
 
+  // Scraped as source text by DevelopmentNoticeCaptureStampTest, which matches this method's name, its closing-brace indentation and the order of the calls below - reformat with care.
   takeScreenShot() {
     this.takingScreenshotSubject.next(true);
     const rect = this.dashboardElement.getBoundingClientRect();
@@ -121,17 +130,26 @@ export class DashboardImageDialogComponent extends DialogComponent<DashboardImag
       width,
       height
     })).pipe(
-      map(canvas => canvas.toDataURL())).subscribe(
-      (image) => {
+      // The capture is rooted at the dashboard element, so the body-level notice was never inside it - and this
+      // image is stored and shown to other users. Marked after the capture, where no stylesheet reaches it.
+      // Does not cover an image set from the gallery picker instead; that is a question for whoever owns the field.
+      switchMap(canvas => this.developmentService.stampDevelopmentNotice(canvas)),
+      map(canvas => canvas.toDataURL()),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (image) => {
         this.updateImage(image);
         this.dashboardImageFormGroup.patchValue({dashboardImage: image}, {emitEvent: false});
         this.dashboardImageFormGroup.markAsDirty();
         this.takingScreenshotSubject.next(false);
       },
-      (e) => {
+      // Retrying re-probes, because a failed check is never cached - so say so instead of just stopping the spinner.
+      error: () => {
         this.takingScreenshotSubject.next(false);
+        this.store.dispatch(new ActionNotificationShow(
+          {message: this.translate.instant('dashboard.take-screenshot-failed'), type: 'error'}));
       }
-    );
+    });
   }
 
   cancel(): void {

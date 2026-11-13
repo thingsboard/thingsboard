@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -15,7 +16,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { DataKey, DataKeyConfigMode, Widget, widgetType } from '@shared/models/widget.models';
+import { DataKey, DataKeyConfigMode, Datasource, Widget, widgetType } from '@shared/models/widget.models';
 import { DataKeyConfigComponent } from './data-key-config.component';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -23,11 +24,16 @@ import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { FormProperty } from '@shared/models/dynamic-form.models';
+import {
+  DataKeySettingsFormFunction
+} from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 export interface DataKeyConfigDialogData {
   dataKey: DataKey;
   dataKeyConfigMode?: DataKeyConfigMode;
   dataKeySettingsForm: FormProperty[];
+  dataKeySettingsFormFunction?: DataKeySettingsFormFunction;
+  dataKeySettingsFormTrimDefaults?: boolean;
   dataKeySettingsDirective: string;
   dashboard: Dashboard;
   aliasController: IAliasController;
@@ -36,6 +42,7 @@ export interface DataKeyConfigDialogData {
   deviceId?: string;
   entityAliasId?: string;
   showPostProcessing?: boolean;
+  reportMode?: boolean;
   callbacks?: WidgetConfigCallbacks;
   hideDataKeyName?: boolean;
   hideDataKeyLabel?: boolean;
@@ -43,6 +50,7 @@ export interface DataKeyConfigDialogData {
   hideDataKeyUnits?: boolean;
   hideDataKeyDecimals?: boolean;
   hideDataKeyAggregation?: boolean;
+  datasources?: Datasource[];
   supportsUnitConversion?: boolean
 }
 
@@ -82,7 +90,7 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
     this.dataKeyFormGroup = this.fb.group({
       dataKey: [this.data.dataKey, [Validators.required]]
     });
-    if (this.data.dataKeySettingsForm?.length ||
+    if (this.data.dataKeySettingsFormFunction || this.data.dataKeySettingsForm?.length ||
       this.data.dataKeySettingsDirective?.length) {
       this.hasAdvanced = true;
       this.dataKeyConfigHeaderOptions = [

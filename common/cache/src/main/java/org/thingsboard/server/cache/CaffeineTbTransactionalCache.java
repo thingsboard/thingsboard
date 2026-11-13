@@ -1,11 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCache;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -25,15 +26,15 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
 
     @Getter
     protected final String cacheName;
-    protected final Cache cache;
+    protected final CaffeineCache cache;
     protected final Lock lock = new ReentrantLock();
     private final Map<K, Set<UUID>> objectTransactions = new HashMap<>();
     private final Map<UUID, CaffeineTbCacheTransaction<K, V>> transactions = new HashMap<>();
 
     public CaffeineTbTransactionalCache(CacheManager cacheManager, String cacheName) {
         this.cacheName = cacheName;
-        this.cache = Optional.ofNullable(cacheManager.getCache(cacheName))
-                .orElseThrow(() -> new IllegalArgumentException("Cache '" + cacheName + "' is not configured"));
+        this.cache = (CaffeineCache) Optional.ofNullable(cacheManager.getCache(cacheName))
+                .orElseThrow(() -> new IllegalArgumentException("Cache '" + cacheName + "' is not configured"));;
     }
 
     @Override
@@ -91,6 +92,27 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
     public void evictOrPut(K key, V value) {
         //No need to put the value in case of Caffeine, because evict will cancel concurrent transaction used to "get" the missing value from cache.
         evict(key);
+    }
+
+    @Override
+    public void evictByPrefix(String prefix) {
+        lock.lock();
+        try {
+            Set<K> keysToEvict = getKeysByPrefix(prefix);
+            evict(keysToEvict);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private Set<K> getKeysByPrefix(String prefix) {
+        Set<K> keysToEvict = new HashSet<>();
+        cache.getNativeCache().asMap().forEach((key, value) -> {
+            if (key.toString().startsWith(prefix)) {
+                keysToEvict.add((K) key);
+            }
+        });
+        return keysToEvict;
     }
 
     @Override

@@ -1,0 +1,51 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="edgeEntityGroupListFormGroup" class="mat-block tb-chip-list" appearance="outline">
+  <mat-chip-grid #chipList formControlName="entityGroups">
+    @for (entityGroup of entityGroups; track entityGroup) {
+      <mat-chip-row
+        [removable]="!disabled"
+        (removed)="remove(entityGroup)">
+        {{entityGroup.name}}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
+    <input matInput type="text" placeholder="{{ !disabled ? ('entity-group.entity-group-list' | translate) : '' }}"
+      style="max-width: 200px;"
+      #entityGroupInput
+      (focusin)="onFocus()"
+      formControlName="entityGroup"
+      matAutocompleteOrigin
+      #origin="matAutocompleteOrigin"
+      [matAutocompleteConnectedTo]="origin"
+      [matAutocomplete]="entityGroupAutocomplete"
+      [matChipInputFor]="chipList">
+  </mat-chip-grid>
+  <mat-autocomplete #entityGroupAutocomplete="matAutocomplete"
+    class="tb-autocomplete"
+    [displayWith]="displayEntityGroupFn">
+    @for (entityGroup of filteredEntityGroups | async; track entityGroup) {
+      <mat-option [value]="entityGroup">
+        <span [innerHTML]="entityGroup.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredEntityGroups | async)?.length) {
+      <mat-option [value]="null">
+        <span>
+          {{ translate.get('entity-group.no-entity-groups-matching', {entityGroup: searchText}) | async }}
+        </span>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (edgeEntityGroupListFormGroup.get('entityGroups').hasError('required')) {
+    <mat-error>
+      {{ 'entity-group.entity-group-list-empty' | translate }}
+    </mat-error>
+  }
+</mat-form-field>

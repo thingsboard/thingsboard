@@ -1,16 +1,17 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="dataKeyFormGroup" (ngSubmit)="save()" style="width: 900px;">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ 'datakey.configuration' | translate }}</h2>
     <span class="flex-1"></span>
     @if (hasAdvanced) {
       <tb-toggle-select
-        appearance="fill" selectMediaBreakpoint="xs" [options]="dataKeyConfigHeaderOptions"
+        appearance="fill-invert" selectMediaBreakpoint="xs" [options]="dataKeyConfigHeaderOptions"
         [(ngModel)]="dataKeyConfigMode" [ngModelOptions]="{ standalone: true }">
       </tb-toggle-select>
     }
@@ -30,7 +31,9 @@
     <tb-data-key-config #dataKeyConfig
                         [dataKeyConfigMode]="dataKeyConfigMode"
                         [dataKeySettingsForm]="data.dataKeySettingsForm"
-                        [dataKeySettingsDirective]="data.dataKeySettingsDirective"
+                        [dataKeySettingsFormFunction]="data.dataKeySettingsFormFunction"
+      [dataKeySettingsFormTrimDefaults]="data.dataKeySettingsFormTrimDefaults"
+      [dataKeySettingsDirective]="data.dataKeySettingsDirective"
                         [deviceId]="data.deviceId"
                         [entityAliasId]="data.entityAliasId"
                         [dashboard]="data.dashboard"
@@ -38,6 +41,7 @@
                         [widget]="data.widget"
                         [widgetType]="data.widgetType"
                         [showPostProcessing]="data.showPostProcessing"
+      [reportMode]="data.reportMode"
                         [callbacks]="data.callbacks"
                         [hideDataKeyName]="data.hideDataKeyName"
                         [hideDataKeyLabel]="data.hideDataKeyLabel"
@@ -45,6 +49,7 @@
                         [hideDataKeyUnits]="data.hideDataKeyUnits"
                         [hideDataKeyDecimals]="data.hideDataKeyDecimals"
                         [hideDataKeyAggregation]="data.hideDataKeyAggregation"
+      [datasources]="data.datasources"
                         [supportsUnitConversion]="data.supportsUnitConversion"
                         formControlName="dataKey">
     </tb-data-key-config>

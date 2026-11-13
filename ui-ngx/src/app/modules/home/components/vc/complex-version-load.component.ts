@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -89,6 +90,15 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
     }
     if (result.deleted) {
       resultMessages.push(this.translate.instant('version-control.deleted', {deleted: result.deleted}));
+    }
+    if (result.groupsCreated) {
+      resultMessages.push(this.translate.instant('version-control.groups-created', {created: result.groupsCreated}));
+    }
+    if (result.groupsUpdated) {
+      resultMessages.push(this.translate.instant('version-control.groups-updated', {updated: result.groupsUpdated}));
+    }
+    if (result.groupsDeleted) {
+      resultMessages.push(this.translate.instant('version-control.groups-deleted', {deleted: result.groupsDeleted}));
     }
     message += resultMessages.join(', ') + '.';
     return message;

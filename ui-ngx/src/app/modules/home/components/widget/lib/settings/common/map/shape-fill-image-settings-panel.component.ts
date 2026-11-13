@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -52,7 +53,6 @@ export class ShapeFillImageSettingsPanelComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateValidators();
-      setTimeout(() => {this.popover?.updatePosition();}, 0);
     });
     this.updateValidators();
   }

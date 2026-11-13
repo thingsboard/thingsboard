@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="tb-dialog-header min-w-0">
+<mat-toolbar color="tb-primary" class="tb-bottom-border min-w-0">
   <h2>{{ 'api-key.generated-api-key-title' | translate }}</h2>
   <span class="flex-1"></span>
   <button mat-icon-button
@@ -85,10 +86,12 @@
 <ng-template #executeCommand>
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
-    <div class="tb-form-hint tb-primary-fill insecure-url-warning flex gap-2" [class.hidden]="secureUrl">
-      <mat-icon class="tb-mat-24">warning</mat-icon>
-      <span>{{ 'api-key.generated-api-key-insecure-url' | translate }}</span>
-    </div>
+    @if (!secureUrl) {
+      <div class="tb-form-hint tb-primary-fill tb-form-hint-warning">
+        <mat-icon>warning</mat-icon>
+        <span>{{ 'api-key.generated-api-key-insecure-url' | translate }}</span>
+      </div>
+    }
     <tb-markdown usePlainMarkdown containerClass="tb-command-code" [data]='createMarkDownCommand(apiKeyCommand)'></tb-markdown>
   </div>
 </ng-template>

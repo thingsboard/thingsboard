@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
-import { Injectable } from '@angular/core';
+import { DOCUMENT, Inject, Injectable } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { Constants } from '@shared/models/constants';
 import { catchError, delay, finalize, mergeMap, switchMap } from 'rxjs/operators';
@@ -17,6 +18,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { parseHttpErrorMessage } from '@core/utils';
 import { getInterceptorConfig } from './interceptor.util';
 import { DomSanitizer } from '@angular/platform-browser';
+import { SystemSetupService } from '@core/http/system-setup.service';
+import { isSetupIncompleteError } from '@shared/models/system-setup.models';
 
 const tmpHeaders = {};
 
@@ -33,7 +36,9 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     private dialogService: DialogService,
     private translate: TranslateService,
     private authService: AuthService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private systemSetupService: SystemSetupService,
+    @Inject(DOCUMENT) private document: Document
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -50,7 +55,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
           observable$ = this.jwtIntercept(req, next);
         }
       } else {
-        observable$ = this.handleRequest(req, next);
+        observable$ = this.handleRequest(this.addAcceptLanguageHeader(req), next);
       }
       return observable$.pipe(
         finalize(() => {
@@ -95,9 +100,13 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       } else if (errorCode !== Constants.serverErrorCode.credentialsExpired) {
         unhandled = true;
       }
-    } else if (errorCode && errorCode === Constants.serverErrorCode.entitiesLimitExceeded) {
+    } else if (errorCode === Constants.serverErrorCode.subscriptionViolation) {
       if (!ignoreErrors) {
-        this.dialogService.entitiesLimitExceeded(errorResponse.error);
+        this.dialogService.subscriptionViolation(errorResponse.error);
+      }
+    } else if (errorCode === Constants.serverErrorCode.entitiesLimitExceeded) {
+      if (!ignoreErrors) {
+        this.dialogService.entitiesLimitExceeded({...errorResponse.error, subscriptionViolation: false});
       }
     } else if (errorResponse.status === 429) {
       if (resendRequest) {
@@ -107,10 +116,14 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       }
     } else if (errorResponse.status === 403) {
       if (!ignoreErrors) {
-        this.dialogService.forbidden();
+        this.dialogService.permissionDenied();
       }
+    } else if (errorResponse.status === 423) {
+      this.handleLock(errorResponse.error);
     } else if (errorResponse.status === 0 || errorResponse.status === -1) {
+      if (!ignoreErrors) {
         this.showError('Unable to connect');
+      }
     } else if (!(req.url.startsWith('/api/rpc') || req.url.startsWith('/api/plugins/rpc'))) {
       if (errorResponse.status === 404) {
         if (!ignoreErrors) {
@@ -152,6 +165,12 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     const jwtToken = AuthService.getJwtToken();
     if (jwtToken) {
       tmpHeaders[this.AUTH_HEADER_NAME] = `${this.AUTH_SCHEME}${jwtToken}`;
+      const lang = this.document.documentElement.lang;
+      if (lang) {
+        tmpHeaders['Accept-Language'] = lang;
+      } else {
+        delete tmpHeaders['Accept-Language'];
+      }
       req = req.clone({
         setHeaders: tmpHeaders
       });
@@ -159,6 +178,16 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     } else {
       return null;
     }
+  }
+
+  private addAcceptLanguageHeader(req: HttpRequest<any>): HttpRequest<any> {
+    const lang = this.document.documentElement.lang;
+    if (lang) {
+      return req.clone({
+        setHeaders: {'Accept-Language': lang}
+      });
+    }
+    return req;
   }
 
   private isTokenBasedAuthEntryPoint(url: string): boolean {
@@ -180,6 +209,12 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       } else if (this.activeRequests === 0) {
         this.store.dispatch(new ActionLoadFinish());
       }
+    }
+  }
+
+  private handleLock(error: any ) {
+    if (isSetupIncompleteError(error)) {
+      this.systemSetupService.handleSetupState(error.setupState);
     }
   }
 

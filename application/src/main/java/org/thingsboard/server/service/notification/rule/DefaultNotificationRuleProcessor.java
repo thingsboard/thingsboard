@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification.rule;
 
 import lombok.RequiredArgsConstructor;
@@ -164,7 +165,7 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     @EventListener(ComponentLifecycleMsg.class)
     public void onNotificationRuleDeleted(ComponentLifecycleMsg componentLifecycleMsg) {
         if (componentLifecycleMsg.getEvent() != ComponentLifecycleEvent.DELETED ||
-                componentLifecycleMsg.getEntityId().getEntityType() != EntityType.NOTIFICATION_RULE) {
+            componentLifecycleMsg.getEntityId().getEntityType() != EntityType.NOTIFICATION_RULE) {
             return;
         }
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { NgModule } from '@angular/core';
 import { MobileAppComponent } from '@home/pages/mobile/applications/mobile-app.component';

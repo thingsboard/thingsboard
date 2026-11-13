@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -10,15 +11,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfObject;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.stats.StatsCounter;
+import org.thingsboard.server.common.stats.Counter;
+import org.thingsboard.server.common.stats.LocalCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -39,17 +41,17 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
 
-    private StatsCounter requestsCounter;
-    private StatsCounter invokeResponsesCounter;
-    private StatsCounter evalResponsesCounter;
-    private StatsCounter failuresCounter;
-    private StatsCounter timeoutsCounter;
+    private Counter requestsCounter;
+    private Counter invokeResponsesCounter;
+    private Counter evalResponsesCounter;
+    private Counter failuresCounter;
+    private Counter timeoutsCounter;
 
     private FutureCallback<UUID> evalCallback;
     private FutureCallback<Object> invokeCallback;
 
     @Autowired
-    private StatsFactory statsFactory;
+    private Optional<StatsFactory> statsFactory;
 
     protected ScheduledExecutorService timeoutExecutorService;
 
@@ -89,16 +91,23 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     public void init() {
         String key = getStatsType().getName();
-        this.requestsCounter = statsFactory.createStatsCounter(key, REQUESTS);
-        this.invokeResponsesCounter = statsFactory.createStatsCounter(key, INVOKE_RESPONSES);
-        this.evalResponsesCounter = statsFactory.createStatsCounter(key, EVAL_RESPONSES);
-        this.failuresCounter = statsFactory.createStatsCounter(key, FAILURES);
-        this.timeoutsCounter = statsFactory.createStatsCounter(key, TIMEOUTS);
+        this.requestsCounter = createCounter(key, REQUESTS);
+        this.invokeResponsesCounter = createCounter(key, INVOKE_RESPONSES);
+        this.evalResponsesCounter = createCounter(key, EVAL_RESPONSES);
+        this.failuresCounter = createCounter(key, FAILURES);
+        this.timeoutsCounter = createCounter(key, TIMEOUTS);
         this.evalCallback = new ScriptStatCallback<>(evalResponsesCounter, timeoutsCounter, failuresCounter);
         this.invokeCallback = new ScriptStatCallback<>(invokeResponsesCounter, timeoutsCounter, failuresCounter);
         if (getMaxEvalRequestsTimeout() > 0 || getMaxInvokeRequestsTimeout() > 0) {
             timeoutExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("script-timeout");
         }
+    }
+
+    private Counter createCounter(String key, String statsName) {
+        if (statsFactory.isPresent()) {
+            return statsFactory.get().createStatsCounter(key, statsName);
+        }
+        return new LocalCounter();
     }
 
     public void stop() {

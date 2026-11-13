@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,7 +24,7 @@ import java.io.Serial;
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> implements HasName, HasTenantId, HasTitle, ExportableEntity<OtaPackageId> {
+public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> implements TenantEntity, HasName, HasTitle, ExportableEntity<OtaPackageId> {
 
     @Serial
     private static final long serialVersionUID = 3168391583570815419L;
@@ -115,6 +116,12 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return title;
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.OTA_PACKAGE;
     }
 
     @JsonIgnore

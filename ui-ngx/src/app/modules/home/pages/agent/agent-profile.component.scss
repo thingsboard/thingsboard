@@ -1,0 +1,46 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../components/agent/agent-shared' as *;
+
+:host {
+  .tb-section-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.76);
+    margin: 16px 0 8px;
+  }
+
+  .tb-command-block {
+    @include agent-command-block;
+    padding: 12px 16px;
+    margin: 0 0 12px;
+    font-size: 12px;
+    line-height: 1.55;
+
+    .tb-copy-command-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      min-width: 0;
+      padding: 0 10px;
+      line-height: 26px;
+      height: 26px;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.85);
+
+      mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+        margin-right: 4px;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+    }
+  
+  }
+}

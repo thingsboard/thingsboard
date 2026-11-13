@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, Input, OnInit, Output, SecurityContext } from '@angular/core';
 import {
   ActionButtonLinkType,
@@ -148,8 +149,11 @@ export class NotificationComponent implements OnInit {
       return {color: alarmSeverityColors.get(this.notification.info.alarmSeverity)};
     } else if (this.notification.type === NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT) {
       return {color: '#D12730'};
-    } else if (this.notification.type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST) {
-      return {color: '#305680'};
+    } else if (this.notification.type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST ||
+               this.notification.type === NotificationType.ADDON_ACCESS_REQUEST ||
+               this.notification.type === NotificationType.ADDON_ACCESS_ERROR ||
+               this.notification.type === NotificationType.PLAN_UPGRADE_REQUEST) {
+      return {color: 'var(--tb-primary-500)'};
     }
     return null;
   }

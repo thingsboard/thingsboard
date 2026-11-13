@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification.channels;
 
 import lombok.RequiredArgsConstructor;
@@ -9,8 +10,11 @@ import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
+
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +29,7 @@ public class EmailNotificationChannel implements NotificationChannel<User, Email
                 .subject(processedTemplate.getSubject())
                 .body(processedTemplate.getBody())
                 .html(true)
+                .reports(Optional.ofNullable(ctx.getRequest().getAdditionalConfig()).map(NotificationRequestConfig::getReports).orElse(null))
                 .build());
     }
 

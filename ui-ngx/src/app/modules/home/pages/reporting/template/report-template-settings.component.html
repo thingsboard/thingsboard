@@ -1,0 +1,99 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-border no-padding" [formGroup]="settingsFormGroup">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>report-template.common-settings</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>report-template.name</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+        @if (settingsFormGroup.get('name').invalid && settingsFormGroup.get('name').touched) {
+          <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="(settingsFormGroup.get('name').hasError('maxlength') ? 'report-template.name-max-length' : 'report-template.name-required') | translate"
+            class="tb-error">
+            warning
+          </mat-icon>
+        }
+      </mat-form-field>
+    </div>
+    @if (!subReport) {
+      <div class="tb-form-row">
+        <div class="fixed-title-width" translate>report-template.file-name-pattern</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <input required matInput formControlName="namePattern" placeholder="{{ 'widget-config.set' | translate }}">
+          @if (settingsFormGroup.get('namePattern').hasError('required') && settingsFormGroup.get('namePattern').touched) {
+            <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'report-template.file-name-pattern-required' | translate"
+              class="tb-error">
+              warning
+            </mat-icon>
+          } @else {
+            <div matIconSuffix tb-help-popup="date/date-format" [tb-help-popup-style]="{width: '800px'}"></div>
+          }
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row">
+        <div class="fixed-title-width" translate>report-template.default-date-format</div>
+        <tb-date-format-select class="flex-1"
+          includeMilliseconds
+          asStringFormat
+          excludeLastUpdateAgo
+        formControlName="timeDataPattern"></tb-date-format-select>
+      </div>
+    }
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>report-template.description</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <textarea matInput formControlName="description" rows="2" placeholder="{{ 'widget-config.set' | translate }}"></textarea>
+      </mat-form-field>
+    </div>
+  </div>
+
+  @if (!subReport && format === TbReportFormat.PDF) {
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>report-template.page-settings</div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'report-template.paper-size' | translate }}</div>
+        <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="pageSize">
+            @for (size of pageSizes; track size) {
+              <mat-option [value]="size">
+                {{ paperSizeDisplayMap.get(size) }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'report-template.orientation' | translate }}</div>
+        <mat-chip-listbox class="center-stretch" formControlName="pageOrientation">
+          @for (orientation of pageOrientations; track orientation) {
+            <mat-chip-option [selectable]="settingsFormGroup.get('pageOrientation').value !== orientation"
+            [value]="orientation">{{ pageOrientationTranslationMap.get(orientation) | translate }}</mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>report-template.margins</div>
+        <tb-report-insets formControlName="pageMargins"></tb-report-insets>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>report-template.background</div>
+        <tb-color-input asBoxInput
+          disableAlpha
+          formControlName="pageBackground">
+        </tb-color-input>
+      </div>
+
+    </div>
+  }
+
+</div>

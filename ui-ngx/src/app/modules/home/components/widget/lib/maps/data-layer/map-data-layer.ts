@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataLayerColorSettings,
   DataLayerColorType,
@@ -20,7 +21,7 @@ import {
   isNumber,
   isNumeric,
   mergeDeepIgnoreArray,
-  parseTbFunction,
+  parseTbFunction, plainColorFromVariable,
   safeExecuteTbFunction
 } from '@core/utils';
 import L from 'leaflet';
@@ -122,7 +123,7 @@ export class DataLayerColorProcessor {
     } else {
       color = this.color;
     }
-    return color;
+    return plainColorFromVariable(color);
   }
 
   static constantRange(range: ColorRange): boolean {

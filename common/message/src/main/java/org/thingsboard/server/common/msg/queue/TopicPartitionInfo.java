@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.msg.queue;
 
 import lombok.Builder;
@@ -74,7 +75,7 @@ public class TopicPartitionInfo {
         if (o == null || getClass() != o.getClass()) return false;
         TopicPartitionInfo that = (TopicPartitionInfo) o;
         return Objects.equals(partition, that.partition) &&
-                fullTopicName.equals(that.fullTopicName);
+               fullTopicName.equals(that.fullTopicName);
     }
 
     @Override

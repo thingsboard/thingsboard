@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -11,6 +12,13 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { HomeDashboardInfo } from '@shared/models/dashboard.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { DashboardId } from '@shared/models/id/dashboard-id';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { AuthState } from '@core/auth/auth.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AuthUser } from '@shared/models/user.model';
+import { Observable } from 'rxjs/internal/Observable';
+import { Authority } from '@shared/models/authority.enum';
 
 @Component({
     selector: 'tb-home-settings',
@@ -20,12 +28,19 @@ import { DashboardId } from '@shared/models/id/dashboard-id';
 })
 export class HomeSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 
+  authState: AuthState = getCurrentAuthState(this.store);
+
+  authUser: AuthUser = this.authState.authUser;
+
+  readonly = !this.userPermissionsService.hasGenericPermission(Resource.WHITE_LABELING, Operation.WRITE);
+
   homeSettings: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private router: Router,
               private dashboardService: DashboardService,
-              public fb: UntypedFormBuilder) {
+              public fb: UntypedFormBuilder,
+              private userPermissionsService: UserPermissionsService) {
     super(store);
   }
 
@@ -34,11 +49,24 @@ export class HomeSettingsComponent extends PageComponent implements OnInit, HasC
       dashboardId: [null],
       hideDashboardToolbar: [true]
     });
-    this.dashboardService.getTenantHomeDashboardInfo().subscribe(
-      (homeDashboardInfo) => {
-        this.setHomeDashboardInfo(homeDashboardInfo);
-      }
-    );
+    if (this.readonly) {
+      this.homeSettings.disable({emitEvent: false});
+    }
+
+    let homeDashboardInfoObservable: Observable<HomeDashboardInfo>;
+
+    if (this.authUser.authority === Authority.TENANT_ADMIN) {
+      homeDashboardInfoObservable = this.dashboardService.getTenantHomeDashboardInfo();
+    } else if (this.authUser.authority === Authority.CUSTOMER_USER) {
+      homeDashboardInfoObservable = this.dashboardService.getCustomerHomeDashboardInfo();
+    }
+    if (homeDashboardInfoObservable) {
+      homeDashboardInfoObservable.subscribe(
+        (homeDashboardInfo) => {
+          this.setHomeDashboardInfo(homeDashboardInfo);
+        }
+      );
+    }
   }
 
   save(): void {
@@ -49,11 +77,19 @@ export class HomeSettingsComponent extends PageComponent implements OnInit, HasC
       dashboardId,
       hideDashboardToolbar
     };
-    this.dashboardService.setTenantHomeDashboardInfo(homeDashboardInfo).subscribe(
-      () => {
-        this.setHomeDashboardInfo(homeDashboardInfo);
-      }
-    );
+    let setHomeDashboardInfoObservable: Observable<any>;
+    if (this.authUser.authority === Authority.TENANT_ADMIN) {
+      setHomeDashboardInfoObservable = this.dashboardService.setTenantHomeDashboardInfo(homeDashboardInfo);
+    } else if (this.authUser.authority === Authority.CUSTOMER_USER) {
+      setHomeDashboardInfoObservable = this.dashboardService.setCustomerHomeDashboardInfo(homeDashboardInfo);
+    }
+    if (setHomeDashboardInfoObservable) {
+      setHomeDashboardInfoObservable.subscribe(
+        () => {
+          this.setHomeDashboardInfo(homeDashboardInfo);
+        }
+      );
+    }
   }
 
   confirmForm(): UntypedFormGroup {

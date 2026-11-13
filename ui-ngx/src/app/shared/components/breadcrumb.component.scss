@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   pointer-events: auto;
   min-width: 0;
@@ -9,7 +10,7 @@
     line-height: 20px;
     font-weight: 400;
     overflow: hidden;
-    color: rgba(0,0,0,0.76);
+    color: var(--tb-menu-text-color);
 
     h1,
     a,
@@ -48,6 +49,17 @@
       &.last-divider {
         opacity: 1;
       }
+    }
+
+    img {
+      display: inline-block;
+      vertical-align: middle;
+      width: 24px;
+      min-width: 24px;
+      height: 24px;
+      min-height: 24px;
+      color: rgb(255, 255, 255);
+      fill: rgb(255, 255, 255);
     }
   }
 }

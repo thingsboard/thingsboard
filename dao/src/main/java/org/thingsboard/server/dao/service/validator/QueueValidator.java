@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +12,10 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.queue.QueueDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.exception.DataValidationException;
 
 @Component
 public class QueueValidator extends DataValidator<Queue> {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -73,6 +74,9 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
             case EDGE:
                 return Futures.transformAsync(ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), new EdgeId(msg.getOriginator().getId())),
                         edge -> getCustomerFuture(ctx, edge, msg.getOriginator()), ctx.getDbCallbackExecutor());
+            case CUSTOMER:
+                return Futures.transformAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), new CustomerId(msg.getOriginator().getId())),
+                        customer -> getCustomerFuture(ctx, customer, msg.getOriginator()), ctx.getDbCallbackExecutor());
             default:
                 return Futures.immediateFailedFuture(new NoSuchElementException("Entity with entityType '" + msg.getOriginator().getEntityType() + "' is not supported."));
         }
@@ -85,7 +89,14 @@ public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbG
             if (hasCustomerId.getCustomerId() == null || hasCustomerId.getCustomerId().isNullUid()) {
                 if (hasCustomerId instanceof HasName) {
                     var hasName = (HasName) hasCustomerId;
-                    throw new RuntimeException(originator.getEntityType().getNormalName() + " with name '" + hasName.getName() + "' is not assigned to Customer!");
+                    boolean isCustomer = hasName instanceof Customer;
+                    var errorMsg = isCustomer ?
+                            "' doesn't have parent customer!" :
+                            "' is not assigned to Customer!";
+                    var withName = isCustomer ?
+                            " with title '" :
+                            " with name '";
+                    throw new RuntimeException(originator.getEntityType().getNormalName() + withName + hasName.getName() + errorMsg);
                 }
                 throw new RuntimeException(originator.getEntityType().getNormalName() + " with id '" + originator + "' is not assigned to Customer!");
             } else {

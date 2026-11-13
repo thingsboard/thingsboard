@@ -1,0 +1,34 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import '../../../../../../../scss/constants';
+
+.tb-form-table-row.tb-mobile-registration-field-row {
+  @media #{$mat-xs} {
+    padding-left: 0;
+  }
+
+  .tb-required-field {
+    width: 80px;
+    min-width: 80px;
+    @media #{$mat-xs} {
+      width: 32px;
+      min-width: 32px;
+    }
+  }
+
+  .tb-label-field, .tb-field-type-field {
+    flex: 1 1 50%;
+    min-width: 100px;
+    @media #{$mat-xs} {
+      min-width: 90px;
+    }
+  }
+
+  .tb-remove-button {
+    width: 40px;
+    min-width: 40px;
+    @media #{$mat-xs} {
+      margin-left: -8px;
+    }
+  }
+}

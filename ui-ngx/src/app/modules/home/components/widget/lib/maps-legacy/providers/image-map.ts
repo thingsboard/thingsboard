@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import L, { LatLngBounds, LatLngLiteral, LatLngTuple, PointExpression } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import {
@@ -32,8 +33,13 @@ export class ImageMap extends LeafletMap {
     imageUrl: string;
     posFunction: CompiledTbFunction<PosFunction>;
 
+    private mapUuid: string;
+
     constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
+        if (this.ctx.reportService.reportView) {
+          this.mapUuid = this.ctx.reportService.onWaitForMap();
+        }
 
         const initData = {
           posFunction: parseTbFunction<PosFunction>(this.ctx.http, options.posFunction,
@@ -172,6 +178,11 @@ export class ImageMap extends LeafletMap {
             this.imageOverlay.setBounds(bounds);
         } else {
             this.imageOverlay = L.imageOverlay(this.imageUrl, bounds).addTo(this.map);
+            if (this.ctx.reportService.reportView) {
+              this.imageOverlay.once('load', () => {
+                this.ctx.reportService.onMapLoaded(this.mapUuid);
+              });
+            }
         }
         const padding = 200 * maxZoom;
         const southWest = this.pointToLatLng(-padding, h + padding);
@@ -239,7 +250,8 @@ export class ImageMap extends LeafletMap {
           zoomControl: !this.options.disableZoomControl,
           zoom: 1,
           crs: L.CRS.Simple,
-          attributionControl: false
+          attributionControl: false,
+          fadeAnimation: !this.ctx.reportService.reportView
         });
         this.updateBounds(updateImage);
       }

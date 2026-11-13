@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.id;
 
 import org.thingsboard.server.common.data.EntityType;
@@ -25,6 +26,10 @@ public class EntityIdFactory {
         return getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(uuid));
     }
 
+    public static EntityId getByTypeAndId(EntityType type, String uuid) {
+        return getByTypeAndUuid(type, UUID.fromString(uuid));
+    }
+
     public static EntityId getByTypeAndUuid(String type, UUID uuid) {
         return getByTypeAndUuid(EntityType.valueOf(type), uuid);
     }
@@ -41,10 +46,19 @@ public class EntityIdFactory {
             case DASHBOARD -> new DashboardId(uuid);
             case DEVICE -> new DeviceId(uuid);
             case ASSET -> new AssetId(uuid);
+            case CONVERTER -> new ConverterId(uuid);
+            case INTEGRATION -> new IntegrationId(uuid);
             case ALARM -> new AlarmId(uuid);
+            case ENTITY_GROUP -> new EntityGroupId(uuid);
             case RULE_CHAIN -> new RuleChainId(uuid);
             case RULE_NODE -> new RuleNodeId(uuid);
+            case SCHEDULER_EVENT -> new SchedulerEventId(uuid);
+            case BLOB_ENTITY -> new BlobEntityId(uuid);
+            case REPORT_TEMPLATE -> new ReportTemplateId(uuid);
+            case REPORT -> new ReportId(uuid);
             case ENTITY_VIEW -> new EntityViewId(uuid);
+            case ROLE -> new RoleId(uuid);
+            case GROUP_PERMISSION -> new GroupPermissionId(uuid);
             case WIDGETS_BUNDLE -> new WidgetsBundleId(uuid);
             case WIDGET_TYPE -> new WidgetTypeId(uuid);
             case DEVICE_PROFILE -> new DeviceProfileId(uuid);
@@ -68,9 +82,17 @@ public class EntityIdFactory {
             case MOBILE_APP_BUNDLE -> new MobileAppBundleId(uuid);
             case CALCULATED_FIELD -> new CalculatedFieldId(uuid);
             case JOB -> new JobId(uuid);
+            case SECRET -> new SecretId(uuid);
             case ADMIN_SETTINGS -> new AdminSettingsId(uuid);
             case AI_MODEL -> new AiModelId(uuid);
             case API_KEY -> new ApiKeyId(uuid);
+            case AGENT -> new AgentId(uuid);
+            case AGENT_APPLICATION -> new AgentApplicationId(uuid);
+            case AGENT_APP_EVENT -> new AgentAppEventId(uuid);
+            case AGENT_APP_UNIT -> new AgentAppUnitId(uuid);
+            case AGENT_APP_PROFILE -> new AgentAppProfileId(uuid);
+            case AGENT_PROFILE -> new AgentProfileId(uuid);
+            case AGENT_BULK_ACTION -> new AgentBulkActionId(uuid);
         };
     }
 
@@ -92,6 +114,12 @@ public class EntityIdFactory {
             case TENANT_PROFILE -> new TenantProfileId(uuid);
             case OTA_PACKAGE -> new OtaPackageId(uuid);
             case EDGE -> EdgeId.fromUUID(uuid);
+            case SCHEDULER_EVENT -> new SchedulerEventId(uuid);
+            case ENTITY_GROUP, DEVICE_GROUP_OTA -> new EntityGroupId(uuid);
+            case ROLE -> new RoleId(uuid);
+            case GROUP_PERMISSION -> new GroupPermissionId(uuid);
+            case INTEGRATION -> new IntegrationId(uuid);
+            case CONVERTER -> new ConverterId(uuid);
             case QUEUE -> new QueueId(uuid);
             case TB_RESOURCE -> new TbResourceId(uuid);
             case NOTIFICATION_RULE -> new NotificationRuleId(uuid);
@@ -100,9 +128,11 @@ public class EntityIdFactory {
             case OAUTH2_CLIENT -> new OAuth2ClientId(uuid);
             case DOMAIN -> new DomainId(uuid);
             case CALCULATED_FIELD -> new CalculatedFieldId(uuid);
+            case SECRET -> new SecretId(uuid);
+            case REPORT_TEMPLATE -> new ReportTemplateId(uuid);
             case AI_MODEL -> new AiModelId(uuid);
-            case API_KEY -> new ApiKeyId(uuid);
             case ADMIN_SETTINGS -> new AdminSettingsId(uuid);
+            case API_KEY -> new ApiKeyId(uuid);
             default -> throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
         };
     }

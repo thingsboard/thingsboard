@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,15 +13,25 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
@@ -28,12 +40,15 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.user.UserServiceImpl.DEFAULT_TOKEN_LENGTH;
+import static org.thingsboard.server.dao.user.UserServiceImpl.USER_PASSWORD_HISTORY;
 
 @DaoSqlTest
 public class UserEdgeTest extends AbstractEdgeTest {
@@ -41,11 +56,15 @@ public class UserEdgeTest extends AbstractEdgeTest {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private UserService userService;
+
     private static final String DEFAULT_FIRST_NAME = "Boris";
     private static final String DEFAULT_LAST_NAME = "Johnson";
     private static final String UPDATED_LAST_NAME = "Borisov";
     private static final String DEFAULT_TENANT_ADMIN_EMAIL = "tenantAdmin@thingsboard.org";
     private static final String DEFAULT_CUSTOMER_USER_EMAIL = "customerUser@thingsboard.org";
+    private static final String DEFAULT_CUSTOMER_USER_GROUP_NAME = "CustomerEdgeUserGroup";
 
     @Test
     public void testCreateUpdateDeleteTenantUser() throws Exception {
@@ -53,8 +72,14 @@ public class UserEdgeTest extends AbstractEdgeTest {
         User newTenantAdmin = buildUser(Authority.TENANT_ADMIN, null);
         User savedTenantAdmin = createAndVerifyUserOnEdge(newTenantAdmin);
 
+        // add custom user group and add user to this group
+        EntityGroup customerUserGroup = createAndVerifyCustomerGroupOnEdge(savedTenantAdmin);
+
         // update user
         updateAndVerifyUserLastName(savedTenantAdmin);
+
+        // remove user from custom user group
+        deleteAndVerifyCustomerGroupOnEdge(savedTenantAdmin, customerUserGroup.getId());
 
         // update user credentials
         login(savedTenantAdmin.getEmail(), "tenant");
@@ -68,33 +93,64 @@ public class UserEdgeTest extends AbstractEdgeTest {
     @Test
     public void testCreateUpdateDeleteCustomerUser() throws Exception {
         // create customer
-        Customer savedCustomer = createAndAssignCustomerToEdge();
+        Customer savedCustomer = saveCustomer("Edge Customer", null);
+        // create sub customer
+        saveCustomer("Edge Sub Customer", savedCustomer.getId());
 
-        // create user
-        User customerUser = buildUser(Authority.CUSTOMER_USER, savedCustomer.getId());
-        User savedCustomerUser = createAndVerifyUserOnEdge(customerUser);
+        // must sleep to make sure that role creation events are processed by edge consumer before edge owner changed
+        TimeUnit.SECONDS.sleep(1);
+
+        // change owner from tenant to parent customer
+        changeEdgeOwnerToCustomer(savedCustomer);
+
+        // create user, activate user and add to customer admin group
+        User newCustomerUser = buildUser(Authority.CUSTOMER_USER, savedCustomer.getId());
+        User savedCustomerAdmin = createAndVerifyUserOnEdge(newCustomerUser);
+
+        // add custom user group and add user to this group
+        EntityGroup customerUserGroup = createAndVerifyCustomerGroupOnEdge(savedCustomerAdmin);
 
         // update user
-        updateAndVerifyUserLastName(savedCustomerUser);
+        updateAndVerifyUserLastName(savedCustomerAdmin);
+
+        // remove user from custom user group
+        deleteAndVerifyCustomerGroupOnEdge(savedCustomerAdmin, customerUserGroup.getId());
+        unAssignEntityGroupFromEdge(customerUserGroup);
 
         // update user credentials
-        login(savedCustomerUser.getEmail(), "customer");
-        updateAndVerifyUserCredentials(savedCustomerUser);
+        login(savedCustomerAdmin.getEmail(), "customer");
+        updateAndVerifyUserCredentials(savedCustomerAdmin);
         loginTenantAdmin();
 
         // delete user
-        deleteAndVerifyUser(savedCustomerUser);
+        deleteAndVerifyUser(savedCustomerAdmin);
+
+        // change owner to tenant
+        changeEdgeOwnerFromCustomerToTenant(savedCustomer, 2);
+
+        // delete customers
+        doDelete("/api/customer/" + savedCustomer.getUuidId())
+                .andExpect(status().isOk());
     }
 
     @Test
     public void testSendUserToCloudFromEdge() throws Exception {
         // create customer
-        Customer savedCustomer = createAndAssignCustomerToEdge();
+        Customer savedCustomer = saveCustomer("Edge Customer", null);
+        // create sub customer
+        saveCustomer("Edge Sub Customer", savedCustomer.getId());
 
-        // create uplinkMsg with user and userCredentials
+        // must sleep to make sure that role creation events are processed by edge consumer before edge owner changed
+        TimeUnit.SECONDS.sleep(1);
+
+        // change owner from tenant to parent customer
+        changeEdgeOwnerToCustomer(savedCustomer);
+
+        // create user
         UserId userId = new UserId(UUID.randomUUID());
         UserCredentialsId userCredentialsId = new UserCredentialsId(UUID.randomUUID());
-        UplinkMsg uplinkMsg = buildUserUplinkMsg(userId, savedCustomer.getId(), userCredentialsId);
+        EntityGroupId customerGroupId = findCustomerAdminsGroup(savedCustomer).getId();
+        UplinkMsg uplinkMsg = buildUserUplinkMsg(userId, savedCustomer.getId(), userCredentialsId, customerGroupId);
 
         User userFromCloud = verifyMsgOnCloud(uplinkMsg, userId, false);
         assertUserCredentialsFlags(userFromCloud, false, false);
@@ -108,7 +164,7 @@ public class UserEdgeTest extends AbstractEdgeTest {
         // create uplinkMsg with user the same email
         UserId secondUserId = new UserId(UUID.randomUUID());
         UserCredentialsId secondCredentialsId = new UserCredentialsId(UUID.randomUUID());
-        UplinkMsg uplinkMsgForUserExistingEmail = buildUserUplinkMsg(secondUserId, savedCustomer.getId(), secondCredentialsId);
+        UplinkMsg uplinkMsgForUserExistingEmail = buildUserUplinkMsg(secondUserId, savedCustomer.getId(), secondCredentialsId, customerGroupId);
 
         verifyMsgOnCloud(uplinkMsgForUserExistingEmail, secondUserId, true);
     }
@@ -141,11 +197,24 @@ public class UserEdgeTest extends AbstractEdgeTest {
     @Test
     public void testSendUserDeleteFromEdgeToCloud() throws Exception {
         // create customer
-        Customer savedCustomer = createAndAssignCustomerToEdge();
+        Customer savedCustomer = saveCustomer("Edge Customer", null);
+        // create sub customer
+        saveCustomer("Edge Sub Customer", savedCustomer.getId());
+
+        // must sleep to make sure that role creation events are processed by edge consumer before edge owner changed
+        TimeUnit.SECONDS.sleep(1);
+
+        // change owner from tenant to parent customer
+        changeEdgeOwnerToCustomer(savedCustomer);
 
         // create user
-        User customerUser = buildUser(Authority.CUSTOMER_USER, savedCustomer.getId());
-        User savedCustomerUser = createAndVerifyUserOnEdge(customerUser);
+        UserId userId = new UserId(UUID.randomUUID());
+        UserCredentialsId userCredentialsId = new UserCredentialsId(UUID.randomUUID());
+        EntityGroupId customerGroupId = findCustomerAdminsGroup(savedCustomer).getId();
+        UplinkMsg uplinkMsg = buildUserUplinkMsg(userId, savedCustomer.getId(), userCredentialsId, customerGroupId);
+
+        User savedCustomerUser = verifyMsgOnCloud(uplinkMsg, userId, false);
+        assertUserCredentialsFlags(savedCustomerUser, false, false);
 
         // simulate user removal event from edge to cloud
         UserUpdateMsg.Builder userUpdateMsg = UserUpdateMsg.newBuilder().setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
@@ -175,18 +244,49 @@ public class UserEdgeTest extends AbstractEdgeTest {
                 });
     }
 
-    private Customer createAndAssignCustomerToEdge() throws Exception {
-        edgeImitator.expectMessageAmount(1);
-        Customer customer = new Customer();
-        customer.setTitle("Edge Customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-        Assert.assertFalse(edgeImitator.waitForMessages(5));
+    @Test
+    public void testRemoveUserFromGroupFromEdgeToCloud() throws Exception {
+        User newTenantAdmin = buildUser(Authority.TENANT_ADMIN, null);
+        User savedTenantAdmin = createAndVerifyUserOnEdge(newTenantAdmin);
+        EntityGroup userGroup = createAndVerifyCustomerGroupOnEdge(savedTenantAdmin);
 
-        edgeImitator.expectMessageAmount(2);
-        doPost("/api/customer/" + savedCustomer.getUuidId() + "/edge/" + edge.getUuidId(), Edge.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    try {
+                        List<EntityGroupId> entityGroupIds = getEntityGroupsIdsForEntity(savedTenantAdmin.getId());
+                        return entityGroupIds.contains(userGroup.getId());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
-        return savedCustomer;
+        UserUpdateMsg.Builder userUpdateMsgBuilder = UserUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(savedTenantAdmin.getUuidId().getMostSignificantBits())
+                .setIdLSB(savedTenantAdmin.getUuidId().getLeastSignificantBits())
+                .setEntityGroupIdMSB(userGroup.getUuidId().getMostSignificantBits())
+                .setEntityGroupIdLSB(userGroup.getUuidId().getLeastSignificantBits());
+
+        testAutoGeneratedCodeByProtobuf(userUpdateMsgBuilder);
+
+        UplinkMsg uplink = UplinkMsg.newBuilder()
+                .setUplinkMsgId(EdgeUtils.nextPositiveInt())
+                .addUserUpdateMsg(userUpdateMsgBuilder.build()).build();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplink);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        loginTenantAdmin();
+        Awaitility.await().atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    try {
+                        List<EntityGroupId> entityGroupIds = getEntityGroupsIdsForEntity(savedTenantAdmin.getId());
+                        return entityGroupIds.stream().noneMatch(entityGroupId -> entityGroupId.equals(userGroup.getId()));
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
     }
 
     private User buildUser(Authority authority, CustomerId customerId) {
@@ -203,11 +303,13 @@ public class UserEdgeTest extends AbstractEdgeTest {
     }
 
     private User createAndVerifyUserOnEdge(User user) throws Exception {
+        EntityGroupInfo userAdminGroup =
+                user.getAuthority() == Authority.TENANT_ADMIN ? findTenantAdminsGroup() : findCustomerAdminsGroup(user.getCustomerId());
         String password = user.getAuthority() == Authority.TENANT_ADMIN ? "tenant" : "customer";
 
         // wait 3 messages - x1 user update msg and x2 user credentials update msgs (create + authenticate user)
         edgeImitator.expectMessageAmount(3);
-        User savedUser = createUser(user, password);
+        User savedUser = createUser(user, password, userAdminGroup.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
         Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
         // The initial USER ADDED edge event may bundle a UserCredentialsUpdateMsg when
@@ -231,6 +333,22 @@ public class UserEdgeTest extends AbstractEdgeTest {
         return savedUser;
     }
 
+    private EntityGroup createAndVerifyCustomerGroupOnEdge(User savedUser) throws Exception {
+        EntityId ownerId = savedUser.getAuthority() == Authority.TENANT_ADMIN ? tenantId : savedUser.getCustomerId();
+        EntityGroup userCustomerGroup = createEntityGroupAndAssignToEdge(EntityType.USER, DEFAULT_CUSTOMER_USER_GROUP_NAME, ownerId);
+
+        edgeImitator.expectMessageAmount(1);
+        addEntitiesToEntityGroup(Collections.singletonList(savedUser.getId()), userCustomerGroup.getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        UserUpdateMsg userUpdateMsg = getLatestUserUpdateMsg();
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
+        Assert.assertEquals(userCustomerGroup.getUuidId().getMostSignificantBits(), userUpdateMsg.getEntityGroupIdMSB());
+        Assert.assertEquals(userCustomerGroup.getUuidId().getLeastSignificantBits(), userUpdateMsg.getEntityGroupIdLSB());
+
+        return userCustomerGroup;
+    }
+
     private void updateAndVerifyUserLastName(User user) throws Exception {
         user.setLastName(UPDATED_LAST_NAME);
 
@@ -243,6 +361,17 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(userFromMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
         Assert.assertEquals(UPDATED_LAST_NAME, userFromMsg.getLastName());
+    }
+
+    private void deleteAndVerifyCustomerGroupOnEdge(User savedUser, EntityGroupId entityGroupId) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        deleteEntitiesFromEntityGroup(Collections.singletonList(savedUser.getId()), entityGroupId);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        UserUpdateMsg userUpdateMsg = getLatestUserUpdateMsg();
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, userUpdateMsg.getMsgType());
+        Assert.assertEquals(entityGroupId.getId().getMostSignificantBits(), userUpdateMsg.getEntityGroupIdMSB());
+        Assert.assertEquals(entityGroupId.getId().getLeastSignificantBits(), userUpdateMsg.getEntityGroupIdLSB());
     }
 
     private void updateAndVerifyUserCredentials(User user) throws Exception {
@@ -275,14 +404,97 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedTenantAdmin.getUuidId().getLeastSignificantBits(), userUpdateMsg.getIdLSB());
     }
 
-    private UplinkMsg buildUserUplinkMsg(UserId userId, CustomerId customerId, UserCredentialsId userCredentialsUuid) {
+    @Test
+    public void testSendUserWithTokenAuthorityFromEdgeToCloud() throws Exception {
+        UserId userId = new UserId(UUID.randomUUID());
+        User user = buildUser(Authority.REFRESH_TOKEN, null);
+        user.setId(userId);
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, user, null))
+                .build());
+
+        Assert.assertNull(userService.findUserById(tenantId, userId));
+    }
+
+    @Test
+    public void testSendUserWithUnsupportedAuthorityFromEdgeToCloud() throws Exception {
+        UserId userId = new UserId(UUID.randomUUID());
+        User sysAdmin = buildUser(Authority.SYS_ADMIN, null);
+        sysAdmin.setId(userId);
+        sysAdmin.setTenantId(TenantId.SYS_TENANT_ID);
+        UserCredentials userCredentials = buildCredentials(new UserCredentialsId(UUID.randomUUID()), userId, true);
+        userCredentials.setPassword(passwordEncoder.encode("password"));
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, sysAdmin, null))
+                .addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials))
+                .build());
+
+        Assert.assertNull(userService.findUserById(TenantId.SYS_TENANT_ID, userId));
+    }
+
+    @Test
+    public void testSendUserWithDifferentTenantIdFromEdgeToCloud() throws Exception {
+        UserId userId = new UserId(UUID.randomUUID());
+        User tenantAdmin = buildUser(Authority.TENANT_ADMIN, null);
+        tenantAdmin.setId(userId);
+        tenantAdmin.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        UserCredentials userCredentials = buildCredentials(new UserCredentialsId(UUID.randomUUID()), userId, false);
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, tenantAdmin, null))
+                .addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials))
+                .build());
+
+        User userFromCloud = doGet("/api/user/" + userId, User.class);
+        Assert.assertEquals(tenantId, userFromCloud.getTenantId());
+    }
+
+    @Test
+    public void testSendUserMsgsForUserOfAnotherTenantFromEdgeToCloud() throws Exception {
+        User sysAdmin = userService.findUserByEmail(TenantId.SYS_TENANT_ID, SYS_ADMIN_EMAIL);
+        UserCredentials sysAdminCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, sysAdmin.getId());
+
+        // update, credentials update and delete for a user outside of edge's tenant
+        User tenantAdmin = buildUser(Authority.TENANT_ADMIN, null);
+        tenantAdmin.setId(sysAdmin.getId());
+        UserCredentials userCredentials = buildCredentials(new UserCredentialsId(UUID.randomUUID()), sysAdmin.getId(), true);
+        userCredentials.setPassword(passwordEncoder.encode("password"));
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantAdmin, null))
+                .build());
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials))
+                .build());
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserDeleteMsg(sysAdmin.getId(), null))
+                .build());
+
+        User sysAdminAfter = userService.findUserById(TenantId.SYS_TENANT_ID, sysAdmin.getId());
+        Assert.assertNotNull(sysAdminAfter);
+        Assert.assertEquals(Authority.SYS_ADMIN, sysAdminAfter.getAuthority());
+        Assert.assertEquals(TenantId.SYS_TENANT_ID, sysAdminAfter.getTenantId());
+        UserCredentials sysAdminCredentialsAfter = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, sysAdmin.getId());
+        Assert.assertEquals(sysAdminCredentials.getId(), sysAdminCredentialsAfter.getId());
+        Assert.assertEquals(sysAdminCredentials.getPassword(), sysAdminCredentialsAfter.getPassword());
+    }
+
+    private void sendUplinkMsg(UplinkMsg uplinkMsg) throws Exception {
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+    }
+
+    private UplinkMsg buildUserUplinkMsg(UserId userId, CustomerId customerId, UserCredentialsId userCredentialsUuid, EntityGroupId entityGroupId) {
         User customerUser = buildUser(Authority.CUSTOMER_USER, customerId);
         customerUser.setId(userId);
         UserCredentials userCredentials = buildCredentials(userCredentialsUuid, userId, false);
         userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
 
-        UserUpdateMsg userUpdateMsg = EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUser);
-        UserCredentialsUpdateMsg userCredentialsMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials);
+        UserUpdateMsg userUpdateMsg = EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUser, entityGroupId);
+        // built directly, because constructUserCredentialsUpdatedMsg drops activation tokens
+        UserCredentialsUpdateMsg userCredentialsMsg = UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(userCredentials)).build();
 
         return UplinkMsg.newBuilder()
                 .addUserUpdateMsg(userUpdateMsg)
@@ -344,6 +556,126 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Optional<UserCredentialsUpdateMsg> opt = edgeImitator.findMessageByType(UserCredentialsUpdateMsg.class);
         Assert.assertTrue(opt.isPresent());
         return opt.get();
+    }
+
+    @Test
+    public void testSendUserCredentialsRequestForUserOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        UUID userUuid = savedDifferentTenantUser.getUuidId();
+        loginTenantAdmin();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addUserCredentialsRequestMsg(UserCredentialsRequestMsg.newBuilder()
+                .setUserIdMSB(userUuid.getMostSignificantBits())
+                .setUserIdLSB(userUuid.getLeastSignificantBits()).build()));
+    }
+
+    @Test
+    public void testUserActivationInDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        verifyNoEdgeEvents(savedDifferentTenantUser.getId());
+    }
+
+    @Test
+    public void testSysAdminCredentialsUpdate() throws Exception {
+        loginSysAdmin();
+        UserId sysAdminId = doGet("/api/auth/user", User.class).getId();
+        resetTokens();
+        doPost("/api/noauth/resetPasswordByEmail", JacksonUtil.newObjectNode().put("email", SYS_ADMIN_EMAIL))
+                .andExpect(status().isOk());
+        loginTenantAdmin();
+        verifyNoEdgeEvents(sysAdminId);
+    }
+
+    @Test
+    public void testTenantUserCredentialsUpdate() throws Exception {
+        resetTokens();
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/noauth/resetPasswordByEmail", JacksonUtil.newObjectNode().put("email", TENANT_ADMIN_EMAIL))
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof UserCredentialsUpdateMsg);
+        UserCredentials userCredentials = JacksonUtil.fromString(((UserCredentialsUpdateMsg) latestMessage).getEntity(), UserCredentials.class, true);
+        Assert.assertNotNull(userCredentials);
+        Assert.assertEquals(tenantAdminUserId, userCredentials.getUserId());
+        loginTenantAdmin();
+    }
+
+    private void verifyNoEdgeEvents(UserId userId) {
+        Awaitility.await()
+                .pollDelay(2, TimeUnit.SECONDS)
+                .atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, Long.MAX_VALUE, new TimePageLink(1000));
+                    Assert.assertTrue(edgeEvents.getData().stream().noneMatch(edgeEvent -> userId.getId().equals(edgeEvent.getEntityId())));
+                });
+    }
+
+    @Test
+    public void testSendUserCredentialsWithIdOfDifferentTenantUserToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        UserCredentials differentTenantCredentials = userService.findUserCredentialsByUserId(differentTenantId, savedDifferentTenantUser.getId());
+        UserCredentials userCredentials = buildCredentials(differentTenantCredentials.getId(), tenantAdminUserId, true);
+        userCredentials.setPassword(passwordEncoder.encode("password"));
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials))
+                .build());
+
+        UserCredentials differentTenantCredentialsAfter = userService.findUserCredentialsByUserId(differentTenantId, savedDifferentTenantUser.getId());
+        Assert.assertNotNull(differentTenantCredentialsAfter);
+        Assert.assertEquals(differentTenantCredentials.getPassword(), differentTenantCredentialsAfter.getPassword());
+    }
+
+    @Test
+    public void testSendUserCredentialsWithTokensAndLoginStateFromEdgeToCloud() throws Exception {
+        User user = buildUser(Authority.TENANT_ADMIN, null);
+        user.setEmail("edgeCredentialsUser@thingsboard.org");
+        User savedUser = doPost("/api/user?sendActivationMail=false", user, User.class);
+        UserCredentials cloudCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
+        cloudCredentials.setResetToken("cloudResetToken");
+        cloudCredentials.setResetTokenExpTime(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+        cloudCredentials.setFailedLoginAttempts(3);
+        userService.saveUserCredentials(tenantId, cloudCredentials, false);
+
+        UserCredentials edgeCredentials = buildCredentials(cloudCredentials.getId(), savedUser.getId(), true);
+        String edgePassword = passwordEncoder.encode("edgePassword");
+        edgeCredentials.setPassword(edgePassword);
+        edgeCredentials.setActivateToken("edgeActivateToken");
+        edgeCredentials.setResetToken("edgeResetToken");
+        edgeCredentials.setResetTokenExpTime(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+        edgeCredentials.setFailedLoginAttempts(0);
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserCredentialsUpdateMsg(UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(edgeCredentials)).build())
+                .build());
+
+        UserCredentials cloudCredentialsAfter = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
+        Assert.assertEquals(edgePassword, cloudCredentialsAfter.getPassword());
+        Assert.assertTrue(cloudCredentialsAfter.isEnabled());
+        Assert.assertNull(cloudCredentialsAfter.getActivateToken());
+        Assert.assertEquals("cloudResetToken", cloudCredentialsAfter.getResetToken());
+        Assert.assertEquals(Integer.valueOf(3), cloudCredentialsAfter.getFailedLoginAttempts());
+        Assert.assertTrue(cloudCredentialsAfter.getAdditionalInfo().get(USER_PASSWORD_HISTORY).toString().contains(edgePassword));
+    }
+
+    @Test
+    public void testSendUserWithEmailOfDifferentTenantUserFromEdgeToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        UserId userId = new UserId(UUID.randomUUID());
+        User user = buildUser(Authority.TENANT_ADMIN, null);
+        user.setId(userId);
+        user.setEmail(savedDifferentTenantUser.getEmail());
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, user, null))
+                .build());
+
+        User savedUser = userService.findUserById(tenantId, userId);
+        Assert.assertNotNull(savedUser);
+        Assert.assertEquals(tenantId, savedUser.getTenantId());
+        Assert.assertNotEquals(savedDifferentTenantUser.getEmail(), savedUser.getEmail());
     }
 
 }

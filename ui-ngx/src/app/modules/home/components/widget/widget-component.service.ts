@@ -1,11 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Inject, Injectable, Optional, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, from, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import {
-  ErrorWidgetType,
+  ErrorWidgetType, isWidgetWithInfo,
   MissingWidgetType,
   toWidgetInfo,
   toWidgetType,
@@ -46,6 +47,7 @@ import tinycolor from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { DashboardReportService } from '@core/http/dashboard-report.service';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { compileTbFunction, TbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
@@ -72,7 +74,8 @@ export class WidgetComponentService {
               private utils: UtilsService,
               private resources: ResourcesService,
               private translate: TranslateService,
-              private http: HttpClient) {
+              private http: HttpClient,
+              private reportService: DashboardReportService) {
 
     this.cssParser.testMode = false;
 
@@ -193,6 +196,9 @@ export class WidgetComponentService {
           ];
           forkJoin(loadDefaultWidgetInfoTasks).subscribe(
             () => {
+              if (this.reportService.reportView) {
+                this.reportService.openReportSubject.subscribe(() => this.widgetService.clearWidgetInfoInMemoryCache());
+              }
               initSubject.next();
             },
             (e) => {
@@ -225,6 +231,9 @@ export class WidgetComponentService {
   }
 
   public getInstantWidgetInfo(widget: Widget): WidgetInfo {
+    if (isWidgetWithInfo(widget)) {
+      return widget.widgetInfo;
+    }
     const widgetInfo = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn);
     if (widgetInfo) {
       return widgetInfo;

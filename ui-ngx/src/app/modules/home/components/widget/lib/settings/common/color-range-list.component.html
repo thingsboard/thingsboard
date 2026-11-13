@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container  [formGroup]="colorRangeListFormGroup">
@@ -46,28 +47,28 @@
                     <input matInput type="number" formControlName="to" placeholder="{{ 'widget-config.set' | translate }}">
                   </mat-form-field>
                   <tb-color-input asBoxInput
-                                  formControlName="color">
-                  </tb-color-input>
-                </div>
-                <button type="button"
-                        mat-icon-button
-                        class="tb-box-button"
-                        (click)="removeRange($index)"
-                        matTooltip="{{ 'action.remove' | translate }}"
-                        matTooltipPosition="above">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-              <button class="tb-box-button"
-                      mat-icon-button
-                      type="button"
-                      cdkDragHandle
-                      matTooltip="{{ 'action.drag' | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>drag_indicator</mat-icon>
-              </button>
+                                  [useThemePalette]="useThemePalette"
+                              formControlName="color">
+              </tb-color-input>
             </div>
-          }
+            <button type="button"
+                    mat-icon-button
+                    class="tb-box-button"
+                    (click)="removeRange($index)"
+                    matTooltip="{{ 'action.remove' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          <button class="tb-box-button"
+                  mat-icon-button
+                  type="button"
+                  cdkDragHandle
+                  matTooltip="{{ 'action.drag' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>drag_indicator</mat-icon>
+          </button>
+        </div>}
         </div>
       }
       @case (true) {

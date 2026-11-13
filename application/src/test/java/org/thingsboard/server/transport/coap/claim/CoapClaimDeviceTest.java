@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap.claim;
 
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +47,6 @@ public class CoapClaimDeviceTest extends AbstractCoapIntegrationTest {
     public void testClaimingDevice() throws Exception {
         processTestClaimingDevice(false);
     }
-
     @Test
     public void testClaimingDeviceWithoutSecretAndDuration() throws Exception {
         processTestClaimingDevice(true);
@@ -71,7 +71,7 @@ public class CoapClaimDeviceTest extends AbstractCoapIntegrationTest {
         postClaimRequest(client, failurePayloadBytes);
         awaitForClaimingInfoToBeRegistered(savedDevice.getId());
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
         ClaimRequest claimRequest;
         if (!emptyPayload) {
             claimRequest = new ClaimRequest("value");

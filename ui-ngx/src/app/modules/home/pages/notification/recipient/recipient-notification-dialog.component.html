@@ -1,12 +1,13 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="targetNotificationForm" class="tb-dialog-container">
-  <mat-toolbar class="tb-dialog-header">
-    <h2>{{ (isAdd ? 'notification.add-notification-recipients-group' : 'notification.edit-notification-recipients-group') | translate }}</h2>
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ dialogTitle | translate }}</h2>
     <span class="flex-1"></span>
     <div tb-help="recipientNotifications"></div>
     <button mat-icon-button
@@ -88,6 +89,27 @@
                   }
                 </section>
               }
+            }
+            @case (notificationTargetConfigType.USER_GROUP_LIST) {
+              <tb-entity-group-list
+                formControlName="groupsIds"
+                appearance="outline"
+                syncIdsWithDB
+                [groupType]="entityType.USER"
+              >
+              </tb-entity-group-list>
+            }
+            @case (notificationTargetConfigType.USER_ROLE) {
+              <tb-entity-list
+                required
+                syncIdsWithDB
+                appearance="outline"
+                formControlName="rolesIds"
+                [entityType]="entityType.ROLE"
+                labelText="{{ 'role.role-list' | translate }}"
+                placeholderText="{{ 'role.role' | translate }}"
+                requiredText="{{ 'role.role-list-required' | translate }}">
+              </tb-entity-list>
             }
             @case (notificationTargetConfigType.USER_LIST) {
               <tb-entity-list
@@ -172,9 +194,12 @@
     <button mat-button
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-    <button mat-raised-button
-            [disabled]="(isLoading$ | async) || targetNotificationForm.invalid || !targetNotificationForm.dirty"
-            color="primary"
-            (click)="save()">{{ (isAdd ? 'action.add' : 'action.save') | translate }}</button>
+    @if (!data?.readonly) {
+      <button mat-raised-button
+              [disabled]="(isLoading$ | async) || targetNotificationForm.invalid || !targetNotificationForm.dirty"
+              color="primary"
+              (click)="save()">{{ (isAdd ? 'action.add' : 'action.save') | translate }}
+      </button>
+    }
   </div>
 </form>

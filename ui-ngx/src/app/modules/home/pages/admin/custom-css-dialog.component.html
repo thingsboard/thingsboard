@@ -1,0 +1,63 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-custom-css-dialog">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2 translate>white-labeling.advanced-css</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="flex flex-col">
+    <div
+      tb-fullscreen
+      [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" class="tb-css-content flex flex-1 flex-col">
+      <div class="tb-css-content-toolbar flex flex-row items-center justify-start">
+        <label class="tb-title no-padding" translate>white-labeling.advanced-css</label>
+        <span class="flex-1"></span>
+        @if (!readonly) {
+          <button type="button"
+            mat-button class="tidy" (click)="beautifyCss()">
+            {{'js-func.tidy' | translate }}
+          </button>
+        }
+        <div [tb-help-popup]="'white-labeling/advanced-css'"
+          [tb-help-popup-style]="{maxWidth: '820px'}">
+        </div>
+        <button type='button' mat-icon-button (click)="fullscreen = !fullscreen"
+          class="tb-mat-32"
+          matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+          matTooltipPosition="above">
+          <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+      <div id="tb-css-panel" tb-toast toastTarget="cssContentEditor"
+        class="tb-css-content-panel flex flex-col">
+        <div #cssEditor id="tb-css-input"></div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button color="primary"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    @if (!readonly) {
+      <button
+        mat-raised-button color="primary"
+        type="button"
+        (click)="save()"
+        [disabled]="(isLoading$ | async) || !valid || !isDirty">
+        {{ 'action.save' | translate }}
+      </button>
+    }
+  </div>
+</div>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
@@ -28,10 +30,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.dao.device.DeviceConnectivityHostSource;
 import org.thingsboard.server.dao.device.DeviceConnectivityService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.system.ResolvedBaseUrl;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
+import org.thingsboard.server.service.iot_hub.DevicePackageEntityState;
+import org.thingsboard.server.service.iot_hub.DevicePackageUpdateService;
+import org.thingsboard.server.service.iot_hub.DeviceUpdateRequest;
+import org.thingsboard.server.service.iot_hub.DeviceUpdateResult;
+import org.thingsboard.server.service.iot_hub.InstalledItemKeptEntities;
 import org.thingsboard.server.service.iot_hub.InstallItemVersionResult;
 import org.thingsboard.server.service.iot_hub.InstallPlan;
 import org.thingsboard.server.service.iot_hub.InstallPlanResult;
@@ -47,6 +58,7 @@ import org.thingsboard.server.service.iot_hub.IotHubService;
 public class IotHubController extends BaseController {
 
     private final IotHubService iotHubService;
+    private final DevicePackageUpdateService devicePackageUpdateService;
     private final IotHubInstalledItemService iotHubInstalledItemService;
     private final DeviceConnectivityService deviceConnectivityService;
     private final SystemSecurityService systemSecurityService;
@@ -57,6 +69,7 @@ public class IotHubController extends BaseController {
     public InstallItemVersionResult installItemVersion(@PathVariable String versionId,
                                                          @RequestBody(required = false) JsonNode data,
                                                          HttpServletRequest request) throws ThingsboardException {
+        checkAllPermissions();
         return iotHubService.installItemVersion(getCurrentUser(), versionId, data, request);
     }
 
@@ -64,6 +77,7 @@ public class IotHubController extends BaseController {
     @GetMapping("/versions/{versionId}/installPlan")
     @ResponseBody
     public InstallPlan resolveInstallPlan(@PathVariable String versionId) throws ThingsboardException {
+        checkAllPermissions();
         return iotHubService.resolveInstallPlan(getCurrentUser(), versionId);
     }
 
@@ -72,6 +86,7 @@ public class IotHubController extends BaseController {
     @ResponseBody
     public InstallPlanResult installPlan(@RequestBody InstallPlanRequest body,
                                          HttpServletRequest request) throws ThingsboardException {
+        checkAllPermissions();
         return iotHubService.installPlan(getCurrentUser(), body.plan(), body.data(), request);
     }
 
@@ -83,8 +98,26 @@ public class IotHubController extends BaseController {
     public InstallItemVersionResult registerDeviceInstall(
             @RequestParam String versionId,
             @RequestBody JsonNode body) throws ThingsboardException {
+        checkAllPermissions();
         DeviceInstalledItemDescriptor descriptor = JacksonUtil.treeToValue(body, DeviceInstalledItemDescriptor.class);
         return iotHubService.registerDeviceInstall(getCurrentUser(), versionId, descriptor);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/installedItems/{installedItemId}/deviceUpdate/check")
+    @ResponseBody
+    public List<DevicePackageEntityState> checkDeviceUpdate(@PathVariable UUID installedItemId) throws ThingsboardException {
+        checkAllPermissions();
+        return devicePackageUpdateService.check(getCurrentUser(), new IotHubInstalledItemId(installedItemId));
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/installedItems/{installedItemId}/deviceUpdate")
+    @ResponseBody
+    public DeviceUpdateResult updateDevicePackage(@PathVariable UUID installedItemId,
+                                                  @RequestBody DeviceUpdateRequest request) throws ThingsboardException {
+        checkAllPermissions();
+        return devicePackageUpdateService.apply(getCurrentUser(), new IotHubInstalledItemId(installedItemId), request);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -94,6 +127,7 @@ public class IotHubController extends BaseController {
                                                      @PathVariable String versionId,
                                                      @RequestParam(required = false, defaultValue = "false") boolean force,
                                                      HttpServletRequest request) throws ThingsboardException {
+        checkAllPermissions();
         return iotHubService.updateItemVersion(getCurrentUser(), new IotHubInstalledItemId(installedItemId), versionId, force, request);
     }
 
@@ -107,6 +141,7 @@ public class IotHubController extends BaseController {
                                                            @RequestParam(required = false) String sortOrder,
                                                            @RequestParam(required = false) List<String> itemTypes,
                                                            @RequestParam(required = false) UUID itemId) throws ThingsboardException {
+        checkAllPermissions();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return iotHubInstalledItemService.findByTenantId(getTenantId(), itemTypes, itemId, pageLink);
     }
@@ -115,6 +150,7 @@ public class IotHubController extends BaseController {
     @GetMapping("/installedItems/count")
     @ResponseBody
     public long getInstalledItemsCount(@RequestParam(required = false) String itemType) throws ThingsboardException {
+        checkAllPermissions();
         return iotHubInstalledItemService.countByTenantId(getTenantId(), itemType);
     }
 
@@ -122,6 +158,7 @@ public class IotHubController extends BaseController {
     @GetMapping("/installedItems/itemIds")
     @ResponseBody
     public List<UUID> getInstalledItemIds() throws ThingsboardException {
+        checkAllPermissions();
         return iotHubInstalledItemService.findInstalledItemIdsByTenantId(getTenantId());
     }
 
@@ -129,6 +166,7 @@ public class IotHubController extends BaseController {
     @GetMapping("/installedItems/counts")
     @ResponseBody
     public Map<UUID, Long> getInstalledItemCounts(@RequestParam String itemType) throws ThingsboardException {
+        checkAllPermissions();
         return iotHubInstalledItemService.findInstalledItemCounts(getTenantId(), itemType);
     }
 
@@ -136,14 +174,32 @@ public class IotHubController extends BaseController {
     @DeleteMapping("/installedItems/{installedItemId}")
     @ResponseBody
     public void deleteInstalledItem(@PathVariable UUID installedItemId) throws ThingsboardException {
+        checkAllPermissions();
         iotHubService.deleteInstalledItem(getCurrentUser(), new IotHubInstalledItemId(installedItemId));
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/installedItems/{installedItemId}/keptEntities")
+    @ResponseBody
+    public InstalledItemKeptEntities getInstalledItemKeptEntities(@PathVariable UUID installedItemId) throws ThingsboardException {
+        checkAllPermissions();
+        return iotHubService.findKeptEntities(getTenantId(), new IotHubInstalledItemId(installedItemId));
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/connectivity")
     @ResponseBody
     public JsonNode getConnectivitySettings(HttpServletRequest request) throws Exception {
-        String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
-        return deviceConnectivityService.getConnectivityInfo(baseUrl);
+        checkAllPermissions();
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
+        return deviceConnectivityService.getConnectivityInfo(baseUrl.url(),
+                baseUrl.fromRequest() ? DeviceConnectivityHostSource.REQUEST : DeviceConnectivityHostSource.BASE_URL);
+    }
+
+    private void checkAllPermissions() throws ThingsboardException {
+        if (!getCurrentUser().getUserPermissions().hasGenericPermission(Resource.ALL, Operation.ALL)) {
+            throw new ThingsboardException("You don't have permissions to use solution templates!",
+                    ThingsboardErrorCode.PERMISSION_DENIED);
+        }
     }
 }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,6 +20,8 @@ import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -33,13 +36,13 @@ import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
-import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.Set;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_DATA_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_COUNT_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_DATA_QUERY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
 @RestController
@@ -83,6 +86,7 @@ public class EntityQueryController extends BaseController {
             @RequestBody AlarmDataQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getPageLink());
+        accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, Operation.READ);
         UserId assigneeId = query.getPageLink().getAssigneeId();
         if (assigneeId != null) {
             checkUserId(assigneeId, Operation.READ);
@@ -112,7 +116,7 @@ public class EntityQueryController extends BaseController {
                     **Deprecated.** Use the V2 endpoint (`POST /api/v2/entitiesQuery/find/keys`) instead.\n
                     Returns unique time series and/or attribute key names from entities matching the query.\n
                     Executes the Entity Data Query to find up to 100 entities, then fetches and aggregates all distinct key names.\n
-                    Primarily used for UI features like autocomplete suggestions.""" + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+                    Primarily used for UI features like autocomplete suggestions.""" + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping("/entitiesQuery/find/keys")
@@ -152,7 +156,7 @@ public class EntityQueryController extends BaseController {
                     (page size is capped at 100); then, all distinct key names are collected from those entities.\n
                     Optionally, each key can include a sample — the most recent value (by timestamp) for that key
                     across all matched entities."""
-                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping("/v2/entitiesQuery/find/keys")
@@ -207,9 +211,7 @@ public class EntityQueryController extends BaseController {
     private void resolveQuery(EntityCountQuery query) throws ThingsboardException {
         if (query.getEntityFilter() != null) {
             var user = getCurrentUser();
-            var customerId = user.getCustomerId();
-            var ownerId = customerId != null && !customerId.isNullUid() ? customerId : getTenantId();
-            EntityFilter.resolveEntityFilter(query.getEntityFilter(), getTenantId(), user.getId(), ownerId);
+            EntityFilter.resolveEntityFilter(query.getEntityFilter(), getTenantId(), user.getId(), user.getOwnerId());
         }
     }
 

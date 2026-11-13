@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,12 +37,20 @@ public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculat
 
     private boolean propagate;
     private boolean propagateToOwner;
+    private boolean propagateToOwnerHierarchy;
     private boolean propagateToTenant;
     private List<String> propagateRelationTypes;
 
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.ALARM;
+    }
+
+    @Override
+    public void validate() {
+        if (arguments != null && arguments.values().stream().anyMatch(Argument::hasTsRollingArgument)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support TS_ROLLING arguments.");
+        }
     }
 
     @Override
@@ -79,6 +88,7 @@ public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculat
     public boolean propagationSettingsEqual(AlarmCalculatedFieldConfiguration other) {
         return this.propagate == other.propagate &&
                this.propagateToOwner == other.propagateToOwner &&
+               this.propagateToOwnerHierarchy == other.propagateToOwnerHierarchy &&
                this.propagateToTenant == other.propagateToTenant &&
                Objects.equals(this.propagateRelationTypes, other.propagateRelationTypes);
     }

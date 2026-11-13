@@ -1,0 +1,41 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-dialog-content {
+    width: min(560px, 100%);
+    padding: 24px;
+    position: relative;
+  }
+  .tb-close-button {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+  }
+  h2 {
+    margin: 0 44px 0 0;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+    color: var(--tb-ink);
+  }
+  p {
+    margin: 12px 0 0;
+    max-width: 62ch;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--tb-value-ink);
+  }
+  .mat-mdc-checkbox.tb-option {
+    margin-top: 16px;
+    margin-left: -12px;
+    --mat-checkbox-label-text-color: var(--tb-value-ink);
+    --mat-checkbox-label-text-size: 15px;
+  }
+  .dialog-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
+}

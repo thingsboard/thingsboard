@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -9,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.4.1-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -24,7 +25,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
         <pkg.name>thingsboard</pkg.name>
-        <docker.name>tb-node</docker.name>
+        <docker.name>${tb.docker.id}-node</docker.name>
+        <sbom.metadata.skip>true</sbom.metadata.skip>
+        <sbom.image.package.dir>${main.dir}/application/target</sbom.image.package.dir>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
@@ -139,6 +142,11 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- After exec-maven-plugin: the image SBOM is made in the phase that pushes the image, once it is pushed -->
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

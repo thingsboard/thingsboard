@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityId } from '@shared/models/id/entity-id';
 import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
@@ -26,6 +27,12 @@ type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
 type ColumnSelectionOptions = 'enabled' | 'disabled';
 
+export enum columnExportOptions {
+  always = 'always',
+  onlyVisible = 'onlyVisible',
+  never = 'never'
+}
+
 export interface TableWidgetSettings {
   enableSearch: boolean;
   enableSelectColumnDisplay: boolean;
@@ -47,9 +54,11 @@ export interface TableWidgetDataKeySettings {
   useCellStyleFunction: boolean;
   cellStyleFunction?: TbFunction;
   useCellContentFunction: boolean;
+  useCellContentFunctionOnExport: boolean;
   cellContentFunction?: TbFunction;
   defaultColumnVisibility?: ColumnVisibilityOptions;
   columnSelectionToDisplay?: ColumnSelectionOptions;
+  columnExportOption?: columnExportOptions;
   disableSorting?: boolean;
 }
 
@@ -82,12 +91,14 @@ export interface DisplayColumn {
   def: string;
   display: boolean;
   selectable: boolean;
+  includeToExport?: columnExportOptions;
 }
 
 export type CellContentFunction = (...args: any[]) => string;
 
 export interface CellContentFunctionInfo {
   useCellContentFunction: boolean;
+  useCellContentFunctionOnExport?: boolean;
   cellContentFunction?: CompiledTbFunction<CellContentFunction>;
 }
 
@@ -311,12 +322,16 @@ export function getCellContentFunctionInfo(widgetContext: WidgetContext, keySett
         if (!cellContentFunction) {
           return {
             useCellContentFunction: false,
-            cellContentFunction: null
+            cellContentFunction: null,
+            useCellContentFunctionOnExport: false
           }
         } else {
+          const useCellContentFunctionOnExport = isDefined(keySettings.useCellContentFunctionOnExport) ?
+            keySettings.useCellContentFunctionOnExport : true;
           return {
             useCellContentFunction: true,
-            cellContentFunction
+            cellContentFunction,
+            useCellContentFunctionOnExport
           }
         }
       })
@@ -325,7 +340,8 @@ export function getCellContentFunctionInfo(widgetContext: WidgetContext, keySett
     cellContentFunctionInfo$ = of(
       {
         useCellContentFunction: false,
-        cellContentFunction: null
+        cellContentFunction: null,
+        useCellContentFunctionOnExport: false
       }
     )
   }

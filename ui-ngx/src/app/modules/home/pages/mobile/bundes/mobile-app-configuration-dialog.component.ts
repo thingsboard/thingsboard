@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
@@ -31,7 +32,7 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
   notShowAgain = false;
   showDontShowAgain: boolean;
 
-  gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_app.git';
+  gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_pe_app.git';
   flutterRunCommand = `flutter run --dart-define-from-file ${this.fileName}.json`;
 
   constructor(protected store: Store<AppState>,
@@ -62,6 +63,8 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
       thingsboardApiEndpoint: window.location.origin,
       appLinksUrlHost: window.location.host,
       appLinksUrlScheme: window.location.protocol.slice(0, -1),
+      registrationRedirectUrlScheme: this.data.bundle.selfRegistrationParams?.redirect?.scheme ?? '',
+      registrationRedirectUrlHost: this.data.bundle.selfRegistrationParams?.redirect?.host ?? '',
     };
     if (!!this.data.androidApp) {
       settings.androidApplicationId = this.data.androidApp.pkgName;

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.telemetry;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -33,8 +34,8 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.List;
 import java.util.Map;

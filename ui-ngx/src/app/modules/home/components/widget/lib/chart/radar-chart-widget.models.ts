@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   latestChartWidgetDefaultSettings,
   LatestChartWidgetSettings
@@ -49,7 +50,7 @@ export const radarChartWidgetDefaultSettings: RadarChartWidgetSettings = {
   animation: mergeDeep({} as ChartAnimationSettings,
     radarChartAnimationDefaultSettings),
   shape: RadarChartShape.polygon,
-  color: '#3F52DD',
+  color: 'var(--tb-primary-500)',
   showLine: true,
   lineType: ChartLineType.solid,
   lineWidth: 2,

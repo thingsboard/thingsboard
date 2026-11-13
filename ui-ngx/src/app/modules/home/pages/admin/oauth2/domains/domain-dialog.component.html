@@ -1,0 +1,41 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form (ngSubmit)="save()" style="width: 850px;max-height: 100vh;display: grid;grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ addTitle | translate }}</h2>
+    <span class="flex-1"></span>
+    <div [tb-help]="helpId"></div>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div></div>
+  }
+  <div mat-dialog-content class="!p-0">
+    <tb-domain #domainComponent></tb-domain>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+      type="button"
+      cdkFocusInitial
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+      type="submit"
+      [disabled]="(isLoading$ | async) || domainComponent.entityForm?.invalid || !domainComponent.entityForm?.dirty">
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</form>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ElementRef,
@@ -15,6 +16,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -78,7 +80,8 @@ export class HelpPopupComponent implements OnChanges {
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private popoverService: TbPopoverService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              public wl: WhiteLabelingService) {
   }
 
   ngOnChanges(_changes: SimpleChanges): void {

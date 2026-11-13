@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-sub-report-preview {
+  position: relative;
+  padding: 30px 10px 30px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 48px;
+  color: rgba(0,0,0,0.47);
+  background: #f0f0f0;
+  border: dashed 2px rgba(0, 0, 0, 0.16);
+  .tb-type-title {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    font-size: 14px;
+    line-height: normal;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    padding: 3px 6px;
+    border-radius: 4px;
+  }
+}

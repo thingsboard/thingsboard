@@ -1,11 +1,17 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { NavTreeNode, NodesCallback } from '@shared/components/nav-tree.component';
+import { NavTreeNode } from '@shared/components/nav-tree.component';
 import { Datasource } from '@shared/models/widget.models';
 import { isDefined, isUndefined } from '@core/utils';
-import { EntityRelationsQuery, EntitySearchDirection, RelationTypeGroup } from '@shared/models/relation.models';
+import {
+  EntityRelationsQuery,
+  EntitySearchDirection,
+  RelationEntityTypeFilter,
+  RelationTypeGroup
+} from '@shared/models/relation.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 
@@ -78,6 +84,16 @@ export function iconUrlHtml(iconUrl: string): string {
 
 export const defaultNodeRelationQueryFunction: NodeRelationQueryFunction = (widgetContext, nodeCtx) => {
   const entity = nodeCtx.entity;
+  const entityType = entity.id.entityType;
+  let filters: RelationEntityTypeFilter[] = [
+    {
+      relationType: 'Contains',
+      entityTypes: []
+    }
+  ];
+  if (entityType === EntityType.TENANT || entityType === EntityType.CUSTOMER){
+    filters = [];
+  }
   const query: EntityRelationsQuery = {
     parameters: {
       rootId: entity.id.id,
@@ -86,12 +102,7 @@ export const defaultNodeRelationQueryFunction: NodeRelationQueryFunction = (widg
       relationTypeGroup: RelationTypeGroup.COMMON,
       maxLevel: 1
     },
-    filters: [
-      {
-        relationType: 'Contains',
-        entityTypes: []
-      }
-    ]
+    filters
   };
   return query;
 };
@@ -100,40 +111,51 @@ export const defaultNodeIconFunction: NodeIconFunction = (widgetContext, nodeCtx
   let materialIcon = 'insert_drive_file';
   const entity = nodeCtx.entity;
   if (entity && entity.id && entity.id.entityType) {
-    switch (entity.id.entityType as EntityType | string) {
-      case 'function':
-        materialIcon = 'functions';
-        break;
-      case EntityType.DEVICE:
-        materialIcon = 'devices_other';
-        break;
-      case EntityType.ASSET:
-        materialIcon = 'domain';
-        break;
-      case EntityType.TENANT:
-        materialIcon = 'supervisor_account';
-        break;
-      case EntityType.CUSTOMER:
-        materialIcon = 'supervisor_account';
-        break;
-      case EntityType.USER:
-        materialIcon = 'account_circle';
-        break;
-      case EntityType.DASHBOARD:
-        materialIcon = 'dashboards';
-        break;
-      case EntityType.ALARM:
-        materialIcon = 'notifications_active';
-        break;
-      case EntityType.ENTITY_VIEW:
-        materialIcon = 'view_quilt';
-        break;
+    const entityType = entity.id.entityType;
+    if (entityType === EntityType.ENTITY_GROUP) {
+      materialIcon = materialIconByEntityType(getEntityGroupType(widgetContext, nodeCtx));
+    } else {
+      materialIcon = materialIconByEntityType(entityType);
     }
   }
   return {
     materialIcon
   };
 };
+
+function materialIconByEntityType(entityType: EntityType | string): string {
+  let materialIcon = 'insert_drive_file';
+  switch (entityType) {
+    case 'function':
+      materialIcon = 'functions';
+      break;
+    case EntityType.DEVICE:
+      materialIcon = 'devices_other';
+      break;
+    case EntityType.ASSET:
+      materialIcon = 'domain';
+      break;
+    case EntityType.TENANT:
+      materialIcon = 'supervisor_account';
+      break;
+    case EntityType.CUSTOMER:
+      materialIcon = 'supervisor_account';
+      break;
+    case EntityType.USER:
+      materialIcon = 'account_circle';
+      break;
+    case EntityType.DASHBOARD:
+      materialIcon = 'dashboards';
+      break;
+    case EntityType.ALARM:
+      materialIcon = 'notifications_active';
+      break;
+    case EntityType.ENTITY_VIEW:
+      materialIcon = 'view_quilt';
+      break;
+  }
+  return materialIcon;
+}
 
 export const defaultNodeOpenedFunction: NodeOpenedFunction = (widgetCtx, nodeCtx) => {
   return nodeCtx.level <= 4;
@@ -151,7 +173,16 @@ export const defaultNodesSortFunction: NodesSortFunction = (widgetCtx, nodeCtx1,
     result = nodeCtx1.entity.id.entityType.localeCompare(nodeCtx2.entity.id.entityType);
   }
   if (result === 0) {
-    result = nodeCtx1.entity.name.localeCompare(nodeCtx2.entity.name);
+    if (nodeCtx1.entity.id.entityType === EntityType.ENTITY_GROUP) {
+      result = getEntityGroupType(widgetCtx, nodeCtx1)?.localeCompare(getEntityGroupType(widgetCtx, nodeCtx2));
+    }
+    if (result === 0 || isUndefined(result)) {
+      result = nodeCtx1.entity.name.localeCompare(nodeCtx2.entity.name);
+    }
   }
   return result;
 };
+
+function getEntityGroupType(widgetContext: WidgetContext, nodeCtx: HierarchyNodeContext): string | undefined {
+  return widgetContext.datasources?.find(ds => ds.entityId === nodeCtx.entity.id.id)?.entityFilter?.groupType;
+}

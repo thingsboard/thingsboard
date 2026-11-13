@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cf;
 
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -45,6 +47,7 @@ import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
@@ -67,6 +70,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Slf4j
@@ -459,8 +463,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 AlarmSeverity.CRITICAL, new Condition("return temperature >= temperatureThreshold;", null, null)
         );
 
-        device.setCustomerId(customerId);
-        device = doPost("/api/device", device, Device.class);
+        doPost("/api/owner/CUSTOMER/" + customerId + "/DEVICE/" + device.getId()).andExpect(status().isOk());
         AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "High Temperature Alarm",
                 arguments, createRules, null);
         postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"temperatureThreshold\":50}");
@@ -517,6 +520,46 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertThat(alarmResult.isCleared()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.INDETERMINATE);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.CLEARED_UNACK);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_subCustomerAlarmRule_simpleExpression() throws Exception {
+        Argument locationArgument = new Argument();
+        locationArgument.setRefEntityKey(new ReferencedEntityKey("location", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        locationArgument.setDefaultValue("unknown");
+
+        Customer subCustomer = new Customer();
+        subCustomer.setTitle("Sub-customer");
+        subCustomer.setTenantId(tenantId);
+        subCustomer.setParentCustomerId(customerId);
+        CustomerId subCustomerId = doPost("/api/customer", subCustomer, Customer.class).getId();
+        originatorId = subCustomerId;
+
+        Argument locationFilterArgument = new Argument();
+        locationFilterArgument.setRefEntityKey(new ReferencedEntityKey("locationFilter", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        locationFilterArgument.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
+        locationFilterArgument.setDefaultValue("None");
+
+        Map<String, Argument> arguments = Map.of(
+                "location", locationArgument,
+                "locationFilter", locationFilterArgument
+        );
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.INDETERMINATE, new Condition(createSimpleExpression(
+                        "location", StringOperation.CONTAINS, new AlarmConditionValue<>(null, "locationFilter")
+                ), null, null)
+        );
+        AlarmRuleDefinition alarmRule = createAlarmRule(subCustomerId, "New resident",
+                arguments, createRules, null);
+
+        postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"locationFilter\":\"Kyiv\"}");
+        postAttributes(subCustomerId, AttributeScope.SERVER_SCOPE, "{\"location\":\"Ukraine, Kyiv\"}");
+        checkAlarmResult(alarmRule, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.INDETERMINATE);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
     }
 
@@ -850,6 +893,48 @@ public class AlarmRulesTest extends AbstractControllerTest {
         Thread.sleep(10000);
         assertThat(getLatestAlarmResult(alarmRule.getId())).isNull();
 
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            CalculatedFieldDebugEvent debugEvent = getDebugEvents(alarmRule.getId(), 5).stream()
+                    .filter(event -> event.getResult() != null)
+                    .findFirst().orElse(null);
+            assertThat(debugEvent).isNotNull();
+            TbAlarmResult alarmResult = JacksonUtil.fromString(debugEvent.getResult(), TbAlarmResult.class);
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_durationCondition_scheduleStarted() throws Exception {
+        Argument motionDetectedArgument = new Argument();
+        motionDetectedArgument.setRefEntityKey(new ReferencedEntityKey("motionDetected", ArgumentType.TS_LATEST, null));
+        motionDetectedArgument.setDefaultValue("false");
+        Map<String, Argument> arguments = Map.of(
+                "motionDetected", motionDetectedArgument
+        );
+
+        SpecificTimeSchedule schedule = new SpecificTimeSchedule();
+        schedule.setTimezone(ZoneId.systemDefault().getId());
+        schedule.setDaysOfWeek(Set.of(1, 2, 3, 4, 5, 6, 7));
+        long startsOn = Duration.between(LocalDate.now().atStartOfDay(), LocalDateTime.now())
+                .plus(15, ChronoUnit.SECONDS).toMillis();
+        schedule.setStartsOn(startsOn);
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return motionDetected == true;", null, null,
+                        new AlarmConditionValue<>(1000L, null),
+                        new AlarmConditionValue<>(schedule, null))
+        );
+
+        AlarmRuleDefinition alarmRule = createAlarmRule(deviceId, "Motion detected alarm",
+                arguments, createRules, null);
+
+        postTelemetry(deviceId, "{\"motionDetected\":true}");
+
+        Thread.sleep(10000);
+        assertThat(getLatestAlarmResult(alarmRule.getId())).isNull();
+
+        // no new telemetry after the schedule window opens, so the stored value must be used
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             CalculatedFieldDebugEvent debugEvent = getDebugEvents(alarmRule.getId(), 5).stream()
                     .filter(event -> event.getResult() != null)

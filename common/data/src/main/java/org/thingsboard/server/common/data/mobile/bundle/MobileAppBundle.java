@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.mobile.bundle;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,19 +11,21 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.layout.MobileLayoutConfig;
+import org.thingsboard.server.common.data.selfregistration.MobileSelfRegistrationParams;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
-public class MobileAppBundle extends BaseData<MobileAppBundleId> implements HasTenantId, HasName {
+public class MobileAppBundle extends BaseData<MobileAppBundleId> implements HasName, TenantEntity {
 
     @Schema(description = "JSON object with Tenant Id")
     private TenantId tenantId;
@@ -42,6 +45,9 @@ public class MobileAppBundle extends BaseData<MobileAppBundleId> implements HasT
     @Schema(description = "Application layout configuration")
     @Valid
     private MobileLayoutConfig layoutConfig;
+    @Schema(description = "Application self registration configuration")
+    @Valid
+    private MobileSelfRegistrationParams selfRegistrationParams;
     @Schema(description = "Whether OAuth2 settings are enabled or not")
     private Boolean oauth2Enabled;
 
@@ -61,6 +67,7 @@ public class MobileAppBundle extends BaseData<MobileAppBundleId> implements HasT
         this.androidAppId = mobile.androidAppId;
         this.iosAppId = mobile.iosAppId;
         this.layoutConfig = mobile.layoutConfig;
+        this.selfRegistrationParams = mobile.selfRegistrationParams;
         this.oauth2Enabled = mobile.oauth2Enabled;
     }
 
@@ -69,5 +76,10 @@ public class MobileAppBundle extends BaseData<MobileAppBundleId> implements HasT
     @Schema(description = "Mobile app bundle title", example = "My main application", accessMode = Schema.AccessMode.READ_ONLY)
     public String getName() {
         return title;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.MOBILE_APP_BUNDLE;
     }
 }

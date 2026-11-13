@@ -1,6 +1,7 @@
 #
-# SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+# SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 #
 
 # Spring common parameters
@@ -74,6 +75,9 @@ redis:
     nodes: "${REDIS_NODES:}"
     # Maximum number of redirects to follow when executing commands across the cluster.
     max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    # Period in seconds of the background refresh of the cluster slot map. It finds slots that moved to another node
+    # (after a failover, or when a node gets a new IP) even before a command to the old node fails. Set 0 to disable.
+    topology-refresh-period-sec: "${REDIS_CLUSTER_TOPOLOGY_REFRESH_PERIOD_SEC:30}"
     # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   sentinel:
@@ -206,6 +210,14 @@ transport:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:600000}"
     # Interval of periodic check for expired sessions and report of the changes to session last activity time
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
+  activity:
+    # This property specifies the strategy for reporting activity events within each reporting period.
+    # The accepted values are 'FIRST', 'LAST', 'FIRST_AND_LAST' and 'ALL'.
+    # <ul><li> 'FIRST': Only the first activity event in each reporting period is reported.</li>
+    # <li> 'LAST': Only the last activity event in the reporting period is reported.</li>
+    # <li> 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.</li>
+    # <li> 'ALL': All activity events in the reporting period are reported.</li></ul>
+    reporting_strategy: "${TB_TRANSPORT_ACTIVITY_REPORTING_STRATEGY:LAST}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"

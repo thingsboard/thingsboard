@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -10,6 +11,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
+import org.thingsboard.server.service.log.sub.LogsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
@@ -40,6 +42,8 @@ public interface TbLocalSubscriptionService {
     void onAlarmUpdate(TransportProtos.TbAlarmSubUpdateProto update, TbCallback callback);
 
     void onNotificationUpdate(EntityId entityId, NotificationsSubscriptionUpdate subscriptionUpdate, TbCallback callback);
+
+    void onLogsUpdate(EntityId entityId, LogsSubscriptionUpdate update, TbCallback callback);
 
     void onApplicationEvent(ClusterTopologyChangeEvent event);
 

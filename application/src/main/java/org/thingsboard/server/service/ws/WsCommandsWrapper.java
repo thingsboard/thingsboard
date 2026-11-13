@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.ws;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -8,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.service.ws.log.cmd.LogsSubscriptionCmd;
+import org.thingsboard.server.service.ws.log.cmd.LogsUnsubscribeCmd;
 import org.thingsboard.server.service.ws.notification.cmd.MarkAllNotificationsAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsReadCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
@@ -56,6 +59,8 @@ public class WsCommandsWrapper {
             @Type(name = "ENTITY_COUNT_UNSUBSCRIBE", value = EntityCountUnsubscribeCmd.class),
             @Type(name = "NOTIFICATIONS_UNSUBSCRIBE", value = NotificationsUnsubCmd.class),
             @Type(name = "ALARM_STATUS_UNSUBSCRIBE", value = AlarmStatusUnsubscribeCmd.class),
+            @Type(name = "LOGS", value = LogsSubscriptionCmd.class),
+            @Type(name = "LOGS_UNSUBSCRIBE", value = LogsUnsubscribeCmd.class),
     })
     private List<WsCmd> cmds;
 

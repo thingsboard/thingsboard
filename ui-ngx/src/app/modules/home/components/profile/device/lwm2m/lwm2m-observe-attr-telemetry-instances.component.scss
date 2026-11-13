@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host{
   .tb-panel {
     min-height: 48px;
@@ -13,6 +14,10 @@
     mat-expansion-panel-header {
       color: inherit;
     }
+  }
+
+  .instance-mobile-toggles {
+    padding-bottom: 12px;
   }
 
   .mat-expansion-panel-header-title {

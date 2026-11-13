@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.device.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,6 +39,8 @@ public class DeviceProfileAlarm implements Serializable {
     private boolean propagate;
     @Schema(description = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
     private boolean propagateToOwner;
+    @Schema(description = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) and all parent owners in the customer hierarchy", example = "true")
+    private boolean propagateToOwnerHierarchy;
     @Schema(description = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
     private boolean propagateToTenant;
 

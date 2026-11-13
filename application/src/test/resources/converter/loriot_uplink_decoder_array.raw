@@ -1,0 +1,37 @@
+function decodePayload(input) {
+    // Initialize the output object with empty attributes and telemetry for clarity.
+    var result = { attributes: {}, telemetry: {}};
+
+    // Extract the timestamp from metadata (represented in milliseconds).
+    var timestamp = metadata.ts; // ts from the incoming message.
+
+    // Initialize an object to store decoded key/value telemetry data.
+    var values = {};
+
+    // Decode battery level from the 5th byte of the payload.
+    values.battery = parseBytesToInt(input, 4, 1);
+
+    // Decode temperature from the 6th and 7th bytes of the payload (divided by 100).
+    values.temperature = parseBytesToInt(input, 5, 2) / 100.0;
+
+    // Combine the timestamp with values and add it to the telemetry.
+    result.telemetry = {
+        ts: timestamp,
+        values: values
+    };
+
+    // Return the fully constructed output object.
+    return result;
+}
+
+var uplinkDataList = [];
+
+var result = decodePayload(payload);
+result.profile = 'IndustrialSensorProfile'; // Device or asset profile name.
+result.customer = 'MyCustomer'; // If customer is not null - created entity will be assigned to customer with such name.
+result.group = 'SensorsGroup'; // If group is not null - created entity will be added to the entity group with such name.
+
+uplinkDataList.add(result);
+
+// Return the final result object.
+return uplinkDataList;

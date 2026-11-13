@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="mqttConfigForm" class="flex flex-col">
@@ -77,7 +78,7 @@
     {{ 'rule-node-config.parse-to-plain-text' | translate }}
   </mat-checkbox>
   <div class="tb-hint">{{ "rule-node-config.parse-to-plain-text-hint" | translate }}</div>
-  <tb-mqtt-version-select formControlName="protocolVersion"></tb-mqtt-version-select>
+  <tb-mqtt-version-select formControlName="protocolVersion" appearance="outline"></tb-mqtt-version-select>
   <mat-checkbox formControlName="cleanSession">
     {{ 'rule-node-config.clean-session' | translate }}
   </mat-checkbox>

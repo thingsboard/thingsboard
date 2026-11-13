@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.oauth2;
 
 import lombok.RequiredArgsConstructor;
@@ -42,8 +43,8 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     }
 
     @Override
-    public PageData<OAuth2Client> findByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(repository.findByTenantId(tenantId, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    public PageData<OAuth2Client> findByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink) {
+        return DaoUtil.toPageData(repository.findByTenantIdAndCustomerId(tenantId, customerId, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { InterceptorHttpParams } from '../interceptors/interceptor-http-params';
 import { HttpHeaders, HttpParams } from '@angular/common/http';
 import { InterceptorConfig } from '../interceptors/interceptor-config';
@@ -11,6 +12,7 @@ export interface RequestConfig {
   ignoreErrors?: boolean;
   resendRequest?: boolean;
   queryParams?: QueryParams;
+  loadEntityDetails?: boolean;
 }
 
 export interface HttpOptionsResult {
@@ -39,7 +41,7 @@ export function createDefaultHttpOptions(queryParamsOrConfig?: QueryParams | Req
 export function defaultHttpOptionsFromParams(queryParams?: QueryParams, config?: RequestConfig) {
   const finalConfig = {
     ...config,
-    ...(queryParams && { queryParams }),
+    ...(queryParams && {queryParams}),
   };
   return defaultHttpOptionsFromConfig(finalConfig);
 }

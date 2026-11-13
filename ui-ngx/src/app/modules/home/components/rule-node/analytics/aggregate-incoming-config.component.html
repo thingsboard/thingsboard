@@ -1,0 +1,285 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="aggregateIncomingConfigForm" class="flex flex-col">
+  <tb-output-message-type-autocomplete required appearance="outline" formControlName="outMsgType"></tb-output-message-type-autocomplete>
+  <div class="gt-sm:flex-row gt-sm:gap-2 flex flex-col">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
+      <mat-label translate>rule-node-config.input-value-key</mat-label>
+      <input required matInput formControlName="inputValueKey">
+      @if (aggregateIncomingConfigForm.get('inputValueKey').hasError('required')) {
+        <mat-error>
+          {{ 'rule-node-config.input-value-key-required' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field class="mat-block flex-1" appearance="outline">
+      <mat-label translate>rule-node-config.output-value-key</mat-label>
+      <input required matInput formControlName="outputValueKey">
+      @if (aggregateIncomingConfigForm.get('outputValueKey').hasError('required')) {
+        <mat-error>
+          {{ 'rule-node-config.output-value-key-required' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+  </div>
+  <mat-accordion multi>
+    <mat-expansion-panel [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title translate>rule-node-config.aggregation</mat-panel-title>
+      </mat-expansion-panel-header>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>rule-node-config.math-function</mat-label>
+        <mat-select formControlName="mathFunction" required>
+          @for (mathFunction of mathFunctions; track mathFunction) {
+            <mat-option [value]="mathFunction">
+              {{ mathFunctionsTranslationMap.get(mathFunction) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>rule-node-config.aggregate-interval-type</mat-label>
+        <mat-select formControlName="aggIntervalType" required>
+          @for (type of aggIntervalTypes; track type) {
+            <mat-option [value]="type">
+              {{ aggIntervalTypesTranslationMap.get(type) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (aggregateIncomingConfigForm.get('aggIntervalType').value !== aggIntervalType.CUSTOM) {
+        <tb-timezone-select
+          required
+          userTimezoneByDefault
+          appearance="outline"
+          formControlName="timeZoneId">
+        </tb-timezone-select>
+      }
+      @if (aggregateIncomingConfigForm.get('aggIntervalType').value === aggIntervalType.CUSTOM) {
+        <div class="gt-sm:flex-row gt-sm:gap-2 flex flex-col">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>rule-node-config.agg-interval-value</mat-label>
+            <input type="number" step="1" min="1" max="2147483647" matInput formControlName="aggIntervalValue" required>
+            @if (aggregateIncomingConfigForm.get('aggIntervalValue').hasError('required')) {
+              <mat-error>
+                {{ 'rule-node-config.agg-interval-value-required' | translate }}
+              </mat-error>
+            }
+            @if (aggregateIncomingConfigForm.get('aggIntervalValue').hasError('min')) {
+              <mat-error>
+                {{ 'rule-node-config.time-value-range' | translate }}
+              </mat-error>
+            }
+            @if (aggregateIncomingConfigForm.get('aggIntervalValue').hasError('max')) {
+              <mat-error>
+                {{ 'rule-node-config.time-value-range' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>rule-node-config.agg-interval-time-unit</mat-label>
+            <mat-select formControlName="aggIntervalTimeUnit" required>
+              @for (timeUnit of aggPeriodTimeUnits; track timeUnit) {
+                <mat-option [value]="timeUnit">
+                  {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+    </mat-expansion-panel>
+    <mat-expansion-panel [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title translate>rule-node-config.interval-persistence</mat-panel-title>
+      </mat-expansion-panel-header>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>rule-node-config.interval-persistence-policy</mat-label>
+        <mat-select formControlName="intervalPersistencePolicy" required>
+          @for (policy of intervalPersistPolicies; track policy) {
+            <mat-option [value]="policy">
+              {{ intervalPersistPolicyTranslationMap.get(policy) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <div class="gt-sm:flex-row gt-sm:gap-2 flex flex-col">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>rule-node-config.interval-check-value</mat-label>
+          <input type="number" step="1" min="1" max="2147483647" matInput formControlName="intervalCheckValue" required>
+          @if (aggregateIncomingConfigForm.get('intervalCheckValue').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.interval-check-value-required' | translate }}
+            </mat-error>
+          }
+          @if (aggregateIncomingConfigForm.get('intervalCheckValue').hasError('min')) {
+            <mat-error>
+              {{ 'rule-node-config.time-value-range' | translate }}
+            </mat-error>
+          }
+          @if (aggregateIncomingConfigForm.get('intervalCheckValue').hasError('max')) {
+            <mat-error>
+              {{ 'rule-node-config.time-value-range' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>rule-node-config.interval-check-time-unit</mat-label>
+          <mat-select formControlName="intervalCheckTimeUnit" required>
+            @for (timeUnit of aggPeriodTimeUnits; track timeUnit) {
+              <mat-option [value]="timeUnit">
+                {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-expansion-panel>
+    <mat-expansion-panel [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title translate>rule-node-config.state-persistence</mat-panel-title>
+      </mat-expansion-panel-header>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>rule-node-config.state-persistence-policy</mat-label>
+        <mat-select formControlName="statePersistencePolicy" required>
+          @for (policy of statePersistPolicies; track policy) {
+            <mat-option [value]="policy">
+              {{ statePersistPolicyTranslationMap.get(policy) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (aggregateIncomingConfigForm.get('statePersistencePolicy').value === StatePersistPolicy.PERIODICALLY) {
+        <div class="gt-sm:flex-row gt-sm:gap-2 flex flex-col">
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>rule-node-config.state-persistence-value</mat-label>
+            <input type="number" step="1" min="1" max="2147483647" matInput formControlName="statePersistenceValue" required>
+            @if (aggregateIncomingConfigForm.get('statePersistenceValue').hasError('required')) {
+              <mat-error>
+                {{ 'rule-node-config.state-persistence-value-required' | translate }}
+              </mat-error>
+            }
+            @if (aggregateIncomingConfigForm.get('statePersistenceValue').hasError('min')) {
+              <mat-error>
+                {{ 'rule-node-config.time-value-range' | translate }}
+              </mat-error>
+            }
+            @if (aggregateIncomingConfigForm.get('statePersistenceValue').hasError('max')) {
+              <mat-error>
+                {{ 'rule-node-config.time-value-range' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>rule-node-config.state-persistence-time-unit</mat-label>
+            <mat-select formControlName="statePersistenceTimeUnit" required>
+              @for (timeUnit of aggPeriodTimeUnits; track timeUnit) {
+                <mat-option [value]="timeUnit">
+                  {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+    </mat-expansion-panel>
+  </mat-accordion>
+  <mat-checkbox class="flex-1" formControlName="autoCreateIntervals" style="padding-bottom: 16px;">
+    {{ 'rule-node-config.auto-create-intervals' | translate }}
+  </mat-checkbox>
+  @if (aggregateIncomingConfigForm.get('autoCreateIntervals').value) {
+    <mat-expansion-panel
+      [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title translate>rule-node-config.interval-entities</mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="gt-sm:flex-row gt-sm:gap-2 flex flex-col">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>rule-node-config.execution-period-value</mat-label>
+          <input type="number" step="1" min="1" max="2147483647" matInput formControlName="periodValue" required>
+          @if (aggregateIncomingConfigForm.get('periodValue').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.execution-period-value-required' | translate }}
+            </mat-error>
+          }
+          @if (aggregateIncomingConfigForm.get('periodValue').hasError('min')) {
+            <mat-error>
+              {{ 'rule-node-config.time-value-range' | translate }}
+            </mat-error>
+          }
+          @if (aggregateIncomingConfigForm.get('periodValue').hasError('max')) {
+            <mat-error>
+              {{ 'rule-node-config.time-value-range' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>rule-node-config.execution-period-time-unit</mat-label>
+          <mat-select formControlName="periodTimeUnit" required>
+            @for (timeUnit of aggPeriodTimeUnits; track timeUnit) {
+              <mat-option [value]="timeUnit">
+                {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-expansion-panel [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title translate>rule-node-config.entities</mat-panel-title>
+        </mat-expansion-panel-header>
+        <div formGroupName="parentEntitiesQuery" class="flex flex-col">
+          <mat-radio-group formControlName="type" class="flex flex-row gap-2"
+            style="padding-top: 16px; padding-bottom: 16px;">
+            <mat-radio-button [value]="'single'" color="primary">
+              <span translate>rule-node-config.single-entity</span>
+            </mat-radio-button>
+            <mat-radio-button [value]="'group'" color="primary">
+              <span translate>rule-node-config.group-of-entities</span>
+            </mat-radio-button>
+            <mat-radio-button [value]="'relationsQuery'" color="primary">
+              <span translate>rule-node-config.relations-query</span>
+            </mat-radio-button>
+          </mat-radio-group>
+          @if (aggregateIncomingConfigForm.get('parentEntitiesQuery.type').value === 'relationsQuery') {
+            <section
+              class="flex flex-col">
+              <label translate class="tb-title tb-required">rule-node-config.root-entity</label>
+              <tb-entity-select
+                required
+                appearance="outline"
+                formControlName="rootEntityId">
+              </tb-entity-select>
+              <label translate class="tb-title tb-required">rule-node-config.relations-query</label>
+              <tb-relations-query-config
+                style="padding-bottom: 15px;"
+                formControlName="relationsQuery">
+              </tb-relations-query-config>
+            </section>
+          }
+          @if (aggregateIncomingConfigForm.get('parentEntitiesQuery.type').value === 'single') {
+            <tb-entity-select
+              required
+              appearance="outline"
+              formControlName="entityId">
+            </tb-entity-select>
+          }
+          @if (aggregateIncomingConfigForm.get('parentEntitiesQuery.type').value === 'group') {
+            <tb-entity-group-select
+              required
+              appearance="outline"
+              formControlName="entityGroupId"
+              placeholderText="entity-group.select-entity-group"
+              notFoundText="entity-group.no-entity-groups-matching"
+              requiredText="entity-group.target-entity-group-required">
+            </tb-entity-group-select>
+          }
+        </div>
+      </mat-expansion-panel>
+    </mat-expansion-panel>
+  }
+</section>

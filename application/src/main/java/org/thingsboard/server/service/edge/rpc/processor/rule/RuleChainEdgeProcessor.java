@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.processor.rule;
 
@@ -48,7 +48,7 @@ public class RuleChainEdgeProcessor extends BaseRuleChainProcessor {
                     return saveOrUpdateRuleChain(tenantId, ruleChainId, ruleChainUpdateMsg, edge);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     RuleChain ruleChainToDelete = edgeCtx.getRuleChainService().findRuleChainById(tenantId, ruleChainId);
-                    if (ruleChainToDelete != null) {
+                    if (ruleChainToDelete != null && tenantId.equals(ruleChainToDelete.getTenantId())) {
                         edgeCtx.getRuleChainService().unassignRuleChainFromEdge(tenantId, ruleChainId, edge.getId(), false);
                     }
                     return Futures.immediateFuture(null);

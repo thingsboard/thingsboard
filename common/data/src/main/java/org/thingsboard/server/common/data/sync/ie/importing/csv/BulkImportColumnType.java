@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.sync.ie.importing.csv;
 
 import lombok.Getter;
@@ -35,7 +36,10 @@ public enum BulkImportColumnType {
     SNMP_VERSION,
     SNMP_COMMUNITY_STRING,
     IS_GATEWAY,
+    OVERWRITE_ACTIVITY_TIME,
     DESCRIPTION,
+    EDGE_LICENSE_KEY,
+    CLOUD_ENDPOINT,
     ROUTING_KEY,
     SECRET;
 

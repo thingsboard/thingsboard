@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Inject, Injectable, NgZone, Renderer2, DOCUMENT } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData, parseException } from '@app/shared/models/error.models';
@@ -76,6 +77,8 @@ export class UtilsService {
   widgetEditMode = false;
   editWidgetInfo: WidgetInfo = null;
 
+  stateSelectView = false;
+
   defaultDataKey: DataKey = {
     name: 'f(x)',
     type: DataKeyType.function,
@@ -110,6 +113,10 @@ export class UtilsService {
       if (dataWidgetAttr && dataWidgetAttr.length) {
         this.editWidgetInfo = JSON.parse(dataWidgetAttr);
         this.widgetEditMode = true;
+      }
+      const stateSelectViewAttr = frame.getAttribute('state-select-view');
+      if (stateSelectViewAttr) {
+        this.stateSelectView = true;
       }
     }
   }
@@ -287,7 +294,6 @@ export class UtilsService {
         .reduce((previousValue, currentValue) => previousValue + currentValue, 0);
       additionalDataKey.color = this.getMaterialColor(index + additionalKeysNumber);
     }
-    additionalDataKey._hash = Math.random();
     return additionalDataKey;
   }*/
 
@@ -401,6 +407,14 @@ export class UtilsService {
     }
   }
 
+  public translateText(text: string): string {
+    if (text.startsWith('${') && text.endsWith('}')) {
+      return this.translate.instant(text.substring(2, text.length - 1));
+    } else {
+      return text;
+    }
+  }
+
   private getEntityIdFromDatasource(dataSource: Datasource): EntityId {
     return {id: dataSource.entityId, entityType: dataSource.entityType};
   }
@@ -459,5 +473,4 @@ export class UtilsService {
       el.parentNode.removeChild(el);
     }
   }
-
 }

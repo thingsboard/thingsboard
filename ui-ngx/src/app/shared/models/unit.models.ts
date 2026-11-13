@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import absorbedDoseRate, { AbsorbedDoseRateUnits } from '@shared/models/units/absorbed-dose-rate';
 import acceleration, { AccelerationUnits } from '@shared/models/units/acceleration';

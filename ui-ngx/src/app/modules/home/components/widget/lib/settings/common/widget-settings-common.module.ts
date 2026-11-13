@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -67,6 +68,15 @@ import {
 import {
   MobileActionEditorComponent
 } from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
+import {
+  SaveBrowserLocationActionEditorComponent
+} from '@home/components/widget/lib/settings/common/action/save-browser-location-action-editor.component';
+import {
+  LocationTargetEntityComponent
+} from '@home/components/widget/lib/settings/common/action/location-target-entity.component';
+import {
+  LocationKeysTableComponent
+} from '@home/components/widget/lib/settings/common/action/location-keys-table.component';
 import {
   WidgetActionSettingsComponent
 } from '@home/components/widget/lib/settings/common/action/widget-action-settings.component';
@@ -256,6 +266,19 @@ import {
 import {
   HtmlContainerSettingsComponent
 } from '@home/components/widget/lib/settings/common/html/html-container-settings.component';
+import {
+  AlignmentPanelComponent
+} from '@home/components/widget/lib/settings/common/alignment-panel.component';
+import { AlignmentComponent } from '@home/components/widget/lib/settings/common/alignment.component';
+import {
+  DynamicFormDialogComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-dialog.component';
+import {
+  ComparisonKeysTableComponent
+} from '@home/components/widget/lib/settings/common/chart/comparison-keys-table.component';
+import {
+  ComparisonKeyRowComponent
+} from '@home/components/widget/lib/settings/common/chart/comparison-key-row.component';
 import { AxisScaleRowComponent } from './axis-scale-row.component';
 
 @NgModule({
@@ -268,6 +291,8 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
     CssSizeInputComponent,
+    AlignmentComponent,
+    AlignmentPanelComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     AutoDateFormatSettingsComponent,
@@ -292,6 +317,9 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,
+    SaveBrowserLocationActionEditorComponent,
+    LocationTargetEntityComponent,
+    LocationKeysTableComponent,
     WidgetActionSettingsComponent,
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
@@ -299,6 +327,8 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     WidgetButtonToggleCustomStyleComponent,
     WidgetButtonCustomStylePanelComponent,
     WidgetButtonToggleCustomStylePanelComponent,
+    ComparisonKeyRowComponent,
+    ComparisonKeysTableComponent,
     TimeSeriesChartAxisSettingsComponent,
     TimeSeriesChartThresholdsPanelComponent,
     TimeSeriesChartThresholdRowComponent,
@@ -328,6 +358,7 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     DynamicFormSelectItemRowComponent,
     DynamicFormComponent,
     DynamicFormArrayComponent,
+    DynamicFormDialogComponent,
     MapLayerSettingsPanelComponent,
     MapLayerRowComponent,
     MapLayersComponent,
@@ -380,6 +411,8 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
     CssSizeInputComponent,
+    AlignmentComponent,
+    AlignmentPanelComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     AutoDateFormatSettingsComponent,
@@ -403,6 +436,9 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,
+    SaveBrowserLocationActionEditorComponent,
+    LocationTargetEntityComponent,
+    LocationKeysTableComponent,
     WidgetActionSettingsComponent,
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
@@ -410,6 +446,8 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     WidgetButtonToggleCustomStyleComponent,
     WidgetButtonCustomStylePanelComponent,
     WidgetButtonToggleCustomStylePanelComponent,
+    ComparisonKeyRowComponent,
+    ComparisonKeysTableComponent,
     TimeSeriesChartAxisSettingsComponent,
     TimeSeriesChartThresholdsPanelComponent,
     TimeSeriesChartThresholdRowComponent,
@@ -439,6 +477,7 @@ import { AxisScaleRowComponent } from './axis-scale-row.component';
     DynamicFormSelectItemRowComponent,
     DynamicFormComponent,
     DynamicFormArrayComponent,
+    DynamicFormDialogComponent,
     MapSettingsComponent,
     EntityAliasSelectComponent,
     FilterSelectComponent,

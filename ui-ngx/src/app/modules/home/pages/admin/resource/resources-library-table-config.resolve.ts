@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import {
   checkBoxCell,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -30,6 +32,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { ResourceLibraryTabsComponent } from '@home/pages/admin/resource/resource-library-tabs.component';
 import { forkJoin, Observable, of } from "rxjs";
 import {
@@ -50,6 +53,7 @@ export class ResourcesLibraryTableConfigResolver  {
 
   constructor(private store: Store<AppState>,
               private resourceService: ResourceService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private router: Router,
               private dialog: MatDialog,
@@ -143,6 +147,7 @@ export class ResourcesLibraryTableConfigResolver  {
     this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.detailsReadonly = (resource) => this.detailsReadonly(resource, authUser.authority);
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 

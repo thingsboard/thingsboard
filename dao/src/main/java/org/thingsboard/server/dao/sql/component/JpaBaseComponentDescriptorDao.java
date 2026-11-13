@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.component;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -100,4 +101,5 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractDao<ComponentDescr
     public void deleteByClazz(TenantId tenantId, String clazz) {
         componentDescriptorRepository.deleteByClazz(clazz);
     }
+
 }

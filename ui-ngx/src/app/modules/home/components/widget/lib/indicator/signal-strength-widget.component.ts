@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Input,
   OnDestroy,
@@ -13,6 +15,7 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   backgroundStyle,
@@ -122,7 +125,8 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
               private sanitizer: DomSanitizer,
               private translate: TranslateService,
               private renderer: Renderer2,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -135,6 +139,9 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
       this.dateStyle = textStyle(this.settings.dateFont);
       this.dateStyle.color = this.settings.dateColor;
+      this.dateFormat.formattedUpdated?.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => this.cd.detectChanges());
     }
 
     this.noSignalRssiValue = this.settings.noSignalRssiValue ?? -100;
@@ -170,6 +177,9 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.tooltipDateStyle = textStyle(this.settings.tooltipDateFont);
       this.tooltipDateStyle.color = this.settings.tooltipDateColor;
       this.tooltipDateLabelStyle = {...this.tooltipDateStyle, ...this.tooltipDateLabelStyle};
+      this.tooltipDateFormat.formattedUpdated?.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => this.cd.detectChanges());
     }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);

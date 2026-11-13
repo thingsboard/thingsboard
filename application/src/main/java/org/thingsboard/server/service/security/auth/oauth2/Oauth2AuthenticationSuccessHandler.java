@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import jakarta.servlet.http.Cookie;
@@ -21,6 +22,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -70,8 +72,8 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         Authentication authentication) throws IOException {
         OAuth2AuthorizationRequest authorizationRequest = httpCookieOAuth2AuthorizationRequestRepository.loadAuthorizationRequest(request);
         String callbackUrlScheme = CallbackUrlSchemeValidator.getCallbackUrlScheme(authorizationRequest);
-        String baseUrl = getBaseUrl(request, callbackUrlScheme);
         String prevUri = getPrevUri(request, response, callbackUrlScheme);
+        String baseUrl = null;
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
@@ -82,6 +84,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(oauth2Client.getMapperConfig().getType());
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     oauth2Client);
+            baseUrl = getBaseUrl(request, callbackUrlScheme, securityUser);
 
             clearAuthenticationAttributes(request, response);
 
@@ -98,16 +101,22 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             } else {
                 errorPrefix = "/login?loginError=";
             }
+            if (StringUtils.isEmpty(baseUrl)) {
+                baseUrl = getBaseUrl(request, callbackUrlScheme, null);
+            }
             getRedirectStrategy().sendRedirect(request, response, baseUrl + errorPrefix +
                     URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8));
         }
     }
 
-    String getBaseUrl(HttpServletRequest request, String callbackUrlScheme) {
+    String getBaseUrl(HttpServletRequest request, String callbackUrlScheme, SecurityUser securityUser) {
         if (!StringUtils.isEmpty(callbackUrlScheme)) {
             return callbackUrlScheme + ":";
         }
-        return this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+        if (securityUser != null) {
+            return this.systemSecurityService.getBaseUrl(securityUser.getAuthority(), securityUser.getTenantId(), securityUser.getCustomerId(), request);
+        }
+        return this.systemSecurityService.getBaseUrl(Authority.SYS_ADMIN, TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
     }
 
     /**

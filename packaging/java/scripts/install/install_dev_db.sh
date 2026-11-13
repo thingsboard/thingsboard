@@ -1,7 +1,8 @@
 #!/bin/bash
 #
-# SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+# SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 #
 
 
@@ -9,7 +10,6 @@ BASE=${project.basedir}/target
 CONF_FOLDER=${BASE}/conf
 jarfile="${BASE}/thingsboard-${project.version}-boot.jar"
 installDir=${BASE}/data
-loadDemo=true
 
 
 export JAVA_OPTS="$JAVA_OPTS -Dplatform=@pkg.platform@"
@@ -21,7 +21,6 @@ run_user="$USER"
 
 sudo -u "$run_user" -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \
-                    -Dinstall.load_demo=${loadDemo} \
                     -Dspring.jpa.hibernate.ddl-auto=none \
                     -Dinstall.upgrade=false \
                     -Dlogging.config=logback.xml \

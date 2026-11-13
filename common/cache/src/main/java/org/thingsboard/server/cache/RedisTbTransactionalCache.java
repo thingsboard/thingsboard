@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
 
 import lombok.Getter;
@@ -7,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.support.NullValue;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.redis.ClusterRedirectException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
@@ -19,7 +22,10 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisRedirectionException;
 import redis.clients.jedis.util.JedisClusterCRC16;
 
 import java.io.Serializable;
@@ -45,10 +51,32 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     @Getter
     private final JedisConnectionFactory connectionFactory;
     private final RedisSerializer<String> keySerializer = StringRedisSerializer.UTF_8;
+    // Combined prefix (configured key prefix + cache name) prepended to every raw Redis key; precomputed once.
+    private final String rawKeyPrefix;
     private final TbRedisSerializer<K, V> valueSerializer;
     protected final Expiration evictExpiration;
     protected final Expiration cacheTtl;
     protected final boolean cacheEnabled;
+
+    static final byte[] EVICT_BY_PREFIX_LUA_SCRIPT = StringRedisSerializer.UTF_8.serialize("""
+            local prefix = ARGV[1]
+            local count = tonumber(ARGV[2]) or 1000
+            local cursor = "0"
+            local keysToDelete = {}
+            repeat
+                local result = redis.call("SCAN", cursor, "MATCH", prefix .. "*", "COUNT", count)
+                cursor = result[1]
+                for i, key in ipairs(result[2]) do
+                    table.insert(keysToDelete, key)
+                end
+            until cursor == "0"
+            if #keysToDelete > 0 then
+                redis.call("DEL", unpack(keysToDelete))
+            end
+            return #keysToDelete
+            """);
+
+    static final byte[] EVICT_BY_PREFIX_SHA = StringRedisSerializer.UTF_8.serialize("837605bb2289f85b0ebf1c10fa8cbd5833bea3ac");
 
     public RedisTbTransactionalCache(String cacheName,
                                      CacheSpecsMap cacheSpecsMap,
@@ -57,6 +85,8 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
                                      TbRedisSerializer<K, V> valueSerializer) {
         this.cacheName = cacheName;
         this.connectionFactory = (JedisConnectionFactory) connectionFactory;
+        String configuredKeyPrefix = configuration.getKeyPrefix() == null ? "" : configuration.getKeyPrefix();
+        this.rawKeyPrefix = configuredKeyPrefix + cacheName;
         this.valueSerializer = valueSerializer;
         this.evictExpiration = Expiration.from(configuration.getEvictTtlInMs(), TimeUnit.MILLISECONDS);
         this.cacheTtl = Optional.ofNullable(cacheSpecsMap)
@@ -165,6 +195,22 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     @Override
+    public void evictByPrefix(String prefix) {
+        if (!cacheEnabled) {
+            return;
+        }
+        byte[] rawPrefix = StringRedisSerializer.UTF_8.serialize(rawKeyPrefix + prefix);
+        byte[] rawBatchSize = StringRedisSerializer.UTF_8.serialize(String.valueOf(1000));
+        // The script has no keys, so the cluster client cannot route it: run it on the node that owns the prefix slot.
+        retryOnClusterTopologyChange(() -> {
+            try (var connection = getConnection(rawPrefix)) {
+                executeScript(connection, EVICT_BY_PREFIX_SHA, EVICT_BY_PREFIX_LUA_SCRIPT, ReturnType.INTEGER, 0, rawPrefix, rawBatchSize);
+            }
+            return null;
+        });
+    }
+
+    @Override
     public TbCacheTransaction<K, V> newTransactionForKey(K key) {
         byte[][] rawKey = new byte[][]{getRawKey(key)};
         RedisConnection connection = watch(rawKey);
@@ -185,14 +231,17 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return TbTransactionalCache.super.getAndPutInTransaction(key, dbCall, cacheValueToResult, dbValueToCacheValue, cacheNullValue);
     }
 
+    /**
+     * Returns a connection to the node that owns the slot of {@code rawKey}, for commands the cluster client cannot
+     * route (WATCH/MULTI, keyless scripts). Such commands bypass the Jedis cluster command executor, which is what
+     * renews the slot map on MOVED or connection errors, so wrap them in {@link #retryOnClusterTopologyChange}.
+     */
     protected RedisConnection getConnection(byte[] rawKey) {
         if (!connectionFactory.isRedisClusterAware()) {
             return connectionFactory.getConnection();
         }
-        RedisConnection connection = connectionFactory.getClusterConnection();
-
         int slotNum = JedisClusterCRC16.getSlot(rawKey);
-        Jedis jedis = new Jedis((((JedisClusterConnection) connection).getNativeConnection().getConnectionFromSlot(slotNum)));
+        Jedis jedis = new Jedis(getNativeCluster().getConnectionFromSlot(slotNum));
 
         JedisConnection jedisConnection = new JedisConnection(jedis, MOCK_POOL, jedis.getDB());
         jedisConnection.setConvertPipelineAndTxResults(connectionFactory.getConvertPipelineAndTxResults());
@@ -201,6 +250,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     protected RedisConnection watch(byte[][] rawKeysList) {
+        return retryOnClusterTopologyChange(() -> doWatch(rawKeysList));
+    }
+
+    private RedisConnection doWatch(byte[][] rawKeysList) {
         RedisConnection connection = getConnection(rawKeysList[0]);
         try {
             connection.watch(rawKeysList);
@@ -212,8 +265,36 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return connection;
     }
 
+    /**
+     * Runs a command that goes to a slot owner through {@link #getConnection(byte[])}. If it fails because the
+     * cluster topology changed (the slot moved, or its node is unreachable or gone), renews the Jedis slot map and
+     * runs the command once more. Without the renewal, every later command for the slot keeps going to the old node.
+     */
+    protected <T> T retryOnClusterTopologyChange(Supplier<T> command) {
+        try {
+            return command.get();
+        } catch (RuntimeException e) {
+            if (!connectionFactory.isRedisClusterAware() || !isClusterTopologyError(e)
+                    || !(getNativeCluster() instanceof TbJedisCluster cluster)) {
+                throw e;
+            }
+            log.warn("[{}] Redis cluster topology changed, renewing the slot map and retrying: {}", cacheName, e.getMessage());
+            cluster.renewSlotCache();
+            return command.get();
+        }
+    }
+
+    static boolean isClusterTopologyError(Throwable e) {
+        return e instanceof JedisConnectionException || e instanceof JedisRedirectionException
+                || e instanceof RedisConnectionFailureException || e instanceof ClusterRedirectException;
+    }
+
+    private JedisCluster getNativeCluster() {
+        return ((JedisClusterConnection) connectionFactory.getClusterConnection()).getNativeConnection();
+    }
+
     protected byte[] getRawKey(K key) {
-        String keyString = cacheName + key.toString();
+        String keyString = rawKeyPrefix + key.toString();
         byte[] rawKey;
         try {
             rawKey = keySerializer.serialize(keyString);
@@ -256,6 +337,13 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public void put(RedisConnection connection, byte[] rawKey, V value, RedisStringCommands.SetOption setOption) {
         byte[] rawValue = getRawValue(value);
         connection.stringCommands().set(rawKey, rawValue, this.cacheTtl, setOption);
+    }
+
+    /**
+     * Loads the Lua scripts this cache queues inside transactions on the connection's node. Called when a
+     * transaction fails with NOSCRIPT. Cache writes outside transactions load missing scripts themselves.
+     */
+    protected void loadScripts(RedisConnection connection) {
     }
 
     protected void executeScript(RedisConnection connection, byte[] scriptSha, byte[] luaScript, ReturnType returnType, int numKeys, byte[]... keysAndArgs) {

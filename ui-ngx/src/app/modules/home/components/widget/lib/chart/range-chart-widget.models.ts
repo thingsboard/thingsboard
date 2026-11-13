@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   BackgroundSettings,
   BackgroundType,
@@ -29,7 +30,7 @@ import {
   TimeSeriesChartXAxisSettings,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { isDefinedAndNotNull, isNumber, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, isNumber, mergeDeep, plainColorFromVariable } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 import {
   chartAnimationDefaultSettings,
@@ -296,7 +297,7 @@ export const toRangeItems = (colorRanges: Array<ColorRange>, valueFormat: ValueF
     rangeItems.push(
       {
         index: counter++,
-        color: range.color,
+        color: plainColorFromVariable(range.color),
         enabled: true,
         visible: true,
         from,

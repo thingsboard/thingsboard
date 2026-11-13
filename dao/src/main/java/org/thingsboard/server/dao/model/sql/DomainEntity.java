@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import jakarta.persistence.Column;
@@ -8,6 +9,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.domain.Domain;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -15,6 +17,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 
 @Data
@@ -25,6 +28,9 @@ public class DomainEntity extends BaseSqlEntity<Domain> {
 
     @Column(name = TENANT_ID_COLUMN)
     private UUID tenantId;
+
+    @Column(name = CUSTOMER_ID_PROPERTY)
+    private UUID customerId;
 
     @Column(name = ModelConstants.DOMAIN_NAME_PROPERTY)
     private String name;
@@ -39,6 +45,9 @@ public class DomainEntity extends BaseSqlEntity<Domain> {
         super(domain);
         if (domain.getTenantId() != null) {
             this.tenantId = domain.getTenantId().getId();
+        }
+        if (domain.getCustomerId() != null) {
+            this.customerId = domain.getCustomerId().getId();
         }
         this.name = domain.getName();
         this.oauth2Enabled = domain.isOauth2Enabled();
@@ -55,6 +64,9 @@ public class DomainEntity extends BaseSqlEntity<Domain> {
         domain.setId(new DomainId(id));
         if (tenantId != null) {
             domain.setTenantId(TenantId.fromUUID(tenantId));
+        }
+        if (customerId != null) {
+            domain.setCustomerId(new CustomerId(customerId));
         }
         domain.setCreatedTime(createdTime);
         domain.setName(name);

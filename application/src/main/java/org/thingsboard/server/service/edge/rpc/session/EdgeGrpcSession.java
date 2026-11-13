@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.session;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -16,10 +17,12 @@ import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -45,11 +48,15 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
+import org.thingsboard.server.service.edge.EdgeMsgSummaryUtils;
 import org.thingsboard.server.service.edge.rpc.DownlinkMessageMapper;
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.EdgeSyncCursor;
 import org.thingsboard.server.service.edge.rpc.EdgeUplinkMessageDispatcher;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.EntityGroupEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.EntityGroupEntitiesEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.EntityGroupPermissionsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.session.manager.EdgeGrpcSessionManager;
 
@@ -116,6 +123,10 @@ public class EdgeGrpcSession implements EdgeSession {
                     }
                 }
                 if (state.isConnected()) {
+                    if (isAddonEdgeCommunicationDisabled()) {
+                        outputStream.onError(new RuntimeException("Edge add-on is disabled for this tenant. Disconnecting edge session."));
+                        return;
+                    }
                     if (requestMsg.getMsgType().equals(RequestMsgType.SYNC_REQUEST_RPC_MESSAGE)) {
                         if (requestMsg.hasSyncRequestMsg()) {
                             boolean fullSync = false;
@@ -315,7 +326,8 @@ public class EdgeGrpcSession implements EdgeSession {
         try {
             if (msg.getSuccess()) {
                 state.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
-                ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_PUSHED, getTenantId(), getEdgeId(), 1));
+                ctx.getStatsCounterService().ifPresent(statsCounterService ->
+                        statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_PUSHED, getTenantId(), getEdgeId(), 1));
                 log.debug("[{}][{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", getTenantId(), getEdgeId(), getSessionId(), msg.getDownlinkMsgId(), msg);
             } else {
                 log.debug("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", getTenantId(), getEdgeId(), getSessionId(), msg.getDownlinkMsgId(), msg.getErrorMsg());
@@ -348,6 +360,28 @@ public class EdgeGrpcSession implements EdgeSession {
             Futures.addCallback(future, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable Pair<Long, Long> result) {
+                    try {
+                        if (next instanceof EntityGroupEdgeEventFetcher entityGroupFetcher) {
+                            PageLink pageLink = new PageLink(1024);
+                            PageData<EdgeEvent> pageData;
+                            do {
+                                pageData = next.fetchEdgeEvents(getTenantId(), state.getEdge(), pageLink);
+                                for (EdgeEvent edgeEvent : pageData.getData()) {
+                                    EntityGroupId entityGroupId = new EntityGroupId(edgeEvent.getEntityId());
+                                    EntityType groupType = entityGroupFetcher.getGroupType();
+                                    EntityGroupPermissionsEdgeEventFetcher groupPermissionsFetcher =
+                                            new EntityGroupPermissionsEdgeEventFetcher(ctx.getGroupPermissionService(), groupType, entityGroupId);
+                                    cursor.getFetchers().add(groupPermissionsFetcher);
+                                    EntityGroupEntitiesEdgeEventFetcher entitiesFetcher =
+                                            new EntityGroupEntitiesEdgeEventFetcher(ctx.getEntityGroupService(), groupType, entityGroupId);
+                                    cursor.getFetchers().add(entitiesFetcher);
+                                }
+                                pageLink = pageLink.nextPageLink();
+                            } while (pageData.hasNext());
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to fetch edge events", e);
+                    }
                     doSync(cursor);
                 }
 
@@ -464,7 +498,7 @@ public class EdgeGrpcSession implements EdgeSession {
                         ctx.getStatsCounterService().ifPresent(statsCounterService ->
                                 statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED, edge.getTenantId(), getEdgeId(), 1));
                         log.warn("[{}][{}] {} on attempt {}", getTenantId(), getEdgeId(), failureMsg, attempt);
-                        log.debug("[{}][{}] entities in failed batch: {}", getTenantId(), getEdgeId(), copy);
+                        log.debug("[{}][{}] entities in failed batch: {}", getTenantId(), getEdgeId(), EdgeMsgSummaryUtils.toSummary(copy));
                     }
                     log.trace("[{}][{}][{}] downlink msg(s) are going to be send.", getTenantId(), getEdgeId(), copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
@@ -473,7 +507,7 @@ public class EdgeGrpcSession implements EdgeSession {
                                     "env variable on the edge and restart it.", clientMaxInboundMessageSize);
                             String message = String.format("Downlink msg size %s exceeds client max inbound message size %s. " +
                                     "Please increase value of CLOUD_RPC_MAX_INBOUND_MESSAGE_SIZE env variable on the edge and restart it.", downlinkMsg.getSerializedSize(), clientMaxInboundMessageSize);
-                            log.error("[{}][{}][{}] {} Message {}", getTenantId(), getEdgeId(), getSessionId(), message, downlinkMsg);
+                            log.error("[{}][{}][{}] {} Message {}", getTenantId(), getEdgeId(), getSessionId(), message, EdgeMsgSummaryUtils.toSummary(downlinkMsg));
                             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(getTenantId())
                                     .edgeId(getEdgeId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(message).error(error).build());
                             ctx.getStatsCounterService().ifPresent(statsCounterService ->
@@ -488,9 +522,10 @@ public class EdgeGrpcSession implements EdgeSession {
                     if (attempt < MAX_DOWNLINK_ATTEMPTS) {
                         scheduleDownlinkMsgsPackSend(attempt + 1);
                     } else {
-                        String failureMsg = String.format("Failed to deliver messages: %s", copy);
+                        String failedMsgsSummary = EdgeMsgSummaryUtils.toSummary(copy);
+                        String failureMsg = String.format("Failed to deliver messages: %s", failedMsgsSummary);
                         log.warn("[{}][{}] Failed to deliver the batch after {} attempts. Next messages are going to be discarded {}",
-                                getTenantId(), getEdgeId(), MAX_DOWNLINK_ATTEMPTS, copy);
+                                getTenantId(), getEdgeId(), MAX_DOWNLINK_ATTEMPTS, failedMsgsSummary);
                         ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(getTenantId()).edgeId(getEdgeId())
                                 .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg)
                                 .error("Failed to deliver messages after " + MAX_DOWNLINK_ATTEMPTS + " attempts").build());
@@ -541,7 +576,7 @@ public class EdgeGrpcSession implements EdgeSession {
     }
 
     private ConnectResponseMsg processConnect(ConnectRequestMsg request) {
-        log.trace("[{}] processConnect [{}]", getSessionId(), request);
+        log.trace("[{}] processConnect, routing key [{}], edge version [{}]", getSessionId(), request.getEdgeRoutingKey(), request.getEdgeVersion());
         Optional<Edge> optional = ctx.getEdgeService().findEdgeByRoutingKey(TenantId.SYS_TENANT_ID, request.getEdgeRoutingKey());
         if (optional.isPresent()) {
             Edge edge = optional.get();
@@ -549,18 +584,26 @@ public class EdgeGrpcSession implements EdgeSession {
             state.setEdge(edge);
             try {
                 if (edge.getSecret().equals(request.getEdgeSecret())) {
+                    if (isAddonEdgeCommunicationDisabled()) {
+                        log.info("[{}][{}] Rejecting add-on edge connection for edge [{}] because subscription edge add-on is disabled",
+                                tenantId, getSessionId(), edge.getId());
+                        return ConnectResponseMsg.newBuilder()
+                                .setResponseCode(ConnectResponseCode.BAD_CREDENTIALS)
+                                .setErrorMsg("Edge add-on is disabled for this tenant. Disconnecting edge session.")
+                                .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
+                    }
                     sessionOpenListener.accept(edge.getId(), parentManagerRef);
                     state.setEdgeVersion(request.getEdgeVersion());
                     processSaveEdgeVersionAsAttribute(request.getEdgeVersion().name());
                     return ConnectResponseMsg.newBuilder()
                             .setResponseCode(ConnectResponseCode.ACCEPTED)
                             .setErrorMsg("")
-                            .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge))
+                            .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge, ctx.getSubscriptionService().getLicenseVersion()))
                             .setMaxInboundMessageSize(maxInboundMessageSize)
                             .build();
                 }
                 String error = "Failed to validate the edge!";
-                String failureMsg = String.format("%s Provided request secret: %s", error, request.getEdgeSecret());
+                String failureMsg = String.format("%s Provided request secret doesn't match the edge secret.", error);
                 ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
                         .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(error).build());
                 return ConnectResponseMsg.newBuilder()
@@ -583,6 +626,21 @@ public class EdgeGrpcSession implements EdgeSession {
                 .setErrorMsg("Failed to find the edge! Routing key: " + request.getEdgeRoutingKey())
                 .setConfiguration(EdgeConfiguration.getDefaultInstance()).build();
     }
+
+    private boolean isAddonEdgeCommunicationDisabled() {
+        int licenseVersion = ctx.getSubscriptionService().getLicenseVersion();
+        if (!EdgeUtils.isAddonEdge(licenseVersion)) {
+            return false;
+        }
+        try {
+            return !ctx.getSubscriptionService().edgeEnabled(state.getTenantId());
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to check edge add-on state for tenant. Rejecting add-on edge communication by default.",
+                    state.getTenantId(), state.getSessionId(), e);
+            return true;
+        }
+    }
+
 
     private void processSaveEdgeVersionAsAttribute(String edgeVersion) {
         AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new StringDataEntry(DataConstants.EDGE_VERSION_ATTR_KEY, edgeVersion), System.currentTimeMillis());

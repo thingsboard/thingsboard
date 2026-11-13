@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.processor.tenant;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -27,6 +28,11 @@ public class TenantProfileEdgeProcessor extends BaseEdgeProcessor {
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         TenantProfileId tenantProfileId = new TenantProfileId(edgeEvent.getEntityId());
         if (EdgeEventActionType.UPDATED.equals(edgeEvent.getAction())) {
+            // tenant profile updates are pushed to all edges, send only the profile of the edge's tenant
+            Tenant tenant = edgeCtx.getTenantService().findTenantById(edgeEvent.getTenantId());
+            if (tenant == null || !tenantProfileId.equals(tenant.getTenantProfileId())) {
+                return null;
+            }
             TenantProfile tenantProfile = edgeCtx.getTenantProfileService().findTenantProfileById(edgeEvent.getTenantId(), tenantProfileId);
             if (tenantProfile != null) {
                 UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());

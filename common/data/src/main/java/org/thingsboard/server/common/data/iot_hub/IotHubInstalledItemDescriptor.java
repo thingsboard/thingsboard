@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.iot_hub;
 
@@ -15,7 +15,6 @@ import java.io.Serializable;
         property = "type")
 @JsonSubTypes({
         @Type(name = "WIDGET", value = WidgetInstalledItemDescriptor.class),
-        @Type(name = "DASHBOARD", value = DashboardInstalledItemDescriptor.class),
         @Type(name = "CALCULATED_FIELD", value = CalculatedFieldInstalledItemDescriptor.class),
         @Type(name = "ALARM_RULE", value = AlarmRuleInstalledItemDescriptor.class),
         @Type(name = "RULE_CHAIN", value = RuleChainInstalledItemDescriptor.class),

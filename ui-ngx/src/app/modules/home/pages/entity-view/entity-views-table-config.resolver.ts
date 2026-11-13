@@ -1,12 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   CellActionDescriptor,
-  checkBoxCell,
   DateEntityTableColumn,
+  EntityChipsEntityTableColumn,
+  EntityColumn,
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
@@ -16,310 +18,157 @@ import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { forkJoin, Observable, of } from 'rxjs';
-import { select, Store } from '@ngrx/store';
-import { selectAuthUser } from '@core/auth/auth.selectors';
-import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { map, mergeMap, tap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { Authority } from '@app/shared/models/authority.enum';
 import { CustomerService } from '@core/http/customer.service';
 import { Customer } from '@app/shared/models/customer.model';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
-import {
-  AssignToCustomerDialogComponent,
-  AssignToCustomerDialogData
-} from '@modules/home/dialogs/assign-to-customer-dialog.component';
-import {
-  AddEntitiesToCustomerDialogComponent,
-  AddEntitiesToCustomerDialogData
-} from '../../dialogs/add-entities-to-customer-dialog.component';
-import { EntityView, EntityViewInfo } from '@app/shared/models/entity-view.models';
+import { EntityViewInfo } from '@app/shared/models/entity-view.models';
 import { EntityViewService } from '@core/http/entity-view.service';
-import { EntityViewComponent } from '@modules/home/pages/entity-view/entity-view.component';
 import { EntityViewTableHeaderComponent } from '@modules/home/pages/entity-view/entity-view-table-header.component';
-import { EntityViewId } from '@shared/models/id/entity-view-id';
-import { EntityViewTabsComponent } from '@home/pages/entity-view/entity-view-tabs.component';
 import { EdgeService } from '@core/http/edge.service';
-import {
-  AddEntitiesToEdgeDialogComponent,
-  AddEntitiesToEdgeDialogData
-} from '@home/dialogs/add-entities-to-edge-dialog.component';
+import { UtilsService } from '@core/services/utils.service';
+import { AllEntitiesTableConfigService } from '@home/components/entity/all-entities-table-config.service';
+import { resolveGroupParams } from '@shared/models/entity-group.models';
+import { GroupEntityTabsComponent } from '@home/components/group/group-entity-tabs.component';
+import { EntityViewComponent } from '@home/pages/entity-view/entity-view.component';
+import { AuthUser } from '@shared/models/user.model';
+import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
 export class EntityViewsTableConfigResolver  {
 
-  private readonly config: EntityTableConfig<EntityViewInfo> = new EntityTableConfig<EntityViewInfo>();
-
-  private customerId: string;
-
-  constructor(private store: Store<AppState>,
+  constructor(private allEntitiesTableConfigService: AllEntitiesTableConfigService<EntityViewInfo>,
+              private store: Store<AppState>,
               private broadcast: BroadcastService,
               private entityViewService: EntityViewService,
               private customerService: CustomerService,
               private edgeService: EdgeService,
               private dialogService: DialogService,
+              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
+              private utils: UtilsService,
               private router: Router,
               private dialog: MatDialog) {
-
-    this.config.entityType = EntityType.ENTITY_VIEW;
-    this.config.entityComponent = EntityViewComponent;
-    this.config.entityTabsComponent = EntityViewTabsComponent;
-    this.config.entityTranslations = entityTypeTranslations.get(EntityType.ENTITY_VIEW);
-    this.config.entityResources = entityTypeResources.get(EntityType.ENTITY_VIEW);
-
-    this.config.addDialogStyle = {maxWidth: '800px'};
-
-    this.config.deleteEntityTitle = entityView =>
-      this.translate.instant('entity-view.delete-entity-view-title', {entityViewName: entityView.name});
-    this.config.deleteEntityContent = () => this.translate.instant('entity-view.delete-entity-view-text');
-    this.config.deleteEntitiesTitle = count => this.translate.instant('entity-view.delete-entity-views-title', {count});
-    this.config.deleteEntitiesContent = () => this.translate.instant('entity-view.delete-entity-views-text');
-
-    this.config.loadEntity = id => this.entityViewService.getEntityViewInfo(id.id);
-    this.config.saveEntity = entityView => {
-      return this.entityViewService.saveEntityView(entityView).pipe(
-        tap(() => {
-          this.broadcast.broadcast('entityViewSaved');
-        }),
-        mergeMap((savedEntityView) => this.entityViewService.getEntityViewInfo(savedEntityView.id.id)
-        ));
-    };
-    this.config.onEntityAction = action => this.onEntityViewAction(action, this.config);
-    this.config.detailsReadonly = () => (this.config.componentsData.entityViewScope === 'customer_user' ||
-      this.config.componentsData.entityViewScope === 'edge_customer_user');
-
-    this.config.headerComponent = EntityViewTableHeaderComponent;
-
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<EntityViewInfo>> {
-    const routeParams = route.params;
-    this.config.componentsData = {
-      entityViewScope: route.data.entityViewsType,
+    const groupParams = resolveGroupParams(route);
+    const config = new EntityTableConfig<EntityViewInfo>(groupParams);
+    this.configDefaults(config);
+    const authUser = getCurrentAuthUser(this.store);
+    config.componentsData = {
+      includeCustomers: true,
       entityViewType: '',
-      edgeId: routeParams.edgeId
+      includeCustomersChanged: (includeCustomers: boolean) => {
+        config.componentsData.includeCustomers = includeCustomers;
+        config.columns = this.configureColumns(authUser, config);
+        config.getTable().columnsUpdated();
+        config.getTable().resetSortAndFilter(true);
+      }
     };
-    this.customerId = routeParams.customerId;
-    return this.store.pipe(select(selectAuthUser), take(1)).pipe(
-      tap((authUser) => {
-        if (authUser.authority === Authority.CUSTOMER_USER) {
-          if (route.data.entityViewsType === 'edge') {
-            this.config.componentsData.entityViewScope = 'edge_customer_user';
-          } else {
-            this.config.componentsData.entityViewScope = 'customer_user';
-          }
-          this.customerId = authUser.customerId;
-        }
-      }),
-      mergeMap(() =>
-        this.customerId ? this.customerService.getCustomer(this.customerId) : of(null as Customer)
-      ),
+    return (config.customerId ?
+      this.customerService.getCustomer(config.customerId) : of(null as Customer)).pipe(
       map((parentCustomer) => {
         if (parentCustomer) {
-          if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
-            this.config.tableTitle = this.translate.instant('customer.public-entity-views');
-          } else {
-            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('entity-view.entity-views');
-          }
-        } else if (this.config.componentsData.entityViewScope === 'edge') {
-          this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
-            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('entity-view.entity-views')
-          );
+          config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('entity-view.entity-views');
         } else {
-          this.config.tableTitle = this.translate.instant('entity-view.entity-views');
+          config.tableTitle = this.translate.instant('entity-view.entity-views');
         }
-        this.config.columns = this.configureColumns(this.config.componentsData.entityViewScope);
-        this.configureEntityFunctions(this.config.componentsData.entityViewScope);
-        this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.entityViewScope);
-        this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.entityViewScope);
-        this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.entityViewScope);
-        this.config.addEnabled = !(this.config.componentsData.entityViewScope === 'customer_user' ||
-          this.config.componentsData.entityViewScope === 'edge_customer_user');
-        this.config.entitiesDeleteEnabled = this.config.componentsData.entityViewScope === 'tenant';
-        this.config.deleteEnabled = () => this.config.componentsData.entityViewScope === 'tenant';
-        return this.config;
+        config.columns = this.configureColumns(authUser, config);
+        this.configureEntityFunctions(config);
+        config.cellActionDescriptors = this.configureCellActions(config);
+        config.groupActionDescriptors = this.configureGroupActions(config);
+        config.addActionDescriptors = this.configureAddActions(config);
+        return this.allEntitiesTableConfigService.prepareConfiguration(config);
       })
     );
   }
 
-  configureColumns(entityViewScope: string): Array<EntityTableColumn<EntityViewInfo>> {
-    const columns: Array<EntityTableColumn<EntityViewInfo>> = [
+  configDefaults(config: EntityTableConfig<EntityViewInfo>) {
+    config.entityType = EntityType.ENTITY_VIEW;
+    config.entityComponent = EntityViewComponent;
+    config.entityTabsComponent = GroupEntityTabsComponent<EntityViewInfo>;
+    config.entityTranslations = entityTypeTranslations.get(EntityType.ENTITY_VIEW);
+    config.entityResources = entityTypeResources.get(EntityType.ENTITY_VIEW);
+
+    config.addDialogStyle = {maxWidth: '800px', height: '1060px'};
+
+    config.entityTitle = (entityView) => entityView ?
+      this.utils.customTranslation(entityView.name, entityView.name) : '';
+
+    config.rowPointer = true;
+
+    config.deleteEntityTitle = entityView =>
+      this.translate.instant('entity-view.delete-entity-view-title', {entityViewName: entityView.name});
+    config.deleteEntityContent = () => this.translate.instant('entity-view.delete-entity-view-text');
+    config.deleteEntitiesTitle = count => this.translate.instant('entity-view.delete-entity-views-title', {count});
+    config.deleteEntitiesContent = () => this.translate.instant('entity-view.delete-entity-views-text');
+
+    config.loadEntity = id => this.entityViewService.getEntityViewInfo(id.id);
+    config.saveEntity = entityView => this.entityViewService.saveEntityView(entityView).pipe(
+        tap(() => {
+          this.broadcast.broadcast('entityViewSaved');
+        }),
+      mergeMap((savedEntityView) => this.entityViewService.getEntityViewInfo(savedEntityView.id.id)
+      ));
+    config.onEntityAction = action => this.onEntityViewAction(action, config);
+    config.headerComponent = EntityViewTableHeaderComponent;
+  }
+
+  configureColumns(authUser: AuthUser, config: EntityTableConfig<EntityViewInfo>): Array<EntityColumn<EntityViewInfo>> {
+    const columns: Array<EntityColumn<EntityViewInfo>> = [
       new DateEntityTableColumn<EntityViewInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<EntityViewInfo>('name', 'entity-view.name', '33%'),
-      new EntityTableColumn<EntityViewInfo>('type', 'entity-view.entity-view-type', '33%'),
+      new EntityTableColumn<EntityViewInfo>('name', 'entity-view.name', '25%', config.entityTitle),
+      new EntityTableColumn<EntityViewInfo>('type', 'entity-view.entity-view-type', '20%'),
     ];
-    if (entityViewScope === 'tenant') {
-      columns.push(
-        new EntityTableColumn<EntityViewInfo>('customerTitle', 'customer.customer', '33%'),
-        new EntityTableColumn<EntityViewInfo>('customerIsPublic', 'entity-view.public', '60px',
-          entity => {
-            return checkBoxCell(entity.customerIsPublic);
-          }, () => ({}), false),
-      );
+    if (config.componentsData.includeCustomers) {
+      const title = (authUser.authority === Authority.CUSTOMER_USER || config.customerId)
+        ? 'entity.sub-customer-name' : 'entity.customer-name';
+      columns.push(new EntityTableColumn<EntityViewInfo>('ownerName', title, '25%'));
     }
+    columns.push(
+      new EntityChipsEntityTableColumn<EntityViewInfo>( 'groups', 'entity.groups', '30%')
+    );
     return columns;
   }
 
-  configureEntityFunctions(entityViewScope: string): void {
-    if (entityViewScope === 'tenant') {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.entityViewService.getTenantEntityViewInfos(pageLink, this.config.componentsData.entityViewType);
-      this.config.deleteEntity = id => this.entityViewService.deleteEntityView(id.id);
-    } else if (entityViewScope === 'edge' || entityViewScope === 'edge_customer_user') {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.entityViewService.getEdgeEntityViews(this.config.componentsData.edgeId, pageLink, this.config.componentsData.entityViewType);
+  configureEntityFunctions(config: EntityTableConfig<EntityViewInfo>): void {
+    if (config.customerId) {
+      config.entitiesFetchFunction = pageLink =>
+        this.entityViewService.getCustomerEntityViewInfos(config.componentsData.includeCustomers,
+          config.customerId, pageLink, config.componentsData.entityViewType);
     } else {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.entityViewService.getCustomerEntityViewInfos(this.customerId, pageLink, this.config.componentsData.entityViewType);
-      this.config.deleteEntity = id => this.entityViewService.unassignEntityViewFromCustomer(id.id);
+      config.entitiesFetchFunction = pageLink =>
+        this.entityViewService.getAllEntityViewInfos(config.componentsData.includeCustomers, pageLink,
+          config.componentsData.entityViewType);
     }
+    config.deleteEntity = id => this.entityViewService.deleteEntityView(id.id);
   }
 
-  configureCellActions(entityViewScope: string): Array<CellActionDescriptor<EntityViewInfo>> {
+  configureCellActions(config: EntityTableConfig<EntityViewInfo>): Array<CellActionDescriptor<EntityViewInfo>> {
     const actions: Array<CellActionDescriptor<EntityViewInfo>> = [];
-    if (entityViewScope === 'tenant') {
-      actions.push(
-        {
-          name: this.translate.instant('entity-view.make-public'),
-          icon: 'share',
-          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
-          onAction: ($event, entity) => this.makePublic($event, entity)
-        },
-        {
-          name: this.translate.instant('entity-view.assign-to-customer'),
-          icon: 'assignment_ind',
-          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
-          onAction: ($event, entity) => this.assignToCustomer($event, [entity.id])
-        },
-        {
-          name: this.translate.instant('entity-view.unassign-from-customer'),
-          icon: 'assignment_return',
-          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
-          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-        },
-        {
-          name: this.translate.instant('entity-view.make-private'),
-          icon: 'reply',
-          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
-          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-        }
-      );
-    }
-    if (entityViewScope === 'customer') {
-      actions.push(
-        {
-          name: this.translate.instant('entity-view.unassign-from-customer'),
-          icon: 'assignment_return',
-          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
-          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-        },
-        {
-          name: this.translate.instant('entity-view.make-private'),
-          icon: 'reply',
-          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
-          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-        }
-      );
-    }
-    if (entityViewScope === 'edge') {
-      actions.push(
-        {
-          name: this.translate.instant('edge.unassign-from-edge'),
-          icon: 'assignment_return',
-          isEnabled: () => true,
-          onAction: ($event, entity) => this.unassignFromEdge($event, entity)
-        }
-      );
-    }
     return actions;
   }
 
-  configureGroupActions(entityViewScope: string): Array<GroupActionDescriptor<EntityViewInfo>> {
+  configureGroupActions(config: EntityTableConfig<EntityViewInfo>): Array<GroupActionDescriptor<EntityViewInfo>> {
     const actions: Array<GroupActionDescriptor<EntityViewInfo>> = [];
-    if (entityViewScope === 'tenant') {
-      actions.push(
-        {
-          name: this.translate.instant('entity-view.assign-entity-views'),
-          icon: 'assignment_ind',
-          isEnabled: true,
-          onAction: ($event, entities) => this.assignToCustomer($event, entities.map((entity) => entity.id))
-        }
-      );
-    }
-    if (entityViewScope === 'customer') {
-      actions.push(
-        {
-          name: this.translate.instant('entity-view.unassign-entity-views'),
-          icon: 'assignment_return',
-          isEnabled: true,
-          onAction: ($event, entities) => this.unassignEntityViewsFromCustomer($event, entities)
-        }
-      );
-    }
-    if (entityViewScope === 'edge') {
-      actions.push(
-        {
-          name: this.translate.instant('entity-view.unassign-entity-views-from-edge'),
-          icon: 'assignment_return',
-          isEnabled: true,
-          onAction: ($event, entities) => this.unassignEntityViewsFromEdge($event, entities)
-        }
-      );
-    }
     return actions;
   }
 
-  configureAddActions(entityViewScope: string): Array<HeaderActionDescriptor> {
+  configureAddActions(config: EntityTableConfig<EntityViewInfo>): Array<HeaderActionDescriptor> {
     const actions: Array<HeaderActionDescriptor> = [];
-    if (entityViewScope === 'customer') {
-      actions.push(
-        {
-          name: this.translate.instant('entity-view.assign-new-entity-view'),
-          icon: 'add',
-          isEnabled: () => true,
-          onAction: ($event) => this.addEntityViewsToCustomer($event)
-        }
-      );
-    }
-    if (entityViewScope === 'edge') {
-      actions.push(
-        {
-          name: this.translate.instant('entity-view.assign-new-entity-view'),
-          icon: 'add',
-          isEnabled: () => true,
-          onAction: ($event) => this.addEntityViewsToEdge($event)
-        }
-      );
-    }
     return actions;
   }
 
-  addEntityViewsToCustomer($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<AddEntitiesToCustomerDialogComponent, AddEntitiesToCustomerDialogData,
-      boolean>(AddEntitiesToCustomerDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        customerId: this.customerId,
-        entityType: EntityType.ENTITY_VIEW
-      }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  private openEntityView($event: Event, entityView: EntityView, config: EntityTableConfig<EntityViewInfo>) {
+  private openEntityView($event: Event, entityView: EntityViewInfo, config: EntityTableConfig<EntityViewInfo>) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -327,103 +176,11 @@ export class EntityViewsTableConfigResolver  {
     this.router.navigateByUrl(url);
   }
 
-  makePublic($event: Event, entityView: EntityView) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialogService.confirm(
-      this.translate.instant('entity-view.make-public-entity-view-title', {entityViewName: entityView.name}),
-      this.translate.instant('entity-view.make-public-entity-view-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
+  manageOwnerAndGroups($event: Event, entityView: EntityViewInfo, config: EntityTableConfig<EntityViewInfo>) {
+    this.homeDialogs.manageOwnerAndGroups($event, entityView).subscribe(
+      (res) => {
         if (res) {
-          this.entityViewService.makeEntityViewPublic(entityView.id.id).subscribe(
-            () => {
-              this.config.updateData();
-            }
-          );
-        }
-      }
-    );
-  }
-
-  assignToCustomer($event: Event, entityViewIds: Array<EntityViewId>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<AssignToCustomerDialogComponent, AssignToCustomerDialogData,
-      boolean>(AssignToCustomerDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        entityIds: entityViewIds,
-        entityType: EntityType.ENTITY_VIEW
-      }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  unassignFromCustomer($event: Event, entityView: EntityViewInfo) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    const isPublic = entityView.customerIsPublic;
-    let title;
-    let content;
-    if (isPublic) {
-      title = this.translate.instant('entity-view.make-private-entity-view-title', {entityViewName: entityView.name});
-      content = this.translate.instant('entity-view.make-private-entity-view-text');
-    } else {
-      title = this.translate.instant('entity-view.unassign-entity-view-title', {entityViewName: entityView.name});
-      content = this.translate.instant('entity-view.unassign-entity-view-text');
-    }
-    this.dialogService.confirm(
-      title,
-      content,
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
-        if (res) {
-          this.entityViewService.unassignEntityViewFromCustomer(entityView.id.id).subscribe(
-            () => {
-              this.config.updateData(this.config.componentsData.entityViewScope !== 'tenant');
-            }
-          );
-        }
-      }
-    );
-  }
-
-  unassignEntityViewsFromCustomer($event: Event, entityViews: Array<EntityViewInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialogService.confirm(
-      this.translate.instant('entity-view.unassign-entity-views-title', {count: entityViews.length}),
-      this.translate.instant('entity-view.unassign-entity-views-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
-        if (res) {
-          const tasks: Observable<any>[] = [];
-          entityViews.forEach(
-            (entityView) => {
-              tasks.push(this.entityViewService.unassignEntityViewFromCustomer(entityView.id.id));
-            }
-          );
-          forkJoin(tasks).subscribe(
-            () => {
-              this.config.updateData();
-            }
-          );
+          config.updateData();
         }
       }
     );
@@ -434,90 +191,10 @@ export class EntityViewsTableConfigResolver  {
       case 'open':
         this.openEntityView(action.event, action.entity, config);
         return true;
-      case 'makePublic':
-        this.makePublic(action.event, action.entity);
-        return true;
-      case 'assignToCustomer':
-        this.assignToCustomer(action.event, [action.entity.id]);
-        return true;
-      case 'unassignFromCustomer':
-        this.unassignFromCustomer(action.event, action.entity);
-        return true;
-      case 'unassignFromEdge':
-        this.unassignFromEdge(action.event, action.entity);
+      case 'manageOwnerAndGroups':
+        this.manageOwnerAndGroups(action.event, action.entity, config);
         return true;
     }
     return false;
   }
-
-  addEntityViewsToEdge($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<AddEntitiesToEdgeDialogComponent, AddEntitiesToEdgeDialogData,
-      boolean>(AddEntitiesToEdgeDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        edgeId: this.config.componentsData.edgeId,
-        entityType: EntityType.ENTITY_VIEW
-      }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  unassignFromEdge($event: Event, entityView: EntityViewInfo) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialogService.confirm(
-      this.translate.instant('entity-view.unassign-entity-view-from-edge-title', {entityViewName: entityView.name}),
-      this.translate.instant('entity-view.unassign-entity-view-from-edge-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
-        if (res) {
-          this.entityViewService.unassignEntityViewFromEdge(this.config.componentsData.edgeId, entityView.id.id).subscribe(
-            () => {
-              this.config.updateData(this.config.componentsData.entityViewScope !== 'tenant');
-            }
-          );
-        }
-      }
-    );
-  }
-
-  unassignEntityViewsFromEdge($event: Event, entityViews: Array<EntityViewInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialogService.confirm(
-      this.translate.instant('entity-view.unassign-entity-views-from-edge-title', {count: entityViews.length}),
-      this.translate.instant('entity-view.unassign-entity-views-from-edge-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
-        if (res) {
-          const tasks: Observable<any>[] = [];
-          entityViews.forEach(
-            (entityView) => {
-              tasks.push(this.entityViewService.unassignEntityViewFromEdge(this.config.componentsData.edgeId, entityView.id.id));
-            }
-          );
-          forkJoin(tasks).subscribe(
-            () => {
-              this.config.updateData();
-            }
-          );
-        }
-      }
-    );
-  }
-
 }

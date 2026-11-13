@@ -1,16 +1,20 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.script;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.RuleNodeScriptFactory;
+import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -24,7 +28,11 @@ import java.util.Set;
 public class RuleNodeJsScriptEngine extends RuleNodeScriptEngine<JsInvokeService, JsonNode> {
 
     public RuleNodeJsScriptEngine(TenantId tenantId, JsInvokeService scriptInvokeService, String script, String... argNames) {
-        super(tenantId, scriptInvokeService, script, argNames);
+        this(tenantId, scriptInvokeService, ScriptType.RULE_NODE_SCRIPT, script, argNames);
+    }
+
+    public RuleNodeJsScriptEngine(TenantId tenantId, JsInvokeService scriptInvokeService, ScriptType scriptType, String script, String... argNames) {
+        super(tenantId, scriptInvokeService, scriptType, script, argNames);
     }
 
     @Override
@@ -38,6 +46,11 @@ public class RuleNodeJsScriptEngine extends RuleNodeScriptEngine<JsInvokeService
         args[1] = JacksonUtil.toString(msg.getMetaData().getData());
         args[2] = msg.getType();
         return args;
+    }
+
+    @Override
+    protected Object prepareAttributes(Map<String, KvEntry> attributes) {
+        return JacksonUtil.toString(Maps.transformValues(attributes, KvEntry::getValueAsString));
     }
 
     @Override

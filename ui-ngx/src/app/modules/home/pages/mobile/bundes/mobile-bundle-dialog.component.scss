@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../../scss/constants";
 
 :host {
@@ -55,6 +56,20 @@
             overflow: hidden;
           }
         }
+      }
+      .mat-stepper-vertical {
+        .mat-step:nth-child(4) {
+          .mat-vertical-content-container.mat-vertical-content-container-active {
+            .mat-vertical-stepper-content {
+              .mat-vertical-content {
+                padding-left: 0;
+              }
+            }
+          }
+        }
+      }
+      tb-user-group-panel {
+        --mat-icon-button-icon-color: rgba(0, 0, 0, .38);
       }
     }
   }

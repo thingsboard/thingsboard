@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -66,7 +67,7 @@ public class AlarmCommentServiceTest extends AbstractServiceTest {
 
     @After
     public void after() {
-        alarmService.delAlarm(tenantId, alarm.getId());
+        alarmService.delAlarm(tenantId, alarm.getOriginator(), alarm.getId());
     }
 
     @Test

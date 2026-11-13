@@ -1,0 +1,196 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../components/agent/agent-shared' as *;
+
+:host {
+  display: block;
+}
+
+.tb-quick-start-panel {
+  border: 1px solid $agent-divider;
+  border-radius: 6px;
+  background: #f6f8f9;
+  padding: 16px 20px;
+  animation: tb-quick-start-in 0.25s ease;
+}
+
+@keyframes tb-quick-start-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tb-quick-start-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  .tb-quick-start-bolt {
+    color: var(--tb-primary-500);
+    flex: 0 0 auto;
+  }
+
+  .tb-quick-start-titles {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tb-quick-start-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: $agent-text-primary;
+  }
+
+  .tb-quick-start-subtitle {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.6);
+    margin-top: 2px;
+  }
+}
+
+.tb-quick-start-filters {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+
+  .tb-quick-start-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 4px;
+    border: 1px solid $agent-divider;
+    background: #fff;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    &.active {
+      border-color: var(--tb-primary-500);
+      background: var(--tb-primary-500);
+      color: #fff;
+    }
+  }
+}
+
+.tb-quick-start-cards {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+.tb-quick-start-card {
+  flex: 0 0 auto;
+  width: 248px;
+  box-sizing: border-box;
+  margin-right: 16px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid $agent-divider;
+  border-radius: 4px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  > * {
+    min-width: 216px;
+  }
+
+  .tb-quick-start-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .tb-quick-start-card-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--tb-primary-500) 10%, transparent);
+    color: var(--tb-primary-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tb-quick-start-card-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tb-quick-start-card-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: $agent-text-primary;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tb-quick-start-card-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tb-quick-start-create {
+    width: 100%;
+
+    .mat-mdc-progress-spinner {
+      display: inline-block;
+      margin-right: 8px;
+    }
+  }
+}
+
+.tb-quick-start-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+
+  &.predefined {
+    background: #ececf7;
+    color: #5c6bc0;
+  }
+
+  @include agent-type-palette;
+}
+
+.tb-quick-start-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 13px;
+  padding: 6px 2px;
+
+  .mat-icon {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .tb-quick-start-empty-success {
+    color: $agent-color-success;
+  }
+}

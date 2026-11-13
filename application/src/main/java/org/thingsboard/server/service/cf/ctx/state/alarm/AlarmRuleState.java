@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.cf.ctx.state.alarm;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.KvUtil;
@@ -38,6 +40,8 @@ public class AlarmRuleState {
 
     private final AlarmSeverity severity;
     private AlarmRule alarmRule;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private AlarmCalculatedFieldState state;
 
     private AlarmCondition condition;
@@ -68,10 +72,10 @@ public class AlarmRuleState {
 
     public AlarmEvalResult reeval(long ts, CalculatedFieldCtx ctx) { // on scheduled duration check or periodic re-eval for rules with schedule
         boolean active = isActive(ts);
+        boolean activeChanged = this.active == null || active != this.active;
+        this.active = active;
         switch (condition.getType()) {
             case SIMPLE, REPEATING -> {
-                boolean activeChanged = this.active == null || active != this.active;
-                this.active = active;
                 if (!active) {
                     return AlarmEvalResult.EMPTY;
                 }
@@ -89,6 +93,9 @@ public class AlarmRuleState {
             case DURATION -> {
                 if (!active) {
                     return AlarmEvalResult.FALSE;
+                }
+                if (firstEventTs <= 0 && condition.hasSchedule() && activeChanged) {
+                    return doEval(false, ctx);
                 }
                 long requiredDuration = getRequiredDurationInMs();
                 if (requiredDuration > 0 && firstEventTs > 0 && ts > firstEventTs) {

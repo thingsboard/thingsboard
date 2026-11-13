@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -141,7 +142,7 @@ public class TwoFactorAuthController extends BaseController {
 
     private JwtPair createTokenPair(SecurityUser user) {
         log.debug("[{}][{}] Creating token pair for user", user.getTenantId(), user.getId());
-        user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
+        user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal(), getMergedUserPermissions(user, false));
         return tokenFactory.createTokenPair(user);
     }
 

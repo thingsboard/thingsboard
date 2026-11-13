@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -38,12 +39,15 @@ public class EntityDataAdapter {
     }
 
     private static EntityData toEntityData(Map<String, Object> row, List<EntityKeyMapping> selectionMapping) {
-        UUID id = (UUID)row.get("id");
+        UUID id = (UUID) row.get("id");
         EntityType entityType = EntityType.valueOf((String) row.get("entity_type"));
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, id);
         Map<EntityKeyType, Map<String, TsValue>> latest = new HashMap<>();
         //Maybe avoid empty hashmaps?
-        EntityData entityData = new EntityData(entityId, latest, new HashMap<>(), new HashMap<>());
+        EntityData entityData = new EntityData(entityId,
+                ((int) row.getOrDefault(DefaultEntityQueryRepository.ATTR_READ_FLAG, 1)) > 0,
+                ((int) row.getOrDefault(DefaultEntityQueryRepository.TS_READ_FLAG, 1)) > 0,
+                latest, new HashMap<>(), new HashMap<>());
         for (EntityKeyMapping mapping : selectionMapping) {
             if (!mapping.isIgnore()) {
                 EntityKey entityKey = mapping.getEntityKey();

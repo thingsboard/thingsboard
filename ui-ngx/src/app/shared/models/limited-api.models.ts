@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 export enum LimitedApi {
   ENTITY_EXPORT = 'ENTITY_EXPORT',
   ENTITY_IMPORT = 'ENTITY_IMPORT',
@@ -14,6 +15,9 @@ export enum LimitedApi {
   CASSANDRA_READ_QUERIES_RULE_ENGINE = 'CASSANDRA_READ_QUERIES_RULE_ENGINE',
   CASSANDRA_WRITE_QUERIES_MONOLITH = 'CASSANDRA_WRITE_QUERIES_MONOLITH',
   CASSANDRA_READ_QUERIES_MONOLITH = 'CASSANDRA_READ_QUERIES_MONOLITH',
+  INTEGRATION_MSGS_PER_TENANT = 'INTEGRATION_MSGS_PER_TENANT',
+  INTEGRATION_MSGS_PER_DEVICE = 'INTEGRATION_MSGS_PER_DEVICE',
+  REPORTS = 'REPORTS',
   TRANSPORT_MESSAGES_PER_TENANT = 'TRANSPORT_MESSAGES_PER_TENANT',
   TRANSPORT_MESSAGES_PER_DEVICE = 'TRANSPORT_MESSAGES_PER_DEVICE',
   TRANSPORT_MESSAGES_PER_GATEWAY = 'TRANSPORT_MESSAGES_PER_GATEWAY',
@@ -39,6 +43,9 @@ export const LimitedApiTranslationMap = new Map<LimitedApi, string>(
     [LimitedApi.CASSANDRA_READ_QUERIES_RULE_ENGINE, 'api-limit.cassandra-read-queries-rule-engine'],
     [LimitedApi.CASSANDRA_WRITE_QUERIES_MONOLITH, 'api-limit.cassandra-write-queries-monolith'],
     [LimitedApi.CASSANDRA_READ_QUERIES_MONOLITH, 'api-limit.cassandra-read-queries-monolith'],
+    [LimitedApi.INTEGRATION_MSGS_PER_TENANT, 'api-limit.integration-messages'],
+    [LimitedApi.INTEGRATION_MSGS_PER_DEVICE, 'api-limit.integration-messages-per-device'],
+    [LimitedApi.REPORTS, 'api-limit.reports-generation'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_TENANT, 'api-limit.transport-messages'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE, 'api-limit.transport-messages-per-device'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY, 'api-limit.transport-messages-per-gateway'],

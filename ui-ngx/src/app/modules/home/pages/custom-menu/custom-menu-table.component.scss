@@ -1,0 +1,28 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "constants";
+@import "mixins";
+
+:host {
+  @include tb-content-card;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+:host ::ng-deep {
+  .tb-entity-table.mat-padding {
+    padding: 0;
+  }
+  mat-cell.mat-column-name {
+    white-space: nowrap;
+    .mat-mdc-icon-button {
+      vertical-align: middle;
+      margin-left: 8px;
+      @include tb-mat-icon-button-size(32);
+      .mat-icon {
+        @include tb-mat-icon-size(20);
+      }
+    }
+  }
+}

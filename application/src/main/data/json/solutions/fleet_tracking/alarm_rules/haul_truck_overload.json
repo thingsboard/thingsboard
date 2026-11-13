@@ -1,0 +1,137 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "93855be4-461e-4a35-b925-50a70d30c738"
+  },
+  "type": "ALARM",
+  "name": "Overload",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "loadWeight": {
+        "refEntityKey": {
+          "key": "loadWeight",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      },
+      "loadWeightCriticalThreshold": {
+        "refEntityKey": {
+          "key": "loadWeightCriticalThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": null
+      },
+      "loadWeightWarningThreshold": {
+        "refEntityKey": {
+          "key": "loadWeightWarningThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": null
+      }
+    },
+    "createRules": {
+      "WARNING": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "loadWeight",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "loadWeightWarningThreshold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": "Haul truck weight load is near the critical limit. Current weight: ${loadWeight}.",
+        "dashboardId": null
+      },
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "loadWeight",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER_OR_EQUAL",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "loadWeightCriticalThreshold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": "Haul truck has exceeded the safe load limit. Current weight: ${loadWeight}.",
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "loadWeight",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "LESS",
+                  "value": {
+                    "staticValue": null,
+                    "dynamicValueArgument": "loadWeightWarningThreshold"
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": "Haul truck load has returned to normal range. Current weight: ${loadWeight}.",
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToOwnerHierarchy": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

@@ -1,0 +1,136 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-log-monitor" [class.tb-log-monitor--paused]="paused">
+  <div class="tb-log-toolbar">
+    <div class="tb-log-toolbar-status">
+      <span class="tb-log-stream-dot" [class.tb-log-stream-dot--paused]="paused"
+      [attr.aria-label]="(paused ? 'agent.log-paused' : 'agent.log-live') | translate"></span>
+      <span class="tb-log-stream-label">{{ (paused ? 'agent.log-paused' : 'agent.log-live') | translate }}</span>
+      <span class="tb-log-stream-sep">·</span>
+      <span class="tb-log-stream-count">
+        {{ lines.length | number }} <span class="tb-log-stream-count-unit">{{ 'agent.log-lines-unit' | translate: { count: lines.length } }}</span>
+      </span>
+      @if (paused && pendingCount > 0) {
+        <span class="tb-log-stream-buffered">
+          {{ 'agent.log-buffered' | translate: { count: pendingCount } }}
+        </span>
+      }
+      @if (droppedTotal > 0) {
+        <span class="tb-log-stream-dropped"
+          [matTooltip]="'agent.log-dropped-hint' | translate"
+          [attr.aria-label]="'agent.log-dropped-total' | translate">
+          {{ 'agent.log-dropped' | translate: { count: droppedTotal } }}
+        </span>
+      }
+    </div>
+    <div class="tb-log-toolbar-actions">
+      <div class="tb-log-search" [class.tb-log-search--active]="search.length > 0">
+        <mat-icon class="tb-log-search-icon">search</mat-icon>
+        <input class="tb-log-search-input"
+          type="text"
+          spellcheck="false"
+          autocomplete="off"
+          [placeholder]="'agent.log-highlight' | translate"
+          [value]="search"
+          (input)="onSearchInput($event)"
+          [attr.aria-label]="'agent.log-highlight-lines' | translate"/>
+        @if (search) {
+          <button mat-icon-button
+            class="tb-log-search-clear"
+            (click)="clearSearch()"
+            [attr.aria-label]="'agent.log-clear-highlight' | translate">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+      <span class="tb-log-toolbar-divider"></span>
+      <button mat-icon-button
+        class="tb-log-tool"
+        [matTooltip]="(paused ? 'agent.log-resume-stream' : 'agent.log-pause-stream') | translate"
+        (click)="togglePause()"
+        [attr.aria-pressed]="paused"
+        [attr.aria-label]="'agent.log-pause-resume-stream' | translate">
+        <mat-icon>{{ paused ? 'play_arrow' : 'pause' }}</mat-icon>
+      </button>
+      <button mat-icon-button
+        class="tb-log-tool"
+        [class.tb-log-tool--active]="followTail"
+        [matTooltip]="'agent.log-follow-latest' | translate"
+        (click)="toggleFollow()"
+        [attr.aria-pressed]="followTail"
+        [attr.aria-label]="'agent.log-follow-latest' | translate">
+        <mat-icon>keyboard_double_arrow_down</mat-icon>
+      </button>
+      <button mat-icon-button
+        class="tb-log-tool"
+        [disabled]="lines.length === 0"
+        [matTooltip]="'agent.log-copy-all' | translate"
+        (click)="copyAll()"
+        [attr.aria-label]="'agent.log-copy-all-lines' | translate">
+        <mat-icon>content_copy</mat-icon>
+      </button>
+      <button mat-icon-button
+        class="tb-log-tool"
+        [disabled]="lines.length === 0"
+        [matTooltip]="'agent.log-download' | translate"
+        (click)="download()"
+        [attr.aria-label]="'agent.log-download' | translate">
+        <mat-icon>download</mat-icon>
+      </button>
+      <button mat-icon-button
+        class="tb-log-tool tb-log-tool--danger"
+        [disabled]="lines.length === 0 && pendingCount === 0"
+        [matTooltip]="'agent.log-clear' | translate"
+        (click)="clear()"
+        [attr.aria-label]="'agent.log-clear' | translate">
+        <mat-icon>delete_sweep</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="tb-log-monitor-body">
+    <cdk-virtual-scroll-viewport itemSize="20"
+      class="tb-log-viewport"
+      data-test="log-viewport">
+      <div *cdkVirtualFor="let entry of lines; let i = index; trackBy: trackBySeq"
+        class="tb-log-row"
+        [class.tb-log-row--gap]="entry.kind === 'gap'"
+        [class.tb-log-row--line]="entry.kind === 'line'"
+        data-test="log-entry">
+        @if (entry.kind === 'line') {
+          <span class="tb-log-row-num">{{ i + 1 }}</span>
+          @if (!search) {
+            <span class="tb-log-row-text">{{ entry.text }}</span>
+          }
+          @if (search) {
+            <span class="tb-log-row-text" [innerHTML]="entry.text | tbLogHighlight: search"></span>
+          }
+        } @else {
+          <span class="tb-log-row-gap-rule"></span>
+          <span class="tb-log-row-gap-text">{{ entry.text }}</span>
+          <span class="tb-log-row-gap-rule"></span>
+        }
+      </div>
+    </cdk-virtual-scroll-viewport>
+
+    @if (lines.length === 0) {
+      <div class="tb-log-empty">
+        <div class="tb-log-empty-pulse"></div>
+        <div class="tb-log-empty-text">{{ (paused ? 'agent.log-stream-paused' : 'agent.log-waiting') | translate }}</div>
+      </div>
+    }
+
+    @if (!followTail && lines.length > 0) {
+      <button class="tb-log-jump"
+        type="button"
+        (click)="jumpToLatest()">
+        <mat-icon>arrow_downward</mat-icon>
+        <span>{{ 'agent.log-jump-to-latest' | translate }}</span>
+      </button>
+    }
+  </div>
+</div>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -213,7 +214,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                     .withTimeoutSeconds(timeoutSeconds)
                     .withMaxRetries(0); // disable retries to respect timeout set in rule node config
 
-            return ctx.getAiChatModelService().sendChatRequestAsync(chatModelConfig, chatRequest);
+            return ctx.getAiChatModelService().sendChatRequestAsync(ctx.getTenantId(), chatModelConfig, chatRequest);
         }, ctx.getDbCallbackExecutor());
     }
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.edge;
 
@@ -11,8 +11,11 @@ import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
+
+import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -106,6 +109,27 @@ public class WidgetEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, widgetsBundleUpdateMsg.getMsgType());
         Assert.assertEquals(savedWidgetsBundle.getUuidId().getMostSignificantBits(), widgetsBundleUpdateMsg.getIdMSB());
         Assert.assertEquals(savedWidgetsBundle.getUuidId().getLeastSignificantBits(), widgetsBundleUpdateMsg.getIdLSB());
+    }
+
+    @Test
+    public void testSendWidgetBundleTypesRequestForBundleOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        WidgetsBundle widgetsBundle = new WidgetsBundle();
+        widgetsBundle.setTitle("Different Tenant Widget Bundle");
+        WidgetsBundle savedWidgetsBundle = doPost("/api/widgetsBundle", widgetsBundle, WidgetsBundle.class);
+        WidgetType widgetType = new WidgetType();
+        widgetType.setName("Different Tenant Widget Type");
+        widgetType.setDescriptor(JacksonUtil.newObjectNode().put("key", "value"));
+        widgetType.setFqn("different_tenant_bundle.type_alias");
+        doPost("/api/widgetType", widgetType, WidgetType.class);
+        doPost("/api/widgetsBundle/" + savedWidgetsBundle.getUuidId() + "/widgetTypeFqns", List.of(widgetType.getFqn()))
+                .andExpect(status().isOk());
+        loginTenantAdmin();
+
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addWidgetBundleTypesRequestMsg(WidgetBundleTypesRequestMsg.newBuilder()
+                .setWidgetBundleIdMSB(savedWidgetsBundle.getUuidId().getMostSignificantBits())
+                .setWidgetBundleIdLSB(savedWidgetsBundle.getUuidId().getLeastSignificantBits())
+                .build()));
     }
 
 }

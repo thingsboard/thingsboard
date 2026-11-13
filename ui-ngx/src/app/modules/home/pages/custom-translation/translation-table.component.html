@@ -1,0 +1,133 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-entity-table tb-absolute-fill">
+  <div class="tb-entity-table-content tb-outlined-border flex flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
+      <div class="mat-toolbar-tools">
+        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
+          <span class="tb-entity-table-title" translate>custom-translation.custom-translation</span>
+          <div tb-help="customTranslation"></div>
+        </div>
+        <span class="flex-1"></span>
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData(true)"
+          matTooltip="{{ 'action.refresh' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="enterSearchMode()"
+          matTooltip="{{ 'custom-translation.search' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <button class="ml-3 lt-md:!hidden" mat-flat-button color="primary" (click)="addNewLanguage($event)" [disabled]="isLoading$ | async">
+          <mat-icon>add</mat-icon>
+          {{ 'custom-translation.add-new-language' | translate }}
+        </button>
+        <button class="ml-3 gt-sm:!hidden" mat-mini-fab color="primary" style="--mat-fab-small-container-elevation-shadow: none;" (click)="addNewLanguage($event)" [disabled]="isLoading$ | async">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button
+          matTooltip="{{ 'custom-translation.search' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field class="flex-1">
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+            [formControl]="textSearch"
+            placeholder="{{ 'custom-translation.search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button (click)="exitSearchMode()"
+          matTooltip="{{ 'action.close' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div class="table-container flex-1">
+      <table mat-table [dataSource]="dataSource" [trackBy]="trackByLocale"
+        matSort [matSortActive]="pageLink.sortOrder?.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        <ng-container matColumnDef="localeCode">
+          <th mat-header-cell *matHeaderCellDef [attr.colspan]="2" mat-sort-header>{{ 'custom-translation.localization-code' | translate }}</th>
+        </ng-container>
+        <ng-container matColumnDef="flag">
+          <mat-cell *matCellDef="let translate" class="tb-icon-cell" style="width: 28px; max-width: 28px; min-width: 28px">
+            <span [class]="flagIconClass(translate.localeCode)"></span>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="localeCodeColumn">
+          <mat-cell *matCellDef="let translate" style="width: 50px">
+            {{ translate.localeCode }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="language">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 35%">{{ 'custom-translation.language' | translate }}</mat-header-cell>
+          <mat-cell *matCellDef="let translate" style="width: 35%">
+            {{ translate.language }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="country">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%">{{ 'custom-translation.country' | translate }}</mat-header-cell>
+          <mat-cell *matCellDef="let translate" style="width: 20%">
+            {{ translate.country }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="progress">
+          <mat-header-cell *matHeaderCellDef style="min-width: 150px; width: 30%">{{ 'custom-translation.translation-progress' | translate }}</mat-header-cell>
+          <mat-cell *matCellDef="let translate" style="min-width: 150px; width: 30%">
+            <div class="progress-bar-container">
+              <mat-progress-bar mode="determinate" value="{{ translate.progress }}"></mat-progress-bar>
+              <span class="value">{{ translate.progress }}&nbsp;%</span>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="actions" stickyEnd>
+          <mat-header-cell *matHeaderCellDef [style]="actionColumStyle()"> </mat-header-cell>
+          <mat-cell *matCellDef="let translate" [style]="actionColumStyle()">
+            <button mat-icon-button
+              [disabled]="(isLoading$ | async)"
+              matTooltip="{{ 'custom-translation.download-translation' | translate }}"
+              matTooltipPosition="above"
+              (click)="downloadLocale($event, translate.localeCode)">
+              <tb-icon>
+                download
+              </tb-icon>
+            </button>
+            <button mat-icon-button
+              [disabled]="(isLoading$ | async)"
+              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltipPosition="above"
+              (click)="editLanguage($event, translate)">
+              <tb-icon>
+                edit
+              </tb-icon>
+            </button>
+            @if (!readonly) {
+              <button mat-icon-button
+                [disabled]="(isLoading$ | async) || !translate.customized"
+                matTooltip="{{ 'action.delete' | translate }}"
+                matTooltipPosition="above"
+                (click)="deleteLocale($event, translate)">
+                <tb-icon>
+                  delete
+                </tb-icon>
+              </button>
+            }
+          </mat-cell>
+        </ng-container>
+        <mat-header-row *matHeaderRowDef="displayedHeaderColumns; sticky: true"></mat-header-row>
+        <mat-row *matRowDef="let translate; columns: displayedColumns;" (click)="editLanguage($event, translate)"></mat-row>
+      </table>
+      <span [class.!hidden]="!dataSource.dataLoading"
+      class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
+    </div>
+  </div>
+</div>

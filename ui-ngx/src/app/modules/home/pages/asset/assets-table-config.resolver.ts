@@ -1,12 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   CellActionDescriptor,
-  checkBoxCell,
   DateEntityTableColumn,
+  EntityChipsEntityTableColumn,
+  EntityColumn,
   EntityTableColumn,
   EntityTableConfig,
   GroupActionDescriptor,
@@ -16,318 +18,172 @@ import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { forkJoin, Observable, of } from 'rxjs';
-import { select, Store } from '@ngrx/store';
-import { selectAuthUser } from '@core/auth/auth.selectors';
-import { map, mergeMap, take, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { map, mergeMap, tap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { Authority } from '@app/shared/models/authority.enum';
 import { CustomerService } from '@core/http/customer.service';
 import { Customer } from '@app/shared/models/customer.model';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
-import {
-  AssignToCustomerDialogComponent,
-  AssignToCustomerDialogData
-} from '@modules/home/dialogs/assign-to-customer-dialog.component';
-import {
-  AddEntitiesToCustomerDialogComponent,
-  AddEntitiesToCustomerDialogData
-} from '../../dialogs/add-entities-to-customer-dialog.component';
-import { Asset, AssetInfo } from '@app/shared/models/asset.models';
+import { AssetInfo } from '@app/shared/models/asset.models';
 import { AssetService } from '@app/core/http/asset.service';
-import { AssetComponent } from '@modules/home/pages/asset/asset.component';
 import { AssetTableHeaderComponent } from '@modules/home/pages/asset/asset-table-header.component';
-import { AssetId } from '@app/shared/models/id/asset-id';
-import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
-import { DeviceInfo } from '@shared/models/device.models';
-import { EdgeService } from '@core/http/edge.service';
-import {
-  AddEntitiesToEdgeDialogComponent,
-  AddEntitiesToEdgeDialogData
-} from '@home/dialogs/add-entities-to-edge-dialog.component';
+import { UtilsService } from '@core/services/utils.service';
+import { AllEntitiesTableConfigService } from '@home/components/entity/all-entities-table-config.service';
+import { resolveGroupParams } from '@shared/models/entity-group.models';
+import { GroupEntityTabsComponent } from '@home/components/group/group-entity-tabs.component';
+import { AssetComponent } from '@home/pages/asset/asset.component';
+import { AuthUser } from '@shared/models/user.model';
+import { CustomerId } from '@shared/models/id/customer-id';
 
 @Injectable()
 export class AssetsTableConfigResolver  {
 
-  private readonly config: EntityTableConfig<AssetInfo> = new EntityTableConfig<AssetInfo>();
-
-  private customerId: string;
-
-  constructor(private store: Store<AppState>,
+  constructor(private allEntitiesTableConfigService: AllEntitiesTableConfigService<AssetInfo>,
+              private store: Store<AppState>,
               private broadcast: BroadcastService,
               private assetService: AssetService,
               private customerService: CustomerService,
-              private edgeService: EdgeService,
               private dialogService: DialogService,
               private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
+              private utils: UtilsService,
               private router: Router,
               private dialog: MatDialog) {
-
-    this.config.entityType = EntityType.ASSET;
-    this.config.entityComponent = AssetComponent;
-    this.config.entityTabsComponent = AssetTabsComponent;
-    this.config.entityTranslations = entityTypeTranslations.get(EntityType.ASSET);
-    this.config.entityResources = entityTypeResources.get(EntityType.ASSET);
-
-    this.config.deleteEntityTitle = asset => this.translate.instant('asset.delete-asset-title', {assetName: asset.name});
-    this.config.deleteEntityContent = () => this.translate.instant('asset.delete-asset-text');
-    this.config.deleteEntitiesTitle = count => this.translate.instant('asset.delete-assets-title', {count});
-    this.config.deleteEntitiesContent = () => this.translate.instant('asset.delete-assets-text');
-
-    this.config.loadEntity = id => this.assetService.getAssetInfo(id.id);
-    this.config.saveEntity = asset => {
-      return this.assetService.saveAsset(asset).pipe(
-        tap(() => {
-          this.broadcast.broadcast('assetSaved');
-        }),
-        mergeMap((savedAsset) => this.assetService.getAssetInfo(savedAsset.id.id)
-        ));
-    };
-    this.config.onEntityAction = action => this.onAssetAction(action, this.config);
-    this.config.detailsReadonly = () => (this.config.componentsData.assetScope === 'customer_user' ||
-      this.config.componentsData.assetScope === 'edge_customer_user');
-
-    this.config.headerComponent = AssetTableHeaderComponent;
-
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<EntityTableConfig<AssetInfo>> {
-    const routeParams = route.params;
-    this.config.componentsData = {
-      assetScope: route.data.assetsType,
+    const groupParams = resolveGroupParams(route);
+    const config = new EntityTableConfig<AssetInfo>(groupParams);
+    this.configDefaults(config);
+    const authUser = getCurrentAuthUser(this.store);
+    config.componentsData = {
+      includeCustomers: true,
       assetProfileId: null,
-      assetType: '',
-      edgeId: routeParams.edgeId
+      includeCustomersChanged: (includeCustomers: boolean) => {
+        config.componentsData.includeCustomers = includeCustomers;
+        config.columns = this.configureColumns(authUser, config);
+        config.getTable().columnsUpdated();
+        config.getTable().resetSortAndFilter(true);
+      }
     };
-    this.customerId = routeParams.customerId;
-    return this.store.pipe(select(selectAuthUser), take(1)).pipe(
-      tap((authUser) => {
-        if (authUser.authority === Authority.CUSTOMER_USER) {
-          if (route.data.assetsType === 'edge') {
-            this.config.componentsData.assetScope = 'edge_customer_user';
-          } else {
-            this.config.componentsData.assetScope = 'customer_user';
-          }
-          this.customerId = authUser.customerId;
-        }
-      }),
-      mergeMap(() =>
-        this.customerId ? this.customerService.getCustomer(this.customerId) : of(null as Customer)
-      ),
+    return (config.customerId ?
+      this.customerService.getCustomer(config.customerId) : of(null as Customer)).pipe(
       map((parentCustomer) => {
         if (parentCustomer) {
-          if (parentCustomer.additionalInfo && parentCustomer.additionalInfo.isPublic) {
-            this.config.tableTitle = this.translate.instant('customer.public-assets');
-          } else {
-            this.config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('asset.assets');
-          }
-        } else if (this.config.componentsData.assetScope === 'edge') {
-          this.edgeService.getEdge(this.config.componentsData.edgeId).subscribe(
-            edge => this.config.tableTitle = edge.name + ': ' + this.translate.instant('asset.assets')
-          );
+          config.tableTitle = parentCustomer.title + ': ' + this.translate.instant('asset.assets');
         } else {
-          this.config.tableTitle = this.translate.instant('asset.assets');
+          config.tableTitle = this.translate.instant('asset.assets');
         }
-        this.config.columns = this.configureColumns(this.config.componentsData.assetScope);
-        this.configureEntityFunctions(this.config.componentsData.assetScope);
-        this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.assetScope);
-        this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.assetScope);
-        this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.assetScope);
-        this.config.addEnabled = !(this.config.componentsData.assetScope === 'customer_user' || this.config.componentsData.assetScope === 'edge_customer_user');
-        this.config.entitiesDeleteEnabled = this.config.componentsData.assetScope === 'tenant';
-        this.config.deleteEnabled = () => this.config.componentsData.assetScope === 'tenant';
-        return this.config;
+        config.columns = this.configureColumns(authUser, config);
+        this.configureEntityFunctions(config);
+        config.cellActionDescriptors = this.configureCellActions(config);
+        config.groupActionDescriptors = this.configureGroupActions(config);
+        config.addActionDescriptors = this.configureAddActions(config);
+        return this.allEntitiesTableConfigService.prepareConfiguration(config);
       })
     );
   }
 
-  configureColumns(assetScope: string): Array<EntityTableColumn<AssetInfo>> {
-    const columns: Array<EntityTableColumn<AssetInfo>> = [
+  configDefaults(config: EntityTableConfig<AssetInfo>) {
+    config.entityType = EntityType.ASSET;
+    config.entityComponent = AssetComponent;
+    config.entityTabsComponent = GroupEntityTabsComponent<AssetInfo>;
+    config.entityTranslations = entityTypeTranslations.get(EntityType.ASSET);
+    config.entityResources = entityTypeResources.get(EntityType.ASSET);
+    config.addDialogStyle = {height: '740px'};
+    config.addDialogOwnerAndGroupWizard = false;
+
+    config.entityTitle = (asset) => asset ?
+      this.utils.customTranslation(asset.name, asset.name) : '';
+
+    config.rowPointer = true;
+
+    config.deleteEntityTitle = asset => this.translate.instant('asset.delete-asset-title', { assetName: asset.name });
+    config.deleteEntityContent = () => this.translate.instant('asset.delete-asset-text');
+    config.deleteEntitiesTitle = count => this.translate.instant('asset.delete-assets-title', {count});
+    config.deleteEntitiesContent = () => this.translate.instant('asset.delete-assets-text');
+
+    config.loadEntity = id => this.assetService.getAssetInfo(id.id);
+    config.saveEntity = asset => this.assetService.saveAsset(asset).pipe(
+      tap(() => {
+        this.broadcast.broadcast('assetSaved');
+      }),
+      mergeMap((savedAsset) => this.assetService.getAssetInfo(savedAsset.id.id)
+      ));
+    config.onEntityAction = action => this.onAssetAction(action, config);
+    config.headerComponent = AssetTableHeaderComponent;
+  }
+
+  configureColumns(authUser: AuthUser, config: EntityTableConfig<AssetInfo>): Array<EntityColumn<AssetInfo>> {
+    const columns: Array<EntityColumn<AssetInfo>> = [
       new DateEntityTableColumn<AssetInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<AssetInfo>('name', 'asset.name', '25%'),
-      new EntityTableColumn<AssetInfo>('assetProfileName', 'asset-profile.asset-profile', '25%'),
-      new EntityTableColumn<AssetInfo>('label', 'asset.label', '25%'),
+      new EntityTableColumn<AssetInfo>('name', 'asset.name', '20%', config.entityTitle),
+      new EntityTableColumn<AssetInfo>('type', 'asset-profile.asset-profile', '20%'),
+      new EntityTableColumn<AssetInfo>('label', 'asset.label', '15%'),
     ];
-    if (assetScope === 'tenant') {
-      columns.push(
-        new EntityTableColumn<AssetInfo>('customerTitle', 'customer.customer', '25%'),
-        new EntityTableColumn<AssetInfo>('customerIsPublic', 'asset.public', '60px',
-          entity => {
-            return checkBoxCell(entity.customerIsPublic);
-          }, () => ({}), false),
-      );
+    if (config.componentsData.includeCustomers) {
+      const title = (authUser.authority === Authority.CUSTOMER_USER || config.customerId)
+        ? 'entity.sub-customer-name' : 'entity.customer-name';
+      columns.push(new EntityTableColumn<AssetInfo>('ownerName', title, '20%'));
     }
+    columns.push(
+      new EntityChipsEntityTableColumn<AssetInfo>( 'groups', 'entity.groups', '25%')
+    );
     return columns;
   }
 
-  configureEntityFunctions(assetScope: string): void {
-    if (assetScope === 'tenant') {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.assetService.getTenantAssetInfosByAssetProfileId(pageLink, this.config.componentsData.assetProfileId !== null ?
-          this.config.componentsData.assetProfileId.id : '');
-      this.config.deleteEntity = id => this.assetService.deleteAsset(id.id);
-    } else if (assetScope === 'edge' || assetScope === 'edge_customer_user') {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.assetService.getEdgeAssets(this.config.componentsData.edgeId, pageLink, this.config.componentsData.assetType);
+  configureEntityFunctions(config: EntityTableConfig<AssetInfo>): void {
+    if (config.customerId) {
+      config.entitiesFetchFunction = pageLink =>
+        this.assetService.getCustomerAssetInfos(config.componentsData.includeCustomers,
+          config.customerId, pageLink, config.componentsData.assetProfileId !== null ?
+            config.componentsData.assetProfileId.id : '');
     } else {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.assetService.getCustomerAssetInfosByAssetProfileId(this.customerId, pageLink,
-          this.config.componentsData.assetProfileId !== null ? this.config.componentsData.assetProfileId.id : '');
-      this.config.deleteEntity = id => this.assetService.unassignAssetFromCustomer(id.id);
+      config.entitiesFetchFunction = pageLink =>
+        this.assetService.getAllAssetInfos(config.componentsData.includeCustomers, pageLink,
+          config.componentsData.assetProfileId !== null ?
+            config.componentsData.assetProfileId.id : '');
     }
+    config.deleteEntity = id => this.assetService.deleteAsset(id.id);
   }
 
-  configureCellActions(assetScope: string): Array<CellActionDescriptor<AssetInfo>> {
+  configureCellActions(config: EntityTableConfig<AssetInfo>): Array<CellActionDescriptor<AssetInfo>> {
     const actions: Array<CellActionDescriptor<AssetInfo>> = [];
-    if (assetScope === 'tenant') {
-      actions.push(
-        {
-          name: this.translate.instant('asset.make-public'),
-          icon: 'share',
-          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
-          onAction: ($event, entity) => this.makePublic($event, entity)
-        },
-        {
-          name: this.translate.instant('asset.assign-to-customer'),
-          icon: 'assignment_ind',
-          isEnabled: (entity) => (!entity.customerId || entity.customerId.id === NULL_UUID),
-          onAction: ($event, entity) => this.assignToCustomer($event, [entity.id])
-        },
-        {
-          name: this.translate.instant('asset.unassign-from-customer'),
-          icon: 'assignment_return',
-          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
-          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-        },
-        {
-          name: this.translate.instant('asset.make-private'),
-          icon: 'reply',
-          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
-          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-        }
-      );
-    }
-    if (assetScope === 'customer') {
-      actions.push(
-        {
-          name: this.translate.instant('asset.unassign-from-customer'),
-          icon: 'assignment_return',
-          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && !entity.customerIsPublic),
-          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-        },
-        {
-          name: this.translate.instant('asset.make-private'),
-          icon: 'reply',
-          isEnabled: (entity) => (entity.customerId && entity.customerId.id !== NULL_UUID && entity.customerIsPublic),
-          onAction: ($event, entity) => this.unassignFromCustomer($event, entity)
-        }
-      );
-    }
-    if (assetScope === 'edge') {
-      actions.push(
-        {
-          name: this.translate.instant('edge.unassign-from-edge'),
-          icon: 'assignment_return',
-          isEnabled: (entity) => true,
-          onAction: ($event, entity) => this.unassignFromEdge($event, entity)
-        }
-      );
-    }
     return actions;
   }
 
-  configureGroupActions(assetScope: string): Array<GroupActionDescriptor<AssetInfo>> {
+  configureGroupActions(config: EntityTableConfig<AssetInfo>): Array<GroupActionDescriptor<AssetInfo>> {
     const actions: Array<GroupActionDescriptor<AssetInfo>> = [];
-    if (assetScope === 'tenant') {
-      actions.push(
-        {
-          name: this.translate.instant('asset.assign-assets'),
-          icon: 'assignment_ind',
-          isEnabled: true,
-          onAction: ($event, entities) => this.assignToCustomer($event, entities.map((entity) => entity.id))
-        }
-      );
-    }
-    if (assetScope === 'customer') {
-      actions.push(
-        {
-          name: this.translate.instant('asset.unassign-assets'),
-          icon: 'assignment_return',
-          isEnabled: true,
-          onAction: ($event, entities) => this.unassignAssetsFromCustomer($event, entities)
-        }
-      );
-    }
-    if (assetScope === 'edge') {
-      actions.push(
-        {
-          name: this.translate.instant('asset.unassign-assets-from-edge'),
-          icon: 'assignment_return',
-          isEnabled: true,
-          onAction: ($event, entities) => this.unassignAssetsFromEdge($event, entities)
-        }
-      );
-    }
     return actions;
   }
 
-  configureAddActions(assetScope: string): Array<HeaderActionDescriptor> {
+  configureAddActions(config: EntityTableConfig<AssetInfo>): Array<HeaderActionDescriptor> {
     const actions: Array<HeaderActionDescriptor> = [];
-    if (assetScope === 'tenant') {
-      actions.push(
-        {
-          name: this.translate.instant('asset.add-asset-text'),
-          icon: 'insert_drive_file',
-          isEnabled: () => true,
-          onAction: ($event) => this.config.getTable().addEntity($event)
-        },
-        {
-          name: this.translate.instant('asset.import'),
-          icon: 'file_upload',
-          isEnabled: () => true,
-          onAction: ($event) => this.importAssets($event)
-        }
-      );
-    }
-    if (assetScope === 'customer') {
-      actions.push(
-        {
-          name: this.translate.instant('asset.assign-new-asset'),
-          icon: 'add',
-          isEnabled: () => true,
-          onAction: ($event) => this.addAssetsToCustomer($event)
-        }
-      );
-    }
-    if (assetScope === 'edge') {
-      actions.push(
-        {
-          name: this.translate.instant('asset.assign-new-asset'),
-          icon: 'add',
-          isEnabled: () => true,
-          onAction: ($event) => this.addAssetsToEdge($event)
-        }
-      );
-    }
+    actions.push(
+      {
+        name: this.translate.instant('asset.add-asset-text'),
+        icon: 'insert_drive_file',
+        isEnabled: () => true,
+        onAction: ($event) => config.getTable().addEntity($event)
+      },
+      {
+        name: this.translate.instant('asset.import'),
+        icon: 'file_upload',
+        isEnabled: () => true,
+        onAction: ($event) => this.importAssets($event, config)
+      }
+    );
     return actions;
   }
 
-  importAssets($event: Event) {
-    this.homeDialogs.importEntities(EntityType.ASSET).subscribe((res) => {
-      if (res) {
-        this.broadcast.broadcast('assetSaved');
-        this.config.updateData();
-      }
-    });
-  }
-
-  private openAsset($event: Event, asset: Asset, config: EntityTableConfig<AssetInfo>) {
+  private openAsset($event: Event, asset: AssetInfo, config: EntityTableConfig<AssetInfo>) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -335,123 +191,21 @@ export class AssetsTableConfigResolver  {
     this.router.navigateByUrl(url);
   }
 
-  addAssetsToCustomer($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<AddEntitiesToCustomerDialogComponent, AddEntitiesToCustomerDialogData,
-      boolean>(AddEntitiesToCustomerDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        customerId: this.customerId,
-        entityType: EntityType.ASSET
+  importAssets($event: Event, config: EntityTableConfig<AssetInfo>) {
+    const customerId = config.customerId ? new CustomerId(config.customerId) : null;
+    this.homeDialogs.importEntities(customerId, EntityType.ASSET, null).subscribe((res) => {
+      if (res) {
+        this.broadcast.broadcast('assetSaved');
+        config.updateData();
       }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
+    });
   }
 
-  makePublic($event: Event, asset: Asset) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialogService.confirm(
-      this.translate.instant('asset.make-public-asset-title', {assetName: asset.name}),
-      this.translate.instant('asset.make-public-asset-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
+  manageOwnerAndGroups($event: Event, asset: AssetInfo, config: EntityTableConfig<AssetInfo>) {
+    this.homeDialogs.manageOwnerAndGroups($event, asset).subscribe(
+      (res) => {
         if (res) {
-          this.assetService.makeAssetPublic(asset.id.id).subscribe(
-            () => {
-              this.config.updateData();
-            }
-          );
-        }
-      }
-    );
-  }
-
-  assignToCustomer($event: Event, assetIds: Array<AssetId>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<AssignToCustomerDialogComponent, AssignToCustomerDialogData,
-      boolean>(AssignToCustomerDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        entityIds: assetIds,
-        entityType: EntityType.ASSET
-      }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  unassignFromCustomer($event: Event, asset: AssetInfo) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    const isPublic = asset.customerIsPublic;
-    let title;
-    let content;
-    if (isPublic) {
-      title = this.translate.instant('asset.make-private-asset-title', {assetName: asset.name});
-      content = this.translate.instant('asset.make-private-asset-text');
-    } else {
-      title = this.translate.instant('asset.unassign-asset-title', {assetName: asset.name});
-      content = this.translate.instant('asset.unassign-asset-text');
-    }
-    this.dialogService.confirm(
-      title,
-      content,
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
-        if (res) {
-          this.assetService.unassignAssetFromCustomer(asset.id.id).subscribe(
-            () => {
-              this.config.updateData(this.config.componentsData.assetScope !== 'tenant');
-            }
-          );
-        }
-      }
-    );
-  }
-
-  unassignAssetsFromCustomer($event: Event, assets: Array<AssetInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialogService.confirm(
-      this.translate.instant('asset.unassign-assets-title', {count: assets.length}),
-      this.translate.instant('asset.unassign-assets-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
-        if (res) {
-          const tasks: Observable<any>[] = [];
-          assets.forEach(
-            (asset) => {
-              tasks.push(this.assetService.unassignAssetFromCustomer(asset.id.id));
-            }
-          );
-          forkJoin(tasks).subscribe(
-            () => {
-              this.config.updateData();
-            }
-          );
+          config.updateData();
         }
       }
     );
@@ -462,90 +216,10 @@ export class AssetsTableConfigResolver  {
       case 'open':
         this.openAsset(action.event, action.entity, config);
         return true;
-      case 'makePublic':
-        this.makePublic(action.event, action.entity);
-        return true;
-      case 'assignToCustomer':
-        this.assignToCustomer(action.event, [action.entity.id]);
-        return true;
-      case 'unassignFromCustomer':
-        this.unassignFromCustomer(action.event, action.entity);
-        return true;
-      case 'unassignFromEdge':
-        this.unassignFromEdge(action.event, action.entity);
+      case 'manageOwnerAndGroups':
+        this.manageOwnerAndGroups(action.event, action.entity, config);
         return true;
     }
     return false;
   }
-
-  addAssetsToEdge($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<AddEntitiesToEdgeDialogComponent, AddEntitiesToEdgeDialogData,
-      boolean>(AddEntitiesToEdgeDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        edgeId: this.config.componentsData.edgeId,
-        entityType: EntityType.ASSET
-      }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  unassignFromEdge($event: Event, asset: AssetInfo) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialogService.confirm(
-      this.translate.instant('asset.unassign-asset-from-edge-title', {assetName: asset.name}),
-      this.translate.instant('asset.unassign-asset-from-edge-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
-        if (res) {
-          this.assetService.unassignAssetFromEdge(this.config.componentsData.edgeId, asset.id.id).subscribe(
-            () => {
-              this.config.updateData(this.config.componentsData.assetScope !== 'tenant');
-            }
-          );
-        }
-      }
-    );
-  }
-
-  unassignAssetsFromEdge($event: Event, assets: Array<AssetInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialogService.confirm(
-      this.translate.instant('asset.unassign-assets-from-edge-title', {count: assets.length}),
-      this.translate.instant('asset.unassign-assets-from-edge-text'),
-      this.translate.instant('action.no'),
-      this.translate.instant('action.yes'),
-      true
-    ).subscribe((res) => {
-        if (res) {
-          const tasks: Observable<any>[] = [];
-          assets.forEach(
-            (asset) => {
-              tasks.push(this.assetService.unassignAssetFromEdge(this.config.componentsData.edgeId, asset.id.id));
-            }
-          );
-          forkJoin(tasks).subscribe(
-            () => {
-              this.config.updateData();
-            }
-          );
-        }
-      }
-    );
-  }
-
 }

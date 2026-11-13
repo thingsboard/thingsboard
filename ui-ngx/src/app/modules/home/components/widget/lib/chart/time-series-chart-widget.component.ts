@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -7,7 +8,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   Renderer2,
   TemplateRef,
   ViewChild,
@@ -22,7 +23,7 @@ import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { LegendConfig, LegendData, LegendKey, LegendPosition } from '@shared/models/widget.models';
+import { compareLegendDataKeys, LegendConfig, LegendData, LegendKey, LegendPosition } from '@shared/models/widget.models';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import {
   timeSeriesChartWidgetDefaultSettings,
@@ -30,6 +31,8 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import { mergeDeep } from '@core/utils';
 import { WidgetComponent } from '@home/components/widget/widget.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
     selector: 'tb-time-series-chart-widget',
@@ -38,7 +41,7 @@ import { WidgetComponent } from '@home/components/widget/widget.component';
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('chartShape', {static: false})
   chartShape: ElementRef<HTMLElement>;
@@ -50,6 +53,10 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
 
   @Input()
   widgetTitlePanel: TemplateRef<any>;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   horizontalLegendPosition = false;
 
@@ -72,7 +79,7 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
 
   private timeSeriesChart: TbTimeSeriesChart;
 
-  constructor(public widgetComponent: WidgetComponent,
+  constructor(@Optional() public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
@@ -93,7 +100,7 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
       this.legendConfig = this.settings.legendConfig;
       this.legendKeys = this.legendData.keys;
       if (this.legendConfig.sortDataKeys) {
-        this.legendKeys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
+        this.legendKeys = this.legendData.keys.sort((key1, key2) => compareLegendDataKeys(key1.dataKey, key2.dataKey));
       }
       this.legendKeys.forEach(legendKey => {
         legendKey.dataKey.settings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
@@ -122,7 +129,9 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
   }
 
   ngAfterViewInit() {
-    this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, this.settings, this.chartShape.nativeElement, this.renderer);
+    this.timeSeriesChart = new TbTimeSeriesChart(this.ctx,
+      {...this.settings, sortSeries: this.showLegend && this.legendConfig.sortDataKeys},
+      this.chartShape.nativeElement, this.renderer);
     this.ctx.widgetActions = this.timeSeriesChart.getWidgetActions();
   }
 
@@ -142,11 +151,17 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
     if (this.timeSeriesChart) {
       this.timeSeriesChart.update();
     }
+    if (this.reportMode) {
+      this.cd.detectChanges();
+    }
   }
 
   public onLatestDataUpdated() {
     if (this.timeSeriesChart) {
       this.timeSeriesChart.latestUpdated();
+    }
+    if (this.reportMode) {
+      this.cd.detectChanges();
     }
   }
 

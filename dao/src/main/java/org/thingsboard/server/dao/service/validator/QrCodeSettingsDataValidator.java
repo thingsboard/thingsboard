@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
@@ -10,10 +11,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
 import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
-import org.thingsboard.server.common.data.oauth2.PlatformType;
-import org.thingsboard.server.exception.DataValidationException;
-import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.dao.mobile.MobileAppDao;
+import org.thingsboard.server.exception.DataValidationException;
 
 @Component
 @AllArgsConstructor
@@ -25,10 +26,10 @@ public class QrCodeSettingsDataValidator extends DataValidator<QrCodeSettings> {
     @Override
     protected void validateDataImpl(TenantId tenantId, QrCodeSettings qrCodeSettings) {
         MobileAppBundleId mobileAppBundleId = qrCodeSettings.getMobileAppBundleId();
-        if (!qrCodeSettings.isUseDefaultApp() && (mobileAppBundleId == null)) {
-            throw new DataValidationException("Mobile app bundle is required to use custom application!");
-        }
-        if (!qrCodeSettings.isUseDefaultApp()) {
+        if (!qrCodeSettings.isUseSystemSettings() && !qrCodeSettings.isUseDefaultApp()) {
+            if (mobileAppBundleId == null) {
+                throw new DataValidationException("Mobile app bundle is required to use custom application!");
+            }
             if (qrCodeSettings.isAndroidEnabled()) {
                 MobileApp androidApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.ANDROID);
                 if (androidApp != null && androidApp.getStatus() != MobileAppStatus.PUBLISHED) {

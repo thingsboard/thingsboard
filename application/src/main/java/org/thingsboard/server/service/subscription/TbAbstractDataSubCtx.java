@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import lombok.Getter;
@@ -51,7 +52,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     }
 
     protected PageData<EntityData> findEntityData() {
-        PageData<EntityData> result = entityService.findEntityDataByQuery(getTenantId(), getCustomerId(), buildEntityDataQuery());
+        PageData<EntityData> result = entityService.findEntityDataByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), buildEntityDataQuery());
         if (log.isTraceEnabled()) {
             result.getData().forEach(ed -> {
                 log.trace("[{}][{}] EntityData: {}", getSessionId(), getCmdId(), ed);
@@ -118,8 +119,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         entityKeyStates.forEach((entityData, keyStates) -> {
             int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
             subToEntityIdMap.put(subIdx, entityData.getEntityId());
-            localSubscriptionService.addSubscription(
-                    createTsSub(entityData, subIdx, false, startTs, endTs, keyStates, resultToLatestValues), sessionRef);
+            registerSubscription(createTsSub(entityData, subIdx, false, startTs, endTs, keyStates, resultToLatestValues));
         });
     }
 
@@ -127,7 +127,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
         for (EntityData entityData : data.getData()) {
             List<TbSubscription> entitySubscriptions = addSubscriptions(entityData, keysByType, latestValues, startTs, endTs);
-            entitySubscriptions.forEach(subscription -> localSubscriptionService.addSubscription(subscription, sessionRef));
+            entitySubscriptions.forEach(this::registerSubscription);
         }
     }
 
@@ -144,19 +144,29 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
             subToEntityIdMap.put(subIdx, entityData.getEntityId());
             switch (keysType) {
                 case TIME_SERIES:
-                    subscriptionList.add(createTsSub(entityData, subIdx, keysList, latestValues, startTs, endTs));
+                    if (entityData.isReadTs()) {
+                        subscriptionList.add(createTsSub(entityData, subIdx, keysList, latestValues, startTs, endTs));
+                    }
                     break;
                 case CLIENT_ATTRIBUTE:
-                    subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.CLIENT_SCOPE, keysList));
+                    if (entityData.isReadAttrs()) {
+                        subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.CLIENT_SCOPE, keysList));
+                    }
                     break;
                 case SHARED_ATTRIBUTE:
-                    subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SHARED_SCOPE, keysList));
+                    if (entityData.isReadAttrs()) {
+                        subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SHARED_SCOPE, keysList));
+                    }
                     break;
                 case SERVER_ATTRIBUTE:
-                    subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SERVER_SCOPE, keysList));
+                    if (entityData.isReadAttrs()) {
+                        subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.SERVER_SCOPE, keysList));
+                    }
                     break;
                 case ATTRIBUTE:
-                    subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.ANY_SCOPE, keysList));
+                    if (entityData.isReadAttrs()) {
+                        subscriptionList.add(createAttrSub(entityData, subIdx, keysType, TbAttributeSubscriptionScope.ANY_SCOPE, keysList));
+                    }
                     break;
             }
         });

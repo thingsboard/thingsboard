@@ -1,13 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../../../scss/constants";
 
 $enabled-color: #198038;
-$disabled-color: #D12730;
-$warning-color: #FAA405;
+
+$main-color: var(--tb-primary-500);
 
 .tb-no-notification-svg-color {
-  color: $tb-primary-color;
+  color: $main-color
 }
 
 .tb-api-usage-panel {
@@ -43,20 +44,20 @@ $warning-color: #FAA405;
         }
         &.disabled {
           .api-item-statistic-status {
-            color: $disabled-color;
+            color: var(--tb-crit);
           }
           .mat-mdc-progress-bar {
-            --mat-progress-bar-track-color: #{rgba($disabled-color, 0.06)};
-            --mat-progress-bar-active-indicator-color: #{$disabled-color};
+            --mat-progress-bar-track-color: color-mix(in srgb, var(--tb-crit) 6%, transparent);
+            --mat-progress-bar-active-indicator-color: var(--tb-crit);
           }
         }
         &.warning {
           .api-item-statistic-status {
-            color: $warning-color;
+            color: var(--tb-warning);
           }
           .mat-mdc-progress-bar {
-            --mat-progress-bar-track-color: #{rgba($warning-color, 0.06)};
-            --mat-progress-bar-active-indicator-color: #{$warning-color};
+            --mat-progress-bar-track-color: color-mix(in srgb, var(--tb-warning) 6%, transparent);
+            --mat-progress-bar-active-indicator-color: var(--tb-warning);
           }
         }
 
@@ -64,14 +65,25 @@ $warning-color: #FAA405;
           background-color: rgba(0, 0, 0, 0.06);
         }
         &.active {
-          background-color: rgba($tb-primary-color, 0.06);
+          position: relative;
+          &:before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: $main-color;
+            opacity: 0.06;
+          }
           .mat-divider {
-            --mat-divider-color: #{$tb-primary-color};
+            --mat-divider-color: #{$main-color};
           }
           .api-item-content {
             .api-item-title {
               font-weight: 500;
-              color: $tb-primary-color;
+              color: $main-color;
             }
           }
         }

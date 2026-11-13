@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.mfa.config;
 
 import org.thingsboard.server.common.data.User;
@@ -16,13 +17,11 @@ public interface TwoFaConfigManager {
 
     Optional<AccountTwoFaSettings> getAccountTwoFaSettings(TenantId tenantId, User user);
 
-
     Optional<TwoFaAccountConfig> getTwoFaAccountConfig(TenantId tenantId, User user, TwoFaProviderType providerType);
 
     AccountTwoFaSettings saveTwoFaAccountConfig(TenantId tenantId, User user, TwoFaAccountConfig accountConfig);
 
     AccountTwoFaSettings deleteTwoFaAccountConfig(TenantId tenantId, User user, TwoFaProviderType providerType);
-
 
     Optional<PlatformTwoFaSettings> getPlatformTwoFaSettings(TenantId tenantId, boolean sysadminSettingsAsDefault);
 

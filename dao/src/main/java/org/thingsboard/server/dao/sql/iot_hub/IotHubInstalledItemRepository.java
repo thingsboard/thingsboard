@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.iot_hub;
 
 import org.springframework.data.domain.Page;
@@ -20,6 +21,9 @@ import java.util.UUID;
 interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledItemEntity, UUID> {
 
     Optional<IotHubInstalledItemEntity> findByTenantIdAndId(UUID tenantId, UUID id);
+
+    @Query(value = "SELECT * FROM iot_hub_installed_item i WHERE i.tenant_id = :tenantId AND i.id = :id FOR UPDATE", nativeQuery = true)
+    Optional<IotHubInstalledItemEntity> findByTenantIdAndIdForUpdate(@Param("tenantId") UUID tenantId, @Param("id") UUID id);
 
     @Query("SELECT DISTINCT item.itemId FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId")
     List<UUID> findInstalledItemIdsByTenantId(@Param("tenantId") UUID tenantId);

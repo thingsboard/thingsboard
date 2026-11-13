@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="flex flex-col gap-5 p-6">
@@ -77,7 +78,10 @@
         }
       </p>
       @if (planSummary.missing > 0) {
-        <p class="tb-iot-hub-install-warning">{{ 'iot-hub.install-plan-missing-warning' | translate:{ count: planSummary.missing } }}</p>
+        <div class="tb-form-hint tb-primary-fill tb-form-hint-warning">
+          <mat-icon>warning</mat-icon>
+          <span>{{ 'iot-hub.install-plan-missing-warning' | translate:{ count: planSummary.missing } }}</span>
+        </div>
       }
       <ul class="tb-iot-hub-plan-list">
         @for (entry of installPlan?.entries; track entry.itemId) {
@@ -130,12 +134,14 @@
     @case ('error') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-error-title' | translate }}</h2>
       <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-error-message' | translate:{ name: item.name } }}</p>
-      @if (item.type === ItemType.SOLUTION_TEMPLATE) {
-        <tb-iot-hub-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-iot-hub-markdown>
-      } @else {
-        <div class="tb-iot-hub-error-details">
-          {{ errorMessage }}
-        </div>
+      @if (errorMessage) {
+        @if (item.type === ItemType.SOLUTION_TEMPLATE) {
+          <tb-iot-hub-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-iot-hub-markdown>
+        } @else {
+          <div class="tb-iot-hub-error-details">
+            {{ errorMessage }}
+          </div>
+        }
       }
     }
   }

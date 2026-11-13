@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.rulechainssmoke;
 
 import io.qameta.allure.Description;
@@ -50,7 +51,7 @@ public class DeleteRuleChainTest extends AbstractRuleChainTest {
         testRestClient.postRuleChain(defaultRuleChainPrototype(ruleChainName));
 
         sideBarMenuView.ruleChainsBtn().click();
-        ruleChainsPage.detailsBtn(ENTITY_NAME).click();
+        ruleChainsPage.detailsBtn(ruleChainName).click();
         String deletedRuleChain = ruleChainsPage.deleteRuleChainFromView(ruleChainName);
         jsClick(ruleChainsPage.refreshBtn());
 

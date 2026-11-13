@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql;
 
 import jakarta.annotation.PostConstruct;
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class NamedParameterJdbcTemplateConfiguration {
 
-    @Value("${spring.jpa.properties.javax.persistence.query.timeout:30000}")
+    @Value("${spring.jpa.properties.jakarta.persistence.query.timeout:30000}")
     private int queryTimeout;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;

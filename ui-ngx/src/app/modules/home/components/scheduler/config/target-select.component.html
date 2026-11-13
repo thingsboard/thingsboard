@@ -1,0 +1,52 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="targetFormGroup" class="tb-target-select flex flex-col gap-4" [class.optional]="!required">
+  <tb-toggle-select appearance="fill" [options]="headerOptions" formControlName="target">
+  </tb-toggle-select>
+  <tb-entity-autocomplete
+    class="flex-1" [class.!hidden]="targetFormGroup.get('target').value !== 'entity'"
+    [required]="required"
+    [appearance]="appearance"
+    [entityType]="entityType"
+    [useFullEntityId]="true"
+    (entityChanged)="deviceLoaded($event)"
+    formControlName="deviceTargetId">
+  </tb-entity-autocomplete>
+  <tb-device-profile-autocomplete
+    class="flex-1" [class.!hidden]="targetFormGroup.get('target').value !== 'deviceProfile'"
+    [required]="required"
+    [editProfileEnabled]="false"
+    [appearance]="appearance"
+    (deviceProfileChanged)="deviceProfileLoaded($event)"
+    formControlName="deviceProfileTargetId"
+  ></tb-device-profile-autocomplete>
+  <section class="flex flex-row gap-2" [class.!hidden]="targetFormGroup.get('target').value !== 'ownerGroup' && targetFormGroup.get('target').value !== 'groupTenant'">
+    @if (targetFormGroup.get('target').value === 'ownerGroup') {
+      <tb-owner-autocomplete
+        formControlName="groupOwnerId"
+        [appearance]="appearance"
+        [excludeOwnerIds]="[currentUser.tenantId]"
+        [required]="required"
+        placeholderText="group-permission.user-group-owner"
+        notFoundText="group-permission.no-owners-matching"
+        requiredText="group-permission.target-user-group-owner-required">
+      </tb-owner-autocomplete>
+    }
+    <tb-entity-group-select
+      class="flex-1"
+      [appearance]="appearance"
+      [ownerId]="targetFormGroup.get('groupOwnerId').value"
+      [allowedGroupTypes]="[entityType]"
+      (currentGroupInfo)="entityGroupLoaded($event)"
+      formControlName="groupOriginatorId"
+      [required]="required"
+      placeholderText="entity-group.select-entity-group"
+      notFoundText="entity-group.no-entity-groups-matching"
+      requiredText="entity-group.target-entity-group-required">
+    </tb-entity-group-select>
+  </section>
+</section>

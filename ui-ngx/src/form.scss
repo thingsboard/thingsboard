@@ -1,6 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import './scss/constants';
+@import './scss/mixins';
 
 @mixin form-row-column() {
   flex-direction: column;
@@ -18,7 +20,7 @@
     .mat-mdc-form-field, tb-unit-input {
       &:not(.fixed-width) {
         width: auto;
-        &.medium-width {
+        &.standard-width, &.medium-width {
           width: auto;
         }
       }
@@ -185,6 +187,26 @@
     color: rgba(0, 0, 0, 0.6);
     white-space: normal;
     border-radius: 6px;
+    &.tb-primary-fill:has(> .mat-icon) {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      > .mat-icon {
+        flex-shrink: 0;
+        @include tb-mat-icon-size(20);
+        color: var(--tb-primary-500);
+        + * {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+      &.tb-form-hint-warning > .mat-icon {
+        color: var(--tb-caution);
+      }
+      &.tb-form-hint-error > .mat-icon {
+        color: var(--tb-crit);
+      }
+    }
   }
   .tb-form-row {
     height: 100%;
@@ -236,6 +258,9 @@
     }
     .mat-mdc-form-field, tb-unit-input {
       width: 106px;
+      &.standard-width {
+        width: 180px;
+      }
       &.medium-width {
         width: 220px;
       }
@@ -716,7 +741,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: $tb-primary-color;
+      background: var(--tb-primary-500);
       mask-image: url(/assets/home/no_data_folder_bg.svg);
       -webkit-mask-image: url(/assets/home/no_data_folder_bg.svg);
       mask-repeat: no-repeat;
@@ -741,7 +766,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: $tb-primary-color;
+      background: var(--tb-primary-500);
       mask-image: url(/assets/home/no-service.svg);
       -webkit-mask-image: url(/assets/home/no-service.svg);
       mask-repeat: no-repeat;
@@ -777,7 +802,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: $tb-primary-color;
+      background: var(--tb-primary-500);
       opacity: 0.04;
       pointer-events: none;
     }

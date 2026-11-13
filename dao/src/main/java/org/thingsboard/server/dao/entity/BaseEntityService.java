@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.entity;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.GroupEntity;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasEmail;
 import org.thingsboard.server.common.data.HasLabel;
@@ -22,18 +24,26 @@ import org.thingsboard.server.common.data.HasTitle;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edqs.query.EdqsRequest;
 import org.thingsboard.server.common.data.edqs.query.EdqsResponse;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.MergedGroupTypePermissionInfo;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilterType;
+import org.thingsboard.server.common.data.query.EntityGroupListFilter;
+import org.thingsboard.server.common.data.query.EntityGroupNameFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
@@ -41,13 +51,22 @@ import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.query.StateEntityOwnerFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.msg.edqs.EdqsApiService;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.stats.EdqsStatsService;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
+import org.thingsboard.server.dao.sql.query.EntityMapping;
+import org.thingsboard.server.dao.user.UserService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,9 +81,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
+import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_GROUP_NAME;
 import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_NAME;
 import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_TYPE;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -78,13 +98,35 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     private static final int MAX_ENTITY_IDS_SIZE = 1024;
     private static final Set<EntityFilterType> EXCLUDED_TYPES_FROM_OPTIMIZATION = Set.of(
-            EntityFilterType.ENTITY_LIST, EntityFilterType.SINGLE_ENTITY, EntityFilterType.RELATIONS_QUERY);
+            EntityFilterType.ENTITY_LIST, EntityFilterType.SINGLE_ENTITY, EntityFilterType.RELATIONS_QUERY, EntityFilterType.ENTITY_GROUP_LIST);
+
+    @Autowired
+    private AssetService assetService;
+
+    @Autowired
+    private DeviceService deviceService;
+
+    @Autowired
+    private EntityViewService entityViewService;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    @Lazy
+    private UserService userService;
+
+    @Autowired
+    private DashboardService dashboardService;
 
     @Value("${sql.query.key-filters-or-conditions.enabled:true}")
     private boolean keyFiltersOrConditionsEnabled;
 
     @Autowired
     private EntityQueryDao entityQueryDao;
+
+    @Autowired
+    private EdgeService edgeService;
 
     @Autowired
     @Lazy
@@ -104,7 +146,142 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private JpaExecutorService jpaExecutorService;
 
     @Override
-    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
+    public <T extends GroupEntity<? extends EntityId>> PageData<T> findUserEntities(TenantId tenantId, CustomerId customerId,
+                                                                                    MergedUserPermissions userPermissions,
+                                                                                    EntityType entityType, Operation operation, String type, PageLink pageLink) {
+        return findUserEntities(tenantId, customerId, userPermissions, entityType, operation, type, pageLink, false, false);
+    }
+
+    @Override
+    public <T extends GroupEntity<? extends EntityId>> PageData<T> findUserEntities(TenantId tenantId, CustomerId customerId,
+                                                                                    MergedUserPermissions userPermissions,
+                                                                                    EntityType entityType, Operation operation, String type, PageLink pageLink, boolean mobile, boolean idOnly) {
+        MergedGroupTypePermissionInfo groupPermissions = userPermissions.getGroupPermissionsByEntityTypeAndOperation(entityType, operation);
+        if (customerId == null || customerId.isNullUid()) {
+            if (groupPermissions.isHasGenericRead()) {
+                return getEntityPageDataByTenantId(entityType, type, tenantId, pageLink, mobile);
+            } else {
+                return getEntityPageDataByGroupIds(entityType, type, groupPermissions.getEntityGroupIds(), pageLink, mobile);
+            }
+        } else {
+            if (groupPermissions.isHasGenericRead()) {
+                if (groupPermissions.getEntityGroupIds().isEmpty()) {
+                    return getEntityPageDataByCustomerId(entityType, type, tenantId, customerId, pageLink, mobile, idOnly);
+                } else {
+                    return getEntityPageDataByCustomerIdOrOtherGroupIds(entityType, type, tenantId, customerId, groupPermissions.getEntityGroupIds(), pageLink, mobile, idOnly);
+                }
+            } else {
+                return getEntityPageDataByGroupIds(entityType, type, groupPermissions.getEntityGroupIds(), pageLink, mobile);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends GroupEntity<? extends EntityId>> PageData<T> getEntityPageDataByTenantId(EntityType entityType, String type, TenantId tenantId, PageLink pageLink, boolean mobile) {
+        switch (entityType) {
+            case DEVICE:
+                if (type != null && !type.trim().isEmpty()) {
+                    return (PageData<T>) deviceService.findDevicesByTenantIdAndType(tenantId, type, pageLink);
+                } else {
+                    return (PageData<T>) deviceService.findDevicesByTenantId(tenantId, pageLink);
+                }
+            case ASSET:
+                if (type != null && !type.trim().isEmpty()) {
+                    return (PageData<T>) assetService.findAssetsByTenantIdAndType(tenantId, type, pageLink);
+                } else {
+                    return (PageData<T>) assetService.findAssetsByTenantId(tenantId, pageLink);
+                }
+            case ENTITY_VIEW:
+                if (type != null && !type.trim().isEmpty()) {
+                    return (PageData<T>) entityViewService.findEntityViewByTenantIdAndType(tenantId, pageLink, type);
+                } else {
+                    return (PageData<T>) entityViewService.findEntityViewByTenantId(tenantId, pageLink);
+                }
+            case EDGE:
+                if (type != null && !type.trim().isEmpty()) {
+                    return (PageData<T>) edgeService.findEdgesByTenantIdAndType(tenantId, type, pageLink);
+                } else {
+                    return (PageData<T>) edgeService.findEdgesByTenantId(tenantId, pageLink);
+                }
+            case DASHBOARD:
+                if (mobile) {
+                    return (PageData<T>) dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink);
+                } else {
+                    return (PageData<T>) dashboardService.findDashboardsByTenantId(tenantId, pageLink);
+                }
+            case CUSTOMER:
+                return (PageData<T>) customerService.findCustomersByTenantId(tenantId, pageLink);
+            case USER:
+                return (PageData<T>) userService.findUsersByTenantId(tenantId, pageLink);
+            default:
+                return new PageData<>();
+        }
+    }
+
+    private <T extends GroupEntity<? extends EntityId>> PageData<T> getEntityPageDataByCustomerId(EntityType entityType, String type, TenantId tenantId, CustomerId customerId, PageLink pageLink, boolean mobile, boolean idOnly) {
+        return getEntityPageDataByCustomerIdOrOtherGroupIds(entityType, type, tenantId, customerId, Collections.emptyList(), pageLink, mobile, idOnly);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends GroupEntity<? extends EntityId>> PageData<T> getEntityPageDataByCustomerIdOrOtherGroupIds(
+            EntityType entityType, String type, TenantId tenantId, CustomerId customerId, List<EntityGroupId> groupIds, PageLink pageLink, boolean mobile, boolean idOnly) {
+        if (type != null && type.trim().length() == 0) {
+            type = null;
+        }
+        EntityMapping<?, ?> mapping = EntityMapping.get(entityType);
+        if (idOnly) {
+            mapping = mapping.onlyId();
+        }
+        return (PageData<T>) entityQueryDao.findInCustomerHierarchyByRootCustomerIdOrOtherGroupIdsAndType(
+                tenantId, customerId, entityType, type, groupIds, pageLink, mapping, mobile);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends GroupEntity<? extends EntityId>> PageData<T> getEntityPageDataByGroupIds(EntityType entityType, String type,
+                                                                                                List<EntityGroupId> groupIds, PageLink pageLink, boolean mobile) {
+        if (!groupIds.isEmpty()) {
+            switch (entityType) {
+                case DEVICE:
+                    if (type != null && !type.trim().isEmpty()) {
+                        return (PageData<T>) deviceService.findDevicesByEntityGroupIdsAndType(groupIds, type, pageLink);
+                    } else {
+                        return (PageData<T>) deviceService.findDevicesByEntityGroupIds(groupIds, pageLink);
+                    }
+                case ASSET:
+                    if (type != null && !type.trim().isEmpty()) {
+                        return (PageData<T>) assetService.findAssetsByEntityGroupIdsAndType(groupIds, type, pageLink);
+                    } else {
+                        return (PageData<T>) assetService.findAssetsByEntityGroupIds(groupIds, pageLink);
+                    }
+                case ENTITY_VIEW:
+                    if (type != null && !type.trim().isEmpty()) {
+                        return (PageData<T>) entityViewService.findEntityViewsByEntityGroupIdsAndType(groupIds, type, pageLink);
+                    } else {
+                        return (PageData<T>) entityViewService.findEntityViewsByEntityGroupIds(groupIds, pageLink);
+                    }
+                case EDGE:
+                    if (type != null && !type.trim().isEmpty()) {
+                        return (PageData<T>) edgeService.findEdgesByEntityGroupIdsAndType(groupIds, type, pageLink);
+                    } else {
+                        return (PageData<T>) edgeService.findEdgesByEntityGroupIds(groupIds, pageLink);
+                    }
+                case DASHBOARD:
+                    if (mobile) {
+                        return (PageData<T>) dashboardService.findMobileDashboardsByEntityGroupIds(groupIds, pageLink);
+                    } else {
+                        return (PageData<T>) dashboardService.findDashboardsByEntityGroupIds(groupIds, pageLink);
+                    }
+                case CUSTOMER:
+                    return (PageData<T>) customerService.findCustomersByEntityGroupIds(groupIds, Collections.emptyList(), pageLink);
+                case USER:
+                    return (PageData<T>) userService.findUsersByEntityGroupIds(groupIds, pageLink);
+            }
+        }
+        return new PageData<>();
+    }
+
+    @Override
+    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions userPermissions, EntityCountQuery query) {
         log.trace("Executing countEntitiesByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
@@ -115,18 +292,19 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityCountQuery(query)
+                    .userPermissions(userPermissions)
                     .build();
             EdqsResponse response = processEdqsRequest(tenantId, customerId, request);
             result = response.getEntityCountQueryResult();
         } else {
-            result = entityQueryDao.countEntitiesByQuery(tenantId, customerId, query);
+            result = entityQueryDao.countEntitiesByQuery(tenantId, customerId, userPermissions, query);
         }
         edqsStatsService.reportEntityCountQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 
     @Override
-    public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+    public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions userPermissions, EntityDataQuery query) {
         log.trace("Executing findEntityDataByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
@@ -137,18 +315,19 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
+                    .userPermissions(userPermissions)
                     .build();
             EdqsResponse response = processEdqsRequest(tenantId, customerId, request);
             result = response.getEntityDataQueryResult();
         } else {
-            result = findEntityDataByQueryInternal(tenantId, customerId, query);
+            result = findEntityDataByQueryInternal(tenantId, customerId, userPermissions, query);
         }
         edqsStatsService.reportEntityDataQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 
     @Override
-    public ListenableFuture<PageData<EntityData>> findEntityDataByQueryAsync(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+    public ListenableFuture<PageData<EntityData>> findEntityDataByQueryAsync(TenantId tenantId, CustomerId customerId, MergedUserPermissions userPermissions, EntityDataQuery query) {
         log.trace("Executing findEntityDataByQueryAsync, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
 
         try {
@@ -162,6 +341,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
+                    .userPermissions(userPermissions)
                     .build();
             long startNs = System.nanoTime();
             return Futures.transform(processEdqsRequestAsync(tenantId, customerId, request), response -> {
@@ -172,28 +352,28 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
         return jpaExecutorService.submit(() -> {
             long startNs = System.nanoTime();
-            PageData<EntityData> result = findEntityDataByQueryInternal(tenantId, customerId, query);
+            PageData<EntityData> result = findEntityDataByQueryInternal(tenantId, customerId, userPermissions, query);
             edqsStatsService.reportEntityDataQuery(tenantId, query, System.nanoTime() - startNs);
             return result;
         });
     }
 
-    private PageData<EntityData> findEntityDataByQueryInternal(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+    private PageData<EntityData> findEntityDataByQueryInternal(TenantId tenantId, CustomerId customerId, MergedUserPermissions userPermissions, EntityDataQuery query) {
         if (!isValidForOptimization(query)) {
-            return entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
+            return entityQueryDao.findEntityDataByQuery(tenantId, customerId, userPermissions, query);
         }
         // 1 step - find entity data by filter and sort columns
-        PageData<EntityData> entityDataByQuery = findEntityIdsByFilterAndSorterColumns(tenantId, customerId, query);
+        PageData<EntityData> entityDataByQuery = findEntityIdsByFilterAndSorterColumns(tenantId, customerId, userPermissions, query);
         if (entityDataByQuery == null || entityDataByQuery.getData().isEmpty()) {
             return entityDataByQuery;
         }
         // 2 step - find entity data by entity ids from the 1st step
-        List<EntityData> entities = fetchEntityDataByIdsFromInitialQuery(tenantId, customerId, query, entityDataByQuery.getData());
+        List<EntityData> entities = fetchEntityDataByIdsFromInitialQuery(tenantId, customerId, query, userPermissions, entityDataByQuery.getData());
         return new PageData<>(entities, entityDataByQuery.getTotalPages(), entityDataByQuery.getTotalElements(), entityDataByQuery.hasNext());
     }
 
-    private boolean validForEdqs(EntityCountQuery query) { // for compatibility with PE
-        return true;
+    private boolean validForEdqs(EntityCountQuery query) {
+        return !(query.getEntityFilter() instanceof StateEntityOwnerFilter filter) || !EntityType.ALARM.equals(filter.getSingleEntity().getEntityType());
     }
 
     private EdqsResponse processEdqsRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request) {
@@ -250,7 +430,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     @Override
-    public Map<EntityId, EntityInfo> fetchEntityInfos(TenantId tenantId, CustomerId customerId, Set<EntityId> entityIds) {
+    public Map<EntityId, EntityInfo> fetchEntityInfos(TenantId tenantId, CustomerId customerId, Set<EntityId> entityIds, MergedUserPermissions userPermissions) {
         Map<EntityId, EntityInfo> infos = new HashMap<>();
         entityIds.stream()
                 .collect(Collectors.groupingBy(EntityId::getEntityType))
@@ -261,7 +441,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                     EntityDataQuery query = new EntityDataQuery(filter, new EntityDataPageLink(ids.size(), 0, null, null),
                             List.of(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.NAME_PROPERTY)), Collections.emptyList(), Collections.emptyList());
 
-                    entityQueryDao.findEntityDataByQuery(tenantId, customerId, query).getData().forEach(entityData -> {
+                    entityQueryDao.findEntityDataByQuery(tenantId, customerId, userPermissions, query).getData().forEach(entityData -> {
                         EntityId entityId = entityData.getEntityId();
                         Optional.ofNullable(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD))
                                 .map(fields -> fields.get(ModelConstants.NAME_PROPERTY))
@@ -313,6 +493,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             }
             return customerId;
         }
+        if (entity instanceof EntityGroup entityGroup && entityGroup.getOwnerId() instanceof CustomerId customerId) {
+            return customerId;
+        }
         return NULL_CUSTOMER_ID;
     }
 
@@ -331,6 +514,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             validateRelationQuery((RelationsQueryFilter) query.getEntityFilter());
         } else if (query.getEntityFilter().getType().equals(ENTITY_TYPE)) {
             validateEntityTypeQuery((EntityTypeFilter) query.getEntityFilter());
+        } else if (query.getEntityFilter().getType().equals(ENTITY_GROUP_NAME)) {
+            validateGroupNameQuery((EntityGroupNameFilter) query.getEntityFilter());
         } else if (query.getEntityFilter().getType().equals(ENTITY_NAME)) {
             validateEntityNameQuery((EntityNameFilter) query.getEntityFilter());
         }
@@ -355,6 +540,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private static void validateEntityNameQuery(EntityNameFilter filter) {
         if (filter.getEntityType() == null) {
             throw new IncorrectParameterException("Entity type is required");
+        }
+    }
+
+    private static void validateGroupNameQuery(EntityGroupNameFilter filter) {
+        if (filter.getGroupType() == null) {
+            throw new IncorrectParameterException("Group type is required");
         }
     }
 
@@ -391,7 +582,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         return !(filteringKeys.containsAll(entityFields) && filteringKeys.containsAll(latestValues));
     }
 
-    private PageData<EntityData> findEntityIdsByFilterAndSorterColumns(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+    private PageData<EntityData> findEntityIdsByFilterAndSorterColumns(TenantId tenantId, CustomerId customerId,
+                                                                       MergedUserPermissions userPermissions, EntityDataQuery query) {
         List<EntityKey> entityFields = null;
         List<EntityKey> latestValues = null;
         if (query.getPageLink().getSortOrder() != null) {
@@ -407,10 +599,11 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             }
         }
         EntityDataQuery entityQuery = new EntityDataQuery(query.getEntityFilter(), query.getPageLink(), entityFields, latestValues, query.getKeyFilters(), query.getKeyFiltersOperation());
-        return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, entityQuery);
+        return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, userPermissions, entityQuery);
     }
 
-    private List<EntityData> fetchEntityDataByIdsFromInitialQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query, List<EntityData> initialQueryResult) {
+    private List<EntityData> fetchEntityDataByIdsFromInitialQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query,
+                                                                  MergedUserPermissions userPermissions, List<EntityData> initialQueryResult) {
         List<EntityData> result = new ArrayList<>();
 
         List<String> entityIds = initialQueryResult.stream().map(d -> d.getEntityId().getId().toString()).collect(Collectors.toList());
@@ -422,23 +615,33 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 chunks.add(entityIds.subList(i, Math.min(entityIds.size(), i + MAX_ENTITY_IDS_SIZE)));
             }
             for (List<String> chunk : chunks) {
-                result.addAll(findEntityDataByEntityIds(tenantId, customerId, query, chunk, entityType, chunk.size()));
+                result.addAll(findEntityDataByEntityIds(tenantId, customerId, query, userPermissions, chunk, entityType, chunk.size()));
             }
         } else {
-            result.addAll(findEntityDataByEntityIds(tenantId, customerId, query, entityIds, entityType, query.getPageLink().getPageSize()));
+            result.addAll(findEntityDataByEntityIds(tenantId, customerId, query, userPermissions, entityIds, entityType, query.getPageLink().getPageSize()));
         }
         return result;
     }
 
-    private List<EntityData> findEntityDataByEntityIds(TenantId tenantId, CustomerId customerId, EntityDataQuery query,
+    private List<EntityData> findEntityDataByEntityIds(TenantId tenantId, CustomerId customerId, EntityDataQuery query, MergedUserPermissions userPermissions,
                                                        List<String> entityIds, EntityType entityType, int pageSize) {
-        EntityListFilter filter = new EntityListFilter();
-        filter.setEntityType(entityType);
-        filter.setEntityList(entityIds);
-
+        EntityDataQuery entityQuery;
         EntityDataPageLink pageLink = new EntityDataPageLink(pageSize, 0, null, query.getPageLink().getSortOrder());
-        EntityDataQuery entityQuery = new EntityDataQuery(filter, pageLink, query.getEntityFields(), query.getLatestValues(), null);
-        return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, entityQuery).getData();
+
+        if (EntityFilterType.ENTITY_GROUP_NAME.equals(query.getEntityFilter().getType())) {
+            EntityGroupListFilter filter = new EntityGroupListFilter();
+            filter.setGroupType(((EntityGroupNameFilter) query.getEntityFilter()).getGroupType());
+            filter.setEntityGroupList(entityIds);
+
+            entityQuery = new EntityDataQuery(filter, pageLink, query.getEntityFields(), query.getLatestValues(), null);
+        } else {
+            EntityListFilter filter = new EntityListFilter();
+            filter.setEntityType(entityType);
+            filter.setEntityList(entityIds);
+
+            entityQuery = new EntityDataQuery(filter, pageLink, query.getEntityFields(), query.getLatestValues(), null);
+        }
+        return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, userPermissions, entityQuery).getData();
     }
 
 }

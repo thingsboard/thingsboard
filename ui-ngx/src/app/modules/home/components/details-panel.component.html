@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <header>
-  <mat-toolbar class="details-toolbar" [style.height]="headerHeightPx+'px'">
+  <mat-toolbar class="details-toolbar" [class.tb-bottom-border]="color === 'tb-primary'" [color]="color" [style.height]="headerHeightPx+'px'">
     <div class="mat-toolbar-tools flex flex-row items-center justify-start" style="height: 100%;">
       <div class="mat-toolbar-tools tb-details-title-header flex flex-1 flex-col items-start justify-start" [class.!hidden]="showSearchPane">
         <div class="tb-details-title flex flex-row items-center justify-start">

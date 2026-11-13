@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-form-field [formGroup]="selectDashboardFormGroup"
@@ -72,12 +73,12 @@
       </mat-option>
     }
   </mat-autocomplete>
-  @if (!inlineField) {
+  @if (!inlineField && showError) {
     <mat-error>
       <ng-content select="[tb-error]"></ng-content>
     </mat-error>
   }
-  @if (!inlineField) {
+  @if (!inlineField && showHint) {
     <mat-hint>
       <ng-content select="[tb-hint]"></ng-content>
     </mat-hint>

@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="flex flex-col" [formGroup]="alarmRuleFormGroup">
@@ -36,6 +37,7 @@
       <tb-dashboard-autocomplete class="tb-alarm-rule-dashboard dashboard"
                                  label=""
                                  placeholder="{{ 'device-profile.alarm-rule-no-mobile-dashboard' | translate }}"
+                                 showHint
                                  formControlName="dashboardId">
         <span tb-hint>{{'device-profile.alarm-rule-mobile-dashboard-hint' | translate}}</span>
       </tb-dashboard-autocomplete>

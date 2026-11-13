@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.mqttv3.claim;
 
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,8 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
+
+import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_CLAIM_SHORT_JSON_TOPIC;
 
 @Slf4j
 @DaoSqlTest
@@ -31,6 +34,16 @@ public class MqttClaimJsonDeviceTest extends MqttClaimDeviceTest {
     @Test
     public void testClaimingDeviceWithoutSecretAndDuration() throws Exception {
         processTestClaimingDevice(true);
+    }
+
+    @Test
+    public void testClaimingDeviceOnShortJsonTopic() throws Exception {
+        processTestClaimingDevice(false, DEVICE_CLAIM_SHORT_JSON_TOPIC);
+    }
+
+    @Test
+    public void testClaimingDeviceOnShortJsonTopicWithoutSecretAndDuration() throws Exception {
+        processTestClaimingDevice(true, DEVICE_CLAIM_SHORT_JSON_TOPIC);
     }
 
     @Test

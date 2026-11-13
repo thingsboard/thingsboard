@@ -1,0 +1,72 @@
+{
+    "end_device_ids": {
+        "device_id": "eui-1000000000000001",
+            "application_ids": {
+                "application_id": "application-tts-name"
+            },
+        "dev_eui": "1000000000000001",
+        "join_eui": "2000000000000001",
+        "dev_addr": "20000001"
+    },
+    "correlation_ids": ["as:up:01H0S7ZJQ9MQPMVY49FT3SE07M", "gs:conn:01H03BQZ9342X3Y86DJ2P704E5", "gs:up:host:01H03BQZ99EGAM52KK1300GFKN", "gs:uplink:01H0S7ZJGS6D9TJSKJN8XNTMAV", "ns:uplink:01H0S7ZJGS9KKD4HTTPKFEMWCV", "rpc:/ttn.lorawan.v3.GsNs/HandleUplink:01H0S7ZJGSF3M38ZRZVTM38DEC", "rpc:/ttn.lorawan.v3.NsAs/HandleUplink:01H0S7ZJQ8R2EH5AA269AKM8DX"],
+    "received_at": "2023-05-19T05:33:35.848446463Z",
+    "uplink_message": {
+    "session_key_id": "AYfqmb0pc/1uRZv9xUydgQ==",
+    "f_port": 85,
+    "f_cnt": 10335,
+    "frm_payload": "A2fuAARofAUAAQbLAgd9qAMIfSUACXNmJwt9IAAMfTAA",
+    "decoded_payload": {
+        "temperature": 23.8,
+        "humidity": 62,
+        "pir": "trigger",
+        "light_level": 2,
+        "co2": 936,
+        "tvoc": 0.37,
+        "pressure": 1008.6,
+        "pm2_5": 32,
+        "pm10": 48
+    },
+    "rx_metadata": [{
+        "gateway_ids": {
+            "gateway_id": "eui-6a7e111a10000000",
+            "eui": "6A7E111A10000000"
+        },
+        "time": "2023-05-19T05:33:35.608982Z",
+        "timestamp": 3893546133,
+        "rssi": -35,
+        "channel_rssi": -35,
+        "snr": 13.2,
+        "frequency_offset": "69",
+        "uplink_token": "CiIKIAoUZXVpLTZhN2UxMTFhMTAwMDAwMDASCCThJP/+9k6eEJWZy8AOGgwIr5ScowYQvNbUsQIgiMy8y6jwpwE=",
+        "channel_index": 3,
+        "received_at": "2023-05-19T05:33:35.607383681Z"
+    }],
+    "settings": {
+        "data_rate": {
+            "lora": {
+                "bandwidth": 125000,
+                "spreading_factor": 7,
+                "coding_rate": "4/5"
+                }
+            },
+            "frequency": "867100000",
+            "timestamp": 3893546133,
+            "time": "2023-05-19T05:33:35.608982Z"
+        },
+        "received_at": "2023-05-19T05:33:35.641841782Z",
+        "consumed_airtime": "0.056576s",
+        "version_ids": {
+            "brand_id": "milesight-iot",
+            "model_id": "am308",
+            "hardware_version": "1.x",
+            "firmware_version": "1.x",
+            "band_id": "EU_863_870"
+        },
+            "network_ids": {
+                "net_id": "000013",
+                "tenant_id": "ttn",
+                "cluster_id": "eu1",
+                "cluster_address": "eu1.cloud.thethings.network"
+        }
+    }
+}

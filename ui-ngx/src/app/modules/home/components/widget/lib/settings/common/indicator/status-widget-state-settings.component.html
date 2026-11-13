@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="stateSettingsFormGroup">
@@ -63,6 +64,7 @@
       <div class="flex flex-row items-center justify-start gap-2">
         <div tb-hint-tooltip-icon="{{'widgets.status-widget.primary-color-hint' | translate}}" translate>widgets.status-widget.primary</div>
         <tb-color-input asBoxInput
+                        useThemePalette
                         formControlName="primaryColor">
         </tb-color-input>
       </div>
@@ -73,10 +75,10 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div tb-hint-tooltip-icon="{{'widgets.status-widget.secondary-color-hint' | translate}}" translate>widgets.status-widget.secondary</div>
           <tb-color-input asBoxInput
-                          formControlName="secondaryColor">
-          </tb-color-input>
-        </div>
-      }
+                          useThemePalette
+                        formControlName="secondaryColor">
+        </tb-color-input>
+      </div>}
       <mat-divider vertical class="lt-sm:!hidden" [class.lt-md:!hidden]="layout !== StatusWidgetLayout.icon"></mat-divider>
       <div class="flex flex-row items-center justify-start gap-2">
         <div translate>widgets.status-widget.background</div>
@@ -93,6 +95,7 @@
       <div class="flex flex-row items-center justify-start gap-2">
         <div tb-hint-tooltip-icon="{{'widgets.status-widget.primary-color-hint' | translate}}" translate>widgets.status-widget.primary</div>
         <tb-color-input asBoxInput
+                        useThemePalette
                         formControlName="primaryColorDisabled">
         </tb-color-input>
       </div>
@@ -103,10 +106,10 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div tb-hint-tooltip-icon="{{'widgets.status-widget.secondary-color-hint' | translate}}" translate>widgets.status-widget.secondary</div>
           <tb-color-input asBoxInput
-                          formControlName="secondaryColorDisabled">
-          </tb-color-input>
-        </div>
-      }
+                          useThemePalette
+                        formControlName="secondaryColorDisabled">
+        </tb-color-input>
+      </div>}
       <mat-divider vertical class="lt-sm:!hidden" [class.lt-md:!hidden]="layout !== StatusWidgetLayout.icon"></mat-divider>
       <div class="flex flex-row items-center justify-start gap-2">
         <div translate>widgets.status-widget.background</div>

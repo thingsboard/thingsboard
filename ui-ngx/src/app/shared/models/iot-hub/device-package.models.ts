@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 export enum InstallMethod {
   // Direct device-to-platform transports
   DIRECT_HTTP = 'DIRECT_HTTP',
@@ -25,7 +26,7 @@ export enum InstallMethod {
   GATEWAY_XMPP = 'GATEWAY_XMPP',
   // ChirpStack (CE-compatible LoRaWAN integration)
   CHIRPSTACK = 'CHIRPSTACK',
-  // ThingsBoard PE integrations (CE shows "PE only" gate)
+  // License-gated integrations (CE shows a "PE only" lock)
   INTEGRATION_APACHE_PULSAR = 'INTEGRATION_APACHE_PULSAR',
   INTEGRATION_AWS_IOT = 'INTEGRATION_AWS_IOT',
   INTEGRATION_AWS_KINESIS = 'INTEGRATION_AWS_KINESIS',
@@ -109,8 +110,8 @@ export const installMethodLabels = new Map<string, string>(
     [InstallMethod.INTEGRATION_TCP, 'TCP Integration'],
     [InstallMethod.INTEGRATION_THINGPARK, 'ThingPark Wireless'],
     [InstallMethod.INTEGRATION_THINGPARK_ENTERPRISE, 'ThingPark Enterprise'],
-    [InstallMethod.INTEGRATION_TTI, 'The Things Industries'],
-    [InstallMethod.INTEGRATION_TTN, 'The Things Stack'],
+    [InstallMethod.INTEGRATION_TTI, 'The Things Stack Cloud & Enterprise'],
+    [InstallMethod.INTEGRATION_TTN, 'The Things Stack Sandbox'],
     [InstallMethod.INTEGRATION_TUYA, 'Tuya'],
     [InstallMethod.INTEGRATION_UDP, 'UDP Integration']
   ]
@@ -173,43 +174,12 @@ export const installMethodIcons = new Map<string, string>(
   ]
 );
 
-export const peOnlyInstallMethods: ReadonlySet<string> = new Set<string>([
-  InstallMethod.INTEGRATION_APACHE_PULSAR,
-  InstallMethod.INTEGRATION_AWS_IOT,
-  InstallMethod.INTEGRATION_AWS_KINESIS,
-  InstallMethod.INTEGRATION_AWS_SQS,
-  InstallMethod.INTEGRATION_AZURE_EVENT_HUB,
-  InstallMethod.INTEGRATION_AZURE_IOT_HUB,
-  InstallMethod.INTEGRATION_AZURE_SERVICE_BUS,
-  InstallMethod.INTEGRATION_CHIRPSTACK,
-  InstallMethod.INTEGRATION_COAP,
-  InstallMethod.INTEGRATION_CUSTOM,
-  InstallMethod.INTEGRATION_HTTP,
-  InstallMethod.INTEGRATION_IOT_CREATORS,
-  InstallMethod.INTEGRATION_KAFKA,
-  InstallMethod.INTEGRATION_KPN_THINGS,
-  InstallMethod.INTEGRATION_LORIOT,
-  InstallMethod.INTEGRATION_MQTT,
-  InstallMethod.INTEGRATION_OPC_UA,
-  InstallMethod.INTEGRATION_PARTICLE,
-  InstallMethod.INTEGRATION_PUB_SUB,
-  InstallMethod.INTEGRATION_RABBITMQ,
-  InstallMethod.INTEGRATION_REMOTE,
-  InstallMethod.INTEGRATION_SIGFOX,
-  InstallMethod.INTEGRATION_TCP,
-  InstallMethod.INTEGRATION_THINGPARK,
-  InstallMethod.INTEGRATION_THINGPARK_ENTERPRISE,
-  InstallMethod.INTEGRATION_TTI,
-  InstallMethod.INTEGRATION_TTN,
-  InstallMethod.INTEGRATION_TUYA,
-  InstallMethod.INTEGRATION_UDP
-]);
-
 export enum InstallStepType {
   SHOW_INSTRUCTION = 'SHOW_INSTRUCTION',
   SHOW_FORM = 'SHOW_FORM',
   DEVICE_PROFILE = 'DEVICE_PROFILE',
-  CONVERTER = 'CONVERTER',
+  UPLINK_CONVERTER = 'UPLINK_CONVERTER',
+  DOWNLINK_CONVERTER = 'DOWNLINK_CONVERTER',
   INTEGRATION = 'INTEGRATION',
   DEVICE = 'DEVICE',
   GATEWAY = 'GATEWAY',
@@ -220,6 +190,9 @@ export enum InstallStepType {
 
 export const ENTITY_STEP_TYPES = new Set<string>([
   InstallStepType.DEVICE_PROFILE,
+  InstallStepType.UPLINK_CONVERTER,
+  InstallStepType.DOWNLINK_CONVERTER,
+  InstallStepType.INTEGRATION,
   InstallStepType.DEVICE,
   InstallStepType.GATEWAY,
   InstallStepType.GATEWAY_CONNECTOR,
@@ -229,6 +202,9 @@ export const ENTITY_STEP_TYPES = new Set<string>([
 
 export const stepTypeAliasMap: Record<string, string> = {
   [InstallStepType.DEVICE_PROFILE]: 'deviceProfile',
+  [InstallStepType.UPLINK_CONVERTER]: 'uplinkConverter',
+  [InstallStepType.DOWNLINK_CONVERTER]: 'downlinkConverter',
+  [InstallStepType.INTEGRATION]: 'integration',
   [InstallStepType.DEVICE]: 'device',
   [InstallStepType.GATEWAY]: 'gateway',
   [InstallStepType.GATEWAY_CONNECTOR]: 'gatewayConnector',
@@ -239,12 +215,21 @@ export const stepTypeAliasMap: Record<string, string> = {
 export interface DeviceInstallStep {
   type: InstallStepType;
   name: string;
+  // Optional stable id of the step, unique within the install method: the key of the step's install state,
+  // so the next version can rename the step. Without it, the key is the type and the name; a form's is its name.
+  id?: string;
   file?: string;
   template?: string;
   serverAttributes?: string;
   sharedAttributes?: string;
   credentials?: string;
   dockerCompose?: string;
+  // INTEGRATION step references the integration-form.json artifact alongside the template.
+  form?: string;
+  // UPLINK_CONVERTER: ThingsBoard's default converter for the method's integration instead of a template
+  default?: boolean;
+  // INTEGRATION: entries added to the integration's metadata, which keeps the entries it has
+  metadata?: Record<string, string>;
 }
 
 export interface DevicePackageInfo {
@@ -263,8 +248,16 @@ export enum FormFieldType {
   INTEGER = 'INTEGER',
   BOOLEAN = 'BOOLEAN',
   SELECT = 'SELECT',
+  // Free-text input with autocomplete suggestions from `options`. Use when the
+  // expected values are well-known but extensible (e.g., LORIOT regional servers).
+  STRING_AUTOCOMPLETE = 'STRING_AUTOCOMPLETE',
   PASSWORD = 'PASSWORD'
 }
+
+// secretSupport: when true, the FE renders the field via tb-secret-key-input
+// (which accepts both plaintext and Secret references). Mirrors Java
+// TemplateField#secret on the backend.
+export type SecretType = 'TEXT' | 'TEXT_FILE';
 
 export interface FormFieldValidator {
   pattern: string;
@@ -289,7 +282,64 @@ export interface FormFieldDefinition {
   randomGenerator?: boolean;
   randomSize?: number;
   randomByDefault?: boolean;
+  // Integration template additions. secretSupport=true → render Secret picker
+  // (tb-secret-key-input); false / undefined → render the typed widget.
+  secretSupport?: boolean;
+  secretType?: SecretType;
+  // Consecutive fields with the same group are shown in one panel titled with the group
+  group?: string;
+  readOnly?: boolean;
+  // A STRING field the user changed shows a button that puts defaultValue back
+  resettable?: boolean;
+  // Shown inside the empty field; the label then always stays above it
+  placeholder?: string;
+  // Fills the field from other fields of the form, e.g. "TTN – ${appId}", until the user edits it.
+  // defaultValue stays the value for ThingsBoard versions that don't know this attribute.
+  defaultValueTemplate?: string;
+  // Replaces helpText when defaultValueTemplate fills the field
+  defaultValueTemplateHelpText?: string;
+  // 'advanced' puts the field into the collapsed Advanced settings panel below the form
+  section?: FormFieldSection;
+  // Next checks the connection of the integration the form configures and stops on a failure
+  checkConnection?: boolean;
+  // With checkConnection: the text of the dialog a failed check shows
+  checkConnectionFailedText?: string;
+  // A regular expression whose matches are removed from the value when the user leaves the field
+  // and before the step is committed, e.g. "@ttn$" for an ID copied with its suffix.
+  // validators check the cleaned value.
+  cleanupPattern?: string;
+  // Key of the field that takes the port pasted at the end of this field's value, e.g. "host:8883"
+  portField?: string;
+  // Set by the install dialog for the fields it adds, not by packages:
+  // help popup shown under the field, and the text of its trigger
+  helpPopupId?: string;
+  helpPopupText?: string;
+  // Shown when the field fails a validator the dialog adds (not on required)
+  errorMessage?: string;
+  // Consecutive fields with the same row are shown on one line. A field with a width (px) keeps it;
+  // the other fields of the row share the remaining space.
+  row?: string;
+  width?: number;
 }
+
+export type FormFieldSection = 'advanced';
+
+const PASTED_PORT_PATTERN = /:(\d{1,5})\/*\s*$/;
+
+/** The value without the port that portField takes, then without the cleanupPattern matches. */
+export const cleanFormFieldValue = (field: FormFieldDefinition, value: any): any => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  const withoutPort = field.portField ? value.replace(PASTED_PORT_PATTERN, '') : value;
+  return field.cleanupPattern ? withoutPort.replace(new RegExp(field.cleanupPattern, 'g'), '') : withoutPort;
+};
+
+/** The port at the end of the value of a field with portField, e.g. 8883 for "eu1.example.com:8883". */
+export const pastedPortOf = (field: FormFieldDefinition, value: any): number | undefined => {
+  const match = field.portField && typeof value === 'string' ? PASTED_PORT_PATTERN.exec(value) : null;
+  return match ? Number(match[1]) : undefined;
+};
 
 export interface EntityStepOutput {
   id: string;
@@ -297,9 +347,16 @@ export interface EntityStepOutput {
   url?: string;
   token?: string;
   dockerComposeUrl?: string;
+  // INTEGRATION step output: routing key, auto-generated webhook URL, and PE base URL.
+  // Resolved in install instructions as ${integration.routingKey}, ${integration.httpEndpoint},
+  // ${integration.baseUrl}.
+  routingKey?: string;
+  httpEndpoint?: string;
+  baseUrl?: string;
 }
 
-export type EntityStepStatus = 'pending' | 'running' | 'success' | 'error' | 'conflict';
+// skipped: a step of an update that failed, so nothing was changed
+export type EntityStepStatus = 'pending' | 'running' | 'success' | 'error' | 'conflict' | 'skipped';
 
 export type ConflictType = 'use-or-overwrite' | 'overwrite-or-copy';
 

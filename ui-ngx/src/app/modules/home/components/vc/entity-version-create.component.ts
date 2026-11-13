@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -34,6 +35,9 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
 
   @Input()
   entityId: EntityId;
+
+  @Input()
+  groupType: EntityType;
 
   @Input()
   entityName: string;
@@ -77,7 +81,9 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
       saveRelations: [false, []],
       saveAttributes: [true, []],
       saveCredentials: [true, []],
-      saveCalculatedFields: [true, []]
+      saveCalculatedFields: [true, []],
+      savePermissions: [true, []],
+      saveGroupEntities: [true, []]
     });
   }
 
@@ -106,8 +112,13 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
             ? this.createVersionFormGroup.get('saveRelations').value : false,
           saveAttributes: !entityTypesWithoutRelatedData.has(this.entityId.entityType)
             ? this.createVersionFormGroup.get('saveAttributes').value : false,
-          saveCredentials: this.entityId.entityType === EntityType.DEVICE ? this.createVersionFormGroup.get('saveCredentials').value : false,
+          saveCredentials: (this.entityId.entityType === EntityType.DEVICE || EntityType.DEVICE === this.groupType) ?
+            this.createVersionFormGroup.get('saveCredentials').value : false,
           saveCalculatedFields: typesWithCalculatedFields.has(this.entityId.entityType) ? this.createVersionFormGroup.get('saveCalculatedFields').value : false,
+          savePermissions: this.entityId.entityType === EntityType.ENTITY_GROUP && EntityType.USER === this.groupType ?
+            this.createVersionFormGroup.get('savePermissions').value : false,
+          saveGroupEntities: this.entityId.entityType === EntityType.ENTITY_GROUP && EntityType.USER !== this.groupType ?
+            this.createVersionFormGroup.get('saveGroupEntities').value : false,
         },
         type: VersionCreateRequestType.SINGLE_ENTITY
       };

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Directive, ElementRef, EventEmitter, OnDestroy, Output } from '@angular/core';
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';

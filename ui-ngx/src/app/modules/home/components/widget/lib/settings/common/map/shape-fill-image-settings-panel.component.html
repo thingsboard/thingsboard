@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-shape-fill-image-settings-panel" [formGroup]="shapeFillImageSettingsFormGroup">
+<div class="tb-shape-fill-image-settings-panel" [formGroup]="shapeFillImageSettingsFormGroup" tbPopoverContentResize>
   <div class="tb-shape-fill-image-settings-title" translate>widgets.maps.data-layer.shape.fill-image</div>
   <div class="flex flex-row">
     <tb-toggle-select formControlName="type" class="flex-1">

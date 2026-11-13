@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Input } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -8,9 +9,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     selector: 'tb-error',
     template: `
     <div [@animation]="state" [style.margin-top]="noMargin ? '0' : '0.5rem'" style="font-size: .75rem">
-      <mat-error>
-        {{message}}
-      </mat-error>
+      <mat-error>{{message}}</mat-error>
     </div>
   `,
     styles: [`

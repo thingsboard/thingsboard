@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.processor.asset.profile;
 
@@ -31,7 +31,8 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             if (assetProfile == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetProfileUpdateMsg {" + assetProfileUpdateMsg + "} cannot be converted to asset profile");
             }
-            AssetProfile assetProfileById = edgeCtx.getAssetProfileService().findAssetProfileById(tenantId, assetProfileId);
+            AssetProfile assetProfileById = findTenantEntity(tenantId, assetProfileId);
+            assetProfile.setTenantId(tenantId);
             if (assetProfileById == null) {
                 created = true;
                 assetProfile.setId(null);

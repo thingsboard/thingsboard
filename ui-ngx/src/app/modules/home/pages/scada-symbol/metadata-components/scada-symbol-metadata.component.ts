@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   DestroyRef,
@@ -42,6 +43,7 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 @Component({
     selector: 'tb-scada-symbol-metadata',
@@ -116,7 +118,8 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
               private fb: UntypedFormBuilder,
               private translate: TranslateService,
               private customTranslate: CustomTranslatePipe,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private wl: WhiteLabelingService) {
     super(store);
   }
 
@@ -213,7 +216,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   }
 
   private updateFunctionCompleters(metadata: ScadaSymbolMetadata) {
-    const contextCompleter = scadaSymbolContextCompletion(metadata, this.tags, this.customTranslate);
+    const contextCompleter = scadaSymbolContextCompletion(metadata, this.tags, this.customTranslate, this.wl);
     const generalStateRender = generalStateRenderFunctionCompletions(contextCompleter);
     if (!this.generalStateRenderFunctionCompleter) {
       this.generalStateRenderFunctionCompleter = new TbEditorCompleter(generalStateRender);

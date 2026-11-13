@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../../../scss/constants";
 
 :host {
@@ -49,11 +50,22 @@
       flex-direction: row;
       align-items: center;
       .tb-link-icon-container {
+        position: relative;
         height: 40px;
         padding: 8px;
-        background: #F3F6FA;
         border-radius: 6px;
         margin-right: 8px;
+        &:before {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          border-radius: 6px;
+          background: var(--tb-primary-500);
+          opacity: 0.04;
+        }
         @media #{$mat-md-lg} {
           display: none;
         }

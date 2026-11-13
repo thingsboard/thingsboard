@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnInit } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { AppState } from '@core/core.state';
@@ -24,6 +25,9 @@ export class LogoComponent implements OnInit {
 
   @Input()
   target: string = null;
+
+  @Input()
+  embed = false;
 
   isExternal = false;
 

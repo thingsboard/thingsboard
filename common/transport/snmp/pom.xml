@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -10,7 +11,7 @@
 
     <parent>
         <groupId>org.thingsboard.common</groupId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.4.1-SNAPSHOT</version>
         <artifactId>transport</artifactId>
     </parent>
 
@@ -46,12 +47,6 @@
         <dependency>
             <groupId>org.snmp4j</groupId>
             <artifactId>snmp4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.snmp4j</groupId>
-            <artifactId>snmp4j-agent</artifactId>
-            <version>3.3.6</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { ValidatorFn, Validators } from '@angular/forms';
 import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -138,6 +139,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 existingAlarm.setSeverity(msgAlarm.getSeverity());
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
                 existingAlarm.setPropagateToOwner(msgAlarm.isPropagateToOwner());
+                existingAlarm.setPropagateToOwnerHierarchy(msgAlarm.isPropagateToOwnerHierarchy());
                 existingAlarm.setPropagateToTenant(msgAlarm.isPropagateToTenant());
                 existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
                 if (buildDetails) {
@@ -149,6 +151,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 existingAlarm.setSeverity(processAlarmSeverity(msg));
                 existingAlarm.setPropagate(config.isPropagate());
                 existingAlarm.setPropagateToOwner(config.isPropagateToOwner());
+                existingAlarm.setPropagateToOwnerHierarchy(config.isPropagateToOwnerHierarchy());
                 existingAlarm.setPropagateToTenant(config.isPropagateToTenant());
                 existingAlarm.setPropagateRelationTypes(relationTypes);
                 existingAlarm.setDetails(details);
@@ -170,6 +173,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .propagate(config.isPropagate())
                 .propagateToOwner(config.isPropagateToOwner())
                 .propagateToTenant(config.isPropagateToTenant())
+                .propagateToOwnerHierarchy(config.isPropagateToOwnerHierarchy())
                 .type(TbNodeUtils.processPattern(config.getAlarmType(), msg))
                 .propagateRelationTypes(relationTypes)
                 .startTs(ts)

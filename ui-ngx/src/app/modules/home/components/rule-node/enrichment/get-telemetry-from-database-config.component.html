@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="getTelemetryFromDatabaseConfigForm" class="tb-form-panel no-padding no-border">
@@ -17,7 +18,7 @@
          trigger-style="letter-spacing:0.25px; font-size:12px"
          [tb-help-popup-style]="{maxWidth: '820px'}"
     trigger-text="{{ 'rule-node-config.key-val.see-examples' | translate }}"></div>
-    <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" color="primary"
+    <mat-icon matSuffix class="help-icon m-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" color="primary"
               matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.timeseries-key' | translate } }}">help
     </mat-icon>
   </tb-string-items-list>
@@ -93,9 +94,9 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div class="description-block tb-primary-fill" [class.error]="getTelemetryFromDatabaseConfigForm.get('interval').invalid">
-          <mat-icon class="description-icon">error_outline</mat-icon>
-          <div class="description-text">
+        <div class="tb-form-hint tb-primary-fill" [class.tb-form-hint-error]="getTelemetryFromDatabaseConfigForm.get('interval').invalid">
+          <mat-icon>{{ getTelemetryFromDatabaseConfigForm.get('interval').valid ? 'info_outline' : 'error_outline' }}</mat-icon>
+          <span>
             @if (getTelemetryFromDatabaseConfigForm.get('interval').valid) {
               {{ 'rule-node-config.fetch-timeseries-from-to' | translate:
               {
@@ -107,7 +108,7 @@
             } @else {
               {{ "rule-node-config.fetch-timeseries-from-to-invalid" | translate }}
             }
-          </div>
+          </span>
         </div>
       </div>
     } @else {
@@ -151,7 +152,8 @@
         </tb-toggle-select>
       </div>
       <div class="tb-form-hint tb-primary-fill hint-container">
-        {{ deduplicationStrategiesHintTranslations.get(getTelemetryFromDatabaseConfigForm.get('fetchMode').value) | translate }}
+        <mat-icon>info_outline</mat-icon>
+        <span>{{ deduplicationStrategiesHintTranslations.get(getTelemetryFromDatabaseConfigForm.get('fetchMode').value) | translate }}</span>
       </div>
     </div>
     @if (getTelemetryFromDatabaseConfigForm.get('fetchMode').value === fetchMode.ALL) {

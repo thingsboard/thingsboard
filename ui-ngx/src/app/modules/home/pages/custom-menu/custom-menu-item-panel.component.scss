@@ -1,0 +1,36 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import '../../../../../scss/constants';
+
+.tb-custom-menu-item-panel {
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @media #{$mat-lt-md} {
+    width: 90vw;
+  }
+  .tb-custom-menu-item-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-custom-menu-item-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: auto;
+    margin: -10px;
+    padding: 10px;
+  }
+  .tb-custom-menu-item-panel-buttons {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+}

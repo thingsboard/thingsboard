@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-installed-table-container flex flex-1 flex-col overflow-hidden rounded-lg">
@@ -41,29 +42,26 @@
         <th mat-header-cell *matHeaderCellDef>@if (updatesChecked) { {{ 'iot-hub.updates' | translate }} }</th>
         <td mat-cell *matCellDef="let item">
           @if (updatesChecked) {
-            @if (getPublishedVersionInfo(item); as pubInfo) {
-              @if (pubInfo.publishedVersionId !== item.itemVersionId) {
-                <div class="flex items-center gap-3">
-                  @if (!itemVersion) {
-                    <button class="tb-installed-version-btn" (click)="viewUpdateDetails(pubInfo, item)">
-                      <mat-icon>arrow_upward</mat-icon>
-                      v{{ pubInfo.publishedVersion }} {{ 'iot-hub.available' | translate }}
-                    </button>
-                  }
+            @let pubInfo = getPublishedVersionInfo(item);
+            @if (pubInfo?.publishedVersionId && pubInfo.publishedVersionId !== item.itemVersionId) {
+              <div class="flex items-center gap-3">
+                @if (!itemVersion) {
                   <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateItem(item, pubInfo)">
-                    @if (itemVersion) {
-                      {{ 'iot-hub.update-to-version' | translate:{ version: pubInfo.publishedVersion } }}
-                    } @else {
-                      {{ 'iot-hub.update' | translate }}
-                    }
+                    <mat-icon>arrow_upward</mat-icon>
+                    v{{ pubInfo.publishedVersion }} {{ 'iot-hub.available' | translate }}
                   </button>
-                </div>
-              } @else {
-                <span class="tb-installed-up-to-date">
-                  <mat-icon>check</mat-icon>
-                  {{ 'iot-hub.up-to-date' | translate }}
-                </span>
-              }
+                } @else {
+                  <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateItem(item, pubInfo)">
+                    {{ 'iot-hub.update-to-version' | translate:{ version: pubInfo.publishedVersion } }}
+                  </button>
+                }
+              </div>
+            } @else if (hasConverterUpdate(item)) {
+              <!-- Only ThingsBoard's default converter changed: the package has no new version for it -->
+              <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateConverter(item)">
+                <mat-icon>arrow_upward</mat-icon>
+                {{ 'iot-hub.new-converter-available' | translate }}
+              </button>
             } @else {
               <span class="tb-installed-up-to-date">
                 <mat-icon>check</mat-icon>
@@ -88,9 +86,12 @@
                 <mat-icon>info_outline</mat-icon>
               </button>
             }
-            <button mat-icon-button (click)="openEntity(item)" matTooltip="{{ (item.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.goto-main-dashboard' : 'iot-hub.open-item-type') | translate:{ type: getItemTypeLabel(item.itemType) } }}">
-              <mat-icon>open_in_new</mat-icon>
-            </button>
+            <!-- The tooltip sits on a wrapper: a disabled button shows none -->
+            <span matTooltip="{{ openLabel(item) }}">
+              <button mat-icon-button (click)="openEntity(item)" [disabled]="!canOpen(item)">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+            </span>
             <button mat-icon-button (click)="deleteItem(item)" matTooltip="{{ 'iot-hub.remove' | translate }}">
               <tb-icon>mdi:trash-can-outline</tb-icon>
             </button>
@@ -107,9 +108,9 @@
                   <span>{{ (item.itemType === 'DEVICE' ? 'iot-hub.review-device-instructions' : 'iot-hub.view-item-details') | translate }}</span>
                 </button>
               }
-              <button mat-menu-item (click)="openEntity(item)">
+              <button mat-menu-item (click)="openEntity(item)" [disabled]="!canOpen(item)">
                 <mat-icon>open_in_new</mat-icon>
-                <span>{{ (item.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.goto-main-dashboard' : 'iot-hub.open-item-type') | translate:{ type: getItemTypeLabel(item.itemType) } }}</span>
+                <span>{{ openLabel(item) }}</span>
               </button>
               <button mat-menu-item (click)="deleteItem(item)">
                 <tb-icon>mdi:trash-can-outline</tb-icon>

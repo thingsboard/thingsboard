@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-card-content flex flex-col gap-2">
@@ -19,12 +20,13 @@
     @for (quickLink of menuLinks$() | async; track quickLink) {
       <mat-grid-tile class="tb-links-tile">
         <a class="tb-link-button flex-1"
-           [routerLink]="quickLink.path">
-          <div class="tb-link-container">
-            <div class="tb-link-icon-container">
-              <tb-icon color="primary">{{ quickLink.icon }}</tb-icon>
-            </div>
-            <div class="tb-link-text">{{ (quickLink.fullName || quickLink.name) | translate }}</div>
+           [routerLink]="quickLink.path"
+         [queryParams]="quickLink.queryParams">
+        <div class="tb-link-container">
+          <div class="tb-link-icon-container">
+            <tb-icon color="primary">{{ quickLink.icon }}</tb-icon>
+          </div>
+          <div class="tb-link-text">{{ quickLink.isCustom ? (quickLink.fullName || quickLink.name) : ((quickLink.fullName || quickLink.name) | translate) }}</div>
           </div>
         </a>
       </mat-grid-tile>

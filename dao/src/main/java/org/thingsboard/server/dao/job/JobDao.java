@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.job;
 
 import org.thingsboard.server.common.data.id.EntityId;
@@ -12,6 +13,8 @@ import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
+
+import java.util.Map;
 
 public interface JobDao extends Dao<Job> {
 
@@ -32,5 +35,7 @@ public interface JobDao extends Dao<Job> {
     void removeByTenantId(TenantId tenantId);
 
     int removeByEntityId(TenantId tenantId, EntityId entityId);
+
+    Map<String, Map<String, Long>> countJobsByTypeAndStatusLastMonth();
 
 }

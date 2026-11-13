@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -162,6 +163,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     @Override
     public void handleCmd(WebSocketSessionRef session, EntityDataCmd cmd) {
+        if (!wsService.hasSession(session.getSessionId())) {
+            log.debug("[{}][{}] Ignoring entity data command for closed session", session.getSessionId(), cmd.getCmdId());
+            return;
+        }
         TbEntityDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
@@ -394,6 +399,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     @Override
     public void handleCmd(WebSocketSessionRef session, AlarmDataCmd cmd) {
+        if (!wsService.hasSession(session.getSessionId())) {
+            log.debug("[{}][{}] Ignoring alarm data command for closed session", session.getSessionId(), cmd.getCmdId());
+            return;
+        }
         TbAlarmDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx == null) {
             log.debug("[{}][{}] Creating new alarm subscription using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
@@ -406,6 +415,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         long end = System.currentTimeMillis();
         stats.getRegularQueryInvocationCnt().incrementAndGet();
         stats.getRegularQueryTimeSpent().addAndGet(end - start);
+        if (ctx.isStopped()) {
+            log.debug("[{}][{}] Alarm data context was stopped while fetching data, skipping subscriptions", session.getSessionId(), cmd.getCmdId());
+            return;
+        }
         List<EntityData> entities = ctx.getEntitiesData();
         ctx.cancelTasks();
         ctx.clearEntitySubscriptions();
@@ -558,9 +571,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private TbAlarmDataSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
-        TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, entityService, localSubscriptionService,
-                attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription,
-                maxAlarmQueriesPerRefreshInterval);
+        TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, entityService, localSubscriptionService, attributesService,
+                stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription, maxAlarmQueriesPerRefreshInterval);
         ctx.setAndResolveQuery(cmd.getQuery());
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
@@ -630,7 +642,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
         Map<EntityData, ListenableFuture<List<ReadTsKvQueryResult>>> fetchResultMap = new HashMap<>();
         List<EntityData> entityDataList = ctx.getData().getData();
-        entityDataList.forEach(entityData -> fetchResultMap.put(entityData,
+        ctx.getData().getData().stream().filter(EntityData::isReadTs).forEach(entityData -> fetchResultMap.put(entityData,
                 tsService.findAllByQueries(ctx.getTenantId(), entityData.getEntityId(), finalTsKvQueryList)));
         return Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
             // Map that holds last ts for each key for each entity.
@@ -734,7 +746,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                             // if ctx has timeseries subscription, timeseries values are cleared after each update and is empty in ctx data,
                             // so to avoid sending timeseries update with empty map we set it to null
                             List<EntityData> preparedData = ctx.getData().getData().stream()
-                                    .map(entityData -> new EntityData(entityData.getEntityId(), entityData.getLatest(), null))
+                                    .map(entityData -> new EntityData(entityData.getEntityId(), entityData.isReadAttrs(), entityData.isReadTs(), entityData.getLatest(), null))
                                     .toList();
                             update = new EntityDataUpdate(ctx.getCmdId(), null, preparedData, ctx.getMaxEntitiesPerDataSubscription());
                         }

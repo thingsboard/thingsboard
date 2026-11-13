@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -35,6 +38,21 @@ public class BasicMapperUtils {
         oauth2User.setAlwaysFullScreen(config.getBasic().isAlwaysFullScreen());
         if (!StringUtils.isEmpty(config.getBasic().getDefaultDashboardName())) {
             oauth2User.setDefaultDashboardName(config.getBasic().getDefaultDashboardName());
+        }
+        if (!StringUtils.isEmpty(config.getBasic().getParentCustomerNamePattern())) {
+            StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
+            String parentCustomerName = sub.replace(config.getBasic().getParentCustomerNamePattern());
+            oauth2User.setParentCustomerName(parentCustomerName);
+        }
+        if (config.getBasic().getUserGroupsNamePattern() != null && !config.getBasic().getUserGroupsNamePattern().isEmpty()) {
+            List<String> userGroupNamePatterns = config.getBasic().getUserGroupsNamePattern();
+            List<String> userGroups = new ArrayList<>();
+            for (String userGroupNamePattern : userGroupNamePatterns) {
+                StrSubstitutor sub = new StrSubstitutor(attributes, START_PLACEHOLDER_PREFIX, END_PLACEHOLDER_PREFIX);
+                String userGroupName = sub.replace(userGroupNamePattern);
+                userGroups.add(userGroupName);
+            }
+            oauth2User.setUserGroups(userGroups);
         }
         return oauth2User;
     }

@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div style="min-width: 400px; position: relative;">
-  <mat-toolbar class="tb-dialog-header flex flex-row">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
     <h2>{{ 'dashboard.public-dashboard-title' | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
@@ -33,7 +34,10 @@
         <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       </button>
     </div>
-    <div class="tb-notice" innerHTML="{{'dashboard.public-dashboard-notice' | translate}}"></div>
+    <div class="tb-form-hint tb-primary-fill">
+      <mat-icon>info_outline</mat-icon>
+      <span innerHTML="{{'dashboard.public-dashboard-notice' | translate}}"></span>
+    </div>
     <tb-social-share-panel style="padding-top: 15px;"
                            shareTitle="{{ 'dashboard.socialshare-title' | translate:{dashboardTitle: dashboard.title} }}"
                            shareText="{{ 'dashboard.socialshare-text' | translate:{dashboardTitle: dashboard.title} }}"

@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="entity-limit-exceeded-dialog">
@@ -21,9 +22,11 @@
       {{ 'action.cancel' | translate }}
     </button>
   </div>
-  <div class="request-entity-limit-increase-sysadmin-prompt">
-    {{ 'entity.request-sysadmin-text' | translate }}
-    <a href="" (click)="loginAsSysAdmin($event)"> {{ 'entity.login-here' | translate }} </a>
-    {{ 'entity.to-increase-limit' | translate }}
-  </div>
+  @if (!isCustomerUser) {
+    <div class="request-entity-limit-increase-sysadmin-prompt">
+      {{ 'entity.request-sysadmin-text' | translate }}
+      <a href="" (click)="loginAsSysAdmin($event)"> {{ 'entity.login-here' | translate }} </a>
+      {{ 'entity.to-increase-limit' | translate }}
+    </div>
+  }
 </div>

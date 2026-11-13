@@ -1,0 +1,93 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="apachePulsarIntegrationConfigForm">
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.service-url</mat-label>
+    <input matInput required formControlName="serviceUrl">
+    @if (apachePulsarIntegrationConfigForm.get('serviceUrl').hasError('required')) {
+      <mat-error translate>
+        integration.service-url-required
+      </mat-error>
+    }
+    @if (apachePulsarIntegrationConfigForm.get('serviceUrl').hasError('privateNetwork')) {
+      <mat-error translate>
+        integration.url-private
+      </mat-error>
+    }
+  </mat-form-field>
+
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.topics</mat-label>
+      <input matInput required formControlName="topics">
+      @if (apachePulsarIntegrationConfigForm.get('topics').hasError('required')) {
+        <mat-error translate>
+          integration.topics-required
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.subscription-name</mat-label>
+      <input matInput required formControlName="subscriptionName">
+      @if (apachePulsarIntegrationConfigForm.get('subscriptionName').hasError('required')) {
+        <mat-error translate>
+          integration.subscription-name-required
+        </mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.max-num-messages</mat-label>
+      <input type="number" matInput required formControlName="maxNumMessages" step="1">
+      @if (apachePulsarIntegrationConfigForm.get('maxNumMessages').hasError('required')) {
+        <mat-error translate>
+          integration.max-num-messages-required
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.max-num-bytes</mat-label>
+      <input type="number" matInput required formControlName="maxNumBytes" step="1">
+      @if (apachePulsarIntegrationConfigForm.get('maxNumBytes').hasError('required')) {
+        <mat-error translate>
+          integration.max-num-bytes-required
+        </mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.timeout-in-ms</mat-label>
+    <input type="number" matInput required formControlName="timeoutInMs" step="1">
+    @if (apachePulsarIntegrationConfigForm.get('timeoutInMs').hasError('required')) {
+      <mat-error translate>
+        integration.timeout-in-ms-required
+      </mat-error>
+    }
+  </mat-form-field>
+
+  <tb-integration-credentials formControlName="credentials"
+                              [allowCredentialTypes]="[IntegrationCredentialType.Anonymous, IntegrationCredentialType.Token]">
+  </tb-integration-credentials>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

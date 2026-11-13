@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.util;
 
 import org.springframework.core.io.ByteArrayResource;
@@ -98,7 +99,7 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
-    public static Resource getGatewayDockerComposeFile(String host, String gatewayImageVersion, DeviceCredentials deviceCredentials, DockerComposeParams params) {
+    public static Resource getGatewayDockerComposeFile(String host, String gatewayImageVersion, DeviceCredentials deviceCredentials, DockerComposeParams params) throws URISyntaxException {
         StringBuilder dockerComposeBuilder = new StringBuilder();
         if (params.includeVersion()) {
             dockerComposeBuilder.append("version: '3.4'\n");

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -10,9 +11,13 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
+import org.thingsboard.server.common.data.permission.AuthorityPermissionsInfo;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -23,7 +28,9 @@ import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -126,8 +133,9 @@ public class ApiKeyEdgeTest extends AbstractEdgeTest {
         user.setFirstName("ApiKey");
         user.setLastName("TestUser");
 
+        EntityGroupInfo tenantAdminGroup = findTenantAdminsGroup();
         edgeImitator.expectMessageAmount(3);
-        User savedUser = createUser(user, "tenant");
+        User savedUser = createUser(user, "tenant", tenantAdminGroup.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
         Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
         Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
@@ -220,6 +228,41 @@ public class ApiKeyEdgeTest extends AbstractEdgeTest {
         ApiKey apiKey = apiKeyService.findApiKeyById(tenantId, new ApiKeyId(uuid));
         Assert.assertNotNull(apiKey);
         Assert.assertEquals(description, apiKey.getDescription());
+    }
+
+    @Test
+    public void testSendApiKeyForUserOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        UUID uuid = Uuids.timeBased();
+        ApiKey apiKey = createSimpleApiKey("Different Tenant User Key");
+        apiKey.setTenantId(differentTenantId);
+        apiKey.setUserId(savedDifferentTenantUser.getId());
+        UplinkMsg uplinkMsg = getUplinkMsg(uuid, apiKey, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        Assert.assertNull(apiKeyService.findApiKeyById(tenantId, new ApiKeyId(uuid)));
+    }
+
+    @Test
+    public void testSendInternalApiKeyWithPermissionsToCloud() throws Exception {
+        UUID uuid = Uuids.timeBased();
+        ApiKey apiKey = createSimpleApiKey("Internal Key From Edge");
+        apiKey.setInternal(true);
+        AuthorityPermissionsInfo permissions = new AuthorityPermissionsInfo();
+        permissions.setOperationsByResource(Map.of(Authority.SYS_ADMIN, Map.of(Resource.ALL, Set.of(Operation.ALL))));
+        apiKey.setPermissions(permissions);
+        UplinkMsg uplinkMsg = getUplinkMsg(uuid, apiKey, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        ApiKey savedApiKey = apiKeyService.findApiKeyById(tenantId, new ApiKeyId(uuid));
+        Assert.assertNotNull(savedApiKey);
+        Assert.assertFalse(savedApiKey.isInternal());
+        Assert.assertNull(savedApiKey.getPermissions());
     }
 
 }

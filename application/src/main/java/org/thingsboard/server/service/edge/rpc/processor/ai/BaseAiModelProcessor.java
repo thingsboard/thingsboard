@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.ai;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
@@ -29,18 +31,24 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
         boolean isCreated = false;
         boolean isNameUpdated = false;
         try {
-            AiModel aiModel = JacksonUtil.fromString(aiModelUpdateMsg.getEntity(), AiModel.class, true);
+            JsonNode aiModelJson = JacksonUtil.toJsonNode(aiModelUpdateMsg.getEntity());
+            AiModel aiModel = JacksonUtil.treeToValueIgnoringUnknown(aiModelJson, AiModel.class);
             if (aiModel == null) {
-                throw new RuntimeException("[{" + tenantId + "}] aiModelUpdateMsg {" + aiModelUpdateMsg + " } cannot be converted to aiModel");
+                throw new RuntimeException("[{" + tenantId + "}] aiModelUpdateMsg for aiModel {" + aiModelId + "} cannot be converted to aiModel");
             }
 
-            Optional<AiModel> aiModelById = edgeCtx.getAiModelService().findAiModelById(tenantId, aiModelId);
-            if (aiModelById.isEmpty()) {
+            AiModel aiModelById = findTenantEntity(tenantId, aiModelId);
+            aiModel.setTenantId(tenantId);
+            if (aiModelById == null) {
                 aiModel.setCreatedTime(Uuids.unixTimestamp(aiModelId.getId()));
                 isCreated = true;
                 aiModel.setId(null);
             } else {
                 aiModel.setId(aiModelId);
+                // edge versions without customer access support do not send this field
+                if (!aiModelJson.has("customerAccessEnabled")) {
+                    aiModel.setCustomerAccessEnabled(aiModelById.isCustomerAccessEnabled());
+                }
             }
 
             String aiModelName = aiModel.getName();
@@ -61,7 +69,7 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
 
             edgeCtx.getAiModelService().save(aiModel, false);
         } catch (Exception e) {
-            log.error("[{}] Failed to process aiModel update msg [{}]", tenantId, aiModelUpdateMsg, e);
+            log.error("[{}] Failed to process aiModel update msg for aiModel [{}]", tenantId, aiModelId, e);
             throw e;
         }
         return Pair.of(isCreated, isNameUpdated);

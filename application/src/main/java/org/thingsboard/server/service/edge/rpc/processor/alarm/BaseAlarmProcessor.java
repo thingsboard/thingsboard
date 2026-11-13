@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,11 +44,13 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         if (alarm == null) {
             throw new RuntimeException("[{" + tenantId + "}] alarmUpdateMsg {" + alarmUpdateMsg + "} cannot be converted to alarm");
         }
-        if (alarm.getOriginator() == null) {
+        if (alarm.getOriginator() == null || !isTenantEntity(tenantId, alarm.getOriginator())) {
             log.warn("[{}] Originator not found for the alarm msg {}", tenantId, alarmUpdateMsg);
             return Futures.immediateFuture(null);
         }
+        alarm.setTenantId(tenantId);
         try {
+            findTenantEntity(tenantId, alarmId);
             switch (alarmUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                     edgeCtx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm, null, alarmId));
@@ -56,22 +59,13 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                     edgeCtx.getAlarmService().updateAlarm(AlarmUpdateRequest.fromAlarm(alarm));
                     break;
                 case ALARM_ACK_RPC_MESSAGE:
-                    Alarm alarmToAck = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
-                    if (alarmToAck != null) {
-                        edgeCtx.getAlarmService().acknowledgeAlarm(tenantId, alarmId, alarm.getAckTs());
-                    }
+                    edgeCtx.getAlarmService().acknowledgeAlarm(tenantId, alarm.getOriginator(), alarmId, alarm.getAckTs());
                     break;
                 case ALARM_CLEAR_RPC_MESSAGE:
-                    Alarm alarmToClear = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
-                    if (alarmToClear != null) {
-                        edgeCtx.getAlarmService().clearAlarm(tenantId, alarmId, alarm.getClearTs(), alarm.getDetails(), true);
-                    }
+                    edgeCtx.getAlarmService().clearAlarm(tenantId, alarm.getOriginator(), alarmId, alarm.getClearTs(), alarm.getDetails(), true);
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    Alarm alarmToDelete = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
-                    if (alarmToDelete != null) {
-                        edgeCtx.getAlarmService().delAlarm(tenantId, alarmId);
-                    }
+                    edgeCtx.getAlarmService().delAlarm(tenantId, alarm.getOriginator(), alarmId);
                     break;
                 case UNRECOGNIZED:
                 default:
@@ -92,8 +86,14 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         }
         try {
             Alarm alarm = edgeCtx.getAlarmService().findAlarmById(tenantId, new AlarmId(alarmComment.getAlarmId().getId()));
-            if (alarm == null) {
+            if (alarm == null || !tenantId.equals(alarm.getTenantId())) {
                 return Futures.immediateFuture(null);
+            }
+            if (alarmComment.getId() != null) {
+                AlarmComment alarmCommentById = edgeCtx.getAlarmCommentService().findAlarmCommentById(tenantId, alarmComment.getId());
+                if (alarmCommentById != null && !alarm.getId().equals(alarmCommentById.getAlarmId())) {
+                    return Futures.immediateFuture(null);
+                }
             }
             switch (alarmCommentUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:

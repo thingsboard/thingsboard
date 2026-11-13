@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div>
@@ -20,7 +21,7 @@
     }
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="homeSettings" (ngSubmit)="save()">
-        <fieldset [disabled]="isLoading$ | async">
+        <fieldset [disabled]="(isLoading$ | async) || readonly">
           <section class="tb-default-dashboard flex flex-1 flex-col">
             <section class="flex flex-1 flex-col gt-sm:flex-row">
               <tb-dashboard-autocomplete
@@ -28,7 +29,6 @@
                 appearance="outline"
                 label="{{ 'dashboard.home-dashboard' | translate }}"
                 formControlName="dashboardId"
-                [dashboardsScope]="'tenant'"
                 [selectFirstDashboard]="false"
               ></tb-dashboard-autocomplete>
               <mat-checkbox class="flex-1" formControlName="hideDashboardToolbar">
@@ -37,9 +37,11 @@
             </section>
           </section>
           <div class="flex w-full flex-row flex-wrap items-center justify-end">
-            <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || homeSettings.invalid || !homeSettings.dirty"
-                    type="submit">{{'action.save' | translate}}
-            </button>
+            @if (!readonly) {
+              <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || homeSettings.invalid || !homeSettings.dirty"
+                type="submit">{{'action.save' | translate}}
+              </button>
+            }
           </div>
         </fieldset>
       </form>

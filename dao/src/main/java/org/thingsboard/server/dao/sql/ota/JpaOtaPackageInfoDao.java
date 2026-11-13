@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.ota;
 
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -79,6 +81,25 @@ public class JpaOtaPackageInfoDao extends JpaAbstractDao<OtaPackageInfoEntity, O
     @Override
     public boolean isOtaPackageUsed(OtaPackageId otaPackageId, OtaPackageType otaPackageType, DeviceProfileId deviceProfileId) {
         return otaPackageInfoRepository.isOtaPackageUsed(otaPackageId.getId(), deviceProfileId.getId(), otaPackageType.name());
+    }
+
+    @Override
+    public OtaPackageInfo findOtaPackageInfoByDeviceIdAndType(UUID deviceId, OtaPackageType type) {
+        OtaPackageInfoEntity otaPackageInfo = OtaPackageUtil.getByOtaPackageType(
+                () -> otaPackageInfoRepository.findFirmwareByDeviceId(deviceId),
+                () -> otaPackageInfoRepository.findSoftwareByDeviceId(deviceId),
+                type);
+        return DaoUtil.getData(otaPackageInfo);
+    }
+
+    @Override
+    public PageData<OtaPackageInfo> findOtaPackageInfosByGroupIdAndHasData(UUID deviceGroupId, OtaPackageType type, PageLink pageLink) {
+        return DaoUtil.toPageData(otaPackageInfoRepository
+                .findAllByTenantIdAndDeviceGroupAndTypeAndHasData(
+                        deviceGroupId,
+                        type,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)));
     }
 
 }

@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-$defaultMainColor: #3F52DD;
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+$defaultMainColor: var(--tb-primary-500);
 $defaultBackgroundColor: #FFFFFF;
 $defaultBoxShadowColor: rgba(0, 0, 0, 0.08);
 $defaultDisabledBoxShadowColor: rgba(0, 0, 0, 0);
@@ -15,19 +16,19 @@ $boxShadowColorEnabled: var(--tb-widget-button-box-shadow-color-enabled, $defaul
 $mainColorHovered: var(--tb-widget-button-main-color-hovered, $defaultMainColor);
 $backgroundColorHovered: var(--tb-widget-button-background-color-hovered, $defaultBackgroundColor);
 $boxShadowColorHovered: var(--tb-widget-button-box-shadow-color-hovered, $defaultBoxShadowColor);
-$mainColorHoveredFilled: var(--tb-widget-button-main-color-hovered-filled, #3347db); // main.darken(6)
+$mainColorHoveredFilled: var(--tb-widget-button-main-color-hovered-filled, #005e52); // main.darken(6)
 
 $mainColorPressed: var(--tb-widget-button-main-color-pressed, $defaultMainColor);
 $backgroundColorPressed: var(--tb-widget-button-background-color-pressed, $defaultBackgroundColor);
 $boxShadowColorPressed: var(--tb-widget-button-box-shadow-color-pressed, $defaultBoxShadowColor);
-$mainColorPressedFilled: var(--tb-widget-button-main-color-pressed-filled, #273cd9); // main.darken(12)
-$mainColorPressedRipple: var(--tb-widget-button-main-color-pressed-ripple, rgba(63, 82, 221, 0.1)); // Alpha(Main, 0.1)
-$mainColorPressedRippleFilled: var(--tb-widget-button-main-color-pressed-ripple-filled, #2439cd); // main.darken(18)
+$mainColorPressedFilled: var(--tb-widget-button-main-color-pressed-filled, #005349); // main.darken(12)
+$mainColorPressedRipple: var(--tb-widget-button-main-color-pressed-ripple, rgba(0, 105, 92, 0.1)); // Alpha(Main, 0.1)
+$mainColorPressedRippleFilled: var(--tb-widget-button-main-color-pressed-ripple-filled, #00483f); // main.darken(18)
 
 $mainColorActivated: var(--tb-widget-button-main-color-activated, $defaultMainColor);
 $backgroundColorActivated: var(--tb-widget-button-background-color-activated, $defaultBackgroundColor);
 $boxShadowColorActivated: var(--tb-widget-button-box-shadow-color-activated, $defaultBoxShadowColor);
-$mainColorActivatedFilled: var(--tb-widget-button-main-color-activated-filled, #273cd9); // main.darken(12)
+$mainColorActivatedFilled: var(--tb-widget-button-main-color-activated-filled, #005349); // main.darken(12)
 
 $mainColorDisabled: var(--tb-widget-button-main-color-disabled, $defaultMainColorDisabled);
 $backgroundColorDisabled: var(--tb-widget-button-background-color-disabled, $defaultBackgroundColorDisabled);

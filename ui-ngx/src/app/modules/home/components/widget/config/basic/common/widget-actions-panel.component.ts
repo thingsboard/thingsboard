@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
@@ -111,7 +112,8 @@ export class WidgetActionsPanelComponent implements ControlValueAccessor, OnInit
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        widgetTitle: this.widgetConfigComponent.modelValue.widgetName,
+        widgetName: this.widgetConfigComponent.modelValue.widgetName,
+        widgetTitle: this.widgetConfigComponent.modelValue.config?.title,
         callbacks: this.widgetConfigComponent.widgetConfigCallbacks,
         actionsData,
         widgetType: this.widgetConfigComponent.widgetType,

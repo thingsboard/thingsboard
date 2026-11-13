@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @use "sass:math";
 
 @mixin tb-mat-icon-size($size) {
@@ -53,4 +54,12 @@
   }
 
   @return $x1;
+}
+
+@mixin tb-content-card() {
+  margin: $tb-content-spacing;
+  @media #{$mat-gt-sm} {
+    width: $tb-content-card-width;
+    margin: $tb-content-spacing-gt-sm auto;
+  }
 }

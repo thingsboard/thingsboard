@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ElementRef,
@@ -30,6 +31,7 @@ import { DeviceProfile, DeviceProfileInfo, DeviceProfileType, DeviceTransportTyp
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-profile-dialog.component';
 import { MatAutocomplete } from '@angular/material/autocomplete';
+import { Operation, Resource } from '@shared/models/security.models';
 import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './add-device-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL } from '@core/utils';
@@ -51,6 +53,10 @@ import { Authority } from '@shared/models/authority.enum';
     standalone: false
 })
 export class DeviceProfileAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
+
+  resource = Resource;
+
+  operation = Operation;
 
   selectDeviceProfileFormGroup: UntypedFormGroup;
 

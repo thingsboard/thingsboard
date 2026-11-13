@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,6 +14,7 @@ import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.layout.MobileLayoutConfig;
+import org.thingsboard.server.common.data.selfregistration.MobileSelfRegistrationParams;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
@@ -45,6 +47,10 @@ public abstract class AbstractMobileAppBundleEntity<T extends MobileAppBundle> e
     @Column(name = ModelConstants.MOBILE_APP_BUNDLE_LAYOUT_CONFIG_PROPERTY)
     private JsonNode layoutConfig;
 
+    @Convert(converter = JsonConverter.class)
+    @Column(name = ModelConstants.MOBILE_APP_BUNDLE_SELF_REGISTRATION_CONFIG_PROPERTY)
+    protected JsonNode selfRegistrationConfig;
+
     @Column(name = ModelConstants.MOBILE_APP_BUNDLE_OAUTH2_ENABLED_PROPERTY)
     private Boolean oauth2Enabled;
 
@@ -60,6 +66,7 @@ public abstract class AbstractMobileAppBundleEntity<T extends MobileAppBundle> e
         this.androidAppId = mobileAppBundleEntity.getAndroidAppId();
         this.iosAppID = mobileAppBundleEntity.getIosAppID();
         this.layoutConfig = mobileAppBundleEntity.getLayoutConfig();
+        this.selfRegistrationConfig = mobileAppBundleEntity.getSelfRegistrationConfig();
         this.oauth2Enabled = mobileAppBundleEntity.getOauth2Enabled();
     }
 
@@ -77,6 +84,7 @@ public abstract class AbstractMobileAppBundleEntity<T extends MobileAppBundle> e
             this.iosAppID = mobileAppBundle.getIosAppId().getId();
         }
         this.layoutConfig = toJson(mobileAppBundle.getLayoutConfig());
+        this.selfRegistrationConfig = toJson(mobileAppBundle.getSelfRegistrationParams());
         this.oauth2Enabled = mobileAppBundle.getOauth2Enabled();
     }
 
@@ -95,6 +103,7 @@ public abstract class AbstractMobileAppBundleEntity<T extends MobileAppBundle> e
             mobileAppBundle.setIosAppId(new MobileAppId(iosAppID));
         }
         mobileAppBundle.setLayoutConfig(fromJson(layoutConfig, MobileLayoutConfig.class));
+        mobileAppBundle.setSelfRegistrationParams(fromJson(selfRegistrationConfig, MobileSelfRegistrationParams.class));
         mobileAppBundle.setOauth2Enabled(oauth2Enabled);
         return mobileAppBundle;
     }

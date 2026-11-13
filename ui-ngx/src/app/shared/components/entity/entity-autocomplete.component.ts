@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -15,6 +16,8 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
+import { ReportTemplateType } from '@shared/models/report.models';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'tb-entity-autocomplete',
@@ -71,6 +74,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   set entitySubtype(entitySubtype: string) {
     if (this.entitySubtypeValue !== entitySubtype) {
       this.entitySubtypeValue = entitySubtype;
+      this.load();
       const currentEntity = this.getCurrentEntity();
       if (currentEntity) {
         if ((currentEntity as any).type !== this.entitySubtypeValue) {
@@ -119,6 +123,13 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   allowCreateNew: boolean;
 
   @Input()
+  @coerceBoolean()
+  newTabDetailsButton: boolean;
+
+  @Input()
+  newTabDetailsButtonHint: string;
+
+  @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
@@ -154,7 +165,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   constructor(private store: Store<AppState>,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private router: Router) {
     this.selectEntityFormGroup = this.fb.group({
       entity: [null]
     });
@@ -208,17 +220,17 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.entityRequiredText = 'device.device-required';
           this.notFoundEntities = 'device.no-devices-text';
           break;
-        case EntityType.EDGE:
-          this.entityText = 'edge.edge';
-          this.noEntitiesMatchingText = 'edge.no-edges-matching';
-          this.entityRequiredText = 'edge.edge-required';
-          this.notFoundEntities = 'edge.no-edges-text';
-          break;
         case EntityType.ENTITY_VIEW:
           this.entityText = 'entity-view.entity-view';
           this.noEntitiesMatchingText = 'entity-view.no-entity-views-matching';
           this.entityRequiredText = 'entity-view.entity-view-required';
           this.notFoundEntities = 'entity-view.no-entity-views-text';
+          break;
+        case EntityType.EDGE:
+          this.entityText = 'edge.edge';
+          this.noEntitiesMatchingText = 'edge.no-edges-matching';
+          this.entityRequiredText = 'edge.edge-required';
+          this.notFoundEntities = 'edge.no-edges-text';
           break;
         case EntityType.RULE_CHAIN:
           this.entityText = 'rulechain.rulechain';
@@ -288,6 +300,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.entityRequiredText = 'ai-models.model-required';
           this.notFoundEntities = 'ai-models.no-model-text';
           break;
+        case EntityType.DOMAIN:
+          this.entityText = 'entity.type-domain';
+          this.noEntitiesMatchingText = 'admin.oauth2.no-domain-matching';
+          this.entityRequiredText = 'admin.oauth2.domain-required';
+          this.notFoundEntities = 'admin.oauth2.no-domain-text';
+          break;
         case EntityType.DEVICE_PROFILE:
           this.entityText = 'device-profile.device-profile';
           this.noEntitiesMatchingText = 'device-profile.no-device-profiles-matching';
@@ -318,13 +336,53 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             this.entityRequiredText = 'customer.customer-required';
           }
           break;
-      }
-    }
-    const currentEntity = this.getCurrentEntity();
-    if (currentEntity) {
-      const currentEntityType = currentEntity.id.entityType;
-      if (this.entityTypeValue && currentEntityType !== this.entityTypeValue) {
-        this.reset();
+        case EntityType.CONVERTER:
+          this.entityText = 'converter.converter';
+          this.noEntitiesMatchingText = 'converter.no-converters-matching';
+          this.entityRequiredText = 'converter.converter-required';
+          this.notFoundEntities = 'converter.no-converters-text';
+          break;
+        case EntityType.INTEGRATION:
+          this.entityText = 'integration.integration';
+          this.noEntitiesMatchingText = 'integration.no-integrations-matching';
+          this.entityRequiredText = 'integration.integration-required';
+          this.notFoundEntities = 'integration.no-integrations-text';
+          break;
+        case EntityType.SCHEDULER_EVENT:
+          this.entityText = 'scheduler.scheduler-event';
+          this.noEntitiesMatchingText = 'scheduler.no-scheduler-events-matching';
+          this.entityRequiredText = 'scheduler.scheduler-event-required';
+          this.notFoundEntities = 'scheduler.no-scheduler-events';
+          break;
+        case EntityType.BLOB_ENTITY:
+          this.entityText = 'blob-entity.blob-entity';
+          this.noEntitiesMatchingText = 'blob-entity.no-blob-entities-matching';
+          this.entityRequiredText = 'blob-entity.blob-entity-required';
+          this.notFoundEntities = 'blob-entity.no-blob-entities-prompt';
+          break;
+        case EntityType.REPORT:
+          this.entityText = 'report.report';
+          this.noEntitiesMatchingText = 'report.no-reports-matching';
+          this.notFoundEntities = 'report.no-reports-text';
+          this.entityRequiredText = 'report.report-required';
+          break;
+        case EntityType.REPORT_TEMPLATE:
+          this.entityText = 'report-template.report-template';
+          if (this.entitySubtypeValue === ReportTemplateType.SUB_REPORT) {
+            this.noEntitiesMatchingText = 'report-template.no-sub-reports-matching';
+            this.notFoundEntities = 'report-template.no-sub-reports-text';
+          } else {
+            this.noEntitiesMatchingText = 'report-template.no-report-templates-matching';
+            this.notFoundEntities = 'report-template.no-report-templates-text';
+          }
+          this.entityRequiredText = 'report-template.report-template-required';
+          break;
+        case EntityType.ROLE:
+          this.entityText = 'role.role';
+          this.noEntitiesMatchingText = 'role.no-roles-matching';
+          this.entityRequiredText = 'role.role-required';
+          this.notFoundEntities = 'role.no-roles-text';
+          break;
       }
     }
   }
@@ -457,6 +515,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   createNewEntity($event: Event, searchText?: string) {
     $event.stopPropagation();
     this.createNew.emit(searchText);
+  }
+
+  openEntityDetailsNewTab($event: Event) {
+    $event.stopPropagation();
+    const url = this.router.serializeUrl(this.router.createUrlTree([this.entityURL]));
+    window.open(url, '_blank');
   }
 
   get showEntityLink(): boolean {

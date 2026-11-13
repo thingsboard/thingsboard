@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.processor.apikey;
 
@@ -10,6 +10,7 @@ import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
@@ -21,10 +22,15 @@ public abstract class BaseApiKeyProcessor extends BaseEdgeProcessor {
         try {
             ApiKey apiKey = JacksonUtil.fromString(apiKeyUpdateMsg.getEntity(), ApiKey.class, true);
             if (apiKey == null) {
-                throw new RuntimeException("[{" + tenantId + "}] apiKeyUpdateMsg {" + apiKeyUpdateMsg + " } cannot be converted to apiKey");
+                throw new RuntimeException("[{" + tenantId + "}] apiKeyUpdateMsg for apiKey {" + apiKeyId + "} cannot be converted to apiKey");
             }
 
-            ApiKey existingApiKey = edgeCtx.getApiKeyService().findApiKeyById(tenantId, apiKeyId);
+            ApiKey existingApiKey = findTenantEntity(tenantId, apiKeyId);
+            apiKey.setTenantId(tenantId);
+            if (apiKey.getUserId() == null || !isTenantEntity(tenantId, apiKey.getUserId())) {
+                throw new DataValidationException("API key is referencing to non-existent user!");
+            }
+
             if (existingApiKey == null) {
                 apiKey.setCreatedTime(Uuids.unixTimestamp(apiKeyId.getId()));
                 isCreated = true;
@@ -33,7 +39,7 @@ public abstract class BaseApiKeyProcessor extends BaseEdgeProcessor {
             apiKey.setId(apiKeyId);
             edgeCtx.getApiKeyService().saveApiKey(tenantId, apiKey, apiKey.getValue(), false);
         } catch (Exception e) {
-            log.error("[{}] Failed to process apiKey update msg [{}]", tenantId, apiKeyUpdateMsg, e);
+            log.error("[{}] Failed to process apiKey update msg for apiKey [{}]", tenantId, apiKeyId, e);
             throw e;
         }
         return isCreated;
@@ -41,7 +47,7 @@ public abstract class BaseApiKeyProcessor extends BaseEdgeProcessor {
 
     protected void deleteApiKey(TenantId tenantId, Edge edge, ApiKeyId apiKeyId) {
         ApiKey apiKey = edgeCtx.getApiKeyService().findApiKeyById(tenantId, apiKeyId);
-        if (apiKey != null) {
+        if (apiKey != null && tenantId.equals(apiKey.getTenantId())) {
             edgeCtx.getApiKeyService().deleteApiKey(tenantId, apiKey, false);
             pushEntityEventToRuleEngine(tenantId, edge, apiKey, TbMsgType.ENTITY_DELETED);
         }

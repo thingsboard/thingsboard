@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -136,6 +137,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       additionalDataSources: [null, []],
       controlsPosition: [null, []],
       zoomActions: [null, []],
+      useGestureHandling: [null, []],
       scales: [null, []],
       dragModeButton: [null, []],
       fitMapBounds: [null, []],

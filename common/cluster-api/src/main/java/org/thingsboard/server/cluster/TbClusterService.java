@@ -1,19 +1,29 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cluster;
 
+import org.thingsboard.integration.api.data.IntegrationDownlinkMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.agent.AgentAppEvent;
+import org.thingsboard.server.common.data.agent.AgentAppUnitInfo;
+import org.thingsboard.server.common.data.agent.AgentBulkAction;
+import org.thingsboard.server.common.data.agent.BulkOperationRequest;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.AgentId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -34,6 +44,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -51,9 +62,13 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void broadcastToCore(ToCoreNotificationMsg msg);
 
+    void broadcastToRuleEngine(ToRuleEngineNotificationMsg msg);
+
     void broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg build, TbQueueCallback callback);
 
     void pushMsgToVersionControl(TenantId tenantId, ToVersionControlServiceMsg msg, TbQueueCallback callback);
+
+    void pushNotificationToCore(String targetServiceId, IntegrationDownlinkMsg downlink, TbQueueCallback callback);
 
     void pushNotificationToCore(String targetServiceId, FromDeviceRpcResponse response, TbQueueCallback callback);
 
@@ -117,7 +132,13 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void pushMsgToEdge(TenantId tenantId, EntityId entityId, ToEdgeMsg msg, TbQueueCallback callback);
 
-    void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId);
+    void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type,
+                                   EdgeEventActionType action, EdgeId sourceEdgeId);
+
+    void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type,
+                                   EdgeEventActionType action, EntityType entityGroupType, EntityGroupId entityGroupId, EdgeId sourceEdgeId);
+
+    void onUserUpdated(User user, User oldUser);
 
     void onCustomerUpdated(Customer customer, Customer oldCustomer);
 
@@ -129,4 +150,13 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onRelationDeleted(TenantId tenantId, EntityRelation entityRelation, TbQueueCallback callback);
 
+    void onAgentAppEvent(TenantId tenantId, AgentId agentId, AgentAppEvent event);
+
+    void onAgentAppEventCancelled(TenantId tenantId, AgentId agentId, AgentAppEvent event);
+
+    void startAgentLogStream(TenantId tenantId, AgentAppUnitInfo info);
+
+    void stopAgentLogStream(TenantId tenantId, AgentAppUnitInfo info);
+
+    void pushMsgToAgentBulkOps(AgentBulkAction bulkAction, BulkOperationRequest request);
 }

@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.device;
 
 import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileCacheInfo;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
@@ -48,6 +51,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -55,6 +59,7 @@ import java.util.stream.Collectors;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service("DeviceProfileDaoService")
@@ -154,8 +159,7 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
     @Override
     public DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate, boolean publishSaveEvent) {
         log.trace("Executing saveDeviceProfile [{}]", deviceProfile);
-        if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration) {
-            X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) deviceProfile.getProfileData().getProvisionConfiguration();
+        if (deviceProfile.getProfileData() != null && deviceProfile.getProfileData().getProvisionConfiguration() instanceof X509CertificateChainProvisionConfiguration x509Configuration) {
             if (x509Configuration.getProvisionDeviceSecret() != null) {
                 formatDeviceProfileCertificate(deviceProfile, x509Configuration);
             }
@@ -256,6 +260,20 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
     }
 
     @Override
+    public ListenableFuture<List<DeviceProfileInfo>> findDeviceProfilesByIdsAsync(TenantId tenantId, List<DeviceProfileId> deviceProfileIds) {
+        log.trace("Executing findDeviceProfilesByIdsAsync, tenantId [{}], deviceProfileIds [{}]", tenantId, deviceProfileIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(deviceProfileIds, ids -> "Incorrect deviceProfileIds " + ids);
+        return deviceProfileDao.findDeviceProfilesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceProfileIds));
+    }
+
+    @Override
+    public List<DeviceProfileInfo> findDeviceProfilesByIds(TenantId tenantId, List<DeviceProfileId> deviceProfileIds) {
+        log.trace("Executing findDeviceProfilesByIds, tenantId [{}], deviceProfileIds [{}]", tenantId, deviceProfileIds);
+        return deviceProfileDao.findDeviceProfilesByTenantIdAndIds(tenantId.getId(), toUUIDs(deviceProfileIds));
+    }
+
+    @Override
     public DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String name) {
         log.trace("Executing findOrCreateDefaultDeviceProfile");
         DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name, false);
@@ -314,6 +332,12 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         log.trace("Executing findDefaultDeviceProfileInfo tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return toDeviceProfileInfo(findDefaultDeviceProfile(tenantId));
+    }
+
+    @Override
+    public List<DeviceProfileCacheInfo> findDeviceProfileCacheInfos(UUID id, int batchSize) {
+        log.trace("Executing findDeviceProfileCacheInfos [{}] [{}]", id, batchSize);
+        return deviceProfileDao.findDeviceProfileCacheInfos(id, batchSize);
     }
 
     @Override
@@ -377,12 +401,6 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         return deviceProfileDao.findTenantDeviceProfileNames(tenantId.getId(), activeOnly)
                 .stream().sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<DeviceProfileInfo> findDeviceProfilesByIds(TenantId tenantId, List<DeviceProfileId> deviceProfileIds) {
-        log.trace("Executing findDeviceProfilesByIds, tenantId [{}], deviceProfileIds [{}]", tenantId, deviceProfileIds);
-        return deviceProfileDao.findDeviceProfilesByTenantIdAndIds(tenantId.getId(), toUUIDs(deviceProfileIds));
     }
 
     private final PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =

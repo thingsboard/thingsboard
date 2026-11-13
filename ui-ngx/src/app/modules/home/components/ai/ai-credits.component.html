@@ -1,0 +1,62 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (hasData()) {
+  @if (asButton()) {
+    <button mat-icon-button
+            type="button"
+            #buttonTrigger
+            [class]="status()"
+            (click)="togglePopup($event, buttonTrigger._elementRef.nativeElement)"
+            [matTooltip]="'solution-creator.ai-credits' | translate"
+            [matTooltipPosition]="resolvedTooltipPosition()">
+      <mat-progress-spinner
+        mode="determinate"
+        [diameter]="24"
+        [strokeWidth]="4"
+        [value]="usagePercent()">
+      </mat-progress-spinner>
+    </button>
+  } @else {
+    <div class="ai-credits-donut flex h-10 cursor-pointer items-center gap-2 overflow-hidden whitespace-nowrap p-1"
+         [class.WARNING]="status() === 'WARNING'"
+         [class.DISABLED]="status() === 'DISABLED'"
+         [class.rounded]="expanded()"
+         [class.rounded-full]="!expanded()"
+         #spinnerTrigger
+         (click)="togglePopup($event, spinnerTrigger)"
+         (keydown.enter)="togglePopup($event, spinnerTrigger)"
+         (keydown.space)="togglePopup($event, spinnerTrigger)"
+         role="button"
+         tabindex="0"
+         [attr.aria-label]="'solution-creator.ai-credits-usage' | translate: {used: usedLabel(), max: maxLabel()}"
+         [matTooltip]="'solution-creator.ai-credits' | translate"
+         [matTooltipPosition]="resolvedTooltipPosition()"
+         [matTooltipDisabled]="expanded()">
+      <div class="donut-spinner flex shrink-0 items-center justify-center">
+        <mat-progress-spinner
+          mode="determinate"
+          [diameter]="24"
+          [strokeWidth]="4"
+          [value]="usagePercent()">
+        </mat-progress-spinner>
+      </div>
+      @if (expanded()) {
+        <div class="flex min-w-0 flex-1 flex-col whitespace-nowrap">
+          <span class="donut-title">{{ 'solution-creator.ai-credits' | translate }}</span>
+          <span class="donut-usage">{{ usedLabel() }} / {{ maxLabel() }}</span>
+        </div>
+        <button mat-stroked-button
+                type="button"
+                color="primary"
+                class="update-btn"
+                (click)="onUpdatePlan($event)">
+          {{ 'solution-creator.ai-credits-update' | translate }}
+        </button>
+      }
+    </div>
+  }
+}

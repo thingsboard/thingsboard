@@ -1,10 +1,17 @@
 DROP FUNCTION IF EXISTS to_uuid;
 DROP FUNCTION IF EXISTS create_or_update_active_alarm;
-DROP FUNCTION IF EXISTS update_alarm;
-DROP FUNCTION IF EXISTS acknowledge_alarm;
-DROP FUNCTION IF EXISTS clear_alarm;
-DROP FUNCTION IF EXISTS assign_alarm;
-DROP FUNCTION IF EXISTS unassign_alarm;
+-- The five alarm-mutation functions exist at two arities (the current one plus the pre-4.3.1.4 compatibility
+-- wrapper), and a bare-name DROP FUNCTION errors out when the name resolves to more than one function.
+DROP FUNCTION IF EXISTS update_alarm(uuid, uuid, uuid, varchar, bigint, bigint, varchar, boolean, boolean, boolean, boolean, varchar);
+DROP FUNCTION IF EXISTS update_alarm(uuid, uuid, varchar, bigint, bigint, varchar, boolean, boolean, boolean, boolean, varchar);
+DROP FUNCTION IF EXISTS acknowledge_alarm(uuid, uuid, uuid, bigint);
+DROP FUNCTION IF EXISTS acknowledge_alarm(uuid, uuid, bigint);
+DROP FUNCTION IF EXISTS clear_alarm(uuid, uuid, uuid, bigint, varchar);
+DROP FUNCTION IF EXISTS clear_alarm(uuid, uuid, bigint, varchar);
+DROP FUNCTION IF EXISTS assign_alarm(uuid, uuid, uuid, uuid, bigint);
+DROP FUNCTION IF EXISTS assign_alarm(uuid, uuid, uuid, bigint);
+DROP FUNCTION IF EXISTS unassign_alarm(uuid, uuid, uuid, bigint);
+DROP FUNCTION IF EXISTS unassign_alarm(uuid, uuid, bigint);
 
 DROP PROCEDURE IF EXISTS cleanup_edge_events_by_ttl;
 DROP PROCEDURE IF EXISTS cleanup_timeseries_by_ttl;
@@ -54,6 +61,7 @@ DROP TABLE IF EXISTS rule_node_state;
 DROP TABLE IF EXISTS rule_node;
 DROP TABLE IF EXISTS rule_chain;
 DROP TABLE IF EXISTS tb_schema_settings;
+DROP TABLE IF EXISTS tb_cluster;
 DROP TABLE IF EXISTS oauth2_mobile;
 DROP TABLE IF EXISTS oauth2_domain;
 DROP TABLE IF EXISTS oauth2_registration;
@@ -64,7 +72,7 @@ DROP TABLE IF EXISTS oauth2_client_registration_template;
 DROP TABLE IF EXISTS ota_package;
 DROP TABLE IF EXISTS api_usage_state;
 DROP TABLE IF EXISTS resource;
-DROP TABLE IF EXISTS firmware;
+DROP TABLE IF EXISTS ota_package;
 DROP TABLE IF EXISTS edge;
 DROP TABLE IF EXISTS edge_event;
 DROP TABLE IF EXISTS rpc;
@@ -77,3 +85,21 @@ DROP TABLE IF EXISTS notification_target;
 DROP TABLE IF EXISTS user_settings;
 DROP TABLE IF EXISTS user_auth_settings;
 DROP TABLE IF EXISTS tb_user;
+
+-- PE schema
+
+DROP TABLE IF EXISTS raw_data_event;
+DROP TABLE IF EXISTS integration_debug_event;
+DROP TABLE IF EXISTS converter_debug_event;
+DROP TABLE IF EXISTS device_group_ota_package;
+DROP TABLE IF EXISTS group_permission;
+DROP TABLE IF EXISTS role;
+DROP TABLE IF EXISTS report_template;
+DROP TABLE IF EXISTS report;
+DROP TABLE IF EXISTS blob_entity;
+DROP TABLE IF EXISTS scheduler_event;
+DROP TABLE IF EXISTS integration;
+DROP TABLE IF EXISTS converter;
+DROP TABLE IF EXISTS entity_group;
+DROP TABLE IF EXISTS secret;
+DROP TABLE IF EXISTS encryption_key;

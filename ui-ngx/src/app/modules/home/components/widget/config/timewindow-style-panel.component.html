@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-timewindow-style-panel" [formGroup]="timewindowStyleFormGroup">
+<div class="tb-timewindow-style-panel" [formGroup]="timewindowStyleFormGroup" tbPopoverContentResize>
   <div class="tb-timewindow-style-title" translate>timewindow.style</div>
   <div class="tb-form-row space-between">
     <mat-slide-toggle class="mat-slide" formControlName="showIcon">

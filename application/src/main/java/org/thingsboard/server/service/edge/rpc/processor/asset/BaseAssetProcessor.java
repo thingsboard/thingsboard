@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.asset;
 
 import lombok.extern.slf4j.Slf4j;
@@ -8,13 +9,17 @@ import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+
+import java.util.UUID;
 
 @Slf4j
 public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
@@ -22,7 +27,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
     @Autowired
     private DataValidator<Asset> assetValidator;
 
-    protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg) {
+    protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg) throws ThingsboardException {
         boolean created = false;
         boolean assetNameUpdated = false;
         assetCreationLock.lock();
@@ -31,12 +36,14 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             if (asset == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetUpdateMsg {" + assetUpdateMsg + " } cannot be converted to asset");
             }
-            Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
+            Asset assetById = findTenantEntity(tenantId, assetId);
+            asset.setTenantId(tenantId);
             if (assetById == null) {
                 created = true;
                 asset.setId(null);
             } else {
                 asset.setId(assetId);
+                changeOwnerIfRequired(tenantId, asset.getCustomerId(), assetId);
             }
             if (isSaveRequired(assetById, asset)) {
                 assetNameUpdated = updateAssetNameIfDuplicateExists(tenantId, assetId, asset);
@@ -45,8 +52,12 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
                 if (created) {
                     asset.setId(assetId);
                 }
-                edgeCtx.getAssetService().saveAsset(asset, false);
+                Asset savedAsset = edgeCtx.getAssetService().saveAsset(asset, false);
+                if (created) {
+                    edgeCtx.getEntityGroupService().addEntityToEntityGroupAll(savedAsset.getTenantId(), savedAsset.getOwnerId(), savedAsset.getId());
+                }
             }
+            safeAddToEntityGroup(tenantId, assetUpdateMsg, assetId);
         } catch (Exception e) {
             log.error("[{}] Failed to process asset update msg [{}]", tenantId, assetUpdateMsg, e);
             throw e;
@@ -54,6 +65,14 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             assetCreationLock.unlock();
         }
         return Pair.of(created, assetNameUpdated);
+    }
+
+    private void safeAddToEntityGroup(TenantId tenantId, AssetUpdateMsg assetUpdateMsg, AssetId assetId) {
+        if (assetUpdateMsg.hasEntityGroupIdMSB() && assetUpdateMsg.hasEntityGroupIdLSB()) {
+            UUID entityGroupUUID = safeGetUUID(assetUpdateMsg.getEntityGroupIdMSB(),
+                    assetUpdateMsg.getEntityGroupIdLSB());
+            safeAddEntityToGroup(tenantId, new EntityGroupId(entityGroupUUID), assetId);
+        }
     }
 
     private boolean updateAssetNameIfDuplicateExists(TenantId tenantId, AssetId assetId, Asset asset) {
@@ -73,7 +92,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
 
     protected void deleteAsset(TenantId tenantId, Edge edge, AssetId assetId) {
         Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
-        if (assetById != null) {
+        if (assetById != null && tenantId.equals(assetById.getTenantId())) {
             edgeCtx.getAssetService().deleteAsset(tenantId, assetId);
             pushEntityEventToRuleEngine(tenantId, edge, assetById, TbMsgType.ENTITY_DELETED);
         }

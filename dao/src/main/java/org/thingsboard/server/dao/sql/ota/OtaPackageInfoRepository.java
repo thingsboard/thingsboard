@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.ota;
 
 import org.springframework.data.domain.Page;
@@ -43,5 +44,41 @@ public interface OtaPackageInfoRepository extends JpaRepository<OtaPackageInfoEn
             "(('FIRMWARE' = :type AND (dp.firmware_id = :otaPackageId OR d.firmware_id = :otaPackageId)) " +
             "OR ('SOFTWARE' = :type AND (dp.software_id = :otaPackageId or d.software_id = :otaPackageId))))", nativeQuery = true)
     boolean isOtaPackageUsed(@Param("otaPackageId") UUID otaPackageId, @Param("deviceProfileId") UUID deviceProfileId, @Param("type") String type);
+
+    @Query(value =
+            "SELECT * FROM ota_package " +
+                    "WHERE id = " +
+                    "(SELECT COALESCE(d.firmware_id, " +
+                    "(SELECT dgop.ota_package_id FROM device_group_ota_package dgop " +
+                    "INNER JOIN ota_package ota ON dgop.ota_package_id = ota.id AND dgop.ota_package_type = 'FIRMWARE' AND ota.device_profile_id = (SELECT d.device_profile_id FROM device d WHERE d.id = :deviceId LIMIT 1) " +
+                    "INNER JOIN relation r ON dgop.group_id = r.from_id AND r.to_type = 'DEVICE' AND r.relation_type_group = 'FROM_ENTITY_GROUP' AND r.to_id = :deviceId ORDER BY dgop.ota_package_update_time DESC LIMIT 1), " +
+                    "(SELECT dp.firmware_id FROM device_profile dp where dp.id = d.device_profile_id)) " +
+                    "FROM device d WHERE d.id = :deviceId)",
+            nativeQuery = true)
+    OtaPackageInfoEntity findFirmwareByDeviceId(@Param("deviceId") UUID deviceId);
+
+    @Query(value =
+            "SELECT * FROM ota_package " +
+                    "WHERE id = " +
+                    "(SELECT COALESCE(d.software_id, " +
+                    "(SELECT dgop.ota_package_id FROM device_group_ota_package dgop " +
+                    "INNER JOIN ota_package ota ON dgop.ota_package_id = ota.id AND dgop.ota_package_type = 'SOFTWARE' AND ota.device_profile_id = (SELECT d.device_profile_id FROM device d WHERE d.id = :deviceId LIMIT 1) " +
+                    "INNER JOIN relation r ON dgop.group_id = r.from_id AND r.to_type = 'DEVICE' AND r.relation_type_group = 'FROM_ENTITY_GROUP' AND r.to_id = :deviceId ORDER BY dgop.ota_package_update_time DESC LIMIT 1), " +
+                    "(SELECT dp.software_id FROM device_profile dp where dp.id = d.device_profile_id)) " +
+                    "FROM device d WHERE d.id = :deviceId)",
+            nativeQuery = true)
+    OtaPackageInfoEntity findSoftwareByDeviceId(@Param("deviceId") UUID deviceId);
+
+    @Query("SELECT new OtaPackageInfoEntity(ota.id, ota.createdTime, ota.tenantId, ota.deviceProfileId, ota.type, ota.title, ota.version, ota.tag, ota.url, ota.fileName, ota.contentType, ota.checksumAlgorithm, ota.checksum, ota.dataSize, ota.additionalInfo, ota.externalId, true) FROM OtaPackageEntity ota " +
+            "WHERE ota.deviceProfileId IN (SELECT d.deviceProfileId FROM DeviceEntity d " +
+            "WHERE d.id IN (SELECT r.toId FROM RelationEntity r " +
+            "WHERE r.fromId = :groupId AND r.fromType = 'ENTITY_GROUP' AND r.relationTypeGroup = 'FROM_ENTITY_GROUP')) " +
+            "AND ota.type = :type " +
+            "AND (ota.data IS NOT NULL OR ota.url IS NOT NULL) " +
+            "AND (:searchText IS NULL OR ilike(ota.title, CONCAT('%', :searchText, '%')) = true)")
+    Page<OtaPackageInfoEntity> findAllByTenantIdAndDeviceGroupAndTypeAndHasData(@Param("groupId") UUID groupId,
+                                                                                @Param("type") OtaPackageType type,
+                                                                                @Param("searchText") String searchText,
+                                                                                Pageable pageable);
 
 }

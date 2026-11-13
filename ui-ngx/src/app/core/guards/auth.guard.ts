@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable, NgZone } from '@angular/core';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
@@ -14,8 +15,13 @@ import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
-import { isObject } from '@core/utils';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { SelfRegistrationService } from '@core/http/self-register.service';
+import { isDefined, isObject } from '@core/utils';
+import { MenuService } from '@core/services/menu.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { MobileService } from '@core/services/mobile.service';
+import { DashboardReportService } from '@core/http/dashboard-report.service';
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +34,12 @@ export class AuthGuard  {
               private dialogService: DialogService,
               private utils: UtilsService,
               private translate: TranslateService,
+              private whiteLabelingService: WhiteLabelingService,
+              private selfRegistrationService: SelfRegistrationService,
+              private userPermissionsService: UserPermissionsService,
+              private menuService: MenuService,
               private mobileService: MobileService,
+              private reportService: DashboardReportService,
               private zone: NgZone) {}
 
   getAuthState(): Observable<AuthState> {
@@ -59,11 +70,10 @@ export class AuthGuard  {
           }
         }
         const path = urlSegments.join('.');
-        const publicId = this.utils.getQueryParam('publicId');
+        const publicId = this.utils.getQueryParam('publicId') || (this.reportService.reportView ? this.reportService.publicId : null);
         const data = lastChild.data || {};
         const params = lastChild.params || {};
         const isPublic = data.module === 'public';
-
         if (!authState.isAuthenticated || isPublic) {
           if (publicId && publicId.length > 0) {
             this.authService.setUserFromJwtToken(null, null, false);
@@ -73,36 +83,38 @@ export class AuthGuard  {
             this.authService.redirectUrl = url;
             // this.authService.gotoDefaultPlace(false);
             return of(this.authService.defaultUrl(false));
-          } else {
-            if (path === 'login') {
-              return forkJoin([this.authService.loadOAuth2Clients()]).pipe(
-                map(() => {
-                  return true;
-                })
-              );
-            } else if (path === 'login.mfa') {
-              if (authState.authUser?.authority === Authority.PRE_VERIFICATION_TOKEN) {
-                return this.authService.getAvailableTwoFaLoginProviders().pipe(
-                  map(() => {
-                    return true;
-                  })
-                );
-              }
+          } else if (path === 'login.mfa' && authState.authUser?.authority !== Authority.PRE_VERIFICATION_TOKEN) {
+            if (authState.isAuthenticated) {
               this.authService.logout();
-              return of(this.authService.defaultUrl(false));
-            } else if (path === 'login.force-mfa') {
-              if (authState.authUser?.authority === Authority.MFA_CONFIGURATION_TOKEN) {
-                return this.authService.getAvailableTwoFaProviders().pipe(
-                  map(() => {
-                    return true;
-                  })
-                );
-              }
-              this.authService.logout();
-              return of(this.authService.defaultUrl(false));
-            } else {
-              return of(true);
             }
+            return of(this.authService.defaultUrl(false));
+          } else {
+            const tasks: Observable<any>[] = [];
+            tasks.push(this.whiteLabelingService.loadLoginWhiteLabelingParams());
+            if (path === 'login' || path === 'signup' || path === 'signup.recaptcha') {
+              tasks.push(this.selfRegistrationService.loadSelfRegistrationParams());
+              if (path === 'login') {
+                tasks.push(this.authService.loadOAuth2Clients());
+              }
+            }
+            if (path === 'login.mfa') {
+              tasks.push(this.authService.getAvailableTwoFaLoginProviders());
+            }
+            if (path === 'login.force-mfa') {
+              tasks.push(this.authService.getAvailableTwoFaProviders());
+            }
+            return forkJoin(tasks).pipe(
+              map(() => {
+                if (path === 'signup' && !this.selfRegistrationService.signUpParams.activate) {
+                  return this.authService.defaultUrl(false);
+                } else if (path === 'login.mfa' && !this.authService.twoFactorAuthProviders) {
+                  this.authService.logout();
+                  return this.authService.defaultUrl(false);
+                } else {
+                  return true;
+                }
+              })
+            );
           }
         } else {
           if (authState.authUser.isPublic) {
@@ -129,8 +141,27 @@ export class AuthGuard  {
             // this.authService.gotoDefaultPlace(true);
             return of(defaultUrl);
           } else {
+            if (authState.authUser.isPublic) {
+              if (this.authService.forceDefaultPlace(authState, path, params)) {
+                this.dialogService.forbidden();
+                return of(false);
+              }
+            }
             const authority = Authority[authState.authUser.authority];
             if (data.auth && data.auth.indexOf(authority) === -1) {
+              this.dialogService.forbidden();
+              return of(false);
+            } else if (isDefined(data.canActivate$)) {
+              return (data.canActivate$ as (userPermissionsService: UserPermissionsService, params: any) => Observable<boolean>)(this.userPermissionsService, params).pipe(
+                catchError(() => of(false)),
+                map((allow) => {
+                  if (!allow) {
+                    this.dialogService.forbidden();
+                  }
+                  return allow;
+                })
+              );
+            } else if (isDefined(data.canActivate) && !data.canActivate(this.userPermissionsService)) {
               this.dialogService.forbidden();
               return of(false);
             } else if (data.redirectTo) {
@@ -140,7 +171,11 @@ export class AuthGuard  {
               } else {
                 redirect = data.redirectTo;
               }
-              return of(this.router.parseUrl(redirect));
+              return this.menuService.getRedirectPath(path, redirect).pipe(
+                map((redirectPath) => {
+                  return this.router.parseUrl(redirectPath);
+                })
+              );
             } else {
               return of(true);
             }

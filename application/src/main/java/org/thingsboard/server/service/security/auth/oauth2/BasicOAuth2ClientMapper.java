@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +26,6 @@ public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         String email = BasicMapperUtils.getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
         OAuth2User oauth2User = BasicMapperUtils.getOAuth2User(email, attributes, config);
-
         return getOrCreateSecurityUserFromOAuth2User(oauth2User, oAuth2Client);
     }
 }

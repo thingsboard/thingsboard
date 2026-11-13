@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../../../scss/constants";
 
 :host {
@@ -39,8 +40,8 @@
     }
     .mat-mdc-progress-bar {
       &.critical {
-        --mat-progress-bar-track-color: rgba(209, 39, 48, 0.06);
-        --mat-progress-bar-active-indicator-color: #D12730;
+        --mat-progress-bar-track-color: color-mix(in srgb, var(--tb-crit) 6%, transparent);
+        --mat-progress-bar-active-indicator-color: var(--tb-crit);
       }
     }
     .mdc-linear-progress {
@@ -75,7 +76,7 @@
       line-height: 16px;
     }
     &.critical {
-      color: #D12730;
+      color: var(--tb-crit);
     }
   }
 

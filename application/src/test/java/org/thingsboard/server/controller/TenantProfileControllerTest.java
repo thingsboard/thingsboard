@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -76,7 +77,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         awaitAuditLog("Wait for async audit log to be persisted (ADDED expected)", savedTenantProfile.getId(), ActionType.ADDED);
 
         savedTenantProfile.setName("New tenant profile");
-        doPost("/api/tenantProfile", savedTenantProfile, TenantProfile.class);
+        doPost("/api/tenantProfile", savedTenantProfile).andExpect(status().isOk());
         TenantProfile foundTenantProfile = doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString(), TenantProfile.class);
         Assert.assertEquals(foundTenantProfile.getName(), savedTenantProfile.getName());
 

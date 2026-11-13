@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
@@ -14,10 +15,13 @@ import { Observable, of } from 'rxjs';
 import {
   EntityTypeVersionCreateConfig,
   exportableEntityTypes,
-  typesWithCalculatedFields
+  typesWithCalculatedFields,
+  overrideEntityTypeTranslations
 } from '@shared/models/vc.models';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Component({
     selector: 'tb-auto-commit-settings',
@@ -34,6 +38,11 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
 
   isReadOnly: Observable<boolean>;
 
+  overrideEntityTypeTranslationsMap = overrideEntityTypeTranslations;
+
+  readonly = !this.userPermissionsService.hasGenericPermission(Resource.VERSION_CONTROL, Operation.WRITE);
+  allowDelete = this.userPermissionsService.hasGenericPermission(Resource.VERSION_CONTROL, Operation.DELETE);
+
   readonly typesWithCalculatedFields = typesWithCalculatedFields;
 
   constructor(protected store: Store<AppState>,
@@ -41,6 +50,7 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
               private dialogService: DialogService,
               private sanitizer: DomSanitizer,
               private translate: TranslateService,
+              private userPermissionsService: UserPermissionsService,
               public fb: UntypedFormBuilder) {
     super(store);
   }
@@ -65,6 +75,9 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
         this.settings = settings;
         this.autoCommitSettingsForm.setControl('entityTypes',
           this.prepareEntityTypesFormArray(settings), {emitEvent: false});
+        if (this.readonly) {
+          this.autoCommitSettingsForm.disable({emitEvent: false});
+        }
       });
     this.isReadOnly = this.adminService.getRepositorySettingsInfo().pipe(map(settings => settings.readOnly));
   }
@@ -95,6 +108,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
       saveRelations: false,
       saveCredentials: true,
       saveCalculatedFields: true,
+      savePermissions: true,
+      saveGroupEntities: true
     };
     const allowed = this.allowedEntityTypes();
     let entityType: EntityType = null;
@@ -118,7 +133,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
   entityTypeText(entityTypeControl: AbstractControl): SafeHtml {
     const entityType: EntityType = entityTypeControl.get('entityType').value;
     const config: AutoVersionCreateConfig = entityTypeControl.get('config').value;
-    let message = entityType ? this.translate.instant(entityTypeTranslations.get(entityType).typePlural) : 'Undefined';
+    let message = entityType ? this.translate.instant(entityType === EntityType.USER ? 'entity-group.user-groups'
+      : entityTypeTranslations.get(entityType).typePlural) : 'Undefined';
     let branchName;
     if (config.branch) {
       branchName = config.branch;
@@ -197,7 +213,9 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
           saveRelations: [config.saveRelations, []],
           saveAttributes: [config.saveAttributes, []],
           saveCredentials: [config.saveCredentials, []],
-          saveCalculatedFields: [config.saveCalculatedFields, []]
+          saveCalculatedFields: [config.saveCalculatedFields, []],
+          savePermissions: [config.savePermissions, []],
+          saveGroupEntities: [config.saveGroupEntities, []]
         })
       }
     );

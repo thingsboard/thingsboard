@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.common.util;
 
 import org.thingsboard.server.common.data.HasDebugSettings;
@@ -32,7 +33,8 @@ public final class DebugModeUtil {
             return true;
         } else {
             var debugSettings = debugSettingsAware.getDebugSettings();
-            return debugSettings != null && debugSettings.isFailuresEnabled() && TbNodeConnectionType.FAILURE.equals(nodeConnection);
+            return debugSettings != null && debugSettings.isFailuresEnabled() &&
+                    (TbNodeConnectionType.FAILURE.equals(nodeConnection) || "ERROR".equals(nodeConnection) || "FAILURE".equals(nodeConnection));
         }
     }
 
@@ -45,7 +47,7 @@ public final class DebugModeUtil {
         }
     }
 
-    public static boolean isDebugFailuresAvailable(HasDebugSettings debugSettingsAware) {
+    public static boolean isDebugIntegrationFailuresAvailable(HasDebugSettings debugSettingsAware) {
         if (isDebugAllAvailable(debugSettingsAware)) {
             return true;
         } else {
@@ -54,4 +56,13 @@ public final class DebugModeUtil {
         }
     }
 
+    public static boolean isDebugFailuresAvailable(HasDebugSettings debugSettingsAware) {
+        if (isDebugAllAvailable(debugSettingsAware)) {
+            return true;
+        } else {
+            var debugSettings = debugSettingsAware.getDebugSettings();
+            return debugSettings != null && debugSettings.isFailuresEnabled();
+        }
+    }
+    
 }

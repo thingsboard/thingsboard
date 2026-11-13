@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="alarmsTableWidgetSettingsForm">
@@ -62,7 +63,7 @@
         {{ 'widgets.table.allow-alarms-clear' | translate }}
       </mat-slide-toggle>
     </div>
-    <mat-form-field class="flex-1" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" subscriptSizing="dynamic" appearance="outline">
       <mat-label translate>widgets.table.hidden-cell-button-display-mode</mat-label>
       <mat-select formControlName="reserveSpaceForHiddenAction">
         <mat-option [value]="'true'">
@@ -73,7 +74,7 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field class="flex-1" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" subscriptSizing="dynamic" appearance="outline">
       <mat-label translate>widgets.table.default-sort-order</mat-label>
       <input matInput formControlName="defaultSortOrder">
     </mat-form-field>

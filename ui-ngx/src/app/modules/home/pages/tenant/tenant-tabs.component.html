@@ -1,30 +1,39 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (entity) {
-  <mat-tab label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
-    <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
-                        [active]="attributesTab.isActive"
-                        [entityId]="entity.id"
-                        [entityName]="entity.name">
-    </tb-attribute-table>
-  </mat-tab>
-  <mat-tab label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
-    <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
-                        disableAttributeScopeSelection
-                        [active]="telemetryTab.isActive"
-                        [entityId]="entity.id"
-                        [entityName]="entity.name">
-    </tb-attribute-table>
-  </mat-tab>
+  @if (resource.TENANT | hasGenericPermission: operation.READ_ATTRIBUTES) {
+    <mat-tab label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
+      <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
+                          [readonly]="!(resource.TENANT | hasGenericPermission: operation.WRITE_ATTRIBUTES)"
+                          [active]="attributesTab.isActive"
+                          [entityId]="entity.id"
+                          [entityName]="entity.name">
+      </tb-attribute-table>
+    </mat-tab>
+  }
+  @if (resource.TENANT | hasGenericPermission: operation.READ_TELEMETRY) {
+    <mat-tab label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
+      <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
+                          [readonly]="!(resource.TENANT | hasGenericPermission: operation.WRITE_TELEMETRY)"
+                          disableAttributeScopeSelection
+                          [active]="telemetryTab.isActive"
+                          [entityId]="entity.id"
+                          [entityName]="entity.name">
+      </tb-attribute-table>
+    </mat-tab>
+  }
   <mat-tab label="{{ 'tenant.events' | translate }}" #eventsTab="matTab">
     <tb-event-table [defaultEventType]="eventTypes.ERROR" [active]="eventsTab.isActive" [tenantId]="nullUid"
                     [entityId]="entity.id"></tb-event-table>
   </mat-tab>
   <mat-tab label="{{ 'relation.relations' | translate }}" #relationsTab="matTab">
-    <tb-relation-table [active]="relationsTab.isActive" [entityId]="entity.id"></tb-relation-table>
+    <tb-relation-table [active]="relationsTab.isActive"
+                       [readonly]="!(resource.TENANT | hasGenericPermission: operation.WRITE)"
+                       [entityId]="entity.id"></tb-relation-table>
   </mat-tab>
 }

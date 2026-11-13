@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.system;
 
 import org.junit.Before;
@@ -7,11 +8,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -19,12 +23,17 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -47,6 +56,14 @@ public class DefaultSystemSecurityServiceTest {
     private AuditLogService auditLogService;
     @Mock
     private SecuritySettingsService securitySettingsService;
+    @Mock
+    private JwtTokenFactory tokenFactory;
+    @Mock
+    private UserPermissionsService userPermissionsService;
+    @Mock
+    private CustomerService customerService;
+    @Mock
+    private WhiteLabelingService whiteLabelingService;
 
     private DefaultSystemSecurityService systemSecurityService;
 
@@ -60,7 +77,7 @@ public class DefaultSystemSecurityServiceTest {
 
     @Before
     public void setUp() {
-        systemSecurityService = new DefaultSystemSecurityService(adminSettingsService, encoder, userService, mailService, auditLogService, securitySettingsService);
+        systemSecurityService = new DefaultSystemSecurityService(adminSettingsService, encoder, tokenFactory, userService, userPermissionsService, customerService, mailService, auditLogService, whiteLabelingService, securitySettingsService);
 
         tenantId = TenantId.fromUUID(UUID.randomUUID());
         userId = new UserId(UUID.randomUUID());
@@ -185,7 +202,54 @@ public class DefaultSystemSecurityServiceTest {
                 .isInstanceOf(LockedException.class);
 
         verify(userService).setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
-        verify(mailService).sendAccountLockoutEmail(eq(username), eq(notificationEmail), eq(5));
+        verify(mailService).sendAccountLockoutEmail(eq(tenantId), eq(username), eq(notificationEmail), eq(5));
+    }
+
+    @Test
+    public void resolveBaseUrlTakesRequestUrlWhenDifferentUrlsAreAllowed() {
+        givenGeneralSettings("https://tb.example.com", false);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("http://192.168.1.10:8080");
+        assertThat(baseUrl.fromRequest()).isTrue();
+    }
+
+    @Test
+    public void resolveBaseUrlTakesSettingsUrlWhenDifferentUrlsAreProhibited() {
+        givenGeneralSettings("https://tb.example.com", true);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("https://tb.example.com");
+        assertThat(baseUrl.fromRequest()).isFalse();
+    }
+
+    @Test
+    public void resolveBaseUrlFallsBackToRequestWhenSettingsUrlIsEmpty() {
+        givenGeneralSettings("", true);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("http://192.168.1.10:8080");
+        assertThat(baseUrl.fromRequest()).isTrue();
+        assertThat(systemSecurityService.getBaseUrl(tenantId, null, request())).isEqualTo(baseUrl.url());
+    }
+
+    private void givenGeneralSettings(String baseUrl, boolean prohibitDifferentUrl) {
+        AdminSettings generalSettings = new AdminSettings();
+        generalSettings.setJsonValue(JacksonUtil.newObjectNode()
+                .put("baseUrl", baseUrl)
+                .put("prohibitDifferentUrl", prohibitDifferentUrl));
+        when(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "general")).thenReturn(generalSettings);
+    }
+
+    private static MockHttpServletRequest request() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setScheme("http");
+        request.setServerName("192.168.1.10");
+        request.setServerPort(8080);
+        return request;
     }
 
 }

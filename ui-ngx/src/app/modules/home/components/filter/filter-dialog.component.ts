@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -22,6 +23,7 @@ export interface FilterDialogData {
   isAdd: boolean;
   filters: Filters | Array<Filter>;
   filter?: Filter;
+  disableUserEdit?: boolean;
 }
 
 @Component({
@@ -32,6 +34,7 @@ export interface FilterDialogData {
 export class FilterDialogComponent extends DialogComponent<FilterDialogComponent, Filter> {
 
   isAdd: boolean;
+  disableUserEdit: boolean;
 
   filterFormGroup: FormGroup<FormControlsFrom<FilterInfo>>;
 
@@ -50,6 +53,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
               private utils: UtilsService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
+    this.disableUserEdit = data.disableUserEdit;
     if (Array.isArray(data.filters)) {
       this.filters = data.filters;
     } else {
@@ -63,7 +67,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
         id: null,
         filter: '',
         keyFilters: [],
-        editable: true
+        editable: !this.disableUserEdit
       };
     } else {
       this.filter = data.filter;
@@ -72,7 +76,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
 
     this.filterFormGroup = this.fb.group({
       filter: [this.filter.filter, [this.validateDuplicateFilterName(), Validators.required]],
-      editable: [this.filter.editable],
+      editable: [!this.disableUserEdit && this.filter.editable],
       keyFilters: [this.filter.keyFilters, Validators.required],
       keyFiltersOperation: [this.filter.keyFiltersOperation ?? ComplexOperation.AND]
     });
@@ -116,7 +120,7 @@ export class FilterDialogComponent extends DialogComponent<FilterDialogComponent
   save(): void {
     const {filter, editable, keyFilters, keyFiltersOperation} = this.filterFormGroup.getRawValue();
     this.filter.filter = filter.trim();
-    this.filter.editable = editable;
+    this.filter.editable = !this.disableUserEdit && editable;
     this.filter.keyFilters = keyFilters;
     this.filter.keyFiltersOperation = keyFiltersOperation;
     if (this.isAdd) {

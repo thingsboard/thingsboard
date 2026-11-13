@@ -1,0 +1,99 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (entity) {
+  <mat-tab
+    label="{{ 'entity-group.columns' | translate }}" #entityGroupColumnsTab="matTab">
+    <tb-entity-group-columns
+      [disabled]="!isEdit"
+      [entityType]="entity.type"
+      [(ngModel)]="entity.configuration.columns"
+      (ngModelChange)="validateAndMark()">
+    </tb-entity-group-columns>
+  </mat-tab>
+}
+@if (entity) {
+  <mat-tab
+    label="{{ 'entity-group.settings' | translate }}" #entityGroupSettingsTab="matTab">
+    <tb-entity-group-settings
+      [disabled]="!isEdit"
+      [entityType]="entity.type"
+      [(ngModel)]="entity.configuration.settings"
+      (ngModelChange)="validateAndMark()">
+    </tb-entity-group-settings>
+  </mat-tab>
+}
+@if (entity) {
+  <mat-tab
+    label="{{ 'entity-group.actions' | translate }}" #entityGroupActionsTab="matTab">
+    <tb-manage-widget-actions
+      [disabled]="!isEdit"
+      [actionTypes]="entityGroupActionTypesList"
+      [actionSources]="entityGroupActionSourcesList"
+      isEntityGroup
+      outlinedBorder
+      [customFunctionArgs]="['$event', '$injector', 'entityId', 'entityName', 'servicesMap', 'tableConfig']"
+      [(ngModel)]="entity.configuration.actions"
+      (ngModelChange)="detailsForm.markAsDirty()">
+    </tb-manage-widget-actions>
+  </mat-tab>
+}
+@if (entity && entity.type === entityTypes.USER && !isEdit && (resource.GROUP_PERMISSION | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'entity-group.roles' | translate }}" #entityGroupRolesTab="matTab">
+    <tb-group-permissions
+      [entityGroup]="entity"
+    [active]="entityGroupRolesTab.isActive"></tb-group-permissions>
+  </mat-tab>
+}
+@if (entity && entity.type !== entityTypes.USER && !isEdit && (resource.GROUP_PERMISSION | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'entity-group.permissions' | translate }}" #entityGroupPermissionsTab="matTab">
+    <tb-group-permissions
+      (permissionsChanged)="onPermissionsChanged()"
+      [readonly]="sharedGroup() || !(entity | hasEntityGroupPermission: operation.WRITE)"
+      [entityGroup]="entity"
+    [active]="entityGroupPermissionsTab.isActive"></tb-group-permissions>
+  </mat-tab>
+}
+@if (entity && !isEdit && (entity | hasEntityGroupPermission: operation.READ_ATTRIBUTES)) {
+  <mat-tab
+    label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
+    <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
+      [readonly]="sharedGroup() || !(entity | hasEntityGroupPermission: operation.WRITE_ATTRIBUTES)"
+      [active]="attributesTab.isActive"
+      [entityId]="entity.id"
+      [entityName]="entity.name">
+    </tb-attribute-table>
+  </mat-tab>
+}
+@if (entity && !isEdit && (entity | hasEntityGroupPermission: operation.READ_TELEMETRY)) {
+  <mat-tab
+    label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
+    <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
+      [readonly]="sharedGroup() || !(entity | hasEntityGroupPermission: operation.WRITE_TELEMETRY)"
+      disableAttributeScopeSelection
+      [active]="telemetryTab.isActive"
+      [entityId]="entity.id"
+      [entityName]="entity.name">
+    </tb-attribute-table>
+  </mat-tab>
+}
+@if (entity && !isEdit && (resource.AUDIT_LOG | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
+    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+  </mat-tab>
+}
+@if (entity && !isEdit && hasVersionControl()) {
+  <mat-tab
+    label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
+    <tb-version-control detailsMode="true" singleEntityMode="true"
+      (versionRestored)="entitiesTableConfig.onGroupUpdated()"
+      [active]="versionControlTab.isActive" [entityId]="entity.id" [groupType]="entity.type"
+    [entityName]="entity.name" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
+  </mat-tab>
+}

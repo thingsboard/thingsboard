@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.limit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +66,21 @@ class LimitedApiTest {
                 Map.entry(LimitedApi.EDGE_UPLINK_MESSAGES, () ->
                         verify(config).getEdgeUplinkMessagesRateLimits()),
                 Map.entry(LimitedApi.EDGE_UPLINK_MESSAGES_PER_EDGE, () ->
-                        verify(config).getEdgeUplinkMessagesRateLimitsPerEdge())
+                        verify(config).getEdgeUplinkMessagesRateLimitsPerEdge()),
+                Map.entry(LimitedApi.AGENT_EVENTS, () ->
+                        verify(config).getAgentEventRateLimits()),
+                Map.entry(LimitedApi.AGENT_EVENTS_PER_AGENT, () ->
+                        verify(config).getAgentEventRateLimitsPerAgent()),
+                Map.entry(LimitedApi.AGENT_LOG_CHUNKS, () ->
+                        verify(config).getAgentLogChunkRateLimits()),
+                Map.entry(LimitedApi.AGENT_LOG_CHUNKS_PER_AGENT, () ->
+                        verify(config).getAgentLogChunkRateLimitsPerAgent()),
+                Map.entry(LimitedApi.INTEGRATION_MSGS_PER_TENANT, () ->
+                        verify(config).getIntegrationMsgsPerTenantRateLimit()),
+                Map.entry(LimitedApi.INTEGRATION_MSGS_PER_DEVICE, () ->
+                        verify(config).getIntegrationMsgsPerDeviceRateLimit()),
+                Map.entry(LimitedApi.INTEGRATION_MSGS_PER_ASSET, () ->
+                        verify(config).getIntegrationMsgsPerAssetRateLimit())
         );
 
         Set<LimitedApi> expected = verifierMap.keySet();

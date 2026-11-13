@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
@@ -17,6 +18,11 @@ import { EdgeService } from '@core/http/edge.service';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { mergeMap, Observable } from 'rxjs';
+import { AgentApplicationType } from '@shared/models/agent.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { EntityId } from '@shared/models/id/entity-id';
+
+const DOCKER_TAB_INDEX = 1;
 
 export interface EdgeInstructionsDialogData {
   edge: EdgeInfo;
@@ -35,11 +41,12 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
   dialogTitle: string;
   showDontShowAgain: boolean;
 
-  loadedInstructions = false;
   notShowAgain = false;
   tabIndex = 0;
   instructionsMethod = EdgeInstructionsMethod;
   contentData: any = {};
+
+  agentAppType = AgentApplicationType.EDGE;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -55,6 +62,7 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
     } else if (this.data.upgradeAvailable) {
       this.dialogTitle = 'edge.upgrade-instructions';
       this.showDontShowAgain = false;
+      this.tabIndex = DOCKER_TAB_INDEX;
     } else {
       this.dialogTitle = 'edge.install-connect-instructions';
       this.showDontShowAgain = false;
@@ -62,7 +70,14 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
   }
 
   ngOnInit() {
-    this.getInstructions(this.instructionsMethod[this.tabIndex]);
+    const method = this.methodForTab(this.tabIndex);
+    if (method) {
+      this.getInstructions(method);
+    }
+  }
+
+  get relatedEntity(): EntityId {
+    return { id: this.data.edge.id.id, entityType: EntityType.EDGE };
   }
 
   ngOnDestroy() {
@@ -78,13 +93,22 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
     }
   }
 
+  private methodForTab(index: number): string | null {
+    if (index <= 0) {
+      return null;
+    }
+    return this.instructionsMethod[index - 1];
+  }
+
   selectedTabChange(index: number) {
-    this.getInstructions(this.instructionsMethod[index]);
+    const method = this.methodForTab(index);
+    if (method) {
+      this.getInstructions(method);
+    }
   }
 
   getInstructions(method: string) {
     if (!this.contentData[method]) {
-      this.loadedInstructions = false;
       let edgeInstructions$: Observable<EdgeInstructions>;
       if (this.data.upgradeAvailable) {
         edgeInstructions$ = this.attributeService.getEntityAttributes(this.data.edge.id, AttributeScope.SERVER_SCOPE, [edgeVersionAttributeKey])
@@ -99,7 +123,6 @@ export class EdgeInstructionsDialogComponent extends DialogComponent<EdgeInstruc
       }
       edgeInstructions$.subscribe(res => {
         this.contentData[method] = res.instructions;
-        this.loadedInstructions = true;
       });
     }
   }

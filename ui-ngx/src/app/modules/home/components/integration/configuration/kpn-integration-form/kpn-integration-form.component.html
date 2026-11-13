@@ -1,0 +1,103 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="kpnIntegrationConfigForm">
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.base-url</mat-label>
+    <input matInput formControlName="baseUrl" required>
+    @if (kpnIntegrationConfigForm.get('baseUrl').hasError('required')) {
+      <mat-error translate>
+        integration.base-url-required
+      </mat-error>
+    }
+    @if (kpnIntegrationConfigForm.get('baseUrl').hasError('privateNetwork')) {
+      <mat-error translate>
+        integration.url-private
+      </mat-error>
+    }
+  </mat-form-field>
+  <div class="flex flex-row items-center justify-start gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.http-endpoint</mat-label>
+      <input matInput formControlName="httpEndpoint">
+    </mat-form-field>
+    <button mat-icon-button ngxClipboard type="button"
+            (cbOnSuccess)="onHttpEndpointCopied()"
+            [cbContent]="kpnIntegrationConfigForm.get('httpEndpoint').value"
+            matTooltip="{{'integration.copy-http-endpoint-url' | translate }}">
+      <mat-icon class="tb-mat-20">content_copy</mat-icon>
+    </button>
+  </div>
+
+  <tb-secret-key-input formControlName="securityHeader" class="mat-block" appearance="outline"
+                       label="{{ 'integration.kpn-security-header' | translate }}"
+                       hint="{{ 'integration.kpn-security-header-hint' | translate }}">
+  </tb-secret-key-input>
+  @if (noSecurity) {
+    <div class="tb-form-hint tb-primary-fill my-2 flex items-center gap-2">
+      <mat-icon class="tb-mat-20 text-[#FAA405]">warning</mat-icon>
+      <span>{{ 'integration.kpn-no-security-warning' | translate }}</span>
+    </div>
+  }
+
+  <mat-expansion-panel class="expansion-panel-setting" [expanded]="httpsDestinationSettingsExpanded">
+    <mat-expansion-panel-header>
+      <mat-panel-title translate>integration.kpn-https-destination-settings</mat-panel-title>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <section class="expansion-panel-setting-content !flex flex-col gap-2">
+        <tb-secret-key-input formControlName="destinationSharedSecret" class="mat-block" appearance="outline"
+                             label="{{ 'integration.destination-shared-secret' | translate }}"
+                             hint="{{ 'integration.kpn-destination-shared-secret-hint' | translate }}">
+        </tb-secret-key-input>
+        <div class="tb-form-panel stroked">
+          <div class="flex flex-col gap-1">
+            <div class="tb-form-panel-title" translate>integration.kpn-additional-headers-filter</div>
+            <div class="tb-form-panel-hint" translate>integration.kpn-additional-headers-filter-hint</div>
+          </div>
+          <tb-key-val-map
+            noDataText="integration.no-headers-filter"
+            keyPlaceholderText="integration.header"
+            isStrokedButton="true"
+            appearance="outline"
+            formControlName="additionalHeadersFilter">
+          </tb-key-val-map>
+          @if (kpnIntegrationConfigForm.get('additionalHeadersFilter').hasError('securityHeaderDuplicate')) {
+            <mat-error>{{ 'integration.kpn-security-header-duplicate' | translate }}</mat-error>
+          }
+        </div>
+      </section>
+    </ng-template>
+  </mat-expansion-panel>
+
+  @if (isSetDownlink) {
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>integration.downlink-credentials</legend>
+      <div class="flex flex-col gt-xs:gap-2">
+        <tb-secret-key-input formControlName="apiId" class="mat-block flex-1" appearance="outline"
+                             label="{{ 'integration.api-id' | translate }}">
+        </tb-secret-key-input>
+        <tb-secret-key-input formControlName="apiKey" class="mat-block flex-1" appearance="outline"
+                             label="{{ 'integration.api-key' | translate }}">
+        </tb-secret-key-input>
+      </div>
+    </fieldset>
+  }
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

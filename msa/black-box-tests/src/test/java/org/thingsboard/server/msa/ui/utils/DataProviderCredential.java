@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.utils;
 
 import org.openqa.selenium.Keys;
@@ -20,9 +21,11 @@ public class DataProviderCredential {
     private static final String LONG_PHONE_NUMBER = "20155501231";
     private static final String SHORT_PHONE_NUMBER = "201555011";
     private static final String RULE_CHAIN_SECOND_WORD_NAME_PATH = "Rule";
-    private static final String CUSTOMER_SECOND_WORD_NAME_PATH = "Customer";
+    private static final String CUSTOMER_FIRST_WORD_NAME_PATH = "Customer";
     private static final String RULE_CHAIN_FIRST_WORD_NAME_PATH = "Root";
-    private static final String CUSTOMER_FIRST_WORD_NAME_PATH = "A";
+    private static final String ENTITY_GROUP_FIRST_WORD_NAME_PATH = "Entity";
+    private static final String ENTITY_GROUP_SECOND_WORD_NAME_PATH = "Group";
+    private static final String CUSTOMER_SECOND_WORD_NAME_PATH = "A";
     private static final String DEFAULT_DEVICE_PROFILE_NAME = "Device Profile";
     private static final String DEFAULT_ASSET_PROFILE_NAME = "Asset Profile";
 
@@ -81,6 +84,13 @@ public class DataProviderCredential {
         return new Object[][]{
                 {CUSTOMER_FIRST_WORD_NAME_PATH},
                 {CUSTOMER_SECOND_WORD_NAME_PATH}};
+    }
+
+    @DataProvider
+    public static Object[][] customerGroupNameForSearchByFirstAndSecondWord() {
+        return new Object[][]{
+                {ENTITY_GROUP_FIRST_WORD_NAME_PATH},
+                {ENTITY_GROUP_SECOND_WORD_NAME_PATH}};
     }
 
     @DataProvider

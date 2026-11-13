@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="tb-dialog-header">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2 translate>device-profile.add</h2>
   <span class="flex-1"></span>
   <div [tb-help]="'deviceProfiles'"></div>
@@ -47,6 +48,8 @@
           <tb-dashboard-autocomplete
             label="{{'device-profile.mobile-dashboard' | translate}}"
             appearance="outline"
+            subscriptSizing="dynamic"
+            showHint
             formControlName="defaultDashboardId">
             <span tb-hint>{{'device-profile.mobile-dashboard-hint' | translate}}</span>
           </tb-dashboard-autocomplete>
@@ -58,6 +61,8 @@
           <tb-rule-chain-autocomplete
             labelText="device-profile.default-edge-rule-chain"
             appearance="outline"
+            subscriptSizing="dynamic"
+            showHint
             formControlName="defaultEdgeRuleChainId"
             [ruleChainType]="edgeRuleChainType">
             <span tb-hint>{{'device-profile.default-edge-rule-chain-hint' | translate}}</span>

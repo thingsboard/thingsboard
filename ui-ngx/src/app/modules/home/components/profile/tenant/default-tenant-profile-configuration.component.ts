@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { DefaultTenantProfileConfiguration, FormControlsFrom } from '@shared/models/tenant.model';
@@ -44,9 +45,17 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxDashboards: [0, [Validators.required, Validators.min(0)]],
       maxRuleChains: [0, [Validators.required, Validators.min(0)]],
       maxEdges: [0, [Validators.required, Validators.min(0)]],
+      maxIntegrations: [0, [Validators.required, Validators.min(0)]],
+      maxConverters: [0, [Validators.required, Validators.min(0)]],
+      maxSchedulerEvents: [0, [Validators.required, Validators.min(0)]],
+      maxAgents: [0, [Validators.required, Validators.min(0)]],
+      maxAgentApplications: [0, [Validators.required, Validators.min(0)]],
+      maxGeneratedReports: [0, [Validators.required, Validators.min(0)]],
+      maxAiCredits: [0, [Validators.required, Validators.min(0)]],
       maxResourcesInBytes: [0, [Validators.required, Validators.min(0)]],
       maxOtaPackagesInBytes: [0, [Validators.required, Validators.min(0)]],
       maxResourceSize: [0, [Validators.required, Validators.min(0)]],
+      maxReportSizeInBytes: [0, [Validators.required, Validators.min(0)]],
       transportTenantMsgRateLimit: [''],
       transportTenantTelemetryMsgRateLimit: [''],
       transportTenantTelemetryDataPointsRateLimit: [''],
@@ -59,6 +68,9 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       transportGatewayDeviceMsgRateLimit: [''],
       transportGatewayDeviceTelemetryMsgRateLimit: [''],
       transportGatewayDeviceTelemetryDataPointsRateLimit: [''],
+      integrationMsgsPerTenantRateLimit: [''],
+      integrationMsgsPerDeviceRateLimit: [''],
+      integrationMsgsPerAssetRateLimit: [''],
       tenantEntityExportRateLimit: [''],
       tenantEntityImportRateLimit: [''],
       tenantNotificationRequestsRateLimit: [''],
@@ -80,6 +92,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       rpcTtlDays: [0, [Validators.required, Validators.min(0)]],
       queueStatsTtlDays: [0, [Validators.required, Validators.min(0)]],
       ruleEngineExceptionsTtlDays: [0, [Validators.required, Validators.min(0)]],
+      blobEntityTtlDays: [0, [Validators.required, Validators.min(0)]],
+      reportTtlDays: [0, [Validators.required, Validators.min(0)]],
       tenantServerRestLimitsConfiguration: [''],
       customerServerRestLimitsConfiguration: [''],
       maxWsSessionsPerTenant: [0, [Validators.min(0)]],
@@ -100,9 +114,13 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       edgeEventRateLimitsPerEdge: [''],
       edgeUplinkMessagesRateLimits: [''],
       edgeUplinkMessagesRateLimitsPerEdge: [''],
+      agentEventRateLimits: [''],
+      agentEventRateLimitsPerAgent: [''],
+      agentLogChunkRateLimits: [''],
+      agentLogChunkRateLimitsPerAgent: [''],
       maxCalculatedFieldsPerEntity: [0, [Validators.required, Validators.min(0)]],
       maxArgumentsPerCF: [0, [Validators.required, Validators.min(0)]],
-      maxRelationLevelPerCfArgument: [1, [Validators.required, Validators.min(1)]],
+      maxRelationLevelPerCfArgument: [0, [Validators.required, Validators.min(1)]],
       minAllowedDeduplicationIntervalInSecForCF: [0, [Validators.required, Validators.min(0)]],
       minAllowedAggregationIntervalInSecForCF: [0, [Validators.required, Validators.min(0)]],
       maxRelatedEntitiesToReturnPerCfArgument: [1, [Validators.required, Validators.min(1)]],
@@ -114,6 +132,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxStateSizeInKBytes: [0, [Validators.required, Validators.min(0)]],
       calculatedFieldDebugEventsRateLimit: [''],
       maxSingleValueArgumentSizeInKBytes: [0, [Validators.required, Validators.min(0)]],
+      aiChatRequestsPerTenantRateLimit: ['']
     });
 
     this.tenantProfileConfigurationForm.get('smsEnabled').valueChanges.pipe(

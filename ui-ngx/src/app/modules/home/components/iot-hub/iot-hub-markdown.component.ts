@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ElementRef,
@@ -23,6 +24,14 @@ import {
 } from '@home/components/iot-hub/iot-hub-markdown.utils';
 import { DevicePackageInfo } from '@shared/models/iot-hub/device-package.models';
 import { isNotEmptyStr } from '@core/utils';
+
+// Every image the readme itself renders opens in the lightbox. Excluded is the chrome that happens
+// to be an <img>: the ${images.gallery(...)} block (it runs its own gallery), the code block
+// clipboard icon and an item link card's thumbnail. Images inside a link are excluded too: the
+// lightbox preventDefaults the click, which would swallow the navigation.
+const README_GALLERY_SELECTOR =
+  'img:not(.tb-gallery-images img):not(.clipboard-btn img):not(tb-iot-hub-item-link-card img):not(a img)';
+const README_GALLERY_IMAGE_CLASS = 'tb-readme-gallery-image';
 
 @Component({
   selector: 'tb-iot-hub-markdown',
@@ -61,6 +70,8 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
 
   readonly itemLinkCompileModules: Type<any>[] = [IotHubItemLinkModule];
 
+  readonly readmeGallerySelector = README_GALLERY_SELECTOR;
+
   constructor(
     private iotHubApiService: IotHubApiService,
     private elementRef: ElementRef<HTMLElement>
@@ -76,16 +87,17 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (propName === 'data' && change.currentValue !== change.previousValue) {
-        this.parsedData = this.parseData(this.data);
-      }
+    // A new resolver means the variable values changed, so the same data has to be resolved again.
+    // Nothing to render until the step's data arrives; a resolver alone would render an empty page
+    if ((changes.data || changes.onResolveVariable) && this.data != null) {
+      this.parsedData = this.parseData(this.data);
     }
   }
 
   onReady() {
     const container = this.elementRef.nativeElement;
+    container.querySelectorAll(README_GALLERY_SELECTOR)
+      .forEach(image => image.classList.add(README_GALLERY_IMAGE_CLASS));
     this.ready.emit(container);
   }
 
@@ -210,8 +222,9 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
       if (calloutMatch) {
         const type = calloutMatch[1];
         const text = calloutMatch[2];
-        const icons: Record<string, string> = { note: 'info_outline', warn: 'warning_amber', error: 'error_outline' };
-        return `<div class="tb-callout tb-callout-${type}"><i class="material-icons tb-callout-icon">${icons[type]}</i><span class="tb-callout-text">${text}</span></div>`;
+        const icons: Record<string, string> = { note: 'info_outline', warn: 'warning', error: 'error_outline' };
+        const modifiers: Record<string, string> = { note: '', warn: ' tb-form-hint-warning', error: ' tb-form-hint-error' };
+        return `<div class="tb-form-hint tb-primary-fill${modifiers[type]} my-3"><i class="mat-icon material-icons notranslate" aria-hidden="true">${icons[type]}</i><span>${text}</span></div>`;
       }
 
       // Special variables

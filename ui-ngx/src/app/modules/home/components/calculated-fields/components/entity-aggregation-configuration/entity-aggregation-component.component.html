@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="entityAggregationConfiguration" class="tb-form-panel no-border no-padding">
@@ -9,12 +10,14 @@
     <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.entity-aggregation.argument-title-hint' | translate }}">
       {{ 'calculated-fields.arguments' | translate }}
     </div>
-    <div class="tb-form-hint tb-primary-fill hint-container">
-      {{ 'calculated-fields.entity-aggregation.argument-hint' | translate }}
+    <div class="tb-form-hint tb-primary-fill">
+      <mat-icon>info_outline</mat-icon>
+      <span>{{ 'calculated-fields.entity-aggregation.argument-hint' | translate }}</span>
     </div>
     <tb-entity-aggregation-arguments-table formControlName="arguments"
                                            [entityId]="entityId"
                                            [tenantId]="tenantId"
+                                           [readonly]="readonly"
                                            [isEditValue]="isEditValue"
                                            [entityName]="entityName"/>
   </div>
@@ -26,6 +29,7 @@
                                        simpleMode
                                        [testScript]="testScript"
                                        [arguments]="arguments$ | async"
+                                       [readonly]="readonly"
     ></tb-calculated-field-metrics-table>
   </div>
   <div class="tb-form-panel">
@@ -87,8 +91,9 @@
                               requiredText="{{ 'calculated-fields.entity-aggregation.offset-value-required' | translate }}"
                               formControlName="offsetSec">
           </tb-time-unit-input>
-          <div class="tb-form-hint tb-primary-fill hint-container">
-            {{ hint }}
+          <div class="tb-form-hint tb-primary-fill">
+            <mat-icon>info_outline</mat-icon>
+            <span>{{ hint }}</span>
           </div>
         }
       </div>

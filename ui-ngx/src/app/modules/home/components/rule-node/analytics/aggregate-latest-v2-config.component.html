@@ -1,0 +1,54 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="aggregateLatestV2ConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block" style="min-width: 100px;" appearance="outline">
+    <mat-label translate>relation.direction</mat-label>
+    <mat-select formControlName="direction" required>
+      @for (direction of directionTypes; track direction) {
+        <mat-option [value]="direction">
+          {{ directionTypeTranslations.get(direction) | translate }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <tb-relation-type-autocomplete
+    required
+    appearance="outline"
+    formControlName="relationType">
+  </tb-relation-type-autocomplete>
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>rule-node-config.deduplication-period-sec</mat-label>
+    <input type="number" step="1" min="10" max="2147483647" matInput formControlName="deduplicationInSec" required>
+    @if (aggregateLatestV2ConfigForm.get('deduplicationInSec').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.deduplication-period-sec-required' | translate }}
+      </mat-error>
+    }
+    @if (aggregateLatestV2ConfigForm.get('deduplicationInSec').hasError('min')) {
+      <mat-error>
+        {{ 'rule-node-config.deduplication-period-sec-range' | translate }}
+      </mat-error>
+    }
+    @if (aggregateLatestV2ConfigForm.get('deduplicationInSec').hasError('max')) {
+      <mat-error>
+        {{ 'rule-node-config.deduplication-period-sec-range' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+  <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel-header>
+      <mat-panel-title translate>rule-node-config.agg-latest-mappings</mat-panel-title>
+    </mat-expansion-panel-header>
+    <tb-agg-latest-mapping-table
+      required
+      formControlName="aggMappings"
+      [tbelFilterFunctionOnly]="true"
+      style="padding-bottom: 15px;">
+    </tb-agg-latest-mapping-table>
+  </mat-expansion-panel>
+  <tb-output-message-type-autocomplete required formControlName="outMsgType" appearance="outline"></tb-output-message-type-autocomplete>
+</section>

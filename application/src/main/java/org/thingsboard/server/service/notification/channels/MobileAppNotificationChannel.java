@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification.channels;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -133,9 +134,15 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
 
     @Override
     public void check(TenantId tenantId) throws Exception {
-        NotificationSettings systemSettings = notificationSettingsService.findNotificationSettings(TenantId.SYS_TENANT_ID);
-        if (!systemSettings.getDeliveryMethodsConfigs().containsKey(MOBILE_APP)) {
-            throw new RuntimeException("Push-notifications to mobile are not configured");
+        NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
+        if (!tenantId.isSysTenantId()) {
+            var config = (MobileAppNotificationDeliveryMethodConfig) settings.getDeliveryMethodsConfigs().get(MOBILE_APP);
+            if (config == null || config.isUseSystemSettings()) {
+                settings = notificationSettingsService.findNotificationSettings(TenantId.SYS_TENANT_ID);
+            }
+        }
+        if (!settings.getDeliveryMethodsConfigs().containsKey(MOBILE_APP)) {
+            throw new RuntimeException("Push-notifications to mobile app are not configured");
         }
     }
 

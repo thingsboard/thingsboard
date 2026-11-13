@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.iot_hub;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,11 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
     @Override
     public IotHubInstalledItem findById(TenantId tenantId, IotHubInstalledItemId id) {
         return iotHubInstalledItemDao.findByTenantIdAndId(tenantId, id).orElse(null);
+    }
+
+    @Override
+    public IotHubInstalledItem findByIdForUpdate(TenantId tenantId, IotHubInstalledItemId id) {
+        return iotHubInstalledItemDao.findByTenantIdAndIdForUpdate(tenantId, id).orElse(null);
     }
 
     @Override

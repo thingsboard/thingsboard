@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.common;
 
 import java.nio.ByteBuffer;
@@ -10,6 +11,7 @@ public class AbstractTbQueueTemplate {
     protected static final String REQUEST_ID_HEADER = "requestId";
     protected static final String RESPONSE_TOPIC_HEADER = "responseTopic";
     protected static final String EXPIRE_TS_HEADER = "expireTs";
+    protected static final String ERROR_MESSAGE_HEADER = "errorMessage";
 
     public static byte[] uuidToBytes(UUID uuid) {
         ByteBuffer buf = ByteBuffer.allocate(16);

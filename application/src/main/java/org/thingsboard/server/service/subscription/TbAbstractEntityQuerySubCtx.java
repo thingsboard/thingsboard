@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.subscription;
 
@@ -73,8 +73,8 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
         clearDynamicValueSubscriptions();
     }
 
-    public void stop() {
-        super.stop();
+    @Override
+    protected void onStop() {
         cancelTasks();
         clearSubscriptions();
     }
@@ -137,7 +137,7 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
                         .scope(TbAttributeSubscriptionScope.SERVER_SCOPE)
                         .build();
                 subToDynamicValueKeySet.add(subIdx);
-                localSubscriptionService.addSubscription(sub, sessionRef);
+                registerSubscription(sub);
             }
         } catch (InterruptedException | ExecutionException e) {
             log.info("[{}][{}][{}] Failed to resolve dynamic values: {}", tenantId, customerId, userId, dynamicValues.keySet());

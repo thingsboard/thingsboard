@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import lombok.Getter;
@@ -96,10 +97,14 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     private void doFetchAlarms() {
+        if (stopped) {
+            return;
+        }
         AlarmDataUpdate update;
         if (!entitiesMap.isEmpty()) {
             long start = System.currentTimeMillis();
-            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(), query, getOrderedEntityIds());
+            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(getTenantId(),
+                    getMergedUserPermissions(), query, getOrderedEntityIds());
             long end = System.currentTimeMillis();
             stats.getAlarmQueryInvocationCnt().incrementAndGet();
             stats.getAlarmQueryTimeSpent().addAndGet(end - start);
@@ -169,7 +174,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                 .updateProcessor((sub, update) -> sendWsMsg(sub.getSessionId(), update))
                 .ts(startTs)
                 .build();
-        localSubscriptionService.addSubscription(subscription, sessionRef);
+        registerSubscription(subscription);
     }
 
     @Override
@@ -333,7 +338,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             newSubsList.forEach(entity -> createAlarmSubscriptionForEntity(query.getPageLink(), startTs, entity));
         }
         subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getTenantId(), getSessionId(), subId));
-        subsToAdd.forEach(subscription -> localSubscriptionService.addSubscription(subscription, sessionRef));
+        subsToAdd.forEach(this::registerSubscription);
     }
 
     private void resetInvocationCounter() {

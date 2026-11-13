@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.ws;
 
@@ -26,5 +26,7 @@ public interface WebSocketService {
     void close(String sessionId, CloseStatus status);
 
     void cleanupIfStale(TenantId tenantId, String sessionId);
+
+    boolean hasSession(String sessionId);
 
 }
