@@ -32,6 +32,9 @@ import static org.thingsboard.server.dao.trendz.TrendzSyncService.TRENDZ_API_KEY
  * would never pick up a change added there.
  * <p>
  * The dir/bean consistency (both ways) is guarded by a test in {@code MigrationIntegrationTest}.
+ * <p>
+ * Each thing this version migrates lives in its own private method called from {@link #apply()}, as in
+ * {@link V4_3_1_5Migration}.
  */
 @Slf4j
 @Component
@@ -46,10 +49,15 @@ public class V4_4_1_0Migration implements Migration {
         return "4.4.1.0";
     }
 
-    // Steps must be idempotent: a crash before the version is recorded re-runs them
+    /**
+     * Runs in the same transaction as the version's schema SQL on the no-downtime path, and outside any transaction
+     * on the offline path (see {@link Migration#apply}). Every step below must therefore be light enough to sit in
+     * a schema transaction, and idempotent, since a crash before the version is recorded re-runs it.
+     */
     @Override
     public void apply() {
         grantAiModelOperationsToTrendzApiKey();
+        revokeAdminSettingsFromTrendzApiKey();
     }
 
     // Mirrors the AI_MODEL entries of DefaultTrendzSyncService.buildTrendzPermissions() for keys created before this version
@@ -99,5 +107,58 @@ public class V4_4_1_0Migration implements Migration {
         // Keeps the key's value and evicts the cached permissions
         apiKeyService.saveApiKey(TenantId.SYS_TENANT_ID, trendzApiKey);
         log.info("Granted {} on {} to the internal Trendz API key", aiModelOperationsByAuthority, Resource.AI_MODEL);
+    }
+
+    /**
+     * Takes {@link Resource#ADMIN_SETTINGS} away from the internal Trendz API key.
+     * <p>
+     * Read access let the key fetch the JWT signing key, and with it mint a token for any user, sysadmin included;
+     * write access let it replace that key. The one settings call Trendz makes, {@code GET /api/trendz/config}, admits
+     * the key by identity now, and new keys no longer get the resource from
+     * {@code DefaultTrendzSyncService.buildTrendzPermissions()} -- keep the two in step.
+     * <p>
+     * An authority left with no permissions at all is not stripped: an empty permission set makes the key fall back
+     * to the user's full permissions, which would widen the grant instead of narrowing it.
+     * <p>
+     * Idempotent: the key is saved only when something actually changed, so a re-run is a no-op.
+     */
+    private void revokeAdminSettingsFromTrendzApiKey() {
+        ApiKey trendzApiKey = apiKeyService.findInternalApiKeyByDescription(TenantId.SYS_TENANT_ID, TRENDZ_API_KEY_DESCRIPTION);
+        if (trendzApiKey == null || trendzApiKey.getPermissions() == null
+            || trendzApiKey.getPermissions().getOperationsByResource() == null) {
+            log.debug("No internal Trendz API key with stored permissions, nothing to revoke");
+            return;
+        }
+
+        Map<Authority, Map<Resource, Set<Operation>>> byAuthority =
+                new HashMap<>(trendzApiKey.getPermissions().getOperationsByResource());
+        boolean changed = false;
+
+        for (Map.Entry<Authority, Map<Resource, Set<Operation>>> entry : byAuthority.entrySet()) {
+            Map<Resource, Set<Operation>> byResource = entry.getValue();
+            if (byResource == null || !byResource.containsKey(Resource.ADMIN_SETTINGS)) {
+                continue;
+            }
+            // Copy rather than mutate in place: the deserialized maps carry no mutability guarantee.
+            Map<Resource, Set<Operation>> updatedByResource = new HashMap<>(byResource);
+            updatedByResource.remove(Resource.ADMIN_SETTINGS);
+            if (updatedByResource.isEmpty()) {
+                log.warn("Internal Trendz API key holds nothing but {} for {}, left as is", Resource.ADMIN_SETTINGS, entry.getKey());
+                continue;
+            }
+            entry.setValue(updatedByResource);
+            changed = true;
+        }
+
+        if (!changed) {
+            log.debug("Internal Trendz API key already holds no {}", Resource.ADMIN_SETTINGS);
+            return;
+        }
+
+        trendzApiKey.getPermissions().setOperationsByResource(byAuthority);
+        // Preserves the key's value, so Trendz keeps authenticating with the secret it already holds, and evicts the
+        // key from the cache, which would otherwise keep serving the old permissions for the rest of its TTL.
+        apiKeyService.saveApiKey(TenantId.SYS_TENANT_ID, trendzApiKey);
+        log.info("Revoked {} from the internal Trendz API key", Resource.ADMIN_SETTINGS);
     }
 }
