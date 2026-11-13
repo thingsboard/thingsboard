@@ -30,6 +30,9 @@
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.implementationTitle>ThingsBoard Migrator</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.migrator.MigratorApplication</pkg.mainClass>
+        <!-- The Cassandra driver that Spring Data Cassandra is built with, instead of the one the root pom sets for the other modules.
+             Must be in sync with cassandra-driver.version of spring-boot-dependencies: update it with spring-boot.version -->
+        <cassandra.version>4.19.3</cassandra.version>
     </properties>
 
     <dependencies>

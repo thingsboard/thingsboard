@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ActionReducerMap, MetaReducer } from '@ngrx/store';
-import { storeFreeze } from 'ngrx-store-freeze';
 
 import { environment as env } from '@env/environment';
 
@@ -31,7 +31,6 @@ export const metaReducers: MetaReducer<AppState>[] = [
   initStateFromLocalStorage
 ];
 if (!env.production) {
-  metaReducers.unshift(storeFreeze);
   metaReducers.unshift(debug);
 }
 

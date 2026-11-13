@@ -78,7 +78,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.datastax.oss</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-core</artifactId>
             <scope>provided</scope>
         </dependency>
@@ -93,7 +93,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
         </dependency>
         <dependency>
