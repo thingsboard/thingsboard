@@ -140,7 +140,7 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
   }
 
   private updateModel() {
-    const value: CountWidgetSettings = this.countWidgetConfigForm.value;
+    const value: CountWidgetSettings = this.countWidgetConfigForm.getRawValue();
     this.propagateChange(value);
   }
 

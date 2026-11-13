@@ -59,7 +59,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
             };
         } catch (DataValidationException e) {
             if (e.getMessage().contains("limit reached")) {
-                log.warn("[{}] Number of allowed users violated {}", tenantId, userUpdateMsg, e);
+                log.warn("[{}] Number of allowed users violated, user [{}]", tenantId, userId, e);
                 return Futures.immediateFuture(null);
             } else {
                 return Futures.immediateFailedFuture(e);
@@ -71,7 +71,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
 
     @Override
     public ListenableFuture<Void> processUserCredentialsMsgFromEdge(TenantId tenantId, Edge edge, UserCredentialsUpdateMsg userCredentialsUpdateMsg) {
-        log.debug("[{}] Executing processUserCredentialsMsgFromEdge, userCredentialsUpdateMsg [{}]", tenantId, userCredentialsUpdateMsg);
+        log.debug("[{}][{}] Executing processUserCredentialsMsgFromEdge", tenantId, edge.getId());
         try {
             edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
@@ -116,7 +116,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
                 User user = edgeCtx.getUserService().findUserById(edgeEvent.getTenantId(), userId);
-                if (user != null) {
+                if (user != null && edgeEvent.getTenantId().equals(user.getTenantId())) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

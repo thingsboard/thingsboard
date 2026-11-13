@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { DestroyRef, inject, Injectable } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { pairwise, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import {
@@ -14,6 +14,7 @@ import {
 import { isDefined } from '@core/utils';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { CalculatedFieldsTableEntity } from '@home/components/calculated-fields/calculated-fields-table-config';
+import { AlarmRule, areAlarmRuleArgumentsValid } from '@shared/models/alarm-rule.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getTimezoneInfo } from '@shared/models/time/time.models';
 
@@ -47,8 +48,24 @@ export class CalculatedFieldFormService {
         propagateRelationTypes: [null],
         createRules: [null, Validators.required],
         clearRule: [null],
-      }),
+      }, {validators: this.alarmRulesArgumentsValidator()}),
     });
+  }
+
+  private alarmRulesArgumentsValidator(): ValidatorFn {
+    return (configuration: AbstractControl): ValidationErrors | null => {
+      const args = configuration.get('arguments').value;
+      const createRulesControl = configuration.get('createRules');
+      const clearRuleControl = configuration.get('clearRule');
+      const rules: AlarmRule[] = [];
+      if (createRulesControl.enabled) {
+        rules.push(...Object.values<AlarmRule>(createRulesControl.value ?? {}));
+      }
+      if (clearRuleControl.enabled) {
+        rules.push(clearRuleControl.value);
+      }
+      return rules.every(rule => areAlarmRuleArgumentsValid(rule, args)) ? null : {alarmRuleArguments: {valid: false}};
+    };
   }
 
   setupTypeChange(form: FormGroup, destroyRef: DestroyRef, isEditActive?: () => boolean): void {
