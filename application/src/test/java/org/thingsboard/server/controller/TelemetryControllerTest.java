@@ -13,8 +13,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -32,6 +34,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -359,6 +362,48 @@ public class TelemetryControllerTest extends AbstractControllerTest {
 
         await().during(1, TimeUnit.SECONDS).atMost(2, TimeUnit.SECONDS)
                 .until(() -> attributesService.find(tenantId, deviceProfileId, AttributeScope.SERVER_SCOPE, "attr").get().isEmpty());
+    }
+
+    @Test
+    public void testDeviceProfileServerScopeAttributes() throws Exception {
+        loginTenantAdmin();
+        DeviceProfile deviceProfile = createDeviceProfile("Test Device Profile");
+        DeviceProfile savedProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        verifyServerScopeAttributes("DEVICE_PROFILE", savedProfile.getId().getId().toString());
+    }
+
+    @Test
+    public void testAssetProfileServerScopeAttributes() throws Exception {
+        loginTenantAdmin();
+        AssetProfile assetProfile = createAssetProfile("Test Asset Profile");
+        AssetProfile savedProfile = doPost("/api/assetProfile", assetProfile, AssetProfile.class);
+        verifyServerScopeAttributes("ASSET_PROFILE", savedProfile.getId().getId().toString());
+    }
+
+    private void verifyServerScopeAttributes(String entityType, String entityId) throws Exception {
+        String body = "{\"testKey\": \"testValue\", \"testNumber\": 42}";
+        doPostAsync("/api/plugins/telemetry/" + entityType + "/" + entityId + "/attributes/SERVER_SCOPE", body, String.class, status().isOk());
+
+        List<Map<String, Object>> attributes = doGetAsyncTyped(
+                "/api/plugins/telemetry/" + entityType + "/" + entityId + "/values/attributes/SERVER_SCOPE?keys=testKey,testNumber",
+                new TypeReference<>() {});
+
+        assertThat(attributes).hasSize(2);
+        assertThat(attributes).anySatisfy(attr -> {
+            assertThat(attr.get("key")).isEqualTo("testKey");
+            assertThat(attr.get("value")).isEqualTo("testValue");
+        });
+        assertThat(attributes).anySatisfy(attr -> {
+            assertThat(attr.get("key")).isEqualTo("testNumber");
+            assertThat(attr.get("value")).isEqualTo(42);
+        });
+
+        doDeleteAsync("/api/plugins/telemetry/" + entityType + "/" + entityId + "/SERVER_SCOPE?keys=testKey,testNumber", String.class);
+
+        List<Map<String, Object>> afterDelete = doGetAsyncTyped(
+                "/api/plugins/telemetry/" + entityType + "/" + entityId + "/values/attributes/SERVER_SCOPE?keys=testKey,testNumber",
+                new TypeReference<>() {});
+        assertThat(afterDelete).isEmpty();
     }
 
     private Device createDevice() throws Exception {
