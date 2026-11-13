@@ -5,27 +5,21 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="mat-padding tb-entity-table tb-absolute-fill">
-  <div class="tb-entity-table-content tb-outlined-border flex flex-1 flex-col">
+<div class="tb-entity-table tb-absolute-fill">
+  <div class="tb-entity-table-content flex flex-1 flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="mode !== 'default' || textSearchMode || !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
-        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
-          <span class="tb-entity-table-title">{{telemetryTypeTranslationsMap.get(attributeScope) | translate}}</span>
-          @if (!disableAttributeScopeSelection && !attributeScopeSelectionReadonly) {
-            <mat-form-field class="mat-block tb-attribute-scope">
-              <mat-label translate>attribute.attributes-scope</mat-label>
-              <mat-select [disabled]="(isLoading$ | async)"
-                          [ngModel]="attributeScope"
-                          (ngModelChange)="attributeScopeChanged($event)">
-                @for (scope of attributeScopes; track scope) {
-                  <mat-option [value]="scope">
-                    {{ telemetryTypeTranslationsMap.get(toTelemetryTypeFunc(scope)) | translate }}
-                  </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          }
-        </div>
+        @if (attributeScopes.length > 1) {
+          <div class="title-container flex flex-row items-center justify-start">
+            <tb-toggle-select [disabled]="isLoading$ | async"
+                              [ngModel]="attributeScope"
+                              (ngModelChange)="attributeScopeChanged($event)">
+              @for (scope of attributeScopes; track scope) {
+                <tb-toggle-option [value]="scope">{{ attributeTableScopeTranslationsMap.get(scope) | translate }}</tb-toggle-option>
+              }
+            </tb-toggle-select>
+          </div>
+        }
         <span class="flex-1"></span>
         @if (attributeScope !== attributeScopeTypes.CLIENT_SCOPE && !disableAddTelemetry && !readonly) {
           <button mat-icon-button
@@ -36,7 +30,7 @@
             <mat-icon>add</mat-icon>
           </button>
         }
-        @if (!isClientSideTelemetryTypeMap.get(attributeScope)) {
+        @if (hasRestLoadedScopes()) {
           <button mat-icon-button
                   [disabled]="isLoading$ | async"
                   (click)="reloadAttributes()"
@@ -81,7 +75,7 @@
           'attribute.selected-telemetry' : 'attribute.selected-attributes') | translate:{count: dataSource.selection.selected.length} }}
         </span>
         <span class="flex-1"></span>
-        <button [class.!hidden]="attributeScope === attributeScopeTypes.CLIENT_SCOPE || readonly"
+        <button [class.!hidden]="!isSelectionDeletable()"
                 class="button-widget-action"
                 mat-icon-button [disabled]="isLoading$ | async"
                 matTooltip="{{ 'action.delete' | translate }}"
@@ -145,7 +139,7 @@
       </div>
     </mat-toolbar>
     <div class="table-container flex-1" [class.!hidden]="mode === 'widget'">
-      <table mat-table [dataSource]="dataSource"
+      <table mat-table [dataSource]="dataSource" [class.tb-scope-column]="scopeColumnVisible"
              matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 40px;">
@@ -165,6 +159,12 @@
           <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'attribute.last-update-time' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             {{ attribute.lastUpdateTs | date:'yyyy-MM-dd HH:mm:ss' }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="scopeName">
+          <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 100px; max-width: 100px; width: 100px;"> {{ 'attribute.scope' | translate }} </mat-header-cell>
+          <mat-cell *matCellDef="let attribute">
+            {{ attribute.scopeName }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="key">
@@ -206,7 +206,7 @@
                   </tb-copy-button>
                 }
               </div>
-              <span [class.!hidden]="isClientSideTelemetryTypeMap.get(attributeScope) || readonly">
+              <span [class.!hidden]="!isAttributeEditable(attribute)">
                 <mat-icon>edit</mat-icon>
               </span>
               @if (attributeScope === latestTelemetryTypes.LATEST_TELEMETRY && !readonly) {

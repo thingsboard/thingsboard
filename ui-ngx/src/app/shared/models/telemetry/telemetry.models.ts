@@ -84,6 +84,17 @@ export const telemetryTypeTranslationsShort = new Map<TelemetryType, string>(
 );
 
 
+export const ALL_ATTRIBUTE_SCOPES = 'ALL';
+
+export type AttributeTableScope = TelemetryType | typeof ALL_ATTRIBUTE_SCOPES;
+
+export const attributeTableScopeTranslations = new Map<AttributeTableScope, string>(
+  [
+    [ALL_ATTRIBUTE_SCOPES, 'attribute.scope-all-short'],
+    ...telemetryTypeTranslationsShort
+  ]
+);
+
 export const isClientSideTelemetryType = new Map<TelemetryType, boolean>(
   [
     [LatestTelemetry.LATEST_TELEMETRY, true],

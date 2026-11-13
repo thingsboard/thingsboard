@@ -57,6 +57,7 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
     this.tableTitle = '';
     this.useTimePageLink = true;
     this.pageMode = pageMode;
+    this.outlinedBorder = pageMode;
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = true;

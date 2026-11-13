@@ -91,7 +91,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               public testButtonLabel?: string,
               private debugEventSelected?: EventEmitter<EventBody>,
               public hideClearEventAction = false,
-              public disableDebugEventAction = false) {
+              public disableDebugEventAction = false,
+              outlinedBorder = false) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
@@ -104,6 +105,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.addEnabled = false;
     this.entitiesDeleteEnabled = false;
     this.pageMode = false;
+    this.outlinedBorder = outlinedBorder;
 
     this.headerComponent = EventTableHeaderComponent;
 
