@@ -238,8 +238,12 @@ export class IotHubApiService {
     );
   }
 
+  /**
+   * updatesFirst: the items installed in a version other than the one IoT Hub publishes now come first, then the rest,
+   * each in the page's sort.
+   */
   public getInstalledItems(pageLink: PageLink, itemTypes?: string | string[],
-                           itemId?: string, config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
+                           itemId?: string, config?: IotHubRequestConfig, updatesFirst = false): Observable<PageData<IotHubInstalledItem>> {
     let query = pageLink.toQuery();
     if (itemTypes) {
       const types = Array.isArray(itemTypes) ? itemTypes : [itemTypes];
@@ -247,6 +251,9 @@ export class IotHubApiService {
     }
     if (itemId) {
       query += `&itemId=${itemId}`;
+    }
+    if (updatesFirst) {
+      query += '&updatesFirst=true';
     }
     return this.http.get<PageData<IotHubInstalledItem>>(
       `/api/iot-hub/installedItems${query}`,

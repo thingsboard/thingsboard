@@ -249,7 +249,12 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         infos.forEach(info => this.publishedVersionMap.set(info.itemId, info));
         this.updatesChecked = true;
         this.isCheckingUpdates = false;
-        void this.checkConverterUpdates();
+        // From the first page: the items with an update come first now, wherever their install date put them
+        this.pageIndex = 0;
+        if (this.paginator) {
+          this.paginator.pageIndex = 0;
+        }
+        this.loadData();
       },
       error: () => {
         this.isCheckingUpdates = false;
@@ -341,7 +346,9 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     };
     const pageLink = new PageLink(this.pageSize, this.pageIndex, this.textSearch || null, sortOrder);
     const typeFilters = this.typeFilters?.length ? this.typeFilters : null;
-    this.iotHubApiService.getInstalledItems(pageLink, typeFilters, this.itemVersion?.itemId, {ignoreLoading: true}).subscribe({
+    // Once the updates are checked, the items with one come first; the page of one item's versions keeps its sort
+    const updatesFirst = this.updatesChecked && !this.itemVersion;
+    this.iotHubApiService.getInstalledItems(pageLink, typeFilters, this.itemVersion?.itemId, {ignoreLoading: true}, updatesFirst).subscribe({
       next: (data) => {
         this.dataSource = data.data;
         this.totalElements = data.totalElements;

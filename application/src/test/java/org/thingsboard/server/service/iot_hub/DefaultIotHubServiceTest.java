@@ -4,6 +4,7 @@
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.converter.ConverterService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -742,6 +745,92 @@ class DefaultIotHubServiceTest {
         IotHubInstalledItem item = installedItem(UUID.randomUUID());
         item.setDescriptor(descriptor);
         return item;
+    }
+
+    @Test
+    void findInstalledItemsUpdatesFirst_passesThePublishedVersionOfEachInstalledItem() {
+        UUID tracker = UUID.randomUUID();
+        UUID trackerPublished = UUID.randomUUID();
+        UUID unpublished = UUID.randomUUID();
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of(tracker, unpublished));
+        ArrayNode published = JacksonUtil.newArrayNode();
+        published.addObject().put("itemId", tracker.toString()).put("publishedVersionId", trackerPublished.toString()).put("publishedVersion", "1.0.1");
+        // An item IoT Hub publishes no version of: nothing to update to
+        published.addObject().put("itemId", unpublished.toString()).putNull("publishedVersionId").putNull("publishedVersion");
+        when(iotHubRestClient.getPublishedVersions(List.of(tracker, unpublished))).thenReturn(published);
+        PageLink pageLink = new PageLink(10);
+
+        service.findInstalledItemsUpdatesFirst(tenantId, List.of("DEVICE"), null, pageLink);
+
+        verify(iotHubInstalledItemService).findByTenantIdUpdatesFirst(tenantId, List.of("DEVICE"), null, Map.of(tracker, trackerPublished), pageLink);
+    }
+
+    @Test
+    void findInstalledItemsUpdatesFirst_withoutAnAnswerFromIotHub_listsInThePageSort() {
+        UUID tracker = UUID.randomUUID();
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of(tracker));
+        when(iotHubRestClient.getPublishedVersions(any())).thenThrow(new RuntimeException("IoT Hub is down"));
+        PageLink pageLink = new PageLink(10);
+
+        service.findInstalledItemsUpdatesFirst(tenantId, null, null, pageLink);
+
+        verify(iotHubInstalledItemService).findByTenantIdUpdatesFirst(tenantId, null, null, Map.of(), pageLink);
+    }
+
+    @Test
+    void findInstalledItemsUpdatesFirst_nothingInstalled_doesNotAskIotHub() {
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of());
+        PageLink pageLink = new PageLink(10);
+
+        service.findInstalledItemsUpdatesFirst(tenantId, null, null, pageLink);
+
+        verify(iotHubRestClient, never()).getPublishedVersions(any());
+        verify(iotHubInstalledItemService).findByTenantIdUpdatesFirst(tenantId, null, null, Map.of(), pageLink);
+    }
+
+    @Test
+    void findInstalledItemsUpdatesFirst_asksIotHubInChunksOf100() {
+        List<UUID> itemIds = Stream.generate(UUID::randomUUID).limit(150).toList();
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(itemIds);
+        when(iotHubRestClient.getPublishedVersions(any())).thenReturn(JacksonUtil.newArrayNode());
+
+        service.findInstalledItemsUpdatesFirst(tenantId, null, null, new PageLink(10));
+
+        verify(iotHubRestClient).getPublishedVersions(itemIds.subList(0, 100));
+        verify(iotHubRestClient).getPublishedVersions(itemIds.subList(100, 150));
+    }
+
+    @Test
+    void findInstalledItemsUpdatesFirst_nextPages_doNotAskIotHubAgain() {
+        UUID tracker = UUID.randomUUID();
+        UUID trackerPublished = UUID.randomUUID();
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of(tracker));
+        ArrayNode published = JacksonUtil.newArrayNode();
+        published.addObject().put("itemId", tracker.toString()).put("publishedVersionId", trackerPublished.toString());
+        when(iotHubRestClient.getPublishedVersions(any())).thenReturn(published);
+        PageLink second = new PageLink(10, 1);
+
+        service.findInstalledItemsUpdatesFirst(tenantId, null, null, new PageLink(10));
+        service.findInstalledItemsUpdatesFirst(tenantId, null, null, second);
+
+        verify(iotHubRestClient).getPublishedVersions(any());
+        verify(iotHubInstalledItemService).findByTenantIdUpdatesFirst(tenantId, null, null, Map.of(tracker, trackerPublished), second);
+    }
+
+    @Test
+    void findInstalledItemsUpdatesFirst_skipsAnEntryThatIsNotAPairOfIds() {
+        UUID tracker = UUID.randomUUID();
+        UUID trackerPublished = UUID.randomUUID();
+        when(iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId)).thenReturn(List.of(tracker));
+        ArrayNode published = JacksonUtil.newArrayNode();
+        published.addObject().put("itemId", "not-an-id").put("publishedVersionId", UUID.randomUUID().toString());
+        published.addObject().put("itemId", tracker.toString()).put("publishedVersionId", trackerPublished.toString());
+        when(iotHubRestClient.getPublishedVersions(any())).thenReturn(published);
+        PageLink pageLink = new PageLink(10);
+
+        service.findInstalledItemsUpdatesFirst(tenantId, null, null, pageLink);
+
+        verify(iotHubInstalledItemService).findByTenantIdUpdatesFirst(tenantId, null, null, Map.of(tracker, trackerPublished), pageLink);
     }
 
 }

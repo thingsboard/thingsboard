@@ -45,6 +45,37 @@ interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledIte
             """)
     Page<IotHubInstalledItemEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("itemTypes") List<String> itemTypes, @Param("itemId") UUID itemId, @Param("textSearch") String textSearch, Pageable pageable);
 
+    /**
+     * As {@link #findByTenantId}, with the items that have an update first: an item of {@code publishedItemIds} whose
+     * installed version is not among {@code publishedVersionIds}. The page's sort applies within each of the two groups.
+     */
+    @Query(value = """
+            SELECT item FROM IotHubInstalledItemEntity item
+            WHERE item.tenantId = :tenantId
+              AND (:itemTypes IS NULL OR item.itemType IN :itemTypes)
+              AND (:itemId IS NULL OR item.itemId = :itemId)
+              AND (:textSearch IS NULL
+                OR ilike(item.itemName, CONCAT('%', :textSearch, '%')) = true
+                OR ilike(item.itemType, CONCAT('%', :textSearch, '%')) = true
+                OR ilike(item.version, CONCAT('%', :textSearch, '%')) = true)
+            ORDER BY CASE WHEN item.itemId IN :publishedItemIds AND item.itemVersionId NOT IN :publishedVersionIds THEN 0 ELSE 1 END
+            """,
+            countQuery = """
+            SELECT COUNT(item) FROM IotHubInstalledItemEntity item
+            WHERE item.tenantId = :tenantId
+              AND (:itemTypes IS NULL OR item.itemType IN :itemTypes)
+              AND (:itemId IS NULL OR item.itemId = :itemId)
+              AND (:textSearch IS NULL
+                OR ilike(item.itemName, CONCAT('%', :textSearch, '%')) = true
+                OR ilike(item.itemType, CONCAT('%', :textSearch, '%')) = true
+                OR ilike(item.version, CONCAT('%', :textSearch, '%')) = true)
+            """)
+    Page<IotHubInstalledItemEntity> findByTenantIdUpdatesFirst(@Param("tenantId") UUID tenantId, @Param("itemTypes") List<String> itemTypes,
+                                                               @Param("itemId") UUID itemId, @Param("textSearch") String textSearch,
+                                                               @Param("publishedItemIds") Collection<UUID> publishedItemIds,
+                                                               @Param("publishedVersionIds") Collection<UUID> publishedVersionIds,
+                                                               Pageable pageable);
+
     @Query("""
             SELECT COUNT(item) FROM IotHubInstalledItemEntity item
             WHERE item.tenantId = :tenantId
