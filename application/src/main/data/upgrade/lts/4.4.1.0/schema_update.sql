@@ -8,3 +8,6 @@
 CREATE INDEX IF NOT EXISTS idx_calculated_field_tenant_id_id ON calculated_field(tenant_id, id);
 
 ALTER TABLE ai_model ADD COLUMN IF NOT EXISTS customer_access_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Also added by upgrade/lts/4.3.1.9/schema_update.sql, which an installation already on 4.4.0 never runs.
+ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS compute_on varchar(32);
