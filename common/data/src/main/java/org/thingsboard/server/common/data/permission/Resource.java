@@ -72,7 +72,8 @@ public enum Resource {
     AGENT_APP_PROFILE(EntityType.AGENT_APP_PROFILE),
     AGENT_PROFILE(EntityType.AGENT_PROFILE),
     AI,
-    API_KEY(EntityType.API_KEY);
+    API_KEY(EntityType.API_KEY),
+    EXTENSION(EntityType.EXTENSION);
 
     private static final Map<EntityType, Resource> groupResourceByGroupType = new HashMap<>();
     private static final Map<EntityType, Resource> resourceByEntityType = new HashMap<>();
@@ -165,6 +166,7 @@ public enum Resource {
         operationsByResource.put(Resource.AGENT, Operation.defaultEntityOperations);
         operationsByResource.put(Resource.AGENT_APP_PROFILE, Operation.crudOperations);
         operationsByResource.put(Resource.AGENT_PROFILE, Operation.crudOperations);
+        operationsByResource.put(Resource.EXTENSION, Operation.crudOperations);
 
         resourcesByAuthority.put(Authority.SYS_ADMIN, Set.of(
                 Resource.ALL,
@@ -247,7 +249,8 @@ public enum Resource {
                 Resource.AGENT_PROFILE,
                 Resource.AGENT_GROUP,
                 Resource.AI,
-                Resource.API_KEY
+                Resource.API_KEY,
+                Resource.EXTENSION
         ));
 
         resourcesByAuthority.put(Authority.CUSTOMER_USER, Set.of(

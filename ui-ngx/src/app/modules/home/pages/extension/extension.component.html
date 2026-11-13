@@ -1,0 +1,104 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="showLogs($event)"
+          [class.!hidden]="isEdit || !entity?.id">
+    {{'extension.show-logs' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="showApiDocs($event)"
+          [class.!hidden]="isEdit || !entity?.id">
+    {{'extension.api-docs' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [class.!hidden]="hideDelete() || isEdit">
+    {{'extension.delete' | translate }}
+  </button>
+</div>
+<div class="mat-padding flex flex-col gap-3">
+  <section *ngIf="entity?.id" class="tb-form-panel stroked no-gap" [class.!hidden]="isEdit">
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title">{{ 'extension.deployment-status' | translate }}</div>
+      <button mat-icon-button
+              [disabled]="statusLoading"
+              matTooltip="{{ 'extension.refresh-status' | translate }}"
+              matTooltipPosition="above"
+              (click)="reloadStatus()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    <div class="tb-extension-status-grid">
+      <div class="tb-status-item">
+        <label>{{ 'extension.name' | translate }}</label>
+        <span>{{ entity?.name || '-' }}</span>
+      </div>
+      <div class="tb-status-item">
+        <label>{{ 'extension.state' | translate }}</label>
+        <span *ngIf="entity?.state" class="tb-state-chip"
+              [style.color]="extensionStateColors.get(status?.state || entity.state)"
+              [style.backgroundColor]="extensionStateBackgroundColors.get(status?.state || entity.state)">
+          {{ extensionStateTranslations.get(status?.state || entity.state) | translate }}
+        </span>
+      </div>
+      <div class="tb-status-item">
+        <label>{{ 'extension.replicas-ready' | translate }}</label>
+        <span>{{ (status?.readyReplicas !== null && status?.readyReplicas !== undefined ? status?.readyReplicas : '-') }} / {{ status?.desiredReplicas !== null && status?.desiredReplicas !== undefined ? status?.desiredReplicas : '-' }}</span>
+      </div>
+      <div class="tb-status-item">
+        <label>{{ 'extension.status-updated' | translate }}</label>
+        <span>{{ status?.snapshotAt ? (status.snapshotAt | date:'yyyy-MM-dd HH:mm:ss') : '-' }}</span>
+      </div>
+    </div>
+    <div *ngIf="extensionUrl" class="tb-extension-url">
+      <label>{{ 'extension.url' | translate }}</label>
+      <div class="tb-extension-url-value">
+        <span>{{ extensionUrl }}</span>
+        <button mat-icon-button type="button" color="primary"
+                ngxClipboard
+                [cbContent]="extensionUrl"
+                (cbOnSuccess)="onExtensionUrlCopied()"
+                matTooltip="{{ 'extension.copyUrl' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon class="tb-mat-20">content_copy</mat-icon>
+        </button>
+      </div>
+    </div>
+    <div *ngIf="status?.lastError || entity?.lastError" class="tb-extension-last-error">
+      <label>{{ 'extension.last-error' | translate }}</label>
+      <span>{{ status?.lastError || entity?.lastError }}</span>
+      <span *ngIf="status?.lastErrorAt || entity?.lastErrorAt" class="tb-error-time">
+        ({{ (status?.lastErrorAt || entity?.lastErrorAt) | date:'yyyy-MM-dd HH:mm:ss' }})
+      </span>
+    </div>
+  </section>
+  <section class="tb-form-panel stroked no-gap" [class.!hidden]="isEdit">
+    <div class="tb-form-panel-title">{{ 'extension.configuration' | translate }}</div>
+    <div class="tb-extension-status-grid">
+      <div class="tb-status-item">
+        <label>{{ 'extension.docker-image' | translate }}</label>
+        <span>{{ dockerImage || '-' }}</span>
+      </div>
+      <div class="tb-status-item">
+        <label>{{ 'extension.port' | translate }}</label>
+        <span>{{ entity?.containerSpec?.port ?? '-' }}</span>
+      </div>
+      <div class="tb-status-item">
+        <label>{{ 'extension.replicas' | translate }}</label>
+        <span>{{ entity?.containerSpec?.replicas ?? '-' }}</span>
+      </div>
+      <div class="tb-status-item">
+        <label>{{ 'extension.resource-size' | translate }}</label>
+        <span>{{ resourceSize }}<ng-container *ngIf="resourceSizeInfo"> ({{ 'extension.cpu' | translate }}: {{ cpuCores(resourceSizeInfo.cpuRequest) }}/{{ cpuCores(resourceSizeInfo.cpuLimit) }}, {{ 'extension.memory' | translate }}: {{ resourceSizeInfo.memoryLimit }})</ng-container></span>
+      </div>
+    </div>
+  </section>
+</div>

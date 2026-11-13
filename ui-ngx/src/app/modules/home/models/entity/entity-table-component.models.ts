@@ -53,6 +53,7 @@ export interface IEntitiesTableComponent {
   isDetailsOpen: boolean;
   detailsPanelOpened: EventEmitter<boolean>;
   entityTableHeaderAnchor: TbAnchorComponent;
+  entityTableFooterAnchor: TbAnchorComponent;
   searchInputField: ElementRef;
   paginator: MatPaginator;
   sort: MatSort;
