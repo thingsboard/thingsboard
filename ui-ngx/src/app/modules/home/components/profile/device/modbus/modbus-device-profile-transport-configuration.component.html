@@ -1,0 +1,83 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="modbusConfigurationForm" style="padding: 8px 0 16px;">
+  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.timeout-ms</mat-label>
+      <input matInput formControlName="timeoutMs" type="number" min="1" required/>
+      @if (modbusConfigurationForm.get('timeoutMs').hasError('required')) {
+        <mat-error>{{ 'device-profile.modbus.timeout-ms-required' | translate }}</mat-error>
+      } @else if (modbusConfigurationForm.get('timeoutMs').invalid) {
+        <mat-error>{{ 'device-profile.modbus.positive-integer' | translate }}</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.retries</mat-label>
+      <input matInput formControlName="retries" type="number" min="0" required/>
+      <mat-hint translate>device-profile.modbus.retries-hint</mat-hint>
+      @if (modbusConfigurationForm.get('retries').hasError('required')) {
+        <mat-error>{{ 'device-profile.modbus.retries-required' | translate }}</mat-error>
+      } @else if (modbusConfigurationForm.get('retries').invalid) {
+        <mat-error>{{ 'device-profile.modbus.non-negative-integer' | translate }}</mat-error>
+      }
+    </mat-form-field>
+  </section>
+  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.poll-period-ms</mat-label>
+      <input matInput formControlName="pollPeriodMs" type="number" min="1" required/>
+      @if (modbusConfigurationForm.get('pollPeriodMs').hasError('required')) {
+        <mat-error>{{ 'device-profile.modbus.poll-period-ms-required' | translate }}</mat-error>
+      } @else if (modbusConfigurationForm.get('pollPeriodMs').invalid) {
+        <mat-error>{{ 'device-profile.modbus.positive-integer' | translate }}</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.attributes-poll-period-ms</mat-label>
+      <input matInput formControlName="attributesPollPeriodMs" type="number" min="1"/>
+      <mat-hint translate>device-profile.modbus.attributes-poll-period-ms-hint</mat-hint>
+      @if (modbusConfigurationForm.get('attributesPollPeriodMs').invalid) {
+        <mat-error>{{ 'device-profile.modbus.positive-integer' | translate }}</mat-error>
+      }
+    </mat-form-field>
+  </section>
+  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.byte-order</mat-label>
+      <mat-select formControlName="byteOrder" required>
+        @for (order of byteOrders; track order) {
+          <mat-option [value]="order">{{ ('device-profile.modbus.order-' + order.toLowerCase()) | translate }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint translate>device-profile.modbus.byte-order-hint</mat-hint>
+    </mat-form-field>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.word-order</mat-label>
+      <mat-select formControlName="wordOrder" required>
+        @for (order of byteOrders; track order) {
+          <mat-option [value]="order">{{ ('device-profile.modbus.order-' + order.toLowerCase()) | translate }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint translate>device-profile.modbus.word-order-hint</mat-hint>
+    </mat-form-field>
+  </section>
+  <div style="padding: 8px 0 16px">
+    <mat-checkbox formControlName="sendDataOnlyOnChange">
+      {{ 'device-profile.modbus.send-data-only-on-change' | translate }}
+    </mat-checkbox>
+    <div class="tb-hint" translate>device-profile.modbus.send-data-only-on-change-hint</div>
+  </div>
+  @for (item of sections; track item.section) {
+    <section class="flex flex-col" style="padding-bottom: 16px">
+      <div class="tb-small">{{ item.title | translate }}</div>
+      <div class="tb-hint" style="padding-bottom: 8px">{{ item.hint | translate }}</div>
+      <tb-modbus-device-profile-mappings [section]="item.section" [formControlName]="item.section">
+      </tb-modbus-device-profile-mappings>
+    </section>
+  }
+  <div class="tb-hint" translate>device-profile.modbus.address-hint</div>
+</form>

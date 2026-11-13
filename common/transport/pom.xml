@@ -31,6 +31,7 @@
         <module>coap</module>
         <module>lwm2m</module>
         <module>snmp</module>
+        <module>modbus</module>
     </modules>
 
     <build>

@@ -1710,6 +1710,54 @@
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate ui-ngx/src/app/shared/models/id/asset-id.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 86ca874a92346a950b6912d78116f1f7ee6bb654).",
       "contentHash": "sha256:5427b1c6bf59f9e9372c47717fee96bf94bddeaf65ad920b77647b16539bf5f9"
+    },
+    {
+      "path": "common/queue/src/main/java/org/thingsboard/server/queue/util/TbModbusTransportComponent.java",
+      "header": "ce-modified",
+      "reason": "Copy of the CE annotation TbSnmpTransportComponent with the SNMP names and property replaced by Modbus ones; the structure and the condition expression are the CE implementation. Reviewed against CE common/queue/src/main/java/org/thingsboard/server/queue/util/TbSnmpTransportComponent.java at 5954190c32f.",
+      "contentHash": "sha256:67f5af76b5c6c01208af252adfc080c675bc241b457a8e991b5730fe3d26796a"
+    },
+    {
+      "path": "transport/modbus/src/main/java/org/thingsboard/server/modbus/ThingsboardModbusTransportApplication.java",
+      "header": "ce-modified",
+      "reason": "Copy of the CE SNMP transport application class ThingsboardSnmpTransportApplication with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE transport/snmp/src/main/java/org/thingsboard/server/snmp/ThingsboardSnmpTransportApplication.java at 5954190c32f.",
+      "contentHash": "sha256:46320e98779260f4b7f367e0ded2757fc412195a8bd3736a49a299b99b94c8d6"
+    },
+    {
+      "path": "transport/modbus/src/main/resources/tb-modbus-transport.yml",
+      "header": "ce-modified",
+      "reason": "Copy of the CE SNMP transport configuration file tb-snmp-transport.yml with the SNMP names replaced by Modbus ones; the structure is the CE implementation. The transport.snmp settings are replaced by the transport.modbus settings of thingsboard.yml. Reviewed against CE transport/snmp/src/main/resources/tb-snmp-transport.yml at 5954190c32f.",
+      "contentHash": "sha256:52c46cf21483e5cc3c2bfdb1cc047ad8ee10063d9e30d8cd3ae31ea80c572601"
+    },
+    {
+      "path": "transport/modbus/src/main/resources/logback.xml",
+      "header": "ce-modified",
+      "reason": "Copy of the CE SNMP transport logging configuration with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE transport/snmp/src/main/resources/logback.xml at 5954190c32f.",
+      "contentHash": "sha256:e1286439f0c71d08c046253793e9dd180054f169e7e90c6ad952d0eaef4a42c3"
+    },
+    {
+      "path": "transport/modbus/src/main/conf/logback.xml",
+      "header": "ce-modified",
+      "reason": "Copy of the CE SNMP transport packaged logging configuration with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE transport/snmp/src/main/conf/logback.xml at 5954190c32f.",
+      "contentHash": "sha256:f77f0bb3a296d814743a6629f49ddfb7897d625a18eeaa556109014a18ce4099"
+    },
+    {
+      "path": "transport/modbus/src/main/conf/tb-modbus-transport.conf",
+      "header": "ce-modified",
+      "reason": "Copy of the CE SNMP transport service configuration tb-snmp-transport.conf with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE transport/snmp/src/main/conf/tb-snmp-transport.conf at 5954190c32f.",
+      "contentHash": "sha256:40ad6e7b0d56b6e4e45d02b93d7a5a218d2a1745d3cf289e90be64027620244f"
+    },
+    {
+      "path": "msa/transport/modbus/docker/Dockerfile",
+      "header": "ce-modified",
+      "reason": "Copy of the CE SNMP transport Dockerfile with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE msa/transport/snmp/docker/Dockerfile at 5954190c32f.",
+      "contentHash": "sha256:296fd0fdec226362f3d865db97133c873dcc0cc38e28c91463b41cf081379097"
+    },
+    {
+      "path": "msa/transport/modbus/docker/start-tb-modbus-transport.sh",
+      "header": "ce-modified",
+      "reason": "Copy of the CE SNMP transport start script start-tb-snmp-transport.sh with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE msa/transport/snmp/docker/start-tb-snmp-transport.sh at 5954190c32f.",
+      "contentHash": "sha256:e7a44ed8e853ecc894ae2614c8c89529a7a3a9c133faae3de121706e490a8661"
     }
   ]
 }

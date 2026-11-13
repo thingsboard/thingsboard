@@ -1,0 +1,67 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="modbusDeviceForm" style="padding: 8px 0;">
+  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.host</mat-label>
+      <input matInput formControlName="host" required/>
+      @if (modbusDeviceForm.get('host').invalid) {
+        <mat-error>{{ 'device-profile.modbus.host-required' | translate }}</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.port</mat-label>
+      <input matInput formControlName="port" type="number" min="1" max="65535" required/>
+      @if (modbusDeviceForm.get('port').hasError('required')) {
+        <mat-error>{{ 'device-profile.modbus.port-required' | translate }}</mat-error>
+      } @else if (modbusDeviceForm.get('port').invalid) {
+        <mat-error>{{ 'device-profile.modbus.port-invalid' | translate }}</mat-error>
+      }
+    </mat-form-field>
+  </section>
+  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.framing</mat-label>
+      <mat-select formControlName="framing" required>
+        @for (framing of framings; track framing) {
+          <mat-option [value]="framing">{{ ('device-profile.modbus.framing-' + framing.toLowerCase()) | translate }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint translate>device-profile.modbus.framing-hint</mat-hint>
+    </mat-form-field>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.unit-id</mat-label>
+      <input matInput formControlName="unitId" type="number" [min]="unitIdRange.min" [max]="unitIdRange.max" required/>
+      @if (showUnitIdZeroHint) {
+        <mat-hint translate>device-profile.modbus.unit-id-zero-hint</mat-hint>
+      }
+      @if (modbusDeviceForm.get('unitId').hasError('required')) {
+        <mat-error>{{ 'device-profile.modbus.unit-id-required' | translate }}</mat-error>
+      } @else if (modbusDeviceForm.get('unitId').invalid) {
+        <mat-error>{{ 'device-profile.modbus.unit-id-invalid' | translate: unitIdRange }}</mat-error>
+      }
+    </mat-form-field>
+  </section>
+  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.timeout-ms</mat-label>
+      <input matInput formControlName="timeoutMs" type="number" min="1"/>
+      <mat-hint translate>device-profile.modbus.device-override-hint</mat-hint>
+      @if (modbusDeviceForm.get('timeoutMs').invalid) {
+        <mat-error>{{ 'device-profile.modbus.positive-integer' | translate }}</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.poll-period-ms</mat-label>
+      <input matInput formControlName="pollPeriodMs" type="number" min="1"/>
+      <mat-hint translate>device-profile.modbus.device-override-hint</mat-hint>
+      @if (modbusDeviceForm.get('pollPeriodMs').invalid) {
+        <mat-error>{{ 'device-profile.modbus.positive-integer' | translate }}</mat-error>
+      }
+    </mat-form-field>
+  </section>
+</form>

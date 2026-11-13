@@ -722,12 +722,27 @@ message GetDeviceCredentialsResponseMsg {
   DeviceCredentialsProto deviceCredentialsData = 1;
 }
 
+// DEPRECATED. FOR REMOVAL
 message GetSnmpDevicesRequestMsg {
+  option deprecated = true; // use GetDeviceIdsByTransportTypeRequestMsg
   int32 page = 1;
   int32 pageSize = 2;
 }
 
+// DEPRECATED. FOR REMOVAL
 message GetSnmpDevicesResponseMsg {
+  option deprecated = true; // use GetDeviceIdsByTransportTypeResponseMsg
+  repeated string ids = 1;
+  bool hasNextPage = 2;
+}
+
+message GetDeviceIdsByTransportTypeRequestMsg {
+  string transportType = 1;
+  int32 page = 2;
+  int32 pageSize = 3;
+}
+
+message GetDeviceIdsByTransportTypeResponseMsg {
   repeated string ids = 1;
   bool hasNextPage = 2;
 }
@@ -1835,11 +1850,12 @@ message TransportApiRequestMsg {
   ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
   GetResourceRequestMsg resourceRequestMsg = 9;
   GetOtaPackageRequestMsg otaPackageRequestMsg = 10;
-  GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 11;
+  GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 11 [deprecated = true];
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
   ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateX509CertRequestMsg = 15;
+  GetDeviceIdsByTransportTypeRequestMsg deviceIdsByTransportTypeRequestMsg = 16;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -1848,13 +1864,14 @@ message TransportApiResponseMsg {
   GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
   GetEntityProfileResponseMsg entityProfileResponseMsg = 3;
   ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 4;
-  GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5;
+  GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5 [deprecated = true];
   LwM2MResponseMsg lwM2MResponseMsg = 6;
   GetResourceResponseMsg resourceResponseMsg = 7;
   GetOtaPackageResponseMsg otaPackageResponseMsg = 8;
   GetDeviceResponseMsg deviceResponseMsg = 9;
   GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
   repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 11;
+  GetDeviceIdsByTransportTypeResponseMsg deviceIdsByTransportTypeResponseMsg = 12;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */

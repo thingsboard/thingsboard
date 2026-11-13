@@ -1,0 +1,68 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.thingsboard.common</groupId>
+        <version>4.4.1-SNAPSHOT</version>
+        <artifactId>transport</artifactId>
+    </parent>
+    <groupId>org.thingsboard.common.transport</groupId>
+    <artifactId>modbus</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Thingsboard Modbus Transport Common</name>
+    <url>https://thingsboard.io</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.dir>${basedir}/../../..</main.dir>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.thingsboard.common.transport</groupId>
+            <artifactId>transport-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.digitalpetri.modbus</groupId>
+            <artifactId>modbus-tcp</artifactId>
+            <exclusions>
+                <!-- Needed only by the library's Netty client transports, which we replace (TcpClientTransport).
+                     Its 1.x line conflicts with netty-channel-fsm 0.x used by Eclipse Milo (OPC-UA integration). -->
+                <exclusion>
+                    <groupId>com.digitalpetri.netty</groupId>
+                    <artifactId>netty-channel-fsm</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

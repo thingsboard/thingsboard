@@ -1729,6 +1729,31 @@ transport:
     scheduler_thread_pool_size: "${SNMP_SCHEDULER_THREAD_POOL_SIZE:4}"
     # Maximum number of retry attempts for a single SNMP devices batch during bootstrap.
     batch_retries: "${SNMP_BOOTSTRAP_RETRIES:8}"
+  modbus:
+    # Enable/disable MODBUS transport protocol
+    enabled: "${MODBUS_ENABLED:false}"
+    # Maximum number of retry attempts for a single MODBUS devices batch during bootstrap.
+    batch_retries: "${MODBUS_BOOTSTRAP_RETRIES:8}"
+    # Number of threads that schedule Modbus poll cycles
+    scheduler_thread_pool_size: "${MODBUS_SCHEDULER_THREAD_POOL_SIZE:4}"
+    netty:
+      # Number of Netty event loop threads shared by all Modbus connections
+      event_loop_threads: "${MODBUS_NETTY_EVENT_LOOP_THREADS:2}"
+    response_processing:
+      # Parallelism level for the executor that processes Modbus responses
+      parallelism_level: "${MODBUS_RESPONSE_PROCESSING_PARALLELISM_LEVEL:4}"
+    # Maximum number of requests in flight per Modbus TCP connection (always 1 for RTU-over-TCP framing).
+    # Keep 1 for serial gateways: most handle one request at a time
+    max_in_flight_per_endpoint: "${MODBUS_MAX_IN_FLIGHT_PER_ENDPOINT:1}"
+    # Maximum number of requests (polls, attribute writes, RPCs) waiting to be sent per Modbus connection.
+    # When the limit is reached, new requests fail immediately instead of piling up behind an unreachable device
+    max_queue_size_per_endpoint: "${MODBUS_MAX_QUEUE_SIZE_PER_ENDPOINT:1000}"
+    # Maximum gap (in registers or coils) between two mappings that are still merged into one read
+    block_merge_max_gap: "${MODBUS_BLOCK_MERGE_MAX_GAP:8}"
+    # Lower bound for poll periods configured in device profiles and devices, in milliseconds
+    min_poll_period_ms: "${MODBUS_MIN_POLL_PERIOD_MS:100}"
+    # Timeout for opening a Modbus TCP connection, in milliseconds
+    connect_timeout_ms: "${MODBUS_CONNECT_TIMEOUT_MS:5000}"
   stats:
     # Enable/Disable the collection of transport statistics
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"

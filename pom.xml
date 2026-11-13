@@ -184,6 +184,7 @@
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
+        <digitalpetri-modbus.version>2.1.6</digitalpetri-modbus.version>
         <bytebuddy.version>1.18.4</bytebuddy.version>
         <langchain4j.version>1.16.1-TB1</langchain4j.version>
         <error_prone_annotations.version>2.43.0</error_prone_annotations.version>
@@ -1594,6 +1595,11 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.common.transport</groupId>
+                <artifactId>modbus</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common.transport</groupId>
                 <artifactId>lwm2m</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -2385,6 +2391,11 @@
                 <groupId>org.snmp4j</groupId>
                 <artifactId>snmp4j</artifactId>
                 <version>${snmp4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.digitalpetri.modbus</groupId>
+                <artifactId>modbus-tcp</artifactId>
+                <version>${digitalpetri-modbus.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
