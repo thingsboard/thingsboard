@@ -8,6 +8,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.data.IntegrationMetaData;
 import org.thingsboard.script.api.ScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
@@ -38,11 +39,13 @@ public class ScriptDownlinkEvaluator extends AbstractScriptEvaluator {
         } catch (ExecutionException e) {
             if (e.getCause() instanceof ScriptException) {
                 throw (ScriptException) e.getCause();
+            } else if (e.getCause() instanceof TbScriptException) {
+                throw new ScriptException("Failed to execute script: " + e.getCause().getMessage());
             } else {
-                throw new ScriptException("Failed to execute js script: " + e.getMessage());
+                throw new ScriptException("Failed to execute script: " + e.getMessage());
             }
         } catch (Exception e) {
-            throw new ScriptException("Failed to execute js script: " + e.getMessage());
+            throw new ScriptException("Failed to execute script: " + e.getMessage());
         }
     }
 
