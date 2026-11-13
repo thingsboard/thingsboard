@@ -4,9 +4,11 @@
 #
 
 from contextlib import redirect_stderr, redirect_stdout
+import hashlib
 import io
 import json
 import os
+import sqlite3
 from pathlib import Path
 import tempfile
 import textwrap
@@ -15,6 +17,19 @@ from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import check_license_headers as p
+
+
+CONNECT = sqlite3.connect
+
+
+def impatient_sqlite():
+    """SQLite that waits 0.1 s instead of 5 s for another connection's lock."""
+    return patch.object(sqlite3, "connect", lambda *args, **kwargs: CONNECT(*args, **kwargs | {"timeout": 0.1}))
+
+
+def signature(label):
+    """A cache signature as cache_signature() shapes it: 32 hex characters."""
+    return hashlib.sha256(label.encode()).hexdigest()[:32]
 
 
 def temporary_directory(test):
@@ -240,6 +255,57 @@ class DecisionTests(unittest.TestCase):
                       stderr.getvalue())
 
 
+class ParallelTests(unittest.TestCase):
+    def test_jobs_follow_the_machine_unless_configured(self):
+        for cpus, expected in ((12, 11), (2, 1), (1, 1), (None, 1)):
+            with patch.dict(os.environ, {p.JOBS_VARIABLE: ""}), patch.object(p.os, "cpu_count", return_value=cpus):
+                self.assertEqual(expected, p.jobs(), f"{cpus} CPUs")
+        with patch.dict(os.environ, {p.JOBS_VARIABLE: "3"}):
+            self.assertEqual(3, p.jobs())
+        for wrong in ("0", "-2", "many"):
+            with patch.dict(os.environ, {p.JOBS_VARIABLE: wrong}), self.assertRaisesRegex(p.Failure, p.JOBS_VARIABLE):
+                p.jobs()
+
+    def test_parallel_keeps_item_order_and_raises_the_first_failure(self):
+        with patch.dict(os.environ, {p.JOBS_VARIABLE: "4"}):
+            self.assertEqual([item * 2 for item in range(50)], p.parallel(lambda item: item * 2, range(50)))
+            self.assertEqual([], p.parallel(lambda item: item, []))
+
+            def failing(item):
+                if item == 7:
+                    raise p.Failure("item 7")
+                return item
+
+            with self.assertRaisesRegex(p.Failure, "item 7"):
+                p.parallel(failing, range(20))
+
+
+class MycilaGuardTests(unittest.TestCase):
+    def tool(self):
+        tool = p.Mycila(this_repository(), temporary_directory(self), fixture_plugin())
+        tool.add(("head", "A.java"), "A.java", b"// header\ncode")
+        return tool
+
+    def test_guard_restores_the_file_end_and_rejects_a_rewritten_one(self):
+        tool = self.tool()
+        with tool.guarded([("head", "A.java")]):
+            tool.file(("head", "A.java")).write_bytes(tool.file(("head", "A.java")).read_bytes().replace(b"// header\n", b""))
+        self.assertEqual(b"code", tool.contents[("head", "A.java")])
+        with self.assertRaisesRegex(p.Failure, "Mycila rewrote the end"):
+            with tool.guarded([("head", "A.java")]):
+                tool.file(("head", "A.java")).write_bytes(b"code\n")
+
+    def test_scope_reports_are_accepted_only_from_target_directories(self):
+        repo = temporary_directory(self)
+        (repo / "module/target").mkdir(parents=True)
+        (repo / "module/target/token.json").write_text("{}")
+        self.assertEqual([repo / "module/target/token.json"], p.scope_reports(repo, "token.json"))
+        (repo / "other").mkdir()
+        (repo / "other/token.json").write_text("{}")
+        with self.assertRaisesRegex(p.Failure, "Unexpected scope report location"):
+            p.scope_reports(repo, "token.json")
+
+
 class InputTests(unittest.TestCase):
     def test_header_state_recognizes_legacy_thingsboard_headers(self):
         ce = b"/**\n * Copyright \xc2\xa9 2016-2025 The Thingsboard Authors\n *\n * Licensed under the Apache License\n */\n"
@@ -270,6 +336,8 @@ class InputTests(unittest.TestCase):
         self.assertEqual(b"// SPDX-A\n// SPDX-B", p.swap_header(b"// SPDX-X\n// SPDX-Y\n// SPDX-Z", new, old))
         with self.assertRaises(p.Failure):
             p.swap_header(b"// SPDX-A\n\n// SPDX-B\ncode\n", old, new)
+        with self.assertRaises(p.Failure):
+            p.swap_header(b"// SPDX-A\n# SPDX-B\ncode\n", old, new)
         with self.assertRaises(p.Failure):
             p.swap_header(b"code\n", old, new)
 
@@ -355,6 +423,30 @@ class InputTests(unittest.TestCase):
         self.assertEqual(f"{p.TEMPLATE_DIRECTORY}/license-header-{p.NON_CE}.txt", p.TEMPLATES[p.NON_CE])
         self.assertTrue((this_repository() / p.TEMPLATES[p.NON_CE]).is_file())
 
+    def test_committed_plugin_tracks_the_root_mycila_configuration(self):
+        git = GitFixture(temporary_directory(self), "main")
+
+        def pom(header):
+            return textwrap.dedent(f"""\
+                <project xmlns="http://maven.apache.org/POM/4.0.0"><build><pluginManagement><plugins><plugin>
+                  <groupId>com.mycila</groupId><artifactId>license-maven-plugin</artifactId><version>5.1.2</version>
+                  <configuration><header>{header}</header></configuration>
+                </plugin></plugins></pluginManagement></build></project>
+                """)
+
+        git.write("pom.xml", pom("a.txt"))
+        first = git.commit("pom")
+        git.write("pom.xml", "<!-- reformatted -->\n" + pom("a.txt"))
+        same = git.commit("comment only")
+        git.write("pom.xml", pom("b.txt"))
+        changed = git.commit("other header")
+        current = p.plugin_signature(p.read_plugin(git.root))
+        self.assertEqual(p.committed_plugin(git.root, first), p.committed_plugin(git.root, same))
+        self.assertNotEqual(p.committed_plugin(git.root, same), current)
+        self.assertEqual(p.committed_plugin(git.root, changed), current)
+        git("rm", "-q", "pom.xml")
+        self.assertIsNone(p.committed_plugin(git.root, git.commit("no pom")))
+
     def test_plugin_version_and_configuration_come_from_root_pom(self):
         repo = temporary_directory(self)
         p.git(repo, "init")
@@ -390,13 +482,13 @@ class GitHistoryTests(unittest.TestCase):
         git("checkout", "lts-4.2")
         git("merge", "--no-ff", "side", "-m", "integrate")
         merged = git("rev-parse", "HEAD")
-        changes = p.history(git.root, "HEAD")
+        changes = p.history(git.root, ["HEAD"])
         self.assertEqual({initial, merged}, {change.commit for change in changes})
         self.assertEqual(source, changes[0].path)
 
         git("rm", source)
         git.commit("delete")
-        deleted = p.history(git.root, "HEAD", "--diff-filter=D")
+        deleted = p.history(git.root, ["HEAD"], "--diff-filter=D")
         self.assertEqual(["D"], [change.status for change in deleted])
         self.assertEqual(b"merged result\n", p.blobs(git.root, [deleted[0].old])[deleted[0].old])
 
@@ -491,6 +583,71 @@ class GitHistoryTests(unittest.TestCase):
         self.assertEqual([(removal, git("rev-parse", f"{removal}:Kept.java"))], lineage.versions("Kept.java"))
         self.assertEqual([], lineage.versions("Gone.java"))
 
+    def test_lineage_walks_shared_history_of_several_bases_once(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("Shared.java", "deleted before the bases diverged\n")
+        git.write("Left.java", "deleted on the left base\n")
+        git.write("Right.java", "deleted on the right base\n")
+        git.commit("CE base")
+        git("rm", "Shared.java")
+        shared = git.commit("shared removal")
+        git("checkout", "-b", "right")
+        git("rm", "Right.java")
+        right = git.commit("right removal")
+        git("checkout", "ce")
+        git("rm", "Left.java")
+        left = git.commit("left removal")
+        separately = {}
+        for base in (left, right):
+            for change in p.history(git.root, [base], "--diff-filter=D"):
+                separately.setdefault(change.path, set()).add(change.commit)
+        together = p.history(git.root, [left, right], "--diff-filter=D")
+        self.assertEqual(3, len(together), "the shared removal is listed once")
+        self.assertEqual(separately, {change.path: {change.commit} for change in together})
+        lineage = p.Lineage.load(git.root, left, [left, right])
+        self.assertEqual({"Shared.java": shared + "^1", "Left.java": left + "^1", "Right.java": right + "^1"},
+                         {path: entry["ref"] for path, entry in lineage.deleted.items()})
+        with self.assertRaises(p.Failure):
+            p.history(git.root, [])
+        with self.assertRaises(p.Failure):
+            p.history(git.root, ["--all"])
+
+    def test_clean_merges_match_each_file_with_its_own_merge_in_any_order(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        for header, name in p.TEMPLATES.items():
+            git.write(name, f"fixture {header}\n")
+        lines = "".join(f"line {index}\n" for index in range(12))
+        git.write("A.java", "A\n" + lines)
+        git.write("B.java", "B\n" + lines)
+        base = git.commit("CE base")
+        bases = {}
+        for branch, line in (("left", "line 0"), ("middle", "line 5"), ("right", "line 11")):
+            git("checkout", "-q", "-b", branch, base)
+            git.write("A.java", "A\n" + lines.replace(line, branch))
+            git.write("B.java", "B\n" + lines.replace(line, branch))
+            bases[branch] = git.commit(branch)
+        lineage = p.Lineage.load(git.root, bases["left"], sorted(bases.values()))
+        # HEAD carries A merged from left and right, B merged from middle and right: two distinct merges.
+        head = {"A.java": "A\n" + lines.replace("line 0", "left").replace("line 11", "right"),
+                "B.java": "B\n" + lines.replace("line 5", "middle").replace("line 11", "right")}
+        normalized = {("head", name): p.comparison_hash(text.encode()) for name, text in head.items()}
+        for files in lineage.trees.values():
+            for name, oid in files.items():
+                normalized[(name, oid)] = p.comparison_hash(p.blobs(git.root, [oid])[oid])
+
+        def strip_headers(tool):
+            return {key: p.comparison_hash(content) for key, content in tool.contents.items()}
+
+        expected = {"A.java": sorted([bases["left"], bases["right"]]),
+                    "B.java": sorted([bases["middle"], bases["right"]])}
+        with patch.object(p.Mycila, "strip_headers", strip_headers):
+            for workers in ("1", "4"):
+                with patch.dict(os.environ, {p.JOBS_VARIABLE: workers}):
+                    merges = p.clean_merges(git.root, fixture_plugin(), p.NoCache(), lineage, list(head), normalized)
+                self.assertEqual(expected, {name: sorted(merge["merge"]) for name, merge in merges.items()},
+                                 f"{workers} workers")
+                self.assertEqual({base}, {merge["base"] for merge in merges.values()})
+
     def test_merge_blobs_returns_only_clean_merges(self):
         git = GitFixture(temporary_directory(self), "main")
         git.write("File.java", "one\ntwo\nthree\nfour\nfive\n")
@@ -569,6 +726,10 @@ class FetchTests(unittest.TestCase):
         third = self.ce.commit("third")
         self.assertEqual(third, self.fetch("lts-4.2"))
 
+    def test_a_local_branch_of_the_same_name_does_not_shadow_the_fetched_tip(self):
+        self.local("branch", "lts-4.2")
+        self.assertEqual(self.second, self.fetch("lts-4.2"))
+
     def test_missing_ref_and_option_like_ref_are_rejected(self):
         with self.assertRaisesRegex(p.Failure, r"(?s)cannot fetch 'missing' from .*couldn't find remote ref missing"):
             self.fetch("missing")
@@ -609,7 +770,7 @@ class CheckCommandTests(unittest.TestCase):
         self.scope = ["Base.java", "Changed.java", "Fixed.java", "Merged.java", "New.java", "Source.java"]
         self.output = self.repo / "target/report.json"
 
-    def check(self, *args, scope=None):
+    def check(self, *args, scope=None, base_plugin=fixture_plugin(), normalizer=None):
         def recognized(content):
             for header in p.TEMPLATES:
                 if content.startswith(fixture(header).encode()):
@@ -639,9 +800,10 @@ class CheckCommandTests(unittest.TestCase):
         with (patch.object(p.Path, "cwd", return_value=self.repo),
               patch.object(p, "RELICENSING_COMMIT", self.relicensing),
               patch.object(p, "read_plugin", return_value=fixture_plugin()),
+              patch.object(p, "committed_plugin", return_value=p.plugin_signature(base_plugin)),
               patch.object(p, "discover_scope", return_value=p.Scope(scope or self.scope, [], [], 0)),
               patch.object(p.Mycila, "current_headers", current_headers),
-              patch.object(p.Mycila, "strip_headers", strip_headers),
+              patch.object(p.Mycila, "strip_headers", normalizer or strip_headers),
               patch.object(p.Mycila, "restamp", restamp),
               redirect_stdout(io.StringIO()), redirect_stderr(stderr)):
             code = p.main(["check", "--output", str(self.output), *args])
@@ -736,6 +898,160 @@ class CheckCommandTests(unittest.TestCase):
         self.assertIn("Removed curations (2)\n", output)
         code, report, _ = self.check("--fix", scope=scope)
         self.assertEqual((0, []), (code, report["removedCurations"]))
+
+    def pull_request(self):
+        self.git("checkout", "-q", "-b", "feature")
+        return self.git("rev-parse", "master")
+
+    def checked(self, report):
+        return sorted(row["path"] for row in report["files"])
+
+    def test_files_changed_during_the_scan_fail_the_check(self):
+        compare = p.compare
+
+        def edit_while_scanning(*args):
+            result = compare(*args)
+            self.git.write("Base.java", fixture("apache") + "edited during the scan\n")
+            return result
+
+        with patch.object(p, "compare", edit_while_scanning):
+            code, report, output = self.check()
+        self.assertEqual((2, None), (code, report))
+        self.assertIn("changed during the scan", output)
+
+    def test_since_checks_only_changed_and_untracked_files(self):
+        target = self.pull_request()
+        self.git.write("New.java", fixture("apache") + "TB feature\n")
+        self.git.commit("wrong header on a TB file")
+        self.git.write("Added.java", fixture(p.NON_CE) + "untracked TB file\n")
+        code, report, output = self.check("--since", "master", scope=self.scope + ["Added.java"])
+        self.assertEqual(1, code)
+        self.assertEqual(["Added.java", "New.java"], self.checked(report))
+        self.assertEqual("mismatch", self.rows(report)["New.java"]["status"])
+        self.assertEqual({"since": "master", "mergeBase": target, "full": False, "reason": "2 changed paths"},
+                         report["selection"])
+        self.assertEqual(7, report["scope"]["supported"])
+        self.assertIn("Checking 2 of 7 files in scope", output)
+        self.assertIn("1 finding in 2 changed files", output)
+
+    def test_since_without_changes_checks_nothing_but_orphaned_curations(self):
+        self.pull_request()
+        code, report, output = self.check("--since", "master")
+        self.assertEqual((0, []), (code, report["files"]))
+        self.assertIn("No changed files to check.", output)
+        orphaned = dict(path="Gone.java", header=p.NON_CE, reason="Reviewed", contentHash=p.raw_hash(b"gone"))
+        self.git.write(p.CURATIONS, json.dumps(dict(schemaVersion=1, curations=[orphaned])))
+        self.git.commit("curation of a file that is not in scope")
+        code, report, _ = self.check("--since", "master")
+        self.assertEqual(1, code)
+        self.assertEqual(["Gone.java"], [issue["path"] for issue in report["curationIssues"]])
+
+    def test_since_checks_files_whose_curation_changed(self):
+        curation = dict(path="New.java", header="apache", reason="Reviewed",
+                        contentHash=p.raw_hash((self.repo / "New.java").read_bytes()))
+        self.git.write(p.CURATIONS, json.dumps(dict(schemaVersion=1, curations=[curation])))
+        self.git.commit("curate New.java")
+        self.pull_request()
+        self.git.write(p.CURATIONS, json.dumps(dict(schemaVersion=1, curations=[])))
+        self.git.commit("drop the curation")
+        code, report, _ = self.check("--since", "master")
+        self.assertEqual(0, code)
+        self.assertEqual(["New.java"], self.checked(report))
+        self.assertEqual("not in CE, no CE evidence", self.rows(report)["New.java"]["reason"])
+
+    def test_since_checks_every_file_when_new_ce_commits_are_merged(self):
+        self.pull_request()
+        self.git("checkout", "-q", "lts-4.3")
+        self.git.write("Fixed.java", fixture("apache") + "second lts addition\n")
+        self.git.commit("second CE fix")
+        self.git("checkout", "-q", "feature")
+        self.git("merge", "-q", "--no-ff", "lts-4.3", "-m", "integrate second CE fix")
+        code, report, output = self.check("--since", "master")
+        self.assertEqual(0, code)
+        self.assertEqual(sorted(self.scope), self.checked(report))
+        self.assertEqual("the CE commits merged into the branch changed", report["selection"]["reason"])
+        self.assertTrue(report["selection"]["full"])
+        self.assertIn("full check: the CE commits merged into the branch changed", output)
+
+    def test_since_checks_every_file_when_the_check_changes(self):
+        self.pull_request()
+        self.git.write(p.TEMPLATES["apache"], "fixture apache, reworded\n")
+        self.git.commit("change a template")
+        _, report, _ = self.check("--since", "master")
+        self.assertEqual(sorted(self.scope), self.checked(report))
+        self.assertEqual(f"the check itself changed ({p.TEMPLATES['apache']})", report["selection"]["reason"])
+
+    def test_since_checks_every_file_when_the_mycila_configuration_changes(self):
+        self.pull_request()
+        _, report, _ = self.check("--since", "master", base_plugin=fixture_plugin("1"))
+        self.assertEqual(sorted(self.scope), self.checked(report))
+        self.assertEqual("the Mycila configuration in the root pom.xml changed", report["selection"]["reason"])
+
+    def test_since_does_not_orphan_curations_of_unchanged_files(self):
+        curation = dict(path="Source.java", header="apache", reason="Reviewed",
+                        contentHash=p.raw_hash((self.repo / "Source.java").read_bytes()))
+        self.git.write(p.CURATIONS, json.dumps(dict(schemaVersion=1, curations=[curation])))
+        self.git.commit("curate Source.java")
+        self.pull_request()
+        self.git.write("New.java", fixture(p.NON_CE) + "TB feature, changed\n")
+        self.git.commit("unrelated change")
+        code, report, _ = self.check("--since", "master")
+        self.assertEqual(0, code)
+        self.assertEqual(["New.java"], self.checked(report))
+        self.assertEqual([], report["curationIssues"])
+
+    def test_since_finds_a_copy_of_a_ce_file_with_another_extension_as_a_full_run_does(self):
+        # CE sources of the copy search follow the extensions of every path CE lacks: New.java brings .java in.
+        self.pull_request()
+        self.git.write("Copy.kt", fixture(p.NON_CE) + self.body)
+        self.git.commit("copy a CE file into another language")
+        scope = self.scope + ["Copy.kt"]
+        _, full, _ = self.check(scope=scope)
+        code, since, _ = self.check("--since", "master", scope=scope)
+        self.assertEqual(1, code)
+        self.assertEqual(["Copy.kt"], self.checked(since))
+        row = self.rows(since)["Copy.kt"]
+        self.assertEqual(self.rows(full)["Copy.kt"], row)
+        self.assertEqual(("unresolved", ["Source.java"]),
+                         (row["status"], [copy["path"] for copy in row["copyCandidates"]]))
+
+    def test_since_checks_every_file_when_the_merge_base_has_no_ce_bases(self):
+        self.pull_request()
+        _, report, output = self.check("--since", "lts-4.3")
+        self.assertEqual(sorted(self.scope), self.checked(report))
+        self.assertEqual("the CE commits merged at the merge base cannot be resolved", report["selection"]["reason"])
+
+    def test_since_checks_every_curated_file_when_the_target_curations_cannot_be_read(self):
+        self.git.write(p.CURATIONS, "not JSON")
+        self.git.commit("damage curations.json")
+        self.pull_request()
+        curation = dict(path="Source.java", header="apache", reason="Reviewed",
+                        contentHash=p.raw_hash((self.repo / "Source.java").read_bytes()))
+        self.git.write(p.CURATIONS, json.dumps(dict(schemaVersion=1, curations=[curation])))
+        self.git.commit("repair curations.json")
+        code, report, _ = self.check("--since", "master")
+        self.assertEqual(0, code)
+        self.assertEqual(["Source.java"], self.checked(report))
+        self.assertEqual(["Source.java"], report["redundantCurations"])
+
+    def test_since_does_not_check_every_file_when_only_the_readme_or_curations_of_the_check_change(self):
+        self.pull_request()
+        self.git.write(p.README, "notes\n")
+        self.git.write(p.CURATIONS, '{"schemaVersion": 1, "curations": [] }')
+        self.git.commit("document the check")
+        code, report, _ = self.check("--since", "master")
+        self.assertEqual((0, []), (code, report["files"]))
+        self.assertEqual({"since": "master", "mergeBase": self.git("rev-parse", "master"), "full": False,
+                          "reason": "2 changed paths"}, report["selection"])
+
+    def test_since_needs_shared_history(self):
+        self.git("checkout", "-q", "--orphan", "unrelated")
+        self.git.write("Other.java", "other\n")
+        self.git.commit("unrelated")
+        self.git("checkout", "-q", "master")
+        code, _, output = self.check("--since", "unrelated")
+        self.assertEqual(2, code)
+        self.assertIn("HEAD shares no history with unrelated", output)
 
     def test_missing_relicensing_commit_fails_before_the_scan(self):
         self.relicensing = "0" * 40
@@ -886,10 +1202,366 @@ def stamped(header, extension):
     return text[:-1] if extension in {"java", "ts"} else text
 
 
+class CopySearchTests(unittest.TestCase):
+    check = CheckCommandTests.check
+    rows = CheckCommandTests.rows
+    BODY = "".join(f"    copied statement number {index};\n" for index in range(40))
+
+    def test_size_filter_follows_git_similarity_threshold(self):
+        git = GitFixture(temporary_directory(self), "main")
+        destination = ("".join(f"line {index:04d}\n" for index in range(100))).encode()
+        half = destination[:len(destination) // 2]
+        for source, expected in ((half, True), (half[:-1], False)):
+            self.assertEqual(expected, p.could_be_copy(len(source), [len(destination)]))
+            tool = p.Mycila.__new__(p.Mycila)
+            tool.root, tool.paths, tool.contents = git.root, {}, {}
+            tool.add(("Source.java", "0" * 40), "Source.java", source)
+            tool.add(("head", "Destination.java"), "Destination.java", destination)
+            found = p.normalized_copies(tool, {("Source.java", "0" * 40): "ref"}, {"Destination.java"},
+                                        tool.nonempty())
+            self.assertEqual(expected, "Destination.java" in found, f"{len(source)} of {len(destination)} bytes")
+            for path in ("files", ".git"):
+                p.run(["rm", "-rf", path], git.root)
+
+    def test_filter_before_normalizing_drops_exactly_the_unreachable_sources(self):
+        # Normalizing removes a header and never grows a file: a source of raw size r can end up at any size up to r.
+        for destinations in ([7], [7, 30], [30, 7], [12, 13, 60]):
+            for raw in range(1, 70):
+                reachable = any(p.could_be_copy(size, destinations) for size in range(1, raw + 1))
+                self.assertEqual(reachable, p.could_shrink_to_copy(raw, destinations), f"{raw} → {destinations}")
+
+    def setUp(self):
+        self.repo = temporary_directory(self)
+        self.git = git = GitFixture(self.repo, "master")
+        git.write(".gitignore", "target/\n")
+        for category, name in p.TEMPLATES.items():
+            git.write(name, f"fixture {category}\n")
+        git.write(p.CURATIONS, '{"schemaVersion": 1, "curations": []}')
+        # Sorted CE sources: a/ (small), b/Alpha, c/ (small), e/Gamma. Alpha and Gamma are identical: Alpha ranks first
+        # among all CE files and wins the tie, whichever sources the size filter drops and whatever else is checked.
+        for name in ("a/Small0.java", "a/Small1.java", *(f"c/Small{index}.java" for index in range(2, 10))):
+            git.write(name, fixture("apache") + "x\n")
+        git.write("b/Alpha.java", fixture("apache") + self.BODY)
+        git.write("e/Gamma.java", fixture("apache") + self.BODY)
+        git.commit("CE")
+        git.write("d/Delta.java", fixture(p.NON_CE) + self.BODY)
+        self.relicensing = git.commit("relicensing")
+        self.scope = ["d/Delta.java"]
+        self.output = self.repo / "target/report.json"
+
+    def test_size_filter_keeps_the_copy_search_result(self):
+        _, filtered, output = self.check()
+        with patch.object(p, "size_filter_holds", return_value=False):
+            _, unfiltered, unfiltered_output = self.check()
+        self.assertEqual(unfiltered["files"], filtered["files"])
+        self.assertEqual(({"sizeFilter": True}, {"sizeFilter": False}),
+                         (filtered["copySearch"], unfiltered["copySearch"]))
+        self.assertNotIn("and the size rule of the copy search disagree", output)
+        self.assertIn("and the size rule of the copy search disagree", unfiltered_output)
+        row = self.rows(filtered)["d/Delta.java"]
+        self.assertEqual(("unresolved", "apache"), (row["status"], row["suggestedHeader"]))
+        self.assertEqual(["b/Alpha.java"], [copy["path"] for copy in row["copyCandidates"]])
+        self.assertIn("2 of 12 other CE files searched for copies", output)
+        self.assertIn("12 of 12 other CE files searched for copies", unfiltered_output)
+
+    def test_since_reports_the_copy_a_full_run_reports_among_equally_similar_sources(self):
+        # TB files beside the new one shift where the checked inputs sit among all inputs of a full run.
+        others = [f"t/Tb{index}.java" for index in range(7)]
+        self.git("reset", "-q", "--hard", "HEAD~1")
+        for name in others:
+            self.git.write(name, fixture(p.NON_CE) + f"TB source {name}\n")
+        self.relicensing = self.git.commit("relicensing with TB files")
+        self.git("checkout", "-q", "-b", "feature")
+        self.git.write("d/Delta.java", fixture(p.NON_CE) + self.BODY)
+        self.git.commit("copy of a CE file under a new path")
+        scope = sorted(others + ["d/Delta.java"])
+        _, full, _ = self.check(scope=scope)
+        _, since, _ = self.check("--since", "master", scope=scope)
+        self.assertEqual(["d/Delta.java"], [row["path"] for row in since["files"]])
+        row = self.rows(full)["d/Delta.java"]
+        self.assertEqual(("unresolved", 1), (row["status"], len(row["copyCandidates"])))
+        self.assertEqual("b/Alpha.java", row["copyCandidates"][0]["path"])
+        self.assertEqual(row, self.rows(since)["d/Delta.java"])
+
+    def test_without_the_size_filter_git_searches_every_ce_file(self):
+        searched = []
+        copies = p.normalized_copies
+
+        def spy(mycila, source_refs, names, nonempty):
+            if "d/Delta.java" in names:  # not the size probe
+                searched.append(sorted(key[0] for key in source_refs))
+            return copies(mycila, source_refs, names, nonempty)
+
+        with patch.object(p, "normalized_copies", spy):
+            self.check()
+            with patch.object(p, "size_filter_holds", return_value=False):
+                self.check()
+        filtered, unfiltered = searched
+        self.assertEqual(["b/Alpha.java", "e/Gamma.java"], filtered)
+        self.assertEqual(12, len(unfiltered))
+
+    def probe(self):
+        return p.size_filter_holds(this_repository(), fixture_plugin())
+
+    def test_size_filter_holds_for_the_installed_git(self):
+        self.assertTrue(self.probe())
+
+    def test_a_python_rule_that_no_longer_matches_git_turns_the_size_filter_off(self):
+        stricter = lambda size, destinations: any(100 * min(size, other) > p.COPY_SIMILARITY * max(size, other)
+                                                  for other in destinations)
+        with patch.object(p, "could_be_copy", stricter):
+            self.assertFalse(self.probe())
+
+    def test_report_marks_the_size_filter_only_when_copies_were_searched(self):
+        _, report, _ = self.check()
+        self.assertEqual({"sizeFilter": True}, report["copySearch"])
+        self.git.write("d/Delta.java", fixture("apache") + "base implementation\n")
+        self.git.commit("Delta in CE as well")
+        with patch.object(p, "RELICENSING_COMMIT", "0" * 40), patch.object(p, "relicensed_ce_bases",
+                                                                           return_value=[self.git("rev-parse", "HEAD")]):
+            _, report, output = self.check()
+        self.assertEqual({"sizeFilter": None}, report["copySearch"])
+        self.assertNotIn("and the size rule of the copy search disagree", output)
+
+    def test_size_filter_is_off_when_git_answers_otherwise_on_either_side_of_the_boundary(self):
+        boundary = 1000 * p.COPY_SIMILARITY // 100 + 100 * p.COPY_SIMILARITY // 100  # 100 lines of 11 bytes
+
+        def git(at_boundary, below):
+            return lambda repo, plugin, source, destination: at_boundary if len(source) == boundary else below
+
+        for at_boundary, below, holds in ((True, False, True),    # Git follows the rule
+                                          (True, True, False),    # looser: a CE file below the boundary matches
+                                          (False, False, False),  # the boundary pair does not match either
+                                          (False, True, False)):
+            with patch.object(p, "git_finds_copy", git(at_boundary, below)):
+                self.assertEqual(holds, self.probe(), (at_boundary, below))
+
+    def test_probe_pairs_sit_on_both_sides_of_the_boundary(self):
+        sizes = []
+        def finds(repo, plugin, source, destination):
+            sizes.append((len(source), len(destination)))
+            return len(source) % 2 == 0
+
+        with patch.dict(os.environ, {p.JOBS_VARIABLE: "1"}), patch.object(p, "git_finds_copy", finds):
+            self.assertTrue(self.probe())
+        (boundary, destination), (below, _) = sizes
+        self.assertEqual((boundary * 100, below), (p.COPY_SIMILARITY * destination, boundary - 1))
+
+    def test_size_filter_follows_the_configured_similarity(self):
+        with patch.object(p, "COPY_SIMILARITY", 60):
+            self.assertTrue(self.probe())
+            self.assertTrue(p.could_be_copy(600, [1000]))
+            self.assertFalse(p.could_be_copy(599, [1000]))
+
+    def test_a_file_grown_by_normalizing_fails_the_check(self):
+        def strip_headers(tool):
+            tool.removed, tool.stacked = {key: b"" for key in tool.contents}, set()
+            for key, content in list(tool.contents.items()):
+                tool.write(key, content + b"appended by a broken normalizer\n")
+            return {key: p.comparison_hash(content) for key, content in tool.contents.items()}
+
+        code, _, output = self.check(normalizer=strip_headers)
+        self.assertEqual(2, code)
+        self.assertIn("Mycila grew these files while removing their headers", output)
+
+
+class CacheTests(unittest.TestCase):
+    LINES = CheckCommandTests.LINES
+    setUp = CheckCommandTests.setUp
+    check = CheckCommandTests.check
+
+    def normalizer(self, seen):
+        def strip_headers(tool):
+            seen.append(sorted(tool.contents))
+            tool.removed, tool.stacked = {}, set()
+            for key, body in list(tool.contents.items()):
+                first, _, rest = body.partition(b"\n")
+                header = first.startswith(b"// ")
+                tool.removed[key] = first + b"\n" if header else b""
+                tool.write(key, rest if header else body)
+            return {key: p.comparison_hash(body) for key, body in tool.contents.items()}
+        return strip_headers
+
+    def cache(self):
+        return self.repo / p.CACHE_DIRECTORY
+
+    def test_a_second_run_takes_ce_inputs_from_the_cache_and_reports_the_same(self):
+        first, second = [], []
+        _, cold, _ = self.check(normalizer=self.normalizer(first))
+        databases = {path.name: path.read_bytes() for path in self.cache().glob("*.sqlite")}
+        _, warm, output = self.check(normalizer=self.normalizer(second))
+        self.assertEqual(cold, warm)
+        self.assertTrue(any(key[0] != "head" for batch in first for key in batch))
+        self.assertEqual({"head"}, {key[0] for batch in second for key in batch})
+        # CI saves the cache only when its bytes changed: a run that only reads it must leave them as they were.
+        self.assertTrue(databases)
+        self.assertEqual(databases, {path.name: path.read_bytes() for path in self.cache().glob("*.sqlite")})
+        self.assertRegex(output, r"[1-9][0-9]* from the cache")
+
+    def test_without_the_cache_nothing_is_read_or_written(self):
+        self.check()
+        seen = []
+        _, report, output = self.check("--no-cache", normalizer=self.normalizer(seen))
+        self.assertTrue(any(key[0] != "head" for batch in seen for key in batch))
+        self.assertIn(" 0 from the cache", output)
+        shutil_tree = sorted(path.name for path in self.cache().iterdir())
+        self.check("--no-cache")
+        self.assertEqual(shutil_tree, sorted(path.name for path in self.cache().iterdir()))
+
+    def test_entries_are_keyed_by_content_and_file_name(self):
+        cache = p.NormalizationCache(temporary_directory(self), signature("signature"))
+        cache.put([(("A.java", "a"), b"// header\nbody\n", b"body\n")])
+        self.assertEqual({("moved/A.java", "b"): b"body\n"}, cache.get({("moved/A.java", "b"): b"// header\nbody\n"}))
+        self.assertEqual({}, cache.get({("B.java", "b"): b"// header\nbody\n"}))
+        self.assertEqual({}, cache.get({("A.xml", "a"): b"// header\nbody\n"}))
+        self.assertEqual({}, cache.get({("A.java", "a"): b"// header\nother\n"}))
+        cache.close()
+
+    def test_signature_follows_everything_that_shapes_normalization(self):
+        repo = temporary_directory(self)
+        for header, name in p.TEMPLATES.items():
+            (repo / name).parent.mkdir(parents=True, exist_ok=True)
+            (repo / name).write_text(f"fixture {header}\n")
+        signature = p.cache_signature(repo, fixture_plugin("1"))
+        self.assertEqual(signature, p.cache_signature(repo, fixture_plugin("1")))
+        self.assertNotEqual(signature, p.cache_signature(repo, fixture_plugin("2")))
+        other = p.Plugin("1", ET.fromstring("<configuration><mapping><java>SLASHSTAR_STYLE</java></mapping></configuration>"))
+        self.assertNotEqual(signature, p.cache_signature(repo, other))
+        with patch.object(p, "CACHE_FORMAT", "other"):
+            self.assertNotEqual(signature, p.cache_signature(repo, fixture_plugin("1")))
+        (repo / p.TEMPLATES["apache"]).write_text("reworded\n")
+        self.assertNotEqual(signature, p.cache_signature(repo, fixture_plugin("1")))
+
+    def test_only_recent_signatures_are_kept(self):
+        directory = temporary_directory(self)
+        for index in range(p.CACHE_SIGNATURES_KEPT + 2):
+            stale = directory / f"{signature(f'old{index}')}.sqlite"
+            stale.write_bytes(b"")
+            os.utime(stale, (index, index))
+        cache = p.NormalizationCache(directory, signature("current"))
+        kept = sorted(path.name for path in directory.glob("*.sqlite"))
+        self.assertEqual(p.CACHE_SIGNATURES_KEPT, len(kept))
+        self.assertIn(f"{signature('current')}.sqlite", kept)
+        cache.close()
+
+    def test_a_damaged_cache_is_started_again(self):
+        directory = temporary_directory(self)
+        (directory / f"{signature('damaged')}.sqlite").write_bytes(b"not a database, cut off by a failed restore")
+        cache = p.NormalizationCache(directory, signature("damaged"))
+        self.assertEqual({}, cache.get({("A.java", "a"): b"raw"}))
+        cache.put([(("A.java", "a"), b"raw", b"normalized")])
+        cache.close()
+        self.assertEqual({("A.java", "a"): b"normalized"},
+                         p.NormalizationCache(directory, signature("damaged")).get({("A.java", "a"): b"raw"}))
+
+    def test_a_cache_damaged_after_its_schema_is_started_again(self):
+        directory = temporary_directory(self)
+        cache = p.NormalizationCache(directory, signature("damaged"))
+        cache.put([((f"F{index}.java", "a"), f"raw {index}".encode(), b"normalized" * 400) for index in range(300)])
+        cache.close()
+        database = directory / f"{signature('damaged')}.sqlite"
+        page = 4096
+        with database.open("r+b") as file:
+            # The schema and the root pages stay readable, so the file opens; every lookup below them fails.
+            file.seek(4 * page)
+            file.write(b"\xff" * (database.stat().st_size - 4 * page))
+        cache = p.NormalizationCache(directory, signature("damaged"))
+        self.assertEqual({}, cache.get({("F0.java", "a"): b"raw 0"}))
+        cache.put([(("A.java", "a"), b"raw", b"normalized")])
+        cache.close()
+        self.assertEqual({("A.java", "a"): b"normalized"},
+                         p.NormalizationCache(directory, signature("damaged")).get({("A.java", "a"): b"raw"}))
+
+    def test_the_cache_of_a_branch_checked_long_ago_survives_newer_signatures(self):
+        directory = temporary_directory(self)
+        p.NormalizationCache(directory, signature("revisited")).close()
+        os.utime(directory / f"{signature('revisited')}.sqlite", (1, 1))
+        for index in range(p.CACHE_SIGNATURES_KEPT):
+            (directory / f"{signature(f'newer{index}')}.sqlite").write_bytes(b"")
+        cache = p.NormalizationCache(directory, signature("revisited"))
+        cache.put([(("A.java", "a"), b"raw", b"normalized")])
+        cache.close()
+        self.assertTrue((directory / f"{signature('revisited')}.sqlite").exists())
+
+    def test_pruning_leaves_files_the_cache_did_not_create(self):
+        directory = temporary_directory(self)
+        foreign = [directory / name for name in ("notes.sqlite", "ABCDEF0123456789ABCDEF0123456789.sqlite", "other.db")]
+        for path in foreign:
+            path.write_bytes(b"")
+            os.utime(path, (1, 1))
+        for index in range(p.CACHE_SIGNATURES_KEPT):
+            (directory / f"{signature(f'newer{index}')}.sqlite").write_bytes(b"")
+        p.NormalizationCache(directory, signature("current")).close()
+        self.assertTrue(all(path.exists() for path in foreign))
+        self.assertEqual(p.CACHE_SIGNATURES_KEPT, len([path for path in directory.iterdir()
+                                                       if p.CACHE_FILE.fullmatch(path.name)]))
+
+    def test_the_number_of_signatures_kept_can_be_set(self):
+        directory = temporary_directory(self)
+        for index in range(2):
+            stale = directory / f"{signature(f'old{index}')}.sqlite"
+            stale.write_bytes(b"")
+            os.utime(stale, (index, index))
+        with patch.dict(os.environ, {p.CACHE_SIGNATURES_VARIABLE: "1"}):
+            p.NormalizationCache(directory, signature("current")).close()
+        self.assertEqual([f"{signature('current')}.sqlite"], [path.name for path in directory.glob("*.sqlite")])
+        with patch.dict(os.environ, {p.CACHE_SIGNATURES_VARIABLE: "0"}), self.assertRaises(p.Failure):
+            p.NormalizationCache(directory, signature("current"))
+
+    def test_entries_are_committed_at_once_so_another_run_can_add_its_own(self):
+        directory = temporary_directory(self)
+        first = p.NormalizationCache(directory, signature("shared"))
+        second = p.NormalizationCache(directory, signature("shared"))
+        first.put([(("A.java", "a"), b"raw a", b"a")])
+        second.put([(("B.java", "b"), b"raw b", b"b")])
+        self.assertEqual({("B.java", "b"): b"b"}, first.get({("B.java", "b"): b"raw b"}))
+        self.assertEqual({("A.java", "a"): b"a"}, second.get({("A.java", "a"): b"raw a"}))
+        first.close()
+        second.close()
+
+    def test_a_cache_locked_by_another_run_is_skipped_and_kept(self):
+        directory = temporary_directory(self)
+        path = directory / f"{signature('locked')}.sqlite"
+        p.NormalizationCache(directory, signature("locked")).close()
+        other = sqlite3.connect(path, timeout=0)
+        other.execute("BEGIN EXCLUSIVE")
+        try:
+            with impatient_sqlite():
+                cache = p.NormalizationCache(directory, signature("locked"))
+            self.assertEqual({}, cache.get({("A.java", "a"): b"raw"}))
+            cache.put([(("A.java", "a"), b"raw", b"normalized")])
+            output = io.StringIO()
+            with redirect_stderr(output):
+                cache.close()
+            self.assertIn("continued without it", output.getvalue())
+            self.assertEqual(0, cache.added)
+        finally:
+            other.rollback()
+            other.close()
+        self.assertTrue(path.exists())
+
+    def test_a_lock_after_opening_downgrades_the_run_to_no_cache(self):
+        directory = temporary_directory(self)
+        path = directory / f"{signature('busy')}.sqlite"
+        with impatient_sqlite():
+            cache = p.NormalizationCache(directory, signature("busy"))
+        other = sqlite3.connect(path, timeout=0)
+        other.execute("BEGIN EXCLUSIVE")
+        try:
+            cache.put([(("A.java", "a"), b"raw", b"normalized")])
+            self.assertEqual({}, cache.get({("A.java", "a"): b"raw"}))
+            with redirect_stderr(io.StringIO()):
+                cache.close()
+        finally:
+            other.rollback()
+            other.close()
+        self.assertEqual(0, cache.added)
+
+
 @unittest.skipUnless(os.environ.get("LICENSE_HEADERS_MAVEN_TESTS") == "1", "opt-in Maven fixtures")
 class MavenTests(unittest.TestCase):
     def test_scope_reports_respect_module_relative_exclusions(self):
-        repo = temporary_directory(self)
+        repo = temporary_directory(self).resolve()  # macOS: /var/folders is a symlink to /private/var/folders
         p.git(repo, "init")
         (repo / "header.txt").write_text("SPDX-FileCopyrightText: Copyright Example\n"
                                          "SPDX-License-Identifier: Apache-2.0\n")
