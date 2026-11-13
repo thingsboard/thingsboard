@@ -12,7 +12,7 @@ const BASE_BINARY = /fetched-v(\d+\.\d+\.\d+)-/;
 
 (() => {
     const listed = listedPackages(JSON.parse(fs.readFileSync(SBOM_FILE, 'utf8')));
-    const versions = chromiumVersions();
+    const versions = { 'chromium.version': require('./chromium-snapshot').version };
     for (const [os, log] of Object.entries(PKG_LOGS)) {
         const output = fs.readFileSync(path.join(TARGET_DIR, log), 'utf8').replace(/\x1b\[[0-9;]*m/g, '');
         const baseBinary = BASE_BINARY.exec(output);
@@ -74,10 +74,3 @@ function packageDir(file) {
     }
     return parts.slice(0, index + (scoped ? 3 : 2)).join(path.sep);
 }
-
-function chromiumVersions() {
-    return {
-        'chromium.version': require('./chromium-snapshot').version
-    };
-}
-
