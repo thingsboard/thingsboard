@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfigDefault;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -14,6 +15,8 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConf
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 
 import java.util.Optional;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
 
 @Slf4j
 @Service
@@ -28,20 +31,34 @@ public class LwM2MServiceImpl implements LwM2MService {
     public LwM2MServerSecurityConfigDefault getServerSecurityInfo(boolean bootstrapServer) {
         LwM2MSecureServerConfig bsServerConfig = bootstrapServer ? bootstrapConfig.orElse(null) : serverConfig;
         if (bsServerConfig!= null) {
-            LwM2MServerSecurityConfigDefault result = getServerSecurityConfig(bsServerConfig);
-            result.setBootstrapServerIs(bootstrapServer);
-            return result;
+            return getServerSecurityConfig(bsServerConfig, bootstrapServer);
         }
         else {
             return  null;
         }
     }
 
-    private LwM2MServerSecurityConfigDefault getServerSecurityConfig(LwM2MSecureServerConfig bsServerConfig) {
+    private LwM2MServerSecurityConfigDefault getServerSecurityConfig(LwM2MSecureServerConfig bsServerConfig, boolean bootstrapServer) {
         LwM2MServerSecurityConfigDefault bsServ = new LwM2MServerSecurityConfigDefault();
-        bsServ.setShortServerId(bsServerConfig.getId());
         bsServ.setHost(bsServerConfig.getHost());
         bsServ.setPort(bsServerConfig.getPort());
+        bsServ.setBootstrapServerIs(bootstrapServer);
+        if (bootstrapServer) {
+            if (bsServerConfig.getId() != null) {
+                log.warn("Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
+                        bsServerConfig.getId());
+            }
+            bsServ.setShortServerId(null);
+        } else {
+            Integer configId = bsServerConfig.getId();
+            if (Lwm2mServerIdentifier.isNotLwm2mServer(configId)) {
+                log.warn("Invalid LwM2M Server ShortServerId [{}] in configuration (transport.lwm2m.server.id). " +
+                                "Must be in range [{} - {}]. Using [{}] instead.",
+                        configId, PRIMARY_LWM2M_SERVER.getId(), LWM2M_SERVER_MAX.getId(), PRIMARY_LWM2M_SERVER.getId());
+                configId = PRIMARY_LWM2M_SERVER.getId();
+            }
+            bsServ.setShortServerId(configId);
+        }
         bsServ.setSecurityHost(bsServerConfig.getSecureHost());
         bsServ.setSecurityPort(bsServerConfig.getSecurePort());
         byte[] publicKeyBase64 = getPublicKey(bsServerConfig);

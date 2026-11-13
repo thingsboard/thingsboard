@@ -232,13 +232,13 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertFalse(transportConfiguration.getBootstrap().isEmpty());
         LwM2MBootstrapServerCredential lwM2MBootstrapServerCredential = transportConfiguration.getBootstrap().get(0);
         Assert.assertTrue(lwM2MBootstrapServerCredential instanceof NoSecLwM2MBootstrapServerCredential);
-        NoSecLwM2MBootstrapServerCredential noSecLwM2MBootstrapServerCredential = (NoSecLwM2MBootstrapServerCredential) lwM2MBootstrapServerCredential;
+        NoSecLwM2MBootstrapServerCredential noSecLwM2MBootstrapSectionDmServerCredential = (NoSecLwM2MBootstrapServerCredential) lwM2MBootstrapServerCredential;
 
-        Assert.assertEquals("PUBLIC_KEY", noSecLwM2MBootstrapServerCredential.getServerPublicKey());
-        Assert.assertEquals(Integer.valueOf(123), noSecLwM2MBootstrapServerCredential.getShortServerId());
-        Assert.assertFalse(noSecLwM2MBootstrapServerCredential.isBootstrapServerIs());
-        Assert.assertEquals("localhost", noSecLwM2MBootstrapServerCredential.getHost());
-        Assert.assertEquals(Integer.valueOf(5685), noSecLwM2MBootstrapServerCredential.getPort());
+        Assert.assertEquals("PUBLIC_KEY", noSecLwM2MBootstrapSectionDmServerCredential.getServerPublicKey());
+        Assert.assertEquals(Integer.valueOf(123), noSecLwM2MBootstrapSectionDmServerCredential.getShortServerId());
+        Assert.assertFalse(noSecLwM2MBootstrapSectionDmServerCredential.isBootstrapServerIs());
+        Assert.assertEquals("localhost", noSecLwM2MBootstrapSectionDmServerCredential.getHost());
+        Assert.assertEquals(Integer.valueOf(5685), noSecLwM2MBootstrapSectionDmServerCredential.getPort());
 
         TelemetryMappingConfiguration observeAttr = transportConfiguration.getObserveAttr();
         Assert.assertEquals("batteryLevel", observeAttr.getKeyName().get("/3_1.2/0/9"));
@@ -400,15 +400,15 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
                 JacksonUtil.fromString(AbstractLwM2MIntegrationTest.TELEMETRY_WITHOUT_OBSERVE, TelemetryMappingConfiguration.class);
         transportConfiguration.setObserveAttr(observeAttrConfiguration);
 
-        List<LwM2MBootstrapServerCredential> bootstrap = new ArrayList<>();
-        AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
-        bootstrapServerCredential.setServerPublicKey("PUBLIC_KEY");
-        bootstrapServerCredential.setShortServerId(123);
-        bootstrapServerCredential.setBootstrapServerIs(false);
-        bootstrapServerCredential.setHost("localhost");
-        bootstrapServerCredential.setPort(5685);
-        bootstrap.add(bootstrapServerCredential);
-        transportConfiguration.setBootstrap(bootstrap);
+        List<LwM2MBootstrapServerCredential> bootstrapSections = new ArrayList<>();
+        AbstractLwM2MBootstrapServerCredential bootstrapSectionServerCredential = new NoSecLwM2MBootstrapServerCredential();
+        bootstrapSectionServerCredential.setServerPublicKey("PUBLIC_KEY");
+        bootstrapSectionServerCredential.setShortServerId(123);
+        bootstrapSectionServerCredential.setBootstrapServerIs(false);
+        bootstrapSectionServerCredential.setHost("localhost");
+        bootstrapSectionServerCredential.setPort(5685);
+        bootstrapSections.add(bootstrapSectionServerCredential);
+        transportConfiguration.setBootstrap(bootstrapSections);
 
         return transportConfiguration;
     }

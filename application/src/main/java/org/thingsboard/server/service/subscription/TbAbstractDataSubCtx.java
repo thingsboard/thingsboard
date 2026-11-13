@@ -118,8 +118,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         entityKeyStates.forEach((entityData, keyStates) -> {
             int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
             subToEntityIdMap.put(subIdx, entityData.getEntityId());
-            localSubscriptionService.addSubscription(
-                    createTsSub(entityData, subIdx, false, startTs, endTs, keyStates, resultToLatestValues), sessionRef);
+            registerSubscription(createTsSub(entityData, subIdx, false, startTs, endTs, keyStates, resultToLatestValues));
         });
     }
 
@@ -127,7 +126,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
         for (EntityData entityData : data.getData()) {
             List<TbSubscription> entitySubscriptions = addSubscriptions(entityData, keysByType, latestValues, startTs, endTs);
-            entitySubscriptions.forEach(subscription -> localSubscriptionService.addSubscription(subscription, sessionRef));
+            entitySubscriptions.forEach(this::registerSubscription);
         }
     }
 

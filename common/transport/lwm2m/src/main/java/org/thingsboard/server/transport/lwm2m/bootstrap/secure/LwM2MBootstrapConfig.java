@@ -38,7 +38,7 @@ public class LwM2MBootstrapConfig implements Serializable {
      *   clientSecretKey?: string,
      *   serverPublicKey?: string;
      *   clientHoldOffTime?: number,
-     *   serverId?: number,
+     *  shortServerId?: number, // DM server only; null for the BS entry
      *   bootstrapServerAccountTimeout: number
      * */
     @Getter
@@ -114,7 +114,7 @@ public class LwM2MBootstrapConfig implements Serializable {
 
     private BootstrapConfig.ServerConfig setServerConfig (AbstractLwM2MBootstrapServerCredential serverCredential) {
         BootstrapConfig.ServerConfig serverConfig = new BootstrapConfig.ServerConfig();
-        if (serverCredential.getShortServerId() != null) {
+        if (!serverCredential.isBootstrapServerIs() && serverCredential.getShortServerId() != null) {
             serverConfig.shortId = serverCredential.getShortServerId();
         }
         serverConfig.lifetime = serverCredential.getLifetime();

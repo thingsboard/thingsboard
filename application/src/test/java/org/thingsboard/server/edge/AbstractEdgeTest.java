@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.HasVersion;
@@ -88,6 +89,7 @@ import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
@@ -99,6 +101,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -118,7 +121,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         registry.add("edges.rpc.port", () -> EDGE_PORT);
     }
 
-    public static final Integer CONNECT_MESSAGE_COUNT = 17;
+    public static final Integer CONNECT_MESSAGE_COUNT = 15;
     public static final Integer INSTALLATION_MESSAGE_COUNT = 8;
     public static final Integer SYNC_MESSAGE_COUNT = CONNECT_MESSAGE_COUNT + INSTALLATION_MESSAGE_COUNT;
     private static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
@@ -130,6 +133,16 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     @Autowired
     protected EdgeEventService edgeEventService;
+
+    protected void sendUplinkMsgAndWaitForResponse(Consumer<UplinkMsg.Builder> customizer) throws Exception {
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        uplinkMsgBuilder.setUplinkMsgId(EdgeUtils.nextPositiveInt());
+        customizer.accept(uplinkMsgBuilder);
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+    }
 
     @Before
     public void setupEdgeTest() throws Exception {
@@ -164,6 +177,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @After
     public void teardownEdgeTest() {
         try {
+            deleteDifferentTenant();
             loginTenantAdmin();
 
             doDelete("/api/edge/" + edge.getId().toString())
@@ -276,9 +290,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
-        // 4 messages ('general', 'mail', 'connectivity', 'jwt')
-        validateMsgsCnt(AdminSettingsUpdateMsg.class, 4);
-        validateAdminSettings(4);
+        // 2 messages ('general', 'connectivity')
+        validateMsgsCnt(AdminSettingsUpdateMsg.class, 2);
+        validateAdminSettings(2);
 
         // 4 messages
         // - 1 from default profile fetcher
@@ -603,6 +617,23 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         compareHasVersionEntities(deviceCredentials, deviceCredentialsMsg);
 
         return savedDevice;
+    }
+
+    protected Device saveDifferentTenantDevice() throws Exception {
+        loginDifferentTenant();
+        Device device = new Device();
+        device.setName("Different Tenant Device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        loginTenantAdmin();
+        return savedDevice;
+    }
+
+    protected void sendUplinkMsgAndVerifyNoDownlink(Consumer<UplinkMsg.Builder> customizer) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        sendUplinkMsgAndWaitForResponse(customizer);
+        // edge events are polled every second, so 2 seconds cover a full poll cycle
+        Assert.assertFalse(edgeImitator.waitForMessages(2));
     }
 
     protected Device findDeviceByName(String deviceName) throws Exception {

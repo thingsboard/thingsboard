@@ -70,6 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -489,8 +490,15 @@ public abstract class AbstractCalculatedFieldProcessingService {
             callback.onFailure(new IllegalArgumentException("Only TimeSeriesImmediateOutputStrategy is supported."));
         } else {
             TimeseriesSaveRequest.Strategy strategy = new TimeseriesSaveRequest.Strategy(tsOutputStrategy.isSaveTimeSeries(), tsOutputStrategy.isSaveLatest(), tsOutputStrategy.isSendWsUpdate(), tsOutputStrategy.isProcessCfs());
-            saveTimeSeriesInternal(tenantId, entityId, jsonResult, tsOutputStrategy.getTtl(), cfIds, ts, strategy, callback);
+            saveTimeSeriesInternal(tenantId, entityId, jsonResult, resolveTtl(tenantId, tsOutputStrategy.getTtl()), cfIds, ts, strategy, callback);
         }
+    }
+
+    private long resolveTtl(TenantId tenantId, long ttl) {
+        if (ttl == 0L) {
+            return TimeUnit.DAYS.toSeconds(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getDefaultStorageTtlDays));
+        }
+        return ttl;
     }
 
     private void saveTimeSeriesInternal(TenantId tenantId, EntityId entityId, JsonElement jsonResult, Long ttl, List<CalculatedFieldId> cfIds, long ts, TimeseriesSaveRequest.Strategy strategy, TbCallback callback) {

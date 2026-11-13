@@ -112,6 +112,7 @@ public class ThingsboardInstallService {
                     systemDataLoaderService.loadSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
                     installScripts.loadSystemImagesAndResources();
+                    entityDatabaseSchemaService.generateClusterIdIfNotExist();
                     databaseSchemaVersionService.updateSchemaVersion();
                 }
                 log.info("Upgrade finished successfully!");
@@ -157,6 +158,8 @@ public class ThingsboardInstallService {
 //                systemDataLoaderService.loadSystemRules();
                 installScripts.loadSystemLwm2mResources();
                 installScripts.loadSystemImagesAndResources();
+
+                entityDatabaseSchemaService.generateClusterIdIfNotExist();
 
                 if (loadDemo) {
                     log.info("Loading demo data...");

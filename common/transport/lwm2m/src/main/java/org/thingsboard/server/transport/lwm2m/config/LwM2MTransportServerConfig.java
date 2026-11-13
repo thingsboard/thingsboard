@@ -81,7 +81,7 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private int cleanPeriodInSec;
 
     @Getter
-    @Value("${transport.lwm2m.server.id:}")
+    @Value("${transport.lwm2m.server.id:123}")
     private Integer id;
 
     @Getter

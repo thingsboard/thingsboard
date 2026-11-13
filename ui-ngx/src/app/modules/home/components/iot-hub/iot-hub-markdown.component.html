@@ -4,7 +4,9 @@
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<tb-markdown [data]="parsedData"
+<tb-markdown tbPhotoSwipeGallery
+             [galleryChildrenSelector]="readmeGallerySelector"
+             [data]="parsedData"
              [applyDefaultMarkdownStyle]="false"
              [additionalStyles]="additionalStyles"
              [additionalCompileModules]="itemLinkCompileModules"

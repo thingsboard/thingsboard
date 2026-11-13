@@ -16,11 +16,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  defaultHereMapProviderSettings,
   HereMapProvider,
   HereMapProviderSettings,
   hereMapProviderTranslationMap
 } from '@home/components/widget/lib/maps-legacy/map-models';
-import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -67,24 +67,8 @@ export class HereMapProviderSettingsComponent extends PageComponent implements O
     this.providerSettingsFormGroup = this.fb.group({
       mapProviderHere: [null, [Validators.required]],
       credentials: this.fb.group({
-        useV3: [true],
-        app_id: [null, [Validators.required]],
-        app_code: [null, [Validators.required]],
         apiKey: [null, [Validators.required]]
       })
-    });
-    this.providerSettingsFormGroup.get('credentials.useV3').valueChanges.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(value => {
-      if (value) {
-        this.providerSettingsFormGroup.get('credentials.apiKey').enable({emitEvent: false});
-        this.providerSettingsFormGroup.get('credentials.app_id').disable({emitEvent: false});
-        this.providerSettingsFormGroup.get('credentials.app_code').disable({emitEvent: false});
-      } else {
-        this.providerSettingsFormGroup.get('credentials.apiKey').disable({emitEvent: false});
-        this.providerSettingsFormGroup.get('credentials.app_id').enable({emitEvent: false});
-        this.providerSettingsFormGroup.get('credentials.app_code').enable({emitEvent: false});
-      }
     });
     this.providerSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -106,21 +90,17 @@ export class HereMapProviderSettingsComponent extends PageComponent implements O
       this.providerSettingsFormGroup.disable({emitEvent: false});
     } else {
       this.providerSettingsFormGroup.enable({emitEvent: false});
-      this.providerSettingsFormGroup.get('credentials.useV3').updateValueAndValidity({onlySelf: true});
     }
   }
 
   writeValue(value: HereMapProviderSettings): void {
-    if (!isDefinedAndNotNull(value.credentials.useV3)) {
-      if (isDefinedAndNotNull(value.credentials.app_id) && isDefinedAndNotNull(value.credentials.app_code)) {
-        value.credentials.useV3 = false;
-      }
-    }
     this.modelValue = value;
-    this.providerSettingsFormGroup.patchValue(
-      value, {emitEvent: false}
-    );
-    this.providerSettingsFormGroup.get('credentials.useV3').updateValueAndValidity({onlySelf: true});
+    this.providerSettingsFormGroup.patchValue({
+      mapProviderHere: value?.mapProviderHere,
+      credentials: {
+        apiKey: value?.credentials?.apiKey || defaultHereMapProviderSettings.credentials.apiKey
+      }
+    }, {emitEvent: false});
   }
 
   public validate(c: FormControl) {

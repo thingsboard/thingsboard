@@ -45,6 +45,13 @@ public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculat
     }
 
     @Override
+    public void validate() {
+        if (arguments != null && arguments.values().stream().anyMatch(Argument::hasTsRollingArgument)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support TS_ROLLING arguments.");
+        }
+    }
+
+    @Override
     public Output getOutput() {
         return null;
     }

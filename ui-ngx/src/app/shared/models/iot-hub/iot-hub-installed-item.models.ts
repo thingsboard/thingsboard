@@ -9,11 +9,6 @@ export interface WidgetInstalledItemDescriptor {
   widgetTypeId: { id: string };
 }
 
-export interface DashboardInstalledItemDescriptor {
-  type: 'DASHBOARD';
-  dashboardId: { id: string };
-}
-
 export interface CalculatedFieldInstalledItemDescriptor {
   type: 'CALCULATED_FIELD';
   calculatedFieldId: { id: string };
@@ -39,6 +34,13 @@ export interface DeviceInstalledItemDescriptor {
   installState?: Record<string, any>;
 }
 
+/**
+ * Whether the install of a device package can be reviewed: an update that removed the entities of the installed
+ * version but did not install the new one leaves the item with nothing to show.
+ */
+export const canReviewDeviceInstall = (descriptor: DeviceInstalledItemDescriptor): boolean =>
+  !!descriptor?.installState && !!descriptor.selectedInstallMethod && !!descriptor.createdEntityIds?.length;
+
 export interface SolutionTemplateInstalledItemDescriptor {
   type: 'SOLUTION_TEMPLATE';
   createdEntityIds: { entityType: string; id: string }[];
@@ -50,7 +52,6 @@ export interface SolutionTemplateInstalledItemDescriptor {
 
 export type IotHubInstalledItemDescriptor =
   | WidgetInstalledItemDescriptor
-  | DashboardInstalledItemDescriptor
   | CalculatedFieldInstalledItemDescriptor
   | AlarmRuleInstalledItemDescriptor
   | RuleChainInstalledItemDescriptor
@@ -61,6 +62,7 @@ export interface InstallItemVersionResult {
   success: boolean;
   errorMessage: string;
   descriptor: IotHubInstalledItemDescriptor;
+  installedItemId?: string;
 }
 
 export enum InstallPlanEntryStatus {
@@ -139,10 +141,6 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
     case 'WIDGET':
       entityId = descriptor.widgetTypeId?.id;
       entityType = EntityType.WIDGET_TYPE;
-      break;
-    case 'DASHBOARD':
-      entityId = descriptor.dashboardId?.id;
-      entityType = EntityType.DASHBOARD;
       break;
     case 'CALCULATED_FIELD':
     case 'ALARM_RULE':

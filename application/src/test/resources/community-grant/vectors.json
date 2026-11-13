@@ -1,0 +1,142 @@
+{
+  "format": "TBICBDL1",
+  "formatVersion": 1,
+  "fixtureMaterial": {
+    "releaseSigningPublicKeyBase64": "Nqbrd0SVV4w9yZWl0cgu9I7G/URhdL3PN8mWRwnWDzE=",
+    "releaseSigningKeyId": 1,
+    "communityGrantCheckerReleasePublicKeysProperty": "1:Nqbrd0SVV4w9yZWl0cgu9I7G/URhdL3PN8mWRwnWDzE=",
+    "checkerStandInRule": "64 bytes; checker[i] = (i * 7 + 3) mod 256",
+    "checkerStandInSha256": "39e3d7b6b5d075d37d053ad89b24b41bef4f3c29760c84447cab3f3be1882241",
+    "checkerStandInHex": "030a11181f262d343b424950575e656c737a81888f969da4abb2b9c0c7ced5dce3eaf1f8ff060d141b222930373e454c535a61686f767d848b9299a0a7aeb5bc",
+    "portalPublicKeyRule": "32 bytes; key[i] = (i * 7 + 0x29) mod 256",
+    "portalPublicKeyBase64": "KTA3PkVMU1phaG92fYSLkpmgp661vMPK0djf5u30+wI=",
+    "clusterId": "3f2a1c44-9f3b-11ee-8c90-0242ac120002",
+    "challenge": "Y2hhbGxlbmdlLTAwMS1ieXRlcw==",
+    "referenceMillis": 1787788800000,
+    "validManifestBytes": 420,
+    "validManifestJson": "{\"bundleVersion\":1,\"os\":\"linux\",\"arch\":\"amd64\",\"clusterId\":\"3f2a1c44-9f3b-11ee-8c90-0242ac120002\",\"checkerInput\":{\"clusterId\":\"3f2a1c44-9f3b-11ee-8c90-0242ac120002\",\"keyId\":1,\"publicKey\":\"KTA3PkVMU1phaG92fYSLkpmgp661vMPK0djf5u30+wI=\",\"challenge\":\"Y2hhbGxlbmdlLTAwMS1ieXRlcw==\",\"referenceMillis\":1787788800000},\"challengeExpiresAt\":4102531200000,\"issuedAt\":4102444800000,\"checkerFileName\":\"tb-instance-check_linux_amd64\"}",
+    "validRelsigHex": "544249435349473101013ab2afc43727f37b9388510b6c0e0b7d920a738eedf45aae5169aa7d97abe3f73796b907168188e0685566bbf792ae0977b6c38072e684ee149d6bcf161fc004"
+  },
+  "fixtures": [
+    {
+      "file": "01-valid.tbicb",
+      "sizeBytes": 575,
+      "sha256": "3e747e7bef600c7a7026558592ac91593922f74c360b0a1746ea3f22e7405dad",
+      "expectedOutcome": "ACCEPT",
+      "expectedReason": null,
+      "note": "The reference bundle; the release signature verifies over the 64-byte checker and the challenge expires in 2100."
+    },
+    {
+      "file": "02-too-short.tbicb",
+      "sizeBytes": 90,
+      "sha256": "38d08ef0ee6f0013b1702ed46f7e6452124f73ae5f19c038b301f17a55e5ba9a",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_TOO_SHORT",
+      "note": "90 bytes, one short of the fixed header, although the magic present is correct."
+    },
+    {
+      "file": "03-bad-magic.tbicb",
+      "sizeBytes": 575,
+      "sha256": "464d3034a07911c75062ba54e2bc1e5cc2da04e146d4c5671bd012a1419809b9",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_BAD_MAGIC",
+      "note": "Byte 0 changed from 'T' to 'X'; everything else is valid."
+    },
+    {
+      "file": "04-unknown-version.tbicb",
+      "sizeBytes": 575,
+      "sha256": "57f64567e6a50273e3ae26f2e5f32a964f95b7c0d8e878a062654636760c9ad4",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_UNSUPPORTED_VERSION",
+      "note": "VERSION = 0x02; the reason names both the declared and the supported version."
+    },
+    {
+      "file": "05-manifest-len-zero.tbicb",
+      "sizeBytes": 575,
+      "sha256": "6bfe256e9d96c801ae56c76c3ed56df50e099551a1ff383792e7312697de1412",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_MANIFEST_LEN_RANGE",
+      "note": "MANIFEST_LEN = 0 with the body intact, so the length range check fires before the total length check."
+    },
+    {
+      "file": "06-manifest-len-too-large.tbicb",
+      "sizeBytes": 575,
+      "sha256": "be383e132528933d6a7468e02fb920621dd33502696631678056f028e0ba4de3",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_MANIFEST_LEN_RANGE",
+      "note": "MANIFEST_LEN = 8193, one past the ceiling, with the body intact."
+    },
+    {
+      "file": "07-checker-len-zero.tbicb",
+      "sizeBytes": 575,
+      "sha256": "e998d83843ecd4c2c14deb240cc2dbf037ff466a7537c1a0e9a27049cfc62051",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_CHECKER_LEN_RANGE",
+      "note": "CHECKER_LEN = 0 with the body intact, so the range check fires before the total length check."
+    },
+    {
+      "file": "08-truncated-mid-manifest.tbicb",
+      "sizeBytes": 301,
+      "sha256": "68c0c107ebdcb7c2299638a6a218e8bccb5a2adf641c5ad6659e68138e878087",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_LENGTH_MISMATCH",
+      "note": "Truncated inside the manifest; both declared lengths describe the missing bytes."
+    },
+    {
+      "file": "09-truncated-mid-checker.tbicb",
+      "sizeBytes": 543,
+      "sha256": "8ef37a7f629b547db387326f27248df6b2dae4d3eef09c87ef0746e1d479e362",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_LENGTH_MISMATCH",
+      "note": "Truncated inside the checker; the manifest is complete and parseable."
+    },
+    {
+      "file": "10-trailing-byte.tbicb",
+      "sizeBytes": 576,
+      "sha256": "a0c5440286f7e1949333036f4329956b0771ff411ea77150bb1b3f9ca9012600",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_LENGTH_MISMATCH",
+      "note": "One 0x00 appended after the checker."
+    },
+    {
+      "file": "11-manifest-not-utf8.tbicb",
+      "sizeBytes": 575,
+      "sha256": "d333b7dfdb4f5434944aaa56c70eb54ec6af84c68ce6a4ec329f6290f48a863b",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_MANIFEST_NOT_UTF8",
+      "note": "The manifest region is 0xFF repeated, which is not valid UTF-8 at any offset."
+    },
+    {
+      "file": "12-manifest-not-json.tbicb",
+      "sizeBytes": 575,
+      "sha256": "b18a78cb214fe5c6bd2c37ecdb7c662b525ae09c33ff7ac2fc900f41b574d7a3",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_MANIFEST_NOT_JSON",
+      "note": "Valid UTF-8 of the right length that is not a JSON object."
+    },
+    {
+      "file": "13-manifest-missing-field.tbicb",
+      "sizeBytes": 524,
+      "sha256": "fc4078744b432e9aae55617709237b6b5c3914bf42c6233185cdc5ee1d4e4c06",
+      "expectedOutcome": "REJECT",
+      "expectedReason": "E_MANIFEST_FIELD",
+      "note": "clusterId removed with every declared length recomputed; the reason names the missing field."
+    },
+    {
+      "file": "14-expired-challenge.tbicb",
+      "sizeBytes": 575,
+      "sha256": "0389de376b9043f38cf383ef0a1282ce44d1dfb35d227ce1a0dc719758078289",
+      "expectedOutcome": "ACCEPT_WITH_WARNING",
+      "expectedReason": "W_CHALLENGE_EXPIRED",
+      "note": "A well-formed bundle whose challenge expired on 2021-01-02; expiry is a warning, not a rejection."
+    },
+    {
+      "file": "15-relsig-not-tbicsig1.tbicb",
+      "sizeBytes": 575,
+      "sha256": "626c7a570eade192fc048cadf134d738fd1b853d42a33ad4ef8dd1624aa36dff",
+      "expectedOutcome": "ACCEPT",
+      "expectedReason": null,
+      "note": "RELSIG's magic is corrupted; the parser passes RELSIG through unchecked and the release-signature verifier refuses it."
+    }
+  ]
+}

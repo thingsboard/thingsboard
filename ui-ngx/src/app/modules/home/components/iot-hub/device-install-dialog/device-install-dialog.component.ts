@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
@@ -12,11 +12,13 @@ import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
+import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { DialogService } from '@core/services/dialog.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceService } from '@core/http/device.service';
 import { DashboardService } from '@core/http/dashboard.service';
@@ -40,12 +42,16 @@ import {
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 import { mergeMap } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { iotHubErrorMessage } from '../iot-hub-utils';
 
 export interface DeviceInstallDialogData {
   item: MpItemVersionView;
   reviewMode?: boolean;
   selectedInstallMethod?: string;
   installState?: Record<string, any>;
+  /** Update: the installed item whose entities are replaced by this version's. */
+  replaceInstalledItemId?: string;
 }
 
 export type WizardStepType = 'connectivity' | 'placeholder' | 'instruction' | 'form' | 'progress';
@@ -64,6 +70,8 @@ export interface WizardStep {
   entitySteps?: EntityStepProgress[];
   progressError?: string;
   progressDone?: boolean;
+  /** An error of the whole step (removal of the replaced entities, registration), not of one entity. */
+  stepError?: string;
 }
 
 const ENTITY_STEP_MIN_DELAY = 2000;
@@ -95,6 +103,21 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   wizardSteps: WizardStep[] = [];
   wizardStarted = false;
   reviewMode = false;
+  /**
+   * Set once the server has an installed item for this device. From that moment every way out of
+   * the wizard — including the header X and the Cancel button on a still-pending later step —
+   * has to report 'installed', or the caller keeps showing pre-install counts and badges.
+   */
+  private installRegistered = false;
+  readonly removingReplaced = signal(false);
+  private replacedEntitiesRemoved = false;
+  private replacedEntitiesMayBeGone = false;
+  private registeredItemId: string | undefined;
+  // Kept as soon as an entity exists: going back resets a progress step, but every registration must still track it.
+  private packageEntityIds: { entityType: string; id: string }[] = [];
+  private createdInThisWizard = new Set<string>();
+  private methodPreselected = false;
+  private closed = false;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -112,7 +135,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     protected router: Router,
     protected dialogRef: MatDialogRef<TbDeviceInstallDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DeviceInstallDialogData,
-    private cdr: ChangeDetectorRef,
+    private cd: ChangeDetectorRef,
     private deviceProfileService: DeviceProfileService,
     private deviceService: DeviceService,
     private dashboardService: DashboardService,
@@ -120,12 +143,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     private attributeService: AttributeService,
     private iotHubApiService: IotHubApiService,
     private translate: TranslateService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private dialogService: DialogService
   ) {
     super(store, router, dialogRef);
   }
 
   async ngOnInit(): Promise<void> {
+    this.registeredItemId = this.data.replaceInstalledItemId;
     try {
       const zipData = await firstValueFrom(this.iotHubApiService.getVersionFileData(this.data.item.id, { ignoreLoading: true }).pipe(
         mergeMap((blob: Blob) => blob.arrayBuffer())
@@ -184,12 +209,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // pe-connectivity-method-prompt dialog and never set
       // selectedInstallMethod.
       this.startWizard();
+      // Update: preselect the method the installed version uses; the user can still pick another one.
+      const installedMethod = this.data.replaceInstalledItemId && this.data.selectedInstallMethod;
+      if (installedMethod && this.availableInstallMethods.includes(installedMethod) && !peOnlyInstallMethods.has(installedMethod)) {
+        this.selectedInstallMethod = installedMethod;
+        this.methodPreselected = true;
+      }
     }
     this.loading = false;
-    this.cdr.detectChanges();
+    this.cd.detectChanges();
   }
 
   ngOnDestroy() {
+    this.closed = true;
     for (const url of this.zipImages.values()) {
       URL.revokeObjectURL(url);
     }
@@ -203,6 +235,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     // selectable — they never become the active install method.
     if (peOnlyInstallMethods.has(ct)) {
       this.openPeConnectivityPrompt(ct);
+      return;
+    }
+    if (this.selectedInstallMethod === ct && this.methodPreselected) {
+      this.confirmConnectivity();
       return;
     }
     if (this.selectedInstallMethod === ct) {
@@ -243,6 +279,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!this.selectedInstallMethod) {
       return;
     }
+    this.methodPreselected = false;
     // If we are already inside the wizard (connectivity step is the
     // first one), append the remaining steps and advance the stepper.
     const onConnectivityStep = this.currentWizardStep?.type === 'connectivity';
@@ -253,12 +290,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.wizardSteps.length = 1;
       this.appendInstallSteps();
       connectivityStep.completed = true;
-      this.cdr.detectChanges();
+      this.cd.detectChanges();
       // Wait for new mat-step children to register before advancing.
-      setTimeout(() => {
-        this.stepper?.next();
-        this.onStepActivated();
-      }, 0);
+      setTimeout(() => this.stepper?.next(), 0);
       return;
     }
     this.startWizard();
@@ -309,21 +343,33 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!step) {
       return;
     }
-    if (step.type === 'form') {
-      if (step.formGroup?.invalid) {
-        step.formGroup.markAllAsTouched();
-        return;
-      }
-      Object.assign(this.formValues, step.formGroup.getRawValue());
+    if (step.type === 'form' && step.formGroup?.invalid) {
+      step.formGroup.markAllAsTouched();
+      return;
     }
     if (this.isLastWizardStep) {
       this.done();
       return;
     }
     step.completed = true;
-    this.cdr.detectChanges();
+    this.cd.detectChanges();
     this.stepper.next();
-    this.onStepActivated();
+  }
+
+  onStepSelectionChange(event: StepperSelectionEvent): void {
+    if (event.selectedIndex <= event.previouslySelectedIndex) {
+      return;
+    }
+    // Forward moves can come from the stepper header, which bypasses nextStep(),
+    // so commit every step being passed over here.
+    for (let i = event.previouslySelectedIndex; i < event.selectedIndex; i++) {
+      const ws = this.wizardSteps[i];
+      if (ws.type === 'form') {
+        Object.assign(this.formValues, ws.formGroup.getRawValue());
+      }
+      ws.completed = true;
+    }
+    this.onStepActivated(this.wizardSteps[event.selectedIndex]);
   }
 
   get primaryEntityAction(): { url: string; label: string } | null {
@@ -356,19 +402,34 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.dialogRef.close('installed');
   }
 
-  cancel(): void {
-    this.dialogRef.close(false);
+  async cancel(): Promise<void> {
+    if (this.removingReplaced()) {
+      return;
+    }
+    if (this.replacedEntitiesMayBeGone && !this.installRegistered) {
+      const close = await firstValueFrom(this.dialogService.confirm(
+        this.translate.instant('iot-hub.device-update-close-title'),
+        this.translate.instant('iot-hub.device-update-close-text'),
+        this.translate.instant('action.cancel'),
+        this.translate.instant('action.close')));
+      if (!close) {
+        return;
+      }
+    }
+    this.closed = true;
+    this.dialogRef.close(this.installRegistered || this.replacedEntitiesMayBeGone ? 'installed' : false);
   }
 
   retryEntitySteps(step: WizardStep): void {
     step.progressError = null;
+    step.stepError = null;
     void this.runEntitySteps(step);
   }
 
   async resolveConflict(ws: WizardStep, ep: EntityStepProgress, resolution: string): Promise<void> {
     ep.status = 'running';
     ep.errorMessage = null;
-    this.cdr.detectChanges();
+    this.cd.detectChanges();
     try {
       let output: EntityStepOutput;
       if (resolution === 'use-existing') {
@@ -390,14 +451,16 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       await this.saveStepAttributes(ep.step, output);
       ep.existingEntity = null;
       ep.conflictType = null;
-      this.markEntityStepSuccess(ws, ep, output, resolution);
+      // An entity this wizard created a moment ago (the user went back and ran the step again) stays the package's own.
+      const recorded = resolution === 'use-existing' && this.createdInThisWizard.has(output.id) ? 'created' : resolution;
+      this.markEntityStepSuccess(ws, ep, output, recorded);
       // Resume running remaining steps
       await this.runEntitySteps(ws);
     } catch (err: any) {
       ep.status = 'error';
-      ep.errorMessage = err?.error?.message || err?.message || 'Unknown error';
+      ep.errorMessage = iotHubErrorMessage(err, this.translate);
       ws.progressError = ep.errorMessage;
-      this.cdr.detectChanges();
+      this.cd.detectChanges();
     }
   }
 
@@ -410,6 +473,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         const progressStep = this.wizardSteps[currentIdx];
         progressStep.entitySteps = null;
         progressStep.progressError = null;
+        progressStep.stepError = null;
         progressStep.progressDone = false;
         progressStep.completed = false;
         // Allow navigation back by making intermediate steps editable
@@ -666,8 +730,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const formJson = this.zipFiles.get(ws.rawSteps[0].file) || '[]';
     ws.formFields = JSON.parse(formJson) as FormFieldDefinition[];
     const controls: Record<string, UntypedFormControl> = {};
-    // In review mode, use stored values; otherwise use defaults
-    const storedValues = this.reviewMode && this.data.installState?.[ws.label]?.formValues;
+    // In review mode and on an update, use stored values; otherwise use defaults
+    const storedValues = (this.reviewMode || this.data.replaceInstalledItemId) && this.data.installState?.[ws.label]?.formValues;
     for (const field of ws.formFields) {
       this.fieldTypes.set(field.key, field.type);
       const validators = [];
@@ -688,7 +752,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   private resolveInitialFieldValue(field: FormFieldDefinition, storedValue: any): any {
-    if (storedValue !== undefined) {
+    // On an update the stored value comes from the previous version, whose field may have changed since.
+    if (storedValue !== undefined && (this.reviewMode || this.fitsField(field, storedValue))) {
       return storedValue;
     }
     const isStringLike = field.type === FormFieldType.STRING || field.type === FormFieldType.PASSWORD;
@@ -698,13 +763,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return field.defaultValue ?? (field.type === FormFieldType.BOOLEAN ? false : '');
   }
 
-  private onStepActivated(): void {
-    const step = this.currentWizardStep;
+  private onStepActivated(step = this.currentWizardStep): void {
     if (!step) {
       return;
     }
     if (step.type === 'instruction') {
       step.markdown = this.zipFiles.get(step.rawSteps[0].file) || '';
+      // Nothing to validate here, so the linear stepper header may move past it right away.
+      step.completed = true;
     } else if (step.type === 'progress' && !step.progressDone) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);
@@ -738,6 +804,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       resolvedName: this.resolveVariables(s.name)
     }));
     ws.progressError = null;
+    ws.stepError = null;
     ws.progressDone = false;
     void this.runEntitySteps(ws);
   }
@@ -747,6 +814,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ep.entityOutput = output;
     ep.resolution = resolution;
     ep.status = 'success';
+    // The connector is attributes on the gateway, not an entity of its own: its output is the gateway, which the gateway
+    // step already accounted for (created, or used as it was).
+    const connector = ep.step.type === InstallStepType.GATEWAY_CONNECTOR;
+    if (resolution !== 'use-existing' && !connector) {
+      this.createdInThisWizard.add(output.id);
+    }
+    const entityType = connector ? null : this.stepTypeToEntityType(ep.step.type);
+    // An entity the user had before the install and chose to use is not the package's: a later update or Delete must
+    // not remove it, even after Back reruns the steps and its "use existing" mark is gone from the install state.
+    const packageOwned = resolution !== 'use-existing' || this.createdInThisWizard.has(output.id);
+    if (entityType && packageOwned && !this.packageEntityIds.some(known => known.id === output.id)) {
+      this.packageEntityIds.push({ entityType, id: output.id });
+    }
     const alias = stepTypeAliasMap[ep.step.type];
     if (alias) {
       this.entityOutputs.set(alias, output);
@@ -756,17 +836,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         remaining.resolvedName = this.resolveVariables(remaining.step.name);
       }
     }
-    this.cdr.detectChanges();
+    this.cd.detectChanges();
   }
 
   private async runEntitySteps(ws: WizardStep): Promise<void> {
+    if (!await this.removeReplacedEntities(ws) || this.closed) {
+      return;
+    }
     for (const ep of ws.entitySteps) {
       if (ep.status === 'success') {
         continue;
       }
       ep.status = 'running';
       ep.errorMessage = null;
-      this.cdr.detectChanges();
+      this.cd.detectChanges();
       try {
         // Pre-check for existing entity
         const existing = await this.preCheckEntity(ep.step);
@@ -774,7 +857,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           ep.status = 'conflict';
           ep.existingEntity = existing;
           ep.conflictType = this.getConflictType(ep.step.type);
-          this.cdr.detectChanges();
+          this.cd.detectChanges();
           return; // Pause — user must choose a resolution
         }
         const startTime = Date.now();
@@ -789,37 +872,79 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         this.markEntityStepSuccess(ws, ep, output, 'created');
       } catch (err: any) {
         ep.status = 'error';
-        ep.errorMessage = err?.error?.message || err?.message || 'Unknown error';
+        ep.errorMessage = iotHubErrorMessage(err, this.translate);
         ws.progressError = ep.errorMessage;
-        this.cdr.detectChanges();
+        this.cd.detectChanges();
         return;
       }
     }
 
-    // All done — register install with created entity IDs
-    ws.progressDone = true;
-    ws.completed = true;
+    // All done — register install with created entity IDs. Until then nothing tracks them, so the step is not done.
     try {
-      const createdEntityIds = this.collectCreatedEntityIds();
+      const createdEntityIds = [...this.packageEntityIds];
       const dashboardId = this.findCreatedDashboardId();
-      await firstValueFrom(
+      const result = await firstValueFrom(
         this.iotHubApiService.registerDeviceInstall(
           this.data.item.id as string,
           { createdEntityIds, dashboardId, selectedInstallMethod: this.selectedInstallMethod, installState: this.buildInstallState() },
-          { ignoreLoading: true }
+          this.registeredItemId,
+          { ignoreLoading: true, ignoreErrors: true }
         )
       );
-    } catch (_e) {
-      // Non-critical — entities are created, tracking registration failed
-      console.error('Failed to register device install', _e);
+      if (!result?.success) {
+        throw new Error(result?.errorMessage);
+      }
+      this.installRegistered = true;
+      this.registeredItemId = result.installedItemId ?? this.registeredItemId;
+    } catch (err: any) {
+      ws.stepError = this.translate.instant('iot-hub.device-install-register-error', { error: iotHubErrorMessage(err, this.translate) });
+      return;
     }
+    ws.progressDone = true;
+    ws.completed = true;
 
     // Auto-advance to next step after a short pause
     if (!this.isLastWizardStep) {
       await this.delay(500);
       this.stepper.next();
-      this.cdr.detectChanges();
-      this.onStepActivated();
+      this.cd.detectChanges();
+    }
+  }
+
+  /** Update: the replaced version's entities are removed right before the new ones are created, or their names conflict. */
+  private async removeReplacedEntities(ws: WizardStep): Promise<boolean> {
+    if (!this.data.replaceInstalledItemId || this.replacedEntitiesRemoved) {
+      return true;
+    }
+    this.removingReplaced.set(true);
+    try {
+      await firstValueFrom(this.iotHubApiService.removeDevicePackageEntities(this.data.replaceInstalledItemId,
+        this.data.item.id as string, { ignoreLoading: true, ignoreErrors: true }));
+      this.replacedEntitiesRemoved = true;
+      this.replacedEntitiesMayBeGone = true;
+      return true;
+    } catch (err: any) {
+      // Only a 400 is a refusal before anything was removed; any other failure (a proxy timeout too) may follow removals.
+      if (!(err instanceof HttpErrorResponse && err.status === 400)) {
+        this.replacedEntitiesMayBeGone = true;
+      }
+      ws.stepError = this.translate.instant('iot-hub.device-update-remove-error', { error: iotHubErrorMessage(err, this.translate) });
+      return false;
+    } finally {
+      this.removingReplaced.set(false);
+    }
+  }
+
+  private fitsField(field: FormFieldDefinition, value: any): boolean {
+    switch (field.type) {
+      case FormFieldType.BOOLEAN:
+        return typeof value === 'boolean';
+      case FormFieldType.INTEGER:
+        return Number.isInteger(value) || (typeof value === 'string' && /^-?\d*$/.test(value));
+      case FormFieldType.SELECT:
+        return typeof value === 'string' && (!field.options?.length || field.options.some(option => option.value === value));
+      default:
+        return typeof value === 'string';
     }
   }
 
@@ -1073,23 +1198,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
     }
     return state;
-  }
-
-  private collectCreatedEntityIds(): { entityType: string; id: string }[] {
-    const ids: { entityType: string; id: string }[] = [];
-    for (const ws of this.wizardSteps) {
-      if (ws.type === 'progress' && ws.entitySteps) {
-        for (const ep of ws.entitySteps) {
-          if (ep.status === 'success' && ep.entityOutput) {
-            const entityType = this.stepTypeToEntityType(ep.step.type);
-            if (entityType) {
-              ids.push({ entityType, id: ep.entityOutput.id });
-            }
-          }
-        }
-      }
-    }
-    return ids;
   }
 
   private findCreatedDashboardId(): { entityType: string; id: string } | undefined {

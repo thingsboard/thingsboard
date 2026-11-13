@@ -38,12 +38,17 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RpcId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
@@ -57,6 +62,7 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
@@ -92,6 +98,9 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Autowired
     protected EdgeService edgeService;
+
+    @Autowired
+    protected RpcService rpcService;
 
     @Test
     public void testDevices() throws Exception {
@@ -654,6 +663,134 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(2, latestDeviceRpcCallMsg.getRetries());
     }
 
+    @Test
+    public void testRpcV2StatusUpdateFromEdge() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+        Rpc rpc = savePersistentRpc(device, RpcStatus.QUEUED);
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.DELIVERED, null);
+        Assert.assertEquals(RpcStatus.DELIVERED, getPersistentRpc(rpc.getId()).getStatus());
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.SUCCESSFUL, "{\"result\":\"ok\"}");
+        Rpc successful = getPersistentRpc(rpc.getId());
+        Assert.assertEquals(RpcStatus.SUCCESSFUL, successful.getStatus());
+        Assert.assertEquals("ok", successful.getResponse().get("result").asText());
+
+        // stale intermediate status must not regress a final RPC
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.DELIVERED, null);
+        Assert.assertEquals(RpcStatus.SUCCESSFUL, getPersistentRpc(rpc.getId()).getStatus());
+    }
+
+    @Test
+    public void testRpcV2StatusRetryAfterTimeoutFromEdge() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+        Rpc rpc = savePersistentRpc(device, RpcStatus.SENT);
+
+        // TIMEOUT with retries left is followed by a re-delivery
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.TIMEOUT, null);
+        Assert.assertEquals(RpcStatus.TIMEOUT, getPersistentRpc(rpc.getId()).getStatus());
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.SENT, null);
+        Assert.assertEquals(RpcStatus.SENT, getPersistentRpc(rpc.getId()).getStatus());
+    }
+
+    @Test
+    public void testRpcV2NonJsonResponseFromEdge() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+        Rpc rpc = savePersistentRpc(device, RpcStatus.DELIVERED);
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.SUCCESSFUL, "not a json");
+        Rpc successful = getPersistentRpc(rpc.getId());
+        Assert.assertEquals(RpcStatus.SUCCESSFUL, successful.getStatus());
+        Assert.assertEquals("not a json", successful.getResponse().get("error").asText());
+    }
+
+    @Test
+    public void testRpcV2StatusForUnknownRpcFromEdge() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+        RpcId unknownRpcId = new RpcId(Uuids.timeBased());
+
+        sendRpcStatusUplink(device, unknownRpcId, RpcStatus.DELIVERED, null);
+        doGet("/api/rpc/persistent/" + unknownRpcId.getId()).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testRpcV2StatusForRpcOfDifferentTenantFromEdge() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        Rpc rpc = savePersistentRpc(differentTenantId, device, RpcStatus.QUEUED);
+
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.SUCCESSFUL, "{\"result\":\"ok\"}");
+
+        Rpc rpcAfterUplink = rpcService.findById(differentTenantId, rpc.getId());
+        Assert.assertEquals(RpcStatus.QUEUED, rpcAfterUplink.getStatus());
+        Assert.assertNull(rpcAfterUplink.getResponse());
+    }
+
+    @Test
+    public void testRpcV2DeleteFromEdge() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+        Rpc rpc = savePersistentRpc(device, RpcStatus.DELIVERED);
+
+        edgeImitator.expectMessageAmount(1);
+        sendRpcStatusUplink(device, rpc.getId(), RpcStatus.DELETED, null);
+        doGet("/api/rpc/persistent/" + rpc.getUuidId()).andExpect(status().isNotFound());
+        // delete originated from the edge must not be echoed back
+        Assert.assertFalse(edgeImitator.waitForMessages(1));
+    }
+
+    @Test
+    public void testRpcV2DeleteFromCloud() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+        Rpc rpc = savePersistentRpc(device, RpcStatus.SUCCESSFUL);
+
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/rpc/persistent/" + rpc.getUuidId()).andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceRpcCallMsg);
+        DeviceRpcCallMsg deviceRpcCallMsg = (DeviceRpcCallMsg) latestMessage;
+        Assert.assertEquals(RpcStatus.DELETED.name(), deviceRpcCallMsg.getRpcStatus());
+        Assert.assertEquals(rpc.getUuidId(), new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB()));
+        Assert.assertFalse(deviceRpcCallMsg.hasRequestMsg());
+        Assert.assertFalse(deviceRpcCallMsg.hasResponseMsg());
+    }
+
+    private Rpc savePersistentRpc(Device device, RpcStatus status) {
+        return savePersistentRpc(tenantId, device, status);
+    }
+
+    private Rpc savePersistentRpc(TenantId rpcTenantId, Device device, RpcStatus status) {
+        Rpc rpc = new Rpc(new RpcId(Uuids.timeBased()));
+        rpc.setTenantId(rpcTenantId);
+        rpc.setDeviceId(device.getId());
+        rpc.setExpirationTime(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1));
+        rpc.setRequest(JacksonUtil.newObjectNode().put("method", "test_method"));
+        rpc.setStatus(status);
+        return rpcService.save(rpc);
+    }
+
+    private Rpc getPersistentRpc(RpcId rpcId) throws Exception {
+        return doGet("/api/rpc/persistent/" + rpcId.getId(), Rpc.class);
+    }
+
+    private void sendRpcStatusUplink(Device device, RpcId rpcId, RpcStatus rpcStatus, String response) throws Exception {
+        DeviceRpcCallMsg.Builder builder = DeviceRpcCallMsg.newBuilder()
+                .setDeviceIdMSB(device.getUuidId().getMostSignificantBits())
+                .setDeviceIdLSB(device.getUuidId().getLeastSignificantBits())
+                .setRequestUuidMSB(rpcId.getId().getMostSignificantBits())
+                .setRequestUuidLSB(rpcId.getId().getLeastSignificantBits())
+                .setRpcStatus(rpcStatus.name());
+        if (response != null) {
+            builder.setResponseMsg(RpcResponseMsg.newBuilder().setResponse(response).build());
+        }
+        UplinkMsg uplinkMsg = UplinkMsg.newBuilder().addDeviceRpcCallMsg(builder.build()).build();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+    }
+
     private void sendAttributesRequestAndVerify(Device device, String scope, String attributesDataStr, String expectedKey,
                                                 String expectedValue) throws Exception {
         JsonNode attributesData = JacksonUtil.toJsonNode(attributesDataStr);
@@ -888,6 +1025,68 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         attributes.put("active", true);
         doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
         verifyEdgeConnected();
+    }
+
+    @Test
+    public void testSendDeviceCredentialsRequestForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceCredentialsRequestMsg(DeviceCredentialsRequestMsg.newBuilder()
+                .setDeviceIdMSB(device.getUuidId().getMostSignificantBits())
+                .setDeviceIdLSB(device.getUuidId().getLeastSignificantBits()).build()));
+    }
+
+    @Test
+    public void testSendAttributesRequestForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        loginDifferentTenant();
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"key1\":\"value1\"}"));
+        loginTenantAdmin();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addAttributesRequestMsg(AttributesRequestMsg.newBuilder()
+                .setEntityType(EntityType.DEVICE.name())
+                .setEntityIdMSB(device.getUuidId().getMostSignificantBits())
+                .setEntityIdLSB(device.getUuidId().getLeastSignificantBits())
+                .setScope(DataConstants.SERVER_SCOPE).build()));
+    }
+
+    @Test
+    public void testSendDeviceUpdateForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        Device deviceUpdate = new Device(device);
+        deviceUpdate.setName("Updated Name");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdate)));
+
+        loginDifferentTenant();
+        Assert.assertEquals(device.getName(), doGet("/api/device/" + device.getUuidId(), Device.class).getName());
+    }
+
+    @Test
+    public void testSendDeviceDeleteForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        DeviceUpdateMsg.Builder deviceDeleteMsgBuilder = DeviceUpdateMsg.newBuilder();
+        deviceDeleteMsgBuilder.setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE);
+        deviceDeleteMsgBuilder.setIdMSB(device.getUuidId().getMostSignificantBits());
+        deviceDeleteMsgBuilder.setIdLSB(device.getUuidId().getLeastSignificantBits());
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(deviceDeleteMsgBuilder.build()));
+
+        loginDifferentTenant();
+        doGet("/api/device/" + device.getUuidId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSendDeviceWithTenantIdOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setId(new DeviceId(Uuids.timeBased()));
+        device.setTenantId(differentTenantId);
+        device.setName("Edge Device With Different Tenant");
+        device.setType("default");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, device)));
+
+        Assert.assertEquals(tenantId, doGet("/api/device/" + device.getUuidId(), Device.class).getTenantId());
     }
 
 }
