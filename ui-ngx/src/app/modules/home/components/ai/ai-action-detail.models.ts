@@ -1105,6 +1105,30 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       const kind = tool.replace(/^save_/, '').replace(/_/g, '-');
       return {hood: text('save', {what: K + 'kind.' + kind, name: str(saved.name) ?? str(saved.title) ?? '—'}), blocks: [{type: 'facts', rows: savedFacts(saved, names)}]};
     }
+    case 'save_entity_view':
+    case 'save_asset_profile':
+    case 'save_secret':
+    case 'save_ai_model':
+    case 'save_resource': {
+      const kind = tool.replace(/^save_/, '').replace(/_/g, '-');
+      const saved = isObject(result) ? result : {};
+      const name = str(values.name) ?? str(values.title) ?? str(saved.name) ?? str(saved.title) ?? '—';
+      const rows: AiDetailFact[] = [];
+      if (str(saved.reference)) {
+        rows.push({label: K + 'fact.reference', value: saved.reference, mono: true});
+      }
+      if (str(saved.link)) {
+        rows.push({label: K + 'fact.link', value: saved.link, mono: true});
+      }
+      if (saved.tested === true) {
+        rows.push({label: K + 'fact.tested', value: K + 'yes'});
+      }
+      return {hood: text('save', {what: K + 'kind.' + kind, name}), blocks: rows.length ? [{type: 'facts', rows}] : generic(result, 'result')};
+    }
+    case 'read_platform_settings':
+      return {hood: text('read-platform-settings'), blocks: json('settings', result)};
+    case 'save_platform_settings':
+      return {hood: text('save-platform-settings'), blocks: json('settings', result)};
     case 'read_api_usage':
       return {hood: text('read-api-usage'), blocks: apiUsageBlocks(result)};
     case 'read_audit_logs':

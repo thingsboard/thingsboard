@@ -62,6 +62,8 @@ const TOOL_WORDS: Record<string, string> = {
   read_audit_logs: 'read-audit-logs',
   read_tasks: 'read-tasks',
   save_image: 'save-image',
+  read_platform_settings: 'read-platform-settings',
+  save_platform_settings: 'save-platform-settings',
   read_device_connect_commands: 'read-connection-settings',
   search_web: 'search-web',
   send_notification: 'send-notification',
@@ -87,7 +89,12 @@ const SAVED_KINDS: Record<string, [string, string]> = {
   save_customer: ['customer', ''],
   save_user: ['user', ''],
   save_entity_group: ['entity-group', ''],
-  save_role: ['role', '']
+  save_role: ['role', ''],
+  save_entity_view: ['entity-view', ''],
+  save_asset_profile: ['asset-profile', ''],
+  save_secret: ['secret', ''],
+  save_ai_model: ['ai-model', ''],
+  save_resource: ['resource', '']
 };
 
 const SEARCHED_TYPES: Record<string, string> = {
@@ -116,7 +123,13 @@ const DELETED_TARGETS: Record<string, string> = {
   USER: 'delete-user',
   ENTITY_GROUP: 'delete-entity-group',
   ROLE: 'delete-role',
-  GROUP_PERMISSION: 'delete-grant'
+  GROUP_PERMISSION: 'delete-grant',
+  IMAGE: 'delete-image',
+  ENTITY_VIEW: 'delete-entity-view',
+  ASSET_PROFILE: 'delete-asset-profile',
+  SECRET: 'delete-secret',
+  AI_MODEL: 'delete-ai-model',
+  RESOURCE: 'delete-resource'
 };
 
 const ACTION_PREFIX = 'ai-assistant.action.';

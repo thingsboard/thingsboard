@@ -866,6 +866,8 @@
             "read-audit-logs-of": "Read the audit log of {{entity}}",
             "read-tasks": "Read the task manager",
             "save-image": "Added image {{name}} to the image gallery",
+            "read-platform-settings": "Read the platform settings",
+            "save-platform-settings": "Saved the platform settings",
             "usage": {
                 "devices": "Devices",
                 "assets": "Assets",
@@ -915,6 +917,11 @@
             "save": "Saved the {{what}} '{{name}}'",
             "kind": {
                 "calculated-field": "calculated field",
+                "entity-view": "entity view",
+                "asset-profile": "asset profile",
+                "secret": "secret",
+                "ai-model": "AI model",
+                "resource": "resource",
                 "alarm-rule": "alarm rule",
                 "notification-target": "notification recipients",
                 "notification-template": "notification template",
@@ -953,6 +960,8 @@
             "no": "No",
             "fact": {
                 "link": "Link",
+                "reference": "Reference",
+                "tested": "Tested before saving",
                 "permissions": "Permissions",
                 "status": "Status",
                 "sends-at": "Sends at",
@@ -1221,6 +1230,78 @@
                 "run": "Adding the image",
                 "done": "Added the image"
             },
+            "create-entity-view": {
+                "run": "Creating the entity view",
+                "done": "Created the entity view"
+            },
+            "update-entity-view": {
+                "run": "Updating the entity view",
+                "done": "Updated the entity view"
+            },
+            "create-asset-profile": {
+                "run": "Creating the asset profile",
+                "done": "Created the asset profile"
+            },
+            "update-asset-profile": {
+                "run": "Updating the asset profile",
+                "done": "Updated the asset profile"
+            },
+            "create-secret": {
+                "run": "Creating the secret",
+                "done": "Created the secret"
+            },
+            "update-secret": {
+                "run": "Updating the secret",
+                "done": "Updated the secret"
+            },
+            "create-ai-model": {
+                "run": "Testing and adding the AI model",
+                "done": "Added the AI model"
+            },
+            "update-ai-model": {
+                "run": "Updating the AI model",
+                "done": "Updated the AI model"
+            },
+            "create-resource": {
+                "run": "Adding the resource",
+                "done": "Added the resource"
+            },
+            "update-resource": {
+                "run": "Updating the resource",
+                "done": "Updated the resource"
+            },
+            "read-platform-settings": {
+                "run": "Reading the platform settings",
+                "done": "Read the platform settings"
+            },
+            "save-platform-settings": {
+                "run": "Saving the platform settings",
+                "done": "Saved the platform settings"
+            },
+            "delete-image": {
+                "run": "Deleting the image",
+                "done": "Deleted the image"
+            },
+            "delete-entity-view": {
+                "run": "Deleting the entity view",
+                "done": "Deleted the entity view"
+            },
+            "delete-asset-profile": {
+                "run": "Deleting the asset profile",
+                "done": "Deleted the asset profile"
+            },
+            "delete-secret": {
+                "run": "Deleting the secret",
+                "done": "Deleted the secret"
+            },
+            "delete-ai-model": {
+                "run": "Deleting the AI model",
+                "done": "Deleted the AI model"
+            },
+            "delete-resource": {
+                "run": "Deleting the resource",
+                "done": "Deleted the resource"
+            },
             "research-device": {
                 "run": "Researching the device",
                 "done": "Researched the device"
@@ -1465,6 +1546,22 @@
             "ask-again-message": "Ask me again for the same change.",
             "field": {
                 "source": "Source",
+                "timeseries": "Telemetry",
+                "attributes": "Attributes",
+                "window": "Time window",
+                "type": "Type",
+                "dashboard": "Default dashboard",
+                "queue": "Queue",
+                "image": "Picture",
+                "value": "Value",
+                "provider": "Provider",
+                "model": "Model",
+                "credentials": "Credentials",
+                "hideToolbar": "Hide toolbar",
+                "repository": "Repository",
+                "branch": "Branch",
+                "authMethod": "Sign-in method",
+                "autoCommit": "Auto-commit",
                 "size": "Size",
                 "defaultDashboard": "Default dashboard",
                 "homeDashboard": "Home dashboard",
@@ -1522,6 +1619,7 @@
             },
             "type": {
                 "IMAGE": "Image",
+                "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
                 "ROLE": "Role",
                 "ALARM_RULE": "Alarm rule",
@@ -1801,7 +1899,8 @@
                 "line": "Their telemetry and alarms, or a dashboard to show them.",
                 "suggestion": "Build a dashboard for my entity views.",
                 "example": {
-                    "find": {"label": "List my entity views", "message": "Which entity views do I have, and which entities do they show?"}
+                    "find": {"label": "List my entity views", "message": "Which entity views do I have, and which entities do they show?"},
+                    "create": {"label": "Create a view", "message": "Create an entity view that shares only the temperature of one of my devices."}
                 }
             },
             "entity-view": {
@@ -1838,7 +1937,8 @@
                 "line": "Alarm rules and calculated fields for the assets of a profile.",
                 "suggestion": "Suggest alarm rules for my asset profiles.",
                 "example": {
-                    "find": {"label": "Find profiles without alarms", "message": "Which of my asset profiles have no alarm rules?"}
+                    "find": {"label": "Find profiles without alarms", "message": "Which of my asset profiles have no alarm rules?"},
+                    "create": {"label": "Create a profile", "message": "Create an asset profile for buildings with its own default dashboard."}
                 }
             },
             "asset-profile": {
@@ -2205,7 +2305,10 @@
             "javascript-library": {
                 "title": "Ask about the JavaScript library",
                 "line": "Shared JavaScript modules for widgets and actions.",
-                "suggestion": "How do I use a JavaScript module in a widget?"
+                "suggestion": "How do I use a JavaScript module in a widget?",
+                "example": {
+                    "module": {"label": "Write a module", "message": "Write a JavaScript module with unit conversion helpers."}
+                }
             },
             "resources-library": {
                 "title": "Ask about the resources library",
@@ -2235,7 +2338,10 @@
             "secrets": {
                 "title": "Ask about secrets",
                 "line": "Keep credentials out of rule chains, integrations and settings.",
-                "suggestion": "How do I use a secret in a rule node?"
+                "suggestion": "How do I use a secret in a rule node?",
+                "example": {
+                    "create": {"label": "Store a secret", "message": "Store an API key as a secret."}
+                }
             },
             "audit-logs": {
                 "title": "Ask about the audit log",
@@ -2267,7 +2373,10 @@
             "home-settings": {
                 "title": "Ask about the home page",
                 "line": "Which dashboard your users see first.",
-                "suggestion": "How do I set a dashboard as the home page for my users?"
+                "suggestion": "How do I set a dashboard as the home page for my users?",
+                "example": {
+                    "set": {"label": "Set the home page", "message": "Make one of my dashboards the home page for all users."}
+                }
             },
             "mail-server-settings": {
                 "title": "Ask about your mail server",
@@ -2289,17 +2398,26 @@
             "repository-settings": {
                 "title": "Ask about the Git repository",
                 "line": "Where version control keeps your entities.",
-                "suggestion": "How do I connect a GitHub repository?"
+                "suggestion": "How do I connect a GitHub repository?",
+                "example": {
+                    "connect": {"label": "Connect GitHub", "message": "Connect a GitHub repository for version control."}
+                }
             },
             "auto-commit-settings": {
                 "title": "Ask about auto-commit",
                 "line": "Which entities are saved to Git each time they change.",
-                "suggestion": "How does auto-commit work?"
+                "suggestion": "How does auto-commit work?",
+                "example": {
+                    "devices": {"label": "Auto-commit devices", "message": "Commit every device change to Git automatically."}
+                }
             },
             "ai-models": {
                 "title": "Ask about AI models",
                 "line": "The models that rule nodes and other features use.",
-                "suggestion": "How do I add an OpenAI model?"
+                "suggestion": "How do I add an OpenAI model?",
+                "example": {
+                    "add": {"label": "Add a model", "message": "Add an OpenAI model for my rule chains."}
+                }
             },
             "api-usage": {
                 "title": "Ask about API usage",
