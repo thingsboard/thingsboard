@@ -27,6 +27,7 @@
 div.tb-widget {
   display: flex;
   flex-direction: column;
+  isolation: isolate;
   .tb-widget-header {
     display: flex;
     flex-direction: row;

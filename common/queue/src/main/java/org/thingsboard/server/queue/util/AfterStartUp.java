@@ -18,6 +18,7 @@ import java.lang.annotation.Target;
 @Order
 public @interface AfterStartUp {
 
+    int SYSTEM_PATCH = 0;
     int QUEUE_INFO_INITIALIZATION = 1;
     int DISCOVERY_SERVICE = 2;
 

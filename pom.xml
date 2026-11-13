@@ -39,6 +39,21 @@
         <skip.ui.build>${skip.yarn}</skip.ui.build>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
+        <sbom.package.phase>none</sbom.package.phase>
+        <!-- The time of the release, written to the SBOMs as their timestamp. Set it together with the release version:
+             mvn versions:set-property -Dproperty=project.build.outputTimestamp -DnewVersion=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+             Maven also gives the files inside the jars this time, so that a build can be repeated. -->
+        <project.build.outputTimestamp>2026-11-10T11:40:00Z</project.build.outputTimestamp>
+        <!-- SBOMs are made only on request: build with -Dsbom.skip=false. It turns on the SBOMs of the jars and packages
+             and, in a build that pushes the multi-architecture Docker images (see msa/pom.xml), those of the images.
+             No profile turns them on: activating a profile of this POM would switch off the packaging profile,
+             which is active by default. -->
+        <sbom.skip>true</sbom.skip>
+        <!-- The SBOM steps that run in yarn. Also skipped with -Dskip.yarn=true: see the skip-pkg-without-yarn profile. -->
+        <sbom.yarn.skip>${sbom.skip}</sbom.yarn.skip>
+        <!-- The yarn SBOM steps of the UI modules: ui-ngx, msa/web-ui and msa/web-report. Also skipped with
+             -Dskip.ui.build=true, which leaves them without node and node_modules: see the skip-pkg-without-ui-build profile. -->
+        <sbom.ui.skip>${sbom.yarn.skip}</sbom.ui.skip>
         <!-- Use -Dpkg.skip=true to skip all packaging at once (bootjar + deb + rpm + zip).
              Individual flags below can be set independently for finer control. -->
         <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
@@ -63,7 +78,7 @@
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.controlScriptsFolder>control</pkg.controlScriptsFolder>
-        <thingsboard.ai.version>2.1.9-SNAPSHOT</thingsboard.ai.version>
+        <thingsboard.ai.version>2.1.10-SNAPSHOT</thingsboard.ai.version>
         <thingsboard.client.version>4.4.0</thingsboard.client.version>
         <spring-boot.version>3.5.15</spring-boot.version>
         <!-- Pins spring-boot-test to 3.5.13: the ImportsContextCustomizer change in 3.5.14 causes "Duplicate spy
@@ -117,6 +132,8 @@
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <jar-plugin.version>3.5.0</jar-plugin.version>
+        <cyclonedx-maven-plugin.version>2.9.3</cyclonedx-maven-plugin.version>
+        <sbom-maven-plugin.version>1.0.0</sbom-maven-plugin.version>
         <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
@@ -278,6 +295,7 @@
                 </property>
             </activation>
             <properties>
+                <sbom.yarn.skip>true</sbom.yarn.skip>
                 <pkg.skip.bootjar>true</pkg.skip.bootjar>
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
@@ -293,6 +311,7 @@
                 </property>
             </activation>
             <properties>
+                <sbom.ui.skip>true</sbom.ui.skip>
                 <pkg.skip.bootjar>true</pkg.skip.bootjar>
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
@@ -617,6 +636,14 @@
                                 <layout>ZIP</layout>
                                 <executable>true</executable>
                                 <excludeDevtools>true</excludeDevtools>
+                                <!-- Lombok is needed only to compile. Its provided scope keeps it out of the SBOM,
+                                     so it must stay out of the jar too. -->
+                                <excludes>
+                                    <exclude>
+                                        <groupId>org.projectlombok</groupId>
+                                        <artifactId>lombok</artifactId>
+                                    </exclude>
+                                </excludes>
                                 <embeddedLaunchScriptProperties>
                                     <confFolder>${pkg.installFolder}/conf</confFolder>
                                     <logFolder>${pkg.unixLogFolder}</logFolder>
@@ -646,6 +673,7 @@
                                     <arg>-PpackagingDir=${main.dir}/packaging</arg>
                                     <arg>-PprojectBuildDir=${basedir}/target</arg>
                                     <arg>-PprojectVersion=${project.version}</arg>
+                                    <arg>-PpkgVersion=${pkg.version}</arg>
                                     <arg>
                                         -PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}
                                     </arg>
@@ -764,6 +792,112 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <version>${cyclonedx-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>generate-sbom</id>
+                            <phase>generate-resources</phase>
+                            <goals>
+                                <goal>makeBom</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <projectType>application</projectType>
+                        <outputDirectory>${project.build.outputDirectory}/META-INF/sbom</outputDirectory>
+                        <outputFormat>json</outputFormat>
+                        <outputName>application.cdx</outputName>
+                        <includeProvidedScope>false</includeProvidedScope>
+                        <skipNotDeployed>false</skipNotDeployed>
+                        <skip>${sbom.skip}</skip>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.thingsboard</groupId>
+                    <artifactId>sbom-maven-plugin</artifactId>
+                    <version>${sbom-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>sbom-metadata</id>
+                            <goals>
+                                <goal>metadata</goal>
+                            </goals>
+                            <configuration>
+                                <manufacturer>
+                                    <name>ThingsBoard, Inc.</name>
+                                    <urls>
+                                        <url>https://thingsboard.io</url>
+                                    </urls>
+                                    <contacts>
+                                        <contact>
+                                            <email>security@thingsboard.io</email>
+                                        </contact>
+                                    </contacts>
+                                </manufacturer>
+                                <supplier>
+                                    <name>ThingsBoard, Inc.</name>
+                                    <urls>
+                                        <url>https://thingsboard.io</url>
+                                    </urls>
+                                </supplier>
+                                <componentManufacturer>
+                                    <name>ThingsBoard, Inc.</name>
+                                    <urls>
+                                        <url>https://thingsboard.io</url>
+                                    </urls>
+                                </componentManufacturer>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>package-sbom</id>
+                            <phase>${sbom.package.phase}</phase>
+                            <goals>
+                                <goal>package</goal>
+                            </goals>
+                            <configuration>
+                                <name>${pkg.name}</name>
+                                <packages>
+                                    <package>
+                                        <id>deb</id>
+                                        <file>${project.build.directory}/${pkg.name}.deb</file>
+                                        <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=all</purl>
+                                        <skip>${pkg.skip.deb}</skip>
+                                    </package>
+                                    <package>
+                                        <id>rpm</id>
+                                        <file>${project.build.directory}/${pkg.name}.rpm</file>
+                                        <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=noarch</purl>
+                                        <skip>${pkg.skip.rpm}</skip>
+                                    </package>
+                                    <package>
+                                        <id>zip</id>
+                                        <file>${project.build.directory}/${pkg.name}-windows.zip</file>
+                                        <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
+                                        <skip>${pkg.skip.zip}</skip>
+                                    </package>
+                                </packages>
+                                <components>
+                                    <component>
+                                        <type>application</type>
+                                        <group>com.sun.winsw</group>
+                                        <name>winsw</name>
+                                        <version>${winsw.version}</version>
+                                        <description>Windows service wrapper, shipped as ${pkg.name}.exe.</description>
+                                        <purl>pkg:maven/com.sun.winsw/winsw@${winsw.version}?classifier=bin&amp;type=exe</purl>
+                                        <license>MIT</license>
+                                        <file>${pkg.win.dist}/service.exe</file>
+                                        <packages>
+                                            <package>zip</package>
+                                        </packages>
+                                    </component>
+                                </components>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
@@ -895,6 +1029,20 @@
                                 <sources>
                                     <source>${basedir}/target/generated-sources</source>
                                 </sources>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>pkg-version</id>
+                            <phase>${pkg.process-resources.phase}</phase>
+                            <goals>
+                                <goal>regex-property</goal>
+                            </goals>
+                            <configuration>
+                                <name>pkg.version</name>
+                                <value>${project.version}</value>
+                                <regex>-</regex>
+                                <replacement>~</replacement>
+                                <failIfNoMatch>false</failIfNoMatch>
                             </configuration>
                         </execution>
                     </executions>
@@ -1029,7 +1177,7 @@
                 <plugin>
                     <groupId>io.github.git-commit-id</groupId>
                     <artifactId>git-commit-id-maven-plugin</artifactId>
-                    <version>5.0.0</version>
+                    <version>10.0.1</version>
                     <executions>
                         <execution>
                             <id>get-the-git-infos</id>

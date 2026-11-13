@@ -617,6 +617,11 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
+    public void evictTenantProfileInfo(TenantProfileId tenantProfileId) {
+        tenantRoutingInfoMap.values().removeIf(routingInfo -> tenantProfileId.equals(routingInfo.getProfileId()));
+    }
+
+    @Override
     public int countTransportsByType(String type) {
         var list = tbTransportServicesByType.get(type);
         return list == null ? 0 : list.size();

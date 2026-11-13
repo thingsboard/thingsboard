@@ -61,6 +61,16 @@ public final class AiModel extends BaseData<AiModelId> implements TenantEntity, 
     )
     private String name;
 
+    @Schema(
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+            accessMode = Schema.AccessMode.READ_WRITE,
+            description = "Whether customer users with the 'INVOKE' permission for AI models can send chat requests to the model, " +
+                    "such as users with the default 'Customer Administrator' role, which grants all operations. " +
+                    "Tenant administrators with the 'INVOKE' permission can use the model regardless of this flag",
+            defaultValue = "false"
+    )
+    private boolean customerAccessEnabled;
+
     @NotNull
     @Valid
     @Schema(
@@ -84,6 +94,7 @@ public final class AiModel extends BaseData<AiModelId> implements TenantEntity, 
         tenantId = model.getTenantId();
         version = model.getVersion();
         name = model.getName();
+        customerAccessEnabled = model.isCustomerAccessEnabled();
         configuration = model.getConfiguration();
         externalId = model.getExternalId() == null ? null : new AiModelId(model.getExternalId().getId());
     }

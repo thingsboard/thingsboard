@@ -1882,6 +1882,8 @@
     "model": "Model",
     "name": "Ad",
     "ai-provider": "Yapay zeka sağlayıcısı",
+    "customer-access": "Müşteri erişimi",
+    "customer-access-hint": "Müşteri kullanıcılarının bu modele sohbet istekleri göndermesine olanak tanır, örneğin Trendz Analytics'ten. Model yapılandırması ve kimlik bilgileri asla açığa çıkarılmaz.",
     "no-found": "Yapay zeka modeli bulunamadı",
     "list": "{ count, plural, =1 {Bir model} other {# model listesi} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# model} } seçildi",
@@ -5424,7 +5426,6 @@
         "community-string": "SNMP topluluk dizesi"
       },
       "isgateway": "Gateway mi",
-      "activity-time-from-gateway-device": "Gateway cihazından etkinlik zamanı",
       "description": "Açıklama",
       "edge-license-key": "Lisans Anahtarı",
       "cloud-endpoint": "Bulut Uç Noktası",
@@ -5692,9 +5693,9 @@
     "type-aws-sqs-description": "Tam yönetilen mesaj kuyruğa alma hizmeti.",
     "type-aws-kinesis": "AWS Kinesis",
     "type-aws-kinesis-description": "Gerçek zamanlı video ve veri akış hizmeti.",
-    "type-ttn": "The Things Stack Community",
+    "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Açık ve merkeziyetsiz LoRaWAN ağı.",
-    "type-tti": "The Things Stack Industries",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "Ölçeklenebilir özel LoRaWAN ağlarını çalıştırmak için yazılım.",
     "type-things-stack": "The Things Stack",
     "type-chirpstack": "ChirpStack",
@@ -8850,7 +8851,8 @@
         "SHARE_GROUP": "Grubu paylaş",
         "ASSIGN_TO_TENANT": "Kiracıya ata",
         "READ_CALCULATED_FIELD": "Hesaplanmış alanları ve alarm kurallarını oku",
-        "WRITE_CALCULATED_FIELD": "Hesaplanmış alanları ve alarm kurallarını yaz"
+        "WRITE_CALCULATED_FIELD": "Hesaplanmış alanları ve alarm kurallarını yaz",
+        "INVOKE": "Çağır"
       }
     }
   },

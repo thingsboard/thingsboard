@@ -5,25 +5,31 @@
   display: block;
 }
 
-.tb-install-form-group-header {
-  margin: 16px 0 8px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.6);
-}
-
 .tb-install-form-secret-toggle {
   margin-left: 4px;
   align-self: center;
 }
 
-.tb-install-form-field-help {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
-  margin-top: 4px;
-}
-
 .tb-install-form-field-help-image {
   max-width: 100%;
   margin-top: 8px;
+}
+
+// Update: a field the installed version didn't have: a thicker outline, a tint and the label in the primary color
+:host ::ng-deep .mat-mdc-form-field.tb-install-form-field-new {
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: var(--tb-primary-500);
+    border-width: 2px;
+  }
+  .mat-mdc-text-field-wrapper {
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--tb-primary-500) 4%, transparent);
+  }
+  .mdc-floating-label,
+  .mat-mdc-floating-label {
+    color: var(--tb-primary-500);
+    font-weight: 500;
+  }
 }

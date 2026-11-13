@@ -55,7 +55,14 @@ import {
   isString,
   mergeDeep
 } from '@core/utils';
-import { DataKey, Datasource, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
+import {
+  compareLegendDataKeys,
+  DataKey,
+  Datasource,
+  DatasourceType,
+  FormattedData,
+  widgetType
+} from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
 import { CallbackDataParams, PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
 import { Renderer2 } from '@angular/core';
@@ -506,6 +513,9 @@ export class TbTimeSeriesChart {
           });
         }
       }
+    }
+    if (this.settings.sortSeries) {
+      this.dataItems.sort((a, b) => compareLegendDataKeys(a.dataKey, b.dataKey));
     }
   }
 

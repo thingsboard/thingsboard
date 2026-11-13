@@ -145,7 +145,7 @@
       }
     }
     &.critical {
-      color: #D12730;
+      color: var(--tb-crit);
       .tb-feature-status {
         line-height: 24px;
         font-size: 24px;

@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
@@ -66,6 +68,8 @@ public interface AiModelConfig {
             description = "AI Provider",
             requiredMode = Schema.RequiredMode.REQUIRED
     )
+    // Written as a regular property so it is kept when 'providerConfig' is null and carries no external type id
+    @JsonProperty("provider")
     AiProvider provider();
 
     @Schema(hidden = true)
@@ -86,6 +90,8 @@ public interface AiModelConfig {
             @JsonSubTypes.Type(value = OllamaProviderConfig.class, name = "OLLAMA")
     })
     AiProviderConfig providerConfig();
+
+    AiModelConfig withoutProviderConfig();
 
     AiModelType modelType();
 

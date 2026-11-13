@@ -4,8 +4,12 @@ package org.thingsboard.server.service.ai.solution;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.exception.ThingsboardRuntimeException;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.channel.SolutionChatRequest;
@@ -18,6 +22,7 @@ import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -47,9 +52,14 @@ public class DefaultAiSolutionService implements AiSolutionService {
     }
 
     @Override
-    public JsonNode chat(UUID solutionId, SolutionStep step, String message, SecurityUser user) {
+    public JsonNode chat(UUID solutionId, SolutionStep step, String message, List<UUID> resources, SecurityUser user) {
+        String text = StringUtils.defaultString(message);
+        List<UUID> attached = CollectionsUtil.isEmpty(resources) ? null : resources;
+        if (StringUtils.isBlank(text) && attached == null) {
+            throw new ThingsboardRuntimeException("Message cannot be blank", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
         return tbAiService.process(tokenProvider -> operations.execute(
-                new TbAiOperation(ChannelProtocol.SOLUTION_CHAT, new SolutionChatRequest(solutionId, step, message)), user, tokenProvider), user);
+                new TbAiOperation(ChannelProtocol.SOLUTION_CHAT, new SolutionChatRequest(solutionId, step, text, attached)), user, tokenProvider), user);
     }
 
     @Override

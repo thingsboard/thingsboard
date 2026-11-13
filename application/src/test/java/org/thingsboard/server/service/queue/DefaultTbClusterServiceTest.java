@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.ota.OtaPackageStateService;
+import org.thingsboard.server.gen.integration.ToIntegrationExecutorNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -297,6 +298,50 @@ public class DefaultTbClusterServiceTest {
                 .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith1)), any(TbProtoQueueMsg.class), isNull());
         verify(tbTransportQueueProducer, never())
                 .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith2)), any(TbProtoQueueMsg.class), isNull());
+    }
+
+    @Test
+    public void testOnQueuesUpdateIsSentToIntegrationExecutors() {
+        TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> tbIeQueueProducer = mockQueueNotificationTargetsWithIntegrationExecutors();
+
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
+
+        ArgumentCaptor<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> msgCaptor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
+        verify(tbIeQueueProducer).send(eq(topicService.getNotificationsTopic(ServiceType.TB_INTEGRATION_EXECUTOR, "ie1")), msgCaptor.capture(), isNull());
+        verifyNoMoreInteractions(tbIeQueueProducer);
+        ToIntegrationExecutorNotificationMsg ieMsg = msgCaptor.getValue().getValue();
+        assertThat(ieMsg.getQueueUpdateMsgsCount()).isEqualTo(1);
+        assertThat(ieMsg.getQueueUpdateMsgs(0).getQueueName()).isEqualTo(DataConstants.MAIN_QUEUE_NAME);
+        assertThat(ieMsg.hasComponentLifecycle()).isFalse();
+    }
+
+    @Test
+    public void testOnQueuesDeleteIsSentToIntegrationExecutors() {
+        TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> tbIeQueueProducer = mockQueueNotificationTargetsWithIntegrationExecutors();
+
+        clusterService.onQueuesDelete(List.of(createTestQueue()));
+
+        ArgumentCaptor<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> msgCaptor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
+        verify(tbIeQueueProducer).send(eq(topicService.getNotificationsTopic(ServiceType.TB_INTEGRATION_EXECUTOR, "ie1")), msgCaptor.capture(), isNull());
+        verifyNoMoreInteractions(tbIeQueueProducer);
+        ToIntegrationExecutorNotificationMsg ieMsg = msgCaptor.getValue().getValue();
+        assertThat(ieMsg.getQueueDeleteMsgsCount()).isEqualTo(1);
+        assertThat(ieMsg.getQueueDeleteMsgs(0).getQueueName()).isEqualTo(DataConstants.MAIN_QUEUE_NAME);
+        assertThat(ieMsg.hasComponentLifecycle()).isFalse();
+    }
+
+    // The monolith and the core run an integration executor too, but already apply queue updates from their own notifications
+    private TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> mockQueueNotificationTargetsWithIntegrationExecutors() {
+        when(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)).thenReturn(Sets.newHashSet(MONOLITH, RULE_ENGINE));
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(MONOLITH, CORE));
+        when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(MONOLITH));
+        when(partitionService.getAllServiceIds(ServiceType.TB_INTEGRATION_EXECUTOR)).thenReturn(Sets.newHashSet(MONOLITH, CORE, "ie1"));
+
+        when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(mock(TbQueueProducer.class));
+        when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(mock(TbQueueProducer.class));
+        TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> tbIeQueueProducer = mock(TbQueueProducer.class);
+        when(producerProvider.getTbIntegrationExecutorNotificationsMsgProducer()).thenReturn(tbIeQueueProducer);
+        return tbIeQueueProducer;
     }
 
     @Test
