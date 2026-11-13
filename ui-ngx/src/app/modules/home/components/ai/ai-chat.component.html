@@ -86,7 +86,7 @@
       (openFile)="showFile($event)"
       (prompt)="ask($event)"
       (compose)="composeText($event)"
-      (answer)="ask($event)"
+      (answer)="ask($event.message, $event.secrets)"
       (editMessage)="promptInput?.setValue($event)">
     </tb-ai-chat-messages>
   } @else if (historyLoading()) {

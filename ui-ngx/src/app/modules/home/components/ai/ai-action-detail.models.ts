@@ -360,7 +360,8 @@ function alarmMeta(row: Values): string {
 
 function recordOf(row: Values, entityType: string): AiDetailRecord | null {
   if (entityType === 'ALARM') {
-    return {entityType, id: idOf(row.id), name: str(row.type) ?? str(row.name) ?? '—', meta: alarmMeta(row), severity: str(row.severity)};
+    const alarmName = str(row.type) ?? str(row.name);
+    return alarmName ? {entityType, id: idOf(row.id), name: alarmName, meta: alarmMeta(row), severity: str(row.severity)} : null;
   }
   const name = str(row.name) ?? str(row.title) ?? str(row.email) ?? str(row.label);
   if (!name) {
@@ -798,13 +799,13 @@ function sentNotification(result: unknown): AiDetailBlock[] {
     rows.push({label: K + 'fact.status', value: K + 'notification-status.' + String(result.status).toLowerCase()});
   }
   if (str(result.sendsAt)) {
-    rows.push({label: K + 'fact.sends-at', raw: true, value: new Date(result.sendsAt).toLocaleString()});
+    rows.push({label: K + 'fact.sends-at', value: new Date(result.sendsAt).toLocaleString()});
   }
   if (str(result.usersTargetName)) {
-    rows.push({label: K + 'fact.recipients', raw: true, value: result.usersTargetName});
+    rows.push({label: K + 'fact.recipients', value: result.usersTargetName});
   }
   if (isObject(result.sent)) {
-    rows.push({label: K + 'fact.delivered', raw: true,
+    rows.push({label: K + 'fact.delivered',
       value: Object.entries(result.sent).map(([method, count]) => `${aiHumanize(method)} ${count}`).join(', ')});
   }
   if (isObject(result.errors)) {
@@ -813,7 +814,7 @@ function sentNotification(result: unknown): AiDetailBlock[] {
         rows.push({label: aiHumanize(method), raw: true, value: `${recipient}: ${aiValueText(error)}`})));
   }
   if (str(result.error)) {
-    rows.push({label: K + 'fact.error', raw: true, value: result.error});
+    rows.push({label: K + 'fact.error', value: result.error});
   }
   return rows.length ? [{type: 'facts', rows}] : [];
 }

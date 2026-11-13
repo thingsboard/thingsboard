@@ -44,7 +44,7 @@ import {
   AiAttachmentPreviewDialogComponent,
   AiAttachmentPreviewDialogData
 } from '@home/components/ai/ai-attachment-preview-dialog.component';
-import { aiAnswersOf, aiAnswersText } from '@home/components/ai/ai-question.component';
+import { aiAnswersOf, aiAnswersPrompt } from '@home/components/ai/ai-question.component';
 import { EntityId } from '@shared/models/id/entity-id';
 
 export interface AnswerRatingEvent {
@@ -112,7 +112,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Output() prompt = new EventEmitter<string>();
 
   @Output() compose = new EventEmitter<string>();
-  @Output() answer = new EventEmitter<string>();
+  @Output() answer = new EventEmitter<{message: string; secrets?: Record<string, string>}>();
   @Output() resourceError = new EventEmitter<any>();
 
   waitApproval = false;
@@ -608,7 +608,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   }
 
   answerQuestions(answers: AiQuestionAnswer[]): void {
-    this.answer.emit(aiAnswersText(answers));
+    this.answer.emit(aiAnswersPrompt(answers));
   }
 
   get retryPrompt(): string {

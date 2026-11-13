@@ -308,6 +308,7 @@ export interface SendChatMessageRequest {
   message: string;
   clientContext?: AiChatClientContext;
   resources?: string[];
+  secrets?: Record<string, string>;
 }
 
 export interface AiResourceFacts {
@@ -345,6 +346,7 @@ export interface AiPromptMessage {
   message: string;
   resources: AiResourceInfo[];
   quote?: AiLinesQuote;
+  secrets?: Record<string, string>;
 }
 
 const QUOTE_PATTERN = /^About lines? (\d+)(?:–(\d+))? of (.+?):\n```([\w+-]*)\n([\s\S]*?)\n```\n*/;

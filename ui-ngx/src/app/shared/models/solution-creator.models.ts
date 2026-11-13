@@ -80,6 +80,7 @@ export interface AiQuestion {
 export interface AiQuestionAnswer {
   question: AiQuestion;
   answer: string;
+  secret?: boolean;
 }
 
 export interface DashboardsOverview {

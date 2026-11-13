@@ -10,6 +10,19 @@ export function aiAnswersText(answers: AiQuestionAnswer[]): string {
   return answers.map(item => item.question.question.trim() + ' ' + item.answer.trim()).join('\n');
 }
 
+export function aiAnswersPrompt(answers: AiQuestionAnswer[]): {message: string; secrets?: Record<string, string>} {
+  const secrets: Record<string, string> = {};
+  const lines = answers.map((item, index) => {
+    if (!item.secret || !item.answer) {
+      return item.question.question.trim() + ' ' + item.answer.trim();
+    }
+    const name = (item.question.id || '').replace(/[^A-Za-z0-9_.-]/g, '_').slice(0, 64) || 'answer_' + (index + 1);
+    secrets[name] = item.answer;
+    return item.question.question.trim() + ' {{secret:' + name + '}}';
+  });
+  return Object.keys(secrets).length ? {message: lines.join('\n'), secrets} : {message: lines.join('\n')};
+}
+
 export function aiAnswersOf(content: string | undefined, questions: AiQuestion[] | undefined): AiQuestionAnswer[] | null {
   if (!content || !questions?.length) {
     return null;
@@ -183,7 +196,7 @@ export class AiQuestionComponent {
   }
 
   private answers(): AiQuestionAnswer[] {
-    return this.questions().map(question => ({question, answer: this.answerOf(question)}));
+    return this.questions().map(question => ({question, answer: this.answerOf(question), secret: !!question.secret && !question.options?.length}));
   }
 
   private answerOf(question: AiQuestion): string {

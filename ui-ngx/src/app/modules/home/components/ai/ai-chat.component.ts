@@ -480,8 +480,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.promptInput?.setValue(text);
   }
 
-  ask(message: string): void {
-    this.sendMsgFromUser({message, resources: []});
+  ask(message: string, secrets?: Record<string, string>): void {
+    this.sendMsgFromUser(secrets ? {message, resources: [], secrets} : {message, resources: []});
   }
 
   showFile(file: AiFile): void {
@@ -836,6 +836,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
     if (this.clientContext()) {
       request.clientContext = this.clientContext();
+    }
+    if (prompt.secrets) {
+      request.secrets = prompt.secrets;
     }
     return request;
   }
