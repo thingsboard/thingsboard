@@ -208,7 +208,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
             }
         }
         subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getTenantId(), getSessionId(), subId));
-        subsToAdd.forEach(subscription -> localSubscriptionService.addSubscription(subscription, sessionRef));
+        subsToAdd.forEach(this::registerSubscription);
         sendWsMsg(new EntityDataUpdate(cmdId, data, null, maxEntitiesPerDataSubscription));
     }
 
