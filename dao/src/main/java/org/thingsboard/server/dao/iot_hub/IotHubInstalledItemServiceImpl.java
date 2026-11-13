@@ -50,6 +50,13 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
     }
 
     @Override
+    public PageData<IotHubInstalledItem> findByTenantIdUpdatesFirst(TenantId tenantId, List<String> itemTypes, UUID itemId,
+                                                                    Map<UUID, UUID> publishedVersionIds, PageLink pageLink) {
+        validatePageLink(pageLink, IotHubInstalledItemEntity.ALLOWED_SORT_PROPERTIES);
+        return iotHubInstalledItemDao.findByTenantIdUpdatesFirst(tenantId, itemTypes, itemId, publishedVersionIds, pageLink);
+    }
+
+    @Override
     public List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId) {
         return iotHubInstalledItemDao.findInstalledItemIdsByTenantId(tenantId);
     }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,6 +19,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.UUID;
 
 @Component
 @TbCoreComponent
@@ -67,6 +70,16 @@ public class IotHubRestClient {
             }
             throw e;
         }
+    }
+
+    /**
+     * IoT Hub's published version of each item: {@code itemId}, {@code publishedVersionId} and {@code publishedVersion},
+     * the last two null for an item with no published version.
+     */
+    public JsonNode getPublishedVersions(Collection<UUID> itemIds) {
+        String url = baseUrl + "/api/versions/publishedVersions";
+        log.debug("Fetching IoT Hub published versions of {} items: {}", itemIds.size(), url);
+        return restTemplate.postForObject(url, itemIds, JsonNode.class);
     }
 
     public byte[] getVersionFileData(String versionId) {

@@ -5,6 +5,9 @@ package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +85,7 @@ import org.thingsboard.server.service.security.permission.AccessControlService;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -137,6 +141,15 @@ public class DefaultIotHubService implements IotHubService {
     private final TbConverterService tbConverterService;
     private final ProjectInfo projectInfo;
     private final DevicePackageEntities devicePackageEntities;
+
+    // How many item ids one request for their published versions takes
+    private static final int PUBLISHED_VERSIONS_CHUNK_SIZE = 100;
+    // The installed items list asks for these on every page while it shows the updates first, so IoT Hub is asked once
+    // a minute per tenant at most; an answer it failed to give is kept too, so a slow IoT Hub doesn't slow down every page
+    private final Cache<TenantId, Map<UUID, UUID>> publishedVersionIdsCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofMinutes(1))
+            .maximumSize(10_000)
+            .build();
 
     // Field names of the marketplace version JSON payload. Both the install path and the
     // install-plan resolver parse the same shape, so the contract lives here in one place.
@@ -801,6 +814,47 @@ public class DefaultIotHubService implements IotHubService {
             });
         }
         return keys;
+    }
+
+    @Override
+    public PageData<IotHubInstalledItem> findInstalledItemsUpdatesFirst(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink) {
+        Map<UUID, UUID> publishedVersionIds = publishedVersionIdsCache.get(tenantId, this::findPublishedVersionIds);
+        return iotHubInstalledItemService.findByTenantIdUpdatesFirst(tenantId, itemTypes, itemId, publishedVersionIds, pageLink);
+    }
+
+    /**
+     * IoT Hub's published version id by item id, of the items the tenant has installed. Asked in chunks, as IoT Hub may limit
+     * the ids of one request. Empty when IoT Hub doesn't answer: the list then shows in the page's sort only.
+     */
+    private Map<UUID, UUID> findPublishedVersionIds(TenantId tenantId) {
+        List<UUID> itemIds = iotHubInstalledItemService.findInstalledItemIdsByTenantId(tenantId);
+        Map<UUID, UUID> publishedVersionIds = new HashMap<>();
+        try {
+            for (List<UUID> chunk : Lists.partition(itemIds, PUBLISHED_VERSIONS_CHUNK_SIZE)) {
+                JsonNode published = iotHubRestClient.getPublishedVersions(chunk);
+                if (published != null && published.isArray()) {
+                    published.forEach(info -> putPublishedVersionId(tenantId, info, publishedVersionIds));
+                }
+            }
+        } catch (RuntimeException e) {
+            log.warn("[{}] Failed to get the published versions of the installed items from IoT Hub", tenantId, e);
+            return Map.of();
+        }
+        return publishedVersionIds;
+    }
+
+    /** An entry of an item with no published version, or one that is not a pair of ids, adds nothing. */
+    private static void putPublishedVersionId(TenantId tenantId, JsonNode info, Map<UUID, UUID> publishedVersionIds) {
+        String itemId = info.path("itemId").asText(null);
+        String versionId = info.path("publishedVersionId").asText(null);
+        if (itemId == null || versionId == null) {
+            return;
+        }
+        try {
+            publishedVersionIds.put(UUID.fromString(itemId), UUID.fromString(versionId));
+        } catch (IllegalArgumentException e) {
+            log.debug("[{}] Skipping a published version from IoT Hub that is not a pair of ids: {}", tenantId, info);
+        }
     }
 
     /** The delete dialog shows these before the user confirms, so they must match what {@link #deleteDevicePackageEntities} keeps. */

@@ -140,9 +140,14 @@ public class IotHubController extends BaseController {
                                                            @RequestParam(required = false) String sortProperty,
                                                            @RequestParam(required = false) String sortOrder,
                                                            @RequestParam(required = false) List<String> itemTypes,
-                                                           @RequestParam(required = false) UUID itemId) throws ThingsboardException {
+                                                           @RequestParam(required = false) UUID itemId,
+                                                           @RequestParam(required = false, defaultValue = "false") boolean updatesFirst) throws ThingsboardException {
         checkAllPermissions();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        if (updatesFirst) {
+            // The items installed in a version other than the one IoT Hub publishes now come first, sorted as asked
+            return iotHubService.findInstalledItemsUpdatesFirst(getTenantId(), itemTypes, itemId, pageLink);
+        }
         return iotHubInstalledItemService.findByTenantId(getTenantId(), itemTypes, itemId, pageLink);
     }
 

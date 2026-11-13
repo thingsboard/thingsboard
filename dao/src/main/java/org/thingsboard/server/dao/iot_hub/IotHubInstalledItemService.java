@@ -25,6 +25,10 @@ public interface IotHubInstalledItemService {
 
     PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink);
 
+    // publishedVersionIds: IoT Hub's published version id by item id; the items installed in another version come first
+    PageData<IotHubInstalledItem> findByTenantIdUpdatesFirst(TenantId tenantId, List<String> itemTypes, UUID itemId,
+                                                             Map<UUID, UUID> publishedVersionIds, PageLink pageLink);
+
     List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId);
 
     List<UUID> findInstalledItemIdsByTenantIdAndItemIdIn(TenantId tenantId, Collection<UUID> itemIds);
