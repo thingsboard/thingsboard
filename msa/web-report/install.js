@@ -8,7 +8,7 @@ const { Transform } = require('stream');
 const { pipeline } = require('stream/promises');
 // The helpers that Playwright downloads its browsers with: httpRequest follows HTTPS_PROXY and redirects, extractZip needs no unzip tool
 const { httpRequest, extractZip } = require('playwright-core/lib/coreBundle').utils;
-const snapshot = require('./chromium-snapshot');
+const { snapshot, debian } = require('./chromium');
 
 const PLATFORMS = {
     linux: {
@@ -24,6 +24,9 @@ const PLATFORMS = {
 
 (async() => {
     checkPlaywrightVersion();
+    // For the Docker image, which installs the chromium package of Debian: see docker/Dockerfile
+    await fse.outputFile(path.join(projectRoot(), 'target', 'chromium.env'),
+        `CHROMIUM_DEBIAN_VERSION=${debian.version}\nCHROMIUM_DEBIAN_ARCHIVE=${debian.archive}\n`);
     await Promise.all(Object.entries(PLATFORMS).map(async ([targetDir, platform]) => {
         await installChromium(platform, path.join(projectRoot(), 'target', 'chromium-' + targetDir),
             path.join(targetPackageDir(targetDir), 'chromium'));
@@ -42,10 +45,12 @@ function checkPlaywrightVersion() {
     if (!chromium) {
         throw new Error('playwright-core/browsers.json does not list chromium');
     }
-    // The last number counts the fixes on the release branch, which a snapshot build never has
+    // The release is the first three numbers; the last one counts the fixes on its branch and differs between builds
     const build = version => version.split('.').slice(0, 3).join('.');
-    if (build(chromium.browserVersion) !== build(snapshot.version)) {
-        throw new Error(`playwright-core expects Chromium ${chromium.browserVersion}, the snapshot builds in chromium-snapshot.js are ${snapshot.version}`);
+    for (const [name, version] of [['snapshot', snapshot.version], ['debian', debian.version]]) {
+        if (build(chromium.browserVersion) !== build(version)) {
+            throw new Error(`playwright-core expects Chromium ${chromium.browserVersion}, the ${name} build in chromium.js is ${version}`);
+        }
     }
 }
 
@@ -59,7 +64,7 @@ async function installChromium(platform, downloadDir, chromiumDir) {
         await fse.remove(path.join(unpacked, file));
     }
     if (!await platform.hasVersion(unpacked)) {
-        throw new Error(`${platform.path} is not Chromium ${snapshot.version}; check the build number in chromium-snapshot.js`);
+        throw new Error(`${platform.path} is not Chromium ${snapshot.version}; check the build number in chromium.js`);
     }
     await fse.move(unpacked, chromiumDir, { overwrite: true });
     await fse.remove(downloadDir);
