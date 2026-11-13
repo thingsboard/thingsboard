@@ -18,6 +18,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -49,6 +50,11 @@ public class TbRenameKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
         }
         if (renameKeysMapping == null || renameKeysMapping.isEmpty()) {
             throw new TbNodeException("At least one mapping entry should be specified!");
+        }
+        for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
+            if (Objects.equals(entry.getKey(), entry.getValue())) {
+                throw new TbNodeException("Source and destination keys must be different: " + entry.getKey());
+            }
         }
     }
 
