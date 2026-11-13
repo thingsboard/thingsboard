@@ -16,22 +16,23 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.single.En
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.dao.asset.AssetDao;
-import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
-import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.device.DeviceDao;
-import org.thingsboard.server.dao.device.DeviceProfileDao;
+import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
 public class CalculatedFieldDataValidator extends DataValidator<CalculatedField> {
+
+    private static final Set<EntityType> SUPPORTED_ENTITY_TYPES = EnumSet.of(
+            EntityType.CUSTOMER, EntityType.ASSET, EntityType.DEVICE, EntityType.ASSET_PROFILE, EntityType.DEVICE_PROFILE);
 
     @Autowired
     private CalculatedFieldDao calculatedFieldDao;
@@ -40,19 +41,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     private ApiLimitService apiLimitService;
 
     @Autowired
-    private CustomerDao customerDao;
-
-    @Autowired
-    private AssetDao assetDao;
-
-    @Autowired
-    private DeviceDao deviceDao;
-
-    @Autowired
-    private AssetProfileDao assetProfileDao;
-
-    @Autowired
-    private DeviceProfileDao deviceProfileDao;
+    private EntityDaoRegistry entityDaoRegistry;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, CalculatedField calculatedField) {
@@ -187,14 +176,10 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
 
     private void validateEntityTenant(TenantId cfTenantId, EntityId entityId) {
         EntityType entityType = entityId.getEntityType();
-        HasTenantId entity = switch (entityType) {
-            case CUSTOMER -> customerDao.findById(cfTenantId, entityId.getId());
-            case ASSET -> assetDao.findById(cfTenantId, entityId.getId());
-            case DEVICE -> deviceDao.findById(cfTenantId, entityId.getId());
-            case ASSET_PROFILE -> assetProfileDao.findById(cfTenantId, entityId.getId());
-            case DEVICE_PROFILE -> deviceProfileDao.findById(cfTenantId, entityId.getId());
-            default -> throw new DataValidationException("Entity type '" + entityType + "' does not support calculated fields.");
-        };
+        if (!SUPPORTED_ENTITY_TYPES.contains(entityType)) {
+            throw new DataValidationException("Entity type '" + entityType + "' does not support calculated fields.");
+        }
+        HasTenantId entity = entityDaoRegistry.<HasTenantId>getDao(entityType).findById(cfTenantId, entityId.getId());
         if (entity == null || !cfTenantId.equals(entity.getTenantId())) {
             throw new DataValidationException(entityType.getNormalName() + " with id [" + entityId.getId() + "] does not belong to the calculated field's tenant!");
         }
