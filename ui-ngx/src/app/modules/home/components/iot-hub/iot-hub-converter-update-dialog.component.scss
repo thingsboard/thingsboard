@@ -43,7 +43,7 @@
   color: rgba(0, 0, 0, 0.54);
 }
 
-// The rest of the packages slide open with Material's standard curve, as an expansion panel does
+// Material expansion-panel timing
 .tb-converter-update-more {
   display: grid;
   grid-template-rows: 0fr;
@@ -61,7 +61,6 @@
 }
 
 .tb-converter-update-toggle {
-  align-self: flex-start;
   padding: 0;
   border: none;
   background: none;
@@ -70,7 +69,6 @@
   line-height: 16px;
   color: var(--tb-primary-500);
   cursor: pointer;
-  // A link, as the "here" link below it
   &:hover,
   &:focus-visible {
     text-decoration: underline;

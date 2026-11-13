@@ -36,8 +36,6 @@ const USED_BY_SHOWN = 3;
 export class TbIotHubConverterUpdateDialogComponent extends DialogComponent<TbIotHubConverterUpdateDialogComponent, boolean> {
 
   readonly modifiedHint = splitTextWithLink(this.translate.instant('iot-hub.device-update-modified'));
-  // A long list of packages would push the Update button down: the first few are shown, the rest on request.
-  // A toggle that hides a single package isn't worth it, so then the whole list is shown
   readonly usedByShown: string[];
   readonly usedByHidden: string[];
   usedByExpanded = false;
@@ -53,6 +51,7 @@ export class TbIotHubConverterUpdateDialogComponent extends DialogComponent<TbIo
     private translate: TranslateService
   ) {
     super(store, router, dialogRef);
+    // Collapse only when at least 2 packages would be hidden
     const shownCount = data.usedBy.length > USED_BY_SHOWN + 1 ? USED_BY_SHOWN : data.usedBy.length;
     this.usedByShown = data.usedBy.slice(0, shownCount);
     this.usedByHidden = data.usedBy.slice(shownCount);

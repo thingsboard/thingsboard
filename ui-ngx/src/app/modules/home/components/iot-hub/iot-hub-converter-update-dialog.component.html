@@ -29,7 +29,7 @@
         }
       </div>
       @if (usedByHidden.length) {
-        <button type="button" class="tb-converter-update-toggle" aria-controls="tb-converter-update-more"
+        <button type="button" class="tb-converter-update-toggle self-start" aria-controls="tb-converter-update-more"
                 [attr.aria-expanded]="usedByExpanded" (click)="usedByExpanded = !usedByExpanded">
           @if (usedByExpanded) {
             {{ 'iot-hub.device-update-shared-less' | translate }}
