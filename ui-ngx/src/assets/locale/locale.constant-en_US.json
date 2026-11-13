@@ -885,6 +885,11 @@
             "gateway-online": "Online",
             "gateway-offline": "Offline",
             "gateway-connectors": "Connectors",
+            "read-ota": "{ count, plural, =1 {Checked the update of one device} other {Checked the update of # devices} }",
+            "read-ota-packages": "Read the OTA packages",
+            "save-ota-package": "Created the OTA package {{name}}",
+            "assign-ota-package": "Assigned the OTA package",
+            "clear-ota-package": "Cleared the OTA package",
             "commit-version": "Saved the version '{{name}}'",
             "restore-version": "Restored from version {{version}}",
             "read-platform-settings": "Read the platform settings",
@@ -1295,6 +1300,22 @@
                 "run": "Checking the gateway",
                 "done": "Checked the gateway"
             },
+            "read-ota": {
+                "run": "Checking the OTA updates",
+                "done": "Checked the OTA updates"
+            },
+            "save-ota-package": {
+                "run": "Creating the OTA package",
+                "done": "Created the OTA package"
+            },
+            "assign-ota-package": {
+                "run": "Assigning the OTA package",
+                "done": "Assigned the OTA package"
+            },
+            "delete-ota-package": {
+                "run": "Deleting the OTA package",
+                "done": "Deleted the OTA package"
+            },
             "commit-version": {
                 "run": "Saving a version",
                 "done": "Saved a version"
@@ -1619,6 +1640,8 @@
             "ask-again-message": "Ask me again for the same change.",
             "field": {
                 "source": "Source",
+                "url": "URL",
+                "tag": "Tag",
                 "entities": "Entities",
                 "includes": "Also saves",
                 "removeOthers": "Delete what the version lacks",
@@ -2362,7 +2385,11 @@
             "ota-updates": {
                 "title": "Ask about firmware updates",
                 "line": "How OTA updates work, and how to roll one out.",
-                "suggestion": "How do I roll out new firmware to my devices?"
+                "suggestion": "How do I roll out new firmware to my devices?",
+                "example": {
+                    "rollout": {"label": "Rollout status", "message": "How is the latest firmware rollout going?"},
+                    "add": {"label": "Add a package", "message": "Add firmware from a URL for one of my device profiles."}
+                }
             },
             "white-labeling": {
                 "title": "Ask about white labeling",

@@ -72,7 +72,7 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.ENTITY_VIEW_GROUP]: {key: 'entity-view-group', entity: true, examples: ['list']},
   [AiAssistantViewType.CUSTOMER_HIERARCHY]: {key: 'customer-hierarchy', examples: ['move']},
   [AiAssistantViewType.GATEWAYS]: {key: 'gateways', examples: ['modbus', 'status']},
-  [AiAssistantViewType.OTA_UPDATES]: {key: 'ota-updates'},
+  [AiAssistantViewType.OTA_UPDATES]: {key: 'ota-updates', examples: ['rollout', 'add']},
   [AiAssistantViewType.WHITE_LABELING]: {key: 'white-labeling'},
   [AiAssistantViewType.LOGIN_WHITE_LABELING]: {key: 'login-white-labeling'},
   [AiAssistantViewType.MAIL_TEMPLATES]: {key: 'mail-templates'},

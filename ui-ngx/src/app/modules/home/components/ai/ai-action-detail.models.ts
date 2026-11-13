@@ -1169,6 +1169,39 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('read-gateway-status', {name: str(result.name) ?? '—'}), blocks};
     }
+    case 'read_ota': {
+      if (!isObject(result)) {
+        return {hood: text('read-ota'), blocks: generic(result, 'result')};
+      }
+      if (Array.isArray(result.packages)) {
+        const rows = result.packages.filter(isObject).slice(0, MAX_ROWS)
+          .map(pkg => `${pkg.title} ${pkg.version} · ${pkg.type} · ${pkg.source}`);
+        return {hood: text('read-ota-packages'), blocks: rows.length ? [{type: 'list', rows}] : []};
+      }
+      const states = isObject(result.states) ? result.states : {};
+      const facts: AiDetailFact[] = Object.entries(states).map(([state, count]) => ({label: aiHumanize(state), raw: true, value: String(count)}));
+      const rows = (Array.isArray(result.list) ? result.list.filter(isObject) : []).slice(0, MAX_ROWS)
+        .map(device => [device.name, device.state, str(device.current), str(device.target) ? '→ ' + device.target : undefined].filter(Boolean).join(' · '));
+      const blocks: AiDetailBlock[] = facts.length ? [{type: 'facts', rows: facts}] : [];
+      if (rows.length) {
+        blocks.push({type: 'list', rows});
+      }
+      return {hood: text('read-ota', {count: Number(result.devices) || 0}), blocks};
+    }
+    case 'save_ota_package':
+      return {hood: text('save-ota-package', {name: [str(values.title), str(values.version)].filter(Boolean).join(' ') || '—'}), blocks: generic(result, 'result')};
+    case 'assign_ota_package': {
+      const updated = isObject(result) && Array.isArray(result.updated) ? result.updated.map(String) : [];
+      const failed = isObject(result) && Array.isArray(result.failed) ? result.failed.filter(isObject) : [];
+      const blocks: AiDetailBlock[] = [];
+      if (updated.length) {
+        blocks.push({type: 'list', label: text('alarms-done'), rows: updated.slice(0, MAX_ROWS)});
+      }
+      if (failed.length) {
+        blocks.push({type: 'list', label: text('alarms-failed'), rows: failed.slice(0, MAX_ROWS).map(row => `${row.target}: ${row.error}`)});
+      }
+      return {hood: text(values.clear ? 'clear-ota-package' : 'assign-ota-package'), blocks: blocks.length ? blocks : generic(result, 'result')};
+    }
     case 'read_versions': {
       const versions = isObject(result) && Array.isArray(result.versions) ? result.versions.filter(isObject) : undefined;
       if (!versions) {
