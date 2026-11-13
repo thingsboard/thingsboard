@@ -3,20 +3,28 @@
 const fse = require('fs-extra');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const crypto = require('crypto');
+const snapshot = require('./chromium-snapshot');
 
-// Chromium builds packaged with the service, downloaded by the Playwright CLI as if it ran on the target platform.
 const PLATFORMS = {
-    linux: { hostPlatform: 'ubuntu24.04-x64', downloadDir: 'chromiumLinux', chromeDir: 'chrome-linux64', binary: 'tb-web-report', pkgOutput: 'thingsboard-web-report-linux' },
-    windows: { hostPlatform: 'win64', downloadDir: 'chromiumWin', chromeDir: 'chrome-win64', binary: 'tb-web-report.exe', pkgOutput: 'thingsboard-web-report-win.exe' }
+    linux: { ...snapshot.linux, binary: 'tb-web-report', pkgOutput: 'thingsboard-web-report-linux' },
+    windows: { ...snapshot.windows, binary: 'tb-web-report.exe', pkgOutput: 'thingsboard-web-report-win.exe' }
 };
 
 (async() => {
+    const expected = fse.readJsonSync(path.join(path.dirname(require.resolve('playwright-core/package.json')), 'browsers.json'))
+        .browsers.find(b => b.name === 'chromium').browserVersion;
+    // The last number counts the fixes on the release branch, which a snapshot build never has
+    const build = version => version.split('.').slice(0, 3).join('.');
+    if (build(expected) !== build(snapshot.version)) {
+        throw new Error(`playwright-core expects Chromium ${expected}, the snapshot builds in chromium-snapshot.js are ${snapshot.version}`);
+    }
     for (const [targetDir, platform] of Object.entries(PLATFORMS)) {
-        const downloadDir = path.join(projectRoot(), 'target', platform.downloadDir);
-        installChromium(platform.hostPlatform, downloadDir);
+        const downloadDir = path.join(projectRoot(), 'target', 'chromium-' + targetDir);
+        await installChromium(platform, downloadDir);
         const chromiumDir = path.join(targetPackageDir(targetDir), 'chromium');
         await fse.emptyDir(chromiumDir);
-        await fse.copy(path.join(downloadDir, chromiumRevisionDir(), platform.chromeDir), chromiumDir);
+        await fse.copy(path.join(downloadDir, platform.chromeDir), chromiumDir);
         await fse.move(path.join(projectRoot(), 'target', platform.pkgOutput),
             path.join(targetPackageDir(targetDir), 'bin', platform.binary),
             {overwrite: true});
@@ -26,21 +34,21 @@ const PLATFORMS = {
     process.exit(1);
 });
 
-function installChromium(hostPlatform, downloadDir) {
-    execFileSync(process.execPath, [path.join(path.dirname(require.resolve('playwright-core/package.json')), 'cli.js'), 'install', '--no-shell', 'chromium'], {
-        stdio: 'inherit',
-        env: {
-            ...process.env,
-            PLAYWRIGHT_HOST_PLATFORM_OVERRIDE: hostPlatform,
-            PLAYWRIGHT_BROWSERS_PATH: downloadDir,
-            PLAYWRIGHT_SKIP_BROWSER_GC: '1'
-        }
-    });
-}
-
-function chromiumRevisionDir() {
-    const browsers = fse.readJsonSync(path.join(projectRoot(), 'node_modules', 'playwright-core', 'browsers.json')).browsers;
-    return 'chromium-' + browsers.find(b => b.name === 'chromium').revision;
+async function installChromium(platform, downloadDir) {
+    await fse.emptyDir(downloadDir);
+    const archive = path.join(downloadDir, 'chromium.zip');
+    const response = await fetch(`${snapshot.baseUrl}/${platform.path}`);
+    if (!response.ok) {
+        throw new Error(`Cannot download ${platform.path}: HTTP ${response.status}`);
+    }
+    const content = Buffer.from(await response.arrayBuffer());
+    const sha256 = crypto.createHash('sha256').update(content).digest('hex');
+    if (sha256 !== platform.sha256) {
+        throw new Error(`${platform.path} has SHA-256 ${sha256}, expected ${platform.sha256}`);
+    }
+    await fse.writeFile(archive, content);
+    execFileSync('unzip', ['-q', archive, '-d', downloadDir, ...platform.exclude.flatMap(file => ['-x', file])], { stdio: 'inherit' });
+    await fse.remove(archive);
 }
 
 function projectRoot() {

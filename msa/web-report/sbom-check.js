@@ -12,7 +12,7 @@ const BASE_BINARY = /fetched-v(\d+\.\d+\.\d+)-/;
 
 (() => {
     const listed = listedPackages(JSON.parse(fs.readFileSync(SBOM_FILE, 'utf8')));
-    const versions = playwrightVersions();
+    const versions = chromiumVersions();
     for (const [os, log] of Object.entries(PKG_LOGS)) {
         const output = fs.readFileSync(path.join(TARGET_DIR, log), 'utf8').replace(/\x1b\[[0-9;]*m/g, '');
         const baseBinary = BASE_BINARY.exec(output);
@@ -75,19 +75,9 @@ function packageDir(file) {
     return parts.slice(0, index + (scoped ? 3 : 2)).join(path.sep);
 }
 
-function playwrightVersions() {
-    const browsers = JSON.parse(fs.readFileSync(path.join(path.dirname(require.resolve('playwright-core/package.json')), 'browsers.json'), 'utf8')).browsers;
-    const browser = name => {
-        const found = browsers.find(candidate => candidate.name === name);
-        if (!found) {
-            throw new Error(`playwright-core/browsers.json does not list ${name}`);
-        }
-        return found;
-    };
+function chromiumVersions() {
     return {
-        'chromium.version': browser('chromium').browserVersion,
-        'chromium-headless-shell.version': browser('chromium-headless-shell').browserVersion,
-        'ffmpeg.revision': browser('ffmpeg').revision
+        'chromium.version': require('./chromium-snapshot').version
     };
 }
 
