@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.SystemUtil;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -90,12 +91,10 @@ import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.queue.notification.DefaultNotificationDeduplicationService;
-import org.thingsboard.server.service.notification.rule.cache.DefaultNotificationRulesCache;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.system.DefaultSystemInfoService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,8 +140,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private RuleChainService ruleChainService;
     @Autowired
     private NotificationRuleProcessor notificationRuleProcessor;
-    @Autowired
-    private DefaultNotificationRulesCache notificationRulesCache;
     @Autowired
     private DeviceStateService deviceStateService;
 
@@ -274,7 +271,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         Device device = createDevice("Device with alarm", "233");
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
         defaultNotifications.create(tenantId, DefaultNotifications.newAlarm, target.getId());
-        notificationRulesCache.evict(tenantId);
+        awaitNotificationRulesCacheUpdate(tenantId, NotificationRuleTriggerType.ALARM);
 
         Alarm alarm = new Alarm();
         alarm.setSeverity(AlarmSeverity.CRITICAL);
@@ -451,7 +448,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         defaultNotifications.create(TenantId.SYS_TENANT_ID, DefaultNotifications.exceededRateLimitsForSysadmin, sysadmins.getId());
         defaultNotifications.create(TenantId.SYS_TENANT_ID, DefaultNotifications.exceededRateLimits, affectedTenantAdmins.getId());
         defaultNotifications.create(TenantId.SYS_TENANT_ID, DefaultNotifications.exceededPerEntityRateLimits, affectedTenantAdmins.getId());
-        notificationRulesCache.evict(TenantId.SYS_TENANT_ID);
+        awaitNotificationRulesCacheUpdate(TenantId.SYS_TENANT_ID, NotificationRuleTriggerType.RATE_LIMITS);
 
         int n = 10;
         updateDefaultTenantProfileConfig(profileConfiguration -> {
@@ -790,14 +787,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
 
-        // Mock SystemUtil to return 15% memory usage (exceeds 1% threshold)
-        try (MockedStatic<SystemUtil> mockedSystemUtil = mockStatic(SystemUtil.class)) {
-            mockedSystemUtil.when(SystemUtil::getMemoryUsage).thenReturn(Optional.of(15));
-
-            Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
-            method.setAccessible(true);
-            method.invoke(systemInfoService);
-        }
+        // 15% RAM exceeds the 1% threshold, CPU and storage stay below 100%
+        saveMonolithSystemInfo(15);
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
@@ -827,9 +818,9 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                     .build());
             TimeUnit.MILLISECONDS.sleep(300);
         }
-        await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(getResourcesShortageNotifications(serviceId)).hasSize(1));
-        Notification notification = getResourcesShortageNotifications(serviceId).get(0);
+        List<Notification> notifications = await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> getResourcesShortageNotifications(serviceId), list -> list.size() == 1);
+        Notification notification = notifications.get(0);
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");
 
@@ -840,7 +831,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .serviceType("serviceType")
                 .serviceId(serviceId)
                 .build());
-        await("").atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getResourcesShortageNotifications(serviceId)).size().isOne());
+        await().during(3, TimeUnit.SECONDS).atMost(TIMEOUT, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(getResourcesShortageNotifications(serviceId)).hasSize(1));
     }
 
     @Test
@@ -867,8 +859,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .build();
         rule.setTriggerConfig(triggerConfig);
         saveNotificationRule(rule);
-        // otherwise evicted asynchronously, and the old 99% thresholds could still apply
-        notificationRulesCache.evict(TenantId.SYS_TENANT_ID);
 
         saveMonolithSystemInfo(15);
 
@@ -884,7 +874,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
         triggerConfig.setCreated(true);
         NotificationRule rule = createNotificationRule(triggerConfig, "Created", "Created", createNotificationTarget(tenantAdminUserId).getId());
-        notificationRulesCache.evict(tenantId);
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
         createDevice("Device 1", "default", "111");
@@ -895,7 +884,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         rule.setEnabled(false);
         saveNotificationRule(rule);
-        notificationRulesCache.evict(tenantId);
 
         createDevice("Device 2", "default", "222");
         TimeUnit.SECONDS.sleep(5);
@@ -903,7 +891,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         rule.setEnabled(true);
         saveNotificationRule(rule);
-        notificationRulesCache.evict(tenantId);
 
         createDevice("Device 3", "default", "333");
         await().atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -934,15 +921,12 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         }, (notification, r) -> check.accept(notification));
     }
 
-    private void saveMonolithSystemInfo(int usagePercent) throws Exception {
+    private void saveMonolithSystemInfo(int usagePercent) {
         try (MockedStatic<SystemUtil> mockedSystemUtil = mockStatic(SystemUtil.class)) {
             mockedSystemUtil.when(SystemUtil::getMemoryUsage).thenReturn(Optional.of(usagePercent));
             mockedSystemUtil.when(SystemUtil::getCpuUsage).thenReturn(Optional.of(usagePercent));
             mockedSystemUtil.when(SystemUtil::getDiscSpaceUsage).thenReturn(Optional.of(usagePercent));
-
-            Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
-            method.setAccessible(true);
-            method.invoke(systemInfoService);
+            ReflectionTestUtils.invokeMethod(systemInfoService, "saveCurrentMonolithSystemInfo");
         }
     }
 
