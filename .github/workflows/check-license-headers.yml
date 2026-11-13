@@ -46,10 +46,50 @@ jobs:
           java-version: 21
           cache: maven
 
+      # Header-free CE contents from earlier runs. A pull request reads the cache of its base branch, then of master.
+      # What keeps a pull request from feeding the cache that other runs trust is GitHub's cache scoping, not the `if:`
+      # on the save step: a pull request runs its own copy of this workflow, and whatever it saved would be restorable
+      # only by that pull request. The `if:` keeps pull requests from spending the repository's cache storage.
+      - name: Restore normalized CE contents
+        id: restore-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target/license-headers-cache
+          key: license-headers-ce-v1-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            license-headers-ce-v1-${{ github.base_ref || github.ref_name }}-
+            license-headers-ce-v1-
+
+      # What the restore brought, to save the cache below only when this run changed it. A run that only reads the
+      # cache leaves its bytes as they were; the check needs no marker for this.
+      - name: Fingerprint restored CE contents
+        id: cache-fingerprint
+        if: github.event_name != 'pull_request'
+        run: echo "hash=${{ hashFiles('target/license-headers-cache/*.sqlite') }}" >> "$GITHUB_OUTPUT"
+
       - name: Check license headers
+        env:
+          # Pull requests check only the files they change; pushes and manual runs check every file.
+          SINCE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
         run: |
           mkdir -p target/license-provenance
-          ./check-license-headers.sh 2>&1 | tee target/license-provenance/console.log
+          # The runner does nothing else: use every CPU, not all but one as on a workstation.
+          LICENSE_HEADERS_JOBS="$(nproc)"
+          export LICENSE_HEADERS_JOBS
+          # A run uses the cache of one signature; older ones would only make every save and restore larger.
+          export LICENSE_HEADERS_CACHE_SIGNATURES=1
+          ./check-license-headers.sh ${SINCE:+--since "$SINCE"} 2>&1 | tee target/license-provenance/console.log
+
+      # Saved even when the check finds problems, but only when the run changed the cache: it normalized something
+      # the cache lacked, or it pruned the databases of other signatures.
+      - name: Save normalized CE contents
+        if: >-
+          always() && github.event_name != 'pull_request'
+          && hashFiles('target/license-headers-cache/*.sqlite') != steps.cache-fingerprint.outputs.hash
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target/license-headers-cache
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
 
       - name: Add findings to the job summary
         if: failure() && hashFiles('target/license-provenance/console.log') != ''
