@@ -2223,7 +2223,7 @@
                 <artifactId>google-cloud-pubsub</artifactId>
                 <version>${pubsub.client.version}</version>
                 <exclusions>
-                    <!-- Not needed: its classes do not use it -->
+                    <!-- Needed only to compile it: its code uses just @Generated from it, which is not kept in the class files -->
                     <exclusion>
                         <groupId>javax.annotation</groupId>
                         <artifactId>javax.annotation-api</artifactId>
@@ -2245,7 +2245,7 @@
                 <artifactId>google-cloud-recaptchaenterprise</artifactId>
                 <version>${google-recaptcha-enterprise.version}</version>
                 <exclusions>
-                    <!-- Not needed: its classes do not use it -->
+                    <!-- Needed only to compile it: its code uses just @Generated from it, which is not kept in the class files -->
                     <exclusion>
                         <groupId>javax.annotation</groupId>
                         <artifactId>javax.annotation-api</artifactId>
@@ -2266,6 +2266,14 @@
                 <groupId>com.google.api</groupId>
                 <artifactId>api-common</artifactId>
                 <version>${google-api-common.version}</version>
+                <exclusions>
+                    <!-- Needed only to compile it: its code uses just @Generated from it, which is not kept in the class files.
+                         Excluded here too because other dependencies, such as google-genai, bring api-common without excluding it -->
+                    <exclusion>
+                        <groupId>javax.annotation</groupId>
+                        <artifactId>javax.annotation-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.api</groupId>
@@ -2504,7 +2512,7 @@
                         <groupId>commons-logging</groupId>
                         <artifactId>commons-logging</artifactId>
                     </exclusion>
-                    <!-- Not needed: its classes and the Google Cloud clients it brings do not use it -->
+                    <!-- Needed only to compile the Google Cloud clients it brings: their code uses just @Generated from it, which is not kept in the class files -->
                     <exclusion>
                         <groupId>javax.annotation</groupId>
                         <artifactId>javax.annotation-api</artifactId>
