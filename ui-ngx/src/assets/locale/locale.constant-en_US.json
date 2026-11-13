@@ -861,6 +861,31 @@
             },
             "read-credentials": "Read the credentials of {{entity}}",
             "read-endpoints": "Read the platform's connection settings",
+            "read-api-usage": "Read the API usage",
+            "read-audit-logs": "Read the audit log",
+            "read-audit-logs-of": "Read the audit log of {{entity}}",
+            "read-tasks": "Read the task manager",
+            "save-image": "Added image {{name}} to the image gallery",
+            "usage": {
+                "devices": "Devices",
+                "assets": "Assets",
+                "customers": "Customers",
+                "users": "Users",
+                "dashboards": "Dashboards",
+                "edges": "Edges",
+                "transportMessages": "Transport messages this month",
+                "transportDataPoints": "Transport data points this month",
+                "ruleEngineExecutions": "Rule engine executions this month",
+                "javaScriptExecutions": "JavaScript executions this month",
+                "tbelExecutions": "TBEL executions this month",
+                "storedDataPoints": "Stored data points this month",
+                "createdAlarms": "Alarms created this month",
+                "emails": "Emails this month",
+                "sms": "SMS this month",
+                "aiCredits": "AI credits this month",
+                "generatedReports": "Reports generated this month",
+                "limited": "{ count, plural, =1 {One limit is close to or at its maximum.} other {# limits are close to or at their maximum.} }"
+            },
             "read-connect-commands": "Read the commands that connect {{entity}}",
             "research": "Researched how {{device}} connects",
             "research-question": "Researched {{device}}: {{question}}",
@@ -927,6 +952,7 @@
             "yes": "Yes",
             "no": "No",
             "fact": {
+                "link": "Link",
                 "permissions": "Permissions",
                 "status": "Status",
                 "sends-at": "Sends at",
@@ -1179,6 +1205,22 @@
                 "run": "Looking up the connection settings",
                 "done": "Looked up the connection settings"
             },
+            "read-api-usage": {
+                "run": "Checking the API usage",
+                "done": "Checked the API usage"
+            },
+            "read-audit-logs": {
+                "run": "Reading the audit log",
+                "done": "Read the audit log"
+            },
+            "read-tasks": {
+                "run": "Checking the task manager",
+                "done": "Checked the task manager"
+            },
+            "save-image": {
+                "run": "Adding the image",
+                "done": "Added the image"
+            },
             "research-device": {
                 "run": "Researching the device",
                 "done": "Researched the device"
@@ -1422,6 +1464,8 @@
             "ask-again": "Ask again",
             "ask-again-message": "Ask me again for the same change.",
             "field": {
+                "source": "Source",
+                "size": "Size",
                 "defaultDashboard": "Default dashboard",
                 "homeDashboard": "Home dashboard",
                 "email": "Email",
@@ -1477,6 +1521,7 @@
                 "shared-attributes": "shared attributes"
             },
             "type": {
+                "IMAGE": "Image",
                 "ENTITY_GROUP": "Group",
                 "ROLE": "Role",
                 "ALARM_RULE": "Alarm rule",
@@ -2152,7 +2197,10 @@
             "images": {
                 "title": "Ask about your images",
                 "line": "Images for dashboards, widgets and white labeling.",
-                "suggestion": "How do I use an image as a dashboard background?"
+                "suggestion": "How do I use an image as a dashboard background?",
+                "example": {
+                    "icon": {"label": "Draw an icon", "message": "Draw a simple pump icon and add it to my images."}
+                }
             },
             "javascript-library": {
                 "title": "Ask about the JavaScript library",
@@ -2192,7 +2240,11 @@
             "audit-logs": {
                 "title": "Ask about the audit log",
                 "line": "Who changed what, and when.",
-                "suggestion": "What does the audit log record?"
+                "suggestion": "What does the audit log record?",
+                "example": {
+                    "changes": {"label": "Recent changes", "message": "What changed in the last 24 hours, and who did it?"},
+                    "logins": {"label": "Recent sign-ins", "message": "Who signed in today?"}
+                }
             },
             "version-control": {
                 "title": "Ask about version control",
@@ -2202,7 +2254,10 @@
             "task-manager": {
                 "title": "Ask about the task manager",
                 "line": "Long-running jobs, such as reprocessing, and how they went.",
-                "suggestion": "What does the task manager show?"
+                "suggestion": "What does the task manager show?",
+                "example": {
+                    "failed": {"label": "Failed tasks", "message": "Which tasks failed recently, and why?"}
+                }
             },
             "scheduler": {
                 "title": "Ask about the scheduler",
@@ -2249,7 +2304,10 @@
             "api-usage": {
                 "title": "Ask about API usage",
                 "line": "What your tenant uses, against its limits.",
-                "suggestion": "What do these API usage numbers mean?"
+                "suggestion": "What do these API usage numbers mean?",
+                "example": {
+                    "limits": {"label": "Check my limits", "message": "Am I close to any of my limits this month?"}
+                }
             },
             "mobile-bundles": {
                 "title": "Ask about mobile bundles",

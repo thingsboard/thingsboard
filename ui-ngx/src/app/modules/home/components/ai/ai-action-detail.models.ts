@@ -1070,6 +1070,10 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
     case 'read_dashboard_html_page':
       return {hood: text('read-html-page', {state: str(values.stateId) ?? 'default', entity: dashboard}), blocks: htmlPage(result)};
     case 'delete': {
+      if (values.targetType === 'IMAGE') {
+        const key = String(values.targetId ?? '').split('/').pop() || '—';
+        return {hood: text('delete', {entity: {entityType: 'IMAGE', name: key}}), blocks: generic(result, 'result')};
+      }
       const type = DELETE_TYPES[values.targetType] ?? values.targetType;
       return {hood: text('delete', {entity: of(values.targetId, type)}), blocks: generic(result, 'result')};
     }
@@ -1101,11 +1105,80 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       const kind = tool.replace(/^save_/, '').replace(/_/g, '-');
       return {hood: text('save', {what: K + 'kind.' + kind, name: str(saved.name) ?? str(saved.title) ?? '—'}), blocks: [{type: 'facts', rows: savedFacts(saved, names)}]};
     }
+    case 'read_api_usage':
+      return {hood: text('read-api-usage'), blocks: apiUsageBlocks(result)};
+    case 'read_audit_logs':
+      return {hood: values.entityId ? text('read-audit-logs-of', {entity: target}) : text('read-audit-logs'), blocks: auditLogBlocks(result)};
+    case 'read_tasks':
+      return {hood: text('read-tasks'), blocks: taskBlocks(result)};
+    case 'save_image': {
+      const saved = isObject(result) ? result : {};
+      const rows: AiDetailFact[] = str(saved.link) ? [{label: K + 'fact.link', value: saved.link, mono: true}] : [];
+      return {hood: text('save-image', {name: str(saved.title) ?? str(values.title) ?? '—'}), blocks: rows.length ? [{type: 'facts', rows}] : generic(result, 'result')};
+    }
     case 'reprocess_calculated_field':
       return {hood: text('reprocess', {entity: of(values.calculatedFieldId, 'CALCULATED_FIELD'), from: dateText(values.startTime ?? values.startTs), to: endText(values.endTime ?? values.endTs)}), blocks: generic(result, 'result')};
   }
   const request = Object.keys(values).length ? (flat(values) ? [{type: 'facts', rows: facts(values, [], names)} as AiDetailBlock] : json('request', values)) : [];
   return {blocks: [...request, ...generic(result, 'result', [], names)]};
+}
+
+const USAGE_LIMIT = (limit: unknown): string => limit === 'unlimited' || limit === undefined ? '∞' : aiValueText(limit);
+
+function apiUsageBlocks(result: unknown): AiDetailBlock[] {
+  if (!isObject(result)) {
+    return generic(result, 'result');
+  }
+  const rows: AiDetailFact[] = [];
+  const warned: string[] = [];
+  for (const [name, entry] of Object.entries(isObject(result.entities) ? result.entities : {})) {
+    if (isObject(entry)) {
+      rows.push({label: K + 'usage.' + name, value: `${aiValueText(entry.count)} / ${USAGE_LIMIT(entry.limit)}`});
+    }
+  }
+  for (const entry of Array.isArray(result.monthly) ? result.monthly : []) {
+    if (isObject(entry) && str(entry.name)) {
+      rows.push({label: K + 'usage.' + entry.name, value: `${aiValueText(entry.count)} / ${USAGE_LIMIT(entry.limit)}`});
+      if (entry.state === 'WARNING' || entry.state === 'DISABLED') {
+        warned.push(entry.name);
+      }
+    }
+  }
+  const blocks: AiDetailBlock[] = rows.length ? [{type: 'facts', rows}] : [];
+  if (warned.length) {
+    blocks.push({type: 'note', text: text('usage.limited', {count: warned.length})});
+  }
+  return blocks;
+}
+
+function auditLogBlocks(result: unknown): AiDetailBlock[] {
+  const logs = isObject(result) && Array.isArray(result.logs) ? result.logs.filter(isObject) : undefined;
+  if (!logs) {
+    return generic(result, 'result');
+  }
+  const rows: AiDetailRecord[] = logs.slice(0, MAX_ROWS).map(log => {
+    const target = isObject(log.entity) ? log.entity : {};
+    const when = str(log.time) ? new Date(log.time).toLocaleString() : undefined;
+    const meta = [str(log.action) ? aiHumanize(log.action) : undefined, str(log.user), when, log.status === 'FAILURE' ? '✕' : undefined]
+      .filter(Boolean).join(' · ');
+    return {entityType: str(target.type) ?? 'USER', id: str(target.id), name: str(target.name) ?? str(target.type) ?? '—', meta};
+  });
+  return [{type: 'records', rows, total: logs.length}];
+}
+
+function taskBlocks(result: unknown): AiDetailBlock[] {
+  const tasks = isObject(result) && Array.isArray(result.tasks) ? result.tasks.filter(isObject) : undefined;
+  if (!tasks) {
+    return generic(result, 'result');
+  }
+  const rows: AiDetailRecord[] = tasks.slice(0, MAX_ROWS).map(task => {
+    const target = isObject(task.entity) ? task.entity : {};
+    const progress = isObject(task.progress) ? task.progress : undefined;
+    const done = progress ? `${aiValueText(progress.successful)}${progress.total !== undefined ? ' / ' + aiValueText(progress.total) : ''}` : undefined;
+    const meta = [str(task.status) ? aiHumanize(task.status) : undefined, done, str(task.error)].filter(Boolean).join(' · ');
+    return {entityType: str(target.type) ?? 'CALCULATED_FIELD', id: str(target.id), name: str(target.name) ?? (str(task.type) ? aiHumanize(task.type) : '—'), meta};
+  });
+  return [{type: 'records', rows, total: tasks.length}];
 }
 
 function hasId(saved: Values): boolean {
