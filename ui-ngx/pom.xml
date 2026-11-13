@@ -80,6 +80,17 @@
                             <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
                         </configuration>
                     </execution>
+                    <!-- skipped with -DskipTests, not -Dmaven.test.skip: a profile for it would switch off activeByDefault yarn-build -->
+                    <execution>
+                        <id>yarn test</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <arguments>--mutex network run test</arguments>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

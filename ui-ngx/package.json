@@ -7,6 +7,7 @@
     "build": "ng build",
     "build:prod": "node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng build --configuration production",
     "build:types": "node generate-types.js",
+    "test": "mkdir -p target/surefire-reports && node --require ./esbuild/ts-node-register.js --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=target/surefire-reports/TEST-ui-ngx.xml 'esbuild/**/*.test.ts'",
     "build:icon-metadata": "node generate-icon-metadata.js",
     "sbom": "node ../tools/src/main/javascript/yarn-sbom.js target/generated-resources/META-INF/sbom/ui-ngx.cdx.json library",
     "lint": "ng lint",

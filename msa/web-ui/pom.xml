@@ -31,6 +31,8 @@
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
+        <!-- an execution-level skip overrides the plugin-level one; maven.test.skip comes from the skip-yarn-test profile -->
+        <yarn.test.skip>${skip.ui.build}</yarn.test.skip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
         <sbom.image.scanExclude></sbom.image.scanExclude>
     </properties>
@@ -102,6 +104,17 @@
                         <phase>compile</phase>
                         <configuration>
                             <arguments>--mutex network run pkg</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>yarn test</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <skip>${yarn.test.skip}</skip>
+                            <arguments>--mutex network run test</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -265,6 +278,18 @@
         </plugins>
     </build>
     <profiles>
+        <profile>
+            <id>skip-yarn-test</id>
+            <activation>
+                <property>
+                    <name>maven.test.skip</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <yarn.test.skip>true</yarn.test.skip>
+            </properties>
+        </profile>
         <profile>
             <id>yarn-start</id>
             <activation>

@@ -1,6 +1,7 @@
 #
 # SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 #
 
 server:
@@ -12,6 +13,8 @@ server:
   compression:
     # Enable/disable HTTP response compression
     enabled: "HTTP_COMPRESSION_ENABLED"
+    # Pre-compressed file encodings in preference order (br, gzip) or "none"; ignored when compression is disabled
+    precompressed_encodings: "HTTP_COMPRESSION_PRECOMPRESSED_ENCODINGS"
 thingsboard:
   enableProxy: "TB_ENABLE_PROXY"
   # ThingsBoard node host

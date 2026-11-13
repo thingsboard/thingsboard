@@ -7,7 +7,7 @@
   "bin": "server.js",
   "scripts": {
     "pkg": "tsc && pkg -t node22-linux-x64 --output ./target/thingsboard-web-ui-linux ./target/src && pkg -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/thingsboard-web-ui-win.exe ./target/src && node install.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mkdir -p target/surefire-reports && node --require ts-node/register --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=target/surefire-reports/TEST-web-ui.xml 'test/**/*.test.ts'",
     "start": "WEB_FOLDER=./target/web node --watch --watch-preserve-output -r ts-node/register server.ts",
     "start-prod": "WEB_FOLDER=./target/web NODE_ENV=production node --watch --watch-preserve-output -r ts-node/register server.ts",
     "build": "tsc",
@@ -20,6 +20,7 @@
     "express": "^5.3.0",
     "http-proxy": "^1.18.1",
     "js-yaml": "^4.3.2",
+    "negotiator": "^1.1.0",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
   },

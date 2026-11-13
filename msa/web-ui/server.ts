@@ -1,15 +1,17 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import express from 'express';
 import config from 'config';
 import { _logger}  from './config/logger';
 import path from 'path';
 import http, { ServerResponse } from 'http';
 import httpProxy from 'http-proxy';
-import compression from 'compression';
-import historyApiFallback from 'connect-history-api-fallback';
-import { Socket } from 'net';
+import { AddressInfo, Socket } from 'net';
 import { RequestHandler } from 'express';
+import { precompressedEncodingsFromConfig } from './middleware/precompressedStatic';
+import { staticMiddlewares } from './middleware/staticMiddlewares';
+import { errorHandler } from './middleware/errorHandler';
 
 const logger = _logger('main');
 
@@ -70,6 +72,8 @@ let connections: Socket[] = [];
 
         const compressionEnabled = isEnabled(config.get('server.compression.enabled'));
         logger.info('HTTP response compression enabled: %s', compressionEnabled);
+        const precompressedEncodings = compressionEnabled ? precompressedEncodingsFromConfig(config) : [];
+        logger.info('Pre-compressed file encodings (tie-break order): %s', precompressedEncodings.join(',') || 'none');
 
         // Apply security headers to all responses
         app.use((_req, res, next) => {
@@ -114,20 +118,15 @@ let connections: Socket[] = [];
             });
         }
 
-        app.use(historyApiFallback());
-        if (compressionEnabled) {
-            app.use(compression());
-        }
-
         const root = path.join(webDir, 'public');
 
-        const staticServe = express.static(root);
+        for (const middleware of staticMiddlewares(root, {compressionEnabled, precompressedEncodings})) {
+            app.use(middleware);
+        }
 
         const indexHtmlFallback: RequestHandler = (req, res, next) => {
           res.sendFile(path.join(root, 'index.html'));
         };
-
-        app.use(staticServe);
 
         const indexHtmlFallbackPaths = [
           /^\/resources\/scada-symbols\/(?:system|tenant)\/[^/]+$/
@@ -135,8 +134,10 @@ let connections: Socket[] = [];
 
         app.use(indexHtmlFallbackPaths, indexHtmlFallback);
 
+        app.use(errorHandler);
+
         server.listen(bindPort, bindAddress, () => {
-            logger.info('==> 🌎  Listening on port %s.', bindPort);
+            logger.info('==> 🌎  Listening on port %s.', (server!.address() as AddressInfo).port);
             logger.info('Started ThingsBoard Web UI Microservice.');
         }).on('error', async (error) => {
             logger.error('Failed to start ThingsBoard Web UI Microservice: %s', error.message);
