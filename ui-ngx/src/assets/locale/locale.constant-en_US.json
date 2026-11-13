@@ -7639,7 +7639,7 @@
         "javascript-type": "JavaScript type",
         "scripts": "Scripts",
         "script-type": "Script type",
-        "javascript-library-filter-title": "JavaScript library filter",
+        "script-filter-title": "Script filter",
         "javascript-resource-details": "JavaScript resource details",
         "javascript-resource-is-in-use": "JavaScript resource is used by other entities",
         "javascript-resources-are-in-use": "JavaScript resources are used by other entities",

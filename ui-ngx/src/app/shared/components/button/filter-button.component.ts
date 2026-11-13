@@ -26,7 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { fromEvent, isObservable, Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap } from 'rxjs/operators';
 import { POSITION_MAP } from '@shared/models/overlay.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isEqual, isObject } from '@core/utils';
 
 export type FilterButtonValueLabelFn<T> = (value: T) => string | Observable<string>;
 
@@ -125,7 +125,7 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
   }
 
   writeValue(value?: T): void {
-    this.value.set(value ?? this.emptyValue());
+    this.value.set(this.normalize(value));
     this.filterControl.setValue(this.value(), {emitEvent: false});
   }
 
@@ -162,7 +162,7 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
   }
 
   update() {
-    this.value.set(this.filterControl.value ?? this.emptyValue());
+    this.value.set(this.normalize(this.filterControl.value));
     this.propagateChange(this.value());
     this.filterControl.markAsPristine();
     this.closePanel();
@@ -173,6 +173,10 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
       this.filterControl.setValue(this.emptyValue(), {emitEvent: false});
       this.filterControl.markAsDirty();
     }
+  }
+
+  isChanged(): boolean {
+    return this.filterControl.dirty && !isEqual(this.normalize(this.filterControl.value), this.value());
   }
 
   private closePanel(restoreFocus = true) {
@@ -187,7 +191,14 @@ export class FilterButtonComponent<T = any> implements ControlValueAccessor {
     }
   }
 
+  private normalize(value: T): T {
+    return this.isEmpty(value) ? this.emptyValue() : value;
+  }
+
   private isEmpty(value: T): boolean {
-    return !isDefinedAndNotNull(value) || value === '';
+    if (!isDefinedAndNotNull(value) || value === '') {
+      return true;
+    }
+    return isObject(value) && Object.values(value).every(v => !isDefinedAndNotNull(v) || v === '');
   }
 }

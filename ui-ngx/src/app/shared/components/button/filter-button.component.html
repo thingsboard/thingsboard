@@ -33,7 +33,7 @@
       <button type="submit"
               mat-raised-button
               color="primary"
-              [disabled]="filterControl.invalid || !filterControl.dirty">
+              [disabled]="filterControl.invalid || !isChanged()">
         {{ 'action.update' | translate }}
       </button>
     </div>
