@@ -51,6 +51,10 @@
             <artifactId>agent-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>util</artifactId>
         </dependency>

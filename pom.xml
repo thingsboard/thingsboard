@@ -108,6 +108,7 @@
         <metrics.version>4.2.25</metrics.version>
         <cassandra-all.version>5.0.7</cassandra-all.version> <!-- tools; 5.0.7 fixes CVE-2026-27314 -->
         <guava.version>33.7.2-jre</guava.version> <!-- to fix CVE-2026-102554 -->
+        <jspecify.version>1.0.0</jspecify.version>
         <commons-io.version>2.16.1</commons-io.version>
         <commons-logging.version>1.3.1</commons-logging.version>
         <commons-csv.version>1.10.0</commons-csv.version>
@@ -1842,11 +1843,25 @@
                 <groupId>com.datastax.oss</groupId>
                 <artifactId>java-driver-core</artifactId>
                 <version>${cassandra.version}</version>
+                <exclusions>
+                    <!-- Annotations that matter only when the driver itself is compiled; LGPL-2.1 -->
+                    <exclusion>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-annotations</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.datastax.oss</groupId>
                 <artifactId>java-driver-query-builder</artifactId>
                 <version>${cassandra.version}</version>
+                <exclusions>
+                    <!-- Annotations that matter only when the driver itself is compiled; LGPL-2.1 -->
+                    <exclusion>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-annotations</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
@@ -1963,6 +1978,11 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jspecify</groupId>
+                <artifactId>jspecify</artifactId>
+                <version>${jspecify.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.protobuf</groupId>
