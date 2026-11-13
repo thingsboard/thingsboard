@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.timeseries;
 
 import lombok.Data;
@@ -22,6 +23,7 @@ public class SqlPartition {
     }
 
     private String createStatement(String table, long start, long end, String partitionDate) {
-        return "CREATE TABLE IF NOT EXISTS " + table + "_" + partitionDate + " PARTITION OF " + table + " FOR VALUES FROM (" + start + ") TO (" + end + ")";
+        String partitionName = (table + "_" + partitionDate).replace("\"", "\"\"");
+        return "CREATE TABLE IF NOT EXISTS \"" + partitionName + "\" PARTITION OF " + table + " FOR VALUES FROM (" + start + ") TO (" + end + ")";
     }
 }
