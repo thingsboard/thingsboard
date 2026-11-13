@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 $maxLegendWidth: 25%;
 $maxLegendHeight: 35%;
 
@@ -50,9 +51,6 @@ $maxLegendHeight: 35%;
     }
     &.legend-right, &.legend-left {
       .tb-time-series-chart-legend {
-        display: inline-grid;
-        grid-auto-flow: column;
-        grid-template-rows: repeat(auto-fit, minmax(16px, min-content));
         max-width: calc($maxLegendWidth - 8px);
         height: fit-content;
         max-height: 100%;
@@ -69,17 +67,59 @@ $maxLegendHeight: 35%;
         }
       }
     }
+    &.legend-direction-column {
+      .tb-time-series-chart-legend {
+        display: inline-grid;
+        grid-auto-flow: column;
+        grid-template-rows: repeat(auto-fit, minmax(16px, min-content));
+      }
+    }
+    &.legend-direction-row {
+      .tb-time-series-chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+      }
+    }
+    &.legend-view-card {
+      .tb-time-series-chart-legend {
+        width: 100%;
+      }
+      &.legend-left, &.legend-right {
+        .tb-time-series-chart-legend-cards {
+          padding-right: 4px;
+        }
+      }
+      &.legend-top, &.legend-bottom {
+        .tb-time-series-chart-legend {
+          overflow-x: auto;
+          overflow-y: hidden;
+        }
+        .tb-time-series-chart-legend-cards {
+          flex-direction: row;
+          padding-bottom: 4px;
+        }
+        .tb-time-series-chart-legend-card {
+          width: auto;
+          flex-shrink: 0;
+        }
+      }
+    }
     .tb-time-series-chart-legend {
-      display: flex;
       align-items: flex-start;
       align-self: stretch;
       column-gap: 16px;
       row-gap: 8px;
-      flex-wrap: wrap;
       overflow: auto;
       width: fit-content;
       max-width: 100%;
       max-height: calc($maxLegendHeight - 8px);
+      .tb-time-series-chart-legend-item-label-circle {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #ccc;
+        flex-shrink: 0;
+      }
       .tb-time-series-chart-legend-table {
         border-spacing: 0;
         table-layout: fixed;
@@ -122,12 +162,6 @@ $maxLegendHeight: 35%;
           color: #ccc;
           white-space: nowrap;
           cursor: pointer;
-          .tb-time-series-chart-legend-item-label-circle {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #ccc;
-          }
         }
       }
       .tb-time-series-chart-legend-type-label {
@@ -140,6 +174,47 @@ $maxLegendHeight: 35%;
       .tb-time-series-chart-legend-value {
         white-space: nowrap;
         text-align: right;
+      }
+      .tb-time-series-chart-legend-cards {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+      }
+      .tb-time-series-chart-legend-card {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+        .tb-time-series-chart-legend-card-header {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          min-width: 0;
+        }
+        .tb-time-series-chart-legend-card-label {
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          color: #ccc;
+        }
+        .tb-time-series-chart-legend-card-values {
+          display: flex;
+          flex-wrap: wrap;
+          column-gap: 16px;
+          row-gap: 4px;
+        }
+        .tb-time-series-chart-legend-card-value-item {
+          display: flex;
+          flex-direction: column;
+        }
       }
     }
   }

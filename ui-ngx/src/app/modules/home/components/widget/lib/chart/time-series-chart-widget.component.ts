@@ -23,9 +23,12 @@ import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { compareLegendDataKeys, LegendConfig, LegendData, LegendKey, LegendPosition } from '@shared/models/widget.models';
+import { compareLegendDataKeys, LegendConfig, LegendData, LegendDirection, LegendKey, LegendPosition } from '@shared/models/widget.models';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import {
+  LegendValueType,
+  legendValueTypes,
+  LegendView,
   timeSeriesChartWidgetDefaultSettings,
   TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
@@ -58,13 +61,17 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
   @coerceBoolean()
   reportMode = false;
 
-  horizontalLegendPosition = false;
+  legendTableHorizontal = false;
 
   showLegend: boolean;
   legendClass: string;
   legendConfig: LegendConfig;
   legendData: LegendData;
   legendKeys: LegendKey[];
+  legendView: LegendView;
+  legendValueTypes: LegendValueType[];
+
+  readonly LegendView = LegendView;
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
@@ -114,8 +121,14 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
     }
 
     if (this.showLegend) {
-      this.horizontalLegendPosition = [LegendPosition.left, LegendPosition.right].includes(this.legendConfig.position);
-      this.legendClass = `legend-${this.legendConfig.position}`;
+      this.legendView = this.settings.legendView === LegendView.card ? LegendView.card : LegendView.table;
+      if (this.legendView === LegendView.card) {
+        this.legendClass = `legend-${this.legendConfig.position} legend-view-card`;
+      } else {
+        const legendItemsDirection = this.resolveLegendItemsDirection();
+        this.legendTableHorizontal = this.settings.legendItemsDirection === LegendDirection.row;
+        this.legendClass = `legend-${this.legendConfig.position} legend-direction-${legendItemsDirection}`;
+      }
       this.legendColumnTitleStyle = textStyle(this.settings.legendColumnTitleFont);
       this.legendColumnTitleStyle.color = this.settings.legendColumnTitleColor;
       this.legendLabelStyle = textStyle(this.settings.legendLabelFont);
@@ -123,8 +136,8 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
       this.legendLabelStyle.color = this.settings.legendLabelColor;
       this.legendValueStyle = textStyle(this.settings.legendValueFont);
       this.legendValueStyle.color = this.settings.legendValueColor;
-      this.displayLegendValues = this.legendConfig.showMin || this.legendConfig.showMax ||
-        this.legendConfig.showAvg || this.legendConfig.showTotal || this.legendConfig.showLatest;
+      this.legendValueTypes = legendValueTypes.filter(valueType => this.legendConfig[valueType.configKey] === true);
+      this.displayLegendValues = !!this.legendValueTypes.length;
     }
   }
 
@@ -165,6 +178,15 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
     }
   }
 
+  private resolveLegendItemsDirection(): LegendDirection {
+    const configured = this.settings.legendItemsDirection;
+    if (configured === LegendDirection.row || configured === LegendDirection.column) {
+      return configured;
+    }
+    return [LegendPosition.left, LegendPosition.right].includes(this.legendConfig.position) ?
+      LegendDirection.column : LegendDirection.row;
+  }
+
   public onLegendKeyEnter(legendKey: LegendKey) {
     this.timeSeriesChart.keyEnter(legendKey.dataKey);
   }
@@ -175,5 +197,13 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
 
   public toggleLegendKey(legendKey: LegendKey) {
     this.timeSeriesChart.toggleKey(legendKey.dataKey, legendKey.dataIndex);
+  }
+
+  public legendSwatchStyle(legendKey: LegendKey): ComponentStyle {
+    return {background: !legendKey.dataKey.hidden ? legendKey.dataKey.color : null};
+  }
+
+  public legendItemLabelStyle(legendKey: LegendKey): ComponentStyle {
+    return !legendKey.dataKey.hidden ? this.legendLabelStyle : this.disabledLegendLabelStyle;
   }
 }

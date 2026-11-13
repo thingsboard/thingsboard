@@ -21,29 +21,45 @@
     <div #chartShape class="tb-time-series-chart-shape">
     </div>
     @if (showLegend) {
-      <div class="tb-time-series-chart-legend" [class.tb-simple-legend]="!displayLegendValues">
-        @if (displayLegendValues) {
-          @if (horizontalLegendPosition) {
+      <div class="tb-time-series-chart-legend" [class.tb-simple-legend]="!displayLegendValues && legendView !== LegendView.card">
+        @if (legendView === LegendView.card) {
+          <div class="tb-time-series-chart-legend-cards">
+            @for (legendKey of legendKeys; track legendKey) {
+              <div class="tb-time-series-chart-legend-card"
+                   (mouseenter)="onLegendKeyEnter(legendKey)"
+                   (mouseleave)="onLegendKeyLeave(legendKey)"
+                   (click)="toggleLegendKey(legendKey)">
+                <div class="tb-time-series-chart-legend-card-header">
+                  <div class="tb-time-series-chart-legend-item-label-circle" [style]="legendSwatchStyle(legendKey)"></div>
+                  <div class="tb-time-series-chart-legend-card-label"
+                       tbTruncateWithTooltip
+                       [style]="legendItemLabelStyle(legendKey)"
+                       [innerHTML]="legendKey.dataKey.label | safe: 'html'">
+                  </div>
+                </div>
+                @if (displayLegendValues) {
+                  <div class="tb-time-series-chart-legend-card-values">
+                    @for (valueType of legendValueTypes; track valueType.type) {
+                      <div class="tb-time-series-chart-legend-card-value-item">
+                        <div class="tb-time-series-chart-legend-type-label" [style]="legendColumnTitleStyle">{{ valueType.labelKey | translate }}</div>
+                        <div class="tb-time-series-chart-legend-value" [style]="legendValueStyle" [innerHTML]="legendData.data[legendKey.dataIndex][valueType.type] | safe: 'html'"></div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else if (displayLegendValues) {
+          @if (legendTableHorizontal) {
             <ng-container *ngTemplateOutlet="horizontalLegend"></ng-container>
           } @else {
             <table class="tb-time-series-chart-legend-table vertical">
               <thead>
                 <tr>
                   <th></th>
-                  @if (legendConfig.showMin === true) {
-                    <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle">{{ 'legend.Min' | translate }}</th>
-                  }
-                  @if (legendConfig.showMax === true) {
-                    <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle">{{ 'legend.Max' | translate }}</th>
-                  }
-                  @if (legendConfig.showAvg === true) {
-                    <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle">{{ 'legend.Avg' | translate }}</th>
-                  }
-                  @if (legendConfig.showTotal === true) {
-                    <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle">{{ 'legend.Total' | translate }}</th>
-                  }
-                  @if (legendConfig.showLatest === true) {
-                    <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle">{{ 'legend.Latest' | translate }}</th>
+                  @for (valueType of legendValueTypes; track valueType.type) {
+                    <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle">{{ valueType.labelKey | translate }}</th>
                   }
                 </tr>
               </thead>
@@ -53,29 +69,9 @@
                     <th>
                       <ng-container *ngTemplateOutlet="legendItem; context:{legendKey: legendKey, left: true}"></ng-container>
                     </th>
-                    @if (legendConfig.showMin === true) {
+                    @for (valueType of legendValueTypes; track valueType.type) {
                       <td class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
-                          [innerHTML]="legendData.data[legendKey.dataIndex].min | safe: 'html'">
-                      </td>
-                    }
-                    @if (legendConfig.showMax === true) {
-                      <td class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
-                          [innerHTML]="legendData.data[legendKey.dataIndex].max | safe: 'html'">
-                      </td>
-                    }
-                    @if (legendConfig.showAvg === true) {
-                      <td class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
-                          [innerHTML]="legendData.data[legendKey.dataIndex].avg | safe: 'html'">
-                      </td>
-                    }
-                    @if (legendConfig.showTotal === true) {
-                      <td class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
-                          [innerHTML]="legendData.data[legendKey.dataIndex].total | safe: 'html'">
-                      </td>
-                    }
-                    @if (legendConfig.showLatest === true) {
-                      <td class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
-                          [innerHTML]="legendData.data[legendKey.dataIndex].latest | safe: 'html'">
+                          [innerHTML]="legendData.data[legendKey.dataIndex][valueType.type] | safe: 'html'">
                       </td>
                     }
                   </tr>
@@ -91,7 +87,7 @@
       </div>
     }
     <ng-template #horizontalLegend>
-      <table class="tb-time-series-chart-legend-table">
+      <table class="tb-time-series-chart-legend-table horizontal">
         <thead>
           <tr>
             <th></th>
@@ -103,20 +99,8 @@
           </tr>
         </thead>
         <tbody>
-          @if (legendConfig.showMin === true) {
-            <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Min', type: 'min'}"></ng-container>
-          }
-          @if (legendConfig.showMax === true) {
-            <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Max', type: 'max'}"></ng-container>
-          }
-          @if (legendConfig.showAvg === true) {
-            <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Avg', type: 'avg'}"></ng-container>
-          }
-          @if (legendConfig.showTotal === true) {
-            <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Total', type: 'total'}"></ng-container>
-          }
-          @if (legendConfig.showLatest === true) {
-            <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Latest', type: 'latest'}"></ng-container>
+          @for (valueType of legendValueTypes; track valueType.type) {
+            <ng-container *ngTemplateOutlet="legendDataRow; context:{label: valueType.labelKey, type: valueType.type}"></ng-container>
           }
         </tbody>
       </table>
@@ -128,8 +112,8 @@
              (mouseenter)="onLegendKeyEnter(legendKey)"
              (mouseleave)="onLegendKeyLeave(legendKey)"
              (click)="toggleLegendKey(legendKey)">
-          <div class="tb-time-series-chart-legend-item-label-circle" [style]="{background: !legendKey.dataKey.hidden ? legendKey.dataKey.color : null}"></div>
-          <div [style]="!legendKey.dataKey.hidden ? legendLabelStyle : disabledLegendLabelStyle" [innerHTML]="legendKey.dataKey.label | safe: 'html'"></div>
+          <div class="tb-time-series-chart-legend-item-label-circle" [style]="legendSwatchStyle(legendKey)"></div>
+          <div [style]="legendItemLabelStyle(legendKey)" [innerHTML]="legendKey.dataKey.label | safe: 'html'"></div>
         </div>
       </div>
     </ng-template>

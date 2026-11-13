@@ -6707,6 +6707,11 @@
     },
     "legend": {
         "direction": "Direction",
+        "items-direction": "Items direction",
+        "items-direction-auto": "Auto",
+        "view": "View",
+        "view-table": "Table",
+        "view-card": "Cards",
         "position": "Position",
         "show-values": "Show values",
         "min-option": "Min",
