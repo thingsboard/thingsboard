@@ -107,7 +107,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     public <E extends HasName, I extends EntityId> ListenableFuture<Void>
     logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, @NotNull I entityId, E entity,
                     ActionType actionType, Exception e, Object... additionalInfo) {
-        if (canLog(entityId.getEntityType(), actionType) || (tenantId != null && tenantId.isSysTenantId())) {
+        if (canLog(entityId.getEntityType(), actionType) || (tenantId != null && tenantId.isSysTenantId() && !actionType.isRead())) {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
             ActionStatus actionStatus = ActionStatus.SUCCESS;
             String failureDetails = "";
@@ -223,7 +223,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             case ATTRIBUTES_READ:
                 actionData.put("entityId", entityId.toString());
                 scope = extractParameter(AttributeScope.class, 0, additionalInfo);
-                actionData.put("scope", scope.name());
+                actionData.put("scope", scope != null ? scope.name() : null);
                 @SuppressWarnings("unchecked")
                 List<String> keys = extractParameter(List.class, 1, additionalInfo);
                 ArrayNode attrsArrayNode = actionData.putArray("attributes");
