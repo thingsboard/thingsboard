@@ -216,7 +216,7 @@ export interface DeviceInstallStep {
   type: InstallStepType;
   name: string;
   // Optional stable id of the step, unique within the install method: the key of the step's install state,
-  // so the next version can rename the step. Without it, the name is the key.
+  // so the next version can rename the step. Without it, the key is the type and the name; a form's is its name.
   id?: string;
   file?: string;
   template?: string;

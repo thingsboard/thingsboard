@@ -177,8 +177,8 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             validateIntegrations(tenantId, request);
             applied = transactionTemplate.execute(status -> applySteps(tenantId, devicePackage, request, versionInfo));
         } catch (StepFailure e) {
-            log.warn("[{}] Device package update of {} failed on step [{}], nothing was changed", tenantId, installedItemId, e.stepName, e.getCause());
-            return DeviceUpdateResult.error(userMessage(e.getCause()), e.stepName);
+            log.warn("[{}] Device package update of {} failed on step [{}], nothing was changed", tenantId, installedItemId, e.stepKey, e.getCause());
+            return DeviceUpdateResult.error(userMessage(e.getCause()), e.stepKey);
         } catch (RestClientException e) {
             log.error("[{}] IoT Hub request failed while updating device package {}", tenantId, installedItemId, e);
             return DeviceUpdateResult.error("IoT Hub is unavailable. Try again later.", null);
@@ -209,14 +209,14 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             throw new IllegalArgumentException("The update has no steps");
         }
         Set<UUID> ownedIds = ownedIds(devicePackage.descriptor());
-        Set<String> stateKeys = new HashSet<>();
+        // A form's values are saved under its key too, so an entity step may not share it
+        Set<String> stateKeys = request.getInstallState() != null ? new HashSet<>(request.getInstallState().keySet()) : new HashSet<>();
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
             if (step.getName() == null || step.getAction() == null || !isKnownType(step.getType())) {
                 throw new IllegalArgumentException("Invalid update step: " + step.getName());
             }
-            // The key of the step's install state
-            if (!stateKeys.add(step.getId() != null ? step.getId() : step.getName())) {
-                throw new IllegalArgumentException("Duplicate update step: " + step.getName());
+            if (!stateKeys.add(step.stateKey())) {
+                throw new IllegalArgumentException("Duplicate update step: " + step.stateKey());
             }
             boolean deviceOrGateway = "DEVICE".equals(step.getType()) || "GATEWAY".equals(step.getType());
             switch (step.getAction()) {
@@ -267,9 +267,9 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             } catch (ExecutionException e) {
                 // What the integration reports, e.g. wrong credentials, is what the user has to fix
                 Throwable cause = e.getCause() != null ? e.getCause() : e;
-                throw new StepFailure(step.getName(), new IllegalArgumentException(cause.getMessage(), cause));
+                throw new StepFailure(step.stateKey(), new IllegalArgumentException(cause.getMessage(), cause));
             } catch (TimeoutException e) {
-                throw new StepFailure(step.getName(), new IllegalStateException("Timeout to validate the integration configuration"));
+                throw new StepFailure(step.stateKey(), new IllegalStateException("Timeout to validate the integration configuration"));
             }
         }
     }
@@ -308,7 +308,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 StepResult result = applyStep(tenantId, step, entity);
                 ObjectNode output = result.output();
                 aliasOutputs.put(STEP_ALIASES.get(step.getType()), output);
-                outputs.put(step.getName(), output);
+                outputs.put(step.stateKey(), output);
                 ObjectNode state = JacksonUtil.newObjectNode();
                 state.set("entityOutput", output);
                 // The package's own entity stays the package's, whatever the request says, so later versions update it
@@ -328,7 +328,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 if (metadata != null) {
                     state.set("metadata", metadata);
                 }
-                installState.put(step.getId() != null ? step.getId() : step.getName(), state);
+                installState.put(step.stateKey(), state);
                 // As at install, an entity used as it was is listed too, so a delete removes the metadata entries the
                 // package added to it; usedExistingEntityIds keeps it the user's
                 if (!stepEntityIds.contains(result.entityId())) {
@@ -350,7 +350,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             } catch (StepFailure e) {
                 throw e;
             } catch (Exception e) {
-                throw new StepFailure(step.getName(), e);
+                throw new StepFailure(step.stateKey(), e);
             }
         }
 
@@ -989,11 +989,11 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     /** A step that failed: the transaction rolls back, and the wizard shows which step it was. */
     private static class StepFailure extends RuntimeException {
 
-        private final String stepName;
+        private final String stepKey;
 
-        StepFailure(String stepName, Throwable cause) {
+        StepFailure(String stepKey, Throwable cause) {
             super(cause.getMessage(), cause);
-            this.stepName = stepName;
+            this.stepKey = stepKey;
         }
 
     }

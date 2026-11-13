@@ -113,6 +113,7 @@ export const defaultConverterUpdateRequest = (update: DefaultConverterUpdate, ex
     installState: {},
     steps: [{
       name: update.converter.name,
+      // The server keys the step's state by its id: the state stays under the key it has
       id: update.stateKey,
       type: 'UPLINK_CONVERTER',
       action: 'OVERWRITE',
