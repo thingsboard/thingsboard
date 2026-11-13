@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ShortEntityView;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IdBased;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -45,6 +47,7 @@ import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.group.EntityGroupService;
@@ -81,6 +84,8 @@ public class EntityGroupServiceTest extends AbstractServiceTest {
     EntityGroupService entityGroupService;
     @Autowired
     EdgeService edgeService;
+    @Autowired
+    CustomerService customerService;
 
     private MergedUserPermissions mergedUserPermissions;
 
@@ -98,6 +103,34 @@ public class EntityGroupServiceTest extends AbstractServiceTest {
     @After
     public void after() {
         executor.shutdownNow();
+    }
+
+    @Test
+    public void testFindEntityGroupInfoByTenantIdAndId() {
+        EntityGroup tenantGroup = new EntityGroup();
+        tenantGroup.setName("Tenant Device Group");
+        tenantGroup.setType(EntityType.DEVICE);
+        tenantGroup = entityGroupService.saveEntityGroup(tenantId, tenantId, tenantGroup);
+
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("Group Owner Customer");
+        customer = customerService.saveCustomer(customer);
+        EntityGroup customerGroup = new EntityGroup();
+        customerGroup.setName("Customer Device Group");
+        customerGroup.setType(EntityType.DEVICE);
+        customerGroup = entityGroupService.saveEntityGroup(tenantId, customer.getId(), customerGroup);
+
+        TenantId otherTenantId = createTenant().getId();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setName("Other Tenant Device Group");
+        otherTenantGroup.setType(EntityType.DEVICE);
+        otherTenantGroup = entityGroupService.saveEntityGroup(otherTenantId, otherTenantId, otherTenantGroup);
+
+        assertThat(entityGroupService.findEntityGroupInfoByTenantIdAndId(tenantId, tenantGroup.getId()).getId()).isEqualTo(tenantGroup.getId());
+        assertThat(entityGroupService.findEntityGroupInfoByTenantIdAndId(tenantId, customerGroup.getId()).getId()).isEqualTo(customerGroup.getId());
+        assertThat(entityGroupService.findEntityGroupInfoByTenantIdAndId(tenantId, otherTenantGroup.getId())).isNull();
+        assertThat(entityGroupService.findEntityGroupInfoByTenantIdAndId(otherTenantId, otherTenantGroup.getId()).getId()).isEqualTo(otherTenantGroup.getId());
     }
 
     @Test

@@ -13,6 +13,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.permission.GroupPermissionInfo;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.ShareGroupRequest;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
@@ -45,6 +47,8 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -180,9 +184,209 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
         loginCustomerAdminUser();
         otherTenantEntityGroup.setOwnerId(customerId);
         doPost("/api/entityGroup", otherTenantEntityGroup)
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
 
         assertThat(entityGroupService.findEntityGroupById(differentTenantId, otherTenantEntityGroup.getId()).getOwnerId()).isEqualTo(differentTenantId);
+    }
+
+    @Test
+    public void testGetEntityGroupInfosByIdsReturnsOnlyOwnTenantGroups() throws Exception {
+        loginTenantAdmin();
+        EntityGroup ownGroup = new EntityGroup();
+        ownGroup.setName("Own Device Group");
+        ownGroup.setType(EntityType.DEVICE);
+        ownGroup = doPost("/api/entityGroup", ownGroup, EntityGroup.class);
+
+        loginDifferentTenant();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setName("Other Tenant Device Group");
+        otherTenantGroup.setType(EntityType.DEVICE);
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        List<EntityInfo> entityInfos = doGetTyped("/api/entityGroupInfos?entityGroupIds=" + ownGroup.getId().getId() + "," + otherTenantGroup.getId().getId(),
+                new TypeReference<>() {});
+        assertThat(entityInfos).extracting(EntityInfo::getId).containsExactly(ownGroup.getId());
+    }
+
+    @Test
+    public void testGetEntityGroupInfosByIdsReturnsOnlyReadableGroups() throws Exception {
+        loginTenantAdmin();
+        EntityGroup tenantGroup = new EntityGroup();
+        tenantGroup.setName("Tenant Device Group");
+        tenantGroup.setType(EntityType.DEVICE);
+        tenantGroup = doPost("/api/entityGroup", tenantGroup, EntityGroup.class);
+
+        loginCustomerAdminUser();
+        EntityGroup customerGroup = new EntityGroup();
+        customerGroup.setName("Customer Device Group");
+        customerGroup.setType(EntityType.DEVICE);
+        customerGroup.setOwnerId(customerId);
+        customerGroup = doPost("/api/entityGroup", customerGroup, EntityGroup.class);
+
+        List<EntityInfo> entityInfos = doGetTyped("/api/entityGroupInfos?entityGroupIds=" + customerGroup.getId().getId() + "," + tenantGroup.getId().getId(),
+                new TypeReference<>() {});
+        assertThat(entityInfos).extracting(EntityInfo::getId).containsExactly(customerGroup.getId());
+    }
+
+    @Test
+    public void testShareGroupWithUserGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantUserGroup = new EntityGroup();
+        otherTenantUserGroup.setName("Other Tenant User Group");
+        otherTenantUserGroup.setType(EntityType.USER);
+        otherTenantUserGroup = doPost("/api/entityGroup", otherTenantUserGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        EntityGroup deviceGroup = new EntityGroup();
+        deviceGroup.setName("Shared Device Group");
+        deviceGroup.setType(EntityType.DEVICE);
+        deviceGroup = doPost("/api/entityGroup", deviceGroup, EntityGroup.class);
+
+        ShareGroupRequest shareGroupRequest = new ShareGroupRequest(tenantId, false, otherTenantUserGroup.getId(), true, null);
+        doPost("/api/entityGroup/" + deviceGroup.getId().getId() + "/share", shareGroupRequest)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(not(containsString(otherTenantUserGroup.getName()))));
+    }
+
+    @Test
+    public void testShareGroupV2WithUserGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantUserGroup = new EntityGroup();
+        otherTenantUserGroup.setName("Other Tenant User Group");
+        otherTenantUserGroup.setType(EntityType.USER);
+        otherTenantUserGroup = doPost("/api/entityGroup", otherTenantUserGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        EntityGroup deviceGroup = new EntityGroup();
+        deviceGroup.setName("Shared Device Group");
+        deviceGroup.setType(EntityType.DEVICE);
+        deviceGroup = doPost("/api/entityGroup", deviceGroup, EntityGroup.class);
+
+        ShareGroupRequest shareGroupRequest = new ShareGroupRequest(tenantId, false, otherTenantUserGroup.getId(), true, null);
+        doPost("/api/v2/entityGroup/" + deviceGroup.getId().getId() + "/share", shareGroupRequest)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(not(containsString(otherTenantUserGroup.getName()))));
+    }
+
+    @Test
+    public void testShareGroupWithAllUsersGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Shared Device Group", tenantId);
+
+        ShareGroupRequest unknownOwnerRequest = new ShareGroupRequest(TenantId.fromUUID(UUID.randomUUID()), true, null, true, null);
+        doPost("/api/entityGroup/{entityGroupId}/share", unknownOwnerRequest, deviceGroup.getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+        ShareGroupRequest otherTenantRequest = new ShareGroupRequest(differentTenantId, true, null, true, null);
+        doPost("/api/entityGroup/{entityGroupId}/share", otherTenantRequest, deviceGroup.getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+        assertThat(findSharedUserGroupIds(deviceGroup)).isEmpty();
+    }
+
+    @Test
+    public void testShareGroupWithAllUsersGroupOfOwnCustomerSharesWithThatGroup() throws Exception {
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Shared Device Group", tenantId);
+        EntityGroup customerAllUsersGroup = entityGroupService.findEntityGroupByTypeAndName(tenantId, customerId,
+                EntityType.USER, EntityGroup.GROUP_ALL_NAME).get();
+
+        ShareGroupRequest shareGroupRequest = new ShareGroupRequest(customerId, true, null, true, null);
+        doPost("/api/entityGroup/{entityGroupId}/share", shareGroupRequest, deviceGroup.getId().toString())
+                .andExpect(status().isOk());
+        assertThat(findSharedUserGroupIds(deviceGroup)).containsExactly(customerAllUsersGroup.getId());
+    }
+
+    @Test
+    public void testShareGroupV2WithAllUsersGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Shared Device Group", tenantId);
+
+        ShareGroupRequest unknownOwnerRequest = new ShareGroupRequest(TenantId.fromUUID(UUID.randomUUID()), true, null, true, null);
+        doPost("/api/v2/entityGroup/{entityGroupId}/share", unknownOwnerRequest, deviceGroup.getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+        ShareGroupRequest otherTenantRequest = new ShareGroupRequest(differentTenantId, true, null, true, null);
+        doPost("/api/v2/entityGroup/{entityGroupId}/share", otherTenantRequest, deviceGroup.getId().toString())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+        assertThat(findSharedUserGroupIds(deviceGroup)).isEmpty();
+    }
+
+    @Test
+    public void testShareGroupV2WithAllUsersGroupOfOwnCustomerSharesWithThatGroup() throws Exception {
+        loginTenantAdmin();
+        EntityGroup deviceGroup = createDeviceGroup("Shared Device Group", tenantId);
+        EntityGroup customerAllUsersGroup = entityGroupService.findEntityGroupByTypeAndName(tenantId, customerId,
+                EntityType.USER, EntityGroup.GROUP_ALL_NAME).get();
+
+        ShareGroupRequest shareGroupRequest = new ShareGroupRequest(customerId, true, null, true, null);
+        doPost("/api/v2/entityGroup/{entityGroupId}/share", shareGroupRequest, deviceGroup.getId().toString())
+                .andExpect(status().isOk());
+        assertThat(findSharedUserGroupIds(deviceGroup)).containsExactly(customerAllUsersGroup.getId());
+    }
+
+    @Test
+    public void testShareGroupToChildOwnerUserGroupWithGroupsOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantUserGroup = new EntityGroup();
+        otherTenantUserGroup.setName("Other Tenant User Group");
+        otherTenantUserGroup.setType(EntityType.USER);
+        otherTenantUserGroup = doPost("/api/entityGroup", otherTenantUserGroup, EntityGroup.class);
+        EntityGroup otherTenantDeviceGroup = new EntityGroup();
+        otherTenantDeviceGroup.setName("Other Tenant Device Group");
+        otherTenantDeviceGroup.setType(EntityType.DEVICE);
+        otherTenantDeviceGroup = doPost("/api/entityGroup", otherTenantDeviceGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        EntityGroup deviceGroup = new EntityGroup();
+        deviceGroup.setName("Shared Device Group");
+        deviceGroup.setType(EntityType.DEVICE);
+        deviceGroup = doPost("/api/entityGroup", deviceGroup, EntityGroup.class);
+        EntityGroup userGroup = new EntityGroup();
+        userGroup.setName("Own User Group");
+        userGroup.setType(EntityType.USER);
+        userGroup = doPost("/api/entityGroup", userGroup, EntityGroup.class);
+        Role role = new Role();
+        role.setName("Read Group Role");
+        role.setType(RoleType.GROUP);
+        role.setPermissions(JacksonUtil.valueToTree(List.of(Operation.READ)));
+        role = doPost("/api/role", role, Role.class);
+
+        doPost("/api/entityGroup/" + deviceGroup.getId().getId() + "/" + otherTenantUserGroup.getId().getId() + "/" + role.getId().getId() + "/share")
+                .andExpect(status().isNotFound());
+        doPost("/api/entityGroup/" + otherTenantDeviceGroup.getId().getId() + "/" + userGroup.getId().getId() + "/" + role.getId().getId() + "/share")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testGetAttributesOfEntityGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setName("Other Tenant Asset Group");
+        otherTenantGroup.setType(EntityType.ASSET);
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        doGetAsync("/api/plugins/telemetry/ENTITY_GROUP/" + otherTenantGroup.getId().getId() + "/values/attributes")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testGetEntityGroupOfOtherTenantReturnsNotFound() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setName("Other Tenant Asset Group");
+        otherTenantGroup.setType(EntityType.ASSET);
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        doGet("/api/entityGroup/" + otherTenantGroup.getId().getId())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(not(containsString(otherTenantGroup.getName()))));
     }
 
     @Test
@@ -575,6 +779,11 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
     private List<RoleId> findSharedRoleIds(EntityGroup entityGroup) {
         return groupPermissionService.findGroupPermissionByTenantIdAndEntityGroupId(tenantId, entityGroup.getId(), new PageLink(100))
                 .getData().stream().map(GroupPermission::getRoleId).collect(Collectors.toList());
+    }
+
+    private List<EntityGroupId> findSharedUserGroupIds(EntityGroup entityGroup) {
+        return groupPermissionService.findGroupPermissionByTenantIdAndEntityGroupId(tenantId, entityGroup.getId(), new PageLink(100))
+                .getData().stream().map(GroupPermission::getUserGroupId).collect(Collectors.toList());
     }
 
 }

@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.CustomerInfo;
@@ -60,6 +61,7 @@ import org.thingsboard.server.common.data.signup.SignUpResult;
 import org.thingsboard.server.common.data.wl.WhiteLabelingType;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.menu.CustomMenuDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -133,6 +135,9 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
 
     @Autowired
     protected WhiteLabelingService whiteLabelingService;
+
+    @Autowired
+    private GroupPermissionService groupPermissionService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -371,6 +376,31 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         );
 
         removeCreatedUser(user);
+    }
+
+    @Test
+    public void testSelfRegisterUserSkipsPermissionForGroupOfOtherTenant() throws Exception {
+        loginDifferentTenant();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setName("Other Tenant Device Group");
+        otherTenantGroup.setType(EntityType.DEVICE);
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+
+        loginTenantAdmin();
+        Role role = new Role();
+        role.setName("Self Registration Group Role");
+        role.setType(RoleType.GROUP);
+        role.setPermissions(JacksonUtil.toJsonNode("[\"READ\"]"));
+        role = doPost("/api/role", role, Role.class);
+        GroupPermission permission = new GroupPermission();
+        permission.setRoleId(role.getId());
+        permission.setEntityGroupId(otherTenantGroup.getId());
+        createWebSelfRegistrationSettings(List.of(permission));
+
+        doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+
+        assertThat(groupPermissionService.findGroupPermissionByTenantIdAndRoleId(tenantId, role.getId(), new PageLink(10)).getData()).isEmpty();
+        removeCreatedUser(userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL));
     }
 
     @Test
