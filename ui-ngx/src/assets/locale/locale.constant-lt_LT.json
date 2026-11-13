@@ -7361,8 +7361,8 @@
   "position": {
     "top": "Viršus",
     "bottom": "Apačia",
-    "left": "Kairioji pusė",
-    "right": "Dešinioji pusė"
+    "left": "Kairė",
+    "right": "Dešinė"
   },
   "profile": {
     "profile": "Profilis",
