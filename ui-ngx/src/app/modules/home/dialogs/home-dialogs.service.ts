@@ -36,6 +36,11 @@ import {
   EntityGroupWizardDialogData,
   EntityGroupWizardDialogResult
 } from '@home/components/wizard/entity-group-wizard-dialog.component';
+import { DashboardInfo } from '@shared/models/dashboard.models';
+import {
+  DashboardInfoDialogData,
+  ImportDashboardFileDialogComponent
+} from '@home/pages/dashboard/import-dashboard-file-dialog.component';
 
 @Injectable()
 export class HomeDialogsService {
@@ -132,6 +137,20 @@ export class HomeDialogsService {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         groupEntity
+      }
+    }).afterClosed();
+  }
+
+  public importDashboardFile($event: Event, dashboard: DashboardInfo): Observable<boolean> {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    return this.dialog.open<ImportDashboardFileDialogComponent, DashboardInfoDialogData,
+      boolean>(ImportDashboardFileDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        dashboard
       }
     }).afterClosed();
   }

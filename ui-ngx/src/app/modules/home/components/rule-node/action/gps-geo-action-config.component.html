@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="geoActionConfigForm" class="tb-form-panel no-border no-padding">
@@ -28,7 +29,10 @@
           }
         </mat-form-field>
       </div>
-      <div class="tb-form-hint tb-primary-fill" translate>rule-node-config.coordinate-field-hint</div>
+      <div class="tb-form-hint tb-primary-fill">
+        <mat-icon>info_outline</mat-icon>
+        <span translate>rule-node-config.coordinate-field-hint</span>
+      </div>
     </section>
   </section>
   <section class="tb-form-panel stroked" [class.no-padding-bottom]="!defaultPaddingEnable">
@@ -154,9 +158,11 @@
         }
       </tb-toggle-select>
     </div>
-    <div class="tb-form-hint tb-primary-fill"> {{ geoActionConfigForm.get('reportPresenceStatusOnEachMessage').value === false ?
-         ('rule-node-config.presence-monitoring-strategy-on-first-message-hint' | translate) :
-         ('rule-node-config.presence-monitoring-strategy-on-each-message-hint' | translate) }}
+    <div class="tb-form-hint tb-primary-fill">
+      <mat-icon>info_outline</mat-icon>
+      <span>{{ geoActionConfigForm.get('reportPresenceStatusOnEachMessage').value === false ?
+            ('rule-node-config.presence-monitoring-strategy-on-first-message-hint' | translate) :
+            ('rule-node-config.presence-monitoring-strategy-on-each-message-hint' | translate) }}</span>
     </div>
     <section class="flex flex-col">
       @if (geoActionConfigForm.get('reportPresenceStatusOnEachMessage').value === false) {

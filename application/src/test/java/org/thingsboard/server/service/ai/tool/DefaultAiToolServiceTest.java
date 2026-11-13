@@ -11,15 +11,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
+import org.thingsboard.server.service.ai.transport.TbAiOperation;
+import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
@@ -31,28 +35,28 @@ class DefaultAiToolServiceTest {
     @Mock
     TbAiService tbAiService;
     @Mock
-    TbAiClient tbAiClient;
-    @Mock
     TbAiClient.TokenProvider tokenProvider;
     @Mock
     TbAiClient.TbAiResponse tbAiResponse;
     @Mock
     SecurityUser user;
+    @Mock
+    TbAiOperations operations;
 
     DefaultAiToolService service;
 
     @BeforeEach
     void setUp() {
-        service = new DefaultAiToolService(tbAiService);
+        service = new DefaultAiToolService(tbAiService, operations);
     }
 
     @Test
-    void shouldProcessWithoutCreditCheckAndDelegateToClient_whenResolveToolApprovalCalled() {
+    void shouldResolveThroughToolApprovalResolveOperation() {
         // GIVEN
         JsonNode decision = toolApprovalDecision(UUID.randomUUID(), true);
         JsonNode expectedResponse = TextNode.valueOf("APPROVED");
         given(tbAiService.process(any(), same(user), eq(false))).willReturn(expectedResponse);
-        given(tbAiClient.resolveToolApproval(same(decision), same(tokenProvider))).willReturn(tbAiResponse);
+        given(operations.execute(any(TbAiOperation.class), same(user), same(tokenProvider))).willReturn(tbAiResponse);
 
         // WHEN
         JsonNode result = service.resolveToolApproval(decision, user);
@@ -60,9 +64,9 @@ class DefaultAiToolServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedResponse);
 
-        assertThat(captureProcessCall().apply(tbAiClient, tokenProvider)).isSameAs(tbAiResponse);
-        then(tbAiClient).should().resolveToolApproval(same(decision), same(tokenProvider));
-        then(tbAiClient).shouldHaveNoMoreInteractions();
+        assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
+        then(operations).should().execute(argThat(operation -> ChannelProtocol.TOOL_APPROVAL_RESOLVE.equals(operation.type())
+                && operation.payload() == decision), same(user), same(tokenProvider));
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 

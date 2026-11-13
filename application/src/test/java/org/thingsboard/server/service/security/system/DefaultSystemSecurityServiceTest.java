@@ -8,11 +8,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -206,6 +209,53 @@ public class DefaultSystemSecurityServiceTest {
 
         verify(userService).setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
         verify(mailService).sendAccountLockoutEmail(eq(tenantId), eq(username), eq(notificationEmail), eq(5));
+    }
+
+    @Test
+    public void resolveBaseUrlTakesRequestUrlWhenDifferentUrlsAreAllowed() {
+        givenGeneralSettings("https://tb.example.com", false);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("http://192.168.1.10:8080");
+        assertThat(baseUrl.fromRequest()).isTrue();
+    }
+
+    @Test
+    public void resolveBaseUrlTakesSettingsUrlWhenDifferentUrlsAreProhibited() {
+        givenGeneralSettings("https://tb.example.com", true);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("https://tb.example.com");
+        assertThat(baseUrl.fromRequest()).isFalse();
+    }
+
+    @Test
+    public void resolveBaseUrlFallsBackToRequestWhenSettingsUrlIsEmpty() {
+        givenGeneralSettings("", true);
+
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(tenantId, null, request());
+
+        assertThat(baseUrl.url()).isEqualTo("http://192.168.1.10:8080");
+        assertThat(baseUrl.fromRequest()).isTrue();
+        assertThat(systemSecurityService.getBaseUrl(tenantId, null, request())).isEqualTo(baseUrl.url());
+    }
+
+    private void givenGeneralSettings(String baseUrl, boolean prohibitDifferentUrl) {
+        AdminSettings generalSettings = new AdminSettings();
+        generalSettings.setJsonValue(JacksonUtil.newObjectNode()
+                .put("baseUrl", baseUrl)
+                .put("prohibitDifferentUrl", prohibitDifferentUrl));
+        when(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "general")).thenReturn(generalSettings);
+    }
+
+    private static MockHttpServletRequest request() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setScheme("http");
+        request.setServerName("192.168.1.10");
+        request.setServerPort(8080);
+        return request;
     }
 
     @Test

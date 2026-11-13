@@ -1,14 +1,14 @@
-#### Upgrading to ${TB_EDGE_VERSION}EDGEPE
+#### Upgrading to ${TB_EDGE_VERSION}
 
 ThingsBoard Edge package download:
 ```bash
-wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}pe.rpm
+wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}${TB_EDGE_PKG_SUFFIX}.rpm
 {:copy-code}
 ```
 
 Install package:
 ```bash
-sudo rpm -Uvh tb-edge-${TB_EDGE_TAG}pe.rpm
+sudo rpm -Uvh tb-edge-${TB_EDGE_TAG}${TB_EDGE_PKG_SUFFIX}.rpm
 {:copy-code}
 ```
 

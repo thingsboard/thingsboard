@@ -14,6 +14,10 @@ import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
 import { distinctUntilChanged, skip, take } from 'rxjs/operators';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
+import { HttpErrorResponse } from '@angular/common/http';
+import { DomSanitizer } from '@angular/platform-browser';
+import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
   selector: 'tb-solution-side-bar',
@@ -41,6 +45,7 @@ export class SolutionSideBarComponent extends PageComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     protected store: Store<AppState>,
+    private sanitizer: DomSanitizer,
   ) {
     super();
     this.store.pipe(select(selectUserSettingsProperty('isSolutionSidebarExpanded'))).pipe(
@@ -61,9 +66,10 @@ export class SolutionSideBarComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.solutionCreator.getSolutions({ignoreLoading: true}).subscribe((solutions) => {
-      this.solutions.set(solutions);
-    })
+    this.solutionCreator.getSolutions({ignoreLoading: true, ignoreErrors: true}).subscribe({
+      next: solutions => this.solutions.set(solutions),
+      error: error => this.showError(error)
+    });
   }
 
   toggleSidebar($event: Event): void {
@@ -89,12 +95,15 @@ export class SolutionSideBarComponent extends PageComponent implements OnInit {
       this.translate.instant('solution-creator.delete-solution-confirm')
     ).subscribe((value) => {
       if (value) {
-        this.solutionCreator.deleteSolution(solution.id).subscribe(() => {
-          this.solutions.update(solutions => solutions.filter(s => s.id !== solution.id));
-          if (this.route.snapshot.queryParamMap.has('solutionId') && this.route.snapshot.queryParamMap.get('solutionId') === solution.id) {
-            this.router.navigate(['/ai-solution-creator']).then(() => {});
-          }
-        })
+        this.solutionCreator.deleteSolution(solution.id, {ignoreErrors: true}).subscribe({
+          next: () => {
+            this.solutions.update(solutions => solutions.filter(s => s.id !== solution.id));
+            if (this.route.snapshot.queryParamMap.has('solutionId') && this.route.snapshot.queryParamMap.get('solutionId') === solution.id) {
+              this.router.navigate(['/ai-solution-creator']).then(() => {});
+            }
+          },
+          error: error => this.showError(error)
+        });
       }
     })
   }
@@ -118,10 +127,13 @@ export class SolutionSideBarComponent extends PageComponent implements OnInit {
       }
     }).afterClosed().subscribe(newTitle => {
       if (newTitle && newTitle !== solution.solutionTitle) {
-        this.solutionCreator.updateSolutionData(solution.id, 'solutionTitle', JSON.stringify(newTitle))
-          .subscribe(value => {
-            solution.solutionTitle = newTitle;
-            this.updatedSolution.next(value);
+        this.solutionCreator.updateSolutionData(solution.id, 'solutionTitle', JSON.stringify(newTitle), {ignoreErrors: true})
+          .subscribe({
+            next: value => {
+              solution.solutionTitle = newTitle;
+              this.updatedSolution.next(value);
+            },
+            error: error => this.showError(error)
           });
       }
     });
@@ -135,12 +147,27 @@ export class SolutionSideBarComponent extends PageComponent implements OnInit {
       this.translate.instant('solution-creator.uninstall-solution-dialog-confirm')
     ).subscribe((value) => {
       if (value) {
-        this.solutionCreator.uninstallSolution(solution.id, {ignoreErrors: true}).subscribe(() => {
-          this.updateSolutionField(solution, {installed: false});
-          this.installedChanged.emit({solutionId: solution.id, installed: false});
+        this.solutionCreator.uninstallSolution(solution.id, {ignoreErrors: true}).subscribe({
+          next: () => {
+            this.updateSolutionField(solution, {installed: false});
+            this.installedChanged.emit({solutionId: solution.id, installed: false});
+          },
+          error: error => this.showError(error)
         });
       }
     });
+  }
+
+  private showError(error: unknown): void {
+    const responseType = isNotEmptyStr((error as {error?: unknown})?.error) ? 'text' : undefined;
+    this.store.dispatch(new ActionNotificationShow({
+      message: parseHttpErrorMessage(error as HttpErrorResponse, this.translate, responseType, this.sanitizer).message,
+      modern: true,
+      type: 'error',
+      target: 'solution-creator',
+      verticalPosition: 'top',
+      horizontalPosition: 'center'
+    }));
   }
 
   updateSolutionField(solution: SolutionInfo | {id: string}, fields: Partial<SolutionInfo>): void {

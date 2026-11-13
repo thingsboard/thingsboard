@@ -93,6 +93,8 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
 
   private widgetIds: string[] = [];
 
+  private widget: Widget;
+
   private loaded = false;
 
   constructor(private dashboardCtx: DashboardContext) {
@@ -112,6 +114,13 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
 
   setWidgetIds(widgetIds: string[]) {
     this.widgetIds = widgetIds;
+    this.widget = null;
+    this.loaded = true;
+  }
+
+  setWidget(widget: Widget) {
+    this.widget = widget;
+    this.widgetIds = [this.widget.id];
     this.loaded = true;
   }
 
@@ -130,13 +139,19 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
 
   [Symbol.iterator](): Iterator<Widget> {
     let pointer = 0;
+    const oneWidget = this.widget;
     const widgetIds = this.widgetIds;
     const dashboard = this.dashboardCtx.getDashboard();
     return {
       next(value?: any): IteratorResult<Widget> {
         if (pointer < widgetIds.length) {
           const widgetId = widgetIds[pointer++];
-          const widget = dashboard.configuration.widgets[widgetId];
+          let widget: Widget;
+          if (oneWidget && oneWidget.id === widgetId) {
+            widget = oneWidget;
+          } else {
+            widget = dashboard.configuration.widgets[widgetId];
+          }
           return {
             done: false,
             value: widget
@@ -161,7 +176,11 @@ export class LayoutWidgetsArray implements Iterable<Widget> {
   }
 
   private widgetById(widgetId: string): Widget {
-    return this.dashboardCtx.getDashboard().configuration.widgets[widgetId];
+    if (this.widget && this.widget.id === widgetId) {
+      return this.widget;
+    } else {
+      return this.dashboardCtx.getDashboard().configuration.widgets[widgetId];
+    }
   }
 
 }

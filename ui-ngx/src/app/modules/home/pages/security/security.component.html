@@ -5,8 +5,8 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="profile-container flex flex-col gap-2">
-  <mat-card appearance="outlined" class="profile-card flex flex-col">
+<div>
+  <mat-card appearance="outlined" class="profile-card tb-content-card flex flex-col">
     <mat-card-title style="margin-bottom: 8px;">
       <span class="mat-headline-5 card-title" translate>profile.jwt-token</span>
     </mat-card-title>
@@ -21,7 +21,7 @@
     </div>
   </mat-card>
   @if (resource.API_KEY | hasGenericPermission: operation.READ) {
-    <mat-card appearance="outlined" class="profile-card flex flex-col">
+    <mat-card appearance="outlined" class="profile-card tb-content-card flex flex-col">
       <div class="flex flex-row items-center justify-between">
         <mat-card-title>
           <span class="mat-headline-5 card-title" translate>api-key.api-keys</span>
@@ -37,7 +37,7 @@
     </mat-card>
   }
   @if (resource.PROFILE | hasGenericPermission: operation.WRITE) {
-    <mat-card appearance="outlined" class="profile-card flex flex-col">
+    <mat-card appearance="outlined" class="profile-card tb-content-card flex flex-col">
       <mat-card-content class="change-password" tb-toast toastTarget="changePassword">
         <form #changePasswordForm="ngForm" [formGroup]="changePassword" (ngSubmit)="onChangePassword(changePasswordForm)">
           <div class="flex flex-row gap-6.25 xs:flex-col xs:gap-0">
@@ -176,7 +176,7 @@
     </mat-card>
   }
   @if (allowTwoFactorProviders.length && (resource.PROFILE | hasGenericPermission: operation.WRITE)) {
-    <mat-card appearance="outlined" class="profile-card">
+    <mat-card appearance="outlined" class="profile-card tb-content-card">
       <mat-card-title style="margin-bottom: 20px;">
         <span class="mat-headline-5 card-title" translate>admin.2fa.2fa</span>
       </mat-card-title>

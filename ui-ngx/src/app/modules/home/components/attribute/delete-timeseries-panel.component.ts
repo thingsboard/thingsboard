@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, InjectionToken, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, ElementRef, InjectionToken, OnDestroy, OnInit } from '@angular/core';
 import { OverlayRef } from '@angular/cdk/overlay';
 import {
   TimeseriesDeleteStrategy,
@@ -37,10 +38,14 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  private resizeObserver = new ResizeObserver(() => this.overlayRef.updatePosition());
+
   constructor(private overlayRef: OverlayRef,
+              private elementRef: ElementRef<HTMLElement>,
               private fb: FormBuilder) { }
 
   ngOnInit(): void {
+    this.resizeObserver.observe(this.elementRef.nativeElement);
     const today = new Date();
     this.deleteTimeseriesFormGroup = this.fb.group({
       strategy: [TimeseriesDeleteStrategy.DELETE_ALL_DATA],
@@ -72,6 +77,7 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.resizeObserver.disconnect();
     this.destroy$.next();
     this.destroy$.complete();
   }

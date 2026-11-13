@@ -116,20 +116,31 @@ class MergeHostValuesRuleTest {
     @Test
     void apply_setsGatewayHostAndPort() {
         when(deviceConnectivityService.resolveGatewayHost("http://demo.example.com:8080")).thenReturn("demo.example.com");
+        when(deviceConnectivityService.resolveGatewayPort()).thenReturn("8883");
         AgentApplication app = gatewayApp();
         rule.apply(app, ctx(true, "http://demo.example.com:8080"));
         assertEquals("demo.example.com", env(app, "TB_GW_HOST"));
+        assertEquals("8883", env(app, "TB_GW_PORT"));
+    }
+
+    @Test
+    void apply_fallsBackToDefaultGatewayPort_whenPortNotConfigured() {
+        when(deviceConnectivityService.resolveGatewayHost("http://demo.example.com:8080")).thenReturn("demo.example.com");
+        when(deviceConnectivityService.resolveGatewayPort()).thenReturn(null);
+        AgentApplication app = gatewayApp();
+        rule.apply(app, ctx(true, "http://demo.example.com:8080"));
         assertEquals("1883", env(app, "TB_GW_PORT"));
     }
 
     @Test
     void apply_setsLegacyGatewayHostAndPort_whenComposeUsesLegacyEnvNames() {
         when(deviceConnectivityService.resolveGatewayHost("http://demo.example.com:8080")).thenReturn("demo.example.com");
+        when(deviceConnectivityService.resolveGatewayPort()).thenReturn("1884");
         AgentApplication app = app(AgentApplicationType.GATEWAY, GATEWAY_IMAGE);
         addEnv(app, "host", "port", "accessToken");
         rule.apply(app, ctx(true, "http://demo.example.com:8080"));
         assertEquals("demo.example.com", env(app, "host"));
-        assertEquals("1883", env(app, "port"));
+        assertEquals("1884", env(app, "port"));
         assertFalse(compose(app).get("services").get("main").get("environment").has("TB_GW_HOST"));
     }
 

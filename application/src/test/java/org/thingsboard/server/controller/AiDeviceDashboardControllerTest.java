@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.DashboardOperationRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.ai.common.client.TbAiClient;
@@ -26,10 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -101,7 +100,7 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(msgErrorPermission)));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -116,7 +115,7 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(msgErrorPermission)));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -147,7 +146,7 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(msgErrorPermissionWrite + AI_RESOURCE)));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -163,7 +162,7 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(msgErrorPermissionRead + "DEVICE '" + device.getName() + "'!")));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -179,7 +178,7 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo("You don't have permission to perform 'READ_ATTRIBUTES' operation with DEVICE '" + device.getName() + "'!")));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -195,7 +194,7 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo("You don't have permission to perform 'READ_TELEMETRY' operation with DEVICE '" + device.getName() + "'!")));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -211,7 +210,7 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(msgErrorPermissionCreate + "'DASHBOARD' resource!")));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -229,15 +228,14 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
                 .andExpect(jsonPath("$.entityType", equalTo("DASHBOARD")))
                 .andExpect(jsonPath("$.limit", equalTo(1)));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
     public void shouldPropagateAiServiceErrorMessage_whenAiClientReturnsFailure() throws Exception {
         // GIVEN
         String aiServiceError = "Failed to save dashboard: dashboards limit reached";
-        given(tbAiClient.generateDashboard(eq(device.getUuidId()), any(JsonNode.class), any(String.class), any(TbAiClient.TokenProvider.class)))
-                .willReturn(failure(aiServiceError));
+        givenOperation(ChannelProtocol.DASHBOARD_GENERATE, failure(aiServiceError));
 
         // WHEN
         ResultActions result = doPost("/api/ai/devices/" + device.getUuidId() + "/dashboard", JacksonUtil.newObjectNode());
@@ -246,7 +244,7 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message", equalTo(aiServiceError)));
 
-        verify(tbAiClient).generateDashboard(eq(device.getUuidId()), any(JsonNode.class), any(String.class), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.DASHBOARD_GENERATE);
     }
 
     private void givenDashboardLimitReached(long limit) {
@@ -255,15 +253,14 @@ public class AiDeviceDashboardControllerTest extends AbstractAiControllerTest {
     }
 
     private void givenAiClientGeneratesDashboard(JsonNode request, JsonNode response) {
-        given(tbAiClient.generateDashboard(eq(device.getUuidId()), eq(request), any(String.class), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(response));
+        givenOperation(ChannelProtocol.DASHBOARD_GENERATE, new DashboardOperationRequest(device.getUuidId(), request), success(response));
     }
 
     private TbAiClient.TokenProvider verifyAiClientGeneratedDashboard(JsonNode request) {
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProviderCaptor = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).generateDashboard(eq(device.getUuidId()), eq(request), eq("Bearer " + token), tokenProviderCaptor.capture());
-        verifyNoMoreInteractions(tbAiClient);
-        return tokenProviderCaptor.getValue();
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.DASHBOARD_GENERATE, new DashboardOperationRequest(device.getUuidId(), request));
+        assertThat(context.tbAccessToken()).isEqualTo("Bearer " + token);
+        verifyNoMoreInteractions(tbAiTransport);
+        return context.tokenProvider();
     }
 
     private static ObjectNode generatedDashboardResponse() {

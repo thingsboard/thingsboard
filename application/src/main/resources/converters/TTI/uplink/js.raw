@@ -1,0 +1,73 @@
+// The Things Stack adds decoded_payload for a device registered from the LoRaWAN Device Repository, and the payload
+// is then that JSON: its keys become telemetry. A Milesight-style history list keeps each record's time.
+// Such a device gets the profile <brand_id>-<model_id>, so all devices of one model share it,
+// or the name the integration metadata gives it under profile.<brand_id>-<model_id>.
+// A device that is not in the Repository can name its model in decoded_payload: its payload formatter adds
+// tbVersionIds: { brand_id, model_id }, which is not telemetry; they become the attributes brandId and modelId, as the
+// integration writes them from version_ids. Any other device gets LoRaWAN Device.
+// The keys the integration metadata lists under attributes.<brand_id>-<model_id> (comma-separated) are saved as
+// attributes, not telemetry: device information and settings.
+var values = {};
+var attributes = {};
+var history = [];
+var versionIds = null;
+if (metadata.payloadFormat == 'JSON') {
+    values = decodeToJson(payload);
+    if (Array.isArray(values.history)) {
+        values.history.forEach(function (record) {
+            if (record.timestamp != null) {
+                var ts = record.timestamp * 1000;
+                delete record.timestamp;
+                history.push({ ts: ts, values: record });
+            }
+        });
+        delete values.history;
+    }
+    if (Object.prototype.hasOwnProperty.call(values, 'tbVersionIds')) {
+        versionIds = values.tbVersionIds;
+        delete values.tbVersionIds;
+    }
+}
+var brandId = metadata.brandId;
+var modelId = metadata.modelId;
+if ((brandId == null || modelId == null) && typeof versionIds === 'object' && versionIds !== null && !Array.isArray(versionIds)) {
+    brandId = versionIds.brand_id;
+    modelId = versionIds.model_id;
+    if (brandId != null && modelId != null) {
+        attributes.brandId = brandId;
+        attributes.modelId = modelId;
+    }
+}
+var profile = 'LoRaWAN Device';
+if (brandId != null && modelId != null) {
+    var model = brandId + '-' + modelId;
+    profile = model;
+    // The profile name chosen at install, kept in the integration metadata
+    var customProfile = metadata['profile.' + model];
+    if (customProfile != null && customProfile != '') {
+        profile = customProfile;
+    }
+    var attributeKeys = metadata['attributes.' + model];
+    if (attributeKeys != null && attributeKeys != '') {
+        attributeKeys.split(',').forEach(function (key) {
+            key = key.trim();
+            if (key != '' && values.hasOwnProperty(key)) {
+                attributes[key] = values[key];
+                delete values[key];
+            }
+        });
+    }
+}
+var result = { profile: profile, telemetry: { ts: metadata.ts, values: values } };
+if (history.length > 0) {
+    history.push({ ts: metadata.ts, values: values });
+    result.telemetry = history;
+}
+if (Object.keys(attributes).length > 0) {
+    result.attributes = attributes;
+}
+return result;
+
+function decodeToJson(payload) {
+    return JSON.parse(String.fromCharCode.apply(String, payload));
+}

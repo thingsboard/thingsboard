@@ -7,8 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -70,6 +72,7 @@ class CleanUpServiceTest {
         DeleteEntityEvent<Alarm> event = DeleteEntityEvent.<Alarm>builder()
                 .tenantId(tenantId)
                 .entityId(alarmId)
+                .entity(new Alarm(alarmId))
                 .build();
 
         cleanUpService.handleEntityDeletionEvent(event);
@@ -91,11 +94,28 @@ class CleanUpServiceTest {
     }
 
     @Test
+    void alarmCommentDeletionDoesNotEnqueueAlarmCommentsCleanupTask() {
+        AlarmId alarmId = new AlarmId(UUID.randomUUID());
+        AlarmComment alarmComment = new AlarmComment(new AlarmCommentId(UUID.randomUUID()));
+        alarmComment.setAlarmId(alarmId);
+        DeleteEntityEvent<AlarmComment> event = DeleteEntityEvent.<AlarmComment>builder()
+                .tenantId(tenantId)
+                .entityId(alarmId)
+                .entity(alarmComment)
+                .build();
+
+        cleanUpService.handleEntityDeletionEvent(event);
+
+        verify(housekeeperClient, never()).submitTask(any());
+    }
+
+    @Test
     void bulkAlarmDeletionDoesNotEnqueuePerAlarmCommentsCleanupTask() {
         AlarmId alarmId = new AlarmId(UUID.randomUUID());
         DeleteEntityEvent<Alarm> event = DeleteEntityEvent.<Alarm>builder()
                 .tenantId(tenantId)
                 .entityId(alarmId)
+                .entity(new Alarm(alarmId))
                 .cause(ActionCause.BULK_DELETION)
                 .build();
 

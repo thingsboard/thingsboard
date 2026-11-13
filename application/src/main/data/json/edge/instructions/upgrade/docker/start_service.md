@@ -8,11 +8,11 @@ nano docker-compose.yml
 services:
     mytbedge:
         restart: always
-        image: "thingsboard/tb-edge-pe:${TB_EDGE_VERSION}"
+        image: "thingsboard/${TB_EDGE_REPO}:${TB_EDGE_VERSION}"
 ...
 ```
 
-Make sure your image is set to **tb-edge-pe:${TB_EDGE_VERSION}**.
+Make sure your image is set to **${TB_EDGE_REPO}:${TB_EDGE_VERSION}**.
 Execute the following commands to up this docker compose directly:
 
 ```bash

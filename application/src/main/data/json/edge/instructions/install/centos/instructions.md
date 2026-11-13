@@ -116,14 +116,14 @@ sudo systemctl restart postgresql-16.service && psql -U postgres -d postgres -h 
 Download installation package:
 
 ```bash
-wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}pe.rpm
+wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}${TB_EDGE_PKG_SUFFIX}.rpm
 {:copy-code}
 ```
 
 Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
-sudo rpm -Uvh tb-edge-${TB_EDGE_TAG}pe.rpm
+sudo rpm -Uvh tb-edge-${TB_EDGE_TAG}${TB_EDGE_PKG_SUFFIX}.rpm
 {:copy-code}
 ```
 

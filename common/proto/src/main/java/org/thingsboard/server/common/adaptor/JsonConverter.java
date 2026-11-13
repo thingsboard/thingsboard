@@ -51,10 +51,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
@@ -70,12 +72,19 @@ public class JsonConverter {
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
-        convertToTelemetry(jsonElement, ts, null, builder);
+        convertToTelemetry(jsonElement, ts, null, builder, Collections.emptySet());
         return builder.build();
     }
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
         return convertToTelemetryProto(jsonElement, System.currentTimeMillis());
+    }
+
+    // String values of noCastKeys stay strings even when type cast is enabled.
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, Set<String> noCastKeys) throws JsonSyntaxException {
+        PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
+        convertToTelemetry(jsonElement, System.currentTimeMillis(), null, builder, noCastKeys);
+        return builder.build();
     }
 
     public static TbPair<TransportProtos.PostTelemetryMsg, List<GatewayMetadata>> convertToGatewayTelemetry(JsonElement jsonElement, long systemTs) {
@@ -102,7 +111,7 @@ public class JsonConverter {
                             throw new JsonSyntaxException("Can't parse gateway metadata: " + metadataElem);
                         }
                     }
-                    parseObject(systemTs, null, builder, jo);
+                    parseObject(systemTs, null, builder, jo, Collections.emptySet());
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
@@ -121,13 +130,13 @@ public class JsonConverter {
         return element;
     }
 
-    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
+    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, Set<String> noCastKeys) {
         if (jsonElement.isJsonObject()) {
-            parseObject(systemTs, result, builder, jsonElement.getAsJsonObject());
+            parseObject(systemTs, result, builder, jsonElement.getAsJsonObject(), noCastKeys);
         } else if (jsonElement.isJsonArray()) {
             jsonElement.getAsJsonArray().forEach(je -> {
                 if (je.isJsonObject()) {
-                    parseObject(systemTs, result, builder, je.getAsJsonObject());
+                    parseObject(systemTs, result, builder, je.getAsJsonObject(), noCastKeys);
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
@@ -137,12 +146,12 @@ public class JsonConverter {
         }
     }
 
-    private static void parseObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo) {
+    private static void parseObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo, Set<String> noCastKeys) {
         try {
             if (result != null) {
                 parseObject(result, systemTs, jo);
             } else {
-                parseObject(builder, systemTs, jo);
+                parseObject(builder, systemTs, jo, noCastKeys);
             }
         } catch (Exception e) {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jo);
@@ -185,9 +194,14 @@ public class JsonConverter {
     }
 
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
+        return convertToAttributesProto(jsonObject, Collections.emptySet());
+    }
+
+    // String values of noCastKeys stay strings even when type cast is enabled.
+    public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject, Set<String> noCastKeys) throws JsonSyntaxException {
         if (jsonObject.isJsonObject()) {
             PostAttributeMsg.Builder result = PostAttributeMsg.newBuilder();
-            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject());
+            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject(), noCastKeys);
             result.addAllKv(keyValueList);
             return result.build();
         } else {
@@ -205,22 +219,22 @@ public class JsonConverter {
         return result;
     }
 
-    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonObject jo) {
+    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonObject jo, Set<String> noCastKeys) {
         if (jo.has("ts") && jo.has("values")) {
-            parseWithTs(builder, jo);
+            parseWithTs(builder, jo, noCastKeys);
         } else {
-            parseWithoutTs(builder, systemTs, jo);
+            parseWithoutTs(builder, systemTs, jo, noCastKeys);
         }
     }
 
-    private static void parseWithoutTs(PostTelemetryMsg.Builder request, long systemTs, JsonObject jo) {
+    private static void parseWithoutTs(PostTelemetryMsg.Builder request, long systemTs, JsonObject jo, Set<String> noCastKeys) {
         TsKvListProto.Builder builder = TsKvListProto.newBuilder();
         builder.setTs(systemTs);
-        builder.addAllKv(parseProtoValues(jo));
+        builder.addAllKv(parseProtoValues(jo, noCastKeys));
         request.addTsKvList(builder.build());
     }
 
-    private static void parseWithTs(PostTelemetryMsg.Builder request, JsonObject jo) {
+    private static void parseWithTs(PostTelemetryMsg.Builder request, JsonObject jo, Set<String> noCastKeys) {
         JsonElement tsJsonElement = jo.get("ts");
         if (tsJsonElement.isJsonNull()) {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + "ts is null!");
@@ -229,12 +243,12 @@ public class JsonConverter {
         } else {
             TsKvListProto.Builder builder = TsKvListProto.newBuilder();
             builder.setTs(tsJsonElement.getAsLong());
-            builder.addAllKv(parseProtoValues(jo.get("values").getAsJsonObject()));
+            builder.addAllKv(parseProtoValues(jo.get("values").getAsJsonObject(), noCastKeys));
             request.addTsKvList(builder.build());
         }
     }
 
-    private static List<KeyValueProto> parseProtoValues(JsonObject valuesObject) {
+    private static List<KeyValueProto> parseProtoValues(JsonObject valuesObject, Set<String> noCastKeys) {
         List<KeyValueProto> result = new ArrayList<>();
         for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
             JsonElement element = valueEntry.getValue();
@@ -245,7 +259,7 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (isTypeCastEnabled && !noCastKeys.contains(valueEntry.getKey()) && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
                         } catch (RuntimeException th) {
@@ -308,11 +322,31 @@ public class JsonConverter {
         return ToServerRpcRequestMsg.newBuilder().setRequestId(requestId).setMethodName(object.get("method").getAsString()).setParams(GSON.toJson(object.get("params"))).build();
     }
 
+
+    private static boolean isExplicitDouble(String valueAsString, BigDecimal bd) {
+        // 1. If BigDecimal retains a fractional part (scale > 0) after removing trailing zeros, it is strictly a Double (e.g., 1.5, 1E-3)
+        if (bd.stripTrailingZeros().scale() > 0) {
+            return true;
+        }
+        // 2. If it contains a decimal point '.' but no exponent ('E' or 'e') (e.g., "100.0"), treat as Double.
+        // Values with exponents that resolve to integers (e.g., "9.97E19") will return false to be processed in the Long/BigInteger flow.
+        return valueAsString.contains(".") && !valueAsString.contains("E") && !valueAsString.contains("e");
+    }
+
     private static void parseNumericValue(List<KvEntry> result, Entry<String, JsonElement> valueEntry, JsonPrimitive value) {
         String valueAsString = value.getAsString();
         String key = valueEntry.getKey();
         var bd = new BigDecimal(valueAsString);
-        if (bd.stripTrailingZeros().scale() <= 0 && !isSimpleDouble(valueAsString)) {
+
+        if (isExplicitDouble(valueAsString, bd)) {
+            if (bd.stripTrailingZeros().scale() <= 16) {
+                result.add(new DoubleDataEntry(key, bd.doubleValue()));
+            } else if (!value.isNumber() || isTypeCastEnabled) {
+                result.add(new StringDataEntry(key, bd.toPlainString()));
+            } else {
+                throw new JsonSyntaxException("Big decimal values are not supported!");
+            }
+        } else {
             try {
                 result.add(new LongDataEntry(key, bd.longValueExact()));
             } catch (ArithmeticException e) {
@@ -321,14 +355,6 @@ public class JsonConverter {
                 } else {
                     throw new JsonSyntaxException("Big integer values are not supported!");
                 }
-            }
-        } else {
-            if (bd.scale() <= 16) {
-                result.add(new DoubleDataEntry(key, bd.doubleValue()));
-            } else if (!value.isNumber() || isTypeCastEnabled) {
-                result.add(new StringDataEntry(key, bd.toPlainString()));
-            } else {
-                throw new JsonSyntaxException("Big integer values are not supported!");
             }
         }
     }
@@ -657,7 +683,7 @@ public class JsonConverter {
     public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted) throws
             JsonSyntaxException {
         Map<Long, List<KvEntry>> result = sorted ? new TreeMap<>() : new HashMap<>();
-        convertToTelemetry(jsonElement, systemTs, result, null);
+        convertToTelemetry(jsonElement, systemTs, result, null, Collections.emptySet());
         return result;
     }
 

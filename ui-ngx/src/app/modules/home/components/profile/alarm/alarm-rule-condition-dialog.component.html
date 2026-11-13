@@ -30,7 +30,7 @@
           formControlName="keyFilters">
         </tb-key-filter-list>
         <section formGroupName="spec" style="margin-top: 1em">
-          <mat-form-field class="mat-block" hideRequiredMarker>
+          <mat-form-field class="mat-block" appearance="outline" hideRequiredMarker>
             <mat-label translate>device-profile.condition-type</mat-label>
             <mat-select formControlName="type" required>
               @for (alarmConditionType of alarmConditionTypes; track alarmConditionType) {
@@ -55,7 +55,7 @@
               </tb-alarm-duration-predicate-value>
               @if (conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION) {
                 <div class="max-w-23% flex-full">
-                  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+                  <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
                     <mat-select formControlName="unit" required
                                 placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
                       @for (timeUnit of timeUnits; track timeUnit) {

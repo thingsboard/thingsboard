@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -11,11 +12,17 @@ import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbActorStopReason;
+import org.thingsboard.server.common.msg.plugin.RuleNodeUpdatedMsg;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -185,6 +192,39 @@ public class ActorSystemTest {
     }
 
     @Test
+    public void testBroadcastToChildrenWithFilterAndHighPriority() throws Exception {
+        executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName()));
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
+
+        TbActorId parentId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
+        actorSystem.createRootActor(ROOT_DISPATCHER, new RecordingActorCreator(parentId, new CopyOnWriteArrayList<>()));
+        TbActorId matchingChildId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
+        List<Integer> matchingChildValues = new CopyOnWriteArrayList<>();
+        actorSystem.createChildActor(ROOT_DISPATCHER, new RecordingActorCreator(matchingChildId, matchingChildValues), parentId);
+        TbActorId otherChildId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
+        List<Integer> otherChildValues = new CopyOnWriteArrayList<>();
+        actorSystem.createChildActor(ROOT_DISPATCHER, new RecordingActorCreator(otherChildId, otherChildValues), parentId);
+
+        // block the only dispatcher thread, so that all messages are enqueued before any is processed
+        CountDownLatch dispatcherBlocked = new CountDownLatch(1);
+        executor.submit(() -> {
+            dispatcherBlocked.await();
+            return null;
+        });
+        actorSystem.tell(matchingChildId, new IntTbActorMsg(1));
+        actorSystem.tell(matchingChildId, new IntTbActorMsg(2));
+        actorSystem.broadcastToChildren(parentId, id -> id.equals(matchingChildId), new IntTbActorMsg(42), true);
+        dispatcherBlocked.countDown();
+
+        Awaitility.await().atMost(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(matchingChildValues).containsExactly(42, 1, 2));
+
+        actorSystem.tell(otherChildId, new IntTbActorMsg(3));
+        Awaitility.await().atMost(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(otherChildValues).containsExactly(3));
+    }
+
+    @Test
     public void testFailedInit() throws InterruptedException {
         executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
         actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
@@ -202,6 +242,58 @@ public class ActorSystemTest {
         Assertions.assertFalse(testCtx1.getLatch().await(2, TimeUnit.SECONDS));
         Assertions.assertTrue(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
         Assertions.assertTrue(testCtx1.getLatch().await(3, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void testInitFailedActorIsReinitializedOnRuleNodeUpdate() throws InterruptedException {
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
+        ActorTestCtx testCtx = getActorTestCtx(1);
+        RuleNodeId ruleNodeId = new RuleNodeId(UUID.randomUUID());
+        AtomicInteger createdActors = new AtomicInteger();
+        AtomicInteger initAttempts = new AtomicInteger();
+        CountDownLatch destroyed = new CountDownLatch(1);
+
+        // fails its first init without retries, as a rule node whose start or update failed; succeeds afterwards
+        TbActorRef actorRef = actorSystem.createRootActor(ROOT_DISPATCHER, new TbActorCreator() {
+            @Override
+            public TbActorId createActorId() {
+                return new TbEntityActorId(ruleNodeId);
+            }
+
+            @Override
+            public TbActor createActor() {
+                createdActors.incrementAndGet();
+                return new TestRootActor(createActorId(), testCtx) {
+                    @Override
+                    public void init(TbActorCtx ctx) throws TbActorException {
+                        if (initAttempts.incrementAndGet() == 1) {
+                            throw new TbActorException("Test init failure", new RuntimeException());
+                        }
+                        super.init(ctx);
+                    }
+
+                    @Override
+                    public InitFailureStrategy onInitFailure(int attempt, Throwable t) {
+                        return InitFailureStrategy.stop();
+                    }
+
+                    @Override
+                    public void destroy(TbActorStopReason stopReason, Throwable cause) {
+                        destroyed.countDown();
+                    }
+                };
+            }
+        });
+        Assertions.assertTrue(destroyed.await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+
+        actorRef.tellWithHighPriority(new RuleNodeUpdatedMsg(TenantId.SYS_TENANT_ID, ruleNodeId));
+        Awaitility.await().atMost(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS).until(() -> initAttempts.get() == 2);
+        actorRef.tell(new IntTbActorMsg(42));
+
+        Assertions.assertTrue(testCtx.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+        // the same actor instance is initialized again, so state it kept from its creation is reused by the re-init
+        assertThat(createdActors.get()).isEqualTo(1);
     }
 
 
@@ -258,4 +350,32 @@ public class ActorSystemTest {
         AtomicInteger invocations = new AtomicInteger();
         return new ActorTestCtx(countDownLatch, invocations, i, actual);
     }
+
+    private static class RecordingActorCreator implements TbActorCreator {
+
+        private final TbActorId actorId;
+        private final List<Integer> values;
+
+        RecordingActorCreator(TbActorId actorId, List<Integer> values) {
+            this.actorId = actorId;
+            this.values = values;
+        }
+
+        @Override
+        public TbActorId createActorId() {
+            return actorId;
+        }
+
+        @Override
+        public TbActor createActor() {
+            return new AbstractTbActor() {
+                @Override
+                public boolean process(TbActorMsg msg) {
+                    values.add(((IntTbActorMsg) msg).getValue());
+                    return true;
+                }
+            };
+        }
+    }
+
 }

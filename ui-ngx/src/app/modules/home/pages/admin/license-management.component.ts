@@ -194,7 +194,17 @@ export class LicenseManagementComponent extends PageComponent implements OnInit,
     return false;
   }
 
+  itemMeterWidth(count: number, max: number): number {
+    if (count > 0 && max > 0) {
+      return Math.min(count / max, 1) * 100;
+    }
+    return 0;
+  }
+
   itemLimitClass(itemType: UsageItemType, count: number, max: number): string {
+    if (max > 0 && count > max) {
+      return 'item-critical';
+    }
     if ([UsageItemType.DEVICES, UsageItemType.ASSETS, UsageItemType.AI_CREDITS].includes(itemType)) {
       if (this.itemLimitCritical(count, max)) {
         return 'item-critical';
