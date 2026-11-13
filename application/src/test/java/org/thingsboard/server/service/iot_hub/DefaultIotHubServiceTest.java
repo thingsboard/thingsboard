@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -43,7 +44,27 @@ import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.iot_hub.AlarmRuleInstalledItemDescriptor;
+import org.thingsboard.server.common.data.iot_hub.CalculatedFieldInstalledItemDescriptor;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
+import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +95,10 @@ class DefaultIotHubServiceTest {
     private IotHubRestClient iotHubRestClient;
     @Mock
     private IotHubInstalledItemService iotHubInstalledItemService;
+    @Mock
+    private TbCalculatedFieldService tbCalculatedFieldService;
+    @Mock
+    private CalculatedFieldService calculatedFieldService;
     @Mock
     private DeviceService deviceService;
     @Mock
@@ -454,6 +479,151 @@ class DefaultIotHubServiceTest {
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.isRolledBack()).isFalse();
         assertThat(result.getErrorMessage()).contains("install failed");
+    }
+
+    @Test
+    void doInstallVersion_calculatedField_mapsTenantReferencesToInstallingTenant() throws Exception {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "CALCULATED_FIELD", "CF", "1.0"));
+        when(iotHubRestClient.getVersionFileData(versionId)).thenReturn(calculatedFieldFileData());
+        when(tbCalculatedFieldService.save(any(), eq(user))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(invocation -> invocation.getArgument(1));
+
+        service.doInstallVersion(user, versionId, null, null);
+
+        ArgumentCaptor<CalculatedField> captor = ArgumentCaptor.forClass(CalculatedField.class);
+        verify(tbCalculatedFieldService).save(captor.capture(), eq(user));
+        assertThat(((ArgumentsBasedCalculatedFieldConfiguration) captor.getValue().getConfiguration()).getArguments().get("T").getRefEntityId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    void updateItemVersion_calculatedField_mapsTenantReferencesToInstallingTenant() throws Exception {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(UUID.randomUUID());
+        CalculatedFieldInstalledItemDescriptor descriptor = new CalculatedFieldInstalledItemDescriptor();
+        descriptor.setCalculatedFieldId(calculatedFieldId);
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("CALCULATED_FIELD");
+        item.setItemVersionId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        when(iotHubRestClient.getVersionInfo(anyString()))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "CALCULATED_FIELD", "CF", "2.0"));
+        when(iotHubRestClient.getVersionFileData(versionId)).thenReturn(calculatedFieldFileData());
+        CalculatedField existing = new CalculatedField(calculatedFieldId);
+        existing.setTenantId(tenantId);
+        when(calculatedFieldService.findById(tenantId, calculatedFieldId)).thenReturn(existing);
+
+        UpdateItemVersionResult result = service.updateItemVersion(user, item.getId(), versionId, true, null);
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<CalculatedField> captor = ArgumentCaptor.forClass(CalculatedField.class);
+        verify(tbCalculatedFieldService).save(captor.capture(), eq(user));
+        assertThat(((ArgumentsBasedCalculatedFieldConfiguration) captor.getValue().getConfiguration()).getArguments().get("T").getRefEntityId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    void doInstallVersion_alarmRule_mapsTenantReferencesToInstallingTenant() throws Exception {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "ALARM_RULE", "Alarm", "1.0"));
+        when(iotHubRestClient.getVersionFileData(versionId)).thenReturn(alarmRuleFileData());
+        when(tbCalculatedFieldService.save(any(), eq(user))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(invocation -> invocation.getArgument(1));
+
+        service.doInstallVersion(user, versionId, null, null);
+
+        ArgumentCaptor<CalculatedField> captor = ArgumentCaptor.forClass(CalculatedField.class);
+        verify(tbCalculatedFieldService).save(captor.capture(), eq(user));
+        assertThat(((ArgumentsBasedCalculatedFieldConfiguration) captor.getValue().getConfiguration()).getArguments().get("T").getRefEntityId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    void updateItemVersion_alarmRule_mapsTenantReferencesToInstallingTenant() throws Exception {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(UUID.randomUUID());
+        AlarmRuleInstalledItemDescriptor descriptor = new AlarmRuleInstalledItemDescriptor();
+        descriptor.setCalculatedFieldId(calculatedFieldId);
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("ALARM_RULE");
+        item.setItemVersionId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        when(iotHubRestClient.getVersionInfo(anyString()))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "ALARM_RULE", "Alarm", "2.0"));
+        when(iotHubRestClient.getVersionFileData(versionId)).thenReturn(alarmRuleFileData());
+        CalculatedField existing = new CalculatedField(calculatedFieldId);
+        existing.setTenantId(tenantId);
+        when(calculatedFieldService.findById(tenantId, calculatedFieldId)).thenReturn(existing);
+
+        UpdateItemVersionResult result = service.updateItemVersion(user, item.getId(), versionId, true, null);
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<CalculatedField> captor = ArgumentCaptor.forClass(CalculatedField.class);
+        verify(tbCalculatedFieldService).save(captor.capture(), eq(user));
+        assertThat(((ArgumentsBasedCalculatedFieldConfiguration) captor.getValue().getConfiguration()).getArguments().get("T").getRefEntityId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    void doInstallVersion_geofencingCalculatedField_mapsZoneGroupTenantReferencesToInstallingTenant() throws Exception {
+        mockTenant();
+        String versionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(versionId))
+                .thenReturn(version(versionId, UUID.randomUUID().toString(), "CALCULATED_FIELD", "Geofencing", "1.0"));
+        when(iotHubRestClient.getVersionFileData(versionId)).thenReturn(geofencingFileData());
+        when(tbCalculatedFieldService.save(any(), eq(user))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(iotHubInstalledItemService.save(eq(tenantId), any())).thenAnswer(invocation -> invocation.getArgument(1));
+
+        service.doInstallVersion(user, versionId, null, null);
+
+        ArgumentCaptor<CalculatedField> captor = ArgumentCaptor.forClass(CalculatedField.class);
+        verify(tbCalculatedFieldService).save(captor.capture(), eq(user));
+        assertThat(((GeofencingCalculatedFieldConfiguration) captor.getValue().getConfiguration()).getZoneGroups().get("zones").getRefEntityId()).isEqualTo(tenantId);
+    }
+
+    private byte[] calculatedFieldFileData() {
+        SimpleCalculatedFieldConfiguration configuration = new SimpleCalculatedFieldConfiguration();
+        configuration.setArguments(Map.of("T", otherTenantArgument()));
+        configuration.setExpression("T");
+        return fileData(CalculatedFieldType.SIMPLE, configuration);
+    }
+
+    private byte[] alarmRuleFileData() {
+        AlarmCalculatedFieldConfiguration configuration = new AlarmCalculatedFieldConfiguration();
+        configuration.setArguments(Map.of("T", otherTenantArgument()));
+        configuration.setCreateRules(Map.of());
+        return fileData(CalculatedFieldType.ALARM, configuration);
+    }
+
+    private byte[] geofencingFileData() {
+        ZoneGroupConfiguration zoneGroup = new ZoneGroupConfiguration("perimeter", GeofencingReportStrategy.REPORT_PRESENCE_STATUS_ONLY, false);
+        zoneGroup.setRefEntityId(TenantId.fromUUID(UUID.randomUUID()));
+        GeofencingCalculatedFieldConfiguration configuration = new GeofencingCalculatedFieldConfiguration();
+        configuration.setEntityCoordinates(new EntityCoordinates("latitude", "longitude"));
+        configuration.setZoneGroups(Map.of("zones", zoneGroup));
+        configuration.setOutput(new TimeSeriesOutput());
+        return fileData(CalculatedFieldType.GEOFENCING, configuration);
+    }
+
+    private Argument otherTenantArgument() {
+        Argument argument = new Argument();
+        argument.setRefEntityId(TenantId.fromUUID(UUID.randomUUID()));
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        return argument;
+    }
+
+    private byte[] fileData(CalculatedFieldType type, CalculatedFieldConfiguration configuration) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(new DeviceId(UUID.randomUUID()));
+        calculatedField.setType(type);
+        calculatedField.setName("CF");
+        calculatedField.setConfiguration(configuration);
+        return JacksonUtil.toString(calculatedField).getBytes(StandardCharsets.UTF_8);
     }
 
     private Dashboard dashboard(TenantId owner) {

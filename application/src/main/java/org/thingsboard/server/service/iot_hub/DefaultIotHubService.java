@@ -20,6 +20,8 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -233,6 +235,7 @@ public class DefaultIotHubService implements IotHubService {
         }
         calculatedField.setId(null);
         calculatedField.setTenantId(tenantId);
+        mapTenantReferences(calculatedField, tenantId);
         if (data != null && data.has("entityId")) {
             EntityId entityId = JacksonUtil.treeToValue(data.get("entityId"), EntityId.class);
             calculatedField.setEntityId(entityId);
@@ -257,6 +260,7 @@ public class DefaultIotHubService implements IotHubService {
         }
         alarmRule.setId(null);
         alarmRule.setTenantId(tenantId);
+        mapTenantReferences(alarmRule, tenantId);
         if (data != null && data.has("entityId")) {
             EntityId entityId = JacksonUtil.treeToValue(data.get("entityId"), EntityId.class);
             alarmRule.setEntityId(entityId);
@@ -498,6 +502,7 @@ public class DefaultIotHubService implements IotHubService {
         existing.setName(newCf.getName());
         existing.setType(newCf.getType());
         existing.setConfiguration(newCf.getConfiguration());
+        mapTenantReferences(existing, tenantId);
         tbCalculatedFieldService.save(existing, user);
     }
 
@@ -518,7 +523,24 @@ public class DefaultIotHubService implements IotHubService {
         existing.setName(newCf.getName());
         existing.setType(newCf.getType());
         existing.setConfiguration(newCf.getConfiguration());
+        mapTenantReferences(existing, tenantId);
         tbCalculatedFieldService.save(existing, user);
+    }
+
+    private void mapTenantReferences(CalculatedField calculatedField, TenantId tenantId) {
+        if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration geofencingCfg) {
+            geofencingCfg.getZoneGroups().values().forEach(zoneGroupConfiguration -> {
+                if (zoneGroupConfiguration.getRefEntityId() != null && zoneGroupConfiguration.getRefEntityId().getEntityType() == EntityType.TENANT) {
+                    zoneGroupConfiguration.setRefEntityId(tenantId);
+                }
+            });
+        } else if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
+            argBasedConfig.getArguments().values().forEach(argument -> {
+                if (argument.getRefEntityId() != null && argument.getRefEntityId().getEntityType() == EntityType.TENANT) {
+                    argument.setRefEntityId(tenantId);
+                }
+            });
+        }
     }
 
     private void updateRuleChain(TenantId tenantId, RuleChainInstalledItemDescriptor descriptor, byte[] fileData) throws Exception {
