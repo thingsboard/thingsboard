@@ -283,6 +283,11 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     @Override
+    public boolean hasSession(String sessionId) {
+        return wsSessionsMap.containsKey(sessionId);
+    }
+
+    @Override
     public void close(String sessionId, CloseStatus status) {
         WsSessionMetaData md = wsSessionsMap.get(sessionId);
         if (md != null) {
