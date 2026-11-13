@@ -30,7 +30,24 @@
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.implementationTitle>ThingsBoard Migrator</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.migrator.MigratorApplication</pkg.mainClass>
+        <!-- The Cassandra driver that Spring Data Cassandra is built with, instead of the one the root pom sets for the other modules -->
+        <migrator.cassandra.version>4.19.3</migrator.cassandra.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>java-driver-core</artifactId>
+                <version>${migrator.cassandra.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>java-driver-query-builder</artifactId>
+                <version>${migrator.cassandra.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
