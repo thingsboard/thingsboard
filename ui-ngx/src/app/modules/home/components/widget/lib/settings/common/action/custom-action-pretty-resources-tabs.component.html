@@ -11,7 +11,7 @@
   <mat-tab #resourceTab="matTab">
     <ng-template mat-tab-label>
       <div [matBadge]="action.customResources?.length" [matBadgeHidden]="resourceTab.isActive || !action.customResources?.length"
-           matBadgeSize="small">{{ 'widgets.html-container.resources' | translate }}</div>
+           matBadgeSize="small">{{ 'widget.resources' | translate }}</div>
     </ng-template>
     <div class="flex flex-col gap-2 pt-4" [class.px-2]="fullscreen">
       @if (action.customResources?.length) {
@@ -42,7 +42,7 @@
         }
       } @else {
         <span translate
-              class="tb-prompt flex items-center justify-center">widgets.html-container.no-resources</span>
+              class="tb-prompt flex items-center justify-center">widget.no-resources</span>
       }
       <div>
         <button mat-raised-button color="primary"
@@ -59,16 +59,18 @@
   <mat-tab label="{{ 'widget.css' | translate }}">
     <tb-css class="flex-1"
             [fillHeight]="true"
+            #cssModel="ngModel"
             [(ngModel)]="action.customCss"
-            (ngModelChange)="notifyActionUpdated()"
+            (ngModelChange)="onCodeChange('customCss', cssModel)"
             label="{{ 'widget.css' | translate }}">
     </tb-css>
   </mat-tab>
   <mat-tab label="{{ 'widget.html' | translate }}">
     <tb-html class="flex-1"
              [fillHeight]="true"
+             #htmlModel="ngModel"
              [(ngModel)]="action.customHtml"
-             (ngModelChange)="notifyActionUpdated()"
+             (ngModelChange)="onCodeChange('customHtml', htmlModel)"
              label="{{ 'widget.html' | translate }}">
     </tb-html>
   </mat-tab>
@@ -76,8 +78,9 @@
     <mat-tab label="{{ 'widget.js' | translate }}">
       <tb-js-func class="flex-1"
                   [fillHeight]="true"
+                  #jsModel="ngModel"
                   [(ngModel)]="action.customFunction"
-                  (ngModelChange)="notifyActionUpdated()"
+                  (ngModelChange)="onCodeChange('customFunction', jsModel)"
                   withModules
                   [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
                   [disableUndefinedCheck]="true"

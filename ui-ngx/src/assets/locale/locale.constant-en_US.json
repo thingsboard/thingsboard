@@ -7065,6 +7065,7 @@
         "system": "System",
         "type": "Widget type",
         "resources": "Resources",
+        "no-resources": "No resources configured",
         "resource-url": "JavaScript/CSS URL",
         "resource-is-extension": "Is extension",
         "remove-resource": "Remove resource",

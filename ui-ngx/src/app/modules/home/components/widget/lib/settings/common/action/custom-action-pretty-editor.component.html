@@ -21,21 +21,26 @@
   </div>
   @if (!fullscreen) {
     <tb-custom-action-pretty-resources-tabs class="h-80"
-                                            [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
+                                            [action]="action"
+                                            (codeValidityChange)="onCodeValidityChange($event)"
+                                            (actionUpdated)="onActionUpdated($event)">
     </tb-custom-action-pretty-resources-tabs>
   } @else {
     <div class="flex min-h-0 flex-1">
       <div #leftPanel class="tb-content flex">
         <tb-custom-action-pretty-resources-tabs class="flex-1"
                                                 fullscreen
-                                                [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
+                                                [action]="action"
+                                                (codeValidityChange)="onCodeValidityChange($event)"
+                                                (actionUpdated)="onActionUpdated($event)">
         </tb-custom-action-pretty-resources-tabs>
       </div>
       <div #rightPanel class="tb-content flex">
         <tb-js-func class="flex-1"
                     [fillHeight]="true"
+                    #jsModel="ngModel"
                     [(ngModel)]="action.customFunction"
-                    (ngModelChange)="onActionUpdated()"
+                    (ngModelChange)="onCodeChange('customFunction', jsModel)"
                     withModules
                     [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
                     [disableUndefinedCheck]="true"

@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgModel } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { CustomActionDescriptor } from '@shared/models/widget.models';
 import {
+  CustomActionCodeField,
+  CustomActionCodeValidity,
   CustomPrettyActionEditorCompleter
 } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -25,10 +28,18 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent {
   @Output()
   actionUpdated: EventEmitter<CustomActionDescriptor> = new EventEmitter<CustomActionDescriptor>();
 
+  @Output()
+  codeValidityChange: EventEmitter<CustomActionCodeValidity> = new EventEmitter<CustomActionCodeValidity>();
+
   customPrettyActionEditorCompleter = CustomPrettyActionEditorCompleter;
 
   constructor() {
     super();
+  }
+
+  public onCodeChange(field: CustomActionCodeField, model: NgModel) {
+    this.codeValidityChange.emit({field, valid: model.valid});
+    this.notifyActionUpdated();
   }
 
   public notifyActionUpdated() {
