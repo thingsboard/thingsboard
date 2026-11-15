@@ -27,6 +27,8 @@ const PLATFORMS = {
     // For the Docker image, which installs the chromium package of Debian: see docker/Dockerfile
     await fse.outputFile(path.join(projectRoot(), 'target', 'chromium.env'),
         `CHROMIUM_DEBIAN_VERSION=${debian.version}\nCHROMIUM_DEBIAN_ARCHIVE=${debian.archive}\n`);
+    // For the SBOMs of the packages, which name the Chromium they ship: see pom.xml
+    await fse.outputFile(path.join(projectRoot(), 'target', 'sbom', 'chromium-versions.properties'), `chromium.version=${snapshot.version}\n`);
     await Promise.all(Object.entries(PLATFORMS).map(async ([targetDir, platform]) => {
         await installChromium(platform, path.join(projectRoot(), 'target', 'chromium-' + targetDir),
             path.join(targetPackageDir(targetDir), 'chromium'));
