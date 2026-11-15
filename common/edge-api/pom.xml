@@ -27,10 +27,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>data</artifactId>
         </dependency>
