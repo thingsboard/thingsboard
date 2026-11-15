@@ -9,8 +9,14 @@ of the SBOMs, each with the address and SHA-1 of its source archive, or else wit
 Everything comes from the SBOM, except the SHA-1 of a Maven sources jar, which is read from the Maven repository
 and remembered in a cache file. A package without a sources jar is asked for again each time.
 
-Usage: sbom_to_ort.py --project-version <version> --out <ortproject.json> --cache <file> [--own <group>/<name> ...]
-       [--add <Maven purl>=<SPDX license> ...] <SBOM> ...
+A license that the SBOM gives as a name, and not as an SPDX identifier or expression, is one that nobody recognised.
+ORT would guess what it stands for, so the package must have a curation that says it: see mapped().
+
+A curation that concludes the license of a package sets aside what the scan finds in it, so it is given for the versions
+that someone has looked at. Another version of that package must be looked at as well: see unreviewed().
+
+Usage: sbom_to_ort.py --project-version <version> --out <ortproject.json> --cache <file> --curations <file>
+       [--own <group>/<name> ...] [--add <Maven purl>=<SPDX license> ...] <SBOM> ...
 """
 import argparse
 import concurrent.futures
@@ -24,17 +30,6 @@ import urllib.request
 
 MAVEN_REPOSITORIES = ['https://repo1.maven.org/maven2', 'https://repo.thingsboard.io/artifactory/libs-release-public']
 SHA1 = re.compile(r'^[0-9a-f]{40}$')
-# License names of poms that offer a choice of licenses. ORT maps a name that stands alone, but not one inside a choice.
-# A name that says too little is here together with the address the pom gives for it.
-LICENSE_NAMES = {
-    'Eclipse Distribution License - Version 1.0': 'BSD-3-Clause',
-    'GNU General Public License Version 2': 'GPL-2.0-only',
-    'GNU General Public License, version 2': 'GPL-2.0-only',
-    ('GNU Lesser General Public License', 'http://www.gnu.org/licenses/lgpl-3.0.txt'): 'LGPL-3.0-only',
-    'GNU Lesser General Public License Version 2.1': 'LGPL-2.1-only',
-    'Mozilla Public License Version 2.0': 'MPL-2.0',
-    'The W3C License': 'W3C',
-}
 
 
 def main():
@@ -43,6 +38,7 @@ def main():
     parser.add_argument('--out', required=True)
     parser.add_argument('--own', action='append', default=[], help='<group>/<name> of our own code released separately')
     parser.add_argument('--cache', required=True, help='file that remembers the sources jars of Maven packages')
+    parser.add_argument('--curations', required=True, help='the package curations of ORT, as JSON')
     parser.add_argument('--add', action='append', default=[], metavar='PURL=LICENSE',
                         help='a Maven package that the artifact contains and the SBOMs do not list yet')
     parser.add_argument('sboms', nargs='+')
@@ -88,7 +84,8 @@ def main():
             json.dump(cache, open(temporary, 'w'), indent=1, sort_keys=True)
             os.replace(temporary, args.cache)
 
-    dependencies, without_source = [], []
+    curations = json.load(open(args.curations))
+    dependencies, without_source, unnamed, unreviewed_versions = [], [], [], []
     for key, component in sorted(components.items()):
         dependency = {'id': identifier(component), 'purl': key}
         source = cache.get(key) if is_maven(key) else npm_tarball(component)
@@ -101,10 +98,22 @@ def main():
         if not source:
             origin = f"repository {vcs['url']} {vcs['revision']}" if vcs else 'no repository from the SBOM'
             without_source.append(f'{key} ({origin})')
-        licenses = declared_licenses(component)
+        licenses, names = declared_licenses(component)
         if licenses:
             dependency['declaredLicenses'] = licenses
+        unnamed += [f"{dependency['id']}: {json.dumps(name)}" for name in names if not mapped(dependency['id'], name, curations)]
+        ranges = unreviewed(dependency['id'], curations)
+        if ranges:
+            unreviewed_versions.append(f"{dependency['id']}: the license is concluded only for {', '.join(ranges)}")
         dependencies.append(dependency)
+    if unreviewed_versions:
+        raise SystemExit(f'{args.curations} concludes the license of these packages, but not of the version in the product. '
+                         'Look at the license of that version, then widen the range of the curation or add one:\n  '
+                         + '\n  '.join(unreviewed_versions))
+    if unnamed:
+        raise SystemExit('These packages state a license by a name that is no SPDX identifier. Add a curation without a version to '
+                         f'{args.curations} that has the name in its declared_license_mapping:\n  '
+                         + '\n  '.join(unnamed))
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     json.dump({'projectName': 'thingsboard', 'dependencies': dependencies}, open(args.out, 'w'), indent=1)
@@ -184,23 +193,63 @@ def repository(component):
 
 
 def declared_licenses(component):
-    """The licenses as the SBOM states them; ORT maps the names it knows to SPDX identifiers."""
-    licenses = set()
+    """The licenses as the SBOM states them, and those of them that hold a name and not only SPDX identifiers."""
+    licenses, names = set(), set()
     for entry in component.get('licenses', []):
         if 'expression' in entry:
             licenses.add(entry['expression'])
         else:
             license = entry['license']
-            licenses.add(license.get('id') or LICENSE_NAMES.get((license.get('name'), license.get('url'))) or license.get('name'))
+            licenses.add(license.get('id') or license.get('name'))
+            if not license.get('id'):
+                names.add(license.get('name'))
     licenses = sorted(license for license in licenses if license)
-    # Several licenses in a pom are a choice, by the convention ORT follows too; ORT would read a list as "all apply"
+    named = [license for license in licenses if license in names]
+    # Several licenses in a pom are a choice, by the convention ORT follows too; ORT would read a list as "all apply".
+    # With a name among them the text is no expression, and the curation of the package maps the whole of it.
     if is_maven(component['purl']) and len(licenses) > 1:
-        licenses = [LICENSE_NAMES.get(license, license) for license in licenses]
-        unknown = [license for license in licenses if ' ' in license and ' WITH ' not in license and ' OR ' not in license]
-        if unknown:
-            raise ValueError(f"{component['purl']} offers a choice of licenses, and LICENSE_NAMES has no SPDX identifier for: {unknown}")
-        return [' OR '.join(licenses)]
-    return licenses
+        licenses = [' OR '.join(licenses)]
+        return licenses, licenses if named else []
+    return licenses, named
+
+
+def mapped(identifier, name, curations):
+    """Whether a curation says what the named license of the package is. Only a curation without a version counts,
+    which applies to every version: the name itself changes when the license of a later version does."""
+    kind, namespace, package = identifier.split(':')[:3]
+    for curation in curations:
+        parts = (curation['id'].split(':') + ['', '', ''])[:4]
+        if parts[0] == kind and parts[1] == namespace and parts[2] in ('', package) and not parts[3]:
+            if name in curation['curations'].get('declared_license_mapping', {}):
+                return True
+    return False
+
+
+def unreviewed(identifier, curations):
+    """The versions for which curations conclude the license of the package, when the version of the package is not
+    among them; nothing when it is, or when no curation concludes its license."""
+    package, _, version = identifier.rpartition(':')
+    concluded = [curation['id'][len(package) + 1:] for curation in curations
+                 if 'concluded_license' in curation['curations'] and curation['id'].startswith(package + ':')]
+    return [] if any(covers(versions, version) for versions in concluded) else concluded
+
+
+def covers(versions, version):
+    """Whether a version is the one a curation names, or is within its range: [1.0,2.0[ is 1.0 and later, before 2.0."""
+    limits = re.fullmatch(r'([\[\]])([^,]*),([^,]*)([\[\]])', versions)
+    if not limits:
+        return versions == version
+    opening, lowest, highest, closing = limits.groups()
+    parts = [numbers(text) for text in (version, lowest, highest)]
+    # 3 is 3.0: without the zeros a shorter version would be before a longer one that starts the same
+    number, low, high = (part + [0] * (max(map(len, parts)) - len(part)) for part in parts)
+    return ((not lowest or number > low or number == low and opening == '[')
+            and (not highest or number < high or number == high and closing == ']'))
+
+
+def numbers(version):
+    """The leading numbers of a version, which say where it is in a range: 2.4.0-b180830.0359 is 2.4.0."""
+    return [int(number) for number in re.match(r'[0-9.]*', version).group().split('.') if number]
 
 
 if __name__ == '__main__':

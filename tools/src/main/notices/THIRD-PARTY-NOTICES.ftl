@@ -6,8 +6,8 @@
     Third-party notices of ThingsBoard, grouped by license.
 
     Each section names one license, lists the packages under it with their copyright statements, and prints the
-    license text once. Packages under EPL, CDDL, MPL or APSL get a "Source code:" line. Packages under GPL or LGPL are
-    covered by the written offer at the end.
+    license text once. ort-config/license-classifications.yml says what else each license gets: a "Source code:" line,
+    or the written offer at the end. A license that is not in that file stops the notices.
 --]
 [#-- Readable titles for licenses that have no SPDX identifier and carry a scanner label instead. --]
 [#assign titles = {
@@ -18,20 +18,66 @@
     "LicenseRef-scancode-w3c-docs-20021231": "W3C Document License (2002-12-31)",
     "LicenseRef-scancode-iso-8879": "ISO 8879 character entity sets notice",
     "LicenseRef-scancode-google-patent-license-webm": "Google additional patent grant for WebM",
-    "LicenseRef-scancode-adobe-postscript": "Adobe PostScript mapping files notice",
-    "LicenseRef-scancode-amazon-sl": "Amazon Software License"
+    "LicenseRef-scancode-adobe-postscript": "Adobe PostScript mapping files notice"
 }]
 [#function title name][#return titles[name]!name][/#function]
-[#-- Scanner labels that are not licenses: pointer sentences (NOASSERTION) and public-domain statements, which carry no obligation. --]
-[#function dropped name][#return name == "NONE" || name?starts_with("NOASSERTION") || name?starts_with("LicenseRef-scancode-public-domain") || name == "CC-PDDC"][/#function]
 [#assign view = LicenseView.CONCLUDED_OR_DECLARED_AND_DETECTED]
 [#assign shipped = packages?filter(p -> !p.excluded)]
 [#assign rule = "=============================================================================="]
-[#function isSourceLink name][#return name?starts_with("EPL-") || name?starts_with("CDDL-") || name?starts_with("MPL-") || name?starts_with("APSL-")][/#function]
-[#function isOffer name][#return name?starts_with("GPL-") || name?starts_with("LGPL-")][/#function]
-[#-- The licenses of a package that the notices list. --]
-[#function licensesOf package][#return view.filter(package.license.filterExcluded(), package.licenseChoices).licenses?filter(l -> !dropped(l.license?string))][/#function]
+[#function inCategory resolved category][#return helper.filterForCategory([resolved], category)?has_content][/#function]
+[#function isSourceLink resolved][#return inCategory(resolved, "source-link")][/#function]
+[#function isOffer resolved][#return inCategory(resolved, "written-offer")][/#function]
+[#-- Every license of a package, without what is no license: NONE, and NOASSERTION, which the scanner gives for a
+     sentence that points to a license elsewhere. --]
+[#function allLicenses package][#return view.filter(package.license.filterExcluded(), package.licenseChoices).licenses?filter(l -> l.license?string != "NONE" && !l.license?string?starts_with("NOASSERTION"))][/#function]
+[#-- The licenses of a package that the notices list: all but those of the category "nothing". --]
+[#function licensesOf package][#return allLicenses(package)?filter(l -> !inCategory(l, "nothing"))][/#function]
+[#-- The copyright statements of a package with a concluded license that the scan found next to a license the package
+     does not have. The scan misread the license of the file; the statement is still one of the package, and nothing
+     says which of its licenses it goes with. --]
+[#function otherCopyrights package]
+    [#if !(package.license.licenseInfo.concludedLicenseInfo.concludedLicense)??][#return []][/#if]
+    [#local listed = []]
+    [#list allLicenses(package) as resolved][#local listed = listed + resolved.getCopyrights(true)][/#list]
+    [#local others = []]
+    [#list package.license.filterExcluded().licenses as resolved]
+        [#local others = others + resolved.getCopyrights(true)?filter(c -> !listed?seq_contains(c) && !others?seq_contains(c))]
+    [/#list]
+    [#return others?sort]
+[/#function]
+[#-- The packages whose other copyright statements are printed already: they are printed once, where the package is
+     listed first. --]
+[#assign withOthers = []]
 [#function coordinates id][#return (id.namespace?has_content)?then(id.namespace + ":", "") + id.name + " " + id.version][/#function]
+[#-- Nobody has said what the notices owe for a license that is not in license-classifications.yml. --]
+[#assign unclassified = []]
+[#list shipped as package]
+    [#list allLicenses(package) as resolved]
+        [#if !helper.filterForClassified([resolved])?has_content]
+            [#assign unclassified = unclassified + [resolved.license?string + " (" + coordinates(package.id) + ")"]]
+        [/#if]
+    [/#list]
+[/#list]
+[#if unclassified?has_content]
+    [#stop "These licenses are not in ort-config/license-classifications.yml: " + unclassified?join(", ")]
+[/#if]
+[#-- A package without any license would not be in the notices, and nobody would know. --]
+[#assign unlicensed = shipped?filter(p -> !allLicenses(p)?has_content)?map(p -> coordinates(p.id))]
+[#if unlicensed?has_content]
+    [#stop "These packages have no license: " + unlicensed?join(", ")]
+[/#if]
+[#-- A choice that license-choices.yml does not decide is still in the license of the package after the choices. ORT
+     would list the package under every license of the choice, as if all of them applied. --]
+[#assign undecided = []]
+[#list shipped as package]
+    [#assign effective = (package.license.filterExcluded().effectiveLicense(view, package.licenseChoices)?string)!""]
+    [#if effective?contains(" OR ")]
+        [#assign undecided = undecided + [coordinates(package.id) + ": " + effective]]
+    [/#if]
+[/#list]
+[#if undecided?has_content]
+    [#stop "These packages offer a choice of licenses that license-choices.yml does not decide: " + undecided?join("; ")]
+[/#if]
 [#-- Count the packages of every license. --]
 [#assign names = []]
 [#assign counts = {}]
@@ -85,14 +131,21 @@ The following components are licensed under ${title(section.name)}:
             [#list resolved.getCopyrights(true) as copyright]
       ${copyright}
             [/#list]
-            [#if isSourceLink(section.name)]
+            [#if !withOthers?seq_contains(package.id) && otherCopyrights(package)?has_content]
+                [#assign withOthers = withOthers + [package.id]]
+      ${resolved.getCopyrights(true)?has_content?then("Other copyright", "Copyright")} notices in this component:
+                [#list otherCopyrights(package) as copyright]
+          ${copyright}
+                [/#list]
+            [/#if]
+            [#if isSourceLink(resolved)]
                 [#assign source = (ortResult.getPackage(package.id).metadata.sourceArtifact.url)!""]
                 [#if !source?has_content][#assign source = (ortResult.getPackage(package.id).metadata.vcsProcessed.url)!""][/#if]
                 [#if source?has_content]
       Source code: ${source}
                 [/#if]
             [/#if]
-            [#if isOffer(section.name)]
+            [#if isOffer(resolved)]
       Source code: see "Written offer for source code" at the end of this file
             [/#if]
         [/#list]
@@ -113,7 +166,7 @@ ${exceptionText}
 [#assign offered = []]
 [#list shipped as package]
     [#list licensesOf(package) as resolved]
-        [#if isOffer(resolved.license?string)]
+        [#if isOffer(resolved)]
             [#assign offered = offered + [coordinates(package.id) + " (" + resolved.license?string + ")"]]
         [/#if]
     [/#list]
@@ -123,9 +176,8 @@ ${rule}
 Written offer for source code
 ${rule}
 
-This product contains the software components listed below, which are licensed
-under the GNU General Public License version 2 with the Classpath Exception or
-under the GNU Lesser General Public License.
+This product contains the software components listed below, each under the
+license shown beside it.
 
 ThingsBoard, Inc. will give any third party a complete machine-readable copy of
 the corresponding source code of these components, on a medium customarily used

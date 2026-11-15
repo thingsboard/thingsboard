@@ -1,0 +1,125 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+# What the third-party notices owe for each license: see THIRD-PARTY-NOTICES.ftl.
+# Every license of a shipped component must be here. The notices are not made for a license that is not: add it,
+# after reading what the license asks of someone who distributes the component.
+categories:
+  - name: "notice"
+    description: "The copyright statements and the text of the license."
+  - name: "source-link"
+    description: "As 'notice', and where the source code of the component is."
+  - name: "written-offer"
+    description: "As 'notice', and our written offer for the source code: for three years, at the cost of the
+      distribution, as the GPL 2 (section 3b) and the LGPL 2.1 (section 6c) ask. A license put here is one that this
+      offer satisfies."
+  - name: "nothing"
+    description: "No obligation, so the notices leave it out: a statement that something is in the public domain."
+
+categorizations:
+  - id: "LicenseRef-scancode-public-domain"
+    categories: ["nothing"]
+  - id: "LicenseRef-scancode-public-domain-disclaimer"
+    categories: ["nothing"]
+  - id: "CC-PDDC"
+    categories: ["nothing"]
+  - id: "LGPL-2.1-or-later"
+    categories: ["written-offer"]
+  - id: "GPL-2.0-only WITH Classpath-exception-2.0"
+    categories: ["written-offer"]
+  - id: "EPL-1.0"
+    categories: ["source-link"]
+  - id: "EPL-2.0"
+    categories: ["source-link"]
+  - id: "CDDL-1.0"
+    categories: ["source-link"]
+  - id: "CDDL-1.1"
+    categories: ["source-link"]
+  - id: "MPL-1.1"
+    categories: ["source-link"]
+  - id: "MPL-2.0"
+    categories: ["source-link"]
+  - id: "APSL-1.0"
+    categories: ["source-link"]
+  - id: "APSL-2.0"
+    categories: ["source-link"]
+  - id: "0BSD"
+    categories: ["notice"]
+  - id: "Apache-1.1"
+    categories: ["notice"]
+  - id: "Apache-2.0"
+    categories: ["notice"]
+  - id: "Apache-2.0 WITH LLVM-exception"
+    categories: ["notice"]
+  - id: "Beerware"
+    categories: ["notice"]
+  - id: "BlueOak-1.0.0"
+    categories: ["notice"]
+  - id: "BSD-2-Clause"
+    categories: ["notice"]
+  - id: "BSD-2-Clause-Views"
+    categories: ["notice"]
+  - id: "BSD-3-Clause"
+    categories: ["notice"]
+  - id: "BSD-3-Clause-No-Nuclear-Warranty"
+    categories: ["notice"]
+  - id: "BSL-1.0"
+    categories: ["notice"]
+  - id: "CC-BY-2.5"
+    categories: ["notice"]
+  - id: "CC-BY-4.0"
+    categories: ["notice"]
+  - id: "CC0-1.0"
+    categories: ["notice"]
+  - id: "DocBook-DTD"
+    categories: ["notice"]
+  - id: "DocBook-Stylesheet"
+    categories: ["notice"]
+  - id: "HTMLTIDY"
+    categories: ["notice"]
+  - id: "ISC"
+    categories: ["notice"]
+  - id: "JSON"
+    categories: ["notice"]
+  - id: "LicenseRef-scancode-adobe-postscript"
+    categories: ["notice"]
+  - id: "LicenseRef-scancode-google-patent-license-webm"
+    categories: ["notice"]
+  - id: "LicenseRef-scancode-iso-8879"
+    categories: ["notice"]
+  - id: "LicenseRef-scancode-paulo-soares"
+    categories: ["notice"]
+  - id: "LicenseRef-scancode-red-hat-attribution"
+    categories: ["notice"]
+  - id: "LicenseRef-scancode-unicode"
+    categories: ["notice"]
+  - id: "LicenseRef-scancode-unicode-icu-58"
+    categories: ["notice"]
+  - id: "LicenseRef-scancode-w3c-docs-20021231"
+    categories: ["notice"]
+  - id: "MIT"
+    categories: ["notice"]
+  - id: "MIT-0"
+    categories: ["notice"]
+  - id: "NCSA"
+    categories: ["notice"]
+  - id: "NTP"
+    categories: ["notice"]
+  - id: "OFL-1.1"
+    categories: ["notice"]
+  - id: "Python-2.0"
+    categories: ["notice"]
+  - id: "SAX-PD"
+    categories: ["notice"]
+  - id: "Unicode-3.0"
+    categories: ["notice"]
+  - id: "W3C"
+    categories: ["notice"]
+  - id: "W3C-19980720"
+    categories: ["notice"]
+  - id: "WTFPL"
+    categories: ["notice"]
+  - id: "Zlib"
+    categories: ["notice"]
