@@ -28,6 +28,7 @@
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
         <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
+        <sbom.jar.phase>prepare-package</sbom.jar.phase>
         <pkg.name>thingsboard</pkg.name>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
@@ -579,10 +580,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.cyclonedx</groupId>
-                <artifactId>cyclonedx-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
             </plugin>
@@ -629,13 +626,14 @@
                 <artifactId>sbom-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>merge-ui-sbom</id>
-                        <goals>
-                            <goal>merge</goal>
-                        </goals>
+                        <id>jar-sbom</id>
                         <configuration>
-                            <host>org.thingsboard:ui-ngx</host>
-                            <skip>${skip.ui.build}</skip>
+                            <nestedSboms>
+                                <nestedSbom>
+                                    <library>org.thingsboard:ui-ngx</library>
+                                    <skip>${skip.ui.build}</skip>
+                                </nestedSbom>
+                            </nestedSboms>
                         </configuration>
                     </execution>
                     <execution>

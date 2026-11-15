@@ -40,6 +40,8 @@
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
         <sbom.package.phase>none</sbom.package.phase>
+        <!-- The phase of the SBOM of the Spring Boot jar: prepare-package in a module that builds such a jar -->
+        <sbom.jar.phase>none</sbom.jar.phase>
         <!-- The time of the release, written to the SBOMs as their timestamp. Set it together with the release version:
              mvn versions:set-property -Dproperty=project.build.outputTimestamp -DnewVersion=$(date -u +%Y-%m-%dT%H:%M:%SZ)
              Maven also gives the files inside the jars this time, so that a build can be repeated. -->
@@ -133,8 +135,7 @@
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <jar-plugin.version>3.5.0</jar-plugin.version>
-        <cyclonedx-maven-plugin.version>2.9.3</cyclonedx-maven-plugin.version>
-        <sbom-maven-plugin.version>1.0.0</sbom-maven-plugin.version>
+        <sbom-maven-plugin.version>2.0.0</sbom-maven-plugin.version>
         <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
@@ -637,8 +638,7 @@
                                 <layout>ZIP</layout>
                                 <executable>true</executable>
                                 <excludeDevtools>true</excludeDevtools>
-                                <!-- Lombok is needed only to compile. Its provided scope keeps it out of the SBOM,
-                                     so it must stay out of the jar too. -->
+                                <!-- Lombok is needed only to compile, so it stays out of the jar -->
                                 <excludes>
                                     <exclude>
                                         <groupId>org.projectlombok</groupId>
@@ -654,9 +654,42 @@
                             </configuration>
                             <executions>
                                 <execution>
+                                    <!-- With the jar, before the package phase: see the jar-sbom execution -->
+                                    <phase>prepare-package</phase>
                                     <goals>
                                         <goal>repackage</goal>
                                     </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.thingsboard</groupId>
+                            <artifactId>sbom-maven-plugin</artifactId>
+                            <executions>
+                                <!-- The SBOM of the Spring Boot jar, made from the libraries the finished jar packs and put into
+                                     it. The jar is built in prepare-package, so that this runs before the package phase, which
+                                     builds the packages and their SBOMs: Maven runs the goals of one plugin in a phase together.
+                                     Declare this plugin after spring-boot-maven-plugin, so that it runs after the repackaging.
+                                     A module that builds such a jar sets sbom.jar.phase to prepare-package. -->
+                                <execution>
+                                    <id>jar-sbom</id>
+                                    <phase>${sbom.jar.phase}</phase>
+                                    <goals>
+                                        <goal>jar</goal>
+                                    </goals>
+                                    <configuration>
+                                        <jar>${project.build.directory}/${project.build.finalName}-boot.jar</jar>
+                                        <otherJars>
+                                            <otherJar>${project.build.directory}/${project.build.finalName}.jar</otherJar>
+                                        </otherJars>
+                                        <libraries>
+                                            <library>
+                                                <group>org.springframework.boot</group>
+                                                <name>spring-boot-jarmode-tools</name>
+                                            </library>
+                                        </libraries>
+                                        <skip>${pkg.skip.bootjar}</skip>
+                                    </configuration>
                                 </execution>
                             </executions>
                         </plugin>
@@ -777,9 +810,19 @@
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>${jar-plugin.version}</version>
                     <!-- Outside the packaging profile: activating any other root profile (e.g. skip-pkg) disables it -->
+                    <executions>
+                        <execution>
+                            <id>default-jar</id>
+                            <!-- Before the package phase: see the jar-sbom execution -->
+                            <phase>prepare-package</phase>
+                        </execution>
+                    </executions>
                     <configuration>
                         <excludes>
                             <exclude>**/logback.xml</exclude>
+                            <!-- The SBOM of the jar is put into the finished jar by the jar-sbom execution only,
+                                 so one left in the output directory by an earlier build is not packed -->
+                            <exclude>META-INF/sbom/application.cdx.json</exclude>
                         </excludes>
                         <archive>
                             <manifestEntries>
@@ -795,33 +838,10 @@
                     <version>3.0.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.cyclonedx</groupId>
-                    <artifactId>cyclonedx-maven-plugin</artifactId>
-                    <version>${cyclonedx-maven-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>generate-sbom</id>
-                            <phase>generate-resources</phase>
-                            <goals>
-                                <goal>makeBom</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <projectType>application</projectType>
-                        <outputDirectory>${project.build.outputDirectory}/META-INF/sbom</outputDirectory>
-                        <outputFormat>json</outputFormat>
-                        <outputName>application.cdx</outputName>
-                        <includeProvidedScope>false</includeProvidedScope>
-                        <skipNotDeployed>false</skipNotDeployed>
-                        <skip>${sbom.skip}</skip>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>sbom-maven-plugin</artifactId>
                     <version>${sbom-maven-plugin.version}</version>
-                    <!-- For the metadata goal, in every execution of it -->
+                    <!-- For the jar and metadata goals, in every execution of them -->
                     <configuration>
                         <manufacturer>
                             <name>ThingsBoard, Inc.</name>
@@ -848,12 +868,6 @@
                         </componentManufacturer>
                     </configuration>
                     <executions>
-                        <execution>
-                            <id>sbom-metadata</id>
-                            <goals>
-                                <goal>metadata</goal>
-                            </goals>
-                        </execution>
                         <execution>
                             <id>package-sbom</id>
                             <phase>${sbom.package.phase}</phase>
