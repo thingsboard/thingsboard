@@ -1,15 +1,41 @@
 diff --git a/node_modules/ngx-hm-carousel/fesm2022/ngx-hm-carousel.mjs b/node_modules/ngx-hm-carousel/fesm2022/ngx-hm-carousel.mjs
-index 117f782..70e49a7 100644
+index 117f782..8128420 100644
 --- a/node_modules/ngx-hm-carousel/fesm2022/ngx-hm-carousel.mjs
 +++ b/node_modules/ngx-hm-carousel/fesm2022/ngx-hm-carousel.mjs
-@@ -1,5 +1,5 @@
+@@ -1,10 +1,29 @@
  import * as i0 from '@angular/core';
 -import { Directive, inject, ViewContainerRef, TemplateRef, input, PLATFORM_ID, DestroyRef, Renderer2, NgZone, ChangeDetectorRef, viewChild, ElementRef, contentChildren, contentChild, computed, signal, effect, forwardRef, Component, ChangeDetectionStrategy } from '@angular/core';
 +import { Directive, inject, ViewContainerRef, TemplateRef, input, PLATFORM_ID, DestroyRef, Renderer2, NgZone, ChangeDetectorRef, viewChild, ElementRef, contentChildren, contentChild, computed, signal, effect, forwardRef, Component, ChangeDetectionStrategy, afterNextRender } from '@angular/core';
  import { DOCUMENT, isPlatformBrowser, NgTemplateOutlet, AsyncPipe } from '@angular/common';
  import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
  import { NG_VALUE_ACCESSOR } from '@angular/forms';
-@@ -340,7 +340,7 @@ class NgxHmCarouselComponent {
+-import { merge, fromEvent, tap, BehaviorSubject, Subject, forkJoin, filter, switchMap, timer, takeUntil, of, interval, bufferCount } from 'rxjs';
+-import { resizeObservable } from '@nghedgehog/core';
++import { merge, fromEvent, tap, BehaviorSubject, Subject, forkJoin, filter, switchMap, timer, takeUntil, of, interval, bufferCount, Observable } from 'rxjs';
++
++// ThingsBoard: replaces the helper imported from '@nghedgehog/core', the only thing the carousel used from that package.
++// Runs onResize, then emits, once the size of the element has not changed for the given delay.
++function resizeObservable(element, onResize, delay = 200) {
++    return new Observable((subscriber) => {
++        let timeoutId;
++        const observer = new ResizeObserver(() => {
++            clearTimeout(timeoutId);
++            timeoutId = setTimeout(() => {
++                onResize();
++                subscriber.next();
++            }, delay);
++        });
++        observer.observe(element);
++        return () => {
++            clearTimeout(timeoutId);
++            observer.disconnect();
++        };
++    });
++}
+ 
+ class NgxHmCarouselItemDirective {
+     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "18.2.3", ngImport: i0, type: NgxHmCarouselItemDirective, deps: [], target: i0.ɵɵFactoryTarget.Directive });
+@@ -340,7 +359,7 @@ class NgxHmCarouselComponent {
                  });
              });
          });
@@ -18,7 +44,7 @@ index 117f782..70e49a7 100644
              this.rootElm = this.container().nativeElement;
              this.containerElm = this.rootElm.children[0];
              this.init();
-@@ -365,10 +365,6 @@ class NgxHmCarouselComponent {
+@@ -365,10 +384,6 @@ class NgxHmCarouselComponent {
              ])
                  .pipe(takeUntilDestroyed(this._destroyRef))
                  .subscribe();
@@ -29,3 +55,15 @@ index 117f782..70e49a7 100644
          });
      }
      ngOnDestroy() {
+diff --git a/node_modules/ngx-hm-carousel/package.json b/node_modules/ngx-hm-carousel/package.json
+index 0977a45..6c4d688 100644
+--- a/node_modules/ngx-hm-carousel/package.json
++++ b/node_modules/ngx-hm-carousel/package.json
+@@ -13,7 +13,6 @@
+     "hammerjs"
+   ],
+   "dependencies": {
+-    "@nghedgehog/core": "^0.0.4",
+     "hammerjs": "^2.0.8",
+     "@types/hammerjs": "^2.0.45",
+     "tslib": "^2.3.0"
