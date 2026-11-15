@@ -821,37 +821,38 @@
                     <groupId>org.thingsboard</groupId>
                     <artifactId>sbom-maven-plugin</artifactId>
                     <version>${sbom-maven-plugin.version}</version>
+                    <!-- For the metadata goal, in every execution of it -->
+                    <configuration>
+                        <manufacturer>
+                            <name>ThingsBoard, Inc.</name>
+                            <urls>
+                                <url>https://thingsboard.io</url>
+                            </urls>
+                            <contacts>
+                                <contact>
+                                    <email>security@thingsboard.io</email>
+                                </contact>
+                            </contacts>
+                        </manufacturer>
+                        <supplier>
+                            <name>ThingsBoard, Inc.</name>
+                            <urls>
+                                <url>https://thingsboard.io</url>
+                            </urls>
+                        </supplier>
+                        <componentManufacturer>
+                            <name>ThingsBoard, Inc.</name>
+                            <urls>
+                                <url>https://thingsboard.io</url>
+                            </urls>
+                        </componentManufacturer>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>sbom-metadata</id>
                             <goals>
                                 <goal>metadata</goal>
                             </goals>
-                            <configuration>
-                                <manufacturer>
-                                    <name>ThingsBoard, Inc.</name>
-                                    <urls>
-                                        <url>https://thingsboard.io</url>
-                                    </urls>
-                                    <contacts>
-                                        <contact>
-                                            <email>security@thingsboard.io</email>
-                                        </contact>
-                                    </contacts>
-                                </manufacturer>
-                                <supplier>
-                                    <name>ThingsBoard, Inc.</name>
-                                    <urls>
-                                        <url>https://thingsboard.io</url>
-                                    </urls>
-                                </supplier>
-                                <componentManufacturer>
-                                    <name>ThingsBoard, Inc.</name>
-                                    <urls>
-                                        <url>https://thingsboard.io</url>
-                                    </urls>
-                                </componentManufacturer>
-                            </configuration>
                         </execution>
                         <execution>
                             <id>package-sbom</id>

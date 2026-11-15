@@ -8,12 +8,24 @@ const { createRequire } = require('module');
 const { fileURLToPath } = require('url');
 const { parseArgs } = require('util');
 
-const USAGE = 'Usage: node yarn-sbom.js <output file> <application|library> <root purl> [--all-platforms | --angular-stats <stats.json of the Angular build>]';
-const { values: { 'all-platforms': allPlatforms, 'angular-stats': angularStats }, positionals: [output, rootType, rootPurl, ...unexpected] } = parseArgs({
+const USAGE = 'Usage: node yarn-sbom.js <output file> <application|library> <root purl> [--all-platforms | --angular-stats <stats.json of the Angular build>'
+  + ' | --pkg-log <os>=<log of pkg --debug> ... [--node-versions <properties file>]]';
+const {
+  values: { 'all-platforms': allPlatforms, 'angular-stats': angularStats, 'pkg-log': pkgLogArguments, 'node-versions': nodeVersions },
+  positionals: [output, rootType, rootPurl, ...unexpected]
+} = parseArgs({
   allowPositionals: true,
-  options: { 'all-platforms': { type: 'boolean' }, 'angular-stats': { type: 'string' } }
+  options: {
+    'all-platforms': { type: 'boolean' },
+    'angular-stats': { type: 'string' },
+    'pkg-log': { type: 'string', multiple: true },
+    'node-versions': { type: 'string' }
+  }
 });
-if (!output || !['application', 'library'].includes(rootType) || !rootPurl || unexpected.length > 0 || (allPlatforms && angularStats)) {
+// Each --pkg-log as [, os, log], or null when it is not <os>=<log>
+const pkgLogs = pkgLogArguments?.map(pkgLog => /^([^=]+)=(.+)$/s.exec(pkgLog));
+if (!output || !['application', 'library'].includes(rootType) || !rootPurl || unexpected.length > 0
+  || [allPlatforms, angularStats, pkgLogs].filter(Boolean).length > 1 || (nodeVersions && !pkgLogs) || pkgLogs?.includes(null)) {
   throw new Error(USAGE);
 }
 const MODULE = process.cwd();
@@ -30,6 +42,10 @@ const normalizePackageData = moduleRequire('normalize-package-data');
 const DEFAULT_REGISTRY = /^https?:\/\/registry\.(?:npmjs\.org|yarnpkg\.com)(?:\/|$)/;
 const GIT_URL = /^git[+:]|\.git$/;
 const SASS_FILE = /\.(?:scss|sass)$/;
+// The files that pkg puts into an executable. It also logs directories and file attributes, which hold no code of a package
+const PKG_ADDED_FILE = /(?:Content of|Bytecode of) (.+?) is added to queue/g;
+const PKG_NODE_VERSION = /fetched-v(\d+\.\d+\.\d+)-/;
+const COLOR_CODES = /\x1b\[[0-9;]*m/g;
 
 const { Builders, Factories, Utils } = Contrib.FromNodePackageJson;
 const componentBuilder = new Builders.ComponentBuilder(
@@ -61,8 +77,8 @@ async function main() {
   });
   bom.metadata.component = root;
 
-  // With --angular-stats the SBOM lists what the build put into its output, not what is installed
-  const contained = angularStats ? bundledPackages() : undefined;
+  // With --angular-stats or --pkg-log the SBOM lists what the build put into its output, not what is installed
+  const contained = angularStats ? bundledPackages() : pkgLogs ? executablePackages() : undefined;
   const edges = new Map();
   const queue = [MODULE, ...(contained || [])];
   for (const node of queue) {
@@ -180,6 +196,41 @@ function sassSources(sassFiles, { includePaths = [], sass: { silenceDeprecations
     compiled.sourceMap.sources.filter(source => source.startsWith('file:')).forEach(source => sources.add(fileURLToPath(source)));
   }
   return sources;
+}
+
+/**
+ * The installed packages with a file in the executables that pkg made, as its --debug logs tell. One SBOM describes
+ * every executable, so they must contain the same packages. With --node-versions, the version of the Node.js runtime
+ * of each executable is written as node.<os>.version.
+ */
+function executablePackages() {
+  let contained;
+  const versions = [];
+  for (const [, os, log] of pkgLogs) {
+    const text = fs.readFileSync(path.resolve(MODULE, log), 'utf8').replace(COLOR_CODES, '');
+    if (nodeVersions) {
+      const nodeVersion = PKG_NODE_VERSION.exec(text);
+      if (!nodeVersion) {
+        throw new Error(`${log} does not name the Node.js runtime of the executable`);
+      }
+      versions.push(`node.${os}.version=${nodeVersion[1]}\n`);
+    }
+    const packages = packagesOf(Array.from(text.matchAll(PKG_ADDED_FILE), match => match[1]), `The ${os} executable`);
+    if (packages.size === 0) {
+      throw new Error(`${log} names no file of an installed package; was pkg run with --debug?`);
+    }
+    const different = contained?.symmetricDifference(packages);
+    if (different?.size > 0) {
+      throw new Error(`The executables do not contain the same packages; only some contain ${[...different].map(packagePath).sort().join(', ')}`);
+    }
+    contained = packages;
+  }
+  if (nodeVersions) {
+    const file = path.resolve(MODULE, nodeVersions);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, versions.join(''));
+  }
+  return contained;
 }
 
 /**
