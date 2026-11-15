@@ -5,13 +5,16 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const { createRequire } = require('module');
+const { fileURLToPath } = require('url');
+const { parseArgs } = require('util');
 
-const ALL_PLATFORMS = '--all-platforms';
-const args = process.argv.slice(2);
-const allPlatforms = args.includes(ALL_PLATFORMS);
-const [output, rootType, rootPurl] = args.filter(arg => arg !== ALL_PLATFORMS);
-if (!output || !['application', 'library'].includes(rootType) || !rootPurl) {
-  throw new Error(`Usage: node yarn-sbom.js <output file> <application|library> <root purl> [${ALL_PLATFORMS}]`);
+const USAGE = 'Usage: node yarn-sbom.js <output file> <application|library> <root purl> [--all-platforms | --angular-stats <stats.json of the Angular build>]';
+const { values: { 'all-platforms': allPlatforms, 'angular-stats': angularStats }, positionals: [output, rootType, rootPurl, ...unexpected] } = parseArgs({
+  allowPositionals: true,
+  options: { 'all-platforms': { type: 'boolean' }, 'angular-stats': { type: 'string' } }
+});
+if (!output || !['application', 'library'].includes(rootType) || !rootPurl || unexpected.length > 0 || (allPlatforms && angularStats)) {
+  throw new Error(USAGE);
 }
 const MODULE = process.cwd();
 const OUTPUT = path.resolve(MODULE, output);
@@ -26,6 +29,7 @@ const normalizePackageData = moduleRequire('normalize-package-data');
 
 const DEFAULT_REGISTRY = /^https?:\/\/registry\.(?:npmjs\.org|yarnpkg\.com)(?:\/|$)/;
 const GIT_URL = /^git[+:]|\.git$/;
+const SASS_FILE = /\.(?:scss|sass)$/;
 
 const { Builders, Factories, Utils } = Contrib.FromNodePackageJson;
 const componentBuilder = new Builders.ComponentBuilder(
@@ -57,8 +61,10 @@ async function main() {
   });
   bom.metadata.component = root;
 
+  // With --angular-stats the SBOM lists what the build put into its output, not what is installed
+  const contained = angularStats ? bundledPackages() : undefined;
   const edges = new Map();
-  const queue = [MODULE];
+  const queue = [MODULE, ...(contained || [])];
   for (const node of queue) {
     if (edges.has(node)) {
       continue;
@@ -66,6 +72,9 @@ async function main() {
     const dependencies = dependenciesOf(node);
     edges.set(node, dependencies);
     queue.push(...dependencies.map(dependency => dependency.target));
+  }
+  if (contained) {
+    leaveOnly(contained, edges);
   }
 
   const byNode = new Map();
@@ -89,7 +98,7 @@ async function main() {
   }
   for (const [node, dependencies] of edges) {
     const from = node === MODULE ? root : byNode.get(node);
-    dependencies.forEach(dependency => from.dependencies.add(byNode.get(dependency.target).bomRef));
+    dependencies.map(dependency => byNode.get(dependency.target)).filter(to => to !== from).forEach(to => from.dependencies.add(to.bomRef));
   }
   if (allPlatforms) {
     const required = new Set();
@@ -115,6 +124,120 @@ async function main() {
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, `${serializer.serialize(bom, { sortLists: true, space: 2 })}\n`);
   console.log(`Wrote ${OUTPUT} with ${byPurl.size} components${notInstalled.size > 0 ? `, ${notInstalled.size} of them optional packages for other platforms` : ''}`);
+}
+
+/**
+ * The installed packages with a file in the output of the production build of Angular:
+ * - what the bundler put into a script or a stylesheet, as the statistics of the build tell;
+ * - what the Sass files of the build take their CSS from: Sass reads the files that a Sass file loads itself, so the
+ *   statistics name only the Sass file;
+ * - the assets and scripts of angular.json, which the build copies or adds as they are: the statistics do not name them.
+ */
+function bundledPackages() {
+  const files = new Set();
+  const stats = JSON.parse(fs.readFileSync(path.resolve(MODULE, angularStats), 'utf8'));
+  for (const outputFile of Object.values(stats.outputs)) {
+    for (const [input, { bytesInOutput }] of Object.entries(outputFile.inputs || {})) {
+      if (bytesInOutput > 0) {
+        // A file that a stylesheet refers to, a font or an image, is named with this prefix
+        files.add(input.replace(/^angular:css-resource:/, ''));
+      }
+    }
+  }
+  if (packagesOf(files, angularStats).size === 0) {
+    throw new Error(`${angularStats} names no file of an installed package; was the UI built with --stats-json?`);
+  }
+  const projects = Object.values(JSON.parse(fs.readFileSync(path.join(MODULE, 'angular.json'), 'utf8')).projects);
+  if (projects.length !== 1) {
+    throw new Error(`angular.json has ${projects.length} projects; the statistics do not tell which of them was built`);
+  }
+  const { options, configurations = {} } = projects[0].architect.build;
+  // A list of the production configuration replaces the list of the options
+  const built = { ...options, ...configurations.production };
+  sassSources([...files].filter(file => SASS_FILE.test(file)), built.stylePreprocessorOptions).forEach(source => files.add(source));
+  for (const entry of [...(built.assets || []), ...(built.scripts || [])]) {
+    files.add(typeof entry === 'string' ? entry : entry.input);
+  }
+  return packagesOf(files, 'The output of the Angular build');
+}
+
+/**
+ * The files that the CSS of the Sass files comes from. Each Sass file is compiled again, with the Sass compiler and
+ * the load paths of the build, and the source map of the result names the files that gave a rule to it. A file that
+ * only gives variables, functions or mixins that nothing uses gives no CSS and is not named.
+ */
+function sassSources(sassFiles, { includePaths = [], sass: { silenceDeprecations = [] } = {} } = {}) {
+  const sass = createRequire(moduleRequire.resolve('@angular/build/package.json'))('sass');
+  const loadPaths = includePaths.map(includePath => path.resolve(MODULE, includePath));
+  const sources = new Set();
+  for (const sassFile of sassFiles) {
+    let compiled;
+    try {
+      compiled = sass.compile(path.resolve(MODULE, sassFile), { loadPaths, sourceMap: true, silenceDeprecations, logger: sass.Logger.silent });
+    } catch (error) {
+      throw new Error(`Cannot compile ${sassFile}, so the SBOM cannot tell which packages its CSS comes from: ${error.message}`);
+    }
+    compiled.sourceMap.sources.filter(source => source.startsWith('file:')).forEach(source => sources.add(fileURLToPath(source)));
+  }
+  return sources;
+}
+
+/**
+ * The directories of the installed packages that the files belong to; a file outside node_modules belongs to none.
+ */
+function packagesOf(files, origin) {
+  const packages = new Set();
+  for (const file of files) {
+    const parts = path.normalize(file).split(path.sep);
+    const index = parts.lastIndexOf('node_modules');
+    if (index < 0) {
+      // A name that holds node_modules, though not as a directory of its path, is a name this function cannot read
+      if (file.includes('node_modules')) {
+        throw new Error(`${origin} contains ${file}, and its package cannot be told from that name`);
+      }
+      continue;
+    }
+    const length = index + (parts[index + 1]?.startsWith('@') ? 3 : 2);
+    // A directory that holds packages, node_modules or a scope, does not tell which of them the build takes
+    if (!parts[length - 1]) {
+      throw new Error(`${origin} contains ${file}, which is a directory of packages, not a package`);
+    }
+    const dir = path.resolve(MODULE, parts.slice(0, length).join(path.sep));
+    if (!packages.has(dir) && !fs.existsSync(path.join(dir, 'package.json'))) {
+      throw new Error(`${origin} contains ${file}, which belongs to no installed package`);
+    }
+    packages.add(dir);
+  }
+  return packages;
+}
+
+/**
+ * Takes the packages that are not contained out of the graph: what depended on such a package depends on what that
+ * package depended on. A contained package that nothing leads to any more, such as a development dependency that
+ * the application imports, hangs on the module itself.
+ */
+function leaveOnly(contained, edges) {
+  const kept = node => node === MODULE || contained.has(node);
+  const reached = new Set();
+  for (const node of [...edges.keys()].filter(kept)) {
+    const targets = new Set();
+    const followed = new Set();
+    const pending = [...edges.get(node)];
+    while (pending.length > 0) {
+      const { target } = pending.pop();
+      if (kept(target)) {
+        targets.add(target);
+      } else if (!followed.has(target)) {
+        followed.add(target);
+        pending.push(...edges.get(target));
+      }
+    }
+    edges.set(node, [...targets].map(target => ({ target, optional: false })));
+    targets.forEach(target => reached.add(target));
+  }
+  [...edges.keys()].filter(node => !kept(node)).forEach(node => edges.delete(node));
+  const direct = edges.get(MODULE);
+  [...contained].filter(node => !reached.has(node)).forEach(target => direct.push({ target, optional: false }));
 }
 
 function dependenciesOf(node) {
@@ -234,6 +357,10 @@ function makeComponent(manifest, dir) {
     const dist = new Models.ExternalReference(url, Enums.ExternalReferenceType.Distribution, { comment });
     if (entry.integrity) {
       dist.hashes.set(...Utils.parsePackageIntegrity(entry.integrity));
+    }
+    // What follows the address of a tarball in yarn.lock is its SHA-1
+    if (/^[0-9a-f]{40}$/.test(revision)) {
+      dist.hashes.set(Enums.HashAlgorithm['SHA-1'], revision);
     }
     component.externalReferences.add(dist);
   }
