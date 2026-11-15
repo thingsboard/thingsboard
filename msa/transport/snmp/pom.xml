@@ -27,7 +27,6 @@
         <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
         <pkg.name>tb-snmp-transport</pkg.name>
         <docker.name>${tb.docker.id}-snmp-transport</docker.name>
-        <sbom.metadata.skip>true</sbom.metadata.skip>
         <sbom.image.package.dir>${main.dir}/transport/snmp/target</sbom.image.package.dir>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>

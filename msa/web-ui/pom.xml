@@ -240,6 +240,9 @@
                 <executions>
                     <execution>
                         <id>sbom-metadata</id>
+                        <goals>
+                            <goal>metadata</goal>
+                        </goals>
                         <configuration>
                             <targetFile>${project.build.directory}/sbom/${pkg.name}.cdx.json</targetFile>
                             <skip>${skip.ui.build}</skip>

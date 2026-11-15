@@ -57,7 +57,7 @@ for day-to-day development. It's a shorthand for four finer-grained flags:
 | Flag                       | Skips                                        | Safe for the unit and integration tests?                      |
 |-----------------------------|-----------------------------------------------|-----------------------------------------------------------------|
 | `-Dpkg.skip=true`           | All of the below (boot jar + deb + rpm + zip) | Yes                                                              |
-| `-Dpkg.skip.bootjar=true`   | `spring-boot:repackage` (`*-boot.jar`)        | Yes — but the boot jar is Gradle `buildDeb`'s input, so this drops the `.deb` too |
+| `-Dpkg.skip.bootjar=true`   | `spring-boot:repackage` (`*-boot.jar`) and the SBOM of the jar | Yes — but the boot jar is Gradle `buildDeb`'s input, so this drops the `.deb` too |
 | `-Dpkg.skip.deb=true`       | Gradle `buildDeb` + Maven `attach-artifact`   | Yes — the `msa/*` copy of the DEB is bound to the same phase and is skipped with it |
 | `-Dpkg.skip.rpm=true`       | Gradle `buildRpm`                             | Yes — no test depends on the RPM                                 |
 | `-Dpkg.skip.zip=true`       | `maven-assembly-plugin` Windows ZIP           | Yes — no test depends on the ZIP                                 |
