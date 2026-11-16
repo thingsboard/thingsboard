@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -59,52 +60,53 @@ public class IotHubInstalledItemServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void updatesFirst_itemsWithAnUpdateComeFirst_eachGroupInThePageSort() {
+    public void withUpdates_onlyTheItemsWithAnUpdate_inThePageSort() {
         installFive();
-        PageLink byName = new PageLink(10, 0, null, new SortOrder("itemName", SortOrder.Direction.ASC));
+        PageLink byName = new PageLink(10, 0, null, new SortOrder("itemName", SortOrder.Direction.DESC));
 
-        PageData<IotHubInstalledItem> page = installedItemService.findByTenantIdUpdatesFirst(tenantId, null, null, published(), byName);
+        PageData<IotHubInstalledItem> page = installedItemService.findByTenantIdWithUpdates(tenantId, null, published(), byName);
 
-        assertThat(names(page)).containsExactly("b", "d", "a", "c", "e");
-        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(names(page)).containsExactly("d", "b");
+        assertThat(page.getTotalElements()).isEqualTo(2);
     }
 
     @Test
-    public void updatesFirst_pagesKeepTheOrderAndTheTotal() {
+    public void withUpdates_pagesAndTotal() {
         installFive();
-        SortOrder byNameDesc = new SortOrder("itemName", SortOrder.Direction.DESC);
+        SortOrder byName = new SortOrder("itemName", SortOrder.Direction.ASC);
 
-        PageData<IotHubInstalledItem> first = installedItemService.findByTenantIdUpdatesFirst(tenantId, null, null, published(),
-                new PageLink(2, 0, null, byNameDesc));
-        PageData<IotHubInstalledItem> second = installedItemService.findByTenantIdUpdatesFirst(tenantId, null, null, published(),
-                new PageLink(2, 1, null, byNameDesc));
+        PageData<IotHubInstalledItem> first = installedItemService.findByTenantIdWithUpdates(tenantId, null, published(),
+                new PageLink(1, 0, null, byName));
+        PageData<IotHubInstalledItem> second = installedItemService.findByTenantIdWithUpdates(tenantId, null, published(),
+                new PageLink(1, 1, null, byName));
 
-        assertThat(names(first)).containsExactly("d", "b");
-        assertThat(names(second)).containsExactly("e", "c");
-        assertThat(first.getTotalElements()).isEqualTo(5);
+        assertThat(names(first)).containsExactly("b");
+        assertThat(names(second)).containsExactly("d");
+        assertThat(first.getTotalElements()).isEqualTo(2);
         assertThat(first.hasNext()).isTrue();
+        assertThat(second.hasNext()).isFalse();
     }
 
     @Test
-    public void updatesFirst_keepsTheFilters() {
+    public void withUpdates_keepsTheSearchAndTheTypes() {
         installFive();
         // "b" is in no item type or version, only in the name of b
         PageLink search = new PageLink(10, 0, "b", new SortOrder("itemName", SortOrder.Direction.ASC));
 
-        PageData<IotHubInstalledItem> page = installedItemService.findByTenantIdUpdatesFirst(tenantId, List.of("WIDGET"), null, published(), search);
-
-        assertThat(names(page)).containsExactly("b");
-        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(names(installedItemService.findByTenantIdWithUpdates(tenantId, List.of("WIDGET"), published(), search)))
+                .containsExactly("b");
+        assertThat(installedItemService.findByTenantIdWithUpdates(tenantId, List.of("DEVICE"), published(),
+                new PageLink(10)).getData()).isEmpty();
     }
 
     @Test
-    public void updatesFirst_withoutPublishedVersions_isThePageSortOnly() {
+    public void withUpdates_withoutPublishedVersions_isEmpty() {
         installFive();
-        PageLink byName = new PageLink(10, 0, null, new SortOrder("itemName", SortOrder.Direction.ASC));
+        Map<UUID, UUID> unpublished = new HashMap<>();
+        unpublished.put(unpublishedItemId, null);
 
-        PageData<IotHubInstalledItem> page = installedItemService.findByTenantIdUpdatesFirst(tenantId, null, null, Map.of(), byName);
-
-        assertThat(names(page)).containsExactly("a", "b", "c", "d", "e");
+        assertThat(installedItemService.findByTenantIdWithUpdates(tenantId, null, Map.of(), new PageLink(10)).getData()).isEmpty();
+        assertThat(installedItemService.findByTenantIdWithUpdates(tenantId, null, unpublished, new PageLink(10)).getData()).isEmpty();
     }
 
 }

@@ -140,15 +140,29 @@ public class IotHubController extends BaseController {
                                                            @RequestParam(required = false) String sortProperty,
                                                            @RequestParam(required = false) String sortOrder,
                                                            @RequestParam(required = false) List<String> itemTypes,
-                                                           @RequestParam(required = false) UUID itemId,
-                                                           @RequestParam(required = false, defaultValue = "false") boolean updatesFirst) throws ThingsboardException {
+                                                           @RequestParam(required = false) UUID itemId) throws ThingsboardException {
         checkAllPermissions();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        if (updatesFirst) {
-            // The items installed in a version other than the one IoT Hub publishes now come first, sorted as asked
-            return iotHubService.findInstalledItemsUpdatesFirst(getTenantId(), itemTypes, itemId, pageLink);
-        }
         return iotHubInstalledItemService.findByTenantId(getTenantId(), itemTypes, itemId, pageLink);
+    }
+
+    /**
+     * The installed items with an update in IoT Hub. The body is what the browser got from IoT Hub on Check for updates:
+     * the published version id by item id. A POST, as the map of a tenant with many items doesn't fit in a URL.
+     */
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/installedItems/withUpdates")
+    @ResponseBody
+    public PageData<IotHubInstalledItem> getInstalledItemsWithUpdates(@RequestParam int pageSize,
+                                                                      @RequestParam int page,
+                                                                      @RequestParam(required = false) String textSearch,
+                                                                      @RequestParam(required = false) String sortProperty,
+                                                                      @RequestParam(required = false) String sortOrder,
+                                                                      @RequestParam(required = false) List<String> itemTypes,
+                                                                      @RequestBody Map<UUID, UUID> publishedVersionIds) throws ThingsboardException {
+        checkAllPermissions();
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return iotHubInstalledItemService.findByTenantIdWithUpdates(getTenantId(), itemTypes, publishedVersionIds, pageLink);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

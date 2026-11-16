@@ -25,9 +25,9 @@ public interface IotHubInstalledItemDao extends Dao<IotHubInstalledItem> {
 
     PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink);
 
-    // publishedVersionIds: IoT Hub's published version id by item id; the items installed in another version come first
-    PageData<IotHubInstalledItem> findByTenantIdUpdatesFirst(TenantId tenantId, List<String> itemTypes, UUID itemId,
-                                                             Map<UUID, UUID> publishedVersionIds, PageLink pageLink);
+    // publishedVersionIds: IoT Hub's published version id by item id, not empty; only the items installed in another version
+    PageData<IotHubInstalledItem> findByTenantIdWithUpdates(TenantId tenantId, List<String> itemTypes,
+                                                            Map<UUID, UUID> publishedVersionIds, PageLink pageLink);
 
     List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId);
 

@@ -125,7 +125,17 @@
       <tr mat-row *matRowDef="let _row; columns: displayedColumns;"></tr>
     </table>
 
-    @if (!isLoading && dataSource.length === 0) {
+    @if (!isLoading && dataSource.length === 0 && onlyUpdates && !hasActiveFilters()) {
+      <!-- Only the items with an update, and none has one -->
+      <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center text-center">
+        <div class="tb-no-data-bg"></div>
+        <h3>{{ 'iot-hub.all-items-up-to-date' | translate }}</h3>
+        <p>{{ 'iot-hub.all-items-up-to-date-text' | translate }}</p>
+        <button mat-flat-button color="primary" (click)="showOnlyUpdates(false)">
+          {{ 'iot-hub.show-all-items' | translate }}
+        </button>
+      </div>
+    } @else if (!isLoading && dataSource.length === 0) {
       <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center text-center">
         <div class="tb-no-data-bg"></div>
         <h3>{{ 'iot-hub.no-installed-items' | translate }}</h3>

@@ -4,7 +4,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import {
@@ -49,6 +50,8 @@ export function iotHubResourceUrl(baseUrl: string, path: string): string {
   }
   return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 }
+
+const PUBLISHED_VERSIONS_CHUNK_SIZE = 100;
 
 export interface IotHubRequestConfig {
   ignoreLoading?: boolean;
@@ -238,12 +241,8 @@ export class IotHubApiService {
     );
   }
 
-  /**
-   * updatesFirst: the items installed in a version other than the one IoT Hub publishes now come first, then the rest,
-   * each in the page's sort.
-   */
   public getInstalledItems(pageLink: PageLink, itemTypes?: string | string[],
-                           itemId?: string, config?: IotHubRequestConfig, updatesFirst = false): Observable<PageData<IotHubInstalledItem>> {
+                           itemId?: string, config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
     let query = pageLink.toQuery();
     if (itemTypes) {
       const types = Array.isArray(itemTypes) ? itemTypes : [itemTypes];
@@ -252,11 +251,25 @@ export class IotHubApiService {
     if (itemId) {
       query += `&itemId=${itemId}`;
     }
-    if (updatesFirst) {
-      query += '&updatesFirst=true';
-    }
     return this.http.get<PageData<IotHubInstalledItem>>(
       `/api/iot-hub/installedItems${query}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /**
+   * The installed items with an update: publishedVersionIds is IoT Hub's published version id by item id, as Check for
+   * updates got it. The server keeps the items installed in another version, with the page's sort, search and types.
+   */
+  public getInstalledItemsWithUpdates(pageLink: PageLink, itemTypes: string[] | null, publishedVersionIds: Record<string, string>,
+                                      config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
+    let query = pageLink.toQuery();
+    if (itemTypes?.length) {
+      query += itemTypes.map(t => `&itemTypes=${t}`).join('');
+    }
+    return this.http.post<PageData<IotHubInstalledItem>>(
+      `/api/iot-hub/installedItems/withUpdates${query}`,
+      publishedVersionIds,
       { params: this.buildParams(config) }
     );
   }
@@ -300,12 +313,20 @@ export class IotHubApiService {
     );
   }
 
+  /** Asked in requests of 100 item ids at most, so a tenant with many items doesn't send IoT Hub one huge request. */
   public getItemsPublishedVersions(itemIds: string[], config?: IotHubRequestConfig): Observable<ItemPublishedVersionInfo[]> {
-    return this.http.post<ItemPublishedVersionInfo[]>(
+    if (!itemIds.length) {
+      return of([]);
+    }
+    const chunks: string[][] = [];
+    for (let i = 0; i < itemIds.length; i += PUBLISHED_VERSIONS_CHUNK_SIZE) {
+      chunks.push(itemIds.slice(i, i + PUBLISHED_VERSIONS_CHUNK_SIZE));
+    }
+    return forkJoin(chunks.map(chunk => this.http.post<ItemPublishedVersionInfo[]>(
       `${this.baseUrl}/api/versions/publishedVersions`,
-      itemIds,
+      chunk,
       { params: this.buildParams(config) }
-    );
+    ))).pipe(map(results => results.flat()));
   }
 
   public getCreatorProfile(creatorId: string, config?: IotHubRequestConfig): Observable<CreatorView> {

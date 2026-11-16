@@ -44,7 +44,7 @@ import {
   loadDefaultUplinkConverter,
   loadOwnDefaultConverterIds
 } from '@home/components/iot-hub/iot-hub-default-converter';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'tb-iot-hub-installed-items-table',
@@ -82,6 +82,15 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   private converterCheckRun = 0;
   updatesChecked = false;
   isCheckingUpdates = false;
+  // IoT Hub didn't answer Check for updates: the page says so quietly, the list works without it
+  updatesCheckFailed = false;
+  // After Check for updates the list shows only the items with an update, until the user asks for all of them
+  onlyUpdates = false;
+  // How many installed items have an update, and how many there are, of all types and with no search; null while not known
+  updatesCount: number | null = null;
+  installedCount = 0;
+  // A later load (another page, mode, sort or search) wins over an earlier one that answers last
+  private loadRun = 0;
 
   private widgetResize$: ResizeObserver;
 
@@ -161,7 +170,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   deleteItem(item: IotHubInstalledItem): void {
     this.iotHubActions.deleteItem(item).subscribe(deleted => {
       if (deleted) {
-        this.loadData();
+        this.reloadAfterChange();
       }
     });
   }
@@ -191,7 +200,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     this.iotHubApiService.getVersionInfo(item.itemVersionId, {ignoreLoading: true}).subscribe(versionView => {
       this.iotHubActions.openItemDetail(versionView, item).subscribe(result => {
         if (result === 'updated' || result === 'deleted') {
-          this.loadData();
+          this.reloadAfterChange();
         }
       });
     });
@@ -241,31 +250,75 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
 
   checkForUpdates(): void {
     this.isCheckingUpdates = true;
+    this.updatesCheckFailed = false;
     this.iotHubApiService.getInstalledItemIds({ ignoreLoading: true }).pipe(
-      switchMap(itemIds => this.iotHubApiService.getItemsPublishedVersions(itemIds, { ignoreLoading: true }))
+      // An IoT Hub that doesn't answer is not a page error: the page says so next to the button, the list works without it
+      switchMap(itemIds => this.iotHubApiService.getItemsPublishedVersions(itemIds, { ignoreLoading: true, ignoreErrors: true }))
     ).subscribe({
       next: (infos) => {
         this.publishedVersionMap.clear();
         infos.forEach(info => this.publishedVersionMap.set(info.itemId, info));
         this.updatesChecked = true;
         this.isCheckingUpdates = false;
-        // From the first page: the items with an update come first now, wherever their install date put them
-        this.pageIndex = 0;
-        if (this.paginator) {
-          this.paginator.pageIndex = 0;
-        }
-        this.loadData();
+        this.showOnlyUpdates(true);
+        this.loadUpdatesCount();
       },
       error: () => {
         this.isCheckingUpdates = false;
+        this.updatesCheckFailed = true;
       }
+    });
+  }
+
+  /** Only the items with an update, or all of them; from the first page, as the list changes. */
+  showOnlyUpdates(onlyUpdates: boolean): void {
+    this.onlyUpdates = onlyUpdates;
+    this.pageIndex = 0;
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
+    this.loadData();
+  }
+
+  /** IoT Hub's published version id by item id, of the items it publishes a version of. */
+  private publishedVersionIds(): Record<string, string> {
+    const ids: Record<string, string> = {};
+    this.publishedVersionMap.forEach((info, itemId) => {
+      if (info.publishedVersionId) {
+        ids[itemId] = info.publishedVersionId;
+      }
+    });
+    return ids;
+  }
+
+  /** After an item is updated or removed: the list and, once the updates are checked, the counts in the header. */
+  private reloadAfterChange(): void {
+    this.loadData();
+    if (this.updatesChecked && !this.itemVersion) {
+      this.loadUpdatesCount();
+    }
+  }
+
+  private loadUpdatesCount(): void {
+    this.updatesCount = null;
+    forkJoin({
+      withUpdates: this.iotHubApiService.getInstalledItemsWithUpdates(new PageLink(1), null, this.publishedVersionIds(), { ignoreLoading: true }),
+      installed: this.iotHubApiService.getInstalledItemsCount(undefined, { ignoreLoading: true })
+    }).subscribe({
+      next: ({ withUpdates, installed }) => {
+        this.updatesCount = withUpdates.totalElements;
+        this.installedCount = installed;
+        this.cd.markForCheck();
+      },
+      // The header then shows only the buttons
+      error: () => this.cd.markForCheck()
     });
   }
 
   updateItem(item: IotHubInstalledItem, publishedInfo: ItemPublishedVersionInfo): void {
     this.iotHubActions.updateItem(item, publishedInfo.publishedVersion, publishedInfo.publishedVersionId).subscribe(result => {
       if (result === 'updated') {
-        this.loadData();
+        this.reloadAfterChange();
       }
     });
   }
@@ -346,18 +399,37 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     };
     const pageLink = new PageLink(this.pageSize, this.pageIndex, this.textSearch || null, sortOrder);
     const typeFilters = this.typeFilters?.length ? this.typeFilters : null;
-    // Once the updates are checked, the items with one come first; the page of one item's versions keeps its sort
-    const updatesFirst = this.updatesChecked && !this.itemVersion;
-    this.iotHubApiService.getInstalledItems(pageLink, typeFilters, this.itemVersion?.itemId, {ignoreLoading: true}, updatesFirst).subscribe({
+    // The page of one item's versions has its own published version and lists all of them
+    const items$ = this.onlyUpdates && !this.itemVersion
+      ? this.iotHubApiService.getInstalledItemsWithUpdates(pageLink, typeFilters, this.publishedVersionIds(), {ignoreLoading: true})
+      : this.iotHubApiService.getInstalledItems(pageLink, typeFilters, this.itemVersion?.itemId, {ignoreLoading: true});
+    const run = ++this.loadRun;
+    items$.subscribe({
       next: (data) => {
+        if (run !== this.loadRun) {
+          return;
+        }
+        // The last page emptied (its last item updated or removed): go to the page that is last now
+        if (!data.data.length && this.pageIndex > 0 && data.totalElements > 0) {
+          this.pageIndex = Math.ceil(data.totalElements / this.pageSize) - 1;
+          if (this.paginator) {
+            this.paginator.pageIndex = this.pageIndex;
+          }
+          this.loadData();
+          return;
+        }
         this.dataSource = data.data;
         this.totalElements = data.totalElements;
         this.isLoading = false;
-        if (this.updatesChecked && !this.itemVersion) {
+        // In the list of items with an update their version update shows, not the converter's
+        if (this.updatesChecked && !this.itemVersion && !this.onlyUpdates) {
           void this.checkConverterUpdates();
         }
       },
       error: () => {
+        if (run !== this.loadRun) {
+          return;
+        }
         this.dataSource = [];
         this.totalElements = 0;
         this.isLoading = false;

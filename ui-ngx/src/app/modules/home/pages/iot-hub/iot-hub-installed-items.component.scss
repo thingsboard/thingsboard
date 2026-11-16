@@ -29,6 +29,35 @@
   margin-bottom: 32px;
 }
 
+// After Check for updates: "N items have an update" and Show all items / Show only updates
+.tb-installed-updates-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.2px;
+  color: rgba(0, 0, 0, 0.76);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .tb-installed-updates-available {
+    color: #f44336;
+  }
+
+  .tb-installed-updates-none {
+    color: #198038;
+  }
+
+  .tb-installed-updates-failed {
+    color: #f66716;
+  }
+}
+
 .tb-installed-title {
   font-size: 36px;
   font-weight: 500;
