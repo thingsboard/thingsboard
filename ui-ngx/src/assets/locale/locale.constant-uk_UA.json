@@ -5743,7 +5743,7 @@
     "opc-ua-type": "Тип",
     "opc-ua-keystore-type": "Тип",
     "opc-ua-keystore-type-required": "Потрібно вказати тип",
-    "opc-ua-keystore-location": "Розташування *",
+    "opc-ua-keystore-location": "Розташування",
     "opc-ua-keystore-password": "Пароль",
     "opc-ua-keystore-password-required": "Потрібно вказати пароль",
     "opc-ua-keystore-alias": "Псевдонім",
