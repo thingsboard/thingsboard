@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AggKey, IndexedSubscriptionData, } from '@app/shared/models/telemetry/telemetry.models';
 import {
   AggregationType,
@@ -242,12 +243,14 @@ export class DataAggregator {
         this.dataReceived = true;
         this.calculateStartEndTs();
       }
-      if (this.resetPending) {
+      if (this.resetPending && !update) {
         this.resetPending = false;
         updateIntervalScheduledTime = false;
       }
       if (update) {
-        this.aggregationMap = new AggregationMap();
+        if (!this.aggregationMap) {
+          this.aggregationMap = new AggregationMap();
+        }
         this.updateAggregatedData(data);
       } else {
         this.aggregationMap = this.processAggregatedData(data);

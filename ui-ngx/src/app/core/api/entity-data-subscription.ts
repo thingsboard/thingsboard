@@ -1006,7 +1006,7 @@ export class EntityDataSubscription {
                 this.entityDataSubscriptionOptions.type === widgetType.timeseries, dataUpdatedCb);
             });
           }
-          dataAggregator.onData(aggData, false, this.history, true);
+          dataAggregator.onData(aggData, isUpdate, this.history, true);
           if (prevDataCb) {
             dataAggregator.updateOnDataCb(prevDataCb);
           }
@@ -1059,7 +1059,7 @@ export class EntityDataSubscription {
             this.onIndexedData(data, dataIndex, detectChanges, false, dataUpdatedCb);
           });
         }
-        dataAggregator.onData(indexedData, false, this.history, true);
+        dataAggregator.onData(indexedData, isUpdate, this.history, true);
         if (prevDataCb) {
           dataAggregator.updateOnDataCb(prevDataCb);
         }

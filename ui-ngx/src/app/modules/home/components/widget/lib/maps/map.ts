@@ -97,8 +97,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected dsData: FormattedData<TbMapDatasource>[] = [];
 
   protected timeline = false;
-  protected minTime: number;
-  protected maxTime: number;
+  protected minTime: number = Infinity;
+  protected maxTime: number = -Infinity;
   protected timeStep: number;
   protected currentTime: number;
 
@@ -977,15 +977,20 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
     let minTime = Infinity;
     let maxTime = -Infinity;
+    const datasources = subscription.data.map(d => d.datasource as TbMapDatasource);
     for (const tripsDataLayer of this.tripDataLayers) {
-      const minMax = tripsDataLayer.prepareTripsData(tripsData, tripsLatestData);
+      const minMax = tripsDataLayer.prepareTripsData(tripsData, tripsLatestData, datasources);
       minTime = Math.min(minMax.minTime, minTime);
       maxTime = Math.max(minMax.maxTime, maxTime);
     }
     const prevMinTime = this.minTime;
     const prevMaxTime = this.maxTime;
-    this.minTime = minTime;
-    this.maxTime = maxTime;
+    if (Number.isFinite(minTime)) {
+      this.minTime = minTime;
+    }
+    if (Number.isFinite(maxTime)) {
+      this.maxTime = maxTime;
+    }
     if (this.timeline) {
       this.timeLineComponent.min = this.minTime;
       this.timeLineComponent.max = this.maxTime;
