@@ -914,6 +914,7 @@
             "translation-set": "Changed",
             "translation-removed": "Back to the platform's text",
             "read-custom-menus": "Read the custom menus",
+            "read-security-settings": "Read the security settings",
             "read-custom-menu": "Read the menu {{name}}",
             "save-custom-menu": "Changed the custom menu",
             "create-custom-menu": "Created the custom menu {{name}}",
@@ -1369,6 +1370,10 @@
             "read-custom-menus": {
                 "run": "Reading the custom menus",
                 "done": "Read the custom menus"
+            },
+            "read-security-settings": {
+                "run": "Reading the security settings",
+                "done": "Read the security settings"
             },
             "save-custom-menu": {
                 "run": "Saving the custom menu",
@@ -2559,22 +2564,35 @@
             "two-factor-auth": {
                 "title": "Ask about two-factor authentication",
                 "line": "Which methods your users can use, and how to set them up.",
-                "suggestion": "How do I require two-factor authentication for my users?"
+                "suggestion": "How do I require two-factor authentication for my users?",
+                "example": {
+                    "review": {"label": "Check our 2FA", "message": "Which two-factor methods are allowed, and is it enforced for anyone?"},
+                    "enforce": {"label": "Require it for admins", "message": "How do I require two-factor authentication for tenant administrators?"}
+                }
             },
             "oauth2-domains": {
                 "title": "Ask about OAuth 2.0 domains",
                 "line": "Which domains sign users in through an external provider.",
-                "suggestion": "How do I let users sign in with Google on my domain?"
+                "suggestion": "How do I let users sign in with Google on my domain?",
+                "example": {
+                    "missing": {"label": "Button not showing", "message": "Why is the Sign in with Google button missing on our login page?"}
+                }
             },
             "oauth2-clients": {
                 "title": "Ask about OAuth 2.0 clients",
                 "line": "The external identity providers your users sign in with.",
-                "suggestion": "How do I set up sign-in with Microsoft Entra ID?"
+                "suggestion": "How do I set up sign-in with Microsoft Entra ID?",
+                "example": {
+                    "review": {"label": "Review our clients", "message": "Which OAuth 2.0 clients do we have, and who gets an account through them?"}
+                }
             },
             "self-registration": {
                 "title": "Ask about self-registration",
                 "line": "Let new users sign up on their own, and choose what they get.",
-                "suggestion": "How do I let customers sign up on their own?"
+                "suggestion": "How do I let customers sign up on their own?",
+                "example": {
+                    "review": {"label": "Is sign-up safe?", "message": "Check our self-registration settings: is it on, and what do new users get?"}
+                }
             },
             "secrets": {
                 "title": "Ask about secrets",

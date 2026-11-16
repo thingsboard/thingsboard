@@ -1283,6 +1283,8 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('save-custom-translation', {locale: str(values.locale) ?? '—'}), blocks};
     }
+    case 'read_security_settings':
+      return {hood: text('read-security-settings'), blocks: json('settings', result)};
     case 'read_custom_menus': {
       if (!isObject(result)) {
         return {hood: text('read-custom-menus'), blocks: generic(result, 'result')};

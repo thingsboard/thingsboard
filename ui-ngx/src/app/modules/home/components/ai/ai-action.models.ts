@@ -75,6 +75,7 @@ const TOOL_WORDS: Record<string, string> = {
   read_custom_translation: 'read-custom-translation',
   save_custom_translation: 'save-custom-translation',
   read_custom_menus: 'read-custom-menus',
+  read_security_settings: 'read-security-settings',
   save_custom_menu: 'save-custom-menu',
   save_ota_package: 'save-ota-package',
   assign_ota_package: 'assign-ota-package',
