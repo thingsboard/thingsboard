@@ -88,6 +88,8 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   onlyUpdates = false;
   // How many installed items have an update, and how many there are, of all types and with no search; null while not known
   updatesCount: number | null = null;
+  // The last load of the list failed: the list is empty, but not because nothing has an update
+  loadFailed = false;
   installedCount = 0;
   // A later load (another page, mode, sort or search) wins over an earlier one that answers last
   private loadRun = 0;
@@ -420,6 +422,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         }
         this.dataSource = data.data;
         this.totalElements = data.totalElements;
+        this.loadFailed = false;
         this.isLoading = false;
         // In the list of items with an update their version update shows, not the converter's
         if (this.updatesChecked && !this.itemVersion && !this.onlyUpdates) {
@@ -432,6 +435,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         }
         this.dataSource = [];
         this.totalElements = 0;
+        this.loadFailed = true;
         this.isLoading = false;
       }
     });

@@ -100,6 +100,15 @@ public class IotHubInstalledItemServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void plainList_sameQuery_isNotFiltered() {
+        installFive();
+        PageLink byName = new PageLink(10, 0, null, new SortOrder("itemName", SortOrder.Direction.ASC));
+
+        assertThat(names(installedItemService.findByTenantId(tenantId, null, null, byName))).containsExactly("a", "b", "c", "d", "e");
+        assertThat(names(installedItemService.findByTenantId(tenantId, null, sensorItemId, byName))).containsExactly("a", "c", "d");
+    }
+
+    @Test
     public void withUpdates_withoutPublishedVersions_isEmpty() {
         installFive();
         Map<UUID, UUID> unpublished = new HashMap<>();

@@ -39,7 +39,7 @@
           <span class="tb-installed-updates-note">
             @if (updatesCount > 0) {
               <mat-icon class="tb-installed-updates-available">arrow_circle_up</mat-icon>
-              {{ (updatesCount === 1 ? 'iot-hub.item-with-update' : 'iot-hub.items-with-update') | translate:{ count: updatesCount, total: installedCount } }}
+              {{ 'iot-hub.items-with-update' | translate:{ count: updatesCount, total: installedCount } }}
             } @else {
               <mat-icon class="tb-installed-updates-none">check_circle</mat-icon>
               {{ 'iot-hub.all-items-up-to-date' | translate }}
