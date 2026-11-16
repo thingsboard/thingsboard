@@ -1,6 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
-
 // negotiator 1.x ships no types, and @types/negotiator (0.6) lacks the `preferred` option
 declare module 'negotiator' {
     import { IncomingMessage } from 'http';

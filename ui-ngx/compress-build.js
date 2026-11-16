@@ -1,6 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
-
 // Writes .br and .gz copies of the production build's files, served as-is by the monolith and msa/web-ui.
 // Not an esbuild plugin: Angular gives custom plugins only the browser code bundle, not polyfills,
 // global styles/scripts or copied assets.
