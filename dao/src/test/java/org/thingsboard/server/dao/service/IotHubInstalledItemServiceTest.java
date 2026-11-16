@@ -109,6 +109,21 @@ public class IotHubInstalledItemServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void withUpdates_ignoresItemsTheTenantHasNotInstalled() {
+        installFive();
+        Map<UUID, UUID> published = new HashMap<>(published());
+        for (int i = 0; i < 20_000; i++) {
+            published.put(UUID.randomUUID(), UUID.randomUUID());
+        }
+
+        PageData<IotHubInstalledItem> page = installedItemService.findByTenantIdWithUpdates(tenantId, null, published,
+                new PageLink(10, 0, null, new SortOrder("itemName", SortOrder.Direction.ASC)));
+
+        // 40k bind parameters would be over PostgreSQL's limit of 32767
+        assertThat(names(page)).containsExactly("b", "d");
+    }
+
+    @Test
     public void withUpdates_withoutPublishedVersions_isEmpty() {
         installFive();
         Map<UUID, UUID> unpublished = new HashMap<>();

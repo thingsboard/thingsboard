@@ -125,34 +125,23 @@
       <tr mat-row *matRowDef="let _row; columns: displayedColumns;"></tr>
     </table>
 
-    @if (!isLoading && loadFailed && onlyUpdates) {
-      <!-- The list of items with an update didn't load: not the same as none having one -->
+    @if (!isLoading && dataSource.length === 0) {
       <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center text-center">
         <div class="tb-no-data-bg"></div>
-        <h3>{{ 'iot-hub.installed-items-load-failed' | translate }}</h3>
-        <button mat-flat-button color="primary" (click)="showOnlyUpdates(true)">
-          {{ 'iot-hub.check-for-updates-try-again' | translate }}
-        </button>
-      </div>
-    } @else if (!isLoading && dataSource.length === 0 && onlyUpdates && !hasActiveFilters()) {
-      <!-- Only the items with an update, and none has one -->
-      <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center text-center">
-        <div class="tb-no-data-bg"></div>
-        <h3>{{ 'iot-hub.all-items-up-to-date' | translate }}</h3>
-        <p>{{ 'iot-hub.all-items-up-to-date-text' | translate }}</p>
-        <button mat-flat-button color="primary" (click)="showOnlyUpdates(false)">
-          {{ 'iot-hub.show-all-items' | translate }}
-        </button>
-      </div>
-    } @else if (!isLoading && dataSource.length === 0) {
-      <div class="tb-iot-hub-empty-state flex flex-1 flex-col items-center justify-center text-center">
-        <div class="tb-no-data-bg"></div>
-        <h3>{{ 'iot-hub.no-installed-items' | translate }}</h3>
-        <p>{{ 'iot-hub.no-installed-items-text' | translate }}</p>
-        @if (hasActiveFilters()) {
-          <button mat-flat-button color="primary" (click)="clearFilters.emit()">
-            {{ 'iot-hub.clear-all-filters' | translate }}
-          </button>
+        @if (loadFailed) {
+          <h3>{{ 'iot-hub.unable-to-load' | translate }}</h3>
+          <p>{{ 'iot-hub.unable-to-load-text' | translate }}</p>
+          <button mat-flat-button color="primary" (click)="retryLoad()">{{ 'iot-hub.try-again' | translate }}</button>
+        } @else if (onlyUpdates && !hasActiveFilters()) {
+          <h3>{{ 'iot-hub.all-items-up-to-date' | translate }}</h3>
+          <p>{{ 'iot-hub.all-items-up-to-date-text' | translate }}</p>
+          <button mat-flat-button color="primary" (click)="showOnlyUpdates(false)">{{ 'iot-hub.show-all-items' | translate }}</button>
+        } @else {
+          <h3>{{ 'iot-hub.no-installed-items' | translate }}</h3>
+          <p>{{ 'iot-hub.no-installed-items-text' | translate }}</p>
+          @if (hasActiveFilters()) {
+            <button mat-flat-button color="primary" (click)="clearFilters.emit()">{{ 'iot-hub.clear-all-filters' | translate }}</button>
+          }
         }
       </div>
     }

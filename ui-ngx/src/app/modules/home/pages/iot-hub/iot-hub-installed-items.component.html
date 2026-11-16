@@ -15,11 +15,11 @@
   <!-- Header -->
   <div class="tb-installed-header">
     <h1 class="tb-installed-title">{{ 'iot-hub.installed-items' | translate }}</h1>
-    @if (!updatesChecked) {
-      <div class="tb-installed-updates flex items-center gap-4">
+    <div class="flex items-center gap-4">
+      @if (!updatesChecked) {
         @if (updatesCheckFailed) {
-          <span class="tb-installed-updates-note">
-            <mat-icon class="tb-installed-updates-failed">warning</mat-icon>
+          <span class="inline-flex items-center gap-2 text-sm leading-5 tracking-[0.2px] text-black/[.76]" role="status">
+            <mat-icon class="tb-mat-20 text-[#f66716]">warning</mat-icon>
             {{ 'iot-hub.check-for-updates-failed' | translate }}
           </span>
         }
@@ -29,20 +29,18 @@
           } @else {
             <mat-icon matButtonIcon>update</mat-icon>
           }
-          {{ (updatesCheckFailed ? 'iot-hub.check-for-updates-try-again' : 'iot-hub.check-for-updates') | translate }}
+          {{ (updatesCheckFailed ? 'iot-hub.try-again' : 'iot-hub.check-for-updates') | translate }}
         </button>
-      </div>
-    } @else {
-      <!-- After Check for updates: how many items have one, and the switch between them and all items -->
-      <div class="tb-installed-updates flex items-center gap-4">
+      } @else {
         @if (updatesCount !== null) {
-          <span class="tb-installed-updates-note">
+          <span class="inline-flex items-center gap-2 text-sm leading-5 tracking-[0.2px] text-black/[.76]" role="status">
             @if (updatesCount > 0) {
-              <mat-icon class="tb-installed-updates-available">arrow_circle_up</mat-icon>
+              <mat-icon class="tb-mat-20 text-[#f44336]">arrow_circle_up</mat-icon>
               {{ 'iot-hub.items-with-update' | translate:{ count: updatesCount, total: installedCount } }}
             } @else {
-              <mat-icon class="tb-installed-updates-none">check_circle</mat-icon>
-              {{ 'iot-hub.all-items-up-to-date' | translate }}
+              <!-- Only versions: a package may still have a new default converter, which the list shows -->
+              <mat-icon class="tb-mat-20 text-[#198038]">check_circle</mat-icon>
+              {{ 'iot-hub.no-newer-versions' | translate }}
             }
           </span>
         }
@@ -51,8 +49,8 @@
         } @else if ((updatesCount ?? 0) > 0) {
           <button mat-stroked-button color="primary" (click)="showOnlyUpdates(true)">{{ 'iot-hub.show-only-updates' | translate }}</button>
         }
-      </div>
-    }
+      }
+    </div>
   </div>
 
   <!-- Filter + chips row -->

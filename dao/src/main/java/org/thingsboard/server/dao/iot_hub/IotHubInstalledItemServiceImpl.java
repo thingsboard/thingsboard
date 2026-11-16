@@ -54,14 +54,16 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
     public PageData<IotHubInstalledItem> findByTenantIdWithUpdates(TenantId tenantId, List<String> itemTypes,
                                                                    Map<UUID, UUID> publishedVersionIds, PageLink pageLink) {
         validatePageLink(pageLink, IotHubInstalledItemEntity.ALLOWED_SORT_PROPERTIES);
-        // An item IoT Hub publishes no version of has nothing to update to
+        // Only the tenant's installed items, so the map can't outgrow the query's bind parameter limit; an item IoT Hub
+        // publishes no version of has nothing to update to
         Map<UUID, UUID> published = new HashMap<>();
-        if (publishedVersionIds != null) {
-            publishedVersionIds.forEach((itemId, versionId) -> {
-                if (itemId != null && versionId != null) {
+        if (publishedVersionIds != null && !publishedVersionIds.isEmpty()) {
+            for (UUID itemId : iotHubInstalledItemDao.findInstalledItemIdsByTenantId(tenantId)) {
+                UUID versionId = publishedVersionIds.get(itemId);
+                if (versionId != null) {
                     published.put(itemId, versionId);
                 }
-            });
+            }
         }
         if (published.isEmpty()) {
             return PageData.emptyPageData();
