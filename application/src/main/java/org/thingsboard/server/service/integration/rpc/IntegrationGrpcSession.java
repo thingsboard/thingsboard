@@ -69,6 +69,7 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -159,7 +160,7 @@ public final class IntegrationGrpcSession implements Closeable {
         if (optional.isPresent()) {
             configuration = optional.get();
             try {
-                if (configuration.isRemote() && configuration.getSecret().equals(request.getIntegrationSecret())) {
+                if (configuration.isRemote() && Objects.equals(configuration.getSecret(), request.getIntegrationSecret())) {
                     Converter defaultConverter = ctx.getConverterService().findConverterById(configuration.getTenantId(),
                             configuration.getDefaultConverterId());
                     ConverterConfigurationProto defaultConverterProto = constructConverterConfigProto(defaultConverter);
