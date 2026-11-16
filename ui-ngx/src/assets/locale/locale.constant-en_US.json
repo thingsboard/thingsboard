@@ -6603,7 +6603,6 @@
         "device-update-modified": "Has local changes. You can download the current version <a>here</a>.",
         "device-install-unexpected-error": "Something went wrong. Try again.",
         "device-install-duplicate-step": "Two install steps of this device package have the same key: {{key}}. Report it to the package's creator.",
-        "device-install-conflicts-hint": "Some entities already exist. Choose what to do with each, then install.",
         "device-install-install": "Install",
         "device-install-nothing-installed": "Nothing was installed.",
         "device-package-confirm-warnings": "Confirm { count, plural, =1 {1 warning} other {# warnings} } to enable {action}",

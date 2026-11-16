@@ -861,38 +861,17 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * asks to confirm every warning again; an install keeps a conflict choice while the existing entity is the same one.
    */
   retry(ws: WizardStep): void {
-    if (this.data.update) {
-      void this.checkUpdate(ws);
-      return;
-    }
-    const choices = new Map<DeviceInstallStep, InstallConflictChoice>();
-    for (const ep of ws.entitySteps ?? []) {
-      const plan = this.entityPlans.get(ep);
-      if (plan?.existing && plan.resolution) {
-        choices.set(ep.step, { existingId: plan.existing.id, resolution: plan.resolution });
+    let choices: Map<DeviceInstallStep, InstallConflictChoice> | undefined;
+    if (!this.data.update) {
+      choices = new Map();
+      for (const ep of ws.entitySteps ?? []) {
+        const plan = this.entityPlans.get(ep);
+        if (plan?.existing && plan.resolution) {
+          choices.set(ep.step, { existingId: plan.existing.id, resolution: plan.resolution });
+        }
       }
-      this.entityPlans.delete(ep);
     }
-    this.initAndPlanInstall(ws, choices);
-  }
-
-  /** Install: records the user's choice for an entity whose name is taken; the install sends it. */
-  resolveConflict(ep: EntityStepProgress, resolution: string): void {
-    const plan = this.entityPlans.get(ep);
-    if (plan) {
-      plan.resolution = resolution;
-    }
-  }
-
-  hasInstallConflicts(ws: WizardStep): boolean {
-    return !!ws.entitySteps?.some(ep => this.entityPlans.get(ep)?.existing);
-  }
-
-  unresolvedInstallConflicts(ws: WizardStep): number {
-    return (ws.entitySteps ?? []).filter(ep => {
-      const plan = this.entityPlans.get(ep);
-      return plan?.existing && !plan.resolution;
-    }).length;
+    void this.planPackage(ws, choices);
   }
 
   goBackToForm(): void {
@@ -1464,12 +1443,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     } else if (step.type === 'progress' && !step.progressDone && !step.applying && !step.checking) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);
-      } else if (this.data.update) {
-        if (!step.entitySteps) {
-          void this.checkUpdate(step);
-        }
-      } else {
-        this.initAndPlanInstall(step);
+      } else if (!step.entitySteps) {
+        void this.planPackage(step);
       }
     }
   }
@@ -1489,17 +1464,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.completed = true;
   }
 
-  private initAndPlanInstall(ws: WizardStep, choices?: Map<DeviceInstallStep, InstallConflictChoice>): void {
-    ws.entitySteps = ws.rawSteps.map(s => ({
-      step: s,
-      status: 'pending' as const,
-      resolvedName: this.resolveVariables(s.name)
-    }));
-    ws.progressError = null;
-    ws.progressDone = false;
-    void this.planInstall(ws, choices);
-  }
-
   private markEntityStepSuccess(ws: WizardStep, ep: EntityStepProgress,
                                 output: EntityStepOutput, resolution: string): void {
     ep.entityOutput = output;
@@ -1515,52 +1479,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
     }
     this.cdr.detectChanges();
-  }
-
-  /**
-   * Install: checks every step for an entity with the same name before anything is created. Without such conflicts
-   * the install starts at once; with them, the user chooses for each one and starts it with Install. On Retry
-   * (choices given), it starts at once when the choices kept cover every conflict.
-   */
-  private async planInstall(ws: WizardStep, choices?: Map<DeviceInstallStep, InstallConflictChoice>): Promise<void> {
-    const run = ++this.checkRun;
-    ws.progressError = null;
-    const duplicateKey = this.duplicateStateKey();
-    if (duplicateKey) {
-      ws.progressError = this.translate.instant('iot-hub.device-install-duplicate-step', { key: duplicateKey });
-      this.cdr.detectChanges();
-      return;
-    }
-    ws.checking = true;
-    this.cdr.detectChanges();
-    try {
-      for (const ep of ws.entitySteps) {
-        const existing = await this.preCheckEntity(ep.step);
-        if (this.closed || run !== this.checkRun) {
-          return;
-        }
-        if (existing) {
-          ep.status = 'conflict';
-          ep.existingEntity = existing;
-          ep.conflictType = this.getConflictType(ep.step.type);
-          const choice = choices?.get(ep.step);
-          const resolution = choice?.existingId === existing.id ? choice.resolution : null;
-          this.entityPlans.set(ep, { action: 'create', existing, resolution, confirmed: true });
-        } else {
-          ep.status = 'pending';
-          this.entityPlans.set(ep, { action: 'create', confirmed: true });
-        }
-      }
-    } catch (e: any) {
-      ws.progressError = this.failureMessage(e);
-      return;
-    } finally {
-      ws.checking = false;
-      this.cdr.detectChanges();
-    }
-    if (!this.closed && (choices ? this.unresolvedInstallConflicts(ws) === 0 : !this.hasInstallConflicts(ws))) {
-      await this.apply(ws);
-    }
   }
 
   private buildIntegrationOutput(result: any): EntityStepOutput {
@@ -1801,9 +1719,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return (ws.entitySteps ?? []).filter(ep => this.entityPlans.get(ep)?.confirmed === false).length;
   }
 
-  /** True when the error is about the whole request, e.g. its check, and not about one of its steps. */
+  /**
+   * True when the banner shows the error: an update's error about the whole request, e.g. its check, as a step's
+   * error shows on its row; every install error, as the banner also says that nothing was installed.
+   */
   hasPackageError(ws: WizardStep): boolean {
-    return !!ws.progressError && !ws.entitySteps?.some(ep => ep.status === 'error');
+    return !!ws.progressError && (!this.data.update || !ws.entitySteps?.some(ep => ep.status === 'error'));
   }
 
   /** resolution is the user's choice for an entity whose name is taken. */
@@ -1821,8 +1742,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       keep: 'iot-hub.device-update-no-changes' }[this.outcomeOf(plan)];
   }
 
-  /** What the request did with the entity of a row, once it succeeded. */
+  /** What the request did with the entity of a row, once it succeeded. Review mode has no plan: the row is done. */
   appliedOutcomeOf(plan: EntityStepPlan | undefined): string {
+    if (!plan) {
+      return 'iot-hub.done';
+    }
     return { update: 'iot-hub.device-package-updated', create: 'iot-hub.device-package-created',
       keep: 'iot-hub.device-package-skipped' }[this.outcomeOf(plan)];
   }
@@ -1930,11 +1854,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.progressDone = true;
     ws.completed = true;
     this.cdr.detectChanges();
-    if (!this.data.update && !this.isLastWizardStep) {
-      await this.delay(500);
-      this.stepper.next();
-      this.cdr.detectChanges();
-    }
   }
 
   /** The values of the forms, which the install state keeps for the next update. */
@@ -2414,43 +2333,62 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** Update: finds out what the update changes and what the user has to confirm, before anything changes. */
-  private async checkUpdate(ws: WizardStep): Promise<void> {
+  /**
+   * Finds out what the install or update does and what the user has to confirm, before anything changes. An install
+   * with nothing to confirm starts at once. choices: on an install's Retry, the conflict choices to keep.
+   */
+  private async planPackage(ws: WizardStep, choices?: Map<DeviceInstallStep, InstallConflictChoice>): Promise<void> {
     const run = ++this.checkRun;
-    // Templates refer to the package's entities, e.g. ${deviceProfile.id}: until the steps run, the installed ones
-    this.restoreInstallState(false);
+    if (this.data.update) {
+      // Templates refer to the package's entities, e.g. ${deviceProfile.id}: until the steps run, the installed ones
+      this.restoreInstallState(false);
+    }
     ws.entitySteps = ws.rawSteps.map(s => ({
       step: s,
       status: 'pending' as const,
       resolvedName: this.resolveVariables(s.name)
     }));
     ws.reviewing = true;
-    ws.checking = true;
     ws.progressError = null;
+    // The server finds a duplicate key of an update
+    const duplicateKey = this.data.update ? null : this.duplicateStateKey();
+    if (duplicateKey) {
+      ws.progressError = this.translate.instant('iot-hub.device-install-duplicate-step', { key: duplicateKey });
+      this.cdr.detectChanges();
+      return;
+    }
+    ws.checking = true;
     this.cdr.detectChanges();
     try {
-      const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId, { ignoreLoading: true }));
-      this.updateStates = new Map(states.map(state => [state.stepName, state]));
-      const plans = await Promise.all(ws.entitySteps.map(ep => this.planEntityStep(ep)));
-      if (run !== this.checkRun) {
-        // The user went back meanwhile: the plan is of the form values before
+      if (this.data.update) {
+        const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId, { ignoreLoading: true }));
+        this.updateStates = new Map(states.map(state => [state.stepName, state]));
+      }
+      const plans = await Promise.all(ws.entitySteps.map(ep => this.planEntityStep(ep, choices)));
+      if (this.closed || run !== this.checkRun) {
+        // The dialog closed or the user went back meanwhile: the plan is of the form values before
         return;
       }
       ws.entitySteps.forEach((ep, i) => this.entityPlans.set(ep, plans[i]));
-      this.overwriteReferencesToCreated(ws);
+      if (this.data.update) {
+        this.overwriteReferencesToCreated(ws);
+      }
     } catch (e: any) {
-      if (run !== this.checkRun) {
+      if (this.closed || run !== this.checkRun) {
         return;
       }
       ws.progressError = this.failureMessage(e);
     }
     ws.checking = false;
     this.cdr.detectChanges();
+    if (!this.data.update && !ws.progressError && this.unconfirmedWarnings(ws) === 0) {
+      await this.apply(ws);
+    }
   }
 
-  private async planEntityStep(ep: EntityStepProgress): Promise<EntityStepPlan> {
+  private async planEntityStep(ep: EntityStepProgress, choices?: Map<DeviceInstallStep, InstallConflictChoice>): Promise<EntityStepPlan> {
     const step = ep.step;
-    if (step.type === InstallStepType.GATEWAY_CONNECTOR) {
+    if (this.data.update && step.type === InstallStepType.GATEWAY_CONNECTOR) {
       // A connector lives in the gateway's attributes, which the step sets again when it changed
       return { action: this.entityStepChanged(step) ? 'overwrite' : 'keep', confirmed: true };
     }
@@ -2487,9 +2425,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         newDefaultConverter
       };
     }
-    // New in this version, or deleted since: created as at install, with the same name conflict check
+    // At install, or new in this version, or deleted since: created, unless the user chooses otherwise for an entity
+    // that has its name. A kept choice counts as confirmed
     const existing = await this.preCheckEntity(step);
-    return { action: 'create', existing, confirmed: !existing };
+    const choice = existing ? choices?.get(step) : undefined;
+    const resolution = choice && choice.existingId === existing.id ? choice.resolution : undefined;
+    return { action: 'create', existing, resolution, confirmed: !existing || !!resolution };
   }
 
   /**
@@ -2599,10 +2540,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       default:
         return null;
     }
-  }
-
-  private getConflictType(stepType: InstallStepType): 'use-or-overwrite' | 'overwrite-or-copy' {
-    return stepType === InstallStepType.DASHBOARD ? 'overwrite-or-copy' : 'use-or-overwrite';
   }
 
   private stepTypeToEntityType(stepType: InstallStepType): string | null {
