@@ -5754,7 +5754,7 @@
     "opc-ua-type": "Type",
     "opc-ua-keystore-type": "Type",
     "opc-ua-keystore-type-required": "Type er påkrevd",
-    "opc-ua-keystore-location": "Plassering *",
+    "opc-ua-keystore-location": "Plassering",
     "opc-ua-keystore-password": "Passord",
     "opc-ua-keystore-password-required": "Passord er påkrevd",
     "opc-ua-keystore-alias": "Alias",

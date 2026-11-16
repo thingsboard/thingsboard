@@ -5745,7 +5745,7 @@
     "opc-ua-type": "Tür",
     "opc-ua-keystore-type": "Tür",
     "opc-ua-keystore-type-required": "Tür gereklidir",
-    "opc-ua-keystore-location": "Konum *",
+    "opc-ua-keystore-location": "Konum",
     "opc-ua-keystore-password": "Parola",
     "opc-ua-keystore-password-required": "Parola gereklidir",
     "opc-ua-keystore-alias": "Takma ad",

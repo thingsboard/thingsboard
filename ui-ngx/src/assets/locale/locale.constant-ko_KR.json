@@ -5772,7 +5772,7 @@
         "opc-ua-type": "유형",
         "opc-ua-keystore-type": "유형",
         "opc-ua-keystore-type-required": "유형은 필수 항목입니다.",
-        "opc-ua-keystore-location": "위치 *",
+        "opc-ua-keystore-location": "위치",
         "opc-ua-keystore-password": "비밀번호",
         "opc-ua-keystore-password-required": "비밀번호는 필수 항목입니다.",
         "opc-ua-keystore-alias": "별명",
