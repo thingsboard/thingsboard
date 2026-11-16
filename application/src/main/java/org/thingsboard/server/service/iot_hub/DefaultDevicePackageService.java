@@ -278,9 +278,13 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         }
     }
 
-    /** The customer and the device group the install was opened from; each must be the tenant's. */
+    /**
+     * The customer and the device group the install was opened from; each must be the tenant's. The group's own
+     * permission isn't checked again: the endpoint's checkAllPermissions already requires ALL operations on ALL resources.
+     */
     private Placement placement(TenantId tenantId, DevicePackageRequest request) {
-        CustomerId customerId = request.getCustomerId() != null ? new CustomerId(request.getCustomerId()) : null;
+        CustomerId customerId = request.getCustomerId() != null && !CustomerId.NULL_UUID.equals(request.getCustomerId())
+                ? new CustomerId(request.getCustomerId()) : null;
         if (customerId != null && !isTenantsCustomer(tenantId, customerId)) {
             throw new IllegalArgumentException("Invalid install request");
         }
@@ -305,14 +309,13 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
     }
 
     /**
-     * Puts the entity in the customer the install was opened from. An overwritten entity keeps its owner: one of another
-     * owner fails the step, as its save from the install wizard did.
+     * Puts the entity in the customer the install was opened from. An overwrite never changes the owner, with or without
+     * a customer: the dao would move the entity past the owner change, leaving its groups and the owner cache stale.
      */
     private static void assignCustomer(GroupEntity<?> entity, CustomerId customerId, GroupEntity<?> current, DevicePackageRequest.Step step) {
-        if (customerId == null) {
-            return;
+        if (customerId != null) {
+            entity.setOwnerId(customerId);
         }
-        entity.setOwnerId(customerId);
         if (current != null && !current.getOwnerId().equals(entity.getOwnerId())) {
             throw new IllegalArgumentException(step.getName() + " belongs to another owner");
         }
@@ -979,7 +982,8 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
     private void afterCommit(SecurityUser user, TenantId tenantId, Applied applied) {
         for (SavedEntity saved : applied.saved()) {
             try {
-                logEntityActionService.logEntityAction(tenantId, saved.id(), (HasName) saved.entity(),
+                CustomerId customerId = saved.entity() instanceof HasCustomerId owned ? owned.getCustomerId() : null;
+                logEntityActionService.logEntityAction(tenantId, saved.id(), (HasName) saved.entity(), customerId,
                         saved.created() ? ActionType.ADDED : ActionType.UPDATED, user);
                 if (saved.id().getEntityType() != EntityType.DEVICE) {
                     autoCommit(user, saved.id());

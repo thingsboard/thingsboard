@@ -986,7 +986,7 @@ class DefaultDevicePackageServiceTest {
         assertThat(result.isSuccess()).isTrue();
         InOrder order = inOrder(installedItemService, logEntityActionService, iotHubRestClient);
         order.verify(installedItemService).save(eq(tenantId), any());
-        order.verify(logEntityActionService).logEntityAction(eq(tenantId), eq(dashboardId), any(), eq(ActionType.ADDED), eq(user));
+        order.verify(logEntityActionService).logEntityAction(eq(tenantId), eq(dashboardId), any(), any(), eq(ActionType.ADDED), eq(user));
         order.verify(iotHubRestClient).reportVersionInstalled(eq(versionId), any());
     }
 
@@ -1106,6 +1106,60 @@ class DefaultDevicePackageServiceTest {
         verify(dashboardService).saveDashboard(dashboard.capture());
         assertThat(dashboard.getValue().getCustomerId()).isNull();
         verifyNoInteractions(customerService, entityGroupService);
+    }
+
+    @Test
+    void installOverwriteOfACustomerDeviceThatChangesItsOwnerFails() {
+        mockInstall();
+        CustomerId owner = customerOf(tenantId);
+        Device current = new Device(deviceId);
+        current.setTenantId(tenantId);
+        current.setName("AM308");
+        current.setCustomerId(owner);
+        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(current);
+
+        for (UUID customerId : new UUID[]{null, customerOf(tenantId).getId()}) {
+            DevicePackageRequest.Step step = overwrite("AM308", "DEVICE", deviceId, null, JacksonUtil.newObjectNode().put("name", "AM308"));
+            step.setConfirmed(true);
+            DevicePackageRequest request = request(step);
+            request.setCustomerId(customerId);
+
+            DevicePackageResult result = service.install(user, request);
+
+            assertThat(result.isSuccess()).isFalse();
+            assertThat(result.getFailedStep()).isEqualTo("DEVICE:AM308");
+            assertThat(result.getErrorMessage()).isEqualTo("AM308 belongs to another owner");
+        }
+        verify(deviceService, never()).saveDevice(any(Device.class));
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void installIntoACustomerGroupGivesTheDeviceTheGroupsCustomer() {
+        mockInstall();
+        CustomerId groupCustomer = customerOf(tenantId);
+        EntityGroup group = new EntityGroup();
+        group.setId(new EntityGroupId(UUID.randomUUID()));
+        group.setType(EntityType.DEVICE);
+        group.setName("Customer sensors");
+        group.setOwnerId(groupCustomer);
+        when(entityGroupService.findEntityGroupById(tenantId, group.getId())).thenReturn(group);
+        DevicePackageRequest request = request(
+                create("AM308", "DEVICE", JacksonUtil.newObjectNode().put("name", "AM308")),
+                create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard")));
+        request.setEntityGroupId(group.getId().getId());
+
+        DevicePackageResult result = service.install(user, request);
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<Device> device = ArgumentCaptor.forClass(Device.class);
+        verify(deviceService).saveDevice(device.capture());
+        assertThat(device.getValue().getCustomerId()).isEqualTo(groupCustomer);
+        ArgumentCaptor<Dashboard> dashboard = ArgumentCaptor.forClass(Dashboard.class);
+        verify(dashboardService).saveDashboard(dashboard.capture());
+        assertThat(dashboard.getValue().getOwnerId()).isEqualTo(tenantId);
+        verify(entityGroupService).addEntityToEntityGroup(tenantId, group.getId(), deviceId);
+        verify(logEntityActionService).logEntityAction(eq(tenantId), eq(deviceId), any(Device.class), eq(groupCustomer), eq(ActionType.ADDED), eq(user));
     }
 
     private CustomerId customerOf(TenantId owner) {
