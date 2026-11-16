@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.ModbusDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
@@ -38,6 +39,9 @@ import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.transport.modbus.ModbusDataType;
+import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
+import org.thingsboard.server.common.data.transport.modbus.ModbusMapping;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
 import org.thingsboard.server.common.data.transport.snmp.config.impl.TelemetryQueryingSnmpCommunicationConfig;
@@ -226,6 +230,38 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testDeviceProfiles_modbus() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfileAndDoBasicAssert("MODBUS", createModbusDeviceProfileTransportConfiguration());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
+        DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
+        DeviceProfile deviceProfileMsg = JacksonUtil.fromString(deviceProfileUpdateMsg.getEntity(), DeviceProfile.class, true);
+        Assert.assertNotNull(deviceProfileMsg);
+        compareHasVersionEntities(deviceProfile, deviceProfileMsg);
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
+        Assert.assertEquals(DeviceTransportType.MODBUS, deviceProfileMsg.getTransportType());
+
+        DeviceProfileData deviceProfileData = deviceProfileMsg.getProfileData();
+
+        Assert.assertTrue(deviceProfileData.getTransportConfiguration() instanceof ModbusDeviceProfileTransportConfiguration);
+        ModbusDeviceProfileTransportConfiguration transportConfiguration =
+                (ModbusDeviceProfileTransportConfiguration) deviceProfileData.getTransportConfiguration();
+        Assert.assertEquals(Integer.valueOf(1000), transportConfiguration.getTimeoutMs());
+        Assert.assertEquals(Integer.valueOf(3), transportConfiguration.getRetries());
+        Assert.assertEquals(Long.valueOf(500L), transportConfiguration.getPollPeriodMs());
+
+        Assert.assertEquals(1, transportConfiguration.getTimeseries().size());
+        ModbusMapping modbusMapping = transportConfiguration.getTimeseries().get(0);
+        Assert.assertEquals("temperature", modbusMapping.getTag());
+        Assert.assertEquals(ModbusDataType.INT16, modbusMapping.getType());
+        Assert.assertEquals(ModbusFunctionCode.READ_INPUT_REGISTERS, modbusMapping.getFunctionCode());
+        Assert.assertEquals(Integer.valueOf(2), modbusMapping.getAddress());
+
+        removeDeviceProfileAndDoBasicAssert(deviceProfile);
+    }
+
+    @Test
     public void testDeviceProfiles_lwm2m() throws Exception {
         DeviceProfile deviceProfile = createDeviceProfileAndDoBasicAssert("LWM2M", createLwm2mDeviceProfileTransportConfiguration());
 
@@ -405,6 +441,20 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         transportConfiguration.setCommunicationConfigs(communicationConfigs);
         transportConfiguration.setTimeoutMs(1000);
         transportConfiguration.setRetries(3);
+        return transportConfiguration;
+    }
+
+    private ModbusDeviceProfileTransportConfiguration createModbusDeviceProfileTransportConfiguration() {
+        ModbusDeviceProfileTransportConfiguration transportConfiguration = new ModbusDeviceProfileTransportConfiguration();
+        ModbusMapping mapping = new ModbusMapping();
+        mapping.setTag("temperature");
+        mapping.setType(ModbusDataType.INT16);
+        mapping.setFunctionCode(ModbusFunctionCode.READ_INPUT_REGISTERS);
+        mapping.setAddress(2);
+        transportConfiguration.setTimeseries(List.of(mapping));
+        transportConfiguration.setTimeoutMs(1000);
+        transportConfiguration.setRetries(3);
+        transportConfiguration.setPollPeriodMs(500L);
         return transportConfiguration;
     }
 
