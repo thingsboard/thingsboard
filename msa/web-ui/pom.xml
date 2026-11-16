@@ -33,6 +33,7 @@
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
         <sbom.image.scanExclude></sbom.image.scanExclude>
+        <notices.image.phase>package</notices.image.phase>
     </properties>
 
     <dependencies>
@@ -201,6 +202,15 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
+                    <!-- The image also has the UI, which has its own SBOM -->
+                    <execution>
+                        <id>notices-image</id>
+                        <configuration>
+                            <arguments combine.children="append">
+                                <argument>${project.build.directory}/web/META-INF/sbom/ui-ngx.cdx.json</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>build-docker-image</id>
                         <phase>pre-integration-test</phase>

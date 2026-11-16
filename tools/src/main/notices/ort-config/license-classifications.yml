@@ -69,6 +69,8 @@ categorizations:
     categories: ["notice"]
   - id: "CC-BY-2.5"
     categories: ["notice"]
+  - id: "CC-BY-3.0"
+    categories: ["notice"]
   - id: "CC-BY-4.0"
     categories: ["notice"]
   - id: "CC0-1.0"
