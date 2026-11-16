@@ -1327,6 +1327,23 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: str(values.bundleId) ? text('save-mobile-bundle') : text('create-mobile-bundle', {name: str(values.title) ?? '—'}), blocks};
     }
+    case 'read_scheduler_events': {
+      if (!isObject(result)) {
+        return {hood: text('read-scheduler-events'), blocks: generic(result, 'result')};
+      }
+      if (Array.isArray(result.events)) {
+        const rows = result.events.filter(isObject).slice(0, MAX_ROWS)
+          .map(event => [event.name, event.schedule, event.enabled === false ? '⏸' : undefined].filter(Boolean).join(' · '));
+        return {hood: text('read-scheduler-events'),
+          blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-scheduler-events')}]};
+      }
+      return {hood: text('read-scheduler-event', {name: str(result.name) ?? '—'}), blocks: json('event', result)};
+    }
+    case 'save_scheduler_event': {
+      const rows = facts(values, ['eventId']);
+      return {hood: str(values.eventId) ? text('save-scheduler-event') : text('create-scheduler-event', {name: str(values.name) ?? '—'}),
+        blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
     case 'save_mobile_qr_code': {
       const rows = facts(values);
       return {hood: text('save-mobile-qr-code'), blocks: rows.length ? [{type: 'facts', rows}] : []};

@@ -89,7 +89,7 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.AUDIT_LOGS]: {key: 'audit-logs', examples: ['changes', 'logins']},
   [AiAssistantViewType.VERSION_CONTROL]: {key: 'version-control', examples: ['save', 'history']},
   [AiAssistantViewType.TASK_MANAGER]: {key: 'task-manager', examples: ['failed']},
-  [AiAssistantViewType.SCHEDULER]: {key: 'scheduler'},
+  [AiAssistantViewType.SCHEDULER]: {key: 'scheduler', examples: ['night', 'week']},
   [AiAssistantViewType.HOME_SETTINGS]: {key: 'home-settings', examples: ['set']},
   [AiAssistantViewType.MAIL_SERVER_SETTINGS]: {key: 'mail-server-settings', examples: ['setup']},
   [AiAssistantViewType.NOTIFICATION_SETTINGS]: {key: 'notification-settings', examples: ['slack', 'sms']},

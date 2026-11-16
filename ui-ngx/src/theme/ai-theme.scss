@@ -1297,7 +1297,14 @@
     color: var(--tb-text-secondary);
   }
 
+  td.k-diff-was, td.k-diff-now {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
   .k-diff-now span {
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
     margin-left: -6px;
     padding: 1px 6px;
     border-radius: 4px;

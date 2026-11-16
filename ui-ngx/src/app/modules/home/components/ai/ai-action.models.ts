@@ -80,6 +80,8 @@ const TOOL_WORDS: Record<string, string> = {
   save_mobile_app: 'save-mobile-app',
   save_mobile_bundle: 'save-mobile-bundle',
   save_mobile_qr_code: 'save-mobile-qr-code',
+  read_scheduler_events: 'read-scheduler-events',
+  save_scheduler_event: 'save-scheduler-event',
   save_custom_menu: 'save-custom-menu',
   save_ota_package: 'save-ota-package',
   assign_ota_package: 'assign-ota-package',
@@ -158,7 +160,8 @@ const DELETED_TARGETS: Record<string, string> = {
   RESOURCE: 'delete-resource',
   CUSTOM_MENU: 'delete-custom-menu',
   MOBILE_APP: 'delete-mobile-app',
-  MOBILE_BUNDLE: 'delete-mobile-bundle'
+  MOBILE_BUNDLE: 'delete-mobile-bundle',
+  SCHEDULER_EVENT: 'delete-scheduler-event'
 };
 
 const ACTION_PREFIX = 'ai-assistant.action.';
@@ -476,6 +479,7 @@ const ENTITY_KINDS: Record<string, AiEntityKind> = {
   MOBILE_APP: {icon: 'smartphone', palette: 'device'},
   MOBILE_BUNDLE: {icon: 'phonelink_setup', palette: 'device'},
   MOBILE_QR_CODE: {icon: 'qr_code_2', palette: 'device'},
+  SCHEDULER_EVENT: {icon: 'schedule', palette: 'rule'},
   IMAGE: {icon: 'image', palette: 'view'},
   TB_RESOURCE: {icon: 'image', palette: 'view'},
   CUSTOMER: {icon: 'supervisor_account', palette: 'people'},

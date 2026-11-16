@@ -916,6 +916,11 @@
             "read-custom-menus": "Read the custom menus",
             "read-security-settings": "Read the security settings",
             "read-mobile-center": "Read the mobile center",
+            "read-scheduler-events": "Read the scheduler",
+            "read-scheduler-event": "Read the scheduler event {{name}}",
+            "no-scheduler-events": "No scheduler events yet.",
+            "save-scheduler-event": "Changed the scheduler event",
+            "create-scheduler-event": "Created the scheduler event {{name}}",
             "mobile-apps": "Apps",
             "no-mobile-apps": "No mobile apps yet.",
             "no-mobile-bundles": "No mobile bundles yet, so the apps show the standard menu.",
@@ -1401,6 +1406,14 @@
                 "run": "Saving the QR code",
                 "done": "Saved the QR code"
             },
+            "read-scheduler-events": {
+                "run": "Reading the scheduler",
+                "done": "Read the scheduler"
+            },
+            "save-scheduler-event": {
+                "run": "Saving the scheduler event",
+                "done": "Saved the scheduler event"
+            },
             "save-custom-menu": {
                 "run": "Saving the custom menu",
                 "done": "Saved the custom menu"
@@ -1424,6 +1437,10 @@
             "delete-mobile-bundle": {
                 "run": "Deleting the mobile bundle",
                 "done": "Deleted the mobile bundle"
+            },
+            "delete-scheduler-event": {
+                "run": "Deleting the scheduler event",
+                "done": "Deleted the scheduler event"
             },
             "delete-custom-menu": {
                 "run": "Deleting the custom menu",
@@ -1795,6 +1812,16 @@
                 "showOnHomePage": "On the home page",
                 "badges": "Store badges",
                 "badgePosition": "Badge position",
+                "eventType": "Event type",
+                "target": "Target",
+                "schedule": "Schedule",
+                "method": "RPC method",
+                "params": "Parameters",
+                "oneway": "One-way",
+                "timeout": "Timeout, ms",
+                "persistent": "Persistent",
+                "package": "Package",
+                "enabled": "Enabled",
                 "useSystemSettings": "System settings",
                 "url": "URL",
                 "tag": "Tag",
@@ -2687,8 +2714,12 @@
             },
             "scheduler": {
                 "title": "Ask about the scheduler",
-                "line": "Run actions on a schedule: update attributes, send commands, generate reports.",
-                "suggestion": "How do I send a command to my devices every night?"
+                "line": "Run actions on a schedule: update attributes, send commands, roll out firmware.",
+                "suggestion": "How do I send a command to my devices every night?",
+                "example": {
+                    "night": {"label": "Night mode on weekdays", "message": "Every weekday at 22:00, set the shared attribute mode to night on my devices."},
+                    "week": {"label": "What runs this week?", "message": "Which scheduler events run in the next 7 days, and when?"}
+                }
             },
             "home-settings": {
                 "title": "Ask about the home page",

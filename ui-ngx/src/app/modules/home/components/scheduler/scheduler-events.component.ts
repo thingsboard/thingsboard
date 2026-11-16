@@ -88,6 +88,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { DomSanitizer } from "@angular/platform-browser";
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 
 @Component({
     selector: 'tb-scheduler-events',
@@ -181,9 +182,14 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     private popoverService: TbPopoverService,
     private viewContainerRef: ViewContainerRef,
     private destroyRef: DestroyRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private aiAssistantPanelService: AiAssistantPanelService
   ) {
     super();
+    this.aiAssistantPanelService.updatedData$.pipe(
+      filter(entities => entities.some(entityId => entityId.entityType === EntityType.SCHEDULER_EVENT)),
+      takeUntilDestroyed()
+    ).subscribe(() => this.reloadSchedulerEvents());
   }
 
   ngOnInit(): void {
@@ -406,7 +412,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
 
   reloadSchedulerEvents(): void {
     if (this.mode === 'calendar') {
-      this.calendarApi.refetchEvents();
+      this.calendarApi?.refetchEvents();
     } else {
       this.updateData();
     }
