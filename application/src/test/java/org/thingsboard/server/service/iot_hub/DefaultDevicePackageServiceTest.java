@@ -19,6 +19,7 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -33,11 +34,13 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.subscription.SubscriptionErrorCode;
@@ -46,11 +49,13 @@ import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.dao.converter.ConverterService;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.dao.subscription.PlatformFeature;
@@ -73,6 +78,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -128,6 +134,10 @@ class DefaultDevicePackageServiceTest {
     private IotHubService iotHubService;
     @Mock
     private ProjectInfo projectInfo;
+    @Mock
+    private CustomerService customerService;
+    @Mock
+    private EntityGroupService entityGroupService;
 
     @InjectMocks
     private DefaultDevicePackageService service;
@@ -142,6 +152,8 @@ class DefaultDevicePackageServiceTest {
     void setUp() {
         ReflectionTestUtils.setField(service, "entityService", entityService);
         ReflectionTestUtils.setField(service, "logEntityActionService", logEntityActionService);
+        ReflectionTestUtils.setField(service, "customerService", customerService);
+        ReflectionTestUtils.setField(service, "entityGroupService", entityGroupService);
         when(user.getTenantId()).thenReturn(tenantId);
 
         DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
@@ -1020,6 +1032,89 @@ class DefaultDevicePackageServiceTest {
         verify(transactionTemplate, never()).execute(any());
     }
 
+    @Test
+    void installAssignsTheCustomerToTheDeviceAndTheDashboard() {
+        mockInstall();
+        CustomerId customerId = customerOf(tenantId);
+        DevicePackageRequest request = request(
+                create("AM308", "DEVICE", JacksonUtil.newObjectNode().put("name", "AM308")),
+                create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard")));
+        request.setCustomerId(customerId.getId());
+
+        DevicePackageResult result = service.install(user, request);
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<Device> device = ArgumentCaptor.forClass(Device.class);
+        verify(deviceService).saveDevice(device.capture());
+        assertThat(device.getValue().getCustomerId()).isEqualTo(customerId);
+        ArgumentCaptor<Dashboard> dashboard = ArgumentCaptor.forClass(Dashboard.class);
+        verify(dashboardService).saveDashboard(dashboard.capture());
+        assertThat(dashboard.getValue().getCustomerId()).isEqualTo(customerId);
+    }
+
+    @Test
+    void installAddsTheDeviceToTheEntityGroup() {
+        mockInstall();
+        EntityGroup group = new EntityGroup();
+        group.setId(new EntityGroupId(UUID.randomUUID()));
+        group.setType(EntityType.DEVICE);
+        group.setName("Warehouse sensors");
+        group.setOwnerId(tenantId);
+        when(entityGroupService.findEntityGroupById(tenantId, group.getId())).thenReturn(group);
+        DevicePackageRequest request = request(
+                create("AM308", "DEVICE", JacksonUtil.newObjectNode().put("name", "AM308")),
+                create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard")));
+        request.setEntityGroupId(group.getId().getId());
+
+        DevicePackageResult result = service.install(user, request);
+
+        assertThat(result.isSuccess()).isTrue();
+        verify(entityGroupService).addEntityToEntityGroup(tenantId, group.getId(), deviceId);
+        verify(entityGroupService, never()).addEntityToEntityGroup(any(), any(), eq(dashboardId));
+        assertThat(savedInTransaction).contains("ENTITY_GROUP");
+        verify(logEntityActionService).logEntityAction(eq(tenantId), eq(deviceId), any(Device.class), any(), eq(ActionType.ADDED_TO_ENTITY_GROUP),
+                eq(user), eq(deviceId.toString()), eq(group.getId().toString()), eq("Warehouse sensors"));
+    }
+
+    @Test
+    void installRejectsACustomerOfAnotherTenant() {
+        mockInstall();
+        CustomerId customerId = customerOf(TenantId.fromUUID(UUID.randomUUID()));
+        DevicePackageRequest request = request(create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "d")));
+        request.setCustomerId(customerId.getId());
+
+        DevicePackageResult result = service.install(user, request);
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Invalid install request");
+        verify(transactionTemplate, never()).execute(any());
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void updateIgnoresCustomerAndEntityGroup() {
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(7L));
+        when(dashboardService.saveDashboard(any(Dashboard.class))).thenAnswer(i -> i.getArgument(0));
+        DevicePackageRequest request = request(overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d")));
+        request.setCustomerId(UUID.randomUUID());
+        request.setEntityGroupId(UUID.randomUUID());
+
+        DevicePackageResult result = service.update(user, installedItem.getId(), request);
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<Dashboard> dashboard = ArgumentCaptor.forClass(Dashboard.class);
+        verify(dashboardService).saveDashboard(dashboard.capture());
+        assertThat(dashboard.getValue().getCustomerId()).isNull();
+        verifyNoInteractions(customerService, entityGroupService);
+    }
+
+    private CustomerId customerOf(TenantId owner) {
+        Customer customer = new Customer(new CustomerId(UUID.randomUUID()));
+        customer.setTenantId(owner);
+        when(customerService.findCustomerById(tenantId, customer.getId())).thenReturn(customer);
+        return customer.getId();
+    }
+
     /** The new entities get these ids; each save records that it ran inside the transaction. */
     private void mockInstall() {
         when(user.getId()).thenReturn(new UserId(UUID.randomUUID()));
@@ -1037,6 +1132,16 @@ class DefaultDevicePackageServiceTest {
             dashboard.setId(dashboardId);
             return dashboard;
         });
+        when(deviceService.saveDevice(any(Device.class))).thenAnswer(i -> {
+            recordSave("DEVICE");
+            Device device = i.getArgument(0);
+            device.setId(deviceId);
+            return device;
+        });
+        doAnswer(i -> {
+            recordSave("ENTITY_GROUP");
+            return null;
+        }).when(entityGroupService).addEntityToEntityGroup(any(), any(), any());
         when(installedItemService.save(any(), any())).thenAnswer(i -> {
             recordSave("INSTALLED_ITEM");
             return i.getArgument(1);

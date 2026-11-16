@@ -24,6 +24,10 @@ public class DevicePackageRequest {
     private String selectedInstallMethod;
     // The form values of the install state, by step: the server adds the entities to it
     private Map<String, JsonNode> installState;
+    // Install only, from a customer's or a device group's page: the customer the device, the gateway and the dashboard
+    // go to, and the group the created device or gateway is added to. An update ignores them
+    private UUID customerId;
+    private UUID entityGroupId;
     private List<Step> steps;
 
     public enum Action {

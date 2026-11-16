@@ -16,10 +16,13 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.GroupEntity;
+import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
@@ -30,14 +33,17 @@ import org.thingsboard.server.common.data.exception.EntityVersionMismatchExcepti
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
@@ -170,6 +176,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             if (request.getVersionId() == null || request.getFromVersionId() != null || toUuid(request.getVersionId()) == null) {
                 throw new IllegalArgumentException("Invalid install request");
             }
+            Placement placement = placement(tenantId, request);
             JsonNode versionInfo = iotHubRestClient.getVersionInfo(request.getVersionId());
             if (versionInfo == null) {
                 throw new IllegalArgumentException("Failed to get version info from IoT Hub");
@@ -179,7 +186,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             validateInstallSteps(request);
             validate(tenantId, previous, request);
             return transactionTemplate.execute(status -> {
-                Applied applied = applySteps(tenantId, previous, request, null);
+                Applied applied = applySteps(tenantId, previous, request, null, placement);
                 IotHubInstalledItem installedItem = new IotHubInstalledItem();
                 installedItem.setTenantId(tenantId);
                 installedItem.setItemId(UUID.fromString(versionInfo.get("itemId").asText()));
@@ -212,7 +219,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             validate(tenantId, devicePackage.descriptor(), request);
             return transactionTemplate.execute(status -> {
                 IotHubInstalledItem installedItem = lockInstalledItem(tenantId, devicePackage, request);
-                Applied applied = applySteps(tenantId, devicePackage.descriptor(), request, installedItem.getItemVersionId());
+                Applied applied = applySteps(tenantId, devicePackage.descriptor(), request, installedItem.getItemVersionId(), Placement.NONE);
                 installedItem.setItemVersionId(UUID.fromString(request.getVersionId()));
                 installedItem.setItemName(versionInfo.get("name").asText());
                 installedItem.setVersion(versionInfo.get("version").asText());
@@ -268,6 +275,46 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             if (step.getAction() == DevicePackageRequest.Action.KEEP && !"use-existing".equals(step.getResolution())) {
                 throw new IllegalArgumentException("Invalid install step: " + step.getName());
             }
+        }
+    }
+
+    /** The customer and the device group the install was opened from; each must be the tenant's. */
+    private Placement placement(TenantId tenantId, DevicePackageRequest request) {
+        CustomerId customerId = request.getCustomerId() != null ? new CustomerId(request.getCustomerId()) : null;
+        if (customerId != null && !isTenantsCustomer(tenantId, customerId)) {
+            throw new IllegalArgumentException("Invalid install request");
+        }
+        if (request.getEntityGroupId() == null) {
+            return new Placement(customerId, customerId, null);
+        }
+        EntityGroup group = entityGroupService.findEntityGroupById(tenantId, new EntityGroupId(request.getEntityGroupId()));
+        EntityId owner = group != null ? group.getOwnerId() : null;
+        boolean tenants = owner != null && (tenantId.equals(owner)
+                || (owner.getEntityType() == EntityType.CUSTOMER && isTenantsCustomer(tenantId, new CustomerId(owner.getId()))));
+        if (group == null || group.getType() != EntityType.DEVICE || !tenants) {
+            throw new IllegalArgumentException("Invalid install request");
+        }
+        // As a device saved into a group: with no customer given, a new one goes to the group's customer
+        CustomerId deviceCustomerId = customerId == null && owner.getEntityType() == EntityType.CUSTOMER ? new CustomerId(owner.getId()) : customerId;
+        return new Placement(customerId, deviceCustomerId, group);
+    }
+
+    private boolean isTenantsCustomer(TenantId tenantId, CustomerId customerId) {
+        Customer customer = customerService.findCustomerById(tenantId, customerId);
+        return customer != null && tenantId.equals(customer.getTenantId());
+    }
+
+    /**
+     * Puts the entity in the customer the install was opened from. An overwritten entity keeps its owner: one of another
+     * owner fails the step, as its save from the install wizard did.
+     */
+    private static void assignCustomer(GroupEntity<?> entity, CustomerId customerId, GroupEntity<?> current, DevicePackageRequest.Step step) {
+        if (customerId == null) {
+            return;
+        }
+        entity.setOwnerId(customerId);
+        if (current != null && !current.getOwnerId().equals(entity.getOwnerId())) {
+            throw new IllegalArgumentException(step.getName() + " belongs to another owner");
         }
     }
 
@@ -364,7 +411,8 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
      * Saves the entities of the steps and builds the descriptor of the installed item, which the caller saves in the
      * same transaction. previous is what the package had: on install an empty descriptor, and installedVersionId null.
      */
-    private Applied applySteps(TenantId tenantId, DeviceInstalledItemDescriptor previous, DevicePackageRequest request, UUID installedVersionId) {
+    private Applied applySteps(TenantId tenantId, DeviceInstalledItemDescriptor previous, DevicePackageRequest request, UUID installedVersionId,
+                               Placement placement) {
         Set<UUID> ownedIds = ownedIds(previous);
         Map<String, ObjectNode> aliasOutputs = new HashMap<>();
         Map<String, ObjectNode> outputs = new LinkedHashMap<>();
@@ -379,6 +427,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         List<EntityId> stepEntityIds = new ArrayList<>();
         Map<UUID, EntityId> usedExistingIds = usedExistingIds(previous);
         List<SavedEntity> saved = new ArrayList<>();
+        List<SavedEntity> grouped = new ArrayList<>();
         List<DevicePackageRequest.Step> connectorSteps = new ArrayList<>();
         List<StepAttributes> attributes = new ArrayList<>();
         DashboardId dashboardId = null;
@@ -393,7 +442,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                     continue;
                 }
                 JsonNode entity = step.getEntity() != null ? resolvePlaceholders(step.getEntity(), aliasOutputs) : null;
-                StepResult result = applyStep(tenantId, step, entity);
+                StepResult result = applyStep(tenantId, step, entity, placement);
                 ObjectNode output = result.output();
                 aliasOutputs.put(STEP_ALIASES.get(step.getType()), output);
                 outputs.put(step.stateKey(), output);
@@ -431,6 +480,11 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                 if (result.saved() != null) {
                     saved.add(result.saved());
                 }
+                if (placement.entityGroup() != null && result.saved() != null && result.saved().created()
+                        && result.entityId().getEntityType() == EntityType.DEVICE) {
+                    entityGroupService.addEntityToEntityGroup(tenantId, placement.entityGroup().getId(), result.entityId());
+                    grouped.add(result.saved());
+                }
                 if (step.getAction() != DevicePackageRequest.Action.KEEP && !"use-existing".equals(resolution)) {
                     // As at install, the step's attributes go with the entity it saved; written after commit
                     attributes.add(new StepAttributes(step.getName(), result.entityId(), step.getServerAttributes(), step.getSharedAttributes()));
@@ -467,7 +521,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         // Resolved once every entity is saved: attributes may refer to a later step's entity
         List<StepAttributes> resolvedAttributes = attributes.stream().map(a -> new StepAttributes(a.stepName(), a.entityId(),
                 resolvePlaceholders(a.server(), aliasOutputs), resolvePlaceholders(a.shared(), aliasOutputs))).toList();
-        return new Applied(descriptor, outputs, saved, connectorSteps, resolvedAttributes, aliasOutputs);
+        return new Applied(descriptor, outputs, saved, connectorSteps, resolvedAttributes, aliasOutputs, placement.entityGroup(), grouped);
     }
 
     /** The checksums the installed device packages recorded, by entity. */
@@ -515,11 +569,11 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         return installedItem;
     }
 
-    private StepResult applyStep(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) throws ThingsboardException {
+    private StepResult applyStep(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity, Placement placement) throws ThingsboardException {
         return switch (step.getType()) {
             case "DEVICE_PROFILE" -> saveDeviceProfile(tenantId, step, entity);
-            case "DEVICE", "GATEWAY" -> saveDevice(tenantId, step, entity);
-            case "DASHBOARD" -> saveDashboard(tenantId, step, entity);
+            case "DEVICE", "GATEWAY" -> saveDevice(tenantId, step, entity, placement);
+            case "DASHBOARD" -> saveDashboard(tenantId, step, entity, placement);
             case "RULE_CHAIN" -> saveRuleChain(tenantId, step, entity);
             case "UPLINK_CONVERTER", "DOWNLINK_CONVERTER" -> saveConverter(tenantId, step, entity);
             case "INTEGRATION" -> saveIntegration(tenantId, step, entity);
@@ -549,7 +603,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         return savedResult(tenantId, result.getId(), result, step, output(result.getId(), result.getName()));
     }
 
-    private StepResult saveDevice(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) {
+    private StepResult saveDevice(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity, Placement placement) {
         DeviceId id = step.getEntityId() != null ? new DeviceId(step.getEntityId()) : null;
         Device device;
         boolean created = false;
@@ -558,6 +612,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             template.setTenantId(tenantId);
             template.setId(null);
             template.setVersion(null);
+            assignCustomer(template, placement.deviceCustomerId(), null, step);
             device = deviceService.saveDevice(template);
             created = true;
         } else {
@@ -568,6 +623,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                 Device template = JacksonUtil.treeToValue(entity, Device.class);
                 template.setTenantId(tenantId);
                 prepareOverwrite(template, id, current, step);
+                assignCustomer(template, placement.customerId(), current, step);
                 device = deviceService.saveDevice(template);
                 created = true;
             }
@@ -603,7 +659,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         return deviceCredentialsService.updateDeviceCredentials(tenantId, credentials);
     }
 
-    private StepResult saveDashboard(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) {
+    private StepResult saveDashboard(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity, Placement placement) {
         DashboardId id = step.getEntityId() != null ? new DashboardId(step.getEntityId()) : null;
         Dashboard current = id != null ? dashboardService.findDashboardById(tenantId, id) : null;
         if (step.getAction() == DevicePackageRequest.Action.KEEP) {
@@ -620,9 +676,11 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                 dashboard.setCustomerId(current.getCustomerId());
             }
             dashboard.setAssignedCustomers(current.getAssignedCustomers());
+            assignCustomer(dashboard, placement.customerId(), current, step);
         } else {
             dashboard.setId(null);
             dashboard.setVersion(null);
+            assignCustomer(dashboard, placement.customerId(), null, step);
         }
         Dashboard result = dashboardService.saveDashboard(dashboard);
         return savedResult(tenantId, result.getId(), result, step, output(result.getId(), result.getTitle()));
@@ -930,6 +988,14 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                 log.warn("[{}] Failed to log the device package update of {}", tenantId, saved.id(), e);
             }
         }
+        for (SavedEntity saved : applied.grouped()) {
+            try {
+                logEntityActionService.logEntityAction(tenantId, saved.id(), (HasName) saved.entity(), ((HasCustomerId) saved.entity()).getCustomerId(),
+                        ActionType.ADDED_TO_ENTITY_GROUP, user, saved.id().toString(), applied.entityGroup().getId().toString(), applied.entityGroup().getName());
+            } catch (Exception e) {
+                log.warn("[{}] Failed to log adding {} to its entity group", tenantId, saved.id(), e);
+            }
+        }
         for (StepAttributes step : applied.attributes()) {
             try {
                 saveAttributes(tenantId, step.entityId(), AttributeScope.SERVER_SCOPE, step.server());
@@ -1071,7 +1137,15 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
 
     private record Applied(DeviceInstalledItemDescriptor descriptor, Map<String, ObjectNode> outputs, List<SavedEntity> saved,
                            List<DevicePackageRequest.Step> connectorSteps, List<StepAttributes> attributes,
-                           Map<String, ObjectNode> aliasOutputs) {
+                           Map<String, ObjectNode> aliasOutputs, EntityGroup entityGroup, List<SavedEntity> grouped) {
+    }
+
+    /**
+     * Where an install opened from a customer's or a device group's page puts its entities. A new device follows the
+     * group's customer when no customer is given, as a device saved into a group does; an update has none.
+     */
+    private record Placement(CustomerId customerId, CustomerId deviceCustomerId, EntityGroup entityGroup) {
+        static final Placement NONE = new Placement(null, null, null);
     }
 
     /** A step that failed: the transaction rolls back, and the wizard shows which step it was. */
