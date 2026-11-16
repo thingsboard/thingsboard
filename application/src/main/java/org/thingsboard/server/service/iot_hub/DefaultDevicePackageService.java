@@ -110,7 +110,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             "DOWNLINK_CONVERTER", "downlinkConverter",
             "INTEGRATION", "integration");
     private static final Pattern ENTITY_PLACEHOLDER = Pattern.compile("\\$\\{([A-Za-z]+)\\.([A-Za-z]+)}");
-    private static final String UNEXPECTED_ERROR = "Failed to update the device package";
+    private static final String UNEXPECTED_ERROR = "Failed to save the device package";
 
     private final IotHubInstalledItemService installedItemService;
     private final IotHubRestClient iotHubRestClient;
@@ -167,7 +167,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         TenantId tenantId = user.getTenantId();
         log.info("[{}] Installing device package version {}", tenantId, request.getVersionId());
         DevicePackageResult result = apply(user, "install of version " + request.getVersionId(), () -> {
-            if (request.getVersionId() == null || request.getFromVersionId() != null) {
+            if (request.getVersionId() == null || request.getFromVersionId() != null || toUuid(request.getVersionId()) == null) {
                 throw new IllegalArgumentException("Invalid install request");
             }
             JsonNode versionInfo = iotHubRestClient.getVersionInfo(request.getVersionId());
@@ -176,6 +176,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             }
             // The package owns nothing yet, so overwriting an entity the tenant has needs a confirmation
             DeviceInstalledItemDescriptor previous = new DeviceInstalledItemDescriptor();
+            validateInstallSteps(request);
             validate(tenantId, previous, request);
             return transactionTemplate.execute(status -> {
                 Applied applied = applySteps(tenantId, previous, request, null);
@@ -258,6 +259,18 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         }
     }
 
+    /** At install a kept entity is one the user chose to use as it is: the package doesn't own it. */
+    private static void validateInstallSteps(DevicePackageRequest request) {
+        if (request.getSteps() == null) {
+            return;
+        }
+        for (DevicePackageRequest.Step step : request.getSteps()) {
+            if (step.getAction() == DevicePackageRequest.Action.KEEP && !"use-existing".equals(step.getResolution())) {
+                throw new IllegalArgumentException("Invalid install step: " + step.getName());
+            }
+        }
+    }
+
     /** What is checked before the transaction: the plan, the tenant's plan features and the integrations' configuration. */
     private void validate(TenantId tenantId, DeviceInstalledItemDescriptor previous, DevicePackageRequest request) throws Exception {
         validatePlan(ownedIds(previous), request);
@@ -275,27 +288,27 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
     }
 
     /**
-     * The update may only change what the package owns, or what the user confirmed. The device and the gateway,
+     * The device package may only change what it owns, or what the user confirmed. Its own device and gateway,
      * whose credentials the firmware uses, are never changed.
      */
     private void validatePlan(Set<UUID> ownedIds, DevicePackageRequest request) {
         if (request.getSteps() == null || request.getSteps().isEmpty()) {
-            throw new IllegalArgumentException("The update has no steps");
+            throw new IllegalArgumentException("The device package has no steps");
         }
         // A form's values are saved under its key too, so an entity step may not share it
         Set<String> stateKeys = request.getInstallState() != null ? new HashSet<>(request.getInstallState().keySet()) : new HashSet<>();
         for (DevicePackageRequest.Step step : request.getSteps()) {
             if (step.getName() == null || step.getAction() == null || !isKnownType(step.getType())) {
-                throw new IllegalArgumentException("Invalid update step: " + step.getName());
+                throw new IllegalArgumentException("Invalid step: " + step.getName());
             }
             if (!stateKeys.add(step.stateKey())) {
-                throw new IllegalArgumentException("Duplicate update step: " + step.stateKey());
+                throw new IllegalArgumentException("Duplicate step: " + step.stateKey());
             }
             boolean deviceOrGateway = "DEVICE".equals(step.getType()) || "GATEWAY".equals(step.getType());
             switch (step.getAction()) {
                 case KEEP, OVERWRITE -> {
                     if (step.getEntityId() == null && !"GATEWAY_CONNECTOR".equals(step.getType())) {
-                        throw new IllegalArgumentException("No entity for update step: " + step.getName());
+                        throw new IllegalArgumentException("No entity for step: " + step.getName());
                     }
                     boolean owned = step.getEntityId() != null && ownedIds.contains(step.getEntityId());
                     if (step.getAction() == DevicePackageRequest.Action.OVERWRITE && !owned && !step.isConfirmed()
@@ -310,7 +323,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                 }
             }
             if (step.getAction() != DevicePackageRequest.Action.KEEP && (step.getEntity() == null || !step.getEntity().isObject())) {
-                throw new IllegalArgumentException("No entity data for update step: " + step.getName());
+                throw new IllegalArgumentException("No entity data for step: " + step.getName());
             }
         }
     }

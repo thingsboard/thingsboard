@@ -507,7 +507,7 @@ class DefaultDevicePackageServiceTest {
                 keep("Dashboard", "DASHBOARD", dashboardId), keep("Dashboard", "DASHBOARD", dashboardId)));
 
         assertThat(result.isSuccess()).isFalse();
-        assertThat(result.getErrorMessage()).isEqualTo("Duplicate update step: DASHBOARD:Dashboard");
+        assertThat(result.getErrorMessage()).isEqualTo("Duplicate step: DASHBOARD:Dashboard");
         verify(transactionTemplate, never()).execute(any());
     }
 
@@ -521,7 +521,7 @@ class DefaultDevicePackageServiceTest {
         DevicePackageResult result = service.update(user, installedItem.getId(), request);
 
         assertThat(result.isSuccess()).isFalse();
-        assertThat(result.getErrorMessage()).isEqualTo("Duplicate update step: Settings");
+        assertThat(result.getErrorMessage()).isEqualTo("Duplicate step: Settings");
         verify(transactionTemplate, never()).execute(any());
     }
 
@@ -848,7 +848,7 @@ class DefaultDevicePackageServiceTest {
         assertThat(DefaultDevicePackageService.userMessage(new EntityVersionMismatchException(EntityType.DASHBOARD, null)))
                 .contains("Check the update again");
         assertThat(DefaultDevicePackageService.userMessage(new IllegalStateException("could not execute statement; SQL [n/a]")))
-                .isEqualTo("Failed to update the device package");
+                .isEqualTo("Failed to save the device package");
     }
 
     @Test
@@ -990,6 +990,34 @@ class DefaultDevicePackageServiceTest {
         assertThat(result.getErrorMessage()).isEqualTo("Invalid install request");
         verify(transactionTemplate, never()).execute(any());
         verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void installKeepStepMustUseExisting() {
+        mockInstall();
+        DevicePackageRequest.Step integrationStep = keep("TTN", "INTEGRATION", integrationId);
+        integrationStep.setResolution("created");
+
+        DevicePackageResult result = service.install(user, request(integrationStep));
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Invalid install step: TTN");
+        verify(transactionTemplate, never()).execute(any());
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void installRejectsAMalformedVersionId() {
+        mockInstall();
+        DevicePackageRequest request = request(create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "d")));
+        request.setVersionId("not-a-uuid");
+
+        DevicePackageResult result = service.install(user, request);
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Invalid install request");
+        verify(iotHubRestClient, never()).getVersionInfo(any());
+        verify(transactionTemplate, never()).execute(any());
     }
 
     /** The new entities get these ids; each save records that it ran inside the transaction. */
