@@ -6,7 +6,7 @@ import { _logger}  from './config/logger';
 import path from 'path';
 import http, { ServerResponse } from 'http';
 import httpProxy from 'http-proxy';
-import compression from 'compression';
+import fs from 'fs';
 import historyApiFallback from 'connect-history-api-fallback';
 import { Socket } from 'net';
 import { RequestHandler } from 'express';
@@ -112,9 +112,14 @@ let connections: Socket[] = [];
         }
 
         app.use(historyApiFallback());
-        app.use(compression());
 
         const root = path.join(webDir, 'public');
+
+        // Serve the .gz copies built by ui-ngx instead of compressing per request: on-the-fly zlib/brotli
+        // costs CPU and fragments native memory, which glibc does not return to the OS.
+        const gzipFiles = listGzipFiles(root);
+        logger.info('Pre-compressed files: %d', gzipFiles.size);
+        app.use(precompressedStatic(root, gzipFiles));
 
         const staticServe = express.static(root);
 
@@ -161,6 +166,49 @@ let connections: Socket[] = [];
 process.on('exit', async (code: number) => {
     logger.info(`ThingsBoard Web UI Microservice has been stopped. Exit code: ${code}.`);
 });
+
+function listGzipFiles(root: string): Set<string> {
+    const files = new Set<string>();
+    if (fs.existsSync(root)) {
+        for (const file of fs.readdirSync(root, {recursive: true, encoding: 'utf8'})) {
+            if (file.endsWith('.gz')) {
+                files.add('/' + file.slice(0, -'.gz'.length).split(path.sep).join('/'));
+            }
+        }
+    }
+    return files;
+}
+
+function precompressedStatic(root: string, gzipFiles: Set<string>): RequestHandler {
+    return (req, res, next) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
+            return next();
+        }
+        let filePath: string;
+        try {
+            filePath = decodeURIComponent(req.path);
+        } catch {
+            return next();
+        }
+        if (!gzipFiles.has(filePath)) {
+            return next();
+        }
+        res.vary('Accept-Encoding');
+        if (req.acceptsEncodings('gzip') !== 'gzip') {
+            return next();
+        }
+        res.setHeader('Content-Encoding', 'gzip');
+        res.type(path.extname(filePath));
+        res.sendFile(filePath + '.gz', {root}, (err) => {
+            if (err) {
+                if (!res.headersSent) {
+                    res.removeHeader('Content-Encoding');
+                }
+                next(err);
+            }
+        });
+    };
+}
 
 async function exit(status: number) {
     logger.info('Exiting with status: %d ...', status);

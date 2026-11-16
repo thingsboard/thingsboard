@@ -13,7 +13,6 @@
     "build": "tsc"
   },
   "dependencies": {
-    "compression": "^1.8.2",
     "config": "^4.4.2",
     "connect-history-api-fallback": "^2.0.0",
     "express": "^5.3.0",
@@ -23,7 +22,6 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "@types/compression": "^1.8.1",
     "@types/connect-history-api-fallback": "1.5.4",
     "@types/express": "~5.0.6",
     "@types/http-proxy": "^1.17.17",
