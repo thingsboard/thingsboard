@@ -1742,10 +1742,16 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       keep: 'iot-hub.device-update-no-changes' }[this.outcomeOf(plan)];
   }
 
-  /** What the request did with the entity of a row, once it succeeded. Review mode has no plan: the row is done. */
+  /**
+   * What the request did with the entity of a row, once it succeeded. Review mode has no plan: the row is done.
+   * An install names the resolution, as there is nothing older to compare with.
+   */
   appliedOutcomeOf(plan: EntityStepPlan | undefined): string {
     if (!plan) {
       return 'iot-hub.done';
+    }
+    if (!this.data.update) {
+      return `iot-hub.device-install-resolution-${plan.resolution ?? 'created'}`;
     }
     return { update: 'iot-hub.device-package-updated', create: 'iot-hub.device-package-created',
       keep: 'iot-hub.device-package-skipped' }[this.outcomeOf(plan)];
