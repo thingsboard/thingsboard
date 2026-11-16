@@ -122,8 +122,9 @@ export class CalculatedFieldReprocessingPanelComponent implements OnInit {
     if (!this.job()) {
       this.startProgress('submitProgress', this.submitDuration);
       const interval = getTimePageLinkInterval(this.timeWindow);
-      const tsOffset = calculateTsOffset(this.timeWindow.timezone);
-      this.calculatedFieldsService.reprocessCalculatedField(this.entityId.id, interval.startTime + tsOffset, interval.endTime + tsOffset, {ignoreLoading: true, ignoreErrors: true})
+      const startTs = interval.startTime + calculateTsOffset(this.timeWindow.timezone, interval.startTime);
+      const endTs = interval.endTime + calculateTsOffset(this.timeWindow.timezone, interval.endTime);
+      this.calculatedFieldsService.reprocessCalculatedField(this.entityId.id, startTs, endTs, {ignoreLoading: true, ignoreErrors: true})
         .subscribe({
           next: () => {
             this.completeProgress('submitProgress');

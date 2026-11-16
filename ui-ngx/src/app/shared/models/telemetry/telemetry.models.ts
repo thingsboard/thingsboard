@@ -666,6 +666,36 @@ export class EntityDataUpdate extends DataUpdate<EntityData> {
     }
   }
 
+  private static processEntityDataOffsetFn(data: Array<EntityData>, getTsOffset: (ts: number) => number) {
+    for (const entityData of data) {
+      if (entityData.timeseries) {
+        for (const key of Object.keys(entityData.timeseries)) {
+          const tsValues = entityData.timeseries[key];
+          for (const tsValue of tsValues) {
+            if (tsValue.ts) {
+              tsValue.ts += getTsOffset(tsValue.ts);
+            }
+          }
+        }
+      }
+      if (entityData.latest) {
+        for (const entityKeyType of Object.keys(entityData.latest)) {
+          const keyTypeValues = entityData.latest[entityKeyType];
+          for (const key of Object.keys(keyTypeValues)) {
+            const tsValue = keyTypeValues[key];
+            if (tsValue.ts) {
+              tsValue.ts += getTsOffset(tsValue.ts);
+            }
+            if (key === entityFields.createdTime.keyName && tsValue.value) {
+              const createdTime = Number(tsValue.value);
+              tsValue.value = (createdTime + getTsOffset(createdTime)) + '';
+            }
+          }
+        }
+      }
+    }
+  }
+
   public prepareData(tsOffset: number) {
     if (this.data) {
       EntityDataUpdate.processEntityData(this.data.data, tsOffset);
@@ -674,7 +704,22 @@ export class EntityDataUpdate extends DataUpdate<EntityData> {
       EntityDataUpdate.processEntityData(this.update, tsOffset);
     }
   }
+
+  public prepareDataOffsetFn(getTsOffset: (ts: number) => number) {
+    if (this.data) {
+      EntityDataUpdate.processEntityDataOffsetFn(this.data.data, getTsOffset);
+    }
+    if (this.update) {
+      EntityDataUpdate.processEntityDataOffsetFn(this.update, getTsOffset);
+    }
+  }
 }
+
+const alarmDataOffsetTimeKeys = [entityFields.createdTime.keyName,
+                                  alarmFields.startTime.keyName,
+                                  alarmFields.endTime.keyName,
+                                  alarmFields.ackTime.keyName,
+                                  alarmFields.clearTime.keyName];
 
 export class AlarmDataUpdate extends DataUpdate<AlarmData> {
 
@@ -706,12 +751,38 @@ export class AlarmDataUpdate extends DataUpdate<AlarmData> {
             if (tsValue.ts) {
               tsValue.ts += tsOffset;
             }
-            if (key in [entityFields.createdTime.keyName,
-                        alarmFields.startTime.keyName,
-                        alarmFields.endTime.keyName,
-                        alarmFields.ackTime.keyName,
-                        alarmFields.clearTime.keyName] && tsValue.value) {
+            if (alarmDataOffsetTimeKeys.includes(key) && tsValue.value) {
               tsValue.value = (Number(tsValue.value) + tsOffset) + '';
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static processAlarmDataOffsetFn(data: Array<AlarmData>, getTsOffset: (ts: number) => number) {
+    for (const alarmData of data) {
+      alarmData.createdTime += getTsOffset(alarmData.createdTime);
+      if (alarmData.ackTs) {
+        alarmData.ackTs += getTsOffset(alarmData.ackTs);
+      }
+      if (alarmData.clearTs) {
+        alarmData.clearTs += getTsOffset(alarmData.clearTs);
+      }
+      if (alarmData.endTs) {
+        alarmData.endTs += getTsOffset(alarmData.endTs);
+      }
+      if (alarmData.latest) {
+        for (const entityKeyType of Object.keys(alarmData.latest)) {
+          const keyTypeValues = alarmData.latest[entityKeyType];
+          for (const key of Object.keys(keyTypeValues)) {
+            const tsValue = keyTypeValues[key];
+            if (tsValue.ts) {
+              tsValue.ts += getTsOffset(tsValue.ts);
+            }
+            if (alarmDataOffsetTimeKeys.includes(key) && tsValue.value) {
+              const value = Number(tsValue.value);
+              tsValue.value = (value + getTsOffset(value)) + '';
             }
           }
         }
@@ -725,6 +796,15 @@ export class AlarmDataUpdate extends DataUpdate<AlarmData> {
     }
     if (this.update) {
       AlarmDataUpdate.processAlarmData(this.update, tsOffset);
+    }
+  }
+
+  public prepareDataOffsetFn(getTsOffset: (ts: number) => number) {
+    if (this.data) {
+      AlarmDataUpdate.processAlarmDataOffsetFn(this.data.data, getTsOffset);
+    }
+    if (this.update) {
+      AlarmDataUpdate.processAlarmDataOffsetFn(this.update, getTsOffset);
     }
   }
 }
@@ -930,6 +1010,7 @@ export class TelemetrySubscriber extends WsSubscriber {
   private alarmStatusSubject = new ReplaySubject<AlarmStatusUpdate>(1);
   private logsSubject = new ReplaySubject<LogsUpdate>(1);
   private tsOffset = undefined;
+  private getTsOffsetFn: (ts: number) => number = undefined;
 
   public data$ = this.dataSubject.asObservable();
   public entityData$ = this.entityDataSubject.asObservable();
@@ -1029,6 +1110,12 @@ export class TelemetrySubscriber extends WsSubscriber {
     }
   }
 
+  public setTsOffsetFn(getTsOffsetFn: (ts: number) => number): boolean {
+    const changed = !isUndefined(this.getTsOffsetFn);
+    this.getTsOffsetFn = getTsOffsetFn;
+    return changed;
+  }
+
   public onData(message: SubscriptionUpdate) {
     const cmdId = message.subscriptionId;
     let keys: string[];
@@ -1052,7 +1139,9 @@ export class TelemetrySubscriber extends WsSubscriber {
   }
 
   public onEntityData(message: EntityDataUpdate) {
-    if (this.tsOffset) {
+    if (this.getTsOffsetFn) {
+      message.prepareDataOffsetFn(this.getTsOffsetFn);
+    } else if (this.tsOffset) {
       message.prepareData(this.tsOffset);
     }
     if (this.zone) {
@@ -1067,7 +1156,9 @@ export class TelemetrySubscriber extends WsSubscriber {
   }
 
   public onAlarmData(message: AlarmDataUpdate) {
-    if (this.tsOffset) {
+    if (this.getTsOffsetFn) {
+      message.prepareDataOffsetFn(this.getTsOffsetFn);
+    } else if (this.tsOffset) {
       message.prepareData(this.tsOffset);
     }
     if (this.zone) {

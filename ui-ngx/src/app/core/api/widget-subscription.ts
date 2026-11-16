@@ -1401,29 +1401,35 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private updateTimewindow() {
     this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
-    this.timeWindow.timezone = this.subscriptionTimewindow.timezone;
-    this.timeWindow.tsOffset = this.subscriptionTimewindow.tsOffset;
+    const timezone = this.subscriptionTimewindow.timezone;
+    this.timeWindow.timezone = timezone;
     if (this.subscriptionTimewindow.realtimeWindowMs) {
       if (this.subscriptionTimewindow.quickInterval) {
-        const startEndTime = calculateIntervalStartEndTime(this.subscriptionTimewindow.quickInterval, this.subscriptionTimewindow.timezone);
-        this.timeWindow.maxTime = startEndTime[1] + this.subscriptionTimewindow.tsOffset;
-        this.timeWindow.minTime = startEndTime[0] + this.subscriptionTimewindow.tsOffset;
+        const startEndTime = calculateIntervalStartEndTime(this.subscriptionTimewindow.quickInterval, timezone);
+        this.timeWindow.tsOffset = calculateTsOffset(timezone, startEndTime[0]);
+        this.timeWindow.maxTime = startEndTime[1] + calculateTsOffset(timezone, startEndTime[1]);
+        this.timeWindow.minTime = startEndTime[0] + this.timeWindow.tsOffset;
       } else {
-        const now = moment().valueOf() + this.subscriptionTimewindow.tsOffset + this.timeWindow.stDiff;
+        const nowTs = moment().valueOf();
+        const offset = calculateTsOffset(timezone, nowTs);
+        const now = nowTs + offset + this.timeWindow.stDiff;
         if (!this.timeWindow.maxTime || Math.abs(now - this.timeWindow.maxTime) > 500) {
+          this.timeWindow.tsOffset = offset;
           this.timeWindow.maxTime = now;
           this.timeWindow.maxTime -= this.timeWindow.maxTime % 1000;
           this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
         }
       }
     } else if (this.subscriptionTimewindow.fixedWindow) {
-      this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs + this.subscriptionTimewindow.tsOffset;
-      this.timeWindow.minTime = this.subscriptionTimewindow.fixedWindow.startTimeMs + this.subscriptionTimewindow.tsOffset;
+      const fixedWindow = this.subscriptionTimewindow.fixedWindow;
+      this.timeWindow.tsOffset = calculateTsOffset(timezone, fixedWindow.startTimeMs);
+      this.timeWindow.maxTime = fixedWindow.endTimeMs + calculateTsOffset(timezone, fixedWindow.endTimeMs);
+      this.timeWindow.minTime = fixedWindow.startTimeMs + this.timeWindow.tsOffset;
     }
   }
 
   private updateTsOffset(): boolean {
-    const newOffset = calculateTsOffset(this.timezone);
+    const newOffset = calculateTsOffset(this.timezone, Date.now());
     if (this.tsOffset !== newOffset) {
       this.tsOffset = newOffset;
       return true;
@@ -1447,8 +1453,10 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.comparisonTimeWindow.interval = this.timewindowForComparison.aggregation.interval || 1000;
     this.comparisonTimeWindow.timezone = this.timewindowForComparison.timezone;
     if (this.timewindowForComparison.fixedWindow) {
-      this.comparisonTimeWindow.maxTime = this.timewindowForComparison.fixedWindow.endTimeMs + this.timewindowForComparison.tsOffset;
-      this.comparisonTimeWindow.minTime = this.timewindowForComparison.fixedWindow.startTimeMs + this.timewindowForComparison.tsOffset;
+      const timezone = this.timewindowForComparison.timezone;
+      const fixedWindow = this.timewindowForComparison.fixedWindow;
+      this.comparisonTimeWindow.maxTime = fixedWindow.endTimeMs + calculateTsOffset(timezone, fixedWindow.endTimeMs);
+      this.comparisonTimeWindow.minTime = fixedWindow.startTimeMs + calculateTsOffset(timezone, fixedWindow.startTimeMs);
     }
   }
 
