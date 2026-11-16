@@ -1,20 +1,34 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import express from 'express';
 import config from 'config';
 import { _logger}  from './config/logger';
 import path from 'path';
 import http, { ServerResponse } from 'http';
 import httpProxy from 'http-proxy';
-import compression from 'compression';
+import fs from 'fs';
 import historyApiFallback from 'connect-history-api-fallback';
 import { Socket } from 'net';
+import Negotiator from 'negotiator';
 import { RequestHandler } from 'express';
 
 const logger = _logger('main');
 
 let server: http.Server | null;
 let connections: Socket[] = [];
+
+// in server preference order; must match the encoders in ui-ngx/compress-build.js
+const precompressedEncodings = [
+    {encoding: 'br', ext: '.br'},
+    {encoding: 'gzip', ext: '.gz'}
+];
+
+interface PrecompressedVariant {
+    encoding: string;
+    ext: string;
+    files: Set<string>;
+}
 
 (async() => {
     try {
@@ -115,11 +129,19 @@ let connections: Socket[] = [];
         }
 
         app.use(historyApiFallback());
-        if (compressionEnabled) {
-            app.use(compression());
-        }
 
         const root = path.join(webDir, 'public');
+
+        // No per-request compression: zlib/brotli fragment native memory that glibc never returns, until OOM
+        if (compressionEnabled) {
+            const variants = listPrecompressedFiles(root);
+            if (variants.some(({files}) => files.size)) {
+                logger.info('Pre-compressed files: %s', variants.map(({encoding, files}) => `${encoding} ${files.size}`).join(', '));
+            } else {
+                logger.warn('No pre-compressed (.br/.gz) UI files in %s: UI files are served uncompressed', root);
+            }
+            app.use(precompressedStatic(root, variants));
+        }
 
         const staticServe = express.static(root);
 
@@ -166,6 +188,57 @@ let connections: Socket[] = [];
 process.on('exit', async (code: number) => {
     logger.info(`ThingsBoard Web UI Microservice has been stopped. Exit code: ${code}.`);
 });
+
+function listPrecompressedFiles(root: string): PrecompressedVariant[] {
+    const variants = precompressedEncodings.map(encoding => ({...encoding, files: new Set<string>()}));
+    if (fs.existsSync(root)) {
+        for (const file of fs.readdirSync(root, {recursive: true, encoding: 'utf8'})) {
+            const variant = variants.find(({ext}) => file.endsWith(ext));
+            variant?.files.add('/' + file.slice(0, -variant.ext.length).split(path.sep).join('/'));
+        }
+    }
+    return variants;
+}
+
+function precompressedStatic(root: string, variants: PrecompressedVariant[]): RequestHandler {
+    return (req, res, next) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
+            return next();
+        }
+        let filePath: string;
+        try {
+            filePath = decodeURIComponent(req.path);
+        } catch {
+            return next();
+        }
+        const available = variants.filter(({files}) => files.has(filePath));
+        if (!available.length) {
+            return next();
+        }
+        res.vary('Accept-Encoding');
+        // highest q wins; on a tie the server's order does, as browsers list gzip before br
+        const encodings = available.map(({encoding}) => encoding);
+        const best = new Negotiator(req).encoding([...encodings, 'identity'], {preferred: encodings});
+        const variant = available.find(({encoding}) => encoding === best);
+        if (!variant) {
+            return next();
+        }
+        res.setHeader('Content-Encoding', variant.encoding);
+        res.type(path.extname(filePath));
+        res.sendFile(filePath + variant.ext, {root}, (err?: NodeJS.ErrnoException & { status?: number }) => {
+            // the client went away; express.static ignores these too
+            if (!err || err.code === 'ECONNABORTED' || err.syscall === 'write') {
+                return;
+            }
+            if (res.headersSent) {
+                return next(err);
+            }
+            res.removeHeader('Content-Encoding');
+            // the copy was removed after startup: fall through to the original
+            next(err.status === 404 ? undefined : err);
+        });
+    };
+}
 
 async function exit(status: number) {
     logger.info('Exiting with status: %d ...', status);

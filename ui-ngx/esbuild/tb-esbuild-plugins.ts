@@ -1,10 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
-import type { Plugin, PluginBuild, OutputFile } from 'esbuild';
+import type { Plugin, PluginBuild } from 'esbuild';
 import dirTree from 'directory-tree';
 import * as packageJson from '../package.json';
-import { gzip } from 'node:zlib';
-import * as path from 'node:path';
 
 const defineTbVariablesPlugin: Plugin = {
   name: 'tb-define-variables',
@@ -36,47 +34,6 @@ const resolveJQueryPlugin: Plugin = {
   }
 };
 
-const compressFileTypes = ['.js', '.css', '.html', '.svg', '.png', '.jpg', '.ttf', '.gif', '.woff', '.woff2', '.eot', '.json'];
-const compressThreshold = 10240;
-
-const compressorPlugin: Plugin = {
-  name: 'tb-compressor-plugin',
-  setup(build) {
-    build.onEnd(async result => {
-      if (!result.outputFiles || !isProduction()) return;
-      const outputExt = '.gz';
-      const gzippedFiles: OutputFile[] = [];
-      for (const file of result.outputFiles) {
-        if (!compressFileTypes.some((ext) => ext === path.extname(file.path))) continue;
-        if (file.contents.byteLength <= compressThreshold) continue;
-        const compressedContent = await gzipContent(file.contents);
-        const compressedFilePath = `${file.path}${outputExt}`;
-        gzippedFiles.push(
-          {
-            path: compressedFilePath,
-            hash: file.hash,
-            contents: new Uint8Array(compressedContent),
-            text: '',
-          }
-        );
-      }
-      result.outputFiles.push(...gzippedFiles);
-    });
-  },
-};
-
-async function gzipContent(content): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    gzip(content, (error, result) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(result);
-      }
-    });
-  });
-}
-
 function isProduction(): boolean {
   const configurationIndex = process.argv.indexOf('--configuration');
   let production = false;
@@ -87,4 +44,4 @@ function isProduction(): boolean {
   return production;
 }
 
-export default [defineTbVariablesPlugin, resolveJQueryPlugin, compressorPlugin];
+export default [defineTbVariablesPlugin, resolveJQueryPlugin];

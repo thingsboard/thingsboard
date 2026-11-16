@@ -2863,7 +2863,6 @@
         "is-gateway": "Gateway",
         "overwrite-activity-time": "استبدال وقت النشاط للجهاز المتصل",
         "device-filter-title": "فلتر الجهاز",
-        "filter-title": "الفلتر",
         "device-state": "حالة الجهاز",
         "state": "الحالة",
         "any": "أي",

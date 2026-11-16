@@ -121,6 +121,15 @@
                                     <arguments>--mutex network run build:prod</arguments>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>yarn compress</id>
+                                <goals>
+                                    <goal>yarn</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>run compress</arguments>
+                                </configuration>
+                            </execution>
                             <!-- After the build: the SBOM lists what the build put into the bundle, as its statistics tell -->
                             <execution>
                                 <id>generate sbom</id>
