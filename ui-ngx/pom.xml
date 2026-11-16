@@ -38,8 +38,8 @@
             <resource>
                 <directory>${project.build.directory}/generated-resources</directory>
                 <excludes>
-                    <!-- The statistics of the production build, which the SBOM of the UI is made from -->
-                    <exclude>public/stats.json</exclude>
+                    <!-- The statistics of the production build, which the SBOM of the UI is made from, and their compressed copies -->
+                    <exclude>public/stats.json*</exclude>
                 </excludes>
             </resource>
         </resources>
