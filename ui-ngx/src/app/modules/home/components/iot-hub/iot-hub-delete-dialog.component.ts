@@ -46,13 +46,23 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     super(store, router, dialogRef);
     this.description = this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
     const kept = data.keptEntities;
-    if (kept?.entities.length) {
-      this.keptReferences = kept.entities.map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
-      // Kept because other packages use them, because the user had them before the package, or both
-      const reasonKey = !kept.usedExistingCount ? 'iot-hub.remove-kept-used' :
-        !kept.usedByItemsCount ? 'iot-hub.remove-kept-own' : 'iot-hub.remove-kept-own-or-used';
-      this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: kept.entities.length });
-      this.keptReason = this.translate.instant(reasonKey, { kept: kept.entities.length });
+    const shared = kept?.entities ?? [];
+    const withDevices = kept?.keptForDevices ?? [];
+    if (shared.length || withDevices.length) {
+      this.keptReferences = [...shared, ...withDevices].map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
+      const reasons: string[] = [];
+      if (shared.length) {
+        // Kept because other packages use them, because the user had them before the package, or both
+        const reasonKey = !kept.usedExistingCount ? 'iot-hub.remove-kept-used' :
+          !kept.usedByItemsCount ? 'iot-hub.remove-kept-own' : 'iot-hub.remove-kept-own-or-used';
+        reasons.push(this.translate.instant(reasonKey, { kept: shared.length }));
+      }
+      if (withDevices.length) {
+        const profiles = withDevices.filter(entity => entity.entityId.entityType === 'DEVICE_PROFILE').length;
+        reasons.push(this.translate.instant('iot-hub.remove-kept-devices', { profiles, devices: kept.devicesCount ?? 0 }));
+      }
+      this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: shared.length + withDevices.length });
+      this.keptReason = reasons.join(' ');
     }
   }
 

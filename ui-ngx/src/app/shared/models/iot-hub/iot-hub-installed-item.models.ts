@@ -159,7 +159,7 @@ export interface ItemPublishedVersionInfo {
   publishedVersion: string;
 }
 
-/** An entity that deleting an installed item keeps, because other installed items use it too. */
+/** An entity that deleting an installed item keeps. */
 export interface IotHubKeptEntity {
   entityId: { id: string; entityType: string };
   name: string;
@@ -170,6 +170,11 @@ export interface IotHubInstalledItemKeptEntities {
   usedByItemsCount: number;
   // Of the kept entities, the ones the user had before and the package took as they were
   usedExistingCount: number;
+  // The package's device profiles that devices use (e.g. the ones a LoRaWAN integration created) and what they refer to:
+  // TB deletes neither. Absent from an older backend
+  keptForDevices?: IotHubKeptEntity[];
+  // How many devices use those profiles
+  devicesCount?: number;
 }
 
 export interface IotHubInstalledItem extends BaseData<{id: string}> {

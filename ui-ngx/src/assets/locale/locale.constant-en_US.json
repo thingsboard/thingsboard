@@ -6449,6 +6449,7 @@
         "remove-kept-title": "{ kept, plural, =1 {This entity will not be removed} other {These entities will not be removed} }",
         "remove-kept-used": "Other installed packages use { kept, plural, =1 {it} other {them} }.",
         "remove-kept-own": "You had { kept, plural, =1 {it} other {them} } before the package was installed.",
+        "remove-kept-devices": "{ devices, plural, =1 {1 device still uses} other {# devices still use} } { profiles, plural, =1 {the device profile} other {the device profiles} }, and ThingsBoard doesn't remove a profile in use. Delete the devices first to remove it.",
         "remove-kept-own-or-used": "You had { kept, plural, =1 {it} other {them} } before the package was installed, or other installed packages use { kept, plural, =1 {it} other {them} }.",
         "remove-desc-solution-template": "Removing this solution template will also remove all created entities including dashboards, rule chains, devices, and other associated resources within your tenant",
         "remove-anyway": "Remove anyway",
