@@ -109,6 +109,15 @@
                                     <arguments>--mutex network run build:prod</arguments>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>yarn compress</id>
+                                <goals>
+                                    <goal>yarn</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>run compress</arguments>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
                 </plugins>
