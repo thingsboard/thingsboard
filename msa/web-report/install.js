@@ -8,7 +8,7 @@ const { Transform } = require('stream');
 const { pipeline } = require('stream/promises');
 // The helpers that Playwright downloads its browsers with: httpRequest follows HTTPS_PROXY and redirects, extractZip needs no unzip tool
 const { httpRequest, extractZip } = require('playwright-core/lib/coreBundle').utils;
-const { snapshot, debian } = require('./chromium');
+const { snapshot } = require('./chromium');
 
 const PLATFORMS = {
     linux: {
@@ -24,9 +24,6 @@ const PLATFORMS = {
 
 (async() => {
     checkPlaywrightVersion();
-    // For the Docker image, which installs the chromium package of Debian: see docker/Dockerfile
-    await fse.outputFile(path.join(projectRoot(), 'target', 'chromium.env'),
-        `CHROMIUM_DEBIAN_VERSION=${debian.version}\nCHROMIUM_DEBIAN_ARCHIVE=${debian.archive}\n`);
     await Promise.all(Object.entries(PLATFORMS).map(async ([targetDir, platform]) => {
         await installChromium(platform, path.join(projectRoot(), 'target', 'chromium-' + targetDir),
             path.join(targetPackageDir(targetDir), 'chromium'));
@@ -47,10 +44,8 @@ function checkPlaywrightVersion() {
     }
     // The release is the first three numbers; the last one counts the fixes on its branch and differs between builds
     const build = version => version.split('.').slice(0, 3).join('.');
-    for (const [name, version] of [['snapshot', snapshot.version], ['debian', debian.version]]) {
-        if (build(chromium.browserVersion) !== build(version)) {
-            throw new Error(`playwright-core expects Chromium ${chromium.browserVersion}, the ${name} build in chromium.js is ${version}`);
-        }
+    if (build(chromium.browserVersion) !== build(snapshot.version)) {
+        throw new Error(`playwright-core expects Chromium ${chromium.browserVersion}, the snapshot build in chromium.js is ${snapshot.version}`);
     }
 }
 
