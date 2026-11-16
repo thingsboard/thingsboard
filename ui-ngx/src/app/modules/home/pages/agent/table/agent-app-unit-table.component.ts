@@ -15,10 +15,7 @@ import { AgentAppUnitTableConfig } from './agent-app-unit-table-config';
 @Component({
   selector: 'tb-agent-app-unit-table',
   template: '<tb-entities-table class="white-background" [entitiesTableConfig]="tableConfig"></tb-entities-table>',
-  styles: [`
-    :host { display: block; height: 100%; }
-    .white-background { --mat-sidenav-content-background-color: white; }
-  `],
+  styles: [':host { display: block; height: 100%; }'],
   standalone: false
 })
 export class AgentAppUnitTableComponent implements AfterViewInit, OnChanges, OnDestroy {

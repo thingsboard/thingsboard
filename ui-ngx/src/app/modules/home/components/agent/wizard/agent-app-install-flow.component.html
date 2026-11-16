@@ -91,7 +91,7 @@
             @for (card of typeCards; track card.type) {
               <button type="button" class="type-card"
                 [class.selected]="selectedType === card.type"
-                [disabled]="unavailableTypes.has(card.type)"
+                [disabled]="isTypeDisabled(card.type)"
                 [attr.aria-pressed]="selectedType === card.type"
                 (click)="selectType(card.type)">
                 <mat-icon>{{ card.icon }}</mat-icon>
@@ -168,7 +168,7 @@
                 <mat-icon class="material-icons">close</mat-icon>
               </button>
             }
-            @if (!profileSelectFormGroup.get('profile').value && canCreateAppProfile && hasCreatableTemplates) {
+            @if (!profileSelectFormGroup.get('profile').value && canCreateProfileForType) {
               <button
                 mat-button color="primary" matSuffix type="button"
                 (mousedown)="$event.preventDefault()"

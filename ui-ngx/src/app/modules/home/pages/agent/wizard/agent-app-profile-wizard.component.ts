@@ -13,7 +13,7 @@ import { AgentService } from '@core/http/agent.service';
 import { StepperOrientation } from '@angular/material/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
@@ -80,6 +80,7 @@ export class AgentAppProfileWizardComponent
   availableTemplates: AgentAppTemplate[] = [];
   selectedTemplateVersion: string | null = null;
   loadingTemplates = false;
+  private templatesSubscription: Subscription | null = null;
 
   profileForm: UntypedFormGroup;
   composeYaml = '';
@@ -128,9 +129,9 @@ export class AgentAppProfileWizardComponent
   }
 
   ngOnInit() {
-    // Prefetch templates for all types so type selection is instant.
-    this.typeCards.forEach(card => {
-      this.loader.loadTemplatesByType(card.type).subscribe({ error: () => {} });
+    const prefetchTypes = this.lockedAppType ? [this.lockedAppType] : this.typeCards.map(card => card.type);
+    prefetchTypes.forEach(type => {
+      this.loader.loadTemplatesByType(type).subscribe({ error: () => {} });
     });
     if (this.editMode) {
       this.initForEdit(this.data.profile);
@@ -200,9 +201,11 @@ export class AgentAppProfileWizardComponent
   }
 
   // A finished request replays synchronously, so a prefetched type shows no loading state.
+  // Drops the previous type's request, so its late response cannot apply its template to the newly selected type.
   private loadTemplatesForType(type: AgentApplicationType) {
+    this.templatesSubscription?.unsubscribe();
     this.loadingTemplates = true;
-    this.loader.loadTemplatesByType(type).subscribe({
+    this.templatesSubscription = this.loader.loadTemplatesByType(type).subscribe({
       next: templates => {
         this.availableTemplates = orderTemplatesNewestFirst(this.supportedTemplates(templates));
         this.loadingTemplates = false;

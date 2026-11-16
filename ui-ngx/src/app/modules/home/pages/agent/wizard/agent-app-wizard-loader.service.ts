@@ -41,7 +41,7 @@ export class AgentAppWizardLoaderService {
   private templateCache = new Map<AgentApplicationType, AgentAppTemplate>();
   private templateByVersionCache = new Map<string, AgentAppTemplate>();
   private templatesByTypeCache = new Map<AgentApplicationType, Observable<AgentAppTemplate[]>>();
-  private profilesCache = new Map<AgentApplicationType, AgentAppProfile[]>();
+  private profilesCache = new Map<AgentApplicationType, Observable<AgentAppProfile[]>>();
 
   constructor(private agentService: AgentService) {}
 
@@ -100,17 +100,16 @@ export class AgentAppWizardLoaderService {
   }
 
   loadProfiles(type: AgentApplicationType): Observable<AgentAppProfile[]> {
-    const cached = this.profilesCache.get(type);
-    if (cached) {
-      return of(cached);
+    let profiles$ = this.profilesCache.get(type);
+    if (!profiles$) {
+      profiles$ = (this.agentService.getAgentAppProfilesByAppType(type) as Observable<AgentAppProfile[]>).pipe(shareReplay(1));
+      this.profilesCache.set(type, profiles$);
     }
-    return this.agentService.getAgentAppProfilesByAppType(type).pipe(
-      tap(profiles => this.profilesCache.set(type, profiles))
-    ) as Observable<AgentAppProfile[]>;
+    return profiles$;
   }
 
   cacheProfiles(type: AgentApplicationType, profiles: AgentAppProfile[]): void {
-    this.profilesCache.set(type, profiles);
+    this.profilesCache.set(type, of(profiles));
   }
 
   // Reads the linked profile via the info-by-id endpoint, which is gated by
