@@ -128,6 +128,7 @@ import {
 import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
+import { exportDateFormat } from '@shared/models/date-time-format.models';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { hidePageSizePixelValue } from '@shared/models/constants';
@@ -774,7 +775,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
               content = this.applyCellContentFunction(entity, contentFunction, value);
             } else {
               content = contentFunction.useCellContentFunctionOnExport ? this.applyCellContentFunction(entity, contentFunction, value)
-                : this.defaultContent(key, contentInfo, value);
+                : this.defaultContent(key, contentInfo, value, isExport);
             }
             if (isDefined(content)) {
               content = this.utils.customTranslation(content, content);
@@ -811,12 +812,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return content;
   }
 
-  private defaultContent(key: EntityColumn, contentInfo: WithOptional<CellContentInfo, 'valueFormat'>, value: any): any {
+  private defaultContent(key: EntityColumn, contentInfo: WithOptional<CellContentInfo, 'valueFormat'>, value: any,
+                         isExport = false): any {
     if (isDefined(value)) {
       const entityField = entityFields[key.name];
       if (entityField) {
         if (entityField.time) {
-          return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
+          return this.datePipe.transform(value, isExport ? exportDateFormat : undefined);
         }
       }
       return contentInfo.valueFormat?.format(value) ?? value;

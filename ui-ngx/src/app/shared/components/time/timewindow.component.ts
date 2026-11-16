@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -366,8 +367,8 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
       } else if (this.innerValue.history.historyType === HistoryWindowType.FOR_ALL_TIME) {
         this.innerValue.displayValue += this.translate.instant('timewindow.for-all-time');
       } else {
-        const startString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
-        const endString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');
+        const startString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.startTimeMs);
+        const endString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.endTimeMs);
         this.innerValue.displayValue += this.translate.instant('timewindow.period', {startTime: startString, endTime: endString});
       }
     }

@@ -164,7 +164,7 @@
         <ng-container matColumnDef="lastUpdateTs">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="min-width: 150px; max-width: 150px; width: 150px;"> {{ 'attribute.last-update-time' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
-            {{ attribute.lastUpdateTs | date:'yyyy-MM-dd HH:mm:ss' }}
+            {{ attribute.lastUpdateTs | tbDate }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="key">

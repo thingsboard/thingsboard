@@ -158,12 +158,12 @@ export class UtilsService {
     return deepClone(this.defaultAlarmDataKeys);
   }
 
-  public defaultAlarmFieldContent(key: DataKey | {name: string}, value: any): string {
+  public defaultAlarmFieldContent(key: DataKey | {name: string}, value: any, dateFormat?: string): string {
     if (isDefined(value)) {
       const alarmField = alarmFields[key.name];
       if (alarmField) {
         if (alarmField.time) {
-          return value ? this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss') : '';
+          return value ? this.datePipe.transform(value, dateFormat) : '';
         } else if (alarmField === alarmFields.severity) {
           return this.translate.instant(alarmSeverityTranslations.get(value));
         } else if (alarmField === alarmFields.status) {
