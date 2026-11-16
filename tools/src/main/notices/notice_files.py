@@ -20,14 +20,11 @@ import io
 import json
 import lzma
 import os
-import re
 import sys
 import zipfile
 
 from sbom_to_ort import MAVEN_REPOSITORIES, from_repositories, maven_path
 
-# NOTICE, NOTICE.txt, notice.md, NOTICE_binary.txt; not NoticeReference.class
-NOTICE = re.compile(r'notice([_-][^.]*)?((\.[^.]*)*\.(txt|md))?', re.IGNORECASE)
 SEPARATOR = '-' * 78
 
 
@@ -65,7 +62,11 @@ def coordinates(namespace, name, version):
 
 
 def is_notice(path):
-    return bool(NOTICE.fullmatch(path.rsplit('/', 1)[-1]))
+    """Whether a file is a NOTICE file, by its name: one that has "notice" before its first dot, and no extension,
+    .txt or .md. NOTICE, notice.txt, NOTICE_binary.txt, THIRD_PARTY_NOTICES, FastDoubleParser-NOTICE,
+    thirdpartynotice.txt; not NoticeReference.class."""
+    name, _, extensions = path.rsplit('/', 1)[-1].lower().partition('.')
+    return 'notice' in name and extensions.rsplit('.', 1)[-1] in ('', 'txt', 'md')
 
 
 def collect(found, package, archive):
