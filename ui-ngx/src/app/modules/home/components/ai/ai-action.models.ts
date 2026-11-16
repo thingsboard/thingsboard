@@ -76,6 +76,10 @@ const TOOL_WORDS: Record<string, string> = {
   save_custom_translation: 'save-custom-translation',
   read_custom_menus: 'read-custom-menus',
   read_security_settings: 'read-security-settings',
+  read_mobile_center: 'read-mobile-center',
+  save_mobile_app: 'save-mobile-app',
+  save_mobile_bundle: 'save-mobile-bundle',
+  save_mobile_qr_code: 'save-mobile-qr-code',
   save_custom_menu: 'save-custom-menu',
   save_ota_package: 'save-ota-package',
   assign_ota_package: 'assign-ota-package',
@@ -152,7 +156,9 @@ const DELETED_TARGETS: Record<string, string> = {
   SECRET: 'delete-secret',
   AI_MODEL: 'delete-ai-model',
   RESOURCE: 'delete-resource',
-  CUSTOM_MENU: 'delete-custom-menu'
+  CUSTOM_MENU: 'delete-custom-menu',
+  MOBILE_APP: 'delete-mobile-app',
+  MOBILE_BUNDLE: 'delete-mobile-bundle'
 };
 
 const ACTION_PREFIX = 'ai-assistant.action.';
@@ -467,6 +473,9 @@ const ENTITY_KINDS: Record<string, AiEntityKind> = {
   MAIL_TEMPLATE: {icon: 'mail', palette: 'view'},
   CUSTOM_TRANSLATION: {icon: 'translate', palette: 'view'},
   CUSTOM_MENU: {icon: 'menu', palette: 'view'},
+  MOBILE_APP: {icon: 'smartphone', palette: 'device'},
+  MOBILE_BUNDLE: {icon: 'phonelink_setup', palette: 'device'},
+  MOBILE_QR_CODE: {icon: 'qr_code_2', palette: 'device'},
   IMAGE: {icon: 'image', palette: 'view'},
   TB_RESOURCE: {icon: 'image', palette: 'view'},
   CUSTOMER: {icon: 'supervisor_account', palette: 'people'},

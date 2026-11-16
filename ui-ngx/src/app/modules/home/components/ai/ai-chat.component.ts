@@ -1072,6 +1072,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
         }
         this.panelService.emitCustomizationSaved({kind: 'TRANSLATION', locale: values.locale});
         break;
+      case 'save_mobile_qr_code':
+        this.panelService.emitCustomizationSaved({kind: 'MOBILE_QR_CODE'});
+        break;
       case 'save_custom_menu':
       case 'delete':
         if (tool === 'delete' && values.targetType !== 'CUSTOM_MENU') {

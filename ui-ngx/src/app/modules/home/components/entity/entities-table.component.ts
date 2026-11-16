@@ -223,16 +223,16 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       this.panelService.setEnabled(true);
       this.panelService.setConfig(aiConfig);
       this.updateAiClientContext();
-      this.aiUpdatedData$?.unsubscribe();
-      if (entitiesTableConfig.entityType) {
-        this.aiUpdatedData$ = this.panelService.updatedData$.pipe(
-          filter(affectedEntities =>
-            affectedEntities.some(entityId => entityId.entityType === entitiesTableConfig.entityType)),
-          takeUntil(this.destroy$)
-        ).subscribe(() => {
-          this.updateData(false);
-        });
-      }
+    }
+    this.aiUpdatedData$?.unsubscribe();
+    if (entitiesTableConfig.entityType) {
+      this.aiUpdatedData$ = this.panelService.updatedData$.pipe(
+        filter(affectedEntities =>
+          affectedEntities.some(entityId => entityId.entityType === entitiesTableConfig.entityType)),
+        takeUntil(this.destroy$)
+      ).subscribe(() => {
+        this.updateData(false);
+      });
     }
 
     this.pageMode = this.entitiesTableConfig.pageMode;

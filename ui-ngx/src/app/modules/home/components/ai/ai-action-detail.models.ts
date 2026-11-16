@@ -1283,6 +1283,54 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('save-custom-translation', {locale: str(values.locale) ?? '—'}), blocks};
     }
+    case 'read_mobile_center': {
+      if (!isObject(result)) {
+        return {hood: text('read-mobile-center'), blocks: generic(result, 'result')};
+      }
+      const blocks: AiDetailBlock[] = [];
+      const apps = (Array.isArray(result.apps) ? result.apps.filter(isObject) : []).slice(0, MAX_ROWS)
+        .map(app => [app.pkgName, app.platformType, aiHumanize(String(app.status)), str(app.versionInfo?.latestVersion)].filter(Boolean).join(' · '));
+      if (apps.length) {
+        blocks.push({type: 'list', label: text('mobile-apps'), rows: apps});
+      } else if (Array.isArray(result.apps)) {
+        blocks.push({type: 'note', text: text('no-mobile-apps')});
+      }
+      if (Array.isArray(result.bundles) && !result.bundles.length) {
+        blocks.push({type: 'note', text: text('no-mobile-bundles')});
+      }
+      for (const bundle of (Array.isArray(result.bundles) ? result.bundles.filter(isObject) : []).slice(0, MAX_ROWS)) {
+        const pages = (Array.isArray(bundle.menu) ? bundle.menu.filter(isObject) : [])
+          .map(page => `${str(page.label) ?? page.id}${page.hidden ? ' ⊘' : ''}`);
+        blocks.push({type: 'list', label: text('mobile-bundle-menu', {name: str(bundle.title) ?? '—'}), rows: pages});
+      }
+      if (isObject(result.qrCode)) {
+        blocks.push(...json('QR code', result.qrCode));
+      }
+      return {hood: text('read-mobile-center'), blocks};
+    }
+    case 'save_mobile_app': {
+      const rows = facts(values, ['appId']);
+      return {hood: str(values.appId) ? text('save-mobile-app') : text('register-mobile-app', {name: str(values.pkgName) ?? '—'}),
+        blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'save_mobile_bundle': {
+      const changes = (Array.isArray(values.changes) ? values.changes.filter(isObject) : [])
+        .map(change => [aiHumanize(String(change.action)), str(change.page) ?? str(change.label), str(change.page) && str(change.label) ? '→ ' + change.label : undefined,
+          str(change.dashboardId) ?? str(change.url) ?? str(change.path)].filter(Boolean).join(' '));
+      const blocks: AiDetailBlock[] = [];
+      const rows = facts(values, ['bundleId', 'changes']);
+      if (rows.length) {
+        blocks.push({type: 'facts', rows});
+      }
+      if (changes.length) {
+        blocks.push({type: 'list', label: text('menu-changes'), rows: changes.slice(0, MAX_ROWS)});
+      }
+      return {hood: str(values.bundleId) ? text('save-mobile-bundle') : text('create-mobile-bundle', {name: str(values.title) ?? '—'}), blocks};
+    }
+    case 'save_mobile_qr_code': {
+      const rows = facts(values);
+      return {hood: text('save-mobile-qr-code'), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
     case 'read_security_settings':
       return {hood: text('read-security-settings'), blocks: json('settings', result)};
     case 'read_custom_menus': {

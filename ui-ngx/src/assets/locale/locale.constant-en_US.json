@@ -915,6 +915,16 @@
             "translation-removed": "Back to the platform's text",
             "read-custom-menus": "Read the custom menus",
             "read-security-settings": "Read the security settings",
+            "read-mobile-center": "Read the mobile center",
+            "mobile-apps": "Apps",
+            "no-mobile-apps": "No mobile apps yet.",
+            "no-mobile-bundles": "No mobile bundles yet, so the apps show the standard menu.",
+            "save-mobile-app": "Changed the mobile app",
+            "register-mobile-app": "Registered the mobile app {{name}}",
+            "save-mobile-bundle": "Changed the mobile bundle",
+            "create-mobile-bundle": "Created the mobile bundle {{name}}",
+            "save-mobile-qr-code": "Changed the mobile app QR code",
+            "mobile-bundle-menu": "Menu of {{name}}",
             "read-custom-menu": "Read the menu {{name}}",
             "save-custom-menu": "Changed the custom menu",
             "create-custom-menu": "Created the custom menu {{name}}",
@@ -1375,6 +1385,22 @@
                 "run": "Reading the security settings",
                 "done": "Read the security settings"
             },
+            "read-mobile-center": {
+                "run": "Reading the mobile center",
+                "done": "Read the mobile center"
+            },
+            "save-mobile-app": {
+                "run": "Saving the mobile app",
+                "done": "Saved the mobile app"
+            },
+            "save-mobile-bundle": {
+                "run": "Saving the mobile bundle",
+                "done": "Saved the mobile bundle"
+            },
+            "save-mobile-qr-code": {
+                "run": "Saving the QR code",
+                "done": "Saved the QR code"
+            },
             "save-custom-menu": {
                 "run": "Saving the custom menu",
                 "done": "Saved the custom menu"
@@ -1390,6 +1416,14 @@
             "delete-ota-package": {
                 "run": "Deleting the OTA package",
                 "done": "Deleted the OTA package"
+            },
+            "delete-mobile-app": {
+                "run": "Deleting the mobile app",
+                "done": "Deleted the mobile app"
+            },
+            "delete-mobile-bundle": {
+                "run": "Deleting the mobile bundle",
+                "done": "Deleted the mobile bundle"
             },
             "delete-custom-menu": {
                 "run": "Deleting the custom menu",
@@ -1742,6 +1776,26 @@
                 "useSystemTemplates": "Platform's templates",
                 "assignTo": "Assigned to",
                 "assignees": "Assignees",
+                "title": "Title",
+                "status": "Status",
+                "minVersion": "Minimum version",
+                "minVersionReleaseNotes": "Minimum version notes",
+                "latestVersion": "Latest version",
+                "latestVersionReleaseNotes": "Latest version notes",
+                "storeLink": "Store link",
+                "sha256CertFingerprints": "Certificate fingerprint",
+                "appId": "Apple app ID",
+                "appSecret": "App secret",
+                "androidAppId": "Android app",
+                "iosAppId": "iOS app",
+                "app": "App",
+                "bundleId": "Bundle",
+                "androidEnabled": "Android",
+                "iosEnabled": "iOS",
+                "showOnHomePage": "On the home page",
+                "badges": "Store badges",
+                "badgePosition": "Badge position",
+                "useSystemSettings": "System settings",
                 "url": "URL",
                 "tag": "Tag",
                 "entities": "Entities",
@@ -1827,6 +1881,9 @@
                 "MAIL_TEMPLATE": "Mail template",
                 "CUSTOM_TRANSLATION": "Custom translation",
                 "CUSTOM_MENU": "Custom menu",
+                "MOBILE_APP": "Mobile app",
+                "MOBILE_BUNDLE": "Mobile bundle",
+                "MOBILE_QR_CODE": "Mobile app QR code",
                 "RELATION": "Relations",
                 "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
@@ -2693,17 +2750,28 @@
             "mobile-bundles": {
                 "title": "Ask about mobile bundles",
                 "line": "Your mobile app's layout, sign-in and branding.",
-                "suggestion": "How do I set up a mobile app for my customers?"
+                "suggestion": "How do I set up a mobile app for my customers?",
+                "example": {
+                    "dashboard": {"label": "Add a dashboard to the app", "message": "Add one of my dashboards to the mobile app menu, right after Home."},
+                    "review": {"label": "What do users see?", "message": "Which pages does our mobile app menu show?"}
+                }
             },
             "mobile-apps": {
                 "title": "Ask about mobile apps",
                 "line": "The Android and iOS apps that connect to the platform.",
-                "suggestion": "How do I connect my own mobile app?"
+                "suggestion": "How do I connect my own mobile app?",
+                "example": {
+                    "release": {"label": "New release", "message": "We released version 1.4.0 of our app; make everyone below 1.2.0 update."},
+                    "register": {"label": "Register our app", "message": "Register our Android app com.acme.iot."}
+                }
             },
             "mobile-qr-code": {
                 "title": "Ask about the mobile QR code",
                 "line": "The QR code that opens the mobile app on your platform.",
-                "suggestion": "How do users sign in with the QR code?"
+                "suggestion": "How do users sign in with the QR code?",
+                "example": {
+                    "home": {"label": "Show it on Home", "message": "Show the mobile app QR code on the home page with the label Get the app."}
+                }
             },
             "trendz": {
                 "title": "Ask about Trendz Analytics",

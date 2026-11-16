@@ -17,6 +17,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { ActivatedRoute } from '@angular/router';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { filter, switchMap } from 'rxjs/operators';
 
 @Component({
     selector: 'tb-mobile-qr-code-widget',
@@ -55,8 +57,19 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
               private mobileAppService: MobileApplicationService,
               private fb: FormBuilder,
               private userPermissionsService: UserPermissionsService,
-              private route: ActivatedRoute) {
+              private route: ActivatedRoute,
+              private aiAssistantPanelService: AiAssistantPanelService) {
     super(store);
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      filter(event => event.kind === 'MOBILE_QR_CODE' && !this.mobileAppSettingsForm.dirty),
+      switchMap(() => this.mobileAppService.getMobileAppSettings({ignoreLoading: true})),
+      takeUntilDestroyed()
+    ).subscribe(settings => {
+      if (settings.qrCodeConfig?.showOnHomePage !== this.mobileAppSettings?.qrCodeConfig?.showOnHomePage) {
+        this.store.dispatch(new ActionUpdateMobileQrCodeEnabled({mobileQrEnabled: settings.qrCodeConfig?.showOnHomePage}));
+      }
+      this.processMobileAppSettings(settings);
+    });
     if (this.readonly) {
       this.mobileAppSettingsForm.disable()
     } else {

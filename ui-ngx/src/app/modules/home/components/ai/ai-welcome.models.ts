@@ -97,9 +97,9 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.AUTO_COMMIT_SETTINGS]: {key: 'auto-commit-settings', examples: ['devices']},
   [AiAssistantViewType.AI_MODELS]: {key: 'ai-models', examples: ['add']},
   [AiAssistantViewType.API_USAGE]: {key: 'api-usage', examples: ['limits']},
-  [AiAssistantViewType.MOBILE_BUNDLES]: {key: 'mobile-bundles'},
-  [AiAssistantViewType.MOBILE_APPS]: {key: 'mobile-apps'},
-  [AiAssistantViewType.MOBILE_QR_CODE]: {key: 'mobile-qr-code'},
+  [AiAssistantViewType.MOBILE_BUNDLES]: {key: 'mobile-bundles', examples: ['dashboard', 'review']},
+  [AiAssistantViewType.MOBILE_APPS]: {key: 'mobile-apps', examples: ['release', 'register']},
+  [AiAssistantViewType.MOBILE_QR_CODE]: {key: 'mobile-qr-code', examples: ['home']},
   [AiAssistantViewType.TRENDZ]: {key: 'trendz'}
 };
 
