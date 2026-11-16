@@ -33,6 +33,13 @@ import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.servi
 import { aiParse } from '@home/components/ai/ai-action-detail.models';
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { CustomMenuService } from '@core/http/custom-menu.service';
+import { UserService } from '@core/http/user.service';
+import { UnitService } from '@core/services/unit.service';
+import { AuthService } from '@core/auth/auth.service';
+import { ActionAuthUpdateUserDetails } from '@core/auth/auth.actions';
+import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { environment as env } from '@env/environment';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { ActionChatMessage, AiStartedFrom, ApprovalChatMessage, ChatMessage, GeneralChatMessage } from '@shared/models/solution-creator.models';
@@ -365,6 +372,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private translate = inject(TranslateService);
   private clipboard = inject(ClipboardService);
   private store = inject(Store<AppState>);
+  private userService = inject(UserService);
+  private unitService = inject(UnitService);
+  private authService = inject(AuthService);
   private sanitizer = inject(DomSanitizer);
   private destroyRef = inject(DestroyRef);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -1078,6 +1088,16 @@ export class AiChatComponent implements OnInit, OnDestroy {
       case 'save_two_factor_settings':
         this.panelService.emitCustomizationSaved({kind: 'TWO_FACTOR'});
         break;
+      case 'save_my_profile':
+        this.applyOwnProfile();
+        break;
+      case 'save_notification_preferences':
+        this.panelService.emitCustomizationSaved({kind: 'ACCOUNT_NOTIFICATIONS'});
+        break;
+      case 'save_my_two_factor':
+      case 'update_api_key':
+        this.panelService.emitCustomizationSaved({kind: 'ACCOUNT_SECURITY'});
+        break;
       case 'save_custom_menu':
       case 'delete':
         if (tool === 'delete' && values.targetType !== 'CUSTOM_MENU') {
@@ -1090,6 +1110,32 @@ export class AiChatComponent implements OnInit, OnDestroy {
         return;
     }
     this.appliedEffects.add(executionId);
+  }
+
+  private applyOwnProfile(): void {
+    const userId = getCurrentAuthUser(this.store)?.userId;
+    if (!userId) {
+      return;
+    }
+    this.userService.getUser(userId, {ignoreLoading: true}).subscribe(user => {
+      this.store.dispatch(new ActionAuthUpdateUserDetails({userDetails: {
+          additionalInfo: {...user.additionalInfo},
+          authority: user.authority,
+          createdTime: user.createdTime,
+          tenantId: user.tenantId,
+          customerId: user.customerId,
+          email: user.email,
+          phone: user.phone,
+          firstName: user.firstName,
+          id: user.id,
+          lastName: user.lastName,
+          customMenuId: user.customMenuId
+        }}));
+      this.store.dispatch(new ActionSettingsChangeLanguage({userLang: user.additionalInfo?.lang || env.defaultLang, reload: false, ignoredLoad: false}));
+      this.unitService.setUnitSystem(user.additionalInfo?.unitSystem);
+      this.authService.refreshJwtToken(false);
+      this.panelService.emitCustomizationSaved({kind: 'PROFILE'});
+    });
   }
 
   private finishAction(finished: ToolFinished): void {

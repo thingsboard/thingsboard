@@ -100,6 +100,9 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.MOBILE_BUNDLES]: {key: 'mobile-bundles', examples: ['dashboard', 'review']},
   [AiAssistantViewType.MOBILE_APPS]: {key: 'mobile-apps', examples: ['release', 'register']},
   [AiAssistantViewType.MOBILE_QR_CODE]: {key: 'mobile-qr-code', examples: ['home']},
+  [AiAssistantViewType.ACCOUNT_PROFILE]: {key: 'account-profile', examples: ['home', 'units']},
+  [AiAssistantViewType.ACCOUNT_SECURITY]: {key: 'account-security', examples: ['review', 'keys']},
+  [AiAssistantViewType.ACCOUNT_NOTIFICATIONS]: {key: 'account-notifications', examples: ['quiet', 'review']},
   [AiAssistantViewType.TRENDZ]: {key: 'trendz'}
 };
 

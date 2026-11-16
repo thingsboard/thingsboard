@@ -21,6 +21,9 @@ import { UnitSystem, UnitSystems } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { filter, switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'tb-profile',
@@ -45,8 +48,14 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private unitService: UnitService,
               private fb: UntypedFormBuilder,
               private userPermissionsService: UserPermissionsService,
+              private aiAssistantPanelService: AiAssistantPanelService,
             ) {
     super(store);
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      filter(event => event.kind === 'PROFILE' && !this.profile?.dirty),
+      switchMap(() => this.userService.getUser(this.user.id.id, {ignoreLoading: true})),
+      takeUntilDestroyed()
+    ).subscribe(user => this.userLoaded(user));
   }
 
   ngOnInit() {

@@ -327,6 +327,9 @@ export enum AiAssistantViewType {
   MOBILE_BUNDLES = 'MOBILE_BUNDLES',
   MOBILE_APPS = 'MOBILE_APPS',
   MOBILE_QR_CODE = 'MOBILE_QR_CODE',
+  ACCOUNT_PROFILE = 'ACCOUNT_PROFILE',
+  ACCOUNT_SECURITY = 'ACCOUNT_SECURITY',
+  ACCOUNT_NOTIFICATIONS = 'ACCOUNT_NOTIFICATIONS',
   TRENDZ = 'TRENDZ'
 }
 
@@ -362,6 +365,9 @@ const AI_PAGE_VIEWS: Array<[string, AiAssistantViewType]> = [
   ['/mobile-center/bundles', AiAssistantViewType.MOBILE_BUNDLES],
   ['/mobile-center/applications', AiAssistantViewType.MOBILE_APPS],
   ['/mobile-center/qr-code-widget', AiAssistantViewType.MOBILE_QR_CODE],
+  ['/account/profile', AiAssistantViewType.ACCOUNT_PROFILE],
+  ['/account/security', AiAssistantViewType.ACCOUNT_SECURITY],
+  ['/account/notificationSettings', AiAssistantViewType.ACCOUNT_NOTIFICATIONS],
   ['/analytics', AiAssistantViewType.TRENDZ]
 ];
 

@@ -919,6 +919,11 @@
             "read-scheduler-events": "Read the scheduler",
             "save-two-factor-settings": "Changed the two-factor authentication settings",
             "save-oauth2-domain": "Changed OAuth 2.0 sign-in on the domain",
+            "read-my-account": "Read your account",
+            "save-my-profile": "Changed your profile",
+            "save-my-two-factor": "Changed your two-factor methods",
+            "update-api-key": "Changed the API key",
+            "delete-api-key": "Deleted the API key",
             "read-scheduler-event": "Read the scheduler event {{name}}",
             "no-scheduler-events": "No scheduler events yet.",
             "save-scheduler-event": "Changed the scheduler event",
@@ -1424,6 +1429,22 @@
                 "run": "Saving the domain's sign-in",
                 "done": "Saved the domain's sign-in"
             },
+            "read-my-account": {
+                "run": "Reading your account",
+                "done": "Read your account"
+            },
+            "save-my-profile": {
+                "run": "Saving your profile",
+                "done": "Saved your profile"
+            },
+            "save-my-two-factor": {
+                "run": "Saving your two-factor methods",
+                "done": "Saved your two-factor methods"
+            },
+            "update-api-key": {
+                "run": "Saving the API key",
+                "done": "Saved the API key"
+            },
             "save-custom-menu": {
                 "run": "Saving the custom menu",
                 "done": "Saved the custom menu"
@@ -1845,6 +1866,10 @@
                 "oauth2Enabled": "OAuth 2.0",
                 "clients": "Sign-in buttons",
                 "warning": "Note",
+                "language": "Language",
+                "unitSystem": "Units",
+                "mainMethod": "Main method",
+                "apiKey": "API key",
                 "useSystemSettings": "System settings",
                 "url": "URL",
                 "tag": "Tag",
@@ -1935,6 +1960,8 @@
                 "MOBILE_BUNDLE": "Mobile bundle",
                 "MOBILE_QR_CODE": "Mobile app QR code",
                 "TWO_FACTOR_SETTINGS": "Security settings",
+                "MY_PROFILE": "Your profile",
+                "MY_TWO_FACTOR": "Your account security",
                 "RELATION": "Relations",
                 "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
@@ -2820,6 +2847,33 @@
                 "example": {
                     "release": {"label": "New release", "message": "We released version 1.4.0 of our app; make everyone below 1.2.0 update."},
                     "register": {"label": "Register our app", "message": "Register our Android app com.acme.iot."}
+                }
+            },
+            "account-profile": {
+                "title": "Ask about your profile",
+                "line": "Your name, language, units and the dashboard you start on.",
+                "suggestion": "Show temperatures in Fahrenheit",
+                "example": {
+                    "home": {"label": "Start on a dashboard", "message": "Open my main dashboard right after I sign in."},
+                    "units": {"label": "Switch units", "message": "Switch my units to imperial."}
+                }
+            },
+            "account-security": {
+                "title": "Ask about your account security",
+                "line": "Your two-factor methods, API keys and password.",
+                "suggestion": "How do I set up an authenticator app?",
+                "example": {
+                    "review": {"label": "Check my security", "message": "How is my account protected, and what should I improve?"},
+                    "keys": {"label": "Review my API keys", "message": "Which API keys do I have, and are any of them unused or expired?"}
+                }
+            },
+            "account-notifications": {
+                "title": "Ask about your notifications",
+                "line": "Which notifications you get, and where.",
+                "suggestion": "Stop emailing me about device activity",
+                "example": {
+                    "quiet": {"label": "Fewer emails", "message": "Only email me about alarms; keep everything else in the bell."},
+                    "review": {"label": "What do I get?", "message": "Which notifications do I get, and by which methods?"}
                 }
             },
             "mobile-qr-code": {

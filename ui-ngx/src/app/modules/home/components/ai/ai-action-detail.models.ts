@@ -1339,6 +1339,20 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('read-scheduler-event', {name: str(result.name) ?? '—'}), blocks: json('event', result)};
     }
+    case 'read_my_account':
+      return {hood: text('read-my-account'), blocks: json('account', result)};
+    case 'save_my_profile': {
+      const rows = facts(values);
+      return {hood: text('save-my-profile'), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'save_my_two_factor': {
+      const rows = facts(values);
+      return {hood: text('save-my-two-factor'), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'update_api_key': {
+      const rows = facts(values, ['apiKeyId']);
+      return {hood: values.delete === true ? text('delete-api-key') : text('update-api-key'), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
     case 'save_oauth2_domain': {
       const rows = facts(values, ['domainId']);
       return {hood: text('save-oauth2-domain'), blocks: rows.length ? [{type: 'facts', rows}] : []};
