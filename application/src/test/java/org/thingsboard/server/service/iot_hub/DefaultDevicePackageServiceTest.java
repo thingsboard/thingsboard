@@ -75,7 +75,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class DefaultDevicePackageUpdateServiceTest {
+class DefaultDevicePackageServiceTest {
 
     private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
     private final SecurityUser user = mock(SecurityUser.class);
@@ -121,7 +121,7 @@ class DefaultDevicePackageUpdateServiceTest {
     private IotHubService iotHubService;
 
     @InjectMocks
-    private DefaultDevicePackageUpdateService service;
+    private DefaultDevicePackageService service;
 
     private IotHubInstalledItem installedItem;
     // Set when the transaction callback threw, so the transaction would roll back
@@ -184,7 +184,7 @@ class DefaultDevicePackageUpdateServiceTest {
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard);
         when(dashboardService.saveDashboard(any(Dashboard.class))).thenAnswer(i -> i.getArgument(0));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 overwrite("AM308 profile", "DEVICE_PROFILE", profileId, 3L, JacksonUtil.newObjectNode().put("name", "milesight-iot-am308").put("description", "new")),
                 keep("AM308", "DEVICE", deviceId),
                 overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "Template title"))));
@@ -218,10 +218,10 @@ class DefaultDevicePackageUpdateServiceTest {
         dashboardState.set("entityOutput", JacksonUtil.newObjectNode().put("id", dashboardId.getId().toString()));
         ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", dashboardState));
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
-        DeviceUpdateRequest request = request(keep("Dashboard", "DASHBOARD", dashboardId));
+        DevicePackageRequest request = request(keep("Dashboard", "DASHBOARD", dashboardId));
         request.setSelectedInstallMethod("INTEGRATION_CHIRPSTACK");
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+        DevicePackageResult result = service.update(user, installedItem.getId(), request);
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
@@ -237,10 +237,10 @@ class DefaultDevicePackageUpdateServiceTest {
         dashboardState.set("entityOutput", JacksonUtil.newObjectNode().put("id", dashboardId.getId().toString()));
         ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", dashboardState));
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
-        DeviceUpdateRequest.Step overview = keep("Overview", "DASHBOARD", dashboardId);
+        DevicePackageRequest.Step overview = keep("Overview", "DASHBOARD", dashboardId);
         overview.setId("main-dashboard");
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(overview));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(overview));
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
@@ -256,7 +256,7 @@ class DefaultDevicePackageUpdateServiceTest {
         ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", dashboardState));
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("Dashboard", "DASHBOARD", dashboardId)));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(keep("Dashboard", "DASHBOARD", dashboardId)));
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
@@ -266,10 +266,10 @@ class DefaultDevicePackageUpdateServiceTest {
     @Test
     void useExistingOfAPackageEntity_staysThePackages() {
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
-        DeviceUpdateRequest.Step step = keep("Overview", "DASHBOARD", dashboardId);
+        DevicePackageRequest.Step step = keep("Overview", "DASHBOARD", dashboardId);
         step.setResolution("use-existing");
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
@@ -282,10 +282,10 @@ class DefaultDevicePackageUpdateServiceTest {
         // At install the user picked their own dashboard: the install adds it to createdEntityIds too
         ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", stateOf(dashboardId, "use-existing")));
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
-        DeviceUpdateRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
+        DevicePackageRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
         step.setResolution("use-existing");
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
@@ -295,9 +295,9 @@ class DefaultDevicePackageUpdateServiceTest {
     @Test
     void overwritingAnEntityUsedAtInstall_needsAConfirmation() {
         ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", stateOf(dashboardId, "use-existing")));
-        DeviceUpdateRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 9L, JacksonUtil.newObjectNode().put("title", "Dashboard"));
+        DevicePackageRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 9L, JacksonUtil.newObjectNode().put("title", "Dashboard"));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isFalse();
         verify(installedItemService, never()).save(any(), any());
@@ -327,10 +327,10 @@ class DefaultDevicePackageUpdateServiceTest {
         // v2 dropped the dashboard step: the install state no longer has it, createdEntityIds does
         ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of());
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
-        DeviceUpdateRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
+        DevicePackageRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
         step.setResolution("use-existing");
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
@@ -343,9 +343,9 @@ class DefaultDevicePackageUpdateServiceTest {
         DeviceInstalledItemDescriptor installed = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
         installed.setUsedExistingEntityIds(List.of(dashboardId));
         installed.setInstallState(Map.of());
-        DeviceUpdateRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 9L, JacksonUtil.newObjectNode().put("title", "Dashboard"));
+        DevicePackageRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 9L, JacksonUtil.newObjectNode().put("title", "Dashboard"));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isFalse();
         verify(installedItemService, never()).save(any(), any());
@@ -358,7 +358,7 @@ class DefaultDevicePackageUpdateServiceTest {
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
         when(entityService.fetchEntity(any(), any())).thenReturn(Optional.of(dashboard(9L)));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getUsedExistingEntityIds()).containsExactly(dashboardId);
@@ -377,13 +377,13 @@ class DefaultDevicePackageUpdateServiceTest {
         current.setConfiguration(configuration);
         when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(current);
         when(integrationService.saveIntegration(any())).thenAnswer(i -> i.getArgument(0));
-        DeviceUpdateRequest.Step step = keep("TTN", "INTEGRATION", integrationId);
+        DevicePackageRequest.Step step = keep("TTN", "INTEGRATION", integrationId);
         step.setResolution("use-existing");
         ObjectNode entries = JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge");
         entries.putNull("profile.milesight-iot-am308");
         step.setMetadata(entries);
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isTrue();
         ArgumentCaptor<Integration> saved = ArgumentCaptor.forClass(Integration.class);
@@ -411,7 +411,7 @@ class DefaultDevicePackageUpdateServiceTest {
         integration.setId(integrationId);
         when(entityService.fetchEntity(tenantId, integrationId)).thenReturn(Optional.of(integration));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
@@ -438,11 +438,11 @@ class DefaultDevicePackageUpdateServiceTest {
         current.setConfiguration(configuration);
         when(integrationService.findIntegrationById(tenantId, tenantsIntegrationId)).thenReturn(current);
         when(integrationService.saveIntegration(any())).thenAnswer(i -> i.getArgument(0));
-        DeviceUpdateRequest.Step step = keep("TTN", "INTEGRATION", tenantsIntegrationId);
+        DevicePackageRequest.Step step = keep("TTN", "INTEGRATION", tenantsIntegrationId);
         step.setResolution("use-existing");
         step.setMetadata(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
@@ -465,10 +465,10 @@ class DefaultDevicePackageUpdateServiceTest {
         configuration.set("metadata", JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge"));
         current.setConfiguration(configuration);
         when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(current);
-        DeviceUpdateRequest.Step step = keep("TTN", "INTEGRATION", integrationId);
+        DevicePackageRequest.Step step = keep("TTN", "INTEGRATION", integrationId);
         step.setMetadata(JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge"));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isTrue();
         verify(integrationService, never()).saveIntegration(any());
@@ -476,12 +476,12 @@ class DefaultDevicePackageUpdateServiceTest {
 
     @Test
     void twoStepsWithOneKey_areRejected() {
-        DeviceUpdateRequest.Step first = keep("Overview", "DASHBOARD", dashboardId);
+        DevicePackageRequest.Step first = keep("Overview", "DASHBOARD", dashboardId);
         first.setId("main-dashboard");
-        DeviceUpdateRequest.Step second = keep("Details", "DASHBOARD", dashboardId);
+        DevicePackageRequest.Step second = keep("Details", "DASHBOARD", dashboardId);
         second.setId("main-dashboard");
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(first, second));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(first, second));
 
         assertThat(result.isSuccess()).isFalse();
         verify(installedItemService, never()).save(any(), any());
@@ -489,7 +489,7 @@ class DefaultDevicePackageUpdateServiceTest {
 
     @Test
     void twoStepsOfOneTypeAndName_areRejected() {
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 keep("Dashboard", "DASHBOARD", dashboardId), keep("Dashboard", "DASHBOARD", dashboardId)));
 
         assertThat(result.isSuccess()).isFalse();
@@ -499,12 +499,12 @@ class DefaultDevicePackageUpdateServiceTest {
 
     @Test
     void stepWithTheKeyOfAForm_isRejected() {
-        DeviceUpdateRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
+        DevicePackageRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
         step.setId("Settings");
-        DeviceUpdateRequest request = request(step);
+        DevicePackageRequest request = request(step);
         request.setInstallState(Map.of("Settings", JacksonUtil.newObjectNode().set("formValues", JacksonUtil.newObjectNode().put("interval", 10))));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+        DevicePackageResult result = service.update(user, installedItem.getId(), request);
 
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.getErrorMessage()).isEqualTo("Duplicate update step: Settings");
@@ -532,14 +532,14 @@ class DefaultDevicePackageUpdateServiceTest {
         legacy.set("metadata", JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
         installed.setInstallState(Map.of("${integrationName}", legacy, "${profileName}", stateOf(profileId, "created"),
                 "Configuration", JacksonUtil.newObjectNode().set("formValues", JacksonUtil.newObjectNode().put("integrationName", "TTN my-app"))));
-        DeviceUpdateRequest.Step uplink = keep("${integrationName}", "UPLINK_CONVERTER", converterId);
+        DevicePackageRequest.Step uplink = keep("${integrationName}", "UPLINK_CONVERTER", converterId);
         uplink.setDefaultConverter(true);
-        DeviceUpdateRequest.Step ttn = keep("${integrationName}", "INTEGRATION", integrationId);
+        DevicePackageRequest.Step ttn = keep("${integrationName}", "INTEGRATION", integrationId);
         ttn.setMetadata(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
-        DeviceUpdateRequest request = request(uplink, ttn);
+        DevicePackageRequest request = request(uplink, ttn);
         request.setInstallState(Map.of("Configuration", installed.getInstallState().get("Configuration")));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+        DevicePackageResult result = service.update(user, installedItem.getId(), request);
 
         assertThat(result.isSuccess()).isTrue();
         Map<String, JsonNode> state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState();
@@ -563,7 +563,7 @@ class DefaultDevicePackageUpdateServiceTest {
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(7L));
         when(dashboardService.saveDashboard(any(Dashboard.class))).thenThrow(new DataValidationException("Dashboards limit reached"));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 overwrite("AM308 profile", "DEVICE_PROFILE", profileId, 3L, JacksonUtil.newObjectNode().put("name", "p")),
                 overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d"))));
 
@@ -580,7 +580,7 @@ class DefaultDevicePackageUpdateServiceTest {
     void entityChangedSinceTheCheck_isAVersionConflict() {
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(8L));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d"))));
 
         assertThat(result.isSuccess()).isFalse();
@@ -608,7 +608,7 @@ class DefaultDevicePackageUpdateServiceTest {
         ObjectNode integration = JacksonUtil.newObjectNode().put("name", "Template name").put("type", "TTN").put("edgeTemplate", true);
         integration.set("defaultConverterId", JacksonUtil.newObjectNode().put("entityType", "CONVERTER").put("id", "${uplinkConverter.id}"));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 create("Uplink", "UPLINK_CONVERTER", JacksonUtil.newObjectNode().put("name", "Uplink for TTN")),
                 overwrite("TTN", "INTEGRATION", integrationId, 2L, integration)));
 
@@ -640,12 +640,12 @@ class DefaultDevicePackageUpdateServiceTest {
         IotHubInstalledItem taker = otherPackage(Map.of("Uplink", usedExisting));
         when(installedItemService.findByTenantId(any(), any(), any(), any()))
                 .thenReturn(new PageData<>(List.of(installedItem, creator, taker), 1, 3, false));
-        DeviceUpdateRequest.Step step = overwrite("Uplink", "UPLINK_CONVERTER", converterId, 4L,
+        DevicePackageRequest.Step step = overwrite("Uplink", "UPLINK_CONVERTER", converterId, 4L,
                 JacksonUtil.newObjectNode().put("name", "Uplink").set("configuration", JacksonUtil.newObjectNode().put("tbelDecoder", "return {};")));
         step.setConfirmed(true);
         step.setDefaultConverter(true);
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(step));
 
         assertThat(result.isSuccess()).isTrue();
         JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("UPLINK_CONVERTER:Uplink");
@@ -672,14 +672,14 @@ class DefaultDevicePackageUpdateServiceTest {
         ObjectNode versionInfo = JacksonUtil.newObjectNode().put("itemId", itemId.toString()).put("name", "AM308").put("version", "1.0.0");
         when(iotHubRestClient.getVersionInfo(installedVersionId.toString())).thenReturn(versionInfo);
         // ThingsBoard's default converter changed: only the converter step is sent
-        DeviceUpdateRequest.Step step = overwrite("Uplink data converter", "UPLINK_CONVERTER", converterId, 4L,
+        DevicePackageRequest.Step step = overwrite("Uplink data converter", "UPLINK_CONVERTER", converterId, 4L,
                 JacksonUtil.newObjectNode().put("name", "Uplink").set("configuration", JacksonUtil.newObjectNode().put("tbelDecoder", "return {};")));
         step.setId("uplink");
         step.setDefaultConverter(true);
-        DeviceUpdateRequest request = request(step);
+        DevicePackageRequest request = request(step);
         request.setVersionId(installedVersionId.toString());
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+        DevicePackageResult result = service.update(user, installedItem.getId(), request);
 
         assertThat(result.isSuccess()).isTrue();
         Map<String, JsonNode> state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState();
@@ -697,7 +697,7 @@ class DefaultDevicePackageUpdateServiceTest {
     void updateToAnotherVersion_dropsTheInstallStateOfTheStepsItLeavesOut() {
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("Dashboard", "DASHBOARD", dashboardId)));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(keep("Dashboard", "DASHBOARD", dashboardId)));
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState()).containsOnlyKeys("DASHBOARD:Dashboard");
@@ -707,7 +707,7 @@ class DefaultDevicePackageUpdateServiceTest {
     void overwritingAnEntityOfAnotherPackage_needsAConfirmation() {
         DashboardId foreign = new DashboardId(UUID.randomUUID());
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 overwrite("Dashboard", "DASHBOARD", foreign, 1L, JacksonUtil.newObjectNode().put("title", "d"))));
 
         assertThat(result.isSuccess()).isFalse();
@@ -716,7 +716,7 @@ class DefaultDevicePackageUpdateServiceTest {
 
     @Test
     void theDeviceIsNeverOverwritten() {
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 overwrite("AM308", "DEVICE", deviceId, 1L, JacksonUtil.newObjectNode().put("name", "d"))));
 
         assertThat(result.isSuccess()).isFalse();
@@ -729,7 +729,7 @@ class DefaultDevicePackageUpdateServiceTest {
         ObjectNode other = JacksonUtil.newObjectNode().put("itemId", UUID.randomUUID().toString());
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(other);
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
 
         assertThat(result.isSuccess()).isFalse();
         verify(transactionTemplate, never()).execute(any());
@@ -743,7 +743,7 @@ class DefaultDevicePackageUpdateServiceTest {
         updated.setItemVersionId(UUID.fromString(versionId));
         when(installedItemService.findByIdForUpdate(tenantId, installedItem.getId())).thenReturn(updated);
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 create("Uplink", "UPLINK_CONVERTER", JacksonUtil.newObjectNode().put("name", "Uplink for TTN"))));
 
         assertThat(result.isSuccess()).isFalse();
@@ -754,10 +754,10 @@ class DefaultDevicePackageUpdateServiceTest {
 
     @Test
     void planOfAnotherInstalledVersion_isRejected() {
-        DeviceUpdateRequest request = request(keep("AM308", "DEVICE", deviceId));
+        DevicePackageRequest request = request(keep("AM308", "DEVICE", deviceId));
         request.setFromVersionId(UUID.randomUUID());
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+        DevicePackageResult result = service.update(user, installedItem.getId(), request);
 
         assertThat(result.isSuccess()).isFalse();
         verify(installedItemService, never()).save(any(), any());
@@ -768,7 +768,7 @@ class DefaultDevicePackageUpdateServiceTest {
         doThrow(new SubscriptionException("Integrations feature is disabled!", SubscriptionErrorCode.FEATURE_DISABLED))
                 .when(subscriptionService).checkFeatureAllowed(tenantId, PlatformFeature.INTEGRATIONS);
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(
                 create("Uplink", "UPLINK_CONVERTER", JacksonUtil.newObjectNode().put("name", "Uplink for TTN"))));
 
         assertThat(result.isSuccess()).isFalse();
@@ -780,10 +780,10 @@ class DefaultDevicePackageUpdateServiceTest {
     void attributesOfAnOverwrittenEntity_areSavedAfterCommit() {
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(7L));
         when(dashboardService.saveDashboard(any(Dashboard.class))).thenAnswer(i -> i.getArgument(0));
-        DeviceUpdateRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d"));
+        DevicePackageRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d"));
         step.setServerAttributes(JacksonUtil.newObjectNode().put("deviceId", "${device.id}"));
 
-        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId), step));
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId), step));
 
         assertThat(result.isSuccess()).isTrue();
         ArgumentCaptor<AttributesSaveRequest> saved = ArgumentCaptor.forClass(AttributesSaveRequest.class);
@@ -829,11 +829,11 @@ class DefaultDevicePackageUpdateServiceTest {
 
     @Test
     void userMessage_showsValidationMessagesAndHidesInternalOnes() {
-        assertThat(DefaultDevicePackageUpdateService.userMessage(new DataValidationException("Rule chains limit reached")))
+        assertThat(DefaultDevicePackageService.userMessage(new DataValidationException("Rule chains limit reached")))
                 .isEqualTo("Rule chains limit reached");
-        assertThat(DefaultDevicePackageUpdateService.userMessage(new EntityVersionMismatchException(EntityType.DASHBOARD, null)))
+        assertThat(DefaultDevicePackageService.userMessage(new EntityVersionMismatchException(EntityType.DASHBOARD, null)))
                 .contains("Check the update again");
-        assertThat(DefaultDevicePackageUpdateService.userMessage(new IllegalStateException("could not execute statement; SQL [n/a]")))
+        assertThat(DefaultDevicePackageService.userMessage(new IllegalStateException("could not execute statement; SQL [n/a]")))
                 .isEqualTo("Failed to update the device package");
     }
 
@@ -842,7 +842,7 @@ class DefaultDevicePackageUpdateServiceTest {
         ObjectNode device = JacksonUtil.newObjectNode().put("id", "123");
         ObjectNode node = JacksonUtil.newObjectNode().put("a", "${device.id}").put("b", "x ${device.id} ${gateway.id}");
 
-        ObjectNode resolved = (ObjectNode) DefaultDevicePackageUpdateService.resolvePlaceholders(node, Map.of("device", device));
+        ObjectNode resolved = (ObjectNode) DefaultDevicePackageService.resolvePlaceholders(node, Map.of("device", device));
 
         assertThat(resolved.get("a").asText()).isEqualTo("123");
         assertThat(resolved.get("b").asText()).isEqualTo("x 123 ${gateway.id}");
@@ -875,35 +875,35 @@ class DefaultDevicePackageUpdateServiceTest {
         return dashboard;
     }
 
-    private DeviceUpdateRequest request(DeviceUpdateRequest.Step... steps) {
-        DeviceUpdateRequest request = new DeviceUpdateRequest();
+    private DevicePackageRequest request(DevicePackageRequest.Step... steps) {
+        DevicePackageRequest request = new DevicePackageRequest();
         request.setVersionId(versionId);
         request.setSteps(List.of(steps));
         return request;
     }
 
-    private static DeviceUpdateRequest.Step keep(String name, String type, EntityId id) {
-        DeviceUpdateRequest.Step step = step(name, type, DeviceUpdateRequest.Action.KEEP);
+    private static DevicePackageRequest.Step keep(String name, String type, EntityId id) {
+        DevicePackageRequest.Step step = step(name, type, DevicePackageRequest.Action.KEEP);
         step.setEntityId(id.getId());
         return step;
     }
 
-    private static DeviceUpdateRequest.Step overwrite(String name, String type, EntityId id, Long version, ObjectNode entity) {
-        DeviceUpdateRequest.Step step = step(name, type, DeviceUpdateRequest.Action.OVERWRITE);
+    private static DevicePackageRequest.Step overwrite(String name, String type, EntityId id, Long version, ObjectNode entity) {
+        DevicePackageRequest.Step step = step(name, type, DevicePackageRequest.Action.OVERWRITE);
         step.setEntityId(id.getId());
         step.setExpectedVersion(version);
         step.setEntity(entity);
         return step;
     }
 
-    private static DeviceUpdateRequest.Step create(String name, String type, ObjectNode entity) {
-        DeviceUpdateRequest.Step step = step(name, type, DeviceUpdateRequest.Action.CREATE);
+    private static DevicePackageRequest.Step create(String name, String type, ObjectNode entity) {
+        DevicePackageRequest.Step step = step(name, type, DevicePackageRequest.Action.CREATE);
         step.setEntity(entity);
         return step;
     }
 
-    private static DeviceUpdateRequest.Step step(String name, String type, DeviceUpdateRequest.Action action) {
-        DeviceUpdateRequest.Step step = new DeviceUpdateRequest.Step();
+    private static DevicePackageRequest.Step step(String name, String type, DevicePackageRequest.Action action) {
+        DevicePackageRequest.Step step = new DevicePackageRequest.Step();
         step.setName(name);
         step.setType(type);
         step.setAction(action);

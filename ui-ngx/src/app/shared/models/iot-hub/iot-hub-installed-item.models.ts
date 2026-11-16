@@ -49,7 +49,7 @@ export interface DevicePackageEntityState {
 }
 
 /** A step of a device package update, with its entity resolved from the template of the new version. */
-export interface DeviceUpdateStep {
+export interface DevicePackageStep {
   name: string;
   type: string;
   action: 'KEEP' | 'OVERWRITE' | 'CREATE';
@@ -71,18 +71,18 @@ export interface DeviceUpdateStep {
   defaultConverter?: boolean;
 }
 
-export interface DeviceUpdateRequest {
+export interface DevicePackageRequest {
   versionId: string;
   // The version installed when the update was planned: the server refuses the update if the package changed since
   fromVersionId?: string;
   // The install method of the new version's steps
   selectedInstallMethod?: string;
   installState: Record<string, any>;
-  steps: DeviceUpdateStep[];
+  steps: DevicePackageStep[];
 }
 
 /** All of the update was applied, or none of it: failedStep is the install state key of the step that failed, if one did. */
-export interface DeviceUpdateResult {
+export interface DevicePackageResult {
   success: boolean;
   errorMessage?: string;
   failedStep?: string;

@@ -97,7 +97,7 @@ import java.util.regex.Pattern;
 @TbCoreComponent
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultDevicePackageUpdateService extends AbstractTbEntityService implements DevicePackageUpdateService {
+public class DefaultDevicePackageService extends AbstractTbEntityService implements DevicePackageService {
 
     // Step type of the package -> the alias its templates refer to it by, e.g. ${deviceProfile.id}
     private static final Map<String, String> STEP_ALIASES = Map.of(
@@ -162,7 +162,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     }
 
     @Override
-    public DeviceUpdateResult apply(SecurityUser user, IotHubInstalledItemId installedItemId, DeviceUpdateRequest request) {
+    public DevicePackageResult update(SecurityUser user, IotHubInstalledItemId installedItemId, DevicePackageRequest request) {
         TenantId tenantId = user.getTenantId();
         log.info("[{}] Updating device package {} to version {}", tenantId, installedItemId, request.getVersionId());
         Applied applied;
@@ -178,17 +178,17 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             applied = transactionTemplate.execute(status -> applySteps(tenantId, devicePackage, request, versionInfo));
         } catch (StepFailure e) {
             log.warn("[{}] Device package update of {} failed on step [{}], nothing was changed", tenantId, installedItemId, e.stepKey, e.getCause());
-            return DeviceUpdateResult.error(userMessage(e.getCause()), e.stepKey);
+            return DevicePackageResult.error(userMessage(e.getCause()), e.stepKey);
         } catch (RestClientException e) {
             log.error("[{}] IoT Hub request failed while updating device package {}", tenantId, installedItemId, e);
-            return DeviceUpdateResult.error("IoT Hub is unavailable. Try again later.", null);
+            return DevicePackageResult.error("IoT Hub is unavailable. Try again later.", null);
         } catch (Exception e) {
             log.warn("[{}] Device package update of {} failed, nothing was changed", tenantId, installedItemId, e);
-            return DeviceUpdateResult.error(userMessage(e), null);
+            return DevicePackageResult.error(userMessage(e), null);
         }
         afterCommit(user, tenantId, applied);
         log.info("[{}] Updated device package {} to version {}", tenantId, installedItemId, request.getVersionId());
-        return DeviceUpdateResult.success(applied.descriptor(), applied.outputs());
+        return DevicePackageResult.success(applied.descriptor(), applied.outputs());
     }
 
     private DevicePackage findDevicePackage(TenantId tenantId, IotHubInstalledItemId installedItemId) {
@@ -204,14 +204,14 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
      * The update may only change what the package owns, or what the user confirmed. The device and the gateway,
      * whose credentials the firmware uses, are never changed.
      */
-    private void validatePlan(DevicePackage devicePackage, DeviceUpdateRequest request) {
+    private void validatePlan(DevicePackage devicePackage, DevicePackageRequest request) {
         if (request.getSteps() == null || request.getSteps().isEmpty()) {
             throw new IllegalArgumentException("The update has no steps");
         }
         Set<UUID> ownedIds = ownedIds(devicePackage.descriptor());
         // A form's values are saved under its key too, so an entity step may not share it
         Set<String> stateKeys = request.getInstallState() != null ? new HashSet<>(request.getInstallState().keySet()) : new HashSet<>();
-        for (DeviceUpdateRequest.Step step : request.getSteps()) {
+        for (DevicePackageRequest.Step step : request.getSteps()) {
             if (step.getName() == null || step.getAction() == null || !isKnownType(step.getType())) {
                 throw new IllegalArgumentException("Invalid update step: " + step.getName());
             }
@@ -225,26 +225,26 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                         throw new IllegalArgumentException("No entity for update step: " + step.getName());
                     }
                     boolean owned = step.getEntityId() != null && ownedIds.contains(step.getEntityId());
-                    if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE && !owned && !step.isConfirmed()
+                    if (step.getAction() == DevicePackageRequest.Action.OVERWRITE && !owned && !step.isConfirmed()
                             && !"GATEWAY_CONNECTOR".equals(step.getType())) {
                         throw new IllegalArgumentException("Overwriting an entity of another package needs a confirmation: " + step.getName());
                     }
-                    if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE && deviceOrGateway && owned) {
+                    if (step.getAction() == DevicePackageRequest.Action.OVERWRITE && deviceOrGateway && owned) {
                         throw new IllegalArgumentException("The device and its credentials don't change on update");
                     }
                 }
                 case CREATE -> {
                 }
             }
-            if (step.getAction() != DeviceUpdateRequest.Action.KEEP && (step.getEntity() == null || !step.getEntity().isObject())) {
+            if (step.getAction() != DevicePackageRequest.Action.KEEP && (step.getEntity() == null || !step.getEntity().isObject())) {
                 throw new IllegalArgumentException("No entity data for update step: " + step.getName());
             }
         }
     }
 
     /** Integrations and converters are saved as through their API, which needs the feature in the tenant's plan. */
-    private void checkFeatures(TenantId tenantId, DeviceUpdateRequest request) {
-        boolean savesIntegrations = request.getSteps().stream().anyMatch(step -> step.getAction() != DeviceUpdateRequest.Action.KEEP
+    private void checkFeatures(TenantId tenantId, DevicePackageRequest request) {
+        boolean savesIntegrations = request.getSteps().stream().anyMatch(step -> step.getAction() != DevicePackageRequest.Action.KEEP
                 && ("INTEGRATION".equals(step.getType()) || step.getType().endsWith("_CONVERTER")));
         if (savesIntegrations) {
             subscriptionService.checkFeatureAllowed(tenantId, PlatformFeature.INTEGRATIONS);
@@ -252,9 +252,9 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     }
 
     /** The configuration of an integration is checked by a remote call, so before the transaction. */
-    private void validateIntegrations(TenantId tenantId, DeviceUpdateRequest request) throws Exception {
-        for (DeviceUpdateRequest.Step step : request.getSteps()) {
-            if (!"INTEGRATION".equals(step.getType()) || step.getAction() == DeviceUpdateRequest.Action.KEEP) {
+    private void validateIntegrations(TenantId tenantId, DevicePackageRequest request) throws Exception {
+        for (DevicePackageRequest.Step step : request.getSteps()) {
+            if (!"INTEGRATION".equals(step.getType()) || step.getAction() == DevicePackageRequest.Action.KEEP) {
                 continue;
             }
             ObjectNode body = step.getEntity().deepCopy();
@@ -274,7 +274,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         }
     }
 
-    private Applied applySteps(TenantId tenantId, DevicePackage devicePackage, DeviceUpdateRequest request, JsonNode versionInfo) {
+    private Applied applySteps(TenantId tenantId, DevicePackage devicePackage, DevicePackageRequest request, JsonNode versionInfo) {
         IotHubInstalledItem installedItem = lockInstalledItem(tenantId, devicePackage, request);
         DeviceInstalledItemDescriptor previous = devicePackage.descriptor();
         Set<UUID> ownedIds = ownedIds(previous);
@@ -291,15 +291,15 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         List<EntityId> stepEntityIds = new ArrayList<>();
         Map<UUID, EntityId> usedExistingIds = usedExistingIds(previous);
         List<SavedEntity> saved = new ArrayList<>();
-        List<DeviceUpdateRequest.Step> connectorSteps = new ArrayList<>();
+        List<DevicePackageRequest.Step> connectorSteps = new ArrayList<>();
         List<StepAttributes> attributes = new ArrayList<>();
         DashboardId dashboardId = null;
 
-        for (DeviceUpdateRequest.Step step : request.getSteps()) {
+        for (DevicePackageRequest.Step step : request.getSteps()) {
             try {
                 if ("GATEWAY_CONNECTOR".equals(step.getType())) {
                     // A connector lives in the gateway's attributes, which aren't transactional: saved after commit
-                    if (step.getAction() != DeviceUpdateRequest.Action.KEEP) {
+                    if (step.getAction() != DevicePackageRequest.Action.KEEP) {
                         connectorSteps.add(copyWithEntity(step, resolvePlaceholders(step.getEntity(), aliasOutputs)));
                     }
                     continue;
@@ -317,7 +317,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 state.put("resolution", resolution);
                 // A kept entity keeps the checksum of what the package left: the current one would take the
                 // user's changes for the package's, and the next update would overwrite them without a warning
-                String checksum = step.getAction() == DeviceUpdateRequest.Action.KEEP ? previousChecksum(previous, step.getEntityId()) : result.checksum();
+                String checksum = step.getAction() == DevicePackageRequest.Action.KEEP ? previousChecksum(previous, step.getEntityId()) : result.checksum();
                 if (checksum != null) {
                     state.put("checksum", checksum);
                 }
@@ -343,7 +343,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 if (result.saved() != null) {
                     saved.add(result.saved());
                 }
-                if (step.getAction() != DeviceUpdateRequest.Action.KEEP && !"use-existing".equals(resolution)) {
+                if (step.getAction() != DevicePackageRequest.Action.KEEP && !"use-existing".equals(resolution)) {
                     // As at install, the step's attributes go with the entity it saved; written after commit
                     attributes.add(new StepAttributes(step.getName(), result.entityId(), step.getServerAttributes(), step.getSharedAttributes()));
                 }
@@ -422,7 +422,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
      * Another update of the package, e.g. a second click or another tab, waits here until this one commits, and then
      * fails: the plan was made for the version installed before. Without it both would create the new entities.
      */
-    private IotHubInstalledItem lockInstalledItem(TenantId tenantId, DevicePackage devicePackage, DeviceUpdateRequest request) {
+    private IotHubInstalledItem lockInstalledItem(TenantId tenantId, DevicePackage devicePackage, DevicePackageRequest request) {
         IotHubInstalledItem installedItem = installedItemService.findByIdForUpdate(tenantId, devicePackage.installedItem().getId());
         UUID planned = request.getFromVersionId() != null ? request.getFromVersionId() : devicePackage.installedItem().getItemVersionId();
         if (installedItem == null || !planned.equals(installedItem.getItemVersionId())
@@ -432,7 +432,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return installedItem;
     }
 
-    private StepResult applyStep(TenantId tenantId, DeviceUpdateRequest.Step step, JsonNode entity) throws ThingsboardException {
+    private StepResult applyStep(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) throws ThingsboardException {
         return switch (step.getType()) {
             case "DEVICE_PROFILE" -> saveDeviceProfile(tenantId, step, entity);
             case "DEVICE", "GATEWAY" -> saveDevice(tenantId, step, entity);
@@ -444,16 +444,16 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         };
     }
 
-    private StepResult saveDeviceProfile(TenantId tenantId, DeviceUpdateRequest.Step step, JsonNode entity) {
+    private StepResult saveDeviceProfile(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) {
         DeviceProfileId id = step.getEntityId() != null ? new DeviceProfileId(step.getEntityId()) : null;
         DeviceProfile current = id != null ? deviceProfileService.findDeviceProfileById(tenantId, id) : null;
-        if (step.getAction() == DeviceUpdateRequest.Action.KEEP) {
+        if (step.getAction() == DevicePackageRequest.Action.KEEP) {
             existing(tenantId, current, step);
             return kept(id, current.getName());
         }
         DeviceProfile profile = JacksonUtil.treeToValue(entity, DeviceProfile.class);
         profile.setTenantId(tenantId);
-        if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE) {
+        if (step.getAction() == DevicePackageRequest.Action.OVERWRITE) {
             existing(tenantId, current, step);
             prepareOverwrite(profile, id, current, step);
             // The tenant's default profile stays the default one
@@ -466,11 +466,11 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return savedResult(tenantId, result.getId(), result, step, output(result.getId(), result.getName()));
     }
 
-    private StepResult saveDevice(TenantId tenantId, DeviceUpdateRequest.Step step, JsonNode entity) {
+    private StepResult saveDevice(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) {
         DeviceId id = step.getEntityId() != null ? new DeviceId(step.getEntityId()) : null;
         Device device;
         boolean created = false;
-        if (step.getAction() == DeviceUpdateRequest.Action.CREATE) {
+        if (step.getAction() == DevicePackageRequest.Action.CREATE) {
             Device template = JacksonUtil.treeToValue(entity, Device.class);
             template.setTenantId(tenantId);
             template.setId(null);
@@ -480,7 +480,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         } else {
             Device current = id != null ? deviceService.findDeviceById(tenantId, id) : null;
             device = existing(tenantId, current, step);
-            if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE) {
+            if (step.getAction() == DevicePackageRequest.Action.OVERWRITE) {
                 // Another device the user chose to overwrite; the package's own device never changes
                 Device template = JacksonUtil.treeToValue(entity, Device.class);
                 template.setTenantId(tenantId);
@@ -500,7 +500,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         if ("GATEWAY".equals(step.getType())) {
             output.put("dockerComposeUrl", "/api/device-connectivity/gateway-launch/" + device.getId().getId() + "/docker-compose/download");
         }
-        SavedEntity saved = created ? new SavedEntity(device.getId(), device, step.getAction() == DeviceUpdateRequest.Action.CREATE) : null;
+        SavedEntity saved = created ? new SavedEntity(device.getId(), device, step.getAction() == DevicePackageRequest.Action.CREATE) : null;
         return new StepResult(device.getId(), output, null, saved);
     }
 
@@ -520,16 +520,16 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return deviceCredentialsService.updateDeviceCredentials(tenantId, credentials);
     }
 
-    private StepResult saveDashboard(TenantId tenantId, DeviceUpdateRequest.Step step, JsonNode entity) {
+    private StepResult saveDashboard(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) {
         DashboardId id = step.getEntityId() != null ? new DashboardId(step.getEntityId()) : null;
         Dashboard current = id != null ? dashboardService.findDashboardById(tenantId, id) : null;
-        if (step.getAction() == DeviceUpdateRequest.Action.KEEP) {
+        if (step.getAction() == DevicePackageRequest.Action.KEEP) {
             existing(tenantId, current, step);
             return kept(id, current.getTitle());
         }
         Dashboard dashboard = JacksonUtil.treeToValue(entity, Dashboard.class);
         dashboard.setTenantId(tenantId);
-        if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE) {
+        if (step.getAction() == DevicePackageRequest.Action.OVERWRITE) {
             existing(tenantId, current, step);
             prepareOverwrite(dashboard, id, current, step);
             // The dashboard keeps its owner and the customers it is assigned to
@@ -545,17 +545,17 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return savedResult(tenantId, result.getId(), result, step, output(result.getId(), result.getTitle()));
     }
 
-    private StepResult saveRuleChain(TenantId tenantId, DeviceUpdateRequest.Step step, JsonNode entity) throws ThingsboardException {
+    private StepResult saveRuleChain(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) throws ThingsboardException {
         RuleChainId id = step.getEntityId() != null ? new RuleChainId(step.getEntityId()) : null;
         RuleChain current = id != null ? ruleChainService.findRuleChainById(tenantId, id) : null;
-        if (step.getAction() == DeviceUpdateRequest.Action.KEEP) {
+        if (step.getAction() == DevicePackageRequest.Action.KEEP) {
             existing(tenantId, current, step);
             return kept(id, current.getName());
         }
         JsonNode ruleChainJson = entity.has("ruleChain") ? entity.get("ruleChain") : entity;
         RuleChain ruleChain = JacksonUtil.treeToValue(ruleChainJson, RuleChain.class);
         ruleChain.setTenantId(tenantId);
-        if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE) {
+        if (step.getAction() == DevicePackageRequest.Action.OVERWRITE) {
             existing(tenantId, current, step);
             prepareOverwrite(ruleChain, id, current, step);
             // A rule chain the tenant made its root one stays the root
@@ -578,17 +578,17 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return savedResult(tenantId, result.getId(), result, step, output(result.getId(), result.getName()));
     }
 
-    private StepResult saveConverter(TenantId tenantId, DeviceUpdateRequest.Step step, JsonNode entity) {
+    private StepResult saveConverter(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) {
         ConverterId id = step.getEntityId() != null ? new ConverterId(step.getEntityId()) : null;
         Converter current = id != null ? converterService.findConverterById(tenantId, id) : null;
-        if (step.getAction() == DeviceUpdateRequest.Action.KEEP) {
+        if (step.getAction() == DevicePackageRequest.Action.KEEP) {
             existing(tenantId, current, step);
             return kept(id, current.getName());
         }
         Converter converter = JacksonUtil.treeToValue(entity, Converter.class);
         converter.setTenantId(tenantId);
         converter.setType("UPLINK_CONVERTER".equals(step.getType()) ? ConverterType.UPLINK : ConverterType.DOWNLINK);
-        if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE) {
+        if (step.getAction() == DevicePackageRequest.Action.OVERWRITE) {
             existing(tenantId, current, step);
             prepareOverwrite(converter, id, current, step);
         } else {
@@ -599,10 +599,10 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return savedResult(tenantId, result.getId(), result, step, output(result.getId(), result.getName()));
     }
 
-    private StepResult saveIntegration(TenantId tenantId, DeviceUpdateRequest.Step step, JsonNode entity) {
+    private StepResult saveIntegration(TenantId tenantId, DevicePackageRequest.Step step, JsonNode entity) {
         IntegrationId id = step.getEntityId() != null ? new IntegrationId(step.getEntityId()) : null;
         Integration current = id != null ? integrationService.findIntegrationById(tenantId, id) : null;
-        if (step.getAction() == DeviceUpdateRequest.Action.KEEP) {
+        if (step.getAction() == DevicePackageRequest.Action.KEEP) {
             existing(tenantId, current, step);
             Integration merged = withMergedMetadata(current, step.getMetadata());
             if (merged != null) {
@@ -613,7 +613,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         }
         Integration integration = JacksonUtil.treeToValue(entity, Integration.class);
         integration.setTenantId(tenantId);
-        if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE) {
+        if (step.getAction() == DevicePackageRequest.Action.OVERWRITE) {
             existing(tenantId, current, step);
             prepareOverwrite(integration, id, current, step);
             // The devices keep sending to the same endpoint
@@ -698,7 +698,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
      * The overwritten entity keeps its id and its current name (the user may have renamed it). The version the
      * user reviewed makes the save fail if someone changed the entity since.
      */
-    private void prepareOverwrite(Object entity, EntityId id, Object current, DeviceUpdateRequest.Step step) {
+    private void prepareOverwrite(Object entity, EntityId id, Object current, DevicePackageRequest.Step step) {
         switch (entity) {
             case DeviceProfile p -> { p.setId((DeviceProfileId) id); p.setName(((DeviceProfile) current).getName()); }
             case Device d -> { d.setId((DeviceId) id); d.setName(((Device) current).getName()); }
@@ -715,7 +715,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         ((HasVersion) entity).setVersion(currentVersion);
     }
 
-    private <T> T existing(TenantId tenantId, T current, DeviceUpdateRequest.Step step) {
+    private <T> T existing(TenantId tenantId, T current, DevicePackageRequest.Step step) {
         if (current == null || !tenantId.equals(((HasTenantId) current).getTenantId())) {
             throw new IllegalArgumentException(step.getName() + " was deleted. Check the update again.");
         }
@@ -745,9 +745,9 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
      * transaction may come from the cache, which is evicted only after commit. A rule chain is read back with
      * its metadata, which isn't cached.
      */
-    private StepResult savedResult(TenantId tenantId, EntityId id, Object entity, DeviceUpdateRequest.Step step, ObjectNode output) {
+    private StepResult savedResult(TenantId tenantId, EntityId id, Object entity, DevicePackageRequest.Step step, ObjectNode output) {
         String checksum = entity instanceof RuleChain ? packageEntities.checksum(tenantId, id) : EntityChecksum.of(entity);
-        return new StepResult(id, output, checksum, new SavedEntity(id, entity, step.getAction() == DeviceUpdateRequest.Action.CREATE));
+        return new StepResult(id, output, checksum, new SavedEntity(id, entity, step.getAction() == DevicePackageRequest.Action.CREATE));
     }
 
     private static ObjectNode output(EntityId id, String name) {
@@ -855,7 +855,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 log.warn("[{}] Failed to save the attributes of device package step [{}]", tenantId, step.stepName(), e);
             }
         }
-        for (DeviceUpdateRequest.Step step : applied.connectorSteps()) {
+        for (DevicePackageRequest.Step step : applied.connectorSteps()) {
             try {
                 saveConnector(tenantId, applied.aliasOutputs().get("gateway"), step.getEntity());
             } catch (Exception e) {
@@ -961,8 +961,8 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return ids;
     }
 
-    private static DeviceUpdateRequest.Step copyWithEntity(DeviceUpdateRequest.Step step, JsonNode entity) {
-        DeviceUpdateRequest.Step copy = JacksonUtil.treeToValue(JacksonUtil.valueToTree(step), DeviceUpdateRequest.Step.class);
+    private static DevicePackageRequest.Step copyWithEntity(DevicePackageRequest.Step step, JsonNode entity) {
+        DevicePackageRequest.Step copy = JacksonUtil.treeToValue(JacksonUtil.valueToTree(step), DevicePackageRequest.Step.class);
         if (entity != null) {
             copy.setEntity(entity);
         }
@@ -982,7 +982,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     }
 
     private record Applied(DeviceInstalledItemDescriptor descriptor, Map<String, ObjectNode> outputs, List<SavedEntity> saved,
-                           List<DeviceUpdateRequest.Step> connectorSteps, List<StepAttributes> attributes,
+                           List<DevicePackageRequest.Step> connectorSteps, List<StepAttributes> attributes,
                            Map<String, ObjectNode> aliasOutputs) {
     }
 

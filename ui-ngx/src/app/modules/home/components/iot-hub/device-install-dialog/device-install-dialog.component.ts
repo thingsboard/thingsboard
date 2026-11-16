@@ -17,8 +17,8 @@ import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models
 import {
   DeviceInstalledItemDescriptor,
   DevicePackageEntityState,
-  DeviceUpdateResult,
-  DeviceUpdateStep
+  DevicePackageResult,
+  DevicePackageStep
 } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
@@ -2182,7 +2182,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       ep.errorMessage = null;
     }
     this.cdr.detectChanges();
-    let result: DeviceUpdateResult;
+    let result: DevicePackageResult;
     try {
       result = await firstValueFrom(this.iotHubApiService.updateDevicePackage(this.data.update.installedItemId, {
         versionId: this.data.item.id as string,
@@ -2247,7 +2247,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /** Update: the steps the server applies, each with its entity resolved from the template of the new version. */
-  private async buildUpdateSteps(ws: WizardStep): Promise<DeviceUpdateStep[]> {
+  private async buildUpdateSteps(ws: WizardStep): Promise<DevicePackageStep[]> {
     for (const ep of ws.entitySteps) {
       const plan = this.entityPlans.get(ep);
       const alias = stepTypeAliasMap[ep.step.type];
@@ -2262,15 +2262,15 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         this.entityOutputs.delete(alias);
       }
     }
-    const steps: DeviceUpdateStep[] = [];
+    const steps: DevicePackageStep[] = [];
     for (const ep of ws.entitySteps) {
       steps.push(await this.buildUpdateStep(ws, ep.step, this.entityPlans.get(ep)));
     }
     return steps;
   }
 
-  private async buildUpdateStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): Promise<DeviceUpdateStep> {
-    const base: DeviceUpdateStep = {
+  private async buildUpdateStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): Promise<DevicePackageStep> {
+    const base: DevicePackageStep = {
       name: step.name,
       id: step.id,
       type: step.type,
@@ -2495,7 +2495,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    */
   private async registerTextOnlyUpdate(): Promise<boolean> {
     const installState = this.data.update.descriptor.installState ?? {};
-    const steps: DeviceUpdateStep[] = [];
+    const steps: DevicePackageStep[] = [];
     for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
       if (!ENTITY_STEP_TYPES.has(step.type)) {
         continue;

@@ -15,7 +15,7 @@ import java.util.UUID;
  * in one transaction, together with the new version of the installed item, or nothing.
  */
 @Data
-public class DeviceUpdateRequest {
+public class DevicePackageRequest {
 
     private String versionId;
     // The version installed when the wizard planned the update; the update fails if the package changed since

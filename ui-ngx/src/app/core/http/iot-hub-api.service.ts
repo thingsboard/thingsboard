@@ -13,7 +13,7 @@ import {
   MpItemVersionView
 } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
-import { DevicePackageEntityState, DeviceUpdateRequest, DeviceUpdateResult, IotHubInstalledItem, IotHubInstalledItemKeptEntities, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { DevicePackageEntityState, DevicePackageRequest, DevicePackageResult, IotHubInstalledItem, IotHubInstalledItemKeptEntities, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, ItemTypeFilterInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
@@ -278,8 +278,8 @@ export class IotHubApiService {
   }
 
   /** Applies a device package update in one transaction: all of it, or nothing. */
-  public updateDevicePackage(installedItemId: string, request: DeviceUpdateRequest, config?: IotHubRequestConfig): Observable<DeviceUpdateResult> {
-    return this.http.post<DeviceUpdateResult>(
+  public updateDevicePackage(installedItemId: string, request: DevicePackageRequest, config?: IotHubRequestConfig): Observable<DevicePackageResult> {
+    return this.http.post<DevicePackageResult>(
       `/api/iot-hub/installedItems/${installedItemId}/deviceUpdate`,
       request,
       { params: this.buildParams(config) }
