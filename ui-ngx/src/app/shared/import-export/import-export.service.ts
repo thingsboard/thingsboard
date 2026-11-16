@@ -7,9 +7,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { BreakpointId, Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
+import { BreakpointId, Dashboard, DashboardInfo, DashboardLayoutId } from '@shared/models/dashboard.models';
 import { DatePipe } from '@angular/common';
-import { deepClone, guid, isDate, isDefined, isNotEmptyStr, isNumber, isObject, isString, isUndefined, unwrapModule } from '@core/utils';
+import { deepClone, guid, isDate, isDefined, isNotEmptyStr, isObject, isString, isUndefined, unwrapModule } from '@core/utils';
 
 import {
   AliasesInfo,
@@ -22,7 +22,8 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
 import { forkJoin, Observable, of, Subject } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
+import { catchError, defaultIfEmpty, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { ExportRow, Widget, WidgetActionsMap, WidgetActionType, WidgetSize, WidgetTypeDetails } from '@shared/models/widget.models';
@@ -266,45 +267,30 @@ export class ImportExportService {
                          onEditMissingAliases: editMissingAliasesFunction, entityGroupId?: string): Observable<Dashboard> {
     return this.openImportDialog('dashboard.import', 'dashboard.dashboard-file').pipe(
       mergeMap((dashboard: Dashboard) => {
-        if (!this.validateImportedDashboard(dashboard)) {
-          this.store.dispatch(new ActionNotificationShow(
-            {message: this.translate.instant('dashboard.invalid-dashboard-file-error'),
-              type: 'error'}));
-          throw new Error('Invalid dashboard file');
-        } else {
-          dashboard = this.prepareImport(dashboard);
-          dashboard = this.dashboardUtils.validateAndUpdateDashboard(dashboard);
-          dashboard.customerId = customerId;
-          let aliasIds = null;
-          const entityAliases = dashboard.configuration.entityAliases;
-          if (entityAliases) {
-            aliasIds = Object.keys(entityAliases);
-          }
-          if (aliasIds && aliasIds.length > 0) {
-            return this.processEntityAliases(entityAliases, aliasIds).pipe(
-              mergeMap((missingEntityAliases) => {
-                if (Object.keys(missingEntityAliases).length > 0) {
-                  return onEditMissingAliases(this.dashboardUtils.getWidgetsArray(dashboard),
-                    false, 'dashboard.dashboard-import-missing-aliases-title',
-                    missingEntityAliases).pipe(
-                    mergeMap((updatedEntityAliases) => {
-                      for (const aliasId of Object.keys(updatedEntityAliases)) {
-                        entityAliases[aliasId] = updatedEntityAliases[aliasId];
-                      }
-                      return this.saveImportedDashboard(dashboard, entityGroupId);
-                    })
-                  );
-                } else {
-                  return this.saveImportedDashboard(dashboard, entityGroupId);
-                }
-              }
-             ));
-          } else {
-            return this.saveImportedDashboard(dashboard, entityGroupId);
-          }
-        }
+        dashboard = this.prepareImportedDashboard(dashboard);
+        dashboard.customerId = customerId;
+        return this.resolveMissingAliases(dashboard, onEditMissingAliases);
       }),
+      mergeMap((dashboard) => this.saveImportedDashboard(dashboard, entityGroupId)),
       catchError(() => of(null))
+    );
+  }
+
+  public importDashboardVersion(dashboard: DashboardInfo,
+                                onEditMissingAliases: editMissingAliasesFunction): Observable<boolean> {
+    return this.openImportDialog('dashboard.update-new-version', 'dashboard.upload-file-to-update').pipe(
+      mergeMap((imported: Dashboard) =>
+        this.resolveMissingAliases(this.prepareImportedDashboard(imported), onEditMissingAliases)),
+      mergeMap((imported) => this.dashboardService.saveDashboard({
+        ...dashboard,
+        configuration: {...imported.configuration, description: dashboard.configuration?.description},
+        resources: imported.resources
+      }).pipe(
+        map(() => true),
+        defaultIfEmpty(true),
+        catchError((err) => of(err instanceof HttpErrorResponse && err.status === HttpStatusCode.Conflict))
+      )),
+      catchError(() => of(false))
     );
   }
 
@@ -1315,10 +1301,40 @@ export class ImportExportService {
   }
 
   private validateImportedDashboard(dashboard: Dashboard): boolean {
-    if (isUndefined(dashboard.title) || isUndefined(dashboard.configuration)) {
-      return false;
+    return isObject(dashboard) && !Array.isArray(dashboard) && isDefined(dashboard.title)
+      && isObject(dashboard.configuration) && !Array.isArray(dashboard.configuration);
+  }
+
+  private prepareImportedDashboard(dashboard: Dashboard): Dashboard {
+    if (!this.validateImportedDashboard(dashboard)) {
+      this.store.dispatch(new ActionNotificationShow(
+        {message: this.translate.instant('dashboard.invalid-dashboard-file-error'),
+          type: 'error'}));
+      throw new Error('Invalid dashboard file');
     }
-    return true;
+    return this.dashboardUtils.validateAndUpdateDashboard(this.prepareImport(dashboard));
+  }
+
+  private resolveMissingAliases(dashboard: Dashboard, onEditMissingAliases: editMissingAliasesFunction): Observable<Dashboard> {
+    const entityAliases = dashboard.configuration.entityAliases;
+    const aliasIds = entityAliases ? Object.keys(entityAliases) : [];
+    if (!aliasIds.length) {
+      return of(dashboard);
+    }
+    return this.processEntityAliases(entityAliases, aliasIds).pipe(
+      mergeMap((missingEntityAliases) => {
+        if (!Object.keys(missingEntityAliases).length) {
+          return of(dashboard);
+        }
+        return onEditMissingAliases(this.dashboardUtils.getWidgetsArray(dashboard),
+          false, 'dashboard.dashboard-import-missing-aliases-title', missingEntityAliases).pipe(
+          map((updatedEntityAliases) => {
+            Object.assign(entityAliases, updatedEntityAliases);
+            return dashboard;
+          })
+        );
+      })
+    );
   }
 
   private validateImportedWidget(widgetItem: WidgetItem): boolean {
