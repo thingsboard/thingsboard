@@ -12,7 +12,7 @@ public enum IntegrationType {
     TPE(false),
     CHIRPSTACK(false),
     PARTICLE(false),
-    TMOBILE_IOT_CDP(false, null),
+    TMOBILE_IOT_CDP(false),
     HTTP(false),
     MQTT(true),
     PUB_SUB(true),
