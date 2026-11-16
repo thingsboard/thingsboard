@@ -44,6 +44,11 @@ def main():
     parser.add_argument('sboms', nargs='+')
     args = parser.parse_intermixed_args()
 
+    absent = [sbom for sbom in args.sboms if not os.path.exists(sbom)]
+    if absent:
+        raise SystemExit('These SBOMs do not exist, and the notices are made from them:\n  ' + '\n  '.join(absent)
+                         + '\nIn the Maven build the SBOMs are made with -Dsbom.skip=false.')
+
     components, skipped = {}, {}
     for sbom in args.sboms:
         for component in json.load(open(sbom)).get('components', []):

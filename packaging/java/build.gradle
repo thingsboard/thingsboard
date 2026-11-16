@@ -82,6 +82,14 @@ ospackage {
     from("${buildDir}/extensions") {
         into "extensions"
     }
+
+    // The third-party notices, when the build makes them (-Dnotices.skip=false)
+    from("${buildDir}/notices/linux") {
+        include "THIRD-PARTY-NOTICES"
+        filePermissions {
+            unix('r--r--r--')  // 0444
+        }
+    }
 }
 
 // Configure our RPM build task
