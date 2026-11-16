@@ -170,11 +170,8 @@ export interface IotHubInstalledItemKeptEntities {
   usedByItemsCount: number;
   // Of the kept entities, the ones the user had before and the package took as they were
   usedExistingCount: number;
-  // The package's device profiles that devices use (e.g. the ones a LoRaWAN integration created) and what they refer to:
-  // TB deletes neither. Absent from an older backend
-  keptForDevices?: IotHubKeptEntity[];
-  // How many devices use those profiles
-  devicesCount?: number;
+  // Device profiles still used by devices, and what kept profiles reference; absent from older backends
+  referencedEntities?: IotHubKeptEntity[];
 }
 
 export interface IotHubInstalledItem extends BaseData<{id: string}> {

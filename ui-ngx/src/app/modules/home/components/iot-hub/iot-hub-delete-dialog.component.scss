@@ -24,38 +24,20 @@
   margin: 0;
 }
 
-// The kept entities: one white list as tb-image-references draws it, a group per reason
 .tb-iot-hub-kept-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px 0;
-  border-radius: 4px;
-  background: #fff;
   border: 1px solid color-mix(in srgb, var(--tb-primary-500) 40%, transparent);
 
-  // The groups share the outer border: no border of its own around each group's list
+  // Groups share the outer border; hide tb-image-references' own
   ::ng-deep tb-image-references table.tb-entities-list-table {
-    padding: 0 10px 0 4px !important;
-    background: transparent !important;
+    padding: 0 10px 0 4px;
+    background: transparent;
 
     &:before {
-      display: none !important;
+      display: none;
     }
   }
 }
 
-.tb-iot-hub-kept-reason {
-  padding: 4px 12px 2px;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-  letter-spacing: 0.4px;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.tb-iot-hub-kept-divider {
-  height: 1px;
-  margin: 6px 12px 4px;
-  background: rgba(0, 0, 0, 0.08);
+.tb-iot-hub-kept-group-next {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }

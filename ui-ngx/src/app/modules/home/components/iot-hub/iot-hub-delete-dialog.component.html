@@ -13,14 +13,13 @@
       <mat-icon>info_outline</mat-icon>
       <div class="flex flex-col">
         <div class="font-medium">{{ keptTitle }}</div>
-        <!-- One list, a group per reason: the reason is over the entities it is about -->
-        <div class="tb-iot-hub-kept-groups mt-2">
-          @for (group of keptGroups; track group.reason; let first = $first) {
-            @if (!first) {
-              <div class="tb-iot-hub-kept-divider"></div>
-            }
-            <div class="tb-iot-hub-kept-reason">{{ group.reason }}</div>
-            <tb-image-references [references]="group.references"></tb-image-references>
+        <div class="tb-iot-hub-kept-groups mt-2 flex flex-col rounded bg-white">
+          @for (group of keptGroups; track group.reason; let i = $index; let first = $first) {
+            <div role="group" class="flex flex-col gap-1 py-2" [class.tb-iot-hub-kept-group-next]="!first"
+                 [attr.aria-labelledby]="'tb-iot-hub-kept-reason-' + i">
+              <div class="px-3 pt-1 font-medium leading-4" [id]="'tb-iot-hub-kept-reason-' + i">{{ group.reason }}</div>
+              <tb-image-references [references]="group.references"></tb-image-references>
+            </div>
           }
         </div>
       </div>

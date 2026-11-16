@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescript
 import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.WidgetInstalledItemDescriptor;
 import org.thingsboard.server.common.data.subscription.SubscriptionException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -724,8 +726,8 @@ public class DefaultIotHubService implements IotHubService {
      * Deletes what a device package created, except the entities another installed device package
      * also uses (e.g. an integration it took over with Overwrite): deleting those would break that package,
      * and the ones the user had before and the package took as they were (use existing). A device profile that devices
-     * still use stays too, e.g. with the devices a LoRaWAN integration created, and so does what it refers to that the
-     * package created: TB deletes neither.
+     * still use stays too, e.g. with the devices a LoRaWAN integration created, and any kept profile keeps what it refers
+     * to: TB deletes neither.
      * A kept integration loses the metadata entries the package added.
      */
     private void deleteDevicePackageEntities(TenantId tenantId, IotHubInstalledItemId installedItemId,
@@ -748,12 +750,14 @@ public class DefaultIotHubService implements IotHubService {
             if (usedExisting.contains(entityId.getId())) {
                 log.info("[{}] Kept {} {}: the package took it as it was", tenantId, entityId.getEntityType(), entityId.getId());
                 removeIntegrationMetadata(tenantId, entityId, descriptor, otherPackages);
+                profileReferences(tenantId, entityId).forEach(reference -> referencedByKeptProfiles.add(reference.getId()));
                 continue;
             }
             Set<IotHubInstalledItemId> usedBy = usedByOtherPackages.get(entityId.getId());
             if (usedBy != null) {
                 log.info("[{}] Kept {} {}: installed device packages {} use it", tenantId, entityId.getEntityType(), entityId.getId(), usedBy);
                 removeIntegrationMetadata(tenantId, entityId, descriptor, otherPackages);
+                profileReferences(tenantId, entityId).forEach(reference -> referencedByKeptProfiles.add(reference.getId()));
                 continue;
             }
             if (referencedByKeptProfiles.contains(entityId.getId())) {
@@ -770,7 +774,12 @@ public class DefaultIotHubService implements IotHubService {
             try {
                 deleteDevicePackageEntity(tenantId, entityId, user);
             } catch (Exception e) {
-                log.error("[{}] Failed to delete device package entity: {}", tenantId, entityId, e);
+                // A reference the package doesn't know of, e.g. a profile the user made later with the package's rule chain
+                if (ExceptionUtils.indexOfType(e, DataValidationException.class) >= 0) {
+                    log.info("[{}] Kept {} {}: {}", tenantId, entityId.getEntityType(), entityId.getId(), ExceptionUtils.getRootCauseMessage(e));
+                } else {
+                    log.error("[{}] Failed to delete device package entity: {}", tenantId, entityId, e);
+                }
             }
         }
     }
@@ -829,10 +838,9 @@ public class DefaultIotHubService implements IotHubService {
             throw new IllegalArgumentException("Installed item not found");
         }
         List<InstalledItemKeptEntities.KeptEntity> kept = new ArrayList<>();
-        List<InstalledItemKeptEntities.KeptEntity> keptForDevices = new ArrayList<>();
+        List<InstalledItemKeptEntities.KeptEntity> referenced = new ArrayList<>();
         Set<IotHubInstalledItemId> usedByItems = new HashSet<>();
         int usedExistingCount = 0;
-        long devicesCount = 0;
         if (installedItem.getDescriptor() instanceof DeviceInstalledItemDescriptor dd && dd.getCreatedEntityIds() != null) {
             Set<UUID> usedExisting = usedExistingIds(dd);
             Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, new ArrayList<>());
@@ -859,32 +867,37 @@ public class DefaultIotHubService implements IotHubService {
                 }
             }
             for (EntityId entityId : dd.getCreatedEntityIds()) {
-                long devices = keptIds.contains(entityId.getId()) ? 0 : countProfileDevices(tenantId, entityId, deletedDevices);
-                if (devices == 0) {
+                if (!keptIds.contains(entityId.getId()) && countProfileDevices(tenantId, entityId, deletedDevices) > 0) {
+                    referenced.add(keptEntity(tenantId, entityId));
+                    keptIds.add(entityId.getId());
+                }
+            }
+            // A kept profile, for whatever reason, keeps what it refers to
+            for (EntityId entityId : dd.getCreatedEntityIds()) {
+                if (!keptIds.contains(entityId.getId())) {
                     continue;
                 }
-                keptForDevices.add(keptEntity(tenantId, entityId));
-                keptIds.add(entityId.getId());
-                devicesCount += devices;
-                // What the profile refers to stays with it
                 for (EntityId reference : profileReferences(tenantId, entityId)) {
                     if (created.contains(reference.getId()) && keptIds.add(reference.getId())) {
-                        keptForDevices.add(keptEntity(tenantId, reference));
+                        referenced.add(keptEntity(tenantId, reference));
                     }
                 }
             }
         }
-        return new InstalledItemKeptEntities(kept, usedByItems.size(), usedExistingCount, keptForDevices, devicesCount);
+        return new InstalledItemKeptEntities(kept, usedByItems.size(), usedExistingCount, referenced);
     }
 
     private InstalledItemKeptEntities.KeptEntity keptEntity(TenantId tenantId, EntityId entityId) {
         return new InstalledItemKeptEntities.KeptEntity(entityId, entityService.fetchEntityName(tenantId, entityId).orElse(null));
     }
 
-    /** The default rule chains and dashboard of the device profile {@code profileId}: TB doesn't delete them while it refers to them. */
+    /** The default rule chains and dashboard of a device profile, which TB doesn't delete while it refers to them; none for another entity. */
     private List<EntityId> profileReferences(TenantId tenantId, EntityId profileId) {
-        DeviceProfile profile = deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(profileId.getId()));
         List<EntityId> references = new ArrayList<>();
+        if (profileId.getEntityType() != EntityType.DEVICE_PROFILE) {
+            return references;
+        }
+        DeviceProfile profile = deviceProfileService.findDeviceProfileById(tenantId, new DeviceProfileId(profileId.getId()));
         if (profile != null) {
             Stream.of(profile.getDefaultRuleChainId(), profile.getDefaultEdgeRuleChainId(), profile.getDefaultDashboardId())
                     .filter(Objects::nonNull)

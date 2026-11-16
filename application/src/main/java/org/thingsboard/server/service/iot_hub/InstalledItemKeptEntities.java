@@ -10,8 +10,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import java.util.List;
 
 /**
- * What deleting an installed item keeps: what other installed items use too, what the user had before it, and the device
- * profiles devices still use (a LoRaWAN integration creates its devices on the first uplink, not the package).
+ * What deleting an installed item keeps: what other installed items use too, what the user had before it, and what other
+ * tenant entities refer to (a LoRaWAN integration creates its devices on the first uplink, not the package).
  */
 @Data
 @NoArgsConstructor
@@ -23,11 +23,9 @@ public class InstalledItemKeptEntities {
     private int usedByItemsCount;
     // How many of the kept entities the user had before and the package took as they were (use existing)
     private int usedExistingCount;
-    // The package's device profiles that devices use and what they refer to (default rule chain, dashboard): TB deletes
-    // neither. Apart from entities, which an update reads as shared with other packages
-    private List<KeptEntity> keptForDevices;
-    // How many devices use those profiles
-    private long devicesCount;
+    // What other tenant entities refer to: the package's device profiles that devices use, and the default rule chains and
+    // dashboard of a kept profile. Apart from entities, which an update reads as shared with other packages
+    private List<KeptEntity> referencedEntities;
 
     @Data
     @NoArgsConstructor

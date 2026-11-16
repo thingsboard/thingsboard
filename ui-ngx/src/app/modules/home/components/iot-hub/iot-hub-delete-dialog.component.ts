@@ -30,8 +30,7 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
 
   description: string;
 
-  // A device package keeps some entities, and the dialog lists them before the user confirms: one group per reason,
-  // so a reason reads only for its own entities
+  // Entities the removal keeps, grouped by reason
   keptGroups: { reason: string; references: ResourceReferences }[] = [];
   keptTitle: string;
 
@@ -47,7 +46,7 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     this.description = this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
     const kept = data.keptEntities;
     const shared = kept?.entities ?? [];
-    const withDevices = kept?.keptForDevices ?? [];
+    const referenced = kept?.referencedEntities ?? [];
     const references = (entities: IotHubKeptEntity[]): ResourceReferences =>
       entities.map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
     if (shared.length) {
@@ -56,12 +55,11 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
         !kept.usedByItemsCount ? 'iot-hub.remove-kept-own' : 'iot-hub.remove-kept-own-or-used';
       this.keptGroups.push({ reason: this.translate.instant(reasonKey, { kept: shared.length }), references: references(shared) });
     }
-    if (withDevices.length) {
-      // The profiles devices use, and what those profiles use (default rule chains, dashboard)
-      this.keptGroups.push({ reason: this.translate.instant('iot-hub.remove-kept-referenced'), references: references(withDevices) });
+    if (referenced.length) {
+      this.keptGroups.push({ reason: this.translate.instant('iot-hub.remove-kept-referenced'), references: references(referenced) });
     }
     if (this.keptGroups.length) {
-      this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: shared.length + withDevices.length });
+      this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: shared.length + referenced.length });
     }
   }
 

@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
@@ -745,13 +747,17 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
-    void findKeptEntities_devicePackage_namesTheProfileDevicesUseAndItsRuleChain_apartFromTheShared() {
+    void findKeptEntities_devicePackage_namesTheProfileDevicesUseAndWhatItRefersTo_apartFromTheShared() {
         DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
+        DashboardId dashboardId = new DashboardId(UUID.randomUUID());
         profile.setDefaultRuleChainId(ruleChainId);
+        profile.setDefaultDashboardId(dashboardId);
+        // The user's, not the package's: not listed
+        profile.setDefaultEdgeRuleChainId(new RuleChainId(UUID.randomUUID()));
         Device packageDevice = new Device(new DeviceId(UUID.randomUUID()));
         packageDevice.setDeviceProfileId(profile.getId());
-        IotHubInstalledItem checked = devicePackage(ruleChainId, profile.getId(), packageDevice.getId());
+        IotHubInstalledItem checked = devicePackage(ruleChainId, dashboardId, profile.getId(), packageDevice.getId());
         when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
         when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
                 .thenReturn(new PageData<>(List.of(checked), 1, 1, false));
@@ -762,15 +768,16 @@ class DefaultIotHubServiceTest {
         when(deviceProfileService.findDeviceProfileById(tenantId, profile.getId())).thenReturn(profile);
         when(entityService.fetchEntityName(tenantId, profile.getId())).thenReturn(Optional.of("smartico-l2-lr"));
         when(entityService.fetchEntityName(tenantId, ruleChainId)).thenReturn(Optional.of("Smartico L2-LR"));
+        when(entityService.fetchEntityName(tenantId, dashboardId)).thenReturn(Optional.of("Smartico L2-LR Fleet"));
 
         InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
 
         // An update reads entities as shared with other packages: the profile is not among them
         assertThat(kept.getEntities()).isEmpty();
-        assertThat(kept.getKeptForDevices()).containsExactly(
+        assertThat(kept.getReferencedEntities()).containsExactly(
                 new InstalledItemKeptEntities.KeptEntity(profile.getId(), "smartico-l2-lr"),
-                new InstalledItemKeptEntities.KeptEntity(ruleChainId, "Smartico L2-LR"));
-        assertThat(kept.getDevicesCount()).isEqualTo(2);
+                new InstalledItemKeptEntities.KeptEntity(ruleChainId, "Smartico L2-LR"),
+                new InstalledItemKeptEntities.KeptEntity(dashboardId, "Smartico L2-LR Fleet"));
     }
 
     @Test
@@ -788,17 +795,36 @@ class DefaultIotHubServiceTest {
 
         InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
 
-        assertThat(kept.getKeptForDevices()).extracting(InstalledItemKeptEntities.KeptEntity::getEntityId).containsExactly(profileId);
-        assertThat(kept.getDevicesCount()).isEqualTo(1);
+        assertThat(kept.getReferencedEntities()).extracting(InstalledItemKeptEntities.KeptEntity::getEntityId).containsExactly(profileId);
     }
 
     @Test
-    void deleteInstalledItem_devicePackage_keepsTheProfileDevicesUseAndItsRuleChain() throws Exception {
-        mockTenant();
+    void findKeptEntities_devicePackage_aSharedProfileKeepsWhatItRefersTo() {
         DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
         profile.setDefaultRuleChainId(ruleChainId);
-        IotHubInstalledItem deleted = devicePackage(ruleChainId, profile.getId());
+        IotHubInstalledItem checked = devicePackage(ruleChainId, profile.getId());
+        IotHubInstalledItem other = devicePackage(profile.getId());
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked, other), 1, 2, false));
+        when(deviceProfileService.findDeviceProfileById(tenantId, profile.getId())).thenReturn(profile);
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).extracting(InstalledItemKeptEntities.KeptEntity::getEntityId).containsExactly(profile.getId());
+        assertThat(kept.getReferencedEntities()).extracting(InstalledItemKeptEntities.KeptEntity::getEntityId).containsExactly(ruleChainId);
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_keepsTheProfileDevicesUseAndWhatItRefersTo() throws Exception {
+        mockTenant();
+        DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
+        RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
+        DashboardId dashboardId = new DashboardId(UUID.randomUUID());
+        profile.setDefaultRuleChainId(ruleChainId);
+        profile.setDefaultDashboardId(dashboardId);
+        IotHubInstalledItem deleted = devicePackage(ruleChainId, dashboardId, profile.getId());
         when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
         when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
                 .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
@@ -809,8 +835,45 @@ class DefaultIotHubServiceTest {
         service.deleteInstalledItem(user, deleted.getId());
 
         verify(tbDeviceProfileService, never()).delete(any(), any());
-        verify(ruleChainService, never()).findRuleChainById(any(), any());
         verify(tbRuleChainService, never()).delete(any(), any());
+        verify(tbDashboardService, never()).delete(any(), any());
+        verify(iotHubInstalledItemService).deleteById(tenantId, deleted.getId());
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_aSharedProfileKeepsItsRuleChain() throws Exception {
+        mockTenant();
+        DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
+        RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
+        profile.setDefaultRuleChainId(ruleChainId);
+        IotHubInstalledItem deleted = devicePackage(ruleChainId, profile.getId());
+        IotHubInstalledItem other = devicePackage(profile.getId());
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted, other), 1, 2, false));
+        when(deviceProfileService.findDeviceProfileById(tenantId, profile.getId())).thenReturn(profile);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        verify(tbDeviceProfileService, never()).delete(any(), any());
+        verify(tbRuleChainService, never()).delete(any(), any());
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_anEntitySomethingElseRefersToStays() throws Exception {
+        mockTenant();
+        RuleChain ruleChain = new RuleChain(new RuleChainId(UUID.randomUUID()));
+        IotHubInstalledItem deleted = devicePackage(ruleChain.getId());
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        when(ruleChainService.findRuleChainById(tenantId, ruleChain.getId())).thenReturn(ruleChain);
+        // A profile the user made after the install uses the package's rule chain
+        doThrow(new DataValidationException("The rule chain referenced by the device profiles cannot be deleted!"))
+                .when(tbRuleChainService).delete(ruleChain, user);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
         verify(iotHubInstalledItemService).deleteById(tenantId, deleted.getId());
     }
 
