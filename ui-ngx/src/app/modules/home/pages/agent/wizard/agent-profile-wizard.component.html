@@ -16,7 +16,7 @@
   </mat-toolbar>
 }
 
-<div mat-dialog-content class="tb-install-wizard-body" [class.tb-install-wizard-embedded]="embedded">
+<div mat-dialog-content class="tb-install-wizard-body flex min-h-[50vh] flex-col" [class.tb-install-wizard-embedded]="embedded">
 
   <mat-stepper linear #stepper [labelPosition]="(stepperLabelPosition | async)">
 
@@ -106,7 +106,7 @@
 
   </mat-stepper>
 
-  <div class="step-footer">
+  <div class="step-footer mt-auto">
     @if (stepper?.selectedIndex === 0) {
       @if (showBack) {
         <button mat-button type="button" (click)="back()">

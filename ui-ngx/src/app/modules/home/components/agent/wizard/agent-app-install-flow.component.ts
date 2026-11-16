@@ -6,8 +6,8 @@ import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatStepper, StepperOrientation } from '@angular/material/stepper';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { BehaviorSubject, combineLatest, forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, share, shareReplay, startWith, take } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, EMPTY, forkJoin, Observable, of, Subscription } from 'rxjs';
+import { catchError, map, share, shareReplay, startWith, switchMap, take } from 'rxjs/operators';
 import { PageComponent } from '@shared/components/page.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AgentService } from '@core/http/agent.service';
@@ -117,6 +117,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   unavailableTypes = new Set<AgentApplicationType>();
   detectingTypes = true;
   private typeAvailability$: Observable<void>;
+  private typeLoadSubscription: Subscription | null = null;
 
   profileSelectFormGroup: UntypedFormGroup;
   filteredProfiles: Observable<AgentAppProfile[]>;
@@ -235,7 +236,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   private detectTypeAvailability(types: AgentApplicationType[]) {
     this.typeAvailability$ = forkJoin(types.map(type => forkJoin([
       this.loader.loadTemplatesByType(type).pipe(catchError(() => of(null))),
-      this.canReadAppProfiles ? this.loader.loadProfiles(type).pipe(catchError(() => of(null))) : of(null)
+      this.canReadAppProfiles ? this.loader.loadProfiles(type).pipe(catchError(() => of(null))) : of([])
     ]))).pipe(
       map(results => {
         results.forEach(([templates, profiles], index) => {
@@ -267,6 +268,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
       return;
     }
     this.selectedType = type;
+    this.typeLoadSubscription?.unsubscribe();
     this.template = null;
     this.composeType = null;
     this.composeTypeKeys = [];
@@ -306,6 +308,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
       this.savedProfile = this.selectedProfile;
     }
     this.useProfile = value;
+    this.typeLoadSubscription?.unsubscribe();
     this.selectedProfile = null;
     this.profileSelectFormGroup.get('profile').patchValue(null, { emitEvent: false });
     this.template = null;
@@ -507,7 +510,8 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     const templates$: Observable<AgentAppTemplate[]> = this.canCreateAppProfile
       ? this.loader.loadTemplatesByType(type).pipe(catchError(() => of([])))
       : of([]);
-    forkJoin([this.loader.loadProfiles(type), templates$]).subscribe({
+    const profiles$: Observable<AgentAppProfile[]> = this.canReadAppProfiles ? this.loader.loadProfiles(type) : of([]);
+    this.typeLoadSubscription = forkJoin([profiles$, templates$]).subscribe({
       next: ([allProfiles, allTemplates]) => {
         const profiles = this.edgeTemplateCompatibility.filterProfiles(allProfiles);
         const templates = this.edgeTemplateCompatibility.filterTemplates(allTemplates);
@@ -525,22 +529,23 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   private loadTemplateForType(type: AgentApplicationType) {
     this.loadingTemplate = true;
-    this.typeAvailability$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      if (this.selectedType !== type || this.useProfile) {
-        return;
-      }
-      if (this.typesWithoutTemplates.has(type)) {
-        this.loadingTemplate = false;
-        this.loadError = this.translate.instant('agent.app-no-templates');
-        return;
-      }
-      this.loader.loadTemplate(type).subscribe({
-        next: tpl => this.applyTemplate(tpl),
-        error: () => {
-          this.loadError = this.translate.instant('agent.app-install-template-failed');
+    this.typeLoadSubscription = this.typeAvailability$.pipe(
+      take(1),
+      switchMap(() => {
+        if (this.typesWithoutTemplates.has(type)) {
           this.loadingTemplate = false;
+          this.loadError = this.translate.instant('agent.app-no-templates');
+          return EMPTY;
         }
-      });
+        return this.loader.loadTemplate(type);
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: tpl => this.applyTemplate(tpl),
+      error: () => {
+        this.loadError = this.translate.instant('agent.app-install-template-failed');
+        this.loadingTemplate = false;
+      }
     });
   }
 

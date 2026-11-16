@@ -14,7 +14,7 @@
   </button>
 </mat-toolbar>
 
-<div mat-dialog-content class="tb-install-wizard-body">
+<div mat-dialog-content class="tb-install-wizard-body flex min-h-[50vh] flex-col">
 
   <mat-stepper linear #stepper
     [orientation]="(stepperOrientation | async)"
@@ -170,7 +170,7 @@
 
   </mat-stepper>
 
-  <div class="step-footer">
+  <div class="step-footer mt-auto">
     @let stepIndex = stepper?.selectedIndex;
     @if (stepIndex > 0) {
       <button mat-button type="button" (click)="stepper.previous()" [disabled]="submitting">

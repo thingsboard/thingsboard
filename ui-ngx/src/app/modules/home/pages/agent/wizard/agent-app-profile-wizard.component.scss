@@ -9,16 +9,6 @@
 @include wizard-summary;
 
 :host {
-  .tb-install-wizard-body {
-    display: flex;
-    flex-direction: column;
-    min-height: 50vh;
-
-    > .step-footer {
-      margin-top: auto;
-    }
-  }
-
   .step-content {
     display: flex;
     flex-direction: column;
