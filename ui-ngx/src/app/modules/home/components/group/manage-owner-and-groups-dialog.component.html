@@ -23,6 +23,12 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <section class="flex flex-1 flex-col">
+        @if (multiSelection) {
+          <div class="tb-hint">
+            {{ (mixedSelection ? 'entity-group.mixed-owner-and-groups-hint' : 'entity-group.multiple-owner-and-groups-hint')
+              | translate: {count: entities.length} }}
+          </div>
+        }
         <tb-owner-and-groups
           [entityType]="entityType"
           appearance="outline"

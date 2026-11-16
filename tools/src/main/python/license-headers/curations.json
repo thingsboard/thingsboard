@@ -1361,7 +1361,7 @@
       "path": "ui-ngx/src/app/modules/home/components/group/manage-owner-and-groups-dialog.component.html",
       "header": "pe-only",
       "reason": "PE view template manage-owner-and-groups-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/dialogs/assign-to-customer-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 4af3aa07a136de6f06469ab94134f84552ed0f80).",
-      "contentHash": "sha256:6663727de4d162e6fc966c2e36dd771058655f0a801232a56e3425825f6cbe54"
+      "contentHash": "sha256:e1de36f77aaedc62b96a06e983e11b0a5674d2bffb683784f6c4aaf528c63fc4"
     },
     {
       "path": "ui-ngx/src/app/modules/home/components/integration/integration-credentials/integration-credentials.component.scss",

@@ -147,6 +147,12 @@ export class UserPermissionsService {
     return this.hasGenericPermission(resource, operation);
   }
 
+  public hasManageOwnerAndGroupsPermission(groupType: EntityType): boolean {
+    return this.hasGenericPermissionByEntityGroupType(Operation.CHANGE_OWNER, groupType) ||
+      (this.hasGenericEntityGroupTypePermission(Operation.ADD_TO_GROUP, groupType) &&
+        this.hasGenericEntityGroupTypePermission(Operation.REMOVE_FROM_GROUP, groupType));
+  }
+
   public hasGenericEntityGroupPermission(operation: Operation, entityGroup: EntityGroup): boolean {
     if (!entityGroup) {
       return false;

@@ -11,7 +11,6 @@ import { ShortEntityView } from '@shared/models/entity-group.models';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
-import { Operation } from '@shared/models/security.models';
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 // @dynamic
@@ -48,8 +47,6 @@ export abstract class GroupEntityComponent<T extends BaseData<HasId>>
 
   canManageOwnerAndGroups(): boolean {
     return (!this.isGroupMode() || this.userPermissionsService.isOwnedGroup(this.entityGroup)) &&
-      (this.userPermissionsService.hasGenericPermissionByEntityGroupType(Operation.CHANGE_OWNER, this.entitiesTableConfig.entityType)
-    || (this.userPermissionsService.hasGenericEntityGroupTypePermission(Operation.ADD_TO_GROUP, this.entitiesTableConfig.entityType) &&
-    this.userPermissionsService.hasGenericEntityGroupTypePermission(Operation.REMOVE_FROM_GROUP, this.entitiesTableConfig.entityType)));
+      this.userPermissionsService.hasManageOwnerAndGroupsPermission(this.entitiesTableConfig.entityType);
   }
 }

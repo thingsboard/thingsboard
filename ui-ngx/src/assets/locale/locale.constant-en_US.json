@@ -4741,7 +4741,9 @@
         "owner": "Owner",
         "owner-required": "Owner is required.",
         "manage-owner-and-groups": "Manage owner and groups",
-        "owner-and-groups": "Owner and groups"
+        "owner-and-groups": "Owner and groups",
+        "mixed-owner-and-groups-hint": "The { count, plural, =1 {selected entity has} other {# selected entities have} } different owners or groups. Everything you set here will be applied to all of them; leave the groups field empty to keep group membership unchanged.",
+        "multiple-owner-and-groups-hint": "The owner and groups you set here will be applied to all { count, plural, =1 {1 selected entity} other {# selected entities} }."
     },
     "entity-field": {
         "additional-info": "Additional info",

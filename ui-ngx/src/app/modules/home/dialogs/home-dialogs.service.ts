@@ -122,7 +122,8 @@ export class HomeDialogsService {
       ));
   }
 
-  public manageOwnerAndGroups($event: Event, groupEntity: GroupEntityInfo<EntityId>): Observable<boolean> {
+  public manageOwnerAndGroups($event: Event,
+                              groupEntities: GroupEntityInfo<EntityId> | GroupEntityInfo<EntityId>[]): Observable<boolean> {
     if ($event) {
       $event.stopPropagation();
     }
@@ -131,7 +132,7 @@ export class HomeDialogsService {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        groupEntity
+        groupEntities
       }
     }).afterClosed();
   }
