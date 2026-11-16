@@ -15,6 +15,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -171,6 +172,28 @@ class IntegrationGrpcSessionTest {
         ConverterConfigurationProto proto = ReflectionTestUtils.invokeMethod(integrationGrpcSession, "constructConverterConfigProto", converter);
 
         assertThat(JacksonUtil.toJsonNode(proto.getAdditionalInfo())).isEqualTo(converter.getAdditionalInfo());
+    }
+
+    @Test
+    void testConstructConverterConfigProtoWithConverterVersion() {
+        Converter converter = createConverter();
+        converter.setIntegrationType(IntegrationType.CHIRPSTACK);
+        converter.setConverterVersion(2);
+
+        ConverterConfigurationProto proto = ReflectionTestUtils.invokeMethod(integrationGrpcSession, "constructConverterConfigProto", converter);
+
+        assertThat(proto.getConverterVersion()).isEqualTo(2);
+        assertThat(proto.getIntegrationType()).isEqualTo("CHIRPSTACK");
+    }
+
+    @Test
+    void testConstructConverterConfigProtoWithoutConverterVersion() {
+        Converter converter = createConverter();
+        converter.setConverterVersion(null);
+
+        ConverterConfigurationProto proto = ReflectionTestUtils.invokeMethod(integrationGrpcSession, "constructConverterConfigProto", converter);
+
+        assertThat(proto.getConverterVersion()).isZero();
     }
 
     private Converter createConverter() {

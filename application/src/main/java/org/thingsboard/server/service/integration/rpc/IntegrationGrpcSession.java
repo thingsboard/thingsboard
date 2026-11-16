@@ -426,6 +426,9 @@ public final class IntegrationGrpcSession implements Closeable {
         if (converter.getIntegrationType() != null) {
             builder.setIntegrationType(converter.getIntegrationType().toString());
         }
+        if (converter.getConverterVersion() != null) {
+            builder.setConverterVersion(converter.getConverterVersion());
+        }
         return builder.build();
     }
 
