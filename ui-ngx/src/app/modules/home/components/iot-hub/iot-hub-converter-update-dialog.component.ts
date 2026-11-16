@@ -21,6 +21,8 @@ export interface IotHubConverterUpdateDialogData {
   usedBy: string[];
 }
 
+const USED_BY_SHOWN = 3;
+
 /**
  * Brings an installed device package's default converter to ThingsBoard's default converter now, without a new version of
  * the package. Closes with true once it is updated.
@@ -34,6 +36,9 @@ export interface IotHubConverterUpdateDialogData {
 export class TbIotHubConverterUpdateDialogComponent extends DialogComponent<TbIotHubConverterUpdateDialogComponent, boolean> {
 
   readonly modifiedHint = splitTextWithLink(this.translate.instant('iot-hub.device-update-modified'));
+  readonly usedByShown: string[];
+  readonly usedByHidden: string[];
+  usedByExpanded = false;
   updating = false;
   errorMessage: string | null = null;
 
@@ -46,6 +51,10 @@ export class TbIotHubConverterUpdateDialogComponent extends DialogComponent<TbIo
     private translate: TranslateService
   ) {
     super(store, router, dialogRef);
+    // Collapse only when at least 2 packages would be hidden
+    const shownCount = data.usedBy.length > USED_BY_SHOWN + 1 ? USED_BY_SHOWN : data.usedBy.length;
+    this.usedByShown = data.usedBy.slice(0, shownCount);
+    this.usedByHidden = data.usedBy.slice(shownCount);
   }
 
   downloadCurrent(): void {

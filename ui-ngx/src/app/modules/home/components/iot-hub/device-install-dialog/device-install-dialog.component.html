@@ -237,7 +237,7 @@
                 <mat-spinner diameter="24"></mat-spinner>
               }
               @case ('success') {
-                <mat-icon class="tb-progress-success">check_circle</mat-icon>
+                <mat-icon class="tb-progress-success tb-update-reveal">check_circle</mat-icon>
               }
               @default {
                 <div class="tb-progress-pending-circle">{{ i + 1 }}</div>
@@ -258,9 +258,6 @@
               @if (plan.newDefaultConverter) {
                 <span class="tb-progress-hint">{{ 'iot-hub.device-update-new-default-converter' | translate }}</span>
               }
-              @if (plan.existing) {
-                <span class="tb-progress-hint">{{ 'iot-hub.device-update-existing-' + plan.resolution | translate }}</span>
-              }
               @if (plan.shared) {
                 <span class="tb-progress-hint">{{ 'iot-hub.device-update-shared' | translate }}</span>
               }
@@ -277,14 +274,17 @@
                 <span class="tb-progress-status-progress">{{ 'iot-hub.in-progress' | translate }}</span>
               }
               @case ('success') {
-                <span class="tb-progress-status-done">{{ updateOutcomeOf(plan) | translate }}</span>
+                <span class="tb-progress-status-done tb-update-reveal">{{ updateOutcomeOf(plan) | translate }}</span>
               }
               @case ('skipped') {
                 <span class="tb-progress-status-progress">{{ 'iot-hub.device-update-skipped' | translate }}</span>
               }
               @default {
-                @if (ws.reviewing && plan) {
-                  <span class="tb-progress-status-progress">{{ 'iot-hub.device-update-no-conflicts' | translate }}</span>
+                <!-- A resolved name conflict shows the choice: Use existing, Overwrite or Create copy -->
+                @if (ws.reviewing && plan?.existing && plan.confirmed) {
+                  <span class="tb-progress-status-progress">{{ 'iot-hub.device-install-' + plan.resolution | translate }}</span>
+                } @else if (ws.reviewing && plan) {
+                  <span class="tb-progress-status-progress">{{ plannedOutcomeOf(plan) | translate }}</span>
                 }
               }
             }

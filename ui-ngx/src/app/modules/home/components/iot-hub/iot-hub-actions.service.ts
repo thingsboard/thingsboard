@@ -239,7 +239,7 @@ export class IotHubActionsService {
     return this.openDeviceInstallDialog(item, {
         reviewMode: true,
         selectedInstallMethod: deviceDescriptor.selectedInstallMethod,
-        installState: deviceDescriptor.installState
+        reviewed: deviceDescriptor
       });
   }
 
@@ -265,7 +265,7 @@ export class IotHubActionsService {
   }
 
   private openDeviceInstallDialog(item: MpItemVersionView,
-                                  options?: { reviewMode?: boolean; selectedInstallMethod?: string; installState?: any;
+                                  options?: { reviewMode?: boolean; selectedInstallMethod?: string; reviewed?: DeviceInstalledItemDescriptor;
                                   entityGroupId?: string; customerId?: string; update?: DeviceInstallUpdate}): Observable<any> {
     return this.dialog.open<TbDeviceInstallDialogComponent, DeviceInstallDialogData>(TbDeviceInstallDialogComponent, {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog-lt-md'],

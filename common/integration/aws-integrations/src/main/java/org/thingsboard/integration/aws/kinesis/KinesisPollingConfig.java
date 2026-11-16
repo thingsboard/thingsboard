@@ -7,6 +7,7 @@ import software.amazon.awssdk.services.kinesis.KinesisAsyncClient;
 import software.amazon.kinesis.retrieval.RecordsFetcherFactory;
 import software.amazon.kinesis.retrieval.RetrievalFactory;
 import software.amazon.kinesis.retrieval.RetrievalSpecificConfig;
+import software.amazon.kinesis.retrieval.polling.KinesisSleepTimeController;
 import software.amazon.kinesis.retrieval.polling.SimpleRecordsFetcherFactory;
 import software.amazon.kinesis.retrieval.polling.SynchronousBlockingRetrievalFactory;
 
@@ -27,6 +28,6 @@ public class KinesisPollingConfig implements RetrievalSpecificConfig {
 
     @Override
     public RetrievalFactory retrievalFactory() {
-        return new SynchronousBlockingRetrievalFactory(streamName, kinesisClient, recordsFetcherFactory, maxRecords, kinesisRequestTimeout, null);
+        return new SynchronousBlockingRetrievalFactory(streamName, kinesisClient, recordsFetcherFactory, maxRecords, kinesisRequestTimeout, null, new KinesisSleepTimeController());
     }
 }
