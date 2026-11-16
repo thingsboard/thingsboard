@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
 :host {
   display: block;
   overflow: hidden;
@@ -21,9 +23,8 @@
   }
 }
 
-
 ::ng-deep {
-  .tb-device-filter-config-component {
+  .tb-filter-button-panel-content {
     max-width: 100%;
     width: 500px;
     min-width: 100%;
