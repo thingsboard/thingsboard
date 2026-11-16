@@ -16,7 +16,7 @@ for /f tokens^=2^ delims^=.+-_^" %%j in ('java -fullversion 2^>^&1 ^| findstr /c
 @ECHO CurrentVersion %jver%
 
 set /a jmajor=jver 2>nul
-if %jmajor% LSS 25 GOTO JAVA_NOT_INSTALLED
+if %jmajor% LSS ${pkg.minJavaVersion} GOTO JAVA_NOT_INSTALLED
 
 :JAVA_INSTALLED
 
@@ -52,8 +52,8 @@ POPD
 GOTO END
 
 :JAVA_NOT_INSTALLED
-@ECHO Java 25 or later is not installed. ThingsBoard requires Java 25 or later.
-@ECHO Please go to https://adoptium.net/ and install Java 25. Then retry installation.
+@ECHO Java ${pkg.minJavaVersion} or later is not installed. ThingsBoard requires Java ${pkg.minJavaVersion} or later.
+@ECHO Please go to https://adoptium.net/ and install Java ${pkg.minJavaVersion}. Then retry installation.
 PAUSE
 GOTO END
 

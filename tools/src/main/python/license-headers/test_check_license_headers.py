@@ -1324,6 +1324,7 @@ class CheckCommandTests(unittest.TestCase):
     def checked(self, report):
         return sorted(row["path"] for row in report["files"])
 
+    @requires_merge_file_object_id
     def test_files_changed_during_the_scan_fail_the_check(self):
         compare = p.compare
 
@@ -1377,6 +1378,7 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual(["New.java"], self.checked(report))
         self.assertEqual("not in CE, no CE evidence", self.rows(report)["New.java"]["reason"])
 
+    @requires_merge_file_object_id
     def test_since_checks_every_file_when_new_ce_commits_are_merged(self):
         self.pull_request()
         self.git("checkout", "-q", "lts-4.3")
@@ -1391,6 +1393,7 @@ class CheckCommandTests(unittest.TestCase):
         self.assertTrue(report["selection"]["full"])
         self.assertIn("full check: the CE commits merged into the branch changed", output)
 
+    @requires_merge_file_object_id
     def test_since_checks_every_file_when_the_check_changes(self):
         self.pull_request()
         self.git.write(p.TEMPLATES["apache"], "fixture apache, reworded\n")
@@ -1399,6 +1402,7 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual(sorted(self.scope), self.checked(report))
         self.assertEqual(f"the check itself changed ({p.TEMPLATES['apache']})", report["selection"]["reason"])
 
+    @requires_merge_file_object_id
     def test_since_checks_every_file_when_the_mycila_configuration_changes(self):
         self.pull_request()
         _, report, _ = self.check("--since", "master", base_plugin=fixture_plugin("1"))
@@ -1418,6 +1422,7 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual(["New.java"], self.checked(report))
         self.assertEqual([], report["curationIssues"])
 
+    @requires_merge_file_object_id
     def test_since_finds_a_copy_of_a_ce_file_with_another_extension_as_a_full_run_does(self):
         # CE sources of the copy search follow the extensions of every path CE lacks: New.java brings .java in.
         self.pull_request()
@@ -1433,6 +1438,22 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual(("unresolved", ["Source.java"]),
                          (row["status"], [copy["path"] for copy in row["copyCandidates"]]))
 
+    @requires_merge_file_object_id
+    def test_since_resolves_a_rename_of_a_ce_file_to_another_type_in_scope_as_a_full_run_does(self):
+        self.pull_request()
+        self.git("mv", "Source.java", "Moved.ts")
+        self.git.write("Moved.ts", fixture("ce-modified") + self.body)
+        self.git.commit("rename a CE file into another language")
+        scope = [name if name != "Source.java" else "Moved.ts" for name in self.scope]
+        _, full, _ = self.check(scope=scope)
+        _, since, _ = self.check("--since", "master", scope=scope)
+        self.assertEqual(["Moved.ts"], self.checked(since))
+        for report in (full, since):
+            row = self.rows(report)["Moved.ts"]
+            self.assertEqual(("match", "ce-modified", "renamed from CE Source.java"),
+                             (row["status"], row["expectedHeader"], row["reason"]))
+
+    @requires_merge_file_object_id
     def test_since_checks_every_file_when_the_merge_base_has_no_ce_bases(self):
         self.pull_request()
         _, report, output = self.check("--since", "lts-4.3")
@@ -1667,6 +1688,7 @@ class CopySearchTests(unittest.TestCase):
         self.scope = ["d/Delta.java"]
         self.output = self.repo / "target/report.json"
 
+    @requires_merge_file_object_id
     def test_size_filter_keeps_the_copy_search_result(self):
         _, filtered, output = self.check()
         with patch.object(p, "size_filter_holds", return_value=False):
@@ -1682,6 +1704,7 @@ class CopySearchTests(unittest.TestCase):
         self.assertIn("2 of 12 other CE files searched for copies", output)
         self.assertIn("12 of 12 other CE files searched for copies", unfiltered_output)
 
+    @requires_merge_file_object_id
     def test_since_reports_the_copy_a_full_run_reports_among_equally_similar_sources(self):
         # TB files beside the new one shift where the checked inputs sit among all inputs of a full run.
         others = [f"t/Tb{index}.java" for index in range(7)]
@@ -1701,6 +1724,7 @@ class CopySearchTests(unittest.TestCase):
         self.assertEqual("b/Alpha.java", row["copyCandidates"][0]["path"])
         self.assertEqual(row, self.rows(since)["d/Delta.java"])
 
+    @requires_merge_file_object_id
     def test_without_the_size_filter_git_searches_every_ce_file(self):
         searched = []
         copies = p.normalized_copies
@@ -1730,6 +1754,7 @@ class CopySearchTests(unittest.TestCase):
         with patch.object(p, "could_be_copy", stricter):
             self.assertFalse(self.probe())
 
+    @requires_merge_file_object_id
     def test_report_marks_the_size_filter_only_when_copies_were_searched(self):
         _, report, _ = self.check()
         self.assertEqual({"sizeFilter": True}, report["copySearch"])
@@ -1771,6 +1796,7 @@ class CopySearchTests(unittest.TestCase):
             self.assertTrue(p.could_be_copy(600, [1000]))
             self.assertFalse(p.could_be_copy(599, [1000]))
 
+    @requires_merge_file_object_id
     def test_a_file_grown_by_normalizing_fails_the_check(self):
         def strip_headers(tool):
             tool.removed, tool.stacked = {key: b"" for key in tool.contents}, set()
@@ -1803,6 +1829,7 @@ class CacheTests(unittest.TestCase):
     def cache(self):
         return self.repo / p.CACHE_DIRECTORY
 
+    @requires_merge_file_object_id
     def test_a_second_run_takes_ce_inputs_from_the_cache_and_reports_the_same(self):
         first, second = [], []
         _, cold, _ = self.check(normalizer=self.normalizer(first))
@@ -1816,6 +1843,7 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(databases, {path.name: path.read_bytes() for path in self.cache().glob("*.sqlite")})
         self.assertRegex(output, r"[1-9][0-9]* from the cache")
 
+    @requires_merge_file_object_id
     def test_without_the_cache_nothing_is_read_or_written(self):
         self.check()
         seen = []

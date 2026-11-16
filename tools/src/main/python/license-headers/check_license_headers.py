@@ -1267,7 +1267,7 @@ def could_shrink_to_copy(raw_size, destinations):
 def compare(repo, plugin, lineage, contents, cache, in_scope):
     names = list(contents)
     new_paths = {name for name in names if not lineage.versions(name)}
-    supported = same_type(names)
+    supported = same_type(in_scope)
     renames, unsupported_renames = {}, {}
     for name in new_paths & set(lineage.renames):
         chain = lineage.renames[name]
