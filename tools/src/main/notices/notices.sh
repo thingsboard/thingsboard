@@ -7,10 +7,12 @@
 # Makes the third-party notices of one artifact from its SBOMs.
 #
 # The SBOMs are turned into the list of their third-party packages (sbom_to_ort.py). ORT scans the source of each
-# package for licenses and copyright statements, and writes the notices with THIRD-PARTY-NOTICES.ftl.
+# package for licenses and copyright statements, and writes the notices with THIRD-PARTY-NOTICES.ftl. The NOTICE files
+# of the packages are added as they are (notice_files.py).
 #
 # Needs Docker and python3. The results of the scans are kept in ~/.ort/scanner (or in $NOTICES_ORT_HOME/scanner):
 # a package that is not there yet is scanned, which takes minutes.
+# The jars are read from ~/.m2/repository (or from $NOTICES_MAVEN_REPOSITORY); one that is not there is downloaded.
 # A package without a source archive and without a repository fails the scan, until a curation gives its source or
 # says that it has none.
 #
@@ -44,17 +46,23 @@ step() { # log file, command: the log is shown only when the command fails
 
 # Only what an earlier run wrote is removed: the directory may hold other files
 rm -rf "$WORK/project" "$WORK/package-configurations"
-rm -f "$WORK"/{analyzer-result.json,scan-result.json,THIRD-PARTY-NOTICES} "$WORK"/{convert,analyze,scan,package-configurations,report}.log
+rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,notice-files.txt,THIRD-PARTY-NOTICES.ftl,THIRD-PARTY-NOTICES}
+rm -f "$WORK"/{convert,analyze,scan,package-configurations,notice-files,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
 step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERSION" --cache "$ORT_HOME/maven-sources.json" \
   --curations "$HERE/ort-config/curations/curations.json" \
   --own org.thingsboard.ai/common --own org.thingsboard.license/client --own org.thingsboard.license/shared \
-  --out "$WORK/project/ortproject.json" "$@"
+  --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" "$@"
 step "$WORK/analyze.log" "${ORT[@]}" -P ort.analyzer.enabledPackageManagers=OrtProjectFile analyze -f JSON -i /work/project -o /work
 step "$WORK/scan.log" "${ORT[@]}" --info scan -f JSON -i /work/analyzer-result.json -o /work --package-types PACKAGE
 step "$WORK/package-configurations.log" python3 "$HERE/package_configurations.py" "$WORK/scan-result.json" "$WORK/package-configurations"
+step "$WORK/notice-files.log" python3 "$HERE/notice_files.py" --jars "$WORK/jars.json" --scan-result "$WORK/scan-result.json" \
+  --archive "$ORT_HOME/scanner/archive" --maven-repository "${NOTICES_MAVEN_REPOSITORY:-$HOME/.m2/repository}" \
+  --downloads "$ORT_HOME/maven-jars" --out "$WORK/notice-files.txt"
+# The template includes notice-files.txt, and can only include what is beside it
+cp "$HERE/THIRD-PARTY-NOTICES.ftl" "$WORK/"
 step "$WORK/report.log" "${ORT[@]}" --info report -i /work/scan-result.json -o /work -f PlainTextTemplate \
-  -O PlainTextTemplate=templatePaths=/notices/THIRD-PARTY-NOTICES.ftl \
+  -O PlainTextTemplate=templatePaths=/work/THIRD-PARTY-NOTICES.ftl \
   --package-configurations-dir /work/package-configurations --repository-configuration-file /notices/license-choices.yml
 
 mkdir -p "$(dirname "$NOTICES")"

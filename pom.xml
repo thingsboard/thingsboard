@@ -1244,6 +1244,9 @@
                         <configuration>
                             <skip>${notices.run.skip}</skip>
                             <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                            <environmentVariables>
+                                <NOTICES_MAVEN_REPOSITORY>${settings.localRepository}</NOTICES_MAVEN_REPOSITORY>
+                            </environmentVariables>
                             <arguments>
                                 <argument>${project.build.directory}/notices/work-linux</argument>
                                 <argument>${project.version}</argument>
@@ -1261,6 +1264,9 @@
                         <configuration>
                             <skip>${notices.run.skip}</skip>
                             <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                            <environmentVariables>
+                                <NOTICES_MAVEN_REPOSITORY>${settings.localRepository}</NOTICES_MAVEN_REPOSITORY>
+                            </environmentVariables>
                             <arguments>
                                 <argument>${project.build.directory}/notices/work-windows</argument>
                                 <argument>${project.version}</argument>

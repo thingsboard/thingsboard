@@ -15,8 +15,10 @@ ORT would guess what it stands for, so the package must have a curation that say
 A curation that concludes the license of a package sets aside what the scan finds in it, so it is given for the versions
 that someone has looked at. Another version of that package must be looked at as well: see unreviewed().
 
+It also writes the list of the jars of the Maven packages, each with its SHA-256, for notice_files.py.
+
 Usage: sbom_to_ort.py --project-version <version> --out <ortproject.json> --cache <file> --curations <file>
-       [--own <group>/<name> ...] [--add <Maven purl>=<SPDX license> ...] <SBOM> ...
+       --jars <file> [--own <group>/<name> ...] [--add <Maven purl>=<SPDX license> ...] <SBOM> ...
 """
 import argparse
 import concurrent.futures
@@ -36,6 +38,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--project-version', required=True, help='version of the ThingsBoard modules, which are left out')
     parser.add_argument('--out', required=True)
+    parser.add_argument('--jars', required=True, help='file to write the jars of the Maven packages to')
     parser.add_argument('--own', action='append', default=[], help='<group>/<name> of our own code released separately')
     parser.add_argument('--cache', required=True, help='file that remembers the sources jars of Maven packages')
     parser.add_argument('--curations', required=True, help='the package curations of ORT, as JSON')
@@ -49,7 +52,7 @@ def main():
         raise SystemExit('These SBOMs do not exist, and the notices are made from them:\n  ' + '\n  '.join(absent)
                          + '\nIn the Maven build the SBOMs are made with -Dsbom.skip=false.')
 
-    components, skipped = {}, {}
+    components, skipped, jars = {}, {}, {}
     for sbom in args.sboms:
         for component in json.load(open(sbom)).get('components', []):
             purl = component.get('purl') or ''
@@ -65,6 +68,8 @@ def main():
             else:
                 # The same package can be listed several times, as jars with different classifiers
                 components.setdefault(key, component)
+                if is_maven(purl):
+                    jars.setdefault(purl, jar(component))
 
     for added in args.add:
         purl, _, license = added.partition('=')
@@ -122,6 +127,7 @@ def main():
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     json.dump({'projectName': 'thingsboard', 'dependencies': dependencies}, open(args.out, 'w'), indent=1)
+    json.dump([jars[purl] for purl in sorted(jars)], open(args.jars, 'w'), indent=1)
     print(f'{len(dependencies)} packages')
     for reason, items in sorted(skipped.items()):
         print(f'Left out, {reason}: {len(items)}')
@@ -149,6 +155,16 @@ def identifier(component):
     return f"{kind}:{component.get('group', '')}:{component['name']}:{component['version']}"
 
 
+def jar(component):
+    """One file of a Maven package, as the artifact contains it: a package can have several, with classifiers."""
+    qualifiers = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(component['purl']).query))
+    sha256 = [h['content'] for h in component.get('hashes', []) if h['alg'] == 'SHA-256']
+    if not sha256:
+        raise ValueError(f"The SBOM gives no SHA-256 for {component['purl']}")
+    return {'group': component['group'], 'name': component['name'], 'version': component['version'],
+            'classifier': qualifiers.get('classifier', ''), 'type': qualifiers.get('type', 'jar'), 'sha256': sha256[0]}
+
+
 def own(component, args):
     group, name, version = component.get('group', ''), component['name'], component.get('version')
     if f'{group}/{name}' in args.own:
@@ -158,20 +174,30 @@ def own(component, args):
 
 def maven_sources(component):
     """The address and SHA-1 of the sources jar, from the first repository that has it."""
-    group, name, version = component['group'], component['name'], component['version']
-    for repository_url in MAVEN_REPOSITORIES:
-        url = f"{repository_url}/{group.replace('.', '/')}/{name}/{version}/{name}-{version}-sources.jar"
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url + '.sha1', headers={'User-Agent': 'sbom-to-ort'}), timeout=30) as response:
-                sha1 = response.read().decode().split()[0].lower()
-        except urllib.error.HTTPError as error:
-            if error.code == 404:
-                continue
-            raise
+    path = maven_path(component['group'], component['name'], component['version'], 'sources')
+    for url, content in from_repositories(path + '.sha1', timeout=30):
+        sha1 = content.decode().split()[0].lower()
         if not SHA1.match(sha1):
-            raise ValueError(f'{url}.sha1 is no SHA-1: {sha1}')
-        return {'url': url, 'sha1': sha1}
+            raise ValueError(f'{url} is no SHA-1: {sha1}')
+        return {'url': url.removesuffix('.sha1'), 'sha1': sha1}
     return None
+
+
+def maven_path(group, name, version, classifier='', type='jar'):
+    """Where a file of a Maven package is in a repository."""
+    return f"{group.replace('.', '/')}/{name}/{version}/{name}-{version}{'-' + classifier if classifier else ''}.{type}"
+
+
+def from_repositories(path, timeout):
+    """The address and the content of a file, from each Maven repository that has it."""
+    for repository_url in MAVEN_REPOSITORIES:
+        url = f'{repository_url}/{path}'
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'sbom-to-ort'}), timeout=timeout) as response:
+                yield url, response.read()
+        except urllib.error.HTTPError as error:
+            if error.code != 404:
+                raise
 
 
 def npm_tarball(component):
