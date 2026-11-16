@@ -1221,6 +1221,100 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
         ...images([{label: text('image-logo'), value: values.logoImage}, {label: text('image-collapsed-logo'), value: values.collapsedLogoImage},
           {label: text('image-favicon'), value: values.favicon}])]};
     }
+    case 'read_mail_templates': {
+      if (!isObject(result)) {
+        return {hood: text('read-mail-templates'), blocks: generic(result, 'result')};
+      }
+      const note: AiDetailBlock[] = [{type: 'note', text: text(result.useSystemTemplates ? 'mail-system-in-use' : 'mail-own-in-use')}];
+      if (str(result.template)) {
+        const blocks: AiDetailBlock[] = [...note, {type: 'facts', rows: [{label: K + 'fact.subject', value: str(result.subject) ?? '—', raw: true}]}];
+        if (str(result.body)) {
+          blocks.push({type: 'code', label: 'HTML', text: result.body});
+        }
+        return {hood: text('read-mail-template', {template: result.template}), blocks};
+      }
+      const rows = (Array.isArray(result.templates) ? result.templates.filter(isObject) : []).map(item => `${item.template} · ${item.subject ?? '—'}`);
+      return {hood: text('read-mail-templates'), blocks: [...note, ...(rows.length ? [{type: 'list', rows} as AiDetailBlock] : [])]};
+    }
+    case 'save_mail_template': {
+      if (values.useSystemTemplates) {
+        return {hood: text('mail-use-system'), blocks: []};
+      }
+      const blocks: AiDetailBlock[] = [];
+      if (str(values.subject)) {
+        blocks.push({type: 'facts', rows: [{label: K + 'fact.subject', value: values.subject, raw: true}]});
+      }
+      const replace = Array.isArray(values.replace) ? values.replace.filter(isObject) : [];
+      if (replace.length) {
+        blocks.push({type: 'list', label: text('mail-replaced'), rows: replace.map(item => `${item.from} → ${item.to}`)});
+      }
+      if (str(values.body)) {
+        blocks.push({type: 'code', label: 'HTML', text: values.body});
+      }
+      return {hood: str(values.template) ? text('save-mail-template', {template: values.template}) : text('save-mail-templates'), blocks};
+    }
+    case 'read_custom_translation': {
+      const locale = str(isObject(result) ? result.locale : undefined) ?? str(values.locale) ?? '—';
+      if (!isObject(result)) {
+        return {hood: text('read-custom-translation', {locale}), blocks: generic(result, 'result')};
+      }
+      const blocks: AiDetailBlock[] = [];
+      const matches = (Array.isArray(result.matches) ? result.matches.filter(isObject) : []).slice(0, MAX_ROWS)
+        .map(match => `${match.key} · ${match.text}${match.customized ? ' ✎' : ''}`);
+      if (matches.length) {
+        blocks.push({type: 'list', label: text('translation-matches'), rows: matches});
+      }
+      const customized = Object.entries(isObject(result.customized) ? result.customized : {}).slice(0, MAX_ROWS)
+        .map(([key, value]) => `${key} · ${value}`);
+      if (customized.length) {
+        blocks.push({type: 'list', label: text('translation-customized'), rows: customized});
+      }
+      return {hood: text('read-custom-translation', {locale}), blocks};
+    }
+    case 'save_custom_translation': {
+      const blocks: AiDetailBlock[] = [];
+      const set = (Array.isArray(values.set) ? values.set.filter(isObject) : []).map(item => `${item.key} → ${item.text}`);
+      if (set.length) {
+        blocks.push({type: 'list', label: text('translation-set'), rows: set.slice(0, MAX_ROWS)});
+      }
+      const removed = Array.isArray(values.remove) ? values.remove.map(String) : [];
+      if (removed.length) {
+        blocks.push({type: 'list', label: text('translation-removed'), rows: removed.slice(0, MAX_ROWS)});
+      }
+      return {hood: text('save-custom-translation', {locale: str(values.locale) ?? '—'}), blocks};
+    }
+    case 'read_custom_menus': {
+      if (!isObject(result)) {
+        return {hood: text('read-custom-menus'), blocks: generic(result, 'result')};
+      }
+      if (Array.isArray(result.menus)) {
+        const rows = result.menus.filter(isObject).slice(0, MAX_ROWS).map(menu => `${menu.name} · ${aiHumanize(String(menu.scope))} · ${aiHumanize(String(menu.assigneeType))}`);
+        return {hood: text('read-custom-menus'), blocks: rows.length ? [{type: 'list', rows}] : generic(result.note, 'result')};
+      }
+      const rows: string[] = [];
+      const walk = (items: unknown, depth: number) => {
+        for (const item of Array.isArray(items) ? items.filter(isObject) : []) {
+          rows.push(`${'  '.repeat(depth)}${str(item.custom) ?? str(item.name) ?? item.id}${item.hidden ? ' ⊘' : ''}`);
+          walk(item.pages, depth + 1);
+        }
+      };
+      walk(result.items, 0);
+      return {hood: text('read-custom-menu', {name: str(result.name) ?? '—'}), blocks: rows.length ? [{type: 'list', rows: rows.slice(0, 80)}] : []};
+    }
+    case 'save_custom_menu': {
+      const changes = (Array.isArray(values.changes) ? values.changes.filter(isObject) : [])
+        .map(change => [aiHumanize(String(change.action)), str(change.item) ?? str(change.name), str(change.item) && str(change.name) ? '→ ' + change.name : undefined,
+          str(change.url) ?? str(change.dashboardId)].filter(Boolean).join(' '));
+      const blocks: AiDetailBlock[] = [];
+      const rows = facts(values, ['menuId', 'changes']);
+      if (rows.length) {
+        blocks.push({type: 'facts', rows});
+      }
+      if (changes.length) {
+        blocks.push({type: 'list', label: text('menu-changes'), rows: changes.slice(0, MAX_ROWS)});
+      }
+      return {hood: str(values.menuId) ? text('save-custom-menu') : text('create-custom-menu', {name: str(values.name) ?? '—'}), blocks};
+    }
     case 'read_ota': {
       if (!isObject(result)) {
         return {hood: text('read-ota'), blocks: generic(result, 'result')};

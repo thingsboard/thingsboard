@@ -23,6 +23,7 @@ import {
 } from '@shared/models/ai-chat.models';
 import { AiAction } from '@home/components/ai/ai-action.models';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { MailTemplate, mailTemplateTranslations } from '@shared/models/settings.models';
 
 export type ApprovalCardState = 'pending' | 'approved' | 'auto' | 'denied' | 'expired';
 
@@ -51,7 +52,7 @@ const VALUE_TOKENS: Record<string, string[]> = {
 
 const CODE_FIELDS = new Set(['arguments', 'expression', 'output']);
 
-const OWN_TYPE_LABELS = new Set(['DASHBOARD_WIDGET', 'DASHBOARD_STATE', 'DASHBOARD_ENTITY_ALIAS', 'DASHBOARD_FILTER', 'NOTIFICATION', 'NOTIFICATION_SETTINGS', 'NOTIFICATION_PREFERENCES', 'IMAGE', 'PLATFORM_SETTINGS', 'RELATION', 'VERSION', 'WHITE_LABELING']);
+const OWN_TYPE_LABELS = new Set(['DASHBOARD_WIDGET', 'DASHBOARD_STATE', 'DASHBOARD_ENTITY_ALIAS', 'DASHBOARD_FILTER', 'NOTIFICATION', 'NOTIFICATION_SETTINGS', 'NOTIFICATION_PREFERENCES', 'IMAGE', 'PLATFORM_SETTINGS', 'RELATION', 'VERSION', 'WHITE_LABELING', 'MAIL_TEMPLATE', 'CUSTOM_TRANSLATION', 'CUSTOM_MENU']);
 
 const PROFILE_TYPES = new Set<string>([EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE]);
 
@@ -190,6 +191,12 @@ export class AiApprovalCardComponent implements OnChanges {
       default:
         return 'ai-assistant.approve';
     }
+  }
+
+  get recordName(): string {
+    const name = this.review?.name;
+    const template = this.review?.entityType === 'MAIL_TEMPLATE' && name ? mailTemplateTranslations.get(name as MailTemplate) : undefined;
+    return template ? this.translate.instant(template) : name;
   }
 
   get alarmRule(): boolean {

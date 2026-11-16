@@ -6,6 +6,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  inject,
   Input, NgZone,
   OnDestroy,
   OnInit,
@@ -13,6 +14,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { PageLink, PageQueryParam } from '@shared/models/page/page-link';
 import { BehaviorSubject, forkJoin, merge, Observable, of, Subject } from 'rxjs';
@@ -99,6 +101,7 @@ export class TranslationMapTableComponent extends PageComponent implements OnIni
 
   private tableResize$: ResizeObserver;
   private destroy$ = new Subject<void>();
+  private aiAssistantPanelService = inject(AiAssistantPanelService);
   private defaultSortOrder: SortOrder = { property: 'k', direction: Direction.ASC };
 
   constructor(protected store: Store<AppState>,
@@ -140,6 +143,13 @@ export class TranslationMapTableComponent extends PageComponent implements OnIni
     this.paginator.pageIndex = this.pageLink.page;
     this.paginator.pageSize = this.pageLink.pageSize;
     this.dataSource.loadTranslateInfo(this.pageLink, this.filterParams.value);
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(event => {
+      if (event.kind === 'TRANSLATION' && event.locale === this.localeCode) {
+        this.updateData(true);
+      }
+    });
     this.initSubscriptions();
 
     this.newKey = this.fb.group({

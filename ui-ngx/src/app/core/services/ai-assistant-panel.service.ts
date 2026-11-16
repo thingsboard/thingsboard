@@ -19,6 +19,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectAuthUser } from '@core/auth/auth.selectors';
 
+export interface AiCustomizationSaved {
+  kind: 'MAIL_TEMPLATES' | 'TRANSLATION' | 'MENU';
+  locale?: string;
+  menuId?: string;
+  deleted?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AiAssistantPanelService implements OnDestroy {
 
@@ -360,6 +367,13 @@ export class AiAssistantPanelService implements OnDestroy {
 
   emitWhiteLabelingSaved(target: 'GENERAL' | 'LOGIN'): void {
     this._whiteLabelingSaved$.next(target);
+  }
+
+  private _customizationSaved$ = new Subject<AiCustomizationSaved>();
+  readonly customizationSaved$ = this._customizationSaved$.asObservable();
+
+  emitCustomizationSaved(event: AiCustomizationSaved): void {
+    this._customizationSaved$.next(event);
   }
 
   emitUpdatedData(affectedEntities: Array<EntityId>): void {

@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter, switchMap } from 'rxjs/operators';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { PageComponent } from '@shared/components/page.component';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
@@ -44,6 +47,9 @@ export class MailTemplatesComponent extends PageComponent implements OnInit, Has
 
   hugeRteOptions: Partial<EditorOptions>;
 
+  private aiAssistantPanelService = inject(AiAssistantPanelService);
+  private destroyRef = inject(DestroyRef);
+
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private wl: WhiteLabelingService,
@@ -81,7 +87,16 @@ export class MailTemplatesComponent extends PageComponent implements OnInit, Has
         '| link table image | alignleft aligncenter alignright alignjustify ' +
         '| numlist bullist outdent indent | blocks | removeformat code | fullscreen';
     }
-    this.mailTemplatesSettings = this.route.snapshot.data.mailTemplatesSettings;
+    this.applySettings(this.route.snapshot.data.mailTemplatesSettings);
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      filter(event => event.kind === 'MAIL_TEMPLATES' && !this.isDirty),
+      switchMap(() => this.wl.getMailTemplates(true)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(settings => this.applySettings(settings));
+  }
+
+  private applySettings(settings: MailTemplatesSettings) {
+    this.mailTemplatesSettings = settings;
     this.mailTemplateTypes = Object.keys(MailTemplate).filter(type => Object.keys(this.mailTemplatesSettings).includes(type));
     if (this.isTenantAdmin()) {
       this.useSystemMailSettings = isDefinedAndNotNull(this.mailTemplatesSettings.useSystemMailSettings) ? this.mailTemplatesSettings.useSystemMailSettings : true;

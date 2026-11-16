@@ -32,6 +32,7 @@ import { AiChatsService } from '@core/services/ai-chats.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { aiParse } from '@home/components/ai/ai-action-detail.models';
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { CustomMenuService } from '@core/http/custom-menu.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { ActionChatMessage, AiStartedFrom, ApprovalChatMessage, ChatMessage, GeneralChatMessage } from '@shared/models/solution-creator.models';
@@ -360,6 +361,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private chats = inject(AiChatsService);
   private panelService = inject(AiAssistantPanelService);
   private whiteLabelingService = inject(WhiteLabelingService);
+  private customMenuService = inject(CustomMenuService);
   private translate = inject(TranslateService);
   private clipboard = inject(ClipboardService);
   private store = inject(Store<AppState>);
@@ -1047,15 +1049,41 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   private applySideEffects(executionId: string, tool: string | undefined, args: unknown): void {
-    if (tool !== 'save_white_labeling' || this.appliedEffects.has(executionId)) {
+    if (!tool || this.appliedEffects.has(executionId)) {
       return;
     }
-    this.appliedEffects.add(executionId);
-    const target = (aiParse(args) as {target?: string})?.target === 'LOGIN' ? 'LOGIN' : 'GENERAL';
-    if (target === 'GENERAL') {
-      this.whiteLabelingService.loadUserWhiteLabelingParams().subscribe();
+    const values = (aiParse(args) ?? {}) as {target?: string; locale?: string; menuId?: string; targetType?: string; targetId?: string};
+    switch (tool) {
+      case 'save_white_labeling': {
+        const target = values.target === 'LOGIN' ? 'LOGIN' : 'GENERAL';
+        if (target === 'GENERAL') {
+          this.whiteLabelingService.loadUserWhiteLabelingParams().subscribe();
+        }
+        this.panelService.emitWhiteLabelingSaved(target);
+        break;
+      }
+      case 'save_mail_template':
+        this.panelService.emitCustomizationSaved({kind: 'MAIL_TEMPLATES'});
+        break;
+      case 'save_custom_translation':
+        if (values.locale && (values.locale === this.translate.currentLang || values.locale === this.translate.getDefaultLang())) {
+          this.translate.currentLoader.getTranslation(values.locale).subscribe(translation =>
+            this.translate.setTranslation(values.locale, translation, true));
+        }
+        this.panelService.emitCustomizationSaved({kind: 'TRANSLATION', locale: values.locale});
+        break;
+      case 'save_custom_menu':
+      case 'delete':
+        if (tool === 'delete' && values.targetType !== 'CUSTOM_MENU') {
+          return;
+        }
+        this.customMenuService.loadCustomMenu(true).subscribe();
+        this.panelService.emitCustomizationSaved({kind: 'MENU', menuId: values.menuId ?? values.targetId, deleted: tool === 'delete'});
+        break;
+      default:
+        return;
     }
-    this.panelService.emitWhiteLabelingSaved(target);
+    this.appliedEffects.add(executionId);
   }
 
   private finishAction(finished: ToolFinished): void {

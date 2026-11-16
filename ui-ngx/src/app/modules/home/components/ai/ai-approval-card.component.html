@@ -18,7 +18,7 @@
     <tb-ai-record [entityType]="hub.entityType" [alarmRule]="hub.alarmRule" [name]="hub.name" [url]="hub.url" [hub]="hub.hub"
  [class.closed]="recordClosed"></tb-ai-record>
   } @else if (review) {
-    <tb-ai-record [entityType]="review.entityType" [alarmRule]="alarmRule" [name]="review.name" [meta]="meta"
+    <tb-ai-record [entityType]="review.entityType" [alarmRule]="alarmRule" [name]="recordName" [meta]="meta"
                   [class.closed]="recordClosed" [class.planned]="planned"></tb-ai-record>
   }
   @switch (state) {

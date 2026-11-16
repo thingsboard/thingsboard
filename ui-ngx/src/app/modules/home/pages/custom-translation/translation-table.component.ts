@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { CustomTranslationService } from '@core/http/custom-translation.service';
@@ -51,6 +52,8 @@ export class TranslationTableComponent extends PageComponent implements OnInit, 
 
   private destroy$ = new Subject<void>();
 
+  private aiAssistantPanelService = inject(AiAssistantPanelService);
+
   constructor(protected store: Store<AppState>,
               private fb: FormBuilder,
               private customTranslationService: CustomTranslationService,
@@ -72,6 +75,13 @@ export class TranslationTableComponent extends PageComponent implements OnInit, 
     this.sort.active = this.pageLink.sortOrder.property;
     this.sort.direction = (this.pageLink.sortOrder.direction).toLowerCase() as SortDirection;
     this.dataSource.loadTranslateInfo(this.pageLink);
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(event => {
+      if (event.kind === 'TRANSLATION') {
+        this.updateData(true);
+      }
+    });
     this.textSearch.valueChanges.pipe(
       debounceTime(150),
       distinctUntilChanged((prev, current) => (this.pageLink.textSearch ?? '') === current.trim()),

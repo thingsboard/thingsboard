@@ -899,6 +899,25 @@
             "website-not-read": "The site blocked automated reading, so only its icon was read",
             "save-white-labeling": "Changed the platform's white labeling",
             "save-white-labeling-login": "Changed the login page's white labeling",
+            "read-mail-templates": "Read the mail templates",
+            "read-mail-template": "Read the {{template}} email",
+            "mail-system-in-use": "The platform's own templates are in use",
+            "mail-own-in-use": "The tenant's own templates are in use",
+            "save-mail-template": "Changed the {{template}} email",
+            "save-mail-templates": "Changed the emails",
+            "mail-use-system": "Went back to the platform's own mail templates",
+            "mail-replaced": "Replaced",
+            "read-custom-translation": "Read the custom translation {{locale}}",
+            "translation-matches": "Found texts",
+            "translation-customized": "Customized texts",
+            "save-custom-translation": "Changed texts of {{locale}}",
+            "translation-set": "Changed",
+            "translation-removed": "Back to the platform's text",
+            "read-custom-menus": "Read the custom menus",
+            "read-custom-menu": "Read the menu {{name}}",
+            "save-custom-menu": "Changed the custom menu",
+            "create-custom-menu": "Created the custom menu {{name}}",
+            "menu-changes": "Changes",
             "reset-white-labeling": "Reset the platform's white labeling to the defaults",
             "reset-white-labeling-login": "Reset the login page's white labeling to the defaults",
             "save-ota-package": "Created the OTA package {{name}}",
@@ -1001,6 +1020,7 @@
             "no": "No",
             "fact": {
                 "link": "Link",
+                "subject": "Subject",
                 "last-connect": "Last connected",
                 "version": "Version",
                 "branch": "Branch",
@@ -1330,6 +1350,30 @@
                 "run": "Saving the white labeling",
                 "done": "Saved the white labeling"
             },
+            "read-mail-templates": {
+                "run": "Reading the mail templates",
+                "done": "Read the mail templates"
+            },
+            "save-mail-template": {
+                "run": "Changing the emails",
+                "done": "Changed the emails"
+            },
+            "read-custom-translation": {
+                "run": "Reading the custom translation",
+                "done": "Read the custom translation"
+            },
+            "save-custom-translation": {
+                "run": "Changing the texts",
+                "done": "Changed the texts"
+            },
+            "read-custom-menus": {
+                "run": "Reading the custom menus",
+                "done": "Read the custom menus"
+            },
+            "save-custom-menu": {
+                "run": "Saving the custom menu",
+                "done": "Saved the custom menu"
+            },
             "save-ota-package": {
                 "run": "Creating the OTA package",
                 "done": "Created the OTA package"
@@ -1341,6 +1385,10 @@
             "delete-ota-package": {
                 "run": "Deleting the OTA package",
                 "done": "Deleted the OTA package"
+            },
+            "delete-custom-menu": {
+                "run": "Deleting the custom menu",
+                "done": "Deleted the custom menu"
             },
             "commit-version": {
                 "run": "Saving a version",
@@ -1685,6 +1733,10 @@
                 "domain": "Domain",
                 "baseUrl": "Base URL",
                 "prohibitDifferentUrl": "Base URL only",
+                "subject": "Subject",
+                "useSystemTemplates": "Platform's templates",
+                "assignTo": "Assigned to",
+                "assignees": "Assignees",
                 "url": "URL",
                 "tag": "Tag",
                 "entities": "Entities",
@@ -1767,6 +1819,9 @@
                 "IMAGE": "Image",
                 "VERSION": "Version",
                 "WHITE_LABELING": "White labeling",
+                "MAIL_TEMPLATE": "Mail template",
+                "CUSTOM_TRANSLATION": "Custom translation",
+                "CUSTOM_MENU": "Custom menu",
                 "RELATION": "Relations",
                 "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
@@ -2456,17 +2511,29 @@
             "mail-templates": {
                 "title": "Ask about mail templates",
                 "line": "The emails the platform sends, such as activation and password reset.",
-                "suggestion": "Which emails can I change here?"
+                "suggestion": "Which emails can I change here?",
+                "example": {
+                    "name": {"label": "Use our name", "message": "Put our company name Acme IoT instead of ThingsBoard in all emails."},
+                    "activation": {"label": "Friendlier activation email", "message": "Make the activation email shorter and friendlier, in our brand color #0f7b6c."}
+                }
             },
             "custom-translation": {
                 "title": "Ask about custom translation",
                 "line": "Your own wording and languages for the platform.",
-                "suggestion": "How do I change a label in the UI for one language?"
+                "suggestion": "How do I change a label in the UI for one language?",
+                "example": {
+                    "rename": {"label": "Rename a word", "message": "Call devices \"machines\" in the menu and page titles."},
+                    "find": {"label": "What did we change?", "message": "Which texts have we customized so far?"}
+                }
             },
             "custom-menu": {
                 "title": "Ask about custom menus",
                 "line": "Which menu items your users see, and where.",
-                "suggestion": "How do I hide menu items from a customer's users?"
+                "suggestion": "How do I hide menu items from a customer's users?",
+                "example": {
+                    "simple": {"label": "Simpler menu for customers", "message": "Make a menu for customer users with only Home, Dashboards and Alarms."},
+                    "link": {"label": "Add a help link", "message": "Add a Help link to https://docs.example.com at the end of our menu."}
+                }
             },
             "images": {
                 "title": "Ask about your images",

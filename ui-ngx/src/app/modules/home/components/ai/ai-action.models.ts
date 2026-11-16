@@ -70,6 +70,12 @@ const TOOL_WORDS: Record<string, string> = {
   read_white_labeling: 'read-white-labeling',
   read_website_brand: 'read-website-brand',
   save_white_labeling: 'save-white-labeling',
+  read_mail_templates: 'read-mail-templates',
+  save_mail_template: 'save-mail-template',
+  read_custom_translation: 'read-custom-translation',
+  save_custom_translation: 'save-custom-translation',
+  read_custom_menus: 'read-custom-menus',
+  save_custom_menu: 'save-custom-menu',
   save_ota_package: 'save-ota-package',
   assign_ota_package: 'assign-ota-package',
   save_platform_settings: 'save-platform-settings',
@@ -144,7 +150,8 @@ const DELETED_TARGETS: Record<string, string> = {
   ASSET_PROFILE: 'delete-asset-profile',
   SECRET: 'delete-secret',
   AI_MODEL: 'delete-ai-model',
-  RESOURCE: 'delete-resource'
+  RESOURCE: 'delete-resource',
+  CUSTOM_MENU: 'delete-custom-menu'
 };
 
 const ACTION_PREFIX = 'ai-assistant.action.';
@@ -456,6 +463,9 @@ const ENTITY_KINDS: Record<string, AiEntityKind> = {
   DASHBOARD_FILTER: {icon: 'filter_list', palette: 'view'},
   WIDGET_TYPE: {icon: 'widgets', palette: 'view'},
   OTA_PACKAGE: {icon: 'system_update', palette: 'device'},
+  MAIL_TEMPLATE: {icon: 'mail', palette: 'view'},
+  CUSTOM_TRANSLATION: {icon: 'translate', palette: 'view'},
+  CUSTOM_MENU: {icon: 'menu', palette: 'view'},
   IMAGE: {icon: 'image', palette: 'view'},
   TB_RESOURCE: {icon: 'image', palette: 'view'},
   CUSTOMER: {icon: 'supervisor_account', palette: 'people'},
