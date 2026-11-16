@@ -13,7 +13,6 @@ import { Authority } from '@shared/models/authority.enum';
 @Component({
     selector: 'tb-entity-view-table-header',
     templateUrl: './entity-view-table-header.component.html',
-    styleUrls: ['./entity-view-table-header.component.scss'],
     standalone: false
 })
 export class EntityViewTableHeaderComponent extends EntityTableHeaderComponent<EntityViewInfo | EntityView> implements OnInit {
