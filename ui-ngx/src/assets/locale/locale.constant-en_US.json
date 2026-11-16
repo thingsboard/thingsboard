@@ -918,6 +918,7 @@
             "read-mobile-center": "Read the mobile center",
             "read-scheduler-events": "Read the scheduler",
             "save-two-factor-settings": "Changed the two-factor authentication settings",
+            "save-oauth2-domain": "Changed OAuth 2.0 sign-in on the domain",
             "read-scheduler-event": "Read the scheduler event {{name}}",
             "no-scheduler-events": "No scheduler events yet.",
             "save-scheduler-event": "Changed the scheduler event",
@@ -1419,6 +1420,10 @@
                 "run": "Saving the two-factor settings",
                 "done": "Saved the two-factor settings"
             },
+            "save-oauth2-domain": {
+                "run": "Saving the domain's sign-in",
+                "done": "Saved the domain's sign-in"
+            },
             "save-custom-menu": {
                 "run": "Saving the custom menu",
                 "done": "Saved the custom menu"
@@ -1837,6 +1842,9 @@
                 "maxFailures": "Lockout after failures",
                 "totalTime": "Time to verify, s",
                 "checkRateLimit": "Code checks limit",
+                "oauth2Enabled": "OAuth 2.0",
+                "clients": "Sign-in buttons",
+                "warning": "Note",
                 "useSystemSettings": "System settings",
                 "url": "URL",
                 "tag": "Tag",
@@ -2676,7 +2684,8 @@
                 "line": "Which domains sign users in through an external provider.",
                 "suggestion": "How do I let users sign in with Google on my domain?",
                 "example": {
-                    "missing": {"label": "Button not showing", "message": "Why is the Sign in with Google button missing on our login page?"}
+                    "missing": {"label": "Button not showing", "message": "Why is the Sign in with Google button missing on our login page?"},
+                    "hide": {"label": "Hide a sign-in button", "message": "Stop showing the GitHub sign-in button on our domain."}
                 }
             },
             "oauth2-clients": {
