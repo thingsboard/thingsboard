@@ -36,7 +36,7 @@ import {
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, merge, Observable, of, shareReplay } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { catchError, debounceTime, distinctUntilChanged, filter, map, share, skip, take, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, share, skip, tap } from 'rxjs/operators';
 import { PageLink, PageQueryParam } from '@shared/models/page/page-link';
 import { SchedulerEventService } from '@core/http/scheduler-event.service';
 import { MatPaginator } from '@angular/material/paginator';
@@ -55,12 +55,23 @@ import {
   SchedulerEventConfigType
 } from '@home/components/scheduler/scheduler-event-config.models';
 import { DialogService } from '@core/services/dialog.service';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import listPlugin from '@fullcalendar/list';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import momentPlugin, { toMoment } from '@fullcalendar/moment';
-import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
-import { FullCalendarComponent } from '@fullcalendar/angular';
+import dayGridPlugin from '@fullcalendar/angular/daygrid';
+import listPlugin from '@fullcalendar/angular/list';
+import timeGridPlugin from '@fullcalendar/angular/timegrid';
+import interactionPlugin from '@fullcalendar/angular/interaction';
+import classicThemePlugin from '@fullcalendar/angular/themes/classic';
+import {
+  CalendarOptions,
+  DateClickInfo,
+  Duration,
+  EventClickInfo,
+  EventDisplayInfo,
+  EventDropInfo,
+  EventInput,
+  EventSourceFuncInfo,
+  FullCalendarComponent,
+  MountInfo
+} from '@fullcalendar/angular';
 import {
   scheduleInfo,
   schedulerCalendarView,
@@ -68,7 +79,6 @@ import {
   schedulerCalendarViewValueMap,
   SchedulerEventsWidgetSettings
 } from '@home/components/scheduler/scheduler-events.models';
-import { Calendar, CalendarOptions, Duration, EventClickArg, EventDropArg, EventInput, } from '@fullcalendar/core';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
 import {
@@ -77,7 +87,6 @@ import {
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
 import { EntityType } from '@shared/models/entity-type.models';
 import { hidePageSizePixelValue } from '@shared/models/constants';
-import { asRoughMs, rangeContainsMarker } from '@fullcalendar/core/internal';
 import _moment from 'moment';
 import { FormBuilder } from '@angular/forms';
 import { isValidPageStepCount, isValidPageStepIncrement } from '@home/components/widget/lib/table-widget.models';
@@ -88,6 +97,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { DomSanitizer } from "@angular/platform-browser";
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const durationToMs = (duration: Duration): number =>
+  (duration.years * 365 + duration.months * 30 + duration.days) * DAY_MS + duration.milliseconds;
 
 @Component({
     selector: 'tb-scheduler-events',
@@ -158,7 +172,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   schedulerEventConfigTypes: {[eventType: string]: SchedulerEventConfigType};
   initialCalendarDate: Date | null = null;
 
-  private calendarApi: Calendar;
+  private calendarApi: ReturnType<FullCalendarComponent['getApi']>;
   private schedulerEvents: Array<SchedulerEventWithCustomerInfo> = [];
   private componentResize$: ResizeObserver;
   private backNavigationCommands? = this.route.snapshot.data.backNavigationCommands;
@@ -219,8 +233,14 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
 
   private setupCalendarOptions(): void {
     this.calendarOptions = {
-      plugins: [interactionPlugin, momentPlugin, dayGridPlugin, listPlugin, timeGridPlugin],
+      plugins: [classicThemePlugin, interactionPlugin, dayGridPlugin, listPlugin, timeGridPlugin],
       height: '100%',
+      eventClass: 'tb-fc-event',
+      views: {
+        list: {
+          listItemEventClass: 'tb-fc-list-event'
+        }
+      },
       fixedWeekCount: false,
       initialView: this.currentCalendarViewValue,
       initialDate: this.initialCalendarDate,
@@ -336,11 +356,8 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     this.router.navigate(this.backNavigationCommands, { relativeTo: this.route }).then(() => {});
   }
 
-  resize(): void {
-    if (this.mode === 'calendar' && this.calendarApi) {
-      this.calendarApi.updateSize();
-    }
-  }
+  // Do not remove: called by the scheduler widget's controller script (self.onResize). FullCalendar v7 resizes itself.
+  resize(): void {}
 
   updateMode(mode: SchedulerEventMode, updateRouterQueryParams: boolean = true): void {
     this.mode = mode;
@@ -349,9 +366,6 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
       this.dataSource?.selection.clear();
       if (this.isCalendarInitialized.value) {
         this.calendarApi.refetchEvents();
-        if (this.widgetMode) {
-          this.calendarApi.updateSize();
-        }
       }
     } else if (!skipUpdateData) {
       this.updateData();
@@ -359,14 +373,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   }
 
   updateData(): void {
-    if (this.mode === 'calendar') {
-      this.isCalendarInitialized.pipe(
-        filter(isInitialized => isInitialized),
-        take(1)
-      ).subscribe(() => {
-        this.resize();
-      });
-    } else {
+    if (this.mode !== 'calendar') {
       if (this.displayPagination) {
         this.pageLink.page = this.paginator.pageIndex;
         this.pageLink.pageSize = this.paginator.pageSize;
@@ -552,10 +559,10 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   private isDateInView(targetDate: number): boolean {
     if (!this.calendarApi) return false;
     const view = this.calendarApi.view;
-    return rangeContainsMarker({start: view.currentStart, end: view.currentEnd}, new Date(targetDate));
+    return targetDate >= view.currentStart.getTime() && targetDate < view.currentEnd.getTime();
   }
 
-  private onEventClick(arg: EventClickArg): void {
+  private onEventClick(arg: EventClickInfo): void {
     const schedulerEvent = this.schedulerEvents.find(event => event.id.id === arg.event.id);
     if (schedulerEvent) {
       if (!schedulerEvent.typeName) {
@@ -583,7 +590,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     this.schedulerEventMenuTrigger.closeMenu();
   }
 
-  private onDayClick(event: DateClickArg): void {
+  private onDayClick(event: DateClickInfo): void {
     if (this.addEnabled) {
       const schedulerEvent = {
         schedule: { startTime: event.date.getTime() },
@@ -598,15 +605,15 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     }
   }
 
-  private onEventDrop(arg: EventDropArg): void {
+  private onEventDrop(arg: EventDropInfo): void {
     const schedulerEvent = this.schedulerEvents.find(event => event.id.id === arg.event.id);
     if (schedulerEvent) {
       this.moveEvent(schedulerEvent, arg.delta, arg.revert);
     }
   }
 
-  private onEventDidMount(event: any): void {
-    const props: { name: string; type: string; info: string; repeatInterval: string } = event.event.extendedProps;
+  private onEventDidMount(event: MountInfo<EventDisplayInfo>): void {
+    const props = event.event.extendedProps as { name: string; type: string; info: string; repeatInterval: string };
     const element = $(event.el);
     import('tooltipster').then(() => {
       element.tooltipster({
@@ -630,7 +637,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   private moveEvent(event: SchedulerEventWithCustomerInfo, delta: Duration, revertFunc: () => void): void {
     this.schedulerEventService.getSchedulerEvent(event.id.id).subscribe({
       next: schedulerEvent => {
-        schedulerEvent.schedule.startTime += asRoughMs(delta);
+        schedulerEvent.schedule.startTime += durationToMs(delta);
         this.schedulerEventService.saveSchedulerEvent(schedulerEvent).subscribe({
           next: () => this.reloadSchedulerEvents(),
           error: () => revertFunc()
@@ -641,7 +648,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   }
 
   private eventSourceFunction(
-    arg: { start: Date; end: Date; timeZone: string },
+    arg: EventSourceFuncInfo,
     successCallback: (events: EventInput[]) => void,
     failureCallback: (error: Error) => void
   ): void {
@@ -659,10 +666,8 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
         this.schedulerEvents = schedulerEvents;
         const events: EventInput[] = [];
         if (this.schedulerEvents.length && this.calendarApi) {
-          const start = toMoment(arg.start, this.calendarApi);
-          const end = toMoment(arg.end, this.calendarApi);
-          const rangeStart = start.local();
-          const rangeEnd = end.local();
+          const rangeStart = _moment(arg.start);
+          const rangeEnd = _moment(arg.end);
           this.schedulerEvents.forEach(event => {
             const eventStart = _moment(event.schedule.startTime);
             let calendarEvent: EventInput;

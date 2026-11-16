@@ -74,13 +74,9 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
       min-height: 0;
       box-sizing: border-box;
 
-      .fc-event:not(.fc-list-event) {
+      .tb-fc-event:not(.tb-fc-list-event) {
         border-radius: 2px;
         box-shadow: 0 4px 20px 0 rgba(0, 0, 0, .14), 0 7px 10px -5px rgba(58, 135, 173, .4);
-      }
-
-      .fc-day-grid-event {
-        margin: 2px 5px 0;
       }
 
       a {
@@ -99,8 +95,27 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
         cursor: pointer;
       }
 
-      .fc-event-title-container {
+      .tb-fc-event-frame {
         display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .tb-fc-event-time {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .tb-fc-event-title-container {
+        display: flex;
+        min-width: 0;
+      }
+
+      .tb-fc-event-title {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
       }
     }
 

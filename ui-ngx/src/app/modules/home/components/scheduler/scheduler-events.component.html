@@ -350,15 +350,15 @@
             @if (mode === 'calendar' || (isCalendarInitialized | async)) {
               <full-calendar #calendar [options]="calendarOptions">
                 <ng-template #eventContent let-arg>
-                  <div class="fc-event-main-frame">
-                    <div class="fc-event-time">
+                  <div class="tb-fc-event-frame">
+                    <div class="tb-fc-event-time">
                       {{ arg.timeText }}
                     </div>
-                    <div class="fc-event-title-container">
+                    <div class="tb-fc-event-title-container">
                       @if (arg.event.extendedProps.repeatInterval) {
-                        <b class="fc-event-title fc-sticky">{{ arg.event.extendedProps.repeatInterval }}&nbsp;</b>
+                        <b class="tb-fc-event-title">{{ arg.event.extendedProps.repeatInterval }}&nbsp;</b>
                       }
-                      <div class="fc-event-title fc-sticky">{{ arg.event.title }}</div>
+                      <div class="tb-fc-event-title">{{ arg.event.title }}</div>
                     </div>
                   </div>
                 </ng-template>
