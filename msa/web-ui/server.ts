@@ -9,6 +9,7 @@ import httpProxy from 'http-proxy';
 import fs from 'fs';
 import historyApiFallback from 'connect-history-api-fallback';
 import { Socket } from 'net';
+import Negotiator from 'negotiator';
 import { RequestHandler } from 'express';
 
 const logger = _logger('main');
@@ -194,18 +195,38 @@ function listPrecompressedFiles(root: string): PrecompressedVariant[] {
             continue;
         }
         const original = file.slice(0, -variant.ext.length);
-        const originalStat = fs.statSync(path.join(root, original), {throwIfNoEntry: false});
-        // an original edited after the build (e.g. a customized locale) must not be shadowed by its old copy
-        if (!originalStat?.isFile() || fs.statSync(path.join(root, file)).mtimeMs < originalStat.mtimeMs) {
+        if (!matchesOriginal(root, original)) {
             stale++;
             continue;
         }
         variant.files.add('/' + original.split(path.sep).join('/'));
     }
     if (stale) {
-        logger.warn('Ignoring %d pre-compressed files without an original or older than it', stale);
+        logger.warn('Ignoring %d pre-compressed files that do not match their original', stale);
     }
     return variants;
+}
+
+// A copy must not shadow an original edited after the build (e.g. a customized locale). gzip stores the
+// uncompressed size (mod 2^32) in its last 4 bytes; the .br copy is trusted together with its .gz sibling.
+function matchesOriginal(root: string, original: string): boolean {
+    const originalStat = fs.statSync(path.join(root, original), {throwIfNoEntry: false});
+    if (!originalStat?.isFile()) {
+        return false;
+    }
+    const gzipPath = path.join(root, original + '.gz');
+    if (!fs.existsSync(gzipPath)) {
+        return true;
+    }
+    const fd = fs.openSync(gzipPath, 'r');
+    try {
+        const size = fs.fstatSync(fd).size;
+        const trailer = Buffer.alloc(4);
+        return size >= 18 && fs.readSync(fd, trailer, 0, 4, size - 4) === 4
+            && trailer.readUInt32LE(0) === originalStat.size % 2 ** 32;
+    } finally {
+        fs.closeSync(fd);
+    }
 }
 
 function precompressedStatic(root: string, variants: PrecompressedVariant[]): RequestHandler {
@@ -224,8 +245,10 @@ function precompressedStatic(root: string, variants: PrecompressedVariant[]): Re
             return next();
         }
         res.vary('Accept-Encoding');
-        // the server's order wins: browsers list gzip before br but accept both
-        const variant = available.find(({encoding}) => req.acceptsEncodings(encoding) === encoding);
+        // highest q wins; on a tie the server's order does, as browsers list gzip before br
+        const encodings = available.map(({encoding}) => encoding);
+        const best = new Negotiator(req).encoding([...encodings, 'identity'], {preferred: encodings});
+        const variant = available.find(({encoding}) => encoding === best);
         if (!variant) {
             return next();
         }
