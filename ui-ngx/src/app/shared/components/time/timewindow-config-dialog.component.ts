@@ -20,7 +20,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
 import {
   deepClean,
@@ -237,7 +237,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
                       ? this.timewindow.hideTimezone : false ],
       hideSaveAsDefault: [ isDefinedAndNotNull(this.timewindow.hideSaveAsDefault)
         ? this.timewindow.hideSaveAsDefault : false ],
+      hideRealtime: [ isDefinedAndNotNull(this.timewindow.hideRealtime) ? this.timewindow.hideRealtime : false ],
+      hideHistory: [ isDefinedAndNotNull(this.timewindow.hideHistory) ? this.timewindow.hideHistory : false ],
     });
+    this.timewindowForm.setValidators(this.sectionsNotEmptyValidator);
+    this.timewindowForm.updateValueAndValidity({emitEvent: false});
     this.updateValidators(this.timewindowForm.get('aggregation.type').value);
 
     if (this.aggregation) {
@@ -302,6 +306,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     ).subscribe((selectedTab: TimewindowType) => {
       this.onTimewindowTypeChange(selectedTab);
     });
+
     this.timewindowForm.get('realtime.hideInterval').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value: boolean) => {
@@ -400,6 +405,36 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       this.timewindowForm.get(controlName).enable({emitEvent: false});
     }
   }
+
+  get selectedTabHidden(): boolean {
+    const selectedTab = this.timewindowForm.get('selectedTab').value;
+    return (selectedTab === TimewindowType.REALTIME && this.timewindowForm.get('hideRealtime').value) ||
+      (selectedTab === TimewindowType.HISTORY && this.timewindowForm.get('hideHistory').value);
+  }
+
+  private sectionsNotEmptyValidator = (control: AbstractControl): ValidationErrors | null => {
+    const value = (control as FormGroup).getRawValue();
+
+    const timezoneAvailable = !value.hideTimezone;
+    const aggregationAvailable = this.aggregation && !(value.hideAggregation && value.hideAggInterval);
+
+    const realtimeIntervalAvailable = !(value.realtime.hideInterval ||
+      (value.realtime.hideLastInterval && value.realtime.hideQuickInterval));
+    const historyIntervalAvailable = !(value.history.hideInterval ||
+      (value.history.hideLastInterval && value.history.hideQuickInterval && value.history.hideFixedInterval));
+
+    const realtimeHasContent = realtimeIntervalAvailable || aggregationAvailable || timezoneAvailable;
+    const historyHasContent = historyIntervalAvailable || aggregationAvailable || timezoneAvailable;
+
+    const errors: ValidationErrors = {};
+    if (!value.hideRealtime && !realtimeHasContent) {
+      errors.realtimeSectionEmpty = true;
+    }
+    if (!value.hideHistory && !historyHasContent) {
+      errors.historySectionEmpty = true;
+    }
+    return Object.keys(errors).length ? errors : null;
+  };
 
   private updateValidators(aggType: AggregationType) {
     if (aggType !== AggregationType.NONE) {
