@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -802,8 +807,10 @@ class DefaultIotHubServiceTest {
     void findKeptEntities_devicePackage_aSharedProfileKeepsWhatItRefersTo() {
         DeviceProfile profile = new DeviceProfile(new DeviceProfileId(UUID.randomUUID()));
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
+        RuleChainId edgeRuleChainId = new RuleChainId(UUID.randomUUID());
         profile.setDefaultRuleChainId(ruleChainId);
-        IotHubInstalledItem checked = devicePackage(ruleChainId, profile.getId());
+        profile.setDefaultEdgeRuleChainId(edgeRuleChainId);
+        IotHubInstalledItem checked = devicePackage(ruleChainId, edgeRuleChainId, profile.getId());
         IotHubInstalledItem other = devicePackage(profile.getId());
         when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
         when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
@@ -813,7 +820,8 @@ class DefaultIotHubServiceTest {
         InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
 
         assertThat(kept.getEntities()).extracting(InstalledItemKeptEntities.KeptEntity::getEntityId).containsExactly(profile.getId());
-        assertThat(kept.getReferencedEntities()).extracting(InstalledItemKeptEntities.KeptEntity::getEntityId).containsExactly(ruleChainId);
+        assertThat(kept.getReferencedEntities()).extracting(InstalledItemKeptEntities.KeptEntity::getEntityId)
+                .containsExactly(ruleChainId, edgeRuleChainId);
     }
 
     @Test
@@ -860,7 +868,30 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
-    void deleteInstalledItem_devicePackage_anEntitySomethingElseRefersToStays() throws Exception {
+    void deleteInstalledItem_devicePackage_anEntitySomethingElseRefersToStays_loggedAsKept() throws Exception {
+        // A profile the user made after the install uses the package's rule chain
+        List<ILoggingEvent> logs = deleteRuleChainFailingWith(
+                new DataValidationException("The rule chain referenced by the device profiles cannot be deleted!"));
+
+        assertThat(logs).anySatisfy(event -> {
+            assertThat(event.getLevel()).isEqualTo(Level.INFO);
+            assertThat(event.getFormattedMessage()).contains("Kept RULE_CHAIN").contains("referenced by the device profiles");
+        });
+        assertThat(logs).noneMatch(event -> event.getLevel() == Level.ERROR);
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_aFailedDelete_staysAnError() throws Exception {
+        List<ILoggingEvent> logs = deleteRuleChainFailingWith(new RuntimeException("Database is down"));
+
+        assertThat(logs).anySatisfy(event -> {
+            assertThat(event.getLevel()).isEqualTo(Level.ERROR);
+            assertThat(event.getFormattedMessage()).contains("Failed to delete device package entity");
+        });
+    }
+
+    /** Deletes a package whose only entity is a rule chain that fails to delete with {@code failure}; the service's logs. */
+    private List<ILoggingEvent> deleteRuleChainFailingWith(Exception failure) throws Exception {
         mockTenant();
         RuleChain ruleChain = new RuleChain(new RuleChainId(UUID.randomUUID()));
         IotHubInstalledItem deleted = devicePackage(ruleChain.getId());
@@ -868,13 +899,22 @@ class DefaultIotHubServiceTest {
         when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
                 .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
         when(ruleChainService.findRuleChainById(tenantId, ruleChain.getId())).thenReturn(ruleChain);
-        // A profile the user made after the install uses the package's rule chain
-        doThrow(new DataValidationException("The rule chain referenced by the device profiles cannot be deleted!"))
-                .when(tbRuleChainService).delete(ruleChain, user);
-
-        service.deleteInstalledItem(user, deleted.getId());
-
+        doThrow(failure).when(tbRuleChainService).delete(ruleChain, user);
+        Logger logger = (Logger) LoggerFactory.getLogger(DefaultIotHubService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        Level level = logger.getLevel();
+        logger.setLevel(Level.INFO);
+        try {
+            service.deleteInstalledItem(user, deleted.getId());
+        } finally {
+            logger.setLevel(level);
+            logger.detachAppender(appender);
+        }
+        // The delete goes on either way
         verify(iotHubInstalledItemService).deleteById(tenantId, deleted.getId());
+        return appender.list;
     }
 
     private void noDevices(DeviceProfileId profileId) {

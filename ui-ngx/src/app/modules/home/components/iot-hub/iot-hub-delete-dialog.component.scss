@@ -35,9 +35,15 @@
     &:before {
       display: none;
     }
+
+    // A long name breaks inside the box instead of running past its border
+    td.tb-entity-name {
+      overflow-wrap: anywhere;
+    }
   }
 }
 
+// Not divide-y: with preflight off, divide-solid draws the side borders of the groups too
 .tb-iot-hub-kept-group-next {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }

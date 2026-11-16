@@ -5,15 +5,16 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="flex flex-col gap-5 p-6">
+<!-- Scrolls when many entities stay, so the buttons stay in view -->
+<div class="flex max-h-[65vh] flex-col gap-5 overflow-y-auto p-6">
   <h2 class="tb-iot-hub-delete-title">{{ 'iot-hub.remove-confirm-title' | translate:{ name: data.itemName } }}</h2>
   <p class="tb-iot-hub-delete-desc">{{ description }}</p>
   @if (keptGroups.length) {
     <div class="tb-form-hint tb-primary-fill">
       <mat-icon>info_outline</mat-icon>
-      <div class="flex flex-col">
+      <div class="flex min-w-0 flex-col">
         <div class="font-medium">{{ keptTitle }}</div>
-        <div class="tb-iot-hub-kept-groups mt-2 flex flex-col rounded bg-white">
+        <div class="tb-iot-hub-kept-groups mt-2 flex min-w-0 flex-col rounded bg-white">
           @for (group of keptGroups; track group.reason; let i = $index; let first = $first) {
             <div role="group" class="flex flex-col gap-1 py-2" [class.tb-iot-hub-kept-group-next]="!first"
                  [attr.aria-labelledby]="'tb-iot-hub-kept-reason-' + i">
