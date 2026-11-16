@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.common.data.subscription.SubscriptionException;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
@@ -1138,6 +1139,30 @@ class DefaultDevicePackageServiceTest {
         assertThat(result.getErrorMessage()).isEqualTo("AM308 spare belongs to another owner");
         verify(deviceService, never()).saveDevice(any(Device.class));
         verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void updateOverwriteOfAnotherDeviceKeepsItsCredentials() {
+        DeviceId otherId = new DeviceId(UUID.randomUUID());
+        Device current = new Device(otherId);
+        current.setTenantId(tenantId);
+        current.setName("AM308 spare");
+        when(deviceService.findDeviceById(tenantId, otherId)).thenReturn(current);
+        when(deviceService.saveDevice(any(Device.class))).thenAnswer(i -> i.getArgument(0));
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setDeviceId(otherId);
+        credentials.setCredentialsId("existing-token");
+        when(deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, otherId)).thenReturn(credentials);
+        DevicePackageRequest.Step step = overwrite("AM308 spare", "DEVICE", otherId, null, JacksonUtil.newObjectNode().put("name", "AM308 spare"));
+        step.setConfirmed(true);
+        step.setCredentials(JacksonUtil.newObjectNode().put("credentialsType", "ACCESS_TOKEN").put("credentialsId", "package-token"));
+
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId), step));
+
+        assertThat(result.isSuccess()).isTrue();
+        verify(deviceService).saveDevice(any(Device.class));
+        verify(deviceCredentialsService, never()).updateDeviceCredentials(any(), any());
+        assertThat(result.getOutputs().get("DEVICE:AM308 spare").get("token").asText()).isEqualTo("existing-token");
     }
 
     @Test
