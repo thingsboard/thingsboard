@@ -58,8 +58,10 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
         reasons.push(this.translate.instant(reasonKey, { kept: shared.length }));
       }
       if (withDevices.length) {
+        // The profiles devices use, and what they use (default rule chains, dashboard), which stays with them
         const profiles = withDevices.filter(entity => entity.entityId.entityType === 'DEVICE_PROFILE').length;
-        reasons.push(this.translate.instant('iot-hub.remove-kept-devices', { profiles, devices: kept.devicesCount ?? 0 }));
+        const key = withDevices.length > profiles ? 'iot-hub.remove-kept-devices-with-references' : 'iot-hub.remove-kept-devices';
+        reasons.push(this.translate.instant(key, { profiles, devices: kept.devicesCount ?? 0 }));
       }
       this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: shared.length + withDevices.length });
       this.keptReason = reasons.join(' ');
