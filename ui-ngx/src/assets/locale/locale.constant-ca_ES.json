@@ -5776,7 +5776,7 @@
         "opc-ua-type": "Tipus",
         "opc-ua-keystore-type": "Tipus",
         "opc-ua-keystore-type-required": "El tipus és obligatori",
-        "opc-ua-keystore-location": "Ubicació *",
+        "opc-ua-keystore-location": "Ubicació",
         "opc-ua-keystore-password": "Contrasenya",
         "opc-ua-keystore-password-required": "La contrasenya és obligatòria",
         "opc-ua-keystore-alias": "Àlies",

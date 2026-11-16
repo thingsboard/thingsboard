@@ -2863,7 +2863,6 @@
     "is-gateway": "Gateway",
     "overwrite-activity-time": "Perrašyti aktyvumo laiką prijungtam įrenginiui",
     "device-filter-title": "Įrenginių filtras",
-    "filter-title": "Filtras",
     "device-state": "Įrenginio būsena",
     "state": "Būsena",
     "any": "Visos",
@@ -5780,7 +5779,7 @@
     "opc-ua-type": "Tipas",
     "opc-ua-keystore-type": "Tipas",
     "opc-ua-keystore-type-required": "Tipas yra privalomas",
-    "opc-ua-keystore-location": "Vieta *",
+    "opc-ua-keystore-location": "Vieta",
     "opc-ua-keystore-password": "Slaptažodis",
     "opc-ua-keystore-password-required": "Slaptažodis yra privalomas",
     "opc-ua-keystore-alias": "Pseudonimas",
@@ -7361,8 +7360,8 @@
   "position": {
     "top": "Viršus",
     "bottom": "Apačia",
-    "left": "Kairioji pusė",
-    "right": "Dešinioji pusė"
+    "left": "Kairė",
+    "right": "Dešinė"
   },
   "profile": {
     "profile": "Profilis",
@@ -7581,7 +7580,6 @@
     "drop-file": "Nuvilkite JavaScript failą arba spustelėkite, kad pasirinktumėte failą, kurį norite įkelti.",
     "drop-resource-file-or": "Nuvilkite JavaScript failą arba",
     "javascript-library": "JavaScript biblioteka",
-    "javascript-type": "JavaScript tipas",
     "scripts": "Skriptai",
     "script-type": "Skripto tipas",
     "javascript-resource-details": "JavaScript ištekliaus informacija",
