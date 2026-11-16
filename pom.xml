@@ -56,6 +56,15 @@
         <!-- The yarn SBOM steps of the UI modules: ui-ngx, msa/web-ui and msa/web-report. Also skipped with
              -Dskip.ui.build=true, which leaves them without node and node_modules: see the skip-pkg-without-ui-build profile. -->
         <sbom.ui.skip>${sbom.yarn.skip}</sbom.ui.skip>
+        <!-- The SBOM of what the packages of the module contain: their SBOMs and their notices are made from it -->
+        <sbom.package.sourceFile>${project.build.directory}/sbom/application.cdx.json</sbom.package.sourceFile>
+        <!-- Third-party notices are made only on request, together with the SBOMs: build with -Dsbom.skip=false
+             -Dnotices.skip=false. A module that makes the SBOMs of its packages then also makes their notices and puts
+             them into the packages: see tools/src/main/notices/notices.sh. -->
+        <notices.skip>true</notices.skip>
+        <!-- What the notices steps follow: a build that skips the packaging makes no notices either, whatever
+             notices.skip says. See the skip-pkg profiles: a profile cannot change a property given on the command line. -->
+        <notices.run.skip>${notices.skip}</notices.run.skip>
         <!-- Use -Dpkg.skip=true to skip all packaging at once (bootjar + deb + rpm + zip).
              Individual flags below can be set independently for finer control. -->
         <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
@@ -281,6 +290,7 @@
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
+                <notices.run.skip>true</notices.run.skip>
             </properties>
         </profile>
 
@@ -301,6 +311,7 @@
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
+                <notices.run.skip>true</notices.run.skip>
             </properties>
         </profile>
         <profile>
@@ -317,6 +328,7 @@
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
+                <notices.run.skip>true</notices.run.skip>
             </properties>
         </profile>
 
@@ -1217,6 +1229,51 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <!-- Declared here, before the plugins of the modules, so that the notices are ready when the packages are built.
+                 The .deb and the .rpm contain the same, so they share a file; the Windows zip has its own. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>notices-linux</id>
+                        <phase>${sbom.package.phase}</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${notices.run.skip}</skip>
+                            <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                            <arguments>
+                                <argument>${project.build.directory}/notices/work-linux</argument>
+                                <argument>${project.version}</argument>
+                                <argument>${project.build.directory}/notices/linux/THIRD-PARTY-NOTICES</argument>
+                                <argument>${sbom.package.sourceFile}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>notices-windows</id>
+                        <phase>${sbom.package.phase}</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${notices.run.skip}</skip>
+                            <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                            <arguments>
+                                <argument>${project.build.directory}/notices/work-windows</argument>
+                                <argument>${project.version}</argument>
+                                <argument>${project.build.directory}/notices/windows/THIRD-PARTY-NOTICES</argument>
+                                <argument>${sbom.package.sourceFile}</argument>
+                                <!-- The service wrapper of the Windows package: see the package-sbom execution -->
+                                <argument>--add</argument>
+                                <argument>pkg:maven/com.sun.winsw/winsw@${winsw.version}=MIT</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>

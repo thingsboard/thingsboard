@@ -36,6 +36,15 @@
             <directory>${pkg.win.dist}/chromium</directory>
             <outputDirectory>chromium</outputDirectory>
         </fileSet>
+        <!-- The third-party notices, when the build makes them (-Dnotices.skip=false) -->
+        <fileSet>
+            <directory>${project.build.directory}/notices/windows</directory>
+            <outputDirectory/>
+            <includes>
+                <include>THIRD-PARTY-NOTICES</include>
+            </includes>
+            <lineEnding>windows</lineEnding>
+        </fileSet>
     </fileSets>
 
     <files>
