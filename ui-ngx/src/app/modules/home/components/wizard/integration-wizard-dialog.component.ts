@@ -52,8 +52,12 @@ export class IntegrationWizardDialogComponent extends
 
   private _downlinkDataConverterComponent: ConverterComponent;
 
+  // The downlink step is re-created when the integration type changes, so its form is re-attached here
   @ViewChild('downlinkDataConverter')
   set downlinkDataConverterComponent(component: ConverterComponent) {
+    if (component === this._downlinkDataConverterComponent) {
+      return;
+    }
     this._downlinkDataConverterComponent = component;
     if (component) {
       this.downlinkConverterForm.setControl('newDownlinkConverter', component.entityForm, {emitEvent: false});
