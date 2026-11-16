@@ -116,6 +116,16 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         });
     }
 
+    /**
+     * Pauses consumption while Redis is unavailable. Processing would only fail the messages, and with the default
+     * skip strategy drop them; paused, they wait in the queue until Redis recovers.
+     */
+    @Override
+    protected boolean isConsumptionPaused() {
+        var circuitBreaker = ctx.getRedisCircuitBreaker();
+        return circuitBreaker != null && !circuitBreaker.isHealthy();
+    }
+
     @Override
     protected void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs,
                                TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer,
