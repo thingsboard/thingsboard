@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
+import { Component, HostBinding, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -54,6 +54,9 @@ export class CustomMenuTableComponent implements OnInit {
 
   readonly customMenuTableConfig = new EntityTableConfig<CustomMenuInfo>();
 
+  @HostBinding('class.tb-full-actions-column')
+  fullActionsColumn = false;
+
   constructor(private customMenuService: CustomMenuService,
               private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
@@ -95,23 +98,23 @@ export class CustomMenuTableComponent implements OnInit {
     this.customMenuTableConfig.entitiesDeleteEnabled = !readonly && authUser.authority !== Authority.SYS_ADMIN;
     this.customMenuTableConfig.addEntity = () => this.addCustomMenu();
 
+    this.fullActionsColumn = this.customMenuTableConfig.entitiesDeleteEnabled;
+
     let mainColumnsWidth: string;
     switch (authUser.authority) {
       case Authority.SYS_ADMIN:
-        mainColumnsWidth = '50%';
+      case Authority.CUSTOMER_USER:
+        mainColumnsWidth = '32%';
         break;
       case Authority.TENANT_ADMIN:
-        mainColumnsWidth = '33%';
-        break;
-      case Authority.CUSTOMER_USER:
-        mainColumnsWidth = '50%';
+        mainColumnsWidth = '21%';
         break;
     }
 
     this.customMenuTableConfig.columns.push(
       new DateEntityTableColumn<CustomMenuInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<CustomMenuInfo>('name', 'custom-menu.name', mainColumnsWidth,
-          entity => entity.name, _entity => ({}), true, () => ({}), () => undefined, false,
+          entity => entity.name, _entity => ({}), true, () => ({}), entity => entity.name, false,
         {
           name: this.translate.instant('custom-menu.edit-name'),
           icon: 'edit',

@@ -14,8 +14,25 @@
   .tb-entity-table.mat-padding {
     padding: 0;
   }
+  .mat-mdc-table {
+    table-layout: fixed;
+  }
+  .mat-mdc-header-cell.mat-column-actions,
+  .mat-mdc-cell.mat-column-actions {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+  }
   mat-cell.mat-column-name {
     white-space: nowrap;
+    > span {
+      display: inline-block;
+      vertical-align: middle;
+      max-width: calc(100% - 40px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .mat-mdc-icon-button {
       vertical-align: middle;
       margin-left: 8px;
@@ -23,6 +40,17 @@
       .mat-icon {
         @include tb-mat-icon-size(20);
       }
+    }
+  }
+}
+
+:host(.tb-full-actions-column) ::ng-deep {
+  .mat-mdc-header-cell.mat-column-actions,
+  .mat-mdc-cell.mat-column-actions {
+    @media #{$mat-gt-md} {
+      width: 144px;
+      min-width: 144px;
+      max-width: 144px;
     }
   }
 }
