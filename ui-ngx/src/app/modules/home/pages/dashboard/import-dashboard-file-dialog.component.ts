@@ -11,6 +11,7 @@ import { DashboardInfo } from '@app/shared/models/dashboard.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
 export interface DashboardInfoDialogData {
   dashboard: DashboardInfo;
@@ -54,15 +55,22 @@ export class ImportDashboardFileDialogComponent extends DialogComponent<ImportDa
       return;
     }
 
-    const dashboardContent = {
-      ...fileControl.value,
-      description: this.dashboard.configuration.description
+    const dashboard: DashboardInfo = {
+      ...this.dashboard,
+      configuration: {
+        ...fileControl.value,
+        description: this.dashboard.configuration.description
+      }
     };
-    this.dashboard.configuration = dashboardContent;
 
-    this.dashboardService.saveDashboard(this.dashboard).subscribe(() => {
-      this.dialogRef.close(true);
-    })
+    this.dashboardService.saveDashboard(dashboard).subscribe({
+      next: () => this.dialogRef.close(true),
+      error: (err: HttpErrorResponse) => {
+        if (err.status === HttpStatusCode.Conflict) {
+          this.dialogRef.close(true);
+        }
+      }
+    });
   }
 
   loadDataFromJsonContent(content: string): any {
