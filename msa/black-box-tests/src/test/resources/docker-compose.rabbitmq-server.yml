@@ -48,6 +48,9 @@ services:
   tb-snmp-transport:
     depends_on:
       - rabbitmq
+  tb-modbus-transport:
+    depends_on:
+      - rabbitmq
   tb-vc-executor1:
     depends_on:
       - rabbitmq
