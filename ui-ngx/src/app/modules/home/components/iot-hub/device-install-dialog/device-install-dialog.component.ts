@@ -858,7 +858,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /**
    * Nothing was changed, so trying again starts from the check: the entities may have changed meanwhile. An update
-   * asks to confirm every warning again; an install keeps a conflict choice while the existing entity is the same one.
+   * asks to confirm every warning again; an install keeps a conflict choice while the existing entity is the same one,
+   * except on the step that failed: the choice may be why it failed, so the user chooses again.
    */
   retry(ws: WizardStep): void {
     let choices: Map<DeviceInstallStep, InstallConflictChoice> | undefined;
@@ -866,7 +867,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       choices = new Map();
       for (const ep of ws.entitySteps ?? []) {
         const plan = this.entityPlans.get(ep);
-        if (plan?.existing && plan.resolution) {
+        if (plan?.existing && plan.resolution && ep.status !== 'error') {
           choices.set(ep.step, { existingId: plan.existing.id, resolution: plan.resolution });
         }
       }
@@ -1163,7 +1164,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         if (!rawSteps.slice(i + 1).some(s => ENTITY_STEP_TYPES.has(s.type))) {
           this.wizardSteps.push({
             type: 'progress',
-            label: this.data.update ? this.translate.instant('iot-hub.device-update-step') : 'Provisioning',
+            label: this.translate.instant(this.data.update ? 'iot-hub.device-update-step' : 'iot-hub.step-provisioning'),
             rawSteps: rawSteps.filter(s => ENTITY_STEP_TYPES.has(s.type)),
             completed: false
           });
@@ -1178,7 +1179,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         }
         this.wizardSteps.push({
           type: 'progress',
-          label: 'Provisioning',
+          label: this.translate.instant('iot-hub.step-provisioning'),
           rawSteps: group,
           completed: this.reviewMode
         });
@@ -1727,6 +1728,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return !!ws.progressError && (!this.data.update || !ws.entitySteps?.some(ep => ep.status === 'error'));
   }
 
+  /**
+   * An install never overwrites an existing device or gateway: its credentials are what its firmware uses. The user
+   * can use it as it is.
+   */
+  canOverwriteExisting(ep: EntityStepProgress): boolean {
+    return !!this.data.update || (ep.step.type !== InstallStepType.DEVICE && ep.step.type !== InstallStepType.GATEWAY);
+  }
+
   /** resolution is the user's choice for an entity whose name is taken. */
   confirmWarning(ep: EntityStepProgress, resolution?: string): void {
     const plan = this.entityPlans.get(ep);
@@ -1913,11 +1922,16 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (plan.action === 'keep') {
       return { ...base, entityId: plan.previous.output.id };
     }
+    // The entity gets the step's attributes, at install also one the user chose to use as it is
+    const attributes = {
+      serverAttributes: this.resolvePackageFile(this.zipFiles, step.serverAttributes, this.formValues),
+      sharedAttributes: this.resolvePackageFile(this.zipFiles, step.sharedAttributes, this.formValues)
+    };
     if (plan.resolution === 'use-existing') {
       // The package's own entity, under a step not matched to its installed one (e.g. renamed without an id),
       // stays the package's, so later versions still update it
       const resolution = this.isPackageEntity(plan.existing.id) ? 'created' : base.resolution;
-      return { ...base, resolution, entityId: plan.existing.id, confirmed: true };
+      return { ...base, resolution, entityId: plan.existing.id, confirmed: true, ...(this.data.update ? {} : attributes) };
     }
     const overwritten = plan.action === 'overwrite' ? plan.previous.output : plan.resolution === 'overwrite' ? plan.existing : null;
     const entity = this.buildEntityBody(ws, step, overwritten);
@@ -1927,16 +1941,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         await firstValueFrom(this.integrationService.getIntegration(overwritten.id, {ignoreErrors: true})) : null;
       entity.configuration.metadata = this.withStepMetadata(step, { ...current?.configuration?.metadata, ...entity.configuration.metadata });
     }
-    // As at install, the entity gets the step's attributes
-    const attributes = {
-      serverAttributes: this.resolvePackageFile(this.zipFiles, step.serverAttributes, this.formValues),
-      sharedAttributes: this.resolvePackageFile(this.zipFiles, step.sharedAttributes, this.formValues)
-    };
     if (overwritten) {
-      // At install, a device the user chose to overwrite takes the package's credentials; on update the device never changes
-      const credentials = !this.data.update && plan.resolution === 'overwrite' ?
-        this.resolvePackageFile(this.zipFiles, step.credentials, this.formValues) : undefined;
-      return { ...base, action: 'OVERWRITE', entityId: overwritten.id, expectedVersion: plan.version, confirmed: true, entity, credentials, ...attributes };
+      // An overwrite keeps the entity's credentials: only an update overwrites a device, and never the package's own
+      return { ...base, action: 'OVERWRITE', entityId: overwritten.id, expectedVersion: plan.version, confirmed: true, entity, ...attributes };
     }
     return {
       ...base,

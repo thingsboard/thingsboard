@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.converter.Converter;
@@ -78,10 +80,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -147,6 +151,8 @@ class DefaultDevicePackageServiceTest {
     private final List<RuntimeException> rolledBack = new ArrayList<>();
     private boolean inTransaction;
     private final List<String> savedInTransaction = new ArrayList<>();
+    // What must run after commit: the audit log, the Hub install report and the attributes, each marked if it ran inside
+    private final List<String> afterCommitCalls = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -910,6 +916,7 @@ class DefaultDevicePackageServiceTest {
         assertThat(state.get("INTEGRATION:TTN").get("resolution").asText()).isEqualTo("use-existing");
         assertThat(result.getDescriptor()).isSameAs(descriptor);
         assertThat(result.getOutputs()).containsOnlyKeys("DEVICE_PROFILE:AM308 profile", "INTEGRATION:TTN", "DASHBOARD:Dashboard");
+        assertThat(afterCommitCalls).containsExactly("AUDIT", "AUDIT", "REPORT");
     }
 
     @Test
@@ -978,7 +985,10 @@ class DefaultDevicePackageServiceTest {
     @Test
     void installReportsToTheHubAfterCommitAndIgnoresAReportFailure() {
         mockInstall();
-        doThrow(new RestClientException("Connection refused")).when(iotHubRestClient).reportVersionInstalled(eq(versionId), any());
+        doAnswer(i -> {
+            recordAfterCommit("REPORT");
+            throw new RestClientException("Connection refused");
+        }).when(iotHubRestClient).reportVersionInstalled(eq(versionId), any());
 
         DevicePackageResult result = service.install(user, request(
                 create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard"))));
@@ -988,6 +998,7 @@ class DefaultDevicePackageServiceTest {
         order.verify(installedItemService).save(eq(tenantId), any());
         order.verify(logEntityActionService).logEntityAction(eq(tenantId), eq(dashboardId), any(), any(), eq(ActionType.ADDED), eq(user));
         order.verify(iotHubRestClient).reportVersionInstalled(eq(versionId), any());
+        assertThat(afterCommitCalls).containsExactly("AUDIT", "REPORT");
     }
 
     @Test
@@ -1074,6 +1085,7 @@ class DefaultDevicePackageServiceTest {
         assertThat(savedInTransaction).contains("ENTITY_GROUP");
         verify(logEntityActionService).logEntityAction(eq(tenantId), eq(deviceId), any(Device.class), any(), eq(ActionType.ADDED_TO_ENTITY_GROUP),
                 eq(user), eq(deviceId.toString()), eq(group.getId().toString()), eq("Warehouse sensors"));
+        assertThat(afterCommitCalls).containsExactly("AUDIT", "AUDIT", "AUDIT", "REPORT");
     }
 
     @Test
@@ -1109,29 +1121,62 @@ class DefaultDevicePackageServiceTest {
     }
 
     @Test
-    void installOverwriteOfACustomerDeviceThatChangesItsOwnerFails() {
-        mockInstall();
-        CustomerId owner = customerOf(tenantId);
-        Device current = new Device(deviceId);
+    void updateOverwriteOfACustomerDeviceThatChangesItsOwnerFails() {
+        DeviceId otherId = new DeviceId(UUID.randomUUID());
+        Device current = new Device(otherId);
         current.setTenantId(tenantId);
-        current.setName("AM308");
-        current.setCustomerId(owner);
-        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(current);
+        current.setName("AM308 spare");
+        current.setCustomerId(customerOf(tenantId));
+        when(deviceService.findDeviceById(tenantId, otherId)).thenReturn(current);
+        DevicePackageRequest.Step step = overwrite("AM308 spare", "DEVICE", otherId, null, JacksonUtil.newObjectNode().put("name", "AM308 spare"));
+        step.setConfirmed(true);
 
-        for (UUID customerId : new UUID[]{null, customerOf(tenantId).getId()}) {
-            DevicePackageRequest.Step step = overwrite("AM308", "DEVICE", deviceId, null, JacksonUtil.newObjectNode().put("name", "AM308"));
-            step.setConfirmed(true);
-            DevicePackageRequest request = request(step);
-            request.setCustomerId(customerId);
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId), step));
 
-            DevicePackageResult result = service.install(user, request);
-
-            assertThat(result.isSuccess()).isFalse();
-            assertThat(result.getFailedStep()).isEqualTo("DEVICE:AM308");
-            assertThat(result.getErrorMessage()).isEqualTo("AM308 belongs to another owner");
-        }
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getFailedStep()).isEqualTo("DEVICE:AM308 spare");
+        assertThat(result.getErrorMessage()).isEqualTo("AM308 spare belongs to another owner");
         verify(deviceService, never()).saveDevice(any(Device.class));
         verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void installRejectsAnOverwriteOfADeviceOrGateway() {
+        mockInstall();
+        for (String type : new String[]{"DEVICE", "GATEWAY"}) {
+            DevicePackageRequest.Step step = overwrite("AM308", type, deviceId, 1L, JacksonUtil.newObjectNode().put("name", "AM308"));
+            step.setConfirmed(true);
+
+            DevicePackageResult result = service.install(user, request(step));
+
+            assertThat(result.isSuccess()).isFalse();
+            assertThat(result.getErrorMessage()).isEqualTo("Invalid install step: AM308");
+        }
+        verify(transactionTemplate, never()).execute(any());
+        verify(deviceService, never()).saveDevice(any(Device.class));
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void installWritesStepAttributesOnAUsedExistingEntityAfterCommit() {
+        mockInstall();
+        DevicePackageRequest.Step deviceStep = keep("AM308", "DEVICE", deviceId);
+        deviceStep.setResolution("use-existing");
+        deviceStep.setServerAttributes(JacksonUtil.newObjectNode().put("model", "AM308"));
+        deviceStep.setSharedAttributes(JacksonUtil.newObjectNode().put("deviceId", "${device.id}"));
+
+        DevicePackageResult result = service.install(user, request(deviceStep,
+                create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard"))));
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<AttributesSaveRequest> saved = ArgumentCaptor.forClass(AttributesSaveRequest.class);
+        verify(telemetryService, times(2)).saveAttributes(saved.capture());
+        assertThat(saved.getAllValues()).extracting(AttributesSaveRequest::getEntityId).containsOnly(deviceId);
+        assertThat(saved.getAllValues()).extracting(AttributesSaveRequest::getScope).containsExactly(AttributeScope.SERVER_SCOPE, AttributeScope.SHARED_SCOPE);
+        assertThat(saved.getAllValues().get(0).getEntries().get(0).getValueAsString()).isEqualTo("AM308");
+        assertThat(saved.getAllValues().get(1).getEntries().get(0).getValueAsString()).isEqualTo(deviceId.getId().toString());
+        // The kept device isn't saved, so only the dashboard is audited
+        assertThat(afterCommitCalls).containsExactly("AUDIT", "ATTRIBUTES", "ATTRIBUTES", "REPORT");
     }
 
     @Test
@@ -1205,12 +1250,29 @@ class DefaultDevicePackageServiceTest {
         integration.setTenantId(tenantId);
         integration.setName("TTN my-app");
         when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(integration);
+        doAnswer(i -> {
+            recordAfterCommit("AUDIT");
+            return null;
+        }).when(logEntityActionService).logEntityAction(any(TenantId.class), any(EntityId.class), any(HasName.class), nullable(CustomerId.class),
+                any(ActionType.class), any(User.class), any(Object[].class));
+        doAnswer(i -> {
+            recordAfterCommit("REPORT");
+            return null;
+        }).when(iotHubRestClient).reportVersionInstalled(any(), any());
+        doAnswer(i -> {
+            recordAfterCommit("ATTRIBUTES");
+            return null;
+        }).when(telemetryService).saveAttributes(any(AttributesSaveRequest.class));
     }
 
     private void recordSave(String what) {
         if (inTransaction) {
             savedInTransaction.add(what);
         }
+    }
+
+    private void recordAfterCommit(String what) {
+        afterCommitCalls.add(inTransaction ? what + " in transaction" : what);
     }
 
     private IotHubInstalledItem otherPackage(Map<String, JsonNode> installState) {

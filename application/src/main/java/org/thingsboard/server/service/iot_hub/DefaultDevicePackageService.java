@@ -266,13 +266,18 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         }
     }
 
-    /** At install a kept entity is one the user chose to use as it is: the package doesn't own it. */
+    /**
+     * At install a kept entity is one the user chose to use as it is: the package doesn't own it. An existing device or
+     * gateway is never overwritten: its credentials are what its firmware uses.
+     */
     private static void validateInstallSteps(DevicePackageRequest request) {
         if (request.getSteps() == null) {
             return;
         }
         for (DevicePackageRequest.Step step : request.getSteps()) {
-            if (step.getAction() == DevicePackageRequest.Action.KEEP && !"use-existing".equals(step.getResolution())) {
+            boolean deviceOrGateway = "DEVICE".equals(step.getType()) || "GATEWAY".equals(step.getType());
+            if ((step.getAction() == DevicePackageRequest.Action.KEEP && !"use-existing".equals(step.getResolution()))
+                    || (step.getAction() == DevicePackageRequest.Action.OVERWRITE && deviceOrGateway)) {
                 throw new IllegalArgumentException("Invalid install step: " + step.getName());
             }
         }
@@ -488,8 +493,10 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                     entityGroupService.addEntityToEntityGroup(tenantId, placement.entityGroup().getId(), result.entityId());
                     grouped.add(result.saved());
                 }
-                if (step.getAction() != DevicePackageRequest.Action.KEEP && !"use-existing".equals(resolution)) {
-                    // As at install, the step's attributes go with the entity it saved; written after commit
+                // The step's attributes go with the entity it saved; at install also onto an entity the user chose to
+                // use, as the install always did. Written after commit
+                boolean install = installedVersionId == null;
+                if (install || (step.getAction() != DevicePackageRequest.Action.KEEP && !"use-existing".equals(resolution))) {
                     attributes.add(new StepAttributes(step.getName(), result.entityId(), step.getServerAttributes(), step.getSharedAttributes()));
                 }
             } catch (StepFailure e) {
@@ -622,7 +629,8 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             Device current = id != null ? deviceService.findDeviceById(tenantId, id) : null;
             device = existing(tenantId, current, step);
             if (step.getAction() == DevicePackageRequest.Action.OVERWRITE) {
-                // Another device the user chose to overwrite; the package's own device never changes
+                // On update, another device the user chose to overwrite; it keeps its credentials. The package's own
+                // device never changes, and an install never overwrites one
                 Device template = JacksonUtil.treeToValue(entity, Device.class);
                 template.setTenantId(tenantId);
                 prepareOverwrite(template, id, current, step);
@@ -632,7 +640,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             }
         }
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
-        if (created && step.getCredentials() != null && step.getCredentials().isObject()) {
+        if (step.getAction() == DevicePackageRequest.Action.CREATE && step.getCredentials() != null && step.getCredentials().isObject()) {
             credentials = applyCredentials(tenantId, credentials, step.getCredentials());
         }
         ObjectNode output = output(device.getId(), device.getName());

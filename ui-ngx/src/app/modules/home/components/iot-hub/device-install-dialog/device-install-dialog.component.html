@@ -120,9 +120,11 @@
                   {{ 'iot-hub.device-install-use-existing' | translate }}
                 </button>
               }
-              <button class="tb-progress-action-btn tb-progress-action-warning" (click)="confirmWarning(ep, 'overwrite')">
-                {{ 'iot-hub.device-install-overwrite' | translate }}
-              </button>
+              @if (canOverwriteExisting(ep)) {
+                <button class="tb-progress-action-btn tb-progress-action-warning" (click)="confirmWarning(ep, 'overwrite')">
+                  {{ 'iot-hub.device-install-overwrite' | translate }}
+                </button>
+              }
             } @else {
               <button class="tb-progress-action-btn tb-progress-action-warning" (click)="confirmWarning(ep)">
                 {{ 'iot-hub.device-install-overwrite' | translate }}
