@@ -134,7 +134,6 @@
         <jts.version>1.19.0</jts.version>
         <elasticsearch-rest-client.version>8.18.8</elasticsearch-rest-client.version> <!-- not managed by Spring Boot 4 -->
         <rest-assured.version>5.5.7</rest-assured.version> <!-- not managed by Spring Boot 4 -->
-        <spotbugs-annotations.version>4.8.6</spotbugs-annotations.version>
         <jcip-annotations.version>1.0-1</jcip-annotations.version>
         <bouncycastle.version>1.86</bouncycastle.version> <!-- to fix CVE-2026-18036, CVE-2026-71888, CVE-2026-71889, CVE-2026-71891, CVE-2026-8763, CVE-2026-12185, CVE-2026-12802, CVE-2026-12803, CVE-2026-12816, CVE-2026-12860, CVE-2026-13506, CVE-2026-14682, CVE-2026-58059, CVE-2026-58060, CVE-2026-58061, CVE-2026-58062, CVE-2026-59639, CVE-2026-59642, CVE-2026-59645, CVE-2026-59650, CVE-2026-59651 (supersedes the earlier 1.84 pin for CVE-2026-5588, CVE-2026-5598, CVE-2025-14813). Not managed by the Spring Boot BOM — this pin is the sole source of the bouncycastle version. -->
         <winsw.version>2.0.1</winsw.version>
@@ -177,7 +176,7 @@
         <expressly.version>6.0.0</expressly.version>
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
-        <langchain4j.version>1.16.1-TB1</langchain4j.version>
+        <langchain4j.version>1.16.1</langchain4j.version>
         <error_prone_annotations.version>2.43.0</error_prone_annotations.version>
         <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
         <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
@@ -1574,7 +1573,7 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>org.thingsboard.langchain4j</groupId>
+                <groupId>dev.langchain4j</groupId>
                 <artifactId>langchain4j-bom</artifactId>
                 <version>${langchain4j.version}</version>
                 <type>pom</type>
@@ -2171,11 +2170,6 @@
                 <groupId>io.rest-assured</groupId>
                 <artifactId>rest-assured</artifactId>
                 <version>${rest-assured.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.spotbugs</groupId>
-                <artifactId>spotbugs-annotations</artifactId>
-                <version>${spotbugs-annotations.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.stephenc.jcip</groupId>
