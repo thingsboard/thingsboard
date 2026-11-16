@@ -611,7 +611,7 @@ class DefaultDevicePackageServiceTest {
 
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.getFailedStep()).isEqualTo("DASHBOARD:Dashboard");
-        assertThat(result.getErrorMessage()).contains("Check the update again");
+        assertThat(result.getErrorMessage()).contains("Check the package again");
         verify(dashboardService, never()).saveDashboard(any(Dashboard.class));
     }
 
@@ -858,7 +858,7 @@ class DefaultDevicePackageServiceTest {
         assertThat(DefaultDevicePackageService.userMessage(new DataValidationException("Rule chains limit reached")))
                 .isEqualTo("Rule chains limit reached");
         assertThat(DefaultDevicePackageService.userMessage(new EntityVersionMismatchException(EntityType.DASHBOARD, null)))
-                .contains("Check the update again");
+                .contains("Check the package again");
         assertThat(DefaultDevicePackageService.userMessage(new IllegalStateException("could not execute statement; SQL [n/a]")))
                 .isEqualTo("Failed to save the device package");
     }

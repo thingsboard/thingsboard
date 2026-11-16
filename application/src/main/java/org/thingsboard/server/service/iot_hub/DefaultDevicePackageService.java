@@ -861,7 +861,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
 
     private <T> T existing(TenantId tenantId, T current, DevicePackageRequest.Step step) {
         if (current == null || !tenantId.equals(((HasTenantId) current).getTenantId())) {
-            throw new IllegalArgumentException(step.getName() + " was deleted. Check the update again.");
+            throw new IllegalArgumentException(step.getName() + " was deleted meanwhile. Check the package again.");
         }
         return current;
     }
@@ -989,7 +989,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                     autoCommit(user, saved.id());
                 }
             } catch (Exception e) {
-                log.warn("[{}] Failed to log the device package update of {}", tenantId, saved.id(), e);
+                log.warn("[{}] Failed to log the device package change of {}", tenantId, saved.id(), e);
             }
         }
         for (SavedEntity saved : applied.grouped()) {
@@ -1058,7 +1058,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
      */
     static String userMessage(Throwable e) {
         if (e instanceof EntityVersionMismatchException) {
-            return "Someone changed it while you were reviewing the update. Check the update again.";
+            return "Someone changed it meanwhile. Check the package again.";
         }
         if (e instanceof DataValidationException || e instanceof EntitiesLimitExceededException || e instanceof IllegalArgumentException
                 || e instanceof SubscriptionException) {

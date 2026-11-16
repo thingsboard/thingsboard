@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The update of an installed device package as the install wizard planned it: the entity of each install step
- * of the new version, already resolved from its template, and what to do with it. The server applies all of it
- * in one transaction, together with the new version of the installed item, or nothing.
+ * The install or update of a device package as the install wizard planned it: the entity of each install step
+ * of the version being installed, already resolved from its template, and what to do with it. The server applies
+ * all of it in one transaction, together with the installed item, or nothing.
  */
 @Data
 public class DevicePackageRequest {
@@ -55,13 +55,13 @@ public class DevicePackageRequest {
         private Long expectedVersion;
         // The user confirmed overwriting an entity of another package or one they didn't install with this package
         private boolean confirmed;
-        // OVERWRITE and CREATE: the entity resolved from the template. ${<alias>.<property>} of an entity this
-        // update creates is left for the server, which knows its id only once it is created.
+        // OVERWRITE and CREATE: the entity resolved from the template. ${<alias>.<property>} of an entity the
+        // request creates is left for the server, which knows its id only once it is created.
         private JsonNode entity;
         // DEVICE and GATEWAY: the credentials template, if any
         private JsonNode credentials;
         // OVERWRITE and CREATE: the attributes of the saved entity, written after the transaction. Like the entity,
-        // they may keep ${<alias>.<property>} of an entity this update creates.
+        // they may keep ${<alias>.<property>} of an entity the request creates.
         private JsonNode serverAttributes;
         private JsonNode sharedAttributes;
         // The resolution the install state records for it

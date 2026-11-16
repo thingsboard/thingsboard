@@ -105,6 +105,12 @@ interface EntityStepPlan {
   newDefaultConverter?: boolean;
 }
 
+// Install: the conflict choice a Retry keeps while the existing entity is the same one
+interface InstallConflictChoice {
+  existingId: string;
+  resolution: string;
+}
+
 /**
  * The installed package an update changes. The steps of the new version change the entities
  * the package created in place, so the device keeps its id, credentials and history.
@@ -589,6 +595,15 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
+  /** Install: coming back to the progress step checks the package again, so a plan made before is never sent. */
+  private resetInstallPlan(ws: WizardStep): void {
+    if (ws.type === 'progress' && !ws.progressDone && !ws.updating && !ws.checking) {
+      ws.entitySteps?.forEach(ep => this.entityPlans.delete(ep));
+      ws.entitySteps = null;
+      ws.progressError = null;
+    }
+  }
+
   previousStep(): void {
     if (!this.stepper || this.stepper.selectedIndex <= 0) {
       return;
@@ -742,10 +757,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   onStepSelectionChange(event: StepperSelectionEvent): void {
     if (event.selectedIndex <= event.previouslySelectedIndex) {
-      // Back through the stepper header too, not only the Back button: the Update step checks the update again
-      if (this.data.update) {
-        this.wizardSteps.slice(event.selectedIndex + 1).forEach(ws => this.resetUpdatePlan(ws));
-      }
+      // Back through the stepper header too, not only the Back button: the progress steps after it check again
+      this.wizardSteps.slice(event.selectedIndex + 1)
+        .forEach(ws => this.data.update ? this.resetUpdatePlan(ws) : this.resetInstallPlan(ws));
       return;
     }
     // Forward moves can come from the stepper header, which bypasses nextStep(). A step whose connection isn't
@@ -845,13 +859,25 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return this.wizardSteps.some(ws => ws.updating);
   }
 
-  /** A failed install sends the same plan again; a failed check of the steps runs the check again. */
+  /** A check or an install is running: the stepper header must not leave the step and start a second one. */
+  get isBusy(): boolean {
+    return this.wizardSteps.some(ws => ws.updating || ws.checking);
+  }
+
+  /**
+   * Install: checks the package again, as the tenant may have changed meanwhile. A conflict choice is kept only
+   * while the existing entity is the same one; otherwise the user chooses again.
+   */
   retryEntitySteps(ws: WizardStep): void {
-    if (ws.entitySteps?.every(ep => this.entityPlans.has(ep))) {
-      void this.runInstall(ws);
-    } else {
-      void this.planInstall(ws);
+    const choices = new Map<DeviceInstallStep, InstallConflictChoice>();
+    for (const ep of ws.entitySteps ?? []) {
+      const plan = this.entityPlans.get(ep);
+      if (plan?.existing && plan.resolution) {
+        choices.set(ep.step, { existingId: plan.existing.id, resolution: plan.resolution });
+      }
+      this.entityPlans.delete(ep);
     }
+    this.initAndPlanInstall(ws, choices);
   }
 
   /** Install: records the user's choice for an entity whose name is taken; the install sends it. */
@@ -1441,7 +1467,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       step.markdown = this.zipFiles.get(step.rawSteps[0].file) || '';
       // Nothing to validate here, so the linear stepper header may move past it right away.
       step.completed = true;
-    } else if (step.type === 'progress' && !step.progressDone) {
+    } else if (step.type === 'progress' && !step.progressDone && !step.updating && !step.checking) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);
       } else if (this.data.update) {
@@ -1469,7 +1495,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.completed = true;
   }
 
-  private initAndPlanInstall(ws: WizardStep): void {
+  private initAndPlanInstall(ws: WizardStep, choices?: Map<DeviceInstallStep, InstallConflictChoice>): void {
     ws.entitySteps = ws.rawSteps.map(s => ({
       step: s,
       status: 'pending' as const,
@@ -1477,7 +1503,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }));
     ws.progressError = null;
     ws.progressDone = false;
-    void this.planInstall(ws);
+    void this.planInstall(ws, choices);
   }
 
   private markEntityStepSuccess(ws: WizardStep, ep: EntityStepProgress,
@@ -1499,9 +1525,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /**
    * Install: checks every step for an entity with the same name before anything is created. Without such conflicts
-   * the install starts at once; with them, the user chooses for each one and starts it with Install.
+   * the install starts at once; with them, the user chooses for each one and starts it with Install. On Retry
+   * (choices given), it starts at once when the choices kept cover every conflict.
    */
-  private async planInstall(ws: WizardStep): Promise<void> {
+  private async planInstall(ws: WizardStep, choices?: Map<DeviceInstallStep, InstallConflictChoice>): Promise<void> {
     ws.progressError = null;
     const duplicateKey = this.duplicateStateKey();
     if (duplicateKey) {
@@ -1521,7 +1548,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           ep.status = 'conflict';
           ep.existingEntity = existing;
           ep.conflictType = this.getConflictType(ep.step.type);
-          this.entityPlans.set(ep, { action: 'create', existing, resolution: null, confirmed: true });
+          const choice = choices?.get(ep.step);
+          const resolution = choice?.existingId === existing.id ? choice.resolution : null;
+          this.entityPlans.set(ep, { action: 'create', existing, resolution, confirmed: true });
         } else {
           ep.status = 'pending';
           this.entityPlans.set(ep, { action: 'create', confirmed: true });
@@ -1534,7 +1563,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       ws.checking = false;
       this.cdr.detectChanges();
     }
-    if (!this.closed && !this.hasInstallConflicts(ws)) {
+    if (!this.closed && (choices ? this.unresolvedInstallConflicts(ws) === 0 : !this.hasInstallConflicts(ws))) {
       await this.runInstall(ws);
     }
   }
@@ -1941,7 +1970,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return state;
   }
 
-  /** The steps the server applies, each with its entity resolved from the template of the version installed. */
+  /** The steps the server applies, each with its entity resolved from the template of the version being installed. */
   private async buildUpdateSteps(ws: WizardStep): Promise<DevicePackageStep[]> {
     for (const ep of ws.entitySteps) {
       const plan = this.entityPlans.get(ep);
@@ -2016,7 +2045,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /**
-   * The entity of a step resolved from the template of the version installed, as the server saves it. The server
+   * The entity of a step resolved from the template of the version being installed, as the server saves it. The server
    * keeps what the entity it overwrites must keep: its id, name, owner and an integration's routing key.
    */
   private buildEntityBody(ws: WizardStep, step: DeviceInstallStep, overwritten: EntityStepOutput | null): any {
