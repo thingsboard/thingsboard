@@ -185,48 +185,13 @@ process.on('exit', async (code: number) => {
 
 function listPrecompressedFiles(root: string): PrecompressedVariant[] {
     const variants = precompressedEncodings.map(encoding => ({...encoding, files: new Set<string>()}));
-    if (!fs.existsSync(root)) {
-        return variants;
-    }
-    let stale = 0;
-    for (const file of fs.readdirSync(root, {recursive: true, encoding: 'utf8'})) {
-        const variant = variants.find(({ext}) => file.endsWith(ext));
-        if (!variant) {
-            continue;
+    if (fs.existsSync(root)) {
+        for (const file of fs.readdirSync(root, {recursive: true, encoding: 'utf8'})) {
+            const variant = variants.find(({ext}) => file.endsWith(ext));
+            variant?.files.add('/' + file.slice(0, -variant.ext.length).split(path.sep).join('/'));
         }
-        const original = file.slice(0, -variant.ext.length);
-        if (!matchesOriginal(root, original)) {
-            stale++;
-            continue;
-        }
-        variant.files.add('/' + original.split(path.sep).join('/'));
-    }
-    if (stale) {
-        logger.warn('Ignoring %d pre-compressed files that do not match their original', stale);
     }
     return variants;
-}
-
-// A copy must not shadow an original edited after the build (e.g. a customized locale). gzip stores the
-// uncompressed size (mod 2^32) in its last 4 bytes; the .br copy is trusted together with its .gz sibling.
-function matchesOriginal(root: string, original: string): boolean {
-    const originalStat = fs.statSync(path.join(root, original), {throwIfNoEntry: false});
-    if (!originalStat?.isFile()) {
-        return false;
-    }
-    const gzipPath = path.join(root, original + '.gz');
-    if (!fs.existsSync(gzipPath)) {
-        return true;
-    }
-    const fd = fs.openSync(gzipPath, 'r');
-    try {
-        const size = fs.fstatSync(fd).size;
-        const trailer = Buffer.alloc(4);
-        return size >= 18 && fs.readSync(fd, trailer, 0, 4, size - 4) === 4
-            && trailer.readUInt32LE(0) === originalStat.size % 2 ** 32;
-    } finally {
-        fs.closeSync(fd);
-    }
 }
 
 function precompressedStatic(root: string, variants: PrecompressedVariant[]): RequestHandler {
