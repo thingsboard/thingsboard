@@ -1752,18 +1752,6 @@
       "header": "ce-modified",
       "reason": "Copy of the CE SNMP transport service configuration tb-snmp-transport.conf with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE transport/snmp/src/main/conf/tb-snmp-transport.conf at 5954190c32f.",
       "contentHash": "sha256:40ad6e7b0d56b6e4e45d02b93d7a5a218d2a1745d3cf289e90be64027620244f"
-    },
-    {
-      "path": "msa/transport/modbus/docker/Dockerfile",
-      "header": "ce-modified",
-      "reason": "Copy of the CE SNMP transport Dockerfile with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE msa/transport/snmp/docker/Dockerfile at 5954190c32f.",
-      "contentHash": "sha256:296fd0fdec226362f3d865db97133c873dcc0cc38e28c91463b41cf081379097"
-    },
-    {
-      "path": "msa/transport/modbus/docker/start-tb-modbus-transport.sh",
-      "header": "ce-modified",
-      "reason": "Copy of the CE SNMP transport start script start-tb-snmp-transport.sh with the SNMP names replaced by Modbus ones; the structure is the CE implementation. Reviewed against CE msa/transport/snmp/docker/start-tb-snmp-transport.sh at 5954190c32f.",
-      "contentHash": "sha256:e7a44ed8e853ecc894ae2614c8c89529a7a3a9c133faae3de121706e490a8661"
     }
   ]
 }
