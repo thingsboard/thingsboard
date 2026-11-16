@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData, HasId } from '@shared/models/base-data';
 import { PageComponent } from '@shared/components/page.component';
-import { Directive, Input, OnInit } from '@angular/core';
+import { Directive, Input, OnInit, TemplateRef } from '@angular/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { PageLink } from '@shared/models/page/page-link';
 
@@ -16,6 +16,9 @@ export abstract class EntityTableHeaderComponent<T extends BaseData<HasId>,
   extends PageComponent implements OnInit {
 
   entitiesTableConfigValue: C;
+
+  @Input()
+  timewindowTemplate: TemplateRef<any>;
 
   @Input()
   set entitiesTableConfig(entitiesTableConfig: C) {
