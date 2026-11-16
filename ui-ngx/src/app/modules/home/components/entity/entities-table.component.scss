@@ -32,12 +32,17 @@
       .title-container{
         overflow: hidden;
         height: 100%;
+        min-width: 0;
         .tb-entity-table-title {
-          flex-shrink: 0;
-          max-width: 40%;
+          flex: 0 1 auto;
+          min-width: 64px;
         }
         ::ng-deep > :not(.tb-entity-table-title, button) {
           min-width: 0;
+          flex-shrink: 10000;
+          .mat-mdc-slide-toggle .mdc-label {
+            white-space: normal;
+          }
         }
       }
 
@@ -82,7 +87,6 @@
       .tb-entity-table-title{
         padding-bottom: 5px;
         width: 100%;
-        max-width: 100%;
       }
     }
   }

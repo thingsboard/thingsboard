@@ -11,7 +11,7 @@
                     [ngModel]="entitiesTableConfig.componentsData.deviceInfoFilter"
                     (ngModelChange)="deviceInfoFilterChanged($event)">
     <ng-template let-control>
-      <tb-device-info-filter [buttonMode]="false" [formControl]="control"></tb-device-info-filter>
+      <tb-device-info-filter [formControl]="control"></tb-device-info-filter>
     </ng-template>
   </tb-filter-button>
   <mat-slide-toggle

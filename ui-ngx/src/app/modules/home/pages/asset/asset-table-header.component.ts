@@ -16,7 +16,6 @@ import { map } from 'rxjs/operators';
 @Component({
     selector: 'tb-asset-table-header',
     templateUrl: './asset-table-header.component.html',
-    styleUrls: ['asset-table-header.component.scss'],
     standalone: false
 })
 export class AssetTableHeaderComponent extends EntityTableHeaderComponent<AssetInfo | Asset> implements OnInit {
