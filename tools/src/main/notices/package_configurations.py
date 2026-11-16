@@ -4,7 +4,7 @@
 #
 
 """Writes one ORT package configuration per scanned package: the paths of its source that are not part of the shipped
-library, and the license findings of finding-curations.json that are false, if that file is there.
+library.
 
 Usage: package_configurations.py <scan-result.json> <output directory>
 """
@@ -25,19 +25,15 @@ NOT_SHIPPED = {
     'OTHER': ['**/*.map'],
     'EXAMPLE_OF': ['**/example/**', '**/examples/**', '**/sample/**', '**/samples/**', '**/demo/**', '**/demos/**'],
 }
-# By package, without the version: {"path": ..., "detected_license": ..., "comment": ...}, and "concluded_license"
-# when the finding stands for another license
-FINDING_CURATIONS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'finding-curations.json')
 
 
 def main():
     scan_result, out = sys.argv[1], sys.argv[2]
-    curations = json.load(open(FINDING_CURATIONS)) if os.path.exists(FINDING_CURATIONS) else {}
     excludes = [{'pattern': pattern, 'reason': reason, 'comment': 'Not part of the shipped library.'}
                 for reason, patterns in NOT_SHIPPED.items() for pattern in patterns]
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
-    written, used = 0, set()
+    written = 0
     for scanned in json.load(open(scan_result))['scanner']['provenances']:
         provenance = scanned.get('package_provenance')
         if not provenance:
@@ -49,19 +45,10 @@ def main():
             vcs = provenance['vcs_info']
             configuration['vcs'] = {'type': vcs['type'], 'url': vcs['url'], 'revision': provenance['resolved_revision']}
         configuration['path_excludes'] = excludes
-        package = scanned['id'].rsplit(':', 1)[0]  # the curations of a package apply to every version of it
-        if package in curations:
-            used.add(package)
-            configuration['license_finding_curations'] = [
-                {'path': curation['path'], 'detected_license': curation['detected_license'],
-                 'concluded_license': curation.get('concluded_license', 'NONE'), 'reason': 'INCORRECT',
-                 'comment': curation['comment']} for curation in curations[package]]
         name = re.sub(r'[^A-Za-z0-9._-]', '_', scanned['id']) + '.json'
         json.dump(configuration, open(os.path.join(out, name), 'w'), indent=1)
         written += 1
-    print(f'{written} package configurations written; {len(used)} of {len(curations)} packages with finding curations were scanned')
-    for package in sorted(set(curations) - used):
-        print(f'  Not scanned: {package}')
+    print(f'{written} package configurations written')
 
 
 if __name__ == '__main__':

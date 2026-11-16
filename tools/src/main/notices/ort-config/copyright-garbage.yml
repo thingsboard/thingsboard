@@ -1,0 +1,20 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+# Copyright statements that the notices leave out of every package: the scan finds them in the text of a license, and
+# they are about that text, not about the component that carries it.
+# Only a statement whose own words show that it comes from a license text belongs here, written as the notices print
+# it: it is left out wherever it is found.
+items:
+  # The GNU General Public License 2: "Copyright (C) 1989, 1991 Free Software Foundation, Inc. ... Everyone is
+  # permitted to copy and distribute verbatim copies of this license document"
+  - "Copyright (c) 1989, 1991 Free Software Foundation, Inc."
+  # The GNU Lesser General Public License 2.1, with the same sentence
+  - "Copyright (c) 1991, 1999 Free Software Foundation, Inc."
+  # The GNU General Public License 3 and the GNU Lesser General Public License 3, with the same sentence
+  - "Copyright (c) 2007 Free Software Foundation, Inc. http://fsf.org"
+  # No copyright notice: part of a sentence of the GNU licenses about "software which is copyrighted by the Free
+  # Software Foundation"
+  - "copyrighted by the Free Software Foundation"

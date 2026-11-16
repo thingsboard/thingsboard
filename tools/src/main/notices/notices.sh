@@ -11,8 +11,15 @@
 #
 # Needs Docker and python3. The results of the scans are kept in ~/.ort/scanner (or in $NOTICES_ORT_HOME/scanner):
 # a package that is not there yet is scanned, which takes minutes.
-# A package without a source archive and without a repository fails the scan, until a curation in
-# ort-config/curations.yml gives its source or says that it has none.
+# A package without a source archive and without a repository fails the scan, until a curation gives its source or
+# says that it has none.
+#
+# The decisions that people made are in four files:
+#   ort-config/curations/curations.json     what a package says wrongly or not at all, and what the scan finds wrongly
+#                                           in it: its source, and its license for the versions someone has looked at
+#   license-choices.yml                     the license we take where a library offers several
+#   ort-config/license-classifications.yml  what the notices owe for each license
+#   ort-config/copyright-garbage.yml        copyright statements that are about the text of a license
 set -euo pipefail
 
 if [ $# -lt 4 ]; then
@@ -40,6 +47,7 @@ rm -rf "$WORK/project" "$WORK/package-configurations"
 rm -f "$WORK"/{analyzer-result.json,scan-result.json,THIRD-PARTY-NOTICES} "$WORK"/{convert,analyze,scan,package-configurations,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
 step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERSION" --cache "$ORT_HOME/maven-sources.json" \
+  --curations "$HERE/ort-config/curations/curations.json" \
   --own org.thingsboard.ai/common --own org.thingsboard.license/client --own org.thingsboard.license/shared \
   --out "$WORK/project/ortproject.json" "$@"
 step "$WORK/analyze.log" "${ORT[@]}" -P ort.analyzer.enabledPackageManagers=OrtProjectFile analyze -f JSON -i /work/project -o /work
@@ -47,7 +55,7 @@ step "$WORK/scan.log" "${ORT[@]}" --info scan -f JSON -i /work/analyzer-result.j
 step "$WORK/package-configurations.log" python3 "$HERE/package_configurations.py" "$WORK/scan-result.json" "$WORK/package-configurations"
 step "$WORK/report.log" "${ORT[@]}" --info report -i /work/scan-result.json -o /work -f PlainTextTemplate \
   -O PlainTextTemplate=templatePaths=/notices/THIRD-PARTY-NOTICES.ftl \
-  --package-configurations-dir /work/package-configurations
+  --package-configurations-dir /work/package-configurations --repository-configuration-file /notices/license-choices.yml
 
 mkdir -p "$(dirname "$NOTICES")"
 cp "$WORK/THIRD-PARTY-NOTICES" "$NOTICES"
