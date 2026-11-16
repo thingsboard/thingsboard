@@ -20,7 +20,7 @@ import { AppState } from '@core/core.state';
 import { selectAuthUser } from '@core/auth/auth.selectors';
 
 export interface AiCustomizationSaved {
-  kind: 'MAIL_TEMPLATES' | 'TRANSLATION' | 'MENU' | 'MOBILE_QR_CODE' | 'TWO_FACTOR' | 'PROFILE' | 'ACCOUNT_SECURITY' | 'ACCOUNT_NOTIFICATIONS';
+  kind: 'MAIL_TEMPLATES' | 'TRANSLATION' | 'MENU' | 'MOBILE_QR_CODE' | 'TWO_FACTOR' | 'PROFILE' | 'ACCOUNT_SECURITY' | 'ACCOUNT_NOTIFICATIONS' | 'MAIL_SERVER';
   locale?: string;
   menuId?: string;
   deleted?: boolean;

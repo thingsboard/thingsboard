@@ -1339,6 +1339,12 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('read-scheduler-event', {name: str(result.name) ?? '—'}), blocks: json('event', result)};
     }
+    case 'read_mail_server':
+      return {hood: text('read-mail-server'), blocks: json('mail server', result)};
+    case 'save_mail_server': {
+      const rows = facts(values);
+      return {hood: text('save-mail-server'), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
     case 'read_my_account':
       return {hood: text('read-my-account'), blocks: json('account', result)};
     case 'save_my_profile': {

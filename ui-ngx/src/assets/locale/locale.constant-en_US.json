@@ -920,6 +920,8 @@
             "save-two-factor-settings": "Changed the two-factor authentication settings",
             "save-oauth2-domain": "Changed OAuth 2.0 sign-in on the domain",
             "read-my-account": "Read your account",
+            "read-mail-server": "Read the mail server",
+            "save-mail-server": "Changed the mail server",
             "save-my-profile": "Changed your profile",
             "save-my-two-factor": "Changed your two-factor methods",
             "update-api-key": "Changed the API key",
@@ -1433,6 +1435,14 @@
                 "run": "Reading your account",
                 "done": "Read your account"
             },
+            "read-mail-server": {
+                "run": "Reading the mail server",
+                "done": "Read the mail server"
+            },
+            "save-mail-server": {
+                "run": "Saving the mail server",
+                "done": "Saved the mail server"
+            },
             "save-my-profile": {
                 "run": "Saving your profile",
                 "done": "Saved your profile"
@@ -1870,6 +1880,18 @@
                 "unitSystem": "Units",
                 "mainMethod": "Main method",
                 "apiKey": "API key",
+                "mailFrom": "Sender",
+                "smtpHost": "SMTP host",
+                "smtpPort": "SMTP port",
+                "smtpProtocol": "Protocol",
+                "enableTls": "TLS",
+                "username": "User name",
+                "password": "Password",
+                "enableProxy": "Proxy",
+                "proxyUser": "Proxy user",
+                "proxyPassword": "Proxy password",
+                "oauth2": "OAuth 2.0",
+                "test": "Test",
                 "useSystemSettings": "System settings",
                 "url": "URL",
                 "tag": "Tag",
@@ -1962,6 +1984,7 @@
                 "TWO_FACTOR_SETTINGS": "Security settings",
                 "MY_PROFILE": "Your profile",
                 "MY_TWO_FACTOR": "Your account security",
+                "MAIL_SERVER": "Mail server",
                 "RELATION": "Relations",
                 "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
@@ -2787,7 +2810,8 @@
                 "line": "How the platform sends email through your own server.",
                 "suggestion": "Set up sending email through my mail server.",
                 "example": {
-                    "setup": {"label": "Set up email", "message": "Set up sending email through my mail server."}
+                    "setup": {"label": "Set up email", "message": "Set up sending email through my mail server."},
+                    "check": {"label": "Is email working?", "message": "Which mail server do we send email through, and does it work? Send me a test email."}
                 }
             },
             "notification-settings": {

@@ -91,7 +91,7 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.TASK_MANAGER]: {key: 'task-manager', examples: ['failed']},
   [AiAssistantViewType.SCHEDULER]: {key: 'scheduler', examples: ['night', 'week']},
   [AiAssistantViewType.HOME_SETTINGS]: {key: 'home-settings', examples: ['set']},
-  [AiAssistantViewType.MAIL_SERVER_SETTINGS]: {key: 'mail-server-settings', examples: ['setup']},
+  [AiAssistantViewType.MAIL_SERVER_SETTINGS]: {key: 'mail-server-settings', examples: ['setup', 'check']},
   [AiAssistantViewType.NOTIFICATION_SETTINGS]: {key: 'notification-settings', examples: ['slack', 'sms']},
   [AiAssistantViewType.REPOSITORY_SETTINGS]: {key: 'repository-settings', examples: ['connect']},
   [AiAssistantViewType.AUTO_COMMIT_SETTINGS]: {key: 'auto-commit-settings', examples: ['devices']},

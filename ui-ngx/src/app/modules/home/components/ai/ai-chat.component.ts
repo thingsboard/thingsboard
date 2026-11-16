@@ -1091,6 +1091,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
       case 'save_my_profile':
         this.applyOwnProfile();
         break;
+      case 'save_mail_server':
+        this.panelService.emitCustomizationSaved({kind: 'MAIL_SERVER'});
+        break;
       case 'save_notification_preferences':
         this.panelService.emitCustomizationSaved({kind: 'ACCOUNT_NOTIFICATIONS'});
         break;
