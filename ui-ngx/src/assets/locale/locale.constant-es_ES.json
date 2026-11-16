@@ -5743,7 +5743,7 @@
     "opc-ua-type": "Tipo",
     "opc-ua-keystore-type": "Tipo",
     "opc-ua-keystore-type-required": "Se requiere el tipo",
-    "opc-ua-keystore-location": "Ubicación *",
+    "opc-ua-keystore-location": "Ubicación",
     "opc-ua-keystore-password": "Contraseña",
     "opc-ua-keystore-password-required": "Se requiere la contraseña",
     "opc-ua-keystore-alias": "Alias",

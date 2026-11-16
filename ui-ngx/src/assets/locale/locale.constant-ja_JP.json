@@ -5743,7 +5743,7 @@
     "opc-ua-type": "タイプ",
     "opc-ua-keystore-type": "タイプ",
     "opc-ua-keystore-type-required": "タイプは必須です。",
-    "opc-ua-keystore-location": "場所 *",
+    "opc-ua-keystore-location": "場所",
     "opc-ua-keystore-password": "パスワード",
     "opc-ua-keystore-password-required": "パスワードは必須です。",
     "opc-ua-keystore-alias": "エイリアス",

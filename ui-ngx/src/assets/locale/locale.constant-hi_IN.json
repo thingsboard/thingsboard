@@ -5780,7 +5780,7 @@
     "opc-ua-type": "प्रकार",
     "opc-ua-keystore-type": "प्रकार",
     "opc-ua-keystore-type-required": "प्रकार आवश्यक है",
-    "opc-ua-keystore-location": "स्थान *",
+    "opc-ua-keystore-location": "स्थान",
     "opc-ua-keystore-password": "पासवर्ड",
     "opc-ua-keystore-password-required": "पासवर्ड आवश्यक है",
     "opc-ua-keystore-alias": "उपनाम",

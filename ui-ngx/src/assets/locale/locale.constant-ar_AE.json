@@ -5781,7 +5781,7 @@
         "opc-ua-type": "النوع",
         "opc-ua-keystore-type": "النوع",
         "opc-ua-keystore-type-required": "النوع مطلوب",
-        "opc-ua-keystore-location": "الموقع *",
+        "opc-ua-keystore-location": "الموقع",
         "opc-ua-keystore-password": "كلمة المرور",
         "opc-ua-keystore-password-required": "كلمة المرور مطلوبة",
         "opc-ua-keystore-alias": "الاسم المستعار",

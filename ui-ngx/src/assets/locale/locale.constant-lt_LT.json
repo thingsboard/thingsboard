@@ -5780,7 +5780,7 @@
     "opc-ua-type": "Tipas",
     "opc-ua-keystore-type": "Tipas",
     "opc-ua-keystore-type-required": "Tipas yra privalomas",
-    "opc-ua-keystore-location": "Vieta *",
+    "opc-ua-keystore-location": "Vieta",
     "opc-ua-keystore-password": "Slaptažodis",
     "opc-ua-keystore-password-required": "Slaptažodis yra privalomas",
     "opc-ua-keystore-alias": "Pseudonimas",

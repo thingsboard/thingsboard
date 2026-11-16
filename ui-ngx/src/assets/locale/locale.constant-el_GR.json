@@ -5754,7 +5754,7 @@
     "opc-ua-type": "Τύπος",
     "opc-ua-keystore-type": "Τύπος",
     "opc-ua-keystore-type-required": "Απαιτείται τύπος",
-    "opc-ua-keystore-location": "Τοποθεσία *",
+    "opc-ua-keystore-location": "Τοποθεσία",
     "opc-ua-keystore-password": "Κωδικός πρόσβασης",
     "opc-ua-keystore-password-required": "Απαιτείται κωδικός πρόσβασης",
     "opc-ua-keystore-alias": "Ψευδώνυμο",
