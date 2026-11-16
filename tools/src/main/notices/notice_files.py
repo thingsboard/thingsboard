@@ -39,16 +39,17 @@ def main():
     args = parser.parse_args()
 
     found = {}  # text -> set of (package, path)
-    for jar in json.load(open(args.jars)):
+    for jar in json.load(open(args.jars, encoding='utf-8')):
         with zipfile.ZipFile(jar_file(jar, args)) as archive:
             collect(found, coordinates(jar['group'], jar['name'], jar['version']), archive)
-    for provenance in json.load(open(args.scan_result))['scanner']['provenances']:
+    for provenance in json.load(open(args.scan_result, encoding='utf-8'))['scanner']['provenances']:
         kind, namespace, name, version = provenance['id'].split(':', 3)
         archive = kept_files(provenance, args.archive) if kind == 'NPM' else None
         if archive:
             collect(found, coordinates(namespace, name, version), archive)
 
-    with open(args.out, 'w') as out:
+    # ORT reads the file as UTF-8, whatever the locale of the build is
+    with open(args.out, 'w', encoding='utf-8') as out:
         out.write(layout(found))
     print(f'{len(found)} NOTICE texts of {len({package for carriers in found.values() for package, _ in carriers})} packages')
     for carriers, _ in ordered(found):
