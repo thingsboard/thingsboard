@@ -11,6 +11,8 @@ import { DashboardInfo } from '@app/shared/models/dashboard.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { isObject } from '@core/utils';
 
 export interface DashboardInfoDialogData {
   dashboard: DashboardInfo;
@@ -32,6 +34,7 @@ export class ImportDashboardFileDialogComponent extends DialogComponent<ImportDa
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: DashboardInfoDialogData,
               private dashboardService: DashboardService,
+              private translate: TranslateService,
               protected dialogRef: MatDialogRef<ImportDashboardFileDialogComponent>,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
@@ -65,13 +68,22 @@ export class ImportDashboardFileDialogComponent extends DialogComponent<ImportDa
     })
   }
 
-  loadDataFromJsonContent(content: string): any {
+  loadDataFromJsonContent = (content: string): any => {
+    let importData: any;
     try {
-      const importData = JSON.parse(content);
-      return importData ? importData['configuration'] : importData;
+      importData = JSON.parse(content);
     } catch (err) {
       this.store.dispatch(new ActionNotificationShow({message: err.message, type: 'error'}));
       return null;
     }
-  }
+    const configuration = isObject(importData) ? importData.configuration : null;
+    if (!isObject(configuration) || Array.isArray(configuration)) {
+      this.store.dispatch(new ActionNotificationShow({
+        message: this.translate.instant('dashboard.invalid-dashboard-file-error'),
+        type: 'error'
+      }));
+      return null;
+    }
+    return configuration;
+  };
 }
