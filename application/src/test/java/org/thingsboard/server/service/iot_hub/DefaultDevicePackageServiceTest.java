@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,12 +17,14 @@ import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestClientException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
@@ -34,6 +37,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.subscription.SubscriptionErrorCode;
@@ -54,6 +58,7 @@ import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.entitiy.integration.TbIntegrationService;
+import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -62,12 +67,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -119,6 +126,8 @@ class DefaultDevicePackageServiceTest {
     private TelemetrySubscriptionService telemetryService;
     @Mock
     private IotHubService iotHubService;
+    @Mock
+    private ProjectInfo projectInfo;
 
     @InjectMocks
     private DefaultDevicePackageService service;
@@ -126,6 +135,8 @@ class DefaultDevicePackageServiceTest {
     private IotHubInstalledItem installedItem;
     // Set when the transaction callback threw, so the transaction would roll back
     private final List<RuntimeException> rolledBack = new ArrayList<>();
+    private boolean inTransaction;
+    private final List<String> savedInTransaction = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -158,11 +169,14 @@ class DefaultDevicePackageServiceTest {
         when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(versionInfo);
 
         when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            inTransaction = true;
             try {
                 return invocation.<TransactionCallback<?>>getArgument(0).doInTransaction(null);
             } catch (RuntimeException e) {
                 rolledBack.add(e);
                 throw e;
+            } finally {
+                inTransaction = false;
             }
         });
         when(packageEntities.checksum(any(), any())).thenReturn("checksum");
@@ -846,6 +860,170 @@ class DefaultDevicePackageServiceTest {
 
         assertThat(resolved.get("a").asText()).isEqualTo("123");
         assertThat(resolved.get("b").asText()).isEqualTo("x 123 ${gateway.id}");
+    }
+
+    @Test
+    void installSavesTheEntitiesAndTheInstalledItemInOneTransaction() {
+        mockInstall();
+        DevicePackageRequest.Step integrationStep = keep("TTN", "INTEGRATION", integrationId);
+        integrationStep.setResolution("use-existing");
+
+        DevicePackageResult result = service.install(user, request(
+                create("AM308 profile", "DEVICE_PROFILE", JacksonUtil.newObjectNode().put("name", "milesight-iot-am308")),
+                integrationStep,
+                create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard"))));
+
+        assertThat(result.isSuccess()).isTrue();
+        verify(transactionTemplate).execute(any());
+        assertThat(savedInTransaction).containsExactly("DEVICE_PROFILE", "DASHBOARD", "INSTALLED_ITEM");
+        ArgumentCaptor<IotHubInstalledItem> saved = ArgumentCaptor.forClass(IotHubInstalledItem.class);
+        verify(installedItemService).save(eq(tenantId), saved.capture());
+        IotHubInstalledItem item = saved.getValue();
+        assertThat(item.getTenantId()).isEqualTo(tenantId);
+        assertThat(item.getItemId()).isEqualTo(itemId);
+        assertThat(item.getItemVersionId()).isEqualTo(UUID.fromString(versionId));
+        assertThat(item.getVersion()).isEqualTo("1.0.1");
+        assertThat(item.getItemName()).isEqualTo("AM308");
+        assertThat(item.getItemType()).isEqualTo("DEVICE");
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) item.getDescriptor();
+        assertThat(descriptor.getCreatedEntityIds()).containsExactly(profileId, integrationId, dashboardId);
+        assertThat(descriptor.getUsedExistingEntityIds()).containsExactly(integrationId);
+        assertThat(descriptor.getDashboardId()).isEqualTo(dashboardId);
+        Map<String, JsonNode> state = descriptor.getInstallState();
+        assertThat(state.get("DEVICE_PROFILE:AM308 profile").get("entityOutput").get("id").asText()).isEqualTo(profileId.getId().toString());
+        assertThat(state.get("DEVICE_PROFILE:AM308 profile").get("checksum").isTextual()).isTrue();
+        assertThat(state.get("DASHBOARD:Dashboard").get("entityOutput").get("id").asText()).isEqualTo(dashboardId.getId().toString());
+        assertThat(state.get("DASHBOARD:Dashboard").get("checksum").isTextual()).isTrue();
+        assertThat(state.get("INTEGRATION:TTN").get("entityOutput").get("id").asText()).isEqualTo(integrationId.getId().toString());
+        assertThat(state.get("INTEGRATION:TTN").get("resolution").asText()).isEqualTo("use-existing");
+        assertThat(result.getDescriptor()).isSameAs(descriptor);
+        assertThat(result.getOutputs()).containsOnlyKeys("DEVICE_PROFILE:AM308 profile", "INTEGRATION:TTN", "DASHBOARD:Dashboard");
+    }
+
+    @Test
+    void installFailureOnALaterStepSavesNothing() {
+        mockInstall();
+        when(dashboardService.saveDashboard(any(Dashboard.class))).thenThrow(new DataValidationException("Dashboards limit reached"));
+
+        DevicePackageResult result = service.install(user, request(
+                create("AM308 profile", "DEVICE_PROFILE", JacksonUtil.newObjectNode().put("name", "milesight-iot-am308")),
+                create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard"))));
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getFailedStep()).isEqualTo("DASHBOARD:Dashboard");
+        assertThat(result.getErrorMessage()).isEqualTo("Dashboards limit reached");
+        assertThat(rolledBack).hasSize(1);
+        verify(installedItemService, never()).save(any(), any());
+        verifyNoInteractions(logEntityActionService, telemetryService);
+        verify(iotHubRestClient, never()).reportVersionInstalled(any(), any());
+    }
+
+    @Test
+    void installOverwriteOfAnExistingEntityNeedsAConfirmation() {
+        mockInstall();
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(7L));
+
+        DevicePackageResult result = service.install(user, request(
+                overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d"))));
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Overwriting an entity of another package needs a confirmation: Dashboard");
+        verify(transactionTemplate, never()).execute(any());
+        verify(dashboardService, never()).saveDashboard(any(Dashboard.class));
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void installWithBadIntegrationCredentialsSavesNothing() throws Exception {
+        mockInstall();
+        doThrow(new ExecutionException(new IllegalStateException("Wrong API key")))
+                .when(tbIntegrationService).validateIntegrationConfiguration(eq(tenantId), any());
+
+        DevicePackageResult result = service.install(user, request(
+                create("TTN", "INTEGRATION", JacksonUtil.newObjectNode().put("name", "TTN").put("type", "TTN"))));
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getFailedStep()).isEqualTo("INTEGRATION:TTN");
+        assertThat(result.getErrorMessage()).isEqualTo("Wrong API key");
+        verify(transactionTemplate, never()).execute(any());
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void installWhenHubIsUnavailableSavesNothing() {
+        mockInstall();
+        when(iotHubRestClient.getVersionInfo(versionId)).thenThrow(new RestClientException("Connection refused"));
+
+        DevicePackageResult result = service.install(user, request(
+                create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard"))));
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("IoT Hub is unavailable. Try again later.");
+        verify(transactionTemplate, never()).execute(any());
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void installReportsToTheHubAfterCommitAndIgnoresAReportFailure() {
+        mockInstall();
+        doThrow(new RestClientException("Connection refused")).when(iotHubRestClient).reportVersionInstalled(eq(versionId), any());
+
+        DevicePackageResult result = service.install(user, request(
+                create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "AM308 dashboard"))));
+
+        assertThat(result.isSuccess()).isTrue();
+        InOrder order = inOrder(installedItemService, logEntityActionService, iotHubRestClient);
+        order.verify(installedItemService).save(eq(tenantId), any());
+        order.verify(logEntityActionService).logEntityAction(eq(tenantId), eq(dashboardId), any(), eq(ActionType.ADDED), eq(user));
+        order.verify(iotHubRestClient).reportVersionInstalled(eq(versionId), any());
+    }
+
+    @Test
+    void installRejectsAFromVersion() {
+        mockInstall();
+        DevicePackageRequest request = request(create("Dashboard", "DASHBOARD", JacksonUtil.newObjectNode().put("title", "d")));
+        request.setFromVersionId(installedVersionId);
+
+        DevicePackageResult result = service.install(user, request);
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Invalid install request");
+        verify(transactionTemplate, never()).execute(any());
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    /** The new entities get these ids; each save records that it ran inside the transaction. */
+    private void mockInstall() {
+        when(user.getId()).thenReturn(new UserId(UUID.randomUUID()));
+        when(projectInfo.getProjectVersion()).thenReturn("4.4.1");
+        when(projectInfo.getProductType()).thenReturn("PE");
+        when(deviceProfileService.saveDeviceProfile(any())).thenAnswer(i -> {
+            recordSave("DEVICE_PROFILE");
+            DeviceProfile profile = i.getArgument(0);
+            profile.setId(profileId);
+            return profile;
+        });
+        when(dashboardService.saveDashboard(any(Dashboard.class))).thenAnswer(i -> {
+            recordSave("DASHBOARD");
+            Dashboard dashboard = i.getArgument(0);
+            dashboard.setId(dashboardId);
+            return dashboard;
+        });
+        when(installedItemService.save(any(), any())).thenAnswer(i -> {
+            recordSave("INSTALLED_ITEM");
+            return i.getArgument(1);
+        });
+        Integration integration = new Integration();
+        integration.setId(integrationId);
+        integration.setTenantId(tenantId);
+        integration.setName("TTN my-app");
+        when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(integration);
+    }
+
+    private void recordSave(String what) {
+        if (inTransaction) {
+            savedInTransaction.add(what);
+        }
     }
 
     private IotHubInstalledItem otherPackage(Map<String, JsonNode> installState) {

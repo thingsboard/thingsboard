@@ -104,6 +104,14 @@ public class IotHubController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/device/install")
+    @ResponseBody
+    public DevicePackageResult installDevicePackage(@RequestBody DevicePackageRequest request) throws ThingsboardException {
+        checkAllPermissions();
+        return devicePackageService.install(getCurrentUser(), request);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/installedItems/{installedItemId}/deviceUpdate/check")
     @ResponseBody
     public List<DevicePackageEntityState> checkDeviceUpdate(@PathVariable UUID installedItemId) throws ThingsboardException {

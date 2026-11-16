@@ -66,6 +66,7 @@ import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.entitiy.integration.TbIntegrationService;
+import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -86,12 +87,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Applies an update of an installed device package in one transaction. The install wizard resolves the templates
- * of the new version (the same way it installs them) and sends the entity of each step; this service checks the
- * plan, saves every entity and the new version of the installed item together, and rolls all of it back on a
- * failure. The side effects of the saves (actors, integration restart, edge, caches) run after commit, so a
- * rollback leaves no trace; the audit log, version control and the attributes, which aren't transactional,
- * are written after commit too.
+ * Installs a device package, or updates an installed one, in one transaction. The install wizard resolves the
+ * templates of the version and sends the entity of each step; this service checks the plan, saves every entity
+ * and the installed item together, and rolls all of it back on a failure. The side effects of the saves (actors,
+ * integration restart, edge, caches) run after commit, so a rollback leaves no trace; the audit log, version control
+ * and the attributes, which aren't transactional, are written after commit too.
  */
 @Service
 @TbCoreComponent
@@ -129,6 +129,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
     private final AttributesService attributesService;
     private final TelemetrySubscriptionService telemetryService;
     private final TransactionTemplate transactionTemplate;
+    private final ProjectInfo projectInfo;
 
     @Override
     public List<DevicePackageEntityState> check(SecurityUser user, IotHubInstalledItemId installedItemId) {
@@ -162,33 +163,106 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
     }
 
     @Override
+    public DevicePackageResult install(SecurityUser user, DevicePackageRequest request) {
+        TenantId tenantId = user.getTenantId();
+        log.info("[{}] Installing device package version {}", tenantId, request.getVersionId());
+        DevicePackageResult result = apply(user, "install of version " + request.getVersionId(), () -> {
+            if (request.getVersionId() == null || request.getFromVersionId() != null) {
+                throw new IllegalArgumentException("Invalid install request");
+            }
+            JsonNode versionInfo = iotHubRestClient.getVersionInfo(request.getVersionId());
+            if (versionInfo == null) {
+                throw new IllegalArgumentException("Failed to get version info from IoT Hub");
+            }
+            // The package owns nothing yet, so overwriting an entity the tenant has needs a confirmation
+            DeviceInstalledItemDescriptor previous = new DeviceInstalledItemDescriptor();
+            validate(tenantId, previous, request);
+            return transactionTemplate.execute(status -> {
+                Applied applied = applySteps(tenantId, previous, request, null);
+                IotHubInstalledItem installedItem = new IotHubInstalledItem();
+                installedItem.setTenantId(tenantId);
+                installedItem.setItemId(UUID.fromString(versionInfo.get("itemId").asText()));
+                installedItem.setItemVersionId(UUID.fromString(request.getVersionId()));
+                installedItem.setItemName(versionInfo.get("name").asText());
+                installedItem.setItemType("DEVICE");
+                installedItem.setVersion(versionInfo.get("version").asText());
+                installedItem.setDescriptor(applied.descriptor());
+                installedItemService.save(tenantId, installedItem);
+                return applied;
+            });
+        });
+        if (result.isSuccess()) {
+            reportInstall(user, request.getVersionId());
+            log.info("[{}] Installed device package version {}", tenantId, request.getVersionId());
+        }
+        return result;
+    }
+
+    @Override
     public DevicePackageResult update(SecurityUser user, IotHubInstalledItemId installedItemId, DevicePackageRequest request) {
         TenantId tenantId = user.getTenantId();
         log.info("[{}] Updating device package {} to version {}", tenantId, installedItemId, request.getVersionId());
-        Applied applied;
-        try {
+        DevicePackageResult result = apply(user, "update of " + installedItemId, () -> {
             DevicePackage devicePackage = findDevicePackage(tenantId, installedItemId);
             JsonNode versionInfo = iotHubRestClient.getVersionInfo(request.getVersionId());
             if (versionInfo == null || !devicePackage.installedItem().getItemId().toString().equals(versionInfo.path("itemId").asText())) {
                 throw new IllegalArgumentException("The version belongs to another item");
             }
-            validatePlan(devicePackage, request);
-            checkFeatures(tenantId, request);
-            validateIntegrations(tenantId, request);
-            applied = transactionTemplate.execute(status -> applySteps(tenantId, devicePackage, request, versionInfo));
+            validate(tenantId, devicePackage.descriptor(), request);
+            return transactionTemplate.execute(status -> {
+                IotHubInstalledItem installedItem = lockInstalledItem(tenantId, devicePackage, request);
+                Applied applied = applySteps(tenantId, devicePackage.descriptor(), request, installedItem.getItemVersionId());
+                installedItem.setItemVersionId(UUID.fromString(request.getVersionId()));
+                installedItem.setItemName(versionInfo.get("name").asText());
+                installedItem.setVersion(versionInfo.get("version").asText());
+                installedItem.setDescriptor(applied.descriptor());
+                installedItemService.save(tenantId, installedItem);
+                return applied;
+            });
+        });
+        if (result.isSuccess()) {
+            log.info("[{}] Updated device package {} to version {}", tenantId, installedItemId, request.getVersionId());
+        }
+        return result;
+    }
+
+    /** Runs the planned change and, once it committed, what isn't transactional; a failure leaves nothing changed. */
+    private DevicePackageResult apply(SecurityUser user, String operation, PackageChange change) {
+        TenantId tenantId = user.getTenantId();
+        Applied applied;
+        try {
+            applied = change.apply();
         } catch (StepFailure e) {
-            log.warn("[{}] Device package update of {} failed on step [{}], nothing was changed", tenantId, installedItemId, e.stepKey, e.getCause());
+            log.warn("[{}] Device package {} failed on step [{}], nothing was changed", tenantId, operation, e.stepKey, e.getCause());
             return DevicePackageResult.error(userMessage(e.getCause()), e.stepKey);
         } catch (RestClientException e) {
-            log.error("[{}] IoT Hub request failed while updating device package {}", tenantId, installedItemId, e);
+            log.error("[{}] IoT Hub request failed during the device package {}", tenantId, operation, e);
             return DevicePackageResult.error("IoT Hub is unavailable. Try again later.", null);
         } catch (Exception e) {
-            log.warn("[{}] Device package update of {} failed, nothing was changed", tenantId, installedItemId, e);
+            log.warn("[{}] Device package {} failed, nothing was changed", tenantId, operation, e);
             return DevicePackageResult.error(userMessage(e), null);
         }
         afterCommit(user, tenantId, applied);
-        log.info("[{}] Updated device package {} to version {}", tenantId, installedItemId, request.getVersionId());
         return DevicePackageResult.success(applied.descriptor(), applied.outputs());
+    }
+
+    /** Counts the install on the Hub; the package is installed whether or not the Hub hears of it. */
+    private void reportInstall(SecurityUser user, String versionId) {
+        TenantId tenantId = user.getTenantId();
+        try {
+            InstallReport report = DefaultIotHubService.buildInstallReport(tenantId.getId(), user.getId().getId(),
+                    projectInfo.getProjectVersion(), projectInfo.getProductType());
+            iotHubRestClient.reportVersionInstalled(versionId, report);
+        } catch (Exception e) {
+            log.warn("[{}] Failed to report install for version {}: {}", tenantId, versionId, e.getMessage());
+        }
+    }
+
+    /** What is checked before the transaction: the plan, the tenant's plan features and the integrations' configuration. */
+    private void validate(TenantId tenantId, DeviceInstalledItemDescriptor previous, DevicePackageRequest request) throws Exception {
+        validatePlan(ownedIds(previous), request);
+        checkFeatures(tenantId, request);
+        validateIntegrations(tenantId, request);
     }
 
     private DevicePackage findDevicePackage(TenantId tenantId, IotHubInstalledItemId installedItemId) {
@@ -204,11 +278,10 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
      * The update may only change what the package owns, or what the user confirmed. The device and the gateway,
      * whose credentials the firmware uses, are never changed.
      */
-    private void validatePlan(DevicePackage devicePackage, DevicePackageRequest request) {
+    private void validatePlan(Set<UUID> ownedIds, DevicePackageRequest request) {
         if (request.getSteps() == null || request.getSteps().isEmpty()) {
             throw new IllegalArgumentException("The update has no steps");
         }
-        Set<UUID> ownedIds = ownedIds(devicePackage.descriptor());
         // A form's values are saved under its key too, so an entity step may not share it
         Set<String> stateKeys = request.getInstallState() != null ? new HashSet<>(request.getInstallState().keySet()) : new HashSet<>();
         for (DevicePackageRequest.Step step : request.getSteps()) {
@@ -274,9 +347,11 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         }
     }
 
-    private Applied applySteps(TenantId tenantId, DevicePackage devicePackage, DevicePackageRequest request, JsonNode versionInfo) {
-        IotHubInstalledItem installedItem = lockInstalledItem(tenantId, devicePackage, request);
-        DeviceInstalledItemDescriptor previous = devicePackage.descriptor();
+    /**
+     * Saves the entities of the steps and builds the descriptor of the installed item, which the caller saves in the
+     * same transaction. previous is what the package had: on install an empty descriptor, and installedVersionId null.
+     */
+    private Applied applySteps(TenantId tenantId, DeviceInstalledItemDescriptor previous, DevicePackageRequest request, UUID installedVersionId) {
         Set<UUID> ownedIds = ownedIds(previous);
         Map<String, ObjectNode> aliasOutputs = new HashMap<>();
         Map<String, ObjectNode> outputs = new LinkedHashMap<>();
@@ -356,7 +431,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
 
         // An update to the installed version itself, e.g. of ThingsBoard's default converter only, sends just the steps
         // it changes: the other steps and the forms keep their install state
-        if (UUID.fromString(request.getVersionId()).equals(installedItem.getItemVersionId()) && previous.getInstallState() != null) {
+        if (UUID.fromString(request.getVersionId()).equals(installedVersionId) && previous.getInstallState() != null) {
             previous.getInstallState().forEach((key, value) -> {
                 if (value instanceof ObjectNode state) {
                     installState.putIfAbsent(key, state);
@@ -376,11 +451,6 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         carryMetadataStates(previous, tracked, state);
         descriptor.setInstallState(state);
 
-        installedItem.setItemVersionId(UUID.fromString(request.getVersionId()));
-        installedItem.setItemName(versionInfo.get("name").asText());
-        installedItem.setVersion(versionInfo.get("version").asText());
-        installedItem.setDescriptor(descriptor);
-        installedItemService.save(tenantId, installedItem);
         // Resolved once every entity is saved: attributes may refer to a later step's entity
         List<StepAttributes> resolvedAttributes = attributes.stream().map(a -> new StepAttributes(a.stepName(), a.entityId(),
                 resolvePlaceholders(a.server(), aliasOutputs), resolvePlaceholders(a.shared(), aliasOutputs))).toList();
@@ -970,6 +1040,11 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
     }
 
     private record DevicePackage(IotHubInstalledItem installedItem, DeviceInstalledItemDescriptor descriptor) {
+    }
+
+    @FunctionalInterface
+    private interface PackageChange {
+        Applied apply() throws Exception;
     }
 
     private record StepResult(EntityId entityId, ObjectNode output, String checksum, SavedEntity saved) {
