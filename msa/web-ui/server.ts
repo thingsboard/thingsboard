@@ -16,6 +16,12 @@ const logger = _logger('main');
 let server: http.Server | null;
 let connections: Socket[] = [];
 
+// in server preference order: brotli is ~23% smaller than gzip on the UI bundle
+const precompressedEncodings = [
+    {encoding: 'br', ext: '.br'},
+    {encoding: 'gzip', ext: '.gz'}
+];
+
 (async() => {
     try {
         logger.info('Starting ThingsBoard Web UI Microservice...');
@@ -115,11 +121,12 @@ let connections: Socket[] = [];
 
         const root = path.join(webDir, 'public');
 
-        // Serve the .gz copies built by ui-ngx instead of compressing per request: on-the-fly zlib/brotli
+        // Serve the .br/.gz copies built by ui-ngx instead of compressing per request: on-the-fly zlib/brotli
         // costs CPU and fragments native memory, which glibc does not return to the OS.
-        const gzipFiles = listGzipFiles(root);
-        logger.info('Pre-compressed files: %d', gzipFiles.size);
-        app.use(precompressedStatic(root, gzipFiles));
+        const precompressed = listPrecompressedFiles(root);
+        logger.info('Pre-compressed files: %s', precompressedEncodings.map(({encoding}) =>
+            `${encoding} ${precompressed.get(encoding)!.size}`).join(', '));
+        app.use(precompressedStatic(root, precompressed));
 
         const staticServe = express.static(root);
 
@@ -167,19 +174,21 @@ process.on('exit', async (code: number) => {
     logger.info(`ThingsBoard Web UI Microservice has been stopped. Exit code: ${code}.`);
 });
 
-function listGzipFiles(root: string): Set<string> {
-    const files = new Set<string>();
+function listPrecompressedFiles(root: string): Map<string, Set<string>> {
+    const files = new Map(precompressedEncodings.map(({encoding}) => [encoding, new Set<string>()]));
     if (fs.existsSync(root)) {
         for (const file of fs.readdirSync(root, {recursive: true, encoding: 'utf8'})) {
-            if (file.endsWith('.gz')) {
-                files.add('/' + file.slice(0, -'.gz'.length).split(path.sep).join('/'));
+            for (const {encoding, ext} of precompressedEncodings) {
+                if (file.endsWith(ext)) {
+                    files.get(encoding)!.add('/' + file.slice(0, -ext.length).split(path.sep).join('/'));
+                }
             }
         }
     }
     return files;
 }
 
-function precompressedStatic(root: string, gzipFiles: Set<string>): RequestHandler {
+function precompressedStatic(root: string, precompressed: Map<string, Set<string>>): RequestHandler {
     return (req, res, next) => {
         if (req.method !== 'GET' && req.method !== 'HEAD') {
             return next();
@@ -190,16 +199,19 @@ function precompressedStatic(root: string, gzipFiles: Set<string>): RequestHandl
         } catch {
             return next();
         }
-        if (!gzipFiles.has(filePath)) {
+        const available = precompressedEncodings.filter(({encoding}) => precompressed.get(encoding)!.has(filePath));
+        if (!available.length) {
             return next();
         }
         res.vary('Accept-Encoding');
-        if (req.acceptsEncodings('gzip') !== 'gzip') {
+        // the server's order wins over the client's: browsers list gzip before br but accept both
+        const variant = available.find(({encoding}) => req.acceptsEncodings(encoding) === encoding);
+        if (!variant) {
             return next();
         }
-        res.setHeader('Content-Encoding', 'gzip');
+        res.setHeader('Content-Encoding', variant.encoding);
         res.type(path.extname(filePath));
-        res.sendFile(filePath + '.gz', {root}, (err?: any) => {
+        res.sendFile(filePath + variant.ext, {root}, (err?: any) => {
             // the client went away: express.static ignores these too
             if (!err || err.code === 'ECONNABORTED' || err.syscall === 'write') {
                 return;
@@ -208,7 +220,7 @@ function precompressedStatic(root: string, gzipFiles: Set<string>): RequestHandl
                 return next(err);
             }
             res.removeHeader('Content-Encoding');
-            // the .gz copy disappeared after startup: let express.static serve the original file
+            // the pre-compressed copy disappeared after startup: let express.static serve the original file
             next(err.status === 404 ? undefined : err);
         });
     };
