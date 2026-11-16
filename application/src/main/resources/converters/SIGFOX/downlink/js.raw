@@ -1,0 +1,27 @@
+/** Encoder **/
+
+// Sigfox downlink: 8 bytes as 16 hexadecimal characters.
+// msg.downlink holds the value of the shared attribute "downlink".
+var result = [];
+
+if (msg.downlink != null) {
+    var payload = String(msg.downlink);
+
+    // A value saved as a number loses its leading zeros. Restore them.
+    while (payload.length < 16) {
+        payload = "0" + payload;
+    }
+
+    if (payload.length > 16) {
+        throw new Error("Sigfox downlink payload must not exceed 16 hexadecimal characters.");
+    }
+
+    result = {
+        contentType: "TEXT",
+        data: payload,
+        metadata: {}
+    };
+}
+
+// An empty array sends no downlink, for example for other attribute updates.
+return result;
