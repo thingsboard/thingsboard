@@ -16,7 +16,7 @@ import { SelfRegistrationService } from '@core/http/self-register.service';
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { MatDialog } from '@angular/material/dialog';
 import { SignupDialogComponent, SignupDialogData } from '@modules/signup/pages/signup/signup-dialog.component';
-import { from } from 'rxjs';
+import { from, of } from 'rxjs';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { passwordStrengthValidator } from '@shared/models/password.models';
 
@@ -173,10 +173,10 @@ export class SignupComponent {
     this.dialog.open<SignupDialogComponent, SignupDialogData, boolean>
     (SignupDialogComponent, {
       disableClose: false,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog', this.wl.loginThemeClass()],
       data: {
         title: 'signup.privacy-policy',
-        content$: this.selfRegistrationService.loadPrivacyPolicy()
+        content$: of(this.selfRegistrationService.privacyPolicy)
       }
     }).afterClosed()
       .subscribe((res) => {
@@ -197,10 +197,10 @@ export class SignupComponent {
     this.dialog.open<SignupDialogComponent, SignupDialogData, boolean>
     (SignupDialogComponent, {
       disableClose: false,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog', this.wl.loginThemeClass()],
       data: {
         title: 'signup.terms-of-use',
-        content$: this.selfRegistrationService.loadTermsOfUse()
+        content$: of(this.selfRegistrationService.termsOfUse)
       }
     }).afterClosed()
       .subscribe((res) => {

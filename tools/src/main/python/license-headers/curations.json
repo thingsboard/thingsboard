@@ -1703,13 +1703,13 @@
       "path": "ui-ngx/src/app/modules/signup/pages/signup/signup-dialog.component.html",
       "header": "pe-only",
       "reason": "PE view template signup-dialog.component.html. Reviewed form fields, bindings and entity/component selection implement the PE feature; the candidate shares standard Material dialog/form/tab scaffolding rather than a CE feature implementation. Reviewed CE candidate ui-ngx/src/app/modules/home/components/entity/add-entity-dialog.component.html at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 955f8f58be2d9d462570164005f4a2ee693b0dd7).",
-      "contentHash": "sha256:07fb450cc0a3d66a35fcb5e56089294ad1181e741f87eef9a76ae38cbbc74882"
+      "contentHash": "sha256:d32cfa4765bb091a814661c842feb499daaaab4aa1fa8f807bc8414f2357f664"
     },
     {
       "path": "ui-ngx/src/app/modules/signup/pages/signup/signup-dialog.component.scss",
       "header": "pe-only",
       "reason": "PE component stylesheet signup-dialog.component.scss. Reviewed overlap consists of shared Material fieldset/panel/button typography, sizing, spacing or host-layout conventions; it does not identify a relocated CE component implementation. Curated as PE-specific UI template use. Reviewed CE candidate ui-ngx/src/app/shared/components/dialog/alert-dialog.component.scss at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 47d8bacd5a1553261a5270fdbe20483feaefe019).",
-      "contentHash": "sha256:4f7db5013f99b1ff93b7b52ed1ac046bffcc29c5b134e4ac94d58b231125b792"
+      "contentHash": "sha256:c197ee8b88da0b86d63251b0652ff1023a14d8aa9bfd83c2a13e83c42ae38575"
     },
     {
       "path": "ui-ngx/src/app/shared/components/role/group-permission-dialog.component.scss",

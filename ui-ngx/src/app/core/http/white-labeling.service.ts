@@ -4,6 +4,7 @@ import { Inject, Injectable, Renderer2, RendererFactory2, RendererStyleFlags2, D
 import { HttpClient } from '@angular/common/http';
 import {
   checkWlParams, defaultCollapsedImageUrl, defaultImageUrl,
+  defaultLoginImageUrl,
   defaultLoginWlParams,
   LoginWhiteLabelingParams,
   mergeDefaults,
@@ -15,16 +16,17 @@ import {
   tbPrimaryPalette,
   WhiteLabelingParams
 } from '@shared/models/white-labeling.models';
-import { Observable, of, ReplaySubject, throwError } from 'rxjs';
+import { Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
 import {
   ColorPalette,
   extendDefaultPalette,
   getContrastColor,
   materialColorPalette
 } from '@shared/models/material.models';
-import { deepClone, isEqual, mergeDeep } from '@core/utils';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { deepClone, isEqual, isUndefinedOrNull, mergeDeep } from '@core/utils';
+import { catchError, filter, map, mergeMap, take, tap } from 'rxjs/operators';
 import { environment as env } from '@env/environment';
+import tinycolor from 'tinycolor2';
 import { ActionSettingsChangeWhiteLabeling } from '@core/settings/settings.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -35,6 +37,7 @@ import { MailTemplatesSettings } from '@shared/models/settings.models';
 import { docPlatformPrefix } from '@shared/models/constants';
 import { MenuId, menuSectionMap } from '@core/services/menu.models';
 import { MenuService } from '@core/services/menu.service';
+import { NavigationEnd, Router } from '@angular/router';
 
 const cssParser = new cssjs();
 cssParser.testMode = false;
@@ -78,6 +81,7 @@ export class WhiteLabelingService {
   private loginPageBackgroundColor: string;
   private loginShowNameVersion: boolean;
   private loginDarkForeground: boolean;
+  private loginPrimaryColorPanels: boolean;
   private showNameBottom: boolean;
   private platformName: string;
   private platformVersion: string;
@@ -88,6 +92,7 @@ export class WhiteLabelingService {
   public loginPageBackgroundColor$ = this.asWhiteLabelingObservable(() => this.loginPageBackgroundColor);
   public loginShowNameVersion$ = this.asWhiteLabelingObservable(() => this.loginShowNameVersion);
   public loginDarkForeground$ = this.asWhiteLabelingObservable(() => this.loginDarkForeground);
+  public loginPrimaryColorPanels$ = this.asWhiteLabelingObservable(() => this.loginPrimaryColorPanels);
   public showNameBottom$ = this.asWhiteLabelingObservable(() => this.showNameBottom);
   public platformName$ = this.asWhiteLabelingObservable(() => this.platformName);
   public platformVersion$ = this.asWhiteLabelingObservable(() => this.platformVersion);
@@ -128,17 +133,21 @@ export class WhiteLabelingService {
   private renderer: Renderer2;
   private readonly ROOT: HTMLElement;
   private readonly BODY: HTMLElement;
+  private readonly APP_ROOT: HTMLElement;
+  private resetLoginThemeSubscription: Subscription;
 
   constructor(
     private http: HttpClient,
     private store: Store<AppState>,
     rendererFactory: RendererFactory2,
     @Inject(DOCUMENT) private document: Document,
-    private menuService: MenuService
+    private menuService: MenuService,
+    private router: Router
   ) {
     this.renderer = rendererFactory.createRenderer(null, null);
     this.ROOT = this.document.documentElement;
     this.BODY = this.document.body;
+    this.APP_ROOT = this.document.querySelector('tb-root');
   }
 
   public logoImageUrl(): string {
@@ -217,6 +226,14 @@ export class WhiteLabelingService {
     return this.asWhiteLabelingObservable(() => this.isPrimaryColorPanels());
   }
 
+  public isLoginPrimaryColorPanels(): boolean {
+    return isUndefinedOrNull(this.loginPrimaryColorPanels) ? false : this.loginPrimaryColorPanels;
+  }
+
+  public loginThemeClass(): string {
+    return this.isLoginPrimaryColorPanels() ? 'tb-dark' : 'tb-login-light';
+  }
+
   public getDocsUrl(): string {
     return `${this.getHelpLinkBaseUrl()}/docs${docPlatformPrefix}/`;
   }
@@ -278,6 +295,12 @@ export class WhiteLabelingService {
     return this.getCurrentWlParams() ? this.getCurrentWlParams().hideConnectivityDialog : false;
   }
 
+  public getMergedLoginWhiteLabelParams(): Observable<LoginWhiteLabelingParams> {
+    return this.http.get<LoginWhiteLabelingParams>('/api/noauth/whiteLabel/loginWhiteLabelParams').pipe(
+      map((mergedLoginWlParams) => mergeDefaults(mergedLoginWlParams, defaultLoginWlParams))
+    );
+  }
+
   public loadLoginWhiteLabelingParams(): Observable<LoginWhiteLabelingParams> {
     return this.http.get<LoginWhiteLabelingParams>('/api/noauth/whiteLabel/loginWhiteLabelParams').pipe(
       mergeMap((loginWlParams) => {
@@ -304,6 +327,7 @@ export class WhiteLabelingService {
     } else {
       observable = of(null);
     }
+    this.applyLoginTheme();
     if (loginWlChanged || this.isUserWlMode) {
       this.isUserWlMode = false;
       observable = observable.pipe(tap(() => this.notifyWlChanged()));
@@ -416,6 +440,7 @@ export class WhiteLabelingService {
       this.menuService.buildMenu();
     }
     this.applyPrimaryPanelsColor(this.currentWLParams.primaryColorPanels);
+    this.resetLoginTheme();
     return this.applyThemePalettes(this.currentWLParams.paletteSettings).pipe(
       tap(() => {
         this.notifyWlChanged();
@@ -467,13 +492,17 @@ export class WhiteLabelingService {
 
   private applyLoginWlParams(wlParams: LoginWhiteLabelingParams) {
     this.loginLogo = wlParams.logoImageUrl;
+    if (!wlParams.loginPrimaryColorPanels && this.loginLogo === defaultLoginImageUrl) {
+      this.loginLogo = defaultImageUrl;
+    }
     this.loginLogoHeight = wlParams.logoImageHeight;
-    this.loginPageBackgroundColor = wlParams.pageBackgroundColor;
+    this.loginPageBackgroundColor = wlParams.loginPrimaryColorPanels ? wlParams.pageBackgroundColor : null;
     this.loginShowNameVersion = wlParams.showNameVersion;
     this.showNameBottom = wlParams.showNameBottom;
     this.platformName = !wlParams.platformName ? 'ThingsBoard' : wlParams.platformName;
     this.platformVersion = !wlParams.platformVersion ? env.tbVersion : wlParams.platformVersion;
     this.loginDarkForeground = wlParams.darkForeground;
+    this.loginPrimaryColorPanels = wlParams.loginPrimaryColorPanels;
   }
 
   private configurePalette(paletteConfig: Palette, defaultColors: ColorPalette,
@@ -523,9 +552,43 @@ export class WhiteLabelingService {
       const cssVar = `${cssVarPrefix}${hue}`;
       const color = palette.colors[hue];
       this.renderer.setStyle(this.ROOT, cssVar, color, RendererStyleFlags2.DashCase);
+      const {r, g, b} = tinycolor(color).toRgb();
+      this.renderer.setStyle(this.ROOT, `${cssVar}-rgb`, `${r}, ${g}, ${b}`, RendererStyleFlags2.DashCase);
       const contrastCssVar = `${cssVarPrefix}contrast-${hue}`;
       const contrastColor = getContrastColor(palette.extends, hue);
       this.renderer.setStyle(this.ROOT, contrastCssVar, contrastColor, RendererStyleFlags2.DashCase);
+    }
+  }
+
+  private applyLoginTheme() {
+    this.resetLoginThemeSubscription?.unsubscribe();
+    const primaryColorPanels = this.isLoginPrimaryColorPanels();
+    this.updateAppRootClass('tb-dark', primaryColorPanels);
+    this.updateAppRootClass('tb-login-light', !primaryColorPanels);
+    this.updateAppRootClass('dark-foreground', primaryColorPanels && !!this.loginDarkForeground);
+  }
+
+  private resetLoginTheme() {
+    this.resetLoginThemeSubscription?.unsubscribe();
+    // the login page stays on screen until the authenticated route is rendered,
+    // dropping the theme right away makes it flash unthemed until then
+    this.resetLoginThemeSubscription = this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      take(1)
+    ).subscribe(() => {
+      this.updateAppRootClass('tb-dark', false);
+      this.updateAppRootClass('tb-login-light', false);
+      this.updateAppRootClass('dark-foreground', false);
+    });
+  }
+
+  private updateAppRootClass(className: string, apply: boolean) {
+    if (this.APP_ROOT) {
+      if (apply) {
+        this.renderer.addClass(this.APP_ROOT, className);
+      } else {
+        this.renderer.removeClass(this.APP_ROOT, className);
+      }
     }
   }
 

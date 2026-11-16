@@ -2,6 +2,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 @import "constants";
 
+@mixin tb-wl-preview-svg-colors($primary-var, $accent-var) {
+  .tb-fill-primary {
+    fill: var(#{$primary-var});
+  }
+  .tb-fill-accent {
+    fill: var(#{$accent-var});
+  }
+}
+
 :host {
   .tb-wl-title {
     font-size: 18px;
@@ -36,31 +45,6 @@
       flex: 1;
       @media #{$mat-gt-sm} {
         width: 320px;
-      }
-    }
-  }
-  .tb-wl-login-preview-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 12px;
-    border-radius: 4px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    background: #fafafa;
-    ::ng-deep svg {
-      max-height: 164px;
-      .tb-fill-login-bg {
-        fill: var(--tb-login-bg-preview);
-      }
-      .tb-fill-fg {
-        fill: var(--tb-login-fg-preview);
-      }
-      .tb-fill-primary {
-        fill: var(--tb-primary-login-preview);
-      }
-      .tb-fill-accent {
-        fill: var(--tb-accent-login-preview);
       }
     }
   }
@@ -109,7 +93,7 @@
           gap: 8px;
           padding-bottom: 12px;
           padding-left: 0;
-          .tb-wl-shell-preview-container {
+          .tb-wl-shell-preview-container, .tb-wl-login-preview-container {
             display: flex;
             flex-direction: row;
             align-items: center;
@@ -118,14 +102,31 @@
             svg {
               width: 100%;
               max-height: 157px;
-              .tb-fill-primary {
-                fill: var(--tb-primary-shell-preview);
-              }
-              .tb-fill-accent {
-                fill: var(--tb-accent-shell-preview);
-              }
+            }
+          }
+          .tb-wl-shell-preview-container {
+            svg {
+              @include tb-wl-preview-svg-colors(--tb-primary-shell-preview, --tb-accent-shell-preview);
               .tb-stroke-accent {
                 stroke: var(--tb-accent-shell-preview);
+              }
+            }
+          }
+
+          .tb-wl-login-preview-container {
+            svg {
+              @include tb-wl-preview-svg-colors(--tb-primary-login-preview, --tb-accent-login-preview);
+              .tb-fill-login-bg {
+                fill: var(--tb-login-bg-preview);
+              }
+              .tb-fill-fg {
+                fill: var(--tb-login-fg-preview);
+              }
+              .tb-stop-primary {
+                stop-color: var(--tb-primary-login-preview);
+              }
+              .tb-stop-accent {
+                stop-color: var(--tb-accent-login-preview);
               }
             }
           }

@@ -7,7 +7,7 @@ import {
   SignUpSelfRegistrationParams,
   WebSelfRegistrationParams
 } from '@shared/models/self-register.models';
-import { Observable, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
@@ -19,6 +19,8 @@ import { isDefinedAndNotNull } from '@core/utils';
 export class SelfRegistrationService {
 
   signUpParams: SignUpSelfRegistrationParams = null;
+  privacyPolicy: string = null;
+  termsOfUse: string = null;
 
   constructor(
     private router: Router,
@@ -49,6 +51,21 @@ export class SelfRegistrationService {
 
   public loadTermsOfUse(): Observable<string> {
     return this.http.get<string>('/api/noauth/selfRegistration/termsOfUse')
+  }
+
+  public loadSignUpPolicies(): Observable<any> {
+    return forkJoin([
+      this.signUpParams.showPrivacyPolicy ? this.loadPrivacyPolicy() : of(null),
+      this.signUpParams.showTermsOfUse ? this.loadTermsOfUse() : of(null)
+    ]).pipe(
+      tap(([privacyPolicy, termsOfUse]) => {
+        this.privacyPolicy = privacyPolicy;
+        this.termsOfUse = termsOfUse;
+        // nothing was ever configured for the domain - there is nothing to accept or to open
+        this.signUpParams.showPrivacyPolicy = !!privacyPolicy;
+        this.signUpParams.showTermsOfUse = !!termsOfUse;
+      })
+    );
   }
 
   public isAvailablePage(): Observable<any> {

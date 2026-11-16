@@ -6,8 +6,6 @@
   display: flex;
   flex: 1 1 ;
   .tb-signup-content {
-    background-color: #eee;
-    --mat-card-elevated-container-elevation: none;
     .tb-signup-form {
       @media #{$mat-gt-sm} {
         width: 480px !important;
@@ -43,12 +41,8 @@
           opacity: .8;
         }
         a {
-          color: var(--mat-app-text-color, var(--mat-app-on-background, inherit));
           margin-left: 8px;
           font-weight: 500;
-          &:hover {
-            border-bottom-color: var(--mat-app-text-color, var(--mat-app-on-background, inherit));
-          }
         }
       }
     }

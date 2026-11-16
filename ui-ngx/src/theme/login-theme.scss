@@ -52,9 +52,113 @@ $tb-primary: mat.m2-define-palette($mat-tb-primary);
   @include mat.all-component-colors($tb-theme);
   @include overwrites.login-theme-overwrites($tb-primary, $tb-theme);
   @include app-overwrites.app-theme-overwrites($tb-primary, $tb-theme);
+
+  // resolved here, the OAuth block re-declares the app theme and would shadow the token
+  --tb-login-divider-color: var(--mat-form-field-outlined-outline-color);
+
   &.dark-foreground {
     @include mat.all-component-colors($tb-dark-foreground-theme);
     @include overwrites.login-theme-overwrites($tb-primary, $tb-dark-foreground-theme);
     @include app-overwrites.app-theme-overwrites($tb-primary, $tb-dark-foreground-theme);
+  }
+
+  .mat-app-background {
+    background-color: #eee;
+    --mat-card-elevated-container-elevation: none;
+
+    .no-account-section a,
+    .has-account-section a {
+      color: var(--mat-app-text-color, var(--mat-app-on-background, inherit));
+      &:hover {
+        border-bottom-color: var(--mat-app-text-color, var(--mat-app-on-background, inherit));
+      }
+    }
+  }
+}
+
+@mixin tb-login-light-surface() {
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(closest-side, rgba(var(--tb-login-primary-500-rgb), 0.25) 0%, rgba(var(--tb-login-primary-500-rgb), 0) 100%),
+    radial-gradient(closest-side, rgba(var(--tb-login-accent-500-rgb), 0.25) 0%, rgba(var(--tb-login-accent-500-rgb), 0) 100%),
+    radial-gradient(closest-side, rgba(var(--tb-login-primary-500-rgb), 0.25) 0%, rgba(var(--tb-login-primary-500-rgb), 0) 100%),
+    radial-gradient(closest-side, rgba(var(--tb-login-accent-500-rgb), 0.25) 0%, rgba(var(--tb-login-accent-500-rgb), 0) 100%);
+  background-size:
+    var(--ap-b) var(--ap-b), var(--ap-t) var(--ap-t),
+    var(--ap-b) var(--ap-b), var(--ap-t) var(--ap-t);
+  background-position:
+    calc(var(--ap-b) * -0.5) calc(50% - var(--ap-o)),
+    calc(var(--ap-t) * -0.55) calc(50% + var(--ap-o)),
+    calc(100% + var(--ap-b) * 0.5) calc(50% + var(--ap-o)),
+    calc(100% + var(--ap-t) * 0.55) calc(50% - var(--ap-o));
+  background-repeat: no-repeat;
+}
+
+.tb-login-light {
+  @include mat.all-component-colors($tb-dark-foreground-theme);
+  @include app-overwrites.app-theme-overwrites($tb-primary, $tb-dark-foreground-theme);
+
+  --tb-login-ink: rgba(0, 0, 0, 0.87);
+  --tb-login-ink-2: rgba(0, 0, 0, 0.6);
+  --tb-login-ink-3: rgba(0, 0, 0, 0.38);
+  --tb-login-link: var(--tb-login-primary-700);
+  --tb-login-link-hover: var(--tb-login-primary-900);
+  --tb-login-divider-color: var(--tb-login-ink-3);
+
+  --ap-b: min(44vw, 560px);
+  --ap-t: min(48vw, 620px);
+  --ap-o: min(9vw, 112px);
+
+  color: var(--tb-login-ink);
+  @include tb-login-light-surface();
+
+  .mat-mdc-card {
+    --mat-card-elevated-container-elevation: 0 1px 2px rgba(15, 36, 32, 0.05), 0 6px 20px rgba(15, 36, 32, 0.07);
+    --mat-card-elevated-container-shape: 8px;
+    background-color: #ffffff;
+    color: var(--tb-login-ink);
+  }
+
+  .mat-app-background {
+    @include tb-login-light-surface();
+    color: var(--tb-login-ink);
+
+    .mat-mdc-card-title {
+      color: var(--tb-login-ink);
+    }
+
+    a {
+      color: var(--tb-login-link);
+      &:hover,
+      &:focus {
+        color: var(--tb-login-link-hover);
+      }
+    }
+
+    .oauth-container .title {
+      color: var(--tb-login-ink);
+    }
+
+    .container-divider .text {
+      color: var(--tb-login-ink-2);
+    }
+
+    .no-account-section span.no-account-message,
+    .has-account-section .message,
+    .tb-signup-message,
+    .tb-email-verification {
+      color: var(--tb-login-ink-2);
+    }
+
+    .forgot-password .tb-reset-password,
+    .no-account-section a,
+    .has-account-section a {
+      color: var(--tb-login-link);
+      &:hover,
+      &:focus {
+        color: var(--tb-login-link-hover);
+        border-bottom-color: var(--tb-login-link-hover);
+      }
+    }
   }
 }

@@ -83,3 +83,31 @@ ALTER TABLE tb_cluster ADD COLUMN IF NOT EXISTS non_production_confirmed_ts bigi
 CREATE UNIQUE INDEX IF NOT EXISTS tb_cluster_single_row ON tb_cluster ((true));
 
 -- TB_CLUSTER SINGLE ROW CONSTRAINT END
+
+-- WHITE LABELING loginPrimaryColorPanels DEFAULT START
+
+-- For the system-level LOGIN white-labeling row that does not yet carry the
+-- loginPrimaryColorPanels flag, add it with value true so upgraded installations keep the
+-- previous primary-colored login page theme. Tenant and customer rows are deliberately left
+-- alone: getMergedLoginWhiteLabelingParams() cascades the flag down to them, so they keep the
+-- previous appearance without pinning a value that would ignore a later system-level change.
+UPDATE white_labeling
+SET settings = jsonb_set(settings::jsonb, '{loginPrimaryColorPanels}', 'true'::jsonb)::text
+WHERE type = 'LOGIN'
+  AND tenant_id = '13814000-1dd2-11b2-8080-808080808080'
+  AND customer_id = '13814000-1dd2-11b2-8080-808080808080'
+  AND settings IS NOT NULL
+  AND settings <> ''
+  AND NOT (settings::jsonb ? 'loginPrimaryColorPanels');
+
+-- The UPDATE above only fixes rows that already exist. Most installations never saved
+-- LOGIN-scope white-labeling settings at all, so there is no system-level row for it to
+-- touch -- and getMergedLoginWhiteLabelingParams() always falls back to the system-level
+-- row for anything not overridden at tenant/customer level. Guarantee that row exists
+-- with the flag set, regardless of whether it was there before this upgrade.
+INSERT INTO white_labeling (tenant_id, customer_id, type, settings)
+VALUES ('13814000-1dd2-11b2-8080-808080808080', '13814000-1dd2-11b2-8080-808080808080', 'LOGIN',
+        '{"loginPrimaryColorPanels":true}')
+ON CONFLICT (tenant_id, customer_id, type) DO NOTHING;
+
+-- WHITE LABELING loginPrimaryColorPanels DEFAULT END

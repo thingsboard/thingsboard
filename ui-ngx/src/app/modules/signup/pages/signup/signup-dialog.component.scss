@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 :host {
   .mat-mdc-dialog-content {
-    color: #000;
+    // policy text is the main content of this dialog, keep it at full contrast in both login themes
+    color: var(--mat-app-text-color);
   }
 }

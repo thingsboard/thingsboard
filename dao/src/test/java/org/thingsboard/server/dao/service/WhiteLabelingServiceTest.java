@@ -186,6 +186,7 @@ public class WhiteLabelingServiceTest extends AbstractServiceTest {
         LoginWhiteLabelingParams systemLoginWhiteLabelingParams = new LoginWhiteLabelingParams();
         systemLoginWhiteLabelingParams.setDarkForeground(true);
         systemLoginWhiteLabelingParams.setPageBackgroundColor("#673AB7");
+        systemLoginWhiteLabelingParams.setLoginPrimaryColorPanels(true);
 
         LoginWhiteLabelingParams tenantLoginWhiteLabelingParams = new LoginWhiteLabelingParams();
         tenantLoginWhiteLabelingParams.setDarkForeground(false);
@@ -193,6 +194,7 @@ public class WhiteLabelingServiceTest extends AbstractServiceTest {
         tenantLoginWhiteLabelingParams.merge(systemLoginWhiteLabelingParams);
         assertThat(tenantLoginWhiteLabelingParams.getPageBackgroundColor()).isEqualTo("#673AB7");
         assertThat(tenantLoginWhiteLabelingParams.isDarkForeground()).isFalse();
+        assertThat(tenantLoginWhiteLabelingParams.getLoginPrimaryColorPanels()).isTrue();
     }
 
     private void updateTenantAllowWhiteLabelingSetting(Boolean allowWhiteLabeling, Boolean allowCustomerWhiteLabeling) {

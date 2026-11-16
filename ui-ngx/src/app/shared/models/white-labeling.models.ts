@@ -43,6 +43,7 @@ export interface WhiteLabelingParams {
 }
 
 export interface LoginWhiteLabelingParams extends WhiteLabelingParams {
+  loginPrimaryColorPanels?: boolean;
   pageBackgroundColor?: string;
   darkForeground?: boolean;
   domainId?: DomainId;
@@ -77,7 +78,7 @@ export const defaultWLParams: WhiteLabelingParams = {
   platformVersion: env.tbVersion
 };
 
-const defaultLoginImageUrl = 'assets/logo_title_white.svg';
+export const defaultLoginImageUrl = 'assets/logo_title_white.svg';
 
 const loginWlParams = deepClone(defaultWLParams) as LoginWhiteLabelingParams;
 loginWlParams.logoImageUrl = defaultLoginImageUrl;

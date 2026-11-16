@@ -11380,6 +11380,8 @@
         "appearance": "Appearance",
         "application-shell": "Application shell",
         "application-shell-desc": "Choose how the primary color is applied to the sidebar, app bar and page headings",
+        "login-theme": "Login page theme",
+        "login-theme-desc": "Choose the background theme for the login, signup and password pages",
         "light": "Light",
         "primary": "Primary",
         "primary-palette": "Primary palette",

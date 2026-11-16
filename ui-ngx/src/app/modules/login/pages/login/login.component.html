@@ -5,7 +5,7 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-login-content mat-app-background tb-dark flex flex-1 items-center justify-center" [class.dark-foreground]="wl.loginDarkForeground$ | async"
+<div class="tb-login-content mat-app-background flex flex-1 items-center justify-center"
   [style.background-color]="wl.loginPageBackgroundColor$ | async">
   <mat-card appearance="raised" style="max-height: 100%; overflow-y: auto;">
     <mat-card-content class="!p-6">
@@ -45,9 +45,9 @@
                     }
                   </div>
                   <div class="container-divider">
-                    <mat-divider class="tb-dark flex-1"></mat-divider>
+                    <mat-divider class="flex-1"></mat-divider>
                     <div class="text">{{ "login.or" | translate | uppercase }}</div>
-                    <mat-divider class="tb-dark flex-1"></mat-divider>
+                    <mat-divider class="flex-1"></mat-divider>
                   </div>
                 </div>
               } @else {

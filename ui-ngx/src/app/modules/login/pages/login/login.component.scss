@@ -8,8 +8,6 @@
   display: flex;
   flex: 1 1 0;
   .tb-login-content {
-    background-color: #eee;
-    --mat-card-elevated-container-elevation: none;
     .tb-login-form {
       @media #{$mat-gt-xs} {
         width: 480px !important;
@@ -40,11 +38,7 @@
         }
         a {
           font-size: 14px;
-          color: var(--mat-app-text-color);
           font-weight: 500;
-          &:hover {
-            border-bottom-color: var(--mat-app-text-color);
-          }
         }
       }
     }
@@ -57,8 +51,8 @@
       width: 100%;
       margin-bottom: 16px;
 
-      .mat-divider-horizontal{
-        --mat-divider-color: var(--mat-form-field-outlined-outline-color);
+      .mat-divider-horizontal {
+        --mat-divider-color: var(--tb-login-divider-color);
       }
 
       .text {

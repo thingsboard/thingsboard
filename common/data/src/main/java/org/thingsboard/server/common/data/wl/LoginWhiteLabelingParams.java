@@ -28,6 +28,8 @@ public class LoginWhiteLabelingParams extends WhiteLabelingParams {
     private String adminSettingsId;
     @Schema(description = "Show platform name and version on login page")
     private Boolean showNameBottom;
+    @Schema(description = "Choose the background theme for the login, signup and password pages")
+    private Boolean loginPrimaryColorPanels;
 
     public LoginWhiteLabelingParams merge(LoginWhiteLabelingParams otherWlParams) {
         Integer prevLogoImageHeight = this.logoImageHeight;
@@ -40,6 +42,9 @@ public class LoginWhiteLabelingParams extends WhiteLabelingParams {
         }
         if (this.pageBackgroundColor == null) {
             this.pageBackgroundColor = otherWlParams.pageBackgroundColor;
+        }
+        if (this.loginPrimaryColorPanels == null) {
+            this.loginPrimaryColorPanels = otherWlParams.loginPrimaryColorPanels;
         }
         return this;
     }

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { inject, NgModule } from '@angular/core';
+import { ResolveFn, RouterModule, Routes } from '@angular/router';
 
 import { AuthGuard } from '@core/guards/auth.guard';
 import { SignupComponent } from '@modules/signup/pages/signup/signup.component';
@@ -9,6 +9,10 @@ import { EmailVerificationComponent } from '@modules/signup/pages/signup/email-v
 import { EmailVerifiedComponent } from '@modules/signup/pages/signup/email-verified.component';
 import { TbRecaptchaComponent } from '@modules/signup/pages/signup/tb-recaptcha.component';
 import { passwordPolicyResolver } from '@modules/login/login-routing.module';
+import { SelfRegistrationService } from '@core/http/self-register.service';
+
+export const signUpPoliciesResolver: ResolveFn<void> = (route, state,
+   selfRegistrationService = inject(SelfRegistrationService)) => selfRegistrationService.loadSignUpPolicies();
 
 const routes: Routes = [
   {
@@ -20,7 +24,8 @@ const routes: Routes = [
     },
     canActivate: [AuthGuard],
     resolve: {
-      passwordPolicy: passwordPolicyResolver
+      passwordPolicy: passwordPolicyResolver,
+      signUpPolicies: signUpPoliciesResolver
     }
   },
   {

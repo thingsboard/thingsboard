@@ -18,12 +18,12 @@ import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { environment as env } from '@env/environment';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
-import { merge, mergeMap, Observable } from 'rxjs';
+import { forkJoin, merge, mergeMap, Observable } from 'rxjs';
 import { isDefined, isEqual, isUndefinedOrNull } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { CustomCssDialogComponent, CustomCssDialogData } from '@home/pages/admin/custom-css-dialog.component';
 import { UiSettingsService } from '@core/http/ui-settings.service';
-import { share } from 'rxjs/operators';
+import { map, share } from 'rxjs/operators';
 import { WINDOW } from '@core/services/window.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -98,6 +98,7 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
   selectedLoginPageForegroundColor: string;
 
   private primaryColorPanelsUnset = false;
+  private loginPrimaryColorPanelsUnset = false;
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -152,11 +153,26 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
 
   private loadWhiteLabelingParams() {
     (this.isLoginWl
-        ? this.whiteLabelingService.getCurrentLoginWhiteLabelParams()
+        ? this.loginWhiteLabelingParams()
         : this.whiteLabelingService.getCurrentWhiteLabelParams()
     ).subscribe((whiteLabelingParams) => {
       this.setWhiteLabelingParams(whiteLabelingParams);
     });
+  }
+
+  private loginWhiteLabelingParams(): Observable<LoginWhiteLabelingParams> {
+    return forkJoin([
+      this.whiteLabelingService.getCurrentLoginWhiteLabelParams(),
+      this.whiteLabelingService.getMergedLoginWhiteLabelParams()
+    ]).pipe(
+      map(([loginWlParams, mergedLoginWlParams]) => {
+        this.loginPrimaryColorPanelsUnset = isUndefinedOrNull(loginWlParams.loginPrimaryColorPanels);
+        if (this.loginPrimaryColorPanelsUnset) {
+          loginWlParams.loginPrimaryColorPanels = !!mergedLoginWlParams.loginPrimaryColorPanels;
+        }
+        return loginWlParams;
+      })
+    );
   }
 
   buildWhiteLabelingSettingsForm() {
@@ -189,6 +205,7 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
       this.wlSettings.addControl('prohibitDifferentUrl',
         this.fb.control('', [])
       );
+      this.wlSettings.addControl('loginPrimaryColorPanels', this.fb.control(false, []));
     } else {
       this.wlSettings.addControl('primaryColorPanels', this.fb.control(false, []));
       this.wlSettings.addControl('overrideTrendzName', this.fb.control(false, []));
@@ -300,6 +317,9 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
       // Seeded value was not touched, keep it unset to not break inheritance
       whiteLabelingParams.primaryColorPanels = null;
     }
+    if (this.loginPrimaryColorPanelsUnset && this.wlSettings.get('loginPrimaryColorPanels').pristine) {
+      whiteLabelingParams.loginPrimaryColorPanels = null;
+    }
     (this.isLoginWl ? this.whiteLabelingService.saveLoginWhiteLabelParams(whiteLabelingParams) :
         this.whiteLabelingService.saveWhiteLabelParams(whiteLabelingParams)).subscribe(() => {
           this.whiteLabelingParams = whiteLabelingParams;
@@ -327,7 +347,7 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
         let deleteParams: Observable<LoginWhiteLabelingParams | WhiteLabelingParams>;
         if (this.isLoginWl) {
           deleteParams = this.whiteLabelingService.deleteCurrentLoginWhiteLabelParams().pipe(
-            mergeMap(() => this.whiteLabelingService.getCurrentLoginWhiteLabelParams())
+            mergeMap(() => this.loginWhiteLabelingParams())
           );
         } else {
           deleteParams =  this.whiteLabelingService.deleteCurrentWhiteLabelParams().pipe(
@@ -367,6 +387,7 @@ export class WhiteLabelingComponent extends PageComponent implements OnInit, Has
     const baseUrlFormControl = this.wlSettings.get('baseUrl');
     if (baseUrlFormControl.pristine && !this.whiteLabelingParams?.baseUrl) {
       baseUrlFormControl.patchValue(domain?.name ? this.window.location.protocol + '//' + domain.name : '');
+      baseUrlFormControl.markAsTouched();
     }
   }
 

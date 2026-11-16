@@ -5,8 +5,7 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-col items-center justify-center"
-     [class.dark-foreground]="wl.loginDarkForeground$ | async"
+<div class="tb-two-factor-auth-login-content mat-app-background flex flex-col items-center justify-center"
      style="width: 100%;"
      [style.background-color]="wl.loginPageBackgroundColor$ | async">
   @if (isLoading$ | async) {
@@ -67,7 +66,7 @@
                     tooltipText="{{ 'login.copy-key' | translate }}"
                     tooltipPosition="above"
                     icon="content_copy"
-                    [style]="{'font-size': '24px', color: 'rgba(255,255,255,.8)'}"
+                    [style]="{'font-size': '24px', color: 'var(--tb-login-ink-2, rgba(255,255,255,.8))'}"
                     >
                   </tb-copy-button>
                 </div>

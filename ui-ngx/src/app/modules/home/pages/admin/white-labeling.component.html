@@ -186,12 +186,30 @@
                 </mat-radio-group>
               </div>
             } @else {
-              <div class="tb-wl-login-preview-container"
-                   [style.--tb-login-bg-preview]="selectedLoginPageBackgroundColor"
-                   [style.--tb-login-fg-preview]="selectedLoginPageForegroundColor"
-                   [style.--tb-primary-login-preview]="selectedPrimaryColor"
-                   [style.--tb-accent-login-preview]="selectedAccentColor"
-                   [innerHtml]="'assets/wl/login-preview.svg' | safeSvg | async">
+              <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1.5">
+                  <div class="tb-wl-subtitle">{{ 'white-labeling.login-theme' | translate }}</div>
+                  <div class="tb-wl-desc">{{ 'white-labeling.login-theme-desc' | translate }}</div>
+                </div>
+                <mat-radio-group formControlName="loginPrimaryColorPanels" color="primary"
+                                 class="tb-wl-shell-select flex flex-1 flex-row gap-2"
+                                 [style.--tb-login-bg-preview]="selectedLoginPageBackgroundColor"
+                                 [style.--tb-login-fg-preview]="selectedLoginPageForegroundColor"
+                                 [style.--tb-primary-login-preview]="selectedPrimaryColor"
+                                 [style.--tb-accent-login-preview]="selectedAccentColor">
+                  <mat-radio-button class="flex-1" [value]="false">
+                    <div>{{ 'white-labeling.light' | translate }}</div>
+                    <div class="tb-wl-login-preview-container"
+                         [innerHtml]="'assets/wl/light-login.svg' | safeSvg | async">
+                    </div>
+                  </mat-radio-button>
+                  <mat-radio-button class="flex-1" [value]="true">
+                    <div>{{ 'white-labeling.primary' | translate }}</div>
+                    <div class="tb-wl-login-preview-container"
+                         [innerHtml]="'assets/wl/login-preview.svg' | safeSvg | async">
+                    </div>
+                  </mat-radio-button>
+                </mat-radio-group>
               </div>
             }
             <div class="flex flex-col gap-3">
@@ -207,7 +225,7 @@
                             formControlName="primaryPalette"
                 ></tb-palette>
               </div>
-              @if (isLoginWl) {
+              @if (isLoginWl && wlSettings.get('loginPrimaryColorPanels').value) {
                 <mat-checkbox formControlName="darkForeground">
                   <div class="flex flex-col gap-1">
                     <div class="tb-wl-subtitle">{{ 'white-labeling.dark-foreground' | translate }}</div>
@@ -228,7 +246,7 @@
                 formControlName="accentPalette"
               ></tb-palette>
             </div>
-            @if (isLoginWl) {
+            @if (isLoginWl && wlSettings.get('loginPrimaryColorPanels').value) {
               <div class="flex flex-row items-center gap-4 xs:flex-col xs:items-stretch">
                 <div class="flex flex-1 flex-col gap-1.5">
                   <div class="tb-wl-subtitle">{{ 'white-labeling.page-background-color' | translate }}</div>
