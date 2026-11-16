@@ -132,10 +132,6 @@
           <h3>{{ 'iot-hub.unable-to-load' | translate }}</h3>
           <p>{{ 'iot-hub.unable-to-load-text' | translate }}</p>
           <button mat-flat-button color="primary" (click)="retryLoad()">{{ 'iot-hub.try-again' | translate }}</button>
-        } @else if (onlyUpdates && !hasActiveFilters()) {
-          <h3>{{ 'iot-hub.all-items-up-to-date' | translate }}</h3>
-          <p>{{ 'iot-hub.all-items-up-to-date-text' | translate }}</p>
-          <button mat-flat-button color="primary" (click)="showOnlyUpdates(false)">{{ 'iot-hub.show-all-items' | translate }}</button>
         } @else {
           <h3>{{ 'iot-hub.no-installed-items' | translate }}</h3>
           <p>{{ 'iot-hub.no-installed-items-text' | translate }}</p>

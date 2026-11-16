@@ -89,6 +89,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   installedCount = 0;
   loadFailed = false;
   private loadRun = 0;
+  private countRun = 0;
 
   private widgetResize$: ResizeObserver;
 
@@ -256,10 +257,16 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       next: (infos) => {
         this.publishedVersionMap.clear();
         infos.forEach(info => this.publishedVersionMap.set(info.itemId, info));
-        this.updatesChecked = true;
-        this.isCheckingUpdates = false;
-        // No newer versions: the full list, where a new default converter still shows
-        this.loadUpdatesCount(() => this.showOnlyUpdates((this.updatesCount ?? 0) > 0));
+        // Checked once the counts are in: the header shows them
+        this.loadUpdatesCount(() => {
+          this.updatesChecked = true;
+          this.isCheckingUpdates = false;
+          // No newer versions: the full list, where a new default converter still shows
+          this.showOnlyUpdates(this.updatesCount > 0);
+        }, () => {
+          this.isCheckingUpdates = false;
+          this.updatesCheckFailed = true;
+        });
       },
       error: () => {
         this.isCheckingUpdates = false;
@@ -290,33 +297,45 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   /** Retries a failed load, and the header counts if they failed with it. */
   retryLoad(): void {
     this.loadData();
-    if (this.updatesCount === null) {
+    if (this.updatesChecked && !this.itemVersion && this.updatesCount === null) {
       this.loadUpdatesCount();
     }
   }
 
   private reloadAfterChange(): void {
-    this.loadData();
-    if (this.updatesChecked && !this.itemVersion) {
-      this.loadUpdatesCount();
+    if (!this.updatesChecked || this.itemVersion) {
+      this.loadData();
+      return;
     }
+    // The last update done: the full list, as after Check for updates
+    this.loadUpdatesCount(
+      () => this.onlyUpdates && this.updatesCount === 0 ? this.showOnlyUpdates(false) : this.loadData(),
+      () => this.loadData());
   }
 
-  private loadUpdatesCount(then?: () => void): void {
-    this.updatesCount = null;
+  /** The header counts; the previous ones stay until the new ones arrive, and a later call wins. */
+  private loadUpdatesCount(onCounts?: () => void, onError?: () => void): void {
+    const run = ++this.countRun;
     forkJoin({
       withUpdates: this.iotHubApiService.getInstalledItemsWithUpdates(new PageLink(1), null, this.publishedVersionIds(), { ignoreLoading: true }),
       installed: this.iotHubApiService.getInstalledItemsCount(undefined, { ignoreLoading: true })
     }).subscribe({
       next: ({ withUpdates, installed }) => {
+        if (run !== this.countRun) {
+          return;
+        }
         this.updatesCount = withUpdates.totalElements;
         this.installedCount = installed;
         this.cd.markForCheck();
-        then?.();
+        onCounts?.();
       },
       error: () => {
+        if (run !== this.countRun) {
+          return;
+        }
+        this.updatesCount = null;
         this.cd.markForCheck();
-        then?.();
+        onError?.();
       }
     });
   }
