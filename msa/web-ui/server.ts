@@ -16,11 +16,17 @@ const logger = _logger('main');
 let server: http.Server | null;
 let connections: Socket[] = [];
 
-// in server preference order: brotli is ~23% smaller than gzip on the UI bundle
+// in server preference order; must match the encoders in ui-ngx/compress-build.js
 const precompressedEncodings = [
     {encoding: 'br', ext: '.br'},
     {encoding: 'gzip', ext: '.gz'}
 ];
+
+interface PrecompressedVariant {
+    encoding: string;
+    ext: string;
+    files: Set<string>;
+}
 
 (async() => {
     try {
@@ -121,12 +127,14 @@ const precompressedEncodings = [
 
         const root = path.join(webDir, 'public');
 
-        // Serve the .br/.gz copies built by ui-ngx instead of compressing per request: on-the-fly zlib/brotli
-        // costs CPU and fragments native memory, which glibc does not return to the OS.
-        const precompressed = listPrecompressedFiles(root);
-        logger.info('Pre-compressed files: %s', precompressedEncodings.map(({encoding}) =>
-            `${encoding} ${precompressed.get(encoding)!.size}`).join(', '));
-        app.use(precompressedStatic(root, precompressed));
+        // No per-request compression: zlib/brotli fragment native memory that glibc never returns, until OOM
+        const variants = listPrecompressedFiles(root);
+        if (variants.some(({files}) => files.size)) {
+            logger.info('Pre-compressed files: %s', variants.map(({encoding, files}) => `${encoding} ${files.size}`).join(', '));
+        } else {
+            logger.warn('No pre-compressed (.br/.gz) UI files in %s: UI files are served uncompressed', root);
+        }
+        app.use(precompressedStatic(root, variants));
 
         const staticServe = express.static(root);
 
@@ -174,21 +182,33 @@ process.on('exit', async (code: number) => {
     logger.info(`ThingsBoard Web UI Microservice has been stopped. Exit code: ${code}.`);
 });
 
-function listPrecompressedFiles(root: string): Map<string, Set<string>> {
-    const files = new Map(precompressedEncodings.map(({encoding}) => [encoding, new Set<string>()]));
-    if (fs.existsSync(root)) {
-        for (const file of fs.readdirSync(root, {recursive: true, encoding: 'utf8'})) {
-            for (const {encoding, ext} of precompressedEncodings) {
-                if (file.endsWith(ext)) {
-                    files.get(encoding)!.add('/' + file.slice(0, -ext.length).split(path.sep).join('/'));
-                }
-            }
-        }
+function listPrecompressedFiles(root: string): PrecompressedVariant[] {
+    const variants = precompressedEncodings.map(encoding => ({...encoding, files: new Set<string>()}));
+    if (!fs.existsSync(root)) {
+        return variants;
     }
-    return files;
+    let stale = 0;
+    for (const file of fs.readdirSync(root, {recursive: true, encoding: 'utf8'})) {
+        const variant = variants.find(({ext}) => file.endsWith(ext));
+        if (!variant) {
+            continue;
+        }
+        const original = file.slice(0, -variant.ext.length);
+        const originalStat = fs.statSync(path.join(root, original), {throwIfNoEntry: false});
+        // an original edited after the build (e.g. a customized locale) must not be shadowed by its old copy
+        if (!originalStat?.isFile() || fs.statSync(path.join(root, file)).mtimeMs < originalStat.mtimeMs) {
+            stale++;
+            continue;
+        }
+        variant.files.add('/' + original.split(path.sep).join('/'));
+    }
+    if (stale) {
+        logger.warn('Ignoring %d pre-compressed files without an original or older than it', stale);
+    }
+    return variants;
 }
 
-function precompressedStatic(root: string, precompressed: Map<string, Set<string>>): RequestHandler {
+function precompressedStatic(root: string, variants: PrecompressedVariant[]): RequestHandler {
     return (req, res, next) => {
         if (req.method !== 'GET' && req.method !== 'HEAD') {
             return next();
@@ -199,20 +219,20 @@ function precompressedStatic(root: string, precompressed: Map<string, Set<string
         } catch {
             return next();
         }
-        const available = precompressedEncodings.filter(({encoding}) => precompressed.get(encoding)!.has(filePath));
+        const available = variants.filter(({files}) => files.has(filePath));
         if (!available.length) {
             return next();
         }
         res.vary('Accept-Encoding');
-        // the server's order wins over the client's: browsers list gzip before br but accept both
+        // the server's order wins: browsers list gzip before br but accept both
         const variant = available.find(({encoding}) => req.acceptsEncodings(encoding) === encoding);
         if (!variant) {
             return next();
         }
         res.setHeader('Content-Encoding', variant.encoding);
         res.type(path.extname(filePath));
-        res.sendFile(filePath + variant.ext, {root}, (err?: any) => {
-            // the client went away: express.static ignores these too
+        res.sendFile(filePath + variant.ext, {root}, (err?: NodeJS.ErrnoException & { status?: number }) => {
+            // the client went away; express.static ignores these too
             if (!err || err.code === 'ECONNABORTED' || err.syscall === 'write') {
                 return;
             }
@@ -220,7 +240,7 @@ function precompressedStatic(root: string, precompressed: Map<string, Set<string
                 return next(err);
             }
             res.removeHeader('Content-Encoding');
-            // the pre-compressed copy disappeared after startup: let express.static serve the original file
+            // the copy was removed after startup: fall through to the original
             next(err.status === 404 ? undefined : err);
         });
     };

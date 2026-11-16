@@ -1,16 +1,15 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Writes brotli (<file>.br) and gzip (<file>.gz) copies next to every compressible file of the production build
-// ("yarn run compress", run by Maven right after "build:prod"). The monolith (Spring resource chain) and msa/web-ui
-// serve these copies as-is, so neither compresses UI files per request.
-// This is not an esbuild plugin on purpose: Angular passes custom plugins only to the browser code bundle,
-// so polyfills, global styles and scripts, and the copied assets (locales, hugerte, ace workers) never reach them.
+// Writes .br and .gz copies of the production build's files, served as-is by the monolith and msa/web-ui.
+// Not an esbuild plugin: Angular gives custom plugins only the browser code bundle, not polyfills,
+// global styles/scripts or copied assets.
 
 const os = require('node:os');
 
-// zlib runs on the libuv thread pool (4 threads by default); it must be sized before its first use
-const concurrency = os.availableParallelism();
+// zlib runs on the libuv thread pool (4 threads by default), which must be sized before its first use.
+// More than 8 threads gains nothing: the largest chunk alone takes ~5 s.
+const concurrency = Math.min(os.availableParallelism(), 8);
 process.env.UV_THREADPOOL_SIZE = String(concurrency);
 
 const fs = require('node:fs');
@@ -26,7 +25,7 @@ const buildDir = path.join(__dirname, 'target', 'generated-resources', 'public')
 const compressibleExtensions = new Set(['.js', '.mjs', '.css', '.html', '.json', '.svg', '.txt', '.md', '.ttf', '.otf', '.eot']);
 const minSize = 10240;
 
-// quality 10 is ~21% smaller than gzip -9 on the UI bundle; 11 saves only 2% more and takes 3x longer
+// brotli quality 11 is only ~2% smaller than 10 but 3x slower; must match precompressedEncodings in msa/web-ui
 const encoders = [
   {
     ext: '.br',
@@ -58,7 +57,7 @@ async function compress(file, { ext, encode }) {
 }
 
 async function main() {
-  // largest first, so the main chunk does not end up last on a single thread
+  // largest first, so the main chunk does not start last
   const files = listFiles(buildDir)
     .map(file => ({ file, size: fs.statSync(file).size }))
     .filter(({ file, size }) => compressibleExtensions.has(path.extname(file).toLowerCase()) && size >= minSize)

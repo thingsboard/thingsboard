@@ -110,8 +110,6 @@
                                 </configuration>
                             </execution>
                             <execution>
-                                <!-- Not an esbuild plugin: Angular passes custom plugins only to the browser code
-                                     bundle, so polyfills, global styles/scripts and copied assets never reach them -->
                                 <id>yarn compress</id>
                                 <goals>
                                     <goal>yarn</goal>
