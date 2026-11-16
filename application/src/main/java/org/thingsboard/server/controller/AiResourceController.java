@@ -5,7 +5,6 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,7 +26,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.resource.AiResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -64,16 +62,10 @@ class AiResourceController extends BaseController {
         AiResourceService.AiResourceContent content = aiResourceService.download(resourceId, user);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(content.mediaType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, disposition(content.name()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(content.name()))
                 .header("X-Content-Type-Options", "nosniff")
                 .cacheControl(CacheControl.maxAge(Duration.ofHours(1)).cachePrivate())
                 .body(content.data());
-    }
-
-    private static String disposition(String name) {
-        ContentDisposition.Builder builder = ContentDisposition.attachment();
-        boolean ascii = StandardCharsets.US_ASCII.newEncoder().canEncode(name);
-        return (ascii ? builder.filename(name) : builder.filename(name, StandardCharsets.UTF_8)).build().toString();
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

@@ -67,6 +67,7 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { TimewindowComponent } from '@shared/components/time/timewindow.component';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { A11yModule } from '@angular/cdk/a11y';
 import { TimewindowPanelComponent } from '@shared/components/time/timewindow-panel.component';
 import { TimeintervalComponent } from '@shared/components/time/timeinterval.component';
 import { DatetimePeriodComponent } from '@shared/components/time/datetime-period.component';
@@ -160,6 +161,7 @@ import { EdgeEntityGroupListComponent } from '@shared/components/group/edge-enti
 import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
+import { FilterButtonComponent } from '@shared/components/button/filter-button.component';
 import { TogglePasswordComponent } from '@shared/components/button/toggle-password.component';
 import { WidgetButtonToggleComponent } from '@shared/components/button/widget-button-toggle.component';
 import { HelpPopupComponent } from '@shared/components/help-popup.component';
@@ -491,6 +493,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShareEntityGroupComponent,
     OtaPackageAutocompleteComponent,
     CopyButtonComponent,
+    FilterButtonComponent,
     TogglePasswordComponent,
     WidgetButtonToggleComponent,
     ProtobufContentComponent,
@@ -594,6 +597,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FormsModule,
     ReactiveFormsModule,
     OverlayModule,
+    A11yModule,
     ShareButtonDirective,
     HotkeyModule,
     ColorPickerModule,
@@ -729,6 +733,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FormsModule,
     ReactiveFormsModule,
     OverlayModule,
+    A11yModule,
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselComponent,
@@ -805,6 +810,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShareEntityGroupComponent,
     OtaPackageAutocompleteComponent,
     CopyButtonComponent,
+    FilterButtonComponent,
     TogglePasswordComponent,
     WidgetButtonToggleComponent,
     ProtobufContentComponent,

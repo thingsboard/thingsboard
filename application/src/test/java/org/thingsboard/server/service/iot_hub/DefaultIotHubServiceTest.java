@@ -600,6 +600,38 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
+    void deleteInstalledItem_devicePackageInstalledWithStateByName_deletesTheConverterWhoseStateWasReplaced() throws Exception {
+        mockTenant();
+        IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+        Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
+        IotHubInstalledItem deleted = devicePackage(converter.getId(), integrationId);
+        // The converter and the integration steps shared the name: the integration's state replaced the converter's
+        ObjectNode state = JacksonUtil.newObjectNode().put("resolution", "use-existing");
+        state.set("entityOutput", JacksonUtil.newObjectNode().put("id", integrationId.getId().toString()));
+        state.set("metadata", JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) deleted.getDescriptor();
+        descriptor.setInstallState(Map.of("${integrationName}", state));
+        descriptor.setUsedExistingEntityIds(List.of(integrationId));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        when(integrationService.findIntegrationById(tenantId, integrationId))
+                .thenReturn(integration(integrationId, Map.of("profile.milesight-iot-am308", "AM308", "profile.added-by-user", "Mine")));
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        // Found by createdEntityIds, not by the install state
+        verify(tbConverterService).delete(converter, user);
+        ArgumentCaptor<Integration> saved = ArgumentCaptor.forClass(Integration.class);
+        verify(integrationService).saveIntegration(saved.capture());
+        verify(integrationService, never()).deleteIntegration(any(), any());
+        JsonNode metadata = saved.getValue().getConfiguration().get("metadata");
+        assertThat(metadata.has("profile.milesight-iot-am308")).isFalse();
+        assertThat(metadata.get("profile.added-by-user").asText()).isEqualTo("Mine");
+    }
+
+    @Test
     void findKeptEntities_devicePackage_namesTheSharedEntitiesAndCountsTheOtherPackages() {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DashboardId sharedDashboardId = new DashboardId(UUID.randomUUID());
