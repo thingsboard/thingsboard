@@ -101,6 +101,8 @@ categorizations:
     categories: ["notice"]
   - id: "LicenseRef-scancode-w3c-docs-20021231"
     categories: ["notice"]
+  - id: "LicenseRef-thingsboard-beerware-googlemutant"
+    categories: ["notice"]
   - id: "MIT"
     categories: ["notice"]
   - id: "MIT-0"

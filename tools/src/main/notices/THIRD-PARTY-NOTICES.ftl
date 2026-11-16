@@ -9,7 +9,8 @@
     license text once. ort-config/license-classifications.yml says what else each license gets: a "Source code:" line,
     or the written offer at the end. A license that is not in that file stops the notices.
 --]
-[#-- Readable titles for licenses that have no SPDX identifier and carry a scanner label instead. --]
+[#-- Readable titles for licenses that have no SPDX identifier: those that carry a scanner label instead, and those
+     whose text is ours to give, in ort-config/custom-license-texts. --]
 [#assign titles = {
     "LicenseRef-scancode-unicode": "Unicode License Agreement for Data Files and Software",
     "LicenseRef-scancode-unicode-icu-58": "Unicode License (ICU 58 and later)",
@@ -18,7 +19,8 @@
     "LicenseRef-scancode-w3c-docs-20021231": "W3C Document License (2002-12-31)",
     "LicenseRef-scancode-iso-8879": "ISO 8879 character entity sets notice",
     "LicenseRef-scancode-google-patent-license-webm": "Google additional patent grant for WebM",
-    "LicenseRef-scancode-adobe-postscript": "Adobe PostScript mapping files notice"
+    "LicenseRef-scancode-adobe-postscript": "Adobe PostScript mapping files notice",
+    "LicenseRef-thingsboard-beerware-googlemutant": "Beerware (leaflet.gridlayer.googlemutant)"
 }]
 [#function title name][#return titles[name]!name][/#function]
 [#assign view = LicenseView.CONCLUDED_OR_DECLARED_AND_DETECTED]
