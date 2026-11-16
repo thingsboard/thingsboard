@@ -14,12 +14,6 @@
     min-height: 42px;
   }
 
-  .insecure-url-warning {
-    .mat-icon {
-      color: #FAA405;
-    }
-  }
-
   @media #{$mat-sm} {
     width: 470px;
   }

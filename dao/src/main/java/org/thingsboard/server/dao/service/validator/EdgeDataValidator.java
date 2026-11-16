@@ -40,7 +40,14 @@ public class EdgeDataValidator extends DataValidator<Edge> {
 
     @Override
     protected Edge validateUpdate(TenantId tenantId, Edge edge) {
-        return edgeDao.findById(edge.getTenantId(), edge.getId().getId());
+        Edge old = edgeDao.findById(edge.getTenantId(), edge.getId().getId());
+        if (old == null) {
+            throw new DataValidationException("Can't update non existing edge!");
+        }
+        if (!old.getTenantId().equals(edge.getTenantId())) {
+            throw new DataValidationException("Can't update edge tenant id!");
+        }
+        return old;
     }
 
     @Override

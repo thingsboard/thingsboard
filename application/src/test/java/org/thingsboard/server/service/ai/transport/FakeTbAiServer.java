@@ -3,6 +3,7 @@
 package org.thingsboard.server.service.ai.transport;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.handler.codec.http.HttpHeaders;
 import org.thingsboard.ai.common.channel.ChannelError;
 import org.thingsboard.ai.common.channel.ChannelFrame;
 import org.thingsboard.ai.common.channel.ChannelFrameCodec;
@@ -36,12 +37,14 @@ class FakeTbAiServer implements AutoCloseable {
     final List<ChannelFrame> received = new CopyOnWriteArrayList<>();
     final AtomicInteger connections = new AtomicInteger();
     final AtomicInteger openConnections = new AtomicInteger();
+    final List<HttpHeaders> handshakeHeaders = new CopyOnWriteArrayList<>();
     private final DisposableServer server;
 
     private FakeTbAiServer(List<String> capabilities, Script script) {
         server = HttpServer.create().host("127.0.0.1").port(0)
                 .route(routes -> routes.ws(ChannelProtocol.WS_PATH, (inbound, outbound) -> {
                     connections.incrementAndGet();
+                    handshakeHeaders.add(inbound.headers());
                     openConnections.incrementAndGet();
                     var connection = new Connection();
                     inbound.receive().asString().subscribe(text -> {

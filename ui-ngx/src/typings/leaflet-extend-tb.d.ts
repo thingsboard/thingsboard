@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { FormattedData } from '@shared/models/widget.models';
 import L from 'leaflet';
 import { Map as MapLibreGLMap, MapOptions as MapLibreGLMapOptions } from 'maplibre-gl';
@@ -8,6 +9,10 @@ import { MatIconRegistry } from '@angular/material/icon';
 
 // redeclare module, maintains compatibility with @types/leaflet
 declare module 'leaflet' {
+  interface MapOptions {
+    gestureHandling?: boolean;
+    gestureHandlingOptions?: { duration?: number; text?: { touch?: string; scroll?: string; scrollMac?: string } };
+  }
   interface MarkerOptions {
     tbMarkerData?: FormattedData<TbMapDatasource>;
   }

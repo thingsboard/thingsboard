@@ -38,7 +38,7 @@
     @switch (creatorStep()) {
       @case ('chat') {
         <div class="chat-container flex w-full flex-auto rounded-lg">
-          <div class="chat relative flex size-full flex-col items-center justify-end gap-3"
+          <div #chatArea class="chat relative flex size-full flex-col items-center justify-end gap-3"
                [class.background]="isInitialEmpty()">
             @if (isInitialEmpty()) {
               <div class="welcome-content">
@@ -57,7 +57,8 @@
                 <tb-ai-chat-messages
                   [messages]="messages()"
                   [loading]="loading()"
-                  [loadingLongTime]="loadingLongTime()">
+                  [loadingLongTime]="loadingLongTime()"
+                  (resourceError)="showErrorMessage($event)">
                   <div loadingLongTime class="long-wait flex w-full flex-col items-center gap-6 rounded-xl">
                     <img [src]="loadingImage" alt="Loading">
                     <div class="flex flex-col items-center gap-1">
@@ -72,6 +73,7 @@
               <tb-ai-prompt-input
                 [placeholder]="activePlaceholder() | translate"
                 [loading]="loading()"
+                [dropZone]="chatArea"
                 (messageSent)="sendMsgFromUser($event)">
               </tb-ai-prompt-input>
               @if (isInitialEmpty()) {

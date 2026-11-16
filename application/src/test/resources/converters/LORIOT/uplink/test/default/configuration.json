@@ -1,0 +1,12 @@
+{
+  "type": "DEVICE",
+  "name": "Device name $eui",
+  "label": "",
+  "profile": "Device type",
+  "customer": "",
+  "group": "",
+  "attributes": [
+    "eui",
+    "fPort"
+  ]
+}

@@ -121,6 +121,10 @@ public abstract class AbstractAiControllerTest extends AbstractControllerTest {
         return TbAiClient.TbAiResponse.builder().success(false).error(error).build();
     }
 
+    protected static TbAiClient.TbAiResponse failure(int status, String error) {
+        return TbAiClient.TbAiResponse.builder().success(false).status(status).error(error).build();
+    }
+
     protected static ObjectNode chatMessage(String from, String content) {
         return JacksonUtil.newObjectNode()
                 .put("from", from)

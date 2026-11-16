@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.iot_hub;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,11 @@ class JpaIotHubInstalledItemDao extends JpaAbstractDao<IotHubInstalledItemEntity
     @Override
     public Optional<IotHubInstalledItem> findByTenantIdAndId(TenantId tenantId, IotHubInstalledItemId installedItemId) {
         return repository.findByTenantIdAndId(tenantId.getId(), installedItemId.getId()).map(DaoUtil::getData);
+    }
+
+    @Override
+    public Optional<IotHubInstalledItem> findByTenantIdAndIdForUpdate(TenantId tenantId, IotHubInstalledItemId installedItemId) {
+        return repository.findByTenantIdAndIdForUpdate(tenantId.getId(), installedItemId.getId()).map(DaoUtil::getData);
     }
 
     @Override

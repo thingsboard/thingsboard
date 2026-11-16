@@ -1,0 +1,13 @@
+{
+  "type": "ASSET",
+  "name": "Asset $eui",
+  "label": "",
+  "profile": "$deviceProfileName",
+  "customer": "",
+  "group": "",
+  "attributes": [
+    "eui",
+    "fPort",
+    "devAddr"
+  ]
+}

@@ -16,7 +16,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
-import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'tb-mobile-qr-code-widget',
@@ -55,15 +55,8 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
               private mobileAppService: MobileApplicationService,
               private fb: FormBuilder,
               private userPermissionsService: UserPermissionsService,
-              private wl: WhiteLabelingService) {
+              private route: ActivatedRoute) {
     super(store);
-    this.mobileAppService.getMobileAppSettings()
-      .subscribe(settings => this.processMobileAppSettings(settings));
-
-    if(this.isTenantAdmin()) {
-      this.wl.getCurrentLoginWhiteLabelParams().subscribe(value => this.setBaseURL = !!value.baseUrl);
-    }
-
     if (this.readonly) {
       this.mobileAppSettingsForm.disable()
     } else {
@@ -142,6 +135,12 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
         }
       });
     }
+
+    const data = this.route.snapshot.data.qrCodeWidgetSettings;
+    if (this.isTenantAdmin()) {
+      this.setBaseURL = !!data.loginWhiteLabelParams.baseUrl;
+    }
+    this.processMobileAppSettings(data.mobileAppSettings);
   }
 
   public isTenantAdmin(): boolean {

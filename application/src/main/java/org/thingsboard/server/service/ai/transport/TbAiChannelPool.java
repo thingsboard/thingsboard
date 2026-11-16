@@ -14,10 +14,12 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.channel.TbAiChannelClient;
 import org.thingsboard.ai.common.client.TbAiClient;
+import org.thingsboard.ai.common.client.TbAiHeaders;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.install.ProjectInfo;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
@@ -59,6 +61,7 @@ class TbAiChannelPool {
     private static final int MAX_ACQUIRE_ATTEMPTS = 3;
 
     private final TbAiChannelClient channelClient;
+    private final String tbVersion;
     private final int maxConnections;
     private final int maxOperationsPerConnection;
     private final long idleTimeoutNanos;
@@ -71,17 +74,19 @@ class TbAiChannelPool {
 
     @Autowired
     TbAiChannelPool(TbAiChannelClient channelClient,
+                    ProjectInfo projectInfo,
                     @Value("${ai.channel.pool.max_connections:2000}") int maxConnections,
                     @Value("${ai.channel.pool.max_operations_per_connection:20}") int maxOperationsPerConnection,
                     @Value("${ai.channel.pool.idle_timeout_seconds:60}") long idleTimeoutSeconds,
                     @Value("${ai.channel.pool.max_age_minutes:10}") long maxAgeMinutes) {
-        this(channelClient, maxConnections, maxOperationsPerConnection, Duration.ofSeconds(idleTimeoutSeconds),
-                Duration.ofMinutes(maxAgeMinutes), System::nanoTime, true);
+        this(channelClient, projectInfo.getProjectVersion(), maxConnections, maxOperationsPerConnection,
+                Duration.ofSeconds(idleTimeoutSeconds), Duration.ofMinutes(maxAgeMinutes), System::nanoTime, true);
     }
 
-    TbAiChannelPool(TbAiChannelClient channelClient, int maxConnections, int maxOperationsPerConnection,
+    TbAiChannelPool(TbAiChannelClient channelClient, String tbVersion, int maxConnections, int maxOperationsPerConnection,
                     Duration idleTimeout, Duration maxAge, LongSupplier nanoClock, boolean startSweeper) {
         this.channelClient = channelClient;
+        this.tbVersion = tbVersion;
         this.maxConnections = maxConnections;
         this.maxOperationsPerConnection = maxOperationsPerConnection;
         this.idleTimeoutNanos = idleTimeout.toNanos();
@@ -293,12 +298,9 @@ class TbAiChannelPool {
         return true;
     }
 
-    private static TbAiClient.TokenProvider handshakeTokenProvider(TbAiTurnContext context) {
+    private TbAiClient.TokenProvider handshakeTokenProvider(TbAiTurnContext context) {
         TbAiClient.TokenProvider delegate = context.tokenProvider();
         String acceptLanguage = context.acceptLanguage();
-        if (acceptLanguage == null || acceptLanguage.isBlank()) {
-            return delegate;
-        }
         return new TbAiClient.TokenProvider() {
             @Override
             public String getToken() {
@@ -308,7 +310,10 @@ class TbAiChannelPool {
             @Override
             public Map<String, String> getAdditionalInfo() {
                 var headers = new HashMap<>(delegate.getAdditionalInfo());
-                headers.put(HttpHeaders.ACCEPT_LANGUAGE, acceptLanguage);
+                headers.put(TbAiHeaders.TB_VERSION, tbVersion);
+                if (acceptLanguage != null && !acceptLanguage.isBlank()) {
+                    headers.put(HttpHeaders.ACCEPT_LANGUAGE, acceptLanguage);
+                }
                 return headers;
             }
         };

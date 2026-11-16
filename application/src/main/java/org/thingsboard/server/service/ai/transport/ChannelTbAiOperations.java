@@ -83,11 +83,11 @@ class ChannelTbAiOperations {
     static TbAiResponse toResponse(OperationResult result) {
         TbAiResponse response;
         if (result.isSuccess()) {
-            response = TbAiResponse.builder().success(true).value(result.body()).build();
+            response = TbAiResponse.builder().success(true).status(result.status()).value(result.body()).build();
         } else {
             JsonNode message = result.body() != null ? result.body().get("message") : null;
             String error = message != null && message.isTextual() ? message.asText() : reasonPhrase(result.status());
-            response = TbAiResponse.builder().success(false).error(error).build();
+            response = TbAiResponse.builder().success(false).status(result.status()).error(error).build();
         }
         response.setCreditsUsed(result.creditsUsed());
         return response;

@@ -9,8 +9,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ImageDescriptor;
@@ -26,10 +29,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.resource.TbResourceRepository;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -297,6 +303,38 @@ public class ImageControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testDownloadImageWithSpecialCharactersInFileName() throws Exception {
+        Map<String, String> expectedHeaders = Map.of(
+                "Baker Street, 221B.png", "attachment; filename=\"Baker Street, 221B.png\"",
+                "\"Baker Street\", 221B.png", "attachment; filename=\"\\\"Baker Street\\\", 221B.png\"",
+                "Хрещатик, 22.png", "attachment; filename=\"=?UTF-8?Q?=D0=A5=D1=80=D0=B5=D1=89=D0=B0=D1=82=D0=B8=D0=BA,_22.png?=\"; " +
+                        "filename*=UTF-8''%D0%A5%D1%80%D0%B5%D1%89%D0%B0%D1%82%D0%B8%D0%BA%2C%2022.png"
+        );
+
+        for (Map.Entry<String, String> entry : expectedHeaders.entrySet()) {
+            TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", entry.getKey(), "image/png", PNG_IMAGE);
+
+            for (String url : List.of("/api/images/tenant/{key}", "/api/images/tenant/{key}/preview")) {
+                String contentDisposition = downloadImageContentDisposition(url, imageInfo.getResourceKey());
+
+                assertThat(contentDisposition).as(entry.getKey()).isEqualTo(entry.getValue());
+            }
+        }
+    }
+
+    @Test
+    public void testUploadImageWithEncodedQuotesInFileName() throws Exception {
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "%22Baker Street%22, 221B.png", "image/png", PNG_IMAGE);
+
+        assertThat(imageInfo.getFileName()).isEqualTo("\"Baker Street\", 221B.png");
+        assertThat(imageInfo.getTitle()).isEqualTo("\"Baker Street\", 221B.png");
+        assertThat(imageInfo.getResourceKey()).isEqualTo("\"Baker Street\", 221B.png");
+
+        doGet("/api/images/tenant/{key}", imageInfo.getResourceKey()).andExpect(status().isOk());
+        doGet("/api/images/tenant/{key}/preview", imageInfo.getResourceKey()).andExpect(status().isOk());
+    }
+
+    @Test
     public void testMakeImagePublic() throws Exception {
         String filename = "my_public_image.png";
         TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
@@ -423,6 +461,18 @@ public class ImageControllerTest extends AbstractControllerTest {
     private byte[] downloadPublicImage(String publicKey) throws Exception {
         return doGet("/api/images/public/" + publicKey).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
+    }
+
+    private String downloadImageContentDisposition(String urlTemplate, String key) throws Exception {
+        MockHttpServletRequestBuilder request = get(urlTemplate, key).characterEncoding(StandardCharsets.UTF_8);
+        setJwtToken(request);
+        MockHttpServletResponse response = mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+        assertThat(response.getContentAsByteArray()).isNotEmpty();
+        List<String> headers = response.getHeaders(HttpHeaders.CONTENT_DISPOSITION);
+        assertThat(headers).hasSize(1);
+        return headers.get(0);
     }
 
 }

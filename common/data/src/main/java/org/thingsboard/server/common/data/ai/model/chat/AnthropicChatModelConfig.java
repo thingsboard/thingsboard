@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
@@ -19,7 +20,7 @@ import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 @Builder
 public record AnthropicChatModelConfig(
         @Schema(ref = "#/components/schemas/AnthropicProviderConfig")
-        @NotNull @Valid AnthropicProviderConfig providerConfig,
+        @With @NotNull @Valid AnthropicProviderConfig providerConfig,
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,
         @Positive @Max(1) Double topP,
@@ -32,6 +33,11 @@ public record AnthropicChatModelConfig(
     @Override
     public AiProvider provider() {
         return AiProvider.ANTHROPIC;
+    }
+
+    @Override
+    public AnthropicChatModelConfig withoutProviderConfig() {
+        return withProviderConfig(null);
     }
 
     @Override

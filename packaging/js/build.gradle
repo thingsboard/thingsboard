@@ -16,7 +16,7 @@ base {
 // OS Package plugin configuration
 ospackage {
     packageName = pkgName
-    version = "${project.version}"
+    version = pkgVersion
     release = 1
     os = LINUX
     type = BINARY
@@ -71,7 +71,6 @@ buildRpm {
 
     arch = X86_64
 
-    archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
     // The RPM writer overwrites the file in place without truncating it, so a smaller rebuild keeps stale bytes
