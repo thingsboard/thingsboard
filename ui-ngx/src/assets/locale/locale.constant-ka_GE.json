@@ -1720,7 +1720,7 @@
     "type-aws-sqs": "AWS SQS",
     "type-aws-kinesis": "AWS Kinesis",
     "type-ibm-watson-iot": "IBM Watson IoT",
-    "type-ttn": "The Things Stack Community",
+    "type-ttn": "The Things Stack Sandbox",
     "type-azure-event-hub": "ტიპის-აზური-ღონისძიების ცენტრი",
     "type-opc-ua": "OPC-UA",
     "type-custom": "უჩვეულო",
@@ -2211,7 +2211,8 @@
         "IMPERSONATE": "განასახიერე",
         "CHANGE_OWNER": "მფლობელის ცვლილება",
         "ADD_TO_GROUP": "ჯგუფში დამატება",
-        "REMOVE_FROM_GROUP": "ჯგუფიდან წაშლა"
+        "REMOVE_FROM_GROUP": "ჯგუფიდან წაშლა",
+        "INVOKE": "გამოძახება"
       }
     }
   },

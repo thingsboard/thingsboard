@@ -36,6 +36,7 @@
     flex: 1;
     min-height: 0;
     width: 464px;
+    overflow: hidden;
 
     &.fill {
       margin: 0;
@@ -45,6 +46,10 @@
     &.details-open {
       padding: 16px 16px 16px 0;
     }
+  }
+
+  .ai-assistant-composer {
+    flex: none;
   }
 
   .ai-assistant-header {
@@ -70,7 +75,7 @@
     display: flex;
     overflow: hidden;
     flex: 1;
-    padding: 0 24px 24px;
+    padding: 0 24px 16px;
     gap: 16px;
     flex-direction: column;
 

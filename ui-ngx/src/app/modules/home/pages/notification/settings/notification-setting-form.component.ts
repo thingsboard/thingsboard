@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
@@ -21,6 +22,7 @@ import {
             multi: true
         }
     ],
+    host: { class: 'contents' },
     standalone: false
 })
 export class NotificationSettingFormComponent implements ControlValueAccessor, OnInit, OnDestroy {

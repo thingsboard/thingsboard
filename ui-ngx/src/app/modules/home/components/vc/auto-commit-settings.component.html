@@ -129,7 +129,10 @@
           </div>
         </fieldset>
         @if (isReadOnly | async) {
-          <div class="tb-hint" translate>version-control.auto-commit-settings-read-only-hint</div>
+          <div class="tb-form-hint tb-primary-fill">
+            <mat-icon>info_outline</mat-icon>
+            <span translate>version-control.auto-commit-settings-read-only-hint</span>
+          </div>
         }
         <div class="flex flex-row items-center justify-end gap-4 xs:flex-col xs:items-stretch xs:justify-end">
           <button mat-raised-button color="warn" type="button" [class.!hidden]="!settings || !allowDelete || !entityTypesFormGroupArray().length"

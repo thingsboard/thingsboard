@@ -8,7 +8,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.Customer;
@@ -64,10 +67,13 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class SignUpControllerSqlTest extends AbstractControllerTest {
@@ -215,6 +221,34 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         assertTermsOfUseAccepted(activatedUser);
 
         removeCreatedUser(activatedUser);
+    }
+
+    @Test
+    public void testActivationByEmailCodeFromMobileAppSendsWorkingMobileLoginLink() throws Exception {
+        String appSecret = StringUtils.randomAlphanumeric(24);
+        String mobilePkgName = "my.test.android.login." + RandomStringUtils.randomAlphabetic(6).toLowerCase();
+        createMobileSelfRegistrationSettings(mobilePkgName, appSecret, PlatformType.ANDROID, createDashboard(), createDashboard());
+        doSignUp(createMobileSignUpRequest(CUSTOMER_TEST_EMAIL, mobilePkgName, appSecret, PlatformType.ANDROID));
+        User user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
+        String activateToken = userService.findUserCredentialsByUserId(tenantId, user.getId()).getActivateToken();
+
+        doPost("/api/noauth/activateByEmailCode", JsonNode.class,
+                "emailCode", activateToken, "pkgName", mobilePkgName, "platform", PlatformType.ANDROID.name());
+
+        ArgumentCaptor<String> loginUrlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mailService).sendAccountActivatedEmail(any(), loginUrlCaptor.capture(), eq(CUSTOMER_TEST_EMAIL));
+        String loginUrl = loginUrlCaptor.getValue();
+        assertThat(loginUrl).contains("pkgName=" + mobilePkgName).contains("platform=ANDROID");
+
+        String loginPathAndQuery = loginUrl.substring(loginUrl.indexOf("/api/noauth/login"));
+        doGet(loginPathAndQuery)
+                .andExpect(status().isPermanentRedirect())
+                .andExpect(header().string(HttpHeaders.LOCATION, "scheme://test/login"));
+
+        int statusWithoutPlatform = doGet("/api/noauth/login?pkgName=" + mobilePkgName).andReturn().getResponse().getStatus();
+        assertThat(statusWithoutPlatform).isNotEqualTo(HttpStatus.PERMANENT_REDIRECT.value());
+
+        removeCreatedUser(userService.findUserById(tenantId, user.getId()));
     }
 
     @Test

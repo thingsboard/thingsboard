@@ -14,13 +14,14 @@ import {
   ViewChild
 } from '@angular/core';
 import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
-import { Observable, of, Subject, throwError, timer } from 'rxjs';
-import { concatMap, finalize, retry, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { EMPTY, Observable, of, Subject, throwError, timer } from 'rxjs';
+import { catchError, concatMap, finalize, retry, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AiChatService } from '@core/http/ai-chat.service';
 import {
   AiAssistantPromptExample,
   AiChatClientContext,
+  AiPromptMessage,
   ApprovalResult,
   ChatEvent,
   ChatInfo,
@@ -183,9 +184,14 @@ export class AiAssistantPanelComponent implements OnInit {
 
   ngOnInit() {
     this.loadChat$.pipe(
-      switchMap(id => {
-        return this.aiChat.getChatMessages(id, {ignoreLoading: true, ignoreErrors: true});
-      }),
+      switchMap(id => this.aiChat.getChatMessages(id, {ignoreLoading: true, ignoreErrors: true}).pipe(
+        catchError(err => {
+          this.messages.set([]);
+          this.completedExecutions.set({});
+          setTimeout(() => this.showErrorMessage(err), 0);
+          return EMPTY;
+        })
+      )),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(messages => {
       this.showHistory(messages);
@@ -235,10 +241,12 @@ export class AiAssistantPanelComponent implements OnInit {
     this.promptInput?.setValue(example.message);
   }
 
-  sendMsgFromUser(msg: string): void {
-    const userMessage: ChatMessage = {from: 'USER', content: msg};
+  sendMsgFromUser(prompt: AiPromptMessage): void {
+    const userMessage: ChatMessage = prompt.resources.length
+      ? {from: 'USER', content: prompt.message, resources: prompt.resources}
+      : {from: 'USER', content: prompt.message};
     this.messages.update(list => [...list, userMessage]);
-    this.sendMessage(msg).subscribe({
+    this.sendMessage(prompt).subscribe({
       error: (err) => {
         if (this.isConnectionLost(err) && this.chatId()) {
           this.showErrorToast(this.translate.instant('ai-assistant.connection-lost'));
@@ -351,7 +359,7 @@ export class AiAssistantPanelComponent implements OnInit {
     }
   }
 
-  private sendMessage(msg: string): Observable<ChatEvent> {
+  private sendMessage(prompt: AiPromptMessage): Observable<ChatEvent> {
     this.initLoadingState();
     this.sessionAffectedEntities = [];
     this.messageCancelled = false;
@@ -368,9 +376,12 @@ export class AiAssistantPanelComponent implements OnInit {
       );
 
     const request: SendChatMessageRequest = {
-      message: msg,
+      message: prompt.message,
       clientContext: this.resolveClientContextToSend()
     };
+    if (prompt.resources.length) {
+      request.resources = prompt.resources.map(resource => resource.id);
+    }
 
     return startOrContinue$.pipe(
       switchMap(() => this.aiChat.sendChatMessage(this.chatId(), request, {ignoreLoading: true, ignoreErrors: true})),
@@ -526,7 +537,7 @@ export class AiAssistantPanelComponent implements OnInit {
     this.loading.set(false);
   }
 
-  private showErrorMessage(error: any): void {
+  showErrorMessage(error: any): void {
     const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
     const message = parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message;
     this.showErrorToast(message);

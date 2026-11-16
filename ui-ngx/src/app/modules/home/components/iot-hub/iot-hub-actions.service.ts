@@ -3,23 +3,29 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, of, EMPTY } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable, of, EMPTY, firstValueFrom, from } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
-import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { DeviceInstalledItemDescriptor, IotHubInstalledItem, IotHubInstalledItemKeptEntities } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { ConverterService } from '@core/http/converter.service';
+import { Converter } from '@shared/models/converter.models';
+import { HasVersion } from '@shared/models/entity.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TbIotHubAddItemDialogComponent, IotHubAddItemDialogData, IotHubAddItemDialogResult } from './iot-hub-add-item-dialog.component';
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData, IotHubItemDetailDialogMode } from './iot-hub-item-detail-dialog.component';
 import { TbIotHubInstallDialogComponent, IotHubInstallDialogData } from './iot-hub-install-dialog.component';
 import { TbIotHubUpdateDialogComponent, IotHubUpdateDialogData } from './iot-hub-update-dialog.component';
 import { TbIotHubDeleteDialogComponent, IotHubDeleteDialogData } from './iot-hub-delete-dialog.component';
-import { TbDeviceInstallDialogComponent, DeviceInstallDialogData } from './device-install-dialog/device-install-dialog.component';
+import { TbDeviceInstallDialogComponent, DeviceInstallDialogData, DeviceInstallUpdate } from './device-install-dialog/device-install-dialog.component';
 import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData } from './iot-hub-installed-items-dialog.component';
 import { IotHubBuiltInService } from './iot-hub-built-in.service';
 import { isBuiltInItem } from './iot-hub-utils';
+import { TbIotHubConverterUpdateDialogComponent, IotHubConverterUpdateDialogData } from './iot-hub-converter-update-dialog.component';
+import { DefaultConverterUpdate, loadInstalledDevicePackages } from './iot-hub-default-converter';
 
 /**
  * What `openBuiltInOrConfirmInstall` did with a built-in item: 'handled' means nothing is left to do
@@ -35,7 +41,9 @@ export class IotHubActionsService {
     private dialog: MatDialog,
     private dialogService: DialogService,
     private translate: TranslateService,
-    private builtInService: IotHubBuiltInService
+    private builtInService: IotHubBuiltInService,
+    private iotHubApiService: IotHubApiService,
+    private converterService: ConverterService
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -148,6 +156,9 @@ export class IotHubActionsService {
     if (!installedItem) {
       return of(false);
     }
+    if (installedItem.itemType === ItemType.DEVICE) {
+      return this.updateDevice(installedItem, versionId);
+    }
     return this.dialog.open<TbIotHubUpdateDialogComponent, IotHubUpdateDialogData, string | boolean>(TbIotHubUpdateDialogComponent, {
       panelClass: ['tb-dialog'],
       disableClose: true,
@@ -162,16 +173,57 @@ export class IotHubActionsService {
     }).afterClosed();
   }
 
+  /**
+   * Brings a device package's default converter to ThingsBoard's default converter now, after the user confirms it.
+   * The dialog opens with what the update check found: whether someone changed the converter, and which other packages use it.
+   */
+  updateDefaultConverter(update: DefaultConverterUpdate): Observable<boolean> {
+    return from(this.converterUpdateDialogData(update)).pipe(
+      switchMap(data => this.dialog.open<TbIotHubConverterUpdateDialogComponent, IotHubConverterUpdateDialogData, boolean>(
+        TbIotHubConverterUpdateDialogComponent, {
+          panelClass: ['tb-dialog'],
+          disableClose: true,
+          autoFocus: false,
+          data
+        }).afterClosed()),
+      catchError(() => of(false))
+    );
+  }
+
+  private async converterUpdateDialogData(update: DefaultConverterUpdate): Promise<IotHubConverterUpdateDialogData> {
+    const installedItemId = update.installedItem.id.id;
+    const converterId = update.converter.id.id;
+    // The converter as it is now, not the table's copy: the dialog downloads it, and the update overwrites only this version
+    const [states, packages, converter] = await Promise.all([
+      firstValueFrom(this.iotHubApiService.checkDeviceUpdate(installedItemId)),
+      loadInstalledDevicePackages(this.iotHubApiService),
+      firstValueFrom(this.converterService.getConverter(converterId)) as Promise<Converter & HasVersion>
+    ]);
+    const state = states.find(s => s.stepName === update.stateKey);
+    // As the server decides what is shared: the converter is one of the entities another package tracks
+    const usedBy = packages
+      .filter(item => item.id.id !== installedItemId &&
+        (item.descriptor as DeviceInstalledItemDescriptor)?.createdEntityIds?.some(id => id.id === converterId))
+      .map(item => item.itemName);
+    return { update: { ...update, converter }, version: converter.version ?? state?.version, modified: state?.modified === true, usedBy };
+  }
+
   deleteItem(installedItem: IotHubInstalledItem): Observable<boolean> {
     if (!installedItem) {
       return of(false);
     }
-    return this.dialog.open<TbIotHubDeleteDialogComponent, IotHubDeleteDialogData, boolean>(TbIotHubDeleteDialogComponent, {
-      panelClass: ['tb-dialog'],
-      disableClose: true,
-      autoFocus: false,
-      data: { installedItemId: installedItem.id.id, itemName: installedItem.itemName, itemType: installedItem.itemType }
-    }).afterClosed();
+    // A device package keeps what other installed packages use: the dialog opens with that already known
+    const keptEntities$: Observable<IotHubInstalledItemKeptEntities | null> = installedItem.itemType === 'DEVICE' ?
+      this.iotHubApiService.getInstalledItemKeptEntities(installedItem.id.id, {ignoreErrors: true}).pipe(catchError(() => of(null))) :
+      of(null);
+    return keptEntities$.pipe(
+      switchMap(keptEntities => this.dialog.open<TbIotHubDeleteDialogComponent, IotHubDeleteDialogData, boolean>(TbIotHubDeleteDialogComponent, {
+        panelClass: ['tb-dialog'],
+        disableClose: true,
+        autoFocus: false,
+        data: { installedItemId: installedItem.id.id, itemName: installedItem.itemName, itemType: installedItem.itemType, keptEntities }
+      }).afterClosed())
+    );
   }
 
   // Reached only for items whose action mode is 'connect', i.e. never for built-in content:
@@ -187,13 +239,34 @@ export class IotHubActionsService {
     return this.openDeviceInstallDialog(item, {
         reviewMode: true,
         selectedInstallMethod: deviceDescriptor.selectedInstallMethod,
-        installState: deviceDescriptor.installState
+        reviewed: deviceDescriptor
       });
   }
 
+  /**
+   * A device package is updated by the install wizard of the new version: its steps change what
+   * the package created in place, so the device and its history stay. When only texts changed,
+   * the wizard records the new version without opening.
+   */
+  private updateDevice(installedItem: IotHubInstalledItem, versionId: string): Observable<string | boolean> {
+    return this.iotHubApiService.getVersionInfo(versionId).pipe(
+      switchMap(item => this.openDeviceInstallDialog(item, {
+        update: {
+          installedItemId: installedItem.id.id,
+          descriptor: installedItem.descriptor as DeviceInstalledItemDescriptor,
+          fromVersionId: installedItem.itemVersionId,
+          fromVersion: installedItem.version
+        }
+      })),
+      map(result => result === 'installed' ? 'updated' : result),
+      // The request has already shown the error
+      catchError(() => of(false))
+    );
+  }
+
   private openDeviceInstallDialog(item: MpItemVersionView,
-                                  options?: { reviewMode?: boolean; selectedInstallMethod?: string; installState?: any;
-                                  entityGroupId?: string; customerId?: string}): Observable<any> {
+                                  options?: { reviewMode?: boolean; selectedInstallMethod?: string; reviewed?: DeviceInstalledItemDescriptor;
+                                  entityGroupId?: string; customerId?: string; update?: DeviceInstallUpdate}): Observable<any> {
     return this.dialog.open<TbDeviceInstallDialogComponent, DeviceInstallDialogData>(TbDeviceInstallDialogComponent, {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog-lt-md'],
       disableClose: true,

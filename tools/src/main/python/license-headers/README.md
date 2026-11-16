@@ -36,7 +36,46 @@ packaging define the new artifact.
 ./check-license-headers.sh
 ```
 
-The check needs the full Git history of the clone.
+The check needs the full Git history of the clone. It runs Git and Mycila
+subprocesses in parallel on all CPUs but one; set `LICENSE_HEADERS_JOBS` to
+another number, for example `1` for a sequential run.
+
+## Cache
+
+The check removes the header of every CE file it compares with Mycila. CE files
+never change, so their header-free contents are kept in
+`target/license-headers-cache` and reused by the next run. The cache is valid
+while the Mycila version and configuration in the root `pom.xml`, the templates
+and the check itself stay the same; anything else starts a new cache, and the
+check normalizes again instead of using the old one. Pass `--no-cache` to
+normalize every CE file again, or `--cache` to keep the cache elsewhere.
+The check keeps the caches of the three most recent signatures, so switching
+between branches does not start over; set `LICENSE_HEADERS_CACHE_SIGNATURES`
+to keep another number. If SQLite cannot use the cache, for example because
+another run holds its lock, the run continues without it.
+
+In GitHub Actions, pushes and manual runs save the cache and pull requests only
+read it: a pull request takes the cache of its base branch, then of `master`.
+CI keeps only the current signature, so the saved cache holds one database, and
+saves it only when the run changed it.
+
+## Check only changed files
+
+```sh
+./check-license-headers.sh --since origin/lts-4.4
+```
+
+Checks the files that differ between the merge base of the given ref and HEAD
+and the working tree, untracked files included, and the files whose curation
+changed. Pull requests run the check this way against their target branch;
+pushes and manual runs check every file. Curations of files no longer in scope
+are still reported for the whole repository.
+
+The check falls back to every file when a change can move the verdict of an
+unchanged file: new CE commits merged into the branch, a changed Mycila
+configuration in the root `pom.xml`, or a change to the check itself. Other
+changes to the Mycila scope, such as a module added to `<modules>`, do not
+trigger it: the files they bring into scope are checked by the next push.
 
 ## Fix automatically
 

@@ -1,0 +1,22 @@
+{
+  "device_id": "3G7H1j-9zF",
+  "timestamp": "2023-06-10T12:00:00Z",
+  "sensor_data": {
+    "temperature": 25.3,
+    "humidity": 62.8,
+    "pressure": 1012.5
+  },
+  "location": {
+    "latitude": 37.7749,
+    "longitude": -122.4194
+  },
+  "status": "active",
+  "power_status": "on",
+  "vibration": {
+    "x": 0.02,
+    "y": 0.03,
+    "z": 0.01
+  },
+  "fault_codes": [100, 204, 301],
+  "battery_level": 78.5
+}

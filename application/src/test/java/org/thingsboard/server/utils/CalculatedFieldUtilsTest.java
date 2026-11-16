@@ -4,7 +4,10 @@ package org.thingsboard.server.utils;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -19,7 +22,9 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
@@ -29,6 +34,7 @@ import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalcul
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -149,6 +155,37 @@ class CalculatedFieldUtilsTest {
         assertThat(propagationState.getArguments().get("state")).isNotNull().isEqualTo(singleValueArgumentEntry);
         assertThat(propagationState.getRequiredArguments()).isNull();
         assertThat(propagationState.getReadinessStatus()).isNull();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CalculatedFieldType.class, names = {"SCRIPT", "PROPAGATION"})
+    void toProtoAndFromProto_shouldRestoreTsRollingArgument(CalculatedFieldType type) {
+        // given
+        CalculatedFieldEntityCtxId stateId = mock(CalculatedFieldEntityCtxId.class);
+        given(stateId.tenantId()).willReturn(TENANT_ID);
+        given(stateId.cfId()).willReturn(CF_ID);
+        given(stateId.entityId()).willReturn(DEVICE_ID);
+
+        TsRollingArgumentEntry rollingArgumentEntry = new TsRollingArgumentEntry(new TreeMap<>(Map.of(1000L, 1.0, 2000L, 0.0)), 2, 604800000L);
+
+        CalculatedFieldState state = switch (type) {
+            case SCRIPT -> new ScriptCalculatedFieldState(DEVICE_ID);
+            case PROPAGATION -> new PropagationCalculatedFieldState(DEVICE_ID);
+            default -> throw new IllegalArgumentException("Unexpected CF type: " + type);
+        };
+        state.getArguments().put("rollingArgument", rollingArgumentEntry);
+
+        // when
+        CalculatedFieldState restored = CalculatedFieldUtils.fromProto(stateId, toProto(stateId, state));
+
+        // then
+        assertThat(restored).isInstanceOf(state.getClass());
+        ArgumentEntry restoredArgument = restored.getArguments().get("rollingArgument");
+        assertThat(restoredArgument).isInstanceOf(TsRollingArgumentEntry.class);
+        TsRollingArgumentEntry restoredRollingArgument = (TsRollingArgumentEntry) restoredArgument;
+        assertThat(restoredRollingArgument.getLimit()).isEqualTo(2);
+        assertThat(restoredRollingArgument.getTimeWindow()).isEqualTo(604800000L);
+        assertThat(restoredRollingArgument.getTsRecords()).isEqualTo(rollingArgumentEntry.getTsRecords());
     }
 
 }

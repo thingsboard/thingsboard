@@ -33,6 +33,11 @@
         <blackBoxTests.skip>true</blackBoxTests.skip>
         <exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
         <docker.push-arm-amd-image.phase>none</docker.push-arm-amd-image.phase>
+        <sbom.image.repository>${docker.repo}/${docker.name}</sbom.image.repository>
+        <!-- Set by the profiles that push the multi-architecture images -->
+        <sbom.image.phase>none</sbom.image.phase>
+        <sbom.image.latestTag>latest</sbom.image.latestTag>
+        <sbom.image.scanExclude>${pkg.installFolder}/**</sbom.image.scanExclude>
     </properties>
 
     <modules>
@@ -116,6 +121,20 @@
                 <pkg.deb.phase>none</pkg.deb.phase>
             </properties>
         </profile>
+        <!-- Activated by -Ddocker.skip.latest.tag=true, which stops the LTS profiles pushing the latest tag:
+             the image SBOMs then leave it out too. -->
+        <profile>
+            <id>skip-latest-tag</id>
+            <activation>
+                <property>
+                    <name>docker.skip.latest.tag</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <sbom.image.latestTag />
+            </properties>
+        </profile>
         <profile>
             <id>black-box-tests</id>
             <activation>
@@ -135,6 +154,11 @@
                     <name>push-docker-amd-arm-images</name>
                 </property>
             </activation>
+            <properties>
+                <!-- With -Dsbom.skip=false, sbom-maven-plugin attaches an SBOM to each image once it is pushed: the tags are those pushed below -->
+                <sbom.image.phase>${docker.push-arm-amd-image.phase}</sbom.image.phase>
+                <sbom.image.tags>latest,${project.version}</sbom.image.tags>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -198,6 +222,9 @@
             <properties>
                 <docker.lts.tag>4.4.1-latest</docker.lts.tag>
                 <docker.skip.latest.tag>false</docker.skip.latest.tag>
+                <!-- With -Dsbom.skip=false, sbom-maven-plugin attaches an SBOM to each image once it is pushed: the tags are those pushed below -->
+                <sbom.image.phase>${docker.push-arm-amd-image.phase}</sbom.image.phase>
+                <sbom.image.tags>${sbom.image.latestTag},${project.version},${docker.lts.tag}</sbom.image.tags>
             </properties>
             <build>
                 <plugins>
@@ -282,6 +309,27 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>${exec-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.thingsboard</groupId>
+                    <artifactId>sbom-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>image-sbom</id>
+                            <phase>${sbom.image.phase}</phase>
+                            <goals>
+                                <goal>image</goal>
+                            </goals>
+                            <configuration>
+                                <components>
+                                    <component>
+                                        <sbom>${sbom.image.package.dir}/${pkg.name}.deb.cdx.json</sbom>
+                                        <file>${project.build.directory}/${pkg.name}.deb</file>
+                                    </component>
+                                </components>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

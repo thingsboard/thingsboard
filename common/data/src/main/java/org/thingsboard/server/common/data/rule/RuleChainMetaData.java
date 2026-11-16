@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,16 +25,16 @@ public class RuleChainMetaData implements HasVersion {
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "Version of the Rule Chain")
     private Long version;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Index of the first rule node in the 'nodes' list")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "Index of the first rule node in the 'nodes' list")
     private Integer firstNodeIndex;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of rule node JSON objects")
     private List<RuleNode> nodes;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of JSON objects that represent connections between rule nodes")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of JSON objects that represent connections between rule nodes")
     private List<NodeConnectionInfo> connections;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of JSON objects that represent connections between rule nodes and other rule chains.")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of JSON objects that represent connections between rule nodes and other rule chains.")
     private List<RuleChainConnectionInfo> ruleChainConnections;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
