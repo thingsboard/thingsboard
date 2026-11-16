@@ -2,6 +2,12 @@
   "schemaVersion": 1,
   "curations": [
     {
+      "path": "application/src/main/data/upgrade/lts/4.3.1.4/schema_update.sql",
+      "header": "busl",
+      "reason": "Not a CE file. CE history had this path only while the calculated field compute on migration was staged under this LTS version on its feature branch (last at aa88a3bd384^1); that migration was moved to 4.3.1.10 before it was merged, and the file here is an unrelated migration that does not come from CE.",
+      "contentHash": "sha256:f7ebdefed7cf985f2f30a7d794a5ae5535999ed2a9c30adf02798dccb04ffe95"
+    },
+    {
       "path": "application/src/main/java/org/thingsboard/server/controller/RedirectController.java",
       "header": "ce-modified",
       "reason": "CE redirect handlers extracted from WebConfig into a dedicated controller in 8fd3afdcecf; the method bodies are the CE implementation. Reviewed against CE application/src/main/java/org/thingsboard/server/config/WebConfig.java at 317a75614137ab5ddd1aecef1abd4c2fcdcb8710 (blob 46cbfbe0f18).",
@@ -60,6 +66,24 @@
       "header": "ce-modified",
       "reason": "CE service application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigrationService.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigrationService.java at 5954190c32f (blob 2f063c3a1a469cb578503bdf548f5e1a4cfb4035); a renamed CE file stays CE-derived.",
       "contentHash": "sha256:f72de342ef3308706b866bb311ede8c07c4027a2b413154a4002807561887ed3"
+    },
+    {
+      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/V4_3_1_4Migration.java",
+      "header": "busl",
+      "reason": "Not a CE file. CE history had this path only while the calculated field compute on migration was staged under this LTS version on its feature branch (last at aa88a3bd384^1); that migration was moved to 4.3.1.10 before it was merged, and the file here is an unrelated migration that does not come from CE.",
+      "contentHash": "sha256:12d56e318fd659b9093f0fb0bf39e1cef4560021464e1c65dead9fb08251a9b8"
+    },
+    {
+      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/V4_3_1_5Migration.java",
+      "header": "busl",
+      "reason": "Not a CE file. CE history had this path only while the calculated field compute on migration was staged under this LTS version on its feature branch (last at d070a23965d^1); that migration was moved to 4.3.1.10 before it was merged, and the file here is an unrelated migration that does not come from CE.",
+      "contentHash": "sha256:4a62288ebd1233f5e8c7b35e5f4b95193cc5f4fd5b35629d0a2ff0e8501b6dcc"
+    },
+    {
+      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/V4_4_2_0Migration.java",
+      "header": "busl",
+      "reason": "New migration bean that registers version 4.4.2.0; the path does not exist in CE. It resembles application/src/main/java/org/thingsboard/server/service/install/lts/V4_3_1_6Migration.java at 181a9ef22ee only through the shared migration bean boilerplate (annotations and getVersion()).",
+      "contentHash": "sha256:1575eba1d44442edb0ab1fe92e238c4993ef4d6a6e78608ff4da411fe8944532"
     },
     {
       "path": "application/src/main/java/org/thingsboard/server/service/install/lts/Version.java",
