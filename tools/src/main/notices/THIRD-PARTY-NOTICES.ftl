@@ -164,6 +164,19 @@ ${exceptionText}
     [/#if]
 
 [/#list]
+[#-- The NOTICE files of the components, as notice_files.py lays them out. --]
+[#assign noticeFiles][#include "notice-files.txt" parse=false][/#assign]
+[#if noticeFiles?has_content]
+${rule}
+NOTICE files of the components
+${rule}
+
+Some components come with a NOTICE file. Each text below is given as it is in
+the component, once, under the components that carry it and the name of the
+file in each.
+
+${noticeFiles}
+[/#if]
 [#-- The written offer is printed only when at least one component needs it. --]
 [#assign offered = []]
 [#list shipped as package]
