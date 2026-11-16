@@ -81,7 +81,7 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.IMAGES]: {key: 'images', examples: ['icon']},
   [AiAssistantViewType.JAVASCRIPT_LIBRARY]: {key: 'javascript-library', examples: ['module']},
   [AiAssistantViewType.RESOURCES_LIBRARY]: {key: 'resources-library'},
-  [AiAssistantViewType.TWO_FACTOR_AUTH]: {key: 'two-factor-auth', examples: ['review', 'enforce']},
+  [AiAssistantViewType.TWO_FACTOR_AUTH]: {key: 'two-factor-auth', examples: ['review', 'methods', 'enforce']},
   [AiAssistantViewType.OAUTH2_DOMAINS]: {key: 'oauth2-domains', examples: ['missing']},
   [AiAssistantViewType.OAUTH2_CLIENTS]: {key: 'oauth2-clients', examples: ['review']},
   [AiAssistantViewType.SELF_REGISTRATION]: {key: 'self-registration', examples: ['review']},

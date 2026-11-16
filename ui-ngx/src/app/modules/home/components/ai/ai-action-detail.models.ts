@@ -1339,6 +1339,10 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('read-scheduler-event', {name: str(result.name) ?? '—'}), blocks: json('event', result)};
     }
+    case 'save_two_factor_settings': {
+      const rows = facts(values);
+      return {hood: text('save-two-factor-settings'), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
     case 'save_scheduler_event': {
       const rows = facts(values, ['eventId']);
       return {hood: str(values.eventId) ? text('save-scheduler-event') : text('create-scheduler-event', {name: str(values.name) ?? '—'}),

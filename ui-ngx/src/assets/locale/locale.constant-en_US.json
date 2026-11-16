@@ -917,6 +917,7 @@
             "read-security-settings": "Read the security settings",
             "read-mobile-center": "Read the mobile center",
             "read-scheduler-events": "Read the scheduler",
+            "save-two-factor-settings": "Changed the two-factor authentication settings",
             "read-scheduler-event": "Read the scheduler event {{name}}",
             "no-scheduler-events": "No scheduler events yet.",
             "save-scheduler-event": "Changed the scheduler event",
@@ -1414,6 +1415,10 @@
                 "run": "Saving the scheduler event",
                 "done": "Saved the scheduler event"
             },
+            "save-two-factor-settings": {
+                "run": "Saving the two-factor settings",
+                "done": "Saved the two-factor settings"
+            },
             "save-custom-menu": {
                 "run": "Saving the custom menu",
                 "done": "Saved the custom menu"
@@ -1822,6 +1827,16 @@
                 "persistent": "Persistent",
                 "package": "Package",
                 "enabled": "Enabled",
+                "methods": "Methods",
+                "issuerName": "Name in the app",
+                "smsTemplate": "SMS text",
+                "smsCodeLifetime": "SMS code valid, s",
+                "emailCodeLifetime": "Email code valid, s",
+                "backupCodes": "Backup codes",
+                "resendPeriod": "New code after, s",
+                "maxFailures": "Lockout after failures",
+                "totalTime": "Time to verify, s",
+                "checkRateLimit": "Code checks limit",
                 "useSystemSettings": "System settings",
                 "url": "URL",
                 "tag": "Tag",
@@ -1911,6 +1926,7 @@
                 "MOBILE_APP": "Mobile app",
                 "MOBILE_BUNDLE": "Mobile bundle",
                 "MOBILE_QR_CODE": "Mobile app QR code",
+                "TWO_FACTOR_SETTINGS": "Security settings",
                 "RELATION": "Relations",
                 "PLATFORM_SETTINGS": "Platform settings",
                 "ENTITY_GROUP": "Group",
@@ -2651,6 +2667,7 @@
                 "suggestion": "How do I require two-factor authentication for my users?",
                 "example": {
                     "review": {"label": "Check our 2FA", "message": "Which two-factor methods are allowed, and is it enforced for anyone?"},
+                    "methods": {"label": "Allow app and backup codes", "message": "Let users verify only with an authenticator app or backup codes."},
                     "enforce": {"label": "Require it for admins", "message": "How do I require two-factor authentication for tenant administrators?"}
                 }
             },

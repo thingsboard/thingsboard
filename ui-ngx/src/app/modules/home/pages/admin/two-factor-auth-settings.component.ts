@@ -24,6 +24,8 @@ import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { NotificationTargetConfigType, NotificationTargetConfigTypeInfoMap } from '@shared/models/notification.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs/operators';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 
 @Component({
     selector: 'tb-2fa-settings',
@@ -59,12 +61,21 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
               private twoFaService: TwoFactorAuthenticationService,
               private userPermissionsService: UserPermissionsService,
               private fb: UntypedFormBuilder,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private aiAssistantPanelService: AiAssistantPanelService) {
     super(store);
   }
 
   ngOnInit() {
     this.build2faSettingsForm();
+    this.loadSettings();
+    this.aiAssistantPanelService.customizationSaved$.pipe(
+      filter(event => event.kind === 'TWO_FACTOR' && !this.twoFaFormGroup.dirty),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.loadSettings());
+  }
+
+  private loadSettings() {
     this.twoFaService.getTwoFaSettings().subscribe((setting) => {
       this.setAuthConfigFormValue(setting);
       this.twoFaFormGroup.markAsUntouched();
