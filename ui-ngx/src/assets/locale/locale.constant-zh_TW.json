@@ -11897,7 +11897,7 @@
         "opc-ua-type": "類型",
         "opc-ua-keystore-type": "類型",
         "opc-ua-keystore-type-required": "類型為必填項。",
-        "opc-ua-keystore-location": "位置 *",
+        "opc-ua-keystore-location": "位置",
         "opc-ua-keystore-password": "密碼",
         "opc-ua-keystore-password-required": "密碼為必填項。",
         "opc-ua-keystore-alias": "別名",

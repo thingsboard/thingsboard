@@ -5745,7 +5745,7 @@
     "opc-ua-type": "Type",
     "opc-ua-keystore-type": "Type",
     "opc-ua-keystore-type-required": "Type er påkrævet",
-    "opc-ua-keystore-location": "Placering *",
+    "opc-ua-keystore-location": "Placering",
     "opc-ua-keystore-password": "Adgangskode",
     "opc-ua-keystore-password-required": "Adgangskode er påkrævet",
     "opc-ua-keystore-alias": "Alias",

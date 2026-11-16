@@ -5745,7 +5745,7 @@
     "opc-ua-type": "类型",
     "opc-ua-keystore-type": "类型",
     "opc-ua-keystore-type-required": "类型为必填项",
-    "opc-ua-keystore-location": "位置 *",
+    "opc-ua-keystore-location": "位置",
     "opc-ua-keystore-password": "密码",
     "opc-ua-keystore-password-required": "密码为必填项",
     "opc-ua-keystore-alias": "别名",

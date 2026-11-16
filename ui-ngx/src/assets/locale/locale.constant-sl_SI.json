@@ -5770,7 +5770,7 @@
         "opc-ua-type": "Vrsta",
         "opc-ua-keystore-type": "Vrsta",
         "opc-ua-keystore-type-required": "Vrsta je obvezna",
-        "opc-ua-keystore-location": "Lokacija *",
+        "opc-ua-keystore-location": "Lokacija",
         "opc-ua-keystore-password": "Geslo",
         "opc-ua-keystore-password-required": "Geslo je obvezno",
         "opc-ua-keystore-alias": "Vzdevek",

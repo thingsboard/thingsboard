@@ -5780,7 +5780,7 @@
         "opc-ua-type": "Typ",
         "opc-ua-keystore-type": "Typ",
         "opc-ua-keystore-type-required": "Typ jest wymagany",
-        "opc-ua-keystore-location": "Lokalizacja *",
+        "opc-ua-keystore-location": "Lokalizacja",
         "opc-ua-keystore-password": "Hasło",
         "opc-ua-keystore-password-required": "Hasło jest wymagane",
         "opc-ua-keystore-alias": "Alias",
