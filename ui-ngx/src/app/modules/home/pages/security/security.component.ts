@@ -20,7 +20,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { ActivatedRoute } from '@angular/router';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { DatePipe } from '@angular/common';
 import { ClipboardService } from 'ngx-clipboard';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
@@ -85,7 +84,6 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
               public dialog: MatDialog,
               public dialogService: DialogService,
               public fb: UntypedFormBuilder,
-              private datePipe: DatePipe,
               private userPermissionsService: UserPermissionsService,
               private authService: AuthService,
               private clipboardService: ClipboardService) {

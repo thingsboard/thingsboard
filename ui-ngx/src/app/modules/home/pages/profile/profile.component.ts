@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserService } from '@core/http/user.service';
 import { User } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
@@ -19,8 +20,12 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AuthService } from '@core/auth/auth.service';
 import { UnitSystem, UnitSystems } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
+import { DateTimeFormatPickerState } from '@shared/models/date-time-format.models';
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { MatDialog } from '@angular/material/dialog';
+import { CustomizeDateTimeFormatDialogComponent } from './customize-date-time-format-dialog.component';
 
 @Component({
     selector: 'tb-profile',
@@ -37,6 +42,8 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
   UnitSystems = UnitSystems;
   authState = getCurrentAuthState(this.store);
   readonly = !this.userPermissionsService.hasGenericPermission(Resource.PROFILE, Operation.WRITE);
+  formatPreviewDate = new Date();
+  formatPreviewPattern = '';
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
@@ -45,8 +52,27 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private unitService: UnitService,
               private fb: UntypedFormBuilder,
               private userPermissionsService: UserPermissionsService,
+              private dateTimeFormatService: DateTimeFormatService,
+              private dialog: MatDialog,
+              private destroyRef: DestroyRef,
             ) {
     super(store);
+  }
+
+  openCustomizeDateTimeFormatDialog(): void {
+    this.dialog.open<CustomizeDateTimeFormatDialogComponent, DateTimeFormatPickerState, DateTimeFormatPickerState>(
+      CustomizeDateTimeFormatDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog'],
+        width: '500px',
+        data: this.profile.get('dateTimeFormat').value
+      }
+    ).afterClosed().subscribe((result) => {
+      if (result) {
+        this.profile.get('dateTimeFormat').setValue(result);
+        this.profile.markAsDirty();
+      }
+    });
   }
 
   ngOnInit() {
@@ -63,8 +89,17 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
       phone: [''],
       language: [''],
       unitSystem: [''],
+      dateTimeFormat: [null],
       homeDashboardId: [null],
       homeDashboardHideToolbar: [true]
+    });
+    this.profile.get('dateTimeFormat').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value) => {
+      const resolved = this.dateTimeFormatService.resolvePickerState(value);
+      const dateFormat = this.dateTimeFormatService.buildDateFormat(resolved.dateOrder, resolved.dateSeparator);
+      const timeFormat = this.dateTimeFormatService.buildTimeFormat(resolved.timeClock, resolved.timeSeparator, resolved.showSeconds, resolved.showMilliseconds);
+      this.formatPreviewPattern = this.dateTimeFormatService.buildCombinedFormat(dateFormat, timeFormat);
     });
     if (this.readonly) {
       this.profile.disable();
@@ -88,6 +123,11 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
     } else {
       delete this.user.additionalInfo.unitSystem;
     }
+    if (isDefinedAndNotNull(this.profile.get('dateTimeFormat').value)) {
+      this.user.additionalInfo.dateTimeFormat = this.profile.get('dateTimeFormat').value;
+    } else {
+      delete this.user.additionalInfo.dateTimeFormat;
+    }
     this.userService.saveUser(this.user).subscribe(
       (user) => {
         this.userLoaded(user);
@@ -105,6 +145,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
             customMenuId: user.customMenuId
           } }));
         this.store.dispatch(new ActionSettingsChangeLanguage({ userLang: user.additionalInfo.lang || env.defaultLang, reload: false, ignoredLoad: false }));
+        this.dateTimeFormatService.setPickerState(user.additionalInfo.dateTimeFormat);
         this.unitService.setUnitSystem(this.user.additionalInfo.unitSystem);
         this.authService.refreshJwtToken(false);
       }
@@ -118,6 +159,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
     let homeDashboardId;
     let homeDashboardHideToolbar = true;
     let unitSystem: UnitSystem = null;
+    let dateTimeFormat: DateTimeFormatPickerState = null;
     if (user.additionalInfo) {
       if (user.additionalInfo.lang) {
         lang = user.additionalInfo.lang;
@@ -129,9 +171,13 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
       if (isNotEmptyStr(user.additionalInfo.unitSystem)) {
         unitSystem = user.additionalInfo.unitSystem;
       }
+      if (isDefinedAndNotNull(user.additionalInfo.dateTimeFormat)) {
+        dateTimeFormat = user.additionalInfo.dateTimeFormat;
+      }
     }
     this.profile.get('language').setValue(lang);
     this.profile.get('unitSystem').setValue(unitSystem);
+    this.profile.get('dateTimeFormat').setValue(dateTimeFormat);
     this.profile.get('homeDashboardId').setValue(homeDashboardId);
     this.profile.get('homeDashboardHideToolbar').setValue(homeDashboardHideToolbar);
   }

@@ -308,7 +308,7 @@
             <div class="tb-form-table-body">
               @for (telemetry of latestTelemetry; track telemetry) {
                 <div class="tb-form-table-row">
-                  <div class="tb-form-table-row-cell flex-1">{{ telemetry.lastUpdateTs | date: 'yyyy-MM-dd HH:mm:ss' }}</div>
+                  <div class="tb-form-table-row-cell flex-1">{{ telemetry.lastUpdateTs | tbDate }}</div>
                   <div class="tb-form-table-row-cell flex-1">{{ telemetry.key }}</div>
                   <div class="tb-form-table-row-cell flex-1">{{ telemetry.value }}</div>
                 </div>

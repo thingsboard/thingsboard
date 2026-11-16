@@ -32,7 +32,6 @@ import { map } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
   AVG_MONTH,
-  calculateTsOffset,
   DAY,
   HOUR,
   Interval,

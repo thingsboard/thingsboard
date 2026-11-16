@@ -1,0 +1,86 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="formGroup" (ngSubmit)="save()">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2 translate>date.customize-date-time-formats</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-padding no-border">
+      <mat-slide-toggle class="mat-slide" formControlName="auto">
+        {{ 'date.use-auto-format' | translate }}
+      </mat-slide-toggle>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>date.date-format</div>
+        <div class="tb-form-row no-border no-padding">
+          <mat-form-field class="flex-1" floatLabel="always" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>date.order</mat-label>
+            <mat-select formControlName="dateOrder">
+              @for (order of dateOrders; track order) {
+                <mat-option [value]="order">{{ dateOrderTranslations[order] | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="flex-1" floatLabel="always" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>date.separator</mat-label>
+            <mat-select formControlName="dateSeparator">
+              @for (separator of dateSeparators; track separator) {
+                <mat-option [value]="separator">{{ separator }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>date.time-format</div>
+        <div class="tb-form-row no-border no-padding">
+          <mat-form-field class="flex-1" floatLabel="always" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>date.clock</mat-label>
+            <mat-select formControlName="timeClock">
+              <mat-option value="24">{{ 'date.clock-24-hour' | translate }}</mat-option>
+              <mat-option value="12">{{ 'date.clock-12-hour' | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="flex-1" floatLabel="always" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>date.separator</mat-label>
+            <mat-select formControlName="timeSeparator">
+              @for (separator of timeSeparators; track separator) {
+                <mat-option [value]="separator">{{ separator }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="showSeconds">
+            {{ 'date.show-seconds' | translate }}
+          </mat-slide-toggle>
+          <mat-slide-toggle class="mat-slide" formControlName="showMilliseconds">
+            {{ 'date.show-milliseconds' | translate }}
+          </mat-slide-toggle>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-between">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="submit">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
+</form>
