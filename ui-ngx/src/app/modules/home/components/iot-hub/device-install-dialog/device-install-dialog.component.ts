@@ -17,6 +17,7 @@ import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models
 import {
   DeviceInstalledItemDescriptor,
   DevicePackageEntityState,
+  DevicePackageRequest,
   DevicePackageResult,
   DevicePackageStep
 } from '@shared/models/iot-hub/iot-hub-installed-item.models';
@@ -97,7 +98,7 @@ interface EntityStepPlan {
   existing?: EntityStepOutput;
   resolution?: string;
   confirmed: boolean;
-  // Overwrite: the version the user reviewed; the server rejects the update if someone changed the entity since
+  // Overwrite: the version the user reviewed; the server rejects the request if someone changed the entity since
   version?: number;
   // Modified: the entity as the check found it, which the user can download before it is overwritten
   current?: any;
@@ -211,11 +212,11 @@ export interface WizardStep {
   entitySteps?: EntityStepProgress[];
   progressError?: string;
   progressDone?: boolean;
-  // Update: the user reviews what the update changes and confirms the warnings (checking: still finding it out)
+  // The user reviews what the install or update does and confirms the warnings (checking: still finding it out)
   reviewing?: boolean;
   checking?: boolean;
-  // Update: the entities are being changed
-  updating?: boolean;
+  // The server is applying the plan
+  applying?: boolean;
 }
 
 export interface ConnectionCheck {
@@ -227,7 +228,7 @@ export interface ConnectionCheck {
 }
 
 // The rows show the outcome of the one request one after another, this far apart
-const UPDATE_REVEAL_INTERVAL = 150;
+const REVEAL_INTERVAL = 150;
 // Where the wizard keeps the converter it builds for a step with "default": true, as if the package had that file
 const DEFAULT_CONVERTER_PATH = 'tb-default-converter/';
 const DEFAULT_RANDOM_SIZE = 20;
@@ -394,8 +395,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private entityPlans = new WeakMap<EntityStepProgress, EntityStepPlan>();
   // Update: for each step with "default": true, whether its converter differs from ThingsBoard's default one now
   private defaultConverterChanges = new Map<DeviceInstallStep, boolean>();
-  // Update: the check of the update in progress; a way back meanwhile starts a new one, which drops this one's result
-  private updateCheckRun = 0;
+  // The check of the plan in progress; a way back meanwhile starts a new one, which drops this one's result
+  private checkRun = 0;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -581,25 +582,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return this.wizardSteps[this.stepper.selectedIndex + 1]?.label || '';
   }
 
-  /** Update: coming back to the Update step checks the update again, e.g. with the configuration changed. */
-  private resetUpdatePlan(ws: WizardStep): void {
-    if (ws.type === 'progress' && !ws.progressDone && !ws.updating) {
+  /**
+   * Coming back to the progress step checks the package again, e.g. with the configuration changed, so a plan made
+   * before is never sent. A check still running is dropped when its result comes.
+   */
+  private resetPlan(ws: WizardStep): void {
+    if (ws.type === 'progress' && !ws.progressDone && !ws.applying) {
       if (ws.checking) {
-        // E.g. back through the stepper header during the check: its result is dropped when it comes
-        this.updateCheckRun++;
+        this.checkRun++;
         ws.checking = false;
       }
-      ws.entitySteps = null;
-      ws.reviewing = false;
-      ws.progressError = null;
-    }
-  }
-
-  /** Install: coming back to the progress step checks the package again, so a plan made before is never sent. */
-  private resetInstallPlan(ws: WizardStep): void {
-    if (ws.type === 'progress' && !ws.progressDone && !ws.updating && !ws.checking) {
       ws.entitySteps?.forEach(ep => this.entityPlans.delete(ep));
       ws.entitySteps = null;
+      ws.reviewing = false;
       ws.progressError = null;
     }
   }
@@ -609,13 +604,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return;
     }
     const step = this.currentWizardStep;
-    if (this.data.update && step?.type === 'progress') {
-      if (step.updating || step.checking) {
-        return;
-      }
-      this.resetUpdatePlan(step);
-      this.stepper.previous();
-    } else if (step?.type === 'progress' && step.progressError) {
+    if (step?.type === 'progress' && (step.applying || step.checking)) {
+      return;
+    }
+    // Install: a failed install goes back to the form, whose values it was planned with; the selection change resets the plan
+    if (!this.data.update && step?.type === 'progress' && step.progressError) {
       this.goBackToForm();
     } else {
       this.stepper.previous();
@@ -758,8 +751,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   onStepSelectionChange(event: StepperSelectionEvent): void {
     if (event.selectedIndex <= event.previouslySelectedIndex) {
       // Back through the stepper header too, not only the Back button: the progress steps after it check again
-      this.wizardSteps.slice(event.selectedIndex + 1)
-        .forEach(ws => this.data.update ? this.resetUpdatePlan(ws) : this.resetInstallPlan(ws));
+      this.wizardSteps.slice(event.selectedIndex + 1).forEach(ws => this.resetPlan(ws));
       return;
     }
     // Forward moves can come from the stepper header, which bypasses nextStep(). A step whose connection isn't
@@ -848,27 +840,31 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   cancel(): void {
-    // Update: the server is applying it; closing now would hide whether it did
-    if (this.isUpdating) {
+    // The server is applying the package; closing now would hide whether it did
+    if (this.isApplying) {
       return;
     }
     this.dialogRef.close(this.installRegistered ? 'installed' : false);
   }
 
-  get isUpdating(): boolean {
-    return this.wizardSteps.some(ws => ws.updating);
+  get isApplying(): boolean {
+    return this.wizardSteps.some(ws => ws.applying);
   }
 
   /** A check or an install is running: the stepper header must not leave the step and start a second one. */
   get isBusy(): boolean {
-    return this.wizardSteps.some(ws => ws.updating || ws.checking);
+    return this.wizardSteps.some(ws => ws.applying || ws.checking);
   }
 
   /**
-   * Install: checks the package again, as the tenant may have changed meanwhile. A conflict choice is kept only
-   * while the existing entity is the same one; otherwise the user chooses again.
+   * Nothing was changed, so trying again starts from the check: the entities may have changed meanwhile. An update
+   * asks to confirm every warning again; an install keeps a conflict choice while the existing entity is the same one.
    */
-  retryEntitySteps(ws: WizardStep): void {
+  retry(ws: WizardStep): void {
+    if (this.data.update) {
+      void this.checkUpdate(ws);
+      return;
+    }
     const choices = new Map<DeviceInstallStep, InstallConflictChoice>();
     for (const ep of ws.entitySteps ?? []) {
       const plan = this.entityPlans.get(ep);
@@ -907,9 +903,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         // Reset the progress step so it re-runs when we come back
         const progressStep = this.wizardSteps[currentIdx];
         // The plan was made with the form values before: the check runs again with the new ones
-        progressStep.entitySteps?.forEach(ep => this.entityPlans.delete(ep));
-        progressStep.entitySteps = null;
-        progressStep.progressError = null;
+        this.resetPlan(progressStep);
         progressStep.progressDone = false;
         progressStep.completed = false;
         // Allow navigation back by making intermediate steps editable
@@ -1467,7 +1461,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       step.markdown = this.zipFiles.get(step.rawSteps[0].file) || '';
       // Nothing to validate here, so the linear stepper header may move past it right away.
       step.completed = true;
-    } else if (step.type === 'progress' && !step.progressDone && !step.updating && !step.checking) {
+    } else if (step.type === 'progress' && !step.progressDone && !step.applying && !step.checking) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);
       } else if (this.data.update) {
@@ -1529,6 +1523,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * (choices given), it starts at once when the choices kept cover every conflict.
    */
   private async planInstall(ws: WizardStep, choices?: Map<DeviceInstallStep, InstallConflictChoice>): Promise<void> {
+    const run = ++this.checkRun;
     ws.progressError = null;
     const duplicateKey = this.duplicateStateKey();
     if (duplicateKey) {
@@ -1541,7 +1536,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     try {
       for (const ep of ws.entitySteps) {
         const existing = await this.preCheckEntity(ep.step);
-        if (this.closed) {
+        if (this.closed || run !== this.checkRun) {
           return;
         }
         if (existing) {
@@ -1564,7 +1559,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.cdr.detectChanges();
     }
     if (!this.closed && (choices ? this.unresolvedInstallConflicts(ws) === 0 : !this.hasInstallConflicts(ws))) {
-      await this.runInstall(ws);
+      await this.apply(ws);
     }
   }
 
@@ -1794,25 +1789,25 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return requestFailureMessage(error, this.translate);
   }
 
-  // --- Update ---
+  // --- Plan, review and apply: install and update ---
 
   /** What the update or install does with the entity of a step, once its progress step has checked it. */
-  updatePlanOf(ep: EntityStepProgress): EntityStepPlan | undefined {
+  planOf(ep: EntityStepProgress): EntityStepPlan | undefined {
     return this.entityPlans.get(ep);
   }
 
-  /** Update: the warnings and name conflicts the user hasn't confirmed yet. */
-  unconfirmedUpdateWarnings(ws: WizardStep): number {
+  /** The warnings and name conflicts the user hasn't confirmed yet. */
+  unconfirmedWarnings(ws: WizardStep): number {
     return (ws.entitySteps ?? []).filter(ep => this.entityPlans.get(ep)?.confirmed === false).length;
   }
 
-  /** Update: true when the error is about the whole update, e.g. its check or the registration of the new version. */
-  hasUpdateError(ws: WizardStep): boolean {
+  /** True when the error is about the whole request, e.g. its check, and not about one of its steps. */
+  hasPackageError(ws: WizardStep): boolean {
     return !!ws.progressError && !ws.entitySteps?.some(ep => ep.status === 'error');
   }
 
-  /** Update: resolution is the user's choice for an entity whose name is taken, as at install. */
-  confirmUpdateWarning(ep: EntityStepProgress, resolution?: string): void {
+  /** resolution is the user's choice for an entity whose name is taken. */
+  confirmWarning(ep: EntityStepProgress, resolution?: string): void {
     const plan = this.entityPlans.get(ep);
     if (plan) {
       plan.resolution = resolution;
@@ -1820,20 +1815,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** Update: what the update will do with the entity of a row; the same as updateOutcomeOf says once it succeeded. */
+  /** What the plan will do with the entity of a row; the same as appliedOutcomeOf says once it succeeded. */
   plannedOutcomeOf(plan: EntityStepPlan): string {
-    return { update: 'iot-hub.device-update-will-update', create: 'iot-hub.device-update-will-create',
+    return { update: 'iot-hub.device-update-will-update', create: 'iot-hub.device-package-will-create',
       keep: 'iot-hub.device-update-no-changes' }[this.outcomeOf(plan)];
   }
 
-  /** Update: what the update did with the entity of a row, once it succeeded. */
-  updateOutcomeOf(plan: EntityStepPlan | undefined): string {
-    return { update: 'iot-hub.device-update-updated', create: 'iot-hub.device-update-created',
-      keep: 'iot-hub.device-update-skipped' }[this.outcomeOf(plan)];
+  /** What the request did with the entity of a row, once it succeeded. */
+  appliedOutcomeOf(plan: EntityStepPlan | undefined): string {
+    return { update: 'iot-hub.device-package-updated', create: 'iot-hub.device-package-created',
+      keep: 'iot-hub.device-package-skipped' }[this.outcomeOf(plan)];
   }
 
   /**
-   * Update: an entity kept or used as it is counts as not changed, even an integration the server adds the step's
+   * An entity kept or used as it is counts as not changed, even an integration the server adds the step's
    * metadata entries to; one a name conflict resolves to overwrite counts as updated.
    */
   private outcomeOf(plan: EntityStepPlan | undefined): 'update' | 'create' | 'keep' {
@@ -1856,47 +1851,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     downloadEntityJson(current, ep.resolvedName || ep.step.name);
   }
 
-  /**
-   * Update: nothing was changed, so trying again starts from the check: the entities may have changed meanwhile
-   * (e.g. someone saved one, which is why it failed), and the user confirms what the update overwrites again.
-   */
-  retryUpdate(ws: WizardStep): void {
-    void this.checkUpdate(ws);
+  /** The label of the button that applies the plan: Install or Update. */
+  get applyActionKey(): string {
+    return this.data.update ? 'action.update' : 'iot-hub.device-install-install';
   }
 
   /**
-   * Update: sends what the check planned to the server, which applies all of it in one transaction together with
-   * the new version of the installed item, or nothing.
+   * Sends the plan in one request, which the server applies in one transaction together with the installed item, or
+   * nothing. The rows run together: the request is one. A success shows row by row, and the request counts as running
+   * until the last row shows it, so the dialog can't be closed meanwhile.
    */
-  async runUpdate(ws: WizardStep): Promise<void> {
+  async apply(ws: WizardStep): Promise<void> {
     ws.reviewing = false;
-    await this.applyPackage(ws, async () => firstValueFrom(this.iotHubApiService.updateDevicePackage(this.data.update.installedItemId, {
-      versionId: this.data.item.id as string,
-      fromVersionId: this.data.update.fromVersionId,
-      selectedInstallMethod: this.selectedInstallMethod,
-      installState: this.buildFormState(),
-      steps: await this.buildUpdateSteps(ws)
-    }, { ignoreLoading: true, ignoreErrors: true })));
-  }
-
-  /** Install: sends the planned steps to the server, which creates all of them together with the installed item, or nothing. */
-  async runInstall(ws: WizardStep): Promise<void> {
-    await this.applyPackage(ws, async () => firstValueFrom(this.iotHubApiService.installDevicePackage({
-      versionId: this.data.item.id as string,
-      selectedInstallMethod: this.selectedInstallMethod,
-      installState: this.buildFormState(),
-      steps: await this.buildUpdateSteps(ws),
-      customerId: this.data.customerId,
-      entityGroupId: this.data.entityGroupId
-    }, { ignoreLoading: true, ignoreErrors: true })));
-  }
-
-  /**
-   * Sends an install or update in one request. The rows run together: the request is one. A success shows row by row,
-   * and the request counts as running until the last row shows it, so the dialog can't be closed meanwhile.
-   */
-  private async applyPackage(ws: WizardStep, send: () => Promise<DevicePackageResult>): Promise<void> {
-    ws.updating = true;
+    ws.applying = true;
     ws.progressError = null;
     for (const ep of ws.entitySteps) {
       ep.status = 'running';
@@ -1905,12 +1872,23 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.cdr.detectChanges();
     let result: DevicePackageResult;
     try {
-      result = await send();
+      const request: DevicePackageRequest = {
+        versionId: this.data.item.id as string,
+        selectedInstallMethod: this.selectedInstallMethod,
+        installState: this.buildFormState(),
+        steps: await this.buildPackageSteps(ws)
+      };
+      const config = { ignoreLoading: true, ignoreErrors: true };
+      result = await firstValueFrom(this.data.update ?
+        this.iotHubApiService.updateDevicePackage(this.data.update.installedItemId,
+          { ...request, fromVersionId: this.data.update.fromVersionId }, config) :
+        this.iotHubApiService.installDevicePackage(
+          { ...request, customerId: this.data.customerId, entityGroupId: this.data.entityGroupId }, config));
     } catch (e: any) {
       result = { success: false, errorMessage: this.failureMessage(e) };
     }
     if (!result.success) {
-      ws.updating = false;
+      ws.applying = false;
       // Nothing was changed: the transaction was rolled back
       const message = readableMessage(result.errorMessage) ?? this.translate.instant('iot-hub.device-install-unexpected-error');
       for (const ep of ws.entitySteps) {
@@ -1928,7 +1906,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.cdr.detectChanges();
       return;
     }
-    const interval = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : UPDATE_REVEAL_INTERVAL;
+    const interval = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : REVEAL_INTERVAL;
     for (const [index, ep] of ws.entitySteps.entries()) {
       if (index > 0 && interval) {
         await this.delay(interval);
@@ -1947,7 +1925,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         this.cdr.detectChanges();
       }
     }
-    ws.updating = false;
+    ws.applying = false;
     this.installRegistered = true;
     ws.progressDone = true;
     ws.completed = true;
@@ -1971,7 +1949,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /** The steps the server applies, each with its entity resolved from the template of the version being installed. */
-  private async buildUpdateSteps(ws: WizardStep): Promise<DevicePackageStep[]> {
+  private async buildPackageSteps(ws: WizardStep): Promise<DevicePackageStep[]> {
     for (const ep of ws.entitySteps) {
       const plan = this.entityPlans.get(ep);
       const alias = stepTypeAliasMap[ep.step.type];
@@ -1988,12 +1966,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     const steps: DevicePackageStep[] = [];
     for (const ep of ws.entitySteps) {
-      steps.push(await this.buildUpdateStep(ws, ep.step, this.entityPlans.get(ep)));
+      steps.push(await this.buildPackageStep(ws, ep.step, this.entityPlans.get(ep)));
     }
     return steps;
   }
 
-  private async buildUpdateStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): Promise<DevicePackageStep> {
+  private async buildPackageStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): Promise<DevicePackageStep> {
     const base: DevicePackageStep = {
       name: step.name,
       id: step.id,
@@ -2064,7 +2042,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       delete entity.ruleChain?.version;
       if (step.type === InstallStepType.INTEGRATION) {
         this.attachConverterReferences(entity);
-        // A converter this update creates gets its id on the server
+        // A converter the request creates gets its id on the server
         const steps = ws.rawSteps.map(s => s.type);
         if (entity.defaultConverterId == null && steps.includes(InstallStepType.UPLINK_CONVERTER)) {
           entity.defaultConverterId = { entityType: 'CONVERTER', id: '${uplinkConverter.id}' };
@@ -2337,7 +2315,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * The key of the step's install state: its id, or else its type and name, so that two steps of an install method
    * never share it. A form without an id keeps its name, which no entity step's type-and-name key equals; a step id
    * equal to a form's name is caught by the duplicate check on install, and by the server on update.
-   * The server keys the steps of an update the same way.
+   * The server keys the steps of a request the same way.
    */
   private stateKeyOf(step: DeviceInstallStep): string {
     return step.id ?? (step.type === InstallStepType.SHOW_FORM ? step.name : `${step.type}:${step.name}`);
@@ -2438,7 +2416,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /** Update: finds out what the update changes and what the user has to confirm, before anything changes. */
   private async checkUpdate(ws: WizardStep): Promise<void> {
-    const run = ++this.updateCheckRun;
+    const run = ++this.checkRun;
     // Templates refer to the package's entities, e.g. ${deviceProfile.id}: until the steps run, the installed ones
     this.restoreInstallState(false);
     ws.entitySteps = ws.rawSteps.map(s => ({
@@ -2454,14 +2432,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId, { ignoreLoading: true }));
       this.updateStates = new Map(states.map(state => [state.stepName, state]));
       const plans = await Promise.all(ws.entitySteps.map(ep => this.planEntityStep(ep)));
-      if (run !== this.updateCheckRun) {
+      if (run !== this.checkRun) {
         // The user went back meanwhile: the plan is of the form values before
         return;
       }
       ws.entitySteps.forEach((ep, i) => this.entityPlans.set(ep, plans[i]));
       this.overwriteReferencesToCreated(ws);
     } catch (e: any) {
-      if (run !== this.updateCheckRun) {
+      if (run !== this.checkRun) {
         return;
       }
       ws.progressError = this.failureMessage(e);

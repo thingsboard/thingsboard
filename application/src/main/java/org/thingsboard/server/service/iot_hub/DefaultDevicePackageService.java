@@ -394,7 +394,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                 continue;
             }
             ObjectNode body = step.getEntity().deepCopy();
-            // Converters this update creates have no id yet; the configuration doesn't depend on them
+            // Converters the request creates have no id yet; the configuration doesn't depend on them
             body.remove(List.of("id", "defaultConverterId", "downlinkConverterId"));
             Integration integration = JacksonUtil.treeToValue(body, Integration.class);
             integration.setTenantId(tenantId);
@@ -812,7 +812,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
 
     /**
      * A copy of the integration with the step's metadata entries merged into its metadata; null when that changes nothing.
-     * A copy: the integration may be the cache's own instance, which a rolled back update must not change.
+     * A copy: the integration may be the cache's own instance, which a rolled back install or update must not change.
      */
     private static Integration withMergedMetadata(Integration integration, JsonNode entries) {
         if (entries == null || !entries.isObject() || entries.isEmpty()) {
@@ -919,7 +919,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         }
     }
 
-    /** Replaces ${<alias>.<property>} of entities this update has saved, e.g. the id of a converter it created. */
+    /** Replaces ${<alias>.<property>} of entities the request has saved, e.g. the id of a converter it created. */
     static JsonNode resolvePlaceholders(JsonNode node, Map<String, ObjectNode> aliasOutputs) {
         if (node == null) {
             return null;
@@ -978,7 +978,10 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         return id != null && dashboardService.findDashboardById(tenantId, id) != null ? id : null;
     }
 
-    /** What isn't transactional: the audit log, version control and attributes. A failure here doesn't undo the update. */
+    /**
+     * What isn't transactional: the audit log, version control and attributes. A failure here doesn't undo the install
+     * or update.
+     */
     private void afterCommit(SecurityUser user, TenantId tenantId, Applied applied) {
         for (SavedEntity saved : applied.saved()) {
             try {

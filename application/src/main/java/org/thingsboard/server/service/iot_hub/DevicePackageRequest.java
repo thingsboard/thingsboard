@@ -18,9 +18,9 @@ import java.util.UUID;
 public class DevicePackageRequest {
 
     private String versionId;
-    // The version installed when the wizard planned the update; the update fails if the package changed since
+    // Update only: the version installed when the wizard planned the update, which fails if the package changed since
     private UUID fromVersionId;
-    // The install method of the new version's steps; the installed one when not set
+    // The install method of the steps; an update without it keeps the installed one
     private String selectedInstallMethod;
     // The form values of the install state, by step: the server adds the entities to it
     private Map<String, JsonNode> installState;
@@ -31,11 +31,12 @@ public class DevicePackageRequest {
     private List<Step> steps;
 
     public enum Action {
-        // Taken as it is: the new version doesn't change it, or the user kept an entity they had
+        // Taken as it is: an update's new version doesn't change it, or the user kept an entity they had
         KEEP,
         // Takes the entity from the step
         OVERWRITE,
-        // A new entity: new in this version, deleted since install, or a copy next to one with the same name
+        // A new entity: one the package installs, a step new in this version or deleted since install, or a copy
+        // next to one with the same name
         CREATE
     }
 
@@ -69,7 +70,8 @@ public class DevicePackageRequest {
         // INTEGRATION: the step's metadata entries, which the package's converter reads. A KEEP merges them into the
         // integration, e.g. one the package took as it was; null removes an entry
         private JsonNode metadata;
-        // UPLINK_CONVERTER: the step takes ThingsBoard's default converter, which the install state records for the update check
+        // UPLINK_CONVERTER: the step takes ThingsBoard's default converter. The install state records it, so that a later
+        // update checks that converter against ThingsBoard's default one
         private boolean defaultConverter;
 
         /**
