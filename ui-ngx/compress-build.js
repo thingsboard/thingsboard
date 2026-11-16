@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Writes a gzip copy (<file>.gz) next to every compressible file of the production build.
-// The monolith (Spring resource chain) and msa/web-ui serve these copies as-is, so neither compresses UI files per request.
+// Writes a gzip copy (<file>.gz) next to every compressible file of the production build ("yarn run compress",
+// run by Maven right after "build:prod"). The monolith (Spring resource chain) and msa/web-ui serve these copies
+// as-is, so neither compresses UI files per request.
+// This is not an esbuild plugin on purpose: Angular passes custom plugins only to the browser code bundle,
+// so polyfills, global styles and scripts, and the copied assets (locales, hugerte, ace workers) never reach them.
 
 const fs = require('node:fs');
 const path = require('node:path');

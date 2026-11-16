@@ -199,13 +199,17 @@ function precompressedStatic(root: string, gzipFiles: Set<string>): RequestHandl
         }
         res.setHeader('Content-Encoding', 'gzip');
         res.type(path.extname(filePath));
-        res.sendFile(filePath + '.gz', {root}, (err) => {
-            if (err) {
-                if (!res.headersSent) {
-                    res.removeHeader('Content-Encoding');
-                }
-                next(err);
+        res.sendFile(filePath + '.gz', {root}, (err?: any) => {
+            // the client went away: express.static ignores these too
+            if (!err || err.code === 'ECONNABORTED' || err.syscall === 'write') {
+                return;
             }
+            if (res.headersSent) {
+                return next(err);
+            }
+            res.removeHeader('Content-Encoding');
+            // the .gz copy disappeared after startup: let express.static serve the original file
+            next(err.status === 404 ? undefined : err);
         });
     };
 }

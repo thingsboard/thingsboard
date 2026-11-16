@@ -109,6 +109,17 @@
                                     <arguments>--mutex network run build:prod</arguments>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <!-- Not an esbuild plugin: Angular passes custom plugins only to the browser code
+                                     bundle, so polyfills, global styles/scripts and copied assets never reach them -->
+                                <id>yarn compress</id>
+                                <goals>
+                                    <goal>yarn</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>run compress</arguments>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
                 </plugins>
