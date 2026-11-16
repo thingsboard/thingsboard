@@ -47,8 +47,8 @@ import {
 } from '@shared/models/integration.models';
 import { capitalize, deepClone, isDefinedAndNotNull, isEmptyStr, isNotEmptyStr } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { catchError, filter, map, startWith } from 'rxjs/operators';
-import { combineLatest, defer, forkJoin, merge, Observable, of, shareReplay } from 'rxjs';
+import { catchError, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, defer, forkJoin, merge, Observable, of, shareReplay, Subscription } from 'rxjs';
 import { ContentType } from '@shared/models/constants';
 import { ConverterLibraryService } from '@core/http/converter-library.service';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -60,6 +60,12 @@ import { DebugConverterEventBody, DebugEventType } from '@shared/models/event.mo
 import { EventsDialogComponent, EventsDialogData } from '@home/dialogs/events-dialog.component';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
+
+interface ConverterDefaults {
+  updateOnlyKeys: DefaultUpdateOnlyKeys;
+  converterV2Config: Record<IntegrationType, ConverterConfigV2>;
+  integrationsConvertersInfo: IntegrationsConvertersInfo;
+}
 
 @Component({
     selector: 'tb-converter',
@@ -149,6 +155,10 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
   private defaultUpdateOnlyKeysByIntegrationType: DefaultUpdateOnlyKeys = {};
   private defaultConverterV2Configuration: Record<IntegrationType, ConverterConfigV2> = {} as Record<IntegrationType, ConverterConfigV2>;
 
+  // Emits once, when the data above is loaded; replays at once to later subscribers
+  private readonly defaults$: Observable<ConverterDefaults>;
+  private scriptTemplateSubscriptions: Record<string, Subscription> = {};
+
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               private converterService: ConverterService,
@@ -163,17 +173,24 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
               private destroyRef: DestroyRef,
               private userPermissionsService: UserPermissionsService) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
-    forkJoin({
-      updateOnlyKeys: this.resourcesService.loadJsonResource<DefaultUpdateOnlyKeys>('/assets/converters/default-update-only-keys.json'),
-      converterV2Config: this.resourcesService.loadJsonResource<Record<IntegrationType, ConverterConfigV2>>('/assets/converters/default-converters-v2-configuration.json'),
+    // A failed request falls back to the initial value of its field
+    this.defaults$ = forkJoin({
+      updateOnlyKeys: this.resourcesService.loadJsonResource<DefaultUpdateOnlyKeys>('/assets/converters/default-update-only-keys.json')
+        .pipe(catchError(() => of(this.defaultUpdateOnlyKeysByIntegrationType))),
+      converterV2Config: this.resourcesService.loadJsonResource<Record<IntegrationType, ConverterConfigV2>>('/assets/converters/default-converters-v2-configuration.json')
+        .pipe(catchError(() => of(this.defaultConverterV2Configuration))),
       integrationsConvertersInfo: this.integrationService.getIntegrationsConvertersInfoCached()
+        .pipe(catchError(() => of(this.integrationsConvertersInfo)))
     }).pipe(
+      shareReplay(1)
+    );
+    // Subscribed first, so the fields are set before any other subscriber of defaults$ runs
+    this.defaults$.pipe(
       takeUntilDestroyed()
-    ).subscribe((value) =>{
+    ).subscribe((value) => {
       this.defaultUpdateOnlyKeysByIntegrationType = value.updateOnlyKeys;
       this.defaultConverterV2Configuration = value.converterV2Config;
       this.integrationsConvertersInfo = value.integrationsConvertersInfo;
-      this.applyLoadedDefaults();
     })
 
     this.updateIntegrationsInfo();
@@ -201,11 +218,11 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
     const typeControl = this.entityForm.get('integrationType');
     // The type can be set before the template subscribes (e.g. preset from the integration form)
     this.integrationInfo$ = combineLatest([
-      this.integrationService.getIntegrationsConvertersInfoCached(),
+      this.defaults$,
       defer(() => typeControl.valueChanges.pipe(startWith(typeControl.value)))
     ]).pipe(
       filter(([, type]) => !!type),
-      map(([info, type]) => info?.[type]),
+      map(([defaults, type]) => defaults.integrationsConvertersInfo?.[type]),
       shareReplay(1)
     );
   }
@@ -215,24 +232,12 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
       this.entityForm.get('type').valueChanges,
       this.entityForm.get('integrationType').valueChanges
     ).pipe(
+      tap(() => this.onTypesChanged()),
+      // The version, the scripts and the default configuration need the loaded defaults:
+      // at once when they are loaded, otherwise once, for the latest types, when they arrive
+      switchMap(() => this.defaults$),
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.resetToNewTab();
-      let converterType: ConverterType = this.entityForm.get('type').value;
-      const integrationType: IntegrationType =  this.entityForm.get('integrationType').value;
-      this.hideDownlink = integrationTypeInfoMap.get(integrationType)?.hideDownlink ?? false;
-      if (this.hideDownlink && converterType === ConverterType.DOWNLINK) {
-        converterType = ConverterType.UPLINK;
-        this.entityForm.get('type').setValue(converterType, {emitEvent: false});
-      }
-
-      this.updateConverterVersion();
-      this.onConverterTypeChanged(converterType);
-      if (converterType === ConverterType.UPLINK) {
-        this.updateDefaultConfiguration(integrationType);
-      }
-      this.updatedConverterScriptLangDisableState();
-    });
+    ).subscribe(() => this.applyTypesDefaults());
     this.entityForm.get('configuration.scriptLang').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
@@ -244,6 +249,41 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
       this.updateConfigurationEntityName(type);
     });
     this.checkIsNewConverter(this.entity, this.entityForm, true);
+  }
+
+  private onTypesChanged(): void {
+    this.resetToNewTab();
+    const integrationType: IntegrationType = this.entityForm.get('integrationType').value;
+    this.hideDownlink = integrationTypeInfoMap.get(integrationType)?.hideDownlink ?? false;
+    if (this.hideDownlink && this.entityForm.get('type').value === ConverterType.DOWNLINK) {
+      this.entityForm.get('type').setValue(ConverterType.UPLINK, {emitEvent: false});
+    }
+  }
+
+  private applyTypesDefaults(): void {
+    // A library converter selected while the defaults were loading keeps its version and scripts
+    if (this.entityForm.get('converterLibrary').value) {
+      return;
+    }
+    const converterType: ConverterType = this.entityForm.get('type').value;
+    const integrationType: IntegrationType = this.entityForm.get('integrationType').value;
+    this.updateConverterVersion();
+    this.onConverterTypeChanged(converterType);
+    if (converterType === ConverterType.UPLINK) {
+      this.updateDefaultConfiguration(integrationType);
+    }
+    this.updatedConverterScriptLangDisableState();
+    this.cd.markForCheck();
+  }
+
+  // Runs the action at once when the defaults are loaded, otherwise when they arrive
+  private whenDefaultsLoaded(action: () => void): void {
+    this.defaults$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      action();
+      this.cd.markForCheck();
+    });
   }
 
   private resetToNewTab() {
@@ -385,12 +425,12 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
         form.get('configuration.scriptLang').patchValue(
           this.tbelEnabled ? ScriptLanguage.TBEL : ScriptLanguage.JS, {emitEvent});
         if (!emitEvent) {
-          this.updateConverterVersion();
+          this.whenDefaultsLoaded(() => this.updateConverterVersion());
         } else {
           form.get('integrationType').updateValueAndValidity({onlySelf: true});
         }
       } else {
-        this.updatedPredefinedConverterKeys();
+        this.whenDefaultsLoaded(() => this.updatedPredefinedConverterKeys());
         this.updatedConverterVersionDisableState();
         this.updatedConverterScriptLangDisableState(entity);
         form.updateValueAndValidity();
@@ -404,10 +444,10 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
         form.get('configuration.scriptLang').patchValue(scriptLang, {emitEvent: true});
       }
       if (isDefinedAndNotNull(entity?.converterVersion)) {
-        this.updatedPredefinedConverterKeys();
+        this.whenDefaultsLoaded(() => this.updatedPredefinedConverterKeys());
         this.updatedConverterVersionDisableState();
       } else {
-        this.updateConverterVersion();
+        this.whenDefaultsLoaded(() => this.updateConverterVersion());
       }
     }
   }
@@ -446,33 +486,6 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
         }, {emitEvent: false});
       }
       this.onSetDefaultScriptBody(converterType);
-    }
-  }
-
-  // The converter version, predefined keys and default configuration depend on the data loaded in the constructor.
-  // A converter whose integration type was set before that data arrived (e.g. a converter opened from
-  // the integration form right after a page load) gets them again here.
-  private applyLoadedDefaults(): void {
-    const integrationType: IntegrationType = this.entityForm.get('integrationType').value;
-    if (!integrationType) {
-      return;
-    }
-    if (!this.isAdd) {
-      // An existing converter keeps its version; only the predefined keys depend on the loaded data.
-      this.updatedPredefinedConverterKeys();
-      return;
-    }
-    if (this.entityForm.get('converterLibrary').value) {
-      return;
-    }
-    const converterType: ConverterType = this.entityForm.get('type').value;
-    const prevConverterVersion: ConverterVersion = this.entityForm.get('converterVersion').value;
-    this.updateConverterVersion();
-    if (this.entityForm.get('converterVersion').value !== prevConverterVersion) {
-      this.onConverterTypeChanged(converterType);
-    }
-    if (converterType === ConverterType.UPLINK) {
-      this.updateDefaultConfiguration(integrationType);
     }
   }
 
@@ -517,7 +530,7 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
       const converterType: ConverterType = this.entityForm.get('type').value;
       const integrationType: IntegrationType = this.entityForm.get('integrationType').value;
       const converterInfo: ConverterInfo = this.integrationsConvertersInfo?.[integrationType]?.[converterType.toLocaleLowerCase()];
-      const keys: string[] = converterInfo?.keys ?? [];
+      const keys = converterInfo?.keys ?? [];
       this.predefinedConverterKeys = keys.map(value => ({name: value, value}));
       this.predefinedKeys = deepClone(keys);
     } else {
@@ -544,11 +557,15 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
 
     if (!isNotEmptyStr(scriptBody)) {
       const targetTemplateUrl = getTargetTemplateUrl(converterType, scriptLang, integrationType, converterVersion);
-      this.resourcesService.loadJsonResource(targetTemplateUrl)
+      this.scriptTemplateSubscriptions[targetField]?.unsubscribe();
+      this.scriptTemplateSubscriptions[targetField] = this.resourcesService.loadJsonResource<string>(targetTemplateUrl)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(template => {
-          this.entityForm.get('configuration').get(targetField)
-            .patchValue(template, { emitEvent: false });
+          const scriptControl = this.entityForm.get('configuration').get(targetField);
+          // A template that arrives late does not replace a script set in the meantime
+          if (!isNotEmptyStr(scriptControl.value)) {
+            scriptControl.patchValue(template, {emitEvent: false});
+          }
         });
     }
   }
