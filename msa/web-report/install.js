@@ -10,6 +10,8 @@ const { pipeline } = require('stream/promises');
 const { httpRequest, extractZip } = require('playwright-core/lib/coreBundle').utils;
 const { snapshot } = require('./chromium');
 
+const DOWNLOAD_ATTEMPTS = 3;
+
 const PLATFORMS = {
     linux: {
         ...snapshot.linux, binary: 'tb-web-report', pkgOutput: 'thingsboard-web-report-linux',
@@ -55,8 +57,8 @@ async function installChromium(platform, downloadDir, chromiumDir) {
     await download(`${snapshot.baseUrl}/${platform.path}`, archive, platform.sha256);
     await extractZip(archive, { dir: downloadDir });
     const unpacked = path.join(downloadDir, path.basename(platform.path, '.zip'));
-    for (const file of platform.exclude || []) {
-        await fse.remove(path.join(unpacked, file));
+    for await (const excluded of fs.promises.glob(platform.exclude || [], { cwd: unpacked })) {
+        await fse.remove(path.join(unpacked, excluded));
     }
     if (!await platform.hasVersion(unpacked)) {
         throw new Error(`${platform.path} is not Chromium ${snapshot.version}; check the build number in chromium.js`);
@@ -65,13 +67,33 @@ async function installChromium(platform, downloadDir, chromiumDir) {
     await fse.remove(downloadDir);
 }
 
-// Writes the file while it is downloaded, and fails unless its SHA-256 is the expected one
-function download(url, file, sha256) {
+// Fails unless the SHA-256 of the downloaded file is the expected one. Tries again when the connection or the server
+// fails, but not for an answer such as 404, which would be the same again.
+async function download(url, file, sha256) {
+    let actual;
+    for (let attempt = 1; actual === undefined; attempt++) {
+        try {
+            actual = await downloadOnce(url, file);
+        } catch (e) {
+            if (e.statusCode < 500 || attempt === DOWNLOAD_ATTEMPTS) {
+                throw e;
+            }
+            console.warn(`${e.message}; trying again`);
+        }
+    }
+    if (actual !== sha256) {
+        throw new Error(`${url} has SHA-256 ${actual}, expected ${sha256}`);
+    }
+}
+
+// Writes the file while it is downloaded, and gives its SHA-256
+function downloadOnce(url, file) {
     return new Promise((resolve, reject) => {
+        const fail = (reason, statusCode) => reject(Object.assign(new Error(`Cannot download ${url}: ${reason}`), { statusCode }));
         httpRequest({ url, socketTimeout: 60000 }, response => {
             if (response.statusCode !== 200) {
                 response.resume();
-                reject(new Error(`Cannot download ${url}: HTTP ${response.statusCode}`));
+                fail(`HTTP ${response.statusCode}`, response.statusCode);
                 return;
             }
             const hash = crypto.createHash('sha256');
@@ -81,15 +103,8 @@ function download(url, file, sha256) {
                     callback(null, chunk);
                 }
             });
-            pipeline(response, hashing, fs.createWriteStream(file)).then(() => {
-                const actual = hash.digest('hex');
-                if (actual === sha256) {
-                    resolve();
-                } else {
-                    reject(new Error(`${url} has SHA-256 ${actual}, expected ${sha256}`));
-                }
-            }, reject);
-        }, reject);
+            pipeline(response, hashing, fs.createWriteStream(file)).then(() => resolve(hash.digest('hex')), e => fail(e.message));
+        }, e => fail(e.message));
     });
 }
 
