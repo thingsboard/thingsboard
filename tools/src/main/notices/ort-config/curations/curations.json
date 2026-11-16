@@ -536,5 +536,33 @@
    "comment": "The headers say 'released to the Public Domain' and 'also licensed under Creative Commons Zero (CC0)'. The scan misreads them as a choice that includes Apache-2.0 and OpenSSL.",
    "concluded_license": "CC0-1.0"
   }
+ },
+ {
+  "id": "NPM::typeface-roboto:[1.0,2.0[",
+  "curations": {
+   "comment": "The package is declared MIT, which is the license of its stylesheet. The font files it holds are Roboto of Google, and say in their license field that they are under Apache-2.0; the scan does not read font files.",
+   "concluded_license": "MIT AND Apache-2.0"
+  }
+ },
+ {
+  "id": "NPM::typeface-roboto-mono:[1.0,2.0[",
+  "curations": {
+   "comment": "The package is declared MIT, which is the license of its stylesheet. The font files it holds are Roboto Mono of Google, and say in their license field that they are under Apache-2.0; the scan does not read font files.",
+   "concluded_license": "MIT AND Apache-2.0"
+  }
+ },
+ {
+  "id": "Maven:io.netty:netty-resolver-dns-native-macos:[4.1,4.2[",
+  "curations": {
+   "comment": "dnsinfo.h is from Apple, and its header says 'Apple Public Source License Version 2.0'; the scan reads the name, at the end of a line, as version 1.0 as well.",
+   "concluded_license": "Apache-2.0 AND APSL-2.0"
+  }
+ },
+ {
+  "id": "NPM::leaflet.gridlayer.googlemutant:[0.15,0.16[",
+  "curations": {
+   "comment": "Beerware is a notice that names its author, and this package has its own, by Ivan Sanchez Ortega; under 'Beerware' the notices would print the notice of Poul-Henning Kamp. The text is in ort-config/custom-license-texts. MIT is for the code it copies from js-lru.",
+   "concluded_license": "MIT AND LicenseRef-thingsboard-beerware-googlemutant"
+  }
  }
 ]
