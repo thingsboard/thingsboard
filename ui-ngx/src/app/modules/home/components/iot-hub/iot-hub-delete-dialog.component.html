@@ -8,13 +8,21 @@
 <div class="flex flex-col gap-5 p-6">
   <h2 class="tb-iot-hub-delete-title">{{ 'iot-hub.remove-confirm-title' | translate:{ name: data.itemName } }}</h2>
   <p class="tb-iot-hub-delete-desc">{{ description }}</p>
-  @if (keptReferences) {
+  @if (keptGroups.length) {
     <div class="tb-form-hint tb-primary-fill">
       <mat-icon>info_outline</mat-icon>
       <div class="flex flex-col">
         <div class="font-medium">{{ keptTitle }}</div>
-        <div>{{ keptReason }}</div>
-        <tb-image-references class="mt-3" [references]="keptReferences"></tb-image-references>
+        <!-- One list, a group per reason: the reason is over the entities it is about -->
+        <div class="tb-iot-hub-kept-groups mt-2">
+          @for (group of keptGroups; track group.reason; let first = $first) {
+            @if (!first) {
+              <div class="tb-iot-hub-kept-divider"></div>
+            }
+            <div class="tb-iot-hub-kept-reason">{{ group.reason }}</div>
+            <tb-image-references [references]="group.references"></tb-image-references>
+          }
+        </div>
       </div>
     </div>
   }

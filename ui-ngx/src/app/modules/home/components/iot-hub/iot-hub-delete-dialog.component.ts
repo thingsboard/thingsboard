@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { IotHubInstalledItemKeptEntities } from 'src/app/shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubInstalledItemKeptEntities, IotHubKeptEntity } from 'src/app/shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourceReferences } from '@shared/models/resource.models';
@@ -30,10 +30,10 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
 
   description: string;
 
-  // A device package keeps the entities other installed packages use, and the dialog lists them before the user confirms
-  keptReferences: ResourceReferences | null = null;
+  // A device package keeps some entities, and the dialog lists them before the user confirms: one group per reason,
+  // so a reason reads only for its own entities
+  keptGroups: { reason: string; references: ResourceReferences }[] = [];
   keptTitle: string;
-  keptReason: string;
 
   constructor(
     protected store: Store<AppState>,
@@ -48,23 +48,20 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     const kept = data.keptEntities;
     const shared = kept?.entities ?? [];
     const withDevices = kept?.keptForDevices ?? [];
-    if (shared.length || withDevices.length) {
-      this.keptReferences = [...shared, ...withDevices].map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
-      const reasons: string[] = [];
-      if (shared.length) {
-        // Kept because other packages use them, because the user had them before the package, or both
-        const reasonKey = !kept.usedExistingCount ? 'iot-hub.remove-kept-used' :
-          !kept.usedByItemsCount ? 'iot-hub.remove-kept-own' : 'iot-hub.remove-kept-own-or-used';
-        reasons.push(this.translate.instant(reasonKey, { kept: shared.length }));
-      }
-      if (withDevices.length) {
-        // The profiles devices use, and what they use (default rule chains, dashboard), which stays with them
-        const profiles = withDevices.filter(entity => entity.entityId.entityType === 'DEVICE_PROFILE').length;
-        const key = withDevices.length > profiles ? 'iot-hub.remove-kept-devices-with-references' : 'iot-hub.remove-kept-devices';
-        reasons.push(this.translate.instant(key, { profiles, devices: kept.devicesCount ?? 0 }));
-      }
+    const references = (entities: IotHubKeptEntity[]): ResourceReferences =>
+      entities.map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
+    if (shared.length) {
+      // Kept because other packages use them, because the user had them before the package, or both
+      const reasonKey = !kept.usedExistingCount ? 'iot-hub.remove-kept-used' :
+        !kept.usedByItemsCount ? 'iot-hub.remove-kept-own' : 'iot-hub.remove-kept-own-or-used';
+      this.keptGroups.push({ reason: this.translate.instant(reasonKey, { kept: shared.length }), references: references(shared) });
+    }
+    if (withDevices.length) {
+      // The profiles devices use, and what those profiles use (default rule chains, dashboard)
+      this.keptGroups.push({ reason: this.translate.instant('iot-hub.remove-kept-referenced'), references: references(withDevices) });
+    }
+    if (this.keptGroups.length) {
       this.keptTitle = this.translate.instant('iot-hub.remove-kept-title', { kept: shared.length + withDevices.length });
-      this.keptReason = reasons.join(' ');
     }
   }
 
