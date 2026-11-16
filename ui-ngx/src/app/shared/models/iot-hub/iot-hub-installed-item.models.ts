@@ -79,6 +79,9 @@ export interface DevicePackageRequest {
   selectedInstallMethod?: string;
   installState: Record<string, any>;
   steps: DevicePackageStep[];
+  // Install only: the owner of the device, gateway and dashboard, and the group the created device joins
+  customerId?: string;
+  entityGroupId?: string;
 }
 
 /** All of the update was applied, or none of it: failedStep is the install state key of the step that failed, if one did. */

@@ -177,18 +177,6 @@ export class IotHubApiService {
     );
   }
 
-  public registerDeviceInstall(
-    versionId: string,
-    descriptor: { type?: string; createdEntityIds: { entityType: string; id: string }[]; usedExistingEntityIds?: { entityType: string; id: string }[]; dashboardId?: { entityType: string; id: string }; selectedInstallMethod?: string; installState?: Record<string, any> },
-    config?: IotHubRequestConfig
-  ): Observable<InstallItemVersionResult> {
-    return this.http.post<InstallItemVersionResult>(
-      `/api/iot-hub/device/register?versionId=${versionId}`,
-      { type: 'DEVICE', ...descriptor },
-      { params: this.buildParams(config) }
-    );
-  }
-
   public installItemVersion(versionId: string, config?: IotHubRequestConfig, data?: any): Observable<InstallItemVersionResult> {
     return this.http.post<InstallItemVersionResult>(
       `/api/iot-hub/versions/${versionId}/install`,
@@ -281,6 +269,15 @@ export class IotHubApiService {
   public updateDevicePackage(installedItemId: string, request: DevicePackageRequest, config?: IotHubRequestConfig): Observable<DevicePackageResult> {
     return this.http.post<DevicePackageResult>(
       `/api/iot-hub/installedItems/${installedItemId}/deviceUpdate`,
+      request,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /** Installs a device package in one transaction: all of its entities and the installed item, or nothing. */
+  public installDevicePackage(request: DevicePackageRequest, config?: IotHubRequestConfig): Observable<DevicePackageResult> {
+    return this.http.post<DevicePackageResult>(
+      `/api/iot-hub/device/install`,
       request,
       { params: this.buildParams(config) }
     );
