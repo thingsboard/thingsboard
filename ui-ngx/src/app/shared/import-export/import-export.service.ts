@@ -22,7 +22,8 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
 import { forkJoin, Observable, of, Subject } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
+import { catchError, defaultIfEmpty, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { ExportRow, Widget, WidgetActionsMap, WidgetActionType, WidgetSize, WidgetTypeDetails } from '@shared/models/widget.models';
@@ -276,7 +277,7 @@ export class ImportExportService {
   }
 
   public importDashboardVersion(dashboard: DashboardInfo,
-                                onEditMissingAliases: editMissingAliasesFunction): Observable<Dashboard> {
+                                onEditMissingAliases: editMissingAliasesFunction): Observable<boolean> {
     return this.openImportDialog('dashboard.update-new-version', 'dashboard.upload-file-to-update').pipe(
       mergeMap((imported: Dashboard) =>
         this.resolveMissingAliases(this.prepareImportedDashboard(imported), onEditMissingAliases)),
@@ -284,8 +285,12 @@ export class ImportExportService {
         ...dashboard,
         configuration: {...imported.configuration, description: dashboard.configuration?.description},
         resources: imported.resources
-      })),
-      catchError(() => of(null))
+      }).pipe(
+        map(() => true),
+        defaultIfEmpty(true),
+        catchError((err) => of(err instanceof HttpErrorResponse && err.status === HttpStatusCode.Conflict))
+      )),
+      catchError(() => of(false))
     );
   }
 
