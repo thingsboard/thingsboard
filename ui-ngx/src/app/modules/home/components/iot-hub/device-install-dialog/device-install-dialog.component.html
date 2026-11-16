@@ -66,7 +66,7 @@
           <ng-container *ngTemplateOutlet="updateRows; context: { $implicit: ws }"></ng-container>
         } @else {
         <div class="flex flex-col p-6">
-          @if (hasInstallConflicts(ws) && !ws.progressDone) {
+          @if (hasInstallConflicts(ws) && !ws.progressDone && !ws.progressError) {
             <span class="tb-progress-hint mb-4">{{ 'iot-hub.device-install-conflicts-hint' | translate }}</span>
           }
           @for (ep of ws.entitySteps; track ep.step.name; let i = $index) {

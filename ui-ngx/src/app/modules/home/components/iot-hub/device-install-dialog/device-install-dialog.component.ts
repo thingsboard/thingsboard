@@ -220,7 +220,7 @@ export interface ConnectionCheck {
   checkedValues?: string;
 }
 
-// Update: the rows show the outcome of the one request one after another, this far apart
+// The rows show the outcome of the one request one after another, this far apart
 const UPDATE_REVEAL_INTERVAL = 150;
 // Where the wizard keeps the converter it builds for a step with "default": true, as if the package had that file
 const DEFAULT_CONVERTER_PATH = 'tb-default-converter/';
@@ -378,6 +378,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * has to report 'installed', or the caller keeps showing pre-install counts and badges.
    */
   private installRegistered = false;
+  // Set however the dialog closes: a check of the steps still running then installs nothing
+  private closed = false;
   // Update: the package's entities as the server finds them, by install step
   private updateStates = new Map<string, DevicePackageEntityState>();
   // Update: the files of the installed version, which the new version is compared with
@@ -432,6 +434,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   async ngOnInit(): Promise<void> {
+    this.dialogRef.beforeClosed().subscribe(() => this.closed = true);
     this.allowAiDashboardGenerate = this.aiDashboardGenerationService.isAllowedDashboardGenerate({ requireTelemetry: true });
     try {
       await this.loadPackageFiles(this.data.item.id as string, this.zipFiles, this.zipImages);
@@ -1155,20 +1158,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           completed: this.reviewMode
         });
         i++;
-      } else if (ENTITY_STEP_TYPES.has(step.type) && this.data.update) {
-        // An update is one transaction: every entity step goes in one Update step, after the last form
+      } else if (ENTITY_STEP_TYPES.has(step.type) && !this.reviewMode) {
+        // An install or update is one transaction: every entity step goes in one progress step, after the last form
         // the entities may use, i.e. where the last group of entity steps is
         if (!rawSteps.slice(i + 1).some(s => ENTITY_STEP_TYPES.has(s.type))) {
           this.wizardSteps.push({
             type: 'progress',
-            label: this.translate.instant('iot-hub.device-update-step'),
+            label: this.data.update ? this.translate.instant('iot-hub.device-update-step') : 'Provisioning',
             rawSteps: rawSteps.filter(s => ENTITY_STEP_TYPES.has(s.type)),
             completed: false
           });
         }
         i++;
       } else if (ENTITY_STEP_TYPES.has(step.type)) {
-        // Group consecutive entity steps
+        // Review mode: consecutive entity steps, as installs before the one-transaction install showed them
         const group: DeviceInstallStep[] = [];
         while (i < rawSteps.length && ENTITY_STEP_TYPES.has(rawSteps[i].type)) {
           group.push(rawSteps[i]);
@@ -1511,6 +1514,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     try {
       for (const ep of ws.entitySteps) {
         const existing = await this.preCheckEntity(ep.step);
+        if (this.closed) {
+          return;
+        }
         if (existing) {
           ep.status = 'conflict';
           ep.existingEntity = existing;
@@ -1528,7 +1534,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       ws.checking = false;
       this.cdr.detectChanges();
     }
-    if (!this.hasInstallConflicts(ws)) {
+    if (!this.closed && !this.hasInstallConflicts(ws)) {
       await this.runInstall(ws);
     }
   }
@@ -1924,7 +1930,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** Update: the values of the forms, which the install state keeps for the next update. */
+  /** The values of the forms, which the install state keeps for the next update. */
   private buildFormState(): Record<string, any> {
     const state: Record<string, any> = {};
     for (const ws of this.wizardSteps) {
@@ -1935,7 +1941,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return state;
   }
 
-  /** Update: the steps the server applies, each with its entity resolved from the template of the new version. */
+  /** The steps the server applies, each with its entity resolved from the template of the version installed. */
   private async buildUpdateSteps(ws: WizardStep): Promise<DevicePackageStep[]> {
     for (const ep of ws.entitySteps) {
       const plan = this.entityPlans.get(ep);
@@ -1995,7 +2001,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       sharedAttributes: this.resolvePackageFile(this.zipFiles, step.sharedAttributes, this.formValues)
     };
     if (overwritten) {
-      return { ...base, action: 'OVERWRITE', entityId: overwritten.id, expectedVersion: plan.version, confirmed: true, entity, ...attributes };
+      // At install, a device the user chose to overwrite takes the package's credentials; on update the device never changes
+      const credentials = !this.data.update && plan.resolution === 'overwrite' ?
+        this.resolvePackageFile(this.zipFiles, step.credentials, this.formValues) : undefined;
+      return { ...base, action: 'OVERWRITE', entityId: overwritten.id, expectedVersion: plan.version, confirmed: true, entity, credentials, ...attributes };
     }
     return {
       ...base,
@@ -2007,7 +2016,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /**
-   * Update: the entity of a step resolved from the template of the new version, as the server saves it. The server
+   * The entity of a step resolved from the template of the version installed, as the server saves it. The server
    * keeps what the entity it overwrites must keep: its id, name, owner and an integration's routing key.
    */
   private buildEntityBody(ws: WizardStep, step: DeviceInstallStep, overwritten: EntityStepOutput | null): any {
@@ -2050,7 +2059,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** Update: a step output from the server, with the URL the wizard opens it at. */
+  /** A step output from the server, with the URL the wizard opens it at. */
   private withEntityUrl(step: DeviceInstallStep, output: EntityStepOutput): EntityStepOutput {
     const urls: Partial<Record<InstallStepType, string>> = {
       [InstallStepType.DEVICE_PROFILE]: `/profiles/deviceProfiles/${output.id}`,
