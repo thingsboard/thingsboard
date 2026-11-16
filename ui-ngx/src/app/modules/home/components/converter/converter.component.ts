@@ -47,8 +47,8 @@ import {
 } from '@shared/models/integration.models';
 import { capitalize, deepClone, isDefinedAndNotNull, isEmptyStr, isNotEmptyStr } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { catchError, filter, map } from 'rxjs/operators';
-import { forkJoin, merge, Observable, of, shareReplay } from 'rxjs';
+import { catchError, filter, map, startWith } from 'rxjs/operators';
+import { combineLatest, defer, forkJoin, merge, Observable, of, shareReplay } from 'rxjs';
 import { ContentType } from '@shared/models/constants';
 import { ConverterLibraryService } from '@core/http/converter-library.service';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -197,13 +197,14 @@ export class ConverterComponent extends EntityComponent<Converter> implements On
   }
 
   private updateIntegrationsInfo(): void {
-    this.integrationInfo$ = this.entityForm.get('integrationType').valueChanges.pipe(
-      filter((integrationType) => !!integrationType),
-      map((integrationType: IntegrationType) => {
-        if (this.integrationsConvertersInfo) {
-          return this.integrationsConvertersInfo[integrationType];
-        }
-      }),
+    const typeControl = this.entityForm.get('integrationType');
+    // The type can be set before the template subscribes (e.g. preset from the integration form)
+    this.integrationInfo$ = combineLatest([
+      this.integrationService.getIntegrationsConvertersInfoCached(),
+      defer(() => typeControl.valueChanges.pipe(startWith(typeControl.value)))
+    ]).pipe(
+      filter(([, type]) => !!type),
+      map(([info, type]) => info?.[type]),
       shareReplay(1)
     );
   }
