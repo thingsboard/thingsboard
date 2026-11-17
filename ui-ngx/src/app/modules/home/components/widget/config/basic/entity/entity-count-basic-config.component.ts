@@ -12,7 +12,11 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isUndefined } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
-import { countDefaultSettings, CountWidgetSettings } from '@home/components/widget/lib/count/count-widget.models';
+import {
+  countDefaultSettings,
+  CountWidgetSettings,
+  normalizeCountWidgetDatasource
+} from '@home/components/widget/lib/count/count-widget.models';
 
 @Component({
     selector: 'tb-entity-count-basic-config',
@@ -48,6 +52,9 @@ export class EntityCountBasicConfigComponent extends BasicWidgetConfigComponent 
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
+    if (!this.widgetEditMode) {
+      normalizeCountWidgetDatasource(configData, DatasourceType.entityCount, this.utils);
+    }
     const settings: CountWidgetSettings = {...countDefaultSettings(false), ...(configData.config.settings || {})};
     this.entityCountWidgetConfigForm = this.fb.group({
       datasources: [configData.config.datasources, []],
