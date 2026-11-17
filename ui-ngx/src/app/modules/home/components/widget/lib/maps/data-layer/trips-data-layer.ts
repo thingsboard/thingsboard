@@ -11,7 +11,7 @@ import {
   TbMapDatasource,
   TripsDataLayerSettings
 } from '@shared/models/widget/maps/map.models';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, Subscription } from 'rxjs';
 import { DataKey, FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { map } from 'rxjs/operators';
 import L from 'leaflet';
@@ -42,6 +42,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   private marker: L.Marker;
   private markerTooltip: L.Popup;
+  private markerIconSubscription: Subscription;
   private labelOffset: L.PointTuple;
 
   private polyline: L.Polyline;
@@ -114,6 +115,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   }
 
   public remove() {
+    this.markerIconSubscription?.unsubscribe();
     if (this.marker) {
       this.layer.removeLayer(this.marker);
       this.marker.off();
@@ -311,7 +313,8 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
     if (this.settings.showMarker && this.marker) {
-      this.dataLayer.dataProcessor.createMarkerIcon(data, dsData, data.rotationAngle).subscribe(
+      this.markerIconSubscription?.unsubscribe();
+      this.markerIconSubscription = this.dataLayer.dataProcessor.createMarkerIcon(data, dsData, data.rotationAngle).subscribe(
         (iconInfo) => {
           const options = deepClone(iconInfo.icon.options);
           this.marker.setIcon(iconInfo.icon);
