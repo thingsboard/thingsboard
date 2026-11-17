@@ -154,6 +154,8 @@
         <jts.version>1.19.0</jts.version>
         <bouncycastle.version>1.86</bouncycastle.version> <!-- to fix CVE-2026-18036, CVE-2026-71888, CVE-2026-71889, CVE-2026-71891, CVE-2026-8763, CVE-2026-12185, CVE-2026-12802, CVE-2026-12803, CVE-2026-12816, CVE-2026-12860, CVE-2026-13506, CVE-2026-14682, CVE-2026-58059, CVE-2026-58060, CVE-2026-58061, CVE-2026-58062, CVE-2026-59639, CVE-2026-59642, CVE-2026-59645, CVE-2026-59650, CVE-2026-59651 (supersedes the earlier 1.84 pin for CVE-2026-5588, CVE-2026-5598, CVE-2025-14813). Not managed by the Spring Boot BOM — this pin is the sole source of the bouncycastle version. -->
         <winsw.version>2.0.1</winsw.version>
+        <!-- The service wrapper of the Windows zip, as the notices add it: see the package-sbom execution -->
+        <notices.winsw>pkg:maven/com.sun.winsw/winsw@${winsw.version}=MIT</notices.winsw>
         <azure-iot-service-client.version>1.13.0</azure-iot-service-client.version>
         <proton-j.version>0.35.0</proton-j.version> <!-- to fix CVE-2026-66257, CVE-2026-66273, CVE-2026-66274, CVE-2026-66275, CVE-2026-66276 and CVE-2026-66277. Not managed by the Spring Boot BOM — this pin is the sole source of the proton-j version. TODO: remove only once a TB dependency pulls proton-j >= 0.35.0 transitively -->
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
@@ -1274,9 +1276,32 @@
                                 <argument>${project.version}</argument>
                                 <argument>${project.build.directory}/notices/windows/THIRD-PARTY-NOTICES</argument>
                                 <argument>${sbom.package.sourceFile}</argument>
-                                <!-- The service wrapper of the Windows package: see the package-sbom execution -->
                                 <argument>--add</argument>
-                                <argument>pkg:maven/com.sun.winsw/winsw@${winsw.version}=MIT</argument>
+                                <argument>${notices.winsw}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <!-- The notices of the whole product: THIRD-PARTY-NOTICES in the root, from the SBOMs that a build
+                         with -Dsbom.skip=false left in the modules. Bound to no phase; run it after such a build, from
+                         the root: mvn -N exec:exec@notices-product. CI runs it the same way and fails when the
+                         committed file differs. The Windows zip of every service has WinSW, which the SBOMs of what
+                         the modules pack do not list. -->
+                    <execution>
+                        <id>notices-product</id>
+                        <inherited>false</inherited>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                            <arguments>
+                                <argument>${project.build.directory}/notices-product</argument>
+                                <argument>${project.version}</argument>
+                                <argument>${main.dir}/THIRD-PARTY-NOTICES</argument>
+                                <argument>--sboms-under</argument>
+                                <argument>${main.dir}</argument>
+                                <argument>--add</argument>
+                                <argument>${notices.winsw}</argument>
                             </arguments>
                         </configuration>
                     </execution>
