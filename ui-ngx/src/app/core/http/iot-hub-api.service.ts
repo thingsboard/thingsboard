@@ -4,7 +4,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import {
@@ -49,6 +50,8 @@ export function iotHubResourceUrl(baseUrl: string, path: string): string {
   }
   return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 }
+
+const PUBLISHED_VERSIONS_CHUNK_SIZE = 100;
 
 export interface IotHubRequestConfig {
   ignoreLoading?: boolean;
@@ -240,16 +243,22 @@ export class IotHubApiService {
 
   public getInstalledItems(pageLink: PageLink, itemTypes?: string | string[],
                            itemId?: string, config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
-    let query = pageLink.toQuery();
-    if (itemTypes) {
-      const types = Array.isArray(itemTypes) ? itemTypes : [itemTypes];
-      types.forEach(t => query += `&itemTypes=${t}`);
-    }
+    let query = this.installedItemsQuery(pageLink, itemTypes);
     if (itemId) {
       query += `&itemId=${itemId}`;
     }
     return this.http.get<PageData<IotHubInstalledItem>>(
       `/api/iot-hub/installedItems${query}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /** Body: published version id by item id; returns items installed in a different version. */
+  public getInstalledItemsWithUpdates(pageLink: PageLink, itemTypes: string[] | null, publishedVersionIds: Record<string, string>,
+                                      config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
+    return this.http.post<PageData<IotHubInstalledItem>>(
+      `/api/iot-hub/installedItems/withUpdates${this.installedItemsQuery(pageLink, itemTypes)}`,
+      publishedVersionIds,
       { params: this.buildParams(config) }
     );
   }
@@ -294,11 +303,18 @@ export class IotHubApiService {
   }
 
   public getItemsPublishedVersions(itemIds: string[], config?: IotHubRequestConfig): Observable<ItemPublishedVersionInfo[]> {
-    return this.http.post<ItemPublishedVersionInfo[]>(
+    if (!itemIds.length) {
+      return of([]);
+    }
+    const chunks: string[][] = [];
+    for (let i = 0; i < itemIds.length; i += PUBLISHED_VERSIONS_CHUNK_SIZE) {
+      chunks.push(itemIds.slice(i, i + PUBLISHED_VERSIONS_CHUNK_SIZE));
+    }
+    return forkJoin(chunks.map(chunk => this.http.post<ItemPublishedVersionInfo[]>(
       `${this.baseUrl}/api/versions/publishedVersions`,
-      itemIds,
+      chunk,
       { params: this.buildParams(config) }
-    );
+    ))).pipe(map(results => results.flat()));
   }
 
   public getCreatorProfile(creatorId: string, config?: IotHubRequestConfig): Observable<CreatorView> {
@@ -306,6 +322,11 @@ export class IotHubApiService {
       `${this.baseUrl}/api/creators/${creatorId}/profile`,
       { params: this.buildParams(config) }
     );
+  }
+
+  private installedItemsQuery(pageLink: PageLink, itemTypes?: string | string[] | null): string {
+    const types = !itemTypes ? [] : Array.isArray(itemTypes) ? itemTypes : [itemTypes];
+    return pageLink.toQuery() + types.map(t => `&itemTypes=${t}`).join('');
   }
 
   private buildParams(config?: IotHubRequestConfig): HttpParams {
