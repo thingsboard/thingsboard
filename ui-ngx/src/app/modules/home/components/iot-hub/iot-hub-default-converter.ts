@@ -28,7 +28,8 @@ export interface DefaultConverterUpdate {
 const DEFAULT_CONVERTERS_V2_CONFIGURATION_URL = '/assets/converters/default-converters-v2-configuration.json';
 
 // The settings of a default converter that decide what it does: the script is compared on its own. Install states keep
-// fingerprints of them, so a key with a value that leaves this list makes every default converter look changed
+// fingerprints of them: adding or removing a key the default settings set, or hashing anything else, changes every
+// fingerprint, and every default converter then looks changed
 const V2_CONFIGURATION_KEYS: (keyof ConverterConfigV2)[] =
   ['type', 'name', 'profile', 'label', 'customer', 'group', 'attributes', 'telemetry', 'updateOnlyKeys'];
 
@@ -103,27 +104,24 @@ const sortedKeys = (value: any): any => {
 
 /**
  * True when ThingsBoard's default converter changed since a package last wrote the converter. Packages that share the
- * converter each record only their own write, so it is current while any of their fingerprints matches ThingsBoard's
- * default converter now, in the language that fingerprint was taken in. A converter no package recorded a fingerprint
- * for is compared itself, and only while nobody changed it: modified asks the server, so only for a converter that differs.
+ * converter each record only their own write, so it is current while any of their fingerprints in the converter's script
+ * language matches ThingsBoard's default converter now. A converter with no such fingerprint is compared itself, and
+ * only while nobody changed it: modified asks the server, so only for a converter that differs.
  */
 export const defaultConverterChanged = async (resourcesService: ResourcesService, converter: Converter,
                                               fingerprints: Set<string> | undefined,
                                               modified: () => Promise<boolean | null>): Promise<boolean> => {
-  if (fingerprints?.size) {
-    for (const fingerprint of fingerprints) {
-      const scriptLang = fingerprint.substring(0, fingerprint.indexOf(':')) as ScriptLanguage;
-      const defaultConverter = scriptLang ?
-        await loadDefaultUplinkConverter(resourcesService, converter.integrationType, scriptLang, converter.name) : null;
-      if (defaultConverter && defaultConverterFingerprint(defaultConverter) === fingerprint) {
-        return false;
-      }
-    }
-    return true;
+  const scriptLang = converter.configuration.scriptLang;
+  const defaultConverter = await loadDefaultUplinkConverter(resourcesService, converter.integrationType, scriptLang, converter.name);
+  if (!defaultConverter) {
+    return false;
   }
-  const defaultConverter = await loadDefaultUplinkConverter(resourcesService, converter.integrationType,
-    converter.configuration.scriptLang, converter.name);
-  return !!defaultConverter && differsFromDefaultConverter(converter, defaultConverter) && (await modified()) === false;
+  // A write in another language, e.g. before the tenant turned TBEL off, says nothing of the converter as it is
+  const ownLanguage = [...(fingerprints ?? [])].filter(fingerprint => fingerprint.startsWith(scriptLang + ':'));
+  if (ownLanguage.length) {
+    return !ownLanguage.includes(defaultConverterFingerprint(defaultConverter));
+  }
+  return differsFromDefaultConverter(converter, defaultConverter) && (await modified()) === false;
 };
 
 /** All installed device packages of the tenant. */
@@ -146,13 +144,15 @@ export interface DefaultConverterRecords {
   owners: Map<string, { installedItemId: string; stateKey: string }>;
   // By converter id: the defaultConverterFingerprint each package recorded when it wrote the converter
   fingerprints: Map<string, Set<string>>;
+  // By installed item id: its check, run once for all its converters
+  checks: Map<string, Promise<DevicePackageEntityState[]>>;
 }
 
 export const loadDefaultConverterRecords = async (iotHubApiService: IotHubApiService): Promise<DefaultConverterRecords> =>
   defaultConverterRecords(await loadInstalledDevicePackages(iotHubApiService));
 
 export const defaultConverterRecords = (packages: IotHubInstalledItem[]): DefaultConverterRecords => {
-  const records: DefaultConverterRecords = { owners: new Map(), fingerprints: new Map() };
+  const records: DefaultConverterRecords = { owners: new Map(), fingerprints: new Map(), checks: new Map() };
   for (const item of packages) {
     for (const [stateKey, state] of Object.entries((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {})) {
       const id: string = state?.defaultConverter ? state.entityOutput?.id : undefined;
@@ -183,8 +183,12 @@ export const loadConverterModified = async (iotHubApiService: IotHubApiService, 
   if (!owner) {
     return null;
   }
-  const states = await firstValueFrom(iotHubApiService.checkDeviceUpdate(owner.installedItemId, { ignoreErrors: true, ignoreLoading: true }))
-    .catch((): DevicePackageEntityState[] => []);
+  if (!records.checks.has(owner.installedItemId)) {
+    records.checks.set(owner.installedItemId,
+      firstValueFrom(iotHubApiService.checkDeviceUpdate(owner.installedItemId, { ignoreErrors: true, ignoreLoading: true }))
+        .catch((): DevicePackageEntityState[] => []));
+  }
+  const states = await records.checks.get(owner.installedItemId);
   return states.find(state => state.stepName === owner.stateKey)?.modified ?? null;
 };
 
