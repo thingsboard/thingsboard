@@ -1113,7 +1113,7 @@ class DefaultTbContextTest {
 
         assertThat(msg.getType()).isEqualTo(TbMsgType.ATTRIBUTES_UPDATED.name());
         assertThat(msg.getMetaData().getValue(DataConstants.SCOPE)).isEqualTo(DataConstants.CLIENT_SCOPE);
-        assertThat(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isEqualTo("[\"joinEui\"]");
+        assertThat(msg.getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isEqualTo("[\"joinEui\"]");
         Map<String, AttributeKvEntry> parsed = JsonConverter.attributesFromMsg(msg).stream()
                 .collect(Collectors.toMap(AttributeKvEntry::getKey, Function.identity()));
         assertThat(parsed.get("joinEui").getDataType()).isEqualTo(DataType.STRING);
@@ -1128,7 +1128,7 @@ class DefaultTbContextTest {
 
         TbMsg msg = defaultTbContext.attributesUpdatedActionMsg(TENANT_ID, RULE_NODE_ID, DataConstants.CLIENT_SCOPE, attributes);
 
-        assertThat(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
+        assertThat(msg.getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isNull();
     }
 
     private TbMsg getTbMsgWithQueueName() {

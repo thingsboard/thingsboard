@@ -530,7 +530,8 @@ public class DefaultTbContext implements TbContext, TbPeContext {
         }
         TbMsgMetaData tbMsgMetaData = getActionMetaData(ruleNodeId);
         // The saved string values that read back as numbers stay strings for the nodes that parse the notification.
-        JsonConverter.putTypeCastDisabledKeysOfNumericStrings(tbMsgMetaData, attributes);
+        List<String> typeCastDisabledKeys = JsonConverter.numericStringKeys(attributes);
+        tbMsgMetaData.putTypeCastDisabledKeys(typeCastDisabledKeys);
         return attributesActionMsg(originator, tbMsgMetaData, scope, ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
     }
 

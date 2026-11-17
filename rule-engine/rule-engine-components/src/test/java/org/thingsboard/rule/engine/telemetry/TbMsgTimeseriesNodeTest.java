@@ -612,7 +612,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenTypeCastDisabledKeysInMetadata_whenOnMsg_thenListedKeysAreSavedAsStrings() throws TbNodeException {
         var metadata = new TbMsgMetaData();
-        JsonConverter.putTypeCastDisabledKeys(metadata, Set.of("devAddr", "firmwareVersion"));
+        metadata.putTypeCastDisabledKeys(Set.of("devAddr", "firmwareVersion"));
 
         List<TsKvEntry> entries = saveIntegrationTelemetry(metadata);
 

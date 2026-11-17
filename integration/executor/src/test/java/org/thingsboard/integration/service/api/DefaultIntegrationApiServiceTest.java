@@ -2,16 +2,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.integration.service.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.IntegrationCallback;
-import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AssetCacheInfo;
 import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.DeviceCacheInfo;
@@ -23,6 +20,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -140,8 +138,8 @@ public class DefaultIntegrationApiServiceTest {
         service.sendUplinkData(integration, IntegrationInfoProto.getDefaultInstance(), data, callback);
 
         Map<TbMsgType, TbMsg> msgs = captureRuleEngineMsgs();
-        assertThat(typeCastDisabledKeys(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST))).isEqualTo(Set.of("devAddr"));
-        assertThat(typeCastDisabledKeys(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST))).isEqualTo(Set.of("joinEui", "firmwareVersion"));
+        assertThat(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST).getTypeCastDisabledKeys()).isEqualTo(Set.of("devAddr"));
+        assertThat(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST).getTypeCastDisabledKeys()).isEqualTo(Set.of("joinEui", "firmwareVersion"));
         verify(callback, timeout(TIMEOUT_MS)).onSuccess(null);
     }
 
@@ -166,8 +164,8 @@ public class DefaultIntegrationApiServiceTest {
         service.sendUplinkData(integration, IntegrationInfoProto.getDefaultInstance(), data, callback);
 
         Map<TbMsgType, TbMsg> msgs = captureRuleEngineMsgs();
-        assertThat(typeCastDisabledKeys(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST))).isEqualTo(Set.of("devAddr"));
-        assertThat(typeCastDisabledKeys(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST))).isEqualTo(Set.of("joinEui", "firmwareVersion"));
+        assertThat(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST).getTypeCastDisabledKeys()).isEqualTo(Set.of("devAddr"));
+        assertThat(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST).getTypeCastDisabledKeys()).isEqualTo(Set.of("joinEui", "firmwareVersion"));
         verify(callback, timeout(TIMEOUT_MS)).onSuccess(null);
     }
 
@@ -189,8 +187,8 @@ public class DefaultIntegrationApiServiceTest {
         service.sendUplinkData(integration, IntegrationInfoProto.getDefaultInstance(), data, mock(IntegrationCallback.class));
 
         Map<TbMsgType, TbMsg> msgs = captureRuleEngineMsgs();
-        assertThat(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST).getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
-        assertThat(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST).getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
+        assertThat(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST).getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isNull();
+        assertThat(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST).getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isNull();
     }
 
     private Map<TbMsgType, TbMsg> captureRuleEngineMsgs() {
@@ -216,10 +214,6 @@ public class DefaultIntegrationApiServiceTest {
 
     private static KeyValueProto stringKv(String key, String value) {
         return KeyValueProto.newBuilder().setKey(key).setType(KeyValueType.STRING_V).setStringV(value).build();
-    }
-
-    private static Set<String> typeCastDisabledKeys(TbMsg msg) {
-        return JacksonUtil.fromString(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS), new TypeReference<>() {});
     }
 
 }

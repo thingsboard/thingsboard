@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.integration;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +13,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.IntegrationCallback;
 import org.thingsboard.integration.api.converter.DedicatedConverterConfig;
 import org.thingsboard.integration.api.converter.DedicatedConverterUtil;
@@ -40,6 +38,7 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -592,7 +591,7 @@ public class DefaultPlatformIntegrationServiceTest {
 
         List<TbMsg> msgs = captureRuleEngineMsgs();
         assertThat(msgs).hasSize(1);
-        assertThat(msgs.get(0).getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
+        assertThat(msgs.get(0).getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isNull();
     }
 
     @Test
@@ -630,8 +629,8 @@ public class DefaultPlatformIntegrationServiceTest {
         List<TbMsg> msgs = captureRuleEngineMsgs();
         TbMsg telemetryMsg = msgs.stream().filter(msg -> msg.isTypeOf(TbMsgType.POST_TELEMETRY_REQUEST)).findFirst().orElseThrow();
         TbMsg attributesMsg = msgs.stream().filter(msg -> msg.isTypeOf(TbMsgType.POST_ATTRIBUTES_REQUEST)).findFirst().orElseThrow();
-        assertThat(typeCastDisabledKeys(telemetryMsg)).containsExactlyInAnyOrder("devAddr");
-        assertThat(typeCastDisabledKeys(attributesMsg)).containsExactlyInAnyOrder("eui", "joinEui", "hardwareVersion", "firmwareVersion");
+        assertThat(telemetryMsg.getTypeCastDisabledKeys()).containsExactlyInAnyOrder("devAddr");
+        assertThat(attributesMsg.getTypeCastDisabledKeys()).containsExactlyInAnyOrder("eui", "joinEui", "hardwareVersion", "firmwareVersion");
         assertThingsStackUplinkTypes(msgs);
     }
 
@@ -662,7 +661,7 @@ public class DefaultPlatformIntegrationServiceTest {
 
         List<TbMsg> msgs = captureRuleEngineMsgs();
         assertThat(msgs).hasSize(2);
-        assertThat(msgs).allSatisfy(msg -> assertThat(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull());
+        assertThat(msgs).allSatisfy(msg -> assertThat(msg.getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isNull());
     }
 
     // What the typed TTN converter produces: unwrapped event keys plus the decoder output
@@ -727,10 +726,6 @@ public class DefaultPlatformIntegrationServiceTest {
                 tuple("fCnt", DataType.LONG, 101L),
                 tuple("temperature", DataType.DOUBLE, 22.5),
                 tuple("pressure", DataType.DOUBLE, 21.5));
-    }
-
-    private static Set<String> typeCastDisabledKeys(TbMsg msg) {
-        return JacksonUtil.fromString(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS), new TypeReference<>() {});
     }
 
 }

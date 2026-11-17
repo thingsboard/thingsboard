@@ -20,7 +20,6 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
@@ -278,7 +277,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     @Test
     public void givenTypeCastDisabledKeysMetadata_whenOnMsg_thenListedNumericStringIsCopiedAsString() {
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
-        JsonConverter.putTypeCastDisabledKeys(metaData, Set.of("joinEui"));
+        metaData.putTypeCastDisabledKeys(Set.of("joinEui"));
 
         Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.POST_ATTRIBUTES_REQUEST, metaData);
 
@@ -303,7 +302,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     @Test
     public void givenAttributesUpdatedWithTypeCastDisabledKeys_whenOnMsg_thenListedNumericStringIsCopiedAsString() {
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
-        JsonConverter.putTypeCastDisabledKeys(metaData, Set.of("joinEui"));
+        metaData.putTypeCastDisabledKeys(Set.of("joinEui"));
 
         Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.ATTRIBUTES_UPDATED, metaData);
 
