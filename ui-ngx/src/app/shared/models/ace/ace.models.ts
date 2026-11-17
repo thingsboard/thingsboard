@@ -153,7 +153,7 @@ export function updateEditorSize(editorElement: any, content: string, editor: Ac
     renderer.setStyle(editorElement, 'width', newWidth.toString() + 'px');
   }
   editor.resize(true);
-  // The horizontal scrollbar takes its height from the rows, so reserve space for it
+  // Ace's horizontal scrollbar overlaps the last row; grow the editor by its height so no vertical scrollbar appears
   const scrollBarHeight: number = editor.renderer.scrollBarH.getHeight();
   if (scrollBarHeight) {
     setHeight(newHeight + scrollBarHeight);
