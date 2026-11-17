@@ -11126,8 +11126,6 @@
       "check-status-settings": "检查状态设置",
       "perform-rpc-status-check": "执行 RPC 设备状态检查",
       "retrieve-led-status-value-method": "使用方法获取 LED 状态值",
-      "led-status-value-attribute": "包含 LED 状态值的设备属性",
-      "led-status-value-timeseries": "包含 LED 状态值的设备时间序列",
       "check-status-method": "RPC 检查设备状态方法",
       "parse-led-status-value-function": "解析 LED 状态值函数",
       "knob-title": "旋钮标题"

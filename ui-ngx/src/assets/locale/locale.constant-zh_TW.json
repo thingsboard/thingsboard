@@ -4213,8 +4213,6 @@
             "check-status-settings": "檢查狀態設定",
             "perform-rpc-status-check": "執行RPC設備狀態檢查",
             "retrieve-led-status-value-method": "使用方法檢索led狀態值",
-            "led-status-value-attribute": "包含led狀態值的設備屬性",
-            "led-status-value-timeseries": "包含led狀態值的設備時間序列",
             "check-status-method": "RPC檢查設備狀態方法",
             "parse-led-status-value-function": "解析led狀態值函數",
             "knob-title": "旋鈕標題",

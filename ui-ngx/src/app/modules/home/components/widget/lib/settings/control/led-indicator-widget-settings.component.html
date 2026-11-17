@@ -51,10 +51,10 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="tb-form-row column-lt-md" [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
+      <div class="tb-form-row column-xs" [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
         @let isAttribute = ledIndicatorWidgetSettingsForm.get('retrieveValueMethod').value === 'attribute';
         <div class="fixed-title-width tb-required">
-          {{ (isAttribute ? 'widgets.rpc.led-status-value-attribute' : 'widgets.rpc.led-status-value-timeseries') | translate }}
+          {{ (isAttribute ? 'widgets.rpc.attribute-value-key' : 'widgets.rpc.timeseries-value-key') | translate }}
         </div>
         <tb-device-key-autocomplete class="flex-1"
                                     formControlName="valueAttribute"

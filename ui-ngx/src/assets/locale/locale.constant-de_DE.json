@@ -12444,8 +12444,6 @@
       "check-status-settings": "Statusprüfungseinstellungen",
       "perform-rpc-status-check": "RPC-Statusprüfung des Geräts durchführen",
       "retrieve-led-status-value-method": "LED-Statuswert mit Methode abrufen",
-      "led-status-value-attribute": "Geräteattribut mit LED-Statuswert",
-      "led-status-value-timeseries": "Zeitreihe des Geräts mit LED-Statuswert",
       "check-status-method": "RPC-Methode zur Geräteprüfung",
       "parse-led-status-value-function": "Funktion zum Parsen des LED-Statuswerts",
       "knob-title": "Drehregler-Titel"

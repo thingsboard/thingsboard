@@ -7263,8 +7263,6 @@
             "check-status-settings": "إعدادات التحقق من الحالة",
             "perform-rpc-status-check": "تنفيذ التحقق من حالة جهاز RPC",
             "retrieve-led-status-value-method": "استرجاع قيمة حالة LED باستخدام طريقة",
-            "led-status-value-attribute": "سمة الجهاز التي تحتوي على قيمة حالة LED",
-            "led-status-value-timeseries": "سلسلة زمنية للجهاز التي تحتوي على قيمة حالة LED",
             "check-status-method": "طريقة التحقق من حالة الجهاز RPC",
             "parse-led-status-value-function": "وظيفة تحليل قيمة حالة LED",
             "knob-title": "عنوان المقبض",

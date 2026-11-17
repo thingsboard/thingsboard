@@ -10437,8 +10437,6 @@
       "check-status-settings": "Būsenos tikrinimo nustatymai",
       "perform-rpc-status-check": "Vykdyti RPC įrenginio būsenos patikrinimą",
       "retrieve-led-status-value-method": "LED būsenos gavimo metodas",
-      "led-status-value-attribute": "Įrenginio atributas, kuriame saugoma LED būsena",
-      "led-status-value-timeseries": "Įrenginio laiko seka, kurioje saugoma LED būsena",
       "check-status-method": "RPC įrenginio būsenos tikrinimo metodas",
       "parse-led-status-value-function": "LED būsenos reikšmės analizės funkcija",
       "knob-title": "Rankenėlės pavadinimas"

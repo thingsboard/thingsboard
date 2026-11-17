@@ -7089,8 +7089,6 @@
             "check-status-settings": "Sprawdź ustawienia stanu",
             "perform-rpc-status-check": "Wykonaj sprawdzenie stanu urządzenia RPC",
             "retrieve-led-status-value-method": "Pobierz wartość stanu diody LED za pomocą metody",
-            "led-status-value-attribute": "Atrybut urządzenia zawierający wartość stanu diody LED",
-            "led-status-value-timeseries": "Szereg czasowy urządzenia zawierający wartość stanu diody LED",
             "check-status-method": "Metoda sprawdzania stanu urządzenia przez RPC",
             "parse-led-status-value-function": "Przeanalizuj funkcję wartości stanu diody LED",
             "knob-title": "Tytuł pokrętła",

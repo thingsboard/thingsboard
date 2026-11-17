@@ -11126,8 +11126,6 @@
       "check-status-settings": "ステータス確認設定",
       "perform-rpc-status-check": "RPCデバイスステータス確認を実行",
       "retrieve-led-status-value-method": "方法を使用してLEDステータス値を取得",
-      "led-status-value-attribute": "LEDステータス値を含むデバイス属性",
-      "led-status-value-timeseries": "LEDステータス値を含むデバイスタイムシリーズ",
       "check-status-method": "RPCデバイスステータスメソッド",
       "parse-led-status-value-function": "LEDステータス値解析関数",
       "knob-title": "ノブタイトル"

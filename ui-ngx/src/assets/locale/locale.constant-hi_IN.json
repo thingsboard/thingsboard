@@ -11127,8 +11127,6 @@
       "check-status-settings": "स्टेटस जाँच सेटिंग्स",
       "perform-rpc-status-check": "RPC डिवाइस स्टेटस जाँच करें",
       "retrieve-led-status-value-method": "LED स्टेटस मान को प्राप्त करने की विधि",
-      "led-status-value-attribute": "डिवाइस एट्रिब्यूट जिसमें LED स्टेटस मान है",
-      "led-status-value-timeseries": "डिवाइस टाइम सीरीज़ जिसमें LED स्टेटस मान है",
       "check-status-method": "RPC डिवाइस स्टेटस जाँच मेथड",
       "parse-led-status-value-function": "LED स्टेटस मान पार्स करने का फ़ंक्शन",
       "knob-title": "नॉब शीर्षक"

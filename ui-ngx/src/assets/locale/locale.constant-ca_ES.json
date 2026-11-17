@@ -5421,8 +5421,6 @@
             "check-status-settings": "Paràmetres de comprovació d'estat",
             "perform-rpc-status-check": "Realitzar comprovació del dispositiu RPC",
             "retrieve-led-status-value-method": "Obtenir estat del led usant mètode",
-            "led-status-value-attribute": "Atribut del dispositiu que conté el valor de l'estat del led",
-            "led-status-value-timeseries": "Timeseries del dispositiu que conté el valor de l'estat del led",
             "check-status-method": "Mètode RPC per revisar l'estat del dispositiu",
             "parse-led-status-value-function": "Funció de parseig per a l'estat del led",
             "knob-title": "Títol de comandament",

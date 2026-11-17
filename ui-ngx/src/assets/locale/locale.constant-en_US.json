@@ -12552,8 +12552,6 @@
             "check-status-settings": "Check status settings",
             "perform-rpc-status-check": "Perform RPC device status check",
             "retrieve-led-status-value-method": "Retrieve LED status value using method",
-            "led-status-value-attribute": "Device attribute containing led status value",
-            "led-status-value-timeseries": "Device time series containing led status value",
             "check-status-method": "RPC check device status method",
             "parse-led-status-value-function": "Parse led status value function",
             "knob-title": "Knob title"

@@ -12444,8 +12444,6 @@
       "check-status-settings": "Paramètres de vérification de statut",
       "perform-rpc-status-check": "Effectuer une vérification de statut de l’appareil via RPC",
       "retrieve-led-status-value-method": "Méthode de récupération de l’état LED",
-      "led-status-value-attribute": "Attribut de l’appareil contenant l’état LED",
-      "led-status-value-timeseries": "Série temporelle de l’appareil contenant la valeur d’état de la LED",
       "check-status-method": "Méthode RPC de vérification de l’état de l’appareil",
       "parse-led-status-value-function": "Fonction d’analyse de l’état LED",
       "knob-title": "Titre du bouton rotatif"

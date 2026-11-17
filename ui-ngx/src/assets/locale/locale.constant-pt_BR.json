@@ -11126,8 +11126,6 @@
       "check-status-settings": "Configurações de verificação de status",
       "perform-rpc-status-check": "Realizar verificação de status do dispositivo via RPC",
       "retrieve-led-status-value-method": "Recuperar valor de status do LED usando método",
-      "led-status-value-attribute": "Atributo do dispositivo contendo o valor de status do LED",
-      "led-status-value-timeseries": "Série temporal do dispositivo contendo o valor de status do LED",
       "check-status-method": "Método RPC de verificação de status do dispositivo",
       "parse-led-status-value-function": "Função de análise do valor de status do LED",
       "knob-title": "Título do knob"

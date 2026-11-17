@@ -6579,8 +6579,6 @@
             "check-status-settings": "Statusinstellingen controleren",
             "perform-rpc-status-check": "Voer de statuscontrole van het RPC-device uit",
             "retrieve-led-status-value-method": "Leidsstatuswaarde ophalen met behulp van methode",
-            "led-status-value-attribute": "Apparaatkenmerk met led-statuswaarde",
-            "led-status-value-timeseries": "Tijdreeks van het device met led-statuswaarde",
             "check-status-method": "RPC-methode voor het controleren van de apparaatstatus",
             "parse-led-status-value-function": "Led-statuswaardefunctie parseren",
             "knob-title": "Titel van de knop",

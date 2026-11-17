@@ -11126,8 +11126,6 @@
       "check-status-settings": "Statuskontrollinnstillinger",
       "perform-rpc-status-check": "Utfør RPC-enhetsstatuskontroll",
       "retrieve-led-status-value-method": "Hent LED-statusverdi ved hjelp av metode",
-      "led-status-value-attribute": "Enhetsattributt som inneholder LED-statusverdi",
-      "led-status-value-timeseries": "Enhetstidsserie som inneholder LED-statusverdi",
       "check-status-method": "RPC-metode for statuskontroll",
       "parse-led-status-value-function": "Parse LED-statusverdi-funksjon",
       "knob-title": "Knappetittel"
