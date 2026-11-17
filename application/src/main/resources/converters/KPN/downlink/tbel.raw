@@ -1,0 +1,36 @@
+/** Encoder **/
+
+// KPN Things device URN. The rule chain adds it to the metadata as deviceName.
+var deviceUrn = metadata['deviceName'];
+
+// One SenML record per key of the message, for example {"temperature": 25}.
+var senmlPack = [];
+foreach (element : msg.entrySet()) {
+    var value = element.value;
+    var record = { "bn": deviceUrn, "n": element.key };
+    if (value instanceof Boolean) {
+        record.vb = value;
+    } else if (value instanceof Number) {
+        record.v = value;
+    } else if (value instanceof String) {
+        record.vs = value;
+    } else {
+        record.vs = JSON.stringify(value);
+    }
+    senmlPack.add(record);
+}
+
+// Nothing to send.
+if (senmlPack.size() == 0) {
+    return [];
+}
+
+return {
+    contentType: "JSON",
+    data: JSON.stringify(senmlPack),
+    metadata: {
+        // Port sent as the "port" query parameter. Required.
+        // For LoRaWAN devices, use the port your device listens on. The simulator accepts any port.
+        FPort: 1
+    }
+};
