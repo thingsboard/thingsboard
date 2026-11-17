@@ -11,11 +11,17 @@
     <div class="flex flex-row items-center justify-start gap-2"[class.mb-1]="!$last" formArrayName="keyVals">
       <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}" [appearance]="appearance">
         <input [formControl]="keyValControl.get('key')" matInput required
-               placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}"/>
+               placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}{{ showRequiredErrors ? '*' : '' }}"/>
+        @if (showRequiredErrors && keyValControl.get('key').hasError('required')) {
+          <mat-error translate>key-val.key-required</mat-error>
+        }
       </mat-form-field>
       <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}" [appearance]="appearance">
         <input [formControl]="keyValControl.get('value')" matInput [required]="isValueRequired"
-               placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
+               placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}{{ showRequiredErrors && isValueRequired ? '*' : '' }}"/>
+        @if (showRequiredErrors && keyValControl.get('value').hasError('required')) {
+          <mat-error translate>key-val.value-required</mat-error>
+        }
       </mat-form-field>
       <button mat-icon-button color="primary"
               [class.!hidden]="disabled"
