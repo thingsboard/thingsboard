@@ -5,21 +5,30 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="flex flex-col gap-5 p-6">
-  <h2 class="tb-iot-hub-delete-title">{{ 'iot-hub.remove-confirm-title' | translate:{ name: data.itemName } }}</h2>
-  <p class="tb-iot-hub-delete-desc">{{ description }}</p>
-  @if (keptReferences) {
-    <div class="tb-form-hint tb-primary-fill">
-      <mat-icon>info_outline</mat-icon>
-      <div class="flex flex-col">
-        <div class="font-medium">{{ keptTitle }}</div>
-        <div>{{ keptReason }}</div>
-        <tb-image-references class="mt-3" [references]="keptReferences"></tb-image-references>
+<h2 mat-dialog-title class="tb-iot-hub-delete-title">{{ 'iot-hub.remove-confirm-title' | translate:{ name: data.itemName } }}</h2>
+<mat-dialog-content class="!pt-0">
+  <div class="flex flex-col gap-5">
+    <p class="tb-iot-hub-delete-desc">{{ description }}</p>
+    @if (keptGroups.length) {
+      <div class="tb-form-hint tb-primary-fill">
+        <mat-icon>info_outline</mat-icon>
+        <div class="flex min-w-0 flex-col">
+          <div class="font-medium">{{ keptTitle }}</div>
+          <div class="tb-iot-hub-kept-groups mt-2 divide-y divide-solid divide-black/[.08] rounded bg-white">
+            @for (group of keptGroups; track group.reason) {
+              <div role="group" class="flex flex-col gap-1 border-0 py-2"
+                   [attr.aria-labelledby]="'tb-iot-hub-kept-reason-' + $index">
+                <div class="px-3 pt-1 font-medium leading-4" [id]="'tb-iot-hub-kept-reason-' + $index">{{ group.reason }}</div>
+                <tb-image-references [references]="group.references"></tb-image-references>
+              </div>
+            }
+          </div>
+        </div>
       </div>
-    </div>
-  }
-</div>
-<div class="flex items-center justify-end gap-2 p-2">
+    }
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
   <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
   <button mat-flat-button color="warn" (click)="confirm()">{{ 'iot-hub.remove-anyway' | translate }}</button>
-</div>
+</mat-dialog-actions>

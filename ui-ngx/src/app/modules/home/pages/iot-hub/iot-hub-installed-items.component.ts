@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -106,5 +107,25 @@ export class TbIotHubInstalledItemsComponent implements OnInit, OnDestroy {
 
   get updatesChecked(): boolean {
     return this.tableComponent?.updatesChecked || false;
+  }
+
+  get updatesCheckFailed(): boolean {
+    return this.tableComponent?.updatesCheckFailed || false;
+  }
+
+  get onlyUpdates(): boolean {
+    return this.tableComponent?.onlyUpdates || false;
+  }
+
+  get updatesCount(): number | null {
+    return this.tableComponent?.updatesCount ?? null;
+  }
+
+  get installedCount(): number {
+    return this.tableComponent?.installedCount || 0;
+  }
+
+  showOnlyUpdates(onlyUpdates: boolean): void {
+    this.tableComponent?.showOnlyUpdates(onlyUpdates);
   }
 }
