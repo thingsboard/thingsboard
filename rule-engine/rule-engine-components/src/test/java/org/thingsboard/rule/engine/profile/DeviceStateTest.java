@@ -9,6 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.adaptor.NoCastKeys;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -30,14 +31,17 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -65,6 +69,10 @@ public class DeviceStateTest {
         AttributesService attributesService = mock(AttributesService.class);
         when(attributesService.find(any(), any(), any(AttributeScope.class), anyCollection())).thenReturn(Futures.immediateFuture(Collections.emptyList()));
         when(ctx.getAttributesService()).thenReturn(attributesService);
+
+        TimeseriesService timeseriesService = mock(TimeseriesService.class);
+        when(timeseriesService.findLatest(any(), any(), anyCollection())).thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
 
         RuleEngineAlarmService alarmService = mock(RuleEngineAlarmService.class);
         when(alarmService.findLatestActiveByOriginatorAndType(any(), any(), any())).thenReturn(null);
@@ -165,6 +173,76 @@ public class DeviceStateTest {
         });
     }
 
+    @Test
+    public void whenAttributeIsNoCastKey_thenStringValueIsEvaluatedAsString() throws Exception {
+        DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.ATTRIBUTE, "joinEui", "0000000000000000");
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
+
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        NoCastKeys.put(metaData, Set.of("joinEui"));
+        deviceState.process(ctx, TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .data("{\"joinEui\": \"0000000000000000\"}")
+                .build());
+
+        verify(ctx).enqueueForTellNext(any(), eq("Alarm Created"));
+    }
+
+    @Test
+    public void whenAttributeIsNotNoCastKey_thenNumericStringIsCast() throws Exception {
+        DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.ATTRIBUTE, "joinEui", "0000000000000000");
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
+
+        // Cast to the long 0, which reads back as "0" and no longer matches.
+        deviceState.process(ctx, TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data("{\"joinEui\": \"0000000000000000\"}")
+                .build());
+
+        verify(ctx, never()).enqueueForTellNext(any(), anyString());
+    }
+
+    @Test
+    public void whenTelemetryIsNoCastKey_thenStringValueIsEvaluatedAsString() throws Exception {
+        DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.TIME_SERIES, "firmwareVersion", "1.10");
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
+
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        NoCastKeys.put(metaData, Set.of("firmwareVersion"));
+        deviceState.process(ctx, TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .data("{\"firmwareVersion\": \"1.10\", \"fCnt\": \"42\"}")
+                .build());
+
+        verify(ctx).enqueueForTellNext(any(), eq("Alarm Created"));
+    }
+
+    @Test
+    public void whenTelemetryIsNotNoCastKey_thenNumericStringIsCast() throws Exception {
+        DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.TIME_SERIES, "firmwareVersion", "1.10");
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
+
+        // Cast to the double 1.1, which reads back as "1.1" and no longer matches.
+        deviceState.process(ctx, TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data("{\"firmwareVersion\": \"1.10\"}")
+                .build());
+
+        verify(ctx, never()).enqueueForTellNext(any(), anyString());
+    }
+
 
     private DeviceState createDeviceState(DeviceId deviceId, DeviceProfileAlarm... alarmConfigs) {
         DeviceProfile deviceProfile = new DeviceProfile();
@@ -177,6 +255,17 @@ public class DeviceStateTest {
                 deviceId, profileState, null);
     }
 
+    private DeviceProfileAlarm createAlarmConfigWithStrCondition(AlarmConditionKeyType keyType, String key, String value) {
+        AlarmConditionFilter condition = new AlarmConditionFilter();
+        condition.setKey(new AlarmConditionFilterKey(keyType, key));
+        condition.setValueType(EntityKeyValueType.STRING);
+        StringFilterPredicate predicate = new StringFilterPredicate();
+        predicate.setOperation(StringFilterPredicate.StringOperation.EQUAL);
+        predicate.setValue(new FilterPredicateValue<>(value));
+        condition.setPredicate(predicate);
+        return createAlarmConfig(condition);
+    }
+
     private DeviceProfileAlarm createAlarmConfigWithBoolAttrCondition(String key, boolean value) {
 
         AlarmConditionFilter condition = new AlarmConditionFilter();
@@ -186,7 +275,10 @@ public class DeviceStateTest {
         predicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
         predicate.setValue(new FilterPredicateValue<>(value));
         condition.setPredicate(predicate);
+        return createAlarmConfig(condition);
+    }
 
+    private DeviceProfileAlarm createAlarmConfig(AlarmConditionFilter condition) {
         DeviceProfileAlarm alarmConfig = new DeviceProfileAlarm();
         alarmConfig.setId("MyAlarmID");
         alarmConfig.setAlarmType("MyAlarm");
