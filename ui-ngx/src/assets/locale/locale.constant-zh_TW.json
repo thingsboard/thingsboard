@@ -6054,8 +6054,6 @@
             "check-status-settings": "檢查狀態設定",
             "perform-rpc-status-check": "執行 RPC 裝置狀態檢查",
             "retrieve-led-status-value-method": "使用方法取得 LED 狀態值",
-            "led-status-value-attribute": "包含 LED 狀態值的裝置屬性",
-            "led-status-value-timeseries": "包含 LED 狀態值的裝置時間序列",
             "check-status-method": "RPC 檢查裝置狀態方法",
             "parse-led-status-value-function": "解析 LED 狀態值函式",
             "knob-title": "旋鈕標題",

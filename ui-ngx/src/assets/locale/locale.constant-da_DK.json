@@ -12558,8 +12558,6 @@
       "check-status-settings": "Indstillinger for statuskontrol",
       "perform-rpc-status-check": "Udfør statuskontrol via RPC",
       "retrieve-led-status-value-method": "Hent LED-statusværdi via metode",
-      "led-status-value-attribute": "Enhedsattribut der indeholder LED-statusværdi",
-      "led-status-value-timeseries": "Enhedens tidsserie, der indeholder LED-statusværdi",
       "check-status-method": "RPC-metode til kontrol af enhedsstatus",
       "parse-led-status-value-function": "Funktion til fortolkning af LED-statusværdi",
       "knob-title": "Titel for drejeknap"

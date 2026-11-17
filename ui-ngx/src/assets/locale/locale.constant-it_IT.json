@@ -12556,8 +12556,6 @@
       "check-status-settings": "Impostazioni controllo stato",
       "perform-rpc-status-check": "Esegui controllo stato dispositivo tramite RPC",
       "retrieve-led-status-value-method": "Recupera valore stato LED usando metodo",
-      "led-status-value-attribute": "Attributo dispositivo con valore stato LED",
-      "led-status-value-timeseries": "Serie temporale dispositivo con valore stato LED",
       "check-status-method": "Metodo RPC per controllo stato dispositivo",
       "parse-led-status-value-function": "Funzione per analisi valore stato LED",
       "knob-title": "Titolo manopola"

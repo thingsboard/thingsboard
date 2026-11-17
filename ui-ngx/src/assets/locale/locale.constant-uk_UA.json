@@ -12556,8 +12556,6 @@
       "check-status-settings": "Налаштування перевірки статусу",
       "perform-rpc-status-check": "Виконати перевірку статусу пристрою через RPC",
       "retrieve-led-status-value-method": "Метод отримання значення статусу LED",
-      "led-status-value-attribute": "Атрибут пристрою, що містить значення статусу LED",
-      "led-status-value-timeseries": "Часовий ряд пристрою, що містить значення статусу LED",
       "check-status-method": "RPC метод перевірки статусу пристрою",
       "parse-led-status-value-function": "Функція розбору значення статусу LED",
       "knob-title": "Заголовок регулятора"
