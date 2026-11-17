@@ -20,12 +20,15 @@
 module.exports = {
     // The packages: snapshot builds of the open source code, published by the Chromium project.
     // exclude: glob patterns of the files that are not packaged
+    // strip: glob patterns of the executables to strip of their symbols, when GNU strip is installed
     snapshot: {
         version: '156.0.8078.0',
         baseUrl: 'https://commondatastorage.googleapis.com/chromium-browser-snapshots',
         // The .pak.info files, 70 MB, are left from the build of the translations; the browser does not read them
         linux: { path: 'Linux_x64/1706520/chrome-linux.zip', sha256: '6b62846a868ea3ee675f77600790877a428dfb2428c940f8eff99db1038f9815',
-            exclude: ['locales/*.pak.info'] },
+            exclude: ['locales/*.pak.info'],
+            // The Linux builds come with their symbols, 180 MB
+            strip: ['chrome', 'chrome_crashpad_handler', 'chrome_sandbox', '*.so*'] },
         // interactive_ui_tests.exe is a test program of 348 MB that the service does not need
         windows: { path: 'Win_x64/1706509/chrome-win.zip', sha256: '6bdfecb33dbfa7159e5666798bdc28c76347bef913573e899cb43930b78d26cc',
             exclude: ['interactive_ui_tests.exe'] }
