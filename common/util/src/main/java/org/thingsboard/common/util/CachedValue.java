@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.common.util;
 
+// Test of the third-party notices check: a change outside the paths that start it
+
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 
