@@ -17,6 +17,7 @@ export type AiWorkMoment = 'reading-request' | 'going-through-results' | 'applyi
 export interface AiWorkState {
   moment: AiWorkMoment;
   since: number;
+  headline?: string;
 }
 const HIDDEN_TOOLS = new Set(['read_current_time']);
 
@@ -93,6 +94,13 @@ const TOOL_WORDS: Record<string, string> = {
   read_reports: 'read-reports',
   save_scheduled_report: 'save-scheduled-report',
   generate_report: 'generate-report',
+  read_widgets: 'read-widgets',
+  read_widget: 'read-widget-type',
+  create_widget: 'create-widget',
+  build_widget: 'build-widget',
+  update_widget: 'update-widget-type',
+  check_widget: 'check-widget',
+  save_widgets_bundle: 'save-widgets-bundle',
   save_two_factor_settings: 'save-two-factor-settings',
   save_oauth2_domain: 'save-oauth2-domain',
   read_my_account: 'read-my-account',
@@ -185,7 +193,9 @@ const DELETED_TARGETS: Record<string, string> = {
   REPORT_COMPONENT: 'delete-report-component',
   REPORT_ENTITY_ALIAS: 'delete-report-alias',
   REPORT_FILTER: 'delete-report-filter',
-  REPORT: 'delete-report'
+  REPORT: 'delete-report',
+  WIDGET_TYPE: 'delete-widget-type',
+  WIDGETS_BUNDLE: 'delete-widgets-bundle'
 };
 
 const ACTION_PREFIX = 'ai-assistant.action.';
@@ -350,6 +360,20 @@ export function aiPromptsOf(args: unknown): AiPrompt[] {
     .slice(0, MAX_PROMPTS);
 }
 
+export const WIDGET_PART_WORDS: Record<string, string> = {
+  html: 'HTML', css: 'CSS', js: 'JavaScript', resources: 'resources', settingsForm: 'settings form',
+  dataKeySettingsForm: 'data key settings form', latestDataKeySettingsForm: 'latest data key settings form', defaultConfig: 'default configuration'
+};
+
+export function widgetParts(values: Record<string, any>): string[] {
+  const parts = Array.isArray(values.sections) ? values.sections.map(String) : [];
+  return parts.length ? parts : typeof values.section === 'string' ? [values.section] : ['overview'];
+}
+
+function joinWords(words: string[]): string {
+  return words.length < 2 ? words.join('') : words.slice(0, -1).join(', ') + ' and ' + words[words.length - 1];
+}
+
 export function aiActionWords(tool: string, args: unknown): AiActionWords {
   const values = (args && typeof args === 'object' ? args : {}) as Record<string, any>;
   if (GENERATING_TOOLS[tool]) {
@@ -362,6 +386,12 @@ export function aiActionWords(tool: string, args: unknown): AiActionWords {
   switch (tool) {
     case 'add_dashboard_widgets':
       return {key: ACTION_PREFIX + (Array.isArray(values.widgets) && values.widgets.length === 1 ? 'add-widget' : 'add-widgets'), kind: 'think'};
+    case 'read_widget': {
+      const parts = widgetParts(values).filter(part => part !== 'overview');
+      return parts.length && !parts.includes('all')
+        ? {key: ACTION_PREFIX + 'read-widget-parts', params: {parts: joinWords(parts.map(part => WIDGET_PART_WORDS[part] ?? part))}, kind: 'think'}
+        : {key: ACTION_PREFIX + 'read-widget-type', kind: 'think'};
+    }
     case 'read_report_template':
       return {key: ACTION_PREFIX + (typeof values.path === 'string' && values.path ? 'read-report-component' : 'read-report-template'), kind: 'think'};
     case 'search_entities':
@@ -498,6 +528,7 @@ const ENTITY_KINDS: Record<string, AiEntityKind> = {
   DASHBOARD_ENTITY_ALIAS: {icon: 'label', palette: 'view'},
   DASHBOARD_FILTER: {icon: 'filter_list', palette: 'view'},
   WIDGET_TYPE: {icon: 'widgets', palette: 'view'},
+  WIDGETS_BUNDLE: {icon: 'now_widgets', palette: 'view'},
   OTA_PACKAGE: {icon: 'system_update', palette: 'device'},
   MAIL_TEMPLATE: {icon: 'mail', palette: 'view'},
   CUSTOM_TRANSLATION: {icon: 'translate', palette: 'view'},

@@ -30,6 +30,7 @@ import { AppState } from '@core/core.state';
 import { AiChatService } from '@core/http/ai-chat.service';
 import { AiChatsService } from '@core/services/ai-chats.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { AiWidgetCheckService } from '@home/components/ai/ai-widget-check.service';
 import { aiParse } from '@home/components/ai/ai-action-detail.models';
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { CustomMenuService } from '@core/http/custom-menu.service';
@@ -75,7 +76,7 @@ import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.comp
 
 export type AiChatVariant = 'page' | 'panel';
 
-const LIVE_EDITED_TYPES = new Set<EntityType>([EntityType.DASHBOARD, EntityType.REPORT_TEMPLATE]);
+const LIVE_EDITED_TYPES = new Set<EntityType>([EntityType.DASHBOARD, EntityType.REPORT_TEMPLATE, EntityType.WIDGET_TYPE, EntityType.WIDGETS_BUNDLE]);
 
 @Component({
   selector: 'tb-ai-chat',
@@ -382,6 +383,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private router = inject(Router);
+  private widgetCheck = inject(AiWidgetCheckService);
 
   readonly hostElement = this.host.nativeElement;
 
@@ -859,6 +861,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
     if (prompt.secrets) {
       request.secrets = prompt.secrets;
     }
+    const editorDraft = this.panelService.editorDraft();
+    if (editorDraft) {
+      request.editorDraft = editorDraft;
+    }
     return request;
   }
 
@@ -953,6 +959,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
       case 'assistantDelta':
         this.appendDelta(event.data.text);
         break;
+      case 'thinking':
+        this.work.update(work => work && event.data?.headline ? {...work, headline: event.data.headline} : work);
+        break;
       case 'assistantMessage':
         this.messages.update(list => [...this.withoutStreaming(list), {
           from: 'AI', content: event.data.message, time: Date.now(),
@@ -972,6 +981,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
           if (call?.from === 'APPROVAL' || call?.from === 'ACTION') {
             this.applySideEffects(event.data.executionId, call.data.tool, call.data.arguments);
             this.openCreatedReportTemplate(call.data.tool, event.data.affectedEntities);
+            this.openCreatedWidget(call.data.tool, event.data.affectedEntities);
           }
         }
         if (event.data.affectedEntities?.length) {
@@ -980,7 +990,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
         }
         break;
       case 'toolStarted':
+        this.work.update(work => work?.headline ? {moment: work.moment, since: work.since} : work);
         this.startAction(event.data);
+        this.runClientTool(event.data);
         break;
       case 'toolFinished':
         this.finishAction(event.data);
@@ -1041,6 +1053,26 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
   }
 
+  private runClientTool(started: ToolStarted): void {
+    if (started.tool !== 'check_widget') {
+      return;
+    }
+    const args = typeof started.arguments === 'string' ? this.parseArguments(started.arguments) : started.arguments as {widgetTypeId?: string};
+    if (!args?.widgetTypeId) {
+      return;
+    }
+    this.widgetCheck.check(args.widgetTypeId).subscribe(reason =>
+      this.aiChat.resolveToolApproval({executionId: started.executionId, approved: true, reason}, {ignoreLoading: true, ignoreErrors: true}).subscribe());
+  }
+
+  private parseArguments(text: string): {widgetTypeId?: string} {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+  }
+
   private startAction(started: ToolStarted): void {
     if (isHiddenAiAction(started.tool) || this.isApprovalExecution(started.executionId)) {
       return;
@@ -1064,6 +1096,18 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
     this.panelService.carryChat(chatId);
     this.router.navigate(['/reporting/templates', created.id]);
+  }
+
+  private openCreatedWidget(tool: string | undefined, affected: EntityId[] | undefined): void {
+    const chatId = this.chatId();
+    const created = affected?.find(entity => entity.entityType === EntityType.WIDGET_TYPE);
+    const view = this.panelService.clientContext()?.view?.type;
+    if ((tool !== 'create_widget' && tool !== 'build_widget') || !created || !chatId
+      || (view !== AiAssistantViewType.WIDGET_TYPE_LIST && view !== AiAssistantViewType.NEW_WIDGET_TYPE)) {
+      return;
+    }
+    this.panelService.carryChat(chatId);
+    this.router.navigate(['/resources/widgets-library/widget-types', created.id]);
   }
 
   private emitDashboards(entities: EntityId[]): void {

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { ReportTemplateService } from '@core/http/report-template.service';
+import { widgetType, widgetTypesData } from '@shared/models/widget.models';
 import { ReportTemplateType } from '@shared/models/report.models';
 import { inject, Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -183,6 +184,18 @@ export class AiRecordLoaderService {
           badge: template.format,
           meta: this.translate.instant(template.type === ReportTemplateType.SUB_REPORT ? 'ai-assistant.record.sub-report' : 'ai-assistant.record.report')
         })));
+      case EntityType.WIDGET_TYPE:
+        return this.http.get<{name: string; widgetType?: string}>(`/api/widgetTypeInfo/${entity.id}`, defaultHttpOptionsFromConfig(CONFIG))
+          .pipe(map(info => ({
+            key, entityType, alarmRule: false, name: info.name, url: `/resources/widgets-library/widget-types/${entity.id}`,
+            meta: info.widgetType && widgetTypesData.get(info.widgetType as widgetType)
+              ? this.translate.instant(widgetTypesData.get(info.widgetType as widgetType).name) : undefined
+          })));
+      case EntityType.WIDGETS_BUNDLE:
+        return this.http.get<{title: string}>(`/api/widgetsBundle/${entity.id}`, defaultHttpOptionsFromConfig(CONFIG))
+          .pipe(map(bundle => ({
+            key, entityType, alarmRule: false, name: bundle.title, url: `/resources/widgets-library/widgets-bundles/${entity.id}`, meta: undefined
+          })));
       case EntityType.REPORT:
         return this.http.get<{name: string; format?: string; templateInfo?: {name?: string}}>(`/api/v2/report/${entity.id}`, defaultHttpOptionsFromConfig(CONFIG))
           .pipe(map(report => ({

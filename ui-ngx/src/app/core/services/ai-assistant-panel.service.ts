@@ -29,6 +29,8 @@ export interface AiCustomizationSaved {
 @Injectable({ providedIn: 'root' })
 export class AiAssistantPanelService implements OnDestroy {
 
+  private _editorDraftProvider: (() => unknown | null) | null = null;
+
   private static readonly WITHOUT_PANEL = ['/home', '/ai-assistant'];
 
   private _open = signal(false);
@@ -376,11 +378,24 @@ export class AiAssistantPanelService implements OnDestroy {
     this._customizationSaved$.next(event);
   }
 
+  setEditorDraftProvider(provider: (() => unknown | null) | null): void {
+    this._editorDraftProvider = provider;
+  }
+
+  editorDraft(): unknown | null {
+    try {
+      return this._editorDraftProvider ? this._editorDraftProvider() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   emitUpdatedData(affectedEntities: Array<EntityId>): void {
     this._updatedData$.next(affectedEntities);
   }
 
   teardown(): void {
+    this._editorDraftProvider = null;
     this._enabled.set(false);
     this._detailsOpen.set(false);
     this._focus = null;

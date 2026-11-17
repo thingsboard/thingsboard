@@ -21,7 +21,8 @@ import { WidgetsBundleComponent } from '@modules/home/pages/widget/widgets-bundl
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@app/core/auth/auth.selectors';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
@@ -116,6 +117,12 @@ export class WidgetsBundlesTableConfigResolver  {
   resolve(): EntityTableConfig<WidgetsBundle> {
     this.config.tableTitle = this.translate.instant('widgets-bundle.widgets-bundles');
     const authUser = getCurrentAuthUser(this.store);
+    const authState = getCurrentAuthState(this.store);
+    this.config.aiAssistantConfig = authState.aiEnabled && authUser.authority === Authority.TENANT_ADMIN
+      && this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL) ? {
+      view: {listView: AiAssistantViewType.WIDGETS_BUNDLE_LIST, entityView: AiAssistantViewType.WIDGETS_BUNDLE},
+      initialPromptPlaceholder: this.translate.instant('widget.ai-assistant-initial-prompt-placeholder')
+    } : null;
     this.config.deleteEnabled = (widgetsBundle) =>
       this.isWidgetsBundleEditable(widgetsBundle, authUser.authority) &&
       this.userPermissionsService.hasGenericPermission(Resource.WIDGETS_BUNDLE, Operation.DELETE);

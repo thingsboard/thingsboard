@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { AiAction } from '@shared/models/ai-chat.models';
+import { WIDGET_PART_WORDS, widgetParts } from '@home/components/ai/ai-action.models';
 
 export interface AiDetailEntity {
   id?: string;
@@ -1540,6 +1541,81 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
         rows.push({label: aiHumanize('sent to'), raw: true, value: str(raw.sentTo)});
       }
       return {hood: text('generate-report'), blocks: rows.length ? [{type: 'facts', rows}] : [{type: 'note', text: text('report-still-running')}]};
+    }
+    case 'read_widgets': {
+      if (!isObject(result)) {
+        return {hood: text('read-widgets'), blocks: generic(result, 'result')};
+      }
+      if (Array.isArray(result.widgets) && str(result.title)) {
+        const rows = result.widgets.filter(isObject).slice(0, MAX_ROWS).map(item => [item.name, item.type].filter(Boolean).join(' · '));
+        return {hood: text('read-widgets-bundle', {name: str(result.title)}),
+          blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-widgets')}]};
+      }
+      if (Array.isArray(result.widgets)) {
+        const rows = result.widgets.filter(isObject).slice(0, MAX_ROWS)
+          .map(item => [item.name, item.type, item.system ? 'system' : undefined].filter(Boolean).join(' · '));
+        return {hood: text('read-widgets'), blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-widgets')}]};
+      }
+      const rows = (Array.isArray(result.bundles) ? result.bundles.filter(isObject) : []).slice(0, MAX_ROWS)
+        .map(item => [item.title, item.system ? 'system' : undefined].filter(Boolean).join(' · '));
+      return {hood: text('read-widgets-bundles'), blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-widgets-bundles')}]};
+    }
+    case 'read_widget': {
+      if (!isObject(result)) {
+        const raw = typeof result === 'string' ? result : '';
+        const name = /^Widget '([^']*)'/.exec(raw)?.[1] ?? '—';
+        const parts = widgetParts(values).filter(part => part !== 'all');
+        const sections = raw.split(/\n\n=== ([A-Za-z]+) ===\n/);
+        const blocks: AiDetailBlock[] = [];
+        for (let i = 1; i + 1 < sections.length; i += 2) {
+          if (sections[i + 1].trim()) {
+            blocks.push({type: 'code', label: WIDGET_PART_WORDS[sections[i]] ?? sections[i], text: sections[i + 1]});
+          }
+        }
+        return {hood: text('read-widget-parts', {name, parts: parts.map(part => WIDGET_PART_WORDS[part] ?? part).join(', ')}), blocks};
+      }
+      const rows = facts(result, ['id', 'name', 'typeParameters', 'functions', 'problems', 'lines', 'settingsForm', 'dataKeySettingsForm',
+        'latestDataKeySettingsForm', 'defaultConfig', 'resources', 'note', 'builtIn', 'description', 'image', 'tags']);
+      const problems = Array.isArray(result.problems) ? result.problems.map(item => String(item)) : [];
+      return {hood: text('read-widget-type', {name: str(result.name) ?? '—'}),
+        blocks: [...(rows.length ? [{type: 'facts' as const, rows}] : []),
+          ...(problems.length ? [{type: 'list' as const, label: text('widget-problems'), rows: problems.slice(0, MAX_ROWS)}] : [])]};
+    }
+    case 'create_widget':
+    case 'build_widget':
+    case 'update_widget': {
+      const raw = typeof result === 'string' && /^OK: [^\n]*\n/.test(result) ? aiParse(result.slice(result.indexOf('\n') + 1)) : result;
+      const edits = Array.isArray(values.edits) ? values.edits.length : 0;
+      const hood = tool === 'create_widget' || (tool === 'build_widget' && !values.widgetTypeId) ? text('create-widget', {name: str(values.name) ?? '—'})
+        : edits ? text('update-widget-edits', {count: edits}) : text('update-widget-type');
+      if (!isObject(raw)) {
+        return {hood, blocks: generic(raw, 'result')};
+      }
+      const warnings = Array.isArray(raw.warnings) ? raw.warnings.map(item => String(item)) : [];
+      const rows = facts(raw, ['typeParameters', 'warnings', 'note', 'next']);
+      return {hood, blocks: [...(rows.length ? [{type: 'facts' as const, rows}] : []),
+        ...(warnings.length ? [{type: 'list' as const, label: text('widget-warnings'), rows: warnings.slice(0, MAX_ROWS)}] : [])]};
+    }
+    case 'check_widget': {
+      if (!isObject(result)) {
+        return {hood: text('check-widget'), blocks: generic(result, 'result')};
+      }
+      const errors = Array.isArray(result.errors) ? result.errors.map(item => String(item)) : [];
+      const consoleErrors = Array.isArray(result.consoleErrors) ? result.consoleErrors.map(item => String(item)) : [];
+      const outcome = errors.length ? text('widget-check-errors', {count: errors.length})
+        : result.result === 'ran without errors' ? text('widget-check-clean') : text('widget-check-not-run');
+      return {hood: text('check-widget'), blocks: [{type: 'note', text: outcome},
+        ...(errors.length ? [{type: 'list' as const, label: text('widget-errors'), rows: errors.slice(0, MAX_ROWS)}] : []),
+        ...(consoleErrors.length ? [{type: 'list' as const, label: text('widget-console'), rows: consoleErrors.slice(0, MAX_ROWS)}] : [])]};
+    }
+    case 'save_widgets_bundle': {
+      const raw = typeof result === 'string' && /^OK: [^\n]*\n/.test(result) ? aiParse(result.slice(result.indexOf('\n') + 1)) : result;
+      const hood = str(values.bundleId) ? text('save-widgets-bundle') : text('create-widgets-bundle', {name: str(values.title) ?? '—'});
+      if (!isObject(raw)) {
+        return {hood, blocks: generic(raw, 'result')};
+      }
+      const rows = Array.isArray(raw.widgets) ? raw.widgets.map(item => String(item)).slice(0, MAX_ROWS) : [];
+      return {hood, blocks: rows.length ? [{type: 'list', label: text('widgets'), rows}] : [{type: 'note', text: text('no-widgets')}]};
     }
     case 'save_scheduler_event': {
       const rows = facts(values, ['eventId']);

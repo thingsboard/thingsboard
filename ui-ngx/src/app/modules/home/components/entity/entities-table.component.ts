@@ -228,7 +228,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     if (entitiesTableConfig.entityType) {
       this.aiUpdatedData$ = this.panelService.updatedData$.pipe(
         filter(affectedEntities =>
-          affectedEntities.some(entityId => entityId.entityType === entitiesTableConfig.entityType)),
+          affectedEntities.some(entityId => entityId.entityType === (entitiesTableConfig.aiReloadEntityType ?? entitiesTableConfig.entityType))),
         takeUntil(this.destroy$)
       ).subscribe(() => {
         this.updateData(false);

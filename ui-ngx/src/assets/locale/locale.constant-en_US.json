@@ -968,6 +968,27 @@
             "register-mobile-app": "Registered the mobile app {{name}}",
             "save-mobile-bundle": "Changed the mobile bundle",
             "create-mobile-bundle": "Created the mobile bundle {{name}}",
+            "read-widgets": "Read the widgets",
+            "read-widgets-bundles": "Read the widgets bundles",
+            "read-widgets-bundle": "Read the widgets bundle {{name}}",
+            "no-widgets": "No widgets",
+            "no-widgets-bundles": "No widgets bundles",
+            "read-widget-type": "Read the widget {{name}}",
+            "read-widget-parts": "Read the {{parts}} of '{{name}}'",
+            "widget-problems": "Problems",
+            "create-widget": "Created the widget {{name}}",
+            "update-widget-type": "Changed the widget",
+            "update-widget-edits": "Changed the widget: { count, plural, =1 {1 edit} other {# edits} }",
+            "widget-warnings": "Warnings",
+            "check-widget": "Ran the widget in the preview",
+            "widget-check-errors": "{ count, plural, =1 {1 error} other {# errors} }",
+            "widget-check-clean": "Ran without errors",
+            "widget-check-not-run": "The widget did not start",
+            "widget-errors": "Errors",
+            "widget-console": "Console errors",
+            "save-widgets-bundle": "Changed the widgets bundle",
+            "create-widgets-bundle": "Created the widgets bundle {{name}}",
+            "widgets": "Widgets",
             "save-mobile-qr-code": "Changed the mobile app QR code",
             "mobile-bundle-menu": "Menu of {{name}}",
             "read-custom-menu": "Read the menu {{name}}",
@@ -1577,6 +1598,46 @@
                 "run": "Deleting the report",
                 "done": "Deleted the report"
             },
+            "read-widgets": {
+                "run": "Reading the widgets library",
+                "done": "Read the widgets library"
+            },
+            "build-widget": {
+                "run": "Writing the widget",
+                "done": "Wrote the widget"
+            },
+            "read-widget-parts": {
+                "run": "Reading the widget's {{parts}}",
+                "done": "Read the widget's {{parts}}"
+            },
+            "read-widget-type": {
+                "run": "Reading the widget",
+                "done": "Read the widget"
+            },
+            "create-widget": {
+                "run": "Creating the widget",
+                "done": "Created the widget"
+            },
+            "update-widget-type": {
+                "run": "Changing the widget",
+                "done": "Changed the widget"
+            },
+            "check-widget": {
+                "run": "Running the widget in the preview",
+                "done": "Ran the widget in the preview"
+            },
+            "save-widgets-bundle": {
+                "run": "Saving the widgets bundle",
+                "done": "Saved the widgets bundle"
+            },
+            "delete-widget-type": {
+                "run": "Deleting the widget",
+                "done": "Deleted the widget"
+            },
+            "delete-widgets-bundle": {
+                "run": "Deleting the widgets bundle",
+                "done": "Deleted the widgets bundle"
+            },
             "delete-report-template": {
                 "run": "Deleting the report template",
                 "done": "Deleted the report template"
@@ -2106,6 +2167,24 @@
                 "report-header-firstPage": "First-page header",
                 "report-footer-enabled": "Footer",
                 "report-footer-firstPage": "First-page footer",
+                "widget-code": "Code",
+                "widget-type": "Widget type",
+                "widget-size": "Default size",
+                "widget-html": "HTML",
+                "widget-css": "CSS",
+                "widget-js": "JavaScript",
+                "widget-resources": "Resources",
+                "widget-settingsForm": "Settings form",
+                "widget-dataKeySettingsForm": "Data key settings form",
+                "widget-latestDataKeySettingsForm": "Latest data key settings form",
+                "widget-defaultConfig": "Default configuration",
+                "widget-tags": "Tags",
+                "widget-image": "Preview image",
+                "widget-deprecated": "Deprecated",
+                "widget-copyOf": "Copy of",
+                "widgetsBundle-order": "Order",
+                "widgetsBundle-widgets": "Widgets",
+                "widgetsBundle-image": "Image",
                 "format": "Format",
                 "templateType": "Template type",
                 "added": "Added",
@@ -2987,6 +3066,60 @@
                 "title-unnamed": "Design this report",
                 "line": "Say what it should show, for which devices and period, and how often it goes out.",
                 "suggestion": "Build a weekly PDF report of my devices."
+            },
+            "widget-types": {
+                "title": "Ask about your widgets",
+                "line": "Write custom widgets for what the stock widgets can't show, or change your own.",
+                "suggestion": "Create a widget that shows a tank level.",
+                "example": {
+                    "tank": {
+                        "label": "Tank level widget",
+                        "message": "Create a widget that shows a tank's fill level as a vertical tank with the percentage, red below 10 %."
+                    },
+                    "heatmap": {
+                        "label": "Weekly heatmap",
+                        "message": "Create a chart widget that shows a key as a heatmap by hour of day and day of week."
+                    }
+                }
+            },
+            "widget-type": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this widget",
+                "line": "What it does, what to change, or why it breaks.",
+                "suggestion": "Check this widget for errors."
+            },
+            "widget-type-new": {
+                "title": "Build this widget",
+                "title-unnamed": "Build this widget",
+                "line": "Say what it should show or do, and the assistant writes it and checks it in the preview.",
+                "suggestion": "Create a widget that shows a tank level."
+            },
+            "widgets-bundles": {
+                "title": "Ask about your widgets bundles",
+                "line": "Group your widgets into bundles for the add-widget dialog.",
+                "suggestion": "Create a bundle for my custom widgets.",
+                "example": {
+                    "custom": {
+                        "label": "Bundle my widgets",
+                        "message": "Create a bundle for my custom widgets and add them all to it."
+                    }
+                }
+            },
+            "widgets-bundle": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this widgets bundle",
+                "line": "Which widgets it holds, their order, or what to add.",
+                "suggestion": "Add my custom widgets to this bundle.",
+                "example": {
+                    "add": {
+                        "label": "Add my widgets",
+                        "message": "Add my custom widgets to this bundle."
+                    },
+                    "order": {
+                        "label": "Sort the widgets",
+                        "message": "Sort the widgets in this bundle by name."
+                    }
+                }
             },
             "report-template": {
                 "title": "Ask about {{name}}",
@@ -13239,6 +13372,20 @@
         "generate-report-canceled": "Generate report canceled"
     },
     "widget": {
+        "ai-assistant-title": "Ask about this widget",
+        "ai-assistant-initial-prompt-placeholder": "Describe the widget you need...",
+        "ai-assistant-suggestion": "Check this widget for errors.",
+        "ai-assistant-example-explain-label": "Explain this widget",
+        "ai-assistant-example-explain-message": "Explain what this widget does: its data, settings and how it renders.",
+        "ai-assistant-example-setting-label": "Add a setting",
+        "ai-assistant-example-setting-message": "Add a settings option for the value color.",
+        "ai-assistant-example-check-label": "Check for errors",
+        "ai-assistant-example-check-message": "Check this widget for errors and fix them.",
+        "ai-assistant-example-tank-label": "Tank level widget",
+        "ai-assistant-example-tank-message": "Make this a widget that shows a tank's fill level as a vertical tank with the percentage, red below 10 %.",
+        "ai-assistant-example-status-label": "Status card",
+        "ai-assistant-example-status-message": "Make this a card that shows whether a device is online, with a colored dot and the time of its last activity.",
+        "new-widget-name": "New widget",
         "widget-library": "Widgets library",
         "widget-bundle": "Widgets Bundle",
         "all-bundles": "All bundles",

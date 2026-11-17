@@ -242,8 +242,13 @@ export interface AssistantDeltaChatEvent extends BaseChatEvent {
   };
 }
 
+export interface ThinkingChatEvent extends BaseChatEvent {
+  event: 'thinking';
+  data: {headline: string};
+}
+
 export type ChatEvent = AssistantChatEvent | AssistantDeltaChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
-  | TurnResumedEvent | TurnStoppedEvent | MessageQueuedEvent | ToolStartedEvent | ToolFinishedEvent;
+  | TurnResumedEvent | TurnStoppedEvent | MessageQueuedEvent | ToolStartedEvent | ToolFinishedEvent | ThinkingChatEvent;
 
 export enum AiAssistantViewType {
   PAGE = 'PAGE',
@@ -256,6 +261,11 @@ export enum AiAssistantViewType {
   REPORT_TEMPLATE = 'REPORT_TEMPLATE',
   SCHEDULED_REPORTS = 'SCHEDULED_REPORTS',
   REPORTS = 'REPORTS',
+  WIDGET_TYPE_LIST = 'WIDGET_TYPE_LIST',
+  WIDGET_TYPE = 'WIDGET_TYPE',
+  NEW_WIDGET_TYPE = 'NEW_WIDGET_TYPE',
+  WIDGETS_BUNDLE_LIST = 'WIDGETS_BUNDLE_LIST',
+  WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
   ALARM_RULE = 'ALARM_RULE',
   ALARM_RULE_LIST = 'ALARM_RULE_LIST',
   ALARM_LIST = 'ALARM_LIST',
@@ -403,6 +413,7 @@ export interface SendChatMessageRequest {
   clientContext?: AiChatClientContext;
   resources?: string[];
   secrets?: Record<string, string>;
+  editorDraft?: unknown;
 }
 
 export interface AiResourceFacts {
