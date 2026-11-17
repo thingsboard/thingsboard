@@ -203,7 +203,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   goBack(): void {
-    this.router.navigate(this.entitiesTableConfig.backNavigationCommands, { relativeTo: this.route });
+    if (isDefinedAndNotNull(this.entitiesTableConfig.backNavigationUrl)) {
+      this.router.navigateByUrl(this.entitiesTableConfig.backNavigationUrl);
+    } else {
+      this.router.navigate(this.entitiesTableConfig.backNavigationCommands, { relativeTo: this.route });
+    }
   }
 
   private init(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {

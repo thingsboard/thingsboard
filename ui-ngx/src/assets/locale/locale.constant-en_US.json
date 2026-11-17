@@ -3758,6 +3758,8 @@
         "copy-profile-id": "Copy Profile Id",
         "profile-id-copied-message": "Profile Id has been copied to clipboard",
         "app-profile-wizard-title": "Create Application Profile",
+        "app-no-templates": "No templates available for this application type.",
+        "app-type-unavailable": "No templates or application profiles available",
         "app-profile-wizard-edit-title": "Update Application Profile",
         "app-update-current-config": "Current application configuration",
         "app-update-future-config": "Future application configuration",

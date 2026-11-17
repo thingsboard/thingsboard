@@ -207,7 +207,7 @@
     }
     <tb-agent-app-arguments class="tb-app-arguments-section"
       formControlName="arguments"
-      [disabled]="!isEdit || isProfileManaged">
+      [readonly]="isProfileManaged">
     </tb-agent-app-arguments>
 
     @if (isEdit && relatedEntity) {

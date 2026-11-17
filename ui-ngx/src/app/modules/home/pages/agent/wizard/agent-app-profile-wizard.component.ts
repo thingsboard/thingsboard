@@ -13,7 +13,7 @@ import { AgentService } from '@core/http/agent.service';
 import { StepperOrientation } from '@angular/material/stepper';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
@@ -32,6 +32,7 @@ import {
 } from '@home/pages/agent/util/agent-compose-yaml';
 import { orderTemplatesNewestFirst } from '@home/pages/agent/util/template-version-order';
 import { EdgeTemplateCompatibilityService } from '@home/pages/agent/util/edge-template-compatibility.service';
+import { AgentAppWizardLoaderService } from '@home/pages/agent/wizard/agent-app-wizard-loader.service';
 
 export interface AgentAppProfileWizardData {
   profile?: AgentAppProfile;
@@ -50,6 +51,7 @@ interface TypeCard {
   selector: 'tb-agent-app-profile-wizard',
   templateUrl: './agent-app-profile-wizard.component.html',
   styleUrls: ['./agent-app-profile-wizard.component.scss'],
+  providers: [AgentAppWizardLoaderService],
   standalone: false
 })
 export class AgentAppProfileWizardComponent
@@ -78,7 +80,8 @@ export class AgentAppProfileWizardComponent
   availableTemplates: AgentAppTemplate[] = [];
   selectedTemplateVersion: string | null = null;
   loadingTemplates = false;
-  private templatesByTypeCache = new Map<AgentApplicationType, AgentAppTemplate[]>();
+  private templatesSubscription: Subscription | null = null;
+  private previewSubscription: Subscription | null = null;
 
   profileForm: UntypedFormGroup;
   composeYaml = '';
@@ -109,6 +112,7 @@ export class AgentAppProfileWizardComponent
               protected router: Router,
               protected translate: TranslateService,
               private agentService: AgentService,
+              private loader: AgentAppWizardLoaderService,
               private breakpointObserver: BreakpointObserver,
               private edgeTemplateCompatibility: EdgeTemplateCompatibilityService,
               private fb: UntypedFormBuilder,
@@ -126,12 +130,9 @@ export class AgentAppProfileWizardComponent
   }
 
   ngOnInit() {
-    // Prefetch templates for all types so type selection is instant.
-    this.typeCards.forEach(card => {
-      this.agentService.getAgentAppTemplatesByAppType(card.type).subscribe({
-        next: templates => this.templatesByTypeCache.set(card.type, templates),
-        error: () => {}
-      });
+    const prefetchTypes = this.lockedAppType ? [this.lockedAppType] : this.typeCards.map(card => card.type);
+    prefetchTypes.forEach(type => {
+      this.loader.loadTemplatesByType(type).subscribe({ error: () => {} });
     });
     if (this.editMode) {
       this.initForEdit(this.data.profile);
@@ -191,6 +192,8 @@ export class AgentAppProfileWizardComponent
       return;
     }
     this.selectedType = type;
+    this.previewSubscription?.unsubscribe();
+    this.previewSubscription = null;
     this.template = null;
     this.composeType = null;
     this.composeTypeKeys = [];
@@ -200,17 +203,13 @@ export class AgentAppProfileWizardComponent
     this.loadTemplatesForType(type);
   }
 
+  // A finished request replays synchronously, so a prefetched type shows no loading state.
+  // Drops the previous type's request, so its late response cannot apply its template to the newly selected type.
   private loadTemplatesForType(type: AgentApplicationType) {
-    const cached = this.templatesByTypeCache.get(type);
-    if (cached) {
-      this.availableTemplates = orderTemplatesNewestFirst(this.supportedTemplates(cached));
-      this.selectLatestTemplate();
-      return;
-    }
+    this.templatesSubscription?.unsubscribe();
     this.loadingTemplates = true;
-    this.agentService.getAgentAppTemplatesByAppType(type).subscribe({
+    this.templatesSubscription = this.loader.loadTemplatesByType(type).subscribe({
       next: templates => {
-        this.templatesByTypeCache.set(type, templates);
         this.availableTemplates = orderTemplatesNewestFirst(this.supportedTemplates(templates));
         this.loadingTemplates = false;
         this.selectLatestTemplate();
@@ -275,10 +274,13 @@ export class AgentAppProfileWizardComponent
   }
 
   private rebuildComposePreview() {
+    this.previewSubscription?.unsubscribe();
+    this.previewSubscription = null;
     const tpl = this.template;
     if (!tpl) {
       return;
     }
+    const composeType = this.composeType;
     this.proposedYaml = dumpRawTemplateCompose(tpl, this.composeType);
     this.currentYaml = this.proposedYaml;
     this.composeYaml = this.currentYaml;
@@ -287,8 +289,11 @@ export class AgentAppProfileWizardComponent
       appType: this.selectedType,
       templateVersion: tpl.currentVersion
     };
-    this.agentService.mergeProfileForPreview(tpl.currentVersion, draft, this.composeType || undefined, undefined, !this.editMode).subscribe({
+    this.previewSubscription = this.agentService.mergeProfileForPreview(tpl.currentVersion, draft, composeType || undefined, undefined, !this.editMode).subscribe({
       next: merged => {
+        if (this.template !== tpl || this.composeType !== composeType) {
+          return;
+        }
         const compose: any = dockerComposeConfig(merged)?.compose;
         if (compose) {
           this.currentYaml = dumpYaml(compose, 0).trimEnd() + '\n';
