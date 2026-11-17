@@ -349,7 +349,7 @@ The following components are licensed under Apache-2.0:
   commons-codec:commons-codec 1.18.0
   commons-collections:commons-collections 3.2.2
   commons-digester:commons-digester 2.1
-  commons-io:commons-io 2.16.1
+  commons-io:commons-io 2.16.0
   commons-logging:commons-logging 1.3.1
   commons-validator:commons-validator 1.7
   dev.langchain4j:langchain4j 1.16.1
