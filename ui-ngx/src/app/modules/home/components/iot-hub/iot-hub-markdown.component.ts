@@ -229,7 +229,7 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
 
       // Special variables
       const res = this.onResolveVariable(key);
-      if (res) {
+      if (res !== undefined) {
         return res;
       }
       return '${' + key + '}';
