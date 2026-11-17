@@ -26,8 +26,6 @@ import zipfile
 from sbom_to_ort import BUILD_PROBLEM, MAVEN_REPOSITORIES, from_repositories, maven_path, stop
 
 SEPARATOR = '-' * 78
-# Where a jar came from, unless it was downloaded now: then it is the address it was downloaded from
-REPOSITORY, EARLIER = 'the local Maven repository', 'downloaded earlier'
 
 
 def main():
@@ -41,11 +39,11 @@ def main():
     args = parser.parse_args()
 
     found = {}  # text -> set of (package, path)
-    sources = []  # (package, where its jar came from, the size of the jar)
+    sources = []  # (package, its jar, the address it was downloaded from now or None)
     for jar in json.load(open(args.jars, encoding='utf-8')):
         package = coordinates(jar['group'], jar['name'], jar['version'])
-        path, source = jar_file(jar, args)
-        sources.append((package, source, os.path.getsize(path)))
+        path, url = jar_file(jar, args)
+        sources.append((package, path, url))
         with zipfile.ZipFile(path) as archive:
             collect(found, package, archive)
     for provenance in json.load(open(args.scan_result, encoding='utf-8'))['scanner']['provenances']:
@@ -113,28 +111,24 @@ def layout(found):
 def jars(sources, maven_repository, downloads):
     """Where the jars came from: how many from the local repository and from earlier downloads, and each one that
     was downloaded now, with its address. A run that took long because of downloads shows them."""
-    kept = {REPOSITORY: 0, EARLIER: 0}
-    now = []
-    for package, source, size in sources:
-        if source in kept:
-            kept[source] += 1
-        else:
-            now.append((package, source, size))
-    megabytes = sum(size for _, _, size in now) / 1_000_000
-    lines = [f'Jars: {len(sources)} in all; {kept[REPOSITORY]} from {REPOSITORY} ({maven_repository}), '
-             f'{kept[EARLIER]} {EARLIER} ({downloads}), {len(now)} downloaded now ({megabytes:.0f} MB){":" if now else ""}']
-    lines += [f'  {package} ({url})' for package, url, _ in sorted(now)]
+    now = sorted((package, url, path) for package, path, url in sources if url)
+    earlier = sum(1 for _, path, url in sources if not url and path.startswith(downloads))
+    megabytes = sum(os.path.getsize(path) for _, _, path in now) / 1_000_000
+    lines = [f'Jars: {len(sources)} in all; {len(sources) - len(now) - earlier} from the local Maven repository '
+             f'({maven_repository}), {earlier} downloaded earlier ({downloads}), '
+             f'{len(now)} downloaded now ({megabytes:.0f} MB){":" if now else ""}']
+    lines += [f'  {package} ({url})' for package, url, _ in now]
     return '\n'.join(lines)
 
 
 def jar_file(jar, args):
-    """The jar with the SHA-256 of the SBOM, and where it came from: the local repository, an earlier download, or
-    the address it is downloaded from now."""
+    """The jar with the SHA-256 of the SBOM, from the local repository or an earlier download, or downloaded now;
+    and the address it was downloaded from now, if it was."""
     path = maven_path(jar['group'], jar['name'], jar['version'], jar['classifier'], jar['type'])
     downloaded = os.path.join(args.downloads, path)
-    for candidate, source in ((os.path.join(args.maven_repository, path), REPOSITORY), (downloaded, EARLIER)):
+    for candidate in (os.path.join(args.maven_repository, path), downloaded):
         if os.path.exists(candidate) and sha256(candidate) == jar['sha256']:
-            return candidate, source
+            return candidate, None
     for url, content in from_repositories(path, timeout=120):
         if hashlib.sha256(content).hexdigest() == jar['sha256']:
             os.makedirs(os.path.dirname(downloaded), exist_ok=True)

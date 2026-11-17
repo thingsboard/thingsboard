@@ -77,15 +77,13 @@ ORT_HOME=${NOTICES_ORT_HOME:-$HOME/.ort}
 ORT=(docker run --rm -u "$(id -u):$(id -g)" -w /work -v "$ORT_HOME:/ort" -v "$HERE:/notices:ro" -v "$WORK:/work"
   -e HOME=/ort/home -e ORT_DATA_DIR=/ort -e ORT_CONFIG_DIR=/notices/ort-config ghcr.io/oss-review-toolkit/ort:98.0.0)
 
-TIMES=()
+TIMES=
 lap() { # name of the step that just ended: how long it took is printed at the end, or on a failure
-  TIMES+=("$1 $((SECONDS - LAP)) s")
+  TIMES+="${TIMES:+, }$1 $((SECONDS - LAP)) s"
   LAP=$SECONDS
 }
 durations() {
-  local IFS=, steps
-  steps="${TIMES[*]}"
-  echo "Third-party notices: took $SECONDS s${steps:+ (${steps//,/, })}"
+  echo "Third-party notices: took $SECONDS s${TIMES:+ ($TIMES)}"
 }
 fail() { # log file, what to say
   echo "$2" >&2
@@ -147,3 +145,5 @@ mkdir -p "$(dirname "$NOTICES")"
 cp "$WORK/THIRD-PARTY-NOTICES" "$NOTICES"
 echo "Third-party notices: $(head -1 "$WORK/convert.log"), $(wc -l < "$NOTICES") lines: $NOTICES"
 durations
+# Where the jars of the NOTICE files came from: downloads explain a slow run
+grep '^Jars:' "$WORK/notice-files.log"
