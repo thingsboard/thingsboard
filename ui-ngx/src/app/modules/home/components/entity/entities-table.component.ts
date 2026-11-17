@@ -787,9 +787,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         res = column.cellTooltipFunction(entity, column.key);
         res = isDefined(res) ? res : null;
         this.cellTooltipCache[index] = res;
-      } else {
-        return res !== null ? res : undefined;
       }
+      return res !== null ? res : undefined;
     } else {
       return undefined;
     }
