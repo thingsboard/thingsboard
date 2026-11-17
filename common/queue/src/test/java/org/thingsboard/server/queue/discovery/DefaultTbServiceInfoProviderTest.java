@@ -17,20 +17,24 @@ import static org.mockito.Mockito.when;
 
 class DefaultTbServiceInfoProviderTest {
 
+    private static final String SNMP = DataConstants.SNMP_TRANSPORT_NAME;
+    private static final String LWM2M = DataConstants.LWM2M_TRANSPORT_NAME;
+
     private DefaultTbServiceInfoProvider provider;
 
     @BeforeEach
     void setUp() {
         TbTransportService snmp = mock(TbTransportService.class);
-        when(snmp.getName()).thenReturn(DataConstants.SNMP_TRANSPORT_NAME);
+        when(snmp.getName()).thenReturn(SNMP);
+        TbTransportService lwm2m = mock(TbTransportService.class);
+        when(lwm2m.getName()).thenReturn(LWM2M);
         ApplicationContext applicationContext = mock(ApplicationContext.class);
-        when(applicationContext.getBeansOfType(TbTransportService.class)).thenReturn(Map.of("snmpTransportService", snmp));
+        when(applicationContext.getBeansOfType(TbTransportService.class))
+                .thenReturn(Map.of("snmpTransportService", snmp, "lwM2MTransportService", lwm2m));
 
         provider = new DefaultTbServiceInfoProvider();
         ReflectionTestUtils.setField(provider, "serviceId", "tb-transport-1");
         ReflectionTestUtils.setField(provider, "serviceType", "tb-transport");
-        ReflectionTestUtils.setField(provider, "supportedIntegrationsStr", "ALL");
-        ReflectionTestUtils.setField(provider, "excludedIntegrationsStr", "NONE");
         ReflectionTestUtils.setField(provider, "applicationContext", applicationContext);
         provider.init();
     }
@@ -41,7 +45,7 @@ class DefaultTbServiceInfoProviderTest {
 
         provider.setTransports();
 
-        assertThat(provider.getServiceInfo().getTransportsList()).containsExactly(DataConstants.SNMP_TRANSPORT_NAME);
+        assertThat(provider.getServiceInfo().getTransportsList()).containsExactlyInAnyOrder(SNMP, LWM2M);
     }
 
     @Test
@@ -49,8 +53,8 @@ class DefaultTbServiceInfoProviderTest {
         provider.setTransports();
 
         // what the discovery service does every minute before re-publishing this node
-        assertThat(provider.generateNewServiceInfoWithCurrentSystemInfo().getTransportsList()).containsExactly(DataConstants.SNMP_TRANSPORT_NAME);
-        assertThat(provider.getServiceInfo().getTransportsList()).containsExactly(DataConstants.SNMP_TRANSPORT_NAME);
+        assertThat(provider.generateNewServiceInfoWithCurrentSystemInfo().getTransportsList()).containsExactlyInAnyOrder(SNMP, LWM2M);
+        assertThat(provider.getServiceInfo().getTransportsList()).containsExactlyInAnyOrder(SNMP, LWM2M);
     }
 
     @Test
@@ -61,7 +65,7 @@ class DefaultTbServiceInfoProviderTest {
         new DummyDiscoveryService(provider, mock(PartitionService.class)).setReady(false);
 
         assertThat(provider.getServiceInfo().getReady()).isFalse();
-        assertThat(provider.getServiceInfo().getTransportsList()).containsExactly(DataConstants.SNMP_TRANSPORT_NAME);
+        assertThat(provider.getServiceInfo().getTransportsList()).containsExactlyInAnyOrder(SNMP, LWM2M);
     }
 
     @Test
@@ -69,7 +73,18 @@ class DefaultTbServiceInfoProviderTest {
         provider.setTransports();
         provider.setTransports();
 
-        assertThat(provider.getServiceInfo().getTransportsList()).containsExactly(DataConstants.SNMP_TRANSPORT_NAME);
+        assertThat(provider.getServiceInfo().getTransportsList()).containsExactlyInAnyOrder(SNMP, LWM2M);
+    }
+
+    @Test
+    void transportsAreNotDuplicatedWhenSetAfterRegeneration() {
+        provider.setTransports();
+        provider.generateNewServiceInfoWithCurrentSystemInfo();
+
+        provider.setTransports();
+
+        assertThat(provider.getServiceInfo().getTransportsList()).containsExactlyInAnyOrder(SNMP, LWM2M);
+        assertThat(provider.generateNewServiceInfoWithCurrentSystemInfo().getTransportsList()).containsExactlyInAnyOrder(SNMP, LWM2M);
     }
 
 }
