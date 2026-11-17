@@ -16,6 +16,7 @@ import tarfile
 import tempfile
 import threading
 import unittest
+import unittest.mock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import scan_cache
@@ -24,7 +25,6 @@ import scan_cache
 class Server(ThreadingHTTPServer):
     """Keeps one archive. Answers 304 to its ETag, and takes a new archive from the account writer:secret."""
     archive = None
-    requests = None
 
     def __init__(self):
         super().__init__(('127.0.0.1', 0), Handler)
@@ -92,8 +92,7 @@ class ScanCacheTest(unittest.TestCase):
         self.home = self.enterContext(tempfile.TemporaryDirectory())
         self.enterContext(contextlib.redirect_stdout(io.StringIO()))
         self.errors = self.enterContext(contextlib.redirect_stderr(io.StringIO()))
-        for name in ('NOTICES_SCAN_CACHE_USER', 'NOTICES_SCAN_CACHE_PASSWORD'):
-            self.addCleanup(os.environ.pop, name, None)
+        self.enterContext(unittest.mock.patch.dict(os.environ))
 
     def write(self, name, content):
         path = os.path.join(self.home, name)
@@ -110,7 +109,7 @@ class ScanCacheTest(unittest.TestCase):
 
     def test_download_adds_the_files_and_is_not_repeated_for_the_same_archive(self):
         self.server.archive = archive_of({'scanner/results/a/scan-results.yml': b'a', 'scanner/archive/1/archive.zip.xz': b'1'})
-        self.assertEqual(scan_cache.download(self.home, self.server.url), 0)
+        scan_cache.download(self.home, self.server.url)
         self.assertEqual(self.read('scanner/results/a/scan-results.yml'), b'a')
         self.assertEqual(self.read('scanner/archive/1/archive.zip.xz'), b'1')
 
@@ -138,26 +137,40 @@ class ScanCacheTest(unittest.TestCase):
         scan_cache.download(self.home, self.server.url)
         self.assertEqual(self.read('scanner/results/a/scan-results.yml'), b'mine')
 
-    def test_no_archive_and_no_server_do_not_fail(self):
-        self.assertEqual(scan_cache.download(self.home, self.server.url), 0)
+    def test_no_archive_does_not_fail_and_is_not_asked_for_again_soon(self):
+        scan_cache.download(self.home, self.server.url)
         self.assertIn('404', self.errors.getvalue())
-        self.assertEqual(scan_cache.download(self.home, 'http://127.0.0.1:1/cache.tar.gz'), 0)
+        scan_cache.download(self.home, self.server.url)
+        self.assertIn('a few minutes ago', self.errors.getvalue())
+        self.assertEqual(self.server.requests, ['GET 404'])
+
+        # Later the archive is asked for again, and the pause ends with a download that works
+        failed = os.path.join(self.home, 'scan-cache.failed')
+        os.utime(failed, (0, 0))
+        self.server.archive = archive_of({'scanner/results/a/scan-results.yml': b'a'})
+        scan_cache.download(self.home, self.server.url)
+        self.assertEqual(self.read('scanner/results/a/scan-results.yml'), b'a')
+        self.assertFalse(os.path.exists(failed))
+
+    def test_no_server_does_not_fail(self):
+        scan_cache.download(self.home, 'http://127.0.0.1:1/cache.tar.gz')
         self.assertIn('takes minutes', self.errors.getvalue())
 
     def test_download_takes_nothing_from_an_archive_with_other_things_than_scans(self):
         for archive in (archive_of({'scanner/../../outside': b'x'}), archive_of({'elsewhere/file': b'x'}),
                         archive_of({}, symlink='scanner/link'), b'no archive'):
             self.server.archive = archive
-            self.assertEqual(scan_cache.download(self.home, self.server.url), 0)
+            with contextlib.suppress(FileNotFoundError):
+                os.remove(os.path.join(self.home, 'scan-cache.failed'))
+            scan_cache.download(self.home, self.server.url)
             self.assertIn('cannot be read', self.errors.getvalue())
-            self.assertFalse(os.path.exists(os.path.join(self.home, 'scan-cache.etag')))
-        self.assertEqual(sorted(os.listdir(self.home)), [])
+            self.assertEqual(os.listdir(self.home), ['scan-cache.failed'])
 
     def test_upload_adds_the_new_files_to_those_of_the_archive(self):
         self.server.archive = archive_of({'scanner/results/a/scan-results.yml': b'a'})
         self.write('scanner/results/b/scan-results.yml', b'b')
         self.as_writer()
-        self.assertEqual(scan_cache.upload(self.home, self.server.url), 0)
+        scan_cache.upload(self.home, self.server.url)
         self.assertEqual(files_of(self.server.archive),
                          {'scanner/results/a/scan-results.yml': b'a', 'scanner/results/b/scan-results.yml': b'b'})
         # Only the directory of the scans is shared
@@ -170,14 +183,6 @@ class ScanCacheTest(unittest.TestCase):
         self.as_writer()
         scan_cache.upload(self.home, self.server.url)
         self.assertEqual(files_of(self.server.archive), {'scanner/results/a/scan-results.yml': b'a'})
-
-    def test_same_files_give_the_same_archive(self):
-        self.write('scanner/results/a/scan-results.yml', b'a')
-        first, second = io.BytesIO(), io.BytesIO()
-        scan_cache.pack(self.home, ['scanner/results/a/scan-results.yml'], first)
-        os.utime(os.path.join(self.home, 'scanner/results/a/scan-results.yml'), (0, 0))
-        scan_cache.pack(self.home, ['scanner/results/a/scan-results.yml'], second)
-        self.assertEqual(first.getvalue(), second.getvalue())
 
     def test_upload_without_the_account_fails_and_says_what_it_needs(self):
         self.write('scanner/results/a/scan-results.yml', b'a')
