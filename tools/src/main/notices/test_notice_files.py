@@ -7,6 +7,8 @@
 
 Run: python3 -m unittest test_notice_files   (in this directory)
 """
+import os
+import tempfile
 import unittest
 
 import notice_files
@@ -44,6 +46,29 @@ class LayoutTest(unittest.TestCase):
 
     def test_clean_keeps_the_text_and_drops_what_does_not_show(self):
         self.assertEqual(notice_files.clean(b'\xef\xbb\xbf\r\n One  \r\n\r\nTwo\t\r\n\r\n'), ' One\n\nTwo')
+
+
+class JarsTest(unittest.TestCase):
+    def test_counts_the_jars_that_were_there_and_lists_the_downloaded_ones(self):
+        with tempfile.TemporaryDirectory() as downloads:
+            def jar(name, size):
+                path = os.path.join(downloads, name)
+                open(path, 'wb').write(b'x' * size)
+                return path
+            sources = [('a:a 1', '/m2/a.jar', None), ('b:b 1', jar('b.jar', 20), None),
+                       ('d:d 1', jar('d.jar', 2_000_000), 'https://repo/d.jar'),
+                       ('c:c 1', jar('c.jar', 1_000_000), 'https://repo/c.jar')]
+            summary = notice_files.jars(sources, '/m2', downloads)
+        self.assertEqual(summary.replace(downloads, '/downloads'), '\n'.join([
+            'Jars: 4 in all; 1 from the local Maven repository (/m2), 1 downloaded earlier (/downloads), '
+            '2 downloaded now (3 MB):',
+            '  c:c 1 (https://repo/c.jar)',
+            '  d:d 1 (https://repo/d.jar)']))
+
+    def test_says_when_nothing_was_downloaded(self):
+        self.assertEqual(notice_files.jars([('a:a 1', '/m2/a.jar', None)], '/m2', '/downloads'),
+                         'Jars: 1 in all; 1 from the local Maven repository (/m2), 0 downloaded earlier (/downloads), '
+                         '0 downloaded now (0 MB)')
 
 
 if __name__ == '__main__':
