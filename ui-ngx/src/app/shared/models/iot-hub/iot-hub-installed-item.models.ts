@@ -48,8 +48,8 @@ export interface DevicePackageEntityState {
   shared: boolean;
 }
 
-/** A step of a device package update, with its entity resolved from the template of the new version. */
-export interface DeviceUpdateStep {
+/** A step of a device package install or update, with its entity resolved from the template of the version being installed. */
+export interface DevicePackageStep {
   name: string;
   type: string;
   action: 'KEEP' | 'OVERWRITE' | 'CREATE';
@@ -58,7 +58,7 @@ export interface DeviceUpdateStep {
   confirmed?: boolean;
   entity?: any;
   credentials?: any;
-  // OVERWRITE and CREATE: the attributes the saved entity gets, as at install
+  // OVERWRITE and CREATE: the attributes the saved entity gets
   serverAttributes?: any;
   sharedAttributes?: any;
   resolution?: string;
@@ -71,18 +71,21 @@ export interface DeviceUpdateStep {
   defaultConverter?: boolean;
 }
 
-export interface DeviceUpdateRequest {
+export interface DevicePackageRequest {
   versionId: string;
-  // The version installed when the update was planned: the server refuses the update if the package changed since
+  // Update only: the version installed when the update was planned; the server refuses it if the package changed since
   fromVersionId?: string;
-  // The install method of the new version's steps
+  // The install method of the steps
   selectedInstallMethod?: string;
   installState: Record<string, any>;
-  steps: DeviceUpdateStep[];
+  steps: DevicePackageStep[];
+  // Install only: the owner of the device, gateway and dashboard, and the group the created device joins
+  customerId?: string;
+  entityGroupId?: string;
 }
 
-/** All of the update was applied, or none of it: failedStep is the install state key of the step that failed, if one did. */
-export interface DeviceUpdateResult {
+/** All of the request was applied, or none of it: failedStep is the install state key of the step that failed, if one did. */
+export interface DevicePackageResult {
   success: boolean;
   errorMessage?: string;
   failedStep?: string;

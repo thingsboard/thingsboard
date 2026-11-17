@@ -481,6 +481,7 @@ class DefaultIotHubServiceTest {
         profile.setDefaultDashboardId(dashboard.getId());
         Integration integration = new Integration(new IntegrationId(UUID.randomUUID()));
         Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        converter.setTenantId(tenantId);
         // The profile and the integration listed first: in reverse order of creation, the dashboard would go before the
         // profile that refers to it, and the converter before the integration that uses it.
         IotHubInstalledItem deleted = devicePackage(profile.getId(), dashboard.getId(), integration.getId(), converter.getId());
@@ -619,6 +620,7 @@ class DefaultIotHubServiceTest {
         mockTenant();
         IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
         Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        converter.setTenantId(tenantId);
         when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
         IotHubInstalledItem deleted = devicePackage(converter.getId(), integrationId);
         // The converter and the integration steps shared the name: the integration's state replaced the converter's
