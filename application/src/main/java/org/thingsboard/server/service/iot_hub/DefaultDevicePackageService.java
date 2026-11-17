@@ -468,10 +468,9 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                 }
                 if (step.isDefaultConverter()) {
                     state.put("defaultConverter", true);
-                    // A kept converter keeps the default it was installed with: ThingsBoard's newer default isn't in it
-                    String previousFingerprint = step.getAction() == DevicePackageRequest.Action.KEEP ?
-                            previousStateText(previous, step.getEntityId(), "defaultConverterFingerprint") : null;
-                    String fingerprint = previousFingerprint != null ? previousFingerprint : step.getDefaultConverterFingerprint();
+                    // Only a step that writes the converter knows which default it holds: a kept one keeps what was recorded
+                    String fingerprint = step.getAction() == DevicePackageRequest.Action.KEEP ?
+                            previousStateText(previous, step.getEntityId(), "defaultConverterFingerprint") : step.getDefaultConverterFingerprint();
                     if (fingerprint != null) {
                         state.put("defaultConverterFingerprint", fingerprint);
                     }

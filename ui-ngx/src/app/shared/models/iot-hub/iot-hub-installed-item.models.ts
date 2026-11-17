@@ -69,7 +69,8 @@ export interface DevicePackageStep {
   metadata?: Record<string, string | null>;
   // The step takes ThingsBoard's default converter: its install state says so, for the update check
   defaultConverter?: boolean;
-  // With defaultConverter: the defaultConverterFingerprint of the default converter the step takes
+  // With defaultConverter: the defaultConverterFingerprint of the default converter the step writes. A KEEP keeps the
+  // fingerprint recorded before
   defaultConverterFingerprint?: string;
 }
 

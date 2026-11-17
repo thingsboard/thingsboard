@@ -40,8 +40,9 @@ import { HasVersion } from '@shared/models/entity.models';
 import {
   defaultConverterChanged,
   defaultConverterFingerprint,
-  loadDefaultUplinkConverter,
-  loadOwnDefaultConverterIds
+  DefaultConverterRecords,
+  loadDefaultConverterRecords,
+  loadDefaultUplinkConverter
 } from '@home/components/iot-hub/iot-hub-default-converter';
 import { downloadEntityJson, readableMessage, requestFailureMessage, splitTextWithLink } from '@home/components/iot-hub/iot-hub-utils';
 import {
@@ -2113,30 +2114,29 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    */
   private async checkDefaultConverters(): Promise<void> {
     this.restoreInstallState();
-    let ownDefaultConverterIds: Set<string> | undefined;
-    // Only for a package installed before the install state kept the default converter's fingerprint
+    let records: DefaultConverterRecords | undefined;
+    // Only for a converter no package recorded a fingerprint for
     let checkedStates: DevicePackageEntityState[] | undefined;
     try {
       for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
         const stored = step.default ? this.storedStateOf(step)?.state : undefined;
         let id: string = stored?.entityOutput?.id;
         // A converter taken as it was may be any converter with that name: only another package's default one is checked
-        if (id && stored.resolution === 'use-existing') {
-          ownDefaultConverterIds ??= await loadOwnDefaultConverterIds(this.iotHubApiService);
-          if (!ownDefaultConverterIds.has(id)) {
+        if (id) {
+          records ??= await loadDefaultConverterRecords(this.iotHubApiService);
+          if (stored.resolution === 'use-existing' && !records.ownIds.has(id)) {
             id = undefined;
           }
         }
         const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true})).catch(() => null) : null;
         if (converter) {
-          const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
-            converter.configuration.scriptLang, converter.name);
-          if (!stored.defaultConverterFingerprint) {
+          const fingerprints = records?.fingerprints.get(id);
+          if (!fingerprints?.size) {
             checkedStates ??= await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId,
               {ignoreErrors: true})).catch((): DevicePackageEntityState[] => []);
           }
           const modified = checkedStates?.find(state => state.stepName === this.storedStateOf(step)?.key)?.modified;
-          this.defaultConverterChanges.set(step, !!defaultConverter && defaultConverterChanged(stored, converter, defaultConverter, modified));
+          this.defaultConverterChanges.set(step, await defaultConverterChanged(this.resourcesService, converter, fingerprints, modified));
         }
       }
     } finally {

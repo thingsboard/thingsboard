@@ -205,7 +205,21 @@ export class IotHubActionsService {
       .filter(item => item.id.id !== installedItemId &&
         (item.descriptor as DeviceInstalledItemDescriptor)?.createdEntityIds?.some(id => id.id === converterId))
       .map(item => item.itemName);
-    return { update: { ...update, converter }, version: converter.version ?? state?.version, modified: state?.modified === true, usedBy };
+    // The check leaves out a converter the package took as it was: the package that installed it knows whether it changed
+    const modified = state ? state.modified : await this.ownerConverterModified(packages, converterId);
+    return { update: { ...update, converter }, version: converter.version ?? state?.version, modified: modified === true, usedBy };
+  }
+
+  private async ownerConverterModified(packages: IotHubInstalledItem[], converterId: string): Promise<boolean | null> {
+    for (const item of packages) {
+      for (const [stateKey, state] of Object.entries((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {})) {
+        if (state?.defaultConverter && state.entityOutput?.id === converterId && state.resolution !== 'use-existing') {
+          const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(item.id.id));
+          return states.find(s => s.stepName === stateKey)?.modified ?? null;
+        }
+      }
+    }
+    return null;
   }
 
   deleteItem(installedItem: IotHubInstalledItem): Observable<boolean> {

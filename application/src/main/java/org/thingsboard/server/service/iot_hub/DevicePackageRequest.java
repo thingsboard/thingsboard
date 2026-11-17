@@ -73,8 +73,8 @@ public class DevicePackageRequest {
         // UPLINK_CONVERTER: the step takes ThingsBoard's default converter. The install state records it, so that a later
         // update checks that converter against ThingsBoard's default one
         private boolean defaultConverter;
-        // With defaultConverter: a fingerprint of ThingsBoard's default converter the step took. ThingsBoard changed its
-        // default converter when the fingerprint of the current one differs, whatever the user did to the converter
+        // With defaultConverter: a fingerprint of ThingsBoard's default converter the step writes, recorded in the install
+        // state. A KEEP records the fingerprint recorded before instead, as the converter wasn't written
         private String defaultConverterFingerprint;
 
         /**

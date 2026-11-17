@@ -70,27 +70,39 @@ const differsFromDefaultConverter = (converter: Converter, defaultConverter: Par
 };
 
 /**
- * Of what decides what the default converter does, as differsFromDefaultConverter compares it. The install state keeps it,
- * so that a later check tells ThingsBoard's change of its default converter from the user's change of the converter.
+ * The script language and a hash of what differsFromDefaultConverter compares. A step that writes the default converter
+ * records it in its install state, so that a later check tells ThingsBoard's change of its default converter from the
+ * user's change of the converter.
  */
 export const defaultConverterFingerprint = (defaultConverter: Partial<Converter>): string => {
   const configuration = defaultConverter.configuration;
   const field = getTargetField(ConverterType.UPLINK, configuration.scriptLang);
-  return String(objectHashCode([(configuration[field] ?? '').trimEnd(),
-    ...V2_CONFIGURATION_KEYS.map(key => configuration[key] ?? null)]));
+  return configuration.scriptLang + ':' + objectHashCode([(configuration[field] ?? '').trimEnd(),
+    ...V2_CONFIGURATION_KEYS.map(key => configuration[key] ?? null)]);
 };
 
 /**
- * True when ThingsBoard's default converter changed since the package's default converter step took it. A package
- * installed before the install state kept the fingerprint is decided by the converter itself, and only while nobody
- * changed it: modified comes from the package's check.
+ * True when ThingsBoard's default converter changed since a package last wrote the converter. Packages that share the
+ * converter each record only their own write, so it is current while any of their fingerprints matches ThingsBoard's
+ * default converter now, in the language that fingerprint was taken in. A converter no package recorded a fingerprint
+ * for is compared itself, and only while nobody changed it: modified comes from the package's check.
  */
-export const defaultConverterChanged = (state: any, converter: Converter, defaultConverter: Partial<Converter>,
-                                        modified?: boolean | null): boolean => {
-  if (state?.defaultConverterFingerprint) {
-    return state.defaultConverterFingerprint !== defaultConverterFingerprint(defaultConverter);
+export const defaultConverterChanged = async (resourcesService: ResourcesService, converter: Converter,
+                                              fingerprints: Set<string> | undefined, modified?: boolean | null): Promise<boolean> => {
+  if (fingerprints?.size) {
+    for (const fingerprint of fingerprints) {
+      const scriptLang = fingerprint.substring(0, fingerprint.indexOf(':')) as ScriptLanguage;
+      const defaultConverter = scriptLang ?
+        await loadDefaultUplinkConverter(resourcesService, converter.integrationType, scriptLang, converter.name) : null;
+      if (defaultConverter && defaultConverterFingerprint(defaultConverter) === fingerprint) {
+        return false;
+      }
+    }
+    return true;
   }
-  return modified === false && differsFromDefaultConverter(converter, defaultConverter);
+  const defaultConverter = await loadDefaultUplinkConverter(resourcesService, converter.integrationType,
+    converter.configuration.scriptLang, converter.name);
+  return modified === false && !!defaultConverter && differsFromDefaultConverter(converter, defaultConverter);
 };
 
 /** All installed device packages of the tenant. */
@@ -106,21 +118,35 @@ export const loadInstalledDevicePackages = async (iotHubApiService: IotHubApiSer
   return items;
 };
 
-/**
- * The converters device packages installed themselves as their default converter, not ones they took as they were, of
- * all installed device packages: only such a converter is ThingsBoard's default one, which a new ThingsBoard version
- * may change. The installed items table and the update dialog both decide by it.
- */
-export const loadOwnDefaultConverterIds = async (iotHubApiService: IotHubApiService): Promise<Set<string>> => {
-  const ids = new Set<string>();
+/** What all installed device packages recorded about their default converters. The installed items table and the update dialog both decide by it. */
+export interface DefaultConverterRecords {
+  // The converters packages installed themselves as their default converter, not ones they took as they were: only such
+  // a converter is ThingsBoard's default one, which a new ThingsBoard version may change
+  ownIds: Set<string>;
+  // By converter id: the defaultConverterFingerprint each package recorded when it wrote the converter
+  fingerprints: Map<string, Set<string>>;
+}
+
+export const loadDefaultConverterRecords = async (iotHubApiService: IotHubApiService): Promise<DefaultConverterRecords> => {
+  const records: DefaultConverterRecords = { ownIds: new Set(), fingerprints: new Map() };
   for (const item of await loadInstalledDevicePackages(iotHubApiService)) {
     for (const state of Object.values((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {})) {
-      if (state?.defaultConverter && state.entityOutput?.id && state.resolution !== 'use-existing') {
-        ids.add(state.entityOutput.id);
+      const id: string = state?.defaultConverter ? state.entityOutput?.id : undefined;
+      if (!id) {
+        continue;
+      }
+      if (state.resolution !== 'use-existing') {
+        records.ownIds.add(id);
+      }
+      if (state.defaultConverterFingerprint) {
+        if (!records.fingerprints.has(id)) {
+          records.fingerprints.set(id, new Set());
+        }
+        records.fingerprints.get(id).add(state.defaultConverterFingerprint);
       }
     }
   }
-  return ids;
+  return records;
 };
 
 /**

@@ -612,6 +612,30 @@ class DefaultDevicePackageServiceTest {
     }
 
     @Test
+    void keptDefaultConverterWithoutAFingerprint_recordsNone() {
+        // E.g. another package's converter taken as it was: the request can't tell which default it holds
+        ConverterId converterId = new ConverterId(UUID.randomUUID());
+        Converter converter = new Converter(converterId);
+        converter.setTenantId(tenantId);
+        converter.setName("TTN my-app");
+        when(converterService.findConverterById(tenantId, converterId)).thenReturn(converter);
+        DeviceInstalledItemDescriptor installed = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        installed.setCreatedEntityIds(List.of(converterId));
+        installed.setInstallState(Map.of("UPLINK_CONVERTER:Uplink", stateOf(converterId, "use-existing").put("defaultConverter", true)));
+        DevicePackageRequest.Step uplink = keep("Uplink", "UPLINK_CONVERTER", converterId);
+        uplink.setDefaultConverter(true);
+        uplink.setResolution("use-existing");
+        uplink.setDefaultConverterFingerprint("current-default");
+
+        DevicePackageResult result = service.update(user, installedItem.getId(), request(uplink));
+
+        assertThat(result.isSuccess()).isTrue();
+        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("UPLINK_CONVERTER:Uplink");
+        assertThat(state.get("defaultConverter").asBoolean()).isTrue();
+        assertThat(state.has("defaultConverterFingerprint")).isFalse();
+    }
+
+    @Test
     void failedStep_rollsBackAndReportsTheStep() {
         when(deviceProfileService.findDeviceProfileById(tenantId, profileId)).thenReturn(profile(3L, "AM308"));
         when(deviceProfileService.saveDeviceProfile(any())).thenAnswer(i -> i.getArgument(0));
