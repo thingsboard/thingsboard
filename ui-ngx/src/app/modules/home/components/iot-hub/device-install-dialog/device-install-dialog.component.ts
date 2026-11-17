@@ -113,10 +113,10 @@ interface InstallConflictChoice {
   resolution: string;
 }
 
-/** Install: an entity that has the name a step gives its entity, as the check found it. */
+/** Install: an entity found under the name a step's template gives. */
 interface ExistingEntity {
   output: EntityStepOutput;
-  // The version the check found, which an overwrite sends: the server rejects it if someone changed the entity since
+  // Sent with an overwrite
   version?: number;
 }
 
@@ -943,9 +943,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // --- Variable Resolution ---
 
   /** escape: applied to each substituted value, e.g. to keep a JSON template valid. */
-  resolveVariables(content: string, escape: (value: string) => string = value => value): string {
+  resolveVariables(content: string, escape: (value: string) => string = value => value,
+                   outputs: Map<string, EntityStepOutput> = this.entityOutputs): string {
     return content.replace(/\$\{([^}]+)}/g, (_match, key) => {
-      const res = this.resolveVariable(key);
+      const res = this.resolveVariable(key, outputs);
       if (res) {
         return escape(res);
       }
@@ -953,7 +954,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     });
   }
 
-  resolveVariable(key: string): string | undefined {
+  resolveVariable(key: string, outputs: Map<string, EntityStepOutput> = this.entityOutputs): string | undefined {
     if (key in this.formValues) {
       return String(this.formValues[key]);
     }
@@ -985,7 +986,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (dotIdx > 0) {
       const alias = key.substring(0, dotIdx);
       const prop = key.substring(dotIdx + 1);
-      const output = this.entityOutputs.get(alias);
+      const output = outputs.get(alias);
       if (output && prop in output) {
         return String((output as any)[prop]);
       }
@@ -1017,13 +1018,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * embedded in a larger string (e.g. "v3/${mqttUsername}/...") and STRING/PASSWORD/SELECT
    * fields are left quoted and handled by the regular resolveVariables() pass.
    */
-  resolveTemplateJson(raw: string): any {
+  resolveTemplateJson(raw: string, outputs: Map<string, EntityStepOutput> = this.entityOutputs): any {
     const typed = raw.replace(/"\$\{([^"{}]+)}"/g, (whole, key) => {
       const type = this.fieldTypes.get(key);
       if (type !== FormFieldType.BOOLEAN && type !== FormFieldType.INTEGER) {
         return whole;
       }
-      const res = this.resolveVariable(key);
+      const res = this.resolveVariable(key, outputs);
       if (res === undefined) {
         return whole;
       }
@@ -1038,7 +1039,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     });
     // Placeholders sit inside JSON strings (or are booleans and numbers, which escaping leaves as they are): a value
     // with a quote, a backslash or a line break, e.g. a pasted password, must not end the string
-    return JSON.parse(this.resolveVariables(typed, value => JSON.stringify(value).slice(1, -1)));
+    return JSON.parse(this.resolveVariables(typed, value => JSON.stringify(value).slice(1, -1), outputs));
   }
 
   private _resolveMarkdownVariable(key: string): string | undefined {
@@ -2390,7 +2391,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }));
     ws.reviewing = true;
     ws.progressError = null;
-    // A duplicate key is caught by this check before the plan is sent, and by the server
     const duplicateKey = this.duplicateStateKey();
     if (duplicateKey) {
       ws.progressError = this.translate.instant('iot-hub.device-install-duplicate-step', { key: duplicateKey });
@@ -2558,46 +2558,37 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /**
-   * The templates of the steps resolved for the check, in step order. A name that refers to an earlier step's entity,
-   * e.g. a dashboard titled ${device.name}, takes the name the plan gives that entity, and not the name of one left
-   * from a failed attempt, so a Retry checks the same names. What is known only once the entity exists, e.g.
-   * ${device.id}, stays a placeholder. Update: the package's installed entities are the real ones.
+   * Names that refer to earlier steps resolve to the names the plan gives those steps, so a retry checks the same names;
+   * ids stay placeholders. On an update the installed entities are used.
    */
   private preCheckTemplates(ws: WizardStep): Map<DeviceInstallStep, any> {
     const installed = this.data.update ? this.installedEntityOutputs() : new Map<string, EntityStepOutput>();
     const outputs = new Map(installed);
     const templates = new Map<DeviceInstallStep, any>();
-    const committedOutputs = this.entityOutputs;
-    this.entityOutputs = outputs;
-    try {
-      for (const ep of ws.entitySteps) {
-        const raw = this.zipFiles.get(ep.step.template);
-        if (!raw) {
-          continue;
-        }
-        const template = this.resolveTemplateJson(raw);
-        templates.set(ep.step, template);
-        const alias = stepTypeAliasMap[ep.step.type];
-        const name = this.templateNameOf(ep.step, template);
-        if (alias && name && !installed.has(alias)) {
-          outputs.set(alias, { name } as EntityStepOutput);
-        }
+    for (const ep of ws.entitySteps) {
+      const raw = this.zipFiles.get(ep.step.template);
+      if (!raw) {
+        continue;
       }
-    } finally {
-      this.entityOutputs = committedOutputs;
+      const template = this.resolveTemplateJson(raw, outputs);
+      templates.set(ep.step, template);
+      const alias = stepTypeAliasMap[ep.step.type];
+      const name = this.templateNameOf(ep.step, template);
+      if (alias && name && !installed.has(alias)) {
+        outputs.set(alias, { name } as EntityStepOutput);
+      }
     }
     return templates;
   }
 
-  /** The name a step's template gives its entity. */
   private templateNameOf(step: DeviceInstallStep, template: any): string | undefined {
     switch (step.type) {
       case InstallStepType.RULE_CHAIN:
-        return template?.ruleChain?.name || template?.name;
+        return template.ruleChain?.name || template.name;
       case InstallStepType.DASHBOARD:
-        return template?.title;
+        return template.title;
       default:
-        return template?.name;
+        return template.name;
     }
   }
 
