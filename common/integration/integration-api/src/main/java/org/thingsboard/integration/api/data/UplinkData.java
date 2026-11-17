@@ -7,6 +7,9 @@ import lombok.Data;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 
+import java.util.Collections;
+import java.util.Set;
+
 @Data
 @Builder
 public class UplinkData {
@@ -23,5 +26,10 @@ public class UplinkData {
     private final PostAttributeMsg attributesUpdate;
     private final PostAttributeMsg constants;
     private final boolean isAsset;
+    // Keys whose numeric-looking string values the converter kept as strings.
+    @Builder.Default
+    private final Set<String> telemetryTypeCastDisabledKeys = Collections.emptySet();
+    @Builder.Default
+    private final Set<String> attributesTypeCastDisabledKeys = Collections.emptySet();
 
 }

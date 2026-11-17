@@ -96,17 +96,19 @@ public class DedicatedScriptUplinkDataConverter extends AbstractUplinkDataConver
         Map<String, String> currentOnValueTelemetryUpdate = this.currentUpdateOnlyTelemetryPerEntity.getOrDefault(name, new ConcurrentHashMap<>());
         Map<String, String> currentOnValueAttributesUpdate = this.currentUpdateOnlyAttributesPerEntity.getOrDefault(name, new ConcurrentHashMap<>());
 
-        TransportProtos.PostTelemetryMsg parsedTelemetry = JsonConverter.convertToTelemetryProto(uplinkData.getTelemetryJson(), uplinkData.getTelemetryNoCastKeys());
+        TransportProtos.PostTelemetryMsg parsedTelemetry = JsonConverter.convertToTelemetryProto(uplinkData.getTelemetryJson(), uplinkData.getTelemetryTypeCastDisabledKeys());
         if (!this.updateOnlyKeys.isEmpty()) {
             parsedTelemetry = filterTelemetryOnKeyValueUpdateAndUpdateMap(parsedTelemetry, currentOnValueTelemetryUpdate);
         }
         builder.telemetry(parsedTelemetry);
 
-        TransportProtos.PostAttributeMsg parsedAttributes = JsonConverter.convertToAttributesProto(uplinkData.getAttributesJson(), uplinkData.getAttributesNoCastKeys());
+        TransportProtos.PostAttributeMsg parsedAttributes = JsonConverter.convertToAttributesProto(uplinkData.getAttributesJson(), uplinkData.getAttributesTypeCastDisabledKeys());
         if (!this.updateOnlyKeys.isEmpty()) {
             parsedAttributes = filterAttributeOnKeyValueUpdateAndUpdateMap(parsedAttributes, currentOnValueAttributesUpdate);
         }
         builder.attributesUpdate(parsedAttributes);
+        builder.telemetryTypeCastDisabledKeys(uplinkData.getTelemetryTypeCastDisabledKeys());
+        builder.attributesTypeCastDisabledKeys(uplinkData.getAttributesTypeCastDisabledKeys());
 
         if (!currentOnValueTelemetryUpdate.isEmpty()) {
             this.currentUpdateOnlyTelemetryPerEntity.put(name, currentOnValueTelemetryUpdate);

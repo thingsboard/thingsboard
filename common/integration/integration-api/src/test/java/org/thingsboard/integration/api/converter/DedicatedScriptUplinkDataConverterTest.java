@@ -31,8 +31,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.DOUBLE_V;
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.LONG_V;
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.STRING_V;
@@ -44,7 +44,7 @@ public class DedicatedScriptUplinkDataConverterTest {
 
     @BeforeEach
     public void startup() {
-        uplinkDataConverter = new DedicatedScriptUplinkDataConverter(any(), any(), any());
+        uplinkDataConverter = new DedicatedScriptUplinkDataConverter(null, null, null);
         ReflectionTestUtils.setField(uplinkDataConverter, "converterUnwrapper", thingsStackUnwrapper);
     }
 
@@ -62,6 +62,9 @@ public class DedicatedScriptUplinkDataConverterTest {
         assertKv(attributes.get("rssi"), LONG_V, -22L);
         assertKv(attributes.get("snr"), DOUBLE_V, 11.0);
         assertKv(attributes.get("frequency"), LONG_V, 868100000L);
+        assertTrue(uplink.getAttributesTypeCastDisabledKeys().containsAll(Set.of("devAddr", "eui")));
+        assertFalse(uplink.getAttributesTypeCastDisabledKeys().contains("fCnt"));
+        assertTrue(uplink.getTelemetryTypeCastDisabledKeys().isEmpty());
     }
 
     @ParameterizedTest
@@ -77,6 +80,8 @@ public class DedicatedScriptUplinkDataConverterTest {
         assertKv(telemetry.get("rssi"), LONG_V, -22L);
         assertKv(telemetry.get("snr"), DOUBLE_V, 11.0);
         assertKv(toMap(uplink.getAttributesUpdate().getKvList()).get("eui"), STRING_V, "1000000000000001");
+        assertEquals(Set.of("devAddr"), uplink.getTelemetryTypeCastDisabledKeys());
+        assertEquals(Set.of("eui"), uplink.getAttributesTypeCastDisabledKeys());
     }
 
     @Test
@@ -161,6 +166,7 @@ public class DedicatedScriptUplinkDataConverterTest {
         UplinkData uplink = uplinkDataConverter.parseUplinkData(uplinkJson, unwrapThingsStack("05060708"));
 
         assertKv(toMap(uplink.getAttributesUpdate().getKvList()).get("devAddr"), LONG_V, 1020304L);
+        assertFalse(uplink.getAttributesTypeCastDisabledKeys().contains("devAddr"));
     }
 
     @Test
