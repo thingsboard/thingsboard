@@ -166,6 +166,14 @@ class ScanCacheTest(unittest.TestCase):
             self.assertIn('cannot be read', self.errors.getvalue())
             self.assertEqual(os.listdir(self.home), ['scan-cache.failed'])
 
+    def test_an_archive_cut_off_in_the_middle_does_not_fail(self):
+        whole = archive_of({f'scanner/results/{n}/scan-results.yml': os.urandom(2000) for n in range(20)})
+        self.server.archive = whole[:len(whole) // 2]
+        scan_cache.download(self.home, self.server.url)
+        self.assertIn('cannot be read', self.errors.getvalue())
+        self.assertTrue(os.path.exists(os.path.join(self.home, 'scan-cache.failed')))
+        self.assertFalse(os.path.exists(os.path.join(self.home, 'scan-cache.etag')))
+
     def test_upload_adds_the_new_files_to_those_of_the_archive(self):
         self.server.archive = archive_of({'scanner/results/a/scan-results.yml': b'a'})
         self.write('scanner/results/b/scan-results.yml', b'b')
@@ -190,6 +198,13 @@ class ScanCacheTest(unittest.TestCase):
             scan_cache.upload(self.home, self.server.url)
         self.assertIn('NOTICES_SCAN_CACHE_USER', str(failure.exception))
         self.assertIsNone(self.server.archive)
+
+    def test_upload_to_a_server_that_does_not_answer_does_not_blame_the_account(self):
+        self.write('scanner/results/a/scan-results.yml', b'a')
+        with self.assertRaises(SystemExit) as failure:
+            scan_cache.upload(self.home, 'http://127.0.0.1:1/cache.tar.gz')
+        self.assertIn('cannot be read', str(failure.exception))
+        self.assertNotIn('NOTICES_SCAN_CACHE_USER', str(failure.exception))
 
 
 if __name__ == '__main__':

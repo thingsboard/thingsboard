@@ -69,7 +69,8 @@ def download(home, url):
             return
         with archive:
             added, stored = unpack(archive, home)
-    except (OSError, tarfile.TarError) as error:
+    # Whatever goes wrong here, such as a connection that ends in the middle of the archive, the notices are still made
+    except Exception as error:
         open(failed_file, 'w').close()
         print(f'Scan cache: {url} cannot be read ({error}). The notices are made without it: each package that was '
               'not scanned on this machine before is scanned now, which takes minutes for each.', file=sys.stderr)
@@ -87,8 +88,8 @@ def upload(home, url):
         archive, _ = fetch(url, None)
         with archive:
             _, stored = unpack(archive, home)
-    except urllib.error.HTTPError as error:
-        if error.code != 404:
+    except Exception as error:
+        if not (isinstance(error, urllib.error.HTTPError) and error.code == 404):
             raise SystemExit(f'Scan cache: {url} cannot be read ({error}), so nothing is uploaded')
         stored = set()  # the first upload
     root = os.path.join(home, DIRECTORY)
@@ -107,11 +108,13 @@ def upload(home, url):
             'Content-Length': str(size), 'Content-Type': 'application/gzip', 'User-Agent': 'scan-cache', **authorization()})
         try:
             urllib.request.urlopen(request, timeout=60).close()
-        except OSError as error:
+        except Exception as error:
+            refused = isinstance(error, urllib.error.HTTPError) and error.code in (401, 403)
             if isinstance(error, urllib.error.HTTPError):
                 error.close()
-            raise SystemExit(f'Scan cache: the upload to {url} failed ({error}). It needs the account that may write '
-                             'there, in NOTICES_SCAN_CACHE_USER and NOTICES_SCAN_CACHE_PASSWORD.')
+            hint = (' It needs the account that may write there, in NOTICES_SCAN_CACHE_USER and NOTICES_SCAN_CACHE_PASSWORD.'
+                    if refused else '')
+            raise SystemExit(f'Scan cache: the upload to {url} failed ({error}).{hint}')
     print(f'Scan cache: uploaded {len(new)} new files to {url}, which now has {len(local)} ({size / 1e6:.1f} MB)')
 
 
