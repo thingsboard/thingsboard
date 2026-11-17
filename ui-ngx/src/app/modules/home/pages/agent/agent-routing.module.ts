@@ -12,7 +12,7 @@ import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { AgentService } from '@core/http/agent.service';
 import { AgentInfo } from '@shared/models/agent.models';
-import { resolveAgentIdParam } from '@home/pages/agent/util/agent-route-params';
+import { isAgentsSectionPath, resolveAgentIdParam } from '@home/pages/agent/util/agent-route-params';
 import { MenuId } from '@core/services/menu.models';
 import { AgentsTableConfigResolver } from '@home/pages/agent/agents-table-config.resolver';
 import { AgentProfilesTableConfigResolver } from '@home/pages/agent/agent-profiles-table-config.resolver';
@@ -49,8 +49,13 @@ const agentInfoBreadcrumbResolver: ResolveFn<AgentInfo | null> = (route) => {
 
 const agentTabsBackUrlResolver: ResolveFn<string | null> = () => {
   const router = inject(Router);
-  const previousUrl = router.getCurrentNavigation()?.previousNavigation?.finalUrl;
-  return previousUrl ? router.serializeUrl(previousUrl).split(/[?#]/)[0] : null;
+  const previousUrl = router.currentNavigation()?.previousNavigation?.finalUrl;
+  if (!previousUrl) {
+    return null;
+  }
+  const url = router.serializeUrl(previousUrl);
+  const path = url.split(/[?#]/)[0];
+  return isAgentsSectionPath(path) ? url : null;
 };
 
 const agentTabsBreadcrumbLabelFunction: BreadCrumbLabelFunction<RouterTabsComponent> =

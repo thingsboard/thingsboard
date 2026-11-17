@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, of, throwError } from 'rxjs';
 import { filter, map, mergeMap, shareReplay, tap } from 'rxjs/operators';
 import { AgentService } from '@core/http/agent.service';
@@ -46,15 +47,18 @@ export class AgentAppWizardLoaderService {
   constructor(private agentService: AgentService) {}
 
   // Warm the per-type template cache so the first type-card click in install
-  // mode doesn't flash a "Loading template…" state.
-  prewarmTemplates(types: AgentApplicationType[]): void {
+  // mode doesn't flash a "Loading template…" state. Background-only: errors are
+  // silent (no toast) and the requests are cancelled when `destroyRef` is destroyed.
+  prewarmTemplates(types: AgentApplicationType[], destroyRef: DestroyRef): void {
     types.forEach(type => {
       if (this.templateCache.has(type)) {
         return;
       }
       this.loadTemplatesByType(type).pipe(
         filter(templates => templates.length > 0),
-        mergeMap(() => this.agentService.getLatestAgentAppTemplate(type, AgentAppConfigType.DOCKER_COMPOSE))
+        mergeMap(() => this.agentService.getLatestAgentAppTemplate(type, AgentAppConfigType.DOCKER_COMPOSE,
+          { ignoreErrors: true, ignoreLoading: true })),
+        takeUntilDestroyed(destroyRef)
       ).subscribe({
         next: tpl => this.templateCache.set(type, tpl),
         error: () => { /* swallow — loadTemplate retries on demand */ }
@@ -85,11 +89,12 @@ export class AgentAppWizardLoaderService {
   }
 
   // Caches the request itself, so concurrent callers share one in-flight call;
-  // shareReplay drops a failed request, so the next caller retries.
+  // shareReplay drops a failed request, so the next caller retries, and cancels it
+  // once every caller has unsubscribed (e.g. the wizard was closed).
   loadTemplatesByType(type: AgentApplicationType): Observable<AgentAppTemplate[]> {
     let templates$ = this.templatesByTypeCache.get(type);
     if (!templates$) {
-      templates$ = this.agentService.getAgentAppTemplatesByAppType(type).pipe(shareReplay(1));
+      templates$ = this.agentService.getAgentAppTemplatesByAppType(type).pipe(shareReplay({ bufferSize: 1, refCount: true }));
       this.templatesByTypeCache.set(type, templates$);
     }
     return templates$;
@@ -102,7 +107,9 @@ export class AgentAppWizardLoaderService {
   loadProfiles(type: AgentApplicationType): Observable<AgentAppProfile[]> {
     let profiles$ = this.profilesCache.get(type);
     if (!profiles$) {
-      profiles$ = (this.agentService.getAgentAppProfilesByAppType(type) as Observable<AgentAppProfile[]>).pipe(shareReplay(1));
+      profiles$ = (this.agentService.getAgentAppProfilesByAppType(type) as Observable<AgentAppProfile[]>).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
       this.profilesCache.set(type, profiles$);
     }
     return profiles$;

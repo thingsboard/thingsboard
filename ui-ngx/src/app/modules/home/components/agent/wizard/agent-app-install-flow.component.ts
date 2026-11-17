@@ -101,6 +101,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   composeTypeKeys: string[] = [];
   loadingTemplate = false;
   loadError = '';
+  mergeError = '';
   private advanceAfterTypeSelect = false;
 
   appName = '';
@@ -227,7 +228,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     }
     const types = this.lockedType ? [this.lockedType] : this.typeCards.map(card => card.type);
     this.detectTypeAvailability(types);
-    this.loader.prewarmTemplates(types);
+    this.loader.prewarmTemplates(types, this.destroyRef);
     if (this.lockedType) {
       this.selectType(this.lockedType);
     }
@@ -248,7 +249,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
           }
         });
       }),
-      shareReplay(1)
+      shareReplay({ bufferSize: 1, refCount: true })
     );
     this.typeAvailability$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.detectingTypes = false;
@@ -283,6 +284,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     this.pendingCustomCompose = null;
     this.appName = this.defaultAppName(type);
     this.loadError = '';
+    this.mergeError = '';
     this.advanceAfterTypeSelect = !this.lockedType;
 
     if (this.useProfile) {
@@ -316,6 +318,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     this.mergedApp = null;
     this.loadingTemplate = false;
     this.loadError = '';
+    this.mergeError = '';
     this.credentialValues = {};
     if (this.selectedType) {
       if (value) {
@@ -457,11 +460,13 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     const draft = buildRelatedMergeDraft(
       this.agentId, this.selectedType!, this.appName, tpl,
       this.composeYaml, dockerComposeConfig(this.mergedApp)?.compose);
+    this.mergeError = '';
     this.loader.merge(
       tpl.currentVersion, tpl.appType, draft, this.useProfile ? undefined : (this.composeType || undefined),
       this.relatedEntityId || undefined, undefined, true
     ).subscribe({
       next: merged => {
+        this.mergeError = '';
         this.mergedApp = merged;
         const mergedYaml = dumpCompose(merged);
         if (this.useProfile) {
@@ -474,7 +479,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
         }
       },
       error: () => {
-        this.loadError = this.translate.instant('agent.app-install-merge-failed');
+        this.mergeError = this.translate.instant('agent.app-install-merge-failed');
       }
     });
   }
@@ -585,8 +590,10 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   private runMergeForPreview(tpl: AgentAppTemplate) {
     const draft = buildInstallMergeDraft(this.agentId, this.selectedType!, this.appName, tpl);
+    this.mergeError = '';
     this.loader.merge(tpl.currentVersion, tpl.appType, draft, this.composeType || undefined, this.relatedEntityId || undefined, undefined, true).subscribe({
       next: merged => {
+        this.mergeError = '';
         this.mergedApp = merged;
         if (!this.useProfile) {
           this.proposedYaml = dumpRawTemplateCompose(tpl, this.composeType);
@@ -598,7 +605,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
         }
       },
       error: () => {
-        this.loadError = this.translate.instant('agent.app-install-merge-failed');
+        this.mergeError = this.translate.instant('agent.app-install-merge-failed');
       }
     });
   }
@@ -666,6 +673,9 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   }
 
   canSubmit(): boolean {
+    if (this.mergeError) {
+      return false;
+    }
     if (this.relatedEntityRequired && !this.relatedEntityId?.id) {
       return false;
     }

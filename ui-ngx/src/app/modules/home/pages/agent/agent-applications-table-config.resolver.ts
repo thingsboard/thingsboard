@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   agentEntityUrl,
+  agentsListUrl,
   agentTabsBackUrl,
   currentAgentRouteSnapshot,
   resolveAgentIdParam
@@ -107,7 +108,7 @@ export class AgentApplicationsTableConfigResolver {
       map(agent => {
         this.agent = agent;
         this.config.tableTitle = agent.name + ': ' + this.translate.instant('agent.applications');
-        this.config.backNavigationCommands = [agentTabsBackUrl(route) ?? agentEntityUrl(route, this.agentId)];
+        this.config.backNavigationUrl = agentTabsBackUrl(route) ?? agentsListUrl(route, this.agentId);
         this.config.componentsData = { agentId: this.agentId, agent };
         this.config.columns = this.configureColumns();
         this.config.cellActionDescriptors = this.configureCellActions();

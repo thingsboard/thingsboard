@@ -74,7 +74,6 @@ export class AgentEventsPageComponent implements OnInit {
       this.viewContainerRef,
       agentUrl
     );
-    console.log(this.route);
-    this.tableConfig.backNavigationCommands = [agentTabsBackUrl(this.route.snapshot) ?? agentUrl];
+    this.tableConfig.backNavigationUrl = agentTabsBackUrl(this.route.snapshot) ?? agentUrl;
   }
 }

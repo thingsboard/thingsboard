@@ -12,9 +12,7 @@
       </button>
     }
     <div class="tb-install-wizard-toolbar-content">
-      <h2>{{ 'agent.app-install-title' | translate }}@if (agent) {
-        :
-      }</h2>
+      <h2>{{ 'agent.app-install-title' | translate }}@if (agent) {:}</h2>
       @if (agent) {
         <span class="flex-1">
           {{ 'agent.app-install-on-agent' | translate: { name: agent?.name } }}
@@ -228,7 +226,13 @@
             </ng-template>
           </mat-expansion-panel>
         }
-        @if (!useProfile && loadError) {
+        @if (mergeError) {
+          <div class="error-state">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ mergeError }}</span>
+          </div>
+        }
+        @if (!useProfile && !template && loadError) {
           <div class="error-state">
             <mat-icon>error_outline</mat-icon>
             <span>{{ loadError }}</span>

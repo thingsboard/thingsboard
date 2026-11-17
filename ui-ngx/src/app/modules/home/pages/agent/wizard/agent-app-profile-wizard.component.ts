@@ -81,6 +81,7 @@ export class AgentAppProfileWizardComponent
   selectedTemplateVersion: string | null = null;
   loadingTemplates = false;
   private templatesSubscription: Subscription | null = null;
+  private previewSubscription: Subscription | null = null;
 
   profileForm: UntypedFormGroup;
   composeYaml = '';
@@ -191,6 +192,8 @@ export class AgentAppProfileWizardComponent
       return;
     }
     this.selectedType = type;
+    this.previewSubscription?.unsubscribe();
+    this.previewSubscription = null;
     this.template = null;
     this.composeType = null;
     this.composeTypeKeys = [];
@@ -271,10 +274,13 @@ export class AgentAppProfileWizardComponent
   }
 
   private rebuildComposePreview() {
+    this.previewSubscription?.unsubscribe();
+    this.previewSubscription = null;
     const tpl = this.template;
     if (!tpl) {
       return;
     }
+    const composeType = this.composeType;
     this.proposedYaml = dumpRawTemplateCompose(tpl, this.composeType);
     this.currentYaml = this.proposedYaml;
     this.composeYaml = this.currentYaml;
@@ -283,8 +289,11 @@ export class AgentAppProfileWizardComponent
       appType: this.selectedType,
       templateVersion: tpl.currentVersion
     };
-    this.agentService.mergeProfileForPreview(tpl.currentVersion, draft, this.composeType || undefined, undefined, !this.editMode).subscribe({
+    this.previewSubscription = this.agentService.mergeProfileForPreview(tpl.currentVersion, draft, composeType || undefined, undefined, !this.editMode).subscribe({
       next: merged => {
+        if (this.template !== tpl || this.composeType !== composeType) {
+          return;
+        }
         const compose: any = dockerComposeConfig(merged)?.compose;
         if (compose) {
           this.currentYaml = dumpYaml(compose, 0).trimEnd() + '\n';
