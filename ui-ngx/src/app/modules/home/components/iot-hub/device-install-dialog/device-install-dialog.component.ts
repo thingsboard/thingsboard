@@ -419,10 +419,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private pendingRoutingKey: string | undefined;
   // protocol → where the server took its host from
   private transportHostSources: Partial<Record<DeviceConnectivityProtocol, DeviceConnectivityHostSource>> = {};
-  // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
+  // form-field key → definition. Its type lets resolveTemplateJson() emit BOOLEAN/INTEGER
   // placeholders as raw JSON values instead of quoted strings.
-  private fieldTypes = new Map<string, FormFieldType>();
-  private optionalFieldKeys = new Set<string>();
+  private formFieldDefs = new Map<string, FormFieldDefinition>();
   // Transport whose ${<protocol>.host} the transport host field overrides
   private hostFieldProtocol: DeviceConnectivityProtocol | null = null;
   gatewayDockerComposeContent: string | null = null;
@@ -957,7 +956,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   resolveVariable(key: string, outputs: Map<string, EntityStepOutput> = this.entityOutputs): string | undefined {
     if (key in this.formValues) {
-      return String(this.formValues[key] ?? '');
+      return String(this.formValues[key] ?? (this.formFieldDefs.get(key)?.type === FormFieldType.BOOLEAN ? false : ''));
     }
     if (this.hostFieldProtocol && key === `${this.hostFieldProtocol}.host`) {
       const host = toBareHost(String(this.formValues[TRANSPORT_HOST_FIELD_KEY] ?? ''));
@@ -1021,7 +1020,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    */
   resolveTemplateJson(raw: string, outputs: Map<string, EntityStepOutput> = this.entityOutputs): any {
     const typed = raw.replace(/"\$\{([^"{}]+)}"/g, (whole, key) => {
-      const type = this.fieldTypes.get(key);
+      const type = this.formFieldDefs.get(key)?.type;
       if (type !== FormFieldType.BOOLEAN && type !== FormFieldType.INTEGER) {
         return whole;
       }
@@ -1051,8 +1050,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (res) {
       return true;
     }
-    const type = this.fieldTypes.get(key);
-    return res === '' && this.optionalFieldKeys.has(key) && type !== FormFieldType.INTEGER && type !== FormFieldType.BOOLEAN;
+    const field = this.formFieldDefs.get(key);
+    return res === '' && !!field && !field.required && field.type !== FormFieldType.INTEGER && field.type !== FormFieldType.BOOLEAN;
   }
 
   private _resolveMarkdownVariable(key: string): string | undefined {
@@ -1337,12 +1336,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       ws.formFields = ws.formFields.map(field => locked.has(field.key) ? { ...field, readOnly: true, resettable: false } : field);
     }
     for (const field of ws.formFields) {
-      this.fieldTypes.set(field.key, field.type);
-      if (field.required) {
-        this.optionalFieldKeys.delete(field.key);
-      } else {
-        this.optionalFieldKeys.add(field.key);
-      }
+      this.formFieldDefs.set(field.key, field);
       const validators = [];
       if (field.required) {
         validators.push(Validators.required);
