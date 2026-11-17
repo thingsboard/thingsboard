@@ -988,6 +988,14 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>3.0.0</version>
+                    <configuration>
+                        <!-- For tools/src/main/notices/notices.sh, which every module runs with this plugin. Its other
+                             settings, such as NOTICES_ORT_HOME and NOTICES_SCAN_CACHE_URL, reach it from the
+                             environment of Maven. -->
+                        <environmentVariables>
+                            <NOTICES_MAVEN_REPOSITORY>${settings.localRepository}</NOTICES_MAVEN_REPOSITORY>
+                        </environmentVariables>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -1244,9 +1252,6 @@
                         <configuration>
                             <skip>${notices.run.skip}</skip>
                             <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
-                            <environmentVariables>
-                                <NOTICES_MAVEN_REPOSITORY>${settings.localRepository}</NOTICES_MAVEN_REPOSITORY>
-                            </environmentVariables>
                             <arguments>
                                 <argument>${project.build.directory}/notices/work-linux</argument>
                                 <argument>${project.version}</argument>
@@ -1264,9 +1269,6 @@
                         <configuration>
                             <skip>${notices.run.skip}</skip>
                             <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
-                            <environmentVariables>
-                                <NOTICES_MAVEN_REPOSITORY>${settings.localRepository}</NOTICES_MAVEN_REPOSITORY>
-                            </environmentVariables>
                             <arguments>
                                 <argument>${project.build.directory}/notices/work-windows</argument>
                                 <argument>${project.version}</argument>
