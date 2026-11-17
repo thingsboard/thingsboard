@@ -38,8 +38,8 @@
             <resource>
                 <directory>${project.build.directory}/generated-resources</directory>
                 <excludes>
-                    <!-- The statistics of the production build, which the SBOM of the UI is made from -->
-                    <exclude>public/stats.json</exclude>
+                    <!-- The statistics of the production build, which the SBOM of the UI is made from, and their compressed copies -->
+                    <exclude>public/stats.json*</exclude>
                 </excludes>
             </resource>
         </resources>
@@ -119,6 +119,15 @@
                                 </goals>
                                 <configuration>
                                     <arguments>--mutex network run build:prod</arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>yarn compress</id>
+                                <goals>
+                                    <goal>yarn</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>run compress</arguments>
                                 </configuration>
                             </execution>
                             <!-- After the build: the SBOM lists what the build put into the bundle, as its statistics tell -->

@@ -12,6 +12,7 @@ import { EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { isNotEmptyStr } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { EntityService } from '@core/http/entity.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -49,6 +50,10 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
 
   @Input()
   typeTranslatePrefix: string;
+
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
 
   entitySubtypeTitle: string;
   entitySubtypeRequiredText: string;
@@ -152,9 +157,9 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.subTypeFormGroup.disable();
+      this.subTypeFormGroup.disable({emitEvent: false});
     } else {
-      this.subTypeFormGroup.enable();
+      this.subTypeFormGroup.enable({emitEvent: false});
     }
   }
 
