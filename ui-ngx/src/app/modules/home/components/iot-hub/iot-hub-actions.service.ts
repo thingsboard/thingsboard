@@ -25,7 +25,7 @@ import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData }
 import { IotHubBuiltInService } from './iot-hub-built-in.service';
 import { isBuiltInItem } from './iot-hub-utils';
 import { TbIotHubConverterUpdateDialogComponent, IotHubConverterUpdateDialogData } from './iot-hub-converter-update-dialog.component';
-import { DefaultConverterUpdate, loadInstalledDevicePackages } from './iot-hub-default-converter';
+import { DefaultConverterUpdate, defaultConverterRecords, loadConverterModified, loadInstalledDevicePackages } from './iot-hub-default-converter';
 
 /**
  * What `openBuiltInOrConfirmInstall` did with a built-in item: 'handled' means nothing is left to do
@@ -206,20 +206,8 @@ export class IotHubActionsService {
         (item.descriptor as DeviceInstalledItemDescriptor)?.createdEntityIds?.some(id => id.id === converterId))
       .map(item => item.itemName);
     // The check leaves out a converter the package took as it was: the package that installed it knows whether it changed
-    const modified = state ? state.modified : await this.ownerConverterModified(packages, converterId);
+    const modified = state ? state.modified : await loadConverterModified(this.iotHubApiService, defaultConverterRecords(packages), converterId);
     return { update: { ...update, converter }, version: converter.version ?? state?.version, modified: modified === true, usedBy };
-  }
-
-  private async ownerConverterModified(packages: IotHubInstalledItem[], converterId: string): Promise<boolean | null> {
-    for (const item of packages) {
-      for (const [stateKey, state] of Object.entries((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {})) {
-        if (state?.defaultConverter && state.entityOutput?.id === converterId && state.resolution !== 'use-existing') {
-          const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(item.id.id));
-          return states.find(s => s.stepName === stateKey)?.modified ?? null;
-        }
-      }
-    }
-    return null;
   }
 
   deleteItem(installedItem: IotHubInstalledItem): Observable<boolean> {

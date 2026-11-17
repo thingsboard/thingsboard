@@ -41,6 +41,7 @@ import {
   defaultConverterChanged,
   defaultConverterFingerprint,
   DefaultConverterRecords,
+  loadConverterModified,
   loadDefaultConverterRecords,
   loadDefaultUplinkConverter
 } from '@home/components/iot-hub/iot-hub-default-converter';
@@ -109,7 +110,7 @@ interface EntityStepPlan {
   version?: number;
   // Modified: the entity as the check found it, which the user can download before it is overwritten
   current?: any;
-  // A step with "default": true whose converter differs from ThingsBoard's default converter now
+  // A step with "default": true whose ThingsBoard default converter changed: see defaultConverterChanged
   newDefaultConverter?: boolean;
 }
 
@@ -409,7 +410,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private previousFiles = new Map<string, string>();
   private previousPackageInfo: DevicePackageInfo | null = null;
   private entityPlans = new WeakMap<EntityStepProgress, EntityStepPlan>();
-  // Update: for each step with "default": true, whether its converter differs from ThingsBoard's default one now
+  // Update: for each step with "default": true, whether ThingsBoard's default converter changed: see defaultConverterChanged
   private defaultConverterChanges = new Map<DeviceInstallStep, boolean>();
   private defaultConverterFingerprints = new Map<DeviceInstallStep, string>();
   // The check of the plan in progress; a way back meanwhile starts a new one, which drops this one's result
@@ -2115,8 +2116,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private async checkDefaultConverters(): Promise<void> {
     this.restoreInstallState();
     let records: DefaultConverterRecords | undefined;
-    // Only for a converter no package recorded a fingerprint for
-    let checkedStates: DevicePackageEntityState[] | undefined;
     try {
       for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
         const stored = step.default ? this.storedStateOf(step)?.state : undefined;
@@ -2124,19 +2123,15 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         // A converter taken as it was may be any converter with that name: only another package's default one is checked
         if (id) {
           records ??= await loadDefaultConverterRecords(this.iotHubApiService);
-          if (stored.resolution === 'use-existing' && !records.ownIds.has(id)) {
+          if (stored.resolution === 'use-existing' && !records.owners.has(id)) {
             id = undefined;
           }
         }
         const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true})).catch(() => null) : null;
         if (converter) {
-          const fingerprints = records?.fingerprints.get(id);
-          if (!fingerprints?.size) {
-            checkedStates ??= await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId,
-              {ignoreErrors: true})).catch((): DevicePackageEntityState[] => []);
-          }
-          const modified = checkedStates?.find(state => state.stepName === this.storedStateOf(step)?.key)?.modified;
-          this.defaultConverterChanges.set(step, await defaultConverterChanged(this.resourcesService, converter, fingerprints, modified));
+          const modified = () => loadConverterModified(this.iotHubApiService, records, id);
+          this.defaultConverterChanges.set(step, await defaultConverterChanged(this.resourcesService, converter,
+            records.fingerprints.get(id), modified));
         }
       }
     } finally {

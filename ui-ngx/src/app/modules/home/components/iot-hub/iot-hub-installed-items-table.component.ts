@@ -42,6 +42,7 @@ import {
   DefaultConverterUpdate,
   defaultConverterChanged,
   DefaultConverterRecords,
+  loadConverterModified,
   loadDefaultConverterRecords,
   loadDefaultUplinkConverter
 } from '@home/components/iot-hub/iot-hub-default-converter';
@@ -401,7 +402,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         }
         records ??= await loadDefaultConverterRecords(this.iotHubApiService);
         // A converter taken as it was counts only when a package installed it as its default converter
-        if (state.resolution === 'use-existing' && !records.ownIds.has(id)) {
+        if (state.resolution === 'use-existing' && !records.owners.has(id)) {
           continue;
         }
         checks.push({ item, stateKey, converterId: id });
@@ -413,9 +414,8 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       if (!converter) {
         return null;
       }
-      const fingerprints = records.fingerprints.get(converterId);
-      const modified = fingerprints?.size ? undefined : await this.converterModified(item, stateKey);
-      if (!(await defaultConverterChanged(this.resourcesService, converter, fingerprints, modified))) {
+      const modified = () => loadConverterModified(this.iotHubApiService, records, converterId);
+      if (!(await defaultConverterChanged(this.resourcesService, converter, records.fingerprints.get(converterId), modified))) {
         return null;
       }
       // The update brings the converter to ThingsBoard's default one in the converter's own script language
@@ -428,12 +428,6 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     }
     this.converterUpdates = new Map(changed.filter(update => !!update).map(update => [update.installedItem.id.id, update]));
     this.cd.markForCheck();
-  }
-
-  private async converterModified(item: IotHubInstalledItem, stateKey: string): Promise<boolean | null> {
-    const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(item.id.id, {ignoreErrors: true, ignoreLoading: true}))
-      .catch(() => []);
-    return states.find(s => s.stepName === stateKey)?.modified ?? null;
   }
 
 
