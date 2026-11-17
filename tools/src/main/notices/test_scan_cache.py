@@ -23,8 +23,10 @@ import scan_cache
 
 
 class Server(ThreadingHTTPServer):
-    """Keeps one archive. Answers 304 to its ETag, and takes a new archive from the account writer:secret."""
+    """Keeps one archive. Answers 304 to its ETag, and takes a new archive from the account writer:secret, unless
+    broken is set: then it answers every upload with 500."""
     archive = None
+    broken = False
 
     def __init__(self):
         super().__init__(('127.0.0.1', 0), Handler)
@@ -58,6 +60,8 @@ class Handler(BaseHTTPRequestHandler):
         body = self.rfile.read(int(self.headers['Content-Length']))
         if self.headers.get('Authorization') != 'Basic ' + base64.b64encode(b'writer:secret').decode():
             return self.answer(401)
+        if self.server.broken:
+            return self.answer(500)
         self.server.archive = body
         self.answer(201)
 
@@ -199,12 +203,21 @@ class ScanCacheTest(unittest.TestCase):
         self.assertIn('NOTICES_SCAN_CACHE_USER', str(failure.exception))
         self.assertIsNone(self.server.archive)
 
-    def test_upload_to_a_server_that_does_not_answer_does_not_blame_the_account(self):
+    def test_upload_that_the_server_fails_does_not_blame_the_account(self):
+        self.write('scanner/results/a/scan-results.yml', b'a')
+        self.as_writer()
+        self.server.broken = True
+        with self.assertRaises(SystemExit) as failure:
+            scan_cache.upload(self.home, self.server.url)
+        self.assertIn('the upload to', str(failure.exception))
+        self.assertIn('500', str(failure.exception))
+        self.assertNotIn('NOTICES_SCAN_CACHE_USER', str(failure.exception))
+
+    def test_upload_without_a_readable_archive_says_so(self):
         self.write('scanner/results/a/scan-results.yml', b'a')
         with self.assertRaises(SystemExit) as failure:
             scan_cache.upload(self.home, 'http://127.0.0.1:1/cache.tar.gz')
         self.assertIn('cannot be read', str(failure.exception))
-        self.assertNotIn('NOTICES_SCAN_CACHE_USER', str(failure.exception))
 
 
 if __name__ == '__main__':
