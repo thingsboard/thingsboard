@@ -1567,7 +1567,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     try {
       const device = await firstValueFrom(this.deviceService.findByName(name, {ignoreErrors: true}));
       if (device) {
-        return { output: { id: device.id.id, name: device.name, url: `/entities/devices/all/${device.id.id}` } };
+        return { output: { id: device.id.id, name: device.name, url: `/entities/devices/all/${device.id.id}` }, version: device.version };
       }
     } catch (_e) {
       // 404 = not found
@@ -2273,7 +2273,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   /**
    * The key of the step's install state: its id, or else its type and name, so that two steps of an install method
    * never share it. A form without an id keeps its name, which no entity step's type-and-name key equals; a step id
-   * equal to a form's name is caught by the duplicate check on install, and by the server on update.
+   * equal to a form's name is caught by the duplicate check before the plan is sent, and by the server.
    * The server keys the steps of a request the same way.
    */
   private stateKeyOf(step: DeviceInstallStep): string {
