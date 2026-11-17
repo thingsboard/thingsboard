@@ -51,22 +51,38 @@
      listed first. --]
 [#assign withOthers = []]
 [#function coordinates id][#return (id.namespace?has_content)?then(id.namespace + ":", "") + id.name + " " + id.version][/#function]
+[#import "stop.ftl" as stop]
 [#-- Nobody has said what the notices owe for a license that is not in license-classifications.yml. --]
 [#assign unclassified = []]
 [#list shipped as package]
     [#list allLicenses(package) as resolved]
         [#if !helper.filterForClassified([resolved])?has_content]
-            [#assign unclassified = unclassified + [resolved.license?string + " (" + coordinates(package.id) + ")"]]
+            [#assign unclassified = unclassified + [resolved.license?string + " (" + package.id.toCoordinates() + ")"]]
         [/#if]
     [/#list]
 [/#list]
 [#if unclassified?has_content]
-    [#stop "These licenses are not in ort-config/license-classifications.yml: " + unclassified?join(", ")]
+    [#stop stop.message("these licenses are new to the product, and nobody has said what they require of us.\n"
+        + stop.lines(unclassified) + "\n"
+        + "We must know what a license obliges us to ship before we ship it.\n"
+        + "To fix: add the license to tools/src/main/notices/ort-config/license-classifications.yml\nunder one category:\n"
+        + "  notice         the copyright lines and the license text (most permissive licenses: MIT, BSD, Apache)\n"
+        + "  source-link    as notice, and where the source is (EPL, MPL, CDDL)\n"
+        + "  written-offer  as notice, and our offer of the source (GPL and LGPL with the conditions there)\n"
+        + "  nothing        no obligation (public domain)\n"
+        + "If you are not sure which, ask before adding it: a copyleft license may need legal review.")]
 [/#if]
 [#-- A package without any license would not be in the notices, and nobody would know. --]
-[#assign unlicensed = shipped?filter(p -> !allLicenses(p)?has_content)?map(p -> coordinates(p.id))]
+[#assign unlicensed = shipped?filter(p -> !allLicenses(p)?has_content)?map(p -> p.id.toCoordinates())]
 [#if unlicensed?has_content]
-    [#stop "These packages have no license: " + unlicensed?join(", ")]
+    [#stop stop.message("no license was found for these packages, so they would be left out of the notices silently.\n"
+        + stop.lines(unlicensed) + "\n"
+        + "To fix: find the license yourself (its repository, its README, its package page). Then add to\n"
+        + "tools/src/main/notices/ort-config/curations/curations.json:\n"
+        + "  {\"id\": \"" + unlicensed[0] + "\",\n"
+        + "   \"curations\": {\"comment\": \"<where you found it>\", \"concluded_license\": \"<identifier>\"}}\n"
+        + "The id may give a range of versions instead, such as [1.0,2.0[, if you checked them all.\n"
+        + "If it truly has no license, we may not be allowed to ship it: raise it before merging.")]
 [/#if]
 [#-- A choice that license-choices.yml does not decide is still in the license of the package after the choices. ORT
      would list the package under every license of the choice, as if all of them applied. --]
@@ -74,11 +90,17 @@
 [#list shipped as package]
     [#assign effective = (package.license.filterExcluded().effectiveLicense(view, package.licenseChoices)?string)!""]
     [#if effective?contains(" OR ")]
-        [#assign undecided = undecided + [coordinates(package.id) + ": " + effective]]
+        [#assign undecided = undecided + [{"id": package.id.toCoordinates(), "given": effective}]]
     [/#if]
 [/#list]
 [#if undecided?has_content]
-    [#stop "These packages offer a choice of licenses that license-choices.yml does not decide: " + undecided?join("; ")]
+    [#stop stop.message("these packages let us choose a license, and nobody has chosen.\n"
+        + stop.lines(undecided?map(u -> u.id + ": " + u.given)) + "\n"
+        + "To fix: add the choice to tools/src/main/notices/license-choices.yml. We take the most permissive one,\n"
+        + "and of copyleft licenses EPL, CDDL or MPL before LGPL or GPL:\n"
+        + "    - given: \"" + undecided[0].given + "\"\n"
+        + "      choice: \"<the license we take>\"\n"
+        + "The rule then applies to every package that offers the same choice.")]
 [/#if]
 [#-- Count the packages of every license. --]
 [#assign names = []]

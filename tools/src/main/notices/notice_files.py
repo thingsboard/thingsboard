@@ -23,7 +23,7 @@ import os
 import sys
 import zipfile
 
-from sbom_to_ort import MAVEN_REPOSITORIES, from_repositories, maven_path
+from sbom_to_ort import BUILD_PROBLEM, MAVEN_REPOSITORIES, from_repositories, maven_path, stop
 
 SEPARATOR = '-' * 78
 
@@ -117,8 +117,8 @@ def jar_file(jar, args):
             open(temporary, 'wb').write(content)
             os.replace(temporary, downloaded)
             return downloaded
-    raise SystemExit(f"{path} with the SHA-256 {jar['sha256']} of the SBOM is neither in {args.maven_repository} nor in "
-                     + ' or '.join(MAVEN_REPOSITORIES) + ': its NOTICE file cannot be read')
+    raise stop(f"{path} with the SHA-256 {jar['sha256']} of the SBOM is neither in {args.maven_repository} nor in "
+               + ' or '.join(MAVEN_REPOSITORIES) + f', so its NOTICE file cannot be read. {BUILD_PROBLEM}')
 
 
 def sha256(path):
@@ -138,8 +138,8 @@ def kept_files(provenance, directory):
         return None
     path = os.path.join(directory, hashlib.sha1(key.encode()).hexdigest(), 'archive.zip.xz')
     if not os.path.exists(path):
-        raise SystemExit(f"{path}, where ORT 98 keeps the license files of {provenance['id']}, does not exist: "
-                         'another version of ORT may keep them elsewhere, see kept_files() in notice_files.py')
+        raise stop(f"{path}, where ORT 98 keeps the license files of {provenance['id']}, does not exist: another "
+                   f'version of ORT may keep them elsewhere, see kept_files() in notice_files.py. {BUILD_PROBLEM}')
     return zipfile.ZipFile(io.BytesIO(lzma.open(path).read()))
 
 
