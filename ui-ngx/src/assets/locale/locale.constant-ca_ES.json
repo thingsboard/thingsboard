@@ -12650,8 +12650,6 @@
             "check-status-settings": "Configuració de la comprovació d'estat",
             "perform-rpc-status-check": "Comprova l'estat del dispositiu per RPC",
             "retrieve-led-status-value-method": "Mètode d'obtenció del valor d'estat del LED",
-            "led-status-value-attribute": "Atribut del dispositiu que conté el valor de l'estat del LED",
-            "led-status-value-timeseries": "Sèries temporals del dispositiu que contenen el valor de l'estat del LED",
             "check-status-method": "Mètode RPC per revisar l'estat del dispositiu",
             "parse-led-status-value-function": "Funció d'anàlisi del valor d'estat del LED",
             "knob-title": "Títol del regulador"

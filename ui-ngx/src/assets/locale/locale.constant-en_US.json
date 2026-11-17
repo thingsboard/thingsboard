@@ -3758,6 +3758,8 @@
         "copy-profile-id": "Copy Profile Id",
         "profile-id-copied-message": "Profile Id has been copied to clipboard",
         "app-profile-wizard-title": "Create Application Profile",
+        "app-no-templates": "No templates available for this application type.",
+        "app-type-unavailable": "No templates or application profiles available",
         "app-profile-wizard-edit-title": "Update Application Profile",
         "app-update-current-config": "Current application configuration",
         "app-update-future-config": "Future application configuration",
@@ -12666,8 +12668,6 @@
             "check-status-settings": "Check status settings",
             "perform-rpc-status-check": "Perform RPC device status check",
             "retrieve-led-status-value-method": "Retrieve LED status value using method",
-            "led-status-value-attribute": "Device attribute containing led status value",
-            "led-status-value-timeseries": "Device time series containing led status value",
             "check-status-method": "RPC check device status method",
             "parse-led-status-value-function": "Parse led status value function",
             "knob-title": "Knob title"

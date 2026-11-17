@@ -68,14 +68,13 @@
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>agent.description</mat-label>
-        <textarea matInput formControlName="description" rows="2"></textarea>
+        <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
       </mat-form-field>
     </fieldset>
   </form>
   <div [formGroup]="entityForm">
     <tb-agent-app-arguments class="tb-app-arguments-section"
-      formControlName="arguments"
-      [disabled]="!isEdit">
+      formControlName="arguments">
     </tb-agent-app-arguments>
   </div>
   <label class="tb-mat-label" translate>agent.app-compose</label>
