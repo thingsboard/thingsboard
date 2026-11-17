@@ -54,6 +54,17 @@ class DefaultTbServiceInfoProviderTest {
     }
 
     @Test
+    void transportsSurviveTheRegenerationOnReadyFlagChange() {
+        provider.setTransports();
+
+        // without ZooKeeper the ready flag is the only thing that regenerates the info
+        new DummyDiscoveryService(provider, mock(PartitionService.class)).setReady(false);
+
+        assertThat(provider.getServiceInfo().getReady()).isFalse();
+        assertThat(provider.getServiceInfo().getTransportsList()).containsExactly(DataConstants.SNMP_TRANSPORT_NAME);
+    }
+
+    @Test
     void transportsAreNotDuplicatedWhenSetAgain() {
         provider.setTransports();
         provider.setTransports();
