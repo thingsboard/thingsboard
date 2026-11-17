@@ -327,6 +327,16 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           this.paginator.firstPage();
         }
       });
+
+      this.alarmsDatasource.totalPages().pipe(
+        debounceTime(0),
+        takeUntil(this.destroy$)
+      ).subscribe((totalPages) => {
+        if (this.paginator.pageIndex > 0 && this.paginator.pageIndex >= totalPages) {
+          this.paginator.pageIndex = Math.max(totalPages - 1, 0);
+          this.updateData();
+        }
+      });
     }
     ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>).pipe(
       takeUntil(this.destroy$)
@@ -1398,6 +1408,12 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
   total(): Observable<number> {
     return this.pageDataSubject.pipe(
       map((pageData) => pageData.totalElements)
+    );
+  }
+
+  totalPages(): Observable<number> {
+    return this.pageDataSubject.pipe(
+      map((pageData) => pageData.totalPages)
     );
   }
 
