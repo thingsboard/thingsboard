@@ -53,18 +53,20 @@
 [#function coordinates id][#return (id.namespace?has_content)?then(id.namespace + ":", "") + id.name + " " + id.version][/#function]
 [#-- A stop of the notices: notices.sh prints the text between the two marks, and not the stack trace around it. --]
 [#function stopMessage text][#return "\nNOTICES-MESSAGE-START\nThird-party notices: " + text + "\nNOTICES-MESSAGE-END"][/#function]
+[#-- The packages of a stop, one to a line --]
+[#function lines items][#return "  " + items?join("\n  ")][/#function]
 [#-- Nobody has said what the notices owe for a license that is not in license-classifications.yml. --]
 [#assign unclassified = []]
 [#list shipped as package]
     [#list allLicenses(package) as resolved]
         [#if !helper.filterForClassified([resolved])?has_content]
-            [#assign unclassified = unclassified + ["  " + resolved.license?string + " (" + package.id.toCoordinates() + ")"]]
+            [#assign unclassified = unclassified + [resolved.license?string + " (" + package.id.toCoordinates() + ")"]]
         [/#if]
     [/#list]
 [/#list]
 [#if unclassified?has_content]
     [#stop stopMessage("these licenses are new to the product, and nobody has said what they require of us.\n"
-        + unclassified?join("\n") + "\n"
+        + lines(unclassified) + "\n"
         + "We must know what a license obliges us to ship before we ship it.\n"
         + "To fix: add the license to tools/src/main/notices/ort-config/license-classifications.yml\nunder one category:\n"
         + "  notice         the copyright lines and the license text (most permissive licenses: MIT, BSD, Apache)\n"
@@ -77,7 +79,7 @@
 [#assign unlicensed = shipped?filter(p -> !allLicenses(p)?has_content)?map(p -> p.id.toCoordinates())]
 [#if unlicensed?has_content]
     [#stop stopMessage("no license was found for these packages, so they would be left out of the notices silently.\n"
-        + "  " + unlicensed?join("\n  ") + "\n"
+        + lines(unlicensed) + "\n"
         + "To fix: find the license yourself (its repository, its README, its package page). Then add to\n"
         + "tools/src/main/notices/ort-config/curations/curations.json:\n"
         + "  {\"id\": \"" + unlicensed[0] + "\",\n"
@@ -96,7 +98,7 @@
 [/#list]
 [#if undecided?has_content]
     [#stop stopMessage("these packages let us choose a license, and nobody has chosen.\n"
-        + undecided?map(u -> "  " + u.id + ": " + u.given)?join("\n") + "\n"
+        + lines(undecided?map(u -> u.id + ": " + u.given)) + "\n"
         + "To fix: add the choice to tools/src/main/notices/license-choices.yml. We take the most permissive one,\n"
         + "and of copyleft licenses EPL, CDDL or MPL before LGPL or GPL:\n"
         + "    - given: \"" + undecided[0].given + "\"\n"

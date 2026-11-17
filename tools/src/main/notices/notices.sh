@@ -14,8 +14,12 @@
 # a package that is not there yet is scanned, which takes minutes. The scans that others have made are downloaded
 # first, from the archive that the machines share (or from the one at $NOTICES_SCAN_CACHE_URL): see scan_cache.py.
 # The jars are read from ~/.m2/repository (or from $NOTICES_MAVEN_REPOSITORY); one that is not there is downloaded.
-# A package without a source archive and without a repository fails the scan, until a curation gives its source or
+# A package without a source archive and without a repository stops the notices, until a curation gives its source or
 # says that it has none.
+#
+# A stop says what is wrong and what to do. sbom_to_ort.py and notice_files.py print only that. The logs of ORT are long:
+# the message that a template stopped with is cut out of them, and a scan that stops on errors gets ORT to list those
+# that ort-config/resolutions.yml does not accept, with scan-issues.ftl.
 #
 # The decisions that people made are in four files:
 #   ort-config/curations/curations.json     what a package says wrongly or not at all, and what the scan finds wrongly
@@ -40,26 +44,29 @@ ORT_HOME=${NOTICES_ORT_HOME:-$HOME/.ort}
 ORT=(docker run --rm -u "$(id -u):$(id -g)" -w /work -v "$ORT_HOME:/ort" -v "$HERE:/notices:ro" -v "$WORK:/work"
   -e HOME=/ort/home -e ORT_DATA_DIR=/ort -e ORT_CONFIG_DIR=/notices/ort-config ghcr.io/oss-review-toolkit/ort:98.0.0)
 
-step() { # log file, command: when the command fails, says why and where its whole log is
-  local log=$1; shift
-  "$@" > "$log" 2>&1 || { explain "$log" >&2; echo "Third-party notices: failed. The whole log: $log" >&2; exit 1; }
+fail() { # log file, what to say
+  echo "$2" >&2
+  echo "Third-party notices: failed. The whole log: $1" >&2
+  exit 1
 }
-explain() { # log file: the message of a stop, without the long logs of ORT around it
-  case "$(basename "$1")" in
-    scan.log) python3 "$HERE/scan_issues.py" "$WORK/scan-result.json" "$HERE/ort-config/resolutions.yml" 2>/dev/null \
-      || tail -n 30 "$1" ;;
-    report.log) local text
-      # The first of the messages: a stack trace can repeat it
-      text=$(sed -n '/^NOTICES-MESSAGE-START$/,/^NOTICES-MESSAGE-END$/{/^NOTICES-MESSAGE-/!p;/^NOTICES-MESSAGE-END$/q}' "$1")
-      if [ -n "$text" ]; then echo "$text"; else tail -n 30 "$1"; fi ;;
-    *) tail -n 30 "$1" ;;
-  esac
+stop_message() { # log file: the first message a template stopped with, as a stack trace can repeat it
+  sed -n '/^NOTICES-MESSAGE-START$/,/^NOTICES-MESSAGE-END$/{/^NOTICES-MESSAGE-/!p;/^NOTICES-MESSAGE-END$/q}' "$1"
+}
+step() { # log file, command of ours: its log is its message
+  local log=$1; shift
+  "$@" > "$log" 2>&1 || fail "$log" "$(cat "$log")"
+}
+ort_step() { # log file, arguments of ORT: the message a template stopped with, else the end of the log
+  local log=$1 text; shift
+  "${ORT[@]}" "$@" > "$log" 2>&1 && return
+  text=$(stop_message "$log")
+  fail "$log" "${text:-$(tail -n 30 "$log")}"
 }
 
 # Only what an earlier run wrote is removed: the directory may hold other files
-rm -rf "$WORK/project" "$WORK/package-configurations"
+rm -rf "$WORK/project" "$WORK/package-configurations" "$WORK/scan-issues"
 rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,notice-files.txt,THIRD-PARTY-NOTICES.ftl,THIRD-PARTY-NOTICES}
-rm -f "$WORK"/{convert,analyze,scan,package-configurations,notice-files,report}.log
+rm -f "$WORK"/{convert,analyze,scan,scan-issues,package-configurations,notice-files,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
 python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" \
   --url "${NOTICES_SCAN_CACHE_URL:-https://repo.thingsboard.io/artifactory/ort/scan-cache.tar.gz}"
@@ -67,15 +74,20 @@ step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERS
   --curations "$HERE/ort-config/curations/curations.json" \
   --own org.thingsboard.ai/common --own org.thingsboard.license/client --own org.thingsboard.license/shared \
   --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" "$@"
-step "$WORK/analyze.log" "${ORT[@]}" -P ort.analyzer.enabledPackageManagers=OrtProjectFile analyze -f JSON -i /work/project -o /work
-step "$WORK/scan.log" "${ORT[@]}" --info scan -f JSON -i /work/analyzer-result.json -o /work --package-types PACKAGE
+ort_step "$WORK/analyze.log" -P ort.analyzer.enabledPackageManagers=OrtProjectFile analyze -f JSON -i /work/project -o /work
+if ! "${ORT[@]}" --info scan -f JSON -i /work/analyzer-result.json -o /work --package-types PACKAGE > "$WORK/scan.log" 2>&1; then
+  "${ORT[@]}" report -i /work/scan-result.json -o /work/scan-issues -f PlainTextTemplate \
+    -O PlainTextTemplate=templatePaths=/notices/scan-issues.ftl > "$WORK/scan-issues.log" 2>&1 || true
+  text=$(stop_message "$WORK/scan-issues.log")
+  fail "$WORK/scan.log" "${text:-$(tail -n 30 "$WORK/scan.log")}"
+fi
 step "$WORK/package-configurations.log" python3 "$HERE/package_configurations.py" "$WORK/scan-result.json" "$WORK/package-configurations"
 step "$WORK/notice-files.log" python3 "$HERE/notice_files.py" --jars "$WORK/jars.json" --scan-result "$WORK/scan-result.json" \
   --archive "$ORT_HOME/scanner/archive" --maven-repository "${NOTICES_MAVEN_REPOSITORY:-$HOME/.m2/repository}" \
   --downloads "$ORT_HOME/maven-jars" --out "$WORK/notice-files.txt"
 # The template includes notice-files.txt, and can only include what is beside it
 cp "$HERE/THIRD-PARTY-NOTICES.ftl" "$WORK/"
-step "$WORK/report.log" "${ORT[@]}" --info report -i /work/scan-result.json -o /work -f PlainTextTemplate \
+ort_step "$WORK/report.log" --info report -i /work/scan-result.json -o /work -f PlainTextTemplate \
   -O PlainTextTemplate=templatePaths=/work/THIRD-PARTY-NOTICES.ftl \
   --package-configurations-dir /work/package-configurations --repository-configuration-file /notices/license-choices.yml
 

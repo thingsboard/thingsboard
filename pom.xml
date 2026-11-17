@@ -1154,7 +1154,7 @@
                                     <exclude>src/main/scripts/windows/**</exclude>
                                     <exclude>**/*.tpl.txt</exclude>
                                     <!-- FreeMarker takes no comment in front of its first directive: the header is after it -->
-                                    <exclude>src/main/notices/THIRD-PARTY-NOTICES.ftl</exclude>
+                                    <exclude>src/main/notices/*.ftl</exclude>
                                     <exclude>**/src/index.html</exclude>
                                     <exclude>**/public/static/rulenode/**</exclude>
                                     <exclude>**/*.proto.js</exclude>
