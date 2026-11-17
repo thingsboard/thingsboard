@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.mqtt;
 
 import io.netty.buffer.ByteBuf;
@@ -172,7 +173,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
                 .usingRecursiveComparison()
                 .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock",
                         "sslContext")
-                .isEqualTo(SslContextBuilder.forClient().build());
+                .isEqualTo(SslContextBuilder.forClient().endpointIdentificationAlgorithm(null).build());
     }
 
     @Test

@@ -116,6 +116,8 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
         javaMailProperties.put(MAIL_PROP + protocol + ".timeout", this.config.getTimeout() + "");
         javaMailProperties.put(MAIL_PROP + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(this.config.getUsername())));
         javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", Boolean.valueOf(this.config.isEnableTls()).toString());
+        // Angus Mail checks the server identity unless this is set
+        javaMailProperties.put(MAIL_PROP + protocol + ".ssl.checkserveridentity", "false");
         if (this.config.isEnableTls() && StringUtils.isNoneEmpty(this.config.getTlsVersion())) {
             javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", this.config.getTlsVersion());
         }

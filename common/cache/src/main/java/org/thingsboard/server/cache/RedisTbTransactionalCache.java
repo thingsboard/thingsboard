@@ -22,8 +22,8 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.RedisClusterClient;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisRedirectionException;
 import redis.clients.jedis.util.JedisClusterCRC16;
@@ -259,7 +259,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             connection.watch(rawKeysList);
             connection.multi();
         } catch (Exception e) {
-            connection.close();
+            try {
+                connection.close();
+            } catch (Exception closeException) {
+                e.addSuppressed(closeException);
+            }
             throw e;
         }
         return connection;
@@ -275,11 +279,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             return command.get();
         } catch (RuntimeException e) {
             if (!connectionFactory.isRedisClusterAware() || !isClusterTopologyError(e)
-                    || !(getNativeCluster() instanceof TbJedisCluster cluster)) {
+                    || !(connectionFactory instanceof TbJedisClusterConnectionFactory clusterConnectionFactory)) {
                 throw e;
             }
             log.warn("[{}] Redis cluster topology changed, renewing the slot map and retrying: {}", cacheName, e.getMessage());
-            cluster.renewSlotCache();
+            clusterConnectionFactory.renewSlotCache();
             return command.get();
         }
     }
@@ -289,8 +293,8 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
                 || e instanceof RedisConnectionFailureException || e instanceof ClusterRedirectException;
     }
 
-    private JedisCluster getNativeCluster() {
-        return ((JedisClusterConnection) connectionFactory.getClusterConnection()).getNativeConnection();
+    private RedisClusterClient getNativeCluster() {
+        return (RedisClusterClient) ((JedisClusterConnection) connectionFactory.getClusterConnection()).getNativeConnection();
     }
 
     protected byte[] getRawKey(K key) {

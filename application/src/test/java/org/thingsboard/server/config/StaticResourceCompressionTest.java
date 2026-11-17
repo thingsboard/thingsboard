@@ -1,20 +1,22 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.config;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.DispatcherServletAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.http.converter.autoconfigure.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.autoconfigure.DispatcherServletAutoConfiguration;
+import org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,12 +34,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 /**
  * Loads the real thingsboard.yml, so the test fails if its static resource chain keys stop binding again.
  */
 @SpringBootTest(classes = StaticResourceCompressionTest.WebMvcConfig.class, properties = "spring.config.name=thingsboard")
-@AutoConfigureMockMvc(addFilters = false)
 public class StaticResourceCompressionTest {
 
     private static final byte[] JS = "console.log('ThingsBoard');\n".repeat(100).getBytes(StandardCharsets.UTF_8);
@@ -48,6 +50,8 @@ public class StaticResourceCompressionTest {
     static Path webRoot;
 
     @Autowired
+    private WebApplicationContext webApplicationContext;
+
     private MockMvc mvc;
 
     @DynamicPropertySource
@@ -61,6 +65,11 @@ public class StaticResourceCompressionTest {
         Files.write(webRoot.resolve("main.js.gz"), JS_GZ);
         Files.write(webRoot.resolve("styles.css"), CSS);
         Files.write(webRoot.resolve("font.woff2"), new byte[]{1, 2, 3});
+    }
+
+    @BeforeEach
+    void setUpMockMvc() {
+        mvc = webAppContextSetup(webApplicationContext).build();
     }
 
     @Test

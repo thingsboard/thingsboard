@@ -307,7 +307,7 @@ public class ImageControllerTest extends AbstractControllerTest {
         Map<String, String> expectedHeaders = Map.of(
                 "Baker Street, 221B.png", "attachment; filename=\"Baker Street, 221B.png\"",
                 "\"Baker Street\", 221B.png", "attachment; filename=\"\\\"Baker Street\\\", 221B.png\"",
-                "Хрещатик, 22.png", "attachment; filename=\"=?UTF-8?Q?=D0=A5=D1=80=D0=B5=D1=89=D0=B0=D1=82=D0=B8=D0=BA,_22.png?=\"; " +
+                "Хрещатик, 22.png", "attachment; filename=\"________, 22.png\"; " +
                         "filename*=UTF-8''%D0%A5%D1%80%D0%B5%D1%89%D0%B0%D1%82%D0%B8%D0%BA%2C%2022.png"
         );
 

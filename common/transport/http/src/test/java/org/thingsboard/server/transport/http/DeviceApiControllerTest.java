@@ -100,4 +100,31 @@ class DeviceApiControllerTest {
         assertThat(response.getValue().getHeaders().get(HttpHeaders.CONTENT_DISPOSITION))
                 .containsExactly("attachment; filename=\"Baker Street, 221B.bin\"");
     }
+
+    @Test
+    void getOtaPackageCallbackWithNonAsciiFileName() {
+        UUID otaPackageId = UUID.randomUUID();
+        OtaPackageDataCache otaPackageDataCache = Mockito.mock(OtaPackageDataCache.class);
+        Mockito.when(otaPackageDataCache.get(otaPackageId.toString(), 0, 0)).thenReturn(new byte[]{1, 2, 3});
+        TransportContext transportContext = Mockito.mock(TransportContext.class);
+        Mockito.when(transportContext.getOtaPackageDataCache()).thenReturn(otaPackageDataCache);
+        DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
+
+        var callback = new DeviceApiController.GetOtaPackageCallback(transportContext, responseWriter, "Title", "1.0", 0, 0);
+        callback.onSuccess(TransportProtos.GetOtaPackageResponseMsg.newBuilder()
+                .setResponseStatus(TransportProtos.ResponseStatus.SUCCESS)
+                .setOtaPackageIdMSB(otaPackageId.getMostSignificantBits())
+                .setOtaPackageIdLSB(otaPackageId.getLeastSignificantBits())
+                .setTitle("Title")
+                .setVersion("1.0")
+                .setContentType("application/octet-stream")
+                .setFileName("Müller Прошивка.bin")
+                .build());
+
+        ArgumentCaptor<ResponseEntity> response = ArgumentCaptor.forClass(ResponseEntity.class);
+        Mockito.verify(responseWriter).setResult(response.capture());
+        assertThat(response.getValue().getHeaders().get(HttpHeaders.CONTENT_DISPOSITION))
+                .containsExactly("attachment; filename=\"Mueller ________.bin\"; filename*=UTF-8''M%C3%BCller%20%D0%9F%D1%80%D0%BE%D1%88%D0%B8%D0%B2%D0%BA%D0%B0.bin");
+        assertThat(response.getValue().getHeaders().get("x-filename")).containsExactly("Müller Прошивка.bin");
+    }
 }

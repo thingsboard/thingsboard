@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.server.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MModelConfigStore;
 
 import java.util.Collections;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
 
@@ -55,6 +58,11 @@ class LwM2MModelConfigServiceImplTest {
         willReturn(Collections.emptyList()).given(modelStore).getAll();
         service.init();
         assertThat(service.currentModelConfigs).isEmpty();
+    }
+
+    @Test
+    void testDestroyBeforeInit() {
+        assertThatCode(() -> ReflectionTestUtils.invokeMethod(service, "destroy")).doesNotThrowAnyException();
     }
 
 }

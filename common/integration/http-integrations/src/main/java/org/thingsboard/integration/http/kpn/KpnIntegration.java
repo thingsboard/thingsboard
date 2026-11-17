@@ -183,7 +183,7 @@ public class KpnIntegration<T extends HttpIntegrationMsg<?>> extends BasicHttpIn
                 }
                 headers.set("x-client-id", mdMap.get(SUB_CUSTOMER_ID_PARAM));
             }
-            String uriString = UriComponentsBuilder.fromHttpUrl(KPN_BASE_URL + DOWNLINK_PATH)
+            String uriString = UriComponentsBuilder.fromUriString(KPN_BASE_URL + DOWNLINK_PATH)
                     .query("port=" + mdMap.get(FPORT_PARAM))
                     .encode()
                     .toUriString();

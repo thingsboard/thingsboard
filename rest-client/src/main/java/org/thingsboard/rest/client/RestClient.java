@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -325,7 +326,7 @@ public class RestClient implements Closeable {
     public enum AuthType {JWT, API_KEY}
 
     public RestClient(String baseURL) {
-        this(new RestTemplate(), baseURL);
+        this(newRestTemplate(), baseURL);
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL) {
@@ -338,7 +339,8 @@ public class RestClient implements Closeable {
 
     public RestClient(RestTemplate restTemplate, String baseURL, AuthType authType, String token) {
         this.restTemplate = restTemplate;
-        this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
+        this.loginRestTemplate = newRestTemplate();
+        this.loginRestTemplate.setRequestFactory(restTemplate.getRequestFactory());
         this.baseURL = baseURL;
         this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
             HttpRequest wrapper = new HttpRequestWrapper(request);
@@ -371,11 +373,21 @@ public class RestClient implements Closeable {
     }
 
     public static RestClient withApiKey(String baseURL, String token) {
-        return withApiKey(new RestTemplate(), baseURL, token);
+        return withApiKey(newRestTemplate(), baseURL, token);
     }
 
     public static RestClient withApiKey(RestTemplate rt, String baseURL, String token) {
         return new RestClient(rt, baseURL, AuthType.API_KEY, token);
+    }
+
+    // Spring 7 defaults to Jackson 3 when it is on the classpath; Spring 6 already uses Jackson 2
+    @SuppressWarnings("removal")
+    private static RestTemplate newRestTemplate() {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getMessageConverters().replaceAll(converter ->
+                converter.getClass().getName().equals("org.springframework.http.converter.json.JacksonJsonHttpMessageConverter") ?
+                        new MappingJackson2HttpMessageConverter() : converter);
+        return restTemplate;
     }
 
     public String getToken() {
@@ -4812,9 +4824,10 @@ public class RestClient implements Closeable {
         return listToString(list.stream().map(Enum::name).collect(Collectors.toList()));
     }
 
+    @SuppressWarnings("removal")
     private HttpEntity<MultiValueMap<String, Object>> createMultipartRequest(String fileName, byte[] fileData, String fileContentType, Map<String, Object> otherParts) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
 
         MultiValueMap<String, String> fileMap = new LinkedMultiValueMap<>();
         fileMap.add(HttpHeaders.CONTENT_DISPOSITION, "form-data; name=file; filename=" + fileName);
@@ -5135,6 +5148,7 @@ public class RestClient implements Closeable {
         return response.getBody();
     }
 
+    @SuppressWarnings("removal")
     public CustomMenu saveCustomMenu(CustomMenuInfo customMenuInfo, UUID[] ids, Boolean force) {
         Map<String, Object> params = new HashMap<>();
         if (ids != null && ids.length > 0) {
@@ -5144,13 +5158,13 @@ public class RestClient implements Closeable {
             params.put("force", force);
         }
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseURL + "/api/customMenu");
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseURL + "/api/customMenu");
 
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             builder.queryParam(entry.getKey(), entry.getValue());
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         HttpEntity<CustomMenuInfo> requestEntity = new HttpEntity<>(customMenuInfo, headers);
         return restTemplate.postForEntity(builder.toUriString(), requestEntity, CustomMenu.class).getBody();
     }
