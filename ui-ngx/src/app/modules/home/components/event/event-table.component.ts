@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
+  booleanAttribute,
   ChangeDetectorRef,
   Component,
   EventEmitter,
+  input,
   Input,
   OnDestroy,
   OnInit,
@@ -27,7 +29,6 @@ import { Subscription } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-event-table',
@@ -55,9 +56,7 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input()
   hideClearEventAction: boolean = false;
 
-  @Input()
-  @coerceBoolean()
-  outlinedBorder = false;
+  outlinedBorder = input(false, {transform: booleanAttribute});
 
   private disableDebugEventActionValue = false;
 
@@ -167,7 +166,7 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.debugEventSelected,
       this.hideClearEventAction,
       this.disableDebugEventAction,
-      this.outlinedBorder
+      this.outlinedBorder()
     );
   }
 

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Component, DestroyRef, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, DestroyRef, Inject, inject, OnInit, SkipSelf } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -52,6 +52,8 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
 
   keyValidators = [Validators.required, Validators.maxLength(255)];
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddAttributeDialogData,
@@ -59,8 +61,7 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddAttributeDialogComponent, boolean>,
               public fb: FormBuilder,
-              private translate: TranslateService,
-              private destroyRef: DestroyRef) {
+              private translate: TranslateService) {
     super(store, router, dialogRef);
   }
 

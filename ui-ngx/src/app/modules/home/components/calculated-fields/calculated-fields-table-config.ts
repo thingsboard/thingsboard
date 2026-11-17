@@ -104,7 +104,6 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               public pageMode = false,
   ) {
     super();
-    this.outlinedBorder = pageMode;
     if (this.pageMode) {
       this.headerComponent = CalculatedFieldsHeaderComponent;
       this.readonly = !calculatedFieldsEntityTypeList.some(entityType => this.userPermissionsService.hasGenericPermissionByEntityGroupType(Operation.WRITE_CALCULATED_FIELD, entityType));

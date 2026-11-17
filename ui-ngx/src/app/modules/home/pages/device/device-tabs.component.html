@@ -6,7 +6,7 @@
 -->
 @if (entity) {
   <mat-tab label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
-    <tb-attribute-table [defaultAttributeScope]="attributeScopes.CLIENT_SCOPE"
+    <tb-attribute-table [defaultAttributeScope]="allAttributeScopes"
                         [active]="attributesTab.isActive"
                         [entityId]="entity.id"
                         [entityName]="entity.name">

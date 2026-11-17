@@ -109,7 +109,11 @@ export interface EntityRelation {
 
 export interface EntityRelationInfo extends EntityRelation {
   fromName: string;
+  /** @deprecated use {@link EntityRelationInfo.entityTypeName} */
+  toEntityTypeName?: string;
   toName: string;
+  /** @deprecated use {@link EntityRelationInfo.entityTypeName} */
+  fromEntityTypeName?: string;
   entityURL?: string;
   direction?: EntitySearchDirection;
   directionName?: string;

@@ -97,7 +97,6 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
               public pageMode: boolean = false,
   ) {
     super();
-    this.outlinedBorder = pageMode;
     if (this.pageMode) {
       this.headerComponent = AlarmRuleTableHeaderComponent;
       this.entityComponent = AlarmRulesComponent;

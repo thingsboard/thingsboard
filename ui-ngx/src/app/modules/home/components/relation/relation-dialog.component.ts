@@ -49,8 +49,8 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
   additionEntityTypes: {[key in string]: string} = {};
 
   isAdd: boolean;
-  direction: EntitySearchDirection;
   entitySearchDirection = EntitySearchDirection;
+  directions = [EntitySearchDirection.FROM, EntitySearchDirection.TO];
   directionTranslations = relationDirectionTranslations;
   readonly: boolean;
   directionSelectable: boolean;
@@ -74,7 +74,6 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
               private userPermissionService: UserPermissionsService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
-    this.direction = data.direction;
     this.readonly = data.readonly;
     this.directionSelectable = data.isAdd && !!data.directionSelectable;
   }
@@ -87,9 +86,10 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
     }
 
     this.relationFormGroup = this.fb.group({
+      direction: [this.data.direction],
       type: [this.isAdd ? CONTAINS_TYPE : this.data.relation.type, [Validators.required]],
       targetEntityIds: [this.isAdd ? null :
-        [this.direction === EntitySearchDirection.FROM ? this.data.relation.to : this.data.relation.from],
+        [this.data.direction === EntitySearchDirection.FROM ? this.data.relation.to : this.data.relation.from],
         [Validators.required]]
     });
     this.additionalInfo = new FormControl(this.data.relation.additionalInfo ? {...this.data.relation.additionalInfo} : null);
@@ -125,6 +125,7 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
     if (!this.relationFormGroup.invalid && !this.additionalInfo.invalid) {
       if (this.isAdd) {
         const tasks: Observable<EntityRelation>[] = [];
+        const direction: EntitySearchDirection = this.relationFormGroup.get('direction').value;
         const type: string = this.relationFormGroup.get('type').value;
         const entityIds: Array<EntityId> = this.relationFormGroup.get('targetEntityIds').value;
         entityIds.forEach(entityId => {
@@ -134,7 +135,7 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
             typeGroup: RelationTypeGroup.COMMON
           } as EntityRelation;
           const currentEntityId = this.data.relation.from ?? this.data.relation.to;
-          if (this.direction === EntitySearchDirection.FROM) {
+          if (direction === EntitySearchDirection.FROM) {
             relation.from = currentEntityId;
             relation.to = entityId;
           } else {

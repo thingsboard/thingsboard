@@ -76,7 +76,7 @@ export const telemetryTypeTranslations = new Map<TelemetryType, string>(
 
 export const telemetryTypeTranslationsShort = new Map<TelemetryType, string>(
   [
-    [LatestTelemetry.LATEST_TELEMETRY, 'attribute.scope-telemetry-short'],
+    [LatestTelemetry.LATEST_TELEMETRY, 'attribute.scope-latest-short'],
     [AttributeScope.CLIENT_SCOPE, 'attribute.scope-client-short'],
     [AttributeScope.SERVER_SCOPE, 'attribute.scope-server-short'],
     [AttributeScope.SHARED_SCOPE, 'attribute.scope-shared-short']

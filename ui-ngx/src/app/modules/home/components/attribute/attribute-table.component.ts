@@ -147,7 +147,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   @Input()
-  defaultAttributeScope: TelemetryType;
+  defaultAttributeScope: AttributeTableScope;
 
   @Input()
   set active(active: boolean) {
@@ -260,9 +260,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   updateColumns() {
-    // Without a scope selector the scope column is what tells the user which attributes are displayed
-    this.scopeColumnVisible = this.attributeScope === ALL_ATTRIBUTE_SCOPES ||
-      (this.attributeScopes.length === 1 && this.attributeScope !== LatestTelemetry.LATEST_TELEMETRY);
+    this.scopeColumnVisible = this.attributeScope === ALL_ATTRIBUTE_SCOPES;
     this.displayedColumns = this.scopeColumnVisible ?
       ['lastUpdateTs', 'scopeName', 'key', 'value'] : ['lastUpdateTs', 'key', 'value'];
     if (!this.readonly ||
@@ -349,10 +347,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.mode = 'default';
     this.textSearchMode = false;
     this.selectedWidgetsBundleAlias = null;
-    this.attributeScope = this.defaultAttributeScope;
-    if (!this.attributeScopeSelectionReadonly && this.defaultAttributeScope !== LatestTelemetry.LATEST_TELEMETRY) {
-      this.attributeScope = ALL_ATTRIBUTE_SCOPES;
-    }
+    this.attributeScope = this.attributeScopes.includes(this.defaultAttributeScope) ?
+      this.defaultAttributeScope : this.attributeScopes[0];
     this.updateColumns();
     this.pageLink.textSearch = null;
     this.textSearch.reset('', {emitEvent: false});
@@ -381,7 +377,11 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   isSelectionDeletable(): boolean {
-    return !this.readonly && this.dataSource.selection.selected.every(attribute => attribute.scope !== AttributeScope.CLIENT_SCOPE);
+    return !this.readonly && this.deletableSelection().length > 0;
+  }
+
+  private deletableSelection(): ScopedAttributeData[] {
+    return this.dataSource.selection.selected.filter(attribute => attribute.scope !== AttributeScope.CLIENT_SCOPE);
   }
 
   addAttribute($event: Event) {
@@ -549,9 +549,10 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.dataSource.selection.selected.length > 0) {
+    const attributesToDelete = this.deletableSelection();
+    if (attributesToDelete.length > 0) {
       this.dialogService.confirm(
-        this.translate.instant('attribute.delete-attributes-title', {count: this.dataSource.selection.selected.length}),
+        this.translate.instant('attribute.delete-attributes-title', {count: attributesToDelete.length}),
         this.translate.instant('attribute.delete-attributes-text'),
         this.translate.instant('action.no'),
         this.translate.instant('action.yes'),
@@ -559,7 +560,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       ).subscribe((result) => {
         if (result) {
           const attributesByScope = new Map<AttributeScope, ScopedAttributeData[]>();
-          this.dataSource.selection.selected.forEach(attribute => {
+          attributesToDelete.forEach(attribute => {
             const scope = attribute.scope as AttributeScope;
             attributesByScope.set(scope, [...(attributesByScope.get(scope) ?? []), attribute]);
           });
