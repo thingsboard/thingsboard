@@ -25,9 +25,9 @@ public class DedicatedUplinkData {
     private final JsonElement telemetry;
     private final JsonElement attributes;
     @JsonIgnore
-    private final Set<String> telemetryNoCastKeys;
+    private final Set<String> telemetryTypeCastDisabledKeys;
     @JsonIgnore
-    private final Set<String> attributesNoCastKeys;
+    private final Set<String> attributesTypeCastDisabledKeys;
 
     @JsonRawValue
     public String getTelemetry() {

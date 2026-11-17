@@ -9,11 +9,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -26,8 +28,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -39,12 +43,14 @@ import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.assertArg;
@@ -464,6 +470,46 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         // THEN
         then(telemetryServiceMock).shouldHaveNoInteractions();
         then(ctxMock).should().tellSuccess(msg);
+    }
+
+    @Test
+    void givenTypeCastDisabledKeysInMetadata_whenOnMsg_thenListedKeysAreSavedAsStrings() throws TbNodeException {
+        var metadata = new TbMsgMetaData();
+        metadata.putTypeCastDisabledKeys(Set.of("joinEui", "hardwareVersion"));
+
+        List<AttributeKvEntry> entries = saveIntegrationAttributes(metadata);
+
+        assertThat(entries).extracting(KvEntry::getKey, KvEntry::getDataType, KvEntry::getValue).containsExactlyInAnyOrder(
+                tuple("joinEui", DataType.STRING, "0000000000000000"),
+                tuple("hardwareVersion", DataType.STRING, "1.0"),
+                tuple("temperature", DataType.DOUBLE, 22.5));
+    }
+
+    @Test
+    void givenMetadataWithoutTypeCastDisabledKeys_whenOnMsg_thenNumericStringsAreCast() throws TbNodeException {
+        List<AttributeKvEntry> entries = saveIntegrationAttributes(new TbMsgMetaData());
+
+        assertThat(entries).extracting(KvEntry::getKey, KvEntry::getDataType, KvEntry::getValue).containsExactlyInAnyOrder(
+                tuple("joinEui", DataType.LONG, 0L),
+                tuple("hardwareVersion", DataType.DOUBLE, 1.0),
+                tuple("temperature", DataType.DOUBLE, 22.5));
+    }
+
+    private List<AttributeKvEntry> saveIntegrationAttributes(TbMsgMetaData metadata) throws TbNodeException {
+        config.setUpdateAttributesOnlyOnValueChange(false);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data("{\"joinEui\": \"0000000000000000\", \"hardwareVersion\": \"1.0\", \"temperature\": \"22.5\"}")
+                .metaData(metadata)
+                .build();
+
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<AttributesSaveRequest> captor = ArgumentCaptor.forClass(AttributesSaveRequest.class);
+        then(telemetryServiceMock).should().saveAttributes(captor.capture());
+        return captor.getValue().getEntries();
     }
 
     // Notify device backward-compatibility test
