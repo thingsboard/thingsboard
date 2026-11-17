@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -726,7 +725,8 @@ public class ConverterControllerTest extends AbstractControllerTest {
             String caseDir = uplinkDir + "test/" + parts[4] + "/";
 
             JsonNode expected = JacksonUtil.toJsonNode(readResource(casePath).orElseThrow());
-            String payload = readResource(caseDir + "payload.json").orElse(getDefaultPayload(integrationType));
+            Optional<String> casePayload = readResource(caseDir + "payload.json");
+            String payload = casePayload.isPresent() ? casePayload.get() : getDefaultPayload(integrationType);
             Converter converter = readResource(caseDir + "configuration.json")
                     .map(configuration -> createConverter(JacksonUtil.toJsonNode(configuration), integrationType, 2))
                     .orElse(null);
@@ -861,8 +861,8 @@ public class ConverterControllerTest extends AbstractControllerTest {
         for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
             String decoder = readResource("converters/COAP/uplink/" + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
 
-            // A JSON object is decoded whatever Content-Format the request has.
-            for (String contentFormat : Arrays.asList(null, "50", "0")) {
+            // A JSON object is decoded with any Content-Format (no Content-Format: see testDefaultUplinkConverters).
+            for (String contentFormat : List.of("50", "0")) {
                 JsonNode response = decodeCoapUplink(decoder, scriptLang, jsonBytes, contentFormat);
                 softly.assertThat(response.get("error").asText()).as(scriptLang + ": JSON, Content-Format " + contentFormat).isEmpty();
                 softly.assertThat(JacksonUtil.toJsonNode(response.get("output").asText())).as(scriptLang + ": JSON, Content-Format " + contentFormat).isEqualTo(expected);
