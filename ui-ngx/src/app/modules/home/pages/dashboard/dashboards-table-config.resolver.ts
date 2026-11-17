@@ -286,7 +286,10 @@ export class DashboardsTableConfigResolver {
   }
 
   importDashboardFile($event: Event, dashboard: DashboardInfo, config: EntityTableConfig<DashboardInfo>) {
-    this.homeDialogs.importDashboardFile($event, dashboard).subscribe(
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.importExport.importDashboardVersion(dashboard, this.editMissingAliases.bind(this)).subscribe(
       (res) => {
         if (res) {
           config.updateData();
