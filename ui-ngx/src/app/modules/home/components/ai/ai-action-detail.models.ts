@@ -3,6 +3,8 @@
 import { AiAction } from '@shared/models/ai-chat.models';
 import { WIDGET_PART_WORDS, widgetParts } from '@home/components/ai/ai-action.models';
 
+const WIDGET_PART_LANGS: Record<string, string> = {html: 'html', css: 'css', js: 'javascript'};
+
 export interface AiDetailEntity {
   id?: string;
   entityType?: string;
@@ -81,7 +83,7 @@ export type AiDetailBlock =
   | {type: 'commands'; rows: AiDetailCommand[]}
   | {type: 'links'; rows: AiDetailLink[]}
   | {type: 'markdown'; text: string}
-  | {type: 'code'; label: string; text: string}
+  | {type: 'code'; label: string; text: string; lang?: string}
   | {type: 'note'; text: AiDetailText}
   | {type: 'text'; text: string}
   | {type: 'json'; label: string; text: string}
@@ -1569,7 +1571,9 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
         const blocks: AiDetailBlock[] = [];
         for (let i = 1; i + 1 < sections.length; i += 2) {
           if (sections[i + 1].trim()) {
-            blocks.push({type: 'code', label: WIDGET_PART_WORDS[sections[i]] ?? sections[i], text: sections[i + 1]});
+            const word = WIDGET_PART_WORDS[sections[i]] ?? sections[i];
+            blocks.push({type: 'code', label: word.charAt(0).toUpperCase() + word.slice(1), text: sections[i + 1],
+              lang: WIDGET_PART_LANGS[sections[i]] ?? 'json'});
           }
         }
         return {hood: text('read-widget-parts', {name, parts: parts.map(part => WIDGET_PART_WORDS[part] ?? part).join(', ')}), blocks};

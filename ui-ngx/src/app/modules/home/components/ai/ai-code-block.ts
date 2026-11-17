@@ -39,9 +39,10 @@ const LANGUAGES: Record<string, CodeLanguage> = {
   arduino: {lang: 'c', label: 'Arduino', icon: 'code'},
   java: {lang: 'c', label: 'Java', icon: 'code'},
   sql: {lang: 'text', label: 'SQL', icon: 'code'},
-  xml: {lang: 'text', label: 'XML', icon: 'code'},
-  html: {lang: 'text', label: 'HTML', icon: 'code'},
-  css: {lang: 'text', label: 'CSS', icon: 'code'}
+  xml: {lang: 'markup', label: 'XML', icon: 'code'},
+  html: {lang: 'markup', label: 'HTML', icon: 'code'},
+  svg: {lang: 'markup', label: 'SVG', icon: 'image'},
+  css: {lang: 'css', label: 'CSS', icon: 'code'}
 };
 
 const FILE_LANGUAGES: Record<string, CodeLanguage> = {
@@ -49,7 +50,6 @@ const FILE_LANGUAGES: Record<string, CodeLanguage> = {
   h: {lang: 'c', label: 'C', icon: 'code'},
   hpp: {lang: 'c', label: 'C++', icon: 'code'},
   md: {lang: 'text', label: 'Markdown', icon: 'article'},
-  svg: {lang: 'text', label: 'SVG', icon: 'image'},
   markdown: {lang: 'text', label: 'Markdown', icon: 'article'},
   txt: {lang: 'text', label: 'Text', icon: 'notes'},
   csv: {lang: 'text', label: 'CSV', icon: 'table_chart'},
@@ -78,7 +78,9 @@ function languageOf(pre: HTMLElement): CodeLanguage | null {
   if (!name || name === 'text' || name === 'plaintext' || name === 'none') {
     return null;
   }
-  return LANGUAGES[name] ?? {lang: 'text', label: name.toUpperCase(), icon: 'code'};
+  const language = LANGUAGES[name] ?? {lang: 'text', label: name.toUpperCase(), icon: 'code'};
+  const label = pre.querySelector('code')?.getAttribute('data-label');
+  return label ? {...language, label} : language;
 }
 
 function decorate(pre: HTMLElement, translate: TranslateService, copy: (text: string) => boolean): void {
@@ -260,6 +262,7 @@ type Piece = string | HTMLElement | null;
 interface ShellState {
   command: boolean;
   quote: string | null;
+  comment?: boolean;
 }
 
 const KEYWORDS: Record<string, RegExp> = {
@@ -337,6 +340,10 @@ function lineHighlighter(lang: string, state: ShellState): (line: string) => Pie
       return logLine;
     case 'diff':
       return line => /^(\+\+\+ |--- |@@)/.test(line) ? [token('com', line)] : [line];
+    case 'markup':
+      return line => markupLine(line, state);
+    case 'css':
+      return line => cssLine(line, state);
     case 'python':
     case 'js':
     case 'c':
@@ -344,6 +351,102 @@ function lineHighlighter(lang: string, state: ShellState): (line: string) => Pie
     default:
       return line => [line];
   }
+}
+
+function blockComment(line: string, state: ShellState, open: string, close: string): [Piece[], string] {
+  const out: Piece[] = [];
+  let rest = line;
+  while (rest) {
+    if (state.comment) {
+      const end = rest.indexOf(close);
+      if (end < 0) {
+        out.push(token('com', rest));
+        return [out, ''];
+      }
+      out.push(token('com', rest.slice(0, end + close.length)));
+      rest = rest.slice(end + close.length);
+      state.comment = false;
+    }
+    const start = rest.indexOf(open);
+    if (start < 0) {
+      return [out, rest];
+    }
+    out.push(rest.slice(0, start));
+    state.comment = true;
+    rest = rest.slice(start);
+    const end = rest.indexOf(close, open.length);
+    if (end >= 0) {
+      out.push(token('com', rest.slice(0, end + close.length)));
+      rest = rest.slice(end + close.length);
+      state.comment = false;
+    } else {
+      out.push(token('com', rest));
+      return [out, ''];
+    }
+  }
+  return [out, ''];
+}
+
+function markupLine(line: string, state: ShellState): Piece[] {
+  if (state.comment || line.includes('<!--')) {
+    const [pieces, rest] = blockComment(line, state, '<!--', '-->');
+    return [...pieces.flatMap(piece => typeof piece === 'string' ? markupText(piece) : [piece]), ...markupText(rest)];
+  }
+  return markupText(line);
+}
+
+function markupText(text: string): Piece[] {
+  const out: Piece[] = [];
+  const pattern = /(?<tag><\/?[\w:-]+)|(?<close>\/?>)|(?<attr>[\w:@.[\]()*#-]+)(?==)|(?<eq>=)|(?<str>"[^"]*"?|'[^']*'?)|(?<bind>\{\{.*?\}\})|(?<flow>@(?:if|else if|else|for|empty|switch|case|default|let)\b)|(?<other>[^<>="'{@]+|[{@>])/g;
+  for (const match of text.matchAll(pattern)) {
+    const groups = match.groups ?? {};
+    if (groups.tag) {
+      out.push(token('op', groups.tag.startsWith('</') ? '</' : '<'), token('kw', groups.tag.replace(/^<\/?/, '')));
+    } else if (groups.close || groups.eq) {
+      out.push(token('op', match[0]));
+    } else if (groups.attr) {
+      out.push(token('key', groups.attr));
+    } else if (groups.str) {
+      out.push(token('str', groups.str));
+    } else if (groups.bind) {
+      out.push(token('var', groups.bind));
+    } else if (groups.flow) {
+      out.push(token('kw', groups.flow));
+    } else {
+      out.push(match[0]);
+    }
+  }
+  return out;
+}
+
+function cssLine(line: string, state: ShellState): Piece[] {
+  const [pieces, rest] = state.comment || line.includes('/*') ? blockComment(line, state, '/*', '*/') : [[], line];
+  return [...pieces.flatMap(piece => typeof piece === 'string' ? cssText(piece) : [piece]), ...cssText(rest)];
+}
+
+function cssText(text: string): Piece[] {
+  const declaration = /^(\s*)([\w-]+)(\s*:\s*)([^;{}]*)(;?)(.*)$/.exec(text);
+  if (declaration && !/[{]/.test(text) && !/^\s*[.#&:@]/.test(text)) {
+    const [, indent, property, colon, value, semi, tail] = declaration;
+    return [indent, token('key', property), token('op', colon), ...cssValue(value), semi ? token('op', semi) : '', ...cssText(tail)];
+  }
+  const out: Piece[] = [];
+  matches(text, /@[\w-]+|[{};]|[^{};@]+/g).forEach(part => {
+    if (part.startsWith('@')) {
+      out.push(token('kw', part));
+    } else if (/^[{};]$/.test(part)) {
+      out.push(token('op', part));
+    } else {
+      out.push(part.trim() ? token('fn', part) : part);
+    }
+  });
+  return out;
+}
+
+function cssValue(value: string): Piece[] {
+  return matches(value, /#[0-9a-fA-F]{3,8}\b|-?\d*\.?\d+(?:px|%|em|rem|vh|vw|s|ms|deg|fr)?|"[^"]*"|'[^']*'|var\([^)]*\)|[^\s#\d"'(-]+\(?|\s+|./g)
+    .map(part => /^["']/.test(part) ? token('str', part) : /^(#|-?\d|\.\d)/.test(part) ? token('num', part)
+      : /^var\(/.test(part) ? token('var', part) : /^\s+$/.test(part) ? part : token('val', part));
 }
 
 function token(kind: string | null, text: string): Piece {

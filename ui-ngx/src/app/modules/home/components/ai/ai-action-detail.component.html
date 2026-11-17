@@ -110,7 +110,7 @@
       <div class="k-codetabs-slot" [attr.data-block]="$index"></div>
     }
     @case ('code') {
-      <pre><code [class]="'language-' + block.label.toLowerCase()">{{ block.text }}</code></pre>
+      <pre><code [class]="'language-' + (block.lang || block.label.toLowerCase())" [attr.data-label]="block.lang ? block.label : null">{{ block.text }}</code></pre>
     }
     @case ('links') {
       <div class="k-detail-links">
