@@ -93,7 +93,7 @@
             </div>
           }
           @case (FormFieldType.SELECT) {
-            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox || helpTextOf(field) ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <mat-select [formControlName]="field.key">
@@ -110,7 +110,7 @@
             </mat-form-field>
           }
           @case (FormFieldType.STRING_AUTOCOMPLETE) {
-            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox || helpTextOf(field) ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''" [matAutocomplete]="auto"
@@ -136,7 +136,7 @@
             </mat-form-field>
           }
           @case (FormFieldType.PASSWORD) {
-            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox || helpTextOf(field) ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
@@ -170,7 +170,7 @@
             </mat-form-field>
           }
           @case (FormFieldType.INTEGER) {
-            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox || helpTextOf(field) ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <input matInput type="number" [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
@@ -191,7 +191,7 @@
             </mat-form-field>
           }
           @default {
-            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox || helpTextOf(field) ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"

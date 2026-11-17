@@ -254,7 +254,10 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
   }
 
   importDashboardFile($event: Event, dashboard: DashboardInfo, config: GroupEntityTableConfig<DashboardInfo>) {
-    this.homeDialogs.importDashboardFile($event, dashboard).subscribe(
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.importExport.importDashboardVersion(dashboard, this.editMissingAliases.bind(this)).subscribe(
       (res) => {
         if (res) {
           config.updateData();
