@@ -780,6 +780,7 @@ class DefaultIotHubServiceTest {
         mockTenant();
         IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
         Converter converter = new Converter(new ConverterId(UUID.randomUUID()));
+        converter.setTenantId(tenantId);
         when(converterService.findConverterById(tenantId, converter.getId())).thenReturn(converter);
         IotHubInstalledItem deleted = devicePackage(converter.getId(), integrationId);
         // The converter and the integration steps shared the name: the integration's state replaced the converter's

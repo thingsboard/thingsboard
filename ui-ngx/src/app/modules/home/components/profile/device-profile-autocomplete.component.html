@@ -17,6 +17,7 @@
   <input matInput type="text"
     #deviceProfileInput
     formControlName="deviceProfile"
+    [attr.aria-label]="inlineField ? ('device-profile.device-profile' | translate) : null"
     (focusin)="onFocus()"
     [required]="required"
     (keydown)="deviceProfileEnter($event)"
@@ -58,12 +59,13 @@
     (closed)="onPanelClosed()"
     #deviceProfileAutocomplete="matAutocomplete"
     [displayWith]="displayDeviceProfileFn">
-    @for (deviceProfile of filteredDeviceProfiles | async; track deviceProfile) {
+    @let deviceProfiles = filteredDeviceProfiles | async;
+    @for (deviceProfile of deviceProfiles; track deviceProfile) {
       <mat-option [value]="deviceProfile">
         <span [innerHTML]="deviceProfile.name | highlight:searchText"></span>
       </mat-option>
     }
-    @if (!(filteredDeviceProfiles | async)?.length) {
+    @if (deviceProfiles && !deviceProfiles.length) {
       <mat-option [value]="null" class="tb-not-found">
         <div class="tb-not-found-content" (click)="$event.stopPropagation()">
           @if (!textIsNotEmpty(searchText) || !addNewProfile) {

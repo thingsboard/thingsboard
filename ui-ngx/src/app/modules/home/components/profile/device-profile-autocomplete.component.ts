@@ -332,6 +332,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
     setTimeout(() => {
       this.deviceProfileInput.nativeElement.blur();
       this.deviceProfileInput.nativeElement.focus();
+      this.ignoreClosedPanel = false;
     }, 0);
   }
 

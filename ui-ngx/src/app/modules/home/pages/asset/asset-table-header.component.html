@@ -5,16 +5,25 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="flex flex-row items-center justify-start">
-  <tb-asset-profile-autocomplete
-    class="min-w-0 flex-1"
-    subscriptSizing="dynamic"
-    [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
-    (ngModelChange)="assetProfileChanged($event)"
-    [addNewProfile]="false"
-    [displayAllOnEmpty]="true"
-    [editProfileEnabled]="false">
-  </tb-asset-profile-autocomplete>
+<div class="flex min-w-0 flex-row items-center justify-start">
+  <tb-filter-button emptyLabel="asset.asset-filter-title"
+                    [valueLabel]="assetProfileLabel"
+                    [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
+                    (ngModelChange)="assetProfileChanged($event)">
+    <ng-template let-control>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>asset-profile.asset-profile</div>
+        <tb-asset-profile-autocomplete
+          class="min-w-0 flex-1"
+          [formControl]="control"
+          [inlineField]="true"
+          [displayAllOnEmpty]="true"
+          [editProfileEnabled]="false"
+          [addNewProfile]="false">
+        </tb-asset-profile-autocomplete>
+      </div>
+    </ng-template>
+  </tb-filter-button>
   <mat-slide-toggle
     style="margin-left: 32px;"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
