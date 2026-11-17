@@ -95,7 +95,7 @@
               }
               @if (plan.existing) {
                 <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">
-                  {{ 'iot-hub.device-install-conflict-exists' | translate:{ type: ('iot-hub.device-install-step-type-' + ep.step.type | translate) } }}
+                  {{ 'iot-hub.device-install-conflict-exists' | translate:{ type: ('iot-hub.device-install-step-type-' + ep.step.type | translate), name: plan.existing.name } }}
                 </span>
               }
               @if (plan.shared) {

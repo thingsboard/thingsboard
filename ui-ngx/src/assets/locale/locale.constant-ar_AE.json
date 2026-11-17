@@ -6549,7 +6549,7 @@
         "device-install-step-type-INTEGRATION": "التكامل",
         "use-secret": "استخدام سر",
         "use-plain-text": "استخدام نص عادي",
-        "device-install-conflict-exists": "يوجد {{type}} بهذا الاسم بالفعل",
+        "device-install-conflict-exists": "يوجد {{type}} بالاسم \"{{name}}\" بالفعل",
         "device-install-use-existing": "استخدام الموجود",
         "device-install-transport-host-step": "الاتصال",
         "device-install-thingsboard-connection": "الاتصال بمنصة ThingsBoard",

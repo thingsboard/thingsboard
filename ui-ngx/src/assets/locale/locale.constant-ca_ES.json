@@ -6551,7 +6551,7 @@
         "device-install-step-type-INTEGRATION": "Integració",
         "use-secret": "Utilitza un secret",
         "use-plain-text": "Utilitza text pla",
-        "device-install-conflict-exists": "{{type}}: aquest nom ja existeix",
+        "device-install-conflict-exists": "{{type}}: el nom \"{{name}}\" ja existeix",
         "device-install-use-existing": "Utilitza l'existent",
         "device-install-transport-host-step": "Connexió",
         "device-install-thingsboard-connection": "Connexió amb ThingsBoard",

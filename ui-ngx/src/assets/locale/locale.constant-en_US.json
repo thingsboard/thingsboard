@@ -6555,7 +6555,7 @@
         "device-install-step-type-INTEGRATION": "Integration",
         "use-secret": "Use Secret",
         "use-plain-text": "Use plain text",
-        "device-install-conflict-exists": "{{type}} with this name already exists",
+        "device-install-conflict-exists": "{{type}} named \"{{name}}\" already exists",
         "device-install-use-existing": "Use existing",
         "device-install-transport-host-step": "Connection",
         "device-install-thingsboard-connection": "ThingsBoard connection",
