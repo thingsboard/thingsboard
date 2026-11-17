@@ -42,7 +42,7 @@
       @if (updatesChecked) {
         @if (onlyUpdates) {
           <button mat-stroked-button color="primary" (click)="showOnlyUpdates(false)">{{ 'iot-hub.show-all-items' | translate }}</button>
-        } @else if ((updatesCount ?? 0) > 0) {
+        } @else if (updatesCount > 0) {
           <button mat-stroked-button color="primary" (click)="showOnlyUpdates(true)">{{ 'iot-hub.show-only-updates' | translate }}</button>
         }
       }

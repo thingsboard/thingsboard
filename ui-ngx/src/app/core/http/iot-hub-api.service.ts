@@ -253,7 +253,7 @@ export class IotHubApiService {
     );
   }
 
-  /** publishedVersionIds: IoT Hub's published version id by item id; the items installed in another version come back. */
+  /** Body: published version id by item id; returns items installed in a different version. */
   public getInstalledItemsWithUpdates(pageLink: PageLink, itemTypes: string[] | null, publishedVersionIds: Record<string, string>,
                                       config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
     return this.http.post<PageData<IotHubInstalledItem>>(

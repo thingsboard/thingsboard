@@ -84,7 +84,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   isCheckingUpdates = false;
   updatesCheckFailed = false;
   onlyUpdates = false;
-  // Of all types and with no search
+  // Totals, ignoring type filters and search
   updatesCount: number | null = null;
   installedCount = 0;
   loadFailed = false;
@@ -245,9 +245,14 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
 
   checkForUpdates(): void {
     this.isCheckingUpdates = true;
+    if (this.updatesChecked) {
+      // Only the count failed: recount, keeping the list as it is
+      this.loadUpdatesCount();
+      return;
+    }
     this.updatesCheckFailed = false;
     this.iotHubApiService.getInstalledItemIds({ ignoreLoading: true }).pipe(
-      // An IoT Hub that doesn't answer is not a page error: the page says so next to the button, the list works without it
+      // Failure is shown next to the button, not as an error toast
       switchMap(itemIds => this.iotHubApiService.getItemsPublishedVersions(itemIds, { ignoreLoading: true, ignoreErrors: true }))
     ).subscribe({
       next: (infos) => {
@@ -255,10 +260,9 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         infos.forEach(info => this.publishedVersionMap.set(info.itemId, info));
         this.loadUpdatesCount(() => {
           this.updatesChecked = true;
-          this.isCheckingUpdates = false;
-          // The full list shows a new default converter, the only-updates list doesn't
+          // No updates: stay on the full list (it also shows converter updates)
           this.showOnlyUpdates(this.updatesCount > 0);
-        }, () => this.isCheckingUpdates = false);
+        });
       },
       error: () => {
         this.isCheckingUpdates = false;
@@ -302,13 +306,23 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       this.loadData();
       return;
     }
-    // Without counts the only-updates list can't be trusted, so the full list
-    this.loadUpdatesCount(
-      () => this.onlyUpdates && this.updatesCount === 0 ? this.showOnlyUpdates(false) : this.loadData(),
-      () => this.onlyUpdates ? this.showOnlyUpdates(false) : this.loadData());
+    this.loadUpdatesCount(() => {
+      if (this.onlyUpdates && this.updatesCount === 0) {
+        this.showOnlyUpdates(false);
+      } else {
+        this.loadData();
+      }
+    }, () => {
+      // Count failed: fall back to the full list
+      if (this.onlyUpdates) {
+        this.showOnlyUpdates(false);
+      } else {
+        this.loadData();
+      }
+    });
   }
 
-  /** The previous counts stay until the new ones arrive, and a later call wins. A failure shows in the header with Try again. */
+  // Latest call wins; previous counts stay until it returns
   private loadUpdatesCount(onCounts?: () => void, onError?: () => void): void {
     const run = ++this.countRun;
     const config = { ignoreLoading: true, ignoreErrors: true };
@@ -323,6 +337,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         this.updatesCount = withUpdates.totalElements;
         this.installedCount = installed;
         this.updatesCheckFailed = false;
+        this.isCheckingUpdates = false;
         this.cd.markForCheck();
         onCounts?.();
       },
@@ -332,6 +347,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         }
         this.updatesCount = null;
         this.updatesCheckFailed = true;
+        this.isCheckingUpdates = false;
         this.cd.markForCheck();
         onError?.();
       }
