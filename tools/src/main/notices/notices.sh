@@ -77,8 +77,19 @@ ORT_HOME=${NOTICES_ORT_HOME:-$HOME/.ort}
 ORT=(docker run --rm -u "$(id -u):$(id -g)" -w /work -v "$ORT_HOME:/ort" -v "$HERE:/notices:ro" -v "$WORK:/work"
   -e HOME=/ort/home -e ORT_DATA_DIR=/ort -e ORT_CONFIG_DIR=/notices/ort-config ghcr.io/oss-review-toolkit/ort:98.0.0)
 
+TIMES=()
+lap() { # name of the step that just ended: how long it took is printed at the end, or on a failure
+  TIMES+=("$1 $((SECONDS - LAP)) s")
+  LAP=$SECONDS
+}
+durations() {
+  local IFS=, steps
+  steps="${TIMES[*]}"
+  echo "Third-party notices: took $SECONDS s${steps:+ (${steps//,/, })}"
+}
 fail() { # log file, what to say
   echo "$2" >&2
+  durations >&2
   echo "Third-party notices: failed. The whole log: $1" >&2
   exit 1
 }
@@ -101,29 +112,38 @@ rm -rf "$WORK/project" "$WORK/package-configurations" "$WORK/scan-issues"
 rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,notice-files.txt,THIRD-PARTY-NOTICES.ftl,stop.ftl,THIRD-PARTY-NOTICES}
 rm -f "$WORK"/{convert,analyze,scan,scan-issues,package-configurations,notice-files,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
+LAP=$SECONDS
 python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" \
   --url "${NOTICES_SCAN_CACHE_URL:-https://repo.thingsboard.io/artifactory/ort/scan-cache.tar.gz}"
+lap "cache download"
 step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERSION" --cache "$ORT_HOME/maven-sources.json" \
   --curations "$HERE/ort-config/curations/curations.json" \
   --own org.thingsboard.ai/common --own org.thingsboard.license/client --own org.thingsboard.license/shared \
   --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" "$@"
+lap convert
 ort_step "$WORK/analyze.log" -P ort.analyzer.enabledPackageManagers=OrtProjectFile analyze -f JSON -i /work/project -o /work
+lap analyze
 if ! "${ORT[@]}" --info scan -f JSON -i /work/analyzer-result.json -o /work --package-types PACKAGE > "$WORK/scan.log" 2>&1; then
   "${ORT[@]}" report -i /work/scan-result.json -o /work/scan-issues -f PlainTextTemplate \
     -O PlainTextTemplate=templatePaths=/notices/scan-issues.ftl > "$WORK/scan-issues.log" 2>&1 || true
   text=$(stop_message "$WORK/scan-issues.log")
   fail "$WORK/scan.log" "${text:-$(tail -n 30 "$WORK/scan.log")}"
 fi
+lap scan
 step "$WORK/package-configurations.log" python3 "$HERE/package_configurations.py" "$WORK/scan-result.json" "$WORK/package-configurations"
+lap "package configurations"
 step "$WORK/notice-files.log" python3 "$HERE/notice_files.py" --jars "$WORK/jars.json" --scan-result "$WORK/scan-result.json" \
   --archive "$ORT_HOME/scanner/archive" --maven-repository "${NOTICES_MAVEN_REPOSITORY:-$HOME/.m2/repository}" \
   --downloads "$ORT_HOME/maven-jars" --out "$WORK/notice-files.txt"
+lap "NOTICE files"
 # The template includes notice-files.txt and imports stop.ftl, and can only read what is beside it
 cp "$HERE/THIRD-PARTY-NOTICES.ftl" "$HERE/stop.ftl" "$WORK/"
 ort_step "$WORK/report.log" --info report -i /work/scan-result.json -o /work -f PlainTextTemplate \
   -O PlainTextTemplate=templatePaths=/work/THIRD-PARTY-NOTICES.ftl \
   --package-configurations-dir /work/package-configurations --repository-configuration-file /notices/license-choices.yml
+lap report
 
 mkdir -p "$(dirname "$NOTICES")"
 cp "$WORK/THIRD-PARTY-NOTICES" "$NOTICES"
 echo "Third-party notices: $(head -1 "$WORK/convert.log"), $(wc -l < "$NOTICES") lines: $NOTICES"
+durations
