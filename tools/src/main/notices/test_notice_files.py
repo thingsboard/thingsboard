@@ -46,5 +46,21 @@ class LayoutTest(unittest.TestCase):
         self.assertEqual(notice_files.clean(b'\xef\xbb\xbf\r\n One  \r\n\r\nTwo\t\r\n\r\n'), ' One\n\nTwo')
 
 
+class JarsTest(unittest.TestCase):
+    def test_counts_the_jars_that_were_there_and_lists_the_downloaded_ones(self):
+        sources = [('a:a 1', notice_files.REPOSITORY, 10), ('b:b 1', notice_files.EARLIER, 20),
+                   ('d:d 1', 'https://repo/d.jar', 2_000_000), ('c:c 1', 'https://repo/c.jar', 1_000_000)]
+        self.assertEqual(notice_files.jars(sources, '/m2', '/downloads'), '\n'.join([
+            'Jars: 4 in all; 1 from the local Maven repository (/m2), 1 downloaded earlier (/downloads), '
+            '2 downloaded now (3 MB):',
+            '  c:c 1 (https://repo/c.jar)',
+            '  d:d 1 (https://repo/d.jar)']))
+
+    def test_says_when_nothing_was_downloaded(self):
+        self.assertEqual(notice_files.jars([('a:a 1', notice_files.REPOSITORY, 10)], '/m2', '/downloads'),
+                         'Jars: 1 in all; 1 from the local Maven repository (/m2), 0 downloaded earlier (/downloads), '
+                         '0 downloaded now (0 MB)')
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -26,6 +26,8 @@ import zipfile
 from sbom_to_ort import BUILD_PROBLEM, MAVEN_REPOSITORIES, from_repositories, maven_path, stop
 
 SEPARATOR = '-' * 78
+# Where a jar came from, unless it was downloaded now: then it is the address it was downloaded from
+REPOSITORY, EARLIER = 'the local Maven repository', 'downloaded earlier'
 
 
 def main():
@@ -39,9 +41,13 @@ def main():
     args = parser.parse_args()
 
     found = {}  # text -> set of (package, path)
+    sources = []  # (package, where its jar came from, the size of the jar)
     for jar in json.load(open(args.jars, encoding='utf-8')):
-        with zipfile.ZipFile(jar_file(jar, args)) as archive:
-            collect(found, coordinates(jar['group'], jar['name'], jar['version']), archive)
+        package = coordinates(jar['group'], jar['name'], jar['version'])
+        path, source = jar_file(jar, args)
+        sources.append((package, source, os.path.getsize(path)))
+        with zipfile.ZipFile(path) as archive:
+            collect(found, package, archive)
     for provenance in json.load(open(args.scan_result, encoding='utf-8'))['scanner']['provenances']:
         kind, namespace, name, version = provenance['id'].split(':', 3)
         archive = kept_files(provenance, args.archive) if kind == 'NPM' else None
@@ -55,6 +61,7 @@ def main():
     for carriers, _ in ordered(found):
         for package, path in carriers:
             print(f'  {package} ({path})')
+    print(jars(sources, args.maven_repository, args.downloads))
 
 
 def coordinates(namespace, name, version):
@@ -103,20 +110,38 @@ def layout(found):
     return '\n'.join(blocks)
 
 
+def jars(sources, maven_repository, downloads):
+    """Where the jars came from: how many from the local repository and from earlier downloads, and each one that
+    was downloaded now, with its address. A run that took long because of downloads shows them."""
+    kept = {REPOSITORY: 0, EARLIER: 0}
+    now = []
+    for package, source, size in sources:
+        if source in kept:
+            kept[source] += 1
+        else:
+            now.append((package, source, size))
+    megabytes = sum(size for _, _, size in now) / 1_000_000
+    lines = [f'Jars: {len(sources)} in all; {kept[REPOSITORY]} from {REPOSITORY} ({maven_repository}), '
+             f'{kept[EARLIER]} {EARLIER} ({downloads}), {len(now)} downloaded now ({megabytes:.0f} MB){":" if now else ""}']
+    lines += [f'  {package} ({url})' for package, url, _ in sorted(now)]
+    return '\n'.join(lines)
+
+
 def jar_file(jar, args):
-    """The jar with the SHA-256 of the SBOM: from the local repository, from an earlier download, or downloaded now."""
+    """The jar with the SHA-256 of the SBOM, and where it came from: the local repository, an earlier download, or
+    the address it is downloaded from now."""
     path = maven_path(jar['group'], jar['name'], jar['version'], jar['classifier'], jar['type'])
     downloaded = os.path.join(args.downloads, path)
-    for candidate in (os.path.join(args.maven_repository, path), downloaded):
+    for candidate, source in ((os.path.join(args.maven_repository, path), REPOSITORY), (downloaded, EARLIER)):
         if os.path.exists(candidate) and sha256(candidate) == jar['sha256']:
-            return candidate
-    for _, content in from_repositories(path, timeout=120):
+            return candidate, source
+    for url, content in from_repositories(path, timeout=120):
         if hashlib.sha256(content).hexdigest() == jar['sha256']:
             os.makedirs(os.path.dirname(downloaded), exist_ok=True)
             temporary = f'{downloaded}.{os.getpid()}'
             open(temporary, 'wb').write(content)
             os.replace(temporary, downloaded)
-            return downloaded
+            return downloaded, url
     raise stop(f"{path} with the SHA-256 {jar['sha256']} of the SBOM is neither in {args.maven_repository} nor in "
                + ' or '.join(MAVEN_REPOSITORIES) + f', so its NOTICE file cannot be read. {BUILD_PROBLEM}')
 
