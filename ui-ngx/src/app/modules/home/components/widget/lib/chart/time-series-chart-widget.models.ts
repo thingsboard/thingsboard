@@ -48,6 +48,8 @@ export interface TimeSeriesChartWidgetSettings extends TimeSeriesChartSettings {
   legendValueFont: Font;
   legendValueColor: string;
   legendConfig: LegendConfig;
+  // legendConfig.direction is intentionally unused for this widget (hidden via hideDirection):
+  // saved widgets already store direction: 'column', so a separate legendItemsDirection is used instead.
   legendItemsDirection?: LegendDirection | null;
   legendView?: LegendView;
   background: BackgroundSettings;

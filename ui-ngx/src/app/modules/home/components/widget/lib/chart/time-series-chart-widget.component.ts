@@ -126,6 +126,7 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
         this.legendClass = `legend-${this.legendConfig.position} legend-view-card`;
       } else {
         const legendItemsDirection = this.resolveLegendItemsDirection();
+        // Auto keeps the vertical table for every position; only an explicit Row switches to the horizontal one
         this.legendTableHorizontal = this.settings.legendItemsDirection === LegendDirection.row;
         this.legendClass = `legend-${this.legendConfig.position} legend-direction-${legendItemsDirection}`;
       }

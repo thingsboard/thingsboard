@@ -200,9 +200,6 @@ $maxLegendHeight: 35%;
         .tb-time-series-chart-legend-card-label {
           flex: 1;
           min-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
           color: #ccc;
         }
         .tb-time-series-chart-legend-card-values {
