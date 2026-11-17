@@ -21,12 +21,9 @@ import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
-import redis.clients.jedis.Connection;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.RedisClusterClient;
-import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisRedirectionException;
 import redis.clients.jedis.util.JedisClusterCRC16;
@@ -244,20 +241,12 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             return connectionFactory.getConnection();
         }
         int slotNum = JedisClusterCRC16.getSlot(rawKey);
-        Jedis jedis = new Jedis(getConnectionFromSlot(getNativeCluster(), slotNum));
+        Jedis jedis = new Jedis(getNativeCluster().getConnectionFromSlot(slotNum));
 
         JedisConnection jedisConnection = new JedisConnection(jedis, MOCK_POOL, jedis.getDB());
         jedisConnection.setConvertPipelineAndTxResults(connectionFactory.getConvertPipelineAndTxResults());
 
         return jedisConnection;
-    }
-
-    private static Connection getConnectionFromSlot(UnifiedJedis cluster, int slotNum) {
-        return switch (cluster) {
-            case JedisCluster jedisCluster -> jedisCluster.getConnectionFromSlot(slotNum);
-            case RedisClusterClient clusterClient -> clusterClient.getConnectionFromSlot(slotNum);
-            default -> throw new IllegalStateException("Unsupported Redis cluster client: " + cluster.getClass());
-        };
     }
 
     protected RedisConnection watch(byte[][] rawKeysList) {
@@ -270,7 +259,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             connection.watch(rawKeysList);
             connection.multi();
         } catch (Exception e) {
-            connection.close();
+            try {
+                connection.close();
+            } catch (Exception closeException) {
+                e.addSuppressed(closeException);
+            }
             throw e;
         }
         return connection;
@@ -286,11 +279,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             return command.get();
         } catch (RuntimeException e) {
             if (!connectionFactory.isRedisClusterAware() || !isClusterTopologyError(e)
-                    || !(getNativeCluster() instanceof TbJedisCluster cluster)) {
+                    || !(connectionFactory instanceof TbJedisClusterConnectionFactory clusterConnectionFactory)) {
                 throw e;
             }
             log.warn("[{}] Redis cluster topology changed, renewing the slot map and retrying: {}", cacheName, e.getMessage());
-            cluster.renewSlotCache();
+            clusterConnectionFactory.renewSlotCache();
             return command.get();
         }
     }
@@ -300,8 +293,8 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
                 || e instanceof RedisConnectionFailureException || e instanceof ClusterRedirectException;
     }
 
-    private UnifiedJedis getNativeCluster() {
-        return ((JedisClusterConnection) connectionFactory.getClusterConnection()).getNativeConnection();
+    private RedisClusterClient getNativeCluster() {
+        return (RedisClusterClient) ((JedisClusterConnection) connectionFactory.getClusterConnection()).getNativeConnection();
     }
 
     protected byte[] getRawKey(K key) {
