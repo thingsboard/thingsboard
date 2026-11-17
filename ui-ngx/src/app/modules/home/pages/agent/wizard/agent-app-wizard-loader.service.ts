@@ -47,8 +47,9 @@ export class AgentAppWizardLoaderService {
   constructor(private agentService: AgentService) {}
 
   // Warm the per-type template cache so the first type-card click in install
-  // mode doesn't flash a "Loading template…" state. Background-only: errors are
-  // silent (no toast) and the requests are cancelled when `destroyRef` is destroyed.
+  // mode doesn't flash a "Loading template…" state. Background-only: a failed `latest`
+  // request is silent (the shared per-type list request may still toast), and the
+  // requests are cancelled when `destroyRef` is destroyed.
   prewarmTemplates(types: AgentApplicationType[], destroyRef: DestroyRef): void {
     types.forEach(type => {
       if (this.templateCache.has(type)) {

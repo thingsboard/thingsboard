@@ -119,6 +119,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   detectingTypes = true;
   private typeAvailability$: Observable<void>;
   private typeLoadSubscription: Subscription | null = null;
+  private mergeSubscription: Subscription | null = null;
 
   profileSelectFormGroup: UntypedFormGroup;
   filteredProfiles: Observable<AgentAppProfile[]>;
@@ -270,6 +271,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     }
     this.selectedType = type;
     this.typeLoadSubscription?.unsubscribe();
+    this.mergeSubscription?.unsubscribe();
     this.template = null;
     this.composeType = null;
     this.composeTypeKeys = [];
@@ -311,6 +313,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     }
     this.useProfile = value;
     this.typeLoadSubscription?.unsubscribe();
+    this.mergeSubscription?.unsubscribe();
     this.selectedProfile = null;
     this.profileSelectFormGroup.get('profile').patchValue(null, { emitEvent: false });
     this.template = null;
@@ -369,6 +372,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   selectProfile(profile: AgentAppProfile) {
     if (!profile) { return; }
     this.selectedProfile = profile;
+    this.mergeSubscription?.unsubscribe();
     this.profileSelectFormGroup.get('profile').patchValue(profile, { emitEvent: false });
     this.composeYaml = dumpCompose(profile);
     this.initCredentialValues();
@@ -461,12 +465,12 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
       this.agentId, this.selectedType!, this.appName, tpl,
       this.composeYaml, dockerComposeConfig(this.mergedApp)?.compose);
     this.mergeError = '';
-    this.loader.merge(
+    this.mergeSubscription?.unsubscribe();
+    this.mergeSubscription = this.loader.merge(
       tpl.currentVersion, tpl.appType, draft, this.useProfile ? undefined : (this.composeType || undefined),
       this.relatedEntityId || undefined, undefined, true
     ).subscribe({
       next: merged => {
-        this.mergeError = '';
         this.mergedApp = merged;
         const mergedYaml = dumpCompose(merged);
         if (this.useProfile) {
@@ -503,6 +507,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   private clearProfileSelection() {
     this.selectedProfile = null;
+    this.mergeSubscription?.unsubscribe();
     this.composeYaml = '';
     this.credentialValues = {};
     this.template = null;
@@ -591,9 +596,9 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   private runMergeForPreview(tpl: AgentAppTemplate) {
     const draft = buildInstallMergeDraft(this.agentId, this.selectedType!, this.appName, tpl);
     this.mergeError = '';
-    this.loader.merge(tpl.currentVersion, tpl.appType, draft, this.composeType || undefined, this.relatedEntityId || undefined, undefined, true).subscribe({
+    this.mergeSubscription?.unsubscribe();
+    this.mergeSubscription = this.loader.merge(tpl.currentVersion, tpl.appType, draft, this.composeType || undefined, this.relatedEntityId || undefined, undefined, true).subscribe({
       next: merged => {
-        this.mergeError = '';
         this.mergedApp = merged;
         if (!this.useProfile) {
           this.proposedYaml = dumpRawTemplateCompose(tpl, this.composeType);
