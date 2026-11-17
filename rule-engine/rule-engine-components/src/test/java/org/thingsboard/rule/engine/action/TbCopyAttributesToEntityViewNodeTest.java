@@ -280,7 +280,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
         TypeCastDisabledKeys.put(metaData, Set.of("joinEui"));
 
-        Map<String, AttributeKvEntry> entries = copyAttributesToView(metaData);
+        Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.POST_ATTRIBUTES_REQUEST, metaData);
 
         assertThat(entries.get("joinEui").getDataType()).isEqualTo(DataType.STRING);
         assertThat(entries.get("joinEui").getValue()).isEqualTo("0000000000000000");
@@ -292,7 +292,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     public void givenMetadataWithoutTypeCastDisabledKeys_whenOnMsg_thenNumericStringsAreCast() {
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
 
-        Map<String, AttributeKvEntry> entries = copyAttributesToView(metaData);
+        Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.POST_ATTRIBUTES_REQUEST, metaData);
 
         assertThat(entries.get("joinEui").getDataType()).isEqualTo(DataType.LONG);
         assertThat(entries.get("joinEui").getValue()).isEqualTo(0L);
@@ -300,12 +300,34 @@ public class TbCopyAttributesToEntityViewNodeTest {
         assertThat(entries.get("firmwareVersion").getValue()).isEqualTo(1.0);
     }
 
-    private Map<String, AttributeKvEntry> copyAttributesToView(TbMsgMetaData metaData) {
+    @Test
+    public void givenAttributesUpdatedWithTypeCastDisabledKeys_whenOnMsg_thenListedNumericStringIsCopiedAsString() {
+        TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
+        TypeCastDisabledKeys.put(metaData, Set.of("joinEui"));
+
+        Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.ATTRIBUTES_UPDATED, metaData);
+
+        assertThat(entries.get("joinEui").getDataType()).isEqualTo(DataType.STRING);
+        assertThat(entries.get("joinEui").getValue()).isEqualTo("0000000000000000");
+        assertThat(entries.get("firmwareVersion").getDataType()).isEqualTo(DataType.DOUBLE);
+    }
+
+    @Test
+    public void givenAttributesUpdatedWithoutTypeCastDisabledKeys_whenOnMsg_thenNumericStringsAreCast() {
+        TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
+
+        Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.ATTRIBUTES_UPDATED, metaData);
+
+        assertThat(entries.get("joinEui").getDataType()).isEqualTo(DataType.LONG);
+        assertThat(entries.get("joinEui").getValue()).isEqualTo(0L);
+    }
+
+    private Map<String, AttributeKvEntry> copyAttributesToView(TbMsgType msgType, TbMsgMetaData metaData) {
         AttributesEntityView attributes = new AttributesEntityView(List.of("joinEui", "firmwareVersion"), Collections.emptyList(), Collections.emptyList());
         EntityView entityView = getEntityView(new TelemetryEntityView(Collections.emptyList(), attributes));
 
         TbMsg msg = TbMsg.newMsg()
-                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .type(msgType)
                 .originator(DEVICE_ID)
                 .copyMetaData(metaData)
                 .data("{\"joinEui\": \"0000000000000000\", \"firmwareVersion\": \"1.0\"}")

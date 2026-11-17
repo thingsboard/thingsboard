@@ -12,6 +12,7 @@ import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
@@ -203,6 +204,43 @@ public class DeviceStateTest {
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(deviceId)
                 .copyMetaData(TbMsgMetaData.EMPTY)
+                .data("{\"joinEui\": \"0000000000000000\"}")
+                .build());
+
+        verify(ctx, never()).enqueueForTellNext(any(), anyString());
+    }
+
+    @Test
+    public void whenAttributesUpdatedNotificationListsKey_thenStringValueIsEvaluatedAsString() throws Exception {
+        DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.ATTRIBUTE, "joinEui", "0000000000000000");
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
+
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue(DataConstants.SCOPE, DataConstants.SHARED_SCOPE);
+        TypeCastDisabledKeys.put(metaData, Set.of("joinEui"));
+        deviceState.process(ctx, TbMsg.newMsg()
+                .type(TbMsgType.ATTRIBUTES_UPDATED)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .data("{\"joinEui\": \"0000000000000000\"}")
+                .build());
+
+        verify(ctx).enqueueForTellNext(any(), eq("Alarm Created"));
+    }
+
+    @Test
+    public void whenAttributesUpdatedNotificationDoesNotListKey_thenNumericStringIsCast() throws Exception {
+        DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.ATTRIBUTE, "joinEui", "0000000000000000");
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
+
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue(DataConstants.SCOPE, DataConstants.SHARED_SCOPE);
+        deviceState.process(ctx, TbMsg.newMsg()
+                .type(TbMsgType.ATTRIBUTES_UPDATED)
+                .originator(deviceId)
+                .copyMetaData(metaData)
                 .data("{\"joinEui\": \"0000000000000000\"}")
                 .build());
 
