@@ -35,6 +35,7 @@ import {
 import {
   chartBarDefaultSettings,
   ChartBarSettings,
+  ChartFillAreaBaseline,
   ChartFillSettings,
   ChartFillType, ChartLabelPosition, ChartLineType, ChartShape, PieChartLabelPosition
 } from '@home/components/widget/lib/chart/chart.models';
@@ -753,7 +754,9 @@ export const reportRangeChartDefaultSettings: ReportRangeChartSettings = mergeDe
           start: 100,
           end: 0
         }
-      }
+      },
+      fillAreaBaseline: ChartFillAreaBaseline.auto,
+      fillAreaBaselineValue: 0
     }),
     rangeUnits: '°C',
     rangeDecimals: 0
@@ -770,6 +773,8 @@ export const toRangeChartWidgetSettings = (
     rangeThreshold: reportRangeChartSettings.rangeThreshold,
     fillArea: reportRangeChartSettings.fillArea,
     fillAreaOpacity: reportRangeChartSettings.fillAreaOpacity,
+    fillAreaBaseline: reportRangeChartSettings.lineSettings.fillAreaBaseline,
+    fillAreaBaselineValue: reportRangeChartSettings.lineSettings.fillAreaBaselineValue,
     showLine: reportRangeChartSettings.lineSettings.showLine,
     step: reportRangeChartSettings.lineSettings.step,
     stepType: reportRangeChartSettings.lineSettings.stepType,
