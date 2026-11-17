@@ -6,7 +6,7 @@ import { Converter, ConverterConfigV2, ConverterType, getTargetField, getTargetT
 import { IntegrationType } from '@shared/models/integration.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { isEqual } from '@core/utils';
-import { DeviceInstalledItemDescriptor, DeviceUpdateRequest, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { DeviceInstalledItemDescriptor, DevicePackageRequest, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
@@ -104,7 +104,7 @@ export const loadOwnDefaultConverterIds = async (iotHubApiService: IotHubApiServ
  * the converter step: the server keeps the other steps, the forms and the integration's metadata as they are.
  * expectedVersion is the converter's version the user reviewed.
  */
-export const defaultConverterUpdateRequest = (update: DefaultConverterUpdate, expectedVersion?: number): DeviceUpdateRequest => {
+export const defaultConverterUpdateRequest = (update: DefaultConverterUpdate, expectedVersion?: number): DevicePackageRequest => {
   const descriptor = update.installedItem.descriptor as DeviceInstalledItemDescriptor;
   return {
     versionId: update.installedItem.itemVersionId,

@@ -421,7 +421,7 @@ public class DefaultIotHubService implements IotHubService {
 
             String itemType = installedItem.getItemType();
             if ("DEVICE".equals(itemType)) {
-                // Updated in one transaction from the install wizard of the new version, see DevicePackageUpdateService
+                // Updated in one transaction from the install wizard of the new version, see DevicePackageService
                 throw new IllegalArgumentException("A device package is updated by the install wizard of the new version");
             }
             IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
