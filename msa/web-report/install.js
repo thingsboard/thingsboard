@@ -4,6 +4,8 @@ const fs = require('fs');
 const fse = require('fs-extra');
 const path = require('path');
 const crypto = require('crypto');
+const { execFile, execFileSync } = require('child_process');
+const { promisify } = require('util');
 const { Transform } = require('stream');
 const { pipeline } = require('stream/promises');
 // The helpers that Playwright downloads its browsers with: httpRequest follows HTTPS_PROXY and redirects, extractZip needs no unzip tool
@@ -60,6 +62,9 @@ async function installChromium(platform, downloadDir, chromiumDir) {
     for await (const excluded of fs.promises.glob(platform.exclude || [], { cwd: unpacked })) {
         await fse.remove(path.join(unpacked, excluded));
     }
+    if (platform.strip) {
+        await stripExecutables(unpacked, platform.strip);
+    }
     if (!await platform.hasVersion(unpacked)) {
         throw new Error(`${platform.path} is not Chromium ${snapshot.version}; check the build number in chromium.js`);
     }
@@ -106,6 +111,26 @@ function downloadOnce(url, file) {
             pipeline(response, hashing, fs.createWriteStream(file)).then(() => resolve(hash.digest('hex')), e => fail(e.message));
         }, e => fail(e.message));
     });
+}
+
+// Strips the symbols with GNU strip, which reads the Linux executables on any build machine. Without it, as on macOS
+// or where binutils is not installed, the executables are packaged as they are.
+async function stripExecutables(dir, patterns) {
+    if (!hasGnuStrip()) {
+        console.warn('strip not found, Linux Chromium left unstripped (+~180 MB); install GNU binutils to strip it');
+        return;
+    }
+    for await (const file of fs.promises.glob(patterns, { cwd: dir })) {
+        await promisify(execFile)('strip', ['--strip-unneeded', path.join(dir, file)]);
+    }
+}
+
+function hasGnuStrip() {
+    try {
+        return execFileSync('strip', ['--version'], { encoding: 'utf8' }).includes('GNU strip');
+    } catch {
+        return false;
+    }
 }
 
 async function fileContains(file, text) {
