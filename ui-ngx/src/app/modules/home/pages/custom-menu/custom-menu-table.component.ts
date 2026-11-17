@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, HostBinding, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -54,9 +54,6 @@ export class CustomMenuTableComponent implements OnInit {
 
   readonly customMenuTableConfig = new EntityTableConfig<CustomMenuInfo>();
 
-  @HostBinding('class.tb-full-actions-column')
-  fullActionsColumn = false;
-
   constructor(private customMenuService: CustomMenuService,
               private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
@@ -98,23 +95,29 @@ export class CustomMenuTableComponent implements OnInit {
     this.customMenuTableConfig.entitiesDeleteEnabled = !readonly && authUser.authority !== Authority.SYS_ADMIN;
     this.customMenuTableConfig.addEntity = () => this.addCustomMenu();
 
-    this.fullActionsColumn = this.customMenuTableConfig.entitiesDeleteEnabled;
-
-    let mainColumnsWidth: string;
+    let nameColumnWidth: string;
+    let scopeColumnWidth: string;
+    let assigneeTypeColumnWidth: string;
     switch (authUser.authority) {
       case Authority.SYS_ADMIN:
-      case Authority.CUSTOMER_USER:
-        mainColumnsWidth = '32%';
+        nameColumnWidth = '60%';
+        scopeColumnWidth = '20%';
         break;
       case Authority.TENANT_ADMIN:
-        mainColumnsWidth = '21%';
+        nameColumnWidth = '50%';
+        scopeColumnWidth = '15%';
+        assigneeTypeColumnWidth = '15%';
+        break;
+      case Authority.CUSTOMER_USER:
+        nameColumnWidth = '60%';
+        assigneeTypeColumnWidth = '20%';
         break;
     }
 
     this.customMenuTableConfig.columns.push(
       new DateEntityTableColumn<CustomMenuInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<CustomMenuInfo>('name', 'custom-menu.name', mainColumnsWidth,
-          entity => entity.name, _entity => ({}), true, () => ({}), entity => entity.name, false,
+      new EntityTableColumn<CustomMenuInfo>('name', 'custom-menu.name', nameColumnWidth,
+          entity => entity.name, _entity => ({}), true, () => ({}), () => undefined, false,
         {
           name: this.translate.instant('custom-menu.edit-name'),
           icon: 'edit',
@@ -123,12 +126,12 @@ export class CustomMenuTableComponent implements OnInit {
         })
     );
     if (authUser.authority !== Authority.CUSTOMER_USER) {
-      this.customMenuTableConfig.columns.push(new EntityTableColumn<CustomMenuInfo>('scope', 'custom-menu.scope', mainColumnsWidth,
+      this.customMenuTableConfig.columns.push(new EntityTableColumn<CustomMenuInfo>('scope', 'custom-menu.scope', scopeColumnWidth,
         (menu) => this.translate.instant(cmScopeTranslations.get(menu.scope))));
     }
     if (authUser.authority !== Authority.SYS_ADMIN) {
       this.customMenuTableConfig.columns.push(new EntityTableColumn<CustomMenuInfo>('assigneeType',
-        'custom-menu.assignee-type', mainColumnsWidth,
+        'custom-menu.assignee-type', assigneeTypeColumnWidth,
         (menu) => this.translate.instant(cmAssigneeTypeTranslations(menu.assigneeType, menu.scope))));
     }
     if (authUser.authority !== Authority.SYS_ADMIN) {
