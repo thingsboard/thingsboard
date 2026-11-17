@@ -170,7 +170,7 @@ export interface IotHubInstalledItemKeptEntities {
   usedByItemsCount: number;
   // Of the kept entities, the ones the user had before and the package took as they were
   usedExistingCount: number;
-  // Device profiles still used by devices, and what kept profiles reference; absent from older backends
+  // Absent from older backends
   referencedEntities?: IotHubKeptEntity[];
 }
 

@@ -36,7 +36,11 @@
       display: none;
     }
 
-    // A long name breaks inside the box instead of running past its border
+    // In a narrow dialog the type wraps, so the name keeps room; a long name breaks inside the box
+    td.tb-entity-type {
+      white-space: normal;
+    }
+
     td.tb-entity-name {
       overflow-wrap: anywhere;
     }

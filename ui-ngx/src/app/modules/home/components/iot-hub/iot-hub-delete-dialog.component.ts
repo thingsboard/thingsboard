@@ -30,7 +30,6 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
 
   description: string;
 
-  // Entities the removal keeps, grouped by reason
   keptGroups: { reason: string; references: ResourceReferences }[] = [];
   keptTitle: string;
 
