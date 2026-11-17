@@ -18,7 +18,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.server.common.adaptor.JsonConverter;
-import org.thingsboard.server.common.adaptor.NoCastKeys;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
@@ -96,7 +95,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                                     .build());
                                         }
                                     } else {
-                                        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()), System.currentTimeMillis(), NoCastKeys.get(msg)).stream()
+                                        List<AttributeKvEntry> attributes = JsonConverter.attributesFromMsg(msg).stream()
                                                 .filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).toList();
                                         ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
                                                 .tenantId(ctx.getTenantId())

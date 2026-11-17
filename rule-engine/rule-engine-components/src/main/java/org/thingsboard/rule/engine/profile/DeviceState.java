@@ -11,7 +11,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
 import org.thingsboard.rule.engine.profile.state.PersistedDeviceState;
 import org.thingsboard.server.common.adaptor.JsonConverter;
-import org.thingsboard.server.common.adaptor.NoCastKeys;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -284,7 +283,7 @@ class DeviceState {
 
     private boolean processAttributes(TbContext ctx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
-        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()), System.currentTimeMillis(), NoCastKeys.get(msg));
+        List<AttributeKvEntry> attributes = JsonConverter.attributesFromMsg(msg);
         if (!attributes.isEmpty()) {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
@@ -298,7 +297,7 @@ class DeviceState {
     }
 
     protected boolean processTelemetryRequest(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        return processTelemetryUpdate(ctx, msg, JsonParser.parseString(msg.getData()));
+        return processTelemetryUpdate(ctx, msg, JsonConverter.sortedTelemetryFromMsg(msg, msg.getMetaDataTs()));
     }
 
     protected boolean processTelemetryUpdatedNotification(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
@@ -307,12 +306,11 @@ class DeviceState {
                 .filter(JsonElement::isJsonObject)
                 .map(e -> e.getAsJsonObject().get("timeseries"))
                 .orElse(msgData);
-        return processTelemetryUpdate(ctx, msg, telemetryData);
+        return processTelemetryUpdate(ctx, msg, JsonConverter.convertToSortedTelemetry(telemetryData, msg.getMetaDataTs()));
     }
 
-    private boolean processTelemetryUpdate(TbContext ctx, TbMsg msg, JsonElement telemetryData) throws ExecutionException, InterruptedException {
+    private boolean processTelemetryUpdate(TbContext ctx, TbMsg msg, Map<Long, List<KvEntry>> tsKvMap) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
-        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToSortedTelemetry(telemetryData, msg.getMetaDataTs(), NoCastKeys.get(msg));
         // iterate over data by ts (ASC order).
         for (Map.Entry<Long, List<KvEntry>> entry : tsKvMap.entrySet()) {
             Long ts = entry.getKey();

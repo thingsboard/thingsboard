@@ -62,9 +62,9 @@ public class DedicatedScriptUplinkDataConverterTest {
         assertKv(attributes.get("rssi"), LONG_V, -22L);
         assertKv(attributes.get("snr"), DOUBLE_V, 11.0);
         assertKv(attributes.get("frequency"), LONG_V, 868100000L);
-        assertTrue(uplink.getAttributesNoCastKeys().containsAll(Set.of("devAddr", "eui")));
-        assertFalse(uplink.getAttributesNoCastKeys().contains("fCnt"));
-        assertTrue(uplink.getTelemetryNoCastKeys().isEmpty());
+        assertTrue(uplink.getAttributesTypeCastDisabledKeys().containsAll(Set.of("devAddr", "eui")));
+        assertFalse(uplink.getAttributesTypeCastDisabledKeys().contains("fCnt"));
+        assertTrue(uplink.getTelemetryTypeCastDisabledKeys().isEmpty());
     }
 
     @ParameterizedTest
@@ -80,8 +80,8 @@ public class DedicatedScriptUplinkDataConverterTest {
         assertKv(telemetry.get("rssi"), LONG_V, -22L);
         assertKv(telemetry.get("snr"), DOUBLE_V, 11.0);
         assertKv(toMap(uplink.getAttributesUpdate().getKvList()).get("eui"), STRING_V, "1000000000000001");
-        assertEquals(Set.of("devAddr"), uplink.getTelemetryNoCastKeys());
-        assertEquals(Set.of("eui"), uplink.getAttributesNoCastKeys());
+        assertEquals(Set.of("devAddr"), uplink.getTelemetryTypeCastDisabledKeys());
+        assertEquals(Set.of("eui"), uplink.getAttributesTypeCastDisabledKeys());
     }
 
     @Test
@@ -166,7 +166,7 @@ public class DedicatedScriptUplinkDataConverterTest {
         UplinkData uplink = uplinkDataConverter.parseUplinkData(uplinkJson, unwrapThingsStack("05060708"));
 
         assertKv(toMap(uplink.getAttributesUpdate().getKvList()).get("devAddr"), LONG_V, 1020304L);
-        assertFalse(uplink.getAttributesNoCastKeys().contains("devAddr"));
+        assertFalse(uplink.getAttributesTypeCastDisabledKeys().contains("devAddr"));
     }
 
     @Test

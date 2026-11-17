@@ -19,7 +19,7 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
-import org.thingsboard.server.common.adaptor.NoCastKeys;
+import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -188,9 +188,9 @@ class TbCalculatedFieldsNodeTest {
     }
 
     @Test
-    void givenTelemetryMsgWithNoCastKeys_whenOnMsg_thenListedKeysAreSavedAsStrings() {
+    void givenTelemetryMsgWithTypeCastDisabledKeys_whenOnMsg_thenListedKeysAreSavedAsStrings() {
         var metadata = new TbMsgMetaData();
-        NoCastKeys.put(metadata, Set.of("devAddr"));
+        TypeCastDisabledKeys.put(metadata, Set.of("devAddr"));
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
@@ -209,10 +209,10 @@ class TbCalculatedFieldsNodeTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
-    void givenAttributesMsg_whenOnMsg_thenNoCastKeysKeepStrings(boolean withNoCastKeys) {
+    void givenAttributesMsg_whenOnMsg_thenTypeCastDisabledKeysKeepStrings(boolean withTypeCastDisabledKeys) {
         var metadata = new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name()));
-        if (withNoCastKeys) {
-            NoCastKeys.put(metadata, Set.of("joinEui"));
+        if (withTypeCastDisabledKeys) {
+            TypeCastDisabledKeys.put(metadata, Set.of("joinEui"));
         }
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
@@ -226,7 +226,7 @@ class TbCalculatedFieldsNodeTest {
         ArgumentCaptor<AttributesSaveRequest> captor = ArgumentCaptor.forClass(AttributesSaveRequest.class);
         then(telemetryServiceMock).should().saveAttributes(captor.capture());
         assertThat(captor.getValue().getEntries()).extracting(KvEntry::getKey, KvEntry::getDataType, KvEntry::getValue).containsExactlyInAnyOrder(
-                withNoCastKeys ? tuple("joinEui", DataType.STRING, "0000000000000000") : tuple("joinEui", DataType.LONG, 0L),
+                withTypeCastDisabledKeys ? tuple("joinEui", DataType.STRING, "0000000000000000") : tuple("joinEui", DataType.LONG, 0L),
                 tuple("hardwareVersion", DataType.DOUBLE, 1.0));
     }
 

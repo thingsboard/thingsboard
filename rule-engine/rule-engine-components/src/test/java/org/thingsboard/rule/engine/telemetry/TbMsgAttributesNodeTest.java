@@ -22,7 +22,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
-import org.thingsboard.server.common.adaptor.NoCastKeys;
+import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -474,9 +474,9 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    void givenNoCastKeysInMetadata_whenOnMsg_thenListedKeysAreSavedAsStrings() throws TbNodeException {
+    void givenTypeCastDisabledKeysInMetadata_whenOnMsg_thenListedKeysAreSavedAsStrings() throws TbNodeException {
         var metadata = new TbMsgMetaData();
-        NoCastKeys.put(metadata, Set.of("joinEui", "hardwareVersion"));
+        TypeCastDisabledKeys.put(metadata, Set.of("joinEui", "hardwareVersion"));
 
         List<AttributeKvEntry> entries = saveIntegrationAttributes(metadata);
 
@@ -487,7 +487,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    void givenNoNoCastKeysInMetadata_whenOnMsg_thenNumericStringsAreCast() throws TbNodeException {
+    void givenMetadataWithoutTypeCastDisabledKeys_whenOnMsg_thenNumericStringsAreCast() throws TbNodeException {
         List<AttributeKvEntry> entries = saveIntegrationAttributes(new TbMsgMetaData());
 
         assertThat(entries).extracting(KvEntry::getKey, KvEntry::getDataType, KvEntry::getValue).containsExactlyInAnyOrder(

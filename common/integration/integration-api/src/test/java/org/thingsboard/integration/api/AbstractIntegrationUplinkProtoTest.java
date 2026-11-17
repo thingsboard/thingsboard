@@ -51,41 +51,41 @@ public class AbstractIntegrationUplinkProtoTest {
     }
 
     @Test
-    public void testDeviceUplinkProtoCarriesNoCastKeys() throws Exception {
+    public void testDeviceUplinkProtoCarriesTypeCastDisabledKeys() throws Exception {
         integration.processUplinkData(context, UplinkData.builder()
                 .deviceName("d").deviceType("default")
                 .telemetry(TELEMETRY).attributesUpdate(ATTRIBUTES)
-                .telemetryNoCastKeys(Set.of("devAddr"))
-                .attributesNoCastKeys(Set.of("joinEui", "hardwareVersion"))
+                .telemetryTypeCastDisabledKeys(Set.of("devAddr"))
+                .attributesTypeCastDisabledKeys(Set.of("joinEui", "hardwareVersion"))
                 .build());
 
         ArgumentCaptor<DeviceUplinkDataProto> captor = ArgumentCaptor.forClass(DeviceUplinkDataProto.class);
         verify(context).processUplinkData(captor.capture(), any());
         DeviceUplinkDataProto proto = captor.getValue();
-        assertThat(proto.getTelemetryNoCastKeysList()).containsExactly("devAddr");
-        assertThat(proto.getAttributesNoCastKeysList()).containsExactlyInAnyOrder("joinEui", "hardwareVersion");
+        assertThat(proto.getTelemetryTypeCastDisabledKeysList()).containsExactly("devAddr");
+        assertThat(proto.getAttributesTypeCastDisabledKeysList()).containsExactlyInAnyOrder("joinEui", "hardwareVersion");
         assertThat(DeviceUplinkDataProto.parseFrom(proto.toByteArray())).isEqualTo(proto);
     }
 
     @Test
-    public void testAssetUplinkProtoCarriesNoCastKeys() throws Exception {
+    public void testAssetUplinkProtoCarriesTypeCastDisabledKeys() throws Exception {
         integration.processUplinkData(context, UplinkData.builder()
                 .isAsset(true).assetName("a").assetType("default")
                 .telemetry(TELEMETRY).attributesUpdate(ATTRIBUTES)
-                .telemetryNoCastKeys(Set.of("devAddr"))
-                .attributesNoCastKeys(Set.of("joinEui"))
+                .telemetryTypeCastDisabledKeys(Set.of("devAddr"))
+                .attributesTypeCastDisabledKeys(Set.of("joinEui"))
                 .build());
 
         ArgumentCaptor<AssetUplinkDataProto> captor = ArgumentCaptor.forClass(AssetUplinkDataProto.class);
         verify(context).processUplinkData(captor.capture(), any());
         AssetUplinkDataProto proto = captor.getValue();
-        assertThat(proto.getTelemetryNoCastKeysList()).containsExactly("devAddr");
-        assertThat(proto.getAttributesNoCastKeysList()).containsExactly("joinEui");
+        assertThat(proto.getTelemetryTypeCastDisabledKeysList()).containsExactly("devAddr");
+        assertThat(proto.getAttributesTypeCastDisabledKeysList()).containsExactly("joinEui");
         assertThat(AssetUplinkDataProto.parseFrom(proto.toByteArray())).isEqualTo(proto);
     }
 
     @Test
-    public void testUplinkWithoutNoCastKeysLeavesProtoFieldsEmpty() {
+    public void testUplinkWithoutTypeCastDisabledKeysLeavesProtoFieldsEmpty() {
         integration.processUplinkData(context, UplinkData.builder()
                 .deviceName("d").deviceType("default")
                 .telemetry(TELEMETRY).attributesUpdate(ATTRIBUTES)
@@ -93,8 +93,8 @@ public class AbstractIntegrationUplinkProtoTest {
 
         ArgumentCaptor<DeviceUplinkDataProto> captor = ArgumentCaptor.forClass(DeviceUplinkDataProto.class);
         verify(context).processUplinkData(captor.capture(), any());
-        assertThat(captor.getValue().getTelemetryNoCastKeysList()).isEmpty();
-        assertThat(captor.getValue().getAttributesNoCastKeysList()).isEmpty();
+        assertThat(captor.getValue().getTelemetryTypeCastDisabledKeysList()).isEmpty();
+        assertThat(captor.getValue().getAttributesTypeCastDisabledKeysList()).isEmpty();
     }
 
 }

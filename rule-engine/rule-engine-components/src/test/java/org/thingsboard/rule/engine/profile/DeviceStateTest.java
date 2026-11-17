@@ -9,7 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.adaptor.NoCastKeys;
+import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -174,13 +174,13 @@ public class DeviceStateTest {
     }
 
     @Test
-    public void whenAttributeIsNoCastKey_thenStringValueIsEvaluatedAsString() throws Exception {
+    public void whenAttributeIsTypeCastDisabledKey_thenStringValueIsEvaluatedAsString() throws Exception {
         DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.ATTRIBUTE, "joinEui", "0000000000000000");
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
         TbMsgMetaData metaData = new TbMsgMetaData();
-        NoCastKeys.put(metaData, Set.of("joinEui"));
+        TypeCastDisabledKeys.put(metaData, Set.of("joinEui"));
         deviceState.process(ctx, TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(deviceId)
@@ -192,7 +192,7 @@ public class DeviceStateTest {
     }
 
     @Test
-    public void whenAttributeIsNotNoCastKey_thenNumericStringIsCast() throws Exception {
+    public void whenAttributeIsNotTypeCastDisabledKey_thenNumericStringIsCast() throws Exception {
         DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.ATTRIBUTE, "joinEui", "0000000000000000");
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
@@ -209,13 +209,13 @@ public class DeviceStateTest {
     }
 
     @Test
-    public void whenTelemetryIsNoCastKey_thenStringValueIsEvaluatedAsString() throws Exception {
+    public void whenTelemetryIsTypeCastDisabledKey_thenStringValueIsEvaluatedAsString() throws Exception {
         DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.TIME_SERIES, "firmwareVersion", "1.10");
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
         TbMsgMetaData metaData = new TbMsgMetaData();
-        NoCastKeys.put(metaData, Set.of("firmwareVersion"));
+        TypeCastDisabledKeys.put(metaData, Set.of("firmwareVersion"));
         deviceState.process(ctx, TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
@@ -227,7 +227,7 @@ public class DeviceStateTest {
     }
 
     @Test
-    public void whenTelemetryIsNotNoCastKey_thenNumericStringIsCast() throws Exception {
+    public void whenTelemetryIsNotTypeCastDisabledKey_thenNumericStringIsCast() throws Exception {
         DeviceProfileAlarm alarmConfig = createAlarmConfigWithStrCondition(AlarmConditionKeyType.TIME_SERIES, "firmwareVersion", "1.10");
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);

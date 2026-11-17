@@ -19,7 +19,7 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.adaptor.NoCastKeys;
+import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
@@ -275,9 +275,9 @@ public class TbCopyAttributesToEntityViewNodeTest {
     }
 
     @Test
-    public void givenNoCastKeysMetadata_whenOnMsg_thenListedNumericStringIsCopiedAsString() {
+    public void givenTypeCastDisabledKeysMetadata_whenOnMsg_thenListedNumericStringIsCopiedAsString() {
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
-        NoCastKeys.put(metaData, Set.of("joinEui"));
+        TypeCastDisabledKeys.put(metaData, Set.of("joinEui"));
 
         Map<String, AttributeKvEntry> entries = copyAttributesToView(metaData);
 
@@ -288,7 +288,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     }
 
     @Test
-    public void givenNoNoCastKeysMetadata_whenOnMsg_thenNumericStringsAreCast() {
+    public void givenMetadataWithoutTypeCastDisabledKeys_whenOnMsg_thenNumericStringsAreCast() {
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
 
         Map<String, AttributeKvEntry> entries = copyAttributesToView(metaData);

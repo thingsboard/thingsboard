@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.integration.service.api;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.IntegrationCallback;
-import org.thingsboard.server.common.adaptor.NoCastKeys;
+import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.AssetCacheInfo;
 import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.DeviceCacheInfo;
@@ -118,7 +120,7 @@ public class DefaultIntegrationApiServiceTest {
     }
 
     @Test
-    public void deviceUplinkPassesTelemetryAndAttributeNoCastKeysToTheirOwnMessages() {
+    public void deviceUplinkPassesTelemetryAndAttributeTypeCastDisabledKeysToTheirOwnMessages() {
         DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.randomUUID());
         when(deviceCache.getEntity(any(), any())).thenReturn(Futures.immediateFuture(
                 new DeviceCacheInfo(UUID.randomUUID(), tenantId, null, "Device A", "default", deviceProfileId)));
@@ -130,21 +132,21 @@ public class DefaultIntegrationApiServiceTest {
                 .setDeviceType("default")
                 .setPostTelemetryMsg(telemetry())
                 .setPostAttributesMsg(attributes())
-                .addAllTelemetryNoCastKeys(List.of("devAddr"))
-                .addAllAttributesNoCastKeys(List.of("joinEui", "firmwareVersion"))
+                .addAllTelemetryTypeCastDisabledKeys(List.of("devAddr"))
+                .addAllAttributesTypeCastDisabledKeys(List.of("joinEui", "firmwareVersion"))
                 .build();
         IntegrationCallback<Void> callback = mock(IntegrationCallback.class);
 
         service.sendUplinkData(integration, IntegrationInfoProto.getDefaultInstance(), data, callback);
 
         Map<TbMsgType, TbMsg> msgs = captureRuleEngineMsgs();
-        assertThat(NoCastKeys.get(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST))).isEqualTo(Set.of("devAddr"));
-        assertThat(NoCastKeys.get(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST))).isEqualTo(Set.of("joinEui", "firmwareVersion"));
+        assertThat(typeCastDisabledKeys(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST))).isEqualTo(Set.of("devAddr"));
+        assertThat(typeCastDisabledKeys(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST))).isEqualTo(Set.of("joinEui", "firmwareVersion"));
         verify(callback, timeout(TIMEOUT_MS)).onSuccess(null);
     }
 
     @Test
-    public void assetUplinkPassesTelemetryAndAttributeNoCastKeysToTheirOwnMessages() {
+    public void assetUplinkPassesTelemetryAndAttributeTypeCastDisabledKeysToTheirOwnMessages() {
         AssetProfileId assetProfileId = new AssetProfileId(UUID.randomUUID());
         when(assetCache.getEntity(any(), any())).thenReturn(Futures.immediateFuture(
                 new AssetCacheInfo(UUID.randomUUID(), tenantId, null, "Asset A", "default", assetProfileId)));
@@ -156,21 +158,21 @@ public class DefaultIntegrationApiServiceTest {
                 .setAssetType("default")
                 .setPostTelemetryMsg(telemetry())
                 .setPostAttributesMsg(attributes())
-                .addAllTelemetryNoCastKeys(List.of("devAddr"))
-                .addAllAttributesNoCastKeys(List.of("joinEui", "firmwareVersion"))
+                .addAllTelemetryTypeCastDisabledKeys(List.of("devAddr"))
+                .addAllAttributesTypeCastDisabledKeys(List.of("joinEui", "firmwareVersion"))
                 .build();
         IntegrationCallback<Void> callback = mock(IntegrationCallback.class);
 
         service.sendUplinkData(integration, IntegrationInfoProto.getDefaultInstance(), data, callback);
 
         Map<TbMsgType, TbMsg> msgs = captureRuleEngineMsgs();
-        assertThat(NoCastKeys.get(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST))).isEqualTo(Set.of("devAddr"));
-        assertThat(NoCastKeys.get(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST))).isEqualTo(Set.of("joinEui", "firmwareVersion"));
+        assertThat(typeCastDisabledKeys(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST))).isEqualTo(Set.of("devAddr"));
+        assertThat(typeCastDisabledKeys(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST))).isEqualTo(Set.of("joinEui", "firmwareVersion"));
         verify(callback, timeout(TIMEOUT_MS)).onSuccess(null);
     }
 
     @Test
-    public void uplinkWithoutNoCastKeysAddsNoMetadata() {
+    public void uplinkWithoutTypeCastDisabledKeysAddsNoMetadata() {
         DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.randomUUID());
         when(deviceCache.getEntity(any(), any())).thenReturn(Futures.immediateFuture(
                 new DeviceCacheInfo(UUID.randomUUID(), tenantId, null, "Device B", "default", deviceProfileId)));
@@ -187,8 +189,8 @@ public class DefaultIntegrationApiServiceTest {
         service.sendUplinkData(integration, IntegrationInfoProto.getDefaultInstance(), data, mock(IntegrationCallback.class));
 
         Map<TbMsgType, TbMsg> msgs = captureRuleEngineMsgs();
-        assertThat(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST).getMetaData().getValue(NoCastKeys.METADATA_KEY)).isNull();
-        assertThat(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST).getMetaData().getValue(NoCastKeys.METADATA_KEY)).isNull();
+        assertThat(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST).getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY)).isNull();
+        assertThat(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST).getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY)).isNull();
     }
 
     private Map<TbMsgType, TbMsg> captureRuleEngineMsgs() {
@@ -214,6 +216,10 @@ public class DefaultIntegrationApiServiceTest {
 
     private static KeyValueProto stringKv(String key, String value) {
         return KeyValueProto.newBuilder().setKey(key).setType(KeyValueType.STRING_V).setStringV(value).build();
+    }
+
+    private static Set<String> typeCastDisabledKeys(TbMsg msg) {
+        return JacksonUtil.fromString(msg.getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY), new TypeReference<>() {});
     }
 
 }

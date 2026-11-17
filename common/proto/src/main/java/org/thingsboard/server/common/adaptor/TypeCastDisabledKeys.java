@@ -5,7 +5,6 @@ package org.thingsboard.server.common.adaptor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Collection;
@@ -16,13 +15,13 @@ import java.util.Set;
  * Carries the keys whose numeric-looking string values must stay strings from an integration uplink
  * to the rule nodes that parse the message data again with {@link JsonConverter}.
  */
-public final class NoCastKeys {
+public final class TypeCastDisabledKeys {
 
-    public static final String METADATA_KEY = "noCastKeys";
+    public static final String METADATA_KEY = "typeCastDisabledKeys";
 
     private static final TypeReference<Set<String>> SET_TYPE = new TypeReference<>() {};
 
-    private NoCastKeys() {
+    private TypeCastDisabledKeys() {
     }
 
     // A JSON array, since keys may contain commas.
@@ -32,11 +31,7 @@ public final class NoCastKeys {
         }
     }
 
-    public static Set<String> get(TbMsg msg) {
-        return get(msg.getMetaData());
-    }
-
-    public static Set<String> get(TbMsgMetaData metaData) {
+    static Set<String> get(TbMsgMetaData metaData) {
         String value = metaData.getValue(METADATA_KEY);
         if (StringUtils.isEmpty(value)) {
             return Collections.emptySet();

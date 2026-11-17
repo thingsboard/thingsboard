@@ -231,7 +231,7 @@ public class TuyaIntegration extends AbstractIntegration<TuyaIntegrationMsg> {
                 UplinkData uplinkDataResult = UplinkData.builder().deviceName(uplinkData.getDeviceName())
                         .deviceType(uplinkData.getDeviceType()).telemetry(uplinkData.getTelemetry())
                         .attributesUpdate(uplinkData.getAttributesUpdate()).customerName(uplinkData.getCustomerName())
-                        .telemetryNoCastKeys(uplinkData.getTelemetryNoCastKeys()).attributesNoCastKeys(uplinkData.getAttributesNoCastKeys())
+                        .telemetryTypeCastDisabledKeys(uplinkData.getTelemetryTypeCastDisabledKeys()).attributesTypeCastDisabledKeys(uplinkData.getAttributesTypeCastDisabledKeys())
                         .build();
                 this.processUplinkDataBlocking(this.context, uplinkDataResult);
             }

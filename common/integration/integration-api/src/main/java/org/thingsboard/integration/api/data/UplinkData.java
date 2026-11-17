@@ -28,8 +28,8 @@ public class UplinkData {
     private final boolean isAsset;
     // Keys whose numeric-looking string values the converter kept as strings.
     @Builder.Default
-    private final Set<String> telemetryNoCastKeys = Collections.emptySet();
+    private final Set<String> telemetryTypeCastDisabledKeys = Collections.emptySet();
     @Builder.Default
-    private final Set<String> attributesNoCastKeys = Collections.emptySet();
+    private final Set<String> attributesTypeCastDisabledKeys = Collections.emptySet();
 
 }
