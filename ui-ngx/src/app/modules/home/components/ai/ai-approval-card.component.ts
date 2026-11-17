@@ -245,7 +245,8 @@ export class AiApprovalCardComponent implements OnChanges {
   }
 
   get stackedDiff(): boolean {
-    return this.changes.some(change => (change.current?.length ?? 0) > STACK_AT || (change.value?.length ?? 0) > STACK_AT);
+    return this.changes.some(change => !change.image && !change.currentImage
+      && ((change.current?.length ?? 0) > STACK_AT || (change.value?.length ?? 0) > STACK_AT));
   }
 
   get changes(): AiReviewRow[] {
