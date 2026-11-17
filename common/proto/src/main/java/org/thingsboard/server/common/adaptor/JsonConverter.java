@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.adaptor;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -11,12 +12,14 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -24,6 +27,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -60,12 +64,21 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class JsonConverter {
 
     private static final Gson GSON = new Gson();
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
+
+    /**
+     * Metadata key that carries the keys whose numeric-looking string values must stay strings, from an integration uplink
+     * or an attributes updated notification, to the rule nodes that parse the message data again with this converter.
+     */
+    public static final String TYPE_CAST_DISABLED_KEYS = "typeCastDisabledKeys";
+
+    private static final TypeReference<Set<String>> TYPE_CAST_DISABLED_KEYS_TYPE = new TypeReference<>() {};
 
     private static boolean isTypeCastEnabled = true;
 
@@ -635,12 +648,46 @@ public class JsonConverter {
         return convertToAttributes(element, ts, Collections.emptySet());
     }
 
+    // A JSON array, since keys may contain commas.
+    public static void putTypeCastDisabledKeys(TbMsgMetaData metaData, Collection<String> keys) {
+        if (keys != null && !keys.isEmpty()) {
+            metaData.putValue(TYPE_CAST_DISABLED_KEYS, JacksonUtil.toString(keys));
+        }
+    }
+
+    /**
+     * Marks the string entries that this converter would cast to a number, so that a message
+     * built from typed entries, such as an attributes updated notification, reads back the same types.
+     */
+    public static void putTypeCastDisabledKeysOfNumericStrings(TbMsgMetaData metaData, Collection<? extends KvEntry> entries) {
+        if (entries == null) {
+            return;
+        }
+        putTypeCastDisabledKeys(metaData, entries.stream()
+                .filter(entry -> entry.getDataType() == DataType.STRING && NumberUtils.isParsable(entry.getValueAsString()))
+                .map(KvEntry::getKey)
+                .collect(Collectors.toList()));
+    }
+
+    static Set<String> getTypeCastDisabledKeys(TbMsgMetaData metaData) {
+        String value = metaData.getValue(TYPE_CAST_DISABLED_KEYS);
+        if (StringUtils.isEmpty(value)) {
+            return Collections.emptySet();
+        }
+        try {
+            Set<String> keys = JacksonUtil.fromString(value, TYPE_CAST_DISABLED_KEYS_TYPE);
+            return keys != null ? keys : Collections.emptySet();
+        } catch (IllegalArgumentException e) {
+            return Collections.emptySet();
+        }
+    }
+
     /**
      * Turns a rule engine message's data into attributes, with the current time as their ts.
      * Honours the keys the integration marked to stay strings in the message metadata.
      */
     public static List<AttributeKvEntry> attributesFromMsg(TbMsg msg) {
-        return convertToAttributes(JsonParser.parseString(msg.getData()), System.currentTimeMillis(), TypeCastDisabledKeys.get(msg.getMetaData()));
+        return convertToAttributes(JsonParser.parseString(msg.getData()), System.currentTimeMillis(), getTypeCastDisabledKeys(msg.getMetaData()));
     }
 
     private static List<AttributeKvEntry> convertToAttributes(JsonElement element, long ts, Set<String> typeCastDisabledKeys) {
@@ -698,14 +745,14 @@ public class JsonConverter {
      * Honours the keys the integration marked to stay strings in the message metadata.
      */
     public static Map<Long, List<KvEntry>> telemetryFromMsg(TbMsg msg, long ts) throws JsonSyntaxException {
-        return convertToTelemetry(JsonParser.parseString(msg.getData()), ts, false, TypeCastDisabledKeys.get(msg.getMetaData()));
+        return convertToTelemetry(JsonParser.parseString(msg.getData()), ts, false, getTypeCastDisabledKeys(msg.getMetaData()));
     }
 
     /**
      * Same as {@link #telemetryFromMsg(TbMsg, long)}, with the result sorted by ts.
      */
     public static Map<Long, List<KvEntry>> sortedTelemetryFromMsg(TbMsg msg, long ts) throws JsonSyntaxException {
-        return convertToTelemetry(JsonParser.parseString(msg.getData()), ts, true, TypeCastDisabledKeys.get(msg.getMetaData()));
+        return convertToTelemetry(JsonParser.parseString(msg.getData()), ts, true, getTypeCastDisabledKeys(msg.getMetaData()));
     }
 
     public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted) throws

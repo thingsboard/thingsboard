@@ -10,7 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -182,7 +182,7 @@ public class DeviceStateTest {
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TypeCastDisabledKeys.put(metaData, Set.of("joinEui"));
+        JsonConverter.putTypeCastDisabledKeys(metaData, Set.of("joinEui"));
         deviceState.process(ctx, TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(deviceId)
@@ -218,7 +218,7 @@ public class DeviceStateTest {
 
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue(DataConstants.SCOPE, DataConstants.SHARED_SCOPE);
-        TypeCastDisabledKeys.put(metaData, Set.of("joinEui"));
+        JsonConverter.putTypeCastDisabledKeys(metaData, Set.of("joinEui"));
         deviceState.process(ctx, TbMsg.newMsg()
                 .type(TbMsgType.ATTRIBUTES_UPDATED)
                 .originator(deviceId)
@@ -254,7 +254,7 @@ public class DeviceStateTest {
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TypeCastDisabledKeys.put(metaData, Set.of("firmwareVersion"));
+        JsonConverter.putTypeCastDisabledKeys(metaData, Set.of("firmwareVersion"));
         deviceState.process(ctx, TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)

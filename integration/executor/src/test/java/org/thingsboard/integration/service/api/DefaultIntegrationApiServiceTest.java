@@ -11,7 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.IntegrationCallback;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AssetCacheInfo;
 import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.DeviceCacheInfo;
@@ -189,8 +189,8 @@ public class DefaultIntegrationApiServiceTest {
         service.sendUplinkData(integration, IntegrationInfoProto.getDefaultInstance(), data, mock(IntegrationCallback.class));
 
         Map<TbMsgType, TbMsg> msgs = captureRuleEngineMsgs();
-        assertThat(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST).getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY)).isNull();
-        assertThat(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST).getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY)).isNull();
+        assertThat(msgs.get(TbMsgType.POST_TELEMETRY_REQUEST).getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
+        assertThat(msgs.get(TbMsgType.POST_ATTRIBUTES_REQUEST).getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
     }
 
     private Map<TbMsgType, TbMsg> captureRuleEngineMsgs() {
@@ -219,7 +219,7 @@ public class DefaultIntegrationApiServiceTest {
     }
 
     private static Set<String> typeCastDisabledKeys(TbMsg msg) {
-        return JacksonUtil.fromString(msg.getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY), new TypeReference<>() {});
+        return JacksonUtil.fromString(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS), new TypeReference<>() {});
     }
 
 }

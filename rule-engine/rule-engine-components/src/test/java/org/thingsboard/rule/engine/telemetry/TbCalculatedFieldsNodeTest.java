@@ -20,7 +20,7 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -191,7 +191,7 @@ class TbCalculatedFieldsNodeTest {
     @Test
     void givenTelemetryMsgWithTypeCastDisabledKeys_whenOnMsg_thenListedKeysAreSavedAsStrings() {
         var metadata = new TbMsgMetaData();
-        TypeCastDisabledKeys.put(metadata, Set.of("devAddr"));
+        JsonConverter.putTypeCastDisabledKeys(metadata, Set.of("devAddr"));
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
@@ -213,7 +213,7 @@ class TbCalculatedFieldsNodeTest {
     void givenAttributesMsg_whenOnMsg_thenTypeCastDisabledKeysKeepStrings(boolean withTypeCastDisabledKeys) {
         var metadata = new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name()));
         if (withTypeCastDisabledKeys) {
-            TypeCastDisabledKeys.put(metadata, Set.of("joinEui"));
+            JsonConverter.putTypeCastDisabledKeys(metadata, Set.of("joinEui"));
         }
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)

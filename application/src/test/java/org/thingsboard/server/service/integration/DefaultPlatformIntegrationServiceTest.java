@@ -23,7 +23,6 @@ import org.thingsboard.integration.api.converter.wrapper.ThingsStackConverterUnw
 import org.thingsboard.integration.api.data.ContentType;
 import org.thingsboard.integration.api.data.UplinkMetaData;
 import org.thingsboard.server.common.adaptor.JsonConverter;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -593,7 +592,7 @@ public class DefaultPlatformIntegrationServiceTest {
 
         List<TbMsg> msgs = captureRuleEngineMsgs();
         assertThat(msgs).hasSize(1);
-        assertThat(msgs.get(0).getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY)).isNull();
+        assertThat(msgs.get(0).getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
     }
 
     @Test
@@ -663,7 +662,7 @@ public class DefaultPlatformIntegrationServiceTest {
 
         List<TbMsg> msgs = captureRuleEngineMsgs();
         assertThat(msgs).hasSize(2);
-        assertThat(msgs).allSatisfy(msg -> assertThat(msg.getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY)).isNull());
+        assertThat(msgs).allSatisfy(msg -> assertThat(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull());
     }
 
     // What the typed TTN converter produces: unwrapped event keys plus the decoder output
@@ -731,7 +730,7 @@ public class DefaultPlatformIntegrationServiceTest {
     }
 
     private static Set<String> typeCastDisabledKeys(TbMsg msg) {
-        return JacksonUtil.fromString(msg.getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY), new TypeReference<>() {});
+        return JacksonUtil.fromString(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS), new TypeReference<>() {});
     }
 
 }

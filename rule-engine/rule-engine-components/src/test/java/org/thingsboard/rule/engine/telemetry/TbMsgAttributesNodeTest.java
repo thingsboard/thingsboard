@@ -22,7 +22,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -476,7 +476,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     void givenTypeCastDisabledKeysInMetadata_whenOnMsg_thenListedKeysAreSavedAsStrings() throws TbNodeException {
         var metadata = new TbMsgMetaData();
-        TypeCastDisabledKeys.put(metadata, Set.of("joinEui", "hardwareVersion"));
+        JsonConverter.putTypeCastDisabledKeys(metadata, Set.of("joinEui", "hardwareVersion"));
 
         List<AttributeKvEntry> entries = saveIntegrationAttributes(metadata);
 

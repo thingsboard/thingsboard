@@ -24,7 +24,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -613,7 +612,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenTypeCastDisabledKeysInMetadata_whenOnMsg_thenListedKeysAreSavedAsStrings() throws TbNodeException {
         var metadata = new TbMsgMetaData();
-        TypeCastDisabledKeys.put(metadata, Set.of("devAddr", "firmwareVersion"));
+        JsonConverter.putTypeCastDisabledKeys(metadata, Set.of("devAddr", "firmwareVersion"));
 
         List<TsKvEntry> entries = saveIntegrationTelemetry(metadata);
 

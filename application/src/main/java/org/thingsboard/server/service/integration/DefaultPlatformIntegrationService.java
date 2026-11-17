@@ -21,7 +21,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.integration.api.IntegrationCallback;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
@@ -388,7 +388,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
                 metaData.putValue("deviceName", sessionInfo.getDeviceName());
                 metaData.putValue("deviceType", sessionInfo.getDeviceType());
                 metaData.putValue("ts", tsKv.getTs() + "");
-                TypeCastDisabledKeys.put(metaData, typeCastDisabledKeys);
+                JsonConverter.putTypeCastDisabledKeys(metaData, typeCastDisabledKeys);
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
                 sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, TbMsgType.POST_TELEMETRY_REQUEST, packCallback);
             }
@@ -411,7 +411,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
-            TypeCastDisabledKeys.put(metaData, typeCastDisabledKeys);
+            JsonConverter.putTypeCastDisabledKeys(metaData, typeCastDisabledKeys);
             sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, TbMsgType.POST_ATTRIBUTES_REQUEST,
                     new IntegrationTbQueueCallback(new ApiStatsProxyCallback<>(tenantId, getCustomerId(sessionInfo), msg.getKvList().size(), callback)));
         } catch (Exception e) {
@@ -746,7 +746,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
                 metaData.putValue("assetName", asset.getName());
                 metaData.putValue("assetType", asset.getType());
                 metaData.putValue("ts", tsKv.getTs() + "");
-                TypeCastDisabledKeys.put(metaData, typeCastDisabledKeys);
+                JsonConverter.putTypeCastDisabledKeys(metaData, typeCastDisabledKeys);
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
                 sendToRuleEngine(asset.getTenantId(), asset.getId(), asset.getAssetProfileId(),
                         asset.getCustomerId(), json, metaData, TbMsgType.POST_TELEMETRY_REQUEST, packCallback);
@@ -762,7 +762,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("assetName", asset.getName());
             metaData.putValue("assetType", asset.getType());
-            TypeCastDisabledKeys.put(metaData, typeCastDisabledKeys);
+            JsonConverter.putTypeCastDisabledKeys(metaData, typeCastDisabledKeys);
             sendToRuleEngine(asset.getTenantId(), asset.getId(), asset.getAssetProfileId(),
                     asset.getCustomerId(), json, metaData, TbMsgType.POST_ATTRIBUTES_REQUEST,
                     new IntegrationTbQueueCallback(new ApiStatsProxyCallback<>(asset.getTenantId(), asset.getCustomerId(), msg.getKvList().size(), callback)));

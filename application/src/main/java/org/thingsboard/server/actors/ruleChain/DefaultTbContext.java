@@ -38,7 +38,7 @@ import org.thingsboard.rule.engine.util.TenantIdLoader;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -530,7 +530,7 @@ public class DefaultTbContext implements TbContext, TbPeContext {
         }
         TbMsgMetaData tbMsgMetaData = getActionMetaData(ruleNodeId);
         // The saved string values that read back as numbers stay strings for the nodes that parse the notification.
-        TypeCastDisabledKeys.putNumericStrings(tbMsgMetaData, attributes);
+        JsonConverter.putTypeCastDisabledKeysOfNumericStrings(tbMsgMetaData, attributes);
         return attributesActionMsg(originator, tbMsgMetaData, scope, ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
     }
 

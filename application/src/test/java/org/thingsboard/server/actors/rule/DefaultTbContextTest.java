@@ -22,7 +22,6 @@ import org.thingsboard.server.actors.ruleChain.RuleNodeCtx;
 import org.thingsboard.server.actors.ruleChain.RuleNodeToRuleChainTellNextMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.adaptor.JsonConverter;
-import org.thingsboard.server.common.adaptor.TypeCastDisabledKeys;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -1114,7 +1113,7 @@ class DefaultTbContextTest {
 
         assertThat(msg.getType()).isEqualTo(TbMsgType.ATTRIBUTES_UPDATED.name());
         assertThat(msg.getMetaData().getValue(DataConstants.SCOPE)).isEqualTo(DataConstants.CLIENT_SCOPE);
-        assertThat(msg.getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY)).isEqualTo("[\"joinEui\"]");
+        assertThat(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isEqualTo("[\"joinEui\"]");
         Map<String, AttributeKvEntry> parsed = JsonConverter.attributesFromMsg(msg).stream()
                 .collect(Collectors.toMap(AttributeKvEntry::getKey, Function.identity()));
         assertThat(parsed.get("joinEui").getDataType()).isEqualTo(DataType.STRING);
@@ -1129,7 +1128,7 @@ class DefaultTbContextTest {
 
         TbMsg msg = defaultTbContext.attributesUpdatedActionMsg(TENANT_ID, RULE_NODE_ID, DataConstants.CLIENT_SCOPE, attributes);
 
-        assertThat(msg.getMetaData().getValue(TypeCastDisabledKeys.METADATA_KEY)).isNull();
+        assertThat(msg.getMetaData().getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
     }
 
     private TbMsg getTbMsgWithQueueName() {

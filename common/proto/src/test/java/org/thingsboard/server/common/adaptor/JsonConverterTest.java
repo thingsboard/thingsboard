@@ -11,8 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -25,6 +29,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Isolated("JsonConverter static settings being modified")
 public class JsonConverterTest {
@@ -204,9 +210,57 @@ public class JsonConverterTest {
         assertEntry(kvs.get("fCnt"), DataType.STRING, "42");
     }
 
+    @Test
+    public void testPutAndGetRoundTripKeysWithCommas() {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        JsonConverter.putTypeCastDisabledKeys(metaData, List.of("a,b", "c\"d"));
+        assertThat(JsonConverter.getTypeCastDisabledKeys(metaData)).containsExactlyInAnyOrder("a,b", "c\"d");
+    }
+
+    @Test
+    public void testPutSkipsEmptySet() {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        JsonConverter.putTypeCastDisabledKeys(metaData, Set.of());
+        JsonConverter.putTypeCastDisabledKeys(metaData, null);
+        assertThat(metaData.getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
+        assertThat(JsonConverter.getTypeCastDisabledKeys(metaData)).isEmpty();
+    }
+
+    @Test
+    public void testGetReturnsEmptySetForInvalidValue() {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue(JsonConverter.TYPE_CAST_DISABLED_KEYS, "joinEui,devAddr");
+        assertThat(JsonConverter.getTypeCastDisabledKeys(metaData)).isEmpty();
+        metaData.putValue(JsonConverter.TYPE_CAST_DISABLED_KEYS, "{\"a\":1}");
+        assertThat(JsonConverter.getTypeCastDisabledKeys(metaData)).isEmpty();
+        assertThat(JsonConverter.getTypeCastDisabledKeys(new TbMsgMetaData())).isEqualTo(Set.of());
+    }
+
+    @Test
+    public void testPutNumericStringsMarksOnlyStringsThatWouldBeCast() {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        JsonConverter.putTypeCastDisabledKeysOfNumericStrings(metaData, List.of(
+                new BaseAttributeKvEntry(new StringDataEntry("joinEui", "0000000000000000"), 0L),
+                new BaseAttributeKvEntry(new StringDataEntry("firmwareVersion", "1.10"), 0L),
+                new BaseAttributeKvEntry(new StringDataEntry("devEui", "70B3D57ED0012345"), 0L),
+                new BaseAttributeKvEntry(new LongDataEntry("fCnt", 42L), 0L),
+                new BaseAttributeKvEntry(new DoubleDataEntry("rssi", -97.5), 0L)));
+        assertThat(JsonConverter.getTypeCastDisabledKeys(metaData)).containsExactlyInAnyOrder("joinEui", "firmwareVersion");
+    }
+
+    @Test
+    public void testPutNumericStringsSkipsEntriesWithoutNumericStrings() {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        JsonConverter.putTypeCastDisabledKeysOfNumericStrings(metaData, List.of(
+                new BaseAttributeKvEntry(new StringDataEntry("devEui", "70B3D57ED0012345"), 0L),
+                new BaseAttributeKvEntry(new LongDataEntry("fCnt", 42L), 0L)));
+        JsonConverter.putTypeCastDisabledKeysOfNumericStrings(metaData, null);
+        assertThat(metaData.getValue(JsonConverter.TYPE_CAST_DISABLED_KEYS)).isNull();
+    }
+
     private static TbMsg msg(String data, Set<String> typeCastDisabledKeys) {
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TypeCastDisabledKeys.put(metaData, typeCastDisabledKeys);
+        JsonConverter.putTypeCastDisabledKeys(metaData, typeCastDisabledKeys);
         return TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(new DeviceId(UUID.randomUUID()))
