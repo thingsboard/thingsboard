@@ -684,7 +684,8 @@ public class JsonConverter {
 
     /**
      * Turns a rule engine message's data into attributes, with the current time as their ts.
-     * Honours the keys the integration marked to stay strings in the message metadata.
+     * Honours the keys marked to stay strings in the message metadata: by the integration on an uplink, and by the save
+     * attributes node on its attributes updated notification.
      */
     public static List<AttributeKvEntry> attributesFromMsg(TbMsg msg) {
         return convertToAttributes(JsonParser.parseString(msg.getData()), System.currentTimeMillis(), getTypeCastDisabledKeys(msg.getMetaData()));
