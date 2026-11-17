@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { Injectable } from '@angular/core';
-import { from, Observable, of } from 'rxjs';
+import { firstValueFrom, from, Observable, of } from 'rxjs';
 import { catchError, filter, map, switchMap, take, timeout } from 'rxjs/operators';
-import html2canvas from 'html2canvas';
 import { WidgetService } from '@core/http/widget.service';
 import { AiResourceService } from '@core/http/ai-resource.service';
 import { migrateWidgetTypeToDynamicForms } from '@shared/models/widget.models';
@@ -15,6 +14,8 @@ const MAX_REASON_LENGTH = 1900;
 const MAX_LINE_LENGTH = 300;
 const PREVIEW_WIDTH = 1280;
 const PREVIEW_HEIGHT = 800;
+const STYLE_CHUNK = 8;
+const ICON_FONT = /material (icons|symbols)/i;
 
 interface WidgetCheckReport {
   initialised: boolean;
@@ -25,6 +26,8 @@ interface WidgetCheckReport {
   height?: number;
   screenshot?: string;
 }
+
+type CapturedReport = WidgetCheckReport & {canvas?: HTMLCanvasElement};
 
 @Injectable({
   providedIn: 'root'
@@ -50,9 +53,9 @@ export class AiWidgetCheckService {
     );
   }
 
-  private run(widget: WidgetInfo): Promise<WidgetCheckReport & {canvas?: HTMLCanvasElement}> {
+  private run(widget: WidgetInfo): Promise<CapturedReport> {
     return new Promise(resolve => {
-      const report: WidgetCheckReport & {canvas?: HTMLCanvasElement} = {initialised: false, errors: [], console: []};
+      const report: CapturedReport = {initialised: false, errors: [], console: []};
       const config = JSON.parse(widget.defaultConfig || '{}');
       config.title = config.title || widget.widgetName;
       const frame = document.createElement('iframe');
@@ -142,34 +145,116 @@ export class AiWidgetCheckService {
     }
   }
 
-  private capture(frame: HTMLIFrameElement): Promise<HTMLCanvasElement | undefined> {
+  private async capture(frame: HTMLIFrameElement): Promise<HTMLCanvasElement | undefined> {
     const doc = frame.contentDocument;
+    const win = frame.contentWindow;
     const target = (doc?.querySelector('tb-widget-container') || doc?.querySelector('tb-widget')) as HTMLElement;
-    if (!target) {
-      return Promise.resolve(undefined);
+    if (!target || !win) {
+      return undefined;
     }
-    return html2canvas(target, {logging: false, useCORS: true, backgroundColor: null, scale: 1})
-      .catch(() => undefined);
+    const rect = target.getBoundingClientRect();
+    const width = Math.ceil(rect.width);
+    const height = Math.ceil(rect.height);
+    if (!width || !height) {
+      return undefined;
+    }
+    const clone = target.cloneNode(true) as HTMLElement;
+    const sources = [target, ...Array.from(target.querySelectorAll<Element>('*'))];
+    const copies = [clone, ...Array.from(clone.querySelectorAll<Element>('*'))];
+    for (let i = 0; i < sources.length; i++) {
+      if (i % STYLE_CHUNK === STYLE_CHUNK - 1) {
+        await new Promise(resolve => setTimeout(resolve));
+      }
+      this.copyElement(win, sources[i], copies[i]);
+    }
+    const markup = new XMLSerializer().serializeToString(clone);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+      `<foreignObject x="0" y="0" width="100%" height="100%">${markup}</foreignObject></svg>`;
+    const image = new Image();
+    image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext('2d').drawImage(image, 0, 0);
+    return canvas;
   }
 
-  private attachScreenshot(report: WidgetCheckReport & {canvas?: HTMLCanvasElement}): Observable<WidgetCheckReport> {
+  private copyElement(win: Window, source: Element, copy: Element) {
+    const style = win.getComputedStyle(source);
+    let text = '';
+    for (const property of Array.from(style)) {
+      if (!property.startsWith('--')) {
+        text += `${property}:${style.getPropertyValue(property)};`;
+      }
+    }
+    copy.setAttribute('style', text);
+    const glyph = source.tagName !== 'CANVAS' && ICON_FONT.test(style.fontFamily) && source.childElementCount === 0;
+    const image = source.tagName === 'CANVAS' ? this.canvasImage(source as HTMLCanvasElement)
+      : glyph ? this.glyphImage(win, source, style) : undefined;
+    if (glyph && !image) {
+      copy.setAttribute('style', text + 'visibility:hidden;');
+      return;
+    }
+    if (image) {
+      const img = copy.ownerDocument.createElement('img');
+      img.setAttribute('src', image);
+      img.setAttribute('style', text);
+      copy.replaceWith(img);
+    }
+  }
+
+  private canvasImage(canvas: HTMLCanvasElement): string | undefined {
+    try {
+      return canvas.toDataURL();
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  private glyphImage(win: Window, source: Element, style: CSSStyleDeclaration): string | undefined {
+    const rect = source.getBoundingClientRect();
+    const glyph = source.textContent?.trim();
+    if (!glyph || !rect.width || !rect.height) {
+      return undefined;
+    }
+    const canvas = win.document.createElement('canvas');
+    canvas.width = Math.ceil(rect.width);
+    canvas.height = Math.ceil(rect.height);
+    const context = canvas.getContext('2d');
+    context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    context.fillStyle = style.color;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(glyph, canvas.width / 2, canvas.height / 2);
+    return this.canvasImage(canvas);
+  }
+
+  private attachScreenshot(report: CapturedReport): Observable<WidgetCheckReport> {
     const canvas = report.canvas;
     delete report.canvas;
-    if (!canvas) {
-      return of(report);
-    }
-    return from(new Promise<Blob>(resolve => canvas.toBlob(blob => resolve(blob), 'image/png'))).pipe(
-      switchMap(blob => blob ? this.aiResources.upload(new File([blob], 'widget-check.png', {type: 'image/png'})) : of(null)),
-      filter(event => !event || event.type === 'done'),
-      take(1),
-      map(event => {
-        if (event?.type === 'done' && event.resource?.id) {
-          report.screenshot = event.resource.id;
+    return from(this.upload(canvas, 'widget-check.png')).pipe(
+      map(screenshot => {
+        if (screenshot) {
+          report.screenshot = screenshot;
         }
         return report;
       }),
       catchError(() => of(report))
     );
+  }
+
+  private upload(canvas: HTMLCanvasElement | undefined, name: string): Promise<string | undefined> {
+    if (!canvas) {
+      return Promise.resolve(undefined);
+    }
+    return new Promise<Blob>(resolve => canvas.toBlob(blob => resolve(blob), 'image/png')).then(blob => !blob ? undefined :
+      firstValueFrom(this.aiResources.upload(new File([blob], name, {type: 'image/png'})).pipe(
+        filter(event => event.type === 'done'),
+        take(1),
+        map(event => event.type === 'done' ? event.resource?.id : undefined),
+        catchError(() => of(undefined))
+      ), {defaultValue: undefined}));
   }
 
   private toReason(report: WidgetCheckReport): string {

@@ -29,6 +29,15 @@ export function aiDashboardThumb(cards: number): string {
     + `<rect x="81" y="33" width="35" height="43" rx="2" fill="#fff" stroke="#e3e6e8"/>${rows}</svg>`;
 }
 
+export function aiWidgetThumb(): string {
+  return `<svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><rect width="120" height="80" fill="#f4f6f7"/>`
+    + `<rect x="22" y="8" width="76" height="64" rx="4" fill="#fff" stroke="#e3e6e8"/>`
+    + `<rect x="29" y="15" width="30" height="4" rx="1" fill="#9aa3a9"/>`
+    + `<path d="M40 55 A20 20 0 1 1 80 55" fill="none" stroke="#e3e6e8" stroke-width="6" stroke-linecap="round"/>`
+    + `<path d="M40 55 A20 20 0 0 1 73 40" fill="none" stroke="#305680" stroke-width="6" stroke-linecap="round"/>`
+    + `<rect x="52" y="50" width="16" height="5" rx="1" fill="#5f6b73"/></svg>`;
+}
+
 @Component({
   selector: 'tb-ai-record-card',
   template: `
@@ -155,7 +164,7 @@ export class AiRecordCardComponent {
 
   picture = computed(() => {
     const view = this.view();
-    return !!(view.image || view.imageUrl || view.entityType === EntityType.DASHBOARD);
+    return !!(view.image || view.imageUrl || view.entityType === EntityType.DASHBOARD || view.entityType === EntityType.WIDGET_TYPE);
   });
 
   primaryAction = computed<AiRecordPrimary>(() => {
@@ -168,7 +177,8 @@ export class AiRecordCardComponent {
 
   hasFoot = computed(() => !!this.note() || this.facts().length > 0 || this.actions().length > 0);
 
-  thumb = computed(() => this.sanitizer.bypassSecurityTrustHtml(aiDashboardThumb(this.view().widgets ?? 4)));
+  thumb = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.view().entityType === EntityType.WIDGET_TYPE
+    ? aiWidgetThumb() : aiDashboardThumb(this.view().widgets ?? 4)));
 
   openLabel = computed(() => this.translate.instant('ai-assistant.record.open-type', {type: this.typeWord()}));
 

@@ -185,9 +185,11 @@ export class AiRecordLoaderService {
           meta: this.translate.instant(template.type === ReportTemplateType.SUB_REPORT ? 'ai-assistant.record.sub-report' : 'ai-assistant.record.report')
         })));
       case EntityType.WIDGET_TYPE:
-        return this.http.get<{name: string; widgetType?: string}>(`/api/widgetTypeInfo/${entity.id}`, defaultHttpOptionsFromConfig(CONFIG))
+        return this.http.get<{name: string; widgetType?: string; image?: string; description?: string}>(`/api/widgetTypeInfo/${entity.id}`,
+          defaultHttpOptionsFromConfig(CONFIG))
           .pipe(map(info => ({
             key, entityType, alarmRule: false, name: info.name, url: `/resources/widgets-library/widget-types/${entity.id}`,
+            image: info.image || undefined, description: info.description || undefined,
             meta: info.widgetType && widgetTypesData.get(info.widgetType as widgetType)
               ? this.translate.instant(widgetTypesData.get(info.widgetType as widgetType).name) : undefined
           })));

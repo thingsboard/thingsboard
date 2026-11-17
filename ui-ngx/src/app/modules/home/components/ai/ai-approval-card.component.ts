@@ -37,6 +37,8 @@ export interface AiReviewRow {
   valueCode: boolean;
   current?: string;
   value: string;
+  image?: boolean;
+  currentImage?: boolean;
 }
 
 const MAX_FIELDS = 5;
@@ -51,6 +53,10 @@ const VALUE_TOKENS: Record<string, string[]> = {
 };
 
 const CODE_FIELDS = new Set(['arguments', 'expression', 'output']);
+
+const IMAGE_FIELDS = new Set(['widget-image']);
+
+const IMAGE_VALUE = /^(tb-image;|\/api\/images\/|data:image\/)/;
 
 const STACK_AT = 24;
 const OWN_TYPE_LABELS = new Set(['DASHBOARD_WIDGET', 'DASHBOARD_STATE', 'DASHBOARD_ENTITY_ALIAS', 'DASHBOARD_FILTER', 'NOTIFICATION', 'NOTIFICATION_SETTINGS', 'NOTIFICATION_PREFERENCES', 'IMAGE', 'PLATFORM_SETTINGS', 'RELATION', 'VERSION', 'WHITE_LABELING', 'MAIL_TEMPLATE', 'CUSTOM_TRANSLATION', 'CUSTOM_MENU', 'MOBILE_APP', 'MOBILE_BUNDLE', 'MOBILE_QR_CODE', 'TWO_FACTOR_SETTINGS', 'MY_PROFILE', 'MY_TWO_FACTOR', 'MAIL_SERVER', 'REPORT_COMPONENT', 'REPORT_ENTITY_ALIAS', 'REPORT_FILTER', 'SCHEDULED_REPORT']);
@@ -221,7 +227,7 @@ export class AiApprovalCardComponent implements OnChanges {
   }
 
   get facts(): AiReviewRow[] {
-    const rows = this.rows('FACT').slice(0, MAX_FIELDS);
+    const rows = [...this.rows('FACT').slice(0, MAX_FIELDS), ...this.rows('CHANGE', field => field.current === undefined || field.current === null)];
     if (this.listing && this.review?.target) {
       rows.push({label: this.translate.instant('ai-assistant.record.set-up-on'), labelCode: false, valueCode: false, value: this.review.target});
     }
@@ -230,8 +236,11 @@ export class AiApprovalCardComponent implements OnChanges {
 
   private reviewFacts(): AiDetailFact[] {
     return [
-      ...this.rows('FACT').map(row => ({label: row.label, raw: true, value: row.value, mono: row.valueCode})),
-      ...this.rows('CHANGE').map(row => ({label: row.label, raw: true, value: `${row.current ?? '—'} → ${row.value}`, mono: row.valueCode}))
+      ...this.rows('FACT').map(row => row.image ? {label: row.label, raw: true, images: {value: row.value}}
+        : {label: row.label, raw: true, value: row.value, mono: row.valueCode}),
+      ...this.rows('CHANGE').map(row => row.image || row.currentImage
+        ? {label: row.label, raw: true, images: {current: row.currentImage ? row.current : undefined, value: row.image ? row.value : undefined}}
+        : {label: row.label, raw: true, value: `${row.current ?? '—'} → ${row.value}`, mono: row.valueCode})
     ];
   }
 
@@ -240,7 +249,7 @@ export class AiApprovalCardComponent implements OnChanges {
   }
 
   get changes(): AiReviewRow[] {
-    return this.rows('CHANGE');
+    return this.rows('CHANGE', field => field.current !== undefined && field.current !== null);
   }
 
   get unchanged(): AiReviewRow[] {
@@ -294,13 +303,15 @@ export class AiApprovalCardComponent implements OnChanges {
     });
   }
 
-  private rows(kind: AiReviewField['kind']): AiReviewRow[] {
-    return (this.review?.fields ?? []).filter(field => field.kind === kind).map(field => ({
+  private rows(kind: AiReviewField['kind'], include: (field: AiReviewField) => boolean = () => true): AiReviewRow[] {
+    return (this.review?.fields ?? []).filter(field => field.kind === kind && include(field)).map(field => ({
       label: field.name ?? this.translate.instant('ai-assistant.review.field.' + field.id),
       labelCode: !!field.name,
       valueCode: CODE_FIELDS.has(field.id) && field.value !== undefined && field.value !== null,
       current: kind === 'CHANGE' ? this.value(field, field.current) : undefined,
-      value: this.value(field, field.value)
+      value: this.value(field, field.value),
+      image: IMAGE_FIELDS.has(field.id) && IMAGE_VALUE.test(field.value ?? ''),
+      currentImage: IMAGE_FIELDS.has(field.id) && IMAGE_VALUE.test(field.current ?? '')
     }));
   }
 

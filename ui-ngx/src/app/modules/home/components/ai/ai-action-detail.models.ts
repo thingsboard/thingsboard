@@ -58,6 +58,7 @@ export interface AiDetailFact {
   entity?: AiDetailEntity;
   mono?: boolean;
   secret?: boolean;
+  images?: {current?: string; value?: string};
 }
 
 export interface AiDetailCommand {

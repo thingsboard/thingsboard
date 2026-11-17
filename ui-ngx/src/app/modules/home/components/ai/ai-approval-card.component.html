@@ -30,7 +30,7 @@
         <dl class="k-fields">
           @for (fact of facts; track $index) {
             <dt>@if (fact.labelCode) { <code>{{ fact.label }}</code> } @else { {{ fact.label }} }</dt>
-            <dd>@if (fact.valueCode) { <code>{{ fact.value }}</code> } @else { {{ fact.value }} }</dd>
+            <dd>@if (fact.image) { <img class="k-img" [src]="fact.value | image: {preview: true} | async" alt=""> } @else if (fact.valueCode) { <code>{{ fact.value }}</code> } @else { {{ fact.value }} }</dd>
           }
         </dl>
       }
@@ -47,8 +47,17 @@
             @for (change of changes; track $index) {
               <tr>
                 <th scope="row">@if (change.labelCode) { <code>{{ change.label }}</code> } @else { {{ change.label }} }</th>
-                <td class="k-diff-was">{{ change.current }}</td>
-                <td class="k-diff-now"><span>{{ change.value }}</span></td>
+                @if (change.image || change.currentImage) {
+                  <td class="k-diff-was">
+                    @if (change.currentImage) { <img class="k-img was" [src]="change.current | image: {preview: true} | async" alt=""> } @else { {{ change.current }} }
+                  </td>
+                  <td class="k-diff-now">
+                    @if (change.image) { <img class="k-img" [src]="change.value | image: {preview: true} | async" alt=""> } @else { <span>{{ change.value }}</span> }
+                  </td>
+                } @else {
+                  <td class="k-diff-was">{{ change.current }}</td>
+                  <td class="k-diff-now"><span>{{ change.value }}</span></td>
+                }
               </tr>
             }
           </tbody>

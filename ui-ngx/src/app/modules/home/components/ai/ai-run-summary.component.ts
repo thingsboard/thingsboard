@@ -10,6 +10,8 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { AiRecordView } from '@home/components/ai/ai-record.models';
 import { AiRecordLoaderService } from '@home/components/ai/ai-record-loader.service';
 
+const LEAD_TYPES = new Set<EntityType>([EntityType.DASHBOARD, EntityType.WIDGET_TYPE]);
+
 @Component({
   selector: 'tb-ai-run-summary',
   template: `
@@ -57,7 +59,7 @@ export class AiRunSummaryComponent {
 
   rows = signal<AiRecordView[]>([]);
 
-  lead = computed(() => this.rows().find(row => row.entityType === EntityType.DASHBOARD && !!row.url) ?? null);
+  lead = computed(() => this.rows().find(row => LEAD_TYPES.has(row.entityType as EntityType) && !!row.url) ?? null);
 
   rest = computed(() => this.rows().filter(row => row !== this.lead()));
 

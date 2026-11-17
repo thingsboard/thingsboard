@@ -959,9 +959,11 @@ export class AiChatComponent implements OnInit, OnDestroy {
       case 'assistantDelta':
         this.appendDelta(event.data.text);
         break;
-      case 'thinking':
-        this.work.update(work => work && event.data?.headline ? {...work, headline: event.data.headline} : work);
+      case 'thinking': {
+        const headline = this.thinkingHeadline(event.data);
+        this.work.update(work => work && headline ? {...work, headline} : work);
         break;
+      }
       case 'assistantMessage':
         this.messages.update(list => [...this.withoutStreaming(list), {
           from: 'AI', content: event.data.message, time: Date.now(),
@@ -1096,6 +1098,14 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
     this.panelService.carryChat(chatId);
     this.router.navigate(['/reporting/templates', created.id]);
+  }
+
+  private thinkingHeadline(data: {headline?: string; tool?: string; arguments?: unknown} | undefined): string | undefined {
+    if (data?.tool) {
+      const words = aiActionWords(data.tool, data.arguments);
+      return this.translate.instant(words.key + '.run', words.params);
+    }
+    return data?.headline;
   }
 
   private openCreatedWidget(tool: string | undefined, affected: EntityId[] | undefined): void {
@@ -1316,9 +1326,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.stopping.set(false);
     this.work.set(undefined);
     this.stopRunningActions();
-    if (this.affectedEntities.length) {
-      this.panelService.emitUpdatedData(this.affectedEntities);
-      this.affectedEntities = [];
+    const notYetReloaded = this.affectedEntities.filter(entity => !LIVE_EDITED_TYPES.has(entity.entityType as EntityType));
+    this.affectedEntities = [];
+    if (notYetReloaded.length) {
+      this.panelService.emitUpdatedData(notYetReloaded);
     }
     this.chats.setReplying(this.replyingChatId, false);
     this.replyingChatId = undefined;

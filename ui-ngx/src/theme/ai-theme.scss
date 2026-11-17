@@ -1269,6 +1269,41 @@
   }
 }
 
+.k-detail-images {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tb-text-muted);
+}
+
+.k-detail-img {
+  display: block;
+  width: 100px;
+  height: 80px;
+  object-fit: contain;
+  border: 1px solid var(--tb-ink-12, rgba(0, 0, 0, 0.12));
+  border-radius: 6px;
+  background: #fff;
+
+  &.was {
+    opacity: .6;
+  }
+}
+
+.k-review .k-img {
+  display: block;
+  width: 150px;
+  height: 120px;
+  object-fit: contain;
+  border: 1px solid var(--tb-ink-12, rgba(0, 0, 0, 0.12));
+  border-radius: 6px;
+  background: #fff;
+
+  &.was {
+    opacity: .6;
+  }
+}
+
 .k-review code,
 .k-diff code {
   display: inline-block;

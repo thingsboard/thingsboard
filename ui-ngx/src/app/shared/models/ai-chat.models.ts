@@ -244,7 +244,7 @@ export interface AssistantDeltaChatEvent extends BaseChatEvent {
 
 export interface ThinkingChatEvent extends BaseChatEvent {
   event: 'thinking';
-  data: {headline: string};
+  data: {headline?: string; tool?: string; arguments?: unknown};
 }
 
 export type ChatEvent = AssistantChatEvent | AssistantDeltaChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, NgZone, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, linkedSignal, NgZone, OnInit, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AiSpinKind, aiWorkClock } from '@home/components/ai/ai-action.models';
 
@@ -41,9 +41,18 @@ export class AiWorkLineComponent implements OnInit {
 
   private elapsed = computed(() => Math.max(0, this.now() - this.since()));
 
+  private shown = computed(() => ({words: this.words(), since: this.since()}), {
+    equal: (a, b) => a.words === b.words && a.since === b.since
+  });
+
+  private wordsSince = linkedSignal<{words: string; since: number}, number>({
+    source: this.shown,
+    computation: (shown, previous) => !previous || previous.source.since !== shown.since ? shown.since : Date.now()
+  });
+
   say = computed(() => {
     const words = this.words();
-    if (this.held() || this.elapsed() < STILL_AFTER_MS || !words) {
+    if (this.held() || this.now() - this.wordsSince() < STILL_AFTER_MS || !words) {
       return words;
     }
     return this.translate.instant('ai-assistant.work.still', {words: words.charAt(0).toLocaleLowerCase() + words.slice(1)});

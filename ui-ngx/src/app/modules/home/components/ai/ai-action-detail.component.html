@@ -82,7 +82,19 @@
         @for (fact of block.rows; track $index) {
           <dt>{{ label(fact) }}</dt>
           <dd [class.mono]="fact.mono">
-            @if (factLink(fact); as url) {
+            @if (fact.images; as pair) {
+              <span class="k-detail-images">
+                @if (pair.current) {
+                  <img class="k-detail-img was" [src]="pair.current | image: {preview: true} | async" alt="">
+                  <mat-icon class="tb-mat-16" aria-hidden="true">arrow_forward</mat-icon>
+                }
+                @if (pair.value) {
+                  <img class="k-detail-img" [src]="pair.value | image: {preview: true} | async" alt="">
+                } @else {
+                  {{ 'ai-assistant.review.not-set' | translate }}
+                }
+              </span>
+            } @else if (factLink(fact); as url) {
               <a [routerLink]="url">{{ factValue(fact) }}</a>
             } @else if (fact.secret && !revealed().has(view().hood?.key + $index)) {
               <span>{{ masked(factValue(fact)) }}</span>
