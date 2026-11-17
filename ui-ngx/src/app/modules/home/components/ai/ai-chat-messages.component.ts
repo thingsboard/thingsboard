@@ -461,6 +461,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
         if (wasNearBottom) {
           setTimeout(() => this.scrollToBottom('smooth'), 0);
         }
+      } else if (lastMsg?.from === 'APPROVAL' && this.waitApproval) {
+        setTimeout(() => this.revealLastApproval(), 0);
       } else if (lastMsg?.from === 'APPROVAL') {
         if (prevLastMsg?.from === 'USER') {
           setTimeout(() => this.scrollToLastUserMessage(), 0);
@@ -869,9 +871,10 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     this.releaseAsk?.();
   }
 
-  private pinToBottom(): void {
+  private pinToBottom(place?: () => void): void {
+    this.releaseBottom?.();
     const scroller = this.scroller;
-    const stick = () => scroller.scrollTop = scroller.scrollHeight;
+    const stick = place ?? (() => scroller.scrollTop = scroller.scrollHeight);
     const observer = new ResizeObserver(stick);
     observer.observe(this.elementRef.nativeElement);
     const release = () => {
@@ -895,6 +898,22 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   scrollToBottom(behavior: ScrollBehavior = 'smooth'): void {
     const el = this.scroller;
     el.scrollTo({top: el.scrollHeight, behavior: this.motion(behavior)});
+  }
+
+  private revealLastApproval(): void {
+    const cards = this.elementRef.nativeElement.querySelectorAll('tb-ai-approval-card');
+    const card = cards[cards.length - 1] as HTMLElement | undefined;
+    if (!card) {
+      return;
+    }
+    const scroller = this.scroller;
+    this.pinToBottom(() => {
+      scroller.scrollTop = scroller.scrollHeight;
+      const top = card.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+      if (top < 0) {
+        scroller.scrollTop += top - 8;
+      }
+    });
   }
 
   scrollToLastUserMessage(): void {

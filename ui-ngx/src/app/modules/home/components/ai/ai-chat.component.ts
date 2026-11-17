@@ -67,7 +67,7 @@ import { AiPlanRun } from '@home/components/ai/ai-plan.component';
 import { AiFile, aiFileMark, aiFileName, aiFileOf, downloadAiFile, downloadAiFileAsPng, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
 import { AiFileBodyComponent, AiFileMarks, AiFileSaver } from '@home/components/ai/ai-file-body.component';
 import { ClipboardService } from 'ngx-clipboard';
-import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
+import { AiChatMessagesComponent, AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AiAssistantViewType } from '@shared/models/ai-chat.models';
@@ -185,6 +185,24 @@ export class AiChatComponent implements OnInit, OnDestroy {
   composerQuote = signal<AiLinesQuote | null>(null);
 
   fileBody = viewChild(AiFileBodyComponent);
+
+  private chatArea = viewChild<ElementRef<HTMLElement>>('chatArea');
+
+  private chatLog = viewChild(AiChatMessagesComponent, {read: ElementRef});
+
+  private logSizeEffect = effect(onCleanup => {
+    const area = this.chatArea()?.nativeElement;
+    const log = this.chatLog()?.nativeElement;
+    if (!area) {
+      return;
+    }
+    const observer = new ResizeObserver(() => this.onLogScroll(area));
+    observer.observe(area);
+    if (log) {
+      observer.observe(log);
+    }
+    onCleanup(() => observer.disconnect());
+  });
 
   unlisted = signal<ReadonlySet<string>>(new Set());
 
@@ -961,7 +979,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
         break;
       case 'thinking': {
         const headline = this.thinkingHeadline(event.data);
-        this.work.update(work => work && headline ? {...work, headline} : work);
+        if (headline) {
+          this.work.update(work => ({...(work ?? {moment: 'going-through-results' as AiWorkMoment, since: Date.now()}), headline}));
+        }
         break;
       }
       case 'assistantMessage':
