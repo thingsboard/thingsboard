@@ -13,7 +13,6 @@
 # Needs Docker and python3. The results of the scans are kept in ~/.ort/scanner (or in $NOTICES_ORT_HOME/scanner):
 # a package that is not there yet is scanned, which takes minutes. The scans that others have made are downloaded
 # first, from the archive that the machines share (or from the one at $NOTICES_SCAN_CACHE_URL): see scan_cache.py.
-# A Maven build sets the two with -Dnotices.ort.home and -Dnotices.scanCache.url.
 # The jars are read from ~/.m2/repository (or from $NOTICES_MAVEN_REPOSITORY); one that is not there is downloaded.
 # A package without a source archive and without a repository fails the scan, until a curation gives its source or
 # says that it has none.

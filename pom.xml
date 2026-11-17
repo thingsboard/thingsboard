@@ -62,11 +62,6 @@
              -Dnotices.skip=false. A module that makes the SBOMs of its packages then also makes their notices and puts
              them into the packages: see tools/src/main/notices/notices.sh. -->
         <notices.skip>true</notices.skip>
-        <!-- Where ORT keeps its data on this machine, with the results of the scans: ~/.ort when empty.
-             Under Maven these two properties are what counts, not the environment variables of notices.sh. -->
-        <notices.ort.home></notices.ort.home>
-        <!-- The archive of scan results that the machines share: the one of notices.sh when empty -->
-        <notices.scanCache.url></notices.scanCache.url>
         <!-- What the notices steps follow: a build that skips the packaging makes no notices either, whatever
              notices.skip says. See the skip-pkg profiles: a profile cannot change a property given on the command line. -->
         <notices.run.skip>${notices.skip}</notices.run.skip>
@@ -994,11 +989,11 @@
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>3.0.0</version>
                     <configuration>
-                        <!-- For tools/src/main/notices/notices.sh, which every module runs with this plugin -->
+                        <!-- For tools/src/main/notices/notices.sh, which every module runs with this plugin. Its other
+                             settings, such as NOTICES_ORT_HOME and NOTICES_SCAN_CACHE_URL, reach it from the
+                             environment of Maven. -->
                         <environmentVariables>
                             <NOTICES_MAVEN_REPOSITORY>${settings.localRepository}</NOTICES_MAVEN_REPOSITORY>
-                            <NOTICES_ORT_HOME>${notices.ort.home}</NOTICES_ORT_HOME>
-                            <NOTICES_SCAN_CACHE_URL>${notices.scanCache.url}</NOTICES_SCAN_CACHE_URL>
                         </environmentVariables>
                     </configuration>
                 </plugin>
