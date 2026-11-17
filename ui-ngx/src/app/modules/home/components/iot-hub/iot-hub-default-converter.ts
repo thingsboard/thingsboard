@@ -5,7 +5,7 @@ import { ResourcesService } from '@core/services/resources.service';
 import { Converter, ConverterConfigV2, ConverterType, getTargetField, getTargetTemplateUrl } from '@shared/models/converter.models';
 import { IntegrationType } from '@shared/models/integration.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
-import { isEqual } from '@core/utils';
+import { isEqual, objectHashCode } from '@core/utils';
 import { DeviceInstalledItemDescriptor, DevicePackageRequest, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { PageLink } from '@shared/models/page/page-link';
@@ -62,11 +62,35 @@ export const loadDefaultUplinkConverter = async (resourcesService: ResourcesServ
 };
 
 /** True when the converter does something else than the default one: another script or other settings. */
-export const differsFromDefaultConverter = (converter: Converter, defaultConverter: Partial<Converter>): boolean => {
+const differsFromDefaultConverter = (converter: Converter, defaultConverter: Partial<Converter>): boolean => {
   const field = getTargetField(ConverterType.UPLINK, converter.configuration.scriptLang);
   const script = (value: string) => (value ?? '').trimEnd();
   return script(converter.configuration[field]) !== script(defaultConverter.configuration[field]) ||
     V2_CONFIGURATION_KEYS.some(key => !isEqual(converter.configuration[key] ?? null, defaultConverter.configuration[key] ?? null));
+};
+
+/**
+ * Of what decides what the default converter does, as differsFromDefaultConverter compares it. The install state keeps it,
+ * so that a later check tells ThingsBoard's change of its default converter from the user's change of the converter.
+ */
+export const defaultConverterFingerprint = (defaultConverter: Partial<Converter>): string => {
+  const configuration = defaultConverter.configuration;
+  const field = getTargetField(ConverterType.UPLINK, configuration.scriptLang);
+  return String(objectHashCode([(configuration[field] ?? '').trimEnd(),
+    ...V2_CONFIGURATION_KEYS.map(key => configuration[key] ?? null)]));
+};
+
+/**
+ * True when ThingsBoard's default converter changed since the package's default converter step took it. A package
+ * installed before the install state kept the fingerprint is decided by the converter itself, and only while nobody
+ * changed it: modified comes from the package's check.
+ */
+export const defaultConverterChanged = (state: any, converter: Converter, defaultConverter: Partial<Converter>,
+                                        modified?: boolean | null): boolean => {
+  if (state?.defaultConverterFingerprint) {
+    return state.defaultConverterFingerprint !== defaultConverterFingerprint(defaultConverter);
+  }
+  return modified === false && differsFromDefaultConverter(converter, defaultConverter);
 };
 
 /** All installed device packages of the tenant. */
@@ -123,6 +147,7 @@ export const defaultConverterUpdateRequest = (update: DefaultConverterUpdate, ex
       confirmed: true,
       resolution: descriptor.installState?.[update.stateKey]?.resolution ?? 'created',
       defaultConverter: true,
+      defaultConverterFingerprint: defaultConverterFingerprint(update.defaultConverter),
       entity: update.defaultConverter
     }]
   };

@@ -40,7 +40,7 @@ import { ConverterService } from '@core/http/converter.service';
 import { ResourcesService } from '@core/services/resources.service';
 import {
   DefaultConverterUpdate,
-  differsFromDefaultConverter,
+  defaultConverterChanged,
   loadDefaultUplinkConverter,
   loadOwnDefaultConverterIds
 } from '@home/components/iot-hub/iot-hub-default-converter';
@@ -383,11 +383,17 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
    * The device packages on this page whose step with "default": true installed a converter that differs from
    * ThingsBoard's default converter now. ThingsBoard's default changes with ThingsBoard, so the package has no new version for it.
    */
+  private async converterModified(item: IotHubInstalledItem, stateKey: string): Promise<boolean | null> {
+    const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(item.id.id, {ignoreErrors: true, ignoreLoading: true}))
+      .catch(() => []);
+    return states.find(s => s.stepName === stateKey)?.modified ?? null;
+  }
+
   private async checkConverterUpdates(): Promise<void> {
     // A later load (another page, sort or search) starts another run: an earlier one finishing last mustn't win
     const run = ++this.converterCheckRun;
     // The package's default converter of each DEVICE package on the page
-    const checks: { item: IotHubInstalledItem; stateKey: string; converterId: string }[] = [];
+    const checks: { item: IotHubInstalledItem; stateKey: string; state: any; converterId: string }[] = [];
     // Over all installed packages, not only this page's, as the update dialog decides
     let ownDefaultConverterIds: Set<string> | undefined;
     for (const item of this.dataSource) {
@@ -404,10 +410,10 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
             continue;
           }
         }
-        checks.push({ item, stateKey, converterId: id });
+        checks.push({ item, stateKey, state, converterId: id });
       }
     }
-    const changed = await Promise.all(checks.map(async ({ item, stateKey, converterId }): Promise<DefaultConverterUpdate | null> => {
+    const changed = await Promise.all(checks.map(async ({ item, stateKey, state, converterId }): Promise<DefaultConverterUpdate | null> => {
       const converter = await firstValueFrom(this.converterService.getConverter(converterId, {ignoreErrors: true, ignoreLoading: true}))
         .catch(() => null);
       if (!converter) {
@@ -415,7 +421,11 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       }
       const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
         converter.configuration.scriptLang, converter.name);
-      return defaultConverter && differsFromDefaultConverter(converter, defaultConverter) ?
+      if (!defaultConverter) {
+        return null;
+      }
+      const modified = state.defaultConverterFingerprint ? undefined : await this.converterModified(item, stateKey);
+      return defaultConverterChanged(state, converter, defaultConverter, modified) ?
         { installedItem: item, stateKey, converter, defaultConverter } : null;
     }));
     if (run !== this.converterCheckRun) {

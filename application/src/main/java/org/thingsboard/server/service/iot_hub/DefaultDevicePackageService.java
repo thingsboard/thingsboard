@@ -468,6 +468,13 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
                 }
                 if (step.isDefaultConverter()) {
                     state.put("defaultConverter", true);
+                    // A kept converter keeps the default it was installed with: ThingsBoard's newer default isn't in it
+                    String previousFingerprint = step.getAction() == DevicePackageRequest.Action.KEEP ?
+                            previousStateText(previous, step.getEntityId(), "defaultConverterFingerprint") : null;
+                    String fingerprint = previousFingerprint != null ? previousFingerprint : step.getDefaultConverterFingerprint();
+                    if (fingerprint != null) {
+                        state.put("defaultConverterFingerprint", fingerprint);
+                    }
                 }
                 ObjectNode metadata = addedMetadata(step.getMetadata());
                 if (metadata != null) {
@@ -880,13 +887,18 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
 
     /** The checksum the installed version recorded for the entity, under whichever step it was installed with. */
     private static String previousChecksum(DeviceInstalledItemDescriptor previous, UUID entityId) {
-        if (previous.getInstallState() == null || entityId == null) {
+        return previousStateText(previous, entityId, "checksum");
+    }
+
+    /** A text field the installed version recorded for the entity, under whichever step it was installed with. */
+    private static String previousStateText(DeviceInstalledItemDescriptor previous, UUID entityId, String field) {
+        if (previous == null || previous.getInstallState() == null || entityId == null) {
             return null;
         }
         for (JsonNode state : previous.getInstallState().values()) {
-            JsonNode checksum = state.get("checksum");
-            if (entityId.toString().equals(state.path("entityOutput").path("id").asText()) && checksum != null && checksum.isTextual()) {
-                return checksum.asText();
+            JsonNode value = state.get(field);
+            if (entityId.toString().equals(state.path("entityOutput").path("id").asText()) && value != null && value.isTextual()) {
+                return value.asText();
             }
         }
         return null;

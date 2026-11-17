@@ -37,7 +37,12 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { Integration, IntegrationType } from '@shared/models/integration.models';
 import { HasVersion } from '@shared/models/entity.models';
-import { differsFromDefaultConverter, loadDefaultUplinkConverter, loadOwnDefaultConverterIds } from '@home/components/iot-hub/iot-hub-default-converter';
+import {
+  defaultConverterChanged,
+  defaultConverterFingerprint,
+  loadDefaultUplinkConverter,
+  loadOwnDefaultConverterIds
+} from '@home/components/iot-hub/iot-hub-default-converter';
 import { downloadEntityJson, readableMessage, requestFailureMessage, splitTextWithLink } from '@home/components/iot-hub/iot-hub-utils';
 import {
   cleanFormFieldValue,
@@ -405,6 +410,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private entityPlans = new WeakMap<EntityStepProgress, EntityStepPlan>();
   // Update: for each step with "default": true, whether its converter differs from ThingsBoard's default one now
   private defaultConverterChanges = new Map<DeviceInstallStep, boolean>();
+  private defaultConverterFingerprints = new Map<DeviceInstallStep, string>();
   // The check of the plan in progress; a way back meanwhile starts a new one, which drops this one's result
   private checkRun = 0;
 
@@ -1953,6 +1959,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       action: 'KEEP',
       resolution: this.resolutionOf(plan),
       defaultConverter: step.default || undefined,
+      defaultConverterFingerprint: step.default ? this.defaultConverterFingerprints.get(step) : undefined,
       // A kept integration, e.g. one the package took as it was, gets them merged by the server: the converter reads them
       metadata: this.integrationMetadataOf(step)
     };
@@ -2094,18 +2101,21 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         }
         step.template = `${DEFAULT_CONVERTER_PATH}${integrationType}.json`;
         this.zipFiles.set(step.template, JSON.stringify(converter));
+        this.defaultConverterFingerprints.set(step, defaultConverterFingerprint(converter));
       }
     }
   }
 
   /**
    * Update: ThingsBoard's default converter changes with ThingsBoard, not with the package, so a step with "default": true
-   * changed when the package's converter differs from the default one now. A converter the user changed differs too:
-   * the update shows that someone changed it.
+   * changed when ThingsBoard's default converter changed since the step took it. The user's change of the converter alone
+   * doesn't count: the update shows it as the entity's local changes.
    */
   private async checkDefaultConverters(): Promise<void> {
     this.restoreInstallState();
     let ownDefaultConverterIds: Set<string> | undefined;
+    // Only for a package installed before the install state kept the default converter's fingerprint
+    let checkedStates: DevicePackageEntityState[] | undefined;
     try {
       for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
         const stored = step.default ? this.storedStateOf(step)?.state : undefined;
@@ -2121,7 +2131,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         if (converter) {
           const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
             converter.configuration.scriptLang, converter.name);
-          this.defaultConverterChanges.set(step, !!defaultConverter && differsFromDefaultConverter(converter, defaultConverter));
+          if (!stored.defaultConverterFingerprint) {
+            checkedStates ??= await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId,
+              {ignoreErrors: true})).catch((): DevicePackageEntityState[] => []);
+          }
+          const modified = checkedStates?.find(state => state.stepName === this.storedStateOf(step)?.key)?.modified;
+          this.defaultConverterChanges.set(step, !!defaultConverter && defaultConverterChanged(stored, converter, defaultConverter, modified));
         }
       }
     } finally {
