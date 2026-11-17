@@ -17,6 +17,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings;
 import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.NoCastKeys;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -130,7 +131,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
 
         String src = msg.getData();
-        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(src), ts);
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(src), ts, NoCastKeys.get(msg));
         if (tsKvMap.isEmpty()) {
             ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;

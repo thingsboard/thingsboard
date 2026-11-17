@@ -19,6 +19,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings;
 import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.NoCastKeys;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -116,7 +117,7 @@ public class TbMsgAttributesNode implements TbNode {
             return;
         }
         String src = msg.getData();
-        List<AttributeKvEntry> newAttributes = JsonConverter.convertToAttributes(JsonParser.parseString(src));
+        List<AttributeKvEntry> newAttributes = JsonConverter.convertToAttributes(JsonParser.parseString(src), System.currentTimeMillis(), NoCastKeys.get(msg));
         if (newAttributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;

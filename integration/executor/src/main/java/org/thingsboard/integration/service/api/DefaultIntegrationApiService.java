@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.integration.api.IntegrationCallback;
+import org.thingsboard.server.common.adaptor.NoCastKeys;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.AssetCacheInfo;
 import org.thingsboard.server.common.data.AssetProfileCacheInfo;
@@ -330,6 +331,7 @@ public class DefaultIntegrationApiService implements IntegrationApiService {
             metaData.putValue(nameMetaKey, entityName);
             metaData.putValue(typeMetaKey, entityType);
             metaData.putValue(TS_META, tsKv.getTs() + "");
+            NoCastKeys.put(metaData, tsKv.getKvList());
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             sender.send(json, metaData, TbMsgType.POST_TELEMETRY_REQUEST, packCallback);
         }
@@ -341,6 +343,7 @@ public class DefaultIntegrationApiService implements IntegrationApiService {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue(nameMetaKey, entityName);
         metaData.putValue(typeMetaKey, entityType);
+        NoCastKeys.put(metaData, msg.getKvList());
         sender.send(json, metaData, TbMsgType.POST_ATTRIBUTES_REQUEST,
                 new MsgPackCallback(1, new ApiStatsProxyCallback<>(tenantId, customerId, msg.getKvList().size(), callback)));
     }

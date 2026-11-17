@@ -10,10 +10,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Isolated("JsonConverter static settings being modified")
 public class JsonConverterTest {
@@ -122,6 +128,70 @@ public class JsonConverterTest {
     public void testParseAttributesProtoCastsNumericStrings() {
         var kvList = JsonConverter.convertToAttributesProto(JsonParser.parseString("{\"devAddr\": \"01020304\"}")).getKvList();
         assertKv(kvList.get(0), KeyValueType.LONG_V, "1020304");
+    }
+
+    @Test
+    public void testConvertToAttributesWithNoCastKeys() {
+        var json = JsonParser.parseString("{\"joinEui\": \"0000000000000000\", \"hardwareVersion\": \"1.0\", \"fCnt\": \"42\", \"rssi\": -110}");
+        Map<String, KvEntry> kvs = toMap(JsonConverter.convertToAttributes(json, 1000L, Set.of("joinEui", "hardwareVersion")));
+        assertEntry(kvs.get("joinEui"), DataType.STRING, "0000000000000000");
+        assertEntry(kvs.get("hardwareVersion"), DataType.STRING, "1.0");
+        assertEntry(kvs.get("fCnt"), DataType.LONG, 42L);
+        assertEntry(kvs.get("rssi"), DataType.LONG, -110L);
+    }
+
+    @Test
+    public void testConvertToAttributesCastsNumericStrings() {
+        var json = JsonParser.parseString("{\"joinEui\": \"0000000000000000\", \"hardwareVersion\": \"1.0\"}");
+        Map<String, KvEntry> kvs = toMap(JsonConverter.convertToAttributes(json, 1000L));
+        assertEntry(kvs.get("joinEui"), DataType.LONG, 0L);
+        assertEntry(kvs.get("hardwareVersion"), DataType.DOUBLE, 1.0);
+    }
+
+    @Test
+    public void testConvertToTelemetryWithNoCastKeys() {
+        var json = JsonParser.parseString("{\"devAddr\": \"01020304\", \"fCnt\": \"42\"}");
+        Map<Long, List<KvEntry>> tsKv = JsonConverter.convertToTelemetry(json, 1000L, Set.of("devAddr"));
+        Map<String, KvEntry> kvs = toMap(tsKv.get(1000L));
+        assertEntry(kvs.get("devAddr"), DataType.STRING, "01020304");
+        assertEntry(kvs.get("fCnt"), DataType.LONG, 42L);
+    }
+
+    @Test
+    public void testConvertToTelemetryWithTsAndNoCastKeys() {
+        var json = JsonParser.parseString("[{\"ts\": 2000, \"values\": {\"devAddr\": \"01020304\", \"snr\": \"9.5\"}}, {\"ts\": 1000, \"values\": {\"devAddr\": \"01020305\"}}]");
+        Map<Long, List<KvEntry>> tsKv = JsonConverter.convertToSortedTelemetry(json, 0L, Set.of("devAddr"));
+        Assertions.assertEquals(List.of(1000L, 2000L), List.copyOf(tsKv.keySet()));
+        assertEntry(toMap(tsKv.get(1000L)).get("devAddr"), DataType.STRING, "01020305");
+        Map<String, KvEntry> kvs = toMap(tsKv.get(2000L));
+        assertEntry(kvs.get("devAddr"), DataType.STRING, "01020304");
+        assertEntry(kvs.get("snr"), DataType.DOUBLE, 9.5);
+    }
+
+    @Test
+    public void testConvertToTelemetryCastsNumericStrings() {
+        var json = JsonParser.parseString("{\"ts\": 1000, \"values\": {\"devAddr\": \"01020304\"}}");
+        assertEntry(JsonConverter.convertToTelemetry(json, 0L).get(1000L).get(0), DataType.LONG, 1020304L);
+        assertEntry(JsonConverter.convertToSortedTelemetry(json, 0L).get(1000L).get(0), DataType.LONG, 1020304L);
+    }
+
+    @Test
+    public void testConvertToTelemetryWithNoCastKeysWhenTypeCastDisabled() {
+        JsonConverter.setTypeCastEnabled(false);
+        var json = JsonParser.parseString("{\"devAddr\": \"01020304\", \"fCnt\": \"42\"}");
+        Map<String, KvEntry> kvs = toMap(JsonConverter.convertToTelemetry(json, 1000L, Set.of("devAddr")).get(1000L));
+        assertEntry(kvs.get("devAddr"), DataType.STRING, "01020304");
+        assertEntry(kvs.get("fCnt"), DataType.STRING, "42");
+    }
+
+    private static Map<String, KvEntry> toMap(List<? extends KvEntry> entries) {
+        return entries.stream().collect(Collectors.toMap(KvEntry::getKey, Function.identity()));
+    }
+
+    private static void assertEntry(KvEntry entry, DataType type, Object value) {
+        Assertions.assertNotNull(entry);
+        Assertions.assertEquals(type, entry.getDataType());
+        Assertions.assertEquals(value, entry.getValue());
     }
 
     private static void assertKv(KeyValueProto kv, KeyValueType type, String value) {

@@ -149,7 +149,7 @@ public class JsonConverter {
     private static void parseObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo, Set<String> noCastKeys) {
         try {
             if (result != null) {
-                parseObject(result, systemTs, jo);
+                parseObject(result, systemTs, jo, noCastKeys);
             } else {
                 parseObject(builder, systemTs, jo, noCastKeys);
             }
@@ -631,10 +631,15 @@ public class JsonConverter {
     }
 
     public static List<AttributeKvEntry> convertToAttributes(JsonElement element, long ts) {
-        return parseValues(element.getAsJsonObject()).stream().<AttributeKvEntry>map(kv -> new BaseAttributeKvEntry(kv, ts)).toList();
+        return convertToAttributes(element, ts, Collections.emptySet());
     }
 
-    private static List<KvEntry> parseValues(JsonObject valuesObject) {
+    // String values of noCastKeys stay strings even when type cast is enabled.
+    public static List<AttributeKvEntry> convertToAttributes(JsonElement element, long ts, Set<String> noCastKeys) {
+        return parseValues(element.getAsJsonObject(), noCastKeys).stream().<AttributeKvEntry>map(kv -> new BaseAttributeKvEntry(kv, ts)).toList();
+    }
+
+    private static List<KvEntry> parseValues(JsonObject valuesObject, Set<String> noCastKeys) {
         List<KvEntry> result = new ArrayList<>();
         for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
             JsonElement element = valueEntry.getValue();
@@ -645,7 +650,7 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (isTypeCastEnabled && !noCastKeys.contains(valueEntry.getKey()) && NumberUtils.isParsable(value.getAsString())) {
                         try {
                             parseNumericValue(result, valueEntry, value);
                         } catch (RuntimeException th) {
@@ -680,29 +685,49 @@ public class JsonConverter {
         return convertToTelemetry(jsonElement, systemTs, true);
     }
 
+    public static Map<Long, List<KvEntry>> convertToSortedTelemetry(JsonElement jsonElement, long systemTs, Set<String> noCastKeys) throws
+            JsonSyntaxException {
+        return convertToTelemetry(jsonElement, systemTs, true, noCastKeys);
+    }
+
+    // String values of noCastKeys stay strings even when type cast is enabled.
+    public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, Set<String> noCastKeys) throws
+            JsonSyntaxException {
+        return convertToTelemetry(jsonElement, systemTs, false, noCastKeys);
+    }
+
     public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted) throws
             JsonSyntaxException {
+        return convertToTelemetry(jsonElement, systemTs, sorted, Collections.emptySet());
+    }
+
+    private static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted, Set<String> noCastKeys) throws
+            JsonSyntaxException {
         Map<Long, List<KvEntry>> result = sorted ? new TreeMap<>() : new HashMap<>();
-        convertToTelemetry(jsonElement, systemTs, result, null, Collections.emptySet());
+        convertToTelemetry(jsonElement, systemTs, result, null, noCastKeys);
         return result;
     }
 
 
-    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
+    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo, Set<String> noCastKeys) {
         if (jo.has("ts") && jo.has("values")) {
-            parseWithTs(result, jo);
+            parseWithTs(result, jo, noCastKeys);
         } else {
-            parseWithoutTs(result, systemTs, jo);
+            parseWithoutTs(result, systemTs, jo, noCastKeys);
         }
     }
 
-    private static void parseWithoutTs(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
-        for (KvEntry entry : parseValues(jo)) {
+    private static void parseWithoutTs(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo, Set<String> noCastKeys) {
+        for (KvEntry entry : parseValues(jo, noCastKeys)) {
             result.computeIfAbsent(systemTs, tmp -> new ArrayList<>()).add(entry);
         }
     }
 
     public static void parseWithTs(Map<Long, List<KvEntry>> result, JsonObject jo) {
+        parseWithTs(result, jo, Collections.emptySet());
+    }
+
+    private static void parseWithTs(Map<Long, List<KvEntry>> result, JsonObject jo, Set<String> noCastKeys) {
         JsonElement tsJsonElement = jo.get("ts");
         if (tsJsonElement.isJsonNull()) {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + "ts is null!");
@@ -711,7 +736,7 @@ public class JsonConverter {
         } else {
             long ts = tsJsonElement.getAsLong();
             JsonObject valuesObject = jo.get("values").getAsJsonObject();
-            for (KvEntry entry : parseValues(valuesObject)) {
+            for (KvEntry entry : parseValues(valuesObject, noCastKeys)) {
                 result.computeIfAbsent(ts, tmp -> new ArrayList<>()).add(entry);
             }
         }
