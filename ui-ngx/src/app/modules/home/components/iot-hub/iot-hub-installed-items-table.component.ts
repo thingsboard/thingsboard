@@ -44,7 +44,7 @@ import {
   loadDefaultUplinkConverter,
   loadOwnDefaultConverterIds
 } from '@home/components/iot-hub/iot-hub-default-converter';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'tb-iot-hub-installed-items-table',
@@ -82,6 +82,14 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   private converterCheckRun = 0;
   updatesChecked = false;
   isCheckingUpdates = false;
+  updatesCheckFailed = false;
+  onlyUpdates = false;
+  // Totals, ignoring type filters and search
+  updatesCount: number | null = null;
+  installedCount = 0;
+  loadFailed = false;
+  private loadRun = 0;
+  private countRun = 0;
 
   private widgetResize$: ResizeObserver;
 
@@ -127,10 +135,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.textSearch || changes.typeFilters) {
       if (!changes.textSearch?.firstChange || !changes.typeFilters?.firstChange) {
-        this.pageIndex = 0;
-        if (this.paginator) {
-          this.paginator.pageIndex = 0;
-        }
+        this.setPageIndex(0);
         this.loadData();
       }
     }
@@ -138,8 +143,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
 
   ngAfterViewInit(): void {
     this.sort.sortChange.subscribe(() => {
-      this.pageIndex = 0;
-      this.paginator.pageIndex = 0;
+      this.setPageIndex(0);
       this.loadData();
     });
   }
@@ -161,7 +165,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   deleteItem(item: IotHubInstalledItem): void {
     this.iotHubActions.deleteItem(item).subscribe(deleted => {
       if (deleted) {
-        this.loadData();
+        this.reloadAfterChange();
       }
     });
   }
@@ -191,7 +195,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     this.iotHubApiService.getVersionInfo(item.itemVersionId, {ignoreLoading: true}).subscribe(versionView => {
       this.iotHubActions.openItemDetail(versionView, item).subscribe(result => {
         if (result === 'updated' || result === 'deleted') {
-          this.loadData();
+          this.reloadAfterChange();
         }
       });
     });
@@ -241,18 +245,111 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
 
   checkForUpdates(): void {
     this.isCheckingUpdates = true;
+    if (this.updatesChecked) {
+      // Only the count failed: recount, keeping the list as it is
+      this.loadUpdatesCount();
+      return;
+    }
+    this.updatesCheckFailed = false;
     this.iotHubApiService.getInstalledItemIds({ ignoreLoading: true }).pipe(
-      switchMap(itemIds => this.iotHubApiService.getItemsPublishedVersions(itemIds, { ignoreLoading: true }))
+      // Failure is shown next to the button, not as an error toast
+      switchMap(itemIds => this.iotHubApiService.getItemsPublishedVersions(itemIds, { ignoreLoading: true, ignoreErrors: true }))
     ).subscribe({
       next: (infos) => {
         this.publishedVersionMap.clear();
         infos.forEach(info => this.publishedVersionMap.set(info.itemId, info));
-        this.updatesChecked = true;
-        this.isCheckingUpdates = false;
-        void this.checkConverterUpdates();
+        this.loadUpdatesCount(() => {
+          this.updatesChecked = true;
+          // No updates: stay on the full list (it also shows converter updates)
+          this.showOnlyUpdates(this.updatesCount > 0);
+        });
       },
       error: () => {
         this.isCheckingUpdates = false;
+        this.updatesCheckFailed = true;
+      }
+    });
+  }
+
+  showOnlyUpdates(onlyUpdates: boolean): void {
+    this.onlyUpdates = onlyUpdates;
+    this.setPageIndex(0);
+    this.loadData();
+  }
+
+  private setPageIndex(pageIndex: number): void {
+    this.pageIndex = pageIndex;
+    if (this.paginator) {
+      this.paginator.pageIndex = pageIndex;
+    }
+  }
+
+  private publishedVersionIds(): Record<string, string> {
+    const ids: Record<string, string> = {};
+    this.publishedVersionMap.forEach((info, itemId) => {
+      if (info.publishedVersionId) {
+        ids[itemId] = info.publishedVersionId;
+      }
+    });
+    return ids;
+  }
+
+  retryLoad(): void {
+    this.loadData();
+    if (this.updatesChecked && !this.itemVersion && this.updatesCount === null) {
+      this.loadUpdatesCount();
+    }
+  }
+
+  private reloadAfterChange(): void {
+    if (!this.updatesChecked || this.itemVersion) {
+      this.loadData();
+      return;
+    }
+    this.loadUpdatesCount(() => {
+      if (this.onlyUpdates && this.updatesCount === 0) {
+        this.showOnlyUpdates(false);
+      } else {
+        this.loadData();
+      }
+    }, () => {
+      // Count failed: fall back to the full list
+      if (this.onlyUpdates) {
+        this.showOnlyUpdates(false);
+      } else {
+        this.loadData();
+      }
+    });
+  }
+
+  // Latest call wins; previous counts stay until it returns
+  private loadUpdatesCount(onCounts?: () => void, onError?: () => void): void {
+    const run = ++this.countRun;
+    const config = { ignoreLoading: true, ignoreErrors: true };
+    forkJoin({
+      withUpdates: this.iotHubApiService.getInstalledItemsWithUpdates(new PageLink(1), null, this.publishedVersionIds(), config),
+      installed: this.iotHubApiService.getInstalledItemsCount(undefined, config)
+    }).subscribe({
+      next: ({ withUpdates, installed }) => {
+        if (run !== this.countRun) {
+          return;
+        }
+        this.updatesCount = withUpdates.totalElements;
+        this.installedCount = installed;
+        this.updatesCheckFailed = false;
+        this.isCheckingUpdates = false;
+        this.cd.markForCheck();
+        onCounts?.();
+      },
+      error: () => {
+        if (run !== this.countRun) {
+          return;
+        }
+        this.updatesCount = null;
+        this.updatesCheckFailed = true;
+        this.isCheckingUpdates = false;
+        this.cd.markForCheck();
+        onError?.();
       }
     });
   }
@@ -260,7 +357,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   updateItem(item: IotHubInstalledItem, publishedInfo: ItemPublishedVersionInfo): void {
     this.iotHubActions.updateItem(item, publishedInfo.publishedVersion, publishedInfo.publishedVersionId).subscribe(result => {
       if (result === 'updated') {
-        this.loadData();
+        this.reloadAfterChange();
       }
     });
   }
@@ -341,18 +438,37 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     };
     const pageLink = new PageLink(this.pageSize, this.pageIndex, this.textSearch || null, sortOrder);
     const typeFilters = this.typeFilters?.length ? this.typeFilters : null;
-    this.iotHubApiService.getInstalledItems(pageLink, typeFilters, this.itemVersion?.itemId, {ignoreLoading: true}).subscribe({
+    // The empty state shows a failure of the only-updates list; one item's versions page lists them all
+    const items$ = this.onlyUpdates && !this.itemVersion
+      ? this.iotHubApiService.getInstalledItemsWithUpdates(pageLink, typeFilters, this.publishedVersionIds(), {ignoreLoading: true, ignoreErrors: true})
+      : this.iotHubApiService.getInstalledItems(pageLink, typeFilters, this.itemVersion?.itemId, {ignoreLoading: true});
+    const run = ++this.loadRun;
+    items$.subscribe({
       next: (data) => {
+        if (run !== this.loadRun) {
+          return;
+        }
+        // The last page emptied after an update or a removal
+        if (!data.data.length && this.pageIndex > 0 && data.totalElements > 0) {
+          this.setPageIndex(Math.ceil(data.totalElements / this.pageSize) - 1);
+          this.loadData();
+          return;
+        }
         this.dataSource = data.data;
         this.totalElements = data.totalElements;
+        this.loadFailed = false;
         this.isLoading = false;
-        if (this.updatesChecked && !this.itemVersion) {
+        if (this.updatesChecked && !this.itemVersion && !this.onlyUpdates) {
           void this.checkConverterUpdates();
         }
       },
       error: () => {
+        if (run !== this.loadRun) {
+          return;
+        }
         this.dataSource = [];
         this.totalElements = 0;
+        this.loadFailed = true;
         this.isLoading = false;
       }
     });
