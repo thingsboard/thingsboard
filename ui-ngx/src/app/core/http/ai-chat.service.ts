@@ -54,9 +54,21 @@ export class AiChatService {
   }
 
   public sendChatMessage(chatId: string, request: SendChatMessageRequest, config?: RequestConfig): Observable<ChatEvent> {
+    return this.streamEvents(`/api/ai/chats/${chatId}/messages`, request, config);
+  }
+
+  /**
+   * Follows the reply still running in the chat: a 'turnResumed' event, every event of the reply so far, then the
+   * live ones. Completes with no events when nothing is running.
+   */
+  public resumeChat(chatId: string, config?: RequestConfig): Observable<ChatEvent> {
+    return this.streamEvents(`/api/ai/chats/${chatId}/resume`, null, config);
+  }
+
+  private streamEvents(url: string, body: any, config?: RequestConfig): Observable<ChatEvent> {
     let lastLength = 0;
     let buffer = '';
-    return this.http.post(`/api/ai/chats/${chatId}/messages`, request, {
+    return this.http.post(url, body, {
       ...defaultHttpOptions(config?.ignoreLoading, config?.ignoreErrors),
       observe: 'events',
       reportProgress: true,

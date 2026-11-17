@@ -101,7 +101,7 @@ public class TbResourceController extends BaseController {
 
         ByteArrayResource resource = new ByteArrayResource(tbResource.getData());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(tbResource.getFileName()))
                 .header("x-filename", tbResource.getFileName())
                 .contentLength(resource.contentLength())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -175,8 +175,8 @@ public class TbResourceController extends BaseController {
 
     @ApiOperation(value = "Get resource info (getResourceInfo)",
             notes = "Get info for the resource with the given type, scope and key. " +
-                    RESOURCE_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    RESOURCE_INFO_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/resource/{resourceType}/{scope}/{key}/info")
     public TbResourceInfo getResourceInfo(@Parameter(description = "Type of the resource", schema = @Schema(allowableValues = {"lwm2m_model", "jks", "pkcs_12", "js_module", "dashboard"}))
                                           @PathVariable("resourceType") String resourceTypeStr,
@@ -237,7 +237,7 @@ public class TbResourceController extends BaseController {
                                          @RequestPart MultipartFile file) throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(getTenantId());
-        resource.setTitle(StringUtils.isNotEmpty(title) ? title : file.getOriginalFilename());
+        resource.setTitle(StringUtils.isNotEmpty(title) ? title : getFileName(file));
         ResourceType resourceType = ResourceType.valueOf(resourceTypeStr);
         resource.setResourceType(resourceType);
 
@@ -251,7 +251,7 @@ public class TbResourceController extends BaseController {
         if (StringUtils.isNotEmpty(resourceSubTypeStr)) {
             resource.setResourceSubType(ResourceSubType.valueOf(resourceSubTypeStr));
         }
-        resource.setFileName(file.getOriginalFilename());
+        resource.setFileName(getFileName(file));
         resource.setData(file.getBytes());
 
         checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
@@ -266,7 +266,7 @@ public class TbResourceController extends BaseController {
                                              @RequestPart MultipartFile file) throws Exception {
         TbResourceId tbResourceId = new TbResourceId(id);
         TbResource resource = checkResourceId(tbResourceId, Operation.WRITE);
-        resource.setFileName(file.getOriginalFilename());
+        resource.setFileName(getFileName(file));
         resource.setData(file.getBytes());
         return tbResourceService.save(resource, getCurrentUser());
     }
@@ -286,8 +286,9 @@ public class TbResourceController extends BaseController {
 
     @ApiOperation(value = "Get Resource Infos (getResources)",
             notes = "Returns a page of Resource Info objects owned by tenant or sysadmin. " +
-                    PAGE_DATA_PARAMETERS + RESOURCE_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    "Customer users may request only 'JS_MODULE' resources, so the 'resourceType' parameter is mandatory for them. " +
+                    PAGE_DATA_PARAMETERS + RESOURCE_INFO_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/resource")
     public PageData<TbResourceInfo> getResources(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                  @RequestParam int pageSize,
@@ -321,6 +322,9 @@ public class TbResourceController extends BaseController {
             filterResourceTypes.remove(ResourceType.JS_MODULE);
             filterResourceTypes.remove(ResourceType.IMAGE);
             filterResourceTypes.remove(ResourceType.DASHBOARD);
+        }
+        if (getCurrentUser().isCustomerUser() && !filterResourceTypes.equals(Set.of(ResourceType.JS_MODULE))) {
+            throw permissionDenied();
         }
         filter.resourceTypes(filterResourceTypes);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
@@ -448,7 +452,7 @@ public class TbResourceController extends BaseController {
         byte[] data = resourceService.getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
         ByteArrayResource resource = new ByteArrayResource(data);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + resourceInfo.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(resourceInfo.getFileName()))
                 .header("x-filename", resourceInfo.getFileName())
                 .contentLength(resource.contentLength())
                 .header("Content-Type", resourceInfo.getResourceType().getMediaType())

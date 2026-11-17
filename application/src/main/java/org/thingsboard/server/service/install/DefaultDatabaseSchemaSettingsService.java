@@ -7,27 +7,24 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.service.install.lts.LtsVersion;
+import org.thingsboard.server.service.install.lts.Version;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
-import java.util.Map;
+import java.util.List;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSettingsService {
 
-    // map of versions from which the upgrade to the current version is possible
-    // key - supported version prefix, value - display name
-    private static final Map<String, String> SUPPORTED_VERSIONS_FOR_UPGRADE = Map.of(
-            "4.3.0", "4.3.0.x",
-            "4.3.1", "4.3.1.x"
-    );
+    // LTS families (major.minor) from which the offline upgrade to the current version is possible. A newer version
+    // within the package's own family needs no offline upgrade: SystemPatchApplier applies it on startup.
+    private static final List<Version> SUPPORTED_FAMILIES_FOR_UPGRADE = List.of(Version.parse("4.3"));
 
     private static final String CE_PRODUCT = "CE";
     // The first CE version that converts to PE: the one that ships the community grant. Anything older takes the
     // cheap CE-to-CE patch upgrade first. 4.3 stays supported, so later 4.3.1.x releases convert as well.
-    private static final LtsVersion MIN_CE_VERSION_FOR_UPGRADE = LtsVersion.parse("4.3.1.4");
+    private static final Version MIN_CE_VERSION_FOR_UPGRADE = Version.parse("4.3.1.6");
 
     private final ProjectInfo projectInfo;
     private final JdbcTemplate jdbcTemplate;
@@ -37,8 +34,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
     @Override
     public void validateSchemaSettings() {
-        // The flag also drops the CE floor below, and that is what it costs: the 4.3.1.4 minimum is
-        // what keeps a CE source above 4.2.2.3, and so keeps LtsMigrationService.select() from ever returning
+        // The flag also drops the CE floor below, and that is what it costs: the CE minimum is
+        // what keeps a CE source above 4.2.2.3, and so keeps MigrationService.select() from ever returning
         // the V4_2_2_3 <-> V4_3_1_3 reproduction-duplicate pair its own invariant forbids selecting together.
         // Forcing an older CE database through without --fromVersion reopens that pair.
         if (isForcedReUpgrade()) {
@@ -48,7 +45,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
         String dbSchemaVersion = getDbSchemaVersion();
         if (isUpgradeFromCe()) {
-            LtsVersion ceVersion = LtsVersion.parse(dbSchemaVersion);
+            Version ceVersion = Version.parse(dbSchemaVersion);
             if (ceVersion.compareTo(MIN_CE_VERSION_FOR_UPGRADE) < 0) {
                 onSchemaSettingsError(String.format("Upgrade failed: transitioning from CE to PE requires the database to be at version '%s' or newer, but it is at '%s'. " +
                                                     "Please upgrade ThingsBoard CE to %s first.",
@@ -56,7 +53,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
             }
             // Without this the migration chain would select nothing and the PE schema would be created on top of a
             // newer CE database, silently.
-            if (ceVersion.compareTo(LtsVersion.parse(getPackageSchemaVersion())) > 0) {
+            if (ceVersion.compareTo(Version.parse(getPackageSchemaVersion())) > 0) {
                 onSchemaSettingsError(String.format("Upgrade failed: the database is at CE version '%s', which is newer than this ThingsBoard PE package ('%s'). " +
                                                     "Please use a PE package of version '%s' or newer.",
                         dbSchemaVersion, getPackageSchemaVersion(), dbSchemaVersion));
@@ -66,10 +63,16 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
                 onSchemaSettingsError("Upgrade failed: database already upgraded to current version. You can set SKIP_SCHEMA_VERSION_CHECK to 'true' if force re-upgrade needed.");
             }
 
-            if (SUPPORTED_VERSIONS_FOR_UPGRADE.keySet().stream().noneMatch(dbSchemaVersion::startsWith)) {
+            Version dbVersion = Version.parse(dbSchemaVersion);
+            Version packageVersion = Version.parse(getPackageSchemaVersion());
+            if (dbVersion.sameFamily(packageVersion) && dbVersion.compareTo(packageVersion) < 0) {
+                onSchemaSettingsError(String.format("Upgrade failed: database version '%s' is in the same LTS family as this package ('%s'). " +
+                                                    "No upgrade is needed: the update is applied automatically when ThingsBoard starts.",
+                        dbSchemaVersion, getPackageSchemaVersion()));
+            }
+            if (SUPPORTED_FAMILIES_FOR_UPGRADE.stream().noneMatch(dbVersion::sameFamily)) {
                 onSchemaSettingsError(String.format("Upgrade failed: database version '%s' is not supported for upgrade. Supported versions are: %s.",
-                        dbSchemaVersion, SUPPORTED_VERSIONS_FOR_UPGRADE.values()
-                ));
+                        dbSchemaVersion, SUPPORTED_FAMILIES_FOR_UPGRADE.stream().map(f -> f.major() + "." + f.minor() + ".x").toList()));
             }
         }
     }
@@ -159,7 +162,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     }
 
     private long toDbVersion(String version) {
-        LtsVersion v = LtsVersion.parse(version);
+        Version v = Version.parse(version);
         return v.major() * 1_000_000_000L + v.minor() * 1_000_000L + v.maintenance() * 1000L + v.patch();
     }
 
@@ -169,7 +172,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     }
 
     private String normalizeVersion(String version) {
-        return LtsVersion.parse(version).toString();
+        return Version.parse(version).toString();
     }
 
 }

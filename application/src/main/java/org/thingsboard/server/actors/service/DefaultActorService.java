@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.service;
 
 import jakarta.annotation.PostConstruct;
@@ -19,12 +20,14 @@ import org.thingsboard.server.actors.TbActorSystemSettings;
 import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.app.AppInitMsg;
 import org.thingsboard.server.actors.stats.StatsActor;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -119,8 +122,12 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        log.info("Received partition change event.");
-        appActor.tellWithHighPriority(new PartitionChangeMsg(event.getServiceType()));
+        ServiceType serviceType = event.getServiceType();
+        Set<TenantId> affectedTenants = event.getAffectedTenants();
+        log.info("Received partition change event for {}, affected tenants: {}", serviceType, affectedTenants == null ? "all" : affectedTenants.size());
+        appActor.tellWithHighPriority(affectedTenants == null ?
+                PartitionChangeMsg.forAllTenants(serviceType) :
+                PartitionChangeMsg.forTenants(serviceType, affectedTenants));
     }
 
     @Override

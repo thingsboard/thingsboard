@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.ai.common.data.usage.ApiUsageInfo;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
@@ -1709,6 +1711,17 @@ public abstract class BaseController {
             oAuth2ClientIds.add(oauth2ClientId);
         }
         return oAuth2ClientIds;
+    }
+
+    protected static String toContentDisposition(String fileName) {
+        ContentDisposition.Builder builder = ContentDisposition.attachment();
+        boolean ascii = StandardCharsets.US_ASCII.newEncoder().canEncode(fileName);
+        return (ascii ? builder.filename(fileName) : builder.filename(fileName, StandardCharsets.UTF_8)).build().toString();
+    }
+
+    protected static String getFileName(MultipartFile file) {
+        String fileName = file.getOriginalFilename();
+        return fileName != null ? fileName.replace("%22", "\"") : null;
     }
 
 }

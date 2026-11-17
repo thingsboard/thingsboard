@@ -28,7 +28,7 @@ test = {
   originator: true,
   msgType: true,
   template: '<form #myCustomConfigForm="ngForm">' +
-    '<mat-form-field class="mat-block">' +
+    '<mat-form-field class="mat-block" appearance="outline">' +
     '<mat-label>My custom field</mat-label>' +
     '<input name="myField" #myField="ngModel" matInput [(ngModel)]="configuration.msgBody.myField" required>' +
     '<mat-error *ngIf="myField.hasError(\'required\')">' +

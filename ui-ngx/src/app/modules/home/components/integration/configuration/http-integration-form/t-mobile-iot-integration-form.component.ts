@@ -27,6 +27,7 @@ import { HttpIntegrationFormComponent } from './http-integration-form.component'
 export class TMobileIotIntegrationFormComponent extends HttpIntegrationFormComponent {
 
   showSecurity = false;
+  showReplaceNoContentToOk = false;
 
   protected integrationType = IntegrationType.TMOBILE_IOT_CDP;
 

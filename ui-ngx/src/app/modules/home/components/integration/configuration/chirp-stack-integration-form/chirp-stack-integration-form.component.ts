@@ -47,8 +47,23 @@ export class ChirpStackIntegrationFormComponent extends IntegrationForm implemen
   @Input()
   routingKey: string;
 
+  @Input()
+  set isSetDownlink(value: boolean) {
+    if (this.isSetDownlinkValue !== value) {
+      this.isSetDownlinkValue = value;
+      this.updateCredentialsValidators();
+    }
+  }
+
+  get isSetDownlink(): boolean {
+    return this.isSetDownlinkValue;
+  }
+
+  private isSetDownlinkValue = false;
+
   private propagateChange = (v: any) => { };
   private propagateChangePending = false;
+  private validatorChange = () => { };
 
   constructor(private fb: UntypedFormBuilder,
               private store: Store<AppState>,
@@ -66,8 +81,7 @@ export class ChirpStackIntegrationFormComponent extends IntegrationForm implemen
       httpEndpoint: [{value: this.endPointUrl(baseUrl()), disabled: true}],
       applicationServerUrl: [null],
       applicationServerAPIToken: [null],
-      useAPI4Plus: [true],
-      allowDownlink: [false]
+      useAPI4Plus: [true]
     });
     this.chirpStackIntegrationConfigForm.get('baseUrl').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -79,23 +93,12 @@ export class ChirpStackIntegrationFormComponent extends IntegrationForm implemen
     ).subscribe(() => {
       this.updateModels(this.chirpStackIntegrationConfigForm.getRawValue());
     });
-
-    this.chirpStackIntegrationConfigForm.get('allowDownlink').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => this.updateDownlinkControlsState());
+    this.updateCredentialsValidators();
   }
 
   writeValue(value: ChipStackIntegration) {
     if (isDefinedAndNotNull(value?.clientConfiguration)) {
-      const config = value.clientConfiguration;
-      this.chirpStackIntegrationConfigForm.reset(config, {emitEvent: false});
-      if (!isDefinedAndNotNull(config.allowDownlink)
-        && (isDefinedAndNotNull(config.applicationServerUrl) || isDefinedAndNotNull(config.applicationServerAPIToken))) {
-        this.chirpStackIntegrationConfigForm.get('allowDownlink').setValue(true, {emitEvent: false});
-      }
-      if (!this.disabled) {
-        this.updateDownlinkControlsState();
-      }
+      this.chirpStackIntegrationConfigForm.reset(value.clientConfiguration, {emitEvent: false});
     } else {
       this.propagateChangePending = true;
     }
@@ -113,6 +116,10 @@ export class ChirpStackIntegrationFormComponent extends IntegrationForm implemen
 
   registerOnTouched(fn: any) { }
 
+  registerOnValidatorChange(fn: () => void) {
+    this.validatorChange = fn;
+  }
+
   setDisabledState(isDisabled: boolean) {
     this.disabled = isDisabled;
     if (isDisabled) {
@@ -120,7 +127,6 @@ export class ChirpStackIntegrationFormComponent extends IntegrationForm implemen
     } else {
       this.chirpStackIntegrationConfigForm.enable({emitEvent: false});
       this.chirpStackIntegrationConfigForm.get('httpEndpoint').disable({emitEvent: false});
-      this.updateDownlinkControlsState();
     }
   }
 
@@ -129,9 +135,11 @@ export class ChirpStackIntegrationFormComponent extends IntegrationForm implemen
   }
 
   private updateModels(value) {
-    if (!value.allowDownlink) {
-      value = {...value, applicationServerUrl: null, applicationServerAPIToken: null};
-    }
+    value = {
+      ...value,
+      applicationServerUrl: value.applicationServerUrl ?? '',
+      applicationServerAPIToken: value.applicationServerAPIToken ?? ''
+    };
     this.propagateChange({clientConfiguration: value});
   }
 
@@ -162,20 +170,14 @@ export class ChirpStackIntegrationFormComponent extends IntegrationForm implemen
     this.chirpStackIntegrationConfigForm?.get('baseUrl').updateValueAndValidity({emitEvent: false});
   }
 
-  updateDownlinkControlsState() {
-    const allowDownlink = this.chirpStackIntegrationConfigForm.get('allowDownlink').value;
-    if (allowDownlink) {
-      this.chirpStackIntegrationConfigForm.get('applicationServerAPIToken').enable({emitEvent: false});
-      this.chirpStackIntegrationConfigForm.get('applicationServerUrl').enable({emitEvent: false});
-      this.chirpStackIntegrationConfigForm.get('applicationServerAPIToken').setValidators(Validators.required);
-      this.chirpStackIntegrationConfigForm.get('applicationServerUrl').setValidators(Validators.required);
-    } else {
-      this.chirpStackIntegrationConfigForm.get('applicationServerAPIToken').disable({emitEvent: false});
-      this.chirpStackIntegrationConfigForm.get('applicationServerUrl').disable({emitEvent: false});
-      this.chirpStackIntegrationConfigForm.get('applicationServerAPIToken').clearValidators();
-      this.chirpStackIntegrationConfigForm.get('applicationServerUrl').clearValidators();
+  private updateCredentialsValidators() {
+    if (this.chirpStackIntegrationConfigForm) {
+      const validators = this.isSetDownlink ? [Validators.required] : [];
+      this.chirpStackIntegrationConfigForm.get('applicationServerUrl').setValidators(validators);
+      this.chirpStackIntegrationConfigForm.get('applicationServerAPIToken').setValidators(validators);
+      this.chirpStackIntegrationConfigForm.get('applicationServerUrl').updateValueAndValidity({emitEvent: false});
+      this.chirpStackIntegrationConfigForm.get('applicationServerAPIToken').updateValueAndValidity({emitEvent: false});
+      this.validatorChange();
     }
-    this.chirpStackIntegrationConfigForm.get('applicationServerAPIToken').updateValueAndValidity({emitEvent: false});
-    this.chirpStackIntegrationConfigForm.get('applicationServerUrl').updateValueAndValidity({emitEvent: false});
   }
 }

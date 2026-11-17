@@ -57,8 +57,8 @@ export class AlarmTablePreviewComponent extends AbstractReportTablePreviewCompon
     }
   }
 
-  protected styleFromColumnSettings(column: DataKey, header = false): ComponentStyle {
-    const style = super.styleFromColumnSettings(column, header);
+  protected styleFromColumnSettings(column: DataKey, header = false, firstColumn = false): ComponentStyle {
+    const style = super.styleFromColumnSettings(column, header, firstColumn);
     if (!this.isPlainFormat && !header) {
       const alarmField = alarmFields[column.name];
       if (alarmField?.time) {

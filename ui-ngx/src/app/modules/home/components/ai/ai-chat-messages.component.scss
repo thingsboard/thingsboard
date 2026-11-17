@@ -15,7 +15,22 @@
 
   .user {
     display: flex;
-    justify-content: end;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+
+    .user-attachments {
+      max-width: 80%;
+
+      ::ng-deep .attachments {
+        justify-content: flex-end;
+
+        .attachment.image {
+          width: 120px;
+          height: 90px;
+        }
+      }
+    }
 
     .msg {
       max-width: 80%;
@@ -38,6 +53,22 @@
         opacity: 0.1;
         pointer-events: none;
       }
+    }
+  }
+
+  .incomplete {
+    padding: 10px 14px;
+    border-radius: 12px;
+    line-height: 20px;
+    color: rgba(0, 0, 0, 0.76);
+    background: rgba(255, 152, 0, 0.08);
+
+    .incomplete-icon {
+      flex: none;
+      color: #FF9800;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
   }
 

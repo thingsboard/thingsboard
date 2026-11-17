@@ -15,21 +15,27 @@ import org.thingsboard.server.common.data.LibraryConvertersInfo;
 import org.thingsboard.server.common.data.converter.ConverterType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.integration.IntegrationInfo;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.converter.ConverterService;
 import org.thingsboard.server.dao.integration.IntegrationService;
+import org.thingsboard.server.dao.secret.SecretConfigurationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.converter.ConverterLibraryService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.integration.IntegrationManagerService;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Service
@@ -40,6 +46,8 @@ public class DefaultTbIntegrationService extends AbstractTbEntityService impleme
     private final IntegrationService integrationService;
     private final ConverterLibraryService converterLibraryService;
     private final ConverterService converterService;
+    private final IntegrationManagerService integrationManagerService;
+    private final SecretConfigurationService secretConfigurationService;
 
     @Override
     public PageData<IntegrationInfo> findTenantIntegrationInfos(TenantId tenantId, PageLink pageLink, boolean isEdgeTemplate) {
@@ -92,6 +100,16 @@ public class DefaultTbIntegrationService extends AbstractTbEntityService impleme
             ));
         }
         return result;
+    }
+
+    @Override
+    public void validateIntegrationConfiguration(TenantId tenantId, Integration integration) throws ExecutionException, InterruptedException, TimeoutException {
+        if (integration.isEdgeTemplate()) {
+            return;
+        }
+        Integration copy = new Integration(integration);
+        secretConfigurationService.replaceSecretUsages(tenantId, copy.getConfiguration());
+        integrationManagerService.validateIntegrationConfiguration(copy).get(20, TimeUnit.SECONDS);
     }
 
 }

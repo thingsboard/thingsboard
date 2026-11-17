@@ -51,7 +51,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor implements Da
                     if (dashboardUpdateMsg.hasEntityGroupIdMSB() && dashboardUpdateMsg.hasEntityGroupIdLSB()) {
                         EntityGroupId entityGroupId = new EntityGroupId(
                                 new UUID(dashboardUpdateMsg.getEntityGroupIdMSB(), dashboardUpdateMsg.getEntityGroupIdLSB()));
-                        edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, dashboardId);
+                        safeRemoveEntityFromGroup(tenantId, entityGroupId, dashboardId);
                     } else if (EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
                         deleteDashboard(tenantId, edge, dashboardId);
                     } else {

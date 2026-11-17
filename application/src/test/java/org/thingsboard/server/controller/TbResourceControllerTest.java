@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.exception.DataValidationException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -966,6 +967,72 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindJsModules_customerUser() throws Exception {
+        loginSysAdmin();
+        TbResourceInfo systemJsModule = saveResource("System js module", ResourceType.JS_MODULE, "system_" + JS_TEST_FILE_NAME);
+
+        loginTenantAdmin();
+        TbResourceInfo tenantJsModule = saveResource("Tenant js module", ResourceType.JS_MODULE, JS_TEST_FILE_NAME);
+        saveResource("Jks resource", ResourceType.JKS, DEFAULT_FILE_NAME);
+
+        loginNewCustomerUserWithoutPermissions();
+        PageData<TbResourceInfo> pageData = doGetTypedWithPageLink("/api/resource?resourceType=JS_MODULE&",
+                new TypeReference<>() {
+                }, new PageLink(100));
+        Assert.assertTrue(pageData.getData().contains(tenantJsModule));
+        Assert.assertTrue(pageData.getData().contains(systemJsModule));
+
+        String msg = "You don't have permission to perform this operation!";
+        doGet("/api/resource?resourceType=JKS&pageSize=10&page=0")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msg)));
+        doGet("/api/resource?resourceType=JS_MODULE,JKS&pageSize=10&page=0")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msg)));
+        doGet("/api/resource?resourceType=IMAGE&pageSize=10&page=0")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msg)));
+        doGet("/api/resource?pageSize=10&page=0")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msg)));
+
+        loginDifferentTenant();
+        loginDifferentTenantCustomer();
+        pageData = doGetTypedWithPageLink("/api/resource?resourceType=JS_MODULE&",
+                new TypeReference<>() {
+                }, new PageLink(100));
+        Assert.assertFalse(pageData.getData().contains(tenantJsModule));
+        Assert.assertTrue(pageData.getData().contains(systemJsModule));
+
+        loginTenantAdmin();
+        EntityGroupInfo deviceGroup = createSharedPublicEntityGroup("Public device group", EntityType.DEVICE, customerId);
+        String publicId = deviceGroup.getAdditionalInfo().get("publicCustomerId").asText();
+        resetTokens();
+        JsonNode tokens = doPost("/api/auth/login/public", JacksonUtil.toJsonNode("{\"publicId\": \"" + publicId + "\"}"), JsonNode.class);
+        this.token = tokens.get("token").asText();
+        doGet("/api/resource?resourceType=JS_MODULE&pageSize=10&page=0")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString("You don't have permission to perform 'READ' operation with 'TB_RESOURCE' resource!")));
+
+        loginSysAdmin();
+        doDelete("/api/resource/" + systemJsModule.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetResourceInfo_customerUser() throws Exception {
+        loginTenantAdmin();
+        TbResourceInfo jsModule = saveResource("Tenant js module", ResourceType.JS_MODULE, JS_TEST_FILE_NAME);
+        TbResourceInfo jks = saveResource("Jks resource", ResourceType.JKS, DEFAULT_FILE_NAME);
+
+        loginCustomerUser();
+        TbResourceInfo foundJsModule = doGet("/api/resource/js_module/tenant/" + jsModule.getResourceKey() + "/info", TbResourceInfo.class);
+        Assert.assertEquals(jsModule, foundJsModule);
+        doGet("/api/resource/jks/tenant/" + jks.getResourceKey() + "/info")
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     public void testFindAllResource_tenantUserWithoutPermission() throws Exception {
         String apiResources = loginTenantAdminAndCreateResources();
         String msgError = "You don't have permission to perform 'READ' operation with 'TB_RESOURCE' resource!";
@@ -985,6 +1052,22 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setFileName(fileName);
         resource.setEncodedData(TEST_DATA);
         return new TbResourceInfo(save(resource));
+    }
+
+    @Test
+    public void testUploadResourceWithEncodedQuotesInFileName() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setFileName("%22Baker Street%22, 221B.js");
+        resource.setData("export const value = 1;".getBytes(StandardCharsets.UTF_8));
+
+        TbResourceInfo savedResource = save(resource);
+
+        assertThat(savedResource.getFileName()).isEqualTo("\"Baker Street\", 221B.js");
+        assertThat(savedResource.getTitle()).isEqualTo("\"Baker Street\", 221B.js");
+        assertThat(savedResource.getResourceKey()).isEqualTo("\"Baker Street\", 221B.js");
+
+        doGet("/api/resource/js_module/tenant/{key}/info", savedResource.getResourceKey()).andExpect(status().isOk());
     }
 
     private TbResourceInfo save(TbResource tbResource) throws Exception {

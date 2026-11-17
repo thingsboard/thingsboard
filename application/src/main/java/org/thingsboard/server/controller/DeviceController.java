@@ -10,7 +10,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -583,6 +585,8 @@ public class DeviceController extends BaseController {
                     "In order to enable claiming devices feature a system parameter security.claim.allowClaimingByDefault should be set to true, " +
                     "otherwise a server-side claimingAllowed attribute with the value true is obligatory for provisioned devices. \n" +
                     "See official documentation for more details regarding claiming." + CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_CLAIM_CHECK)
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = ClaimResult.class)))
     @PreAuthorize("hasAuthority('CUSTOMER_USER')")
     @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.POST)
     @ResponseBody

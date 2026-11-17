@@ -529,9 +529,6 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   toggleEntityDetails($event: Event, entity) {
     if ($event) {
       $event.stopPropagation();
-      if (($event as MouseEvent).detail > 1) {
-        return;
-      }
     }
     const open = this.dataSource.toggleCurrentEntity(entity) ? true : !this.isDetailsOpen;
     this.setEntityDetailsOpen(open);
@@ -790,9 +787,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         res = column.cellTooltipFunction(entity, column.key);
         res = isDefined(res) ? res : null;
         this.cellTooltipCache[index] = res;
-      } else {
-        return res !== null ? res : undefined;
       }
+      return res !== null ? res : undefined;
     } else {
       return undefined;
     }
