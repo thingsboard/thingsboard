@@ -98,4 +98,5 @@
         </pluginManagement>
     </build>
 
+    <!-- Test of the third-party notices check: a pom.xml change that does not change the notices -->
 </project>
