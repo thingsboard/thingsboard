@@ -1107,12 +1107,14 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
 
   constructor(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions) {
     super();
-    options = {...options, ...{
-        updateInterval: 32,
-        padding: 0.1,
-        interactive: false,
-        pane: 'tilePane'
-    }};
+    options = {
+      maxZoom: 22,
+      ...options,
+      updateInterval: 32,
+      padding: 0.1,
+      interactive: false,
+      pane: 'tilePane'
+    };
     options.attribution = this._loadAttribution(options);
     this._prepareTransformRequest(options);
     L.setOptions(this, options);
@@ -1128,6 +1130,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     }
     const paneName = this.getPaneName();
     map.getPane(paneName).appendChild(this._container);
+    (map as any)._addZoomLimit(this);
     this._initGL();
 
     this._offset = this._map.containerPointToLayerPoint([0, 0]);
@@ -1146,6 +1149,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     }
     const paneName = this.getPaneName();
     map.getPane(paneName).removeChild(this._container);
+    (map as any)._removeZoomLimit(this);
 
     if (this._glMap) {
       this._glMap.remove();
