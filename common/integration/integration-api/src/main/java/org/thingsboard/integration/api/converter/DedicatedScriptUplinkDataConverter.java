@@ -107,6 +107,8 @@ public class DedicatedScriptUplinkDataConverter extends AbstractUplinkDataConver
             parsedAttributes = filterAttributeOnKeyValueUpdateAndUpdateMap(parsedAttributes, currentOnValueAttributesUpdate);
         }
         builder.attributesUpdate(parsedAttributes);
+        builder.telemetryNoCastKeys(uplinkData.getTelemetryNoCastKeys());
+        builder.attributesNoCastKeys(uplinkData.getAttributesNoCastKeys());
 
         if (!currentOnValueTelemetryUpdate.isEmpty()) {
             this.currentUpdateOnlyTelemetryPerEntity.put(name, currentOnValueTelemetryUpdate);

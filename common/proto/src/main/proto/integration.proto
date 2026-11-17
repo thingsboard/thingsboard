@@ -74,6 +74,9 @@ message DeviceUplinkDataProto {
   transport.PostTelemetryMsg postTelemetryMsg = 5;
   transport.PostAttributeMsg postAttributesMsg = 6;
   string deviceLabel = 7;
+  // Keys whose numeric-looking string values the converter kept as strings; the platform passes them to the rule engine.
+  repeated string telemetryNoCastKeys = 8;
+  repeated string attributesNoCastKeys = 9;
 }
 
 message AssetUplinkDataProto {
@@ -84,6 +87,9 @@ message AssetUplinkDataProto {
   transport.PostTelemetryMsg postTelemetryMsg = 5;
   transport.PostAttributeMsg postAttributesMsg = 6;
   string assetLabel = 7;
+  // Keys whose numeric-looking string values the converter kept as strings; the platform passes them to the rule engine.
+  repeated string telemetryNoCastKeys = 8;
+  repeated string attributesNoCastKeys = 9;
 }
 
 message EntityViewDataProto {

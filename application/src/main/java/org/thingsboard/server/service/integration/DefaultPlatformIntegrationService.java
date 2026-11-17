@@ -94,6 +94,7 @@ import org.thingsboard.server.service.profile.DefaultTbAssetProfileCache;
 import org.thingsboard.server.service.profile.DefaultTbDeviceProfileCache;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -201,11 +202,11 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
             IntegrationCallback<Void> compositeCallback = operationCount > 1 ? new CompositeCallback(operationCount, callback) : callback;
 
             if (hasTelemetry) {
-                process(sessionInfo, data.getPostTelemetryMsg(), compositeCallback);
+                process(sessionInfo, data.getPostTelemetryMsg(), data.getTelemetryNoCastKeysList(), compositeCallback);
             }
 
             if (hasAttributes) {
-                process(sessionInfo, data.getPostAttributesMsg(), compositeCallback);
+                process(sessionInfo, data.getPostAttributesMsg(), data.getAttributesNoCastKeysList(), compositeCallback);
             }
         };
     }
@@ -227,11 +228,11 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
             IntegrationCallback<Void> compositeCallback = operationCount > 1 ? new CompositeCallback(operationCount, callback) : callback;
 
             if (hasTelemetry) {
-                process(asset, data.getPostTelemetryMsg(), compositeCallback);
+                process(asset, data.getPostTelemetryMsg(), data.getTelemetryNoCastKeysList(), compositeCallback);
             }
 
             if (hasAttributes) {
-                process(asset, data.getPostAttributesMsg(), compositeCallback);
+                process(asset, data.getPostAttributesMsg(), data.getAttributesNoCastKeysList(), compositeCallback);
             }
         };
     }
@@ -364,6 +365,11 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
 
     @Override
     public void process(SessionInfoProto sessionInfo, PostTelemetryMsg msg, IntegrationCallback<Void> callback) {
+        process(sessionInfo, msg, Collections.emptySet(), callback);
+    }
+
+    // noCastKeys: the keys whose string values the converter kept as strings, passed to the rule engine in the metadata.
+    void process(SessionInfoProto sessionInfo, PostTelemetryMsg msg, Collection<String> noCastKeys, IntegrationCallback<Void> callback) {
         try {
             if (msg.getTsKvListCount() == 0) {
                 callback.onSuccess(null);
@@ -382,7 +388,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
                 metaData.putValue("deviceName", sessionInfo.getDeviceName());
                 metaData.putValue("deviceType", sessionInfo.getDeviceType());
                 metaData.putValue("ts", tsKv.getTs() + "");
-                NoCastKeys.put(metaData, tsKv.getKvList());
+                NoCastKeys.put(metaData, noCastKeys);
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
                 sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, TbMsgType.POST_TELEMETRY_REQUEST, packCallback);
             }
@@ -393,6 +399,10 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
 
     @Override
     public void process(SessionInfoProto sessionInfo, PostAttributeMsg msg, IntegrationCallback<Void> callback) {
+        process(sessionInfo, msg, Collections.emptySet(), callback);
+    }
+
+    void process(SessionInfoProto sessionInfo, PostAttributeMsg msg, Collection<String> noCastKeys, IntegrationCallback<Void> callback) {
         try {
             TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
@@ -401,7 +411,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("deviceName", sessionInfo.getDeviceName());
             metaData.putValue("deviceType", sessionInfo.getDeviceType());
-            NoCastKeys.put(metaData, msg.getKvList());
+            NoCastKeys.put(metaData, noCastKeys);
             sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, TbMsgType.POST_ATTRIBUTES_REQUEST,
                     new IntegrationTbQueueCallback(new ApiStatsProxyCallback<>(tenantId, getCustomerId(sessionInfo), msg.getKvList().size(), callback)));
         } catch (Exception e) {
@@ -720,7 +730,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
         return metaData;
     }
 
-    private void process(Asset asset, PostTelemetryMsg msg, IntegrationCallback<Void> callback) {
+    private void process(Asset asset, PostTelemetryMsg msg, Collection<String> noCastKeys, IntegrationCallback<Void> callback) {
         try {
             if (msg.getTsKvListCount() == 0) {
                 callback.onSuccess(null);
@@ -736,7 +746,7 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
                 metaData.putValue("assetName", asset.getName());
                 metaData.putValue("assetType", asset.getType());
                 metaData.putValue("ts", tsKv.getTs() + "");
-                NoCastKeys.put(metaData, tsKv.getKvList());
+                NoCastKeys.put(metaData, noCastKeys);
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
                 sendToRuleEngine(asset.getTenantId(), asset.getId(), asset.getAssetProfileId(),
                         asset.getCustomerId(), json, metaData, TbMsgType.POST_TELEMETRY_REQUEST, packCallback);
@@ -746,13 +756,13 @@ public class DefaultPlatformIntegrationService extends IntegrationActivityManage
         }
     }
 
-    private void process(Asset asset, PostAttributeMsg msg, IntegrationCallback<Void> callback) {
+    private void process(Asset asset, PostAttributeMsg msg, Collection<String> noCastKeys, IntegrationCallback<Void> callback) {
         try {
             JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("assetName", asset.getName());
             metaData.putValue("assetType", asset.getType());
-            NoCastKeys.put(metaData, msg.getKvList());
+            NoCastKeys.put(metaData, noCastKeys);
             sendToRuleEngine(asset.getTenantId(), asset.getId(), asset.getAssetProfileId(),
                     asset.getCustomerId(), json, metaData, TbMsgType.POST_ATTRIBUTES_REQUEST,
                     new IntegrationTbQueueCallback(new ApiStatsProxyCallback<>(asset.getTenantId(), asset.getCustomerId(), msg.getKvList().size(), callback)));

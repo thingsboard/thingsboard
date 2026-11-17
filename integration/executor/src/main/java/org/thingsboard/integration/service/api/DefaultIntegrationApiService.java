@@ -68,6 +68,7 @@ import org.thingsboard.server.service.cache.IntegrationExecutorDeviceProfileCach
 import org.thingsboard.server.service.data.EntityCacheKey;
 import org.thingsboard.server.service.data.EntityUplinkData;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -149,8 +150,8 @@ public class DefaultIntegrationApiService implements IntegrationApiService {
                     TransportProtos.SessionInfoProto sessionInfo = ProtoUtils.toSessionInfo(integration.getUuidId(), device);
                     onActivity(device.tenantId(), new DeviceId(device.id()), integration, proto);
                     dispatchUplink(data.hasPostTelemetryMsg(), data.hasPostAttributesMsg(), callback,
-                            composite -> process(sessionInfo, data.getPostTelemetryMsg(), composite),
-                            composite -> process(sessionInfo, data.getPostAttributesMsg(), composite));
+                            composite -> process(sessionInfo, data.getPostTelemetryMsg(), data.getTelemetryNoCastKeysList(), composite),
+                            composite -> process(sessionInfo, data.getPostAttributesMsg(), data.getAttributesNoCastKeysList(), composite));
                 } catch (Exception e) {
                     callback.onError(new RuntimeException("Failed to process device uplink data: " + data.getDeviceName(), e));
                 }
@@ -181,8 +182,8 @@ public class DefaultIntegrationApiService implements IntegrationApiService {
                 }
                 try {
                     dispatchUplink(data.hasPostTelemetryMsg(), data.hasPostAttributesMsg(), callback,
-                            composite -> process(asset, data.getPostTelemetryMsg(), integration.getId(), composite),
-                            composite -> process(asset, data.getPostAttributesMsg(), integration.getId(), composite));
+                            composite -> process(asset, data.getPostTelemetryMsg(), data.getTelemetryNoCastKeysList(), integration.getId(), composite),
+                            composite -> process(asset, data.getPostAttributesMsg(), data.getAttributesNoCastKeysList(), integration.getId(), composite));
                 } catch (Exception e) {
                     callback.onError(new RuntimeException("Failed to process asset uplink data: " + data.getAssetName(), e));
                 }
@@ -279,42 +280,42 @@ public class DefaultIntegrationApiService implements IntegrationApiService {
         producer.send(tpi, new TbProtoQueueMsg<>(messageKey, msg), wrappedCallback);
     }
 
-    private void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, IntegrationCallback<Void> callback) {
+    private void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, Collection<String> noCastKeys, IntegrationCallback<Void> callback) {
         TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
         processTelemetry(tenantId, getCustomerId(sessionInfo), sessionInfo.getDeviceName(), sessionInfo.getDeviceType(),
-                DEVICE_NAME_META, DEVICE_TYPE_META, msg,
+                DEVICE_NAME_META, DEVICE_TYPE_META, msg, noCastKeys,
                 (json, metaData, msgType, cb) -> sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, msgType, cb),
                 callback);
     }
 
-    private void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, IntegrationCallback<Void> callback) {
+    private void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostAttributeMsg msg, Collection<String> noCastKeys, IntegrationCallback<Void> callback) {
         TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
         processAttributes(tenantId, getCustomerId(sessionInfo), sessionInfo.getDeviceName(), sessionInfo.getDeviceType(),
-                DEVICE_NAME_META, DEVICE_TYPE_META, msg,
+                DEVICE_NAME_META, DEVICE_TYPE_META, msg, noCastKeys,
                 (json, metaData, msgType, cb) -> sendToRuleEngine(tenantId, deviceId, sessionInfo, json, metaData, msgType, cb),
                 callback);
     }
 
-    private void process(AssetCacheInfo asset, TransportProtos.PostTelemetryMsg msg, IntegrationId integrationId, IntegrationCallback<Void> callback) {
+    private void process(AssetCacheInfo asset, TransportProtos.PostTelemetryMsg msg, Collection<String> noCastKeys, IntegrationId integrationId, IntegrationCallback<Void> callback) {
         processTelemetry(asset.tenantId(), asset.customerId(), asset.name(), asset.type(),
-                ASSET_NAME_META, ASSET_TYPE_META, msg,
+                ASSET_NAME_META, ASSET_TYPE_META, msg, noCastKeys,
                 (json, metaData, msgType, cb) -> sendToRuleEngine(asset.tenantId(),
                         new AssetId(asset.id()), asset.type(), asset.assetProfileId(), asset.customerId(), json, metaData, msgType, integrationId, cb),
                 callback);
     }
 
-    private void process(AssetCacheInfo asset, TransportProtos.PostAttributeMsg msg, IntegrationId integrationId, IntegrationCallback<Void> callback) {
+    private void process(AssetCacheInfo asset, TransportProtos.PostAttributeMsg msg, Collection<String> noCastKeys, IntegrationId integrationId, IntegrationCallback<Void> callback) {
         processAttributes(asset.tenantId(), asset.customerId(), asset.name(), asset.type(),
-                ASSET_NAME_META, ASSET_TYPE_META, msg,
+                ASSET_NAME_META, ASSET_TYPE_META, msg, noCastKeys,
                 (json, metaData, msgType, cb) -> sendToRuleEngine(asset.tenantId(),
                         new AssetId(asset.id()), asset.type(), asset.assetProfileId(), asset.customerId(), json, metaData, msgType, integrationId, cb),
                 callback);
     }
 
     private void processTelemetry(TenantId tenantId, CustomerId customerId, String entityName, String entityType,
-                                  String nameMetaKey, String typeMetaKey, TransportProtos.PostTelemetryMsg msg,
+                                  String nameMetaKey, String typeMetaKey, TransportProtos.PostTelemetryMsg msg, Collection<String> noCastKeys,
                                   TbMsgSender sender, IntegrationCallback<Void> callback) {
         if (msg.getTsKvListCount() == 0) {
             callback.onSuccess(null);
@@ -331,19 +332,19 @@ public class DefaultIntegrationApiService implements IntegrationApiService {
             metaData.putValue(nameMetaKey, entityName);
             metaData.putValue(typeMetaKey, entityType);
             metaData.putValue(TS_META, tsKv.getTs() + "");
-            NoCastKeys.put(metaData, tsKv.getKvList());
+            NoCastKeys.put(metaData, noCastKeys);
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             sender.send(json, metaData, TbMsgType.POST_TELEMETRY_REQUEST, packCallback);
         }
     }
 
     private void processAttributes(TenantId tenantId, CustomerId customerId, String entityName, String entityType, String nameMetaKey, String typeMetaKey,
-                                   TransportProtos.PostAttributeMsg msg, TbMsgSender sender, IntegrationCallback<Void> callback) {
+                                   TransportProtos.PostAttributeMsg msg, Collection<String> noCastKeys, TbMsgSender sender, IntegrationCallback<Void> callback) {
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue(nameMetaKey, entityName);
         metaData.putValue(typeMetaKey, entityType);
-        NoCastKeys.put(metaData, msg.getKvList());
+        NoCastKeys.put(metaData, noCastKeys);
         sender.send(json, metaData, TbMsgType.POST_ATTRIBUTES_REQUEST,
                 new MsgPackCallback(1, new ApiStatsProxyCallback<>(tenantId, customerId, msg.getKvList().size(), callback)));
     }

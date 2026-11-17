@@ -186,9 +186,11 @@ public abstract class AbstractIntegration<T> implements ThingsboardPlatformInteg
         }
         if (data.getTelemetry() != null) {
             builder.setPostTelemetryMsg(data.getTelemetry());
+            builder.addAllTelemetryNoCastKeys(data.getTelemetryNoCastKeys());
         }
         if (data.getAttributesUpdate() != null) {
             builder.setPostAttributesMsg(data.getAttributesUpdate());
+            builder.addAllAttributesNoCastKeys(data.getAttributesNoCastKeys());
         }
         context.processUplinkData(builder.build(), new IntegrationCallback<>() {
             @Override
@@ -233,9 +235,11 @@ public abstract class AbstractIntegration<T> implements ThingsboardPlatformInteg
         }
         if (data.getTelemetry() != null) {
             builder.setPostTelemetryMsg(data.getTelemetry());
+            builder.addAllTelemetryNoCastKeys(data.getTelemetryNoCastKeys());
         }
         if (data.getAttributesUpdate() != null) {
             builder.setPostAttributesMsg(data.getAttributesUpdate());
+            builder.addAllAttributesNoCastKeys(data.getAttributesNoCastKeys());
         }
         context.processUplinkData(builder.build(), new IntegrationCallback<>() {
             @Override

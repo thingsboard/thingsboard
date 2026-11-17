@@ -49,6 +49,9 @@ import org.thingsboard.server.exception.ThingsboardRuntimeException;
 import org.thingsboard.server.gen.integration.AssetUplinkDataProto;
 import org.thingsboard.server.gen.integration.DeviceUplinkDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActivityProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
+import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -530,6 +533,8 @@ public class DefaultPlatformIntegrationServiceTest {
                 .setDeviceType(device.getType())
                 .setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(uplink.getTelemetryJson(), uplink.getTelemetryNoCastKeys()))
                 .setPostAttributesMsg(JsonConverter.convertToAttributesProto(uplink.getAttributesJson(), uplink.getAttributesNoCastKeys()))
+                .addAllTelemetryNoCastKeys(uplink.getTelemetryNoCastKeys())
+                .addAllAttributesNoCastKeys(uplink.getAttributesNoCastKeys())
                 .build();
 
         service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
@@ -554,6 +559,8 @@ public class DefaultPlatformIntegrationServiceTest {
                 .setAssetType(asset.getType())
                 .setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(uplink.getTelemetryJson(), uplink.getTelemetryNoCastKeys()))
                 .setPostAttributesMsg(JsonConverter.convertToAttributesProto(uplink.getAttributesJson(), uplink.getAttributesNoCastKeys()))
+                .addAllTelemetryNoCastKeys(uplink.getTelemetryNoCastKeys())
+                .addAllAttributesNoCastKeys(uplink.getAttributesNoCastKeys())
                 .build();
 
         service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
@@ -588,7 +595,78 @@ public class DefaultPlatformIntegrationServiceTest {
         assertThat(msgs.get(0).getMetaData().getValue(NoCastKeys.METADATA_KEY)).isNull();
     }
 
-    // What the typed TTN converter produces: unwrapped event keys plus the decoder output {"telemetry": {"temperature": "22.5"}}.
+    @Test
+    public void whenDecoderSendsLongDecimal_thenItIsNotMarkedAndIsSavedAsNumber() throws Exception {
+        AbstractIntegration integration = mock(AbstractIntegration.class);
+        when(integration.getTenantId()).thenReturn(TENANT_ID);
+        when(integration.getId()).thenReturn(new IntegrationId(UUID.randomUUID()));
+        Device device = new Device();
+        device.setId(DEVICE_ID);
+        device.setTenantId(TENANT_ID);
+        device.setName("ttn-device");
+        device.setType("default");
+        device.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
+        when(deviceService.findDeviceByTenantIdAndName(TENANT_ID, device.getName())).thenReturn(device);
+        doAnswer(_ -> null).when(service).onActivity(any(), any(), anyLong());
+
+        DedicatedUplinkData uplink = parseThingsStackUplink();
+        PostTelemetryMsg telemetry = JsonConverter.convertToTelemetryProto(uplink.getTelemetryJson(), uplink.getTelemetryNoCastKeys());
+        // The proto parser keeps a decimal with more than 16 fraction digits as a string.
+        assertThat(telemetry.getTsKvList(0).getKvList())
+                .filteredOn(kv -> kv.getKey().equals("pressure"))
+                .extracting(KeyValueProto::getType, KeyValueProto::getStringV)
+                .containsExactly(tuple(KeyValueType.STRING_V, "21.50000000000000000000"));
+        DeviceUplinkDataProto data = DeviceUplinkDataProto.newBuilder()
+                .setDeviceName(device.getName())
+                .setDeviceType(device.getType())
+                .setPostTelemetryMsg(telemetry)
+                .setPostAttributesMsg(JsonConverter.convertToAttributesProto(uplink.getAttributesJson(), uplink.getAttributesNoCastKeys()))
+                .addAllTelemetryNoCastKeys(uplink.getTelemetryNoCastKeys())
+                .addAllAttributesNoCastKeys(uplink.getAttributesNoCastKeys())
+                .build();
+
+        service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
+
+        List<TbMsg> msgs = captureRuleEngineMsgs();
+        TbMsg telemetryMsg = msgs.stream().filter(msg -> msg.isTypeOf(TbMsgType.POST_TELEMETRY_REQUEST)).findFirst().orElseThrow();
+        TbMsg attributesMsg = msgs.stream().filter(msg -> msg.isTypeOf(TbMsgType.POST_ATTRIBUTES_REQUEST)).findFirst().orElseThrow();
+        assertThat(NoCastKeys.get(telemetryMsg)).containsExactlyInAnyOrder("devAddr");
+        assertThat(NoCastKeys.get(attributesMsg)).containsExactlyInAnyOrder("eui", "joinEui", "hardwareVersion", "firmwareVersion");
+        assertThingsStackUplinkTypes(msgs);
+    }
+
+    @Test
+    public void whenRemoteIntegrationSendsNoKeys_thenNoCastKeysMetadataIsNotAdded() throws Exception {
+        AbstractIntegration integration = mock(AbstractIntegration.class);
+        when(integration.getTenantId()).thenReturn(TENANT_ID);
+        when(integration.getId()).thenReturn(new IntegrationId(UUID.randomUUID()));
+        Device device = new Device();
+        device.setId(DEVICE_ID);
+        device.setTenantId(TENANT_ID);
+        device.setName("old-remote-device");
+        device.setType("default");
+        device.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
+        when(deviceService.findDeviceByTenantIdAndName(TENANT_ID, device.getName())).thenReturn(device);
+        doAnswer(_ -> null).when(service).onActivity(any(), any(), anyLong());
+
+        // An older remote integration builds the same protos without the no-cast key fields.
+        DedicatedUplinkData uplink = parseThingsStackUplink();
+        DeviceUplinkDataProto data = DeviceUplinkDataProto.newBuilder()
+                .setDeviceName(device.getName())
+                .setDeviceType(device.getType())
+                .setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(uplink.getTelemetryJson(), uplink.getTelemetryNoCastKeys()))
+                .setPostAttributesMsg(JsonConverter.convertToAttributesProto(uplink.getAttributesJson(), uplink.getAttributesNoCastKeys()))
+                .build();
+
+        service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
+
+        List<TbMsg> msgs = captureRuleEngineMsgs();
+        assertThat(msgs).hasSize(2);
+        assertThat(msgs).allSatisfy(msg -> assertThat(msg.getMetaData().getValue(NoCastKeys.METADATA_KEY)).isNull());
+    }
+
+    // What the typed TTN converter produces: unwrapped event keys plus the decoder output
+    // {"telemetry": {"temperature": "22.5", "pressure": 21.50000000000000000000}}.
     private static DedicatedUplinkData parseThingsStackUplink() throws Exception {
         String payload = """
                 {
@@ -620,7 +698,7 @@ public class DefaultPlatformIntegrationServiceTest {
         config.setAttributes(Set.of("eui", "joinEui", "hardwareVersion", "firmwareVersion"));
         config.setTelemetry(Set.of("devAddr", "fCnt"));
 
-        JsonObject decoded = JsonParser.parseString("{\"telemetry\": {\"temperature\": \"22.5\"}}").getAsJsonObject();
+        JsonObject decoded = JsonParser.parseString("{\"telemetry\": {\"temperature\": \"22.5\", \"pressure\": 21.50000000000000000000}}").getAsJsonObject();
         return DedicatedConverterUtil.parseUplinkData(config, decoded, metadata, unwrapper.getKeys());
     }
 
@@ -648,7 +726,8 @@ public class DefaultPlatformIntegrationServiceTest {
                 tuple("firmwareVersion", DataType.STRING, "1.01"),
                 tuple("devAddr", DataType.STRING, "01020304"),
                 tuple("fCnt", DataType.LONG, 101L),
-                tuple("temperature", DataType.DOUBLE, 22.5));
+                tuple("temperature", DataType.DOUBLE, 22.5),
+                tuple("pressure", DataType.DOUBLE, 21.5));
     }
 
 }
