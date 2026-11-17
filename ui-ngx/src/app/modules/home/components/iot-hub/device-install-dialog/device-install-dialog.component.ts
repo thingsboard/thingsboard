@@ -380,11 +380,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   reviewMode = false;
   allowAiDashboardGenerate = false;
   /**
-   * Set once the server has an installed item for this device. From that moment every way out of
+   * Set once the server has installed or updated the package. From that moment every way out of
    * the wizard — including the header X and the Cancel button on a still-pending later step —
    * has to report 'installed', or the caller keeps showing pre-install counts and badges.
    */
-  private installRegistered = false;
+  private packageInstalled = false;
+  // Update: the hint of an entity someone changed since install, with a link to save it
+  readonly modifiedHintText = splitTextWithLink(this.translate.instant('iot-hub.device-update-modified'));
   // Set however the dialog closes: a check of the steps still running then installs nothing
   private closed = false;
   // Update: the package's entities as the server finds them, by install step
@@ -835,8 +837,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   done(): void {
-    // Update: the installed item keeps the old version until the registration succeeds
-    this.dialogRef.close(this.data.update && !this.installRegistered ? false : 'installed');
+    // Update: the installed item keeps the old version until the update succeeds
+    this.dialogRef.close(this.data.update && !this.packageInstalled ? false : 'installed');
   }
 
   cancel(): void {
@@ -844,7 +846,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (this.isApplying) {
       return;
     }
-    this.dialogRef.close(this.installRegistered ? 'installed' : false);
+    this.dialogRef.close(this.packageInstalled ? 'installed' : false);
   }
 
   get isApplying(): boolean {
@@ -880,10 +882,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const currentIdx = this.stepper.selectedIndex;
     for (let i = currentIdx - 1; i >= 0; i--) {
       if (this.wizardSteps[i].type === 'form') {
-        // Reset the progress step so it re-runs when we come back
+        // The plan was made with the form values before: the selection change below resets it, so the check runs
+        // again with the new ones
         const progressStep = this.wizardSteps[currentIdx];
-        // The plan was made with the form values before: the check runs again with the new ones
-        this.resetPlan(progressStep);
         progressStep.progressDone = false;
         progressStep.completed = false;
         // Allow navigation back by making intermediate steps editable
@@ -1181,7 +1182,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           type: 'progress',
           label: this.translate.instant('iot-hub.step-provisioning'),
           rawSteps: group,
-          completed: this.reviewMode
+          completed: true
         });
       } else {
         // Unknown step type — skip
@@ -1465,19 +1466,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.completed = true;
   }
 
-  private markEntityStepSuccess(ws: WizardStep, ep: EntityStepProgress,
-                                output: EntityStepOutput, resolution: string): void {
+  private markEntityStepSuccess(ep: EntityStepProgress, output: EntityStepOutput, resolution: string): void {
     ep.entityOutput = output;
     ep.resolution = resolution;
     ep.status = 'success';
     const alias = stepTypeAliasMap[ep.step.type];
     if (alias) {
       this.entityOutputs.set(alias, output);
-    }
-    for (const remaining of ws.entitySteps) {
-      if (remaining.status === 'pending') {
-        remaining.resolvedName = this.resolveVariables(remaining.step.name);
-      }
     }
     this.cdr.detectChanges();
   }
@@ -1777,8 +1772,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return plan.action === 'create' && plan.resolution !== 'overwrite' ? 'create' : 'update';
   }
 
-  textWithLink(key: string): { before: string; link: string; after: string } {
-    return splitTextWithLink(this.translate.instant(key));
+  /** What happens to the step's entity: on an update the resolution chosen at install, else the one chosen now. */
+  private resolutionOf(plan: EntityStepPlan | undefined): string {
+    return plan?.previous?.resolution ?? plan?.resolution ?? 'created';
   }
 
   /** Update: saves the entity the user changed, as it is before the update overwrites it, to a JSON file. */
@@ -1792,7 +1788,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /** The label of the button that applies the plan: Install or Update. */
   get applyActionKey(): string {
-    return this.data.update ? 'action.update' : 'iot-hub.device-install-install';
+    return this.data.update ? 'action.update' : 'iot-hub.install';
   }
 
   /**
@@ -1852,20 +1848,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       const output = result.outputs?.[this.stateKeyOf(ep.step)];
       const plan = this.entityPlans.get(ep);
-      const resolution = plan?.previous?.resolution ?? plan?.resolution ?? 'created';
+      const resolution = this.resolutionOf(plan);
       if (output) {
         const entityOutput = this.withEntityUrl(ep.step, output);
         if (ep.step.type === InstallStepType.GATEWAY) {
           this.setGatewayOutput(ep.step, entityOutput);
         }
-        this.markEntityStepSuccess(ws, ep, entityOutput, resolution);
+        this.markEntityStepSuccess(ep, entityOutput, resolution);
       } else {
         ep.status = 'success';
         this.cdr.detectChanges();
       }
     }
     ws.applying = false;
-    this.installRegistered = true;
+    this.packageInstalled = true;
     ws.progressDone = true;
     ws.completed = true;
     this.cdr.detectChanges();
@@ -1911,7 +1907,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       id: step.id,
       type: step.type,
       action: 'KEEP',
-      resolution: plan.previous?.resolution ?? plan.resolution ?? 'created',
+      resolution: this.resolutionOf(plan),
       defaultConverter: step.default || undefined,
       // A kept integration, e.g. one the package took as it was, gets them merged by the server: the converter reads them
       metadata: this.integrationMetadataOf(step)
@@ -2363,8 +2359,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }));
     ws.reviewing = true;
     ws.progressError = null;
-    // The server finds a duplicate key of an update
-    const duplicateKey = this.data.update ? null : this.duplicateStateKey();
+    // The server rejects a duplicate key too, but only when the plan is sent: this tells the user before the check
+    const duplicateKey = this.duplicateStateKey();
     if (duplicateKey) {
       ws.progressError = this.translate.instant('iot-hub.device-install-duplicate-step', { key: duplicateKey });
       this.cdr.detectChanges();

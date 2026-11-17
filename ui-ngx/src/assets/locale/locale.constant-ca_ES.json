@@ -6591,7 +6591,6 @@
         "device-update-modified": "Té canvis locals. Podeu baixar la versió actual <a>aquí</a>.",
         "device-install-unexpected-error": "S'ha produït un error. Torneu-ho a provar.",
         "device-package-will-create": "Es crearà",
-        "device-install-install": "Instal·la",
         "device-install-nothing-installed": "No s'ha instal·lat res.",
         "device-package-confirm-warnings": "Confirmeu { count, plural, one {1 avís} other {# avisos} } per activar el botó {action}",
         "device-package-skipped": "Sense canvis",

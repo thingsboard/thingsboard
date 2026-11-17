@@ -6589,7 +6589,6 @@
         "device-update-modified": "يحتوي على تغييرات محلية. يمكنك تنزيل الإصدار الحالي <a>من هنا</a>.",
         "device-install-unexpected-error": "حدث خطأ ما. حاول مرة أخرى.",
         "device-package-will-create": "سيتم الإنشاء",
-        "device-install-install": "تثبيت",
         "device-install-nothing-installed": "لم يتم تثبيت أي شيء.",
         "device-package-confirm-warnings": "أكّد {count, plural, one {تحذيرًا واحدًا} two {تحذيرين} few {# تحذيرات} many {# تحذيرًا} other {# تحذير} } لتمكين زر \"{action}\"",
         "device-package-skipped": "لم يتغير",

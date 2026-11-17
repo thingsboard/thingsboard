@@ -70,14 +70,13 @@
 
 <!-- Update: an entity someone changed since install, which the user can save before the update overwrites it -->
 <ng-template #modifiedHint let-ep>
-  @let hint = textWithLink('iot-hub.device-update-modified');
-  {{ hint.before }}<a class="tb-progress-link" href="#" (click)="$event.preventDefault(); downloadCurrentEntity(ep)">{{ hint.link }}</a>{{ hint.after }}
+  {{ modifiedHintText.before }}<a class="tb-progress-link" href="#" (click)="$event.preventDefault(); downloadCurrentEntity(ep)">{{ modifiedHintText.link }}</a>{{ modifiedHintText.after }}
 </ng-template>
 
 <!-- The package's entities and what the install or update does with them; review mode shows them done -->
 <ng-template #packageRows let-ws>
   <div class="flex flex-col p-6">
-    @for (ep of ws.entitySteps; track ep.step.name; let i = $index) {
+    @for (ep of ws.entitySteps; track ep.step; let i = $index) {
       @if (i > 0) {
         <div class="tb-progress-divider"></div>
       }
@@ -252,7 +251,7 @@
     <!-- Review mode: tabs -->
     <div mat-dialog-content>
       <mat-tab-group (selectedIndexChange)="onTabChanged($event)">
-        @for (ws of wizardSteps; track ws.label) {
+        @for (ws of wizardSteps; track ws) {
           <mat-tab [label]="ws.label">
             <ng-template matTabContent>
               <ng-container *ngTemplateOutlet="stepContent; context: { $implicit: ws }"></ng-container>
@@ -276,7 +275,7 @@
           <mat-icon>done</mat-icon>
         </ng-template>
 
-        @for (ws of wizardSteps; track ws.label) {
+        @for (ws of wizardSteps; track ws) {
           <mat-step [editable]="!isBusy"
                     [completed]="ws.completed && !ws.formGroup?.invalid"
                     [stepControl]="ws.type === 'form' ? ws.formGroup : null">
@@ -312,7 +311,7 @@
 
     <mat-dialog-actions>
       @if (!isFirstWizardStep) {
-        <button mat-stroked-button [disabled]="connectionChecking(currentWizardStep) || isApplying || currentWizardStep?.checking" (click)="previousStep()">{{ 'action.back' | translate }}</button>
+        <button mat-stroked-button [disabled]="connectionChecking(currentWizardStep) || isBusy" (click)="previousStep()">{{ 'action.back' | translate }}</button>
       }
       <span class="flex-1"></span>
       @if (currentWizardStep; as step) {
