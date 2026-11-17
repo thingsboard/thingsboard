@@ -6,6 +6,10 @@
 
 # Makes the third-party notices of one artifact from its SBOMs.
 #
+# With --product, makes those of the whole product: THIRD-PARTY-NOTICES at the root of the repository, from the SBOMs
+# that the modules left in their target/sbom after a build with -Dsbom.skip=false. Run it after such a build to update
+# the file; CI runs it the same way and fails when the committed file differs.
+#
 # The SBOMs are turned into the list of their third-party packages (sbom_to_ort.py). ORT scans the source of each
 # package for licenses and copyright statements, and writes the notices with THIRD-PARTY-NOTICES.ftl. The NOTICE files
 # of the packages are added as they are (notice_files.py).
@@ -29,15 +33,44 @@
 #   ort-config/copyright-garbage.yml        copyright statements that are about the text of a license
 set -euo pipefail
 
-if [ $# -lt 4 ]; then
+HERE=$(dirname "$(realpath "$0")")
+if [ $# -eq 1 ] && [ "$1" = --product ]; then
+  ROOT=$(realpath "$HERE/../../../..")
+  mapfile -t SBOMS < <(cd "$ROOT" && find . -path '*/node_modules' -prune -o -path '*/target/sbom/*.cdx.json' -print | sort)
+  if [ ${#SBOMS[@]} -eq 0 ]; then
+    echo "Third-party notices: no SBOMs in the target/sbom directories of the modules. Build the product with them" \
+      "first, from $ROOT: mvn clean package -DskipTests -Dsbom.skip=false" >&2
+    exit 1
+  fi
+  # The version leaves our own modules out; WinSW is the service wrapper in the Windows zip of every service, which
+  # the SBOMs of what the modules pack do not list (see the package-sbom execution in the root pom.xml)
+  POM=$(python3 -I - "$ROOT/pom.xml" <<'EOF'
+import sys
+import xml.etree.ElementTree as ET
+pom = ET.parse(sys.argv[1]).getroot()
+ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
+version, winsw = pom.findtext('m:version', namespaces=ns), pom.findtext('m:properties/m:winsw.version', namespaces=ns)
+if not version or not winsw:
+    sys.exit(f'Third-party notices: {sys.argv[1]} has no <version> or no <winsw.version> property')
+print(version, winsw)
+EOF
+)
+  read -r VERSION WINSW <<< "$POM"
+  echo "Third-party notices of the product $VERSION, from ${#SBOMS[@]} SBOMs:"
+  printf '  %s\n' "${SBOMS[@]#./}"
+  set -- "${SBOMS[@]/#./$ROOT}" --add "pkg:maven/com.sun.winsw/winsw@$WINSW=MIT"
+  WORK=$ROOT/target/notices-product
+  NOTICES=$ROOT/THIRD-PARTY-NOTICES
+elif [ $# -ge 4 ]; then
+  WORK=$(realpath -m "$1")
+  VERSION=$2
+  NOTICES=$3
+  shift 3
+else
   echo "usage: $0 <work directory> <project version> <notices file> <SBOM> ... [options of sbom_to_ort.py]" >&2
+  echo "       $0 --product" >&2
   exit 2
 fi
-WORK=$(realpath -m "$1")
-VERSION=$2
-NOTICES=$3
-shift 3
-HERE=$(dirname "$(realpath "$0")")
 ORT_HOME=${NOTICES_ORT_HOME:-$HOME/.ort}
 # ORT runs as the user of this script, so that it can write to the mounted directories whoever that is; its home
 # directory in the image belongs to another user, so ORT keeps its data and its home in /ort
