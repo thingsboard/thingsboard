@@ -11,8 +11,9 @@
 # of the packages are added as they are (notice_files.py).
 #
 # Needs Docker and python3. The results of the scans are kept in ~/.ort/scanner (or in $NOTICES_ORT_HOME/scanner):
-# a package that is not there yet is scanned, which takes minutes. With the address of the shared archive of scans in
-# NOTICES_SCAN_CACHE_URL, the scans that others have made are downloaded first: see scan_cache.py.
+# a package that is not there yet is scanned, which takes minutes. The scans that others have made are downloaded
+# first, from the archive that the machines share (or from the one at $NOTICES_SCAN_CACHE_URL): see scan_cache.py.
+# A Maven build sets the two with -Dnotices.ort.home and -Dnotices.scanCache.url.
 # The jars are read from ~/.m2/repository (or from $NOTICES_MAVEN_REPOSITORY); one that is not there is downloaded.
 # A package without a source archive and without a repository fails the scan, until a curation gives its source or
 # says that it has none.
@@ -50,9 +51,8 @@ rm -rf "$WORK/project" "$WORK/package-configurations"
 rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,notice-files.txt,THIRD-PARTY-NOTICES.ftl,THIRD-PARTY-NOTICES}
 rm -f "$WORK"/{convert,analyze,scan,package-configurations,notice-files,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
-if [ -n "${NOTICES_SCAN_CACHE_URL:-}" ]; then
-  python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" --url "$NOTICES_SCAN_CACHE_URL"
-fi
+python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" \
+  --url "${NOTICES_SCAN_CACHE_URL:-https://repo.thingsboard.io/artifactory/ort/scan-cache.tar.gz}"
 step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERSION" --cache "$ORT_HOME/maven-sources.json" \
   --curations "$HERE/ort-config/curations/curations.json" \
   --own org.thingsboard.ai/common --own org.thingsboard.license/client --own org.thingsboard.license/shared \
