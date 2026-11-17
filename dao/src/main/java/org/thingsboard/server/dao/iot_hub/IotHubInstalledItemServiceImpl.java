@@ -14,6 +14,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.model.sql.IotHubInstalledItemEntity;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,6 +48,27 @@ class IotHubInstalledItemServiceImpl implements IotHubInstalledItemService {
     public PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink) {
         validatePageLink(pageLink, IotHubInstalledItemEntity.ALLOWED_SORT_PROPERTIES);
         return iotHubInstalledItemDao.findByTenantId(tenantId, itemTypes, itemId, pageLink);
+    }
+
+    @Override
+    public PageData<IotHubInstalledItem> findByTenantIdWithUpdates(TenantId tenantId, List<String> itemTypes,
+                                                                   Map<UUID, UUID> publishedVersionIds, PageLink pageLink) {
+        validatePageLink(pageLink, IotHubInstalledItemEntity.ALLOWED_SORT_PROPERTIES);
+        // Only the tenant's installed items, so the map can't outgrow the query's bind parameter limit; an item IoT Hub
+        // publishes no version of has nothing to update to
+        Map<UUID, UUID> published = new HashMap<>();
+        if (publishedVersionIds != null && !publishedVersionIds.isEmpty()) {
+            for (UUID itemId : iotHubInstalledItemDao.findInstalledItemIdsByTenantId(tenantId)) {
+                UUID versionId = publishedVersionIds.get(itemId);
+                if (versionId != null) {
+                    published.put(itemId, versionId);
+                }
+            }
+        }
+        if (published.isEmpty()) {
+            return PageData.emptyPageData();
+        }
+        return iotHubInstalledItemDao.findByTenantIdWithUpdates(tenantId, itemTypes, published, pageLink);
     }
 
     @Override

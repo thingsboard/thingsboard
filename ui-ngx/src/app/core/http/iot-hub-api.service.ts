@@ -4,7 +4,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
 import { PageLink } from '@shared/models/page/page-link';
 import {
@@ -13,7 +14,7 @@ import {
   MpItemVersionView
 } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
-import { DevicePackageEntityState, DeviceUpdateRequest, DeviceUpdateResult, IotHubInstalledItem, IotHubInstalledItemKeptEntities, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { DevicePackageEntityState, DevicePackageRequest, DevicePackageResult, IotHubInstalledItem, IotHubInstalledItemKeptEntities, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, ItemTypeFilterInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
@@ -49,6 +50,8 @@ export function iotHubResourceUrl(baseUrl: string, path: string): string {
   }
   return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 }
+
+const PUBLISHED_VERSIONS_CHUNK_SIZE = 100;
 
 export interface IotHubRequestConfig {
   ignoreLoading?: boolean;
@@ -177,18 +180,6 @@ export class IotHubApiService {
     );
   }
 
-  public registerDeviceInstall(
-    versionId: string,
-    descriptor: { type?: string; createdEntityIds: { entityType: string; id: string }[]; usedExistingEntityIds?: { entityType: string; id: string }[]; dashboardId?: { entityType: string; id: string }; selectedInstallMethod?: string; installState?: Record<string, any> },
-    config?: IotHubRequestConfig
-  ): Observable<InstallItemVersionResult> {
-    return this.http.post<InstallItemVersionResult>(
-      `/api/iot-hub/device/register?versionId=${versionId}`,
-      { type: 'DEVICE', ...descriptor },
-      { params: this.buildParams(config) }
-    );
-  }
-
   public installItemVersion(versionId: string, config?: IotHubRequestConfig, data?: any): Observable<InstallItemVersionResult> {
     return this.http.post<InstallItemVersionResult>(
       `/api/iot-hub/versions/${versionId}/install`,
@@ -240,16 +231,22 @@ export class IotHubApiService {
 
   public getInstalledItems(pageLink: PageLink, itemTypes?: string | string[],
                            itemId?: string, config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
-    let query = pageLink.toQuery();
-    if (itemTypes) {
-      const types = Array.isArray(itemTypes) ? itemTypes : [itemTypes];
-      types.forEach(t => query += `&itemTypes=${t}`);
-    }
+    let query = this.installedItemsQuery(pageLink, itemTypes);
     if (itemId) {
       query += `&itemId=${itemId}`;
     }
     return this.http.get<PageData<IotHubInstalledItem>>(
       `/api/iot-hub/installedItems${query}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /** Body: published version id by item id; returns items installed in a different version. */
+  public getInstalledItemsWithUpdates(pageLink: PageLink, itemTypes: string[] | null, publishedVersionIds: Record<string, string>,
+                                      config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
+    return this.http.post<PageData<IotHubInstalledItem>>(
+      `/api/iot-hub/installedItems/withUpdates${this.installedItemsQuery(pageLink, itemTypes)}`,
+      publishedVersionIds,
       { params: this.buildParams(config) }
     );
   }
@@ -278,9 +275,18 @@ export class IotHubApiService {
   }
 
   /** Applies a device package update in one transaction: all of it, or nothing. */
-  public updateDevicePackage(installedItemId: string, request: DeviceUpdateRequest, config?: IotHubRequestConfig): Observable<DeviceUpdateResult> {
-    return this.http.post<DeviceUpdateResult>(
+  public updateDevicePackage(installedItemId: string, request: DevicePackageRequest, config?: IotHubRequestConfig): Observable<DevicePackageResult> {
+    return this.http.post<DevicePackageResult>(
       `/api/iot-hub/installedItems/${installedItemId}/deviceUpdate`,
+      request,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /** Installs a device package in one transaction: all of its entities and the installed item, or nothing. */
+  public installDevicePackage(request: DevicePackageRequest, config?: IotHubRequestConfig): Observable<DevicePackageResult> {
+    return this.http.post<DevicePackageResult>(
+      `/api/iot-hub/device/install`,
       request,
       { params: this.buildParams(config) }
     );
@@ -294,11 +300,18 @@ export class IotHubApiService {
   }
 
   public getItemsPublishedVersions(itemIds: string[], config?: IotHubRequestConfig): Observable<ItemPublishedVersionInfo[]> {
-    return this.http.post<ItemPublishedVersionInfo[]>(
+    if (!itemIds.length) {
+      return of([]);
+    }
+    const chunks: string[][] = [];
+    for (let i = 0; i < itemIds.length; i += PUBLISHED_VERSIONS_CHUNK_SIZE) {
+      chunks.push(itemIds.slice(i, i + PUBLISHED_VERSIONS_CHUNK_SIZE));
+    }
+    return forkJoin(chunks.map(chunk => this.http.post<ItemPublishedVersionInfo[]>(
       `${this.baseUrl}/api/versions/publishedVersions`,
-      itemIds,
+      chunk,
       { params: this.buildParams(config) }
-    );
+    ))).pipe(map(results => results.flat()));
   }
 
   public getCreatorProfile(creatorId: string, config?: IotHubRequestConfig): Observable<CreatorView> {
@@ -306,6 +319,11 @@ export class IotHubApiService {
       `${this.baseUrl}/api/creators/${creatorId}/profile`,
       { params: this.buildParams(config) }
     );
+  }
+
+  private installedItemsQuery(pageLink: PageLink, itemTypes?: string | string[] | null): string {
+    const types = !itemTypes ? [] : Array.isArray(itemTypes) ? itemTypes : [itemTypes];
+    return pageLink.toQuery() + types.map(t => `&itemTypes=${t}`).join('');
   }
 
   private buildParams(config?: IotHubRequestConfig): HttpParams {
