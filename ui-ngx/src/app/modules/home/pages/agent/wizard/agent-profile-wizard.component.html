@@ -18,7 +18,7 @@
 
 <div mat-dialog-content class="tb-install-wizard-body flex min-h-[50vh] flex-col" [class.tb-install-wizard-embedded]="embedded">
 
-  <mat-stepper linear #stepper [labelPosition]="(stepperLabelPosition | async)">
+  <mat-stepper class="flex-1" linear #stepper [labelPosition]="(stepperLabelPosition | async)">
 
     <mat-step [stepControl]="step1Form" [label]="'agent.add-profile-step-details' | translate">
       <form [formGroup]="step1Form" autocomplete="off">
@@ -106,7 +106,7 @@
 
   </mat-stepper>
 
-  <div class="step-footer mt-auto">
+  <div class="step-footer">
     @if (stepper?.selectedIndex === 0) {
       @if (showBack) {
         <button mat-button type="button" (click)="back()">

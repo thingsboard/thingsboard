@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { inject, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, ResolveFn, Route, RouterModule, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, ResolveFn, Route, Router, RouterModule, Routes } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
@@ -47,6 +47,12 @@ const agentInfoBreadcrumbResolver: ResolveFn<AgentInfo | null> = (route) => {
     : of(null);
 };
 
+const agentTabsBackUrlResolver: ResolveFn<string | null> = () => {
+  const router = inject(Router);
+  const previousUrl = router.getCurrentNavigation()?.previousNavigation?.finalUrl;
+  return previousUrl ? router.serializeUrl(previousUrl).split(/[?#]/)[0] : null;
+};
+
 const agentTabsBreadcrumbLabelFunction: BreadCrumbLabelFunction<RouterTabsComponent> =
   (route, translate, component, data, utils) => {
     const name = (route?.data?.agent as AgentInfo)?.name ?? '';
@@ -78,7 +84,8 @@ const agentTabsChildren = (entitiesTableConfig: any): Route => ({
     } as BreadCrumbConfig<RouterTabsComponent>
   },
   resolve: {
-    agent: agentInfoBreadcrumbResolver
+    agent: agentInfoBreadcrumbResolver,
+    agentTabsBackUrl: agentTabsBackUrlResolver
   },
   children: [
     {

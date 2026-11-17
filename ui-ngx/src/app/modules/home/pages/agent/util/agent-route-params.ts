@@ -45,6 +45,10 @@ export function agentEntityUrl(route: ActivatedRouteSnapshot, agentId: string, .
   return '/' + [url, ...tail].join('/');
 }
 
+export function agentTabsBackUrl(route: ActivatedRouteSnapshot): string | null {
+  return route.pathFromRoot.find(r => r.data?.agentTabsBackUrl)?.data.agentTabsBackUrl ?? null;
+}
+
 // Deepest activated route snapshot — for callers (dialogs, table configs) that
 // only have a Router and need the scope of the page currently displayed.
 export function currentAgentRouteSnapshot(router: Router): ActivatedRouteSnapshot {

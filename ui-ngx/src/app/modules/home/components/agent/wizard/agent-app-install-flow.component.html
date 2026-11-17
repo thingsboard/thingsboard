@@ -228,7 +228,12 @@
             </ng-template>
           </mat-expansion-panel>
         }
-        @if (!useProfile) {
+        @if (!useProfile && loadError) {
+          <div class="error-state">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ loadError }}</span>
+          </div>
+        } @else if (!useProfile) {
           @if (composeTypeKeys.length > 1) {
             <mat-form-field class="mat-block" appearance="outline">
               <mat-label translate>agent.app-compose-template-select</mat-label>
