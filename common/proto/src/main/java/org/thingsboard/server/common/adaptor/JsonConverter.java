@@ -74,8 +74,13 @@ public class JsonConverter {
     private static int maxStringValueLength = 0;
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts) throws JsonSyntaxException {
+        return convertToTelemetryProto(jsonElement, ts, Collections.emptySet());
+    }
+
+    // String values of typeCastDisabledKeys stay strings even when type cast is enabled.
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts, Set<String> typeCastDisabledKeys) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
-        convertToTelemetry(jsonElement, ts, null, builder, Collections.emptySet());
+        convertToTelemetry(jsonElement, ts, null, builder, typeCastDisabledKeys);
         return builder.build();
     }
 
@@ -664,7 +669,8 @@ public class JsonConverter {
         return convertToAttributes(JsonParser.parseString(msg.getData()), System.currentTimeMillis(), msg.getTypeCastDisabledKeys());
     }
 
-    private static List<AttributeKvEntry> convertToAttributes(JsonElement element, long ts, Set<String> typeCastDisabledKeys) {
+    // String values of typeCastDisabledKeys stay strings even when type cast is enabled.
+    public static List<AttributeKvEntry> convertToAttributes(JsonElement element, long ts, Set<String> typeCastDisabledKeys) {
         return parseValues(element.getAsJsonObject(), typeCastDisabledKeys).stream().<AttributeKvEntry>map(kv -> new BaseAttributeKvEntry(kv, ts)).toList();
     }
 

@@ -20,6 +20,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -40,6 +41,10 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
@@ -424,6 +429,71 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(deviceCredentialsMsg);
         Assert.assertEquals(device.getId(), deviceCredentialsMsg.getDeviceId());
         compareHasVersionEntities(deviceCredentials, deviceCredentialsMsg);
+    }
+
+    @Test
+    public void testSendAttributesRequestToCloud_numericStringAttributeStaysString() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        // saved as a string, the way an integration saves an identifier kept as a string by the converter
+        attributesService.save(tenantId, device.getId(), AttributeScope.SERVER_SCOPE,
+                new BaseAttributeKvEntry(new StringDataEntry("joinEui", "0000000000000000"), System.currentTimeMillis())).get();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(1);
+        edgeImitator.sendUplinkMsg(serverAttributesRequest(device));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        EntityDataProto entityData = (EntityDataProto) edgeImitator.getLatestMessage();
+        TransportProtos.KeyValueProto joinEui = entityData.getAttributesUpdatedMsg().getKvList().stream()
+                .filter(kv -> kv.getKey().equals("joinEui")).findFirst().orElseThrow();
+        Assert.assertEquals(TransportProtos.KeyValueType.STRING_V, joinEui.getType());
+        Assert.assertEquals("0000000000000000", joinEui.getStringV());
+        Assert.assertTrue(entityData.getAttributesTypeCastDisabledKeysList().contains("joinEui"));
+    }
+
+    @Test
+    public void testSendAttributesRequestToCloud_numericStringLatestTimeseriesStaysString() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        long ts = System.currentTimeMillis();
+        // saved as strings, the way an integration saves identifiers kept as strings by the converter; fCnt is a number
+        tsService.save(tenantId, device.getId(), List.of(
+                new BasicTsKvEntry(ts, new StringDataEntry("devAddr", "00123456")),
+                new BasicTsKvEntry(ts, new LongDataEntry("fCnt", 42L))), 0L).get();
+
+        // the latest time series are sent to the edge after the attributes of the requested scope
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(serverAttributesRequest(device));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    EntityDataProto entityData = edgeImitator.findAllMessagesByType(EntityDataProto.class).stream()
+                            .filter(msg -> msg.hasPostTelemetryMsg() && msg.getEntityIdMSB() == device.getUuidId().getMostSignificantBits()
+                                    && msg.getEntityIdLSB() == device.getUuidId().getLeastSignificantBits())
+                            .filter(msg -> msg.getPostTelemetryMsg().getTsKvList(0).getKvList().stream().anyMatch(kv -> kv.getKey().equals("devAddr")))
+                            .findFirst().orElseThrow(() -> new AssertionError("No latest time series message with devAddr"));
+                    TransportProtos.TsKvListProto tsKvList = entityData.getPostTelemetryMsg().getTsKvList(0);
+                    Assert.assertEquals(ts, tsKvList.getTs());
+                    TransportProtos.KeyValueProto devAddr = tsKvList.getKvList().stream().filter(kv -> kv.getKey().equals("devAddr")).findFirst().orElseThrow();
+                    Assert.assertEquals(TransportProtos.KeyValueType.STRING_V, devAddr.getType());
+                    Assert.assertEquals("00123456", devAddr.getStringV());
+                    TransportProtos.KeyValueProto fCnt = tsKvList.getKvList().stream().filter(kv -> kv.getKey().equals("fCnt")).findFirst().orElseThrow();
+                    Assert.assertEquals(TransportProtos.KeyValueType.LONG_V, fCnt.getType());
+                    Assert.assertEquals(List.of("devAddr"), entityData.getTelemetryTypeCastDisabledKeysList());
+                });
+    }
+
+    private static UplinkMsg serverAttributesRequest(Device device) {
+        return UplinkMsg.newBuilder()
+                .addAttributesRequestMsg(AttributesRequestMsg.newBuilder()
+                        .setEntityIdMSB(device.getUuidId().getMostSignificantBits())
+                        .setEntityIdLSB(device.getUuidId().getLeastSignificantBits())
+                        .setEntityType(EntityType.DEVICE.name())
+                        .setScope(DataConstants.SERVER_SCOPE)
+                        .build())
+                .build();
     }
 
     @Test

@@ -4,6 +4,8 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -68,13 +70,20 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
+import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 
 import java.lang.reflect.Constructor;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.EXCLUDED_NODES_BY_EDGE_VERSION;
@@ -293,6 +302,102 @@ public class EdgeMsgConstructorUtilsTest {
         Assertions.assertEquals(deviceAttrUpdate1, merged.get(0));
         Assertions.assertEquals(deviceAttrUpdate2, merged.get(1));
         Assertions.assertEquals(deviceAttrUpdate3, merged.get(2));
+    }
+
+    @Test
+    @DisplayName("constructEntityDataMsg: attributes marked as type cast disabled stay strings and the keys go to the proto")
+    public void testConstructEntityDataMsg_attributesWithTypeCastDisabledKeys() {
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        JsonElement body = JsonParser.parseString("{\"ts\":1000,\"scope\":\"CLIENT_SCOPE\","
+                + "\"kv\":{\"joinEui\":\"0000000000000000\",\"hardwareVersion\":\"1.0\",\"fCnt\":\"42\"},"
+                + "\"typeCastDisabledKeys\":[\"joinEui\",\"hardwareVersion\"]}");
+
+        for (var action : List.of(EdgeEventActionType.ATTRIBUTES_UPDATED, EdgeEventActionType.POST_ATTRIBUTES)) {
+            EntityDataProto proto = EdgeMsgConstructorUtils.constructEntityDataMsg(tenantId, deviceId, action, body);
+
+            var attributesMsg = action == EdgeEventActionType.POST_ATTRIBUTES ? proto.getPostAttributesMsg() : proto.getAttributesUpdatedMsg();
+            Map<String, KeyValueProto> kvs = toMap(attributesMsg.getKvList());
+            Assertions.assertEquals(KeyValueType.STRING_V, kvs.get("joinEui").getType(), action.name());
+            Assertions.assertEquals("0000000000000000", kvs.get("joinEui").getStringV(), action.name());
+            Assertions.assertEquals(KeyValueType.STRING_V, kvs.get("hardwareVersion").getType(), action.name());
+            Assertions.assertEquals("1.0", kvs.get("hardwareVersion").getStringV(), action.name());
+            Assertions.assertEquals(KeyValueType.LONG_V, kvs.get("fCnt").getType(), action.name());
+            Assertions.assertEquals(List.of("joinEui", "hardwareVersion"), sorted(proto.getAttributesTypeCastDisabledKeysList()), action.name());
+            Assertions.assertTrue(proto.getTelemetryTypeCastDisabledKeysList().isEmpty(), action.name());
+            Assertions.assertEquals(1000L, proto.getAttributeTs(), action.name());
+            Assertions.assertEquals("CLIENT_SCOPE", proto.getPostAttributeScope(), action.name());
+        }
+    }
+
+    @Test
+    @DisplayName("constructEntityDataMsg: telemetry marked as type cast disabled stays a string, keeps its ts and the keys go to the proto")
+    public void testConstructEntityDataMsg_telemetryWithTypeCastDisabledKeys() {
+        JsonElement body = JsonParser.parseString("{\"ts\":1000,\"data\":{\"devAddr\":\"00123456\",\"temperature\":\"21.5\"},"
+                + "\"typeCastDisabledKeys\":[\"devAddr\"]}");
+
+        EntityDataProto proto = EdgeMsgConstructorUtils.constructEntityDataMsg(TenantId.fromUUID(UUID.randomUUID()),
+                new DeviceId(UUID.randomUUID()), EdgeEventActionType.TIMESERIES_UPDATED, body);
+
+        var tsKvList = proto.getPostTelemetryMsg().getTsKvList(0);
+        Map<String, KeyValueProto> kvs = toMap(tsKvList.getKvList());
+        Assertions.assertEquals(1000L, tsKvList.getTs());
+        Assertions.assertEquals(KeyValueType.STRING_V, kvs.get("devAddr").getType());
+        Assertions.assertEquals("00123456", kvs.get("devAddr").getStringV());
+        Assertions.assertEquals(KeyValueType.DOUBLE_V, kvs.get("temperature").getType());
+        Assertions.assertEquals(List.of("devAddr"), proto.getTelemetryTypeCastDisabledKeysList());
+        Assertions.assertTrue(proto.getAttributesTypeCastDisabledKeysList().isEmpty());
+    }
+
+    @Test
+    @DisplayName("constructEntityDataMsg: without type cast disabled keys numeric strings are cast as before and the proto has no keys")
+    public void testConstructEntityDataMsg_withoutTypeCastDisabledKeys() {
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        EntityDataProto attributes = EdgeMsgConstructorUtils.constructEntityDataMsg(tenantId, deviceId, EdgeEventActionType.ATTRIBUTES_UPDATED,
+                JsonParser.parseString("{\"ts\":1000,\"kv\":{\"joinEui\":\"0000000000000000\",\"hardwareVersion\":\"1.0\"}}"));
+        Map<String, KeyValueProto> attributeKvs = toMap(attributes.getAttributesUpdatedMsg().getKvList());
+        Assertions.assertEquals(KeyValueType.LONG_V, attributeKvs.get("joinEui").getType());
+        Assertions.assertEquals(0L, attributeKvs.get("joinEui").getLongV());
+        Assertions.assertEquals(KeyValueType.DOUBLE_V, attributeKvs.get("hardwareVersion").getType());
+        Assertions.assertTrue(attributes.getAttributesTypeCastDisabledKeysList().isEmpty());
+
+        EntityDataProto telemetry = EdgeMsgConstructorUtils.constructEntityDataMsg(tenantId, deviceId, EdgeEventActionType.TIMESERIES_UPDATED,
+                JsonParser.parseString("{\"ts\":1000,\"data\":{\"devAddr\":\"00123456\"}}"));
+        KeyValueProto devAddr = telemetry.getPostTelemetryMsg().getTsKvList(0).getKv(0);
+        Assertions.assertEquals(KeyValueType.LONG_V, devAddr.getType());
+        Assertions.assertEquals(123456L, devAddr.getLongV());
+        Assertions.assertTrue(telemetry.getTelemetryTypeCastDisabledKeysList().isEmpty());
+    }
+
+    @Test
+    @DisplayName("mergeDownlinkDuplicates: type cast disabled keys of a filtered attributes body are kept")
+    public void testMergeDownlinkDuplicates_typeCastDisabledKeysAreKept() {
+        UUID deviceId = UUID.randomUUID();
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        var older = createEdgeEvent(tenantId, 1, EdgeEventActionType.ATTRIBUTES_UPDATED, deviceId, EdgeEventType.DEVICE,
+                JacksonUtil.toJsonNode("{\"ts\":1000,\"kv\":{\"joinEui\":\"0000000000000000\",\"a\":1},\"typeCastDisabledKeys\":[\"joinEui\"]}"));
+        var newer = createEdgeEvent(tenantId, 2, EdgeEventActionType.ATTRIBUTES_UPDATED, deviceId, EdgeEventType.DEVICE,
+                createAttrBody(2_000L, "{\"a\":2}"));
+
+        List<EdgeEvent> merged = EdgeMsgConstructorUtils.mergeAndFilterDownlinkDuplicates(List.of(older, newer));
+
+        JsonNode olderBody = merged.stream().filter(event -> event.getSeqId() == 1).findFirst().orElseThrow().getBody();
+        Assertions.assertNull(getIntValue(olderBody, "a"));
+        Assertions.assertEquals("0000000000000000", olderBody.get("kv").get("joinEui").asText());
+        EntityDataProto proto = EdgeMsgConstructorUtils.constructEntityDataMsg(tenantId, new DeviceId(deviceId),
+                EdgeEventActionType.ATTRIBUTES_UPDATED, JsonParser.parseString(JacksonUtil.toString(olderBody)));
+        Assertions.assertEquals(KeyValueType.STRING_V, proto.getAttributesUpdatedMsg().getKv(0).getType());
+        Assertions.assertEquals(List.of("joinEui"), proto.getAttributesTypeCastDisabledKeysList());
+    }
+
+    private static Map<String, KeyValueProto> toMap(List<KeyValueProto> kvList) {
+        return kvList.stream().collect(Collectors.toMap(KeyValueProto::getKey, Function.identity()));
+    }
+
+    private static List<String> sorted(List<String> keys) {
+        return keys.stream().sorted(Comparator.reverseOrder()).toList();
     }
 
     private Integer getIntValue(JsonNode body, String key) {

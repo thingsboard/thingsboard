@@ -390,4 +390,159 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
                 });
     }
 
+    @Test
+    public void testTypeCastDisabledKeys_edgeEventKeepsStringsAndSendsKeysToEdge() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        String attributesBody = "{\"scope\":\"SERVER_SCOPE\",\"ts\":1000,\"kv\":{\"joinEui\":\"0000000000000000\",\"hardwareVersion\":\"1.0\"},"
+                + "\"typeCastDisabledKeys\":[\"joinEui\",\"hardwareVersion\"]}";
+
+        EntityDataProto attributesUpdated = sendEdgeEventAndGetEntityData(device, EdgeEventActionType.ATTRIBUTES_UPDATED, attributesBody);
+        assertStringKv(attributesUpdated.getAttributesUpdatedMsg().getKvList(), "joinEui", "0000000000000000");
+        assertStringKv(attributesUpdated.getAttributesUpdatedMsg().getKvList(), "hardwareVersion", "1.0");
+        Assert.assertEquals(List.of("hardwareVersion", "joinEui"), attributesUpdated.getAttributesTypeCastDisabledKeysList().stream().sorted().toList());
+
+        EntityDataProto postAttributes = sendEdgeEventAndGetEntityData(device, EdgeEventActionType.POST_ATTRIBUTES, attributesBody);
+        assertStringKv(postAttributes.getPostAttributesMsg().getKvList(), "joinEui", "0000000000000000");
+        assertStringKv(postAttributes.getPostAttributesMsg().getKvList(), "hardwareVersion", "1.0");
+        Assert.assertEquals(List.of("hardwareVersion", "joinEui"), postAttributes.getAttributesTypeCastDisabledKeysList().stream().sorted().toList());
+
+        EntityDataProto timeseries = sendEdgeEventAndGetEntityData(device, EdgeEventActionType.TIMESERIES_UPDATED,
+                "{\"ts\":1000,\"data\":{\"devAddr\":\"00123456\"},\"typeCastDisabledKeys\":[\"devAddr\"]}");
+        Assert.assertEquals(1000L, timeseries.getPostTelemetryMsg().getTsKvList(0).getTs());
+        assertStringKv(timeseries.getPostTelemetryMsg().getTsKvList(0).getKvList(), "devAddr", "00123456");
+        Assert.assertEquals(List.of("devAddr"), timeseries.getTelemetryTypeCastDisabledKeysList());
+    }
+
+    @Test
+    public void testTypeCastDisabledKeys_edgeEventWithoutKeysIsCastAsBefore() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        EntityDataProto attributesUpdated = sendEdgeEventAndGetEntityData(device, EdgeEventActionType.ATTRIBUTES_UPDATED,
+                "{\"scope\":\"SERVER_SCOPE\",\"ts\":1000,\"kv\":{\"joinEui\":\"0000000000000000\"}}");
+
+        TransportProtos.KeyValueProto joinEui = attributesUpdated.getAttributesUpdatedMsg().getKv(0);
+        Assert.assertEquals(TransportProtos.KeyValueType.LONG_V, joinEui.getType());
+        Assert.assertEquals(0L, joinEui.getLongV());
+        Assert.assertEquals(0, attributesUpdated.getAttributesTypeCastDisabledKeysCount());
+    }
+
+    @Test
+    public void testSendTypeCastDisabledKeysToCloud_valuesAreSavedAsStrings() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        long ts = System.currentTimeMillis();
+
+        // attributes updated: saved by the edge processor itself; telemetry: saved by the rule engine
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityData(entityDataBuilder(device)
+                .setAttributesUpdatedMsg(stringAttributes("joinEui", "0000000000000000", "hardwareVersion", "1.0"))
+                .setPostAttributeScope(DataConstants.SERVER_SCOPE)
+                .addAllAttributesTypeCastDisabledKeys(List.of("joinEui", "hardwareVersion"))
+                .setPostTelemetryMsg(stringTelemetry(ts, "devAddr", "00123456"))
+                .addTelemetryTypeCastDisabledKeys("devAddr")
+                .build()));
+        // post attributes: saved by the rule engine
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityData(entityDataBuilder(device)
+                .setPostAttributesMsg(stringAttributes("eui", "0004000000000001", "firmwareVersion", "2.0"))
+                .setPostAttributeScope(DataConstants.CLIENT_SCOPE)
+                .addAllAttributesTypeCastDisabledKeys(List.of("eui", "firmwareVersion"))
+                .build()));
+
+        String valuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/values/";
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode serverAttributes = doGetAsync(valuesUrl + "attributes/" + DataConstants.SERVER_SCOPE, JsonNode.class);
+                    assertStringAttribute(serverAttributes, "joinEui", "0000000000000000");
+                    assertStringAttribute(serverAttributes, "hardwareVersion", "1.0");
+                    JsonNode clientAttributes = doGetAsync(valuesUrl + "attributes/" + DataConstants.CLIENT_SCOPE, JsonNode.class);
+                    assertStringAttribute(clientAttributes, "eui", "0004000000000001");
+                    assertStringAttribute(clientAttributes, "firmwareVersion", "2.0");
+                    JsonNode timeseries = doGetAsync(valuesUrl + "timeseries?keys=devAddr", JsonNode.class);
+                    Assert.assertEquals("00123456", timeseries.get("devAddr").get(0).get("value").asText());
+                });
+    }
+
+    @Test
+    public void testSendStringsWithoutTypeCastDisabledKeysToCloud_valuesAreCastAsBefore() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        long ts = System.currentTimeMillis();
+
+        // what an edge without the type cast disabled keys sends
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityData(entityDataBuilder(device)
+                .setAttributesUpdatedMsg(stringAttributes("joinEui", "0000000000000000", "hardwareVersion", "1.0"))
+                .setPostAttributeScope(DataConstants.SERVER_SCOPE)
+                .setPostTelemetryMsg(stringTelemetry(ts, "devAddr", "00123456"))
+                .build()));
+
+        String valuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/values/";
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode serverAttributes = doGetAsync(valuesUrl + "attributes/" + DataConstants.SERVER_SCOPE, JsonNode.class);
+                    JsonNode joinEui = findAttributeValue(serverAttributes, "joinEui");
+                    Assert.assertTrue("joinEui must be a number: " + joinEui, joinEui.isNumber());
+                    Assert.assertEquals(0L, joinEui.asLong());
+                    JsonNode hardwareVersion = findAttributeValue(serverAttributes, "hardwareVersion");
+                    Assert.assertTrue("hardwareVersion must be a number: " + hardwareVersion, hardwareVersion.isNumber());
+                    JsonNode timeseries = doGetAsync(valuesUrl + "timeseries?keys=devAddr", JsonNode.class);
+                    Assert.assertEquals("123456", timeseries.get("devAddr").get(0).get("value").asText());
+                });
+    }
+
+    private EntityDataProto sendEdgeEventAndGetEntityData(Device device, EdgeEventActionType action, String body) throws Exception {
+        EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), action, device.getId().getId(), EdgeEventType.DEVICE, JacksonUtil.toJsonNode(body));
+        edgeImitator.expectMessageAmount(1);
+        edgeEventService.saveAsync(edgeEvent).get();
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof EntityDataProto);
+        return (EntityDataProto) latestMessage;
+    }
+
+    private static EntityDataProto.Builder entityDataBuilder(Device device) {
+        return EntityDataProto.newBuilder()
+                .setEntityIdMSB(device.getUuidId().getMostSignificantBits())
+                .setEntityIdLSB(device.getUuidId().getLeastSignificantBits())
+                .setEntityType(device.getId().getEntityType().name());
+    }
+
+    private static TransportProtos.PostAttributeMsg stringAttributes(String... keysAndValues) {
+        TransportProtos.PostAttributeMsg.Builder builder = TransportProtos.PostAttributeMsg.newBuilder();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            builder.addKv(stringKv(keysAndValues[i], keysAndValues[i + 1]));
+        }
+        return builder.build();
+    }
+
+    private static TransportProtos.PostTelemetryMsg stringTelemetry(long ts, String key, String value) {
+        return TransportProtos.PostTelemetryMsg.newBuilder()
+                .addTsKvList(TransportProtos.TsKvListProto.newBuilder().setTs(ts).addKv(stringKv(key, value)).build())
+                .build();
+    }
+
+    private static TransportProtos.KeyValueProto stringKv(String key, String value) {
+        return TransportProtos.KeyValueProto.newBuilder().setKey(key).setType(TransportProtos.KeyValueType.STRING_V).setStringV(value).build();
+    }
+
+    private static void assertStringKv(List<TransportProtos.KeyValueProto> kvList, String key, String expectedValue) {
+        TransportProtos.KeyValueProto kv = kvList.stream().filter(item -> item.getKey().equals(key)).findFirst()
+                .orElseThrow(() -> new AssertionError("No value for key " + key));
+        Assert.assertEquals(key, TransportProtos.KeyValueType.STRING_V, kv.getType());
+        Assert.assertEquals(expectedValue, kv.getStringV());
+    }
+
+    private static void assertStringAttribute(JsonNode attributes, String key, String expectedValue) {
+        JsonNode value = findAttributeValue(attributes, key);
+        Assert.assertTrue(key + " must be a string: " + value, value.isTextual());
+        Assert.assertEquals(expectedValue, value.asText());
+    }
+
+    private static JsonNode findAttributeValue(JsonNode attributes, String key) {
+        for (JsonNode attribute : attributes) {
+            if (key.equals(attribute.get("key").asText())) {
+                return attribute.get("value");
+            }
+        }
+        throw new AssertionError("No attribute " + key + " in " + attributes);
+    }
+
 }

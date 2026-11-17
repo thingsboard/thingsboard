@@ -136,6 +136,33 @@ public class JsonConverterTest {
     }
 
     @Test
+    public void testParseTelemetryProtoWithTsAndTypeCastDisabledKeys() {
+        var json = JsonParser.parseString("{\"devAddr\": \"00123456\", \"fCnt\": \"42\"}");
+        var tsKvList = JsonConverter.convertToTelemetryProto(json, 1000L, Set.of("devAddr")).getTsKvList(0);
+        Assertions.assertEquals(1000L, tsKvList.getTs());
+        assertKv(tsKvList.getKv(0), KeyValueType.STRING_V, "00123456");
+        assertKv(tsKvList.getKv(1), KeyValueType.LONG_V, "42");
+    }
+
+    @Test
+    public void testParseTelemetryProtoWithTsCastsNumericStrings() {
+        var json = JsonParser.parseString("{\"devAddr\": \"00123456\"}");
+        var tsKvList = JsonConverter.convertToTelemetryProto(json, 1000L).getTsKvList(0);
+        Assertions.assertEquals(1000L, tsKvList.getTs());
+        assertKv(tsKvList.getKv(0), KeyValueType.LONG_V, "123456");
+    }
+
+    @Test
+    public void testConvertToAttributesWithTsAndTypeCastDisabledKeys() {
+        var json = JsonParser.parseString("{\"joinEui\": \"0000000000000000\", \"fCnt\": \"42\"}");
+        var attributes = JsonConverter.convertToAttributes(json, 1000L, Set.of("joinEui"));
+        Map<String, KvEntry> kvs = toMap(attributes);
+        assertEntry(kvs.get("joinEui"), DataType.STRING, "0000000000000000");
+        assertEntry(kvs.get("fCnt"), DataType.LONG, 42L);
+        assertThat(attributes).allSatisfy(attribute -> assertThat(attribute.getLastUpdateTs()).isEqualTo(1000L));
+    }
+
+    @Test
     public void testParseAttributesProtoCastsNumericStrings() {
         var kvList = JsonConverter.convertToAttributesProto(JsonParser.parseString("{\"devAddr\": \"01020304\"}")).getKvList();
         assertKv(kvList.get(0), KeyValueType.LONG_V, "1020304");
