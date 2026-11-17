@@ -75,6 +75,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     private List<ServiceType> serviceTypes;
     private List<JobType> taskTypes;
     private ServiceInfo serviceInfo;
+    private volatile Set<String> transports = Collections.emptySet();
 
     private boolean ready = true;
 
@@ -151,10 +152,12 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
 
     @AfterContextReady
     public void setTransports() {
+        transports = getTransportServices().stream()
+                .map(TbTransportService::getName)
+                .collect(Collectors.toSet());
         serviceInfo = ServiceInfo.newBuilder(serviceInfo)
-                .addAllTransports(getTransportServices().stream()
-                        .map(TbTransportService::getName)
-                        .collect(Collectors.toSet()))
+                .clearTransports()
+                .addAllTransports(transports)
                 .build();
     }
 
@@ -194,6 +197,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         }
         builder.setReady(ready);
         builder.addAllTaskTypes(taskTypes.stream().map(JobType::name).toList());
+        builder.addAllTransports(transports);
         return serviceInfo = builder.build();
     }
 
