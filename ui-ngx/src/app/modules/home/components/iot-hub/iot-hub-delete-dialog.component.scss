@@ -15,6 +15,12 @@
   letter-spacing: 0.1px;
   color: rgba(0, 0, 0, 0.87);
   margin: 0;
+  padding: 24px 24px 20px;
+
+  // No baseline strut: the title keeps its own line height
+  &::before {
+    display: none;
+  }
 }
 
 .tb-iot-hub-delete-desc {
