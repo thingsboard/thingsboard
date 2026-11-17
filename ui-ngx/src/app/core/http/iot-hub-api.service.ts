@@ -243,11 +243,7 @@ export class IotHubApiService {
 
   public getInstalledItems(pageLink: PageLink, itemTypes?: string | string[],
                            itemId?: string, config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
-    let query = pageLink.toQuery();
-    if (itemTypes) {
-      const types = Array.isArray(itemTypes) ? itemTypes : [itemTypes];
-      types.forEach(t => query += `&itemTypes=${t}`);
-    }
+    let query = this.installedItemsQuery(pageLink, itemTypes);
     if (itemId) {
       query += `&itemId=${itemId}`;
     }
@@ -257,18 +253,11 @@ export class IotHubApiService {
     );
   }
 
-  /**
-   * The installed items with an update: publishedVersionIds is IoT Hub's published version id by item id, as Check for
-   * updates got it. The server keeps the items installed in another version, with the page's sort, search and types.
-   */
+  /** publishedVersionIds: IoT Hub's published version id by item id; the items installed in another version come back. */
   public getInstalledItemsWithUpdates(pageLink: PageLink, itemTypes: string[] | null, publishedVersionIds: Record<string, string>,
                                       config?: IotHubRequestConfig): Observable<PageData<IotHubInstalledItem>> {
-    let query = pageLink.toQuery();
-    if (itemTypes?.length) {
-      query += itemTypes.map(t => `&itemTypes=${t}`).join('');
-    }
     return this.http.post<PageData<IotHubInstalledItem>>(
-      `/api/iot-hub/installedItems/withUpdates${query}`,
+      `/api/iot-hub/installedItems/withUpdates${this.installedItemsQuery(pageLink, itemTypes)}`,
       publishedVersionIds,
       { params: this.buildParams(config) }
     );
@@ -313,7 +302,6 @@ export class IotHubApiService {
     );
   }
 
-  /** Asked in requests of 100 item ids at most, so a tenant with many items doesn't send IoT Hub one huge request. */
   public getItemsPublishedVersions(itemIds: string[], config?: IotHubRequestConfig): Observable<ItemPublishedVersionInfo[]> {
     if (!itemIds.length) {
       return of([]);
@@ -334,6 +322,11 @@ export class IotHubApiService {
       `${this.baseUrl}/api/creators/${creatorId}/profile`,
       { params: this.buildParams(config) }
     );
+  }
+
+  private installedItemsQuery(pageLink: PageLink, itemTypes?: string | string[] | null): string {
+    const types = !itemTypes ? [] : Array.isArray(itemTypes) ? itemTypes : [itemTypes];
+    return pageLink.toQuery() + types.map(t => `&itemTypes=${t}`).join('');
   }
 
   private buildParams(config?: IotHubRequestConfig): HttpParams {

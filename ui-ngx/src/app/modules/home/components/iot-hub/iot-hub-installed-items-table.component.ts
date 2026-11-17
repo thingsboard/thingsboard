@@ -84,7 +84,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   isCheckingUpdates = false;
   updatesCheckFailed = false;
   onlyUpdates = false;
-  // Of all types and with no search; null while not known
+  // Of all types and with no search
   updatesCount: number | null = null;
   installedCount = 0;
   loadFailed = false;
@@ -135,10 +135,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.textSearch || changes.typeFilters) {
       if (!changes.textSearch?.firstChange || !changes.typeFilters?.firstChange) {
-        this.pageIndex = 0;
-        if (this.paginator) {
-          this.paginator.pageIndex = 0;
-        }
+        this.setPageIndex(0);
         this.loadData();
       }
     }
@@ -146,8 +143,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
 
   ngAfterViewInit(): void {
     this.sort.sortChange.subscribe(() => {
-      this.pageIndex = 0;
-      this.paginator.pageIndex = 0;
+      this.setPageIndex(0);
       this.loadData();
     });
   }
@@ -257,16 +253,12 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       next: (infos) => {
         this.publishedVersionMap.clear();
         infos.forEach(info => this.publishedVersionMap.set(info.itemId, info));
-        // Checked once the counts are in: the header shows them
         this.loadUpdatesCount(() => {
           this.updatesChecked = true;
           this.isCheckingUpdates = false;
-          // No newer versions: the full list, where a new default converter still shows
+          // The full list shows a new default converter, the only-updates list doesn't
           this.showOnlyUpdates(this.updatesCount > 0);
-        }, () => {
-          this.isCheckingUpdates = false;
-          this.updatesCheckFailed = true;
-        });
+        }, () => this.isCheckingUpdates = false);
       },
       error: () => {
         this.isCheckingUpdates = false;
@@ -277,11 +269,15 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
 
   showOnlyUpdates(onlyUpdates: boolean): void {
     this.onlyUpdates = onlyUpdates;
-    this.pageIndex = 0;
-    if (this.paginator) {
-      this.paginator.pageIndex = 0;
-    }
+    this.setPageIndex(0);
     this.loadData();
+  }
+
+  private setPageIndex(pageIndex: number): void {
+    this.pageIndex = pageIndex;
+    if (this.paginator) {
+      this.paginator.pageIndex = pageIndex;
+    }
   }
 
   private publishedVersionIds(): Record<string, string> {
@@ -294,7 +290,6 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     return ids;
   }
 
-  /** Retries a failed load, and the header counts if they failed with it. */
   retryLoad(): void {
     this.loadData();
     if (this.updatesChecked && !this.itemVersion && this.updatesCount === null) {
@@ -307,18 +302,19 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       this.loadData();
       return;
     }
-    // The last update done: the full list, as after Check for updates
+    // Without counts the only-updates list can't be trusted, so the full list
     this.loadUpdatesCount(
       () => this.onlyUpdates && this.updatesCount === 0 ? this.showOnlyUpdates(false) : this.loadData(),
-      () => this.loadData());
+      () => this.onlyUpdates ? this.showOnlyUpdates(false) : this.loadData());
   }
 
-  /** The header counts; the previous ones stay until the new ones arrive, and a later call wins. */
+  /** The previous counts stay until the new ones arrive, and a later call wins. A failure shows in the header with Try again. */
   private loadUpdatesCount(onCounts?: () => void, onError?: () => void): void {
     const run = ++this.countRun;
+    const config = { ignoreLoading: true, ignoreErrors: true };
     forkJoin({
-      withUpdates: this.iotHubApiService.getInstalledItemsWithUpdates(new PageLink(1), null, this.publishedVersionIds(), { ignoreLoading: true }),
-      installed: this.iotHubApiService.getInstalledItemsCount(undefined, { ignoreLoading: true })
+      withUpdates: this.iotHubApiService.getInstalledItemsWithUpdates(new PageLink(1), null, this.publishedVersionIds(), config),
+      installed: this.iotHubApiService.getInstalledItemsCount(undefined, config)
     }).subscribe({
       next: ({ withUpdates, installed }) => {
         if (run !== this.countRun) {
@@ -326,6 +322,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         }
         this.updatesCount = withUpdates.totalElements;
         this.installedCount = installed;
+        this.updatesCheckFailed = false;
         this.cd.markForCheck();
         onCounts?.();
       },
@@ -334,6 +331,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
           return;
         }
         this.updatesCount = null;
+        this.updatesCheckFailed = true;
         this.cd.markForCheck();
         onError?.();
       }
@@ -424,9 +422,9 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     };
     const pageLink = new PageLink(this.pageSize, this.pageIndex, this.textSearch || null, sortOrder);
     const typeFilters = this.typeFilters?.length ? this.typeFilters : null;
-    // One item's versions page lists them all
+    // The empty state shows a failure of the only-updates list; one item's versions page lists them all
     const items$ = this.onlyUpdates && !this.itemVersion
-      ? this.iotHubApiService.getInstalledItemsWithUpdates(pageLink, typeFilters, this.publishedVersionIds(), {ignoreLoading: true})
+      ? this.iotHubApiService.getInstalledItemsWithUpdates(pageLink, typeFilters, this.publishedVersionIds(), {ignoreLoading: true, ignoreErrors: true})
       : this.iotHubApiService.getInstalledItems(pageLink, typeFilters, this.itemVersion?.itemId, {ignoreLoading: true});
     const run = ++this.loadRun;
     items$.subscribe({
@@ -436,10 +434,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         }
         // The last page emptied after an update or a removal
         if (!data.data.length && this.pageIndex > 0 && data.totalElements > 0) {
-          this.pageIndex = Math.ceil(data.totalElements / this.pageSize) - 1;
-          if (this.paginator) {
-            this.paginator.pageIndex = this.pageIndex;
-          }
+          this.setPageIndex(Math.ceil(data.totalElements / this.pageSize) - 1);
           this.loadData();
           return;
         }
@@ -447,7 +442,6 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         this.totalElements = data.totalElements;
         this.loadFailed = false;
         this.isLoading = false;
-        // In the only-updates list the version update shows, not the converter's
         if (this.updatesChecked && !this.itemVersion && !this.onlyUpdates) {
           void this.checkConverterUpdates();
         }

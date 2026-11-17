@@ -18,21 +18,18 @@
     <div class="flex items-center gap-4">
       <!-- Always there, so a screen reader announces each change of the note -->
       <span class="inline-flex items-center gap-2 text-sm leading-5 tracking-[0.2px] text-black/[.76]" role="status">
-        @if (!updatesChecked) {
-          @if (updatesCheckFailed) {
-            <mat-icon class="tb-mat-20 text-[#f66716]">warning</mat-icon>
-            {{ 'iot-hub.check-for-updates-failed' | translate }}
-          }
-        } @else if (updatesCount > 0) {
+        @if (updatesCheckFailed) {
+          <mat-icon class="tb-mat-20 text-[#f66716]">warning</mat-icon>
+          {{ 'iot-hub.check-for-updates-failed' | translate }}
+        } @else if (updatesChecked && updatesCount > 0) {
           <mat-icon class="tb-mat-20 text-[#f44336]">arrow_circle_up</mat-icon>
           {{ 'iot-hub.items-with-update' | translate:{ count: updatesCount, total: installedCount } }}
-        } @else if (updatesCount === 0) {
-          <!-- Only versions: a package may still have a new default converter, which the list shows -->
+        } @else if (updatesChecked && updatesCount === 0) {
           <mat-icon class="tb-mat-20 text-[#198038]">check_circle</mat-icon>
           {{ 'iot-hub.no-newer-versions' | translate }}
         }
       </span>
-      @if (!updatesChecked) {
+      @if (!updatesChecked || updatesCheckFailed) {
         <button mat-flat-button color="primary" (click)="checkForUpdates()" [disabled]="isCheckingUpdates">
           @if (isCheckingUpdates) {
             <mat-spinner matButtonIcon class="mr-2" diameter="18"></mat-spinner>
@@ -41,7 +38,8 @@
           }
           {{ (updatesCheckFailed ? 'iot-hub.try-again' : 'iot-hub.check-for-updates') | translate }}
         </button>
-      } @else {
+      }
+      @if (updatesChecked) {
         @if (onlyUpdates) {
           <button mat-stroked-button color="primary" (click)="showOnlyUpdates(false)">{{ 'iot-hub.show-all-items' | translate }}</button>
         } @else if ((updatesCount ?? 0) > 0) {
