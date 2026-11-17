@@ -1510,7 +1510,17 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private async findDeviceProfileByName(name: string): Promise<ExistingEntity | null> {
     const profiles = await firstValueFrom(this.deviceProfileService.getDeviceProfileNames());
     const match = profiles.find(p => p.name === name);
-    return match ? { output: { id: match.id.id, name: match.name, url: `/profiles/deviceProfiles/${match.id.id}` } } : null;
+    if (!match) {
+      return null;
+    }
+    const output = { id: match.id.id, name: match.name, url: `/profiles/deviceProfiles/${match.id.id}` };
+    try {
+      // The names lookup carries no version; read the matched profile so an overwrite can send it
+      const profile = await firstValueFrom(this.deviceProfileService.getDeviceProfile(match.id.id, {ignoreErrors: true}));
+      return { output, version: profile.version };
+    } catch (_e) {
+      return { output };
+    }
   }
 
   private async findRuleChainByName(name: string): Promise<ExistingEntity | null> {
