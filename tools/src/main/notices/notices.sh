@@ -40,9 +40,20 @@ ORT_HOME=${NOTICES_ORT_HOME:-$HOME/.ort}
 ORT=(docker run --rm -u "$(id -u):$(id -g)" -w /work -v "$ORT_HOME:/ort" -v "$HERE:/notices:ro" -v "$WORK:/work"
   -e HOME=/ort/home -e ORT_DATA_DIR=/ort -e ORT_CONFIG_DIR=/notices/ort-config ghcr.io/oss-review-toolkit/ort:98.0.0)
 
-step() { # log file, command: the log is shown only when the command fails
+step() { # log file, command: when the command fails, says why and where its whole log is
   local log=$1; shift
-  "$@" > "$log" 2>&1 || { cat "$log" >&2; echo "Third-party notices: failed, see $log" >&2; exit 1; }
+  "$@" > "$log" 2>&1 || { explain "$log" >&2; echo "Third-party notices: failed. The whole log: $log" >&2; exit 1; }
+}
+explain() { # log file: the message of a stop, without the long logs of ORT around it
+  case "$(basename "$1")" in
+    scan.log) python3 "$HERE/scan_issues.py" "$WORK/scan-result.json" "$HERE/ort-config/resolutions.yml" 2>/dev/null \
+      || tail -n 30 "$1" ;;
+    report.log) local text
+      # The first of the messages: a stack trace can repeat it
+      text=$(sed -n '/^NOTICES-MESSAGE-START$/,/^NOTICES-MESSAGE-END$/{/^NOTICES-MESSAGE-/!p;/^NOTICES-MESSAGE-END$/q}' "$1")
+      if [ -n "$text" ]; then echo "$text"; else tail -n 30 "$1"; fi ;;
+    *) tail -n 30 "$1" ;;
+  esac
 }
 
 # Only what an earlier run wrote is removed: the directory may hold other files

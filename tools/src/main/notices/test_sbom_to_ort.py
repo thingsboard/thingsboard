@@ -105,5 +105,40 @@ class MappedTest(unittest.TestCase):
         self.assertFalse(sbom_to_ort.mapped('Maven:org.example:ranged:1.5', 'Example License', self.CURATIONS))
 
 
+
+class UnscannableTest(unittest.TestCase):
+    curations = [
+        {'id': 'Maven:com.example:fork:2.8.8TB', 'curations': {'vcs': {'type': 'Git', 'url': 'u', 'revision': 'r'}}},
+        {'id': 'Maven:com.adobe.xmp:xmpcore:[6.0,7.0[', 'curations': {'is_metadata_only': True}},
+        {'id': 'Maven:com.example:licensed:[1.0,2.0[', 'curations': {'concluded_license': 'MIT'}},
+    ]
+
+    def test_curation_that_gives_the_source_or_says_there_is_none(self):
+        self.assertTrue(sbom_to_ort.unscannable('Maven:com.example:fork:2.8.8TB', self.curations))
+        self.assertTrue(sbom_to_ort.unscannable('Maven:com.adobe.xmp:xmpcore:6.1.11', self.curations))
+
+    def test_curation_of_another_version_or_without_a_source_does_not_count(self):
+        self.assertFalse(sbom_to_ort.unscannable('Maven:com.example:fork:2.8.9TB', self.curations))
+        self.assertFalse(sbom_to_ort.unscannable('Maven:com.adobe.xmp:xmpcore:7.0', self.curations))
+        self.assertFalse(sbom_to_ort.unscannable('Maven:com.example:licensed:1.2', self.curations))
+
+
+class MessagesTest(unittest.TestCase):
+    def test_each_message_names_the_packages_and_the_file_to_change(self):
+        for text, package in [
+            (sbom_to_ort.unreviewed_message([('Maven:com.sun.mail:jakarta.mail:3.0.1', ['[2.0,3.0['])]), 'jakarta.mail:3.0.1'),
+            (sbom_to_ort.unnamed_message([('Maven:com.example:widget:1.4.0', 'Apache Software License')]), 'widget:1.4.0'),
+            (sbom_to_ort.unscanned_message(['Maven:com.example:widget:1.4.0']), 'widget:1.4.0'),
+        ]:
+            self.assertTrue(text.startswith('Third-party notices: '))
+            self.assertIn(package, text)
+            self.assertIn(sbom_to_ort.CURATIONS, text)
+
+    def test_the_mapping_of_a_name_is_for_every_version(self):
+        text = sbom_to_ort.unnamed_message([('Maven:com.example:widget:1.4.0', 'Apache Software License')])
+        self.assertIn('"id": "Maven:com.example:widget",', text)
+        self.assertIn('{"Apache Software License": "<identifier>"}', text)
+
+
 if __name__ == '__main__':
     unittest.main()

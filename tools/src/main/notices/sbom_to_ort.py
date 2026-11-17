@@ -15,6 +15,11 @@ ORT would guess what it stands for, so the package must have a curation that say
 A curation that concludes the license of a package sets aside what the scan finds in it, so it is given for the versions
 that someone has looked at. Another version of that package must be looked at as well: see unreviewed().
 
+A package with neither a source archive nor a repository cannot be scanned, so it needs a curation that gives its source
+or says that it has none: see unscannable().
+
+Each of these stops the notices with a message that says what to do.
+
 It also writes the list of the jars of the Maven packages, each with its SHA-256, for notice_files.py.
 
 Usage: sbom_to_ort.py --project-version <version> --out <ortproject.json> --cache <file> --curations <file>
@@ -30,6 +35,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+CURATIONS = 'tools/src/main/notices/ort-config/curations/curations.json'
+BUILD_PROBLEM = 'This is a problem of the build or of these tools, not something to decide in the files of the notices.'
 MAVEN_REPOSITORIES = ['https://repo1.maven.org/maven2', 'https://repo.thingsboard.io/artifactory/libs-release-public']
 SHA1 = re.compile(r'^[0-9a-f]{40}$')
 
@@ -49,8 +56,8 @@ def main():
 
     absent = [sbom for sbom in args.sboms if not os.path.exists(sbom)]
     if absent:
-        raise SystemExit('These SBOMs do not exist, and the notices are made from them:\n  ' + '\n  '.join(absent)
-                         + '\nIn the Maven build the SBOMs are made with -Dsbom.skip=false.')
+        raise SystemExit('Third-party notices: these SBOMs do not exist, and the notices are made from them:\n  '
+                         + '\n  '.join(absent) + '\n' + BUILD_PROBLEM + ' The Maven build makes them with -Dsbom.skip=false.')
 
     components, skipped, jars = {}, {}, {}
     for sbom in args.sboms:
@@ -95,7 +102,7 @@ def main():
             os.replace(temporary, args.cache)
 
     curations = json.load(open(args.curations))
-    dependencies, without_source, unnamed, unreviewed_versions = [], [], [], []
+    dependencies, without_source, unnamed, unreviewed_versions, unscanned = [], [], [], [], []
     for key, component in sorted(components.items()):
         dependency = {'id': identifier(component), 'purl': key}
         source = cache.get(key) if is_maven(key) else npm_tarball(component)
@@ -108,22 +115,22 @@ def main():
         if not source:
             origin = f"repository {vcs['url']} {vcs['revision']}" if vcs else 'no repository from the SBOM'
             without_source.append(f'{key} ({origin})')
+            if not vcs and not unscannable(dependency['id'], curations):
+                unscanned.append(dependency['id'])
         licenses, names = declared_licenses(component)
         if licenses:
             dependency['declaredLicenses'] = licenses
-        unnamed += [f"{dependency['id']}: {json.dumps(name)}" for name in names if not mapped(dependency['id'], name, curations)]
+        unnamed += [(dependency['id'], name) for name in names if not mapped(dependency['id'], name, curations)]
         ranges = unreviewed(dependency['id'], curations)
         if ranges:
-            unreviewed_versions.append(f"{dependency['id']}: the license is concluded only for {', '.join(ranges)}")
+            unreviewed_versions.append((dependency['id'], ranges))
         dependencies.append(dependency)
     if unreviewed_versions:
-        raise SystemExit(f'{args.curations} concludes the license of these packages, but not of the version in the product. '
-                         'Look at the license of that version, then widen the range of the curation or add one:\n  '
-                         + '\n  '.join(unreviewed_versions))
+        raise SystemExit(unreviewed_message(unreviewed_versions))
     if unnamed:
-        raise SystemExit('These packages state a license by a name that is no SPDX identifier. Add a curation without a version to '
-                         f'{args.curations} that has the name in its declared_license_mapping:\n  '
-                         + '\n  '.join(unnamed))
+        raise SystemExit(unnamed_message(unnamed))
+    if unscanned:
+        raise SystemExit(unscanned_message(unscanned))
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     json.dump({'projectName': 'thingsboard', 'dependencies': dependencies}, open(args.out, 'w'), indent=1)
@@ -160,7 +167,7 @@ def jar(component):
     qualifiers = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(component['purl']).query))
     sha256 = [h['content'] for h in component.get('hashes', []) if h['alg'] == 'SHA-256']
     if not sha256:
-        raise ValueError(f"The SBOM gives no SHA-256 for {component['purl']}")
+        raise SystemExit(f"Third-party notices: the SBOM gives no SHA-256 for {component['purl']}. {BUILD_PROBLEM}")
     return {'group': component['group'], 'name': component['name'], 'version': component['version'],
             'classifier': qualifiers.get('classifier', ''), 'type': qualifiers.get('type', 'jar'), 'sha256': sha256[0]}
 
@@ -178,7 +185,7 @@ def maven_sources(component):
     for url, content in from_repositories(path + '.sha1', timeout=30):
         sha1 = content.decode().split()[0].lower()
         if not SHA1.match(sha1):
-            raise ValueError(f'{url} is no SHA-1: {sha1}')
+            raise SystemExit(f'Third-party notices: {url} is no SHA-1: {sha1}. {BUILD_PROBLEM}')
         return {'url': url.removesuffix('.sha1'), 'sha1': sha1}
     return None
 
@@ -206,7 +213,7 @@ def npm_tarball(component):
         if reference.get('type') == 'distribution':
             sha1 = [h['content'] for h in reference.get('hashes', []) if h['alg'] == 'SHA-1']
             if not sha1:
-                raise ValueError(f"The SBOM gives no SHA-1 for {reference['url']}")
+                raise SystemExit(f"Third-party notices: the SBOM gives no SHA-1 for {reference['url']}. {BUILD_PROBLEM}")
             # The same file under the name ORT knows the registry by
             return {'url': reference['url'].replace('https://registry.yarnpkg.com/', 'https://registry.npmjs.org/'), 'sha1': sha1[0]}
     return None
@@ -242,6 +249,53 @@ def declared_licenses(component):
         licenses = [' OR '.join(licenses)]
         return licenses, licenses if named else []
     return licenses, named
+
+
+def unreviewed_message(packages):
+    identifier, ranges = packages[0]
+    package, _, version = identifier.rpartition(':')
+    return ('Third-party notices: we set the license of these packages by hand, but only for older versions.\n'
+            + ''.join(f'  {i}   (checked: {", ".join(r)})\n' for i, r in packages)
+            + 'A license can change between versions, so it must not carry over to a version nobody has read.\n'
+            f'To fix: read the license of the new version (its LICENSE file and source headers), then in {CURATIONS} either\n'
+            f'  - widen the range of the entry, if the license is the same: "id": "{package}:[<from>,<to>[" '
+            f'(for example a range that holds {version}), or\n'
+            '  - add an entry for the new version or range, with the license you found and a "comment" saying where.')
+
+
+def unnamed_message(packages):
+    identifier, name = packages[0]
+    kind, namespace, package = identifier.split(':')[:3]
+    return ('Third-party notices: these packages name their license in words that are no standard license identifier.\n'
+            + ''.join(f'  {i}: {json.dumps(n)}\n' for i, n in packages)
+            + 'The tool would guess what the words mean, and a wrong guess puts a wrong license into the notices.\n'
+            f'To fix: find the standard identifier (https://spdx.org/licenses), and add to {CURATIONS} an entry without a version,\n'
+            'which then holds for every version that names its license in the same words:\n'
+            f'  {{"id": "{kind}:{namespace}:{package}",\n'
+            '   "curations": {"comment": "<where you checked>",\n'
+            f'                 "declared_license_mapping": {{{json.dumps(name)}: "<identifier>"}}}}}}\n'
+            'A package already in that file gets the mapping in its entry without a version.')
+
+
+def unscanned_message(identifiers):
+    return ('Third-party notices: the source of these packages cannot be found, so their licenses and copyrights cannot be read.\n'
+            + ''.join(f'  {i}\n' for i in identifiers)
+            + f'They have no sources jar or tarball, and no repository. To fix, add to {CURATIONS} one of:\n'
+            '  - where the source is, at the commit of this version:\n'
+            f'    {{"id": "{identifiers[0]}",\n'
+            '     "curations": {"comment": "<why this commit>",\n'
+            '                   "vcs": {"type": "Git", "url": "<repository>", "revision": "<commit>", "path": ""}}}\n'
+            '  - or, if the authors publish no source at all: "is_metadata_only": true, with a comment that says so.\n'
+            '    Its license then comes only from what the package declares.')
+
+
+def unscannable(identifier, curations):
+    """Whether a curation that covers the version gives the source of a package that the SBOM gives none for, or says
+    that it has none."""
+    package, _, version = identifier.rpartition(':')
+    return any(curation['id'].startswith(package + ':') and covers(curation['id'][len(package) + 1:], version)
+               and {'vcs', 'source_artifact', 'is_metadata_only'} & curation['curations'].keys()
+               for curation in curations)
 
 
 def mapped(identifier, name, curations):
