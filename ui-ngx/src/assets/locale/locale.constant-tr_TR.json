@@ -12558,8 +12558,6 @@
       "check-status-settings": "Durum kontrol ayarları",
       "perform-rpc-status-check": "RPC cihaz durumu kontrolünü gerçekleştir",
       "retrieve-led-status-value-method": "LED durum değerini alma yöntemi",
-      "led-status-value-attribute": "LED durum değerini içeren cihaz özniteliği",
-      "led-status-value-timeseries": "LED durum değerini içeren cihaz zaman serisi",
       "check-status-method": "RPC cihaz durumu kontrol yöntemi",
       "parse-led-status-value-function": "LED durum değerini ayrıştırma fonksiyonu",
       "knob-title": "Düğme başlığı"

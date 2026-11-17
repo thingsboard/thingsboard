@@ -12570,8 +12570,6 @@
       "check-status-settings": "Ρυθμίσεις ελέγχου κατάστασης",
       "perform-rpc-status-check": "Εκτέλεση ελέγχου κατάστασης συσκευής μέσω RPC",
       "retrieve-led-status-value-method": "Ανάκτηση τιμής κατάστασης LED μέσω μεθόδου",
-      "led-status-value-attribute": "Χαρακτηριστικό συσκευής με τιμή κατάστασης LED",
-      "led-status-value-timeseries": "Χρονοσειρά συσκευής με τιμή κατάστασης LED",
       "check-status-method": "RPC μέθοδος ελέγχου κατάστασης συσκευής",
       "parse-led-status-value-function": "Συνάρτηση ανάλυσης τιμής κατάστασης LED",
       "knob-title": "Τίτλος περιστροφικού ελεγκτή"

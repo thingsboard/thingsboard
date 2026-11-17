@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AgentService } from '@core/http/agent.service';
 import { DialogService } from '@core/services/dialog.service';
 import { AgentEventsTableConfig } from '@home/pages/agent/table/agent-events-table-config';
-import { agentEntityUrl, resolveAgentIdParam } from '@home/pages/agent/util/agent-route-params';
+import { agentEntityUrl, agentsListUrl, agentTabsBackUrl, resolveAgentIdParam } from '@home/pages/agent/util/agent-route-params';
 
 @Component({
   selector: 'tb-agent-events-page',
@@ -74,6 +74,6 @@ export class AgentEventsPageComponent implements OnInit {
       this.viewContainerRef,
       agentUrl
     );
-    this.tableConfig.backNavigationCommands = [agentUrl];
+    this.tableConfig.backNavigationUrl = agentTabsBackUrl(this.route.snapshot) ?? agentsListUrl(this.route.snapshot, agentId);
   }
 }

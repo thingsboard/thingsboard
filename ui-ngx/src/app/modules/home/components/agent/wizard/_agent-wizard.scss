@@ -165,7 +165,10 @@
     transition: border-color 0.2s, background 0.2s;
     &:hover { border-color: var(--tb-primary-400); background: color-mix(in srgb, var(--tb-primary-500) 4%, transparent); }
     &.selected { border-color: var(--tb-primary-500); background: color-mix(in srgb, var(--tb-primary-500) 8%, transparent); }
-    &.locked-out, &:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+    &.locked-out, &:disabled {
+      cursor: not-allowed; pointer-events: none;
+      mat-icon, h4 { opacity: 0.35; }
+    }
     mat-icon { font-size: 36px; width: 36px; height: 36px; color: var(--tb-primary-500); margin-bottom: 8px; }
     h4 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
     p { font-size: 13px; color: $agent-text-secondary; margin: 0; }

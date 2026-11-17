@@ -12588,8 +12588,6 @@
             "check-status-settings": "상태 확인 설정",
             "perform-rpc-status-check": "RPC 장치 상태 확인 수행",
             "retrieve-led-status-value-method": "메서드를 사용하여 LED 상태 값 가져오기",
-            "led-status-value-attribute": "LED 상태 값을 포함하는 장치 속성",
-            "led-status-value-timeseries": "LED 상태 값을 포함하는 장치 시계열",
             "check-status-method": "RPC 장치 상태 확인 메서드",
             "parse-led-status-value-function": "LED 상태 값 구문 분석 함수",
             "knob-title": "노브 제목"
