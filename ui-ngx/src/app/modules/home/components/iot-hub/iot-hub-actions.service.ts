@@ -212,7 +212,7 @@ export class IotHubActionsService {
     if (!installedItem) {
       return of(false);
     }
-    // A device package keeps what other installed packages use: the dialog opens with that already known
+    // A device package keeps some entities: the dialog opens with them already known
     const keptEntities$: Observable<IotHubInstalledItemKeptEntities | null> = installedItem.itemType === 'DEVICE' ?
       this.iotHubApiService.getInstalledItemKeptEntities(installedItem.id.id, {ignoreErrors: true}).pipe(catchError(() => of(null))) :
       of(null);
