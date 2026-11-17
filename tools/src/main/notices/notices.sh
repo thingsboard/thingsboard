@@ -55,6 +55,18 @@ if [ "$1" = --sboms-under ]; then
   fi
   echo "Third-party notices from ${#SBOMS[@]} SBOMs:"
   printf '  %s\n' "${SBOMS[@]#"$UNDER"/}"
+  # An SBOM of another version was left by an older build: the notices would list what that build had
+  OTHER=$(python3 -c 'import json, sys
+for path in sys.argv[2:]:
+    version = json.load(open(path, encoding="utf-8")).get("metadata", {}).get("component", {}).get("version")
+    if version != sys.argv[1]:
+        print(f"  {path} ({version})")' "$VERSION" "${SBOMS[@]}")
+  if [ -n "$OTHER" ]; then
+    echo "Third-party notices: these SBOMs are not of the version $VERSION, so an older build left them. Build again" \
+      "from clean: mvn clean package -DskipTests -Dsbom.skip=false" >&2
+    echo "$OTHER" >&2
+    exit 1
+  fi
   shift 2
   set -- "${SBOMS[@]}" "$@"
 fi
@@ -133,4 +145,4 @@ cp "$WORK/THIRD-PARTY-NOTICES" "$NOTICES"
 echo "Third-party notices: $(head -1 "$WORK/convert.log"), $(wc -l < "$NOTICES") lines: $NOTICES"
 durations
 # Where the jars of the NOTICE files came from: downloads explain a slow run
-grep '^Jars:' "$WORK/notice-files.log"
+sed -n '/^Jars:/{s/:$//;p}' "$WORK/notice-files.log"
