@@ -696,6 +696,31 @@
   &[data-pal="solution"] .tb-rec-tile { background: var(--entity-solution-bg); color: var(--entity-solution-fg); }
 }
 
+.tb-rec-badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font: 600 10px/16px var(--tb-mono);
+  letter-spacing: .5px;
+  color: var(--tb-ink-54);
+  background: var(--tb-ink-12);
+  vertical-align: middle;
+
+  &[data-badge="pdf"] {
+    color: var(--tb-crit);
+    background: color-mix(in srgb, var(--tb-crit) 10%, transparent);
+  }
+
+  &[data-badge="csv"] {
+    color: var(--tb-ok-text);
+    background: var(--tb-ok-tint);
+  }
+}
+
 .tb-rec-tile {
   display: inline-flex;
   align-items: center;
@@ -1280,6 +1305,11 @@
     color: var(--tb-text-muted);
     text-align: left;
     vertical-align: baseline;
+
+    code {
+      white-space: nowrap;
+      overflow-wrap: normal;
+    }
   }
 
   td {
@@ -1299,7 +1329,7 @@
 
   td.k-diff-was, td.k-diff-now {
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .k-diff-now span {
@@ -1928,6 +1958,41 @@ code.k-ent[data-pal="solution"] .k-ent-ic { color: var(--entity-solution-fg); }
 
   .k-actions {
     flex-wrap: wrap;
+  }
+}
+
+@mixin k-diff-stacked {
+  thead {
+    display: none;
+  }
+
+  tr {
+    display: block;
+    padding: 4px 0;
+  }
+
+  tbody th {
+    display: block;
+    padding: 0;
+  }
+
+  td {
+    display: inline;
+    padding: 0;
+  }
+
+  .k-diff-now::before {
+    content: '→';
+    margin: 0 12px 0 8px;
+    color: var(--tb-ink-38);
+  }
+}
+
+.k-diff.k-diff-stacked {
+  @include k-diff-stacked;
+
+  td.k-diff-was:not(:empty) {
+    text-decoration: line-through;
   }
 }
 

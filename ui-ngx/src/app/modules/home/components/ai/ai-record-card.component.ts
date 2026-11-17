@@ -56,6 +56,9 @@ export function aiDashboardThumb(cards: number): string {
           } @else {
             <b class="tb-rec-title">{{ rec.name }}</b>
           }
+          @if (rec.badge) {
+            <span class="tb-rec-badge" [attr.data-badge]="rec.badge.toLowerCase()">{{ rec.badge }}</span>
+          }
           <span class="tb-rec-meta">
             @if (rec.hub; as listing) {
               <span class="tb-hub-ic tight-only" [matTooltip]="'ai-assistant.detail.on-iot-hub' | translate" matTooltipPosition="above"><mat-icon class="tb-mat-16" aria-hidden="true">hub</mat-icon></span>

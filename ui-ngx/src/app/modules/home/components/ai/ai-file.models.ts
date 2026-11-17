@@ -5,6 +5,7 @@ import { AiResourceInfo } from '@shared/models/ai-chat.models';
 
 export const WRITE_FILE_TOOL = 'write_file';
 export const CREATE_FILE_TOOL = 'create_file';
+export const FILE_MAKING_TOOLS = new Set<string>([CREATE_FILE_TOOL, 'test_report_template', 'generate_report', 'read_reports']);
 
 export interface AiMadeFile {
   executionId: string;
@@ -12,12 +13,14 @@ export interface AiMadeFile {
   label: string;
   icon: string;
   size: string;
-  preview: 'image' | 'pdf' | null;
+  preview: 'image' | null;
+  download: boolean;
 }
 
-const MADE_KINDS: Record<string, {label: string; icon: string; preview: 'image' | 'pdf' | null}> = {
+const MADE_KINDS: Record<string, {label: string; icon: string; preview: 'image' | null}> = {
   'image/png': {label: 'PNG', icon: 'image', preview: 'image'},
-  'application/pdf': {label: 'PDF', icon: 'picture_as_pdf', preview: 'pdf'},
+  'application/pdf': {label: 'PDF', icon: 'picture_as_pdf', preview: null},
+  'text/csv': {label: 'CSV', icon: 'table_chart', preview: null},
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {label: 'Word', icon: 'description', preview: null},
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {label: 'Excel', icon: 'table_chart', preview: null}
 };
@@ -25,13 +28,15 @@ const MADE_KINDS: Record<string, {label: string; icon: string; preview: 'image' 
 export function aiMadeFileOf(executionId: string, result: unknown): AiMadeFile | null {
   let parsed: unknown = result;
   if (typeof result === 'string') {
+    const text = /^OK: [^\n]*\n/.test(result) ? result.slice(result.indexOf('\n') + 1) : result;
     try {
-      parsed = JSON.parse(result);
+      parsed = JSON.parse(text);
     } catch {
       return null;
     }
   }
   const file = (parsed as {file?: Partial<AiResourceInfo>})?.file;
+  const download = (parsed as {download?: unknown})?.download === true;
   if (!file || typeof file.id !== 'string' || typeof file.name !== 'string' || typeof file.mediaType !== 'string') {
     return null;
   }
@@ -43,7 +48,8 @@ export function aiMadeFileOf(executionId: string, result: unknown): AiMadeFile |
     label: kind.label,
     icon: kind.icon,
     size: formatSize(bytes),
-    preview: kind.preview
+    preview: kind.preview,
+    download
   };
 }
 

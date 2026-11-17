@@ -52,7 +52,8 @@ const VALUE_TOKENS: Record<string, string[]> = {
 
 const CODE_FIELDS = new Set(['arguments', 'expression', 'output']);
 
-const OWN_TYPE_LABELS = new Set(['DASHBOARD_WIDGET', 'DASHBOARD_STATE', 'DASHBOARD_ENTITY_ALIAS', 'DASHBOARD_FILTER', 'NOTIFICATION', 'NOTIFICATION_SETTINGS', 'NOTIFICATION_PREFERENCES', 'IMAGE', 'PLATFORM_SETTINGS', 'RELATION', 'VERSION', 'WHITE_LABELING', 'MAIL_TEMPLATE', 'CUSTOM_TRANSLATION', 'CUSTOM_MENU', 'MOBILE_APP', 'MOBILE_BUNDLE', 'MOBILE_QR_CODE', 'TWO_FACTOR_SETTINGS', 'MY_PROFILE', 'MY_TWO_FACTOR', 'MAIL_SERVER']);
+const STACK_AT = 24;
+const OWN_TYPE_LABELS = new Set(['DASHBOARD_WIDGET', 'DASHBOARD_STATE', 'DASHBOARD_ENTITY_ALIAS', 'DASHBOARD_FILTER', 'NOTIFICATION', 'NOTIFICATION_SETTINGS', 'NOTIFICATION_PREFERENCES', 'IMAGE', 'PLATFORM_SETTINGS', 'RELATION', 'VERSION', 'WHITE_LABELING', 'MAIL_TEMPLATE', 'CUSTOM_TRANSLATION', 'CUSTOM_MENU', 'MOBILE_APP', 'MOBILE_BUNDLE', 'MOBILE_QR_CODE', 'TWO_FACTOR_SETTINGS', 'MY_PROFILE', 'MY_TWO_FACTOR', 'MAIL_SERVER', 'REPORT_COMPONENT', 'REPORT_ENTITY_ALIAS', 'REPORT_FILTER', 'SCHEDULED_REPORT']);
 
 const PROFILE_TYPES = new Set<string>([EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE]);
 
@@ -232,6 +233,10 @@ export class AiApprovalCardComponent implements OnChanges {
       ...this.rows('FACT').map(row => ({label: row.label, raw: true, value: row.value, mono: row.valueCode})),
       ...this.rows('CHANGE').map(row => ({label: row.label, raw: true, value: `${row.current ?? '—'} → ${row.value}`, mono: row.valueCode}))
     ];
+  }
+
+  get stackedDiff(): boolean {
+    return this.changes.some(change => (change.current?.length ?? 0) > STACK_AT || (change.value?.length ?? 0) > STACK_AT);
   }
 
   get changes(): AiReviewRow[] {

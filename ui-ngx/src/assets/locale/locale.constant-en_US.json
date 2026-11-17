@@ -917,6 +917,24 @@
             "read-security-settings": "Read the security settings",
             "read-mobile-center": "Read the mobile center",
             "read-scheduler-events": "Read the scheduler",
+            "create-report-template": "Created the report template {{name}}",
+            "update-report-template": "Changed the report template",
+            "read-report-template": "Read the layout of '{{name}}'",
+            "read-report-component": "Read the component {{path}} of '{{name}}'",
+            "sub-report": "Sub-report",
+            "report-components": "Components",
+            "report-problems": "Problems",
+            "add-report-components": "Added report components",
+            "update-report-component": "Changed the component {{path}}",
+            "move-report-component": "Moved {{path}} to {{target}}",
+            "save-report-alias": "Saved the entity alias {{name}}",
+            "save-report-filter": "Saved the filter {{name}}",
+            "test-report-template": "Checked the report",
+            "report-pages": "{ count, plural, =1 {1 page} other {# pages} }",
+            "report-rows": "{ count, plural, =1 {1 row} other {# rows} }",
+            "report-pages-clean": "{ count, plural, =1 {1 page} other {# pages} }, no errors",
+            "report-rows-clean": "{ count, plural, =1 {1 row} other {# rows} }, no errors",
+            "report-errors": "Errors",
             "save-two-factor-settings": "Changed the two-factor authentication settings",
             "save-oauth2-domain": "Changed OAuth 2.0 sign-in on the domain",
             "read-my-account": "Read your account",
@@ -930,6 +948,19 @@
             "no-scheduler-events": "No scheduler events yet.",
             "save-scheduler-event": "Changed the scheduler event",
             "create-scheduler-event": "Created the scheduler event {{name}}",
+            "read-reports": "Read the reports",
+            "read-report-templates": "Read the report templates",
+            "no-report-templates": "No report templates",
+            "read-scheduled-reports": "Read the scheduled reports",
+            "read-generated-reports": "Read the generated reports",
+            "no-scheduled-reports": "No scheduled reports",
+            "no-generated-reports": "No generated reports",
+            "attach-report": "Attached {{name}}",
+            "read-scheduled-report": "Read the scheduled report {{name}}",
+            "save-scheduled-report": "Changed the scheduled report",
+            "create-scheduled-report": "Scheduled the report {{name}}",
+            "generate-report": "Generated the report",
+            "report-still-running": "Still generating; it will appear on the Reports page",
             "mobile-apps": "Apps",
             "no-mobile-apps": "No mobile apps yet.",
             "no-mobile-bundles": "No mobile bundles yet, so the apps show the standard menu.",
@@ -1081,6 +1112,13 @@
                 "size": "Size",
                 "theme": "Theme",
                 "time-window": "Time window",
+                "format": "Format",
+                "page": "Page",
+                "file-name": "File name",
+                "header-footer": "Header and footer",
+                "component": "Component",
+                "path": "Path",
+                "height": "Height",
                 "state-id": "State ID",
                 "type": "Type",
                 "on": "On",
@@ -1483,6 +1521,78 @@
                 "run": "Deleting the scheduler event",
                 "done": "Deleted the scheduler event"
             },
+            "create-report-template": {
+                "run": "Creating the report template",
+                "done": "Created the report template"
+            },
+            "update-report-template": {
+                "run": "Saving the report template",
+                "done": "Saved the report template"
+            },
+            "read-report-template": {
+                "run": "Reading the report template",
+                "done": "Read the report template"
+            },
+            "read-report-component": {
+                "run": "Reading the component",
+                "done": "Read the component"
+            },
+            "add-report-components": {
+                "run": "Adding report components",
+                "done": "Added report components"
+            },
+            "update-report-component": {
+                "run": "Changing a report component",
+                "done": "Changed a report component"
+            },
+            "move-report-component": {
+                "run": "Moving a report component",
+                "done": "Moved a report component"
+            },
+            "save-report-alias": {
+                "run": "Saving the entity alias",
+                "done": "Saved the entity alias"
+            },
+            "save-report-filter": {
+                "run": "Saving the filter",
+                "done": "Saved the filter"
+            },
+            "test-report-template": {
+                "run": "Generating a test report",
+                "done": "Checked the report"
+            },
+            "read-reports": {
+                "run": "Reading the reports",
+                "done": "Read the reports"
+            },
+            "save-scheduled-report": {
+                "run": "Saving the scheduled report",
+                "done": "Saved the scheduled report"
+            },
+            "generate-report": {
+                "run": "Generating the report",
+                "done": "Generated the report"
+            },
+            "delete-report": {
+                "run": "Deleting the report",
+                "done": "Deleted the report"
+            },
+            "delete-report-template": {
+                "run": "Deleting the report template",
+                "done": "Deleted the report template"
+            },
+            "delete-report-component": {
+                "run": "Deleting the report component",
+                "done": "Deleted the report component"
+            },
+            "delete-report-alias": {
+                "run": "Deleting the entity alias",
+                "done": "Deleted the entity alias"
+            },
+            "delete-report-filter": {
+                "run": "Deleting the filter",
+                "done": "Deleted the filter"
+            },
             "delete-custom-menu": {
                 "run": "Deleting the custom menu",
                 "done": "Deleted the custom menu"
@@ -1752,6 +1862,11 @@
             "details": "Details",
             "request": "Request",
             "result": "Result",
+            "template": "Template",
+            "event": "Event",
+            "account": "Account",
+            "mail-server": "Mail server",
+            "qr-code": "QR code",
             "settings": "Settings",
             "try-again": "Try again",
             "try-again-prompt": "Try that again"
@@ -1936,6 +2051,63 @@
                 "appliesTo": "Applies to",
                 "permissions": "Permissions",
                 "description": "Description",
+                "report-title": "Title",
+                "report-text": "Text",
+                "report-html": "Text",
+                "report-keys": "Keys",
+                "report-columns": "Columns",
+                "report-latestColumns": "Extra columns",
+                "report-series": "Series",
+                "report-key": "Key",
+                "report-timewindow": "Time window",
+                "report-thresholds": "Thresholds",
+                "report-legend": "Legend",
+                "report-axes": "Axes",
+                "report-height": "Height",
+                "report-chart": "Chart",
+                "report-url": "Image",
+                "report-templateId": "Sub-report",
+                "report-statuses": "Statuses",
+                "report-severities": "Severities",
+                "report-types": "Alarm types",
+                "report-sortOrder": "Sort order",
+                "report-states": "States",
+                "report-ranges": "Ranges",
+                "report-size": "Text size",
+                "report-bold": "Bold",
+                "report-italic": "Italic",
+                "report-color": "Color",
+                "report-align": "Alignment",
+                "report-verticalAlign": "Vertical alignment",
+                "report-keepTogether": "Keep together",
+                "report-units": "Units",
+                "report-decimals": "Decimals",
+                "reportTemplate": "Report template",
+                "reportUser": "Generated as",
+                "reportTimezone": "Report time zone",
+                "notificationTemplate": "Notification template",
+                "reportFor": "Generated for",
+                "report-settings": "Also changes",
+                "report-alias": "Entity alias",
+                "report-filter": "Filter",
+                "report-position": "Position",
+                "report-resolves": "Resolves to",
+                "report-conditions": "Conditions",
+                "report-name": "Name",
+                "report-description": "Description",
+                "report-format": "Format",
+                "report-page-size": "Page",
+                "report-page-orientation": "Orientation",
+                "report-page-margins": "Margins",
+                "report-page-background": "Page background",
+                "report-fileName": "File name",
+                "report-timeFormat": "Time format",
+                "report-header-enabled": "Header",
+                "report-header-firstPage": "First-page header",
+                "report-footer-enabled": "Footer",
+                "report-footer-firstPage": "First-page footer",
+                "format": "Format",
+                "templateType": "Template type",
                 "added": "Added",
                 "removed": "Removed",
                 "name": "Name",
@@ -1994,12 +2166,19 @@
                 "DASHBOARD_STATE": "Dashboard state",
                 "DASHBOARD_ENTITY_ALIAS": "Entity alias",
                 "DASHBOARD_FILTER": "Dashboard filter",
+                "REPORT_COMPONENT": "Report component",
+                "REPORT_ENTITY_ALIAS": "Report entity alias",
+                "REPORT_FILTER": "Report filter",
+                "SCHEDULED_REPORT": "Scheduled report",
                 "NOTIFICATION": "Notification",
                 "NOTIFICATION_SETTINGS": "Notification delivery",
                 "NOTIFICATION_PREFERENCES": "Notification preferences"
             }
         },
         "record": {
+            "report": "Report",
+            "sub-report": "Sub-report",
+            "scheduled-report": "Scheduled report",
             "group-of": "{{type}} group",
             "on": "on {{name}}",
             "on-profile": "on profile {{name}}",
@@ -2786,6 +2965,63 @@
                 "suggestion": "What does the task manager show?",
                 "example": {
                     "failed": {"label": "Failed tasks", "message": "Which tasks failed recently, and why?"}
+                }
+            },
+            "report-templates": {
+                "title": "Ask about your report templates",
+                "line": "Design PDF and CSV reports, or change an existing one.",
+                "suggestion": "Build a weekly PDF report of my devices.",
+                "example": {
+                    "fleet": {
+                        "label": "Weekly fleet report",
+                        "message": "Build a weekly PDF report of my devices: a chart of their main readings over the previous week, a table of their latest values and their critical alarms."
+                    },
+                    "export": {
+                        "label": "Data export",
+                        "message": "Make a CSV export of yesterday's telemetry of my devices, one row per hour."
+                    }
+                }
+            },
+            "report-template-new": {
+                "title": "Design this report",
+                "title-unnamed": "Design this report",
+                "line": "Say what it should show, for which devices and period, and how often it goes out.",
+                "suggestion": "Build a weekly PDF report of my devices."
+            },
+            "report-template": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this report template",
+                "line": "What is in it, what to change, or what to add.",
+                "suggestion": "Is this report ready to send?"
+            },
+            "scheduled-reports": {
+                "title": "Ask about scheduled reports",
+                "line": "Send reports on a schedule: daily, weekly or monthly, to the people who need them.",
+                "suggestion": "Send my weekly report to the operations team every Monday.",
+                "example": {
+                    "weekly": {
+                        "label": "Weekly report every Monday",
+                        "message": "Generate one of my report templates every Monday at 07:00 and send it to me."
+                    },
+                    "next": {
+                        "label": "What goes out next?",
+                        "message": "Which reports are scheduled, when do they run next and who gets them?"
+                    }
+                }
+            },
+            "reports": {
+                "title": "Ask about your reports",
+                "line": "Find, get or clean up the reports generated so far, or generate one now.",
+                "suggestion": "Show me the latest report.",
+                "example": {
+                    "latest": {
+                        "label": "Latest report",
+                        "message": "Show me the latest generated report in the chat."
+                    },
+                    "now": {
+                        "label": "Generate one now",
+                        "message": "Generate a report from one of my templates now and keep it here."
+                    }
                 }
             },
             "scheduler": {
@@ -11345,6 +11581,18 @@
         "copy-public-link": "Copy link"
     },
     "report-template": {
+        "ai-assistant-title": "Ask about this report template",
+        "ai-assistant-initial-prompt-placeholder": "Describe the report you need...",
+        "ai-assistant-suggestion": "Is this report ready to send?",
+        "ai-assistant-example-fleet-label": "Weekly fleet report",
+        "ai-assistant-example-fleet-message": "Build a weekly PDF report of my devices: a chart of their main readings over the previous week, a table of their latest values and their critical alarms.",
+        "ai-assistant-example-export-label": "Data export",
+        "ai-assistant-example-export-message": "Make a CSV export of yesterday's telemetry of my devices, one row per hour.",
+        "ai-assistant-example-check-label": "Check the report",
+        "ai-assistant-example-check-message": "Generate a test report and tell me what is wrong or empty in it.",
+        "ai-assistant-example-per-device-label": "One section per device",
+        "ai-assistant-example-per-device-message": "Give every device its own section with its chart and table, each starting on a new page.",
+        "new-report-template-name": "New report template",
         "report-template": "Report template",
         "report-templates": "Report templates",
         "add": "Add report template",

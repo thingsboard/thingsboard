@@ -27,7 +27,7 @@ import { AiRecordLoaderService } from '@home/components/ai/ai-record-loader.serv
           <div class="tb-list-body" role="list" [attr.aria-label]="'ai-assistant.summary.made' | translate">
             @for (row of shownRows(); track row.key) {
               <tb-ai-record role="listitem" [entityType]="row.entityType" [alarmRule]="row.alarmRule" [name]="row.name"
-                            [meta]="row.meta" [url]="row.url" [state]="row.state" [alarm]="row.alarm"></tb-ai-record>
+                            [meta]="row.meta" [badge]="row.badge" [url]="row.url" [state]="row.state" [alarm]="row.alarm"></tb-ai-record>
             }
             @if (rest().length > LIST_SHOWN) {
               <button type="button" class="tb-more" [attr.aria-expanded]="allShown()" (click)="allShown.set(!allShown())">
@@ -42,7 +42,7 @@ import { AiRecordLoaderService } from '@home/components/ai/ai-record-loader.serv
       <div class="k-recs" role="list" [attr.aria-label]="'ai-assistant.summary.made' | translate">
         @for (row of rest(); track row.key) {
           <tb-ai-record role="listitem" [entityType]="row.entityType" [alarmRule]="row.alarmRule" [name]="row.name"
-                        [meta]="row.meta" [url]="row.url" [state]="row.state" [alarm]="row.alarm"></tb-ai-record>
+                        [meta]="row.meta" [badge]="row.badge" [url]="row.url" [state]="row.state" [alarm]="row.alarm"></tb-ai-record>
         }
       </div>
     }

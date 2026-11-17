@@ -33,7 +33,7 @@ const TARGETED_HUB_TYPES = new Set<string>([ItemType.CALCULATED_FIELD, ItemType.
           <div class="tb-list-body" role="list" [attr.aria-label]="listLabel()">
             @for (rec of shownViews(); track rec.key) {
               <tb-ai-record role="listitem" [entityType]="rec.entityType" [alarmRule]="rec.alarmRule" [name]="rec.name"
-                            [meta]="sameKind() ? lineMeta(rec) : rec.meta" [url]="rec.url" [state]="rec.state" [alarm]="rec.alarm"
+                            [meta]="sameKind() ? lineMeta(rec) : rec.meta" [badge]="rec.badge" [url]="rec.url" [state]="rec.state" [alarm]="rec.alarm"
                             [hub]="rec.hub"></tb-ai-record>
             }
             @if (views().length > LIST_SHOWN) {

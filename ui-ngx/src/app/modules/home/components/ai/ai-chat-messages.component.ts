@@ -37,7 +37,7 @@ import { AiPlanRun } from '@home/components/ai/ai-plan.component';
 import { aiRecordKey, AiShownRecords, aiShownRecordsOf, SHOW_RECORDS_TOOL } from '@home/components/ai/ai-record.models';
 import { AiCardAction } from '@home/components/ai/ai-card-actions.component';
 import { decorateSections } from '@home/components/ai/ai-disclosure.component';
-import { AiFile, aiFileMark, aiFileName, aiFileOf, AiMadeFile, aiMadeFileOf, CREATE_FILE_TOOL, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
+import { AiFile, aiFileMark, aiFileName, aiFileOf, AiMadeFile, aiMadeFileOf, FILE_MAKING_TOOLS, WRITE_FILE_TOOL } from '@home/components/ai/ai-file.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AiResourceService } from '@core/http/ai-resource.service';
 import {
@@ -133,6 +133,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   streaming = false;
   files: Record<number, AiFile> = {};
   madeFiles: Record<number, AiMadeFile> = {};
+  private handledMadeFiles = new Set<string>();
   quotes: Record<number, {name: string; icon: string; from: number; to: number; message: string}> = {};
   sources: Record<number, AiSource[]> = {};
 
@@ -183,23 +184,20 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
         maxWidth: '92vw',
         data: {resource: file.resource}
       });
-    } else if (file.preview === 'pdf') {
-      const tab = window.open('', '_blank');
-      this.aiResourceService.getUrl(file.resource.id).subscribe({
-        next: url => {
-          if (tab) {
-            tab.location.href = url;
-          } else {
-            window.open(url, '_blank');
-          }
-        },
-        error: error => {
-          tab?.close();
-          this.resourceError.emit(error);
-        }
-      });
     } else {
       this.downloadMadeFile(file);
+    }
+  }
+
+  private downloadRequestedFiles(): void {
+    for (const file of Object.values(this.madeFiles)) {
+      if (this.handledMadeFiles.has(file.executionId)) {
+        continue;
+      }
+      this.handledMadeFiles.add(file.executionId);
+      if (file.download && this.loading) {
+        this.downloadMadeFile(file);
+      }
     }
   }
 
@@ -400,6 +398,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       this.files = this.findFiles();
       this.latestFiles = new Map(Object.values(this.files).map(file => [file.name, file]));
       this.madeFiles = this.findMadeFiles();
+      this.downloadRequestedFiles();
       this.quotes = this.findQuotes();
       this.sources = this.findSources();
       this.records = this.findRecords();
@@ -780,7 +779,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   private findMadeFiles(): Record<number, AiMadeFile> {
     const files: Record<number, AiMadeFile> = {};
     this.messages.forEach((message, index) => {
-      if (message.from === 'ACTION' && message.data.tool === CREATE_FILE_TOOL && message.data.status === 'SUCCESS') {
+      if (message.from === 'ACTION' && FILE_MAKING_TOOLS.has(message.data.tool) && message.data.status === 'SUCCESS') {
         const file = aiMadeFileOf(message.data.executionId, message.data.result);
         if (file) {
           files[index] = file;

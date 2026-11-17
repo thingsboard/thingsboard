@@ -19,20 +19,24 @@ import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import {
+  defaultPdfReportTemplateConfig,
   ReportConfig,
   ReportTemplate,
   ReportTemplateFilter,
   ReportTemplateInfo,
   ReportTemplateQuery,
   ReportTemplateType,
-  reportTemplateTypeTranslationMap
+  reportTemplateTypeTranslationMap,
+  TbReportFormat
 } from '@shared/models/report.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { deepClone } from '@core/utils';
 import { ReportTemplateService } from '@core/http/report-template.service';
 import { mergeMap } from 'rxjs/operators';
 import { UtilsService } from '@core/services/utils.service';
 import { AuthUser } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ReportTemplateTableHeaderComponent } from '@home/pages/reporting/template/report-template-table-header.component';
@@ -101,6 +105,12 @@ export class ReportTemplatesTableConfigResolver  {
     };
 
     config.columns = this.configureColumns(authUser, config);
+    if (this.aiAvailable()) {
+      config.aiAssistantConfig = {
+        view: {listView: AiAssistantViewType.REPORT_TEMPLATE_LIST, entityView: AiAssistantViewType.REPORT_TEMPLATE},
+        initialPromptPlaceholder: this.translate.instant('report-template.ai-assistant-initial-prompt-placeholder')
+      };
+    }
     this.configureEntityFunctions(config);
     config.cellActionDescriptors = this.configureCellActions(config);
     config.groupActionDescriptors = this.configureGroupActions(config);
@@ -231,7 +241,38 @@ export class ReportTemplatesTableConfigResolver  {
         onAction: ($event) => this.importReportTemplate($event, config)
       }
     );
+    if (this.aiAvailable()) {
+      actions.push({
+        name: this.translate.instant('ai-assistant.configure-with-ai'),
+        icon: 'mdi:creation',
+        isEnabled: () => true,
+        onAction: ($event) => this.configureWithAi($event, config)
+      });
+    }
     return actions;
+  }
+
+  private aiAvailable(): boolean {
+    return getCurrentAuthState(this.store).aiEnabled && this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL);
+  }
+
+  configureWithAi($event: Event, config: EntityTableConfig<ReportTemplateInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const reportTemplate = {
+      name: this.translate.instant('report-template.new-report-template-name'),
+      format: TbReportFormat.PDF,
+      type: ReportTemplateType.REPORT,
+      configuration: deepClone(defaultPdfReportTemplateConfig)
+    } as ReportTemplate;
+    this.reportTemplateService.saveReportTemplate(reportTemplate).subscribe((saved) => {
+      const url = this.router.createUrlTree([saved.id.id], {
+        relativeTo: config.getTable().route,
+        queryParams: {action: 'aiAssistant'}
+      });
+      this.router.navigateByUrl(url);
+    });
   }
 
   openReportTemplate($event: Event, reportTemplate: ReportTemplateInfo, config: EntityTableConfig<ReportTemplateInfo>) {

@@ -80,7 +80,16 @@ import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
 } from '@home/components/alias/entity-alias-dialog.component';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { buffer, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
+
+const AI_RELOAD_DEBOUNCE_MS = 1000;
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
 import { DatePipe } from '@angular/common';
@@ -233,8 +242,15 @@ export class ReportTemplatePageComponent extends PageComponent
               private popoverService: TbPopoverService,
               private viewContainerRef: ViewContainerRef,
               private breadcrumbService: BreadcrumbService,
+              private panelService: AiAssistantPanelService,
+              private appStore: Store<AppState>,
+              private userPermissionsService: UserPermissionsService,
               public homeService: HomeService) {
     super();
+  }
+
+  get aiAssistantAvailable(): boolean {
+    return getCurrentAuthState(this.appStore).aiEnabled && this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL);
   }
 
   ngOnInit() {
@@ -277,6 +293,62 @@ export class ReportTemplatePageComponent extends PageComponent
         this.init(reportTemplate);
       }
     );
+    this.setupAiAssistant();
+  }
+
+  private setupAiAssistant() {
+    if (!this.aiAssistantAvailable) {
+      return;
+    }
+    this.panelService.setEnabled(true);
+    this.updateAiConfig();
+    this.panelService.updatedData$.pipe(
+      buffer(this.panelService.updatedData$.pipe(debounceTime(AI_RELOAD_DEBOUNCE_MS))),
+      map(batches => batches.flat()),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(affected => {
+      if (this.reportTemplate && affected.some(entityId => entityId.entityType === EntityType.REPORT_TEMPLATE
+        && entityId.id === this.reportTemplate.id.id)) {
+        this.reportTemplateService.getReportTemplate(this.reportTemplate.id.id).subscribe(reportTemplate => this.init(reportTemplate));
+      }
+    });
+  }
+
+  private updateAiConfig() {
+    const blank = !this.hasReportComponents();
+    const examples = blank ? ['fleet', 'export'] : ['check', 'per-device'];
+    this.panelService.setConfig({
+      welcomeKey: blank ? 'report-template-new' : undefined,
+      title: this.translate.instant('report-template.ai-assistant-title'),
+      initialPromptPlaceholder: this.translate.instant('report-template.ai-assistant-initial-prompt-placeholder'),
+      suggestion: this.translate.instant('report-template.ai-assistant-suggestion'),
+      fill: true,
+      promptExamples: examples.map(example => ({
+        label: this.translate.instant(`report-template.ai-assistant-example-${example}-label`),
+        message: this.translate.instant(`report-template.ai-assistant-example-${example}-message`)
+      }))
+    });
+  }
+
+  private hasReportComponents(): boolean {
+    const configuration = this.reportTemplate?.configuration as PdfReportTemplateConfig;
+    if (!configuration) {
+      return false;
+    }
+    const sections = [configuration.header, configuration.header?.firstPage, configuration.footer, configuration.footer?.firstPage];
+    return !!configuration.components?.length || sections.some(section => !!section?.components?.length);
+  }
+
+  private updateAiClientContext() {
+    if (!this.aiAssistantAvailable || !this.reportTemplate?.id) {
+      return;
+    }
+    this.updateAiConfig();
+    this.panelService.setClientContextForView({
+      type: AiAssistantViewType.REPORT_TEMPLATE,
+      entityId: {entityType: EntityType.REPORT_TEMPLATE, id: this.reportTemplate.id.id}
+    });
+    this.panelService.setViewName(this.reportTemplate.name);
   }
 
   ngAfterViewInit() {
@@ -287,6 +359,9 @@ export class ReportTemplatePageComponent extends PageComponent
       this.layoutResize$.observe(this.reportTemplateLayoutEl().nativeElement);
       this.viewInited = true;
     });
+    if (this.aiAssistantAvailable && this.route.snapshot.queryParamMap.get('action') === 'aiAssistant') {
+      this.panelService.openPanel();
+    }
     const reportTemplateContent = this.reportTemplateContentEl();
     if (reportTemplateContent) {
       reportTemplateContent.elementScrolled().pipe(
@@ -311,6 +386,9 @@ export class ReportTemplatePageComponent extends PageComponent
   ngOnDestroy() {
     if (this.layoutResize$) {
       this.layoutResize$.disconnect();
+    }
+    if (this.aiAssistantAvailable) {
+      this.panelService.teardown();
     }
   }
 
@@ -770,6 +848,7 @@ export class ReportTemplatePageComponent extends PageComponent
     }
     this.isDirty = false;
     this.updateBreadcrumbs.emit();
+    this.updateAiClientContext();
     this.cd.markForCheck();
   }
 

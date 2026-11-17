@@ -545,6 +545,78 @@ function aliasFilter(filter: unknown, names: AiDetailNames): AiDetailFact[] {
   return rows;
 }
 
+function reportTemplateOverview(result: Values): AiDetailBlock[] {
+  const blocks: AiDetailBlock[] = [];
+  const settings = isObject(result.settings) ? result.settings : {};
+  const page = isObject(settings.page) ? settings.page : null;
+  const rows: AiDetailFact[] = [{label: K + 'fact.format', value: [str(result.format), result.templateType === 'SUB_REPORT' ? text('sub-report') : null].filter(Boolean).join(' · ')}];
+  if (page) {
+    rows.push({label: K + 'fact.page', value: [page.size, aiHumanize(String(page.orientation ?? ''))].filter(Boolean).join(' · ')});
+  }
+  if (str(settings.fileName)) {
+    rows.push({label: K + 'fact.file-name', value: settings.fileName, mono: true});
+  }
+  const sections = ['header', 'footer'].filter(section => isObject(settings[section]) && settings[section].enabled);
+  if (page) {
+    rows.push({label: K + 'fact.header-footer', value: sections.length ? sections.map(section => aiHumanize(section)).join(', ') : '—'});
+  }
+  blocks.push({type: 'facts', rows});
+  const components = isObject(result.components) ? Object.entries(result.components) : [];
+  blocks.push({
+    type: 'list', label: text('report-components'),
+    rows: components.length ? components.slice(0, MAX_ROWS).map(([path, line]) => {
+      const item = isObject(line) ? line : {};
+      return [path, aiHumanize(String(item.type ?? '')), str(item.is), str(item.alias)].filter(Boolean).join(' · ');
+    }) : ['—']
+  });
+  const aliases = (Array.isArray(result.entityAliases) ? result.entityAliases : []).filter(isObject);
+  if (aliases.length) {
+    blocks.push({type: 'list', label: text('aliases'), rows: aliases.map(alias => [str(alias.name) ?? alias.id, alias.filter?.type ? aiHumanize(alias.filter.type) : null].filter(Boolean).join(' · '))});
+  }
+  const filters = (Array.isArray(result.filters) ? result.filters : []).filter(isObject);
+  if (filters.length) {
+    blocks.push({type: 'list', label: text('filters'), rows: filters.map(item => String(item.name ?? item.id))});
+  }
+  const problems = (Array.isArray(result.problems) ? result.problems : []).map(String);
+  if (problems.length) {
+    blocks.push({type: 'list', label: text('report-problems'), rows: problems});
+  }
+  return blocks;
+}
+
+function reportComponentFacts(component: Values): AiDetailFact[] {
+  const rows: AiDetailFact[] = [{label: K + 'fact.component', value: aiHumanize(String(component.type ?? ''))}];
+  rows.push({label: K + 'fact.path', value: String(component.path ?? '—'), mono: true});
+  const config = isObject(component.config) ? component.config : {};
+  const title = str(config.title) ?? str(config.text);
+  if (title) {
+    rows.push({label: K + 'fact.title', value: title});
+  }
+  if (str(component.entityAlias) || str(component.entityAliasId)) {
+    rows.push(str(component.entityAlias) ? {label: K + 'fact.alias', value: component.entityAlias}
+      : {label: K + 'fact.alias', value: component.entityAliasId, mono: true});
+  }
+  const entries = [config.keys, config.columns, config.series, config.latestColumns].filter(Array.isArray).flat();
+  const keys = entries.map((item: any) => typeof item === 'string' ? item : item?.key).filter(Boolean);
+  if (str(config.key)) {
+    keys.push(config.key);
+  }
+  if (keys.length) {
+    rows.push({label: K + 'fact.keys', value: [...new Set(keys)].join(', '), mono: true});
+  }
+  const history = isObject(config.timewindow) && isObject(config.timewindow.history) ? config.timewindow.history : null;
+  if (history) {
+    const window = history.interval ?? history.last ?? (isObject(history.range) ? `${history.range.from} – ${history.range.to}` : null);
+    const aggregation = isObject(config.timewindow.aggregation) && config.timewindow.aggregation.type && config.timewindow.aggregation.type !== 'NONE'
+      ? `${config.timewindow.aggregation.type}${config.timewindow.aggregation.grouping ? ' per ' + config.timewindow.aggregation.grouping : ''}` : null;
+    rows.push({label: K + 'fact.time-window', value: [window ? aiHumanize(String(window)) : null, aggregation].filter(Boolean).join(' · ')});
+  }
+  if (typeof config.height === 'number') {
+    rows.push({label: K + 'fact.height', value: `${config.height} px`});
+  }
+  return rows;
+}
+
 function widgetFacts(widget: Values, names: AiDetailNames): AiDetailFact[] {
   const rows: AiDetailFact[] = [];
   if (str(widget.title)) {
@@ -1304,7 +1376,7 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
         blocks.push({type: 'list', label: text('mobile-bundle-menu', {name: str(bundle.title) ?? '—'}), rows: pages});
       }
       if (isObject(result.qrCode)) {
-        blocks.push(...json('QR code', result.qrCode));
+        blocks.push(...json('qr-code', result.qrCode));
       }
       return {hood: text('read-mobile-center'), blocks};
     }
@@ -1340,7 +1412,7 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       return {hood: text('read-scheduler-event', {name: str(result.name) ?? '—'}), blocks: json('event', result)};
     }
     case 'read_mail_server':
-      return {hood: text('read-mail-server'), blocks: json('mail server', result)};
+      return {hood: text('read-mail-server'), blocks: json('mail-server', result)};
     case 'save_mail_server': {
       const rows = facts(values);
       return {hood: text('save-mail-server'), blocks: rows.length ? [{type: 'facts', rows}] : []};
@@ -1366,6 +1438,108 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
     case 'save_two_factor_settings': {
       const rows = facts(values);
       return {hood: text('save-two-factor-settings'), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'create_report_template':
+    case 'update_report_template': {
+      const rows = facts(values, ['templateId']);
+      return {hood: tool === 'create_report_template' ? text('create-report-template', {name: str(values.name) ?? '—'}) : text('update-report-template'),
+        blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'read_report_template': {
+      if (!isObject(result)) {
+        return {hood: text(str(values.path) ? 'read-report-component' : 'read-report-template', {path: str(values.path) ?? '—', name: '—'}), blocks: generic(result, 'result')};
+      }
+      if (str(values.path)) {
+        return {hood: text('read-report-component', {path: str(result.path) ?? str(values.path), name: str(result.template) ?? '—'}),
+          blocks: [{type: 'facts', rows: reportComponentFacts(result)}]};
+      }
+      return {hood: text('read-report-template', {name: str(result.name) ?? '—'}), blocks: reportTemplateOverview(result)};
+    }
+    case 'add_report_components': {
+      const rows = (Array.isArray(values.components) ? values.components.filter(isObject) : []).slice(0, MAX_ROWS).map(component => {
+        const config = isObject(component.config) ? component.config : {};
+        const title = str(config.title) ?? str(config.text);
+        return [str(component.in), aiHumanize(String(component.type)), title].filter(Boolean).join(' · ');
+      });
+      return {hood: text('add-report-components'), blocks: rows.length ? [{type: 'list', rows}] : []};
+    }
+    case 'update_report_component': {
+      const rows = facts(isObject(values.config) ? values.config as Values : {});
+      return {hood: text('update-report-component', {path: str(values.path) ?? '—'}), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'move_report_component':
+      return {hood: text('move-report-component', {path: str(values.path) ?? '—', target: str(values.in) ?? '—'}), blocks: []};
+    case 'save_report_entity_alias':
+    case 'save_report_filter': {
+      const rows = facts(values, ['templateId', 'aliasId', 'filterId']);
+      return {hood: text(tool === 'save_report_filter' ? 'save-report-filter' : 'save-report-alias', {name: str(values.name) ?? '—'}),
+        blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'test_report_template': {
+      if (!isObject(result)) {
+        return {hood: text('test-report-template'), blocks: generic(result, 'result')};
+      }
+      const errors = (Array.isArray(result.errors) ? result.errors.filter(isObject) : [])
+        .map(error => [error.page !== undefined ? `p. ${error.page}` : error.row !== undefined ? `row ${error.row}` : undefined, str(error.message)]
+          .filter(Boolean).join(' · '));
+      const pdf = result.pages !== undefined;
+      const count = Number(pdf ? result.pages : result.rows ?? 0);
+      const size = text((pdf ? 'report-pages' : 'report-rows') + (errors.length ? '' : '-clean'), {count});
+      return {hood: text('test-report-template'),
+        blocks: [{type: 'note', text: size},
+          ...(errors.length ? [{type: 'list' as const, label: text('report-errors'), rows: errors.slice(0, MAX_ROWS)}] : [])]};
+    }
+    case 'read_reports': {
+      if (!isObject(result)) {
+        return {hood: text('read-reports'), blocks: generic(result, 'result')};
+      }
+      if (Array.isArray(result.templates)) {
+        const rows = result.templates.filter(isObject).slice(0, MAX_ROWS)
+          .map(item => [item.name, item.format, item.templateType === 'SUB_REPORT' ? 'Sub-report' : undefined].filter(Boolean).join(' · '));
+        return {hood: text('read-report-templates'),
+          blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-report-templates')}]};
+      }
+      if (Array.isArray(result.scheduledReports)) {
+        const rows = result.scheduledReports.filter(isObject).slice(0, MAX_ROWS)
+          .map(item => [item.name, item.template, item.schedule, item.enabled === false ? '⏸' : undefined].filter(Boolean).join(' · '));
+        return {hood: text('read-scheduled-reports'),
+          blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-scheduled-reports')}]};
+      }
+      if (Array.isArray(result.reports)) {
+        const rows = result.reports.filter(isObject).slice(0, MAX_ROWS)
+          .map(item => [item.file, item.template, item.generated].filter(Boolean).join(' · '));
+        return {hood: text('read-generated-reports'),
+          blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-generated-reports')}]};
+      }
+      if (isObject(result.file)) {
+        return {hood: text('attach-report', {name: str(result.file.name) ?? '—'}), blocks: []};
+      }
+      const rows = facts(result, ['eventId', 'templateId', 'rawSchedule', 'recipients', 'notificationTemplate', 'name']);
+      const recipients = Array.isArray(result.recipients) ? result.recipients.filter(isObject).map(item => str(item.name)).filter(Boolean) : [];
+      if (recipients.length) {
+        rows.push({label: aiHumanize('recipients'), raw: true, value: recipients.join(', ')});
+      }
+      return {hood: text('read-scheduled-report', {name: str(result.name) ?? '—'}), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'save_scheduled_report': {
+      const rows = facts(values, ['eventId', 'templateId', 'userId', 'recipientIds', 'notificationTemplateId']);
+      return {hood: str(values.eventId) ? text('save-scheduled-report') : text('create-scheduled-report', {name: str(values.name) ?? '—'}),
+        blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'generate_report': {
+      const raw = typeof result === 'string' && /^OK: [^\n]*\n/.test(result) ? aiParse(result.slice(result.indexOf('\n') + 1)) : result;
+      if (!isObject(raw)) {
+        return {hood: text('generate-report'), blocks: generic(raw, 'result')};
+      }
+      const name = isObject(raw.file) ? str(raw.file.name) : str(raw.file);
+      const rows: AiDetailFact[] = [];
+      if (name) {
+        rows.push({label: aiHumanize('file'), raw: true, value: name});
+      }
+      if (str(raw.sentTo)) {
+        rows.push({label: aiHumanize('sent to'), raw: true, value: str(raw.sentTo)});
+      }
+      return {hood: text('generate-report'), blocks: rows.length ? [{type: 'facts', rows}] : [{type: 'note', text: text('report-still-running')}]};
     }
     case 'save_scheduler_event': {
       const rows = facts(values, ['eventId']);

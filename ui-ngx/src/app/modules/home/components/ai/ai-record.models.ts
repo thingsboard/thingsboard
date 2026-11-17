@@ -36,6 +36,7 @@ export interface AiRecordView {
   alarmRule: boolean;
   name: string;
   meta: string;
+  badge?: string;
   url?: string;
   state?: AiRecordState;
   alarm?: AiAlarmState;

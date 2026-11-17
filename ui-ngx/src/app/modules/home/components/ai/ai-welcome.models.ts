@@ -21,6 +21,10 @@ interface AiWelcomeKind {
 const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.DASHBOARD_LIST]: {key: 'dashboards', examples: ['build', 'find']},
   [AiAssistantViewType.DASHBOARD]: {key: 'dashboard', entity: true},
+  [AiAssistantViewType.REPORT_TEMPLATE_LIST]: {key: 'report-templates', examples: ['fleet', 'export']},
+  [AiAssistantViewType.REPORT_TEMPLATE]: {key: 'report-template', entity: true},
+  [AiAssistantViewType.SCHEDULED_REPORTS]: {key: 'scheduled-reports', examples: ['weekly', 'next']},
+  [AiAssistantViewType.REPORTS]: {key: 'reports', examples: ['latest', 'now']},
   [AiAssistantViewType.DEVICE_LIST]: {key: 'devices', examples: ['inactive']},
   [AiAssistantViewType.DEVICE]: {key: 'device', entity: true, examples: ['telemetry', 'alarm', 'dashboard']},
   [AiAssistantViewType.DEVICE_GROUP_LIST]: {key: 'device-groups', owned: true},
@@ -113,7 +117,7 @@ export function aiWelcome(view: AiChatView | undefined, name: string | null, con
   if (!kind) {
     return {title: config?.title, line: config?.subTitle, examples: configExamples, suggestion: config?.suggestion ?? shortExample(configExamples)};
   }
-  const base = 'ai-assistant.welcome.' + kind.key;
+  const base = 'ai-assistant.welcome.' + (config?.welcomeKey ?? kind.key);
   const own = (kind.examples ?? []).map(example => ({
     label: translate.instant(`${base}.example.${example}.label`),
     message: translate.instant(`${base}.example.${example}.message`)

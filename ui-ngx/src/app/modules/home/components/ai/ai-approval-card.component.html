@@ -35,7 +35,7 @@
         </dl>
       }
       @if (changes.length) {
-        <table class="k-diff">
+        <table class="k-diff" [class.k-diff-stacked]="stackedDiff">
           <thead>
             <tr>
               <td></td>

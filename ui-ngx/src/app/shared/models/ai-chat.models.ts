@@ -128,6 +128,7 @@ export interface AiAssistantPanelConfig {
   fill?: boolean;
   promptExamples?: AiAssistantPromptExample[];
   suggestion?: string;
+  welcomeKey?: string;
 }
 
 export interface BaseChatToolEventData {
@@ -251,6 +252,10 @@ export enum AiAssistantViewType {
   DASHBOARD_LIST = 'DASHBOARD_LIST',
   DASHBOARD_GROUP_LIST = 'DASHBOARD_GROUP_LIST',
   DASHBOARD_GROUP = 'DASHBOARD_GROUP',
+  REPORT_TEMPLATE_LIST = 'REPORT_TEMPLATE_LIST',
+  REPORT_TEMPLATE = 'REPORT_TEMPLATE',
+  SCHEDULED_REPORTS = 'SCHEDULED_REPORTS',
+  REPORTS = 'REPORTS',
   ALARM_RULE = 'ALARM_RULE',
   ALARM_RULE_LIST = 'ALARM_RULE_LIST',
   ALARM_LIST = 'ALARM_LIST',
@@ -355,6 +360,8 @@ const AI_PAGE_VIEWS: Array<[string, AiAssistantViewType]> = [
   ['/features/vc', AiAssistantViewType.VERSION_CONTROL],
   ['/features/taskManager', AiAssistantViewType.TASK_MANAGER],
   ['/features/scheduler', AiAssistantViewType.SCHEDULER],
+  ['/reporting/scheduling', AiAssistantViewType.SCHEDULED_REPORTS],
+  ['/reporting/reports', AiAssistantViewType.REPORTS],
   ['/settings/home', AiAssistantViewType.HOME_SETTINGS],
   ['/settings/outgoing-mail', AiAssistantViewType.MAIL_SERVER_SETTINGS],
   ['/settings/notifications', AiAssistantViewType.NOTIFICATION_SETTINGS],

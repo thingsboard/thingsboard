@@ -15,6 +15,9 @@ export { AiRecordState } from '@home/components/ai/ai-record.models';
     } @else {
       <span class="tb-rec-name" [matTooltip]="name()" matTooltipPosition="above" [matTooltipShowDelay]="600">{{ name() }}</span>
     }
+    @if (badge(); as label) {
+      <span class="tb-rec-badge" [attr.data-badge]="label.toLowerCase()">{{ label }}</span>
+    }
     @if (hub(); as listing) {
       <span class="tb-rec-meta">
         <span class="tb-hub-ic" [matTooltip]="'ai-assistant.detail.on-iot-hub' | translate" matTooltipPosition="above"><mat-icon class="tb-mat-16" aria-hidden="true">hub</mat-icon></span>
@@ -51,6 +54,8 @@ export class AiRecordComponent {
   name = input.required<string>();
 
   meta = input<string>();
+
+  badge = input<string>();
 
   url = input<string>();
 

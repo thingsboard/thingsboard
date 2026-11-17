@@ -12,7 +12,7 @@
     @case ('hub') {
       <div class="k-detail-recs k-detail-hub tb-list-body" role="list">
         @for (rec of shown(hub(), 'hub'); track rec.key) {
-          <tb-ai-record role="listitem" [entityType]="rec.entityType" [alarmRule]="rec.alarmRule" [name]="rec.name" [url]="rec.url"
+          <tb-ai-record role="listitem" [entityType]="rec.entityType" [alarmRule]="rec.alarmRule" [name]="rec.name" [badge]="rec.badge" [url]="rec.url"
                         [hub]="rec.hub"></tb-ai-record>
         }
         @if (hub().length > LIST_SHOWN) {

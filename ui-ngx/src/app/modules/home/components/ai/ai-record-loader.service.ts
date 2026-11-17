@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { ReportTemplateService } from '@core/http/report-template.service';
+import { ReportTemplateType } from '@shared/models/report.models';
 import { inject, Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -65,6 +67,7 @@ export class AiRecordLoaderService {
   private iotHubApi = inject(IotHubApiService);
   private translate = inject(TranslateService);
   private http = inject(HttpClient);
+  private reportTemplateService = inject(ReportTemplateService);
 
   loadAll(refs: AiRecordRef[], options: AiRecordLoadOptions = {}): Observable<AiRecordView[]> {
     if (!refs.length) {
@@ -174,6 +177,27 @@ export class AiRecordLoaderService {
       case EntityType.NOTIFICATION_TEMPLATE:
         return this.notificationService.getNotificationTemplateById(entity.id, CONFIG)
           .pipe(map(template => this.simple(key, entityType, template.name, NOTIFICATION_PAGES[entityType])));
+      case EntityType.REPORT_TEMPLATE:
+        return this.reportTemplateService.getReportTemplateInfo(entity.id, CONFIG).pipe(map(template => ({
+          key, entityType, alarmRule: false, name: template.name, url: `/reporting/templates/${entity.id}`,
+          badge: template.format,
+          meta: this.translate.instant(template.type === ReportTemplateType.SUB_REPORT ? 'ai-assistant.record.sub-report' : 'ai-assistant.record.report')
+        })));
+      case EntityType.REPORT:
+        return this.http.get<{name: string; format?: string; templateInfo?: {name?: string}}>(`/api/v2/report/${entity.id}`, defaultHttpOptionsFromConfig(CONFIG))
+          .pipe(map(report => ({
+            key, entityType, alarmRule: false, name: report.name, url: '/reporting/reports', badge: report.format,
+            meta: report.templateInfo?.name
+          })));
+      case EntityType.SCHEDULER_EVENT:
+        return this.http.get<{name: string; type?: string}>(`/api/schedulerEvent/${entity.id}`, defaultHttpOptionsFromConfig(CONFIG))
+          .pipe(map(event => {
+            const report = event.type === 'generateReport' || event.type === 'generateDashboardReport';
+            return {
+              key, entityType, alarmRule: false, name: event.name, url: report ? '/reporting/scheduling' : url,
+              meta: report ? this.translate.instant('ai-assistant.record.scheduled-report') : undefined
+            };
+          }));
       default:
         return this.entityService.getEntity(entityType, entity.id, CONFIG).pipe(map(found => {
           const view = this.simple(key, entityType, found?.name ?? (found as {title?: string})?.title, NOTIFICATION_PAGES[entityType] ?? url);

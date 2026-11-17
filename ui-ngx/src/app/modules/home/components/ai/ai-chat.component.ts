@@ -69,10 +69,13 @@ import { ClipboardService } from 'ngx-clipboard';
 import { AnswerRatingEvent, AnswerReportEvent } from '@home/components/ai/ai-chat-messages.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
 
 export type AiChatVariant = 'page' | 'panel';
+
+const LIVE_EDITED_TYPES = new Set<EntityType>([EntityType.DASHBOARD, EntityType.REPORT_TEMPLATE]);
 
 @Component({
   selector: 'tb-ai-chat',
@@ -968,6 +971,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
             && message.data.executionId === event.data.executionId);
           if (call?.from === 'APPROVAL' || call?.from === 'ACTION') {
             this.applySideEffects(event.data.executionId, call.data.tool, call.data.arguments);
+            this.openCreatedReportTemplate(call.data.tool, event.data.affectedEntities);
           }
         }
         if (event.data.affectedEntities?.length) {
@@ -1051,10 +1055,21 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.messages.update(list => [...list, {from: 'ACTION', data: action}]);
   }
 
+  private openCreatedReportTemplate(tool: string | undefined, affected: EntityId[] | undefined): void {
+    const chatId = this.chatId();
+    const created = affected?.find(entity => entity.entityType === EntityType.REPORT_TEMPLATE);
+    if (tool !== 'create_report_template' || !created || !chatId
+      || this.panelService.clientContext()?.view?.type !== AiAssistantViewType.REPORT_TEMPLATE_LIST) {
+      return;
+    }
+    this.panelService.carryChat(chatId);
+    this.router.navigate(['/reporting/templates', created.id]);
+  }
+
   private emitDashboards(entities: EntityId[]): void {
-    const dashboards = entities.filter(entity => entity.entityType === EntityType.DASHBOARD);
-    if (dashboards.length) {
-      this.panelService.emitUpdatedData(dashboards);
+    const edited = entities.filter(entity => LIVE_EDITED_TYPES.has(entity.entityType as EntityType));
+    if (edited.length) {
+      this.panelService.emitUpdatedData(edited);
     }
   }
 

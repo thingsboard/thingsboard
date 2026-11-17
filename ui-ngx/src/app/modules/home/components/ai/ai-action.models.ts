@@ -82,6 +82,17 @@ const TOOL_WORDS: Record<string, string> = {
   save_mobile_qr_code: 'save-mobile-qr-code',
   read_scheduler_events: 'read-scheduler-events',
   save_scheduler_event: 'save-scheduler-event',
+  create_report_template: 'create-report-template',
+  update_report_template: 'update-report-template',
+  add_report_components: 'add-report-components',
+  update_report_component: 'update-report-component',
+  move_report_component: 'move-report-component',
+  save_report_entity_alias: 'save-report-alias',
+  save_report_filter: 'save-report-filter',
+  test_report_template: 'test-report-template',
+  read_reports: 'read-reports',
+  save_scheduled_report: 'save-scheduled-report',
+  generate_report: 'generate-report',
   save_two_factor_settings: 'save-two-factor-settings',
   save_oauth2_domain: 'save-oauth2-domain',
   read_my_account: 'read-my-account',
@@ -169,7 +180,12 @@ const DELETED_TARGETS: Record<string, string> = {
   CUSTOM_MENU: 'delete-custom-menu',
   MOBILE_APP: 'delete-mobile-app',
   MOBILE_BUNDLE: 'delete-mobile-bundle',
-  SCHEDULER_EVENT: 'delete-scheduler-event'
+  SCHEDULER_EVENT: 'delete-scheduler-event',
+  REPORT_TEMPLATE: 'delete-report-template',
+  REPORT_COMPONENT: 'delete-report-component',
+  REPORT_ENTITY_ALIAS: 'delete-report-alias',
+  REPORT_FILTER: 'delete-report-filter',
+  REPORT: 'delete-report'
 };
 
 const ACTION_PREFIX = 'ai-assistant.action.';
@@ -346,6 +362,8 @@ export function aiActionWords(tool: string, args: unknown): AiActionWords {
   switch (tool) {
     case 'add_dashboard_widgets':
       return {key: ACTION_PREFIX + (Array.isArray(values.widgets) && values.widgets.length === 1 ? 'add-widget' : 'add-widgets'), kind: 'think'};
+    case 'read_report_template':
+      return {key: ACTION_PREFIX + (typeof values.path === 'string' && values.path ? 'read-report-component' : 'read-report-template'), kind: 'think'};
     case 'search_entities':
       return {key: ACTION_PREFIX + searchedWords(values), kind: 'think'};
     case 'update_alarms':
@@ -488,6 +506,12 @@ const ENTITY_KINDS: Record<string, AiEntityKind> = {
   MOBILE_BUNDLE: {icon: 'phonelink_setup', palette: 'device'},
   MOBILE_QR_CODE: {icon: 'qr_code_2', palette: 'device'},
   SCHEDULER_EVENT: {icon: 'schedule', palette: 'rule'},
+  REPORT_TEMPLATE: {icon: 'description', palette: 'view'},
+  REPORT_COMPONENT: {icon: 'view_agenda', palette: 'view'},
+  REPORT_ENTITY_ALIAS: {icon: 'label', palette: 'view'},
+  REPORT_FILTER: {icon: 'filter_list', palette: 'view'},
+  SCHEDULED_REPORT: {icon: 'event_repeat', palette: 'rule'},
+  REPORT: {icon: 'summarize', palette: 'view'},
   TWO_FACTOR_SETTINGS: {icon: 'phonelink_lock', palette: 'people'},
   DOMAIN: {icon: 'language', palette: 'people'},
   MY_PROFILE: {icon: 'account_circle', palette: 'people'},

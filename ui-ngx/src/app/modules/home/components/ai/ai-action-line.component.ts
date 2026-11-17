@@ -75,16 +75,17 @@ export class AiActionLineComponent {
       ? affected.find(item => item.entityType === EntityType.ENTITY_GROUP) ?? affected[0]
       : affected[0];
     const text = this.outcome();
-    const match = entity && this.action().status === 'SUCCESS' ? /'([^']{1,120})'/.exec(text) : null;
+    const match = entity && this.action().status === 'SUCCESS' ? /(?:^|\s)'(.{1,120}?)'(?=$|[\s.,:;!?)])/.exec(text) : null;
     if (!match) {
       return null;
     }
+    const start = match.index + match[0].indexOf('\'');
     const alarmRule = entity.entityType === EntityType.CALCULATED_FIELD && this.isAlarmRule();
     const kind = aiEntityKind(entity.entityType, alarmRule);
     const base = alarmRule ? '/alarms/alarm-rules' : baseDetailsPageByEntityType.get(entity.entityType as EntityType);
     const groupUrl = entity.entityType === EntityType.ENTITY_GROUP ? this.groupView()?.url : undefined;
     return {
-      before: text.slice(0, match.index),
+      before: text.slice(0, start),
       name: match[1],
       after: text.slice(match.index + match[0].length),
       icon: kind.icon,
