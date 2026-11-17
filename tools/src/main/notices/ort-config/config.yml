@@ -10,6 +10,9 @@ ort:
     # Scan the published source archive first (sources jar, npm tarball); clone the repository only when there is none.
     sourceCodeOrigins: [ARTIFACT, VCS]
 
+  # Issues from this severity up fail a step: scan-issues.ftl lists the scan's from the same severity
+  severeIssueThreshold: WARNING
+
   scanner:
     skipExcluded: true
 

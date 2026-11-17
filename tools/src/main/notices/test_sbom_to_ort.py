@@ -108,19 +108,23 @@ class MappedTest(unittest.TestCase):
         self.assertFalse(sbom_to_ort.mapped('Maven:org.example:ranged:1.5', 'Example License', self.CURATIONS))
 
 
-
 class SourceCuratedTest(unittest.TestCase):
     curations = [
         {'id': 'Maven:com.example:fork:2.8.8TB', 'curations': {'vcs': {'type': 'Git', 'url': 'u', 'revision': 'r'}}},
         {'id': 'Maven:com.adobe.xmp:xmpcore:[6.0,7.0[', 'curations': {'is_metadata_only': True}},
         {'id': 'Maven:com.example:licensed:[1.0,2.0[', 'curations': {'concluded_license': 'MIT'}},
         {'id': 'Maven:com.example:everywhere', 'curations': {'is_metadata_only': True}},
+        {'id': 'Maven:org.nosources', 'curations': {'is_metadata_only': True}},
     ]
 
     def test_curation_that_gives_the_source_or_says_there_is_none(self):
         self.assertTrue(sbom_to_ort.source_curated('Maven:com.example:fork:2.8.8TB', self.curations))
         self.assertTrue(sbom_to_ort.source_curated('Maven:com.adobe.xmp:xmpcore:6.1.11', self.curations))
         self.assertTrue(sbom_to_ort.source_curated('Maven:com.example:everywhere:3.0', self.curations))
+
+    def test_curation_of_the_group(self):
+        self.assertTrue(sbom_to_ort.source_curated('Maven:org.nosources:any:1.0', self.curations))
+        self.assertFalse(sbom_to_ort.source_curated('Maven:org.nosources.sub:any:1.0', self.curations))
 
     def test_curation_of_another_version_or_without_a_source_does_not_count(self):
         self.assertFalse(sbom_to_ort.source_curated('Maven:com.example:fork:2.8.9TB', self.curations))

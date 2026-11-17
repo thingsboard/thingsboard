@@ -302,24 +302,23 @@ def source_curated(identifier, curations):
 
 
 def curations_of(identifier, curations, version_too=False):
-    """The versions that the curations of the package name, with what each curation says; with version_too, only those
-    that apply to the version of the package. A curation that names no version applies to all."""
-    package, _, version = identifier.rpartition(':')
-    found = [(curation['id'][len(package) + 1:], curation['curations']) for curation in curations
-             if curation['id'] == package or curation['id'].startswith(package + ':')]
+    """The curations of the package, as ORT applies them, each as the versions its id names and what it says: those
+    of its type, namespace and name, and those of its namespace without a name. With version_too, only those that
+    apply to the version of the package; an id without a version applies to all."""
+    kind, namespace, name, version = identifier.split(':', 3)
+    found = []
+    for curation in curations:
+        parts = (curation['id'].split(':', 3) + ['', '', ''])[:4]
+        if parts[0] == kind and parts[1] == namespace and parts[2] in ('', name):
+            found.append((parts[3], curation['curations']))
     return [(versions, c) for versions, c in found if not version_too or not versions or covers(versions, version)]
 
 
 def mapped(identifier, name, curations):
     """Whether a curation says what the named license of the package is. Only a curation without a version counts,
     which applies to every version: the name itself changes when the license of a later version does."""
-    kind, namespace, package = identifier.split(':')[:3]
-    for curation in curations:
-        parts = (curation['id'].split(':') + ['', '', ''])[:4]
-        if parts[0] == kind and parts[1] == namespace and parts[2] in ('', package) and not parts[3]:
-            if name in curation['curations'].get('declared_license_mapping', {}):
-                return True
-    return False
+    return any(not versions and name in curation.get('declared_license_mapping', {})
+               for versions, curation in curations_of(identifier, curations))
 
 
 def unreviewed(identifier, curations):

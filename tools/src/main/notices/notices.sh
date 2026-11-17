@@ -49,7 +49,7 @@ fail() { # log file, what to say
   echo "Third-party notices: failed. The whole log: $1" >&2
   exit 1
 }
-stop_message() { # log file: the first message a template stopped with, as a stack trace can repeat it
+stop_message() { # log file: the first message a template stopped with (see stop.ftl), as a stack trace can repeat it
   sed -n '/^NOTICES-MESSAGE-START$/,/^NOTICES-MESSAGE-END$/{/^NOTICES-MESSAGE-/!p;/^NOTICES-MESSAGE-END$/q}' "$1"
 }
 step() { # log file, command of ours: its log is its message
@@ -65,7 +65,7 @@ ort_step() { # log file, arguments of ORT: the message a template stopped with, 
 
 # Only what an earlier run wrote is removed: the directory may hold other files
 rm -rf "$WORK/project" "$WORK/package-configurations" "$WORK/scan-issues"
-rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,notice-files.txt,THIRD-PARTY-NOTICES.ftl,THIRD-PARTY-NOTICES}
+rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,notice-files.txt,THIRD-PARTY-NOTICES.ftl,stop.ftl,THIRD-PARTY-NOTICES}
 rm -f "$WORK"/{convert,analyze,scan,scan-issues,package-configurations,notice-files,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
 python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" \
@@ -85,8 +85,8 @@ step "$WORK/package-configurations.log" python3 "$HERE/package_configurations.py
 step "$WORK/notice-files.log" python3 "$HERE/notice_files.py" --jars "$WORK/jars.json" --scan-result "$WORK/scan-result.json" \
   --archive "$ORT_HOME/scanner/archive" --maven-repository "${NOTICES_MAVEN_REPOSITORY:-$HOME/.m2/repository}" \
   --downloads "$ORT_HOME/maven-jars" --out "$WORK/notice-files.txt"
-# The template includes notice-files.txt, and can only include what is beside it
-cp "$HERE/THIRD-PARTY-NOTICES.ftl" "$WORK/"
+# The template includes notice-files.txt and imports stop.ftl, and can only read what is beside it
+cp "$HERE/THIRD-PARTY-NOTICES.ftl" "$HERE/stop.ftl" "$WORK/"
 ort_step "$WORK/report.log" --info report -i /work/scan-result.json -o /work -f PlainTextTemplate \
   -O PlainTextTemplate=templatePaths=/work/THIRD-PARTY-NOTICES.ftl \
   --package-configurations-dir /work/package-configurations --repository-configuration-file /notices/license-choices.yml
