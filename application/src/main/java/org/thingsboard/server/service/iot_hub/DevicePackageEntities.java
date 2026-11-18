@@ -26,7 +26,6 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -90,45 +89,6 @@ public class DevicePackageEntities {
                 }
             }
         });
-    }
-
-    /** The entities the package recorded, by id: those it created and those the user chose to use as they were. */
-    static Map<UUID, EntityId> createdIds(DeviceInstalledItemDescriptor descriptor) {
-        Map<UUID, EntityId> ids = new HashMap<>();
-        if (descriptor.getCreatedEntityIds() != null) {
-            descriptor.getCreatedEntityIds().forEach(id -> ids.put(id.getId(), id));
-        }
-        return ids;
-    }
-
-    /**
-     * The entities the user chose to use as they were. An install made before the descriptor kept them has them only in
-     * its install state, which the first update carries over into the descriptor. Update, delete and the delete dialog
-     * all read them here, so a delete never removes such an entity.
-     */
-    static Map<UUID, EntityId> usedExistingIds(DeviceInstalledItemDescriptor descriptor) {
-        Map<UUID, EntityId> ids = new LinkedHashMap<>();
-        if (descriptor.getUsedExistingEntityIds() != null) {
-            descriptor.getUsedExistingEntityIds().forEach(id -> ids.put(id.getId(), id));
-            return ids;
-        }
-        Map<UUID, EntityId> createdIds = createdIds(descriptor);
-        if (descriptor.getInstallState() != null) {
-            descriptor.getInstallState().values().forEach(state -> {
-                if (!"use-existing".equals(state.path("resolution").asText())) {
-                    return;
-                }
-                try {
-                    UUID id = UUID.fromString(state.path("entityOutput").path("id").asText());
-                    if (createdIds.containsKey(id)) {
-                        ids.put(id, createdIds.get(id));
-                    }
-                } catch (IllegalArgumentException ignored) {
-                    // no entity recorded for this step
-                }
-            });
-        }
-        return ids;
     }
 
     /** The package entity an install-state step recorded, with its type from the ids the package created. */

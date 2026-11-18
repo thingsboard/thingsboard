@@ -97,6 +97,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -736,7 +737,7 @@ public class DefaultIotHubService implements IotHubService {
         if (createdEntityIds == null || createdEntityIds.isEmpty()) {
             return;
         }
-        Set<UUID> usedExisting = DevicePackageEntities.usedExistingIds(descriptor).keySet();
+        Set<UUID> usedExisting = descriptor.getUsedExistingEntities().stream().map(EntityId::getId).collect(Collectors.toSet());
         List<DeviceInstalledItemDescriptor> otherPackages = new ArrayList<>();
         Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, otherPackages);
         // An entity goes before what it refers to: a device before its profile, a profile before its default dashboard
@@ -842,7 +843,7 @@ public class DefaultIotHubService implements IotHubService {
         Set<IotHubInstalledItemId> usedByItems = new HashSet<>();
         int usedExistingCount = 0;
         if (installedItem.getDescriptor() instanceof DeviceInstalledItemDescriptor dd && dd.getCreatedEntityIds() != null) {
-            Set<UUID> usedExisting = DevicePackageEntities.usedExistingIds(dd).keySet();
+            Set<UUID> usedExisting = dd.getUsedExistingEntities().stream().map(EntityId::getId).collect(Collectors.toSet());
             Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, new ArrayList<>());
             // The delete removes these before the profiles, so they don't keep a profile; a kept device does
             Set<UUID> deletedDevices = new HashSet<>();
