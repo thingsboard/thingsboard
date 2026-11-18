@@ -10,8 +10,8 @@ ships. How the components are listed is in [sbom.md](sbom.md).
 ## The project's license
 
 Since version 4.4, ThingsBoard is licensed under the Business Source License 1.1 (BUSL-1.1): see [LICENSE](../LICENSE).
-Each release converts to the Apache License 2.0 four years after it is published. Versions released before 4.4 remain
-under the Apache License 2.0.
+Each release converts to the Apache License 2.0 four years after it is published. Versions of this repository released
+before 4.4 remain under the Apache License 2.0.
 
 Contributions are accepted under the Contributor License Agreement: see
 [CONTRIBUTING.md](../CONTRIBUTING.md#contributor-license-agreement).
@@ -52,21 +52,24 @@ SPDX-License-Identifier: Apache-2.0
 The comment style follows the file type, for example `//` lines in Java and TypeScript, an XML comment in `pom.xml`
 and `#` lines in YAML and shell scripts. Do not add your own copyright or author lines.
 
-- A new file: run `mvn license:format`, which gives every file without a header the `busl` header.
-- A changed file: run the provenance check, which knows from the Git history which header each file needs:
+- Run `mvn license:format`. It leaves the three headers above alone and gives every other file the `busl` header, also
+  a file that carries a third-party header (see [Copied third-party code](sbom.md#copied-third-party-code)).
+- Then, for every file you add or change, run the provenance check, which knows from the Git history which header each
+  file needs:
 
   ```bash
-  ./check-license-headers.sh --since origin/<target branch>   # the files your branch changes
-  ./check-license-headers.sh --fix                            # restamp the files it can decide
+  ./check-license-headers.sh --since origin/<target branch>         # the files your branch adds or changes
+  ./check-license-headers.sh --since origin/<target branch> --fix   # restamp the files it can decide
   ```
 
-  It needs the full Git history of the clone (`git fetch --unshallow` on a shallow one).
+  Use `upstream/<target branch>` in a fork. The check needs the full Git history of the clone (`git fetch --unshallow`
+  on a shallow one).
 
 When the check reports "Needs a decision" for a file that resembles a CE file at another path, or whose path existed in
 CE once, put the right header on it and record the decision in `tools/src/main/python/license-headers/curations.json`.
 How is in the [check's README](../tools/src/main/python/license-headers/README.md#add-a-curation).
 
-Pull requests into the release branches run the same check, and fail with a report of the files to fix.
+Pull requests into `master` and the release branches run the same check, and fail with a report of the files to fix.
 
 ## Third-party notices
 
@@ -90,7 +93,10 @@ mvn -T1C clean package -DskipTests -Dsbom.skip=false   # the SBOMs, see sbom.md
 mvn -N exec:exec@notices-product                        # the notices, into THIRD-PARTY-NOTICES
 ```
 
-The generator needs Docker and Python 3.11 or later. It runs the
+Build the whole project, without `-pl`, `-Dpkg.skip*`, `-Dskip.yarn` or `-Dskip.ui.build`: the generator reads every
+SBOM it finds, and a build that skipped some gives an incomplete file without an error.
+
+The generator needs Linux or macOS (WSL on Windows), Docker and Python 3.11 or later. It runs the
 [OSS Review Toolkit](https://oss-review-toolkit.org) (ORT) in a container, which scans the source of every component
 for licenses and copyright lines. Its logs are in `target/notices-product/`.
 
@@ -114,8 +120,10 @@ requests that were each correct before the other one was merged.
 
 ## When the generator stops
 
-The generator stops rather than guess. Every stop starts with `Third-party notices:`, names the packages, and says what
-to do: usually, which decision to record in which of these files under `tools/src/main/notices/`.
+The generator stops rather than guess. Most stops start with `Third-party notices:`, name the packages, and say what to
+do: usually, which decision to record in which of these files under `tools/src/main/notices/`. If the scan cache cannot
+be downloaded (`Scan cache: … cannot be read`), check the network. `NOTICES_SCAN_CACHE_URL=none` runs without it, but
+then every package is scanned, which takes hours.
 
 | File                                     | Records                                                                                                |
 |------------------------------------------|--------------------------------------------------------------------------------------------------------|

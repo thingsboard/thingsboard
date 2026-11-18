@@ -11,8 +11,12 @@ mvn -T1C clean package -DskipTests -Dsbom.skip=false   # the SBOMs
 mvn -N exec:exec@notices-product                        # the notices of the product, into THIRD-PARTY-NOTICES
 ```
 
-The second command runs `notices.sh` over every SBOM that the modules left in their `target/sbom`. It needs Docker and
-Python 3.11 or later. Its work directory, with the logs of every step, is `target/notices-product/`.
+The second command runs `notices.sh` over every SBOM that the modules left in their `target/sbom`. Build the whole
+project, without `-pl`, `-Dpkg.skip*`, `-Dskip.yarn` or `-Dskip.ui.build`: the generator reads every SBOM it finds, and
+a build that skipped some gives an incomplete file without an error.
+
+The generator needs Linux or macOS (WSL on Windows), Docker and Python 3.11 or later. Its work directory, with the logs
+of every step, is `target/notices-product/`.
 
 ## Steps
 
