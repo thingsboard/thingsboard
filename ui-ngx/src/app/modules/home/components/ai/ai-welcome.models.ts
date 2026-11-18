@@ -88,6 +88,8 @@ const WELCOMES: Partial<Record<AiAssistantViewType, AiWelcomeKind>> = {
   [AiAssistantViewType.CUSTOM_TRANSLATION]: {key: 'custom-translation', examples: ['rename', 'find']},
   [AiAssistantViewType.CUSTOM_MENU]: {key: 'custom-menu', examples: ['simple', 'link']},
   [AiAssistantViewType.IMAGES]: {key: 'images', examples: ['icon']},
+  [AiAssistantViewType.SCADA_SYMBOL_LIST]: {key: 'scada-symbols', examples: ['find', 'connectors']},
+  [AiAssistantViewType.SCADA_SYMBOL]: {key: 'scada-symbol', examples: ['explain', 'values']},
   [AiAssistantViewType.JAVASCRIPT_LIBRARY]: {key: 'javascript-library', examples: ['module']},
   [AiAssistantViewType.RESOURCES_LIBRARY]: {key: 'resources-library'},
   [AiAssistantViewType.TWO_FACTOR_AUTH]: {key: 'two-factor-auth', examples: ['review', 'methods', 'enforce']},

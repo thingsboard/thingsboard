@@ -976,6 +976,12 @@
             "read-widget-type": "Read the widget {{name}}",
             "read-widget-parts": "Read the {{parts}} of '{{name}}'",
             "widget-problems": "Problems",
+            "read-scada-symbols": "Read the SCADA symbols",
+            "read-scada-symbol": "Read the SCADA symbol {{name}}",
+            "read-scada-symbol-parts": "Read the {{parts}} of '{{name}}'",
+            "no-scada-symbols": "No SCADA symbols",
+            "scada-symbol-behaviors": "Behaviors",
+            "scada-symbol-problems": "Problems",
             "create-widget": "Created the widget {{name}}",
             "update-widget-type": "Changed the widget",
             "update-widget-edits": "Changed the widget: { count, plural, =1 {1 edit} other {# edits} }",
@@ -1601,6 +1607,18 @@
             "read-widgets": {
                 "run": "Reading the widgets library",
                 "done": "Read the widgets library"
+            },
+            "read-scada-symbols": {
+                "run": "Reading the SCADA symbols",
+                "done": "Read the SCADA symbols"
+            },
+            "read-scada-symbol": {
+                "run": "Reading the SCADA symbol",
+                "done": "Read the SCADA symbol"
+            },
+            "read-scada-symbol-parts": {
+                "run": "Reading the symbol's {{parts}}",
+                "done": "Read the symbol's {{parts}}"
             },
             "build-widget": {
                 "run": "Writing the widget",
@@ -3066,6 +3084,36 @@
                 "title-unnamed": "Design this report",
                 "line": "Say what it should show, for which devices and period, and how often it goes out.",
                 "suggestion": "Build a weekly PDF report of my devices."
+            },
+            "scada-symbols": {
+                "title": "Ask about your SCADA symbols",
+                "line": "Find the right symbol for a process screen, or learn how one works.",
+                "suggestion": "Which symbols show a pump?",
+                "example": {
+                    "find": {
+                        "label": "Find a pump",
+                        "message": "Which HP symbols show a pump, and what size are they?"
+                    },
+                    "connectors": {
+                        "label": "Joining pipes",
+                        "message": "How do pipes and connectors join without a visible seam?"
+                    }
+                }
+            },
+            "scada-symbol": {
+                "title": "Ask about this symbol",
+                "line": "What it shows, what its clicks do, and which values it reads.",
+                "suggestion": "What does this symbol show?",
+                "example": {
+                    "explain": {
+                        "label": "Explain it",
+                        "message": "Explain what this symbol shows and what happens when it is clicked."
+                    },
+                    "values": {
+                        "label": "Its values",
+                        "message": "Which values does this symbol read by default, and from where?"
+                    }
+                }
             },
             "widget-types": {
                 "title": "Ask about your widgets",

@@ -266,6 +266,8 @@ export enum AiAssistantViewType {
   NEW_WIDGET_TYPE = 'NEW_WIDGET_TYPE',
   WIDGETS_BUNDLE_LIST = 'WIDGETS_BUNDLE_LIST',
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
+  SCADA_SYMBOL_LIST = 'SCADA_SYMBOL_LIST',
+  SCADA_SYMBOL = 'SCADA_SYMBOL',
   ALARM_RULE = 'ALARM_RULE',
   ALARM_RULE_LIST = 'ALARM_RULE_LIST',
   ALARM_LIST = 'ALARM_LIST',
@@ -359,6 +361,7 @@ const AI_PAGE_VIEWS: Array<[string, AiAssistantViewType]> = [
   ['/white-labeling/customTranslation', AiAssistantViewType.CUSTOM_TRANSLATION],
   ['/white-labeling/customMenu', AiAssistantViewType.CUSTOM_MENU],
   ['/resources/images', AiAssistantViewType.IMAGES],
+  ['/resources/scada-symbols', AiAssistantViewType.SCADA_SYMBOL_LIST],
   ['/resources/javascript-library', AiAssistantViewType.JAVASCRIPT_LIBRARY],
   ['/resources/resources-library', AiAssistantViewType.RESOURCES_LIBRARY],
   ['/security-settings/2fa', AiAssistantViewType.TWO_FACTOR_AUTH],
@@ -388,10 +391,17 @@ const AI_PAGE_VIEWS: Array<[string, AiAssistantViewType]> = [
   ['/analytics', AiAssistantViewType.TRENDZ]
 ];
 
-const AI_TITLED_VIEWS = new Set<string>([AiAssistantViewType.PAGE, ...AI_PAGE_VIEWS.map(([, type]) => type)]);
+const AI_PAGE_VIEW_PATTERNS: Array<[RegExp, AiAssistantViewType]> = [
+  [/^\/resources\/scada-symbols\/(system|tenant)\/[^/]+$/, AiAssistantViewType.SCADA_SYMBOL]
+];
+
+const AI_TITLED_VIEWS = new Set<string>([AiAssistantViewType.PAGE, ...AI_PAGE_VIEWS.map(([, type]) => type),
+  ...AI_PAGE_VIEW_PATTERNS.map(([, type]) => type)]);
 
 export const aiPageView = (path: string): AiAssistantViewType =>
-  AI_PAGE_VIEWS.find(([prefix]) => path === prefix || path.startsWith(prefix + '/'))?.[1] ?? AiAssistantViewType.PAGE;
+  AI_PAGE_VIEW_PATTERNS.find(([pattern]) => pattern.test(path))?.[1]
+  ?? AI_PAGE_VIEWS.find(([prefix]) => path === prefix || path.startsWith(prefix + '/'))?.[1]
+  ?? AiAssistantViewType.PAGE;
 
 export const isAiTitledView = (type: string): boolean => AI_TITLED_VIEWS.has(type);
 

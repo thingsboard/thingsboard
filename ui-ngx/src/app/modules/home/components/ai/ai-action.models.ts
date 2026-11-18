@@ -101,6 +101,7 @@ const TOOL_WORDS: Record<string, string> = {
   update_widget: 'update-widget-type',
   check_widget: 'check-widget',
   save_widgets_bundle: 'save-widgets-bundle',
+  read_scada_symbols: 'read-scada-symbols',
   save_two_factor_settings: 'save-two-factor-settings',
   save_oauth2_domain: 'save-oauth2-domain',
   read_my_account: 'read-my-account',
@@ -365,6 +366,10 @@ export const WIDGET_PART_WORDS: Record<string, string> = {
   dataKeySettingsForm: 'data key settings form', latestDataKeySettingsForm: 'latest data key settings form', defaultConfig: 'default configuration'
 };
 
+export const SCADA_SYMBOL_PART_WORDS: Record<string, string> = {
+  svg: 'SVG', metadata: 'metadata', functions: 'functions', behavior: 'behaviors', properties: 'properties'
+};
+
 export function widgetParts(values: Record<string, any>): string[] {
   const parts = Array.isArray(values.sections) ? values.sections.map(String) : [];
   return parts.length ? parts : typeof values.section === 'string' ? [values.section] : ['overview'];
@@ -391,6 +396,12 @@ export function aiActionWords(tool: string, args: unknown): AiActionWords {
       return parts.length && !parts.includes('all')
         ? {key: ACTION_PREFIX + 'read-widget-parts', params: {parts: joinWords(parts.map(part => WIDGET_PART_WORDS[part] ?? part))}, kind: 'think'}
         : {key: ACTION_PREFIX + 'read-widget-type', kind: 'think'};
+    }
+    case 'read_scada_symbol': {
+      const parts = widgetParts(values).filter(part => part !== 'overview');
+      return parts.length && !parts.includes('all')
+        ? {key: ACTION_PREFIX + 'read-scada-symbol-parts', params: {parts: joinWords(parts.map(part => SCADA_SYMBOL_PART_WORDS[part] ?? part))}, kind: 'think'}
+        : {key: ACTION_PREFIX + 'read-scada-symbol', kind: 'think'};
     }
     case 'read_report_template':
       return {key: ACTION_PREFIX + (typeof values.path === 'string' && values.path ? 'read-report-component' : 'read-report-template'), kind: 'think'};

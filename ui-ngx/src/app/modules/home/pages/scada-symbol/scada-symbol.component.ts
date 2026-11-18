@@ -197,6 +197,7 @@ export class ScadaSymbolComponent extends PageComponent
       () => {
         this.reset();
         this.init(this.route.snapshot.data.symbolData);
+        setTimeout(() => this.updateBreadcrumbs.emit());
       }
     );
   }

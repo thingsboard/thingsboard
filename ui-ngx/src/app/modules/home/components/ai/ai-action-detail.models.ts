@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { AiAction } from '@shared/models/ai-chat.models';
-import { WIDGET_PART_WORDS, widgetParts } from '@home/components/ai/ai-action.models';
+import { SCADA_SYMBOL_PART_WORDS, WIDGET_PART_WORDS, widgetParts } from '@home/components/ai/ai-action.models';
 
 const WIDGET_PART_LANGS: Record<string, string> = {html: 'html', css: 'css', js: 'javascript'};
+
+const SCADA_SYMBOL_PART_LANGS: Record<string, string> = {svg: 'html', functions: 'javascript'};
 
 export interface AiDetailEntity {
   id?: string;
@@ -231,6 +233,16 @@ function images(rows: {label?: AiDetailText; value: unknown}[]): AiDetailBlock[]
 
 function text(key: string, params?: Record<string, AiDetailParam>): AiDetailText {
   return {key: K + key, params};
+}
+
+function scadaSymbolOverviewBlocks(overview: Values): AiDetailBlock[] {
+  const rows = facts(overview, ['link', 'note', 'tags', 'behavior', 'properties', 'problems', 'searchTags', 'description']);
+  const behaviors = Array.isArray(overview.behavior)
+    ? overview.behavior.filter(isObject).map(item => [item.name || item.id, item.default].filter(Boolean).join(' — ')) : [];
+  const problems = Array.isArray(overview.problems) ? overview.problems.map(item => String(item)) : [];
+  return [...(rows.length ? [{type: 'facts' as const, rows}] : []),
+    ...(behaviors.length ? [{type: 'list' as const, label: text('scada-symbol-behaviors'), rows: behaviors.slice(0, MAX_ROWS)}] : []),
+    ...(problems.length ? [{type: 'list' as const, label: text('scada-symbol-problems'), rows: problems.slice(0, MAX_ROWS)}] : [])];
 }
 
 function facts(values: Values, skip: string[] = [], names?: AiDetailNames): AiDetailFact[] {
@@ -1562,6 +1574,32 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       const rows = (Array.isArray(result.bundles) ? result.bundles.filter(isObject) : []).slice(0, MAX_ROWS)
         .map(item => [item.title, item.system ? 'system' : undefined].filter(Boolean).join(' · '));
       return {hood: text('read-widgets-bundles'), blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-widgets-bundles')}]};
+    }
+    case 'read_scada_symbols': {
+      const rows = (isObject(result) && Array.isArray(result.symbols) ? result.symbols.filter(isObject) : []).slice(0, MAX_ROWS)
+        .map(item => [item.title, item.family === 'hp' ? 'HP' : item.family, item.size, item.system ? 'system' : undefined].filter(Boolean).join(' · '));
+      return {hood: text('read-scada-symbols'), blocks: rows.length ? [{type: 'list', rows}] : [{type: 'note', text: text('no-scada-symbols')}]};
+    }
+    case 'read_scada_symbol': {
+      if (!isObject(result)) {
+        const raw = typeof result === 'string' ? result : '';
+        const name = /^SCADA symbol '([^']*)'/.exec(raw)?.[1] ?? '—';
+        const parts = widgetParts(values).filter(part => part !== 'all');
+        const sections = raw.split(/\n\n=== ([A-Za-z]+) ===\n/);
+        const blocks: AiDetailBlock[] = [];
+        for (let i = 1; i + 1 < sections.length; i += 2) {
+          const overview = sections[i] === 'overview' ? aiParse(sections[i + 1]) : undefined;
+          if (isObject(overview)) {
+            blocks.push(...scadaSymbolOverviewBlocks(overview));
+          } else if (sections[i + 1].trim()) {
+            const word = SCADA_SYMBOL_PART_WORDS[sections[i]] ?? sections[i];
+            blocks.push({type: 'code', label: word.charAt(0).toUpperCase() + word.slice(1), text: sections[i + 1],
+              lang: SCADA_SYMBOL_PART_LANGS[sections[i]] ?? 'json'});
+          }
+        }
+        return {hood: text('read-scada-symbol-parts', {name, parts: parts.map(part => SCADA_SYMBOL_PART_WORDS[part] ?? part).join(', ')}), blocks};
+      }
+      return {hood: text('read-scada-symbol', {name: str(result.title) ?? '—'}), blocks: scadaSymbolOverviewBlocks(result)};
     }
     case 'read_widget': {
       if (!isObject(result)) {
