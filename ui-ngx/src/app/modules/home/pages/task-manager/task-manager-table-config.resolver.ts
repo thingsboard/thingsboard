@@ -68,6 +68,7 @@ export class TaskManagerTableConfigResolver {
     this.config.detailsPanelEnabled = false;
     this.config.searchEnabled = false;
     this.config.useTimePageLink = true;
+    this.config.timewindowPlacement = 'header';
     this.config.forAllTimeEnabled = true;
     this.config.entitiesDeleteEnabled = false;
 
