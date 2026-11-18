@@ -8,6 +8,7 @@ import org.apache.commons.codec.DecoderException;
 import org.eclipse.leshan.core.security.util.SecurityUtil;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
@@ -16,7 +17,9 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCred
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -28,8 +31,13 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.eclipse.leshan.core.SecurityMode.PSK;
@@ -45,6 +53,32 @@ public class LwM2mCredentialsSecurityInfoValidator {
 
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
+
+    public TbLwM2MSecurityInfo provisionX509CertificateChain(X509Certificate[] chain) throws CertificateEncodingException {
+        CompletableFuture<ValidateDeviceCredentialsResponse> response = new CompletableFuture<>();
+        context.getTransportService().process(DeviceTransportType.LWM2M, ValidateOrCreateDeviceX509CertRequestMsg.newBuilder()
+                        .setCertificateChain(SslUtil.getCertificateChainString(chain)).build(),
+                new TransportServiceCallback<>() {
+                    @Override
+                    public void onSuccess(ValidateDeviceCredentialsResponse msg) {
+                        response.complete(msg);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        response.completeExceptionally(e);
+                    }
+                });
+        try {
+            return createSecurityInfo(SslUtil.parseCommonName(chain[0]), response.get(config.getTimeout(), TimeUnit.MILLISECONDS),
+                    LwM2mTypeServer.CLIENT);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new LwM2MAuthException();
+        } catch (ExecutionException | TimeoutException e) {
+            throw new LwM2MAuthException();
+        }
+    }
 
     public TbLwM2MSecurityInfo getEndpointSecurityInfoByCredentialsId(String credentialsId, LwM2mTypeServer keyValue) {
         CountDownLatch latch = new CountDownLatch(1);
@@ -105,7 +139,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     createClientSecurityInfoRPK(result, endpoint, credentials.getClient());
                     break;
                 case X509:
-                    createClientSecurityInfoX509(result, endpoint);
+                    createClientSecurityInfoX509(result, result.getEndpoint());
                     break;
                 default:
                     break;
