@@ -19,7 +19,7 @@ public class TuyaIntegrationConfiguration {
                    secret = true, group = "Tuya Connection", required = true)
     private String accessId;
 
-    @TemplateField(key = "tuyaAccessKey", label = "Access key",
+    @TemplateField(key = "tuyaAccessKey", label = "Access Secret",
                    type = FormFieldType.PASSWORD, secret = true, group = "Tuya Connection", required = true)
     private String accessKey;
 
