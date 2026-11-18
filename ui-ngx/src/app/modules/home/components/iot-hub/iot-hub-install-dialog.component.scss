@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 tb-entity-select {
@@ -42,17 +43,6 @@ tb-entity-select {
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 8px;
   padding-bottom: 24px;
-}
-
-.tb-iot-hub-install-warning {
-  color: #b26a00;
-  background: #fff8e1;
-  border-left: 3px solid #f5b324;
-  padding: 8px 12px;
-  font-size: 13px;
-  line-height: 18px;
-  border-radius: 4px;
-  margin: 0;
 }
 
 .tb-iot-hub-plan-list {

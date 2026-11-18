@@ -16,9 +16,9 @@
   </mat-toolbar>
 }
 
-<div mat-dialog-content class="tb-install-wizard-body" [class.tb-install-wizard-embedded]="embedded">
+<div mat-dialog-content class="tb-install-wizard-body flex min-h-[50vh] flex-col" [class.tb-install-wizard-embedded]="embedded">
 
-  <mat-stepper linear #stepper [labelPosition]="(stepperLabelPosition | async)">
+  <mat-stepper class="flex-1" linear #stepper [labelPosition]="(stepperLabelPosition | async)">
 
     <mat-step [stepControl]="step1Form" [label]="'agent.add-profile-step-details' | translate">
       <form [formGroup]="step1Form" autocomplete="off">
@@ -33,10 +33,6 @@
           }
         </mat-form-field>
         <mat-form-field class="mat-block" appearance="outline">
-          <mat-label translate>agent.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
-        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>agent.provisioning-strategy</mat-label>
           <mat-select formControlName="provisionType">
             @for (type of agentProvisionTypes; track type) {
@@ -46,38 +42,42 @@
             }
           </mat-select>
         </mat-form-field>
-        <div class="tb-wizard-hint">
-          <mat-icon class="hint-icon">help_outline</mat-icon>
+        <div class="tb-form-hint tb-primary-fill mb-4 mt-1">
+          <mat-icon>info_outline</mat-icon>
           <div>
-            <div class="hint-title">
+            <div class="font-medium">
               {{ 'agent.provisioning-strategy-label' | translate: {
               strategy: agentProvisionTypeTranslationMap.get(step1Form.get('provisionType').value) | translate
               } }}
             </div>
-            <div class="hint-body">
+            <div>
               {{ agentProvisionTypeDescriptionMap.get(step1Form.get('provisionType').value) | translate }}
             </div>
           </div>
         </div>
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>agent.description</mat-label>
+          <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
+        </mat-form-field>
       </form>
     </mat-step>
 
     <mat-step [label]="'agent.add-profile-step-app-profiles' | translate">
       <form [formGroup]="step2Form" autocomplete="off">
-        <div class="tb-wizard-hint">
-          <mat-icon class="hint-icon">help_outline</mat-icon>
+        <div class="tb-form-hint tb-primary-fill mb-4 mt-1">
+          <mat-icon>info_outline</mat-icon>
           <div>
-            <div class="hint-title">{{ 'agent.add-profile-app-profiles-hint-title' | translate }}</div>
-            <div class="hint-body">
+            <div class="font-medium">{{ 'agent.add-profile-app-profiles-hint-title' | translate }}</div>
+            <div>
               {{ 'agent.add-profile-app-profiles-hint' | translate: { profileName: step1Form.get('name').value } }}
             </div>
           </div>
         </div>
         @if (assignmentsLoadState === 'failed') {
-          <div class="tb-wizard-hint">
-            <mat-icon class="hint-icon">warning_amber</mat-icon>
+          <div class="tb-form-hint tb-primary-fill tb-form-hint-warning mb-4 mt-1">
+            <mat-icon>warning</mat-icon>
             <div>
-              <div class="hint-body">{{ 'agent.add-profile-assignments-load-failed' | translate }}</div>
+              <div>{{ 'agent.add-profile-assignments-load-failed' | translate }}</div>
               <button mat-button color="primary" type="button" (click)="loadAssignedAppProfiles()">
                 {{ 'action.retry' | translate }}
               </button>

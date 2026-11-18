@@ -102,24 +102,27 @@
               </mat-form-field>
             </div>
             <div class="tb-form-hint tb-primary-fill">
-              {{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}
-              @if (dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE) {
-                <section>
-                  {{ 'datakey.aggregation-type-hint-common' | translate }}
-                </section>
-              }
-              @if (reportMode && dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE) {
-                <div class="tb-form-row space-between">
-                  <div>{{ 'timewindow.timewindow' | translate }}</div>
-                  <tb-timewindow asButton="true"
-                                 strokedButton
-                                 noMargin
-                                 isEdit="true"
-                                 timezone="true"
-                                 historyOnly
-                                 formControlName="timewindow"></tb-timewindow>
-                </div>
-              }
+              <mat-icon>info_outline</mat-icon>
+              <div>
+                {{ dataKeyFormGroup.get('aggregationType').value ? (dataKeyAggregationTypeHintTranslations.get(aggregationTypes[dataKeyFormGroup.get('aggregationType').value]) | translate) : '' }}
+                @if (dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE) {
+                  <section>
+                    {{ 'datakey.aggregation-type-hint-common' | translate }}
+                  </section>
+                }
+                @if (reportMode && dataKeyFormGroup.get('aggregationType').value && dataKeyFormGroup.get('aggregationType').value !== aggregationTypes.NONE) {
+                  <div class="tb-form-row space-between">
+                    <div>{{ 'timewindow.timewindow' | translate }}</div>
+                    <tb-timewindow asButton="true"
+                                   strokedButton
+                                   noMargin
+                                   isEdit="true"
+                                   timezone="true"
+                                   historyOnly
+                                   formControlName="timewindow"></tb-timewindow>
+                  </div>
+                }
+              </div>
             </div>
           </div>
         }
@@ -135,7 +138,10 @@
                   <mat-slide-toggle class="mat-slide" formControlName="comparisonEnabled" (click)="$event.stopPropagation()">
                     {{ 'datakey.enable-delta-calculation' | translate }}
                   </mat-slide-toggle>
-                  <mat-hint class="tb-form-hint tb-primary-fill">{{ 'datakey.enable-delta-calculation-hint' | translate }}</mat-hint>
+                  <mat-hint class="tb-form-hint tb-primary-fill">
+                    <mat-icon>info_outline</mat-icon>
+                    <span>{{ 'datakey.enable-delta-calculation-hint' | translate }}</span>
+                  </mat-hint>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>

@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -30,7 +31,10 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.id.RpcId;
+import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcError;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -72,7 +76,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
                     if (deviceUpdateMsg.hasEntityGroupIdMSB() && deviceUpdateMsg.hasEntityGroupIdLSB()) {
                         EntityGroupId entityGroupId = new EntityGroupId(
                                 new UUID(deviceUpdateMsg.getEntityGroupIdMSB(), deviceUpdateMsg.getEntityGroupIdLSB()));
-                        edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, deviceId);
+                        safeRemoveEntityFromGroup(tenantId, entityGroupId, deviceId);
                     } else if (EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
                         deleteDevice(tenantId, edge, deviceId);
                     } else {
@@ -96,7 +100,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
 
     @Override
     public ListenableFuture<Void> processDeviceCredentialsMsgFromEdge(TenantId tenantId, EdgeId edgeId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
-        log.debug("[{}] Executing processDeviceCredentialsMsgFromEdge, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
+        log.debug("[{}][{}] Executing processDeviceCredentialsMsgFromEdge", tenantId, edgeId);
         try {
             edgeSynchronizationManager.getEdgeId().set(edgeId);
 
@@ -139,7 +143,10 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
     @Override
     public ListenableFuture<Void> processDeviceRpcCallFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
         log.trace("[{}] processDeviceRpcCallFromEdge [{}]", tenantId, deviceRpcCallMsg);
-        if (deviceRpcCallMsg.hasResponseMsg()) {
+        if (deviceRpcCallMsg.hasRpcStatus()) {
+            // RPC v2 (persistent) status update from the edge - update the cloud Rpc entity (same id == request UUID).
+            return processDeviceRpcStatusFromEdge(tenantId, edge, deviceRpcCallMsg);
+        } else if (deviceRpcCallMsg.hasResponseMsg()) {
             return processDeviceRpcResponseFromEdge(tenantId, deviceRpcCallMsg);
         } else if (deviceRpcCallMsg.hasRequestMsg()) {
             return processDeviceRpcRequestFromEdge(tenantId, edge, deviceRpcCallMsg);
@@ -147,10 +154,52 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
         return Futures.immediateFuture(null);
     }
 
+    private ListenableFuture<Void> processDeviceRpcStatusFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
+        RpcId rpcId = new RpcId(new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB()));
+        Rpc existingRpc = edgeCtx.getTbRpcService().findRpcById(tenantId, rpcId);
+        if (existingRpc == null || !tenantId.equals(existingRpc.getTenantId())) {
+            // RPC is unknown to the cloud (edge-originated or already deleted) - nothing to sync
+            log.debug("[{}][{}] Ignoring RPC status [{}] from edge - RPC not found", tenantId, rpcId, deviceRpcCallMsg.getRpcStatus());
+            return Futures.immediateFuture(null);
+        }
+        if (RpcStatus.DELETED.name().equals(deviceRpcCallMsg.getRpcStatus())) {
+            // RPC v2 (persistent) delete/abort propagation Edge -> Cloud: remove the cloud copy.
+            // Mark the edge-sync context so TbRpcService.deleteRpc does not echo the delete back to edges.
+            try {
+                edgeSynchronizationManager.getEdgeId().set(edge.getId());
+                edgeCtx.getTbRpcService().deleteRpc(tenantId, existingRpc);
+            } finally {
+                edgeSynchronizationManager.getEdgeId().remove();
+            }
+            return Futures.immediateFuture(null);
+        }
+        RpcStatus rpcStatus = RpcStatus.valueOf(deviceRpcCallMsg.getRpcStatus());
+        JsonNode response = null;
+        if (deviceRpcCallMsg.hasResponseMsg() && !StringUtils.isEmpty(deviceRpcCallMsg.getResponseMsg().getResponse())) {
+            String payload = deviceRpcCallMsg.getResponseMsg().getResponse();
+            try {
+                response = JacksonUtil.toJsonNode(payload);
+            } catch (IllegalArgumentException e) {
+                response = JacksonUtil.newObjectNode().put("error", payload);
+            }
+        }
+        // stale or out-of-order statuses (e.g. DELIVERED after SUCCESSFUL) are rejected by the guarded update
+        existingRpc.setStatus(rpcStatus);
+        if (response != null) {
+            existingRpc.setResponse(response);
+        }
+        edgeCtx.getTbRpcService().update(tenantId, existingRpc);
+        return Futures.immediateFuture(null);
+    }
+
     private ListenableFuture<Void> processDeviceRpcResponseFromEdge(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         UUID requestUuid = new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB());
         DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
+        if (!isTenantEntity(tenantId, deviceId)) {
+            log.warn("[{}] Skipping RPC response because device doesn't exist, {}", tenantId, deviceRpcCallMsg);
+            return Futures.immediateFuture(null);
+        }
 
         FromDeviceRpcResponse response;
         if (!StringUtils.isEmpty(deviceRpcCallMsg.getResponseMsg().getError())) {
@@ -180,6 +229,10 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
 
     private ListenableFuture<Void> processDeviceRpcRequestFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
         DeviceId deviceId = new DeviceId(new UUID(deviceRpcCallMsg.getDeviceIdMSB(), deviceRpcCallMsg.getDeviceIdLSB()));
+        if (!isTenantEntity(tenantId, deviceId)) {
+            log.warn("[{}] Skipping RPC request because device doesn't exist, {}", tenantId, deviceRpcCallMsg);
+            return Futures.immediateFuture(null);
+        }
         try {
             TbMsgMetaData metaData = new TbMsgMetaData();
             String requestId = Integer.toString(deviceRpcCallMsg.getRequestId());

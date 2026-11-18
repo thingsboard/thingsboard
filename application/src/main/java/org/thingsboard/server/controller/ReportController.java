@@ -10,7 +10,6 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.EntityType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +56,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -276,7 +274,7 @@ public class ReportController extends BaseController {
             ReportData reportData = future.get(timeoutMs, TimeUnit.MILLISECONDS);
             ByteArrayResource resource = new ByteArrayResource(reportData.getData());
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"" + reportData.getName() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(reportData.getName()))
                     .header("x-filename", reportData.getName())
                     .contentLength(resource.contentLength())
                     .contentType(MediaType.parseMediaType(reportData.getContentType()))
@@ -340,11 +338,8 @@ public class ReportController extends BaseController {
 
     private ResponseEntity<ByteArrayResource> buildDownloadResponse(byte[] data, String name, String contentType) {
         ByteArrayResource resource = new ByteArrayResource(data);
-        ContentDisposition cd = ContentDisposition.attachment()
-                .filename(name, StandardCharsets.UTF_8)
-                .build();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, cd.toString())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(name))
                 .header("x-filename", name)
                 .contentLength(resource.contentLength())
                 .header("Content-Type", contentType)

@@ -23,6 +23,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -63,6 +64,14 @@ public interface RuleChainService extends EntityDaoService {
     List<RuleNode> getReferencingRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId);
 
     List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId);
+
+    /**
+     * Batched equivalent of {@link #getRuleNodeRelations(TenantId, RuleNodeId)} for all nodes of a rule chain: loads the
+     * outgoing relations of every given rule node and validates their rule node / rule chain targets with a bounded
+     * number of queries instead of a few queries per node. Relations pointing to a missing rule node or rule chain are
+     * removed, as in the single-node variant. Every requested rule node id is present in the result.
+     */
+    Map<RuleNodeId, List<EntityRelation>> getRuleNodesRelations(TenantId tenantId, List<RuleNodeId> ruleNodeIds);
 
     PageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, PageLink pageLink);
 

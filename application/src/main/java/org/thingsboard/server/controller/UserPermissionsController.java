@@ -70,7 +70,7 @@ public class UserPermissionsController extends BaseController {
             @PathVariable(ENTITY_ID) String strEntityId,
             @Parameter(description = OPERATION_PARAM_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"ALL", "CREATE", "READ", "WRITE", "DELETE",
                     "RPC_CALL", "READ_CREDENTIALS", "WRITE_CREDENTIALS", "READ_ATTRIBUTES", "WRITE_ATTRIBUTES", "READ_TELEMETRY", "WRITE_TELEMETRY","ADD_TO_GROUP",
-                    "REMOVE_FROM_GROUP", "CHANGE_OWNER", "IMPERSONATE", "CLAIM_DEVICES", "SHARE_GROUP", "ASSIGN_TO_TENANT", "READ_CALCULATED_FIELD", "WRITE_CALCULATED_FIELD"}))
+                    "REMOVE_FROM_GROUP", "CHANGE_OWNER", "IMPERSONATE", "CLAIM_DEVICES", "SHARE_GROUP", "ASSIGN_TO_TENANT", "READ_CALCULATED_FIELD", "WRITE_CALCULATED_FIELD", "INVOKE"}))
             @PathVariable(OPERATION) Operation operation) {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, strEntityId);
         try {

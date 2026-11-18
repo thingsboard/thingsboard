@@ -1240,9 +1240,9 @@ export const getFilenameFromHttpHeader = (headers: HttpHeaders): string  => {
     if (filenameStarMatch && filenameStarMatch[1]) {
       return decodeURIComponent(filenameStarMatch[1]);
     }
-    const filenameMatch = /filename="([^"]+)"/i.exec(header);
+    const filenameMatch = /filename="((?:[^"\\]|\\.)+)"/i.exec(header);
     if (filenameMatch && filenameMatch[1]) {
-      return filenameMatch[1];
+      return filenameMatch[1].replace(/\\(.)/g, '$1');
     }
   }
   return headers.get('x-filename') ?? '';

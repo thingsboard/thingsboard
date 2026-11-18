@@ -71,14 +71,15 @@
     }
   </div>
 } @else {
-  <!-- Big card (Widget / Dashboard / Solution Template) -->
+  <!-- Big card (Widget / Solution Template) -->
   <div class="tb-iot-hub-item-card" role="button" tabindex="0" (click)="onCardClick()" (keyup.enter)="onCardClick()">
     <div class="tb-iot-hub-card-preview">
       @if (getPreviewUrl(); as previewUrl) {
         <img [src]="previewUrl" alt="" class="tb-iot-hub-preview-image">
       } @else {
         <div class="tb-iot-hub-preview-placeholder">
-          <tb-icon>{{ getPlaceholderIcon() }}</tb-icon>
+          <!-- The item's own colour, standing in for the compact card's coloured square. -->
+          <tb-icon [style.color]="item.color || null">{{ getPlaceholderIcon() }}</tb-icon>
         </div>
       }
     </div>

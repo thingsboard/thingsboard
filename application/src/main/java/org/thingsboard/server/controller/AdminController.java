@@ -132,7 +132,7 @@ public class AdminController extends BaseController {
     public AdminSettings getAdminSettings(
             @Parameter(description = "A string value of the key (e.g. 'general' or 'mail').")
             @PathVariable("key") String key,
-            @Parameter(description = "Use system settings if settings are not defined on tenant level.")
+            @Parameter(description = "Deprecated, not used.")
             @RequestParam(required = false, defaultValue = "false") boolean systemByDefault) throws Exception {
         Authority authority = getCurrentUser().getAuthority();
         AdminSettings adminSettings;
@@ -141,7 +141,7 @@ public class AdminController extends BaseController {
             adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key), "No Administration settings found for key: " + key);
         } else {
             accessControlService.checkPermission(getCurrentUser(), Resource.WHITE_LABELING, Operation.READ);
-            adminSettings = getTenantAdminSettings(getTenantId(), key, systemByDefault);
+            adminSettings = getTenantAdminSettings(getTenantId(), key, false);
         }
         if (adminSettings.getKey().equals(MAIL_SETTINGS_KEY)) {
             ((ObjectNode) adminSettings.getJsonValue()).remove("refreshToken");

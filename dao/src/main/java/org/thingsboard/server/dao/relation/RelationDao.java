@@ -4,6 +4,7 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -11,7 +12,9 @@ import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by ashvayka on 25.04.17.
@@ -27,6 +30,12 @@ public interface RelationDao {
     List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup);
 
     List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from);
+
+    /**
+     * Finds the relations of the given type group that originate from any of the given entities of one entity type,
+     * in a single query. Callers are expected to bound the size of {@code fromIds}.
+     */
+    List<EntityRelation> findAllByFromIds(TenantId tenantId, Collection<UUID> fromIds, EntityType fromType, RelationTypeGroup typeGroup);
 
     List<EntityRelation> findAllByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
 

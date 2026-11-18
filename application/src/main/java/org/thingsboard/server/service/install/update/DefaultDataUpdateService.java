@@ -55,7 +55,7 @@ import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.DbUpgradeExecutorService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
-import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.install.lts.MigrationService;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.lang.reflect.Field;
@@ -99,7 +99,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private final ComponentDiscoveryService componentDiscoveryService;
     private final DbUpgradeExecutorService executorService;
     private final DatabaseSchemaSettingsService schemaSettingsService;
-    private final LtsMigrationService ltsMigrationService;
+    private final MigrationService migrationService;
 
     @Override
     public void updateData(boolean fromCe) throws Exception {
@@ -109,7 +109,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }
         //TODO: should be cleaned after each release
         backfillForExistingTenants();
-        ltsMigrationService.runDataMigrations(schemaSettingsService.getDbSchemaVersion(), schemaSettingsService.getPackageSchemaVersion(),
+        migrationService.runDataMigrations(schemaSettingsService.getDbSchemaVersion(), schemaSettingsService.getPackageSchemaVersion(),
                 schemaSettingsService.isForcedReUpgrade());
         log.info("Data updated.");
     }

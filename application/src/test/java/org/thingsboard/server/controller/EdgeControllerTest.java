@@ -69,6 +69,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.permission.ShareGroupRequest;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
@@ -85,8 +86,8 @@ import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomTranslationUpdateMsg;
@@ -257,6 +258,64 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         testNotifyEntityEqualsOneTimeServiceNeverError(edge, tenantId,
                 tenantAdminUser.getId(), tenantAdminUser.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+    }
+
+    @Test
+    public void testSaveEdgeWithIdOfDifferentTenant() throws Exception {
+        Edge savedEdge = doPost("/api/edge", constructEdge("My edge", "default"), Edge.class);
+
+        loginDifferentTenant();
+        try {
+            Edge edge = constructEdge("Different tenant edge", "other");
+            edge.setId(savedEdge.getId());
+            doPost("/api/edge", edge)
+                    .andExpect(status().isForbidden())
+                    .andExpect(statusReason(containsString("You don't have permission to perform")));
+        } finally {
+            deleteDifferentTenant();
+        }
+
+        loginTenantAdmin();
+        Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
+        Assert.assertEquals(tenantId, foundEdge.getTenantId());
+        Assert.assertEquals(savedEdge.getName(), foundEdge.getName());
+        Assert.assertEquals(savedEdge.getRoutingKey(), foundEdge.getRoutingKey());
+        Assert.assertEquals(savedEdge.getSecret(), foundEdge.getSecret());
+    }
+
+    @Test
+    public void testAssignReadOnlyEntityGroupToEdgeByCustomerUser() throws Exception {
+        Edge edge = doPost("/api/edge", constructEdge("Customer edge", "default"), Edge.class);
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/EDGE/" + edge.getId().getId())
+                .andExpect(status().isOk());
+
+        EntityGroup readOnlyGroup = new EntityGroup();
+        readOnlyGroup.setType(EntityType.DEVICE);
+        readOnlyGroup.setName("Read only device group");
+        readOnlyGroup = doPost("/api/entityGroup", readOnlyGroup, EntityGroup.class);
+        doPost("/api/entityGroup/" + readOnlyGroup.getId().getId() + "/share",
+                new ShareGroupRequest(customerId, true, null, true, null))
+                .andExpect(status().isOk());
+
+        EntityGroup customerGroup = new EntityGroup();
+        customerGroup.setType(EntityType.DEVICE);
+        customerGroup.setName("Customer device group");
+        customerGroup.setOwnerId(customerId);
+        customerGroup = doPost("/api/entityGroup", customerGroup, EntityGroup.class);
+
+        loginCustomerAdminUser();
+        doGet("/api/entityGroup/" + readOnlyGroup.getId().getId())
+                .andExpect(status().isOk());
+        doPost("/api/edge/" + edge.getId().getId() + "/entityGroup/" + readOnlyGroup.getId().getId() + "/DEVICE")
+                .andExpect(status().isForbidden());
+        doPost("/api/edge/" + edge.getId().getId() + "/entityGroup/" + customerGroup.getId().getId() + "/DEVICE")
+                .andExpect(status().isOk());
+
+        loginTenantAdmin();
+        EntityGroupId readOnlyGroupId = readOnlyGroup.getId();
+        PageData<EntityGroupInfo> edgeGroups = doGetTypedWithPageLink("/api/entityGroups/edge/" + edge.getId().getId() + "/DEVICE?",
+                new TypeReference<>() {}, new PageLink(100));
+        Assert.assertTrue(edgeGroups.getData().stream().noneMatch(g -> g.getId().equals(readOnlyGroupId)));
     }
 
     @Test
@@ -1047,9 +1106,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
         Assert.assertTrue(popRuleChainMetadataMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, getEdgeRootRuleChainId(edgeImitator)));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "general"));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "mail"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "connectivity"));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "jwt"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
@@ -1770,9 +1827,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popTenantProfileMsg(edgeImitator.getDownlinkMsgsDeque(), tenantProfileId));
         Assert.assertTrue(popQueueMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "general"));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "mail"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "connectivity"));
-        Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgsDeque(), "jwt"));
         Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
         Assert.assertTrue(popRuleChainMetadataMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, getEdgeRootRuleChainId(edgeImitator)));
         Assert.assertTrue(popRoleMsg(edgeImitator.getDownlinkMsgsDeque(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Tenant User", RoleType.GENERIC));

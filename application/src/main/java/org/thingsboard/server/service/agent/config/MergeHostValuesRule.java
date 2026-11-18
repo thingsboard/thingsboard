@@ -96,11 +96,16 @@ public class MergeHostValuesRule implements AppConfigMergeRule {
             log.warn("Skipping gateway host merge: resolveGatewayHost returned blank for baseUrl [{}]", baseUrl);
             return;
         }
+        String port = deviceConnectivityService.resolveGatewayPort();
+        if (StringUtils.isBlank(port)) {
+            log.debug("Gateway MQTT port is not configured in connectivity settings, using default [{}]", GATEWAY_DEFAULT_PORT);
+            port = GATEWAY_DEFAULT_PORT;
+        }
         var imagePattern = AgentApplicationType.GATEWAY.getMainImagePattern();
         GatewayEnvSchema schema = GatewayEnvSchema.detect(compose, imagePattern);
         Map<String, String> envVars = Map.of(
                 schema.getHostKey(), host,
-                schema.getPortKey(), GATEWAY_DEFAULT_PORT
+                schema.getPortKey(), port
         );
         DockerComposeUtils.setEnvVariables(compose, imagePattern, envVars);
     }

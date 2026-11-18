@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
@@ -10,10 +13,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
@@ -22,16 +32,19 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
         "sql.attributes.value_no_xss_validation=true",
-        "sql.ts.value_no_xss_validation=true"
+        "sql.ts.value_no_xss_validation=true",
+        "audit-log.logging-level.mask.device=RW"
 })
 public class TelemetryControllerTest extends AbstractControllerTest {
 
@@ -289,6 +302,63 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         ObjectNode tsDataAfterDeletion = readResponse(doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", params), ObjectNode.class);
         Assert.assertTrue(tsDataAfterDeletion.get("key1,key2").get(0).get("value").isNull());
         Assert.assertTrue(tsDataAfterDeletion.get("key3").get(0).get("value").isNull());
+    }
+
+    @Test
+    public void testGetAttributesWithoutScopeBySysAdmin() throws Exception {
+        loginSysAdmin();
+        doGetAsync("/api/plugins/telemetry/TENANT/" + tenantId + "/values/attributes").andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetAttributesWithoutScopeWhenReadAuditEnabled() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes").andExpect(status().isOk());
+
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            PageData<AuditLog> auditLogs = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + device.getId().getId() + "?",
+                    new TypeReference<>() {
+                    }, new TimePageLink(10));
+            assertThat(auditLogs.getData()).anySatisfy(auditLog -> {
+                assertThat(auditLog.getActionType()).isEqualTo(ActionType.ATTRIBUTES_READ);
+                assertThat(auditLog.getActionData().path("scope").isNull()).isTrue();
+            });
+        });
+    }
+
+    @Test
+    public void testCustomerUserCannotReadTimeseriesOfNotAssignedDevice() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(1000L, new LongDataEntry("t", 1L))).get();
+
+        loginCustomerAdminUser();
+        String url = "/api/plugins/telemetry/DEVICE/{entityId}/values/timeseries?keys=t&startTs=0&endTs={endTs}";
+        doGetAsync(url, device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
+        doGetAsync(url + "&agg=SUM&interval=86400000", device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
+        doGetAsync(url, UUID.randomUUID(), System.currentTimeMillis()).andExpect(status().isNotFound());
+        List<BaseReadTsKvQuery> queries = List.of(new BaseReadTsKvQuery("t", 0, System.currentTimeMillis(), 10, "DESC"));
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", queries, String.class, status().isForbidden());
+
+        loginTenantAdmin();
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + device.getId().getId()).andExpect(status().isOk());
+
+        loginCustomerAdminUser();
+        ObjectNode result = doGetAsync(url, ObjectNode.class, device.getUuidId(), System.currentTimeMillis());
+        Assert.assertEquals(1L, result.get("t").get(0).get("value").asLong());
+    }
+
+    @Test
+    public void testCustomerUserCannotSaveDeviceProfileAttributes() throws Exception {
+        loginTenantAdmin();
+        DeviceProfileId deviceProfileId = createDevice().getDeviceProfileId();
+
+        loginCustomerUser();
+        doPostAsync("/api/plugins/telemetry/DEVICE_PROFILE/" + deviceProfileId + "/SERVER_SCOPE", "{\"attr\": \"value\"}", String.class, status().isForbidden());
+
+        await().during(1, TimeUnit.SECONDS).atMost(2, TimeUnit.SECONDS)
+                .until(() -> attributesService.find(tenantId, deviceProfileId, AttributeScope.SERVER_SCOPE, "attr").get().isEmpty());
     }
 
     private Device createDevice() throws Exception {

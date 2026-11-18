@@ -1,12 +1,16 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section class="tb-kv-map-config flex flex-col" [formGroup]="kvListFormGroup">
   @if (description) {
-    <div class="tb-form-hint tb-primary-fill mb-4" [innerHTML]="description | translate | safe: 'html'"></div>
+    <div class="tb-form-hint tb-primary-fill mb-4">
+      <mat-icon>info_outline</mat-icon>
+      <span [innerHTML]="description | translate | safe: 'html'"></span>
+    </div>
   }
   @if (keyValsFormArray().controls.length || !emptyText) {
     <div class="header flex flex-1 flex-row gap-2" >

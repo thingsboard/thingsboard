@@ -8,12 +8,16 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.CustomerInfo;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -35,11 +39,11 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.selfregistration.DefaultDashboardParams;
 import org.thingsboard.server.common.data.selfregistration.HomeDashboardParams;
-import org.thingsboard.server.common.data.selfregistration.V2CaptchaParams;
 import org.thingsboard.server.common.data.selfregistration.MobileRedirectParams;
 import org.thingsboard.server.common.data.selfregistration.MobileSelfRegistrationParams;
 import org.thingsboard.server.common.data.selfregistration.SignUpField;
 import org.thingsboard.server.common.data.selfregistration.SignUpFieldId;
+import org.thingsboard.server.common.data.selfregistration.V2CaptchaParams;
 import org.thingsboard.server.common.data.selfregistration.WebSelfRegistrationParams;
 import org.thingsboard.server.common.data.signup.SignUpRequest;
 import org.thingsboard.server.common.data.signup.SignUpResult;
@@ -63,10 +67,13 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class SignUpControllerSqlTest extends AbstractControllerTest {
@@ -201,6 +208,66 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testActivationByEmailCodeStoresPolicyAcceptanceTimestamps() throws Exception {
+        createWebSelfRegistrationSettings();
+        doSignUp(createWebSignUpRequest(CUSTOMER_TEST_EMAIL));
+        User user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
+        String activateToken = userService.findUserCredentialsByUserId(tenantId, user.getId()).getActivateToken();
+
+        doPost("/api/noauth/activateByEmailCode", JsonNode.class, "emailCode", activateToken);
+
+        User activatedUser = userService.findUserById(tenantId, user.getId());
+        assertPrivacyPolicyAccepted(activatedUser);
+        assertTermsOfUseAccepted(activatedUser);
+
+        removeCreatedUser(activatedUser);
+    }
+
+    @Test
+    public void testActivationByEmailCodeFromMobileAppSendsWorkingMobileLoginLink() throws Exception {
+        String appSecret = StringUtils.randomAlphanumeric(24);
+        String mobilePkgName = "my.test.android.login." + RandomStringUtils.randomAlphabetic(6).toLowerCase();
+        createMobileSelfRegistrationSettings(mobilePkgName, appSecret, PlatformType.ANDROID, createDashboard(), createDashboard());
+        doSignUp(createMobileSignUpRequest(CUSTOMER_TEST_EMAIL, mobilePkgName, appSecret, PlatformType.ANDROID));
+        User user = userService.findUserByEmail(tenantId, CUSTOMER_TEST_EMAIL);
+        String activateToken = userService.findUserCredentialsByUserId(tenantId, user.getId()).getActivateToken();
+
+        doPost("/api/noauth/activateByEmailCode", JsonNode.class,
+                "emailCode", activateToken, "pkgName", mobilePkgName, "platform", PlatformType.ANDROID.name());
+
+        ArgumentCaptor<String> loginUrlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mailService).sendAccountActivatedEmail(any(), loginUrlCaptor.capture(), eq(CUSTOMER_TEST_EMAIL));
+        String loginUrl = loginUrlCaptor.getValue();
+        assertThat(loginUrl).contains("pkgName=" + mobilePkgName).contains("platform=ANDROID");
+
+        String loginPathAndQuery = loginUrl.substring(loginUrl.indexOf("/api/noauth/login"));
+        doGet(loginPathAndQuery)
+                .andExpect(status().isPermanentRedirect())
+                .andExpect(header().string(HttpHeaders.LOCATION, "scheme://test/login"));
+
+        int statusWithoutPlatform = doGet("/api/noauth/login?pkgName=" + mobilePkgName).andReturn().getResponse().getStatus();
+        assertThat(statusWithoutPlatform).isNotEqualTo(HttpStatus.PERMANENT_REDIRECT.value());
+
+        removeCreatedUser(userService.findUserById(tenantId, user.getId()));
+    }
+
+    @Test
+    public void testAcceptPrivacyPolicyStoresAcceptanceTimestamp() {
+        doPost("/api/signup/acceptPrivacyPolicy", JsonNode.class);
+
+        User user = userService.findUserById(tenantId, tenantAdminUserId);
+        assertPrivacyPolicyAccepted(user);
+    }
+
+    @Test
+    public void testAcceptTermsOfUseStoresAcceptanceTimestamp() {
+        doPost("/api/signup/acceptTermsOfUse", JsonNode.class);
+
+        User user = userService.findUserById(tenantId, tenantAdminUserId);
+        assertTermsOfUseAccepted(user);
+    }
+
+    @Test
     public void testSelfRegistrationCreateMessageInRuleChain() throws Exception {
         createWebSelfRegistrationSettings();
         var signUpRequest = createWebSignUpRequest(CUSTOMER_TEST_EMAIL);
@@ -261,6 +328,22 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
                 SignUpFieldId.PASSWORD, "abcdef123"));
         signUpRequest.setRecaptchaResponse(RECAPTCHA_DUMMY_RESPONSE);
         return signUpRequest;
+    }
+
+    private void assertPrivacyPolicyAccepted(User user) {
+        assertThat(user.isPrivacyPolicyAccepted()).isTrue();
+        assertAcceptedTsIsPositive(user, DataConstants.PRIVACY_POLICY_ACCEPTED_TS);
+    }
+
+    private void assertTermsOfUseAccepted(User user) {
+        assertThat(user.isTermsOfUseAccepted()).isTrue();
+        assertAcceptedTsIsPositive(user, DataConstants.TERMS_OF_USE_ACCEPTED_TS);
+    }
+
+    private void assertAcceptedTsIsPositive(User user, String acceptedTsKey) {
+        JsonNode acceptedTs = user.getAdditionalInfo().path(acceptedTsKey);
+        assertThat(acceptedTs.isNumber()).isTrue();
+        assertThat(acceptedTs.asLong()).isPositive();
     }
 
     protected SignUpRequest createMobileSignUpRequest(String email, String pkgName, String appSecret, PlatformType platformType) {

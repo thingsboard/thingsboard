@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.rule;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,12 +21,18 @@ import org.thingsboard.server.actors.ruleChain.RuleChainOutputMsg;
 import org.thingsboard.server.actors.ruleChain.RuleNodeCtx;
 import org.thingsboard.server.actors.ruleChain.RuleNodeToRuleChainTellNextMsg;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -41,10 +48,12 @@ import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1091,6 +1100,35 @@ class DefaultTbContextTest {
                 .data(TbMsg.EMPTY_STRING)
                 .callback(callback)
                 .build();
+    }
+
+    @Test
+    public void givenSavedStringAttributes_whenAttributesUpdatedActionMsg_thenNumericStringsStayStringsWhenParsed() {
+        List<AttributeKvEntry> attributes = List.of(
+                new BaseAttributeKvEntry(new StringDataEntry("joinEui", "0000000000000000"), 0L),
+                new BaseAttributeKvEntry(new StringDataEntry("devEui", "70B3D57ED0012345"), 0L),
+                new BaseAttributeKvEntry(new LongDataEntry("fCnt", 42L), 0L));
+
+        TbMsg msg = defaultTbContext.attributesUpdatedActionMsg(TENANT_ID, RULE_NODE_ID, DataConstants.CLIENT_SCOPE, attributes);
+
+        assertThat(msg.getType()).isEqualTo(TbMsgType.ATTRIBUTES_UPDATED.name());
+        assertThat(msg.getMetaData().getValue(DataConstants.SCOPE)).isEqualTo(DataConstants.CLIENT_SCOPE);
+        assertThat(msg.getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isEqualTo("[\"joinEui\"]");
+        Map<String, AttributeKvEntry> parsed = JsonConverter.attributesFromMsg(msg).stream()
+                .collect(Collectors.toMap(AttributeKvEntry::getKey, Function.identity()));
+        assertThat(parsed.get("joinEui").getDataType()).isEqualTo(DataType.STRING);
+        assertThat(parsed.get("joinEui").getValue()).isEqualTo("0000000000000000");
+        assertThat(parsed.get("devEui").getDataType()).isEqualTo(DataType.STRING);
+        assertThat(parsed.get("fCnt").getDataType()).isEqualTo(DataType.LONG);
+    }
+
+    @Test
+    public void givenNoNumericStringAttributes_whenAttributesUpdatedActionMsg_thenNoTypeCastDisabledKeys() {
+        List<AttributeKvEntry> attributes = List.of(new BaseAttributeKvEntry(new LongDataEntry("fCnt", 42L), 0L));
+
+        TbMsg msg = defaultTbContext.attributesUpdatedActionMsg(TENANT_ID, RULE_NODE_ID, DataConstants.CLIENT_SCOPE, attributes);
+
+        assertThat(msg.getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isNull();
     }
 
     private TbMsg getTbMsgWithQueueName() {

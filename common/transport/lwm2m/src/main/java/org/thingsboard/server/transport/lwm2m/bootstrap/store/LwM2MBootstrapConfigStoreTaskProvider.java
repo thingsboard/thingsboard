@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 
 import lombok.extern.slf4j.Slf4j;
@@ -70,8 +71,10 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         }
         if (previousResponse == null && shouldStartWithDiscover(configNew)) {
             Tasks tasks = new Tasks();
-            tasks.requestsToSend = new ArrayList<>(1);
-            tasks.requestsToSend.add(new BootstrapDiscoverRequest());
+            tasks.requestsToSend = new ArrayList<>(3);
+            tasks.requestsToSend.add(new BootstrapDiscoverRequest("/0"));
+            tasks.requestsToSend.add(new BootstrapDiscoverRequest("/1"));
+            tasks.requestsToSend.add(new BootstrapDiscoverRequest("/2"));
             tasks.last = false;
             return tasks;
         } else {

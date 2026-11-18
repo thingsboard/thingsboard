@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @TbCoreComponent
-@ConditionalOnExpression("'${TB_AI_JWT_SIGNING_KEY:}' != ''")
+@ConditionalOnExpression("'${ai.jwt.signing_key:}' != ''")
 class LocalTbAiTokenProvider implements TbAiTokenProvider {
 
     private final TbAiTokenFactory tokenFactory;
@@ -47,9 +47,9 @@ class LocalTbAiTokenProvider implements TbAiTokenProvider {
 
     // AI-related settings are read directly from environment variables, not yaml properties: they are
     // managed-service settings, not operator-tunable configuration.
-    public LocalTbAiTokenProvider(@Value("${TB_AI_JWT_ISSUER:local}") String issuer,
-                                  @Value("${TB_AI_JWT_SIGNING_KEY}") String signingKey,
-                                  @Value("${TB_AI_JWT_EXPIRATION_TIME_MINUTES:60}") int expirationTimeMinutes,
+    public LocalTbAiTokenProvider(@Value("${ai.jwt.issuer:local}") String issuer,
+                                  @Value("${ai.jwt.signing_key}") String signingKey,
+                                  @Value("${ai.jwt.expiration_time_minutes:60}") int expirationTimeMinutes,
                                   @Value("${cache.tbAiAccessTokens.timeToLiveInMinutes:60}") int cacheTtlMinutes,
                                   @Value("${cache.tbAiAccessTokens.maxSize:20000}") int cacheMaxSize,
                                   SystemSecurityService systemSecurityService,

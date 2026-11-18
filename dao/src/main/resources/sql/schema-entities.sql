@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS tb_instance_registry (
     last_activity_ts bigint NOT NULL
 );
 
--- Also copied by the upgrade scripts that reach this table; LtsMigrationIntegrationTest keeps them in sync.
+-- Also copied by the upgrade scripts that reach this table; MigrationIntegrationTest keeps them in sync.
 CREATE TABLE IF NOT EXISTS tb_cluster (
     cluster_id uuid NOT NULL,
     license_secret varchar,
@@ -1369,13 +1369,14 @@ CREATE TABLE IF NOT EXISTS report (
 ) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS ai_model (
-    id              UUID          NOT NULL PRIMARY KEY,
-    external_id     UUID,
-    created_time    BIGINT        NOT NULL,
-    tenant_id       UUID          NOT NULL,
-    version         BIGINT        NOT NULL DEFAULT 1,
-    name            VARCHAR(255)  NOT NULL,
-    configuration   JSONB         NOT NULL,
+    id                      UUID          NOT NULL PRIMARY KEY,
+    external_id             UUID,
+    created_time            BIGINT        NOT NULL,
+    tenant_id               UUID          NOT NULL,
+    version                 BIGINT        NOT NULL DEFAULT 1,
+    name                    VARCHAR(255)  NOT NULL,
+    configuration           JSONB         NOT NULL,
+    customer_access_enabled BOOLEAN       NOT NULL DEFAULT FALSE,
     CONSTRAINT ai_model_name_unq_key        UNIQUE (tenant_id, name),
     CONSTRAINT ai_model_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
