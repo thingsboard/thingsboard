@@ -2907,8 +2907,7 @@
             "snmp-command": "Folosiți documentația următoare pentru a conecta dispozitivul prin SNMP.",
             "sparkplug-command": "Folosiți documentația următoare pentru a conecta dispozitivul prin MQTT Sparkplug.",
             "lwm2m-command": "Folosiți documentația următoare pentru a conecta dispozitivul prin LWM2M."
-        },
-        "filter-title": "Filtru"
+        }
     },
     "dynamic-form": {
         "property": {
@@ -4889,9 +4888,7 @@
         "select-entity-view": "Selectați vizualizarea de entitate",
         "make-public": "Declară publică vizualizarea de entitate",
         "make-private": "Declară privată vizualizarea de entitate",
-        "start-date": "Dată Început",
         "start-ts": "Ora de început",
-        "end-date": "Dată Sfârșit",
         "end-ts": "Ora de sfârșit",
         "date-limits": "Limite dată",
         "client-attributes": "Atribute client",
@@ -5971,9 +5968,7 @@
         "downlink-connection-string": "Șir de conexiune downlink",
         "downlink-connection-string-required": "Șirul de conexiune downlink este obligatoriu",
         "downlink-topic-name": "Nume topic downlink",
-        "downlink-topic-name-required": "Numele topicului downlink este obligatoriu",
-        "access-key-min-length": "Cheia de acces este prea scurtă.",
-        "access-key-max-length": "Cheia de acces este prea lungă."
+        "downlink-topic-name-required": "Numele topicului downlink este obligatoriu"
     },
     "scada": {
         "symbols": "Simboluri SCADA",
@@ -6326,8 +6321,7 @@
         "type-rule-chain": "Lanț de reguli",
         "type-rule-chain-plural": "Lanțuri de reguli",
         "type-device": "Dispozitiv",
-        "type-device-plural": "Dispozitive",
-        "selected": "Selectat"
+        "type-device-plural": "Dispozitive"
     },
     "iot-hub": {
         "advanced-settings": "Setări avansate",
@@ -6604,21 +6598,7 @@
         "deep-link-invalid-id": "Link nevalid către elementul IoT Hub.",
         "deep-link-not-found": "Acest element IoT Hub nu există sau a fost eliminat.",
         "deep-link-fetch-failed": "Nu s-a putut încărca elementul IoT Hub. Încercați din nou.",
-        "export-to-iot-hub": "Exportă în IoT Hub",
-        "new-converter-available": "Convertor nou disponibil",
-        "converter-update-title": "Actualizați convertorul?",
-        "device-install-step-pending": "În așteptare",
-        "device-install-step-running": "Se creează...",
-        "device-install-step-success": "Creat",
-        "device-update-will-create": "Va fi creat",
-        "device-update-shared-more": "și încă {{count}}",
-        "device-update-shared-less": "Afișează mai puțin",
-        "device-update-new-default-converter": "ThingsBoard are o nouă versiune a convertorului implicit utilizat de acest pachet.",
-        "device-update-confirm-warnings": "Confirmați { count, plural, one {# avertisment} few {# avertismente} other {# de avertismente} } pentru a activa actualizarea",
-        "device-update-skipped": "Neschimbat",
-        "device-update-updated": "Actualizat",
-        "device-update-created": "Creat",
-        "device-update-try-again": "Încearcă din nou"
+        "export-to-iot-hub": "Exportă în IoT Hub"
     },
     "item-data": {
         "widget-type-timeseries": "Serii temporale",
@@ -6769,7 +6749,6 @@
         "create-account": "Creează un cont",
         "sign-in-with": "Conectează-te cu {{name}}",
         "sign-in-to-your-account": "Conectați-vă la contul dumneavoastră",
-        "login-with": "Conectare cu {{name}}",
         "or": "sau",
         "error": "Eroare de conectare",
         "verify-your-identity": "Verificați-vă identitatea",
@@ -7650,8 +7629,7 @@
         "selected-javascript-resources": "{ count, plural, one {# resursă JavaScript selectată} few {# resurse JavaScript selectate} other {# de resurse JavaScript selectate} }",
         "no-javascript-resource-text": "Nu au fost găsite resurse JavaScript",
         "all-types": "Toate",
-        "module-script": "Script de modul",
-        "javascript-type": "Tip JavaScript"
+        "module-script": "Script de modul"
     },
     "rpc": {
         "error": {
@@ -10840,8 +10818,6 @@
         "move": "Mută widgetul",
         "save-widget-as": "Salvează widgetul ca",
         "save-widget-as-text": "Introduceți noul titlu al widgetului",
-        "save-widget-type-as": "Salvează Tip Widget Ca...",
-        "save-widget-type-as-text": "Introduceți titlu nou widget și/sau selectați pachet widget destinație",
         "toggle-fullscreen": "Comută ecran complet",
         "run": "Execută widget",
         "widget-title": "Titlul widgetului",
@@ -10876,8 +10852,6 @@
         "basic-mode-form-selector": "Selector de formular pentru modul de bază",
         "basic-mode": "De bază",
         "advanced-mode": "Avansat",
-        "settings-schema": "Schemă setări",
-        "datakey-settings-schema": "Schemă setări chei date",
         "javascript": "JavaScript",
         "js": "JS",
         "delete-widget-title": "Sigur doriți să ștergeți widgetul '{{widgetName}}'?",
@@ -10885,7 +10859,6 @@
         "delete-widgets-title": "Sigur doriți să ștergeți { count, plural, one {# widget} few {# widgeturi} other {# de widgeturi} }?",
         "delete-widgets-text": "Atenție, după confirmare toate widgeturile selectate vor fi eliminate și toate datele asociate nu vor mai putea fi recuperate.",
         "delete-widget": "Șterge widgetul",
-        "add-widget-type": "Adaugă Tip Nou Widget",
         "widget-template-load-failed-error": "Eroare la încărcarea șablonului widgetului!",
         "details": "Detalii",
         "widget-details": "Detalii widget",
@@ -11293,10 +11266,7 @@
         "export": "Exportă tip de widget",
         "export-failed-error": "Widgetul nu poate fi exportat: {{error}}",
         "widget-file": "Fișier widget",
-        "invalid-widget-file-error": "Widgetul nu poate fi importat: structură de date nevalidă a widgetului.",
-        "create-new-widget-type": "Definește tip widget nou",
-        "widget-type-file": "Alege fișier pentru tip widget",
-        "invalid-widget-type-file-error": "Eroare! Tip widget nu poate fi importat; structură de date invalidă"
+        "invalid-widget-file-error": "Widgetul nu poate fi importat: structură de date nevalidă a widgetului."
     },
     "self-registration": {
         "self-registration": "Autoînregistrare",
@@ -12046,7 +12016,6 @@
                 "February": "Februarie",
                 "March": "Martie",
                 "April": "Aprilie",
-                "Maz": "Mai",
                 "June": "Iunie",
                 "July": "Iulie",
                 "August": "August",
@@ -12673,9 +12642,7 @@
             "retrieve-led-status-value-method": "Metodă de preluare a valorii stării LED-ului",
             "check-status-method": "Metoda RPC de verificare a stării dispozitivului",
             "parse-led-status-value-function": "Funcție de parsare a valorii stării LED-ului",
-            "knob-title": "Titlul butonului rotativ",
-            "led-status-value-attribute": "Atributul dispozitivului care conține valoarea stării LED-ului",
-            "led-status-value-timeseries": "Seria temporală a dispozitivului care conține valoarea stării LED-ului"
+            "knob-title": "Titlul butonului rotativ"
         },
         "maps": {
             "map-type": {
