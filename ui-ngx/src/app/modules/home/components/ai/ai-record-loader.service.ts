@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { TB_IMAGE_PREFIX } from '@shared/models/resource.models';
 import { ReportTemplateService } from '@core/http/report-template.service';
 import { widgetType, widgetTypesData } from '@shared/models/widget.models';
 import { ReportTemplateType } from '@shared/models/report.models';
@@ -193,6 +194,22 @@ export class AiRecordLoaderService {
             meta: info.widgetType && widgetTypesData.get(info.widgetType as widgetType)
               ? this.translate.instant(widgetTypesData.get(info.widgetType as widgetType).name) : undefined
           })));
+      case EntityType.TB_RESOURCE:
+        return this.http.get<{title: string; resourceType?: string; resourceSubType?: string; link?: string}>(`/api/resource/info/${entity.id}`,
+          defaultHttpOptionsFromConfig(CONFIG))
+          .pipe(map(info => {
+            if (info.resourceType !== 'IMAGE' || !info.link) {
+              return this.simple(key, entityType, info.title, undefined);
+            }
+            const symbol = info.resourceSubType === 'SCADA_SYMBOL';
+            const path = info.link.replace(/^\/api\/images\//, '');
+            return {
+              key, entityType: symbol ? 'SCADA_SYMBOL' : entityType, alarmRule: false, name: info.title,
+              url: symbol ? `/resources/scada-symbols/${path}` : '/resources/images',
+              image: TB_IMAGE_PREFIX + info.link,
+              meta: this.translate.instant(symbol ? 'ai-assistant.review.type.SCADA_SYMBOL' : 'ai-assistant.review.type.IMAGE')
+            };
+          }));
       case EntityType.WIDGETS_BUNDLE:
         return this.http.get<{title: string}>(`/api/widgetsBundle/${entity.id}`, defaultHttpOptionsFromConfig(CONFIG))
           .pipe(map(bundle => ({

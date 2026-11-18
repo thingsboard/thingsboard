@@ -235,12 +235,17 @@ function text(key: string, params?: Record<string, AiDetailParam>): AiDetailText
   return {key: K + key, params};
 }
 
+function scadaSymbolPicture(values: Values): AiDetailBlock[] {
+  const link = str(values.link);
+  return link && link.startsWith('tb-image;') ? [{type: 'images', rows: [{url: link}]}] : [];
+}
+
 function scadaSymbolOverviewBlocks(overview: Values): AiDetailBlock[] {
   const rows = facts(overview, ['link', 'note', 'tags', 'behavior', 'properties', 'problems', 'searchTags', 'description']);
   const behaviors = Array.isArray(overview.behavior)
     ? overview.behavior.filter(isObject).map(item => [item.name || item.id, item.default].filter(Boolean).join(' — ')) : [];
   const problems = Array.isArray(overview.problems) ? overview.problems.map(item => String(item)) : [];
-  return [...(rows.length ? [{type: 'facts' as const, rows}] : []),
+  return [...scadaSymbolPicture(overview), ...(rows.length ? [{type: 'facts' as const, rows}] : []),
     ...(behaviors.length ? [{type: 'list' as const, label: text('scada-symbol-behaviors'), rows: behaviors.slice(0, MAX_ROWS)}] : []),
     ...(problems.length ? [{type: 'list' as const, label: text('scada-symbol-problems'), rows: problems.slice(0, MAX_ROWS)}] : [])];
 }
@@ -1600,6 +1605,17 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
         return {hood: text('read-scada-symbol-parts', {name, parts: parts.map(part => SCADA_SYMBOL_PART_WORDS[part] ?? part).join(', ')}), blocks};
       }
       return {hood: text('read-scada-symbol', {name: str(result.title) ?? '—'}), blocks: scadaSymbolOverviewBlocks(result)};
+    }
+    case 'build_scada_symbol': {
+      const raw = typeof result === 'string' && result.startsWith('OK: ') ? aiParse(result.slice(4)) : result;
+      const hood = str(values.symbol) ? text('update-scada-symbol', {name: str(values.title) ?? '—'}) : text('create-scada-symbol', {name: str(values.title) ?? '—'});
+      if (!isObject(raw)) {
+        return {hood, blocks: generic(raw, 'result')};
+      }
+      const warnings = Array.isArray(raw.warnings) ? raw.warnings.map(item => String(item)) : [];
+      const rows = facts(raw, ['warnings', 'link']);
+      return {hood, blocks: [...scadaSymbolPicture(raw), ...(rows.length ? [{type: 'facts' as const, rows}] : []),
+        ...(warnings.length ? [{type: 'list' as const, label: text('widget-warnings'), rows: warnings.slice(0, MAX_ROWS)}] : [])]};
     }
     case 'read_widget': {
       if (!isObject(result)) {

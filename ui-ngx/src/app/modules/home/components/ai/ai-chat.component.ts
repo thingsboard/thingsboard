@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { isAiTitledView } from '@shared/models/ai-chat.models';
+import { aiPageView, isAiTitledView } from '@shared/models/ai-chat.models';
 import {
   Component,
   computed,
@@ -1004,6 +1004,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
             this.applySideEffects(event.data.executionId, call.data.tool, call.data.arguments);
             this.openCreatedReportTemplate(call.data.tool, event.data.affectedEntities);
             this.openCreatedWidget(call.data.tool, event.data.affectedEntities);
+            this.openCreatedScadaSymbol(call.data.tool, call.data.arguments, event.data.result);
           }
         }
         if (event.data.affectedEntities?.length) {
@@ -1138,6 +1139,23 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
     this.panelService.carryChat(chatId);
     this.router.navigate(['/resources/widgets-library/widget-types', created.id]);
+  }
+
+  private openCreatedScadaSymbol(tool: string | undefined, args: unknown, result: string | undefined): void {
+    const chatId = this.chatId();
+    const view = this.panelService.clientContext()?.view?.type ?? aiPageView((this.router.url || '/').split(/[?#]/)[0]);
+    const values = (aiParse(args) ?? {}) as {symbol?: string};
+    if (tool !== 'build_scada_symbol' || values.symbol || !chatId || !result?.startsWith('OK: ')
+      || (view !== AiAssistantViewType.SCADA_SYMBOL_LIST && view !== AiAssistantViewType.SCADA_SYMBOL)) {
+      return;
+    }
+    const link = (aiParse(result.slice(4)) as {link?: string} | undefined)?.link;
+    const path = /^tb-image;\/api\/images\/((?:system|tenant)\/[^/?#]+)$/.exec(link ?? '')?.[1];
+    if (!path) {
+      return;
+    }
+    this.panelService.carryChat(chatId);
+    this.router.navigate(['/resources/scada-symbols', ...path.split('/')]);
   }
 
   private emitDashboards(entities: EntityId[]): void {

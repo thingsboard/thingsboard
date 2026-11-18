@@ -225,6 +225,9 @@ export class AiRecordCardComponent {
     if (view.alarmRule) {
       return this.translate.instant('ai-assistant.review.type.ALARM_RULE').toLowerCase();
     }
+    if (view.entityType === 'SCADA_SYMBOL') {
+      return this.translate.instant('ai-assistant.review.type.SCADA_SYMBOL');
+    }
     const key = entityTypeTranslations.get(view.entityType as EntityType)?.type;
     return key ? this.translate.instant(key).toLowerCase() : this.translate.instant('ai-assistant.record.entity');
   }
