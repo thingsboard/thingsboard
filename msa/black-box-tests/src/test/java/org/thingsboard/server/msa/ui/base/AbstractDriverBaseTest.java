@@ -15,7 +15,6 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.html5.WebStorage;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -70,7 +69,6 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
     private JavascriptExecutor js;
     public static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private final Duration duration = Duration.ofMillis(WAIT_TIMEOUT);
-    private WebStorage webStorage;
 
     @BeforeClass
     public void startUp() throws MalformedURLException {

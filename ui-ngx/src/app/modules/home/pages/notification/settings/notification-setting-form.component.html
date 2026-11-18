@@ -5,31 +5,25 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<form [formGroup]="notificationSettingsFormGroup" class="flex flex-col">
-  <div class="flex flex-row" style="height: 48px;">
-    <div class="flex max-w-50% flex-full items-center justify-start">
+<form [formGroup]="notificationSettingsFormGroup" class="contents">
+  <div class="col-span-full grid h-12 grid-cols-subgrid items-center">
+    <mat-checkbox color="primary"
+                  [disabled]="disabled"
+                  (click)="$event.stopPropagation()"
+                  (change)="changeInstanceTypeCheckBox($event.checked)"
+                  [checked]="getChecked()"
+                  [indeterminate]="getIndeterminate()">
+      <span class="notification-type"
+            [class.notification-type-disabled]="!notificationSettingsFormGroup.get('enabled').value">
+        {{notificationTemplateTypeTranslateMap.get(notificationSettingsFormGroup.get('name').value)?.name | translate}}
+      </span>
+    </mat-checkbox>
+    @for (deliveryMethod of deliveryMethods; track deliveryMethod) {
       <mat-checkbox color="primary"
                     [disabled]="disabled"
-                    (click)="$event.stopPropagation()"
-                    (change)="changeInstanceTypeCheckBox($event.checked)"
-                    [checked]="getChecked()"
-                    [indeterminate]="getIndeterminate()">
-        <span class="notification-type"
-              [class.notification-type-disabled]="!notificationSettingsFormGroup.get('enabled').value">
-          {{notificationTemplateTypeTranslateMap.get(notificationSettingsFormGroup.get('name').value)?.name | translate}}
-        </span>
-      </mat-checkbox>
-    </div>
-    @for (deliveryMethod of deliveryMethods; track deliveryMethod) {
-      <div class="flex flex-1 flex-row">
-        <div class="flex flex-1 items-center justify-start">
-          <mat-checkbox color="primary"
-                        [disabled]="disabled"
-                      [checked]="getChecked(deliveryMethod)"
-                        (click)="toggleDeliviryMethod(deliveryMethod)"
-          ></mat-checkbox>
-        </div>
-      </div>
+                    [checked]="getChecked(deliveryMethod)"
+                    (click)="toggleDeliviryMethod(deliveryMethod)"
+      ></mat-checkbox>
     }
   </div>
 </form>

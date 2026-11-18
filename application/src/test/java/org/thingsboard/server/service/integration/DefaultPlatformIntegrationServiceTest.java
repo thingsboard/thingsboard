@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.integration;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,25 +13,44 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.integration.api.IntegrationCallback;
+import org.thingsboard.integration.api.converter.DedicatedConverterConfig;
+import org.thingsboard.integration.api.converter.DedicatedConverterUtil;
+import org.thingsboard.integration.api.converter.DedicatedUplinkData;
+import org.thingsboard.integration.api.converter.wrapper.ThingsStackConverterUnwrapper;
+import org.thingsboard.integration.api.data.ContentType;
+import org.thingsboard.integration.api.data.UplinkMetaData;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.AbstractIntegration;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
+import org.thingsboard.server.gen.integration.AssetUplinkDataProto;
+import org.thingsboard.server.gen.integration.DeviceUplinkDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceActivityProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
+import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -38,15 +59,22 @@ import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.service.profile.DefaultTbAssetProfileCache;
 import org.thingsboard.server.service.profile.DefaultTbDeviceProfileCache;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -482,6 +510,222 @@ public class DefaultPlatformIntegrationServiceTest {
 
         assertThat(result).isEqualTo(savedDevice);
         verify(customerService).saveCustomer(any(Customer.class));
+    }
+
+    @Test
+    public void whenDeviceUplinkFromTypedConverter_thenStringIdentifiersStayStringsAfterRuleNodeParsing() throws Exception {
+        AbstractIntegration integration = mock(AbstractIntegration.class);
+        when(integration.getTenantId()).thenReturn(TENANT_ID);
+        when(integration.getId()).thenReturn(new IntegrationId(UUID.randomUUID()));
+        Device device = new Device();
+        device.setId(DEVICE_ID);
+        device.setTenantId(TENANT_ID);
+        device.setName("ttn-device");
+        device.setType("default");
+        device.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
+        when(deviceService.findDeviceByTenantIdAndName(TENANT_ID, device.getName())).thenReturn(device);
+        doAnswer(_ -> null).when(service).onActivity(any(), any(), anyLong());
+
+        DedicatedUplinkData uplink = parseThingsStackUplink();
+        DeviceUplinkDataProto data = DeviceUplinkDataProto.newBuilder()
+                .setDeviceName(device.getName())
+                .setDeviceType(device.getType())
+                .setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(uplink.getTelemetryJson(), uplink.getTelemetryTypeCastDisabledKeys()))
+                .setPostAttributesMsg(JsonConverter.convertToAttributesProto(uplink.getAttributesJson(), uplink.getAttributesTypeCastDisabledKeys()))
+                .addAllTelemetryTypeCastDisabledKeys(uplink.getTelemetryTypeCastDisabledKeys())
+                .addAllAttributesTypeCastDisabledKeys(uplink.getAttributesTypeCastDisabledKeys())
+                .build();
+
+        service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
+
+        assertThingsStackUplinkTypes(captureRuleEngineMsgs());
+    }
+
+    @Test
+    public void whenAssetUplinkFromTypedConverter_thenStringIdentifiersStayStringsAfterRuleNodeParsing() throws Exception {
+        AbstractIntegration integration = mock(AbstractIntegration.class);
+        when(integration.getTenantId()).thenReturn(TENANT_ID);
+        Asset asset = new Asset();
+        asset.setId(ASSET_ID);
+        asset.setTenantId(TENANT_ID);
+        asset.setName("ttn-asset");
+        asset.setType("default");
+        when(assetService.findAssetByTenantIdAndName(TENANT_ID, asset.getName())).thenReturn(asset);
+
+        DedicatedUplinkData uplink = parseThingsStackUplink();
+        AssetUplinkDataProto data = AssetUplinkDataProto.newBuilder()
+                .setAssetName(asset.getName())
+                .setAssetType(asset.getType())
+                .setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(uplink.getTelemetryJson(), uplink.getTelemetryTypeCastDisabledKeys()))
+                .setPostAttributesMsg(JsonConverter.convertToAttributesProto(uplink.getAttributesJson(), uplink.getAttributesTypeCastDisabledKeys()))
+                .addAllTelemetryTypeCastDisabledKeys(uplink.getTelemetryTypeCastDisabledKeys())
+                .addAllAttributesTypeCastDisabledKeys(uplink.getAttributesTypeCastDisabledKeys())
+                .build();
+
+        service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
+
+        assertThingsStackUplinkTypes(captureRuleEngineMsgs());
+    }
+
+    @Test
+    public void whenUplinkHasNoKeptStrings_thenTypeCastDisabledKeysMetadataIsNotAdded() {
+        AbstractIntegration integration = mock(AbstractIntegration.class);
+        when(integration.getTenantId()).thenReturn(TENANT_ID);
+        when(integration.getId()).thenReturn(new IntegrationId(UUID.randomUUID()));
+        Device device = new Device();
+        device.setId(DEVICE_ID);
+        device.setTenantId(TENANT_ID);
+        device.setName("http-device");
+        device.setType("default");
+        device.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
+        when(deviceService.findDeviceByTenantIdAndName(TENANT_ID, device.getName())).thenReturn(device);
+        doAnswer(_ -> null).when(service).onActivity(any(), any(), anyLong());
+
+        DeviceUplinkDataProto data = DeviceUplinkDataProto.newBuilder()
+                .setDeviceName(device.getName())
+                .setDeviceType(device.getType())
+                .setPostAttributesMsg(JsonConverter.convertToAttributesProto(JsonParser.parseString("{\"devAddr\": \"01020304\", \"model\": \"x1\"}")))
+                .build();
+
+        service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
+
+        List<TbMsg> msgs = captureRuleEngineMsgs();
+        assertThat(msgs).hasSize(1);
+        assertThat(msgs.get(0).getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isNull();
+    }
+
+    @Test
+    public void whenDecoderSendsLongDecimal_thenItIsNotMarkedAndIsSavedAsNumber() throws Exception {
+        AbstractIntegration integration = mock(AbstractIntegration.class);
+        when(integration.getTenantId()).thenReturn(TENANT_ID);
+        when(integration.getId()).thenReturn(new IntegrationId(UUID.randomUUID()));
+        Device device = new Device();
+        device.setId(DEVICE_ID);
+        device.setTenantId(TENANT_ID);
+        device.setName("ttn-device");
+        device.setType("default");
+        device.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
+        when(deviceService.findDeviceByTenantIdAndName(TENANT_ID, device.getName())).thenReturn(device);
+        doAnswer(_ -> null).when(service).onActivity(any(), any(), anyLong());
+
+        DedicatedUplinkData uplink = parseThingsStackUplink();
+        PostTelemetryMsg telemetry = JsonConverter.convertToTelemetryProto(uplink.getTelemetryJson(), uplink.getTelemetryTypeCastDisabledKeys());
+        // The proto parser keeps a decimal with more than 16 fraction digits as a string.
+        assertThat(telemetry.getTsKvList(0).getKvList())
+                .filteredOn(kv -> kv.getKey().equals("pressure"))
+                .extracting(KeyValueProto::getType, KeyValueProto::getStringV)
+                .containsExactly(tuple(KeyValueType.STRING_V, "21.50000000000000000000"));
+        DeviceUplinkDataProto data = DeviceUplinkDataProto.newBuilder()
+                .setDeviceName(device.getName())
+                .setDeviceType(device.getType())
+                .setPostTelemetryMsg(telemetry)
+                .setPostAttributesMsg(JsonConverter.convertToAttributesProto(uplink.getAttributesJson(), uplink.getAttributesTypeCastDisabledKeys()))
+                .addAllTelemetryTypeCastDisabledKeys(uplink.getTelemetryTypeCastDisabledKeys())
+                .addAllAttributesTypeCastDisabledKeys(uplink.getAttributesTypeCastDisabledKeys())
+                .build();
+
+        service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
+
+        List<TbMsg> msgs = captureRuleEngineMsgs();
+        TbMsg telemetryMsg = msgs.stream().filter(msg -> msg.isTypeOf(TbMsgType.POST_TELEMETRY_REQUEST)).findFirst().orElseThrow();
+        TbMsg attributesMsg = msgs.stream().filter(msg -> msg.isTypeOf(TbMsgType.POST_ATTRIBUTES_REQUEST)).findFirst().orElseThrow();
+        assertThat(telemetryMsg.getTypeCastDisabledKeys()).containsExactlyInAnyOrder("devAddr");
+        assertThat(attributesMsg.getTypeCastDisabledKeys()).containsExactlyInAnyOrder("eui", "joinEui", "hardwareVersion", "firmwareVersion");
+        assertThingsStackUplinkTypes(msgs);
+    }
+
+    @Test
+    public void whenRemoteIntegrationSendsNoKeys_thenTypeCastDisabledKeysMetadataIsNotAdded() throws Exception {
+        AbstractIntegration integration = mock(AbstractIntegration.class);
+        when(integration.getTenantId()).thenReturn(TENANT_ID);
+        when(integration.getId()).thenReturn(new IntegrationId(UUID.randomUUID()));
+        Device device = new Device();
+        device.setId(DEVICE_ID);
+        device.setTenantId(TENANT_ID);
+        device.setName("old-remote-device");
+        device.setType("default");
+        device.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
+        when(deviceService.findDeviceByTenantIdAndName(TENANT_ID, device.getName())).thenReturn(device);
+        doAnswer(_ -> null).when(service).onActivity(any(), any(), anyLong());
+
+        // An older remote integration builds the same protos without the type-cast-disabled key fields.
+        DedicatedUplinkData uplink = parseThingsStackUplink();
+        DeviceUplinkDataProto data = DeviceUplinkDataProto.newBuilder()
+                .setDeviceName(device.getName())
+                .setDeviceType(device.getType())
+                .setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(uplink.getTelemetryJson(), uplink.getTelemetryTypeCastDisabledKeys()))
+                .setPostAttributesMsg(JsonConverter.convertToAttributesProto(uplink.getAttributesJson(), uplink.getAttributesTypeCastDisabledKeys()))
+                .build();
+
+        service.processUplinkData(integration, data, mock(IntegrationCallback.class)).run();
+
+        List<TbMsg> msgs = captureRuleEngineMsgs();
+        assertThat(msgs).hasSize(2);
+        assertThat(msgs).allSatisfy(msg -> assertThat(msg.getMetaData().getValue(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS)).isNull());
+    }
+
+    // What the typed TTN converter produces: unwrapped event keys plus the decoder output
+    // {"telemetry": {"temperature": "22.5", "pressure": 21.50000000000000000000}}.
+    private static DedicatedUplinkData parseThingsStackUplink() throws Exception {
+        String payload = """
+                {
+                  "end_device_ids": {
+                    "device_id": "ttn-device",
+                    "application_ids": {"application_id": "test-app"},
+                    "dev_eui": "70B3D57ED0000001",
+                    "join_eui": "0000000000000000",
+                    "dev_addr": "01020304"
+                  },
+                  "received_at": "2026-11-17T09:46:05.447941836Z",
+                  "uplink_message": {
+                    "f_port": 1,
+                    "f_cnt": 101,
+                    "frm_payload": "AgI7AAMANwJxDGA=",
+                    "decoded_payload": {"temperature": "22.5"},
+                    "version_ids": {"brand_id": "acme", "model_id": "sensor", "hardware_version": "1.0", "firmware_version": "1.01", "band_id": "EU_863_870"},
+                    "rx_metadata": [{"gateway_ids": {"gateway_id": "gw"}, "rssi": -22, "channel_rssi": -22, "snr": 11}],
+                    "settings": {"data_rate": {"lora": {"bandwidth": 125000, "spreading_factor": 11}}, "frequency": "867700000"}
+                  }
+                }
+                """;
+        ThingsStackConverterUnwrapper unwrapper = new ThingsStackConverterUnwrapper();
+        UplinkMetaData metadata = unwrapper.unwrap(payload.getBytes(StandardCharsets.UTF_8), new UplinkMetaData<>(ContentType.JSON, Map.of())).getSecond();
+
+        DedicatedConverterConfig config = new DedicatedConverterConfig();
+        config.setType(EntityType.DEVICE);
+        config.setName("Device $eui");
+        config.setAttributes(Set.of("eui", "joinEui", "hardwareVersion", "firmwareVersion"));
+        config.setTelemetry(Set.of("devAddr", "fCnt"));
+
+        JsonObject decoded = JsonParser.parseString("{\"telemetry\": {\"temperature\": \"22.5\", \"pressure\": 21.50000000000000000000}}").getAsJsonObject();
+        return DedicatedConverterUtil.parseUplinkData(config, decoded, metadata, unwrapper.getKeys());
+    }
+
+    private List<TbMsg> captureRuleEngineMsgs() {
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ruleEngineProducerService, atLeastOnce()).sendToRuleEngine(eq(integrationRuleEngineMsgProducer), eq(TENANT_ID), msgCaptor.capture(), any(TbQueueCallback.class));
+        return msgCaptor.getAllValues();
+    }
+
+    // Parses each message the way the save attributes / save time series nodes do.
+    private static void assertThingsStackUplinkTypes(List<TbMsg> msgs) {
+        Map<String, KvEntry> kvs = new HashMap<>();
+        for (TbMsg msg : msgs) {
+            if (msg.isTypeOf(TbMsgType.POST_ATTRIBUTES_REQUEST)) {
+                JsonConverter.attributesFromMsg(msg).forEach(kv -> kvs.put(kv.getKey(), kv));
+            } else {
+                JsonConverter.telemetryFromMsg(msg, 0L).values().forEach(list -> list.forEach(kv -> kvs.put(kv.getKey(), kv)));
+            }
+        }
+        assertThat(kvs.values()).extracting(KvEntry::getKey, KvEntry::getDataType, KvEntry::getValue).containsExactlyInAnyOrder(
+                tuple("eui", DataType.STRING, "70B3D57ED0000001"),
+                tuple("joinEui", DataType.STRING, "0000000000000000"),
+                tuple("hardwareVersion", DataType.STRING, "1.0"),
+                tuple("firmwareVersion", DataType.STRING, "1.01"),
+                tuple("devAddr", DataType.STRING, "01020304"),
+                tuple("fCnt", DataType.LONG, 101L),
+                tuple("temperature", DataType.DOUBLE, 22.5),
+                tuple("pressure", DataType.DOUBLE, 21.5));
     }
 
 }

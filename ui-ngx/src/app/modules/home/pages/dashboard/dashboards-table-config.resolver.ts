@@ -45,10 +45,6 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  DashboardInfoDialogData,
-  ImportDashboardFileDialogComponent
-} from "@home/pages/dashboard/import-dashboard-file-dialog.component";
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
@@ -289,18 +285,17 @@ export class DashboardsTableConfigResolver {
     this.importExport.exportDashboard(dashboard.id.id);
   }
 
-  importDashboardFile($event: Event, dashboard: DashboardInfo) {
+  importDashboardFile($event: Event, dashboard: DashboardInfo, config: EntityTableConfig<DashboardInfo>) {
     if ($event) {
       $event.stopPropagation();
     }
-    return this.dialog.open<ImportDashboardFileDialogComponent, DashboardInfoDialogData,
-      boolean>(ImportDashboardFileDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        dashboard
+    this.importExport.importDashboardVersion(dashboard, this.editMissingAliases.bind(this)).subscribe(
+      (res) => {
+        if (res) {
+          config.updateData();
+        }
       }
-    }).afterClosed();
+    );
   }
 
   manageOwnerAndGroups($event: Event, dashboard: DashboardInfo, config: EntityTableConfig<DashboardInfo>) {
@@ -322,7 +317,7 @@ export class DashboardsTableConfigResolver {
         this.exportDashboard(action.event, action.entity);
         return true;
       case 'import':
-        this.importDashboardFile(action.event, action.entity);
+        this.importDashboardFile(action.event, action.entity, config);
         return true;
       case 'manageOwnerAndGroups':
         this.manageOwnerAndGroups(action.event, action.entity, config);

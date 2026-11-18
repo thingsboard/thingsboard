@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component } from '@angular/core';
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
@@ -17,6 +19,11 @@ export class JsLibraryTableHeaderComponent extends EntityTableHeaderComponent<Re
 
   readonly jsResourceSubTypes: ResourceSubType[] = [ResourceSubType.EXTENSION, ResourceSubType.MODULE];
   readonly resourceSubTypesTranslationMap = ResourceSubTypeTranslationMap;
+
+  private translate = inject(TranslateService);
+
+  readonly jsResourceSubTypeLabel = (resourceSubType: ResourceSubType): string =>
+    this.translate.instant(this.resourceSubTypesTranslationMap.get(resourceSubType) ?? resourceSubType);
 
   constructor(protected store: Store<AppState>) {
     super(store);

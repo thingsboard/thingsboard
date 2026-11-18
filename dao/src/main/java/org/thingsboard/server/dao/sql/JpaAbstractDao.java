@@ -10,7 +10,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -113,13 +112,10 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         if (entity.getUuid() == null) {
             getEntityManager().persist(entity);
         } else {
-            if (entity instanceof HasVersion) {
-                /*
-                 * Hibernate 6 does not allow creating versioned entities with preset IDs.
-                 * Bypassing by calling the underlying session directly
-                 * */
-                Session session = getEntityManager().unwrap(Session.class);
-                session.save(entity);
+            if (entity instanceof HasVersion versionedEntity) {
+                // a null version makes persist() treat the entity as new despite its preset id
+                versionedEntity.setVersion(null);
+                getEntityManager().persist(entity);
             } else {
                 entity = getEntityManager().merge(entity);
             }

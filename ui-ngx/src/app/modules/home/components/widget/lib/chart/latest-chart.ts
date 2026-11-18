@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ECharts, echartsModule, EChartsOption } from '@home/components/widget/lib/chart/echarts-widget.models';
 import {
   LatestChartDataItem,
@@ -12,7 +13,7 @@ import { DeepPartial } from '@shared/models/common';
 import { Renderer2 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isDefinedAndNotNull, isNumeric, mergeDeep } from '@core/utils';
-import { DataKey } from '@shared/models/widget.models';
+import { compareLegendDataKeys, DataKey } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
 import { SVG, Svg } from '@svgdotjs/svg.js';
@@ -103,9 +104,9 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
       }
     }
     if (this.settings.sortSeries) {
-      this.dataItems.sort((a, b) => a.dataKey.label.localeCompare(b.dataKey.label));
+      this.dataItems.sort((a, b) => compareLegendDataKeys(a.dataKey, b.dataKey));
       if (this.settings.showLegend) {
-        this.legendItems.sort((a, b) => a.label.localeCompare(b.label));
+        this.legendItems.sort((a, b) => compareLegendDataKeys(a.dataKey, b.dataKey));
       }
     }
     this.showTotalValueInLegend = this.settings.showLegend && !this.settings.showTotal && this.settings.legendShowTotal;

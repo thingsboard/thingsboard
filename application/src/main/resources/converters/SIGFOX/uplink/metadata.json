@@ -1,0 +1,7 @@
+{
+    "Header:accept-encoding": "gzip,deflate",
+    "Header:content-type": "application/json",
+    "Header:content-length": "243",
+    "Header:user-agent": "SIGFOX",
+    "Header:accept-charset": "UTF-8;q=0.9,*;q=0.7",
+    "Header:accept-language": "en"}

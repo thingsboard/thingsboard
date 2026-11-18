@@ -200,19 +200,19 @@
     }
 
     @if (isEdit && isProfileManaged) {
-      <div class="tb-app-compose-hint">
-        <mat-icon class="tb-app-compose-hint-icon">info_outline</mat-icon>
+      <div class="tb-form-hint tb-primary-fill mb-2">
+        <mat-icon>info_outline</mat-icon>
         <span translate>agent.app-arguments-profile-managed-hint</span>
       </div>
     }
     <tb-agent-app-arguments class="tb-app-arguments-section"
       formControlName="arguments"
-      [disabled]="!isEdit || isProfileManaged">
+      [readonly]="isProfileManaged">
     </tb-agent-app-arguments>
 
     @if (isEdit && relatedEntity) {
-      <div class="tb-app-compose-hint">
-        <mat-icon class="tb-app-compose-hint-icon">info_outline</mat-icon>
+      <div class="tb-form-hint tb-primary-fill mb-2">
+        <mat-icon>info_outline</mat-icon>
         <span translate>agent.app-compose-creds-overridden-hint</span>
       </div>
     }

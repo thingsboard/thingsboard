@@ -3,7 +3,7 @@
 package org.thingsboard.integration.opcua;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.codec.binary.Base64;
+import org.apache.commons.codec.binary.Base64;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

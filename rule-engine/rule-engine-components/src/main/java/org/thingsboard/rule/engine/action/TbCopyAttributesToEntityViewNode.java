@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -95,7 +96,7 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                                     .build());
                                         }
                                     } else {
-                                        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData())).stream()
+                                        List<AttributeKvEntry> attributes = JsonConverter.attributesFromMsg(msg).stream()
                                                 .filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).toList();
                                         ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
                                                 .tenantId(ctx.getTenantId())

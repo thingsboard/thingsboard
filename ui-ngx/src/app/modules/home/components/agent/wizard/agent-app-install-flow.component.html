@@ -12,9 +12,7 @@
       </button>
     }
     <div class="tb-install-wizard-toolbar-content">
-      <h2>{{ 'agent.app-install-title' | translate }}@if (agent) {
-        :
-      }</h2>
+      <h2>{{ 'agent.app-install-title' | translate }}@if (agent) {:}</h2>
       @if (agent) {
         <span class="flex-1">
           {{ 'agent.app-install-on-agent' | translate: { name: agent?.name } }}
@@ -55,9 +53,8 @@
   }
 
   @if (selectAgent && !embedded && !checkingManaged && !managedApp) {
-    <div class="tb-agent-deploy-note"
-      >
-      <mat-icon>auto_awesome</mat-icon>
+    <div class="tb-form-hint tb-primary-fill mb-4">
+      <mat-icon>info_outline</mat-icon>
       <span translate>agent.deploy-via-agent-desc</span>
     </div>
   }
@@ -91,11 +88,12 @@
             @for (card of typeCards; track card.type) {
               <button type="button" class="type-card"
                 [class.selected]="selectedType === card.type"
+                [disabled]="isTypeDisabled(card.type)"
                 [attr.aria-pressed]="selectedType === card.type"
                 (click)="selectType(card.type)">
                 <mat-icon>{{ card.icon }}</mat-icon>
                 <h4>{{ card.labelKey | translate }}</h4>
-                <p>{{ card.descKey | translate }}</p>
+                <p>{{ (unavailableTypes.has(card.type) ? 'agent.app-type-unavailable' : card.descKey) | translate }}</p>
               </button>
             }
           </div>
@@ -147,6 +145,12 @@
             (relatedEntityNameChange)="onRelatedEntityName($event)">
           </tb-agent-related-entity-autocomplete>
         }
+        @if (useProfile && typesWithoutTemplates.has(selectedType)) {
+          <div class="tb-form-hint tb-primary-fill tb-form-hint-warning mb-4">
+            <mat-icon>warning_amber</mat-icon>
+            <span translate>agent.app-no-templates</span>
+          </div>
+        }
         @if (useProfile) {
           <mat-form-field class="mat-block" appearance="outline" [formGroup]="profileSelectFormGroup">
             <mat-label translate>agent.app-install-select-profile</mat-label>
@@ -161,7 +165,7 @@
                 <mat-icon class="material-icons">close</mat-icon>
               </button>
             }
-            @if (!profileSelectFormGroup.get('profile').value && canCreateAppProfile) {
+            @if (!profileSelectFormGroup.get('profile').value && canCreateProfileForType) {
               <button
                 mat-button color="primary" matSuffix type="button"
                 (mousedown)="$event.preventDefault()"
@@ -222,7 +226,18 @@
             </ng-template>
           </mat-expansion-panel>
         }
-        @if (!useProfile) {
+        @if (mergeError) {
+          <div class="error-state">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ mergeError }}</span>
+          </div>
+        }
+        @if (!useProfile && !template && loadError) {
+          <div class="error-state">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ loadError }}</span>
+          </div>
+        } @else if (!useProfile) {
           @if (composeTypeKeys.length > 1) {
             <mat-form-field class="mat-block" appearance="outline">
               <mat-label translate>agent.app-compose-template-select</mat-label>
@@ -236,8 +251,8 @@
             </mat-form-field>
           }
           @if (relatedEntityId) {
-            <div class="tb-app-compose-hint">
-              <mat-icon class="tb-app-compose-hint-icon">info_outline</mat-icon>
+            <div class="tb-form-hint tb-primary-fill mb-4">
+              <mat-icon>info_outline</mat-icon>
               <span translate>agent.app-compose-creds-overridden-hint</span>
             </div>
           }
@@ -300,8 +315,8 @@
             </div>
           }
         </div>
-        <div class="info-box">
-          <mat-icon>info</mat-icon>
+        <div class="tb-form-hint tb-primary-fill mb-4">
+          <mat-icon>info_outline</mat-icon>
           <span translate>agent.app-install-confirm-info</span>
         </div>
         <div class="step-footer">

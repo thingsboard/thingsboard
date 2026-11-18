@@ -321,6 +321,8 @@ export const legendPositionTranslationMap = new Map<LegendPosition, string>(
   ]
 );
 
+export const compareLegendDataKeys = (a: DataKey, b: DataKey): number => a.label.localeCompare(b.label);
+
 export interface LegendConfig {
   position: LegendPosition;
   direction?: LegendDirection;

@@ -28,9 +28,18 @@ installDir=${pkg.installFolder}/data
 
 source "${CONF_FOLDER}/${configfile}"
 
+javaenv=${pkg.installFolder}/bin/java-env
+if [ ! -r "$javaenv" ]; then
+    echo "Cannot read $javaenv; reinstall ${pkg.name}." >&2
+    exit 1
+fi
+source "$javaenv"
+
+require_java "$javaexe"
+
 run_user=${pkg.user}
 
-su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
+su -s /bin/sh -c "'$javaexe' -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \
                     -Dspring.jpa.hibernate.ddl-auto=none \
                     -Dinstall.upgrade=false \

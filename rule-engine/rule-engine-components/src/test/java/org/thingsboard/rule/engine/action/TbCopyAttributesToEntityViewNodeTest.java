@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.Futures;
@@ -22,6 +23,8 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -38,7 +41,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -266,6 +272,85 @@ public class TbCopyAttributesToEntityViewNodeTest {
                 .hasMessage("Unsupported msg type [" + msgType + "]");
 
         verifyNoMoreInteractions(ctxMock);
+    }
+
+    @Test
+    public void givenTypeCastDisabledKeysMetadata_whenOnMsg_thenListedNumericStringIsCopiedAsString() {
+        TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
+        metaData.putTypeCastDisabledKeys(Set.of("joinEui"));
+
+        Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.POST_ATTRIBUTES_REQUEST, metaData);
+
+        assertThat(entries.get("joinEui").getDataType()).isEqualTo(DataType.STRING);
+        assertThat(entries.get("joinEui").getValue()).isEqualTo("0000000000000000");
+        assertThat(entries.get("firmwareVersion").getDataType()).isEqualTo(DataType.DOUBLE);
+        assertThat(entries.get("firmwareVersion").getValue()).isEqualTo(1.0);
+    }
+
+    @Test
+    public void givenMetadataWithoutTypeCastDisabledKeys_whenOnMsg_thenNumericStringsAreCast() {
+        TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
+
+        Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.POST_ATTRIBUTES_REQUEST, metaData);
+
+        assertThat(entries.get("joinEui").getDataType()).isEqualTo(DataType.LONG);
+        assertThat(entries.get("joinEui").getValue()).isEqualTo(0L);
+        assertThat(entries.get("firmwareVersion").getDataType()).isEqualTo(DataType.DOUBLE);
+        assertThat(entries.get("firmwareVersion").getValue()).isEqualTo(1.0);
+    }
+
+    @Test
+    public void givenAttributesUpdatedWithTypeCastDisabledKeys_whenOnMsg_thenListedNumericStringIsCopiedAsString() {
+        TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
+        metaData.putTypeCastDisabledKeys(Set.of("joinEui"));
+
+        Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.ATTRIBUTES_UPDATED, metaData);
+
+        assertThat(entries.get("joinEui").getDataType()).isEqualTo(DataType.STRING);
+        assertThat(entries.get("joinEui").getValue()).isEqualTo("0000000000000000");
+        assertThat(entries.get("firmwareVersion").getDataType()).isEqualTo(DataType.DOUBLE);
+    }
+
+    @Test
+    public void givenAttributesUpdatedWithoutTypeCastDisabledKeys_whenOnMsg_thenNumericStringsAreCast() {
+        TbMsgMetaData metaData = new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.CLIENT_SCOPE.name()));
+
+        Map<String, AttributeKvEntry> entries = copyAttributesToView(TbMsgType.ATTRIBUTES_UPDATED, metaData);
+
+        assertThat(entries.get("joinEui").getDataType()).isEqualTo(DataType.LONG);
+        assertThat(entries.get("joinEui").getValue()).isEqualTo(0L);
+    }
+
+    private Map<String, AttributeKvEntry> copyAttributesToView(TbMsgType msgType, TbMsgMetaData metaData) {
+        AttributesEntityView attributes = new AttributesEntityView(List.of("joinEui", "firmwareVersion"), Collections.emptyList(), Collections.emptyList());
+        EntityView entityView = getEntityView(new TelemetryEntityView(Collections.emptyList(), attributes));
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(msgType)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data("{\"joinEui\": \"0000000000000000\", \"firmwareVersion\": \"1.0\"}")
+                .build();
+
+        mockEntityViewLookup(entityView);
+        when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
+        doAnswer(invocation -> {
+            AttributesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
+            return null;
+        }).when(telemetryServiceMock).saveAttributes(any(AttributesSaveRequest.class));
+        TbMsg newMsg = TbMsg.newMsg(msg, msg.getQueueName(), msg.getRuleChainId(), msg.getRuleNodeId());
+        doAnswer(invocation -> newMsg).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
+
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<AttributesSaveRequest> requestCaptor = ArgumentCaptor.forClass(AttributesSaveRequest.class);
+        verify(telemetryServiceMock).saveAttributes(requestCaptor.capture());
+        AttributesSaveRequest request = requestCaptor.getValue();
+        assertThat(request.getEntityId()).isEqualTo(ENTITY_VIEW_ID);
+        assertThat(request.getScope()).isEqualTo(AttributeScope.CLIENT_SCOPE);
+        assertThat(request.getEntries().size()).isEqualTo(2);
+        return request.getEntries().stream().collect(Collectors.toMap(AttributeKvEntry::getKey, Function.identity()));
     }
 
     private EntityView getEntityView(TelemetryEntityView attributesEntityView, long startTimeMs, long endTimeMs) {

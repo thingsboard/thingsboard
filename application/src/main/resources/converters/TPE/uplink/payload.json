@@ -1,0 +1,73 @@
+{
+    "DevEUI_uplink": {
+        "Time": "2024-11-28T21:08:22.138+00:00",
+        "DevEUI": "1000000000000001",
+        "FPort": 1,
+        "FCntUp": 26,
+        "LostUplinksAS": 0,
+        "ADRbit": 1,
+        "MType": 2,
+        "FCntDn": 2,
+        "payload_hex": "01ed03335f0e4c63",
+        "mic_hex": "e7214986",
+        "Lrcid": "00000211",
+        "LrrRSSI": -114,
+        "LrrSNR": 4.75,
+        "LrrESP": -115.2547,
+        "SpFact": 9,
+        "SubBand": "G0",
+        "Channel": "LC1",
+        "Lrrid": "100019D4",
+        "Late": 0,
+        "LrrLAT": 32.516357,
+        "LrrLON": -106.824348,
+        "Lrrs": {
+            "Lrr": [{
+                "Lrrid": "100019D4",
+                "Chain": 0,
+                "LrrRSSI": -114,
+                "LrrSNR": 4.75,
+                "LrrESP": -115.2547
+            }]
+        },
+        "DevLrrCnt": 1,
+        "CustomerID": "100045194",
+        "CustomerData": {
+            "loc": {
+                "lat": "32.592782",
+                "lon": "-106.927742"
+            },
+            "alr": {
+                "pro": "DL/TBRG",
+                "ver": "1"
+            },
+            "tags": ["EnvironSens", "RainGauge", "CDRRC"],
+            "doms": [],
+            "name": "RainGauge 5483_Test"
+        },
+        "BaseStationData": {
+            "doms": [],
+            "name": "iStation US #6_CDRRC_Summerford"
+        },
+        "ModelCfg": "0",
+        "DriverCfg": {
+            "mod": {
+                "pId": "dl",
+                "mId": "dl-tbrg",
+                "ver": "1"
+            },
+            "app": {
+                "pId": "dl",
+                "mId": "dl-tbrg",
+                "ver": "1"
+            }
+        },
+        "InstantPER": 0,
+        "MeanPER": 0.037037,
+        "DevAddr": "00FDA112",
+        "TxPower": 18,
+        "NbTrans": 2,
+        "Frequency": 902.5,
+        "DynamicClass": "A"
+    }
+}

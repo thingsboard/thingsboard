@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
@@ -14,7 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
-import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.http.HttpHeaders;
 import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -545,9 +546,9 @@ public class TbHttpClientTest {
 
     @Test
     public void testHeadersToMetaData() {
-        Map<String, List<String>> headers = new LinkedMultiValueMap<>();
-        headers.put("Content-Type", List.of("binary"));
-        headers.put("Set-Cookie", List.of("sap-context=sap-client=075; path=/", "sap-token=sap-client=075; path=/"));
+        HttpHeaders headers = new HttpHeaders();
+        headers.addAll("Content-Type", List.of("binary"));
+        headers.addAll("Set-Cookie", List.of("sap-context=sap-client=075; path=/", "sap-token=sap-client=075; path=/"));
 
         TbMsgMetaData metaData = new TbMsgMetaData();
 

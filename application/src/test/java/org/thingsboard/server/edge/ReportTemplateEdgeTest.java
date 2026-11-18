@@ -244,5 +244,42 @@ public class ReportTemplateEdgeTest extends AbstractEdgeTest {
     private CustomerId normalizeCustomerId(CustomerId customerId) {
         return customerId == null || customerId.isNullUid() ? null : customerId;
     }
-}
 
+    @Test
+    public void testReportTemplateWithTenantIdOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        ReportTemplate reportTemplate = createReportTemplate("Edge Report Template With Different Tenant", tenantId);
+        reportTemplate.setId(new ReportTemplateId(UUID.randomUUID()));
+        reportTemplate.setTenantId(differentTenantId);
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(createUplinkMsg(reportTemplate));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        ReportTemplate foundReportTemplate = doGet("/api/reportTemplate/" + reportTemplate.getId().getId(), ReportTemplate.class);
+        Assert.assertEquals(tenantId, foundReportTemplate.getTenantId());
+    }
+
+    @Test
+    public void testReportTemplateUpdateAndDeleteOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        ReportTemplate reportTemplate = createReportTemplate("Different Tenant Report Template", differentTenantId);
+        reportTemplate.setTenantId(differentTenantId);
+        ReportTemplate savedReportTemplate = doPost("/api/reportTemplate", reportTemplate, ReportTemplate.class);
+        loginTenantAdmin();
+
+        ReportTemplate reportTemplateUpdate = createReportTemplate("Updated From Edge", tenantId);
+        reportTemplateUpdate.setId(savedReportTemplate.getId());
+        edgeImitator.expectResponsesAmount(2);
+        edgeImitator.sendUplinkMsg(createUpdateUplinkMsg(reportTemplateUpdate));
+        edgeImitator.sendUplinkMsg(createDeleteUplinkMsg(savedReportTemplate));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        loginDifferentTenant();
+        ReportTemplate foundReportTemplate = doGet("/api/reportTemplate/" + savedReportTemplate.getUuidId(), ReportTemplate.class);
+        Assert.assertEquals(savedReportTemplate.getName(), foundReportTemplate.getName());
+        Assert.assertEquals(differentTenantId, foundReportTemplate.getTenantId());
+    }
+
+}

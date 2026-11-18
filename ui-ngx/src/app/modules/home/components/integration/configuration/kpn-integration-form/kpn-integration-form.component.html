@@ -24,7 +24,7 @@
       <mat-label translate>integration.http-endpoint</mat-label>
       <input matInput formControlName="httpEndpoint">
     </mat-form-field>
-    <button mat-icon-button ngxClipboard type="button" color="primary"
+    <button mat-icon-button ngxClipboard type="button"
             (cbOnSuccess)="onHttpEndpointCopied()"
             [cbContent]="kpnIntegrationConfigForm.get('httpEndpoint').value"
             matTooltip="{{'integration.copy-http-endpoint-url' | translate }}">
@@ -78,10 +78,14 @@
       <legend class="group-title" translate>integration.downlink-credentials</legend>
       <div class="flex flex-col gt-xs:gap-2">
         <tb-secret-key-input formControlName="apiId" class="mat-block flex-1" appearance="outline"
-                             label="{{ 'integration.api-id' | translate }}">
+                             required
+                             label="{{ 'integration.api-id' | translate }}"
+                             requiredText="{{ 'integration.api-id-required' | translate }}">
         </tb-secret-key-input>
         <tb-secret-key-input formControlName="apiKey" class="mat-block flex-1" appearance="outline"
-                             label="{{ 'integration.api-key' | translate }}">
+                             required
+                             label="{{ 'integration.api-key' | translate }}"
+                             requiredText="{{ 'integration.api-key-required' | translate }}">
         </tb-secret-key-input>
       </div>
     </fieldset>

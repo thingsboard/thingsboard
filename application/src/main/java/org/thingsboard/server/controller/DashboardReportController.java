@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +39,6 @@ import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.utils.MiscUtils;
 
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.function.Consumer;
@@ -143,11 +141,8 @@ public class DashboardReportController extends BaseController {
     private Consumer<DashboardReportData> onSuccess(DeferredResult<ResponseEntity<Resource>> result) {
         return reportData -> {
             ByteArrayResource resource = new ByteArrayResource(reportData.getData());
-            ContentDisposition cd = ContentDisposition.attachment()
-                    .filename(reportData.getName(), StandardCharsets.UTF_8)
-                    .build();
             ResponseEntity<Resource> response = ResponseEntity.ok().
-                    header(HttpHeaders.CONTENT_DISPOSITION, cd.toString())
+                    header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(reportData.getName()))
                     .header("x-filename", reportData.getName())
                     .contentLength(resource.contentLength())
                     .contentType(parseMediaType(reportData.getContentType()))

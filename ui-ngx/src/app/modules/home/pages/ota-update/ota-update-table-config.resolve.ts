@@ -65,8 +65,7 @@ export class OtaUpdateTableConfigResolve  {
           icon: 'content_paste',
           style: {
             padding: '4px',
-            'font-size': '16px',
-            color: 'rgba(0,0,0,.87)'
+            'font-size': '16px'
           },
           isEnabled: (otaPackage) => !!otaPackage.url,
           onAction: (_$event, entity) => entity.url,
@@ -86,8 +85,7 @@ export class OtaUpdateTableConfigResolve  {
           icon: 'content_paste',
           style: {
             padding: '4px',
-            'font-size': '16px',
-            color: 'rgba(0,0,0,.87)'
+            'font-size': '16px'
           },
           isEnabled: (otaPackage) => !!otaPackage.checksum,
           onAction: (_$event, entity) => entity.checksum,

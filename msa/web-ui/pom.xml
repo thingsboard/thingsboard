@@ -32,6 +32,7 @@
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
+        <sbom.image.scanExclude></sbom.image.scanExclude>
     </properties>
 
     <dependencies>
@@ -81,6 +82,16 @@
                         </goals>
                         <configuration>
                             <arguments>install --non-interactive --check-files --network-concurrency 4 --network-timeout 100000 --mutex network</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate sbom</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${sbom.ui.skip}</skip>
+                            <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
                         </configuration>
                     </execution>
                     <execution>
@@ -175,6 +186,10 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
             </plugin>
@@ -214,6 +229,35 @@
                                 <argument>${docker.repo}/${docker.name}:latest</argument>
                                 <argument>${docker.repo}/${docker.name}:${project.version}</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- After exec-maven-plugin: the image SBOM is made in the phase that pushes the image, once it is pushed -->
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sbom-metadata</id>
+                        <configuration>
+                            <targetFile>${project.build.directory}/sbom/${pkg.name}.cdx.json</targetFile>
+                            <skip>${skip.ui.build}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>image-sbom</id>
+                        <configuration>
+                            <components combine.self="override">
+                                <component>
+                                    <sbom>${project.build.directory}/sbom/${pkg.name}.cdx.json</sbom>
+                                    <installDir>${pkg.installFolder}</installDir>
+                                </component>
+                                <component>
+                                    <sbom>${project.build.directory}/web/META-INF/sbom/ui-ngx.cdx.json</sbom>
+                                    <bundleDir>${pkg.installFolder}/web</bundleDir>
+                                </component>
+                            </components>
                         </configuration>
                     </execution>
                 </executions>

@@ -4,7 +4,7 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div class="mat-padding tb-entity-table" [class.tb-absolute-fill]="groupPermissionsMode === 'group'">
+<div class="tb-entity-table" [class.mat-padding]="groupPermissionsMode === 'group'" [class.tb-absolute-fill]="groupPermissionsMode === 'group'">
   <div class="tb-entity-table-content tb-outlined-border flex flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
@@ -73,7 +73,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div [class.flex-1]="groupPermissionsMode === 'group'" class="table-container">
+    <div class="table-container flex-1">
       <table mat-table [dataSource]="dataSource"
         matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>

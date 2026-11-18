@@ -1,12 +1,15 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.pat;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.ApiKeyAuthRequest;
 
 import java.io.Serial;
+import java.util.Collection;
 
 public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
 
@@ -17,7 +20,7 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
     private SecurityUser securityUser;
 
     public ApiKeyAuthenticationToken(ApiKeyAuthRequest apiKeyAuthRequest) {
-        super(null);
+        super((Collection<? extends GrantedAuthority>) null);
         this.apiKeyAuthRequest = apiKeyAuthRequest;
         setAuthenticated(false);
     }

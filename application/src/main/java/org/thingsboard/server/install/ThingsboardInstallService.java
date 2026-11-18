@@ -226,7 +226,7 @@ public class ThingsboardInstallService {
         } catch (EntityCapExceededException e) {
             // A deliberate pre-flight refusal: report the plain policy message, not an unexpected failure.
             throw new ThingsboardInstallException(e.getMessage(), e);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("Unexpected error during ThingsBoard installation!", e);
             throw new ThingsboardInstallException("Unexpected error during ThingsBoard installation!", e);
         } finally {

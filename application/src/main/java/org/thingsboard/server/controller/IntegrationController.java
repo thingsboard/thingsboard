@@ -5,7 +5,9 @@ package org.thingsboard.server.controller;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -142,14 +144,10 @@ public class IntegrationController extends AutoCommitController {
 
             checkEntity(integration.getId(), integration, Resource.INTEGRATION);
 
-            if (!integration.isEdgeTemplate()) {
-                try {
-                    Integration copy = new Integration(integration);
-                    secretConfigurationService.replaceSecretUsages(tenantId, copy.getConfiguration());
-                    integrationManagerService.validateIntegrationConfiguration(copy).get(20, TimeUnit.SECONDS);
-                } catch (ExecutionException e) {
-                    throwRealCause(e);
-                }
+            try {
+                tbIntegrationService.validateIntegrationConfiguration(tenantId, integration);
+            } catch (ExecutionException e) {
+                throwRealCause(e);
             }
 
             Integration result = checkNotNull(integrationService.saveIntegration(integration));
@@ -479,6 +477,8 @@ public class IntegrationController extends AutoCommitController {
                   notes = "Returns a ZIP containing integration.json, uplink.json, optional downlink.json, "
                         + "and form.json. Sensitive fields are tokenized via @TemplateField annotations on "
                         + "the integration's runtime POJO.")
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(mediaType = "application/zip", schema = @Schema(type = "string", format = "binary")))
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/integration/{integrationId}/export-package")
     public ResponseEntity<byte[]> exportIntegrationPackage(
