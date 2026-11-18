@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.notification.rule.DefaultNotificationR
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -40,14 +41,17 @@ import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.service.notification.rule.cache.DefaultNotificationRulesCache;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class AbstractNotificationApiTest extends AbstractControllerTest {
@@ -60,6 +64,8 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     @Autowired
     protected NotificationRuleService notificationRuleService;
+    @Autowired
+    protected DefaultNotificationRulesCache notificationRulesCache;
     @Autowired
     protected NotificationTemplateService notificationTemplateService;
     @Autowired
@@ -184,7 +190,16 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     }
 
     protected NotificationRule saveNotificationRule(NotificationRule notificationRule) {
-        return doPost("/api/notification/rule", notificationRule, NotificationRule.class);
+        NotificationRule savedRule = doPost("/api/notification/rule", notificationRule, NotificationRule.class);
+        awaitNotificationRulesCacheUpdate(savedRule.getTenantId(), savedRule.getTriggerType());
+        return savedRule;
+    }
+
+    // saving a rule evicts the rules cache asynchronously
+    protected void awaitNotificationRulesCacheUpdate(TenantId tenantId, NotificationRuleTriggerType triggerType) {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).pollInterval(10, TimeUnit.MILLISECONDS)
+                .until(() -> Set.copyOf(notificationRulesCache.getEnabled(tenantId, triggerType))
+                        .equals(Set.copyOf(notificationRuleService.findEnabledNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType))));
     }
 
     protected PageData<NotificationRuleInfo> findNotificationRules() throws Exception {

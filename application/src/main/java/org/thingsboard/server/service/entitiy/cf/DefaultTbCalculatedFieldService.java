@@ -21,8 +21,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.Optional;
-
 @TbCoreComponent
 @Service
 @Slf4j
@@ -85,7 +83,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
 
     private void checkEntityExistence(TenantId tenantId, EntityId entityId) {
         switch (entityId.getEntityType()) {
-            case ASSET, DEVICE, ASSET_PROFILE, DEVICE_PROFILE -> Optional.ofNullable(entityService.fetchEntity(tenantId, entityId))
+            case ASSET, DEVICE, ASSET_PROFILE, DEVICE_PROFILE -> entityService.fetchEntity(tenantId, entityId)
                     .orElseThrow(() -> new IllegalArgumentException(entityId.getEntityType().getNormalName() + " with id [" + entityId.getId() + "] does not exist."));
             default -> throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' does not support calculated fields.");
         }

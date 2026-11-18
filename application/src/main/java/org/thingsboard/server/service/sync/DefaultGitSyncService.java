@@ -150,7 +150,7 @@ public class DefaultGitSyncService implements GitSyncService {
     private Path getRepoDirectory(RepositorySettings settings) {
         // using uri to define folder name in case repo url is changed
         String name = URI.create(settings.getRepositoryUri()).getPath().replaceAll("[^a-zA-Z]", "");
-        return Path.of(repositoriesFolder, name);
+        return GitRepository.resolveDirectory(repositoriesFolder, name);
     }
 
     private RevCommit getLastCommit(String key) {

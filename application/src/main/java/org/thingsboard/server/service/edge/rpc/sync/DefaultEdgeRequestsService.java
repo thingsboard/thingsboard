@@ -74,6 +74,7 @@ import org.thingsboard.server.gen.edge.v1.SendSmsUplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeEntityTenantChecker;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.mail.EdgeMailRequest;
 import org.thingsboard.server.service.mail.MailExecutorService;
@@ -109,6 +110,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Autowired
     private RelationService relationService;
+
+    @Autowired
+    private EdgeEntityTenantChecker edgeEntityTenantChecker;
 
     @Lazy
     @Autowired
@@ -168,6 +172,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         RuleChainId ruleChainId = new RuleChainId(new UUID(ruleChainMetadataRequestMsg.getRuleChainIdMSB(), ruleChainMetadataRequestMsg.getRuleChainIdLSB()));
+        if (!isTenantEntity(tenantId, ruleChainId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN_METADATA, EdgeEventActionType.ADDED, ruleChainId, null);
     }
 
@@ -180,6 +187,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         final EdgeEventType entityType = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
         if (entityType == null) {
             log.warn("[{}] Type doesn't supported {}", tenantId, entityId.getEntityType());
+            return Futures.immediateFuture(null);
+        }
+        if (!isTenantEntity(tenantId, entityId)) {
             return Futures.immediateFuture(null);
         }
         String scope = attributesRequestMsg.getScope();
@@ -275,6 +285,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(relationRequestMsg.getEntityType()),
                 new UUID(relationRequestMsg.getEntityIdMSB(), relationRequestMsg.getEntityIdLSB()));
+        if (!isTenantEntity(tenantId, entityId)) {
+            return Futures.immediateFuture(null);
+        }
 
         List<ListenableFuture<List<EntityRelation>>> futures = new ArrayList<>();
         futures.add(findRelationByQuery(tenantId, edge, entityId, EntitySearchDirection.FROM));
@@ -398,6 +411,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsRequestMsg.getDeviceIdMSB(), deviceCredentialsRequestMsg.getDeviceIdLSB()));
+        if (!isTenantEntity(tenantId, deviceId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE,
                 EdgeEventActionType.CREDENTIALS_UPDATED, deviceId, null);
     }
@@ -409,6 +425,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         UserId userId = new UserId(new UUID(userCredentialsRequestMsg.getUserIdMSB(), userCredentialsRequestMsg.getUserIdLSB()));
+        if (!isTenantEntity(tenantId, userId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.USER,
                 EdgeEventActionType.CREDENTIALS_UPDATED, userId, null);
     }
@@ -421,7 +440,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         if (widgetBundleTypesRequestMsg.getWidgetBundleIdMSB() != 0 && widgetBundleTypesRequestMsg.getWidgetBundleIdLSB() != 0) {
             WidgetsBundleId widgetsBundleId = new WidgetsBundleId(new UUID(widgetBundleTypesRequestMsg.getWidgetBundleIdMSB(), widgetBundleTypesRequestMsg.getWidgetBundleIdLSB()));
             WidgetsBundle widgetsBundleById = widgetsBundleService.findWidgetsBundleById(tenantId, widgetsBundleId);
-            if (widgetsBundleById != null) {
+            if (widgetsBundleById != null && (TenantId.SYS_TENANT_ID.equals(widgetsBundleById.getTenantId()) || tenantId.equals(widgetsBundleById.getTenantId()))) {
                 List<WidgetType> widgetTypesToPush =
                         widgetTypeService.findWidgetTypesByWidgetsBundleId(widgetsBundleById.getTenantId(), widgetsBundleId);
                 for (WidgetType widgetType : widgetTypesToPush) {
@@ -621,6 +640,14 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     private static <T> T parseSendRequest(String request, Class<T> clazz) throws IOException {
         return request != null ? JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER.readValue(request, clazz) : null;
+    }
+
+    private boolean isTenantEntity(TenantId tenantId, EntityId entityId) {
+        boolean tenantEntity = edgeEntityTenantChecker.isTenantEntity(tenantId, entityId);
+        if (!tenantEntity) {
+            log.warn("[{}] Entity {} not found, skipping request", tenantId, entityId);
+        }
+        return tenantEntity;
     }
 
     private ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,

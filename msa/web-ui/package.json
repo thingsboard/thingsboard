@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-web-ui",
   "private": true,
-  "version": "4.2.2.8",
+  "version": "4.2.2.9",
   "description": "ThingsBoard Web UI Microservice",
   "main": "server.ts",
   "bin": "server.js",
@@ -13,17 +13,16 @@
     "build": "tsc"
   },
   "dependencies": {
-    "compression": "^1.8.2",
     "config": "^4.4.2",
     "connect-history-api-fallback": "^2.0.0",
     "express": "^5.3.0",
     "http-proxy": "^1.18.1",
     "js-yaml": "^4.3.2",
+    "negotiator": "^1.1.0",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "@types/compression": "^1.8.1",
     "@types/connect-history-api-fallback": "1.5.4",
     "@types/express": "~5.0.6",
     "@types/http-proxy": "^1.17.17",
