@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 @ComponentScan({"org.thingsboard.server", "org.thingsboard.script", "org.thingsboard.integration"})
 @Slf4j
 // Test of the third-party notices check: a change to Java code only (1)
+// Test of the third-party notices check: a change to Java code only (3)
 public class ThingsboardServerApplication {
 
     private static final String SPRING_CONFIG_NAME_KEY = "--spring.config.name";
