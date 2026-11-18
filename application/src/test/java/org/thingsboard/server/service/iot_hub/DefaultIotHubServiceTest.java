@@ -719,8 +719,11 @@ class DefaultIotHubServiceTest {
         when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
                 .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
         // Found, so only the use-existing rule keeps it
-        lenient().when(dashboardService.findDashboardById(tenantId, usersDashboardId)).thenReturn(new Dashboard(usersDashboardId));
+        Dashboard usersDashboard = new Dashboard(usersDashboardId);
+        usersDashboard.setTenantId(tenantId);
+        lenient().when(dashboardService.findDashboardById(tenantId, usersDashboardId)).thenReturn(usersDashboard);
         Device device = new Device(deviceId);
+        device.setTenantId(tenantId);
         when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
 
         service.deleteInstalledItem(user, deleted.getId());
@@ -737,6 +740,9 @@ class DefaultIotHubServiceTest {
         when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
         when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
                 .thenReturn(new PageData<>(List.of(checked), 1, 1, false));
+        Dashboard usersDashboard = new Dashboard(usersDashboardId);
+        usersDashboard.setTenantId(tenantId);
+        lenient().when(dashboardService.findDashboardById(tenantId, usersDashboardId)).thenReturn(usersDashboard);
         when(entityService.fetchEntityName(tenantId, usersDashboardId)).thenReturn(Optional.of("My dashboard"));
 
         InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
