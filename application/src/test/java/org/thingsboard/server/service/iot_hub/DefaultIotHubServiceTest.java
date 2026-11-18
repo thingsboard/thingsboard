@@ -70,6 +70,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -706,6 +707,59 @@ class DefaultIotHubServiceTest {
         assertThat(kept.getEntities()).containsExactly(new InstalledItemKeptEntities.KeptEntity(usersDashboardId, "My dashboard"));
         assertThat(kept.getUsedByItemsCount()).isZero();
         assertThat(kept.getUsedExistingCount()).isEqualTo(1);
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackageInstalledBefore441_keepsEntitiesTheUserHadBefore() {
+        mockTenant();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId usersDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackageInstalledBefore441(deviceId, usersDashboardId);
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        // Found, so only the use-existing rule keeps it
+        Dashboard usersDashboard = new Dashboard(usersDashboardId);
+        usersDashboard.setTenantId(tenantId);
+        lenient().when(dashboardService.findDashboardById(tenantId, usersDashboardId)).thenReturn(usersDashboard);
+        Device device = new Device(deviceId);
+        device.setTenantId(tenantId);
+        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        verify(tbDeviceService).delete(device, user);
+        verify(tbDashboardService, never()).delete(any(), any());
+    }
+
+    @Test
+    void findKeptEntities_devicePackageInstalledBefore441_namesTheEntitiesTheUserHadBefore() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId usersDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem checked = devicePackageInstalledBefore441(deviceId, usersDashboardId);
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked), 1, 1, false));
+        Dashboard usersDashboard = new Dashboard(usersDashboardId);
+        usersDashboard.setTenantId(tenantId);
+        lenient().when(dashboardService.findDashboardById(tenantId, usersDashboardId)).thenReturn(usersDashboard);
+        when(entityService.fetchEntityName(tenantId, usersDashboardId)).thenReturn(Optional.of("My dashboard"));
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).containsExactly(new InstalledItemKeptEntities.KeptEntity(usersDashboardId, "My dashboard"));
+        assertThat(kept.getUsedExistingCount()).isEqualTo(1);
+    }
+
+    /** An install made before 4.4.1: the dashboard the user took as it was is only in the install state, under the step name. */
+    private IotHubInstalledItem devicePackageInstalledBefore441(DeviceId deviceId, DashboardId usersDashboardId) {
+        IotHubInstalledItem installedItem = devicePackage(deviceId, usersDashboardId);
+        ObjectNode device = JacksonUtil.newObjectNode().put("resolution", "created");
+        device.set("entityOutput", JacksonUtil.newObjectNode().put("id", deviceId.getId().toString()));
+        ObjectNode dashboard = JacksonUtil.newObjectNode().put("resolution", "use-existing");
+        dashboard.set("entityOutput", JacksonUtil.newObjectNode().put("id", usersDashboardId.getId().toString()));
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Device", device, "Dashboard", dashboard));
+        return installedItem;
     }
 
     @Test
