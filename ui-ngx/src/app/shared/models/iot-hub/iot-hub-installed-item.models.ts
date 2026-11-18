@@ -34,6 +34,13 @@ export interface DeviceInstalledItemDescriptor {
   installState?: Record<string, any>;
 }
 
+/**
+ * Whether the install of a device package can be reviewed: an update that removed the entities of the installed
+ * version but did not install the new one leaves the item with nothing to show.
+ */
+export const canReviewDeviceInstall = (descriptor: DeviceInstalledItemDescriptor): boolean =>
+  !!descriptor?.installState && !!descriptor.selectedInstallMethod && !!descriptor.createdEntityIds?.length;
+
 export interface SolutionTemplateInstalledItemDescriptor {
   type: 'SOLUTION_TEMPLATE';
   createdEntityIds: { entityType: string; id: string }[];
@@ -55,6 +62,7 @@ export interface InstallItemVersionResult {
   success: boolean;
   errorMessage: string;
   descriptor: IotHubInstalledItemDescriptor;
+  installedItemId?: string;
 }
 
 export enum InstallPlanEntryStatus {

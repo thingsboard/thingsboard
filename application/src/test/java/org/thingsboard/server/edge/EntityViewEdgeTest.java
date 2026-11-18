@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.edge;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Assert;
@@ -17,12 +19,14 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -223,6 +227,67 @@ public class EntityViewEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testEntityViewFromEdgeSavedInEdgeTenant() throws Exception {
+        Device device = findDeviceByName("Edge Device 1");
+
+        EntityView entityViewMsg = buildEntityViewForUplinkMsg(device, "Edge EntityView 3");
+        entityViewMsg.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        EntityViewUpdateMsg.Builder entityViewUpdateMsgBuilder = EntityViewUpdateMsg.newBuilder();
+        entityViewUpdateMsgBuilder.setIdMSB(entityViewMsg.getUuidId().getMostSignificantBits());
+        entityViewUpdateMsgBuilder.setIdLSB(entityViewMsg.getUuidId().getLeastSignificantBits());
+        entityViewUpdateMsgBuilder.setEntity(JacksonUtil.toString(entityViewMsg));
+        entityViewUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        uplinkMsgBuilder.addEntityViewUpdateMsg(entityViewUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        EntityView entityView = doGet("/api/entityView/" + entityViewMsg.getUuidId(), EntityView.class);
+        Assert.assertEquals(tenantId, entityView.getTenantId());
+    }
+
+    @Test
+    public void testEntityViewFromEdgeWithIdOfOtherTenantViewNotSaved() throws Exception {
+        Device edgeDevice = findDeviceByName("Edge Device 1");
+
+        loginDifferentTenant();
+        Device otherTenantDevice = new Device();
+        otherTenantDevice.setName("Other tenant device");
+        otherTenantDevice.setType("default");
+        otherTenantDevice = doPost("/api/device", otherTenantDevice, Device.class);
+        EntityView otherTenantView = saveEntityView("Other tenant EntityView", otherTenantDevice.getId());
+        loginTenantAdmin();
+
+        EntityView entityViewMsg = buildEntityViewForUplinkMsg(edgeDevice, "Edge EntityView 4");
+        entityViewMsg.setId(otherTenantView.getId());
+
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        EntityViewUpdateMsg.Builder entityViewUpdateMsgBuilder = EntityViewUpdateMsg.newBuilder();
+        entityViewUpdateMsgBuilder.setIdMSB(entityViewMsg.getUuidId().getMostSignificantBits());
+        entityViewUpdateMsgBuilder.setIdLSB(entityViewMsg.getUuidId().getLeastSignificantBits());
+        entityViewUpdateMsgBuilder.setEntity(JacksonUtil.toString(entityViewMsg));
+        entityViewUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE);
+        uplinkMsgBuilder.addEntityViewUpdateMsg(entityViewUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertFalse(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        loginDifferentTenant();
+        EntityView storedView = doGet("/api/entityView/" + otherTenantView.getUuidId(), EntityView.class);
+        Assert.assertEquals(differentTenantId, storedView.getTenantId());
+        Assert.assertEquals("Other tenant EntityView", storedView.getName());
+        Assert.assertEquals(otherTenantDevice.getId(), storedView.getEntityId());
+        loginTenantAdmin();
+    }
+
+    @Test
     public void testSendDeleteEntityViewOnEdgeToCloud() throws Exception {
         Device device = findDeviceByName("Edge Device 1");
         EntityView savedEntityView = saveEntityViewOnCloudAndVerifyDeliveryToEdge(device);
@@ -291,6 +356,21 @@ public class EntityViewEdgeTest extends AbstractEdgeTest {
         entityView.setType("test");
         entityView.setEntityId(device.getId());
         return entityView;
+    }
+
+    @Test
+    public void testSendEntityViewForEntityOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        EntityView entityView = new EntityView();
+        entityView.setId(new EntityViewId(Uuids.timeBased()));
+        entityView.setTenantId(tenantId);
+        entityView.setName("Edge Entity View");
+        entityView.setType("default");
+        entityView.setEntityId(device.getId());
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityViewUpdateMsg(
+                EdgeMsgConstructorUtils.constructEntityViewUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, entityView)));
+
+        doGet("/api/entityView/" + entityView.getUuidId()).andExpect(status().isNotFound());
     }
 
 }

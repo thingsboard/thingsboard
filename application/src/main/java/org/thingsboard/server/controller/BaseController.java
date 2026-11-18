@@ -673,7 +673,11 @@ public abstract class BaseController {
         for (EntityId referencedEntityId : calculatedFieldConfig.getReferencedEntities()) {
             EntityType refEntityType = referencedEntityId.getEntityType();
             switch (refEntityType) {
-                case TENANT -> {}
+                case TENANT -> {
+                    if (!getTenantId().equals(referencedEntityId)) {
+                        throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION, ThingsboardErrorCode.PERMISSION_DENIED);
+                    }
+                }
                 case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
                 default -> throw new IllegalArgumentException("Unsupported referenced entity type: '" + refEntityType + "'.");
             }

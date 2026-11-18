@@ -9,6 +9,7 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.ApiKeyId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -71,7 +72,11 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     if (!(entity instanceof HasCustomerId)) {
                         return false;
                     }
-                    return operation.equals(Operation.CLAIM_DEVICES) || user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId());
+                    CustomerId customerId = ((HasCustomerId) entity).getCustomerId();
+                    if (operation.equals(Operation.CLAIM_DEVICES) && (customerId == null || customerId.isNullUid())) {
+                        return true;
+                    }
+                    return user.getCustomerId().equals(customerId);
                 }
             };
 
@@ -203,7 +208,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         @Override
         @SuppressWarnings("unchecked")
         public boolean hasPermission(SecurityUser user, Operation operation, ApiKeyId entityId, ApiKeyInfo entity) {
-            return user.getTenantId().equals(entity.getTenantId());
+            return user.getTenantId().equals(entity.getTenantId()) && user.getId().equals(entity.getUserId());
         }
     };
 

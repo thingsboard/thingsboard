@@ -9,5 +9,8 @@
     "skipLibCheck": true,
     "strictPropertyInitialization": false
   },
-  "exclude": ["node_modules", "target"]
+  "exclude": ["node_modules", "target"],
+  "ts-node": {
+    "files": true
+  }
 }

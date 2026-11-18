@@ -326,17 +326,21 @@ public class CommunityGrantControllerTest extends AbstractControllerTest {
             Mockito.doReturn(new CommunityGrantPortalStatus("AWAITING_SIGNUP", null, null),
                             new CommunityGrantPortalStatus("DONE", null, null))
                     .when(portalClient).getStatus(any(), any());
+            Mockito.doReturn("license-secret").when(portalClient).claimLicense(any());
 
             doPost("/api/communityGrant/start").andExpect(status().isOk());
 
             await("the poller reaching a terminal state").atMost(30, TimeUnit.SECONDS)
                     .until(() -> flowStateStore.get().getState() == CommunityGrantState.REGISTERED);
             assertThat(jdbcTemplate.queryForObject("SELECT license_claim_token FROM tb_cluster", String.class)).isNull();
+            assertThat(jdbcTemplate.queryForObject("SELECT license_secret FROM tb_cluster", String.class)).isEqualTo("license-secret");
         } finally {
             poller.disarm();
             flowStateStore.update(state -> CommunityGrantFlowState.initial());
             if (seededClusterId) {
                 jdbcTemplate.update("DELETE FROM tb_cluster");
+            } else {
+                jdbcTemplate.update("UPDATE tb_cluster SET license_secret = NULL");
             }
         }
     }
