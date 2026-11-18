@@ -276,9 +276,7 @@
       "api-usage-state-enabled": "API-ის გამოყენების მდგომარეობა ჩართულია",
       "api-usage-state-warning": "API-ის გამოყენების მდგომარეობის გაფრთხილება",
       "api-usage-state-disabled": "API-ის გამოყენების მდგომარეობა გამორთულია",
-      "two-fa-verification": "2FA დამოწმების შეტყობინება",
-      "user-activated": "მომხმარებლი გააქტიურებულია",
-      "user-registered": "მომხმარებელი დარეგისტრირდა"
+      "two-fa-verification": "2FA დამოწმების შეტყობინება"
     },
     "mail-subject": "წერილის თემა",
     "mail-body": "წერილის ტექსტი",
@@ -2321,8 +2319,7 @@
     "set-access-token": "წვდომის ტოკენის მითითება",
     "menu-conflict": "მენიუს კონფლიქტი",
     "menu-conflict-message": "არსებობს სხვა ნაგულისხმევი მორგებული მენიუ მოქმედების არით <b>{{scope}}</b>. დარწმუნებული ხართ, რომ გსურთ მისი ჩანაცვლება თქვენი მორგებული მენიუთი?",
-    "replace": "ჩანაცვლება",
-    "custom-menu-hint": "აღწერე მორგებული მენიუს JSON ქვემოთ. ეს JSON შეიცავს მორგებული მენიუს ღილაკების სიას"
+    "replace": "ჩანაცვლება"
   },
   "custom-translation": {
     "add-new-key": "ახალი გასაღების დამატება",
@@ -2910,8 +2907,7 @@
       "snmp-command": "SNMP-ით მოწყობილობის დასაკავშირებლად გამოიყენეთ შემდეგი დოკუმენტაცია.",
       "sparkplug-command": "MQTT Sparkplug-ით მოწყობილობის დასაკავშირებლად გამოიყენეთ შემდეგი დოკუმენტაცია.",
       "lwm2m-command": "LWM2M-ით მოწყობილობის დასაკავშირებლად გამოიყენეთ შემდეგი დოკუმენტაცია."
-    },
-    "filter-title": "ფილტრი"
+    }
   },
   "dynamic-form": {
     "property": {
@@ -4896,9 +4892,7 @@
     "unable-entity-view-device-alias-title": "ობიექტის ხედის ზედმეტსახელის წაშლა შეუძლებელია",
     "unable-entity-view-device-alias-text": "მოწყობილობის ზედმეტსახელის '{{entityViewAlias}}' წაშლა შეუძლებელია, რადგან მას იყენებს შემდეგი ვიჯეტ(ებ)ი:<br/>{{widgetsList}}",
     "select-entity-view": "აირჩიეთ ობიექტის ხედი",
-    "start-date": "დაწყების თარიღი",
     "start-ts": "დაწყების დრო",
-    "end-date": "დასრულების თარიღი",
     "end-ts": "დასრულების დრო",
     "date-limits": "თარიღის ლიმიტები",
     "client-attributes": "კლიენტის ატრიბუტები",
@@ -5733,7 +5727,6 @@
     "type-aws-sqs-description": "შეტყობინებების რიგის სრულად მართვადი სერვისი.",
     "type-aws-kinesis": "AWS Kinesis",
     "type-aws-kinesis-description": "სერვისი რეალურ დროში ვიდეოსა და მონაცემთა ნაკადებისთვის.",
-    "type-ibm-watson-iot": "IBM Watson IoT",
     "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "ღია და დეცენტრალიზებული LoRaWAN ქსელი.",
     "type-tti": "The Things Stack Cloud & Enterprise",
@@ -5975,9 +5968,7 @@
     "downlink-connection-string": "დაუნლინკის კავშირის სტრიქონი",
     "downlink-connection-string-required": "დაუნლინკის კავშირის სტრიქონი სავალდებულოა",
     "downlink-topic-name": "დაუნლინკის თემის სახელი",
-    "downlink-topic-name-required": "დაუნლინკის თემის სახელი სავალდებულოა",
-    "access-key-min-length": "წვდომის გასაღები ძალიან მოკლეა.",
-    "access-key-max-length": "წვდომის გასაღები ძალიან გრძელია."
+    "downlink-topic-name-required": "დაუნლინკის თემის სახელი სავალდებულოა"
   },
   "scada": {
     "symbols": "SCADA სიმბოლოები",
@@ -6330,8 +6321,7 @@
     "type-rule-chain": "წესების ჯაჭვი",
     "type-rule-chain-plural": "წესების ჯაჭვები",
     "type-device": "მოწყობილობა",
-    "type-device-plural": "მოწყობილობები",
-    "selected": "შერჩეული"
+    "type-device-plural": "მოწყობილობები"
   },
   "iot-hub": {
     "advanced-settings": "გაფართოებული პარამეტრები",
@@ -6608,21 +6598,7 @@
     "deep-link-invalid-id": "IoT Hub-ის ელემენტის ბმული არასწორია.",
     "deep-link-not-found": "IoT Hub-ის ეს ელემენტი არ არსებობს ან წაიშალა.",
     "deep-link-fetch-failed": "IoT Hub-ის ელემენტის ჩატვირთვა ვერ მოხერხდა. გთხოვთ, სცადოთ ხელახლა.",
-    "export-to-iot-hub": "IoT Hub-ში ექსპორტი",
-    "new-converter-available": "ხელმისაწვდომია ახალი კონვერტორი",
-    "converter-update-title": "გსურთ კონვერტორის განახლება?",
-    "device-install-step-pending": "მოლოდინში",
-    "device-install-step-running": "იქმნება...",
-    "device-install-step-success": "შექმნილია",
-    "device-update-will-create": "შეიქმნება",
-    "device-update-shared-more": "და კიდევ {{count}}",
-    "device-update-shared-less": "ნაკლების ჩვენება",
-    "device-update-new-default-converter": "ThingsBoard-ს აქვს ამ პაკეტის მიერ გამოყენებული ნაგულისხმევი კონვერტორის ახალი ვერსია.",
-    "device-update-confirm-warnings": "განახლების ჩასართავად დაადასტურეთ {count, plural, other {# გაფრთხილება} }",
-    "device-update-skipped": "უცვლელი",
-    "device-update-updated": "განახლებულია",
-    "device-update-created": "შექმნილია",
-    "device-update-try-again": "ხელახლა ცდა"
+    "export-to-iot-hub": "IoT Hub-ში ექსპორტი"
   },
   "item-data": {
     "widget-type-timeseries": "დროითი მწკრივი",
@@ -7653,8 +7629,7 @@
     "selected-javascript-resources": "არჩეულია {count, plural, =1 {1 JavaScript რესურსი} other {# JavaScript რესურსი} }",
     "no-javascript-resource-text": "JavaScript რესურსები ვერ მოიძებნა",
     "all-types": "ყველა",
-    "module-script": "მოდულის სკრიპტი",
-    "javascript-type": "JavaScript ტიპი"
+    "module-script": "მოდულის სკრიპტი"
   },
   "rpc": {
     "error": {
@@ -7752,7 +7727,6 @@
     "name-max-length": "სახელი 256 სიმბოლოზე ნაკლები უნდა იყოს",
     "type": "ტიპი",
     "rule-node-description": "წესის კვანძის აღწერა",
-    "description": "აღწერა",
     "delete": "წესის კვანძის წაშლა",
     "select-all-objects": "ყველა კვანძისა და კავშირის მონიშვნა",
     "deselect-all-objects": "ყველა კვანძისა და კავშირის მონიშვნის მოხსნა",
@@ -9056,9 +9030,6 @@
     "group-entities": "ჯგუფის ობიექტები",
     "entities-group-owner": "ობიექტების ჯგუფის მფლობელი",
     "devices-group-owner": "მოწყობილობების ჯგუფის მფლობელი",
-    "group-of-entities": "ობიექტის ჯგუფი",
-    "single-device": "ერთი მოწყობილობა",
-    "group-of-devices": "მოწყობილობათა ჯგუფი",
     "message-body": "შეტყობინების ტანი",
     "target": "სამიზნე",
     "rpc-method": "მეთოდი",
@@ -9088,7 +9059,6 @@
   "report": {
     "general-report-settings": "ანგარიშის ზოგადი პარამეტრები",
     "target-dashboard": "სამიზნე სამუშაო დაფა",
-    "report-config": "რეპორტის კონფიგურაცია",
     "email-config": "ელფოსტის კონფიგურაცია",
     "dashboard-state-param": "სამუშაო დაფის მდგომარეობის პარამეტრის მნიშვნელობა",
     "base-url": "საბაზისო URL",
@@ -9099,7 +9069,6 @@
     "name-pattern": "ანგარიშის სახელის ნიმუში",
     "name-pattern-required": "ანგარიშის სახელის ნიმუში სავალდებულოა",
     "type": "ანგარიშის ტიპი",
-    "use-current-user-credentials": "გამოიყენეთ მიმდინარე მომხმარებელთა ჩანაწერები",
     "customer-user-credentials": "კლიენტის მომხმარებლის ავტორიზაციის მონაცემები",
     "customer-user-credentials-required": "კლიენტის მომხმარებლის ავტორიზაციის მონაცემები სავალდებულოა",
     "generate-test-report": "სატესტო ანგარიშის გენერირება",
@@ -10849,8 +10818,6 @@
     "move": "ვიჯეტის გადატანა",
     "save-widget-as": "ვიჯეტის შენახვა სხვა სახელით",
     "save-widget-as-text": "გთხოვთ, შეიყვანოთ ვიჯეტის ახალი სათაური",
-    "save-widget-type-as": "შეინახე ვიჯეტის ტიპი როგორც",
-    "save-widget-type-as-text": "შეიყვანეთ ახალი ვიჯეტის სატაური ან/და აირჩიეთ სამიზნე ვიჯეტიბის ნაკრებიდან.",
     "toggle-fullscreen": "სრულეკრანიანი რეჟიმის გადართვა",
     "run": "ვიჯეტის გაშვება",
     "widget-title": "ვიჯეტის სათაური",
@@ -10885,8 +10852,6 @@
     "basic-mode-form-selector": "საბაზისო რეჟიმის ფორმის სელექტორი",
     "basic-mode": "საბაზისო",
     "advanced-mode": "გაფართოებული",
-    "settings-schema": "პარამეტრების სქემა",
-    "datakey-settings-schema": "მონაცემტა გასაღები პარამეტრების სქემა",
     "javascript": "Javascript",
     "js": "JS",
     "delete-widget-title": "დარწმუნებული ხართ, რომ გსურთ ვიჯეტის '{{widgetName}}' წაშლა?",
@@ -10894,7 +10859,6 @@
     "delete-widgets-title": "დარწმუნებული ხართ, რომ გსურთ { count, plural, other {# ვიჯეტის} } წაშლა?",
     "delete-widgets-text": "ფრთხილად, დადასტურების შემდეგ ყველა არჩეული ვიჯეტი წაიშლება და მათთან დაკავშირებული ყველა მონაცემი ვეღარ აღდგება.",
     "delete-widget": "ვიჯეტის წაშლა",
-    "add-widget-type": "ახალი ვიჯეტის ტიპი",
     "widget-template-load-failed-error": "ვიჯეტის შაბლონის ჩატვირთვა ვერ მოხერხდა!",
     "details": "დეტალები",
     "widget-details": "ვიჯეტის დეტალები",
@@ -11302,10 +11266,7 @@
     "export": "ვიჯეტის ტიპის ექსპორტი",
     "export-failed-error": "ვიჯეტის ექსპორტი ვერ მოხერხდა: {{error}}",
     "widget-file": "ვიჯეტის ფაილი",
-    "invalid-widget-file-error": "ვიჯეტის იმპორტი შეუძლებელია: ვიჯეტის მონაცემების სტრუქტურა არასწორია.",
-    "create-new-widget-type": "ახალი ვიჯეტისტიპის შექმნა",
-    "widget-type-file": "ვიჯეტის ტიპის ფაილი",
-    "invalid-widget-type-file-error": "ვიჯეტის ტიპის იმპორტი ვერ განხორციელდ: არასწირი მონაცემტა სტრუქტურა."
+    "invalid-widget-file-error": "ვიჯეტის იმპორტი შეუძლებელია: ვიჯეტის მონაცემების სტრუქტურა არასწორია."
   },
   "self-registration": {
     "self-registration": "თვითრეგისტრაცია",
@@ -11328,7 +11289,6 @@
     "ios-key-required": "iOS-ის გასაღები სავალდებულოა.",
     "notification-recipient": "შეტყობინების მიმღები",
     "notification-recipient-required": "შეტყობინების მიმღები სავალდებულოა.",
-    "notification-email": "შეტყობინების ელ.ფოსტა",
     "privacy-policy-text": "კონფიდენციალურობის პოლიტიკის ტექსტი",
     "terms-of-use-text": "გამოყენების პირობების ტექსტი",
     "text-message-page": "რეგისტრაციის გვერდის ტექსტური შეტყობინება",
@@ -11499,18 +11459,8 @@
     "app-title": "აპლიკაციის სათაური",
     "favicon": "საიტის ხატულა",
     "favicon-desc": "ხატულა ბრაუზერის ჩანართსა და სანიშნეებში. PNG ან ICO, რეკომენდებულია 32×32 px",
-    "favicon-description": "*.ico, *.gif ან *.png სურათი მაქს. ზომით {{kbSize}} კილობაიტი.",
-    "favicon-size-error": "სურათი ძალიან დიდია. მაქს. დასაშვები სურათის ზომა {{kbSize}} კილობაიტი.",
-    "favicon-type-error": "არასწორი სურათის ფორმატი. მისარებია მხოლოდ ICO, GIF or PNG.",
-    "drop-favicon-image": "გადმოიტანეთ სურათი ან დაჭირეთ ატვირთვას.",
-    "no-favicon-image": "ხატულა არ არის არჩეული",
     "logo": "ლოგო",
     "logo-desc": "SVG ან PNG, სიმაღლე არანაკლებ 96px, არაუმეტეს 200 KB",
-    "logo-description": "ნებისმიერი სურათი ზომით {{kbSize}} კილობაიტი.",
-    "logo-size-error": "ლოგოს სურათი ძალიან დიდია. მაქს. ზომა {{kbSize}} კილობაიტი.",
-    "logo-type-error": "ლოგოს ფორმატი არასწორია. მისარებია მხოლოდ სურათები.",
-    "drop-logo-image": "ჩააგდეთ ლოგი ან დააჭირეთ ატვირთვას.",
-    "no-logo-image": "ლოგი არ არის არჩეული.",
     "logo-height": "ლოგოს სიმაღლე",
     "logo-height-desc": "ლოგოს ზომა პროპორციულად იცვლება და ის ცენტრში თავსდება. მაღალი ლოგოებისთვის გაზარდეთ სიმაღლე (200px-მდე)",
     "collapsed-logo": "ჩაკეცილი გვერდითი პანელის ლოგო",
@@ -12692,9 +12642,7 @@
       "retrieve-led-status-value-method": "LED-ის სტატუსის მნიშვნელობის მიღება მეთოდით",
       "check-status-method": "მოწყობილობის სტატუსის შემოწმების RPC მეთოდი",
       "parse-led-status-value-function": "LED-ის სტატუსის მნიშვნელობის გარჩევის ფუნქცია",
-      "knob-title": "რეგულატორის სათაური",
-      "led-status-value-attribute": "მოწყობილობის ატრიბუტი, რომელიც LED-ის სტატუსის მნიშვნელობას შეიცავს",
-      "led-status-value-timeseries": "მოწყობილობის დროითი მწკრივი, რომელიც LED-ის სტატუსის მნიშვნელობას შეიცავს"
+      "knob-title": "რეგულატორის სათაური"
     },
     "maps": {
       "map-type": {
@@ -14295,12 +14243,7 @@
     "scheduler": "დამგეგმავი",
     "scheduler-promo": "შეასრულეთ განახლებები და გაგზავნეთ მოვლენები წესების ჯაჭვებში განრიგის მიხედვით.",
     "reports": "ანგარიშები",
-    "reports-promo": "შექმენით ანგარიშები ცხრილებით, დიაგრამებითა და საკუთარი ბრენდირებით და გააგზავნეთ ისინი განრიგის მიხედვით.",
-    "white-labeling-feature": "თეთრი მარკირების თვისება",
-    "white-labeling-text-full": "პლათფორმა",
-    "enable-white-labeling": "ეტიკეტირების ჩართვა",
-    "read-more": "დეტალურად",
-    "white-labeling-video-text": "ვიდეო ტუტორიალის ნახვა"
+    "reports-promo": "შექმენით ანგარიშები ცხრილებით, დიაგრამებითა და საკუთარი ბრენდირებით და გააგზავნეთ ისინი განრიგის მიხედვით."
   },
   "platform-feature": {
     "overview": "მიმოხილვა",
@@ -14401,102 +14344,7 @@
       "cell-double-click": "უჯრაზე ორმაგი დაწკაპუნებისას",
       "card-click": "ბარათზე დაწკაპუნებისას",
       "click": "დაწკაპუნებისას"
-    },
-    "dashboardName": {
-      "title": "პერსონალური სივრცე (საქართველო)"
-    },
-    "map": {
-      "title": "ობიექტების ლოკაცია"
-    },
-    "objectsWidget": {
-      "title": "ობიექტები"
-    },
-    "deviceMap": {
-      "title": "მოწყობილობის ლოკაცია"
-    },
-    "gas": {
-      "label": "გაზი",
-      "hourlyChart": "გაზის საათობრივი გრაფიკი",
-      "dailyChart": "გაზის მოხმარების ყოველდღიური გრაფიკი",
-      "aboutDeviceTable": {
-        "title": "მოწყობილობის დეტალები",
-        "lastActivity": "ბოლო აქტივობა",
-        "firmwareVersion": "მოწყობილობის კოდის ვერსია",
-        "pollFrequency": "გამოკითხვის სიხშირე",
-        "gasConsumption": "გაზის მოხმარება",
-        "openingAlarm": "განგაშის აქტივაცია",
-        "batteryAlarm": "დაცლილი ბატარეის განგაში",
-        "timeZone": "დროის სარტყელი",
-        "alarm": {
-          "yes": "განგაში!",
-          "no": "განგაში არ ფიქსირდება"
-        }
-      },
-      "dataTable": {
-        "title": "გაზის მოხმარება",
-        "gas": "გაზი",
-        "voltage": "ბატარეის ძაბვა"
-      }
-    },
-    "energyMeter": {
-      "label": "ენერგია",
-      "hourlyChart": "ენერგია საათობრივი გრაფიკი",
-      "dailyChart": "ენერგიის დღიური მოხმარების ცხრილი",
-      "aboutDeviceTable": {
-        "title": "მრიცხველის შესახებ",
-        "lastActivity": "ბოლო აქტივობა",
-        "firmwareVersion": "მოწყობილობის კოდის ვერსია",
-        "pollFrequency": "გამოკითხვის სიხშირე",
-        "energyConsumption": "ენერგიის მოხმარება",
-        "openingAlarm": "გაგაშის აქტივაცია",
-        "batteryAlarm": "დაცლილი ბატარეის განგაში",
-        "timeZone": "დროის სარტყელი",
-        "alarm": {
-          "yes": "განგაში!",
-          "no": "განგაში არ ფიქსირდება"
-        }
-      },
-      "dataTable": {
-        "title": "ენერგიის მოხმარება",
-        "energy": "ენერგია",
-        "voltage": "ბატარეის ძაბვა"
-      }
-    },
-    "documentation": {
-      "title": "დოკუმენტაცია",
-      "structuralScheme": "სტრუქტურული სქემა",
-      "documentation": "დოკუმენტაცია"
-    },
-    "relayController": "რელეს კონტროლერი",
-    "reportWidget": {
-      "title": "რეპორტები",
-      "reportType": "რეპორტის ტიპი",
-      "testimonyType": "ჩვენება",
-      "begin": "პერიოდის დასაწყისი",
-      "end": "პერიოდის დასასრული",
-      "btnCreate": "შექმნა",
-      "btnDownload": "ჩამოტვირთვა",
-      "dateError": "საწყისი დრო არ შეიძლება იყოს დასრულების დროზე ნაკლები!",
-      "fileheader": {
-        "deviceNumber": "მოწყობილობის ნომერი",
-        "objectName": "ობიექტის სახელი",
-        "address": "მისამართი",
-        "device": "მოწყობილობა",
-        "initialData": "საწყისი მონაცემები",
-        "finalData": "საბოლოო მონაცემები",
-        "difference": "განსხვავება",
-        "ratio": "შეფარდება",
-        "total": "სულ"
-      },
-      "noData": "მონაცემები არ არის",
-      "from": "დან",
-      "to": "მდე"
-    },
-    "batteryVoltageChart": {
-      "title": "ბატარეის ძაბვა",
-      "label": "ძაბვა"
-    },
-    "rssiChart": "სიგნალის მიმღეობა RSSI"
+    }
   },
   "paginator": {
     "items-per-page": "ელემენტები გვერდზე:",
