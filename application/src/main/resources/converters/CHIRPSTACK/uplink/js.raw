@@ -66,6 +66,12 @@ function decodePayload(input) {
     // };
 }
 
+// Skip events without a device payload (e.g. status or txack) so they
+// are not stored as telemetry. Returning an empty array yields no uplink data.
+if (payload.length === 0) {
+    return [];
+}
+
 var result = decodePayload(payload);
 // Uncomment this code block to overwrite values set in the main configuration window. Useful if you extract device/asset/customer/group names from the payload;
 // result.type = 'DEVICE'; // Entity type allows you to choose type of created entity. Can be 'DEVICE' or 'ASSET'.
