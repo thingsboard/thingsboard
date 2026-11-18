@@ -276,9 +276,7 @@
       "api-usage-state-enabled": "API lietojuma stāvoklis — iespējots",
       "api-usage-state-warning": "API lietojuma stāvokļa brīdinājums",
       "api-usage-state-disabled": "API lietojuma stāvoklis — atspējots",
-      "two-fa-verification": "2FA verifikācijas ziņojums",
-      "user-activated": "Lietotājs aktivizēts ziņojums",
-      "user-registered": "Lietotājs reģistrēts ziņojums"
+      "two-fa-verification": "2FA verifikācijas ziņojums"
     },
     "mail-subject": "Pasta temats",
     "mail-body": "Pasta saturs",
@@ -2321,8 +2319,7 @@
     "set-access-token": "Iestatīt piekļuves tokenu",
     "menu-conflict": "Izvēlnes konflikts",
     "menu-conflict-message": "Pastāv cita noklusējuma pielāgota izvēlne ar tvērumu <b>{{scope}}</b>. Vai tiešām vēlaties to aizstāt ar savu pielāgoto izvēlni?",
-    "replace": "Aizstāt",
-    "custom-menu-hint": "Definēt pielāgotu izvēlni JSON formā. Šis JSON ietver sarakstu no pielāgotās izvēlnes vienumiem."
+    "replace": "Aizstāt"
   },
   "custom-translation": {
     "add-new-key": "Pievienot jaunu atslēgu",
@@ -2910,8 +2907,7 @@
     "list-of-groups": "{ count, plural, one {# iekārtu grupa} other {Saraksts ar # iekārtu grupām} }",
     "group-name-starts-with": "Iekārtu grupas, kuru nosaukumi sākas ar '{{prefix}}'",
     "import": "Importēt iekārtu",
-    "device-file": "Iekārtas fails",
-    "filter-title": "Filtrs"
+    "device-file": "Iekārtas fails"
   },
   "dynamic-form": {
     "property": {
@@ -4896,9 +4892,7 @@
     "unable-entity-view-device-alias-title": "Nevar dzēst entītijas skata segvārdu",
     "unable-entity-view-device-alias-text": "Iekārtas segvārdu '{{entityViewAlias}}' nevar dzēst, jo to izmanto šādi logrīki:<br/>{{widgetsList}}",
     "select-entity-view": "Atlasīt entītijas skatu",
-    "start-date": "Starta datums",
     "start-ts": "Sākuma laiks",
-    "end-date": "Beigu datums",
     "end-ts": "Beigu laiks",
     "date-limits": "Datumu ierobežojumi",
     "client-attributes": "Klienta atribūti",
@@ -5733,7 +5727,6 @@
     "type-aws-sqs-description": "Pilnībā pārvaldīts ziņojumu rindošanas pakalpojums.",
     "type-aws-kinesis": "AWS Kinesis",
     "type-aws-kinesis-description": "Pakalpojums reāllaika video un datu plūsmām.",
-    "type-ibm-watson-iot": "IBM Watson IoT",
     "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Atvērts un decentralizēts LoRaWAN tīkls.",
     "type-tti": "The Things Stack Cloud & Enterprise",
@@ -5975,9 +5968,7 @@
     "downlink-connection-string": "Lejupsaites savienojuma virkne",
     "downlink-connection-string-required": "Lejupsaites savienojuma virkne ir nepieciešama",
     "downlink-topic-name": "Lejupsaites tēmas nosaukums",
-    "downlink-topic-name-required": "Lejupsaites tēmas nosaukums ir nepieciešams",
-    "access-key-min-length": "Piekļuves atslēga ir pārāk īsa.",
-    "access-key-max-length": "Piekļuves atslēga ir pārāk gara."
+    "downlink-topic-name-required": "Lejupsaites tēmas nosaukums ir nepieciešams"
   },
   "scada": {
     "symbols": "SCADA simboli",
@@ -6330,8 +6321,7 @@
     "type-rule-chain": "Noteikumu ķēde",
     "type-rule-chain-plural": "Noteikumu ķēdes",
     "type-device": "Iekārta",
-    "type-device-plural": "Iekārtas",
-    "selected": "Atlasīts"
+    "type-device-plural": "Iekārtas"
   },
   "iot-hub": {
     "advanced-settings": "Papildu iestatījumi",
@@ -6608,21 +6598,7 @@
     "deep-link-invalid-id": "Nederīga IoT Hub vienuma saite.",
     "deep-link-not-found": "Šis IoT Hub vienums neeksistē vai ir noņemts.",
     "deep-link-fetch-failed": "Neizdevās ielādēt IoT Hub vienumu. Lūdzu, mēģiniet vēlreiz.",
-    "export-to-iot-hub": "Eksportēt uz IoT Hub",
-    "new-converter-available": "Pieejams jauns datu pārveidotājs",
-    "converter-update-title": "Atjaunināt datu pārveidotāju?",
-    "device-install-step-pending": "Gaida",
-    "device-install-step-running": "Izveide...",
-    "device-install-step-success": "Izveidots",
-    "device-update-will-create": "Tiks izveidots",
-    "device-update-shared-more": "un vēl {{count}}",
-    "device-update-shared-less": "Rādīt mazāk",
-    "device-update-new-default-converter": "ThingsBoard ir pieejama jauna šīs pakotnes noklusējuma datu pārveidotāja versija.",
-    "device-update-confirm-warnings": "Apstipriniet {count, plural, one {# brīdinājumu} other {# brīdinājumus} }, lai iespējotu atjaunināšanu",
-    "device-update-skipped": "Nemainīts",
-    "device-update-updated": "Atjaunināts",
-    "device-update-created": "Izveidots",
-    "device-update-try-again": "Mēģināt vēlreiz"
+    "export-to-iot-hub": "Eksportēt uz IoT Hub"
   },
   "item-data": {
     "widget-type-timeseries": "Laikrindas",
@@ -7653,8 +7629,7 @@
     "selected-javascript-resources": "Atlasīts: {count, plural, one {# JavaScript resurss} other {# JavaScript resursi} }",
     "no-javascript-resource-text": "JavaScript resursi nav atrasti",
     "all-types": "Visi",
-    "module-script": "Moduļa skripts",
-    "javascript-type": "JavaScript tips"
+    "module-script": "Moduļa skripts"
   },
   "rpc": {
     "error": {
@@ -9055,9 +9030,6 @@
     "group-entities": "Entītiju grupa",
     "entities-group-owner": "Entītiju grupas īpašnieks",
     "devices-group-owner": "Iekārtu grupas īpašnieks",
-    "group-of-entities": "Vienību grupa",
-    "single-device": "Viena iekārta",
-    "group-of-devices": "Iekārtu grupa",
     "message-body": "Ziņojuma pamatteksts",
     "target": "Mērķis",
     "rpc-method": "Metode",
@@ -9087,7 +9059,6 @@
   "report": {
     "general-report-settings": "Vispārīgie atskaites iestatījumi",
     "target-dashboard": "Mērķa infopanelis",
-    "report-config": "Atskaites konfigurācija",
     "email-config": "E-pasta konfigurācija",
     "dashboard-state-param": "Infopaneļa stāvokļa parametra vērtība",
     "base-url": "Pamata URL",
@@ -9098,7 +9069,6 @@
     "name-pattern": "Atskaites nosaukuma šablons",
     "name-pattern-required": "Atskaites nosaukuma šablons ir nepieciešams",
     "type": "Atskaites tips",
-    "use-current-user-credentials": "Lietot lietotāja patreizējo akreditācijas informāciju",
     "customer-user-credentials": "Klienta lietotāja akreditācijas dati",
     "customer-user-credentials-required": "Klienta lietotāja akreditācijas dati ir nepieciešami",
     "generate-test-report": "Ģenerēt testa atskaiti",
@@ -10848,8 +10818,6 @@
     "move": "Pārvietot logrīku",
     "save-widget-as": "Saglabāt logrīku kā",
     "save-widget-as-text": "Lūdzu, ievadiet jaunu logrīka virsrakstu",
-    "save-widget-type-as": "Saglabāt logrīka tipu kā",
-    "save-widget-type-as-text": "Lūdzu ievadīt jaunu logrīka virsrakstu un/vai atlasīt mērķa logrīku apkopojumu",
     "toggle-fullscreen": "Pārslēgt pilnekrāna režīmu",
     "run": "Palaist logrīku",
     "widget-title": "Logrīka virsraksts",
@@ -10884,8 +10852,6 @@
     "basic-mode-form-selector": "Pamata režīma formas atlasītājs",
     "basic-mode": "Pamata",
     "advanced-mode": "Papildu",
-    "settings-schema": "Iestatījumu shēma",
-    "datakey-settings-schema": "Datu atslēgas iestatījumu shēma",
     "javascript": "JavaScript",
     "js": "JS",
     "delete-widget-title": "Vai tiešām vēlaties dzēst logrīku '{{widgetName}}'?",
@@ -10893,7 +10859,6 @@
     "delete-widgets-title": "Vai tiešām vēlaties dzēst {count, plural, one {# logrīku} other {# logrīkus} }?",
     "delete-widgets-text": "Uzmanību! Pēc apstiprināšanas visi atlasītie logrīki tiks dzēsti un visi saistītie dati kļūs neatgūstami.",
     "delete-widget": "Dzēst logrīku",
-    "add-widget-type": "Pievienot jaunu logrīka tipu",
     "widget-template-load-failed-error": "Neizdevās ielādēt logrīka veidni!",
     "details": "Detaļas",
     "widget-details": "Logrīka detaļas",
@@ -11301,10 +11266,7 @@
     "export": "Eksportēt logrīka tipu",
     "export-failed-error": "Nav iespējams eksportēt logrīku: {{error}}",
     "widget-file": "Logrīka fails",
-    "invalid-widget-file-error": "Nav iespējams importēt logrīku: nederīga logrīka datu struktūra.",
-    "create-new-widget-type": "Radīt jaunu logrīka tipu",
-    "widget-type-file": "Logrīka tipa fails",
-    "invalid-widget-type-file-error": "Nav iespējams importēt logrīka tipu: Invalīda logrīka tipa datu struktūra."
+    "invalid-widget-file-error": "Nav iespējams importēt logrīku: nederīga logrīka datu struktūra."
   },
   "self-registration": {
     "self-registration": "Pašreģistrācija",
@@ -11327,7 +11289,6 @@
     "ios-key-required": "iOS atslēga ir nepieciešama.",
     "notification-recipient": "Paziņojuma saņēmējs",
     "notification-recipient-required": "Paziņojuma saņēmējs ir nepieciešams.",
-    "notification-email": "Paziņojumu email",
     "privacy-policy-text": "Privātuma politikas teksts",
     "terms-of-use-text": "Lietošanas noteikumu teksts",
     "text-message-page": "Teksta ziņojums reģistrēšanās lapai",
@@ -11498,18 +11459,8 @@
     "app-title": "Lietojumprogrammas virsraksts",
     "favicon": "Vietnes ikona",
     "favicon-desc": "Ikona pārlūka cilnē un grāmatzīmēs. PNG vai ICO, ieteicams 32×32 px",
-    "favicon-description": "*.ico, *.gif or *.png attēls ar maksimālo izmēru {{kbSize}} KBytes.",
-    "favicon-size-error": "Weblapas attēls ir pa lielu. Maksimālais weblapas bildes izmērs ir {{kbSize}} KBytes.",
-    "favicon-type-error": "Invalīds weblapas attēla faila formāts. Tikai ICO, GIF vai PNG attēls tiks atļautas.",
-    "drop-favicon-image": "Nosviest weblapas ikonas attēlu vai klikšķināt uz atlasīto failu augšupielādei.",
-    "no-favicon-image": "Nav ikonas atlasītas",
     "logo": "Logotips",
     "logo-desc": "SVG vai PNG, augstums vismaz 96 px, līdz 200 KB",
-    "logo-description": "Jebkurš attēls ar maksimālo izmēru {{kbSize}} KBytes.",
-    "logo-size-error": "Logo attēls ir par lielu. Maksimālais pieļaujamais logo attēla izmērs {{kbSize}} KBytes.",
-    "logo-type-error": "Invalīds logo faila formāts. Tikai attēli tiek apstiprināti.",
-    "drop-logo-image": "Iesviest logo attēlu vai atlasīt failu augšupielādei.",
-    "no-logo-image": "Nav logo atlasīts",
     "logo-height": "Logotipa augstums",
     "logo-height-desc": "Logotipu mērogo proporcionāli un centrē. Augstiem logotipiem palieliniet augstumu (līdz 200 px)",
     "collapsed-logo": "Sakļautās sānjoslas logotips",
@@ -12691,9 +12642,7 @@
       "retrieve-led-status-value-method": "Iegūt LED statusa vērtību, izmantojot metodi",
       "check-status-method": "RPC iekārtas statusa pārbaudes metode",
       "parse-led-status-value-function": "LED statusa vērtības parsēšanas funkcija",
-      "knob-title": "Regulatora virsraksts",
-      "led-status-value-attribute": "Iekārtas atribūts, kas satur LED statusa vērtību",
-      "led-status-value-timeseries": "Iekārtas laikrinda, kas satur LED statusa vērtību"
+      "knob-title": "Regulatora virsraksts"
     },
     "maps": {
       "map-type": {
@@ -14294,12 +14243,7 @@
     "scheduler": "Plānotājs",
     "scheduler-promo": "Izpildiet atjauninājumus un pēc grafika nosūtiet notikumus uz noteikumu ķēdēm.",
     "reports": "Atskaites",
-    "reports-promo": "Veidojiet atskaites no tabulām, diagrammām un sava zīmola noformējuma un sūtiet tās pēc grafika.",
-    "white-labeling-feature": "Pielāgošanas iespēja",
-    "white-labeling-text-full": "Pārveidot web interfeisu ar Jūsu kompānijas izvēli 2 minūšu laikā.<br/><br/>Noņemt esošo attēlojumu.<br/>Nav nepieciešams restarts.",
-    "enable-white-labeling": "Iespējot vizuālos pašiestatījumus pārveidojot abonešanas plānu!",
-    "read-more": "Lasīt vairāk",
-    "white-labeling-video-text": "skatīt video, lai redzētu kā minētā funkcionalitāte strādā!"
+    "reports-promo": "Veidojiet atskaites no tabulām, diagrammām un sava zīmola noformējuma un sūtiet tās pēc grafika."
   },
   "platform-feature": {
     "overview": "Pārskats",
