@@ -53,7 +53,8 @@ public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticati
         context.setAuthentication(authResult);
         SecurityContextHolder.setContext(context);
         if (authResult.getPrincipal() instanceof SecurityUser user) {
-            user.setClientAddress(request.getRemoteAddr());
+            java.net.InetAddress resolved = org.thingsboard.server.config.ClientAddressCaptureFilter.resolvedClientAddress(request);
+            user.setClientAddress(resolved != null ? resolved.getHostAddress() : request.getRemoteAddr());
         }
         chain.doFilter(request, response);
     }

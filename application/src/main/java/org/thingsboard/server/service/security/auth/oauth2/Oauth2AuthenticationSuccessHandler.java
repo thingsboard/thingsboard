@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
+import org.thingsboard.server.service.security.ip.SysAdminIpPolicy;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -50,6 +52,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final SystemSecurityService systemSecurityService;
+    private final SysAdminIpPolicy sysAdminIpPolicy;
 
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
@@ -57,13 +60,15 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                               final OAuth2ClientService oAuth2ClientService,
                                               final OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
                                               final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository,
-                                              final SystemSecurityService systemSecurityService) {
+                                              final SystemSecurityService systemSecurityService,
+                                              final SysAdminIpPolicy sysAdminIpPolicy) {
         this.tokenFactory = tokenFactory;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
         this.oAuth2ClientService = oAuth2ClientService;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
         this.httpCookieOAuth2AuthorizationRequestRepository = httpCookieOAuth2AuthorizationRequestRepository;
         this.systemSecurityService = systemSecurityService;
+        this.sysAdminIpPolicy = sysAdminIpPolicy;
     }
 
     @Override
@@ -84,6 +89,15 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(oauth2Client.getMapperConfig().getType());
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     oauth2Client);
+
+            // A third-party identity provider asserting a sysadmin's email must not mint tokens from
+            // outside the sysadmin IP allowlist; the generic message keeps the account's role unknowable.
+            RestAuthenticationDetails details = new RestAuthenticationDetails(request);
+            if (sysAdminIpPolicy.isBlocked(securityUser.getAuthority(), securityUser.getTenantId(), securityUser.getId(),
+                    details.getResolvedAddress(), details.getRawSocketAddress(), "oauth2")) {
+                throw new BadCredentialsException("Authentication failed");
+            }
+
             baseUrl = getBaseUrl(request, callbackUrlScheme, securityUser);
 
             clearAuthenticationAttributes(request, response);

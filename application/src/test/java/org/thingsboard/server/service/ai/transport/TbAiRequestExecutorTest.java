@@ -178,8 +178,13 @@ class TbAiRequestExecutorTest {
                 .containsEntry("X-Forwarded-Port", port);
         if (forwardedFor != null) {
             assertThat(headers).containsEntry("X-Forwarded-For", forwardedFor);
+            // the forwarded address is only honored on loopback together with the internal token
+            assertThat(headers).containsEntry(
+                    org.thingsboard.server.service.security.ip.InternalForwardingToken.HEADER,
+                    org.thingsboard.server.service.security.ip.InternalForwardingToken.value());
         } else {
             assertThat(headers).doesNotContainKey("X-Forwarded-For");
+            assertThat(headers).doesNotContainKey(org.thingsboard.server.service.security.ip.InternalForwardingToken.HEADER);
         }
     }
 

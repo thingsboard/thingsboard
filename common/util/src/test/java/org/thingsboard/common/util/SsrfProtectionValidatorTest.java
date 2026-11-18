@@ -278,10 +278,10 @@ public class SsrfProtectionValidatorTest {
 
     @Test
     void testCidrRangeInvalidPrefixLength() {
-        assertThatThrownBy(() -> SsrfProtectionValidator.CidrRange.parse("10.0.0.0/999"))
+        assertThatThrownBy(() -> CidrRange.parseLiteral("10.0.0.0/999"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid prefix length");
-        assertThatThrownBy(() -> SsrfProtectionValidator.CidrRange.parse("10.0.0.0/-1"))
+        assertThatThrownBy(() -> CidrRange.parseLiteral("10.0.0.0/-1"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid prefix length");
     }
