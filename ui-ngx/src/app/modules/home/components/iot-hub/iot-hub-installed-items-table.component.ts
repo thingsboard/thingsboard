@@ -36,15 +36,7 @@ import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
-import { ConverterService } from '@core/http/converter.service';
-import { ResourcesService } from '@core/services/resources.service';
-import {
-  DefaultConverterUpdate,
-  differsFromDefaultConverter,
-  loadDefaultUplinkConverter,
-  loadOwnDefaultConverterIds
-} from '@home/components/iot-hub/iot-hub-default-converter';
-import { firstValueFrom, forkJoin } from 'rxjs';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'tb-iot-hub-installed-items-table',
@@ -77,9 +69,6 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   isLoading = false;
 
   publishedVersionMap = new Map<string, ItemPublishedVersionInfo>();
-  // Installed device packages whose default converter differs from ThingsBoard's default converter now
-  converterUpdates = new Map<string, DefaultConverterUpdate>();
-  private converterCheckRun = 0;
   updatesChecked = false;
   isCheckingUpdates = false;
   updatesCheckFailed = false;
@@ -103,9 +92,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     private iotHubActions: IotHubActionsService,
     private elementRef: ElementRef,
     private zone: NgZone,
-    private cd: ChangeDetectorRef,
-    private converterService: ConverterService,
-    private resourcesService: ResourcesService
+    private cd: ChangeDetectorRef
   ) {
     this.widgetResize$ = new ResizeObserver(() => {
       this.zone.run(() => {
@@ -260,7 +247,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         infos.forEach(info => this.publishedVersionMap.set(info.itemId, info));
         this.loadUpdatesCount(() => {
           this.updatesChecked = true;
-          // No updates: stay on the full list (it also shows converter updates)
+          // No updates: stay on the full list
           this.showOnlyUpdates(this.updatesCount > 0);
         });
       },
@@ -362,70 +349,6 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     });
   }
 
-  hasConverterUpdate(item: IotHubInstalledItem): boolean {
-    return this.converterUpdates.has(item.id.id);
-  }
-
-  /** Brings the package's default converter to ThingsBoard's default one. Other packages on the converter take it too. */
-  updateConverter(item: IotHubInstalledItem): void {
-    const update = this.converterUpdates.get(item.id.id);
-    if (!update) {
-      return;
-    }
-    this.iotHubActions.updateDefaultConverter(update).subscribe(updated => {
-      if (updated) {
-        this.loadData();
-      }
-    });
-  }
-
-  /**
-   * The device packages on this page whose step with "default": true installed a converter that differs from
-   * ThingsBoard's default converter now. ThingsBoard's default changes with ThingsBoard, so the package has no new version for it.
-   */
-  private async checkConverterUpdates(): Promise<void> {
-    // A later load (another page, sort or search) starts another run: an earlier one finishing last mustn't win
-    const run = ++this.converterCheckRun;
-    // The package's default converter of each DEVICE package on the page
-    const checks: { item: IotHubInstalledItem; stateKey: string; converterId: string }[] = [];
-    // Over all installed packages, not only this page's, as the update dialog decides
-    let ownDefaultConverterIds: Set<string> | undefined;
-    for (const item of this.dataSource) {
-      const states = item.itemType === 'DEVICE' ? Object.entries((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {}) : [];
-      for (const [stateKey, state] of states) {
-        const id: string = state?.defaultConverter ? state.entityOutput?.id : undefined;
-        if (!id) {
-          continue;
-        }
-        // A converter taken as it was counts only when a package installed it as its default converter
-        if (state.resolution === 'use-existing') {
-          ownDefaultConverterIds ??= await loadOwnDefaultConverterIds(this.iotHubApiService);
-          if (!ownDefaultConverterIds.has(id)) {
-            continue;
-          }
-        }
-        checks.push({ item, stateKey, converterId: id });
-      }
-    }
-    const changed = await Promise.all(checks.map(async ({ item, stateKey, converterId }): Promise<DefaultConverterUpdate | null> => {
-      const converter = await firstValueFrom(this.converterService.getConverter(converterId, {ignoreErrors: true, ignoreLoading: true}))
-        .catch(() => null);
-      if (!converter) {
-        return null;
-      }
-      const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
-        converter.configuration.scriptLang, converter.name);
-      return defaultConverter && differsFromDefaultConverter(converter, defaultConverter) ?
-        { installedItem: item, stateKey, converter, defaultConverter } : null;
-    }));
-    if (run !== this.converterCheckRun) {
-      return;
-    }
-    this.converterUpdates = new Map(changed.filter(update => !!update).map(update => [update.installedItem.id.id, update]));
-    this.cd.markForCheck();
-  }
-
-
   getPublishedVersionInfo(item: IotHubInstalledItem): ItemPublishedVersionInfo | undefined {
     return this.publishedVersionMap.get(item.itemId);
   }
@@ -458,9 +381,6 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
         this.totalElements = data.totalElements;
         this.loadFailed = false;
         this.isLoading = false;
-        if (this.updatesChecked && !this.itemVersion && !this.onlyUpdates) {
-          void this.checkConverterUpdates();
-        }
       },
       error: () => {
         if (run !== this.loadRun) {
