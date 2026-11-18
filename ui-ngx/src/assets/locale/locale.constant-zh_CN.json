@@ -5635,8 +5635,6 @@
     "access-id-required": "访问 ID 为必填项。",
     "access-key": "访问密钥",
     "access-key-required": "访问密钥为必填项。",
-    "access-key-min-length": "访问密钥过短。",
-    "access-key-max-length": "访问密钥过长。",
     "connection-parameters": "连接参数",
     "service-bus-namespace-name": "Service Bus 命名空间名称",
     "service-bus-namespace-name-required": "Service Bus 命名空间名称为必填项。",

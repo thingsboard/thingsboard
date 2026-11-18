@@ -5633,8 +5633,6 @@
     "access-id-required": "O ID de acesso é obrigatório.",
     "access-key": "Chave de acesso",
     "access-key-required": "A chave de acesso é obrigatória.",
-    "access-key-min-length": "A chave de acesso é muito curta.",
-    "access-key-max-length": "A chave de acesso é muito longa.",
     "connection-parameters": "Parâmetros de conexão",
     "service-bus-namespace-name": "Nome do namespace do Service Bus",
     "service-bus-namespace-name-required": "O nome do namespace do Service Bus é obrigatório.",

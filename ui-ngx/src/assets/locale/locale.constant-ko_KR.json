@@ -5662,8 +5662,6 @@
         "access-id-required": "액세스 ID는 필수 항목입니다.",
         "access-key": "액세스 키",
         "access-key-required": "액세스 키는 필수 항목입니다.",
-        "access-key-min-length": "액세스 키가 너무 짧습니다.",
-        "access-key-max-length": "액세스 키가 너무 깁니다.",
         "connection-parameters": "연결 매개변수",
         "service-bus-namespace-name": "Service Bus 네임스페이스 이름",
         "service-bus-namespace-name-required": "Service Bus 네임스페이스 이름은 필수 항목입니다.",
