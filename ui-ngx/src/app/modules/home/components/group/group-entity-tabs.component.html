@@ -7,7 +7,7 @@
 @if (entity && (entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.READ_ATTRIBUTES)) {
   <mat-tab
     label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
-    <tb-attribute-table [defaultAttributeScope]="entityType === entityTypes.DEVICE ? attributeScopes.CLIENT_SCOPE : attributeScopes.SERVER_SCOPE"
+    <tb-attribute-table [defaultAttributeScope]="entityType === entityTypes.DEVICE || entityType === entityTypes.ENTITY_VIEW ? allAttributeScopes : attributeScopes.SERVER_SCOPE"
       [readonly]="!(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE_ATTRIBUTES)"
       [active]="attributesTab.isActive"
       [entityId]="entity.id"

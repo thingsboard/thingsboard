@@ -5,12 +5,14 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="mat-padding tb-entity-table tb-absolute-fill xs:!w-screen sm:!w-fit" [class.tb-popover-mode]="popoverComponent">
-  <div class="tb-entity-table-content flex flex-1 flex-col" [class.tb-outlined-border]="!popoverComponent">
+<div class="tb-entity-table tb-absolute-fill xs:!w-screen sm:!w-fit" [class.mat-padding]="popoverComponent || !singleEntityMode" [class.tb-popover-mode]="popoverComponent">
+  <div class="tb-entity-table-content flex flex-1 flex-col" [class.tb-outlined-border]="!popoverComponent && !singleEntityMode">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
       <div class="mat-toolbar-tools">
         <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
-          <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
+          @if (!singleEntityMode) {
+            <span class="tb-entity-table-title">{{ 'version-control.versions' | translate }}</span>
+          }
           <tb-branch-autocomplete
             #branchAutocompleteComponent
             subscriptSizing="dynamic"

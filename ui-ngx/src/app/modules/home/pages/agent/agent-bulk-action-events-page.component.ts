@@ -67,6 +67,7 @@ export class AgentBulkActionEventsPageComponent implements OnInit {
       this.viewContainerRef,
       this.router
     );
+    this.tableConfig.outlinedBorder = true;
     this.agentService.getAgentBulkAction(bulkActionId).subscribe(action => {
       if (action?.agentProfileId) {
         this.tableConfig.backNavigationCommands = ['/edgeManagement/profiles/agent/' + action.agentProfileId];

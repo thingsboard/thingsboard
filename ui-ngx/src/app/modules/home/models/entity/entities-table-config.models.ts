@@ -228,6 +228,15 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.DESC};
   displayPagination = true;
   pageMode = true;
+  private outlinedBorderValue: boolean = null;
+
+  get outlinedBorder(): boolean {
+    return this.outlinedBorderValue ?? this.pageMode;
+  }
+
+  set outlinedBorder(value: boolean) {
+    this.outlinedBorderValue = value;
+  }
   defaultPageSize = 10;
   pageStepCount = 3;
   pageStepIncrement: number;

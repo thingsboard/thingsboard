@@ -195,6 +195,7 @@ export class GroupEntitiesTableComponent extends PageComponent implements AfterV
     this.entityGroupConfig = entityGroup.entityGroupConfig;
     if (groupParams.hierarchyView) {
       this.entityGroupConfig.pageMode = false;
+      this.entityGroupConfig.outlinedBorder = true;
     }
     this.entityGroupConfig.onToggleEntityGroupDetails = this.onToggleEntityGroupDetails.bind(this);
     this.entityGroupConfig.onToggleEntityDetails = this.onToggleEntityDetails.bind(this);

@@ -23,6 +23,16 @@
   }
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" class="flex flex-col gap-2">
+      @if (data.attributeScopes?.length > 1) {
+        <div class="tb-form-row no-border no-padding space-between">
+          <div translate>attribute.scope</div>
+          <tb-toggle-select formControlName="scope">
+            @for (scope of data.attributeScopes; track scope) {
+              <tb-toggle-option [value]="scope">{{ telemetryTypeTranslationsShort.get(scope) | translate }}</tb-toggle-option>
+            }
+          </tb-toggle-select>
+        </div>
+      }
       <tb-string-autocomplete
         panelWidth=""
         additionalClass="mat-block tb-inline-field tb-suffix-absolute tb-suffix-show-on-hover"
@@ -30,7 +40,7 @@
         [label]="'attribute.key' | translate"
         subscriptSizing="dynamic"
         appearance="outline"
-        [fetchOptionsFn]="isTelemetry && fetchOptions.bind(this)"
+        [fetchOptionsFn]="fetchOptions"
         [errorMessages]="attributeErrorMessages"
         [controlValidators]="keyValidators"
         formControlName="key">
