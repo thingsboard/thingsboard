@@ -86,12 +86,16 @@ public class ModbusConnectionPool {
     public ModbusConnection acquire(ModbusSessionContext session) {
         ConnectionSpec spec = connectionSpec(session.getDeviceConfig().getEndpoint());
         Duration timeout = Duration.ofMillis(session.getEffectiveTimeoutMs());
+
         return connections.compute(spec.key(), (key, existing) -> {
             if (existing != null && !existing.getSettings().equals(spec.settings())) {
-                throw new IllegalStateException("Modbus connection " + key + " is already used with " + existing.getSettings()
-                        + "; device requests " + spec.settings());
+                throw new IllegalStateException(
+                        "Modbus connection " + key + " is already used with " + existing.getSettings() + "; device requests " + spec.settings());
             }
-            var connection = existing != null ? existing : create(spec, timeout);
+            var connection = existing != null
+                    ? existing
+                    : create(spec, timeout);
+
             connection.attach(session.getSessionId());
             connection.ensureTimeout(timeout);
             return connection;
@@ -162,7 +166,8 @@ public class ModbusConnectionPool {
                     .dataBits(serial.getDataBits())
                     .stopBits(getSerialStopBits(serial.getStopBits()))
                     .requestTimeout(requestTimeout)
-                    .executor(executor);
+                    .executor(executor)
+                    .scheduler(reconnectScheduler);
 
             ModbusRs485Settings rs485 = serial.getRs485();
             if (rs485 != null) {

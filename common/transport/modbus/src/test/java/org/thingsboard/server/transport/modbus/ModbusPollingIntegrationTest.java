@@ -14,6 +14,9 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -29,6 +32,8 @@ import org.thingsboard.server.common.data.transport.modbus.ModbusByteOrder;
 import org.thingsboard.server.common.data.transport.modbus.ModbusDataType;
 import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
 import org.thingsboard.server.common.data.transport.modbus.ModbusMapping;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusEndpoint;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusSerialEndpoint;
 import org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpEndpoint;
 import org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpFraming;
 import org.thingsboard.server.common.transport.TransportService;
@@ -42,6 +47,7 @@ import org.thingsboard.server.transport.modbus.session.ModbusSessionContext;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -95,6 +101,7 @@ class ModbusPollingIntegrationTest {
         ReflectionTestUtils.setField(pool, "maxInFlightPerEndpoint", 1);
         ReflectionTestUtils.setField(pool, "maxQueueSizePerEndpoint", 100);
         ReflectionTestUtils.setField(pool, "connectTimeoutMs", 1000L);
+        ReflectionTestUtils.setField(pool, "serialMaxReconnectDelayMs", 1000L);
         pool.init();
         service = new ModbusTransportService(pool, transportService);
         ReflectionTestUtils.setField(service, "schedulerThreadPoolSize", 2);
@@ -319,6 +326,59 @@ class ModbusPollingIntegrationTest {
             service.stopPolling(session);
         } finally {
             rtuServer.stop();
+        }
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS)
+    void serialPortPollsAndWrites(@TempDir Path directory) throws Exception {
+        Path port = directory.resolve("ttyModbus");
+        ModbusRtuServer device = ModbusRtuServer.create(new PtySerialPort(port), services());
+        device.start();
+        try {
+            writeInputFloat(1, 0, 5.5f);
+            writeInputFloat(2, 0, 7.5f);
+            ModbusDeviceProfileTransportConfiguration profile = profile(false, 100L);
+            profile.setRpc(List.of(mapping("setSetpoint", ModbusDataType.UINT16, ModbusFunctionCode.WRITE_SINGLE_REGISTER, 30, null)));
+            ModbusSessionContext first = session(serialEndpoint(port), 1, profile);
+            ModbusSessionContext second = session(serialEndpoint(port), 2, profile(false, 100L));
+            first.activate(() -> {});
+            service.startPolling(first);
+            service.startPolling(second);
+
+            verifyVoltagePolled(5.5, WAIT_MS);
+            verifyVoltagePolled(7.5, WAIT_MS);
+            assertThat(rpc(first, 1, "setSetpoint", "42").getPayload()).isEqualTo("{\"result\":\"ok\"}");
+            assertThat(holdingRegister(1, 30)).containsExactly(0, 42);
+            service.stopPolling(first);
+            service.stopPolling(second);
+        } finally {
+            device.stop();
+        }
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS)
+    void serialPortPollingResumesAfterThePortIsUnpluggedAndPluggedBackIn(@TempDir Path directory) throws Exception {
+        Path port = directory.resolve("ttyModbus");
+        ModbusRtuServer device = ModbusRtuServer.create(new PtySerialPort(port), services());
+        device.start();
+        try {
+            writeInputFloat(1, 0, 1f);
+            ModbusSessionContext session = session(serialEndpoint(port), 1, profile(false, 100L));
+            service.startPolling(session);
+            verifyVoltagePolled(1.0, WAIT_MS);
+
+            device.stop();
+            verify(transportService, timeout(WAIT_MS).atLeastOnce()).errorEvent(any(), any(), anyString(), any());
+
+            writeInputFloat(1, 0, 2f);
+            device.start();
+
+            verifyVoltagePolled(2.0, RECOVERY_MS);
+            service.stopPolling(session);
+        } finally {
+            device.stop();
         }
     }
 
@@ -559,10 +619,20 @@ class ModbusPollingIntegrationTest {
         return msg.getKvList().stream().filter(kv -> kv.getKey().equals(key)).findFirst().orElseThrow();
     }
 
+    private static ModbusSerialEndpoint serialEndpoint(Path port) {
+        ModbusSerialEndpoint endpoint = new ModbusSerialEndpoint();
+        endpoint.setPort(port.toString());
+        return endpoint;
+    }
+
     private ModbusSessionContext session(int unitId, ModbusDeviceProfileTransportConfiguration profile) {
         ModbusTcpEndpoint endpoint = new ModbusTcpEndpoint();
         endpoint.setHost("127.0.0.1");
         endpoint.setPort(port);
+        return session(endpoint, unitId, profile);
+    }
+
+    private ModbusSessionContext session(ModbusEndpoint endpoint, int unitId, ModbusDeviceProfileTransportConfiguration profile) {
         ModbusDeviceTransportConfiguration deviceConfig = new ModbusDeviceTransportConfiguration();
         deviceConfig.setEndpoint(endpoint);
         deviceConfig.setUnitId(unitId);

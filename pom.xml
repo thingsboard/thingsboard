@@ -185,6 +185,7 @@
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
         <digitalpetri-modbus.version>2.1.6</digitalpetri-modbus.version>
+        <jserialcomm.version>2.11.4</jserialcomm.version>
         <bytebuddy.version>1.18.4</bytebuddy.version>
         <langchain4j.version>1.16.1</langchain4j.version>
         <error_prone_annotations.version>2.43.0</error_prone_annotations.version>
@@ -2394,9 +2395,9 @@
                 <version>${digitalpetri-modbus.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.digitalpetri.modbus</groupId>
-                <artifactId>modbus-serial</artifactId>
-                <version>${digitalpetri-modbus.version}</version>
+                <groupId>com.fazecast</groupId>
+                <artifactId>jSerialComm</artifactId>
+                <version>${jserialcomm.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>

@@ -54,8 +54,8 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.digitalpetri.modbus</groupId>
-            <artifactId>modbus-serial</artifactId>
+            <groupId>com.fazecast</groupId>
+            <artifactId>jSerialComm</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
