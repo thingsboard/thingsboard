@@ -1606,9 +1606,14 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('read-scada-symbol', {name: str(result.title) ?? '—'}), blocks: scadaSymbolOverviewBlocks(result)};
     }
-    case 'build_scada_symbol': {
+    case 'build_scada_symbol':
+    case 'create_scada_symbol':
+    case 'update_scada_symbol': {
       const raw = typeof result === 'string' && result.startsWith('OK: ') ? aiParse(result.slice(4)) : result;
-      const hood = str(values.symbol) ? text('update-scada-symbol', {name: str(values.title) ?? '—'}) : text('create-scada-symbol', {name: str(values.title) ?? '—'});
+      const name = (isObject(raw) ? str(raw.title) : undefined) ?? str(values.title) ?? '—';
+      const hood = tool === 'create_scada_symbol' ? text('copy-scada-symbol', {name})
+        : tool === 'update_scada_symbol' ? text('change-scada-symbol', {name})
+        : str(values.symbol) ? text('update-scada-symbol', {name}) : text('create-scada-symbol', {name});
       if (!isObject(raw)) {
         return {hood, blocks: generic(raw, 'result')};
       }

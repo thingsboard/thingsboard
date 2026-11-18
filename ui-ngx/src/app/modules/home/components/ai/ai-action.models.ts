@@ -103,6 +103,8 @@ const TOOL_WORDS: Record<string, string> = {
   save_widgets_bundle: 'save-widgets-bundle',
   read_scada_symbols: 'read-scada-symbols',
   build_scada_symbol: 'build-scada-symbol',
+  create_scada_symbol: 'copy-scada-symbol',
+  update_scada_symbol: 'update-scada-symbol',
   save_two_factor_settings: 'save-two-factor-settings',
   save_oauth2_domain: 'save-oauth2-domain',
   read_my_account: 'read-my-account',

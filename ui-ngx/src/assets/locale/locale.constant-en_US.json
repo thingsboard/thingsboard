@@ -982,6 +982,8 @@
             "no-scada-symbols": "No SCADA symbols",
             "create-scada-symbol": "Drew the SCADA symbol {{name}}",
             "update-scada-symbol": "Redrew the SCADA symbol {{name}}",
+            "copy-scada-symbol": "Copied the SCADA symbol as {{name}}",
+            "change-scada-symbol": "Changed the SCADA symbol {{name}}",
             "scada-symbol-behaviors": "Behaviors",
             "scada-symbol-problems": "Problems",
             "create-widget": "Created the widget {{name}}",
@@ -1630,6 +1632,14 @@
                 "run": "Drawing the SCADA symbol",
                 "done": "Drew the SCADA symbol"
             },
+            "copy-scada-symbol": {
+                "run": "Copying the SCADA symbol",
+                "done": "Copied the SCADA symbol"
+            },
+            "update-scada-symbol": {
+                "run": "Changing the SCADA symbol",
+                "done": "Changed the SCADA symbol"
+            },
             "read-widget-parts": {
                 "run": "Reading the widget's {{parts}}",
                 "done": "Read the widget's {{parts}}"
@@ -2215,6 +2225,8 @@
                 "scada-behavior": "Behaviors",
                 "scada-properties": "Settings",
                 "scada-tags": "Search tags",
+                "scada-copyOf": "Copy of",
+                "scada-changed": "Changed",
                 "format": "Format",
                 "templateType": "Template type",
                 "added": "Added",

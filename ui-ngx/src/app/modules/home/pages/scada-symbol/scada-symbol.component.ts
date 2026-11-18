@@ -15,7 +15,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActivatedRoute } from '@angular/router';
-import { map, switchMap, takeUntil } from 'rxjs/operators';
+import { buffer, debounceTime, map, switchMap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ScadaSymbolData, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import {
@@ -49,7 +49,9 @@ import { WidgetActionCallbacks } from '@home/components/widget/action/manage-wid
 import {
   ScadaSymbolMetadataComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata.component';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { EntityType } from '@shared/models/entity-type.models';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import {
@@ -69,6 +71,8 @@ import { WidgetService } from '@core/http/widget.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+
+const AI_RELOAD_DEBOUNCE_MS = 1000;
 
 @Component({
     selector: 'tb-scada-symbol',
@@ -158,6 +162,7 @@ export class ScadaSymbolComponent extends PageComponent
               private imageService: ImageService,
               private widgetService: WidgetService,
               private userPermissionsService: UserPermissionsService,
+              private panelService: AiAssistantPanelService,
               private dialog: MatDialog) {
     super(store);
 
@@ -200,9 +205,68 @@ export class ScadaSymbolComponent extends PageComponent
         setTimeout(() => this.updateBreadcrumbs.emit());
       }
     );
+    this.setupAiAssistant();
+  }
+
+  private get aiAssistantAvailable(): boolean {
+    return getCurrentAuthState(this.store).aiEnabled && this.authUser.authority === Authority.TENANT_ADMIN
+      && this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL);
+  }
+
+  private aiEditorDraftProvider = () => this.aiEditorDraft();
+
+  private setupAiAssistant() {
+    if (!this.aiAssistantAvailable) {
+      return;
+    }
+    this.panelService.setEditorDraftProvider(this.aiEditorDraftProvider);
+    this.panelService.updatedData$.pipe(
+      buffer(this.panelService.updatedData$.pipe(debounceTime(AI_RELOAD_DEBOUNCE_MS))),
+      map(batches => batches.flat()),
+      takeUntil(this.destroy$)
+    ).subscribe(affected => {
+      const id = this.symbolData?.imageResource?.id?.id;
+      if (id && affected.some(entityId => entityId.entityType === EntityType.TB_RESOURCE && entityId.id === id)) {
+        this.reloadFromServer();
+      }
+    });
+  }
+
+  private aiEditorDraft(): unknown | null {
+    if (this.readonly || !this.isDirty || !this.symbolData?.imageResource) {
+      return null;
+    }
+    try {
+      const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+      const type = imageResourceType(this.symbolData.imageResource);
+      return {scadaSymbol: {
+        link: `${IMAGES_URL_PREFIX}/${type}/${this.symbolData.imageResource.resourceKey}`,
+        content: this.prepareScadaSymbolContent(metadata)
+      }};
+    } catch {
+      return null;
+    }
+  }
+
+  private reloadFromServer() {
+    const imageResource = this.symbolData.imageResource;
+    const type = imageResourceType(imageResource);
+    this.imageService.getImageInfo(type, imageResource.resourceKey, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      switchMap(imageInfo => this.imageService.getImageString(
+        `${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(imageInfo.resourceKey)}`).pipe(
+        map(content => ({imageResource: imageInfo, scadaSymbolContent: content}))
+      ))
+    ).subscribe(data => {
+      this.previewMode = false;
+      this.init(data);
+      this.updateBreadcrumbs.emit();
+    });
   }
 
   ngOnDestroy() {
+    if (this.aiAssistantAvailable) {
+      this.panelService.setEditorDraftProvider(null);
+    }
     super.ngOnDestroy();
     this.destroy$.next();
     this.destroy$.complete();

@@ -76,7 +76,7 @@ import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.comp
 
 export type AiChatVariant = 'page' | 'panel';
 
-const LIVE_EDITED_TYPES = new Set<EntityType>([EntityType.DASHBOARD, EntityType.REPORT_TEMPLATE, EntityType.WIDGET_TYPE, EntityType.WIDGETS_BUNDLE]);
+const LIVE_EDITED_TYPES = new Set<EntityType>([EntityType.DASHBOARD, EntityType.REPORT_TEMPLATE, EntityType.WIDGET_TYPE, EntityType.WIDGETS_BUNDLE, EntityType.TB_RESOURCE]);
 
 @Component({
   selector: 'tb-ai-chat',
@@ -1145,7 +1145,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     const chatId = this.chatId();
     const view = this.panelService.clientContext()?.view?.type ?? aiPageView((this.router.url || '/').split(/[?#]/)[0]);
     const values = (aiParse(args) ?? {}) as {symbol?: string};
-    if (tool !== 'build_scada_symbol' || values.symbol || !chatId || !result?.startsWith('OK: ')
+    if ((tool !== 'build_scada_symbol' && tool !== 'create_scada_symbol') || values.symbol || !chatId || !result?.startsWith('OK: ')
       || (view !== AiAssistantViewType.SCADA_SYMBOL_LIST && view !== AiAssistantViewType.SCADA_SYMBOL)) {
       return;
     }
