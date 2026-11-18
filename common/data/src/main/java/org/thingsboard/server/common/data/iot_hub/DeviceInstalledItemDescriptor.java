@@ -19,7 +19,8 @@ import java.util.Set;
 public class DeviceInstalledItemDescriptor implements IotHubInstalledItemDescriptor {
 
     private List<EntityId> createdEntityIds;
-    // Of createdEntityIds, the entities the user chose to use as they were: the package doesn't own them
+    // Of createdEntityIds, the entities the user chose to use as they were: the package doesn't own them.
+    // Read them with getUsedExistingEntityIdsIncludingLegacy(): installs without this field keep them only in installState.
     private List<EntityId> usedExistingEntityIds;
     private DashboardId dashboardId;
     private String selectedInstallMethod;
@@ -30,7 +31,7 @@ public class DeviceInstalledItemDescriptor implements IotHubInstalledItemDescrip
      * them only in its install state, with the resolution "use-existing".
      */
     @JsonIgnore
-    public Set<EntityId> getUsedExistingEntities() {
+    public Set<EntityId> getUsedExistingEntityIdsIncludingLegacy() {
         if (usedExistingEntityIds != null) {
             return new LinkedHashSet<>(usedExistingEntityIds);
         }

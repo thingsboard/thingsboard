@@ -434,7 +434,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         }
         List<EntityId> stepEntityIds = new ArrayList<>();
         Map<UUID, EntityId> usedExistingIds = new LinkedHashMap<>();
-        previous.getUsedExistingEntities().forEach(id -> usedExistingIds.put(id.getId(), id));
+        previous.getUsedExistingEntityIdsIncludingLegacy().forEach(id -> usedExistingIds.put(id.getId(), id));
         List<SavedEntity> saved = new ArrayList<>();
         List<SavedEntity> grouped = new ArrayList<>();
         List<DevicePackageRequest.Step> connectorSteps = new ArrayList<>();
@@ -1092,7 +1092,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
      */
     private static Set<UUID> ownedIds(DeviceInstalledItemDescriptor descriptor) {
         Set<UUID> ids = new HashSet<>(createdIds(descriptor).keySet());
-        descriptor.getUsedExistingEntities().forEach(id -> ids.remove(id.getId()));
+        descriptor.getUsedExistingEntityIdsIncludingLegacy().forEach(id -> ids.remove(id.getId()));
         return ids;
     }
 
