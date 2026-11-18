@@ -30,7 +30,6 @@ import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.s
 @Component({
     selector: 'tb-alarm-rules-table',
     templateUrl: './alarm-rules-table.component.html',
-    styleUrls: ['./alarm-rules-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [EntityDebugSettingsService],
     standalone: false

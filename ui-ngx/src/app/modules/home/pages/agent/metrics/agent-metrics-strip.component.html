@@ -29,10 +29,11 @@
       <span class="tb-agent-metrics-strip-value">{{ volumeLabel }}</span>
     </span>
   }
-  @if (showChartsButton && !chartsActive) {
+  @if (showChartsButton) {
     <button mat-stroked-button
       type="button"
       class="tb-agent-metrics-strip-toggle lt-xl:!hidden"
+      [class.invisible]="chartsActive"
       (click)="onToggleCharts($event)">
       <mat-icon>show_chart</mat-icon>
       <span translate>agent.metrics-show-charts</span>
@@ -40,6 +41,7 @@
     <button mat-icon-button
       type="button"
       class="tb-agent-metrics-strip-toggle xl:!hidden"
+      [class.invisible]="chartsActive"
       [matTooltip]="'agent.metrics-show-charts' | translate"
       matTooltipPosition="above"
       (click)="onToggleCharts($event)">

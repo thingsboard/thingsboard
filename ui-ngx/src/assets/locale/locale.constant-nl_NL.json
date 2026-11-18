@@ -12556,8 +12556,6 @@
       "check-status-settings": "Statuscontrole-instellingen",
       "perform-rpc-status-check": "RPC-statuscontrole uitvoeren",
       "retrieve-led-status-value-method": "LED-status ophalen via methode",
-      "led-status-value-attribute": "Attribuut met LED-statuswaarde",
-      "led-status-value-timeseries": "Tijdreeks met LED-statuswaarde",
       "check-status-method": "RPC-methode voor statuscontrole",
       "parse-led-status-value-function": "Functie voor parsering van LED-statuswaarde",
       "knob-title": "Knoptitel"

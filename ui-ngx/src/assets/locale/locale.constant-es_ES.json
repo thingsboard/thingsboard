@@ -12556,8 +12556,6 @@
       "check-status-settings": "Configuración de verificación de estado",
       "perform-rpc-status-check": "Realizar verificación de estado del dispositivo mediante RPC",
       "retrieve-led-status-value-method": "Recuperar valor de estado del LED usando método",
-      "led-status-value-attribute": "Atributo del dispositivo que contiene el estado del LED",
-      "led-status-value-timeseries": "Serie temporal del dispositivo que contiene el estado del LED",
       "check-status-method": "Método RPC para verificar estado del dispositivo",
       "parse-led-status-value-function": "Función para analizar el valor del estado del LED",
       "knob-title": "Título del control giratorio"
