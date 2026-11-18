@@ -71,6 +71,9 @@ Each source file needs the project's license header. Apply it automatically befo
 mvn license:format
 ```
 
+Which header a file needs depends on where it comes from, and a changed file may need another one: see
+[docs/licensing-guide.md](docs/licensing-guide.md#file-headers).
+
 Building the UI on its own, from `ui-ngx`:
 
 ```bash
@@ -147,6 +150,16 @@ recreated on the next run:
 rm ~/.testcontainers.properties
 ```
 
+## Dependencies, SBOMs and licensing
+
+Every artifact ThingsBoard ships carries an SBOM, and the root `THIRD-PARTY-NOTICES` is generated from those SBOMs. A
+change that adds, updates or removes a Maven or npm dependency also regenerates that file, and pull requests check it.
+
+- [docs/sbom.md](docs/sbom.md): which artifacts get an SBOM, how to build with SBOMs, and what to do for each kind of
+  dependency change.
+- [docs/licensing-guide.md](docs/licensing-guide.md): the project's license, the file headers, the third-party notices,
+  how to regenerate them, and what to do when the generator stops.
+
 ## Submitting changes
 
 Open a pull request against `master`. Fill out the pull request template, and make sure:
@@ -154,6 +167,8 @@ Open a pull request against `master`. Fill out the pull request template, and ma
 - New or changed behavior has test coverage.
 - `mvn license:format` has been run, so new files carry the correct license header. Do not add
   your own copyright or author lines to file headers.
+- A change to the dependencies comes with the regenerated `THIRD-PARTY-NOTICES`: see
+  [docs/licensing-guide.md](docs/licensing-guide.md#regenerating-the-notices).
 - The change builds cleanly: `mvn -pl <module> -am -DskipTests -Dpkg.skip=true test-compile` at minimum for the modules you touched.
 - You have signed the Contributor License Agreement (see below).
 
