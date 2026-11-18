@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 @import "constants";
 
+$tb-report-components-library-width: 250px;
+$tb-report-components-library-border-width: 1px;
+
 .tb-report-template {
   width: 100%;
   height: 100%;
@@ -54,15 +57,18 @@
   .tb-report-components-library {
     box-sizing: content-box;
     z-index: 1;
-    width: 250px;
+    width: $tb-report-components-library-width;
     display: flex;
     flex-direction: column;
     background: #fff;
-    border-right: var(--mat-sidenav-container-divider-color) 1px solid;
+    border-right: var(--mat-sidenav-container-divider-color) $tb-report-components-library-border-width solid;
     &.tb-close-library {
       transform: translate3d(-100%, 0, 0);
-      margin-right: -251px;
     }
+  }
+  .tb-report-components-library.tb-close-library,
+  .tb-report-template-container.tb-panels-animating > .tb-report-components-library {
+    margin-right: -($tb-report-components-library-width + $tb-report-components-library-border-width);
   }
   .tb-report-template-content {
     position: relative;
@@ -115,11 +121,11 @@
       }
     }
   }
-  // The panels are animated with transforms from the component (animatePanels), not with CSS transitions
   .tb-report-template-container.tb-panels-animating > * {
     flex-shrink: 0;
   }
   .tb-report-settings {
+    --tb-report-settings-extend: 0px;
     position: relative;
     z-index: 2;
     width: 500px;
@@ -131,7 +137,7 @@
       top: 0;
       bottom: 0;
       left: 100%;
-      width: var(--tb-report-settings-extend, 0);
+      width: var(--tb-report-settings-extend);
       background: #fff;
     }
     &.tb-report-component-settings {

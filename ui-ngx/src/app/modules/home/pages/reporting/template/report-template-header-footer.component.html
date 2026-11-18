@@ -6,14 +6,14 @@
 -->
 <div class="tb-report-components-container tb-header" [class.tb-expanded]="expanded">
   <div class="tb-header-toolbar">
-    <tb-toggle-select class="tb-header-select" [(ngModel)]="headerToggleValue" (ngModelChange)="toggleCurrentHeader()">
+    <tb-toggle-select class="tb-header-select" data-flip="move" [(ngModel)]="headerToggleValue" (ngModelChange)="toggleCurrentHeader()">
       <tb-toggle-option value="header">{{ (header ? 'report-template.header' : 'report-template.footer') | translate }}</tb-toggle-option>
       <tb-toggle-option value="firstPageHeader">{{ (header ? 'report-template.first-page-header' : 'report-template.first-page-footer') | translate }}</tb-toggle-option>
     </tb-toggle-select>
-    <div class="tb-header-title">
+    <div class="tb-header-title" data-flip="move">
       {{ (header ? 'report-template.header' : 'report-template.footer') | translate }}
     </div>
-    <div #reportHeaderToolbarButtons class="tb-header-toolbar-buttons">
+    <div #reportHeaderToolbarButtons class="tb-header-toolbar-buttons" data-flip="move">
       <button mat-button class="tb-report-header-expand-button" (click)="toggleExpanded()">
         {{ (expanded ? 'report-template.collapse' : 'report-template.expand') | translate }}
         <mat-icon class="tb-mat-20" iconPositionEnd>expand_more</mat-icon>
@@ -33,7 +33,7 @@
   </div>
   <div #reportHeaderComponents class="tb-header-components">
     @if (!currentHeader.enabled) {
-      <div class="tb-disabled-header">
+      <div class="tb-disabled-header" data-flip="stretch">
         @if (header) {
           {{ (headerToggleValue === 'header' ? 'report-template.header-disabled' : 'report-template.first-page-header-disabled') | translate }}
         } @else {
@@ -41,7 +41,7 @@
         }
       </div>
     }
-    <tb-report-components
+    <tb-report-components data-flip="page"
       [context]="context"
       [format]="format"
       [readonly]="readonly"
@@ -58,7 +58,7 @@
       (componentEdit)="editReportComponent($event)"
       (componentRemoved)="reportComponentRemoved($event)">
     </tb-report-components>
-    <tb-report-components
+    <tb-report-components data-flip="page"
       [context]="context"
       [format]="format"
       [readonly]="readonly"

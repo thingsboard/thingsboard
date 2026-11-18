@@ -94,39 +94,10 @@ import { VersionControlComponent } from '@home/components/vc/version-control.com
 import { TbPopoverService } from '@shared/components/popover.service';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 import { HomeService } from '@core/services/home.service';
-
-interface PanelAnimationTarget {
-  element: HTMLElement;
-  rect: DOMRect;
-  page: boolean;
-  children: PanelAnimationTarget[];
-}
-
-/**
- * Elements of the report area animated when the side panels resize: report pages (scaled like the page itself)
- * and the editor UI around them (toolbars, titles), which keeps its size and only moves.
- */
-const collectPanelAnimationTargets = (root: HTMLElement): PanelAnimationTarget[] => {
-  const visit = (element: HTMLElement): PanelAnimationTarget => {
-    const rect = element.getBoundingClientRect();
-    if (!rect.width && !rect.height) {
-      return null;
-    }
-    const page = element.tagName.toLowerCase() === 'tb-report-components';
-    const children = page ? [] : Array.from(element.children).map(child => visit(child as HTMLElement)).filter(t => !!t);
-    return {element, rect, page, children};
-  };
-  return Array.from(root.children).map(child => visit(child as HTMLElement)).filter(t => !!t);
-};
-
-const hasBoxDecoration = (element: HTMLElement): boolean => {
-  const style = getComputedStyle(element);
-  return style.backgroundColor !== 'rgba(0, 0, 0, 0)' || parseFloat(style.borderTopWidth) > 0 ||
-    parseFloat(style.borderBottomWidth) > 0 || parseFloat(style.borderLeftWidth) > 0;
-};
-
-const containsPage = (target: PanelAnimationTarget): boolean =>
-  target.page || target.children.some(child => containsPage(child));
+import { PanelsAnimator } from '@home/pages/reporting/template/report-panels-animator';
+import {
+  ReportComponentLayoutService
+} from '@home/pages/reporting/template/components/report-component-layout.service';
 
 @Component({
     selector: 'tb-report-template-page',
@@ -185,6 +156,18 @@ export class ReportTemplatePageComponent extends PageComponent
     read: ElementRef<HTMLElement>,
   });
 
+  reportTemplateSectionsEl = viewChild('reportTemplateSections', {
+    read: ElementRef<HTMLElement>,
+  });
+
+  reportComponentsLibraryEl = viewChild('reportComponentsLibrary', {
+    read: ElementRef<HTMLElement>,
+  });
+
+  reportSettingsEl = viewChild('reportSettings', {
+    read: ElementRef<HTMLElement>,
+  });
+
   readonly = false;
 
   format: TbReportFormat;
@@ -238,7 +221,7 @@ export class ReportTemplatePageComponent extends PageComponent
 
   private scrolling = false;
 
-  private panelsAnimation: {animations: Animation[]; commit: () => void};
+  private readonly panelsAnimator: PanelsAnimator;
 
   private layoutResize$: ResizeObserver;
 
@@ -270,8 +253,23 @@ export class ReportTemplatePageComponent extends PageComponent
               private popoverService: TbPopoverService,
               private viewContainerRef: ViewContainerRef,
               private breadcrumbService: BreadcrumbService,
+              private reportComponentLayoutService: ReportComponentLayoutService,
               public homeService: HomeService) {
     super();
+    this.panelsAnimator = new PanelsAnimator(
+      {
+        ready: () => this.viewInited,
+        container: () => this.reportTemplateContainerEl()?.nativeElement,
+        content: () => this.reportTemplateContentEl()?.getElementRef().nativeElement,
+        layout: () => this.reportTemplateLayoutEl()?.nativeElement,
+        sections: () => this.reportTemplateSectionsEl()?.nativeElement,
+        settings: () => this.reportSettingsEl()?.nativeElement,
+        library: () => this.reportComponentsLibraryEl()?.nativeElement
+      },
+      this.reportComponentLayoutService,
+      () => this.layoutResize(),
+      () => this.cd.detectChanges()
+    );
   }
 
   ngOnInit() {
@@ -319,6 +317,7 @@ export class ReportTemplatePageComponent extends PageComponent
   ngAfterViewInit() {
     this.layoutResize$ = new ResizeObserver(() => {
       this.layoutResize();
+      this.cd.detectChanges();
     });
     setTimeout(() => {
       this.layoutResize$.observe(this.reportTemplateLayoutEl().nativeElement);
@@ -346,7 +345,7 @@ export class ReportTemplatePageComponent extends PageComponent
   }
 
   ngOnDestroy() {
-    this.finishPanelsAnimation();
+    this.panelsAnimator.finish();
     if (this.layoutResize$) {
       this.layoutResize$.disconnect();
     }
@@ -407,7 +406,7 @@ export class ReportTemplatePageComponent extends PageComponent
 
   public editReportComponent(reportComponent: ReportComponentConfig): void {
     if (this.editingReportComponent !== reportComponent) {
-      this.animatePanels(() => {
+      this.panelsAnimator.run(() => {
         this.editingReportComponent = reportComponent;
         this.prevReportComponent = editReportComponent(reportComponent);
         this.selectEditingComponent();
@@ -431,7 +430,19 @@ export class ReportTemplatePageComponent extends PageComponent
   }
 
   public saveReportComponent(): void {
-    this.animatePanels(() => {
+    this.closeEditor();
+  }
+
+  public cancelReportComponentEdit(): void {
+    if (this.editingReportComponent) {
+      assignReportComponent(this.editingReportComponent, this.prevReportComponent);
+      this.reportComponentUpdated(false);
+      this.closeEditor();
+    }
+  }
+
+  private closeEditor() {
+    this.panelsAnimator.run(() => {
       this.prevReportComponent = null;
       this.editingReportComponent = null;
       const reportComponentsComponents = this.allReportComponentsComponents();
@@ -440,166 +451,6 @@ export class ReportTemplatePageComponent extends PageComponent
       }
       this.editorPanelExpanded = false;
     });
-  }
-
-  public cancelReportComponentEdit(): void {
-    if (this.editingReportComponent) {
-      assignReportComponent(this.editingReportComponent, this.prevReportComponent);
-      this.reportComponentUpdated(false);
-      this.animatePanels(() => {
-        this.prevReportComponent = null;
-        this.editingReportComponent = null;
-        const reportComponentsComponents = this.allReportComponentsComponents();
-        for (const component of reportComponentsComponents) {
-          component.componentSelected(null);
-        }
-        this.editorPanelExpanded = false;
-      });
-    }
-  }
-
-  /**
-   * Applies a change that resizes the side panels and animates it with transforms only, so the animation
-   * runs on the compositor. Animating the panels' width would relayout and repaint the whole report on every frame.
-   *
-   * While animating, the content column covers both its previous and its new area, and the report inside it
-   * is already laid out at its final width. Report pages are animated from their previous position and scale,
-   * the editor UI around them (toolbars, titles) only moves. At the end the column gets its final width,
-   * the report layout doesn't change, so nothing jumps.
-   */
-  private animatePanels(change: () => void) {
-    this.finishPanelsAnimation();
-    const container: HTMLElement = this.reportTemplateContainerEl()?.nativeElement;
-    const contentEl: HTMLElement = this.reportTemplateContentEl()?.getElementRef().nativeElement;
-    const layoutEl: HTMLElement = this.reportTemplateLayoutEl()?.nativeElement;
-    const sectionsEl = layoutEl?.querySelector<HTMLElement>('.tb-report-template-sections');
-    const settingsEl = container?.querySelector<HTMLElement>('.tb-report-settings');
-    if (!this.viewInited || !contentEl || !sectionsEl || !settingsEl || typeof settingsEl.animate !== 'function') {
-      change();
-      return;
-    }
-    const libraryEl = container.querySelector<HTMLElement>('.tb-report-components-library');
-    const settingsBefore = settingsEl.getBoundingClientRect();
-    const libraryTransformBefore = libraryEl ? getComputedStyle(libraryEl).transform : null;
-    const before = collectPanelAnimationTargets(sectionsEl);
-
-    change();
-    this.cd.detectChanges();
-
-    const settingsAfter = settingsEl.getBoundingClientRect();
-    if (Math.abs(settingsAfter.left - settingsBefore.left) < 1) {
-      return;
-    }
-    const containerRect = container.getBoundingClientRect();
-    const contentAfter = contentEl.getBoundingClientRect();
-    const libraryTransformAfter = libraryEl ? getComputedStyle(libraryEl).transform : null;
-
-    // Temporary layout: library collapsed, content column spans its previous and new area,
-    // report laid out at the final width and position inside it
-    container.classList.add('tb-panels-animating');
-    if (libraryEl) {
-      libraryEl.style.marginRight = '-251px';
-    }
-    const columnLeft = contentEl.getBoundingClientRect().left;
-    const columnRight = Math.max(settingsBefore.left, settingsAfter.left);
-    const columnStyle = getComputedStyle(contentEl);
-    const columnExtraWidth = contentEl.offsetWidth - contentEl.clientWidth +
-      parseFloat(columnStyle.paddingLeft) + parseFloat(columnStyle.paddingRight);
-    contentEl.style.flex = 'none';
-    contentEl.style.width = `${columnRight - columnLeft}px`;
-    layoutEl.style.marginLeft = `${contentAfter.left - columnLeft}px`;
-    layoutEl.style.width = `${contentAfter.width - columnExtraWidth}px`;
-    // Pages start at their previous, larger size: don't clip them to the final width
-    layoutEl.style.overflow = 'visible';
-    const panelExtend = containerRect.right - (settingsBefore.left + settingsAfter.width);
-    if (panelExtend > 0) {
-      settingsEl.style.setProperty('--tb-report-settings-extend', `${panelExtend}px`);
-    }
-    this.layoutResize();
-
-    const commit = () => {
-      animations.forEach(a => a.cancel());
-      container.classList.remove('tb-panels-animating');
-      libraryEl?.style.removeProperty('margin-right');
-      contentEl.style.removeProperty('flex');
-      contentEl.style.removeProperty('width');
-      layoutEl.style.removeProperty('margin-left');
-      layoutEl.style.removeProperty('width');
-      layoutEl.style.removeProperty('overflow');
-      settingsEl.style.removeProperty('--tb-report-settings-extend');
-      animatedElements.forEach(element => element.style.removeProperty('transform-origin'));
-      if (this.panelsAnimation?.commit === commit) {
-        this.panelsAnimation = null;
-      }
-    };
-    const animations: Animation[] = [];
-    const animatedElements: HTMLElement[] = [];
-    this.panelsAnimation = {animations, commit};
-
-    // Measure the final report layout after the batched component size updates have been applied
-    queueMicrotask(() => {
-      if (this.panelsAnimation?.commit !== commit) {
-        return;
-      }
-      const options: KeyframeAnimationOptions = {duration: 400, easing: 'cubic-bezier(0.25, 0.8, 0.25, 1)', fill: 'forwards'};
-      // Read all final positions first, then start the animations: interleaving reads with style writes
-      // would force a layout per element
-      const moves: {element: HTMLElement; transform: string}[] = [];
-      const measureTarget = (target: PanelAnimationTarget) => {
-        const rectAfter = target.element.getBoundingClientRect();
-        const widthChanged = Math.abs(rectAfter.width - target.rect.width) >= 1;
-        if (!target.page && (containsPage(target) || (widthChanged && target.children.length))) {
-          // Not a page and not editor UI that can move as a whole: animate its parts
-          target.children.forEach(child => measureTarget(child));
-          return;
-        }
-        if (!target.rect.width || !rectAfter.width) {
-          return;
-        }
-        let scaleX = 1;
-        let scaleY = 1;
-        if (target.page) {
-          scaleX = scaleY = target.rect.width / rectAfter.width;
-        } else if (widthChanged && hasBoxDecoration(target.element)) {
-          // A box (e.g. disabled header placeholder) is stretched to its new size, text only moves
-          scaleX = target.rect.width / rectAfter.width;
-          scaleY = target.rect.height / (rectAfter.height || 1);
-        }
-        const dx = target.rect.left - rectAfter.left;
-        const dy = target.rect.top - rectAfter.top;
-        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(scaleX - 1) < 0.001 && Math.abs(scaleY - 1) < 0.001) {
-          return;
-        }
-        moves.push({element: target.element, transform: `translate(${dx}px, ${dy}px) scale(${scaleX}, ${scaleY})`});
-      };
-      before.forEach(target => measureTarget(target));
-      const settingsLayoutLeft = settingsEl.getBoundingClientRect().left;
-
-      animations.push(settingsEl.animate([
-        {transform: `translateX(${settingsBefore.left - settingsLayoutLeft}px)`},
-        {transform: `translateX(${settingsAfter.left - settingsLayoutLeft}px)`}
-      ], options));
-      if (libraryEl && libraryTransformBefore !== libraryTransformAfter) {
-        animations.push(libraryEl.animate([
-          {transform: libraryTransformBefore},
-          {transform: libraryTransformAfter}
-        ], options));
-      }
-      moves.forEach(move => {
-        move.element.style.transformOrigin = '0 0';
-        animatedElements.push(move.element);
-        animations.push(move.element.animate([{transform: move.transform}, {transform: 'none'}], options));
-      });
-      Promise.all(animations.map(a => a.finished)).then(() => {
-        if (this.panelsAnimation?.commit === commit) {
-          commit();
-        }
-      }, () => {});
-    });
-  }
-
-  private finishPanelsAnimation() {
-    this.panelsAnimation?.commit();
   }
 
   public openFilters($event: Event) {
@@ -909,7 +760,6 @@ export class ReportTemplatePageComponent extends PageComponent
       this.renderer.setStyle(component.element.nativeElement, 'maxWidth', this.layoutWidth + 'px');
     });
     this.updateScale();
-    this.cd.detectChanges();
   }
 
   private updateScale() {
