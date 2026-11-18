@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
 import org.eclipse.leshan.core.ResponseCode;
