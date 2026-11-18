@@ -116,7 +116,7 @@
   }
   <div #reportTemplateContainer class="tb-report-template-container size-full" cdkDropListGroup>
     @if (!readonly) {
-      <div class="tb-report-components-library tb-dynamic-panel">
+      <div class="tb-report-components-library" [class.tb-close-library]="editorPanelExpanded">
         <mat-toolbar class="flex h-auto flex-col items-start gap-4 p-4">
           <div translate>report-template.report-components</div>
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field bg-white">
@@ -236,9 +236,9 @@
         </div>
       </div>
     </div>
-    <div class="tb-report-settings tb-dynamic-panel"
-                [class.tb-report-component-settings]="!!editingReportComponent"
-                [style.width.px]="editingReportComponent ?
+    <div class="tb-report-settings"
+                [class.tb-report-component-settings]="editorPanelExpanded"
+                [style.width.px]="editingReportComponent && editorPanelExpanded ?
                             reportComponentTypesData.getReportComponentTypeData(editingReportComponent.type, editingReportComponent.subType).preferredSettingsWidthPx : null">
       @if (editingReportComponent) {
         <tb-details-panel class="flex-1"

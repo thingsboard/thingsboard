@@ -31,7 +31,6 @@
   }
   @for (item of components; track item) {
     <div cdkDrag class="tb-draggable tb-report-component-draggable"
-      #reportComponentDrag
       [class.!hidden]="componentEntering"
       [cdkDragData]="item"
       (cdkDragMoved)="dragMoved($event)"
@@ -43,7 +42,6 @@
         [selected]="selected"
         [context]="context"
         [format]="format"
-        [width]="reportComponentDrag.offsetWidth"
         [parentScale]="scale"
         (edit)="onComponentEdit(item)"
       (remove)="componentRemove(item)"></tb-report-component>

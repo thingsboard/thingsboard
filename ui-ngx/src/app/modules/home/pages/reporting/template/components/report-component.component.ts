@@ -41,6 +41,57 @@ import { isFunction } from '@core/utils';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import ITooltipsterGeoHelper = JQueryTooltipster.ITooltipsterGeoHelper;
 
+const pendingSizeUpdates = new Set<ReportComponentComponent>();
+let sizeUpdatesFlushScheduled = false;
+
+const scheduleComponentSizeUpdate = (component: ReportComponentComponent) => {
+  pendingSizeUpdates.add(component);
+  if (!sizeUpdatesFlushScheduled) {
+    sizeUpdatesFlushScheduled = true;
+    queueMicrotask(flushComponentSizeUpdates);
+  }
+};
+
+const flushComponentSizeUpdates = () => {
+  sizeUpdatesFlushScheduled = false;
+  const components = Array.from(pendingSizeUpdates);
+  pendingSizeUpdates.clear();
+  const parentWidths = components.map(c => c.measureParentWidth());
+  components.forEach((c, i) => c.applyContentWidth(parentWidths[i]));
+  const contentHeights = components.map((c, i) => parentWidths[i] > 0 ? c.measureContentHeight() : 0);
+  components.forEach((c, i) => {
+    if (parentWidths[i] > 0) {
+      c.applyHostHeight(contentHeights[i]);
+    }
+  });
+};
+
+let hostResizeObserver: ResizeObserver;
+const hostResizeComponents = new WeakMap<Element, ReportComponentComponent>();
+
+const observeHostResize = (component: ReportComponentComponent, element: HTMLElement) => {
+  if (!hostResizeObserver) {
+    hostResizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const target = hostResizeComponents.get(entry.target);
+        if (target) {
+          scheduleComponentSizeUpdate(target);
+        }
+      }
+    });
+  }
+  hostResizeComponents.set(element, component);
+  hostResizeObserver.observe(element);
+};
+
+const unobserveHostResize = (component: ReportComponentComponent, element: HTMLElement) => {
+  pendingSizeUpdates.delete(component);
+  if (hostResizeObserver && hostResizeComponents.get(element) === component) {
+    hostResizeComponents.delete(element);
+    hostResizeObserver.unobserve(element);
+  }
+};
+
 export interface IReportComponent {
   selected: boolean;
   componentUpdated(): void;
@@ -127,9 +178,6 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
   parentScale = 1;
 
   @Input()
-  width: number;
-
-  @Input()
   pageMarginLeft: number;
 
   @Input()
@@ -191,8 +239,6 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
 
   private reportComponentHeight = 0;
 
-  private hostResize$: ResizeObserver;
-
   constructor(private reportComponents: ReportComponentsComponent,
               public elementRef: ElementRef<HTMLElement>,
               private container: ViewContainerRef,
@@ -244,11 +290,11 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (['scale', 'parentScale', 'width'].includes(propName)) {
+        if (['scale', 'parentScale'].includes(propName)) {
           if (propName === 'scale') {
             this.reportComponentPreview.scale = this.scale;
           }
-          this.updateComponentLayout();
+          this.updateComponentLayout(true);
         }
         if (['pageMarginLeft', 'pageMarginRight'].includes(propName)) {
           if (this.typeData.pageBreak) {
@@ -261,19 +307,14 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
 
   ngAfterViewInit() {
     this.updateComponentLayout();
-    this.hostResize$ = new ResizeObserver(() => {
-      this.updateComponentSize();
-    });
-    this.hostResize$.observe(this.elementRef.nativeElement);
+    observeHostResize(this, this.elementRef.nativeElement);
   }
 
   ngOnDestroy(): void {
     if (this.editReportComponentTooltip && !this.editReportComponentTooltip.status().destroyed) {
       this.editReportComponentTooltip.destroy();
     }
-    if (this.hostResize$) {
-      this.hostResize$.disconnect();
-    }
+    unobserveHostResize(this, this.elementRef.nativeElement);
   }
 
   @HostListener('click', ['$event'])
@@ -321,7 +362,20 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
   }
 
   private updateComponentSize() {
-    const parentWidth = this.elementRef.nativeElement.getBoundingClientRect().width / this.parentScale;
+    const parentWidth = this.measureParentWidth();
+    if (parentWidth > 0) {
+      this.applyContentWidth(parentWidth);
+      this.applyHostHeight(this.measureContentHeight());
+    }
+  }
+
+  // Sizes are measured from the layout (offsetWidth/offsetHeight), not from getBoundingClientRect(): they must not
+  // depend on transforms of ancestors, e.g. a parent component whose scale isn't updated yet or a running animation
+  measureParentWidth(): number {
+    return this.elementRef.nativeElement.offsetWidth;
+  }
+
+  applyContentWidth(parentWidth: number) {
     if (parentWidth > 0) {
       const border = pointsToPixels(this.borderWidth) * 2;
       const leftRightPaddings = pointsToPixels(this.paddingLeft) + pointsToPixels(this.paddingRight);
@@ -329,15 +383,24 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
       if (!this.innerComponent) {
         this.renderer.setStyle(this.reportComponentElement().nativeElement, 'transform', `scale(${this.scale})`);
       }
-      const rect = this.reportComponentElement().nativeElement.getBoundingClientRect();
-      const targetHeight = rect.height > 0 ? rect.height / this.parentScale : this.reportComponentHeight;
-      this.reportComponentHeight = targetHeight;
-      const topBottomPaddings = pointsToPixels(this.paddingTop) + pointsToPixels(this.paddingBottom);
-      this.renderer.setStyle(this.elementRef.nativeElement, 'height', (targetHeight + topBottomPaddings + border) + 'px');
     }
   }
 
-  private updateComponentLayout() {
+  measureContentHeight(): number {
+    // Height as displayed: scaled by the component's own transform, or by the parent component's one for a nested component
+    const height = this.reportComponentElement().nativeElement.offsetHeight;
+    return height * (this.innerComponent ? this.parentScale : this.scale);
+  }
+
+  applyHostHeight(contentHeight: number) {
+    const targetHeight = contentHeight > 0 ? contentHeight / this.parentScale : this.reportComponentHeight;
+    this.reportComponentHeight = targetHeight;
+    const border = pointsToPixels(this.borderWidth) * 2;
+    const topBottomPaddings = pointsToPixels(this.paddingTop) + pointsToPixels(this.paddingBottom);
+    this.renderer.setStyle(this.elementRef.nativeElement, 'height', (targetHeight + topBottomPaddings + border) + 'px');
+  }
+
+  private updateComponentLayout(batched = false) {
     if (isLayoutReportComponentConfig(this.reportComponent) && !this.isPlainFormat) {
       this.background = this.reportComponent.background;
       this.borderWidth = (this.reportComponent.borderWidth || 0) * this.scale;
@@ -363,7 +426,11 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
         this.marginRight = -this.pageMarginRight / this.scale;
       }
     }
-    this.updateComponentSize();
+    if (batched) {
+      scheduleComponentSizeUpdate(this);
+    } else {
+      this.updateComponentSize();
+    }
   }
 
   public componentUpdated() {
