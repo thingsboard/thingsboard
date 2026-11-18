@@ -17,9 +17,9 @@ upload     puts the files of this machine and of the archive into a new archive,
            NOTICES_SCAN_CACHE_PASSWORD. Two uploads at the same time are not kept apart: the scans of the earlier one
            can be lost, and are then made again by whoever needs them next.
 
-A file that both have is never replaced: other runs of ORT may be reading it.
+A file that both have is never replaced: other runs of ORT may be reading it. With --url none, neither is done.
 
-Usage: scan_cache.py download|upload --home <home of ORT> --url <address of the archive>
+Usage: scan_cache.py download|upload --home <home of ORT> --url <address of the archive>|none
 """
 import argparse
 import base64
@@ -41,8 +41,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=['download', 'upload'])
     parser.add_argument('--home', required=True, help='the directory where ORT keeps its data')
-    parser.add_argument('--url', required=True, help='the address of the archive')
+    parser.add_argument('--url', required=True, help='the address of the archive, or none')
     args = parser.parse_args()
+    if args.url == 'none':
+        print('Scan cache: not used')
+        return
 
     os.makedirs(args.home, exist_ok=True)
     # The modules of one build make their notices at the same time: the first one downloads, the others find it done
@@ -62,15 +65,12 @@ def download(home, url):
             return
         with archive:
             added, stored = unpack(archive, home)
-    # Whatever goes wrong here, such as a connection that ends in the middle of the archive
+    # Whatever goes wrong, such as a connection that ends in the middle of the archive, stops the notices
     except Exception as error:
         raise SystemExit(
-            f'Scan cache: {url} cannot be read ({error}).\n'
-            'Without it, every package that this machine has not scanned before would be scanned now, which takes '
-            'hours for the whole product, so the notices stop.\n'
-            f'To fix: try again in a few minutes. If it keeps failing, check that the address answers: curl -I {url}\n'
-            'To make the notices without it anyway, for example offline with the scans already on this machine: '
-            'NOTICES_SCAN_CACHE_URL=none')
+            f'Scan cache: {url} cannot be read ({error}), so the notices stop: without it they would take hours.\n'
+            f'To fix: try again in a few minutes. If it keeps failing, check the address: curl -I {url}\n'
+            'Or make the notices without it, for example offline with the scans already here: NOTICES_SCAN_CACHE_URL=none')
     if etag:
         with open(etag_file, 'w') as file:
             file.write(etag)
