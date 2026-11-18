@@ -141,41 +141,37 @@ class ScanCacheTest(unittest.TestCase):
         scan_cache.download(self.home, self.server.url)
         self.assertEqual(self.read('scanner/results/a/scan-results.yml'), b'mine')
 
-    def test_no_archive_does_not_fail_and_is_not_asked_for_again_soon(self):
-        scan_cache.download(self.home, self.server.url)
-        self.assertIn('404', self.errors.getvalue())
-        scan_cache.download(self.home, self.server.url)
-        self.assertIn('a few minutes ago', self.errors.getvalue())
-        self.assertEqual(self.server.requests, ['GET 404'])
+    def download_stops(self, url):
+        """The message that the download stops with."""
+        with self.assertRaises(SystemExit) as stop:
+            scan_cache.download(self.home, url)
+        return str(stop.exception.code)
 
-        # Later the archive is asked for again, and the pause ends with a download that works
-        failed = os.path.join(self.home, 'scan-cache.failed')
-        os.utime(failed, (0, 0))
+    def test_no_archive_stops_and_says_what_to_do(self):
+        message = self.download_stops(self.server.url)
+        self.assertIn('404', message)
+        self.assertIn('To fix', message)
+
+        # The next run asks for the archive again
         self.server.archive = archive_of({'scanner/results/a/scan-results.yml': b'a'})
         scan_cache.download(self.home, self.server.url)
         self.assertEqual(self.read('scanner/results/a/scan-results.yml'), b'a')
-        self.assertFalse(os.path.exists(failed))
+        self.assertEqual(self.server.requests, ['GET 404', 'GET 200'])
 
-    def test_no_server_does_not_fail(self):
-        scan_cache.download(self.home, 'http://127.0.0.1:1/cache.tar.gz')
-        self.assertIn('takes minutes', self.errors.getvalue())
+    def test_no_server_stops(self):
+        self.assertIn('cannot be read', self.download_stops('http://127.0.0.1:1/cache.tar.gz'))
 
     def test_download_takes_nothing_from_an_archive_with_other_things_than_scans(self):
         for archive in (archive_of({'scanner/../../outside': b'x'}), archive_of({'elsewhere/file': b'x'}),
                         archive_of({}, symlink='scanner/link'), b'no archive'):
             self.server.archive = archive
-            with contextlib.suppress(FileNotFoundError):
-                os.remove(os.path.join(self.home, 'scan-cache.failed'))
-            scan_cache.download(self.home, self.server.url)
-            self.assertIn('cannot be read', self.errors.getvalue())
-            self.assertEqual(os.listdir(self.home), ['scan-cache.failed'])
+            self.assertIn('cannot be read', self.download_stops(self.server.url))
+            self.assertEqual(os.listdir(self.home), [])
 
-    def test_an_archive_cut_off_in_the_middle_does_not_fail(self):
+    def test_an_archive_cut_off_in_the_middle_stops(self):
         whole = archive_of({f'scanner/results/{n}/scan-results.yml': os.urandom(2000) for n in range(20)})
         self.server.archive = whole[:len(whole) // 2]
-        scan_cache.download(self.home, self.server.url)
-        self.assertIn('cannot be read', self.errors.getvalue())
-        self.assertTrue(os.path.exists(os.path.join(self.home, 'scan-cache.failed')))
+        self.assertIn('cannot be read', self.download_stops(self.server.url))
         self.assertFalse(os.path.exists(os.path.join(self.home, 'scan-cache.etag')))
 
     def test_upload_adds_the_new_files_to_those_of_the_archive(self):

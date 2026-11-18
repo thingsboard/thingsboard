@@ -15,7 +15,8 @@
 #
 # Needs Docker and python3. The results of the scans are kept in ~/.ort/scanner (or in $NOTICES_ORT_HOME/scanner):
 # a package that is not there yet is scanned, which takes minutes. The scans that others have made are downloaded
-# first, from the archive that the machines share (or from the one at $NOTICES_SCAN_CACHE_URL): see scan_cache.py.
+# first, from the archive that the machines share (or from the one at $NOTICES_SCAN_CACHE_URL, or from none with
+# NOTICES_SCAN_CACHE_URL=none): see scan_cache.py.
 # The jars are read from ~/.m2/repository (or from $NOTICES_MAVEN_REPOSITORY); one that is not there is downloaded.
 # A package without a source archive and without a repository stops the notices, until a curation gives its source or
 # says that it has none.
@@ -111,7 +112,7 @@ rm -f "$WORK"/{convert,analyze,scan,scan-issues,package-configurations,notice-fi
 mkdir -p "$WORK/project" "$ORT_HOME"
 LAP=$SECONDS
 python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" \
-  --url "${NOTICES_SCAN_CACHE_URL:-https://repo.thingsboard.io/artifactory/ort/scan-cache.tar.gz}"
+  --url "${NOTICES_SCAN_CACHE_URL:-https://repo.thingsboard.io/artifactory/ort/scan-cache.tar.gz}" || { durations >&2; exit 1; }
 lap "cache download"
 step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERSION" --cache "$ORT_HOME/maven-sources.json" \
   --curations "$HERE/ort-config/curations/curations.json" \
