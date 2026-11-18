@@ -153,7 +153,7 @@ rm ~/.testcontainers.properties
 ## Dependencies, SBOMs and licensing
 
 Every artifact ThingsBoard ships carries an SBOM, and the root `THIRD-PARTY-NOTICES` is generated from those SBOMs. A
-change that adds, updates or removes a Maven or npm dependency also regenerates that file, and pull requests check it.
+change that adds, updates or removes a Maven or npm dependency must include the regenerated file.
 
 - [docs/sbom.md](docs/sbom.md): which artifacts get an SBOM, how to build with SBOMs, and what to do for each kind of
   dependency change.

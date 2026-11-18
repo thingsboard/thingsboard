@@ -1,13 +1,11 @@
 # Licensing
 
 > [!NOTE]
-> This document explains, for contributors, how licensing works in this repository. It is not a license and not
-> legal advice. The terms that apply are those of [LICENSE](../LICENSE), of the license texts of the third-party
-> components, and of the Contributor License Agreement. Where this document differs from them, they apply.
+> This guide is not a license and not legal advice. Where it differs from [LICENSE](../LICENSE), the license texts of
+> the third-party components or the Contributor License Agreement, those apply.
 
-This document covers the license of ThingsBoard itself, the license headers of its files, and the third-party notices
-that it ships for the components it contains. How the components are listed in the first place is in
-[sbom.md](sbom.md).
+This guide covers the license of ThingsBoard itself, the license headers of its files, and the third-party notices it
+ships. How the components are listed is in [sbom.md](sbom.md).
 
 ## The project's license
 
@@ -64,25 +62,24 @@ and `#` lines in YAML and shell scripts. Do not add your own copyright or author
 
   It needs the full Git history of the clone (`git fetch --unshallow` on a shallow one).
 
-- "Needs a decision": the check cannot decide a file that resembles a CE file at another path, or whose path existed in
-  CE once. Put the right header on it and record the decision in `tools/src/main/python/license-headers/curations.json`.
-  How is in the [check's README](../tools/src/main/python/license-headers/README.md#add-a-curation).
+When the check reports "Needs a decision" for a file that resembles a CE file at another path, or whose path existed in
+CE once, put the right header on it and record the decision in `tools/src/main/python/license-headers/curations.json`.
+How is in the [check's README](../tools/src/main/python/license-headers/README.md#add-a-curation).
 
 Pull requests into the release branches run the same check, and fail with a report of the files to fix.
 
 ## Third-party notices
 
-ThingsBoard ships third-party components under their own licenses, which require us to pass on their license texts
-and copyright notices. The root [THIRD-PARTY-NOTICES](../THIRD-PARTY-NOTICES) lists every third-party component the
-product ships, grouped by license, with:
+The licenses of the third-party components ThingsBoard ships require us to pass on their license texts and copyright
+notices. The root [THIRD-PARTY-NOTICES](../THIRD-PARTY-NOTICES) lists every such component, grouped by license, with:
 
 - the copyright lines found in its sources, and the text of each license;
 - the NOTICE files that Apache-2.0 components ask us to pass on;
 - where the source code is, for the licenses that require it (EPL, CDDL, MPL);
 - a written offer of the source code, for the LGPL and GPL components.
 
-Each package and each image of the Node.js services also carries the notices of exactly what it contains, made from its
-own SBOM by the same generator during a release build (`-Dsbom.skip=false -Dnotices.skip=false`).
+Each package, and each image of the Node.js services, also carries the notices of exactly what it contains. The same
+generator makes them from its own SBOM during a release build (`-Dsbom.skip=false -Dnotices.skip=false`).
 
 The file is generated: never edit it by hand. Commit it whenever you change what the product ships.
 
@@ -98,7 +95,7 @@ The generator needs Docker and Python 3.11 or later. It runs the
 for licenses and copyright lines. Its logs are in `target/notices-product/`.
 
 A scan of a package takes minutes, so the results are kept: in `~/.ort/scanner`, and in a shared archive that every run
-downloads first. A run in which nothing new needs scanning takes about a minute. A package that is new to the product is
+downloads first. A run with nothing new to scan takes about a minute. A package that is new to the product is
 scanned on your machine the first time. Only CI adds new scans to the shared archive.
 
 | Environment variable       | Default                  | Effect                                    |
@@ -109,10 +106,10 @@ scanned on your machine the first time. Only CI adds new scans to the shared arc
 
 ## The pull-request check
 
-A pull request from a member of the ThingsBoard organization whose merge changes a `pom.xml`, `package.json` or
-`yarn.lock`, the notices tooling or `THIRD-PARTY-NOTICES` is checked: CI builds the merge with SBOMs, regenerates the
-notices and compares them with the committed file. For other pull requests, a maintainer makes sure the file is up to
-date before merging. A pull request that changes none of these passes in seconds.
+CI checks a pull request when it comes from a member of the ThingsBoard organization and its merge changes a
+`pom.xml`, `package.json` or `yarn.lock`, the notices tooling or `THIRD-PARTY-NOTICES`. It builds the merge with SBOMs,
+regenerates the notices and compares them with the committed file. Other pull requests from members pass in seconds.
+For pull requests from outside the organization, a maintainer makes sure the file is up to date before merging.
 
 When the files differ, the check fails and attaches the correct file to the build as `THIRD-PARTY-NOTICES`. Download
 it, look at what changed, and commit it. When the generator stops instead (next section), the check fails with its
@@ -143,7 +140,7 @@ misread as a statement) goes into `ort-config/copyright-garbage.yml`.
 Every entry in these files carries a comment that says where the information comes from, so that a reviewer can check
 it.
 
-## Rules
+## Rules for license decisions
 
 - **A license choice takes the most permissive license offered**, and among copyleft licenses EPL, CDDL or MPL before
   LGPL or GPL. A rule applies to every package that offers the same choice.
