@@ -109,9 +109,10 @@ scanned on your machine the first time. Only CI adds new scans to the shared arc
 
 ## The pull-request check
 
-A pull request whose merge changes a `pom.xml`, `package.json` or `yarn.lock`, the notices tooling or
-`THIRD-PARTY-NOTICES` is checked: CI builds the merge with SBOMs, regenerates the notices and compares them with the
-committed file. A pull request that changes none of these passes in seconds.
+A pull request from a member of the ThingsBoard organization whose merge changes a `pom.xml`, `package.json` or
+`yarn.lock`, the notices tooling or `THIRD-PARTY-NOTICES` is checked: CI builds the merge with SBOMs, regenerates the
+notices and compares them with the committed file. For other pull requests, a maintainer makes sure the file is up to
+date before merging. A pull request that changes none of these passes in seconds.
 
 When the files differ, the check fails and attaches the correct file to the build as `THIRD-PARTY-NOTICES`. Download
 it, look at what changed, and commit it. When the generator stops instead (next section), the check fails with its
