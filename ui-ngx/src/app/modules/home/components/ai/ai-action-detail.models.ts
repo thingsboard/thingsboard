@@ -1660,6 +1660,16 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       return {hood, blocks: [...(rows.length ? [{type: 'facts' as const, rows}] : []),
         ...(warnings.length ? [{type: 'list' as const, label: text('widget-warnings'), rows: warnings.slice(0, MAX_ROWS)}] : [])]};
     }
+    case 'check_scada_symbol': {
+      if (!isObject(result)) {
+        return {hood: text('check-scada-symbol'), blocks: generic(result, 'result')};
+      }
+      const errors = Array.isArray(result.errors) ? result.errors.map(item => String(item)) : [];
+      const outcome = errors.length ? text('widget-check-errors', {count: errors.length})
+        : result.result === 'rendered without errors' ? text('scada-symbol-check-clean') : text('scada-symbol-check-not-rendered');
+      return {hood: text('check-scada-symbol'), blocks: [{type: 'note', text: outcome},
+        ...(errors.length ? [{type: 'list' as const, label: text('widget-errors'), rows: errors.slice(0, MAX_ROWS)}] : [])]};
+    }
     case 'check_widget': {
       if (!isObject(result)) {
         return {hood: text('check-widget'), blocks: generic(result, 'result')};

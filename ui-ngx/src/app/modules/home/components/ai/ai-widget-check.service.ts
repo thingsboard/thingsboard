@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { Injectable } from '@angular/core';
-import { firstValueFrom, from, Observable, of } from 'rxjs';
+import { firstValueFrom, forkJoin, from, Observable, of } from 'rxjs';
 import { catchError, filter, map, switchMap, take, timeout } from 'rxjs/operators';
 import { WidgetService } from '@core/http/widget.service';
 import { AiResourceService } from '@core/http/ai-resource.service';
-import { migrateWidgetTypeToDynamicForms } from '@shared/models/widget.models';
+import { migrateWidgetTypeToDynamicForms, WidgetTypeDetails } from '@shared/models/widget.models';
+import { ImageService } from '@core/http/image.service';
+import { parseScadaSymbolMetadataFromContent, ScadaSymbolMetadata } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
 
 const SETTLE_MS = 2500;
@@ -25,6 +27,8 @@ interface WidgetCheckReport {
   width?: number;
   height?: number;
   screenshot?: string;
+  rendered?: boolean;
+  activeValues?: Record<string, unknown>;
 }
 
 type CapturedReport = WidgetCheckReport & {canvas?: HTMLCanvasElement};
@@ -35,7 +39,82 @@ type CapturedReport = WidgetCheckReport & {canvas?: HTMLCanvasElement};
 export class AiWidgetCheckService {
 
   constructor(private widgetService: WidgetService,
+              private imageService: ImageService,
               private aiResources: AiResourceService) {
+  }
+
+  checkScadaSymbol(link: string): Observable<string> {
+    const url = link.replace(/^tb-image;/, '');
+    return forkJoin({
+      widgetType: this.widgetService.getWidgetType('system.scada_symbol', {ignoreLoading: true, ignoreErrors: true}),
+      content: this.imageService.getImageString(url)
+    }).pipe(
+      switchMap(({widgetType, content}) => {
+        const widget = detailsToWidgetInfo(migrateWidgetTypeToDynamicForms(widgetType as WidgetTypeDetails));
+        const active = this.activeValues(parseScadaSymbolMetadataFromContent(content));
+        return from(this.runSymbol(widget, link, {}).then(normal =>
+          this.runSymbol(widget, link, active.behavior).then(activeRun => ({normal, activeRun, values: active.values}))));
+      }),
+      switchMap(({normal, activeRun, values}) => {
+        const report: CapturedReport = {
+          initialised: normal.initialised && activeRun.initialised,
+          rendered: !!normal.rendered && !!activeRun.rendered,
+          errors: [...new Set([...normal.errors, ...activeRun.errors])],
+          console: [...new Set([...normal.console, ...activeRun.console])],
+          activeValues: values,
+          canvas: this.sideBySide(normal.canvas, activeRun.canvas)
+        };
+        return this.attachScreenshot(report);
+      }),
+      map(report => this.toReason(report)),
+      timeout(2 * RUN_TIMEOUT_MS + 15000),
+      catchError(error => of(this.toReason({
+        initialised: false,
+        errors: ['The symbol could not be loaded: ' + (error?.message || error?.statusText || error)],
+        console: []
+      })))
+    );
+  }
+
+  private runSymbol(widget: WidgetInfo, link: string, behavior: Record<string, unknown>): Promise<CapturedReport> {
+    const config = JSON.parse(widget.defaultConfig || '{}');
+    config.showTitle = false;
+    config.settings = {...(config.settings || {}), scadaSymbolUrl: link, simulated: true,
+      scadaSymbolObjectSettings: {behavior, properties: {}}};
+    return this.run({...widget, defaultConfig: JSON.stringify(config)});
+  }
+
+  private activeValues(metadata: ScadaSymbolMetadata): {behavior: Record<string, unknown>; values: Record<string, unknown>} {
+    const behavior: Record<string, unknown> = {};
+    const values: Record<string, unknown> = {};
+    for (const item of metadata?.behavior || []) {
+      if (item.type !== 'value') {
+        continue;
+      }
+      const type = String(item.valueType);
+      const value = type === 'BOOLEAN' ? !/animation/i.test(item.id)
+        : type === 'DOUBLE' || type === 'INTEGER' ? (/capacity|max/i.test(item.id) ? 100 : 60)
+        : type === 'STRING' ? 'Test' : null;
+      behavior[item.id] = {...(item.defaultGetValueSettings || {}), action: 'DO_NOTHING', defaultValue: value};
+      values[item.id] = value;
+    }
+    return {behavior, values};
+  }
+
+  private sideBySide(left?: HTMLCanvasElement, right?: HTMLCanvasElement): HTMLCanvasElement | undefined {
+    if (!left || !right) {
+      return left || right;
+    }
+    const gap = 16;
+    const canvas = document.createElement('canvas');
+    canvas.width = left.width + gap + right.width;
+    canvas.height = Math.max(left.height, right.height);
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(left, 0, 0);
+    context.drawImage(right, left.width + gap, 0);
+    return canvas;
   }
 
   check(widgetTypeId: string): Observable<string> {
@@ -137,6 +216,7 @@ export class AiWidgetCheckService {
       }
     }
     report.noData = !!doc.querySelector('.tb-widget-no-data');
+    report.rendered = !!doc.querySelector('tb-scada-symbol-widget svg');
     const widget = doc.querySelector('tb-widget') as HTMLElement;
     if (widget) {
       const rect = widget.getBoundingClientRect();

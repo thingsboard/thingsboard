@@ -1077,6 +1077,14 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   private runClientTool(started: ToolStarted): void {
+    if (started.tool === 'check_scada_symbol') {
+      const values = (typeof started.arguments === 'string' ? aiParse(started.arguments) : started.arguments) as {symbol?: string} | undefined;
+      if (values?.symbol) {
+        this.widgetCheck.checkScadaSymbol(values.symbol).subscribe(reason =>
+          this.aiChat.resolveToolApproval({executionId: started.executionId, approved: true, reason}, {ignoreLoading: true, ignoreErrors: true}).subscribe());
+      }
+      return;
+    }
     if (started.tool !== 'check_widget') {
       return;
     }

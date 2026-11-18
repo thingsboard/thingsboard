@@ -984,6 +984,9 @@
             "update-scada-symbol": "Redrew the SCADA symbol {{name}}",
             "copy-scada-symbol": "Copied the SCADA symbol as {{name}}",
             "change-scada-symbol": "Changed the SCADA symbol {{name}}",
+            "check-scada-symbol": "Ran the SCADA symbol",
+            "scada-symbol-check-clean": "Rendered without errors",
+            "scada-symbol-check-not-rendered": "The symbol did not render",
             "scada-symbol-behaviors": "Behaviors",
             "scada-symbol-problems": "Problems",
             "create-widget": "Created the widget {{name}}",
@@ -1639,6 +1642,10 @@
             "update-scada-symbol": {
                 "run": "Changing the SCADA symbol",
                 "done": "Changed the SCADA symbol"
+            },
+            "check-scada-symbol": {
+                "run": "Running the SCADA symbol",
+                "done": "Ran the SCADA symbol"
             },
             "read-widget-parts": {
                 "run": "Reading the widget's {{parts}}",
@@ -3126,7 +3133,8 @@
                 }
             },
             "scada-symbol": {
-                "title": "Ask about this symbol",
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this symbol",
                 "line": "What it shows, what its clicks do, and which values it reads.",
                 "suggestion": "What does this symbol show?",
                 "example": {

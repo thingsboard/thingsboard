@@ -266,6 +266,7 @@ export class ScadaSymbolComponent extends PageComponent
   ngOnDestroy() {
     if (this.aiAssistantAvailable) {
       this.panelService.setEditorDraftProvider(null);
+      this.panelService.setViewName(null);
     }
     super.ngOnDestroy();
     this.destroy$.next();
@@ -547,6 +548,9 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   private init(data: ScadaSymbolData) {
+    if (this.aiAssistantAvailable) {
+      this.panelService.setViewName(data?.imageResource?.title ?? null);
+    }
     this.readonly = this.authUser.authority !== Authority.SYS_ADMIN && data.imageResource.tenantId.id === NULL_UUID;
     this.origSymbolData = data;
     this.symbolData = deepClone(data);
