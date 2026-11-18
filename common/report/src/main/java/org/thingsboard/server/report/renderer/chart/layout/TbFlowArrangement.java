@@ -25,6 +25,7 @@ public class TbFlowArrangement extends FlowArrangement {
     private final double verticalGap;
 
     private double maxRelativeHeight = 0;
+    private double maxRelativeWidth = 0;
 
     public TbFlowArrangement() {
         this(HorizontalAlignment.CENTER, VerticalAlignment.CENTER, 2.0, 2.0);
@@ -49,12 +50,24 @@ public class TbFlowArrangement extends FlowArrangement {
         this.maxRelativeHeight = maxRelativeHeight;
     }
 
+    /**
+     * Limits the width to the given fraction of the available width.
+     * The width shrinks to a single row of items when it fits, so items wrap only when the limit is reached.
+     */
+    public void setMaxRelativeWidth(double maxRelativeWidth) {
+        this.maxRelativeWidth = maxRelativeWidth;
+    }
+
     @Override
     public Size2D arrange(BlockContainer container, Graphics2D g2,
                           RectangleConstraint constraint) {
         if (this.maxRelativeHeight > 0) {
             double maxHeight = constraint.getHeight() * this.maxRelativeHeight;
             constraint = constraint.toFixedHeight(maxHeight);
+        }
+        if (this.maxRelativeWidth > 0) {
+            double maxWidth = constraint.getWidth() * this.maxRelativeWidth;
+            constraint = constraint.toFixedWidth(Math.min(singleRowWidth(container, g2), maxWidth));
         }
         return super.arrange(container, g2, constraint);
     }
@@ -134,6 +147,18 @@ public class TbFlowArrangement extends FlowArrangement {
         }
         alignItemsV((List<Block>)container.getBlocks(), s.height, constraint.getHeight());
         return s;
+    }
+
+    private double singleRowWidth(BlockContainer container, Graphics2D g2) {
+        List<Block> blocks = (List<Block>) container.getBlocks();
+        double width = 0.0;
+        for (Block block : blocks) {
+            width += block.arrange(g2, RectangleConstraint.NONE).width;
+        }
+        if (blocks.size() > 1) {
+            width += this.horizontalGap * (blocks.size() - 1);
+        }
+        return width;
     }
 
     private void alignItemsH(List<Block> items, double width) {
