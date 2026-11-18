@@ -736,7 +736,7 @@ public class DefaultIotHubService implements IotHubService {
         if (createdEntityIds == null || createdEntityIds.isEmpty()) {
             return;
         }
-        Set<UUID> usedExisting = usedExistingIds(descriptor);
+        Set<UUID> usedExisting = DevicePackageEntities.usedExistingIds(descriptor).keySet();
         List<DeviceInstalledItemDescriptor> otherPackages = new ArrayList<>();
         Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, otherPackages);
         // An entity goes before what it refers to: a device before its profile, a profile before its default dashboard
@@ -842,7 +842,7 @@ public class DefaultIotHubService implements IotHubService {
         Set<IotHubInstalledItemId> usedByItems = new HashSet<>();
         int usedExistingCount = 0;
         if (installedItem.getDescriptor() instanceof DeviceInstalledItemDescriptor dd && dd.getCreatedEntityIds() != null) {
-            Set<UUID> usedExisting = usedExistingIds(dd);
+            Set<UUID> usedExisting = DevicePackageEntities.usedExistingIds(dd).keySet();
             Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, new ArrayList<>());
             // The delete removes these before the profiles, so they don't keep a profile; a kept device does
             Set<UUID> deletedDevices = new HashSet<>();
@@ -923,15 +923,6 @@ public class DefaultIotHubService implements IotHubService {
             }
         }
         return Math.max(count, 0);
-    }
-
-    /** The entities the package took as they were at install (use existing); none for installs before 4.4.1 kept them. */
-    private static Set<UUID> usedExistingIds(DeviceInstalledItemDescriptor descriptor) {
-        Set<UUID> ids = new HashSet<>();
-        if (descriptor.getUsedExistingEntityIds() != null) {
-            descriptor.getUsedExistingEntityIds().forEach(id -> ids.add(id.getId()));
-        }
-        return ids;
     }
 
     /** The other installed device packages' entities, by id; the packages' descriptors go to {@code otherPackages}. */

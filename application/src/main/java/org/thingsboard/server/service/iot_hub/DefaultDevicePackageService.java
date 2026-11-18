@@ -143,7 +143,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         DeviceInstalledItemDescriptor descriptor = findDevicePackage(tenantId, installedItemId).descriptor();
         Set<UUID> sharedIds = new HashSet<>();
         iotHubService.findKeptEntities(tenantId, installedItemId).getEntities().forEach(e -> sharedIds.add(e.getEntityId().getId()));
-        Map<UUID, EntityId> createdIds = createdIds(descriptor);
+        Map<UUID, EntityId> createdIds = DevicePackageEntities.createdIds(descriptor);
         Map<UUID, Set<String>> recordedChecksums = recordedChecksums(tenantId);
 
         List<DevicePackageEntityState> states = new ArrayList<>();
@@ -433,7 +433,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
             });
         }
         List<EntityId> stepEntityIds = new ArrayList<>();
-        Map<UUID, EntityId> usedExistingIds = usedExistingIds(previous);
+        Map<UUID, EntityId> usedExistingIds = DevicePackageEntities.usedExistingIds(previous);
         List<SavedEntity> saved = new ArrayList<>();
         List<SavedEntity> grouped = new ArrayList<>();
         List<DevicePackageRequest.Step> connectorSteps = new ArrayList<>();
@@ -521,7 +521,7 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
         descriptor.setSelectedInstallMethod(request.getSelectedInstallMethod() != null ? request.getSelectedInstallMethod() : previous.getSelectedInstallMethod());
         descriptor.setCreatedEntityIds(createdEntityIds(tenantId, previous, stepEntityIds));
         // Carried over like createdEntityIds, so an entity the user chose to use stays theirs after a version drops its step
-        Set<UUID> tracked = createdIds(descriptor).keySet();
+        Set<UUID> tracked = DevicePackageEntities.createdIds(descriptor).keySet();
         descriptor.setUsedExistingEntityIds(usedExistingIds.values().stream().filter(id -> tracked.contains(id.getId())).toList());
         descriptor.setDashboardId(dashboardId != null ? dashboardId : existingDashboard(tenantId, previous));
         Map<String, JsonNode> state = new LinkedHashMap<>(installState);
@@ -1090,38 +1090,8 @@ public class DefaultDevicePackageService extends AbstractTbEntityService impleme
      * those to createdEntityIds too, so they are subtracted; an entity of a step a later version dropped stays owned.
      */
     private static Set<UUID> ownedIds(DeviceInstalledItemDescriptor descriptor) {
-        Set<UUID> ids = new HashSet<>(createdIds(descriptor).keySet());
-        ids.removeAll(usedExistingIds(descriptor).keySet());
-        return ids;
-    }
-
-    /**
-     * The entities the user chose to use as they were. An install made before the descriptor kept them has them only in
-     * its install state, which the first update carries over into the descriptor.
-     */
-    private static Map<UUID, EntityId> usedExistingIds(DeviceInstalledItemDescriptor descriptor) {
-        Map<UUID, EntityId> ids = new LinkedHashMap<>();
-        if (descriptor.getUsedExistingEntityIds() != null) {
-            descriptor.getUsedExistingEntityIds().forEach(id -> ids.put(id.getId(), id));
-            return ids;
-        }
-        Map<UUID, EntityId> createdIds = createdIds(descriptor);
-        if (descriptor.getInstallState() != null) {
-            descriptor.getInstallState().values().forEach(state -> {
-                UUID id = toUuid(state.path("entityOutput").path("id").asText());
-                if (id != null && "use-existing".equals(state.path("resolution").asText()) && createdIds.containsKey(id)) {
-                    ids.put(id, createdIds.get(id));
-                }
-            });
-        }
-        return ids;
-    }
-
-    private static Map<UUID, EntityId> createdIds(DeviceInstalledItemDescriptor descriptor) {
-        Map<UUID, EntityId> ids = new HashMap<>();
-        if (descriptor.getCreatedEntityIds() != null) {
-            descriptor.getCreatedEntityIds().forEach(id -> ids.put(id.getId(), id));
-        }
+        Set<UUID> ids = new HashSet<>(DevicePackageEntities.createdIds(descriptor).keySet());
+        ids.removeAll(DevicePackageEntities.usedExistingIds(descriptor).keySet());
         return ids;
     }
 
