@@ -94,15 +94,9 @@ The generator needs Docker and Python 3.11 or later. It runs the
 [OSS Review Toolkit](https://oss-review-toolkit.org) (ORT) in a container, which scans the source of every component
 for licenses and copyright lines. Its logs are in `target/notices-product/`.
 
-A scan of a package takes minutes, so the results are kept: in `~/.ort/scanner`, and in a shared archive that every run
-downloads first. A run with nothing new to scan takes about a minute. A package that is new to the product is
-scanned on your machine the first time. Only CI adds new scans to the shared archive.
-
-| Environment variable       | Default                  | Effect                                    |
-|----------------------------|--------------------------|-------------------------------------------|
-| `NOTICES_ORT_HOME`         | `~/.ort`                 | Where ORT keeps its scans and downloads   |
-| `NOTICES_SCAN_CACHE_URL`   | the shared archive       | Another archive, or `none` for no archive |
-| `NOTICES_MAVEN_REPOSITORY` | Maven's local repository | Where the jars are read from              |
+A package that is new to the product is scanned on your machine the first time, which takes minutes. The scans that
+others have made are downloaded first, from an archive that CI keeps up to date, so a run with nothing new to scan takes
+about a minute. The settings of the generator are in [its README](../tools/src/main/notices/README.md).
 
 ## The pull-request check
 
@@ -120,25 +114,18 @@ requests that were each correct before the other one was merged.
 
 ## When the generator stops
 
-The generator stops rather than guess. Every stop starts with `Third-party notices:` and ends with what to do. Most
-stops ask for a decision, recorded in one of these files under `tools/src/main/notices/`:
+The generator stops rather than guess. Every stop starts with `Third-party notices:`, names the packages, and says what
+to do: usually, which decision to record in which of these files under `tools/src/main/notices/`.
 
-| Message (start)                                                                      | Cause                                              | Where to record the decision               |
-|--------------------------------------------------------------------------------------|----------------------------------------------------|--------------------------------------------|
-| `these packages let us choose a license, and nobody has chosen`                      | A package offers several licenses                  | `license-choices.yml`                      |
-| `these licenses are new to the product`                                              | No one has said what a license requires of us      | `ort-config/license-classifications.yml`   |
-| `no license was found for these packages`                                            | Neither the package nor its sources name a license | `ort-config/curations/curations.json`      |
-| `these packages name their license in words that are no standard license identifier` | The license name is not an SPDX identifier         | `ort-config/curations/curations.json`      |
-| `we set the license of these packages by hand, but only for older versions`          | A reviewed license does not cover the new version  | `ort-config/curations/curations.json`      |
-| `the source of these packages cannot be found`                                       | No sources jar, tarball or repository              | `ort-config/curations/curations.json`      |
-| `the scan of these packages reported errors`                                         | A download or scan failed                          | run again, or `ort-config/resolutions.yml` |
-| `no SBOMs in the target/sbom directories` or `these SBOMs are not of the version`    | The SBOM build is missing or stale                 | build again from clean                     |
+| File                                     | Records                                                                                                |
+|------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| `license-choices.yml`                    | The license we take where a package offers several                                                     |
+| `ort-config/license-classifications.yml` | What the notices owe for each license                                                                  |
+| `ort-config/curations/curations.json`    | What a package states wrongly or not at all: its license for the versions someone has read, its source |
+| `ort-config/resolutions.yml`             | Scan errors that do not affect the notices                                                             |
+| `ort-config/copyright-garbage.yml`       | Copyright lines that cannot be about any component's code, such as the copyright of a license text     |
 
-A copyright line in the notices that cannot be about any component's code (a license text's own copyright, or code
-misread as a statement) goes into `ort-config/copyright-garbage.yml`.
-
-Every entry in these files carries a comment that says where the information comes from, so that a reviewer can check
-it.
+Every entry carries a comment that says where the information comes from, so that a reviewer can check it.
 
 ## Rules for license decisions
 
@@ -152,12 +139,3 @@ it.
 - **A package without a license is not shipped** until this is raised and resolved.
 - **Do not change the ScanCode options** in `ort-config/config.yml`: stored scans made with other options are not
   reused, and everything would be scanned again.
-
-## Testing the tooling
-
-From the repository root:
-
-```bash
-python3 -m unittest discover -s tools/src/main/notices                   # the notices generator
-python3 -m unittest discover -s tools/src/main/python/license-headers    # the header check
-```

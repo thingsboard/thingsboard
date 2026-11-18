@@ -78,13 +78,9 @@ web-report executables and the bundled Chromium are declared in `msa/web-report/
 
 ### Docker images
 
-Image SBOMs are made only by a build that pushes the multi-architecture images (the `push-docker-amd-arm-images` and
-`push-lts-docker-amd-arm-images` profiles of `msa/pom.xml`) with `-Dsbom.skip=false`. After the push, the `image` goal
-scans each architecture with [Syft](https://github.com/anchore/syft) and attaches the SBOM to the image with
-[ORAS](https://oras.land). It needs Docker with buildx, `syft` and `oras` on the `PATH`, and a login to the registry.
-This is part of the release, not of everyday work.
-
-The image SBOM combines what Syft finds in the image with the SBOM of the package or the npm module that the image
+Image SBOMs are made at the release, by the build that pushes the multi-architecture images with `-Dsbom.skip=false`:
+see the `image` goal in the [plugin's README](https://github.com/thingsboard/sbom-maven-plugin#image-goal). The image SBOM
+combines what Syft finds in the image with the SBOM of the package or the npm module that the image
 installs. The components of the base image are listed but left out of the notices: the base image ships its own license
 texts.
 
