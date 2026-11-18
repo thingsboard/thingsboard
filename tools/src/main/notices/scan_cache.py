@@ -65,12 +65,13 @@ def download(home, url):
             return
         with archive:
             added, stored = unpack(archive, home)
-    # Whatever goes wrong, such as a connection that ends in the middle of the archive, stops the notices
+    # Whatever goes wrong stops the notices: the server, the archive, or this machine, such as a full disk. The error
+    # says which, and the types cannot: a broken archive and a full disk are both an OSError
     except Exception as error:
         raise SystemExit(
             f'Scan cache: {url} cannot be read ({error}), so the notices stop: without it they would take hours.\n'
-            f'To fix: try again in a few minutes. If it keeps failing, check the address: curl -I {url}\n'
-            'Or make the notices without it, for example offline with the scans already here: NOTICES_SCAN_CACHE_URL=none')
+            'To fix: if the error is about this machine, fix it there. Otherwise make sure that the server answers and '
+            'has the archive.')
     if etag:
         with open(etag_file, 'w') as file:
             file.write(etag)

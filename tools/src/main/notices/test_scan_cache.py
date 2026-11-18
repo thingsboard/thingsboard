@@ -150,7 +150,7 @@ class ScanCacheTest(unittest.TestCase):
     def test_no_archive_stops_and_says_what_to_do(self):
         message = self.download_stops(self.server.url)
         self.assertIn('404', message)
-        self.assertIn('NOTICES_SCAN_CACHE_URL=none', message)
+        self.assertIn('To fix', message)
 
         # The next run asks for the archive again
         self.server.archive = archive_of({'scanner/results/a/scan-results.yml': b'a'})
