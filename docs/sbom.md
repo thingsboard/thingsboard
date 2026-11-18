@@ -3,7 +3,7 @@
 ThingsBoard describes every artifact it ships in a software bill of materials (SBOM): a list of the third-party
 components inside it, with their versions, licenses and hashes. The SBOMs use the
 [CycloneDX](https://cyclonedx.org) 1.6 JSON format. They are also the input from which the third-party notices are
-made, so a component that is missing from an SBOM is missing from the notices too: see [licensing.md](licensing.md).
+made, so a component that is missing from an SBOM is missing from the notices too: see [licensing-guide.md](licensing-guide.md).
 
 ## What gets an SBOM
 
@@ -33,7 +33,7 @@ for the Node.js services, whose SBOMs read the packages of other platforms from 
 | Flag                                               | Effect on the SBOMs                                                                                                       |
 |----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | `-Dsbom.skip=false`                                | Turns on the SBOMs of the jars, the packages and the npm modules                                                          |
-| `-Dnotices.skip=false`                             | Also makes the third-party notices of each package and puts them into it (needs Docker; see [licensing.md](licensing.md)) |
+| `-Dnotices.skip=false`                             | Also makes the third-party notices of each package and puts them into it (needs Docker; see [licensing-guide.md](licensing-guide.md)) |
 | `-Dskip.yarn=true`, `-Dskip.ui.build=true`         | Skip the npm SBOMs, and with them all packaging                                                                           |
 | `-Dpkg.skip=true` and the finer `pkg.skip.*` flags | Skip the packages, and with them their SBOMs; `pkg.skip.bootjar` also skips the SBOM of the jar                           |
 
@@ -135,7 +135,7 @@ comes from and under which license, and expect a reviewer to decide how it is de
 | Change a Docker base image               | Nothing: the image SBOM is made from the pushed image.                                       |
 
 "Regenerate the notices" means: build with SBOMs, run the notices generator, and commit the root `THIRD-PARTY-NOTICES`.
-A pull request that changes dependencies and not the notices fails its check. See [licensing.md](licensing.md).
+A pull request that changes dependencies and not the notices fails its check. See [licensing-guide.md](licensing-guide.md).
 
 ## Troubleshooting
 

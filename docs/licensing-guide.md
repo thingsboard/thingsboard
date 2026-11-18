@@ -1,5 +1,10 @@
 # Licensing
 
+> [!NOTE]
+> This document explains, for contributors, how licensing works in this repository. It is not a license and not
+> legal advice. The terms that apply are those of [LICENSE](../LICENSE), of the license texts of the third-party
+> components, and of the Contributor License Agreement. Where this document differs from them, they apply.
+
 This document covers the license of ThingsBoard itself, the license headers of its files, and the third-party notices
 that it ships for the components it contains. How the components are listed in the first place is in
 [sbom.md](sbom.md).
