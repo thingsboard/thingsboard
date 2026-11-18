@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.transport.modbus.connection;
 
+import com.fazecast.jSerialComm.SerialPort;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import jakarta.annotation.PostConstruct;
@@ -12,6 +13,10 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.transport.modbus.config.ModbusEndpoint;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusRs485Settings;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusSerialEndpoint;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusSerialParity;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusSerialStopBits;
 import org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpEndpoint;
 import org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpFraming;
 import org.thingsboard.server.queue.util.TbModbusTransportComponent;
@@ -21,6 +26,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
 /**
@@ -41,16 +47,20 @@ public class ModbusConnectionPool {
     private int maxQueueSizePerEndpoint;
     @Value("${transport.modbus.connect_timeout_ms:5000}")
     private long connectTimeoutMs;
+    @Value("${transport.modbus.serial.max_reconnect_delay_ms:5000}")
+    private long serialMaxReconnectDelayMs;
 
     private final Map<String, ModbusConnection> connections = new ConcurrentHashMap<>();
 
     private EventLoopGroup eventLoopGroup;
     private ExecutorService executor;
+    private ScheduledExecutorService reconnectScheduler;
 
     @PostConstruct
     public void init() {
         eventLoopGroup = new NioEventLoopGroup(eventLoopThreads, ThingsBoardThreadFactory.forName("modbus-netty"));
         executor = ThingsBoardExecutors.newWorkStealingPool(responseProcessingParallelism, "modbus-response-processing");
+        reconnectScheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("modbus-reconnect");
     }
 
     @PreDestroy
@@ -62,6 +72,9 @@ public class ModbusConnectionPool {
         }
         if (executor != null) {
             executor.shutdownNow();
+        }
+        if (reconnectScheduler != null) {
+            reconnectScheduler.shutdownNow();
         }
     }
 
@@ -118,12 +131,14 @@ public class ModbusConnectionPool {
      * Everything that depends on the endpoint type. A serial endpoint is added here as another branch.
      */
     private ConnectionSpec connectionSpec(ModbusEndpoint endpoint) {
+        int singleInFlight = 1;
+
         if (endpoint instanceof ModbusTcpEndpoint tcp) {
             // RTU frames carry no transaction id, so a response can only be matched to the single outstanding request
-            int maxInFlight = tcp.getFraming() == ModbusTcpFraming.RTU ? 1 : maxInFlightPerEndpoint;
+            int maxInFlight = tcp.getFraming() == ModbusTcpFraming.RTU ? singleInFlight : maxInFlightPerEndpoint;
             Duration connectTimeout = Duration.ofMillis(connectTimeoutMs);
-            return new ConnectionSpec(tcp.getKey(), "framing=" + tcp.getFraming(), maxInFlight,
-                    requestTimeout -> DigitalPetriModbusClientAdapter.builder()
+            return new ConnectionSpec(tcp.getKey(), tcp.getConnectionSettings(), maxInFlight,
+                    requestTimeout -> DigitalPetriModbusClientAdapter.tcp()
                             .host(tcp.getHost().trim())
                             .port(tcp.getPort())
                             .framing(tcp.getFraming())
@@ -132,8 +147,50 @@ public class ModbusConnectionPool {
                             .eventLoopGroup(eventLoopGroup)
                             .executor(executor)
                             .build());
+        } else if (endpoint instanceof ModbusSerialEndpoint serial) {
+            return new ConnectionSpec(serial.getKey(), serial.getConnectionSettings(), singleInFlight, modbusClientAdapterProvider(serial));
         }
         throw new IllegalArgumentException("Unsupported Modbus endpoint type: " + endpoint.getType());
+    }
+
+    private Function<Duration, ModbusClientAdapter> modbusClientAdapterProvider(ModbusSerialEndpoint serial) {
+        return requestTimeout -> {
+            var builder = DigitalPetriModbusClientAdapter.serial()
+                    .serialPort(serial.getPort())
+                    .baudRate(serial.getBaudRate())
+                    .parity(getSerialParity(serial.getParity()))
+                    .dataBits(serial.getDataBits())
+                    .stopBits(getSerialStopBits(serial.getStopBits()))
+                    .requestTimeout(requestTimeout)
+                    .executor(executor);
+
+            ModbusRs485Settings rs485 = serial.getRs485();
+            if (rs485 != null) {
+                builder.rs485Mode(true)
+                        .rs485RtsActiveHigh(rs485.isRtsActiveHigh())
+                        .rs485Termination(rs485.isTermination())
+                        .rs485DuringTx(rs485.isRxDuringTx())
+                        .rs485DelayBefore(rs485.getDelayBeforeMicros())
+                        .rs485DelayAfter(rs485.getDelayAfterMicros());
+            }
+            // the library's serial transport opens the port once and never again, unlike our TCP transports
+            return new ModbusClientRetryDecorator(serial.getKey(), builder.build(), reconnectScheduler, serialMaxReconnectDelayMs);
+        };
+    }
+
+    private int getSerialParity(ModbusSerialParity parity) {
+        return switch (parity) {
+            case NONE -> SerialPort.NO_PARITY;
+            case ODD  -> SerialPort.ODD_PARITY;
+            case EVEN -> SerialPort.EVEN_PARITY;
+        };
+    }
+
+    private int getSerialStopBits(ModbusSerialStopBits stopBits) {
+        return switch (stopBits) {
+            case ONE -> SerialPort.ONE_STOP_BIT;
+            case TWO -> SerialPort.TWO_STOP_BITS;
+        };
     }
 
     private record ConnectionSpec(String key, String settings, int maxInFlight,

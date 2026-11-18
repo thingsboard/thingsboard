@@ -4,6 +4,6 @@ package org.thingsboard.server.common.data.transport.modbus.config;
 
 public enum ModbusEndpointType {
 
-    TCP
+    TCP, SERIAL
 
 }

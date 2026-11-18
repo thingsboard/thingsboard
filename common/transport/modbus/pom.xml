@@ -54,6 +54,10 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>com.digitalpetri.modbus</groupId>
+            <artifactId>modbus-serial</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>

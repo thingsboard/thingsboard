@@ -5,6 +5,10 @@ package org.thingsboard.server.common.data.device.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusRs485Settings;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusSerialEndpoint;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusSerialParity;
+import org.thingsboard.server.common.data.transport.modbus.config.ModbusSerialStopBits;
 import org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpEndpoint;
 import org.thingsboard.server.common.data.transport.modbus.config.ModbusTcpFraming;
 
@@ -13,6 +17,83 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ModbusDeviceTransportConfigurationTest {
+
+    @Test
+    void deserializesSerialEndpointThroughInterface() throws Exception {
+        DeviceTransportConfiguration parsed = MAPPER.readValue("""
+                {
+                  "type": "MODBUS",
+                  "endpoint": {
+                    "type": "SERIAL", "port": "/dev/ttyUSB0", "baudRate": 19200, "parity": "NONE", "stopBits": "TWO",
+                    "rs485": { "rtsActiveHigh": false, "delayBeforeMicros": 500 }
+                  },
+                  "unitId": 3
+                }
+                """, DeviceTransportConfiguration.class);
+
+        ModbusDeviceTransportConfiguration cfg = (ModbusDeviceTransportConfiguration) parsed;
+        assertThat(cfg.getEndpoint()).isInstanceOf(ModbusSerialEndpoint.class);
+        ModbusSerialEndpoint endpoint = (ModbusSerialEndpoint) cfg.getEndpoint();
+        assertThat(endpoint.getBaudRate()).isEqualTo(19200);
+        assertThat(endpoint.getDataBits()).isEqualTo(8);
+        assertThat(endpoint.getParity()).isEqualTo(ModbusSerialParity.NONE);
+        assertThat(endpoint.getStopBits()).isEqualTo(ModbusSerialStopBits.TWO);
+        assertThat(endpoint.getRs485().isRtsActiveHigh()).isFalse();
+        assertThat(endpoint.getRs485().getDelayBeforeMicros()).isEqualTo(500);
+        assertThat(endpoint.getKey()).isEqualTo("serial:///dev/ttyUSB0");
+        assertThatCode(cfg::validate).doesNotThrowAnyException();
+    }
+
+    @Test
+    void serialRoundTripWritesTypeAndOmitsDerivedFields() throws Exception {
+        ModbusDeviceTransportConfiguration cfg = new ModbusDeviceTransportConfiguration();
+        cfg.setEndpoint(serial("/dev/ttyUSB0"));
+
+        String json = MAPPER.writeValueAsString((DeviceTransportConfiguration) cfg);
+
+        var endpoint = MAPPER.readTree(json).get("endpoint");
+        assertThat(endpoint.get("type").asText()).isEqualTo("SERIAL");
+        assertThat(endpoint.has("key")).isFalse();
+        assertThat(endpoint.has("connectionSettings")).isFalse();
+        assertThat(endpoint.has("minUnitId")).isFalse();
+        assertThat(MAPPER.readValue(json, DeviceTransportConfiguration.class)).isEqualTo(cfg);
+    }
+
+    @Test
+    void serialKeyIgnoresCaseAndPrefixOfWindowsPortsOnly() {
+        assertThat(serial("com3").getKey()).isEqualTo("serial://COM3");
+        assertThat(serial("\\\\.\\COM10").getKey()).isEqualTo("serial://COM10");
+        assertThat(serial(" /dev/ttyUSB0 ").getKey()).isEqualTo("serial:///dev/ttyUSB0");
+        assertThat(serial("/dev/ttyusb0").getKey()).isNotEqualTo(serial("/dev/ttyUSB0").getKey());
+    }
+
+    @Test
+    void serialConnectionSettingsCoverTheWholeLine() {
+        ModbusSerialEndpoint plain = serial("/dev/ttyUSB0");
+        assertThat(plain.getConnectionSettings()).isEqualTo("baud=9600, data=8, parity=EVEN, stop=ONE, rs485=off");
+
+        ModbusSerialEndpoint otherBaudRate = serial("/dev/ttyUSB0");
+        otherBaudRate.setBaudRate(19200);
+        ModbusSerialEndpoint withRs485 = serial("/dev/ttyUSB0");
+        withRs485.setRs485(new ModbusRs485Settings());
+
+        assertThat(otherBaudRate.getConnectionSettings()).isNotEqualTo(plain.getConnectionSettings());
+        assertThat(withRs485.getConnectionSettings()).isNotEqualTo(plain.getConnectionSettings());
+        assertThat(otherBaudRate.getKey()).isEqualTo(plain.getKey());
+    }
+
+    @Test
+    void serialRejectsBroadcastAndReservedUnitIds() {
+        ModbusDeviceTransportConfiguration cfg = new ModbusDeviceTransportConfiguration();
+        cfg.setEndpoint(serial("/dev/ttyUSB0"));
+
+        cfg.setUnitId(0);
+        assertThatThrownBy(cfg::validate).isInstanceOf(IllegalArgumentException.class);
+        cfg.setUnitId(248);
+        assertThatThrownBy(cfg::validate).isInstanceOf(IllegalArgumentException.class);
+        cfg.setUnitId(247);
+        assertThatCode(cfg::validate).doesNotThrowAnyException();
+    }
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -48,6 +129,7 @@ class ModbusDeviceTransportConfigurationTest {
         assertThat(tree.get("endpoint").get("type").asText()).isEqualTo("TCP");
         assertThat(tree.get("endpoint").has("key")).isFalse();
         assertThat(tree.get("endpoint").has("minUnitId")).isFalse();
+        assertThat(tree.get("endpoint").has("connectionSettings")).isFalse();
         assertThat(MAPPER.readValue(json, DeviceTransportConfiguration.class)).isEqualTo(cfg);
     }
 
@@ -117,6 +199,12 @@ class ModbusDeviceTransportConfigurationTest {
         endpoint.setHost(host);
         endpoint.setPort(port);
         endpoint.setFraming(framing);
+        return endpoint;
+    }
+
+    private static ModbusSerialEndpoint serial(String port) {
+        ModbusSerialEndpoint endpoint = new ModbusSerialEndpoint();
+        endpoint.setPort(port);
         return endpoint;
     }
 

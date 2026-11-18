@@ -6,12 +6,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
 
+import java.io.Serial;
 import java.util.Locale;
 
 @Schema
 @Data
 public class ModbusTcpEndpoint implements ModbusEndpoint {
 
+    @Serial
     private static final long serialVersionUID = -2378563149305812244L;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Device or serial-to-TCP bridge host", example = "10.0.0.30")
@@ -37,6 +39,11 @@ public class ModbusTcpEndpoint implements ModbusEndpoint {
             normalizedHost = "[" + normalizedHost + "]";
         }
         return "tcp://" + normalizedHost + ":" + port;
+    }
+
+    @Override
+    public String getConnectionSettings() {
+        return "framing=" + framing;
     }
 
     @Override

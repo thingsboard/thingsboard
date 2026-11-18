@@ -18,6 +18,8 @@ import com.digitalpetri.modbus.pdu.WriteMultipleCoilsRequest;
 import com.digitalpetri.modbus.pdu.WriteMultipleRegistersRequest;
 import com.digitalpetri.modbus.pdu.WriteSingleCoilRequest;
 import com.digitalpetri.modbus.pdu.WriteSingleRegisterRequest;
+import com.digitalpetri.modbus.serial.SerialPortTransportConfig;
+import com.digitalpetri.modbus.serial.client.SerialPortClientTransport;
 import io.netty.channel.EventLoopGroup;
 import lombok.Builder;
 import org.thingsboard.server.common.data.transport.modbus.ModbusFunctionCode;
@@ -37,7 +39,20 @@ public class DigitalPetriModbusClientAdapter implements ModbusClientAdapter {
 
     private final ModbusClient client;
 
-    @Builder
+    @Builder(builderMethodName = "serial", builderClassName = "SerialBuilder")
+    public DigitalPetriModbusClientAdapter(String serialPort, int baudRate, int dataBits, int stopBits, int parity, boolean rs485Mode,
+                                           boolean rs485RtsActiveHigh, boolean rs485Termination, boolean rs485DuringTx,
+                                           int rs485DelayBefore, int rs485DelayAfter, Duration requestTimeout,
+                                           ExecutorService executor) {
+        this.client = ModbusRtuClient.create(
+                new SerialPortClientTransport(new SerialPortTransportConfig(
+                        serialPort, baudRate, dataBits, stopBits, parity, rs485Mode, rs485RtsActiveHigh, rs485Termination,
+                        rs485DuringTx, rs485DelayBefore, rs485DelayAfter, executor
+                )),
+                cfg -> cfg.requestTimeout = requestTimeout);
+    }
+
+    @Builder(builderMethodName = "tcp", builderClassName = "TcpBuilder")
     public DigitalPetriModbusClientAdapter(String host, int port, ModbusTcpFraming framing, Duration requestTimeout,
                                            Duration connectTimeout, EventLoopGroup eventLoopGroup, ExecutorService executor) {
         this.client = switch (framing) {

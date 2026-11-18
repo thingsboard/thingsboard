@@ -1715,7 +1715,7 @@
       "path": "transport/modbus/src/main/resources/tb-modbus-transport.yml",
       "header": "ce-modified",
       "reason": "Copy of the CE SNMP transport configuration file tb-snmp-transport.yml with the SNMP names replaced by Modbus ones; the structure is the CE implementation. The transport.snmp settings are replaced by the transport.modbus settings of thingsboard.yml. Reviewed against CE transport/snmp/src/main/resources/tb-snmp-transport.yml at 5954190c32f.",
-      "contentHash": "sha256:52c46cf21483e5cc3c2bfdb1cc047ad8ee10063d9e30d8cd3ae31ea80c572601"
+      "contentHash": "sha256:d103d9ad386039b3368c3f141e902725ec9358dd77229fb9c6150d7ea4d1d2c7"
     },
     {
       "path": "transport/modbus/src/main/resources/logback.xml",

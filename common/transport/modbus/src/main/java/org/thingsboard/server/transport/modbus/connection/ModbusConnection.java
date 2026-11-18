@@ -110,9 +110,11 @@ public class ModbusConnection {
             log.info("[{}] Increasing request timeout {} -> {}, rebuilding client", key, timeout, required);
             old = client;
             timeout = required;
+            // close before open: a serial port can be opened only once, so the new client could not open it
+            // while the old one still holds it
+            disconnectQuietly(old);
             client = newClient(required);
         }
-        disconnectQuietly(old);
     }
 
     public CompletableFuture<byte[]> read(int unitId, ModbusFunctionCode functionCode, int address, int count) {
