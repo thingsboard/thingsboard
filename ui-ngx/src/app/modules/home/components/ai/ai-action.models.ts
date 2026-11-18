@@ -396,6 +396,8 @@ export function aiActionWords(tool: string, args: unknown): AiActionWords {
   switch (tool) {
     case 'add_dashboard_widgets':
       return {key: ACTION_PREFIX + (Array.isArray(values.widgets) && values.widgets.length === 1 ? 'add-widget' : 'add-widgets'), kind: 'think'};
+    case 'add_scada_connectors':
+      return {key: ACTION_PREFIX + 'add-scada-connectors', kind: 'think'};
     case 'read_widget': {
       const parts = widgetParts(values).filter(part => part !== 'overview');
       return parts.length && !parts.includes('all')

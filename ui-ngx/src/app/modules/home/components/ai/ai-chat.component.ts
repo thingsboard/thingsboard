@@ -1003,6 +1003,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
           if (call?.from === 'APPROVAL' || call?.from === 'ACTION') {
             this.applySideEffects(event.data.executionId, call.data.tool, call.data.arguments);
             this.openCreatedReportTemplate(call.data.tool, event.data.affectedEntities);
+            this.openCreatedDashboard(call.data.tool, event.data.affectedEntities);
             this.openCreatedWidget(call.data.tool, event.data.affectedEntities);
             this.openCreatedScadaSymbol(call.data.tool, call.data.arguments, event.data.result);
           }
@@ -1135,6 +1136,18 @@ export class AiChatComponent implements OnInit, OnDestroy {
       return this.translate.instant(words.key + '.run', words.params);
     }
     return data?.headline;
+  }
+
+  private openCreatedDashboard(tool: string | undefined, affected: EntityId[] | undefined): void {
+    const chatId = this.chatId();
+    const created = affected?.find(entity => entity.entityType === EntityType.DASHBOARD);
+    const view = this.panelService.clientContext()?.view?.type ?? aiPageView((this.router.url || '/').split(/[?#]/)[0]);
+    if (tool !== 'create_dashboard' || !created || !chatId
+      || (view !== AiAssistantViewType.DASHBOARD_LIST && view !== AiAssistantViewType.DASHBOARD_GROUP_LIST)) {
+      return;
+    }
+    this.panelService.carryChat(chatId);
+    this.router.navigate(['/dashboards', created.id]);
   }
 
   private openCreatedWidget(tool: string | undefined, affected: EntityId[] | undefined): void {

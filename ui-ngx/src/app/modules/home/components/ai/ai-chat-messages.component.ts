@@ -367,6 +367,10 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes.loading && !changes.loading.firstChange && changes.loading.previousValue && !changes.loading.currentValue
+      && !changes.messages?.firstChange && this.isNearBottom()) {
+      setTimeout(() => this.followTurnEnd(), 0);
+    }
     if (changes.loadingLongTime?.currentValue) {
       if (this.isNearBottom()) {
         setTimeout(() => this.scrollToBottom('smooth'), 0);
@@ -893,6 +897,22 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     scroller.addEventListener('pointerdown', release, {passive: true});
     this.releaseBottom = release;
     stick();
+  }
+
+  private followTurnEnd(): void {
+    const scroller = this.scroller;
+    const answers = this.elementRef.nativeElement.querySelectorAll('.ai');
+    const answer = answers[answers.length - 1] as HTMLElement | undefined;
+    this.pinToBottom(() => {
+      let target = scroller.scrollHeight - scroller.clientHeight;
+      if (answer?.isConnected) {
+        const top = answer.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 8;
+        target = Math.min(target, top);
+      }
+      if (target > scroller.scrollTop) {
+        scroller.scrollTop = target;
+      }
+    });
   }
 
   scrollToBottom(behavior: ScrollBehavior = 'smooth'): void {

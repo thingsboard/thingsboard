@@ -1148,6 +1148,12 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       const rows = widgetRecords(values.widgets, result);
       return {hood: text(rows.length === 1 ? 'add-widget' : 'add-widgets', {count: rows.length, entity: dashboard}), blocks: rows.length ? [{type: 'records', rows}] : generic(result, 'result')};
     }
+    case 'add_scada_connectors': {
+      const rows = (Array.isArray(values.lines) ? values.lines : []).filter(isObject)
+        .map((line, index) => `${str(line.name) ?? 'Line ' + (index + 1)} · ${Array.isArray(line.points) ? line.points.length : 0} points`
+          + (isObject(line.flow) ? ' · flow' : ''));
+      return {hood: text('add-scada-connectors', {count: rows.length, entity: dashboard}), blocks: rows.length ? [{type: 'list', rows}] : generic(result, 'result')};
+    }
     case 'update_dashboard_widget':
       return {
         hood: text('update-widget', {name: str(values.title) ?? names.get(values.widgetId)?.name ?? '—', entity: dashboard}),
