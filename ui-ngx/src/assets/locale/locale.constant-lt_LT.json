@@ -5670,8 +5670,6 @@
     "access-id-required": "Prieigos ID yra privalomas.",
     "access-key": "Prieigos raktas",
     "access-key-required": "Prieigos raktas yra privalomas.",
-    "access-key-min-length": "Prieigos raktas per trumpas.",
-    "access-key-max-length": "Prieigos raktas per ilgas.",
     "connection-parameters": "Ryšio parametrai",
     "service-bus-namespace-name": "Service Bus vardų srities pavadinimas",
     "service-bus-namespace-name-required": "Service Bus vardų srities pavadinimas yra privalomas.",

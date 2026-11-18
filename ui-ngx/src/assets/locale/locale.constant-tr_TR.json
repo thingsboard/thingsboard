@@ -5635,8 +5635,6 @@
     "access-id-required": "Erişim Kimliği gereklidir.",
     "access-key": "Erişim Anahtarı",
     "access-key-required": "Erişim Anahtarı gereklidir.",
-    "access-key-min-length": "Erişim Anahtarı çok kısa.",
-    "access-key-max-length": "Erişim Anahtarı çok uzun.",
     "connection-parameters": "Bağlantı parametreleri",
     "service-bus-namespace-name": "Service Bus Ad Alanı Adı",
     "service-bus-namespace-name-required": "Service Bus Ad Alanı Adı gereklidir.",

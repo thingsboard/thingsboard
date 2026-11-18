@@ -5671,8 +5671,6 @@
         "access-id-required": "معرف الوصول مطلوب.",
         "access-key": "مفتاح الوصول",
         "access-key-required": "مفتاح الوصول مطلوب.",
-        "access-key-min-length": "مفتاح الوصول قصير جدًا.",
-        "access-key-max-length": "مفتاح الوصول طويل جدًا.",
         "connection-parameters": "معلمات الاتصال",
         "service-bus-namespace-name": "اسم مساحة أسماء Service Bus",
         "service-bus-namespace-name-required": "اسم مساحة أسماء Service Bus مطلوب.",

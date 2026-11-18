@@ -5676,8 +5676,6 @@
         "access-id-required": "Access ID is required.",
         "access-key": "Access Secret",
         "access-key-required": "Access Secret is required.",
-        "access-key-min-length": "Access Key is too short.",
-        "access-key-max-length": "Access Key is too long.",
         "connection-parameters": "Connection parameters",
         "service-bus-namespace-name": "Service Bus Namespace Name",
         "service-bus-namespace-name-required": "Service Bus Namespace Name is required.",
