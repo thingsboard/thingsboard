@@ -1660,6 +1660,15 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       return {hood, blocks: [...(rows.length ? [{type: 'facts' as const, rows}] : []),
         ...(warnings.length ? [{type: 'list' as const, label: text('widget-warnings'), rows: warnings.slice(0, MAX_ROWS)}] : [])]};
     }
+    case 'create_scada_symbol_widget': {
+      const raw = typeof result === 'string' && result.startsWith('OK: ') ? aiParse(result.slice(4)) : result;
+      const name = (isObject(raw) ? str(raw.name) : undefined) ?? str(values.name) ?? '—';
+      if (!isObject(raw)) {
+        return {hood: text('create-scada-symbol-widget', {name}), blocks: generic(raw, 'result')};
+      }
+      const rows = facts(raw, ['widgetTypeId']);
+      return {hood: text('create-scada-symbol-widget', {name}), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
     case 'check_scada_symbol': {
       if (!isObject(result)) {
         return {hood: text('check-scada-symbol'), blocks: generic(result, 'result')};

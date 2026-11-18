@@ -106,6 +106,7 @@ const TOOL_WORDS: Record<string, string> = {
   create_scada_symbol: 'copy-scada-symbol',
   update_scada_symbol: 'update-scada-symbol',
   check_scada_symbol: 'check-scada-symbol',
+  create_scada_symbol_widget: 'create-scada-symbol-widget',
   save_two_factor_settings: 'save-two-factor-settings',
   save_oauth2_domain: 'save-oauth2-domain',
   read_my_account: 'read-my-account',
