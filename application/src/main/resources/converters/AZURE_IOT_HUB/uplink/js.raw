@@ -1,0 +1,73 @@
+/** Decoder **/
+
+// Decode the incoming payload to a JSON object.
+var data = decodeToJson(payload);
+
+// The device name comes from deviceId. Reject the message if it is missing or empty.
+var deviceName = data.deviceId != null ? String(data.deviceId).trim() : "";
+if (!deviceName) {
+    throw new Error("Payload has no deviceId");
+}
+// The device profile comes from deviceType. If it is missing or empty, the "default" profile is used.
+var deviceType = data.deviceType != null ? String(data.deviceType).trim() : "";
+if (!deviceType) {
+    deviceType = "default";
+}
+
+// Use the ISO 8601 timestamp if provided; otherwise, use the current server time.
+var ts = data.timestamp != null ? new Date(data.timestamp).getTime() : Date.now();
+
+// Static device properties become attributes.
+var attributes = {};
+if (data.location != null) {
+    attributes.latitude = data.location.latitude;
+    attributes.longitude = data.location.longitude;
+    attributes.altitude = data.location.altitude;
+}
+if (data.metadata != null) {
+    attributes.version = data.metadata.version;
+    attributes.manufacturer = data.metadata.manufacturer;
+}
+
+// Measurements and state become telemetry.
+var telemetry = {
+    temperature: data.temperature,
+    pressure: data.pressure,
+    status: data.status,
+    receivedAlarms: data.alarms
+};
+if (data.vibration != null) {
+    telemetry.vibrationX = data.vibration.x;
+    telemetry.vibrationY = data.vibration.y;
+    telemetry.vibrationZ = data.vibration.z;
+}
+if (data.metadata != null) {
+    telemetry.batteryLevel = data.metadata.batteryLevel;
+    telemetry.batteryStatus = data.metadata.batteryStatus;
+}
+
+// Build the converted uplink message.
+var result = {
+    deviceName: deviceName,
+    deviceType: deviceType,
+    attributes: attributes,
+    telemetry: {
+        ts: ts,
+        values: telemetry
+    }
+};
+
+/** Helper functions **/
+
+// Convert the byte array to a string.
+function decodeToString(payload) {
+    return String.fromCharCode.apply(String, payload);
+}
+
+// Convert the byte array to a JSON object.
+function decodeToJson(payload) {
+    return JSON.parse(decodeToString(payload));
+}
+
+// Return the converted uplink message.
+return result;

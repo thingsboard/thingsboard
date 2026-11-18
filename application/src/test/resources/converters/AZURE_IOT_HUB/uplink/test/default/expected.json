@@ -1,14 +1,19 @@
 {
   "deviceName": "8F4A2C6D",
   "deviceType": "Packing machine",
-  "groupName": "Control room",
   "attributes": {
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "altitude": 10,
     "version": 1,
     "manufacturer": "Example corporation"
   },
   "telemetry": {
-    "ts": 1686306600000,
+    "ts": 1791973800000,
     "values": {
+      "temperature": 25.5,
+      "pressure": 1013.25,
+      "status": "ALARM",
       "receivedAlarms": [
         {
           "type": "temperature",
@@ -21,12 +26,9 @@
           "message": "Excessive vibration detected."
         }
       ],
-      "temperature": 25.5,
-      "pressure": 1013.25,
-      "x": 0.02,
-      "y": 0.03,
-      "z": 0.015,
-      "status": "ALARM",
+      "vibrationX": 0.02,
+      "vibrationY": 0.03,
+      "vibrationZ": 0.015,
       "batteryLevel": 100,
       "batteryStatus": "Charging"
     }
