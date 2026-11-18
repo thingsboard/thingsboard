@@ -1676,7 +1676,6 @@
         "unassign-asset": "Odebrat aktivum",
         "unassign-assets-title": "Jste si jisti, že chcete odebrat { count, plural, one {# aktivum} few {# aktiva} many {# aktiva} other {# aktiv} }?",
         "unassign-assets-text": "Po potvrzení budou všechna vybraná aktiva odebrána a nebudou pro zákazníka dostupná.",
-        "unassign-assets-from-edge": "Odebrat aktiva edge",
         "copyId": "Kopírovat ID aktiva",
         "idCopiedMessage": "ID aktiva bylo zkopírováno do schránky",
         "select-asset": "Vybrat aktivum",
@@ -1827,7 +1826,6 @@
         "transport-data-points-hourly-activity": "Hodinová aktivita datových bodů přenosu",
         "transport-data-points-daily-activity": "Denní aktivita datových bodů přenosu",
         "transport-data-points-monthly-activity": "Měsíční aktivita datových bodů přenosu",
-        "transport-hourly-activity": "Hodinová aktivita přenosu",
         "transport-messages": "Zprávy přenosu",
         "transport-messages-hourly-activity": "Hodinová aktivita zpráv přenosu",
         "transport-data-point-hourly-activity": "Hodinová aktivita datových bodů přenosu",
@@ -1860,7 +1858,6 @@
         "ai-credits-hourly-activity": "Hodinová aktivita kreditů AI",
         "ai-credits-daily-activity": "Denní aktivita kreditů AI",
         "ai-credits-monthly-activity": "Měsíční aktivita kreditů AI",
-        "transport-monthly-activity": "Měsíční aktivita přenosu",
         "view-details": "Zobrazit detail",
         "view-statistics": "Zobrazit statistiky"
     },
@@ -2189,7 +2186,6 @@
         "public-dashboards": "Veřejné dashboardy",
         "public-devices": "Veřejná zařízení",
         "public-assets": "Veřejná aktiva",
-        "public-edges": "Veřejné edge",
         "public-entity-views": "Veřejné entitní pohledy",
         "add": "Přidat zákazníka",
         "delete": "Smazat zákazníka",
@@ -2210,7 +2206,6 @@
         "manage-customer-assets": "Spravovat aktiva zákazníka",
         "manage-public-assets": "Spravovat veřejná aktiva",
         "manage-customer-edges": "Spravovat instance Edge zákazníka",
-        "manage-public-edges": "Spravovat edge zákazníka",
         "add-customer-text": "Přidat nového zákazníka",
         "no-customers-text": "Žádní zákazníci nebyli nalezeni",
         "customer-details": "Detail zákazníka",
@@ -2401,7 +2396,6 @@
         "add": "Přidat dashboard",
         "assign-dashboard-to-customer": "Přiřadit dashboardy zákazníkovi",
         "assign-dashboard-to-customer-text": "Prosím vyberte dashboardy, které mají být přiřazeny zákazníkovi",
-        "assign-dashboard-to-edge-title": "Přiřadit dashboard(y) k edge",
         "assign-to-customer-text": "Prosím vyberte zákazníka, kterému mají být dashboardy přiřazeny",
         "assign-to-customer": "Přiřadit zákazníkovi",
         "unassign-from-customer": "Odebrat zákazníkovi",
@@ -2749,8 +2743,6 @@
         "assign-to-customer": "Přiřadit zákazníkovi",
         "assign-device-to-customer": "Přiřadit zařízení zákazníkovi",
         "assign-device-to-customer-text": "Vyberte prosím zařízení, která mají být přiřazena zákazníkovi",
-        "assign-device-to-edge-title": "Přiřadit zařízení k edge",
-        "assign-device-to-edge-text": "Zvolte prosím zařízení, která mají být přiřazena k edge",
         "make-public": "Zveřejnit zařízení",
         "make-private": "Učinit zařízení neveřejným",
         "no-devices-text": "Žádná zařízení nebyla nalezena",
@@ -2915,8 +2907,7 @@
             "snmp-command": "Podle následující dokumentace připojte zařízení přes SNMP.",
             "sparkplug-command": "Podle následující dokumentace připojte zařízení přes MQTT Sparkplug.",
             "lwm2m-command": "Pro připojení zařízení přes LWM2M použijte následující dokumentaci."
-        },
-        "filter-title": "Filtr"
+        }
     },
     "dynamic-form": {
         "property": {
@@ -3584,11 +3575,6 @@
         "manage-entity-views": "Spravovat entitní pohledy",
         "manage-dashboards": "Spravovat dashboardy",
         "manage-rulechains": "Spravovat řetězy pravidel",
-        "edge-assets": "Aktiva edge",
-        "edge-devices": "Zařízení edge",
-        "edge-entity-views": "Entitní pohledy edge",
-        "edge-dashboards": "Dashboardy edge",
-        "edge-rulechains": "Řetězy pravidel edge",
         "assets": "Aktiva Edge",
         "devices": "Zařízení Edge",
         "entity-views": "Entitní pohledy Edge",
@@ -4856,7 +4842,6 @@
         "assign-to-customer": "Přiřadit zákazníkovi",
         "assign-entity-view-to-customer": "Přiřadit entitní pohledy zákazníkovi",
         "assign-entity-view-to-customer-text": "Vyberte prosím entitní pohledy, které mají být přiřazeny zákazníkovi",
-        "assign-entity-view-to-edge-title": "Přiřadit entitní pohled(y) k edge",
         "no-entity-views-text": "Žádné entitní pohledy nebyly nalezeny",
         "assign-to-customer-text": "Vyberte prosím zákazníka, kterému mají být přiřazeny entitní pohledy",
         "entity-view-details": "Detail entitního pohledu",
@@ -4903,9 +4888,7 @@
         "select-entity-view": "Vybrat entitní pohled",
         "make-public": "Zveřejnit entitní pohled",
         "make-private": "Učinit entitní pohled neveřejným",
-        "start-date": "Datum zahájení",
         "start-ts": "Čas zahájení",
-        "end-date": "Datum ukončení",
         "end-ts": "Čas ukončení",
         "date-limits": "Omezení data",
         "client-attributes": "Klientské atributy",
@@ -5303,11 +5286,9 @@
         "launch-docker-point-access": "Přímý přístup k zařízení",
         "launch-docker-action": "Zobrazit pokyny",
         "launch-back": "Zpět",
-        "gateway-exists": "Zařízení se shodným názvem již existuje.",
         "gateway-name": "Název zařízení Gateway",
         "gateway-name-required": "Název zařízení Gateway je povinný.",
         "gateways": "Zařízení Gateway",
-        "gateway-saved": "Konfigurace brány byla úspěšně uložena.",
         "no-gateway-found": "Žádná zařízení Gateway nebyla nalezena.",
         "no-gateway-matching": " Zařízení Gateway '{{item}}' nebylo nalezeno.",
         "auto-provision": "Automatické zřizování",
@@ -5987,9 +5968,7 @@
         "downlink-connection-string": "Připojovací řetězec pro Downlink",
         "downlink-connection-string-required": "Připojovací řetězec pro Downlink je povinný",
         "downlink-topic-name": "Název topicu pro Downlink",
-        "downlink-topic-name-required": "Název topicu pro Downlink je povinný",
-        "access-key-min-length": "Přístupový klíč je příliš krátký.",
-        "access-key-max-length": "Přístupový klíč je příliš dlouhý."
+        "downlink-topic-name-required": "Název topicu pro Downlink je povinný"
     },
     "scada": {
         "symbols": "Symboly SCADA",
@@ -6342,8 +6321,7 @@
         "type-rule-chain": "Řetěz pravidel",
         "type-rule-chain-plural": "Řetězy pravidel",
         "type-device": "Zařízení",
-        "type-device-plural": "Zařízení",
-        "selected": "Vybráno"
+        "type-device-plural": "Zařízení"
     },
     "iot-hub": {
         "advanced-settings": "Pokročilá nastavení",
@@ -6620,21 +6598,7 @@
         "deep-link-invalid-id": "Neplatný odkaz na položku IoT Hub.",
         "deep-link-not-found": "Tato položka IoT Hub neexistuje nebo byla odstraněna.",
         "deep-link-fetch-failed": "Nepodařilo se načíst položku IoT Hub. Zkuste to prosím znovu.",
-        "export-to-iot-hub": "Exportovat do IoT Hub",
-        "new-converter-available": "Je k dispozici nový převodník dat",
-        "converter-update-title": "Aktualizovat převodník dat?",
-        "device-install-step-pending": "Čekající",
-        "device-install-step-running": "Vytváření...",
-        "device-install-step-success": "Vytvořeno",
-        "device-update-will-create": "Bude vytvořeno",
-        "device-update-shared-more": "a další: {{count}}",
-        "device-update-shared-less": "Zobrazit méně",
-        "device-update-new-default-converter": "ThingsBoard má novou verzi výchozího převodníku dat, který tento balíček používá.",
-        "device-update-confirm-warnings": "Chcete-li povolit aktualizaci, potvrďte { count, plural, one {# varování} few {# varování} many {# varování} other {# varování} }",
-        "device-update-skipped": "Nezměněno",
-        "device-update-updated": "Aktualizováno",
-        "device-update-created": "Vytvořeno",
-        "device-update-try-again": "Zkusit znovu"
+        "export-to-iot-hub": "Exportovat do IoT Hub"
     },
     "item-data": {
         "widget-type-timeseries": "Časové řady",
@@ -6785,7 +6749,6 @@
         "create-account": "Vytvořit účet",
         "sign-in-with": "Přihlásit se pomocí {{name}}",
         "sign-in-to-your-account": "Přihlaste se ke svému účtu",
-        "login-with": "Přihlásit se přes {{name}}",
         "or": "nebo",
         "error": "Chyba přihlášení",
         "verify-your-identity": "Ověřte svou identitu",
@@ -7666,8 +7629,7 @@
         "selected-javascript-resources": "Vybráno: { count, plural, one {# zdroj JavaScript} few {# zdroje JavaScript} many {# zdroje JavaScript} other {# zdrojů JavaScript} }",
         "no-javascript-resource-text": "Nebyly nalezeny žádné zdroje JavaScript",
         "all-types": "Vše",
-        "module-script": "Skript modulu",
-        "javascript-type": "Typ JavaScript"
+        "module-script": "Skript modulu"
     },
     "rpc": {
         "error": {
@@ -9430,7 +9392,6 @@
         "no-queues-found": "Nebyly nalezeny žádné fronty.",
         "no-queues-matching": "Nebyly nalezeny žádné fronty odpovídající '{{queue}}'.",
         "select-name": "Vybrat název fronty",
-        "select_name": "Vybrat název fronty",
         "name": "Název",
         "name-required": "Název fronty je povinný!",
         "name-unique": "Název fronty není jedinečný!",
@@ -9517,8 +9478,7 @@
             "retry-timeout-hint": "Opakovat všechny zprávy ze zpracovávané dávky, u kterých vypršel časový limit",
             "retry-failed-and-timeout-label": "Opakovat neúspěšné a po vypršení časového limitu",
             "retry-failed-and-timeout-hint": "Opakovat všechny neúspěšné zprávy a zprávy s vypršeným časovým limitem ze zpracovávané dávky"
-        },
-        "name_required": "Název fronty je povinný!"
+        }
     },
     "queue-statistics": {
         "queue-statistics": "Statistiky front",
@@ -10858,8 +10818,6 @@
         "move": "Přesunout widget",
         "save-widget-as": "Uložit widget jako",
         "save-widget-as-text": "Zadejte nový název widgetu",
-        "save-widget-type-as": "Uložit typ widgetu jako",
-        "save-widget-type-as-text": "Zadejte prosím název nového widgetu a/nebo vyberte cílovou kategorii widgetů",
         "toggle-fullscreen": "Přepnout na celou obrazovku",
         "run": "Spustit widget",
         "widget-title": "Název widgetu",
@@ -10879,8 +10837,6 @@
         "settings-form": "Formulář nastavení",
         "data-key-settings-form": "Formulář nastavení datového klíče",
         "latest-data-key-settings-form": "Formulář nastavení klíče posledních hodnot",
-        "settings-schema": "Schéma nastavení",
-        "datakey-settings-schema": "Schéma nastavení datového klíče",
         "widget-settings": "Nastavení widgetu",
         "description": "Popis",
         "tags": "Štítky",
@@ -10903,7 +10859,6 @@
         "delete-widgets-title": "Jste si jisti, že chcete smazat { count, plural, one {# widget} few {# widgety} many {# widgetu} other {# widgetů} }?",
         "delete-widgets-text": "Buďte opatrní, po potvrzení budou všechny vybrané widgety odstraněny a všechna související data nebude možné obnovit.",
         "delete-widget": "Smazat widget",
-        "add-widget-type": "Přidat nový typ widgetu",
         "widget-template-load-failed-error": "Nahrání šablony widgetu selhalo!",
         "details": "Detail",
         "widget-details": "Detail widgetu",
@@ -11311,10 +11266,7 @@
         "export": "Exportovat typ widgetu",
         "export-failed-error": "Widget nebylo možné exportovat: {{error}}",
         "widget-file": "Soubor widgetu",
-        "invalid-widget-file-error": "Widget nebylo možné importovat: Neplatná datová struktura widgetu.",
-        "create-new-widget-type": "Vytvořit nový typ widgetu",
-        "widget-type-file": "Soubor typu widgetu",
-        "invalid-widget-type-file-error": "Typ widgetu nebylo možné importovat: Neplatná datová struktura typu widgetu."
+        "invalid-widget-file-error": "Widget nebylo možné importovat: Neplatná datová struktura widgetu."
     },
     "self-registration": {
         "self-registration": "Samoobslužná registrace",
@@ -12690,9 +12642,7 @@
             "retrieve-led-status-value-method": "Získat hodnotu stavu LED pomocí metody",
             "check-status-method": "Metoda RPC pro kontrolu stavu zařízení",
             "parse-led-status-value-function": "Funkce pro parsování hodnoty stavu LED",
-            "knob-title": "Název otočného ovladače",
-            "led-status-value-attribute": "Atribut zařízení obsahující hodnotu stavu LED",
-            "led-status-value-timeseries": "Časové řady zařízení obsahující hodnotu stavu LED"
+            "knob-title": "Název otočného ovladače"
         },
         "maps": {
             "map-type": {
