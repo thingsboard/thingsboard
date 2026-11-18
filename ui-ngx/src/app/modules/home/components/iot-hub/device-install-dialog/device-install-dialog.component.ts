@@ -37,7 +37,7 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { Integration, IntegrationType } from '@shared/models/integration.models';
 import { HasVersion } from '@shared/models/entity.models';
-import { differsFromDefaultConverter, loadDefaultUplinkConverter, loadOwnDefaultConverterIds } from '@home/components/iot-hub/iot-hub-default-converter';
+import { loadDefaultUplinkConverter } from '@home/components/iot-hub/iot-hub-default-converter';
 import { downloadEntityJson, readableMessage, requestFailureMessage, splitTextWithLink } from '@home/components/iot-hub/iot-hub-utils';
 import {
   cleanFormFieldValue,
@@ -103,8 +103,6 @@ interface EntityStepPlan {
   version?: number;
   // Modified: the entity as the check found it, which the user can download before it is overwritten
   current?: any;
-  // A step with "default": true whose converter differs from ThingsBoard's default converter now
-  newDefaultConverter?: boolean;
 }
 
 // Install: the conflict choice a Retry keeps while the existing entity is the same one
@@ -403,8 +401,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private previousFiles = new Map<string, string>();
   private previousPackageInfo: DevicePackageInfo | null = null;
   private entityPlans = new WeakMap<EntityStepProgress, EntityStepPlan>();
-  // Update: for each step with "default": true, whether its converter differs from ThingsBoard's default one now
-  private defaultConverterChanges = new Map<DeviceInstallStep, boolean>();
   // The check of the plan in progress; a way back meanwhile starts a new one, which drops this one's result
   private checkRun = 0;
 
@@ -490,7 +486,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // Update: the package keeps the method it was installed with
       this.selectedInstallMethod = this.data.update.descriptor.selectedInstallMethod;
       await this.loadPreviousVersion();
-      await this.checkDefaultConverters();
       if (this.isTextOnlyUpdate() && await this.registerTextOnlyUpdate()) {
         return;
       }
@@ -2078,7 +2073,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /**
    * A converter step with "default": true takes the converter ThingsBoard creates for a new integration of the method's
-   * type (INTEGRATION_TTN: TTN). It becomes the step's template, so it installs, overwrites and updates like a file of the package.
+   * type (INTEGRATION_TTN: TTN). It becomes the step's template, so it installs and overwrites like a file of the package; an update
+   * counts it as changed only when the step switches to or from the default converter (see entityStepChanged).
    */
   private async addDefaultConverters(): Promise<void> {
     const scriptLang = getCurrentAuthState(this.store).tbelEnabled ? ScriptLanguage.TBEL : ScriptLanguage.JS;
@@ -2095,38 +2091,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         step.template = `${DEFAULT_CONVERTER_PATH}${integrationType}.json`;
         this.zipFiles.set(step.template, JSON.stringify(converter));
       }
-    }
-  }
-
-  /**
-   * Update: ThingsBoard's default converter changes with ThingsBoard, not with the package, so a step with "default": true
-   * changed when the package's converter differs from the default one now. A converter the user changed differs too:
-   * the update shows that someone changed it.
-   */
-  private async checkDefaultConverters(): Promise<void> {
-    this.restoreInstallState();
-    let ownDefaultConverterIds: Set<string> | undefined;
-    try {
-      for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
-        const stored = step.default ? this.storedStateOf(step)?.state : undefined;
-        let id: string = stored?.entityOutput?.id;
-        // A converter taken as it was may be any converter with that name: only another package's default one is checked
-        if (id && stored.resolution === 'use-existing') {
-          ownDefaultConverterIds ??= await loadOwnDefaultConverterIds(this.iotHubApiService);
-          if (!ownDefaultConverterIds.has(id)) {
-            id = undefined;
-          }
-        }
-        const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true})).catch(() => null) : null;
-        if (converter) {
-          const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
-            converter.configuration.scriptLang, converter.name);
-          this.defaultConverterChanges.set(step, !!defaultConverter && differsFromDefaultConverter(converter, defaultConverter));
-        }
-      }
-    } finally {
-      this.formValues = {};
-      this.entityOutputs.clear();
     }
   }
 
@@ -2343,12 +2307,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /** Update: true when the new version's files give the entity something else than the installed version's gave it. */
   private entityStepChanged(step: DeviceInstallStep): boolean {
-    if (this.defaultConverterChanges.has(step)) {
-      return this.defaultConverterChanges.get(step);
-    }
     const previousStep = this.findPreviousStep(step);
     if (!previousStep) {
       return true;
+    }
+    // The default converter's template isn't a file of the package: it changes only when the step switches to or from the default converter
+    if (step.default) {
+      return !previousStep.default;
     }
     const previousFormValues = this.previousFormValues();
     const files: ('template' | 'serverAttributes' | 'sharedAttributes' | 'credentials')[] = ['template', 'serverAttributes', 'sharedAttributes', 'credentials'];
@@ -2450,13 +2415,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (previous) {
       // Its current name: the user may have renamed it
       ep.resolvedName = previous.output.name;
-      const newDefaultConverter = this.defaultConverterChanges.get(step);
-      // The default converter of a package that took another package's converter is that package's: the update
-      // of either brings it to ThingsBoard's default, which changes it for both
-      if (previous.useExisting && newDefaultConverter) {
-        const current = await this.loadEntitySnapshot(step, previous.output.id);
-        return { action: 'overwrite', previous, shared: true, confirmed: false, version: current.version, newDefaultConverter };
-      }
       // The device and its credentials, which the firmware uses, never change on update
       if (previous.useExisting || step.type === InstallStepType.DEVICE || step.type === InstallStepType.GATEWAY) {
         return { action: 'keep', previous, confirmed: true };
@@ -2475,8 +2433,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         action: 'overwrite', previous, shared: previous.shared, modified: modified && !previous.shared,
         confirmed: !previous.shared && !modified,
         version,
-        current: modified && !previous.shared ? current : undefined,
-        newDefaultConverter
+        current: modified && !previous.shared ? current : undefined
       };
     }
     // At install, or new in this version, or deleted since: created, unless the user chooses otherwise for an entity
