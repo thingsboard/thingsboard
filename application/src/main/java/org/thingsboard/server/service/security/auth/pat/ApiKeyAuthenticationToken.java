@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.pat;
 
+import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.ApiKeyAuthRequest;
 
@@ -15,6 +18,9 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
 
     private ApiKeyAuthRequest apiKeyAuthRequest;
     private SecurityUser securityUser;
+    // The key the request authenticated with; the principal alone cannot tell one key of a user from another.
+    @Getter
+    private ApiKeyId apiKeyId;
 
     public ApiKeyAuthenticationToken(ApiKeyAuthRequest apiKeyAuthRequest) {
         super(null);
@@ -22,10 +28,11 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
         setAuthenticated(false);
     }
 
-    public ApiKeyAuthenticationToken(SecurityUser securityUser) {
+    public ApiKeyAuthenticationToken(SecurityUser securityUser, ApiKeyId apiKeyId) {
         super(securityUser.getAuthorities());
         this.eraseCredentials();
         this.securityUser = securityUser;
+        this.apiKeyId = apiKeyId;
         super.setAuthenticated(true);
     }
 

@@ -6,6 +6,7 @@ package org.thingsboard.server.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,7 @@ import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.trendz.TrendzConfiguration;
@@ -27,12 +29,14 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.dao.trendz.TrendzSyncService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.auth.pat.ApiKeyAuthenticationToken;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.dao.trendz.TrendzSyncService.TRENDZ_API_KEY_DESCRIPTION;
 
 @RestController
 @TbCoreComponent
@@ -52,7 +56,11 @@ public class TrendzController extends BaseController {
     @GetMapping("/config")
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     public TrendzConfiguration getTrendzConfig(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
+        // Trendz calls this with its internal API key to check the key works. The key holds no ADMIN_SETTINGS:
+        // those would also open the mail, security and JWT settings to it, so it is let in here by identity instead.
+        if (!isTrendzApiKey()) {
+            accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
+        }
         TrendzSettings settings = trendzSettingsService.findTrendzSettings();
         return settings != null ? settings.configuration() : new TrendzConfiguration(null, null);
     }
@@ -133,6 +141,14 @@ public class TrendzController extends BaseController {
         } catch (Exception e) {
             log.error("Failed to perform Trendz public synchronization.", e);
         }
+    }
+
+    private boolean isTrendzApiKey() {
+        if (!(SecurityContextHolder.getContext().getAuthentication() instanceof ApiKeyAuthenticationToken authentication)) {
+            return false;
+        }
+        ApiKey trendzApiKey = apiKeyService.findInternalApiKeyByDescription(TenantId.SYS_TENANT_ID, TRENDZ_API_KEY_DESCRIPTION);
+        return trendzApiKey != null && trendzApiKey.getId().equals(authentication.getApiKeyId());
     }
 
 }

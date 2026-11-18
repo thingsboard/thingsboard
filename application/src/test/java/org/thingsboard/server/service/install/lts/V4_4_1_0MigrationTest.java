@@ -37,6 +37,7 @@ import static org.thingsboard.server.dao.trendz.TrendzSyncService.TRENDZ_API_KEY
 class V4_4_1_0MigrationTest {
 
     private static final List<Authority> AUTHORITIES = List.of(Authority.TENANT_ADMIN, Authority.CUSTOMER_USER);
+    private static final Set<Operation> WIDGET_OPERATIONS = Set.of(Operation.READ, Operation.CREATE, Operation.WRITE, Operation.DELETE);
 
     @Mock
     private ApiKeyService apiKeyService;
@@ -114,10 +115,61 @@ class V4_4_1_0MigrationTest {
         verify(apiKeyService, never()).saveApiKey(any(), any());
     }
 
+    @Test
+    void revokesAdminSettingsAndKeepsTheRest() {
+        Map<Resource, Set<Operation>> sysAdminPermissions = new HashMap<>();
+        sysAdminPermissions.put(Resource.ADMIN_SETTINGS, Set.of(Operation.READ, Operation.WRITE));
+        sysAdminPermissions.put(Resource.WIDGETS_BUNDLE, WIDGET_OPERATIONS);
+        givenTrendzApiKeyWithSysAdmin(sysAdminPermissions);
+
+        migration.apply();
+
+        Map<Authority, Map<Resource, Set<Operation>>> byAuthority = savedPermissions();
+        assertFalse(byAuthority.get(Authority.SYS_ADMIN).containsKey(Resource.ADMIN_SETTINGS));
+        assertEquals(WIDGET_OPERATIONS, byAuthority.get(Authority.SYS_ADMIN).get(Resource.WIDGETS_BUNDLE),
+                "the other sysadmin permissions must survive");
+        assertEquals(tenantAdminPermissions(), byAuthority.get(Authority.TENANT_ADMIN),
+                "other authorities must be left alone");
+    }
+
+    /**
+     * {@link Migration#apply()} re-runs when a node crashes before the version is recorded, so a key that already
+     * lacks the resource must not be written again.
+     */
+    @Test
+    void alreadyRevokedKeyIsNotSavedAgain() {
+        givenTrendzApiKeyWithSysAdmin(Map.of(Resource.WIDGETS_BUNDLE, WIDGET_OPERATIONS));
+
+        migration.apply();
+
+        verify(apiKeyService, never()).saveApiKey(any(), any());
+    }
+
+    /**
+     * An empty permission set for an authority makes the key fall back to the user's full permissions, so stripping
+     * the last resource would widen the key rather than narrow it.
+     */
+    @Test
+    void lastSysAdminPermissionIsNotStripped() {
+        givenTrendzApiKeyWithSysAdmin(Map.of(Resource.ADMIN_SETTINGS, Set.of(Operation.READ, Operation.WRITE)));
+
+        migration.apply();
+
+        verify(apiKeyService, never()).saveApiKey(any(), any());
+    }
+
     private Map<Authority, Map<Resource, Set<Operation>>> savedPermissions() {
         ArgumentCaptor<ApiKeyInfo> saved = ArgumentCaptor.forClass(ApiKeyInfo.class);
         verify(apiKeyService).saveApiKey(eq(TenantId.SYS_TENANT_ID), saved.capture());
         return saved.getValue().getPermissions().getOperationsByResource();
+    }
+
+    // The tenant admin entry already carries the AI_MODEL grant, so only the ADMIN_SETTINGS revocation can save the key.
+    private void givenTrendzApiKeyWithSysAdmin(Map<Resource, Set<Operation>> sysAdminPermissions) {
+        Map<Authority, Map<Resource, Set<Operation>>> byAuthority = new HashMap<>();
+        byAuthority.put(Authority.SYS_ADMIN, Map.copyOf(sysAdminPermissions));
+        byAuthority.put(Authority.TENANT_ADMIN, tenantAdminPermissions());
+        givenTrendzApiKey(byAuthority);
     }
 
     private void givenTrendzApiKey(Map<Authority, Map<Resource, Set<Operation>>> byAuthority) {
@@ -132,6 +184,12 @@ class V4_4_1_0MigrationTest {
 
         when(apiKeyService.findInternalApiKeyByDescription(TenantId.SYS_TENANT_ID, TRENDZ_API_KEY_DESCRIPTION))
                 .thenReturn(apiKey);
+    }
+
+    private Map<Resource, Set<Operation>> tenantAdminPermissions() {
+        return Map.of(
+                Resource.DEVICE, Set.of(Operation.READ),
+                Resource.AI_MODEL, Set.of(Operation.READ, Operation.INVOKE));
     }
 
     // Separate map instances per authority, the way a key deserialized from the permissions column arrives.
