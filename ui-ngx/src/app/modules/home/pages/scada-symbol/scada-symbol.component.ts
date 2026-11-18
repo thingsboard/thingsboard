@@ -14,7 +14,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { buffer, debounceTime, map, switchMap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ScadaSymbolData, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol-editor.models';
@@ -154,6 +154,7 @@ export class ScadaSymbolComponent extends PageComponent
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
+              private router: Router,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef,
               private entityService: EntityService,
@@ -256,10 +257,17 @@ export class ScadaSymbolComponent extends PageComponent
         `${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(imageInfo.resourceKey)}`).pipe(
         map(content => ({imageResource: imageInfo, scadaSymbolContent: content}))
       ))
-    ).subscribe(data => {
-      this.previewMode = false;
-      this.init(data);
-      this.updateBreadcrumbs.emit();
+    ).subscribe({
+      next: data => {
+        this.previewMode = false;
+        this.init(data);
+        this.updateBreadcrumbs.emit();
+      },
+      error: err => {
+        if (err?.status === 404) {
+          this.router.navigate(['/resources/scada-symbols']);
+        }
+      }
     });
   }
 

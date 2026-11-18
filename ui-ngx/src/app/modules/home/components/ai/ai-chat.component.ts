@@ -1006,6 +1006,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
             this.openCreatedDashboard(call.data.tool, event.data.affectedEntities);
             this.openCreatedWidget(call.data.tool, event.data.affectedEntities);
             this.openCreatedScadaSymbol(call.data.tool, call.data.arguments, event.data.result);
+            this.leaveDeletedScadaSymbol(call.data.tool, call.data.arguments);
           }
         }
         if (event.data.affectedEntities?.length) {
@@ -1177,6 +1178,21 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
     this.panelService.carryChat(chatId);
     this.router.navigate(['/resources/scada-symbols', ...path.split('/')]);
+  }
+
+  private leaveDeletedScadaSymbol(tool: string | undefined, args: unknown): void {
+    const chatId = this.chatId();
+    const values = (aiParse(args) ?? {}) as {targetType?: string; targetId?: string};
+    const shown = /^\/resources\/scada-symbols\/tenant\/([^/?#]+)/.exec(this.router.url || '')?.[1];
+    if (tool !== 'delete' || values.targetType !== 'IMAGE' || !chatId || !shown) {
+      return;
+    }
+    const deleted = (values.targetId ?? '').trim().replace(/^tb-image;/, '').split('/').pop();
+    if (deleted !== decodeURIComponent(shown)) {
+      return;
+    }
+    this.panelService.carryChat(chatId);
+    this.router.navigate(['/resources/scada-symbols']);
   }
 
   private emitDashboards(entities: EntityId[]): void {
