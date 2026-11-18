@@ -20,7 +20,13 @@ import { GeneralSettingsComponent } from '@home/pages/admin/general-settings.com
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { MailTemplatesComponent } from '@home/pages/admin/mail-templates.component';
 import { forkJoin, mergeMap, Observable, of } from 'rxjs';
-import { MailTemplatesSettings } from '@shared/models/settings.models';
+import {
+  AdminSettings,
+  MailConfigTemplate,
+  MailServerSettings,
+  MailTemplatesSettings,
+  SmsProviderConfiguration
+} from '@shared/models/settings.models';
 import { WhiteLabelingComponent } from '@home/pages/admin/white-labeling.component';
 import { SelfRegistrationComponent } from '@home/pages/admin/self-registration.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
@@ -59,6 +65,8 @@ import { AuthService } from '@core/auth/auth.service';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
 import { ActionUpdateLicenseParams } from '@core/auth/auth.actions';
+import { NotificationService } from '@core/http/notification.service';
+import { NotificationSettings } from '@shared/models/notification.models';
 
 export const subscriptionInfoResolver: ResolveFn<SubscriptionInfo> = (
   route: ActivatedRouteSnapshot,
@@ -111,6 +119,35 @@ export const mailTemplateSettingsResolver: ResolveFn<MailTemplatesSettings> = (
   state: RouterStateSnapshot,
   wl = inject(WhiteLabelingService)
 ): Observable<MailTemplatesSettings> => wl.getMailTemplates(true);
+
+export const mailServerSettingsResolver: ResolveFn<{
+  loginProcessingUrl: string;
+  mailConfigTemplate: Array<MailConfigTemplate>;
+  adminSettings: AdminSettings<MailServerSettings>;
+}> = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  adminService = inject(AdminService)
+) => forkJoin({
+  loginProcessingUrl: adminService.getLoginProcessingUrl(),
+  mailConfigTemplate: adminService.getMailConfigTemplate(),
+  adminSettings: adminService.getAdminSettings<MailServerSettings>('mail')
+});
+
+export const notificationsSettingsResolver: ResolveFn<{
+  notificationSettings: NotificationSettings;
+  smsProviderSettings: AdminSettings<SmsProviderConfiguration>;
+}> = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  adminService = inject(AdminService),
+  notificationService = inject(NotificationService)
+) => forkJoin({
+  notificationSettings: notificationService.getNotificationSettings(),
+  smsProviderSettings: adminService.getAdminSettings<SmsProviderConfiguration>('sms', false, {ignoreErrors: true}).pipe(
+    catchError(() => of({key: 'sms', jsonValue: null} as AdminSettings<SmsProviderConfiguration>))
+  )
+});
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
@@ -332,6 +369,9 @@ const routes: Routes = [
           breadcrumb: {
             menuId: MenuId.mail_server
           }
+        },
+        resolve: {
+          mailServerSettings: mailServerSettingsResolver
         }
       },
       {
@@ -344,6 +384,9 @@ const routes: Routes = [
           breadcrumb: {
             menuId: MenuId.notification_settings
           }
+        },
+        resolve: {
+          notificationsSettings: notificationsSettingsResolver
         }
       },
       {

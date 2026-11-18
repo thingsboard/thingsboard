@@ -47,7 +47,7 @@ public class ShortEntityView implements HasId<EntityId>, HasName {
         this.properties.put(name, value);
     }
 
-    @Schema(description = "Name of the entity", requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Name of the entity", requiredMode = Schema.RequiredMode.NOT_REQUIRED, accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {

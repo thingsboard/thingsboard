@@ -23,8 +23,8 @@
       </tr>
     }
     <tr>
-      @for (column of columns; track column) {
-        <th [style]="headerStyle(column)">{{ column.label }}
+      @for (column of columns; track column; let first = $first) {
+        <th [style]="headerStyle(column, first)">{{ column.label }}
           @if (hasSortOrder(column)) {
             <mat-icon class="tb-mat-16 sort-order">
               {{ ascSortOrder() ? 'arrow_upward' : 'arrow_downward' }}
@@ -36,8 +36,8 @@
   </thead>
   <tbody>
     <tr>
-      @for (column of columns; track column) {
-        <td [style]="cellStyle(column)" [innerHTML]="cellContent(column) | safe: 'html'"></td>
+      @for (column of columns; track column; let first = $first) {
+        <td [style]="cellStyle(column, first)" [innerHTML]="cellContent(column) | safe: 'html'"></td>
       }
     </tr>
   </tbody>

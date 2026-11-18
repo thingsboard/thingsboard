@@ -27,6 +27,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -60,6 +61,8 @@ import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumn
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.dao.device.DeviceDao;
+import org.thingsboard.server.dao.device.claim.ClaimResponse;
+import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.exception.DataValidationException;
@@ -1402,6 +1405,43 @@ public class DeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testBulkImportDeviceWithOverwriteActivityTime() throws Exception {
+        String deviceName = "some_device";
+        String deviceType = "some_type";
+        BulkImportRequest request = new BulkImportRequest();
+        request.setFile(String.format("NAME,TYPE,OVERWRITE_ACTIVITY_TIME\n%s,%s,true", deviceName, deviceType));
+        BulkImportRequest.Mapping mapping = new BulkImportRequest.Mapping();
+        BulkImportRequest.ColumnMapping name = new BulkImportRequest.ColumnMapping();
+        name.setType(BulkImportColumnType.NAME);
+        BulkImportRequest.ColumnMapping type = new BulkImportRequest.ColumnMapping();
+        type.setType(BulkImportColumnType.TYPE);
+        BulkImportRequest.ColumnMapping overwriteActivityTime = new BulkImportRequest.ColumnMapping();
+        overwriteActivityTime.setType(BulkImportColumnType.OVERWRITE_ACTIVITY_TIME);
+        List<BulkImportRequest.ColumnMapping> columns = new ArrayList<>();
+        columns.add(name);
+        columns.add(type);
+        columns.add(overwriteActivityTime);
+
+        mapping.setColumns(columns);
+        mapping.setDelimiter(',');
+        mapping.setUpdate(true);
+        mapping.setHeader(true);
+        request.setMapping(mapping);
+
+        BulkImportResult<Device> result = doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
+
+        Assert.assertEquals(1, result.getCreated().get());
+        Assert.assertEquals(0, result.getErrors().get());
+        Assert.assertTrue(result.getErrorsList().isEmpty());
+
+        Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
+
+        Assert.assertNotNull(savedDevice);
+        Assert.assertNotNull(savedDevice.getAdditionalInfo());
+        Assert.assertTrue(savedDevice.getAdditionalInfo().get("overwriteActivityTime").asBoolean());
+    }
+
+    @Test
     public void testSaveDeviceWithOutdatedVersion() throws Exception {
         Device device = createDevice("Device v1.0");
         assertThat(device.getVersion()).isOne();
@@ -1516,6 +1556,99 @@ public class DeviceControllerTest extends AbstractControllerTest {
         savedSecondDevice.setExternalId(secondExternalId);
         Device resavedSecondDevice = doPost("/api/device", savedSecondDevice, Device.class);
         assertThat(resavedSecondDevice.getExternalId()).isEqualTo(secondExternalId);
+    }
+
+    @Test
+    public void testReclaimDeviceByCustomerUser() throws Exception {
+        Device device = createTenantDevice("Customer device to reclaim", customerId);
+
+        loginCustomerAdminUser();
+        doDeleteAsync("/api/customer/device/" + device.getName() + "/claim", String.class);
+
+        loginTenantAdmin();
+        Device reclaimedDevice = doGet("/api/device/" + device.getId().getId(), Device.class);
+        assertThat(reclaimedDevice.getOwnerId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    public void testReclaimDeviceOfDifferentCustomerByCustomerUser() throws Exception {
+        createDifferentCustomer();
+        Device device = createTenantDevice("Different customer device", differentCustomerId);
+
+        loginCustomerAdminUser();
+        doDelete("/api/customer/device/" + device.getName() + "/claim").andExpect(status().isForbidden());
+
+        loginTenantAdmin();
+        Device foundDevice = doGet("/api/device/" + device.getId().getId(), Device.class);
+        assertThat(foundDevice.getOwnerId()).isEqualTo(differentCustomerId);
+    }
+
+    @Test
+    public void testReclaimSubCustomerDeviceByParentCustomerUser() throws Exception {
+        Device device = createTenantDevice("Sub-customer device to reclaim", subCustomerId);
+
+        loginCustomerAdminUser();
+        doDeleteAsync("/api/customer/device/" + device.getName() + "/claim", String.class);
+
+        loginTenantAdmin();
+        Device reclaimedDevice = doGet("/api/device/" + device.getId().getId(), Device.class);
+        assertThat(reclaimedDevice.getOwnerId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    public void testReclaimParentCustomerDeviceBySubCustomerUser() throws Exception {
+        Device device = createTenantDevice("Parent customer device", customerId);
+
+        loginSubCustomerAdminUser();
+        doDelete("/api/customer/device/" + device.getName() + "/claim").andExpect(status().isForbidden());
+
+        loginTenantAdmin();
+        Device foundDevice = doGet("/api/device/" + device.getId().getId(), Device.class);
+        assertThat(foundDevice.getOwnerId()).isEqualTo(customerId);
+    }
+
+    @Test
+    public void testReclaimDeviceByTenantAdmin() throws Exception {
+        Device device = createTenantDevice("Customer device to reclaim by tenant", customerId);
+
+        doDeleteAsync("/api/customer/device/" + device.getName() + "/claim", String.class);
+
+        Device reclaimedDevice = doGet("/api/device/" + device.getId().getId(), Device.class);
+        assertThat(reclaimedDevice.getOwnerId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    public void testClaimUnassignedDeviceByCustomerUser() throws Exception {
+        Device device = createTenantDevice("Unassigned device to claim", null);
+        claimDevicesService.registerClaimingInfo(tenantId, device.getId(), "secret", TimeUnit.MINUTES.toMillis(1)).get();
+
+        loginCustomerAdminUser();
+        ClaimResult claimResult = doPostClaimAsync("/api/customer/device/" + device.getName() + "/claim",
+                new ClaimRequest("secret"), ClaimResult.class, status().isOk());
+        assertThat(claimResult.getResponse()).isEqualTo(ClaimResponse.SUCCESS);
+        assertThat(claimResult.getDevice().getOwnerId()).isEqualTo(customerId);
+    }
+
+    @Test
+    public void testClaimDeviceOfDifferentCustomerByCustomerUser() throws Exception {
+        createDifferentCustomer();
+        Device device = createTenantDevice("Different customer device to claim", differentCustomerId);
+
+        loginCustomerAdminUser();
+        doPost("/api/customer/device/" + device.getName() + "/claim", new ClaimRequest(null)).andExpect(status().isForbidden());
+
+        loginTenantAdmin();
+        Device foundDevice = doGet("/api/device/" + device.getId().getId(), Device.class);
+        assertThat(foundDevice.getOwnerId()).isEqualTo(differentCustomerId);
+    }
+
+    private Device createTenantDevice(String name, CustomerId ownerId) throws Exception {
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setName(name);
+        device.setType("default");
+        device.setCustomerId(ownerId);
+        return doPost("/api/device", device, Device.class);
     }
 
 }

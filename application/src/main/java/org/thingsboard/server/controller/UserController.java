@@ -292,7 +292,7 @@ public class UserController extends BaseController {
             HttpServletRequest request) throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         User user = checkNotNull(userService.findUserByEmail(securityUser.getTenantId(), email));
-        accessControlService.checkPermission(securityUser, Resource.USER, Operation.READ, user.getId(), user);
+        accessControlService.checkPermission(securityUser, Resource.USER, Operation.WRITE, user.getId(), user);
 
         UserActivationLink activationLink = tbUserService.getActivationLink(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getAuthority(), user.getId(), request);
         try {
@@ -323,7 +323,7 @@ public class UserController extends BaseController {
                                                     HttpServletRequest request) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         UserId userId = new UserId(toUUID(strUserId));
-        checkUserId(userId, Operation.READ);
+        checkUserId(userId, Operation.WRITE);
         SecurityUser securityUser = getCurrentUser();
         return tbUserService.getActivationLink(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getAuthority(), userId, request);
     }

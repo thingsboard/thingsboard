@@ -37,6 +37,9 @@ import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.SendEmailUplinkMsg;
+import org.thingsboard.server.gen.edge.v1.SendNotificationUplinkMsg;
+import org.thingsboard.server.gen.edge.v1.SendSmsUplinkMsg;
 import org.thingsboard.server.gen.edge.v1.SchedulerEventUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
@@ -45,6 +48,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.edge.EdgeMsgSummaryUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -177,6 +181,21 @@ public class EdgeUplinkMessageDispatcher {
                     result.add(ctx.getEdgeRequestsService().processEntityViewsRequestMsg(edge.getTenantId(), edge, entityViewRequestMsg));
                 }
             }
+            if (uplinkMsg.getSendEmailUplinkMsgCount() > 0) {
+                for (SendEmailUplinkMsg sendEmailUplinkMsg : uplinkMsg.getSendEmailUplinkMsgList()) {
+                    result.add(ctx.getEdgeRequestsService().processSendEmailMsg(edge.getTenantId(), edge, sendEmailUplinkMsg));
+                }
+            }
+            if (uplinkMsg.getSendSmsUplinkMsgCount() > 0) {
+                for (SendSmsUplinkMsg sendSmsUplinkMsg : uplinkMsg.getSendSmsUplinkMsgList()) {
+                    result.add(ctx.getEdgeRequestsService().processSendSmsMsg(edge.getTenantId(), edge, sendSmsUplinkMsg));
+                }
+            }
+            if (uplinkMsg.getSendNotificationUplinkMsgCount() > 0) {
+                for (SendNotificationUplinkMsg sendNotificationUplinkMsg : uplinkMsg.getSendNotificationUplinkMsgList()) {
+                    result.add(ctx.getEdgeRequestsService().processSendNotificationMsg(edge.getTenantId(), edge, sendNotificationUplinkMsg));
+                }
+            }
             if (uplinkMsg.getEntityGroupEntitiesRequestMsgCount() > 0) {
                 for (EntityGroupRequestMsg entityGroupEntitiesRequestMsg : uplinkMsg.getEntityGroupEntitiesRequestMsgList()) {
                     result.add(ctx.getEdgeRequestsService().processEntityGroupEntitiesRequest(edge.getTenantId(), edge, entityGroupEntitiesRequestMsg));
@@ -238,7 +257,7 @@ public class EdgeUplinkMessageDispatcher {
                 }
             }
         } catch (Exception e) {
-            String failureMsg = String.format("Can't process uplink msg [%s] from edge", uplinkMsg);
+            String failureMsg = String.format("Can't process uplink msg [%s] from edge", EdgeMsgSummaryUtils.toSummary(uplinkMsg));
             log.trace("[{}][{}] Can't process uplink msg [{}]", edge.getTenantId(), edge.getId(), uplinkMsg, e);
             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(edge.getTenantId()).edgeId(edge.getId())
                     .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(e.getMessage()).build());

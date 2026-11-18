@@ -126,7 +126,7 @@ public class AgentApplication extends BaseData<AgentApplicationId> implements Ha
         return config;
     }
 
-    @Schema(description = "Template version this application is based on", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Template version this application is based on", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     public String getTemplateVersion() {
         return templateVersion;
     }

@@ -28,6 +28,7 @@ import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -280,6 +281,58 @@ public class AlarmEdgeTest extends AbstractEdgeTest {
         alarmComment.setComment(new TextNode("AlarmComment"));
         alarmComment.setCreatedTime(Uuids.unixTimestamp(uuid));
         return alarmComment;
+    }
+
+    @Test
+    public void testSendAlarmForEntityOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        Alarm alarm = new Alarm();
+        alarm.setId(new AlarmId(Uuids.timeBased()));
+        alarm.setTenantId(differentTenantId);
+        alarm.setOriginator(device.getId());
+        alarm.setType("Edge Alarm");
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addAlarmUpdateMsg(
+                EdgeMsgConstructorUtils.constructAlarmUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, alarm)));
+
+        loginDifferentTenant();
+        doGet("/api/alarm/" + alarm.getUuidId()).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testSendAlarmCommentWithIdOfCommentOfAnotherAlarmToCloud() throws Exception {
+        Device device = saveDevice("Alarm Comment Device", "default");
+        Alarm firstAlarm = saveAlarm(device, "first alarm");
+        Alarm secondAlarm = saveAlarm(device, "second alarm");
+
+        AlarmComment alarmComment = new AlarmComment();
+        alarmComment.setComment(new TextNode("Original comment"));
+        alarmComment.setAlarmId(firstAlarm.getId());
+        alarmComment = doPost("/api/alarm/" + firstAlarm.getUuidId() + "/comment", alarmComment, AlarmComment.class);
+
+        AlarmComment edgeAlarmComment = new AlarmComment();
+        edgeAlarmComment.setId(alarmComment.getId());
+        edgeAlarmComment.setCreatedTime(alarmComment.getCreatedTime());
+        edgeAlarmComment.setAlarmId(secondAlarm.getId());
+        edgeAlarmComment.setComment(new TextNode("Changed comment"));
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addAlarmCommentUpdateMsg(AlarmCommentUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE)
+                .setEntity(JacksonUtil.toString(edgeAlarmComment))
+                .build()));
+
+        PageData<AlarmCommentInfo> firstAlarmComments = doGetTyped("/api/alarm/" + firstAlarm.getUuidId() + "/comment?page=0&pageSize=10", new TypeReference<>() {});
+        Assert.assertEquals(1, firstAlarmComments.getTotalElements());
+        Assert.assertEquals(alarmComment.getComment(), firstAlarmComments.getData().get(0).getComment());
+        PageData<AlarmCommentInfo> secondAlarmComments = doGetTyped("/api/alarm/" + secondAlarm.getUuidId() + "/comment?page=0&pageSize=10", new TypeReference<>() {});
+        Assert.assertEquals(0, secondAlarmComments.getTotalElements());
+    }
+
+    private Alarm saveAlarm(Device device, String type) {
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(device.getId());
+        alarm.setType(type);
+        alarm.setSeverity(AlarmSeverity.MINOR);
+        return doPost("/api/alarm", alarm, Alarm.class);
     }
 
 }

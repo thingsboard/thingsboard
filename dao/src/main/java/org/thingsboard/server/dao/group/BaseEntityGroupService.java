@@ -184,6 +184,20 @@ public class BaseEntityGroupService extends AbstractCachedEntityService<EntityGr
     }
 
     @Override
+    public EntityGroupInfo findEntityGroupInfoByTenantIdAndId(TenantId tenantId, EntityGroupId entityGroupId) {
+        log.trace("Executing findEntityGroupInfoByTenantIdAndId, tenantId [{}], entityGroupId [{}]", tenantId, entityGroupId);
+        validateId(entityGroupId, id -> INCORRECT_ENTITY_GROUP_ID + id);
+        return entityGroupInfoDao.findByTenantIdAndId(tenantId, entityGroupId.getId());
+    }
+
+    @Override
+    public ListenableFuture<EntityGroupInfo> findEntityGroupInfoByTenantIdAndIdAsync(TenantId tenantId, EntityGroupId entityGroupId) {
+        log.trace("Executing findEntityGroupInfoByTenantIdAndIdAsync, tenantId [{}], entityGroupId [{}]", tenantId, entityGroupId);
+        validateId(entityGroupId, id -> INCORRECT_ENTITY_GROUP_ID + id);
+        return entityGroupInfoDao.findByTenantIdAndIdAsync(tenantId, entityGroupId.getId());
+    }
+
+    @Override
     public EntityGroup saveEntityGroup(TenantId tenantId, EntityId parentEntityId, EntityGroup entityGroup) {
         log.trace("Executing saveEntityGroup [{}]", entityGroup);
         validateEntityId(parentEntityId, id -> INCORRECT_PARENT_ENTITY_ID + id);
@@ -1210,6 +1224,12 @@ public class BaseEntityGroupService extends AbstractCachedEntityService<EntityGr
             EntityGroup old = entityGroupDao.findById(tenantId, data.getId().getId());
             if (old == null) {
                 throw new DataValidationException("Can`t update non existing entity group!");
+            }
+            if (!data.getOwnerId().equals(old.getOwnerId())) {
+                throw new DataValidationException("Entity group owner can't be changed!");
+            }
+            if (data.getType() != old.getType()) {
+                throw new DataValidationException("Entity group type can't be changed!");
             }
             return old;
         }

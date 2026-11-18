@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.ai.common.data.usage.ApiUsageInfo;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
@@ -146,6 +148,8 @@ import org.thingsboard.server.common.data.menu.CustomMenuInfo;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -892,6 +896,49 @@ public abstract class BaseController {
         }
     }
 
+    protected void checkReportUser(UserId userId) throws ThingsboardException {
+        if (!getCurrentUser().getId().equals(userId)) {
+            checkUserId(userId, Operation.IMPERSONATE);
+        }
+    }
+
+    protected UserId resolveReportUser(UserId userId, boolean useCurrentUserCredentials) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        if (useCurrentUserCredentials && !currentUser.getId().equals(userId) && !canImpersonate(userId)) {
+            return currentUser.getId();
+        }
+        checkReportUser(userId);
+        return userId;
+    }
+
+    private boolean canImpersonate(UserId userId) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        User user = userService.findUserById(currentUser.getTenantId(), userId);
+        return user != null && currentUser.getTenantId().equals(user.getTenantId()) &&
+                accessControlService.hasPermission(currentUser, Resource.USER, Operation.IMPERSONATE, userId, user);
+    }
+
+    protected void checkTemplateReportUser(NotificationTemplate notificationTemplate) throws ThingsboardException {
+        NotificationTemplateConfig configuration = notificationTemplate != null ? notificationTemplate.getConfiguration() : null;
+        if (configuration != null && configuration.isAttachReport() && configuration.getUserId() != null) {
+            checkReportUser(configuration.getUserId());
+        }
+    }
+
+    protected void checkMsgReportUser(JsonNode msg) throws ThingsboardException {
+        if (msg == null) {
+            return;
+        }
+        checkReportUserIfPresent(msg.path("reportConfig").path("userId"));
+        checkReportUserIfPresent(msg.path("userId").path("id"));
+    }
+
+    private void checkReportUserIfPresent(JsonNode reportUserId) throws ThingsboardException {
+        if (reportUserId.isTextual() && StringUtils.isNotBlank(reportUserId.asText())) {
+            checkReportUser(new UserId(toUUID(reportUserId.asText())));
+        }
+    }
+
     UserInfo checkUserInfoId(UserId userId, Operation operation) throws ThingsboardException {
         try {
             validateId(userId, id -> "Incorrect userId " + id);
@@ -1095,7 +1142,11 @@ public abstract class BaseController {
         for (EntityId referencedEntityId : calculatedFieldConfig.getReferencedEntities()) {
             EntityType refEntityType = referencedEntityId.getEntityType();
             switch (refEntityType) {
-                case TENANT -> {}
+                case TENANT -> {
+                    if (!getTenantId().equals(referencedEntityId)) {
+                        throw permissionDenied();
+                    }
+                }
                 case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
                 default -> throw new IllegalArgumentException("Unsupported referenced entity type: '" + refEntityType + "'.");
             }
@@ -1244,7 +1295,7 @@ public abstract class BaseController {
     protected EntityGroupInfo checkEntityGroupId(EntityGroupId entityGroupId, Operation operation) throws ThingsboardException {
         try {
             validateId(entityGroupId, id -> "Incorrect entityGroupId " + id);
-            EntityGroupInfo entityGroup = entityGroupService.findEntityGroupInfoById(getTenantId(), entityGroupId);
+            EntityGroupInfo entityGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), entityGroupId);
             checkNotNull(entityGroup, "Entity group with id [" + entityGroupId + "] is not found");
             accessControlService.checkEntityGroupInfoPermission(getCurrentUser(), operation, entityGroup);
             return entityGroup;
@@ -1709,6 +1760,17 @@ public abstract class BaseController {
             oAuth2ClientIds.add(oauth2ClientId);
         }
         return oAuth2ClientIds;
+    }
+
+    protected static String toContentDisposition(String fileName) {
+        ContentDisposition.Builder builder = ContentDisposition.attachment();
+        boolean ascii = StandardCharsets.US_ASCII.newEncoder().canEncode(fileName);
+        return (ascii ? builder.filename(fileName) : builder.filename(fileName, StandardCharsets.UTF_8)).build().toString();
+    }
+
+    protected static String getFileName(MultipartFile file) {
+        String fileName = file.getOriginalFilename();
+        return fileName != null ? fileName.replace("%22", "\"") : null;
     }
 
 }

@@ -249,6 +249,11 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Override
     public String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest) {
+        return resolveBaseUrl(tenantId, customerId, httpServletRequest).url();
+    }
+
+    @Override
+    public ResolvedBaseUrl resolveBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest) {
         String baseUrl = null;
         AdminSettings generalSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "general");
 
@@ -262,10 +267,10 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         }
 
         if (StringUtils.isEmpty(baseUrl) && httpServletRequest != null) {
-            baseUrl = MiscUtils.constructBaseUrl(httpServletRequest);
+            return new ResolvedBaseUrl(MiscUtils.constructBaseUrl(httpServletRequest), true);
         }
 
-        return formatBaseUrl(baseUrl);
+        return new ResolvedBaseUrl(formatBaseUrl(baseUrl), false);
     }
 
     @Override
@@ -327,7 +332,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     @Override
     public AccessJwtToken createUserAccessToken(TenantId tenantId, UserId userId) throws ThingsboardException {
         User user = userService.findUserById(tenantId, userId);
-        if (user == null) {
+        if (user == null || !user.getTenantId().equals(tenantId)) {
             throw new ThingsboardException("Configured user [id: " + userId + "] was not found in system. Please use other user credentials.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         UserCredentials credentials = userService.findUserCredentialsByUserId(tenantId, userId);

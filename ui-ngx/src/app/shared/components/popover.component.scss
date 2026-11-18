@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@import '../../../scss/constants';
 @import '../../../scss/mixins';
 
 $popover-arrow-width: 6;
 $popover-distance: $popover-arrow-width + 4;
 $zindex-popover: 1030;
-$popover-bg: #fff;
 $border-radius-base: 6px;
 $popover-close-button-size: 30px;
 $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08),

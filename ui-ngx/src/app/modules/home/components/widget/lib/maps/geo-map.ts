@@ -41,6 +41,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
 
   protected createMap(): Observable<L.Map> {
     const map = L.map(this.mapElement, {
+      ...this.gestureHandlingMapOptions,
       scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
       doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
       zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),

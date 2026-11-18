@@ -16,7 +16,11 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.UserInfo;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
@@ -24,6 +28,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserCredentialsDao;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -33,6 +38,8 @@ import static org.assertj.core.api.Assertions.within;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,6 +49,9 @@ public class AuthControllerTest extends AbstractControllerTest {
 
     @MockitoSpyBean
     private UserCredentialsDao userCredentialsDao;
+
+    @MockitoSpyBean
+    private AccessControlService accessControlService;
 
     @After
     public void tearDown() throws Exception {
@@ -285,6 +295,26 @@ public class AuthControllerTest extends AbstractControllerTest {
                 .put("activateToken", newActivationToken)
                 .put("password", "wefewe")).andExpect(status().isOk());
         assertThat(getUser(user.getId()).getAdditionalInfo().get("userActivated").asBoolean()).isTrue();
+    }
+
+    @Test
+    public void testActivationLinkRequiresWritePermissionOnUser() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("pending-user@thingsboard.org");
+        user = doPost("/api/user", user, User.class);
+
+        doThrow(new ThingsboardException("You don't have permission to perform this operation!", ThingsboardErrorCode.PERMISSION_DENIED))
+                .when(accessControlService).checkPermission(any(), eq(Resource.USER), eq(Operation.WRITE), eq(user.getId()), any());
+
+        doGet("/api/user/" + user.getId() + "/activationLinkInfo").andExpect(status().isForbidden());
+        doGet("/api/user/" + user.getId() + "/activationLink").andExpect(status().isForbidden());
+        doPost("/api/user/sendActivationMail?email=" + user.getEmail()).andExpect(status().isForbidden());
+
+        Mockito.reset(accessControlService);
+        assertThat(getActivationLinkInfo(user).value()).isNotBlank();
+        doPost("/api/user/sendActivationMail?email=" + user.getEmail()).andExpect(status().isOk());
     }
 
     @Test

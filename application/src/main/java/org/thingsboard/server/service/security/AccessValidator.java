@@ -358,6 +358,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.DEVICE_PROFILE, operation, entityId, deviceProfile);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(deviceProfile));
             }
@@ -376,6 +377,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.ASSET_PROFILE, operation, entityId, assetProfile);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(assetProfile));
             }
@@ -388,6 +390,7 @@ public class AccessValidator {
         } else {
             if (!operation.equals(Operation.READ_TELEMETRY)) {
                 callback.onSuccess(ValidationResult.accessDenied("Allowed only READ_TELEMETRY operation!"));
+                return;
             }
             ApiUsageState apiUsageState = apiUsageStateService.findApiUsageStateById(currentUser.getTenantId(), new ApiUsageStateId(entityId.getId()));
             if (apiUsageState == null) {
@@ -397,6 +400,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.API_USAGE_STATE, operation, entityId, apiUsageState);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(apiUsageState));
             }
@@ -415,6 +419,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.OTA_PACKAGE, operation, entityId, otaPackage);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(otaPackage));
             }
@@ -642,7 +647,7 @@ public class AccessValidator {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<EntityGroupInfo> entityGroupFuture = entityGroupService.findEntityGroupInfoByIdAsync(currentUser.getTenantId(), new EntityGroupId(entityId.getId()));
+            ListenableFuture<EntityGroupInfo> entityGroupFuture = entityGroupService.findEntityGroupInfoByTenantIdAndIdAsync(currentUser.getTenantId(), new EntityGroupId(entityId.getId()));
             Futures.addCallback(entityGroupFuture, getCallback(callback, entityGroup -> {
                 if (entityGroup == null) {
                     return ValidationResult.entityNotFound("Entity group with requested id wasn't found!");

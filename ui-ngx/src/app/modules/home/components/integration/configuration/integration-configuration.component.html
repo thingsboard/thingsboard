@@ -54,6 +54,7 @@
     @case (integrationTypes.KPN) {
       <tb-kpn-integration-form formControlName="configuration"
                                   [routingKey]="routingKey"
+                                  [isSetDownlink]="isSetDownlink"
                                   [executeRemotelyTemplate]="executeRemotelyTemplate"
                                   [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
                                   [allowLocalNetwork]="allowLocalNetwork">
@@ -93,6 +94,7 @@
     @case (integrationTypes.CHIRPSTACK) {
       <tb-chirp-stack-integration-form formControlName="configuration"
                                        [routingKey]="routingKey"
+                                       [isSetDownlink]="isSetDownlink"
                                        [executeRemotelyTemplate]="executeRemotelyTemplate"
                                        [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
                                        [allowLocalNetwork]="allowLocalNetwork">

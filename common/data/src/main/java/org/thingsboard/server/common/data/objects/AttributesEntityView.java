@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.objects;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,11 +19,11 @@ import java.util.List;
 @NoArgsConstructor
 public class AttributesEntityView implements Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of client-side attribute keys to expose", example = "[\"currentConfiguration\"]")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of client-side attribute keys to expose", example = "[\"currentConfiguration\"]")
     private List<String> cs = new ArrayList<>();
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of server-side attribute keys to expose", example = "[\"model\"]")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of server-side attribute keys to expose", example = "[\"model\"]")
     private List<String> ss = new ArrayList<>();
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of shared attribute keys to expose", example = "[\"targetConfiguration\"]")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "List of shared attribute keys to expose", example = "[\"targetConfiguration\"]")
     private List<String> sh = new ArrayList<>();
 
     public AttributesEntityView(List<String> cs,

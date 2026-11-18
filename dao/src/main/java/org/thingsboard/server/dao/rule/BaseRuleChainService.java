@@ -6,6 +6,7 @@ package org.thingsboard.server.dao.rule;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -55,6 +55,7 @@ import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.relation.RelationWriteLock;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -67,7 +68,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -94,6 +97,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String TB_RULE_CHAIN_INPUT_NODE = "org.thingsboard.rule.engine.flow.TbRuleChainInputNode";
 
+    // Upper bound for the size of IN lists used when rule nodes and their relations are loaded in batches
+    private static final int RULE_NODES_BATCH_SIZE = 1024;
+
     @Autowired
     private RuleChainDao ruleChainDao;
 
@@ -102,6 +108,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private RuleNodeDao ruleNodeDao;
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Autowired
     private EntityCountService entityCountService;
@@ -473,9 +482,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public List<RuleNode> getRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, id -> "Incorrect rule chain id for search request.");
         List<EntityRelation> relations = getRuleChainToNodeRelations(tenantId, ruleChainId);
-        List<RuleNode> ruleNodes = new ArrayList<>();
+        Map<UUID, RuleNode> ruleNodesById = findRuleNodesByIds(relations.stream().map(relation -> relation.getTo().getId()).toList());
+        List<RuleNode> ruleNodes = new ArrayList<>(relations.size());
         for (EntityRelation relation : relations) {
-            RuleNode ruleNode = ruleNodeDao.findById(tenantId, relation.getTo().getId());
+            RuleNode ruleNode = ruleNodesById.get(relation.getTo().getId());
             if (ruleNode != null) {
                 ruleNodes.add(ruleNode);
             } else {
@@ -503,27 +513,78 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId) {
         Validator.validateId(ruleNodeId, id -> "Incorrect rule node id for search request.");
         List<EntityRelation> relations = relationService.findByFrom(tenantId, ruleNodeId, RelationTypeGroup.RULE_NODE);
-        List<EntityRelation> validRelations = new ArrayList<>();
+        return removeDanglingRelations(tenantId, relations);
+    }
+
+    @Override
+    public Map<RuleNodeId, List<EntityRelation>> getRuleNodesRelations(TenantId tenantId, List<RuleNodeId> ruleNodeIds) {
+        Map<RuleNodeId, List<EntityRelation>> result = new LinkedHashMap<>();
+        // A rule chain without nodes is valid: just created, or all of its nodes removed
+        if (ruleNodeIds != null && ruleNodeIds.isEmpty()) {
+            return result;
+        }
+        validateIds(ruleNodeIds, ids -> "Incorrect rule node ids for search request " + ids);
+        ruleNodeIds.forEach(ruleNodeId -> result.put(ruleNodeId, new ArrayList<>()));
+        List<EntityRelation> relations = new ArrayList<>();
+        for (List<RuleNodeId> batch : Lists.partition(ruleNodeIds, RULE_NODES_BATCH_SIZE)) {
+            relations.addAll(relationDao.findAllByFromIds(tenantId, toUUIDs(batch), EntityType.RULE_NODE, RelationTypeGroup.RULE_NODE));
+        }
+        for (EntityRelation relation : removeDanglingRelations(tenantId, relations)) {
+            result.computeIfAbsent(new RuleNodeId(relation.getFrom().getId()), id -> new ArrayList<>()).add(relation);
+        }
+        return result;
+    }
+
+    /**
+     * Returns the relations whose rule node or rule chain target exists, preserving order,
+     * and deletes the relations to missing targets.
+     */
+    private List<EntityRelation> removeDanglingRelations(TenantId tenantId, List<EntityRelation> relations) {
+        Set<UUID> ruleNodeTargets = new HashSet<>();
+        Set<UUID> ruleChainTargets = new HashSet<>();
         for (EntityRelation relation : relations) {
-            boolean valid = true;
             EntityType toType = relation.getTo().getEntityType();
-            if (toType == EntityType.RULE_NODE || toType == EntityType.RULE_CHAIN) {
-                BaseData<?> entity;
-                if (relation.getTo().getEntityType() == EntityType.RULE_NODE) {
-                    entity = ruleNodeDao.findById(tenantId, relation.getTo().getId());
-                } else {
-                    entity = ruleChainDao.findById(tenantId, relation.getTo().getId());
-                }
-                if (entity == null) {
-                    relationService.deleteRelation(tenantId, relation);
-                    valid = false;
-                }
+            if (toType == EntityType.RULE_NODE) {
+                ruleNodeTargets.add(relation.getTo().getId());
+            } else if (toType == EntityType.RULE_CHAIN) {
+                ruleChainTargets.add(relation.getTo().getId());
             }
+        }
+        Set<UUID> existingRuleNodes = findRuleNodesByIds(ruleNodeTargets).keySet();
+        Set<UUID> existingRuleChains = new HashSet<>();
+        for (UUID ruleChainId : ruleChainTargets) {
+            if (ruleChainDao.findById(tenantId, ruleChainId) != null) {
+                existingRuleChains.add(ruleChainId);
+            }
+        }
+        List<EntityRelation> validRelations = new ArrayList<>(relations.size());
+        for (EntityRelation relation : relations) {
+            UUID targetId = relation.getTo().getId();
+            boolean valid = switch (relation.getTo().getEntityType()) {
+                case RULE_NODE -> existingRuleNodes.contains(targetId);
+                case RULE_CHAIN -> existingRuleChains.contains(targetId);
+                default -> true;
+            };
             if (valid) {
                 validRelations.add(relation);
+            } else {
+                relationService.deleteRelation(tenantId, relation);
             }
         }
         return validRelations;
+    }
+
+    private Map<UUID, RuleNode> findRuleNodesByIds(Collection<UUID> ruleNodeIds) {
+        if (ruleNodeIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<UUID, RuleNode> ruleNodesById = new HashMap<>();
+        for (List<UUID> batch : Lists.partition(new ArrayList<>(ruleNodeIds), RULE_NODES_BATCH_SIZE)) {
+            for (RuleNode ruleNode : ruleNodeDao.findAllRuleNodeByIds(batch.stream().map(RuleNodeId::new).toList())) {
+                ruleNodesById.put(ruleNode.getId().getId(), ruleNode);
+            }
+        }
+        return ruleNodesById;
     }
 
     @Override

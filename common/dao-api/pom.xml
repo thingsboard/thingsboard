@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -9,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.4.0.2</version>
+        <version>4.4.1-SNAPSHOT</version>
         <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
@@ -42,6 +43,14 @@
             <artifactId>guava</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+        </dependency>
+        <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
         </dependency>
@@ -71,8 +80,13 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.datastax.oss</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.stephenc.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

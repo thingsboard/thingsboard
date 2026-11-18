@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.GroupPermissionId;
@@ -303,13 +304,16 @@ public class GroupPermissionServiceImpl extends AbstractEntityService implements
     }
 
     private ListenableFuture<GroupPermissionInfo> fetchUserGroupPermissionInfoAsync(TenantId tenantId, GroupPermission groupPermission) {
-        ListenableFuture<Role> roleFuture = roleDao.findByIdAsync(tenantId, groupPermission.getRoleId().getId());
+        ListenableFuture<Role> roleFuture = findRoleAsync(tenantId, groupPermission.getRoleId());
         return Futures.transformAsync(roleFuture, role -> {
             GroupPermissionInfo groupPermissionInfo = new GroupPermissionInfo(groupPermission);
             groupPermissionInfo.setRole(role);
             if (groupPermission.getEntityGroupId() != null && !groupPermission.getEntityGroupId().isNullUid()) {
-                ListenableFuture<EntityGroup> entityGroup = entityGroupService.findEntityGroupByIdAsync(tenantId, groupPermission.getEntityGroupId());
+                ListenableFuture<EntityGroupInfo> entityGroup = entityGroupService.findEntityGroupInfoByTenantIdAndIdAsync(tenantId, groupPermission.getEntityGroupId());
                 return Futures.transform(entityGroup, entityGroup1 -> {
+                    if (entityGroup1 == null) {
+                        return null;
+                    }
                     groupPermissionInfo.setEntityGroupName(entityGroup1.getName());
                     groupPermissionInfo.setEntityGroupType(entityGroup1.getType());
                     EntityId ownerId = entityGroup1.getOwnerId();
@@ -324,12 +328,15 @@ public class GroupPermissionServiceImpl extends AbstractEntityService implements
     }
 
     private ListenableFuture<GroupPermissionInfo> fetchEntityGroupPermissionInfoAsync(TenantId tenantId, GroupPermission groupPermission) {
-        ListenableFuture<Role> roleFuture = roleDao.findByIdAsync(tenantId, groupPermission.getRoleId().getId());
+        ListenableFuture<Role> roleFuture = findRoleAsync(tenantId, groupPermission.getRoleId());
         return Futures.transformAsync(roleFuture, role -> {
             GroupPermissionInfo groupPermissionInfo = new GroupPermissionInfo(groupPermission);
             groupPermissionInfo.setRole(role);
-            ListenableFuture<EntityGroup> userGroup = entityGroupService.findEntityGroupByIdAsync(tenantId, groupPermission.getUserGroupId());
+            ListenableFuture<EntityGroupInfo> userGroup = entityGroupService.findEntityGroupInfoByTenantIdAndIdAsync(tenantId, groupPermission.getUserGroupId());
             return Futures.transform(userGroup, userGroup1 -> {
+                if (userGroup1 == null) {
+                    return null;
+                }
                 groupPermissionInfo.setUserGroupName(userGroup1.getName());
                 EntityId ownerId = userGroup1.getOwnerId();
                 groupPermissionInfo.setUserGroupOwnerId(ownerId);
@@ -337,6 +344,12 @@ public class GroupPermissionServiceImpl extends AbstractEntityService implements
                 return groupPermissionInfo;
             }, MoreExecutors.directExecutor());
         }, MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<Role> findRoleAsync(TenantId tenantId, RoleId roleId) {
+        return Futures.transform(roleDao.findByIdAsync(tenantId, roleId.getId()),
+                role -> role != null && (tenantId.equals(role.getTenantId()) || role.getTenantId().isSysTenantId()) ? role : null,
+                MoreExecutors.directExecutor());
     }
 
     private final PaginatedRemover<TenantId, GroupPermission> tenantGroupPermissionRemover = new PaginatedRemover<>() {

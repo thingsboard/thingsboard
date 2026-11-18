@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TenantEntity;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.ReportTemplateId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.menu.CustomMenuInfo;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
@@ -93,6 +95,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         put(Resource.REPORT_TEMPLATE, reportTemplatePermissionChecker);
         put(Resource.REPORT, customerStandaloneEntityPermissionChecker);
         put(Resource.API_KEY, apiKeysPermissionChecker);
+        put(Resource.AI_MODEL, aiModelPermissionChecker);
     }
 
     private final PermissionChecker<AlarmId, Alarm> customerAlarmPermissionChecker = new PermissionChecker<>() {
@@ -227,7 +230,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     }
                 }
             } else {
-                if (operation == Operation.CLAIM_DEVICES) {
+                if (operation == Operation.CLAIM_DEVICES && user.getTenantId().equals(((HasOwnerId) entity).getOwnerId())) {
                     return user.getUserPermissions().hasGenericPermission(resource, operation);
                 }
                 if (entity.getEntityType() == EntityType.CUSTOMER && user.getCustomerId().equals(entityId) ||
@@ -293,6 +296,11 @@ public class CustomerUserPermissions extends AbstractPermissions {
     };
 
     private static final PermissionChecker customerResourcePermissionChecker = new PermissionChecker<TbResourceId, TbResourceInfo>() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Resource resource, Operation operation) {
+            return operation == Operation.READ && user.getUserPrincipal().getType() != UserPrincipal.Type.PUBLIC_ID;
+        }
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, TbResourceId resourceId, TbResourceInfo resource) {
@@ -482,6 +490,29 @@ public class CustomerUserPermissions extends AbstractPermissions {
         }
     };
 
+    // Customers may only invoke models with customer access enabled
+    private static final PermissionChecker aiModelPermissionChecker = new PermissionChecker() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Resource resource, Operation operation) {
+            return operation == Operation.INVOKE && user.getUserPermissions().hasGenericPermission(resource, operation);
+        }
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, TenantEntity entity) {
+            if (operation != Operation.INVOKE) {
+                return false;
+            }
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            if (!(entity instanceof AiModel model) || !model.isCustomerAccessEnabled()) {
+                return false;
+            }
+            return user.getUserPermissions().hasGenericPermission(Resource.AI_MODEL, operation);
+        }
+    };
+
     private static final PermissionChecker apiKeysPermissionChecker = new PermissionChecker() {
 
         @Override
@@ -493,6 +524,9 @@ public class CustomerUserPermissions extends AbstractPermissions {
         @SuppressWarnings("unchecked")
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, TenantEntity entity) {
             if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            if (!(entity instanceof ApiKeyInfo apiKeyInfo) || !user.getId().equals(apiKeyInfo.getUserId())) {
                 return false;
             }
             // This entity does not have groups, so we are checking only generic level permissions

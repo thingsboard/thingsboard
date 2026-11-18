@@ -1,0 +1,14 @@
+{
+  "deviceName":"Device A",
+  "deviceType":"thermostat",
+  "customerName":"customer",
+  "groupName":"thermostat devices",
+  "attributes": {
+    "model":"Model A",
+    "serialNumber":"SN111"
+  },
+  "telemetry": {
+    "temperature":42,
+    "humidity":80
+  }
+}

@@ -13,6 +13,7 @@
   .tb-bundle-widgets-card {
     .mat-mdc-card-header-text {
       flex: 1;
+      min-width: 0;
     }
   }
 }
@@ -39,6 +40,10 @@
     gap: 8px;
     .mat-headline-5 {
       margin: 0;
+      min-width: 0;
+    }
+    > button {
+      flex-shrink: 0;
     }
   }
 

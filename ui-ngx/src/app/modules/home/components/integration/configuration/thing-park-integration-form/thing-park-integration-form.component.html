@@ -24,7 +24,7 @@
       <mat-label translate>integration.http-endpoint</mat-label>
       <input matInput formControlName="httpEndpoint">
     </mat-form-field>
-    <button mat-icon-button ngxClipboard type="button" color="primary"
+    <button mat-icon-button ngxClipboard type="button"
             (cbOnSuccess)="onHttpEndpointCopied()"
             [cbContent]="thingParkConfigForm.get('httpEndpoint').value"
             matTooltip="{{'integration.copy-http-endpoint-url' | translate }}">
@@ -116,10 +116,6 @@
       </mat-panel-description>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
-      <mat-slide-toggle class="toggle" [aria-label]="'integration.replace-no-content-to-ok' | translate"
-                        formControlName="replaceNoContentToOk">
-        {{ 'integration.replace-no-content-to-ok' | translate }}
-      </mat-slide-toggle>
       <mat-form-field appearance="outline" class="mat-block">
         <mat-label translate>integration.downlink-url</mat-label>
         <input matInput formControlName="downlinkUrl">

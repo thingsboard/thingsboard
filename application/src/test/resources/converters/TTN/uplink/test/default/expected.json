@@ -1,0 +1,24 @@
+{
+  "entityType": "DEVICE",
+  "name": "eui-1000000000000001",
+  "profile": "milesight-iot-am308",
+  "telemetry": {
+    "ts": 1684474415641,
+    "values": {
+      "temperature": 23.8,
+      "humidity": 62,
+      "pir": "trigger",
+      "light_level": 2,
+      "co2": 936,
+      "tvoc": 0.37,
+      "pressure": 1008.6,
+      "pm2_5": 32,
+      "pm10": 48
+    }
+  },
+  "attributes": {
+    "devAddr": "20000001",
+    "fPort": 85,
+    "eui": "1000000000000001"
+  }
+}

@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-tab-group selectedIndex="{{hasCustomFunction ? 3 : 2}}" dynamicHeight="true" style="width: 100%; height: 100%;">
@@ -12,6 +13,7 @@
           <div class="flex flex-1 flex-row items-center justify-start"
                style="padding-top: 10px;">
             <tb-resource-autocomplete class="mat-block flex-1"
+                                      appearance="outline"
                                       subscriptSizing="dynamic"
                                       hideRequiredMarker required
                                       [allowAutocomplete]="resource.isModule"

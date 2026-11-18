@@ -109,7 +109,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         log.trace("[{}] processTelemetryMsg [{}]", tenantId, entityData);
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData.getEntityType(), entityData.getEntityIdMSB(), entityData.getEntityIdLSB());
-        if (entityId != null && isEntityExists(tenantId, entityId)) {
+        if (entityId != null && isTenantEntity(tenantId, entityId)) {
             if ((entityData.hasPostAttributesMsg() || entityData.hasPostTelemetryMsg() || entityData.hasAttributesUpdatedMsg())) {
                 Pair<TbMsgMetaData, CustomerId> pair = getBaseMsgMetadataAndCustomerId(tenantId, entityId);
                 TbMsgMetaData metaData = pair.getKey();
@@ -193,7 +193,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                 }
             }
             case ENTITY_GROUP -> {
-                EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, new EntityGroupId(entityId.getId()));
+                EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupInfoByTenantIdAndId(tenantId, new EntityGroupId(entityId.getId()));
                 if (entityGroup != null) {
                     metaData.putValue("entityGroupName", entityGroup.getName());
                     metaData.putValue("entityGroupType", entityGroup.getType().name());

@@ -99,6 +99,32 @@ public class AlarmRuleControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveAlarmRuleWithOtherTenantReference() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        AlarmRuleDefinition alarmRule = createTestAlarmRule(testDevice.getId(), "High Temperature");
+        alarmRule.getConfiguration().getArguments().get("temperature").setRefEntityId(tenantId);
+
+        doPost("/api/alarm/rule", alarmRule).andExpect(status().isForbidden());
+
+        PageData<AlarmRuleDefinition> alarmRules = doGetTypedWithPageLink(
+                "/api/alarm/rules/" + EntityType.DEVICE + "/" + testDevice.getUuidId() + "?",
+                new TypeReference<>() {}, new PageLink(10));
+        assertThat(alarmRules.getData()).isEmpty();
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithOwnTenantReference() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        AlarmRuleDefinition alarmRule = createTestAlarmRule(testDevice.getId(), "High Temperature");
+        alarmRule.getConfiguration().getArguments().get("temperature").setRefEntityId(savedTenant.getId());
+
+        AlarmRuleDefinition saved = saveAlarmRule(alarmRule);
+
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getConfiguration().getArguments().get("temperature").getRefEntityId()).isEqualTo(savedTenant.getId());
+    }
+
+    @Test
     public void testGetAlarmRuleById() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         AlarmRuleDefinition alarmRule = createTestAlarmRule(testDevice.getId(), "Test Alarm");

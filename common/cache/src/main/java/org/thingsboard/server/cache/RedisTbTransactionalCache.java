@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.support.NullValue;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.redis.ClusterRedirectException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
@@ -20,7 +22,10 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisRedirectionException;
 import redis.clients.jedis.util.JedisClusterCRC16;
 
 import java.io.Serializable;
@@ -196,9 +201,13 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         }
         byte[] rawPrefix = StringRedisSerializer.UTF_8.serialize(rawKeyPrefix + prefix);
         byte[] rawBatchSize = StringRedisSerializer.UTF_8.serialize(String.valueOf(1000));
-        try (var connection = getConnection(rawPrefix)) {
-            executeScript(connection, EVICT_BY_PREFIX_SHA, EVICT_BY_PREFIX_LUA_SCRIPT, ReturnType.INTEGER, 0, rawPrefix, rawBatchSize);
-        }
+        // The script has no keys, so the cluster client cannot route it: run it on the node that owns the prefix slot.
+        retryOnClusterTopologyChange(() -> {
+            try (var connection = getConnection(rawPrefix)) {
+                executeScript(connection, EVICT_BY_PREFIX_SHA, EVICT_BY_PREFIX_LUA_SCRIPT, ReturnType.INTEGER, 0, rawPrefix, rawBatchSize);
+            }
+            return null;
+        });
     }
 
     @Override
@@ -222,14 +231,17 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return TbTransactionalCache.super.getAndPutInTransaction(key, dbCall, cacheValueToResult, dbValueToCacheValue, cacheNullValue);
     }
 
+    /**
+     * Returns a connection to the node that owns the slot of {@code rawKey}, for commands the cluster client cannot
+     * route (WATCH/MULTI, keyless scripts). Such commands bypass the Jedis cluster command executor, which is what
+     * renews the slot map on MOVED or connection errors, so wrap them in {@link #retryOnClusterTopologyChange}.
+     */
     protected RedisConnection getConnection(byte[] rawKey) {
         if (!connectionFactory.isRedisClusterAware()) {
             return connectionFactory.getConnection();
         }
-        RedisConnection connection = connectionFactory.getClusterConnection();
-
         int slotNum = JedisClusterCRC16.getSlot(rawKey);
-        Jedis jedis = new Jedis((((JedisClusterConnection) connection).getNativeConnection().getConnectionFromSlot(slotNum)));
+        Jedis jedis = new Jedis(getNativeCluster().getConnectionFromSlot(slotNum));
 
         JedisConnection jedisConnection = new JedisConnection(jedis, MOCK_POOL, jedis.getDB());
         jedisConnection.setConvertPipelineAndTxResults(connectionFactory.getConvertPipelineAndTxResults());
@@ -238,6 +250,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     protected RedisConnection watch(byte[][] rawKeysList) {
+        return retryOnClusterTopologyChange(() -> doWatch(rawKeysList));
+    }
+
+    private RedisConnection doWatch(byte[][] rawKeysList) {
         RedisConnection connection = getConnection(rawKeysList[0]);
         try {
             connection.watch(rawKeysList);
@@ -247,6 +263,34 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             throw e;
         }
         return connection;
+    }
+
+    /**
+     * Runs a command that goes to a slot owner through {@link #getConnection(byte[])}. If it fails because the
+     * cluster topology changed (the slot moved, or its node is unreachable or gone), renews the Jedis slot map and
+     * runs the command once more. Without the renewal, every later command for the slot keeps going to the old node.
+     */
+    protected <T> T retryOnClusterTopologyChange(Supplier<T> command) {
+        try {
+            return command.get();
+        } catch (RuntimeException e) {
+            if (!connectionFactory.isRedisClusterAware() || !isClusterTopologyError(e)
+                    || !(getNativeCluster() instanceof TbJedisCluster cluster)) {
+                throw e;
+            }
+            log.warn("[{}] Redis cluster topology changed, renewing the slot map and retrying: {}", cacheName, e.getMessage());
+            cluster.renewSlotCache();
+            return command.get();
+        }
+    }
+
+    static boolean isClusterTopologyError(Throwable e) {
+        return e instanceof JedisConnectionException || e instanceof JedisRedirectionException
+                || e instanceof RedisConnectionFailureException || e instanceof ClusterRedirectException;
+    }
+
+    private JedisCluster getNativeCluster() {
+        return ((JedisClusterConnection) connectionFactory.getClusterConnection()).getNativeConnection();
     }
 
     protected byte[] getRawKey(K key) {
@@ -293,6 +337,13 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public void put(RedisConnection connection, byte[] rawKey, V value, RedisStringCommands.SetOption setOption) {
         byte[] rawValue = getRawValue(value);
         connection.stringCommands().set(rawKey, rawValue, this.cacheTtl, setOption);
+    }
+
+    /**
+     * Loads the Lua scripts this cache queues inside transactions on the connection's node. Called when a
+     * transaction fails with NOSCRIPT. Cache writes outside transactions load missing scripts themselves.
+     */
+    protected void loadScripts(RedisConnection connection) {
     }
 
     protected void executeScript(RedisConnection connection, byte[] scriptSha, byte[] luaScript, ReturnType returnType, int numKeys, byte[]... keysAndArgs) {

@@ -57,6 +57,7 @@ import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.permission.ShareGroupRequest;
 import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.owner.OwnerService;
@@ -210,9 +211,8 @@ public class EntityGroupController extends AutoCommitController {
             @RequestBody EntityGroup entityGroup) throws Exception {
         SecurityUser currentUser = getCurrentUser();
         checkEntityGroupType(entityGroup.getType());
-        Operation operation = entityGroup.getId() == null ? Operation.CREATE : Operation.WRITE;
         EntityId parentEntityId = entityGroup.getOwnerId();
-        if (operation == Operation.CREATE) {
+        if (entityGroup.getId() == null) {
             if (parentEntityId == null || parentEntityId.isNullUid()) {
                 parentEntityId = currentUser.getOwnerId();
             } else {
@@ -221,13 +221,11 @@ public class EntityGroupController extends AutoCommitController {
                             "Invalid entity group ownerId!", ThingsboardErrorCode.PERMISSION_DENIED);
                 }
             }
+            EntityGroupInfo entityGroupInfo = new EntityGroupInfo(entityGroup, ownersCacheService.fetchOwnersHierarchy(getTenantId(), parentEntityId));
+            accessControlService.checkEntityGroupInfoPermission(currentUser, Operation.CREATE, entityGroupInfo);
         } else {
-            validateEntityId(parentEntityId, id -> "Incorrect entity group ownerId " + id);
+            parentEntityId = checkEntityGroupId(entityGroup.getId(), Operation.WRITE).getOwnerId();
         }
-
-        EntityGroupInfo entityGroupInfo = new EntityGroupInfo(entityGroup, ownersCacheService.fetchOwnersHierarchy(getTenantId(), parentEntityId));
-
-        accessControlService.checkEntityGroupInfoPermission(currentUser, operation, entityGroupInfo);
 
         return tbEntityGroupService.save(getTenantId(), parentEntityId, entityGroup, getCurrentUser());
     }
@@ -967,7 +965,11 @@ public class EntityGroupController extends AutoCommitController {
         for (String strEntityGroupId : strEntityGroupIds) {
             entityGroupIds.add(new EntityGroupId(toUUID(strEntityGroupId)));
         }
-        return checkNotNull(entityGroupService.findEntityGroupEntityInfosByIds(tenantId, entityGroupIds, new PageLink(Integer.MAX_VALUE)).getData());
+        List<EntityGroupInfo> entityGroups = checkNotNull(
+                entityGroupService.findEntityGroupInfosByIds(tenantId, entityGroupIds, new PageLink(Integer.MAX_VALUE)).getData());
+        return filterEntityGroupsByReadPermission(entityGroups).stream()
+                .map(entityGroup -> new EntityInfo(entityGroup.getId(), entityGroup.getName()))
+                .toList();
     }
 
     @ApiOperation(value = "Get Owners (getOwners)",
@@ -1145,7 +1147,8 @@ public class EntityGroupController extends AutoCommitController {
 
     @ApiOperation(value = "Share the Entity Group (shareEntityGroup)",
             notes = "Share the entity group with certain user group based on the provided Share Group Request. " +
-                    "The request is quite flexible and processing of the request involves multiple security checks using platform RBAC feature."
+                    "The request is quite flexible and processing of the request involves multiple security checks using platform RBAC feature. " +
+                    "Each role in 'roleIds' must be a group role readable by the current user, and each of its operations must be granted to the current user for the entity group or its entities."
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_GROUP_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/entityGroup/{entityGroupId}/share")
@@ -1165,21 +1168,25 @@ public class EntityGroupController extends AutoCommitController {
 
             EntityGroupInfo userGroup;
             if (shareGroupRequest.isAllUserGroup()) {
-                Optional<EntityGroupInfo> userGroupOptional = entityGroupService.findEntityGroupInfoByTypeAndName(getTenantId(), shareGroupRequest.getOwnerId(),
-                        EntityType.USER, EntityGroup.GROUP_ALL_NAME);
+                Optional<EntityGroupInfo> userGroupOptional = findAllUserGroup(shareGroupRequest.getOwnerId());
                 if (userGroupOptional.isPresent()) {
                     userGroup = userGroupOptional.get();
                 } else {
                     throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
                 }
             } else {
-                userGroup = entityGroupService.findEntityGroupInfoById(getTenantId(), shareGroupRequest.getUserGroupId());
+                userGroup = checkNotNull(entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), shareGroupRequest.getUserGroupId()));
             }
             accessControlService.checkEntityGroupInfoPermission(getCurrentUser(), Operation.WRITE, userGroup);
 
-            List<RoleId> roleIds;
+            List<Role> roles;
             if (shareGroupRequest.getRoleIds() != null && !shareGroupRequest.getRoleIds().isEmpty()) {
-                roleIds = shareGroupRequest.getRoleIds();
+                roles = new ArrayList<>();
+                for (RoleId roleId : shareGroupRequest.getRoleIds()) {
+                    Role role = checkRoleId(roleId, Operation.READ);
+                    checkGroupRoleAllowedForShare(role, entityGroup);
+                    roles.add(role);
+                }
             } else {
                 Role role;
                 if (shareGroupRequest.isReadElseWrite()) {
@@ -1187,15 +1194,15 @@ public class EntityGroupController extends AutoCommitController {
                 } else {
                     role = roleService.findOrCreateWriteEntityGroupRole(getTenantId(), getCurrentUser().getCustomerId());
                 }
-                roleIds = Collections.singletonList(role.getId());
+                roles = Collections.singletonList(role);
             }
 
-            for (RoleId roleId : roleIds) {
+            for (Role role : roles) {
                 GroupPermission groupPermission = new GroupPermission();
                 groupPermission.setTenantId(getTenantId());
                 groupPermission.setEntityGroupId(entityGroup.getId());
                 groupPermission.setEntityGroupType(entityGroup.getType());
-                groupPermission.setRoleId(roleId);
+                groupPermission.setRoleId(role.getId());
                 groupPermission.setUserGroupId(userGroup.getId());
 
                 GroupPermission savedGroupPermission = checkNotNull(groupPermissionService.saveGroupPermission(getTenantId(), groupPermission));
@@ -1246,7 +1253,7 @@ public class EntityGroupController extends AutoCommitController {
         checkParameter("userGroupId", strUserGroupId);
         checkParameter("roleId", strRoleId);
         EntityGroupId userGroupId = new EntityGroupId(toUUID(strUserGroupId));
-        EntityGroup userGroup = entityGroupService.findEntityGroupById(getTenantId(), userGroupId);
+        EntityGroup userGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), userGroupId);
         if (userGroup == null) {
             throw new ThingsboardException("User group with requested id: " + userGroupId + " wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -1299,7 +1306,7 @@ public class EntityGroupController extends AutoCommitController {
 
     private EntityGroup resolveEntityGroup(UUID entityGroupUuid) throws ThingsboardException {
         EntityGroupId entityGroupId = new EntityGroupId(entityGroupUuid);
-        EntityGroup entityGroup = entityGroupService.findEntityGroupById(getTenantId(), entityGroupId);
+        EntityGroup entityGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), entityGroupId);
         if (entityGroup == null) {
             throw new ThingsboardException("Entity group with requested id: " + entityGroupId + " wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
@@ -1309,20 +1316,25 @@ public class EntityGroupController extends AutoCommitController {
     private EntityGroupInfo resolveUserGroup(ShareGroupRequest shareGroupRequest) throws ThingsboardException {
         EntityGroupInfo userGroup;
         if (shareGroupRequest.isAllUserGroup()) {
-            Optional<EntityGroupInfo> userGroupOptional = entityGroupService.findEntityGroupInfoByTypeAndName(getTenantId(), shareGroupRequest.getOwnerId(),
-                    EntityType.USER, EntityGroup.GROUP_ALL_NAME);
+            Optional<EntityGroupInfo> userGroupOptional = findAllUserGroup(shareGroupRequest.getOwnerId());
             if (userGroupOptional.isPresent()) {
                 userGroup = userGroupOptional.get();
             } else {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
         } else {
-            userGroup = entityGroupService.findEntityGroupInfoById(getTenantId(), shareGroupRequest.getUserGroupId());
+            userGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(getTenantId(), shareGroupRequest.getUserGroupId());
         }
         if (userGroup == null) {
             throw new ThingsboardException("Specified user group wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
         return userGroup;
+    }
+
+    private Optional<EntityGroupInfo> findAllUserGroup(EntityId ownerId) throws ThingsboardException {
+        TenantId tenantId = getTenantId();
+        return entityGroupService.findEntityGroupInfoByTypeAndName(tenantId, ownerId, EntityType.USER, EntityGroup.GROUP_ALL_NAME)
+                .map(group -> entityGroupService.findEntityGroupInfoByTenantIdAndId(tenantId, group.getId()));
     }
 
     private List<Role> resolveRoles(ShareGroupRequest shareGroupRequest) throws ThingsboardException {
@@ -1389,7 +1401,7 @@ public class EntityGroupController extends AutoCommitController {
             Edge edge = checkEdgeId(edgeId, Operation.WRITE);
 
             EntityGroupId entityGroupId = new EntityGroupId(toUUID(strEntityGroupId));
-            checkEntityGroupId(entityGroupId, Operation.READ);
+            checkEntityGroupId(entityGroupId, Operation.WRITE);
             EntityType groupType = checkStrEntityGroupType("groupType", strGroupType);
 
             EntityGroup savedEntityGroup = checkNotNull(entityGroupService.assignEntityGroupToEdge(getCurrentUser().getTenantId(), entityGroupId, edgeId, groupType));
@@ -1504,9 +1516,29 @@ public class EntityGroupController extends AutoCommitController {
         }
     }
 
-    private void shareGroup(Role role, EntityGroup userGroup, EntityGroup entityGroup, Set<Operation> mergedOperations) throws ThingsboardException {
+    private void checkGroupRoleAllowedForShare(Role role, EntityGroup entityGroup) throws ThingsboardException {
+        if (role.getType() == RoleType.GENERIC) {
+            throw new ThingsboardException("Can't assign Generic Role to entity group!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        MergedUserPermissions userPermissions = getCurrentUser().getUserPermissions();
+        Resource groupResource = Resource.groupResourceFromGroupType(entityGroup.getType());
+        Resource entityResource = Resource.resourceFromEntityType(entityGroup.getType());
+        for (Operation operation : toRoleOperations(role)) {
+            if (!userPermissions.hasGenericPermission(groupResource, operation)
+                    && !userPermissions.hasGenericPermission(entityResource, operation)
+                    && !userPermissions.hasGroupPermissions(entityGroup.getId(), operation)) {
+                throw permissionDenied();
+            }
+        }
+    }
+
+    private List<Operation> toRoleOperations(Role role) {
         CollectionType collectionType = TypeFactory.defaultInstance().constructCollectionType(List.class, Operation.class);
-        List<Operation> roleOperations = JacksonUtil.readValue(role.getPermissions().toString(), collectionType);
+        return JacksonUtil.readValue(role.getPermissions().toString(), collectionType);
+    }
+
+    private void shareGroup(Role role, EntityGroup userGroup, EntityGroup entityGroup, Set<Operation> mergedOperations) throws ThingsboardException {
+        List<Operation> roleOperations = toRoleOperations(role);
         if (!mergedOperations.isEmpty() && (mergedOperations.contains(Operation.ALL) || mergedOperations.containsAll(roleOperations))) {
             GroupPermission savedGroupPermission = groupPermissionService.saveGroupPermission(getTenantId(), new GroupPermission(getTenantId(), userGroup.getId(), role.getId(), entityGroup.getId(), entityGroup.getId().getEntityType(), false));
             userPermissionsService.onGroupPermissionUpdated(savedGroupPermission);

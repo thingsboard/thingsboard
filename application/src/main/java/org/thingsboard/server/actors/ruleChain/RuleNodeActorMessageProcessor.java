@@ -42,11 +42,18 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     RuleNodeActorMessageProcessor(TenantId tenantId, String ruleChainName,
                                   RuleNodeId ruleNodeId, ActorSystemContext systemContext, TbActorCtx selfActor) {
+        this(tenantId, ruleChainName, ruleNodeId, systemContext, selfActor, null);
+    }
+
+    RuleNodeActorMessageProcessor(TenantId tenantId, String ruleChainName,
+                                  RuleNodeId ruleNodeId, ActorSystemContext systemContext, TbActorCtx selfActor, RuleNode preloadedRuleNode) {
         super(systemContext, tenantId, ruleNodeId);
         this.apiUsageClient = systemContext.getApiUsageClient();
         this.ruleChainName = ruleChainName;
         this.componentService = systemContext.getComponentService();
-        RuleNode ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
+        // The parent rule chain actor has just loaded this node; reuse it instead of another round trip to the database.
+        RuleNode ruleNode = preloadedRuleNode != null && ruleNodeId.equals(preloadedRuleNode.getId()) ?
+                copyOf(preloadedRuleNode) : systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, getName(ruleNode));
         replaceSecretUsages(ruleNode);
         this.defaultCtx = new DefaultTbContext(systemContext, ruleChainName, new RuleNodeCtx(tenantId, selfActor, ruleNode));
@@ -211,6 +218,21 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         if (DebugModeUtil.isDebugAllAvailable(defaultCtx.getSelf())) {
             systemContext.persistDebugInput(tenantId, entityId, msg, fromNodeConnectionType);
         }
+    }
+
+    // Secret substitution modifies the configuration JSON in place, and the RuleNode copy constructor shares it,
+    // so the configuration is deep-copied to keep the parent rule chain's instance untouched. The copy constructor also
+    // skips queueName, configurationVersion and debugMode, which are set explicitly to match a node read from the database.
+    @SuppressWarnings("deprecation")
+    static RuleNode copyOf(RuleNode ruleNode) {
+        RuleNode copy = new RuleNode(ruleNode);
+        copy.setQueueName(ruleNode.getQueueName());
+        copy.setConfigurationVersion(ruleNode.getConfigurationVersion());
+        copy.setDebugMode(ruleNode.isDebugMode());
+        if (ruleNode.getConfiguration() != null) {
+            copy.setConfiguration(ruleNode.getConfiguration().deepCopy());
+        }
+        return copy;
     }
 
     private void replaceSecretUsages(RuleNode ruleNode) {

@@ -321,6 +321,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
           const container = parent.getBoundingClientRect();
           position.coord.left = Math.max(0,clientRect.right - position.size.width - container.left);
           position.coord.top = position.coord.top - container.top;
+          if (position.coord.top < 2) {
+            position.coord.top = 2;
+          }
           position.target = clientRect.right;
           return position;
         },
