@@ -11,11 +11,14 @@ import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.integration.redis.util.RedisLockRegistry;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
+import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
 import static org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mRedisRegistrationStore.REG_EP;
@@ -178,6 +181,31 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             if (lock != null) {
                 lock.unlock();
             }
+        }
+    }
+
+    @Override
+    public void removeByDeviceId(UUID deviceId) {
+        String endpointToRemove = null;
+        try (var connection = connectionFactory.getConnection()) {
+            ScanOptions options = ScanOptions.scanOptions().match(SEC_EP + "*").count(1000).build();
+            try (Cursor<byte[]> cursor = connection.keyCommands().scan(options)) {
+                while (cursor.hasNext()) {
+                    byte[] key = cursor.next();
+                    byte[] data = connection.stringCommands().get(key);
+                    if (data != null && data.length > 0) {
+                        TbLwM2MSecurityInfo info = JavaSerDesUtil.decode(data);
+                        if (info != null && info.getMsg() != null && info.getMsg().getDeviceInfo() != null
+                                && deviceId.equals(info.getMsg().getDeviceInfo().getDeviceId().getId())) {
+                            endpointToRemove = info.getEndpoint();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (endpointToRemove != null) {
+            remove(endpointToRemove);
         }
     }
 

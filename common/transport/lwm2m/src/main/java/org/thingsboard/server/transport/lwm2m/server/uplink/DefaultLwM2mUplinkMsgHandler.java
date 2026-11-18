@@ -38,6 +38,7 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.common.data.Device;
@@ -51,6 +52,7 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveS
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
+import org.thingsboard.server.common.transport.DeviceDeletedEvent;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -431,9 +433,19 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
+    @EventListener
+    public void onDeviceDeletedEvent(DeviceDeletedEvent event) {
+        onDeviceDelete(event.getDeviceId());
+    }
+
     @Override
     public void onDeviceDelete(DeviceId deviceId) {
-        clearAndUnregister(clientContext.getClientByDeviceId(deviceId.getId()));
+        LwM2mClient client = clientContext.getClientByDeviceId(deviceId.getId());
+        if (client != null) {
+            clearAndUnregister(client);
+        } else {
+            securityStore.removeByDeviceId(deviceId.getId());
+        }
     }
 
     @Override
