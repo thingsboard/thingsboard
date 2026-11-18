@@ -4,6 +4,7 @@ import {
   Datasource,
   defaultLegendConfig,
   LegendConfig,
+  LegendDirection,
   LegendPosition,
   widgetType
 } from '@shared/models/widget.models';
@@ -41,7 +42,7 @@ import {
 import {
   BarChartWithLabelsWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
-import { TimeSeriesChartWidgetSettings } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
+import { LegendView, TimeSeriesChartWidgetSettings } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import { IntervalType } from '@shared/models/telemetry/telemetry.models';
 import { LatestChartWidgetSettings } from '@home/components/widget/lib/chart/latest-chart.models';
 import { DoughnutLayout } from '@home/components/widget/lib/chart/doughnut-widget.models';
@@ -490,6 +491,8 @@ export interface ReportTimeSeriesChartSettings extends TimeSeriesChartSettings {
   legendValueFont: Font;
   legendValueColor: string;
   legendConfig: LegendConfig;
+  legendItemsDirection?: LegendDirection | null;
+  legendView?: LegendView;
 }
 
 export const reportTimeSeriesChartDefaultSettings: ReportTimeSeriesChartSettings = mergeDeep({} as ReportTimeSeriesChartSettings,

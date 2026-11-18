@@ -9,6 +9,7 @@ import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.StandardChartTheme;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.block.Arrangement;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelClip;
 import org.jfree.chart.labels.ItemLabelPosition;
@@ -40,7 +41,9 @@ import org.thingsboard.server.common.data.report.configuration.chart.ChartFillTy
 import org.thingsboard.server.common.data.report.configuration.chart.ChartLabelPosition;
 import org.thingsboard.server.common.data.report.configuration.chart.ChartShape;
 import org.thingsboard.server.common.data.report.configuration.chart.LegendConfig;
+import org.thingsboard.server.common.data.report.configuration.chart.LegendDirection;
 import org.thingsboard.server.common.data.report.configuration.chart.LegendPosition;
+import org.thingsboard.server.common.data.report.configuration.chart.LegendView;
 import org.thingsboard.server.common.data.report.configuration.chart.LineSeriesSettings;
 import org.thingsboard.server.common.data.report.configuration.chart.ReportTimeSeriesChartSettings;
 import org.thingsboard.server.common.data.report.configuration.chart.TimeSeriesChartBarWidth;
@@ -58,6 +61,7 @@ import org.thingsboard.server.report.context.chart.TsChartThresholdItem;
 import org.thingsboard.server.report.context.chart.YAxisScale;
 import org.thingsboard.server.report.renderer.chart.layout.TbColumnArrangement;
 import org.thingsboard.server.report.renderer.chart.layout.TbFlowArrangement;
+import org.thingsboard.server.report.renderer.chart.legend.TbCardLegendTitle;
 import org.thingsboard.server.report.renderer.chart.legend.TbLegendTitle;
 import org.thingsboard.server.report.renderer.chart.legend.TbLegendValues;
 import org.thingsboard.server.report.renderer.chart.legend.TbLegendValuesRequest;
@@ -361,12 +365,15 @@ public class TbTimeSeriesChart implements XYSeriesLabelGenerator, TbSeriesLegend
                     legendTitle = legend;
                     hPadding = 16.0;
                 }
+            } else if (chartSettings.getLegendView() == LegendView.card) {
+                TbCardLegendTitle legend = new TbCardLegendTitle(plot, legendConfig);
+                this.setupLegendWithValues(legend, legendConfig);
+                legend.setMaxRelativeHeight(0.5);
+                legend.setHorizontalAlignment(HorizontalAlignment.LEFT);
+                legendTitle = legend;
             } else if (legendConfig.isSimpleLegend()) {
-                TbFlowArrangement hLayout = new TbFlowArrangement(HorizontalAlignment.CENTER, VerticalAlignment.CENTER, 16.0, 8.0);
-                hLayout.setMaxRelativeHeight(0.35);
-                TbColumnArrangement vLayout = new TbColumnArrangement(HorizontalAlignment.LEFT, VerticalAlignment.TOP, 16.0, 8.0);
-                vLayout.setMaxRelativeWidth(0.35);
-                LegendTitle legend = new TbLegendTitle(plot, hLayout, vLayout);
+                Arrangement layout = this.createSimpleLegendArrangement(legendConfig.getPosition());
+                LegendTitle legend = new TbLegendTitle(plot, layout, layout);
                 legend.setBackgroundPaint(ColorUtils.TRANSPARENT);
 
                 legend.setItemLabelPadding(new RectangleInsets(0.0, 4.0, 0.0, 0.0));
@@ -400,29 +407,10 @@ public class TbTimeSeriesChart implements XYSeriesLabelGenerator, TbSeriesLegend
 
             } else {
                 TbTableLegendTitle legend = new TbTableLegendTitle(plot, legendConfig);
-                legend.setMaxRelativeWidth(0.35);
-                legend.setMaxRelativeHeight(0.35);
-
-                legend.setItemLabelPadding(new RectangleInsets(0.0, 4.0, 0.0, 0.0));
-                legend.setItemFont(toAwtFont(chartSettings.getLegendLabelFont()));
-                legend.setItemPaint(safeParseCssColor(chartSettings.getLegendLabelColor()));
-
-                legend.setLegendColumnTitleFont(toAwtFont(chartSettings.getLegendColumnTitleFont()));
-                legend.setLegendColumnTitlePaint(safeParseCssColor(chartSettings.getLegendColumnTitleColor()));
-
-                legend.setLegendValueFont(toAwtFont(chartSettings.getLegendValueFont()));
-                legend.setLegendValuePaint(safeParseCssColor(chartSettings.getLegendValueColor()));
-
-                boolean sortAlphabetically = legendConfig.getSortDataKeys();
-                if (sortAlphabetically) {
-                    legend.setLegendItemComparator(Comparator.comparing(item -> item.getLegendItem().getLabel(), String.CASE_INSENSITIVE_ORDER));
-                } else {
-                    legend.setLegendItemComparator((item1, item2) -> {
-                        int dataIndex1 = findSeriesIndex(item1.getLegendItem().getDatasetIndex(), item1.getLegendItem().getSeriesIndex());
-                        int dataIndex2 = findSeriesIndex(item2.getLegendItem().getDatasetIndex(), item2.getLegendItem().getSeriesIndex());
-                        return dataIndex1 - dataIndex2;
-                    });
-                }
+                legend.setHorizontal(chartSettings.getLegendItemsDirection() == LegendDirection.row);
+                this.setupLegendWithValues(legend, legendConfig);
+                legend.setMaxRelativeWidth(0.5);
+                legend.setHorizontalAlignment(HorizontalAlignment.LEFT);
                 legendTitle = legend;
             }
 
@@ -449,6 +437,59 @@ public class TbTimeSeriesChart implements XYSeriesLabelGenerator, TbSeriesLegend
                 chart.addSubtitle(legendTitle);
                 legendTitle.addChangeListener(chart);
             }
+        }
+    }
+
+    private void setupLegendWithValues(TbTableLegendTitle legend, LegendConfig legendConfig) {
+        legend.setMaxRelativeWidth(0.35);
+        legend.setMaxRelativeHeight(0.35);
+
+        legend.setItemLabelPadding(new RectangleInsets(0.0, 4.0, 0.0, 0.0));
+        legend.setItemFont(toAwtFont(chartSettings.getLegendLabelFont()));
+        legend.setItemPaint(safeParseCssColor(chartSettings.getLegendLabelColor()));
+
+        legend.setLegendColumnTitleFont(toAwtFont(chartSettings.getLegendColumnTitleFont()));
+        legend.setLegendColumnTitlePaint(safeParseCssColor(chartSettings.getLegendColumnTitleColor()));
+
+        legend.setLegendValueFont(toAwtFont(chartSettings.getLegendValueFont()));
+        legend.setLegendValuePaint(safeParseCssColor(chartSettings.getLegendValueColor()));
+
+        boolean sortAlphabetically = legendConfig.getSortDataKeys();
+        if (sortAlphabetically) {
+            legend.setLegendItemComparator(Comparator.comparing(item -> item.getLegendItem().getLabel(), String.CASE_INSENSITIVE_ORDER));
+        } else {
+            legend.setLegendItemComparator((item1, item2) -> {
+                int dataIndex1 = findSeriesIndex(item1.getLegendItem().getDatasetIndex(), item1.getLegendItem().getSeriesIndex());
+                int dataIndex2 = findSeriesIndex(item2.getLegendItem().getDatasetIndex(), item2.getLegendItem().getSeriesIndex());
+                return dataIndex1 - dataIndex2;
+            });
+        }
+    }
+
+    private Arrangement createSimpleLegendArrangement(LegendPosition position) {
+        boolean leftOrRight = position == LegendPosition.left || position == LegendPosition.right;
+        LegendDirection direction = chartSettings.getLegendItemsDirection();
+        if (direction == null) {
+            direction = leftOrRight ? LegendDirection.column : LegendDirection.row;
+        }
+        if (direction == LegendDirection.row) {
+            TbFlowArrangement layout = leftOrRight ?
+                    new TbFlowArrangement(HorizontalAlignment.LEFT, VerticalAlignment.TOP, 16.0, 8.0) :
+                    new TbFlowArrangement(HorizontalAlignment.CENTER, VerticalAlignment.CENTER, 16.0, 8.0);
+            if (leftOrRight) {
+                layout.setMaxRelativeWidth(0.35);
+            } else {
+                layout.setMaxRelativeHeight(0.35);
+            }
+            return layout;
+        } else {
+            TbColumnArrangement layout = new TbColumnArrangement(HorizontalAlignment.LEFT, VerticalAlignment.TOP, 16.0, 8.0);
+            if (leftOrRight) {
+                layout.setMaxRelativeWidth(0.35);
+            } else {
+                layout.setMaxRelativeHeight(0.35);
+            }
+            return layout;
         }
     }
 

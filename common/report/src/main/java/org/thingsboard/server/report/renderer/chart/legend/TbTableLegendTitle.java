@@ -39,7 +39,7 @@ import static org.thingsboard.server.report.util.ColorUtils.safeParseCssColor;
 public class TbTableLegendTitle extends Title {
 
     private final TbLegendItemSource source;
-    private final LegendConfig legendConfig;
+    protected final LegendConfig legendConfig;
     private final TbTableBlockContainer legendTable;
 
     private Comparator<TbLegendItem> legendItemComparator;
@@ -53,14 +53,16 @@ public class TbTableLegendTitle extends Title {
     private Paint itemPaint;
     private RectangleInsets itemLabelPadding;
 
-    private Font legendColumnTitleFont;
-    private Paint legendColumnTitlePaint;
+    protected Font legendColumnTitleFont;
+    protected Paint legendColumnTitlePaint;
 
-    private Font legendValueFont;
-    private Paint legendValuePaint;
+    protected Font legendValueFont;
+    protected Paint legendValuePaint;
 
-    private double maxRelativeWidth = 0;
-    private double maxRelativeHeight = 0;
+    protected double maxRelativeWidth = 0;
+    protected double maxRelativeHeight = 0;
+
+    private boolean horizontal = false;
 
     public TbTableLegendTitle(TbLegendItemSource source, LegendConfig config) {
         this.source = source;
@@ -139,6 +141,10 @@ public class TbTableLegendTitle extends Title {
         this.maxRelativeHeight = maxRelativeHeight;
     }
 
+    public void setHorizontal(boolean horizontal) {
+        this.horizontal = horizontal;
+    }
+
     @Override
     public Size2D arrange(Graphics2D g2, RectangleConstraint constraint) {
         this.fetchLegendItems();
@@ -155,6 +161,7 @@ public class TbTableLegendTitle extends Title {
                 targetConstraint = toContentConstraint(new RectangleConstraint(maxWidth, constraint.getHeight()));
             }
         }
+        this.legendTable.setFitColumnsToContent(RectangleEdge.isLeftOrRight(p));
         Size2D size = this.legendTable.arrange(g2, targetConstraint);
         Size2D result = new Size2D();
         result.height = calculateTotalHeight(size.height);
@@ -178,19 +185,26 @@ public class TbTableLegendTitle extends Title {
 
     private void fetchLegendItems() {
         this.legendTable.clear();
-        TbLegendValuesRequest request = this.buildLegendValuesRequest();
-        List<TbLegendItem> legendItems = this.source.getTbLegendItems(request);
-        if (legendItems != null && !legendItems.isEmpty()) {
-            if (this.legendItemComparator != null) {
-                legendItems.sort(this.legendItemComparator);
-            }
-            RectangleEdge p = getPosition();
-            if (RectangleEdge.isTopOrBottom(p)) {
-                this.buildVerticalLegendItems(legendItems);
-            } else {
+        List<TbLegendItem> legendItems = this.loadLegendItems();
+        if (!legendItems.isEmpty()) {
+            if (this.horizontal) {
                 this.buildHorizontalLegendItems(legendItems);
+            } else {
+                this.buildVerticalLegendItems(legendItems);
             }
         }
+    }
+
+    protected List<TbLegendItem> loadLegendItems() {
+        TbLegendValuesRequest request = this.buildLegendValuesRequest();
+        List<TbLegendItem> legendItems = this.source.getTbLegendItems(request);
+        if (legendItems == null) {
+            return List.of();
+        }
+        if (this.legendItemComparator != null) {
+            legendItems.sort(this.legendItemComparator);
+        }
+        return legendItems;
     }
 
     private TbLegendValuesRequest buildLegendValuesRequest() {
@@ -324,7 +338,7 @@ public class TbTableLegendTitle extends Title {
     }
 
 
-    private Block createLegendItemBlock(LegendItem item) {
+    protected Block createLegendItemBlock(LegendItem item) {
         BlockContainer result;
         LegendGraphic lg = new LegendGraphic(item.getShape(),
                 item.getFillPaint());

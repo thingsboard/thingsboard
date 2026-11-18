@@ -11,6 +11,8 @@ import {
   DataKey,
   Datasource,
   DatasourceType,
+  LegendDirection,
+  legendDirectionTranslationMap,
   legendPositions,
   legendPositionTranslationMap,
   WidgetConfig,
@@ -30,6 +32,10 @@ import {
   resolveCssSize
 } from '@shared/models/widget-settings.models';
 import {
+  legendItemsDirectionApplicable,
+  legendViews,
+  legendViewTranslationMap,
+  LegendView,
   timeSeriesChartWidgetDefaultSettings,
   TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
@@ -71,6 +77,18 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
   legendPositions = legendPositions;
 
   legendPositionTranslationMap = legendPositionTranslationMap;
+
+  legendDirection = LegendDirection;
+
+  legendDirections = Object.keys(LegendDirection);
+
+  legendDirectionTranslationMap = legendDirectionTranslationMap;
+
+  legendViews = legendViews;
+
+  legendView = LegendView;
+
+  legendViewTranslationMap = legendViewTranslationMap;
 
   timeSeriesChartWidgetConfigForm: UntypedFormGroup;
 
@@ -168,6 +186,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       legendValueFont: [settings.legendValueFont, []],
       legendValueColor: [settings.legendValueColor, []],
       legendConfig: [settings.legendConfig, []],
+      legendItemsDirection: [settings.legendItemsDirection ?? null, []],
+      legendView: [settings.legendView, []],
 
       showTooltip: [settings.showTooltip, []],
       tooltipTrigger: [settings.tooltipTrigger, []],
@@ -247,6 +267,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.legendValueFont = config.legendValueFont;
     this.widgetConfig.config.settings.legendValueColor = config.legendValueColor;
     this.widgetConfig.config.settings.legendConfig = config.legendConfig;
+    this.widgetConfig.config.settings.legendItemsDirection = config.legendItemsDirection;
+    this.widgetConfig.config.settings.legendView = config.legendView;
 
     this.widgetConfig.config.settings.showTooltip = config.showTooltip;
     this.widgetConfig.config.settings.tooltipTrigger = config.tooltipTrigger;
@@ -281,7 +303,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['comparisonEnabled', 'dataZoom', 'showTitle', 'showIcon', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
+    return ['comparisonEnabled', 'dataZoom', 'showTitle', 'showIcon', 'showLegend', 'legendView', 'showTooltip', 'tooltipShowDate', 'stack'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
@@ -293,6 +315,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     const showTooltip: boolean = this.timeSeriesChartWidgetConfigForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetConfigForm.get('tooltipShowDate').value;
     const stack: boolean = this.timeSeriesChartWidgetConfigForm.get('stack').value;
+    const legendView: LegendView = this.timeSeriesChartWidgetConfigForm.get('legendView').value;
 
     if (dataZoom) {
       this.timeSeriesChartWidgetConfigForm.get('dataZoomUpdateTimewindow').enable();
@@ -345,6 +368,12 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       this.timeSeriesChartWidgetConfigForm.get('legendValueFont').enable();
       this.timeSeriesChartWidgetConfigForm.get('legendValueColor').enable();
       this.timeSeriesChartWidgetConfigForm.get('legendConfig').enable();
+      this.timeSeriesChartWidgetConfigForm.get('legendView').enable({emitEvent: false});
+      if (legendItemsDirectionApplicable(legendView)) {
+        this.timeSeriesChartWidgetConfigForm.get('legendItemsDirection').enable();
+      } else {
+        this.timeSeriesChartWidgetConfigForm.get('legendItemsDirection').disable();
+      }
     } else {
       this.timeSeriesChartWidgetConfigForm.get('legendColumnTitleFont').disable();
       this.timeSeriesChartWidgetConfigForm.get('legendColumnTitleColor').disable();
@@ -353,6 +382,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       this.timeSeriesChartWidgetConfigForm.get('legendValueFont').disable();
       this.timeSeriesChartWidgetConfigForm.get('legendValueColor').disable();
       this.timeSeriesChartWidgetConfigForm.get('legendConfig').disable();
+      this.timeSeriesChartWidgetConfigForm.get('legendItemsDirection').disable();
+      this.timeSeriesChartWidgetConfigForm.get('legendView').disable({emitEvent: false});
     }
 
     if (showTooltip) {

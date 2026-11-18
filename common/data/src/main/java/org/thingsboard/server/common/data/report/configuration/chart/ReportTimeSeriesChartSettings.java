@@ -72,6 +72,10 @@ public class ReportTimeSeriesChartSettings {
 
     @JsonProperty("legendConfig")
     private LegendConfig legendConfig;
+    private LegendView legendView;
+    @Schema(description = "Direction of the legend items. Null means auto: column for left/right legend, row for top/bottom legend. " +
+            "Table legend with values is rendered horizontally (keys as columns) only when explicitly set to row.")
+    private LegendDirection legendItemsDirection;
 
     public ReportTimeSeriesChartSettings() {}
 
@@ -133,6 +137,8 @@ public class ReportTimeSeriesChartSettings {
                 .build();
         this.legendValueColor = input.getLegendValueColor() != null ? input.getLegendValueColor() : "rgba(0, 0, 0, 0.87)";
         this.legendConfig = new LegendConfig(input.getLegendConfig());
+        this.legendView = input.getLegendView() != null ? input.getLegendView() : LegendView.table;
+        this.legendItemsDirection = input.getLegendItemsDirection();
 
     }
 
