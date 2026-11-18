@@ -9,9 +9,9 @@ A scan of the source of a package takes minutes, and ORT keeps its result in the
 that the same source is never scanned twice on one machine. The archive holds the files of that directory.
 
 download   adds the files of the archive that this machine does not have yet. The archive is asked for with the ETag of
-           the last download, so one that has not changed is not downloaded again. Without the archive the notices are
-           still made: the packages are then scanned on this machine. After a failed download the archive is not asked
-           for again for 10 minutes, so that the other modules of the build do not wait for the same failure.
+           the last download, so one that has not changed is not downloaded again. An archive that cannot be read stops
+           the notices: without it, every package that this machine has not scanned before would be scanned now,
+           which takes hours for the whole product.
 upload     puts the files of this machine and of the archive into a new archive, when this machine has files that the
            archive does not. Needs the account that may write, in NOTICES_SCAN_CACHE_USER and
            NOTICES_SCAN_CACHE_PASSWORD. Two uploads at the same time are not kept apart: the scans of the earlier one
@@ -27,18 +27,14 @@ import contextlib
 import fcntl
 import os
 import shutil
-import sys
 import tarfile
 import tempfile
-import time
 import urllib.error
 import urllib.request
 
 DIRECTORY = 'scanner'
 # Seconds that a connection or a read may take: a download waits that long for a server that does not answer
 TIMEOUT = 10
-# Seconds after a failed download in which the archive is not asked for again
-RETRY_AFTER = 600
 
 
 def main():
@@ -56,10 +52,7 @@ def main():
 
 
 def download(home, url):
-    etag_file, failed_file = os.path.join(home, 'scan-cache.etag'), os.path.join(home, 'scan-cache.failed')
-    if os.path.exists(failed_file) and time.time() - os.path.getmtime(failed_file) < RETRY_AFTER:
-        print(f'Scan cache: {url} could not be read a few minutes ago, so it is not asked for now', file=sys.stderr)
-        return
+    etag_file = os.path.join(home, 'scan-cache.etag')
     # The ETag says what was downloaded, which is of no use once the files are gone
     known = read(etag_file) if os.path.isdir(os.path.join(home, DIRECTORY)) else None
     try:
@@ -69,14 +62,15 @@ def download(home, url):
             return
         with archive:
             added, stored = unpack(archive, home)
-    # Whatever goes wrong here, such as a connection that ends in the middle of the archive, the notices are still made
+    # Whatever goes wrong here, such as a connection that ends in the middle of the archive
     except Exception as error:
-        open(failed_file, 'w').close()
-        print(f'Scan cache: {url} cannot be read ({error}). The notices are made without it: each package that was '
-              'not scanned on this machine before is scanned now, which takes minutes for each.', file=sys.stderr)
-        return
-    with contextlib.suppress(FileNotFoundError):
-        os.remove(failed_file)
+        raise SystemExit(
+            f'Scan cache: {url} cannot be read ({error}).\n'
+            'Without it, every package that this machine has not scanned before would be scanned now, which takes '
+            'hours for the whole product, so the notices stop.\n'
+            f'To fix: try again in a few minutes. If it keeps failing, check that the address answers: curl -I {url}\n'
+            'To make the notices without it anyway, for example offline with the scans already on this machine: '
+            'NOTICES_SCAN_CACHE_URL=none')
     if etag:
         with open(etag_file, 'w') as file:
             file.write(etag)
