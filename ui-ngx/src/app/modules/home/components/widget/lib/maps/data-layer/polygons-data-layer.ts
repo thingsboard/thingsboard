@@ -10,7 +10,7 @@ import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
 import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
 import {
   TbLatestDataLayerItem,
@@ -23,6 +23,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   private polygonContainer: L.FeatureGroup;
   private polygon: L.Polygon;
   private polygonStyleInfo: ShapeStyleInfo;
+  private styleSubscription: Subscription;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -41,6 +42,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   }
 
   public remove() {
+    this.styleSubscription?.unsubscribe();
     super.remove();
     if (this.polygonStyleInfo?.patternId) {
       this.dataLayer.getMap().unUseShapePattern(this.polygonStyleInfo.patternId);
@@ -56,7 +58,8 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
 
-    this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polygonStyleInfo = styleInfo;
       if (this.polygon) {
         this.polygon.setStyle(this.polygonStyleInfo.style);
@@ -80,7 +83,8 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polygonStyleInfo = styleInfo;
       this.updatePolygonShape(data);
       this.updateTooltip(data, dsData);

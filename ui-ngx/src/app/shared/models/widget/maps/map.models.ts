@@ -26,7 +26,7 @@ import { materialColors } from '@shared/models/material.models';
 import type L from 'leaflet';
 import { TbFunction } from '@shared/models/js-function.models';
 import { Observable, Observer, of, switchMap } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { finalize, map, shareReplay } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerIconContainer, MarkerShape } from '@shared/models/widget/maps/marker-shape.models';
 import { ColorRange, DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
@@ -1523,6 +1523,7 @@ const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): T
 }
 
 const imageAspectMap: {[key: string]: ImageWithAspect} = {};
+const imageAspectLoading: {[key: string]: Observable<ImageWithAspect>} = {};
 
 const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Observable((observer: Observer<HTMLImageElement>) => {
   const image = document.createElement('img'); // support IE
@@ -1531,16 +1532,19 @@ const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Obse
   image.style.top = '-99999px';
   image.onload = () => {
     observer.next(image);
-    document.body.removeChild(image);
     observer.complete();
   };
   image.onerror = err => {
     observer.error(err);
-    document.body.removeChild(image);
-    observer.complete();
   };
   document.body.appendChild(image);
   image.src = imageUrl;
+  return () => {
+    image.remove();
+    if (!image.complete) {
+      image.removeAttribute('src');
+    }
+  };
 });
 
 export const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
@@ -1554,32 +1558,33 @@ export interface ImageWithAspect {
 }
 
 export const loadImageWithAspect = (imagePipe: ImagePipe, imageUrl: string): Observable<ImageWithAspect> => {
-  if (imageUrl?.length) {
-    const hash = hashCode(imageUrl);
-    let imageWithAspect = imageAspectMap[hash];
-    if (imageWithAspect) {
-      return of(imageWithAspect);
-    } else {
-      return imagePipe.transform(imageUrl, {asString: true, ignoreLoadingImage: true}).pipe(
+  if (!imageUrl?.length) {
+    return of(null);
+  }
+  const hash = hashCode(imageUrl);
+  const imageWithAspect = imageAspectMap[hash];
+  if (imageWithAspect) {
+    return of(imageWithAspect);
+  } else {
+    let loading$ = imageAspectLoading[hash];
+    if (!loading$) {
+      loading$ = imagePipe.transform(imageUrl, {asString: true, ignoreLoadingImage: true}).pipe(
         switchMap((res) => {
           const url = res as string;
           return loadImageSize(url).pipe(
-            map((size) => {
-              imageWithAspect = {
-                url,
-                width: size[0],
-                height: size[1],
-                aspect: size[0]/size[1]
-              };
+            map(([width, height]) => {
+              const imageWithAspect: ImageWithAspect = {url, width, height, aspect: width / height};
               imageAspectMap[hash] = imageWithAspect;
               return imageWithAspect;
             })
           );
-        })
+        }),
+        finalize(() => delete imageAspectLoading[hash]),
+        shareReplay({bufferSize: 1, refCount: false})
       );
+      imageAspectLoading[hash] = loading$;
     }
-  } else {
-    return of(null);
+    return loading$;
   }
 };
 
