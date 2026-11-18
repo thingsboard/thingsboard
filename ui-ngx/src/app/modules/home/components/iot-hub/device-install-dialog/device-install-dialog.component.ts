@@ -2073,7 +2073,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /**
    * A converter step with "default": true takes the converter ThingsBoard creates for a new integration of the method's
-   * type (INTEGRATION_TTN: TTN). It becomes the step's template, so it installs, overwrites and updates like a file of the package.
+   * type (INTEGRATION_TTN: TTN). It becomes the step's template, so it installs and overwrites like a file of the package; an update
+   * counts it as changed only when the step switches to or from the default converter (see entityStepChanged).
    */
   private async addDefaultConverters(): Promise<void> {
     const scriptLang = getCurrentAuthState(this.store).tbelEnabled ? ScriptLanguage.TBEL : ScriptLanguage.JS;
@@ -2310,7 +2311,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!previousStep) {
       return true;
     }
-    // ThingsBoard's default converter is no file of the package, so a new version of the package doesn't change it
+    // The default converter's template isn't a file of the package: it changes only when the step switches to or from the default converter
     if (step.default) {
       return !previousStep.default;
     }
