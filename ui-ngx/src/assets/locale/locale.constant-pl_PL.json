@@ -5670,8 +5670,6 @@
         "access-id-required": "Identyfikator dostępu jest wymagany.",
         "access-key": "Klucz dostępu",
         "access-key-required": "Klucz dostępu jest wymagany.",
-        "access-key-min-length": "Klucz dostępu jest za krótki.",
-        "access-key-max-length": "Klucz dostępu jest za długi.",
         "connection-parameters": "Parametry połączenia",
         "service-bus-namespace-name": "Nazwa przestrzeni nazw Service Bus",
         "service-bus-namespace-name-required": "Nazwa przestrzeni nazw Service Bus jest wymagana.",

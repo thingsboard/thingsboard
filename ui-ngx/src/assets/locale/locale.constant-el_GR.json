@@ -5644,8 +5644,6 @@
     "access-id-required": "Απαιτείται Access ID.",
     "access-key": "Access Key",
     "access-key-required": "Απαιτείται Access Key.",
-    "access-key-min-length": "Το Access Key είναι πολύ μικρό.",
-    "access-key-max-length": "Το Access Key είναι πολύ μεγάλο.",
     "connection-parameters": "Παράμετροι σύνδεσης",
     "service-bus-namespace-name": "Όνομα χώρου ονομάτων Service Bus",
     "service-bus-namespace-name-required": "Απαιτείται όνομα χώρου ονομάτων Service Bus.",
