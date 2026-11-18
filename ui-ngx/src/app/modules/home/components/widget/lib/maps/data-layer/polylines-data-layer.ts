@@ -15,7 +15,7 @@ import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
 import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
 import {
   TbLatestDataLayerItem,
@@ -28,6 +28,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   private polylineContainer: L.FeatureGroup;
   private polyline: L.Polyline;
   private polylineStyleInfo: ShapeStyleInfo;
+  private styleSubscription: Subscription;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -46,6 +47,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   }
 
   public remove() {
+    this.styleSubscription?.unsubscribe();
     super.remove();
     if (this.polylineStyleInfo?.patternId) {
       this.dataLayer.getMap().unUseShapePattern(this.polylineStyleInfo.patternId);
@@ -61,7 +63,8 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
 
-    this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polylineStyleInfo = styleInfo;
       if (this.polyline) {
         this.polyline.setStyle(this.polylineStyleInfo.style);
@@ -85,7 +88,8 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polylineStyleInfo = styleInfo;
       this.updatePolylineShape(data);
       this.updateTooltip(data, dsData);

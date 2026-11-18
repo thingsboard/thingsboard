@@ -11,7 +11,7 @@ import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
 import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
 import {
   TbLatestDataLayerItem,
@@ -23,6 +23,7 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
 
   private circle: L.Circle;
   private circleStyleInfo: ShapeStyleInfo;
+  private styleSubscription: Subscription;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -41,6 +42,7 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
   }
 
   public remove() {
+    this.styleSubscription?.unsubscribe();
     super.remove();
     if (this.circleStyleInfo?.patternId) {
       this.dataLayer.getMap().unUseShapePattern(this.circleStyleInfo.patternId);
@@ -56,7 +58,8 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
       snapIgnore: !this.dataLayer.isSnappable()
     });
 
-    this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
       this.circleStyleInfo = styleInfo;
       if (this.circle) {
         this.circle.setStyle(this.circleStyleInfo.style);
@@ -77,7 +80,8 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.styleSubscription?.unsubscribe();
+    this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
       this.circleStyleInfo = styleInfo;
       this.updateCircleShape(data);
       this.updateTooltip(data, dsData);

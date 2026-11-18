@@ -25,7 +25,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L, { FeatureGroup } from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, Subscription } from 'rxjs';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import {
   deepClone,
@@ -383,6 +383,7 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
   private labelOffset: L.PointTuple;
   private iconClassList: string[];
   private moving = false;
+  private markerIconSubscription: Subscription;
   private dragStart: () => void;
   private dragEnd: () => void;
 
@@ -399,6 +400,11 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
 
   public updateBubblingMouseEvents() {
     this.marker.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
+  }
+
+  public remove() {
+    this.markerIconSubscription?.unsubscribe();
+    super.remove();
   }
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Marker {
@@ -511,7 +517,8 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
   }
 
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    this.dataLayer.dataProcessor.createMarkerIcon(data, dsData).subscribe(
+    this.markerIconSubscription?.unsubscribe();
+    this.markerIconSubscription = this.dataLayer.dataProcessor.createMarkerIcon(data, dsData).subscribe(
       (iconInfo) => {
         let icon: L.Icon | L.DivIcon;
         const options = deepClone(iconInfo.icon.options);
