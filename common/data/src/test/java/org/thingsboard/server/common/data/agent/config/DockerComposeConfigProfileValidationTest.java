@@ -114,6 +114,29 @@ class DockerComposeConfigProfileValidationTest {
                 .hasMessageContaining("TB_GW_CLIENT_ID");
     }
 
+    // ==================== GATEWAY — tlsAccessToken ====================
+
+    @Test
+    void gateway_tlsAccessToken_valid() {
+        ObjectNode env = JsonNodeFactory.instance.objectNode()
+                .put("TB_GW_SECURITY_TYPE", "tlsAccessToken")
+                .put("TB_GW_ACCESS_TOKEN", "placeholder");
+        DockerComposeConfig config = createConfigWithService("thingsboard/tb-gateway:3.8.0", env);
+
+        assertThatNoException().isThrownBy(() -> config.validateForProfile(AgentApplicationType.GATEWAY));
+    }
+
+    @Test
+    void gateway_tlsAccessToken_missingToken_throws() {
+        ObjectNode env = JsonNodeFactory.instance.objectNode()
+                .put("TB_GW_SECURITY_TYPE", "tlsAccessToken");
+        DockerComposeConfig config = createConfigWithService("thingsboard/tb-gateway:3.8.0", env);
+
+        assertThatThrownBy(() -> config.validateForProfile(AgentApplicationType.GATEWAY))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("TB_GW_ACCESS_TOKEN");
+    }
+
     // ==================== GATEWAY — unsupported type ====================
 
     @Test

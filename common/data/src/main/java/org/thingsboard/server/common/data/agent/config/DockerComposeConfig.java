@@ -80,10 +80,11 @@ public class DockerComposeConfig extends AgentAppConfig {
             throw new DataValidationException("Gateway security type (TB_GW_SECURITY_TYPE) must be specified");
         }
         switch (securityType) {
-            case "accessToken" -> requireEnvKeys(env, "TB_GW_ACCESS_TOKEN");
+            // tlsAccessToken authenticates with the same token; the gateway enables TLS from the port / CA cert
+            case "accessToken", "tlsAccessToken" -> requireEnvKeys(env, "TB_GW_ACCESS_TOKEN");
             case "usernamePassword" -> requireEnvKeys(env, "TB_GW_CLIENT_ID", "TB_GW_USERNAME", "TB_GW_PASSWORD");
             default -> throw new DataValidationException("Unsupported gateway security type: " + securityType
-                    + ". Supported types: accessToken, usernamePassword");
+                    + ". Supported types: accessToken, tlsAccessToken, usernamePassword");
         }
     }
 
