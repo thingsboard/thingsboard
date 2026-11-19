@@ -1,0 +1,7 @@
+{
+  "contentType": "JSON",
+  "data": "{\"temperatureUploadFrequency\":60,\"humidityUploadFrequency\":30}",
+  "metadata": {
+    "topic": "tb/aws/iot/commands/Thermostat-01"
+  }
+}
