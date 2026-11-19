@@ -1150,8 +1150,10 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
     }
     case 'add_scada_connectors': {
       const rows = (Array.isArray(values.lines) ? values.lines : []).filter(isObject)
-        .map((line, index) => `${str(line.name) ?? 'Line ' + (index + 1)} · ${Array.isArray(line.points) ? line.points.length : 0} points`
-          + (isObject(line.flow) ? ' · flow' : ''));
+        .map((line, index) => `${str(line.name) ?? 'Line ' + (index + 1)} · ${isObject(line.from) && isObject(line.to)
+          ? `${names.get(str(line.from.widgetId) ?? '')?.name ?? str(line.from.widgetId) ?? '—'} ${str(line.from.side) ?? ''} → `
+            + `${names.get(str(line.to.widgetId) ?? '')?.name ?? str(line.to.widgetId) ?? '—'} ${str(line.to.side) ?? ''}`
+          : `${Array.isArray(line.points) ? line.points.length : 0} points`}` + (isObject(line.flow) ? ' · flow' : ''));
       return {hood: text('add-scada-connectors', {count: rows.length, entity: dashboard}), blocks: rows.length ? [{type: 'list', rows}] : generic(result, 'result')};
     }
     case 'update_dashboard_widget':
