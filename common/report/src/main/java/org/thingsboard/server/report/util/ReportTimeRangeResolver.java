@@ -52,6 +52,15 @@ public class ReportTimeRangeResolver {
     }
 
     public ReportTimeRange resolve(ReportTemplateConfig reportTemplateConfig, TbReportCtx ctx) {
+        try {
+            return doResolve(reportTemplateConfig, ctx);
+        } catch (Exception e) {
+            log.debug("[{}] Failed to resolve report time range", ctx.getTenantId(), e);
+            return UNDEFINED_TIME_RANGE;
+        }
+    }
+
+    private ReportTimeRange doResolve(ReportTemplateConfig reportTemplateConfig, TbReportCtx ctx) {
         Map<TimeWindowKey, History> timeWindows = new HashMap<>();
         if (!collect(renderedComponents(reportTemplateConfig), ctx, timeWindows, new HashSet<>()) || timeWindows.size() != 1) {
             return UNDEFINED_TIME_RANGE;

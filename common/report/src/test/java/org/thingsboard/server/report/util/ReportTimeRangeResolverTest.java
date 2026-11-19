@@ -393,6 +393,14 @@ public class ReportTimeRangeResolverTest {
         assertThat(range.timezone()).isEqualTo(UTC);
     }
 
+    @Test
+    void testResolveInvalidTimezoneIsUndefined() {
+        TimeWindowConfiguration window = quickWindow(QuickTimeInterval.CURRENT_DAY);
+        window.setTimezone("Invalid/Timezone");
+
+        assertThatCode(() -> assertUndefined(resolver.resolve(config(chart(window)), ctx))).doesNotThrowAnyException();
+    }
+
     private void givenSubReportTemplate(ReportTemplateId templateId, ReportTemplateConfig configuration) {
         ReportTemplate template = new ReportTemplate(templateId);
         template.setConfiguration(configuration);

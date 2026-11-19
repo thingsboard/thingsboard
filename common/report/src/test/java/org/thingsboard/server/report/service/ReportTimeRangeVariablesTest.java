@@ -13,6 +13,7 @@ import org.thingsboard.server.common.data.report.configuration.components.Report
 import org.thingsboard.server.common.data.report.configuration.components.TimeseriesChartComponent;
 import org.thingsboard.server.common.data.report.configuration.timewindow.FixedTimeWindow;
 import org.thingsboard.server.common.data.report.configuration.timewindow.History;
+import org.thingsboard.server.common.data.report.configuration.timewindow.QuickTimeInterval;
 import org.thingsboard.server.common.data.report.configuration.timewindow.TimeWindowConfiguration;
 import org.thingsboard.server.report.context.ComponentData;
 import org.thingsboard.server.report.context.RemoteTbReportCtxProvider.RemoteTbReportCtx;
@@ -63,7 +64,7 @@ public class ReportTimeRangeVariablesTest {
     @Test
     void testSubReportInheritsFormattedReportTimeRangeOfRootTemplate() {
         TbReportCtx rootCtx = ctx(config("yyyy-MM-dd HH:mm", chart(START_TS, END_TS)));
-        service.resolveReportTimeRange(rootCtx);
+        service.resolveAndCacheReportTimeRange(rootCtx);
 
         TbReportCtx subReportCtx = rootCtx.createSubReportCxt(config("dd/MM/yyyy", chart(1000, 2000)));
 
@@ -75,6 +76,20 @@ public class ReportTimeRangeVariablesTest {
     @Test
     void testUndefinedReportTimeRangeRendersEmptyVariables() {
         TbReportCtx rootCtx = ctx(config("yyyy-MM-dd HH:mm", chart(START_TS, END_TS), chart(1000, 2000)));
+
+        assertThat(reportVariables(rootCtx))
+                .containsEntry("reportStartTime", "")
+                .containsEntry("reportEndTime", "")
+                .containsEntry("reportTimeRange", "");
+    }
+
+    @Test
+    void testInvalidTimezoneRendersEmptyVariables() {
+        TimeseriesChartComponent chart = chart(START_TS, END_TS);
+        chart.getTimewindow().getHistory().setHistoryType(2);
+        chart.getTimewindow().getHistory().setQuickInterval(QuickTimeInterval.CURRENT_DAY);
+        chart.getTimewindow().setTimezone("Invalid/Timezone");
+        TbReportCtx rootCtx = ctx(config("yyyy-MM-dd HH:mm", chart));
 
         assertThat(reportVariables(rootCtx))
                 .containsEntry("reportStartTime", "")

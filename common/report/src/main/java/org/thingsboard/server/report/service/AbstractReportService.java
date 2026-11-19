@@ -313,7 +313,7 @@ public abstract class AbstractReportService implements ReportService {
         return entities;
     }
 
-    protected ReportTimeRangeVariables resolveReportTimeRange(TbReportCtx ctx) {
+    protected ReportTimeRangeVariables resolveAndCacheReportTimeRange(TbReportCtx ctx) {
         return (ReportTimeRangeVariables) ctx.getParams().computeIfAbsent(REPORT_TIME_RANGE, key -> {
             ReportTimeRange timeRange = timeRangeResolver.resolve(ctx.getConfiguration(), ctx);
             String timeDataPattern = ctx.getConfiguration().getTimeDataPattern();
@@ -326,7 +326,7 @@ public abstract class AbstractReportService implements ReportService {
     protected void populateReportVars(ComponentData componentData, TbReportCtx ctx) {
         Map<String, Object> variables = componentData.getVariables();
         variables.put("reportCreatedTime", ctx.getReportCreatedTime());
-        ReportTimeRangeVariables timeRange = resolveReportTimeRange(ctx);
+        ReportTimeRangeVariables timeRange = resolveAndCacheReportTimeRange(ctx);
         variables.put("reportStartTime", timeRange.startTime());
         variables.put("reportEndTime", timeRange.endTime());
         variables.put("reportTimeRange", timeRange.timeRange());

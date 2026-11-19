@@ -1388,7 +1388,7 @@ export const reportComponentsLibrary = new Map<string, ReportComponentLibraryIte
         title: 'report-template.component.time-range',
         previewImage: '/assets/report/components/time-range.svg',
         type: ReportComponentType.HEADING,
-        defaultConfig: reportInfoHeadingConfig('${reportTimeRange}')
+        defaultConfig: reportInfoHeadingConfig('Time range: ${reportTimeRange}')
       }
     ],
     [
@@ -1867,17 +1867,12 @@ const historyRangeKey = (timewindow: Timewindow): string => {
   }
 };
 
-const reportTimeRangeKey = (timewindow: Timewindow): string => {
-  const rangeKey = historyRangeKey(timewindow);
-  return rangeKey ? `${rangeKey}|tz:${timewindow.timezone || ''}` : null;
-};
-
 export const hasDifferentReportTimeRanges = (components: ReportComponentConfig[]): boolean => {
   const timewindows: Timewindow[] = [];
   components.forEach(component => collectQueriedTimewindows(component, timewindows));
   const timeRangeKeys = new Set<string>();
   for (const timewindow of timewindows) {
-    const key = reportTimeRangeKey(timewindow);
+    const key = historyRangeKey(timewindow);
     if (key) {
       timeRangeKeys.add(key);
       if (timeRangeKeys.size > 1) {
@@ -1892,7 +1887,7 @@ export const usesReportTimeRangeVariables = (components: ReportComponentConfig[]
   reportTimeRangeVariablePattern.test(JSON.stringify(components));
 
 export const isReportTimeRangeUndefined = (components: ReportComponentConfig[]): boolean =>
-  usesReportTimeRangeVariables(components) && hasDifferentReportTimeRanges(components);
+  hasDifferentReportTimeRanges(components) && usesReportTimeRangeVariables(components);
 
 export const assignReportComponent = (reportComponent: ReportComponentConfig, sourceReportComponent: ReportComponentConfig): void => {
   const ignoreFields: string[] = [];
