@@ -5,6 +5,7 @@ package org.thingsboard.integration.http.sigfox;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.encoders.Hex;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,8 +82,11 @@ public class SigFoxIntegration extends BasicHttpIntegration<JsonHttpIntegrationM
                 context.removeDownlinkMsg(deviceName);
                 if (result.size() == 1 && !result.getFirst().isEmpty()) {
                     DownlinkData downlink = result.getFirst();
+                    String downlinkData = "BINARY".equals(downlink.getContentType())
+                            ? Hex.toHexString(downlink.getData())
+                            : new String(downlink.getData(), StandardCharsets.UTF_8);
                     ObjectNode json = JacksonUtil.newObjectNode();
-                    json.putObject(sigFoxDeviceId).put("downlinkData", new String(downlink.getData(), StandardCharsets.UTF_8));
+                    json.putObject(sigFoxDeviceId).put("downlinkData", downlinkData);
                     HttpHeaders responseHeaders = new HttpHeaders();
                     responseHeaders.add("Content-Type", "application/json");
                     ResponseEntity<JsonNode> response = new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
