@@ -7,7 +7,6 @@
 
 Run: python3 -m unittest test_sbom_to_ort   (in this directory)
 """
-import tempfile
 import unittest
 
 import sbom_to_ort
@@ -162,24 +161,6 @@ class IsJarTest(unittest.TestCase):
 CHROMIUM_LINUX = 'pkg:generic/chromium/chromium@156.0.8078.0?os=linux'
 
 
-class ReadHereTest(unittest.TestCase):
-    def read(self, content):
-        with tempfile.NamedTemporaryFile('w', suffix='.json') as file:
-            file.write(content)
-            file.flush()
-            return sbom_to_ort.read_here(file.name)
-
-    def test_a_path_or_a_path_and_a_platform(self):
-        self.assertEqual(self.read('{"a": "A.txt", "b": {"path": "B.txt", "platform": "Linux"}}'),
-                         {'a': {'path': 'A.txt'}, 'b': {'path': 'B.txt', 'platform': 'Linux'}})
-
-    def test_anything_else_stops_the_notices(self):
-        for content in ['{"a": {"platform": "Linux"}}', '{"a": {"path": "A.txt", "os": "linux"}}', '{"a": 1}']:
-            with self.subTest(content=content), self.assertRaises(SystemExit) as stopped:
-                self.read(content)
-            self.assertIn('the entry of a in', str(stopped.exception))
-
-
 class LicenseFileTest(unittest.TestCase):
     def test_the_address_of_the_license_file(self):
         component = {'name': 'node', 'externalReferences': [{'type': 'website', 'url': 'https://nodejs.org'},
@@ -187,23 +168,23 @@ class LicenseFileTest(unittest.TestCase):
         self.assertEqual(sbom_to_ort.license_file(component, {}), {'url': 'https://example.com/LICENSE'})
 
     def test_a_license_file_kept_in_this_repository(self):
-        here = {'lwm2m-registry': {'path': 'application/src/main/data/lwm2m-registry/NOTICE.txt'}}
+        here = {'lwm2m-registry': 'application/src/main/data/lwm2m-registry/NOTICE.txt'}
         self.assertEqual(sbom_to_ort.license_file({'name': 'lwm2m-registry'}, here),
                          {'path': 'application/src/main/data/lwm2m-registry/NOTICE.txt'})
 
     def test_a_license_file_of_a_platform(self):
-        here = {CHROMIUM_LINUX: {'path': 'CREDITS.txt', 'platform': 'Linux'}}
+        here = {CHROMIUM_LINUX: 'CREDITS.txt'}
         self.assertEqual(sbom_to_ort.license_file({'name': 'chromium', 'purl': CHROMIUM_LINUX}, here),
-                         {'path': 'CREDITS.txt', 'platform': 'Linux'})
+                         {'path': 'CREDITS.txt', 'platform': 'linux'})
 
     def test_a_license_file_of_another_version_stops_the_notices(self):
-        here = {CHROMIUM_LINUX: {'path': 'CREDITS.txt', 'platform': 'Linux'}}
+        here = {CHROMIUM_LINUX: 'CREDITS.txt'}
         with self.assertRaises(SystemExit) as stopped:
             sbom_to_ort.license_file({'name': 'chromium', 'purl': 'pkg:generic/chromium/chromium@157.0.1.0?os=linux'}, here)
         self.assertIn(f'license-files-here.json has the license file of {CHROMIUM_LINUX}, CREDITS.txt', str(stopped.exception))
 
     def test_a_license_file_of_another_platform_is_not_another_version(self):
-        here = {CHROMIUM_LINUX: {'path': 'CREDITS.txt', 'platform': 'Linux'}}
+        here = {CHROMIUM_LINUX: 'CREDITS.txt'}
         windows = 'pkg:generic/chromium/chromium@156.0.8078.0?os=windows'
         self.assertIsNone(sbom_to_ort.license_file({'name': 'chromium', 'purl': windows}, here))
 
@@ -220,7 +201,7 @@ class LicenseFileTest(unittest.TestCase):
     def test_a_license_file_both_in_the_sbom_and_in_this_repository_stops_the_notices(self):
         component = {'name': 'node', 'externalReferences': [{'type': 'license', 'url': 'https://example.com/LICENSE'}]}
         with self.assertRaises(SystemExit) as stopped:
-            sbom_to_ort.license_file(component, {'node': {'path': 'LICENSE.node'}})
+            sbom_to_ort.license_file(component, {'node': 'LICENSE.node'})
         self.assertIn('the SBOM gives a license file for node', str(stopped.exception))
 
 

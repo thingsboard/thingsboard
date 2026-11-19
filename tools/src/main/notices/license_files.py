@@ -15,8 +15,8 @@ an address names one version of the file, such as the LICENSE at the tag of a re
 A file kept in this repository can cover the builds of a component for several platforms, with sections for one of
 them at its end, such as the credits of Chromium: each starts with the line "======== Only in the <platform> build
 ========" and runs to the next one. The notices leave out the sections of the platforms whose components they do not
-have, as license-files-here.json gives the platform of each: the notices of the Linux packages have no Windows section,
-and those of the whole product have the file once, as it is.
+have, as the os qualifier of the purl of each gives it, in any case: the notices of the Linux packages have no Windows
+section, and those of the whole product have the file once, as it is.
 
 Usage: license_files.py --list <file of sbom_to_ort.py> --downloads <directory> --out <file>
 """
@@ -92,14 +92,14 @@ def for_platforms(text, platforms, path):
         section = SECTION.match(line)
         if section:
             sections.add(section[1])
-            keep = section[1] in platforms
+            keep = section[1].lower() in platforms
         if keep:
             lines.append(line)
-    unknown = sorted(platforms - sections) if sections else []
+    unknown = sorted(platforms - {section.lower() for section in sections}) if sections else []
     if unknown:
-        raise stop(f'{path} has no section for the platform {", ".join(unknown)}, which license-files-here.json gives: '
-                   f'its sections are for {", ".join(sorted(sections))}. Fix the platform in '
-                   'tools/src/main/notices/license-files-here.json.')
+        raise stop(f'{path} has no section for the platform {", ".join(unknown)}, which the os qualifier of the purl of '
+                   f'its component gives: its sections are for {", ".join(sorted(sections))}. Fix the qualifier in the pom '
+                   'that declares the component, or the sections of the file.')
     return '\n'.join(lines).strip('\n')
 
 

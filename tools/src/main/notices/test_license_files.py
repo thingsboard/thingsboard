@@ -67,35 +67,35 @@ Multimedia Redirection API"""
 
 class PlatformsTest(unittest.TestCase):
     def test_the_platforms_of_the_components_that_have_a_file(self):
-        entries = [{'name': 'chromium', 'path': 'CREDITS.txt', 'platform': 'Linux'},
-                   {'name': 'chromium', 'path': 'CREDITS.txt', 'platform': 'Windows'},
+        entries = [{'name': 'chromium', 'path': 'CREDITS.txt', 'platform': 'linux'},
+                   {'name': 'chromium', 'path': 'CREDITS.txt', 'platform': 'windows'},
                    {'name': 'lwm2m-registry', 'path': 'NOTICE.txt'},
                    {'name': 'node', 'url': 'https://example.com/LICENSE'}]
-        self.assertEqual(license_files.platforms_of(entries), {'CREDITS.txt': {'Linux', 'Windows'}, 'NOTICE.txt': None})
+        self.assertEqual(license_files.platforms_of(entries), {'CREDITS.txt': {'linux', 'windows'}, 'NOTICE.txt': None})
 
     def test_a_component_for_every_platform_takes_the_whole_file(self):
-        entries = [{'name': 'a', 'path': 'CREDITS.txt', 'platform': 'Linux'}, {'name': 'b', 'path': 'CREDITS.txt'}]
+        entries = [{'name': 'a', 'path': 'CREDITS.txt', 'platform': 'linux'}, {'name': 'b', 'path': 'CREDITS.txt'}]
         self.assertEqual(license_files.platforms_of(entries), {'CREDITS.txt': None})
         self.assertEqual(license_files.platforms_of(list(reversed(entries))), {'CREDITS.txt': None})
 
     def test_the_sections_of_other_platforms_are_left_out(self):
-        linux = license_files.for_platforms(CREDITS, {'Linux'}, 'CREDITS.txt')
+        linux = license_files.for_platforms(CREDITS, {'linux'}, 'CREDITS.txt')
         self.assertIn('wayland', linux)
         self.assertNotIn('Multimedia', linux)
         self.assertTrue(linux.endswith('wayland'))
-        windows = license_files.for_platforms(CREDITS, {'Windows'}, 'CREDITS.txt')
+        windows = license_files.for_platforms(CREDITS, {'windows'}, 'CREDITS.txt')
         self.assertNotIn('wayland', windows)
         self.assertIn('zlib\n\n======== Only in the Windows build ========\n\n========\nMultimedia', windows)
 
     def test_the_file_of_every_platform_is_the_whole_file(self):
-        self.assertEqual(license_files.for_platforms(CREDITS, {'Linux', 'Windows'}, 'CREDITS.txt'), CREDITS)
+        self.assertEqual(license_files.for_platforms(CREDITS, {'linux', 'windows'}, 'CREDITS.txt'), CREDITS)
         self.assertEqual(license_files.for_platforms(CREDITS, None, 'CREDITS.txt'), CREDITS)
 
     def test_a_platform_without_a_section_stops_the_notices(self):
         with self.assertRaises(SystemExit) as stopped:
-            license_files.for_platforms(CREDITS, {'linux'}, 'CREDITS.txt')
-        self.assertIn('CREDITS.txt has no section for the platform linux, which license-files-here.json gives: its '
-                      'sections are for Linux, Windows.', str(stopped.exception))
+            license_files.for_platforms(CREDITS, {'macos'}, 'CREDITS.txt')
+        self.assertIn('CREDITS.txt has no section for the platform macos, which the os qualifier of the purl of its '
+                      'component gives: its sections are for Linux, Windows.', str(stopped.exception))
 
     def test_a_file_without_sections_is_for_every_platform(self):
-        self.assertEqual(license_files.for_platforms('zlib', {'Linux'}, 'NOTICE.txt'), 'zlib')
+        self.assertEqual(license_files.for_platforms('zlib', {'linux'}, 'NOTICE.txt'), 'zlib')

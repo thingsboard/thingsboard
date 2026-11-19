@@ -71,7 +71,7 @@ def main():
         raise stop('these SBOMs do not exist, and the notices are made from them:\n  ' + '\n  '.join(absent)
                    + f'\n{BUILD_PROBLEM} The Maven build makes them with -Dsbom.skip=false.')
 
-    here = read_here(args.license_files_here)
+    here = json.load(open(args.license_files_here, encoding='utf-8'))
     components, skipped, jars, license_files = {}, {}, {}, set()
     for sbom in args.sboms:
         for component in json.load(open(sbom)).get('components', []):
@@ -159,22 +159,11 @@ def main():
         print(f'  {item}')
 
 
-def read_here(path):
-    """The license files kept in this repository, by the purl of the component, or by its name when it has none, each as
-    {"path": ...} or {"path": ..., "platform": ...}: the file may give the path alone. A platform is for a file with
-    sections for one platform, which the notices of another platform leave out (see license_files.py)."""
-    here = {}
-    for key, value in json.load(open(path, encoding='utf-8')).items():
-        entry = {'path': value} if isinstance(value, str) else value
-        if not isinstance(entry, dict) or 'path' not in entry or set(entry) - {'path', 'platform'}:
-            raise stop(f'the entry of {key} in {path} is neither the path of a file nor {{"path": ..., "platform": ...}}.')
-        here[key] = entry
-    return here
-
-
 def license_file(component, here):
-    """Where the license file of the component is: {'url': the address that the SBOM gives}, the entry that `here` gives
-    for the purl of the component, or for its name when it has none, or None."""
+    """Where the license file of the component is: {'url': the address that the SBOM gives}, {'path': the file in this
+    repository that `here` gives for the purl of the component, or for its name when it has none}, or None. A file in this
+    repository also gets the os qualifier of the purl as the platform, whose sections of the file the notices keep (see
+    license_files.py)."""
     name = component.get('purl') or component['name']
     urls = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'license']
     if len(urls) > 1:
@@ -182,15 +171,16 @@ def license_file(component, here):
                    'component and what it contains.')
     if urls and name in here:
         raise stop(f'the SBOM gives a license file for {name}, {urls[0]}, and so does license-files-here.json, '
-                   f'{here[name]["path"]}. Keep one of them.')
+                   f'{here[name]}. Keep one of them.')
     if urls:
         return {'url': urls[0]}
     if name in here:
-        return here[name]
+        platform = qualifiers(name).get('os')
+        return {'path': here[name], **({'platform': platform} if platform else {})}
     # A file kept for another version of the component would leave this version out of the notices without a word
     other = [key for key in here if key.startswith('pkg:') and without_version(key) == without_version(name)]
     if other:
-        raise stop(f'license-files-here.json has the license file of {other[0]}, {here[other[0]]["path"]}, and the SBOM '
+        raise stop(f'license-files-here.json has the license file of {other[0]}, {here[other[0]]}, and the SBOM '
                    f'has {name}. Make the file for this version, and then change its entry.')
     return None
 
