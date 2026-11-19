@@ -32,10 +32,11 @@ import {
   isDefined,
   isDefinedAndNotNull,
   isEmptyStr,
+  isEqual,
   parseTbFunction, plainColorFromVariable,
   safeExecuteTbFunction
 } from '@core/utils';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import tinycolor from 'tinycolor2';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { TbMap } from '@home/components/widget/lib/maps/map';
@@ -57,8 +58,11 @@ import { DataLayerColorProcessor, TbMapDataLayer } from '@home/components/widget
 
 export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDataLayerSettings> {
 
+  private static readonly MARKER_ICON_CACHE_SIZE = 256;
+
   private positionFunction: CompiledTbFunction<MarkerPositionFunction>;
   private markerIconProcessor: MarkerIconProcessor<any>;
+  private markerIconCache = new Map<string, MarkerIconInfo>();
 
   constructor(public dataLayer: TbMapDataLayer,
               private settings: S,
@@ -129,6 +133,34 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   }
 
   public createColoredMarkerShape(shape: MarkerShape, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
+    const key = `shape|${shape}|${color.toHex8()}|${rotationAngle}|${size}`;
+    return this.cachedMarkerIcon(key, () => this.buildColoredMarkerShape(shape, color, rotationAngle, size));
+  }
+
+  public createColoredMarkerIcon(iconContainer: MarkerIconContainer,
+                                 icon: string, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
+    const key = `icon|${iconContainer}|${icon}|${color.toHex8()}|${rotationAngle}|${size}`;
+    return this.cachedMarkerIcon(key, () => this.buildColoredMarkerIcon(iconContainer, icon, color, rotationAngle, size));
+  }
+
+  private cachedMarkerIcon(key: string, create: () => Observable<MarkerIconInfo>): Observable<MarkerIconInfo> {
+    const cached = this.markerIconCache.get(key);
+    if (cached) {
+      this.markerIconCache.delete(key);
+      this.markerIconCache.set(key, cached);
+      return of(cached);
+    }
+    return create().pipe(
+      tap((iconInfo) => {
+        this.markerIconCache.set(key, iconInfo);
+        if (this.markerIconCache.size > MarkerDataProcessor.MARKER_ICON_CACHE_SIZE) {
+          this.markerIconCache.delete(this.markerIconCache.keys().next().value);
+        }
+      })
+    );
+  }
+
+  private buildColoredMarkerShape(shape: MarkerShape, color: tinycolor.Instance, rotationAngle: number, size: number): Observable<MarkerIconInfo> {
     return createColorMarkerShapeURI(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer), shape, color).pipe(
       map((iconUrl) => {
         let icon: L.Icon<L.BaseIconOptions>;
@@ -157,8 +189,8 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
     );
   }
 
-  public createColoredMarkerIcon(iconContainer: MarkerIconContainer,
-                                 icon: string, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
+  private buildColoredMarkerIcon(iconContainer: MarkerIconContainer,
+                                 icon: string, color: tinycolor.Instance, rotationAngle: number, size: number): Observable<MarkerIconInfo> {
     return createColorMarkerIconElement(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer),
       iconContainer, icon, color).pipe(
       map((element) => {
@@ -381,6 +413,8 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
 
   private marker: L.Marker;
   private labelOffset: L.PointTuple;
+  private boundLabelOffset: L.PointTuple;
+  private appliedIconInfo: MarkerIconInfo;
   private iconClassList: string[];
   private moving = false;
   private markerIconSubscription: Subscription;
@@ -428,6 +462,23 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
 
   protected bindLabel(content: L.Content): void {
     this.marker.bindTooltip(content, { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
+  }
+
+  protected updateLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+    if (this.settings.label.show) {
+      const content = this.createLabelContent(data, dsData);
+      const offsetChanged = !isEqual(this.boundLabelOffset, this.labelOffset);
+      if (this.marker.getTooltip() && !offsetChanged) {
+        if (content !== this.labelContent) {
+          this.marker.setTooltipContent(content);
+        }
+      } else {
+        this.unbindLabel();
+        this.bindLabel(content);
+      }
+      this.labelContent = content;
+      this.boundLabelOffset = this.labelOffset;
+    }
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
@@ -520,25 +571,41 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
     this.markerIconSubscription?.unsubscribe();
     this.markerIconSubscription = this.dataLayer.dataProcessor.createMarkerIcon(data, dsData).subscribe(
       (iconInfo) => {
-        let icon: L.Icon | L.DivIcon;
-        const options = deepClone(iconInfo.icon.options);
-        options.className = this.updateIconClasses(options.className);
-        if (iconInfo.icon instanceof L.DivIcon) {
-          icon = L.divIcon(options);
-        } else {
-          icon = L.icon(options as L.IconOptions);
-        }
-        this.marker.setIcon(icon);
-        const anchor = options.iconAnchor;
-        if (anchor && Array.isArray(anchor)) {
-          this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
-        } else {
-          this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
+        if (!this.isSameIcon(iconInfo)) {
+          let icon: L.Icon | L.DivIcon;
+          const options = deepClone(iconInfo.icon.options);
+          options.className = this.updateIconClasses(options.className);
+          if (iconInfo.icon instanceof L.DivIcon) {
+            icon = L.divIcon(options);
+          } else {
+            icon = L.icon(options as L.IconOptions);
+          }
+          this.marker.setIcon(icon);
+          this.appliedIconInfo = iconInfo;
+          const anchor = options.iconAnchor;
+          if (anchor && Array.isArray(anchor)) {
+            this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
+          } else {
+            this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
+          }
+          this.editModeUpdated();
         }
         this.updateLabel(data, dsData);
-        this.editModeUpdated();
       }
     );
+  }
+
+  private isSameIcon(iconInfo: MarkerIconInfo): boolean {
+    const applied = this.appliedIconInfo;
+    if (!applied) {
+      return false;
+    }
+    if (applied === iconInfo) {
+      return true;
+    }
+    return applied.icon.constructor === iconInfo.icon.constructor &&
+      isEqual(applied.size, iconInfo.size) &&
+      isEqual(applied.icon.options, iconInfo.icon.options);
   }
 
   private updateIconClasses(className: string, toRemove?: string): string {

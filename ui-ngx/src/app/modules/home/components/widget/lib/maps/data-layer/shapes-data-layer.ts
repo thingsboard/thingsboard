@@ -61,6 +61,21 @@ export interface ShapeStyleInfo {
   style: L.PathOptions;
 }
 
+export const isSameShapeStyle = (a: ShapeStyleInfo, b: ShapeStyleInfo): boolean => {
+  if (!a || !b) {
+    return false;
+  }
+  if (a === b) {
+    return true;
+  }
+  if (a.patternId !== b.patternId) {
+    return false;
+  }
+  const aKeys = Object.keys(a.style);
+  const bKeys = Object.keys(b.style);
+  return aKeys.length === bKeys.length && aKeys.every(key => a.style[key] === b.style[key]);
+};
+
 abstract class ShapePatternProcessor<S = any> {
 
   static fromSettings(dataLayer: TbMapDataLayer,

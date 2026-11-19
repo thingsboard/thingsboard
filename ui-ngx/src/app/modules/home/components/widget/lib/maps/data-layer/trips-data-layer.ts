@@ -7,7 +7,7 @@ import {
   defaultBaseTripsDataLayerSettings,
   findRotationAngle,
   interpolateLineSegment,
-  MapDataLayerType, MarkerType,
+  MapDataLayerType, MarkerIconInfo, MarkerType,
   TbMapDatasource,
   TripsDataLayerSettings
 } from '@shared/models/widget/maps/map.models';
@@ -15,7 +15,7 @@ import { forkJoin, Observable, Subscription } from 'rxjs';
 import { DataKey, FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { map } from 'rxjs/operators';
 import L from 'leaflet';
-import { deepClone, isDefined, isUndefined, plainColorFromVariable } from '@core/utils';
+import { deepClone, isDefined, isEqual, isUndefined, plainColorFromVariable } from '@core/utils';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import moment from 'moment/moment';
@@ -39,14 +39,19 @@ export interface PointItem {
 class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsDataLayer, L.FeatureGroup> {
 
   private tripRouteData: TripRouteData;
+  private timePoints: number[];
 
   private marker: L.Marker;
   private markerTooltip: L.Popup;
   private markerIconSubscription: Subscription;
+  private appliedIconInfo: MarkerIconInfo;
   private labelOffset: L.PointTuple;
+  private labelContent: string;
+  private boundLabelOffset: L.PointTuple;
 
   private polyline: L.Polyline;
   private polylineDecorator: L.PolylineDecorator;
+  private appliedPathColor: string;
   private pointsContainer: L.FeatureGroup;
   private points = new Map<string, PointItem>();
 
@@ -103,7 +108,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.latestData) {
       this.pointData = {...this.pointData, ...this.latestData};
     }
-    this.updatePath();
+    this.updatePathAppearance();
     this.updateMarker();
   }
 
@@ -220,6 +225,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
         this.polylineDecorator = new L.PolylineDecorator(this.polyline, this.dataLayer.getPathDecoratorStyle(pathStyle.color));
         this.polylineDecorator.addTo(this.layer);
       }
+      this.appliedPathColor = pathStyle.color;
     }
   }
 
@@ -304,10 +310,14 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.settings.showPath) {
       const dsData = this.dataLayer.getMap().getData();
       const pathStyle = this.dataLayer.getPathStyle(this.pointData, dsData);
+      if (pathStyle.color === this.appliedPathColor) {
+        return;
+      }
       this.polyline.setStyle(pathStyle);
       if (this.settings.usePathDecorator) {
         this.polylineDecorator.setPatterns(this.dataLayer.getPathDecoratorStyle(pathStyle.color).patterns)
       }
+      this.appliedPathColor = pathStyle.color;
     }
   }
 
@@ -316,13 +326,16 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
       this.markerIconSubscription?.unsubscribe();
       this.markerIconSubscription = this.dataLayer.dataProcessor.createMarkerIcon(data, dsData, data.rotationAngle).subscribe(
         (iconInfo) => {
-          const options = deepClone(iconInfo.icon.options);
-          this.marker.setIcon(iconInfo.icon);
-          const anchor = options.iconAnchor;
-          if (anchor && Array.isArray(anchor)) {
-            this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
-          } else {
-            this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
+          if (iconInfo !== this.appliedIconInfo) {
+            const options = deepClone(iconInfo.icon.options);
+            this.marker.setIcon(iconInfo.icon);
+            this.appliedIconInfo = iconInfo;
+            const anchor = options.iconAnchor;
+            if (anchor && Array.isArray(anchor)) {
+              this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
+            } else {
+              this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
+            }
           }
           this.updateMarkerLabel(data, dsData);
         }
@@ -332,11 +345,20 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   private updateMarkerLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
     if (this.settings.label.show) {
-      this.marker.unbindTooltip();
       const label = this.dataLayer.dataLayerLabelProcessor.processPattern(data, dsData);
       const labelColor = this.dataLayer.getCtx().widgetConfig.color;
-      const content: L.Content = `<div style="color: ${labelColor};"><b>${label}</b></div>`;
-      this.marker.bindTooltip(content, { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
+      const content = `<div style="color: ${labelColor};"><b>${label}</b></div>`;
+      const offsetChanged = !isEqual(this.boundLabelOffset, this.labelOffset);
+      if (this.marker.getTooltip() && !offsetChanged) {
+        if (content !== this.labelContent) {
+          this.marker.setTooltipContent(content);
+        }
+      } else {
+        this.marker.unbindTooltip();
+        this.marker.bindTooltip(content, { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
+      }
+      this.labelContent = content;
+      this.boundLabelOffset = this.labelOffset;
     }
   }
 
@@ -389,6 +411,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
       const endPoint = this.dataLayer.dataProcessor.extractLocation(result[timeStamp[timeStamp.length - 1]], dsData);
       result[timeStamp[timeStamp.length - 1]].rotationAngle += findRotationAngle(startPoint, endPoint);
     }
+    this.timePoints = timeStamp.map(item => parseInt(item, 10));
     return result;
   }
 
@@ -397,7 +420,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
       this.currentTime = this.dataLayer.getMap().getCurrentTime();
       let currentPosition = this.tripRouteData[this.currentTime];
       if (!currentPosition) {
-        const timePoints = Object.keys(this.tripRouteData).map(item => parseInt(item, 10));
+        const timePoints = this.timePoints;
         for (let i = 1; i < timePoints.length; i++) {
           if (timePoints[i - 1] < this.currentTime && timePoints[i] > this.currentTime) {
             const beforePosition = this.tripRouteData[timePoints[i - 1]];

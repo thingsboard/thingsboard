@@ -13,7 +13,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { isSameShapeStyle, ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
@@ -29,6 +29,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   private polyline: L.Polyline;
   private polylineStyleInfo: ShapeStyleInfo;
   private styleSubscription: Subscription;
+  private appliedGeometryKey: string;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -56,6 +57,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const polyData = this.dataLayer.extractPolylineCoordinates(data);
+    this.appliedGeometryKey = this.geometryKey(data);
     const polyConstructor = L.polyline;
     this.polyline = polyConstructor(polyData as (TbPolylineRawCoordinates & L.LatLngTuple[]), {
       noClip: true,
@@ -90,19 +92,21 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     this.styleSubscription?.unsubscribe();
     this.styleSubscription = this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
+      const styleChanged = !isSameShapeStyle(this.polylineStyleInfo, styleInfo);
       this.polylineStyleInfo = styleInfo;
-      this.updatePolylineShape(data);
+      const geometryChanged = this.updatePolylineShape(data);
       this.updateTooltip(data, dsData);
-      this.updateLabel(data, dsData);
+      this.updateLabel(data, dsData, geometryChanged);
 
-      if (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled()) {
+      if (styleChanged && (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled())) {
         this.polyline.setStyle(this.polylineStyleInfo.style);
       }
     });
   }
 
-  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
-    this.updatePolylineShape(data);
+  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.updatePolylineShape(data, true);
+    this.updateLabel(data, dsData);
   }
 
   protected addItemClass(clazz: string): void {
@@ -353,12 +357,23 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       }
     }
     this.dataLayer.savePolylineCoordinates(this.data, coordinates).subscribe();
+    this.appliedGeometryKey = null;
   }
 
-  private updatePolylineShape(data: FormattedData<TbMapDatasource>) {
+  private geometryKey(data: FormattedData<TbMapDatasource>): string {
+    const rawPolyData = data[this.settings.polylineKey.label];
+    return isString(rawPolyData) ? rawPolyData : JSON.stringify(rawPolyData);
+  }
+
+  private updatePolylineShape(data: FormattedData<TbMapDatasource>, force = false): boolean {
     if (this.editing) {
-      return;
+      return false;
     }
+    const geometryKey = this.geometryKey(data);
+    if (!force && geometryKey === this.appliedGeometryKey) {
+      return false;
+    }
+    this.appliedGeometryKey = geometryKey;
 
     const polyData = this.dataLayer.extractPolylineCoordinates(data) as TbPolylineData;
     if (this.polyline instanceof L.Polyline && !(this.polyline instanceof L.Rectangle)) {
@@ -380,6 +395,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       this.polyline.addTo(this.polylineContainer);
       this.editModeUpdated();
     }
+    return true;
   }
 }
 

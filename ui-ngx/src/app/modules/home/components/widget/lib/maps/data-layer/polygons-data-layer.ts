@@ -8,7 +8,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { isSameShapeStyle, ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
@@ -24,6 +24,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   private polygon: L.Polygon;
   private polygonStyleInfo: ShapeStyleInfo;
   private styleSubscription: Subscription;
+  private appliedGeometryKey: string;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -51,6 +52,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const polyData = this.dataLayer.extractPolygonCoordinates(data);
+    this.appliedGeometryKey = this.geometryKey(data);
     const polyConstructor = isCutPolygon(polyData) || polyData.length !== 2 ? L.polygon : L.rectangle;
     this.polygon = polyConstructor(polyData as (TbPolygonRawCoordinates & L.LatLngTuple[]), {
       noClip: true,
@@ -85,18 +87,19 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     this.styleSubscription?.unsubscribe();
     this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
+      const styleChanged = !isSameShapeStyle(this.polygonStyleInfo, styleInfo);
       this.polygonStyleInfo = styleInfo;
-      this.updatePolygonShape(data);
+      const geometryChanged = this.updatePolygonShape(data);
       this.updateTooltip(data, dsData);
-      this.updateLabel(data, dsData);
-      if (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled()) {
+      this.updateLabel(data, dsData, geometryChanged);
+      if (styleChanged && (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled())) {
         this.polygon.setStyle(this.polygonStyleInfo.style);
       }
     });
   }
 
   protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.updatePolygonShape(data);
+    this.updatePolygonShape(data, true);
     this.updateLabel(data, dsData);
   }
 
@@ -333,12 +336,23 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       }
     }
     this.dataLayer.savePolygonCoordinates(this.data, coordinates).subscribe();
+    this.appliedGeometryKey = null;
   }
 
-  private updatePolygonShape(data: FormattedData<TbMapDatasource>) {
+  private geometryKey(data: FormattedData<TbMapDatasource>): string {
+    const rawPolyData = data[this.settings.polygonKey.label];
+    return isString(rawPolyData) ? rawPolyData : JSON.stringify(rawPolyData);
+  }
+
+  private updatePolygonShape(data: FormattedData<TbMapDatasource>, force = false): boolean {
     if (this.editing) {
-      return;
+      return false;
     }
+    const geometryKey = this.geometryKey(data);
+    if (!force && geometryKey === this.appliedGeometryKey) {
+      return false;
+    }
+    this.appliedGeometryKey = geometryKey;
     const polyData = this.dataLayer.extractPolygonCoordinates(data) as TbPolyData;
     if (isCutPolygon(polyData) || polyData.length !== 2) {
       if (this.polygon instanceof L.Rectangle) {
@@ -358,6 +372,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       const bounds = new L.LatLngBounds(polyData as L.LatLngTuple[]);
       (this.polygon as L.Rectangle).setBounds(bounds);
     }
+    return true;
   }
 
 }

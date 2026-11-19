@@ -16,6 +16,7 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
   D extends TbLatestMapDataLayer<S,D> = TbLatestMapDataLayer<any>, L extends L.Layer = L.Layer> extends TbDataLayerItem<S,D,L> {
 
   protected tooltip: L.Popup;
+  protected labelContent: string;
   protected data: FormattedData<TbMapDatasource>;
   protected selected = false;
 
@@ -182,14 +183,21 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
     }
   }
 
-  protected updateLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+  protected updateLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[], force = true) {
     if (this.settings.label.show) {
-      this.unbindLabel();
-      const label = this.dataLayer.dataLayerLabelProcessor.processPattern(data, dsData);
-      const labelColor = this.dataLayer.getCtx().widgetConfig.color;
-      const content: L.Content = `<div style="color: ${labelColor};"><b>${label}</b></div>`;
-      this.bindLabel(content);
+      const content = this.createLabelContent(data, dsData);
+      if (force || content !== this.labelContent) {
+        this.unbindLabel();
+        this.bindLabel(content);
+        this.labelContent = content;
+      }
     }
+  }
+
+protected createLabelContent(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): string {
+    const label = this.dataLayer.dataLayerLabelProcessor.processPattern(data, dsData);
+    const labelColor = this.dataLayer.getCtx().widgetConfig.color;
+    return `<div style="color: ${labelColor};"><b>${label}</b></div>`;
   }
 
   protected canDeselect(cancel = false): boolean {

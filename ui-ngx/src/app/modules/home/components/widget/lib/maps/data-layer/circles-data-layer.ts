@@ -9,7 +9,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { isSameShapeStyle, ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable, Subscription } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
@@ -24,6 +24,7 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
   private circle: L.Circle;
   private circleStyleInfo: ShapeStyleInfo;
   private styleSubscription: Subscription;
+  private geometryDirty = false;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -82,11 +83,14 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     this.styleSubscription?.unsubscribe();
     this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
+      const styleChanged = !isSameShapeStyle(this.circleStyleInfo, styleInfo);
       this.circleStyleInfo = styleInfo;
-      this.updateCircleShape(data);
+      const geometryChanged = this.updateCircleShape(data);
       this.updateTooltip(data, dsData);
-      this.updateLabel(data, dsData);
-      this.circle.setStyle(this.circleStyleInfo.style);
+      this.updateLabel(data, dsData, geometryChanged);
+      if (styleChanged) {
+        this.circle.setStyle(this.circleStyleInfo.style);
+      }
     });
   }
 
@@ -158,20 +162,26 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
     const center = this.circle.getLatLng();
     const radius = this.circle.getRadius();
     this.dataLayer.saveCircleCoordinates(this.data, center, radius).subscribe();
+    this.geometryDirty = true;
   }
 
-  private updateCircleShape(data: FormattedData<TbMapDatasource>) {
+  private updateCircleShape(data: FormattedData<TbMapDatasource>): boolean {
     if (this.editing) {
-      return;
+      return false;
     }
+    let changed = this.geometryDirty;
+    this.geometryDirty = false;
     const circleData = this.dataLayer.extractCircleCoordinates(data);
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
     if (!this.circle.getLatLng().equals(center)) {
       this.circle.setLatLng(center);
+      changed = true;
     }
     if (this.circle.getRadius() !== circleData.radius) {
       this.circle.setRadius(circleData.radius);
+      changed = true;
     }
+    return changed;
   }
 }
 

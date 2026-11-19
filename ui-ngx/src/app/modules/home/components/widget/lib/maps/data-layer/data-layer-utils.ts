@@ -10,6 +10,14 @@ import { FormattedData } from '@shared/models/widget.models';
 import L from 'leaflet';
 import { DataLayerPatternProcessor } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 
+interface TooltipState {
+  processor: DataLayerPatternProcessor;
+  data: FormattedData<TbMapDatasource>;
+  dsData: FormattedData<TbMapDatasource>[];
+}
+
+const tooltipStates = new WeakMap<L.Popup, TooltipState>();
+
 export const createTooltip = (map: TbMap<any>,
                               layer: L.Layer,
                               settings: DataLayerTooltipSettings,
@@ -17,6 +25,13 @@ export const createTooltip = (map: TbMap<any>,
                               canOpen: () => boolean): L.Popup => {
   const tooltip = L.popup({autoClose: settings.autoclose, closeOnClick: false});
   (tooltip as any)._source = layer;
+  const open = (beforeOpen?: () => void) => {
+    if ((tooltip as any)._prepareOpen((layer as any)._latlng)) {
+      beforeOpen?.();
+      renderTooltip(tooltip);
+      tooltip.openOn(map.getMap());
+    }
+  };
   layer.on('move', (e) => {
     tooltip.setLatLng((e as any).latlng);
   });
@@ -29,18 +44,13 @@ export const createTooltip = (map: TbMap<any>,
       if (tooltip.isOpen()) {
         tooltip.close();
       } else if (canOpen()) {
-        if ((tooltip as any)._prepareOpen((layer as any)._latlng)) {
-          map.deselectItem();
-          tooltip.openOn(map.getMap());
-        }
+        open(() => map.deselectItem());
       }
     });
   } else if (settings.trigger === DataLayerTooltipTrigger.hover) {
     layer.on('mouseover', () => {
       if (canOpen()) {
-        if ((tooltip as any)._prepareOpen((layer as any)._latlng)) {
-          tooltip.openOn(map.getMap());
-        }
+        open();
       }
     });
     layer.on('mousemove', (e) => {
@@ -51,7 +61,7 @@ export const createTooltip = (map: TbMap<any>,
     });
   }
   layer.on('popupopen', () => {
-    bindTooltipActions(map, tooltip, settings, data);
+    bindTooltipActions(map, tooltip, settings, tooltipStates.get(tooltip)?.data ?? data);
   });
   return tooltip;
 }
@@ -62,11 +72,19 @@ export const updateTooltip = (map: TbMap<any>,
                               processor: DataLayerPatternProcessor,
                               data: FormattedData<TbMapDatasource>,
                               dsData: FormattedData<TbMapDatasource>[]): void => {
-  let tooltipTemplate = processor.processPattern(data, dsData);
-  tooltipTemplate = processTooltipTemplate(tooltipTemplate);
-  tooltip.setContent(tooltipTemplate);
-  if (tooltip.isOpen() && tooltip.getElement()) {
-    bindTooltipActions(map, tooltip, settings, data);
+  tooltipStates.set(tooltip, {processor, data, dsData});
+  if (tooltip.isOpen()) {
+    renderTooltip(tooltip);
+    if (tooltip.getElement()) {
+      bindTooltipActions(map, tooltip, settings, data);
+    }
+  }
+}
+
+const renderTooltip = (tooltip: L.Popup): void => {
+  const state = tooltipStates.get(tooltip);
+  if (state) {
+    tooltip.setContent(processTooltipTemplate(state.processor.processPattern(state.data, state.dsData)));
   }
 }
 
