@@ -369,7 +369,7 @@ public class RemoteIntegrationManagerService {
             integration.setEnabled(integrationConfigurationProto.getEnabled());
         }
 
-        log.info("Received Integration update: {}!", integration);
+        log.info("[{}] Received Integration update: name [{}], type [{}], enabled [{}]", integration.getId(), integration.getName(), integration.getType(), integration.isEnabled());
         return integration;
     }
 
