@@ -194,7 +194,6 @@ export interface ModbusSerialEndpoint {
   type: 'SERIAL';
   port: string;
   baudRate: number;
-  dataBits?: number;
   parity: ModbusSerialParity;
   stopBits: ModbusSerialStopBits;
   rs485?: ModbusRs485Settings;

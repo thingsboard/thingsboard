@@ -24,7 +24,7 @@ class ModbusDeviceTransportConfigurationTest {
                 {
                   "type": "MODBUS",
                   "endpoint": {
-                    "type": "SERIAL", "port": "/dev/ttyUSB0", "baudRate": 19200, "parity": "NONE", "stopBits": "TWO",
+                    "type": "SERIAL", "port": "/dev/ttyUSB0", "baudRate": 19200, "dataBits": 8, "parity": "NONE", "stopBits": "TWO",
                     "rs485": { "rtsActiveHigh": false, "delayBeforeMs": 5 }
                   },
                   "unitId": 3
@@ -35,7 +35,6 @@ class ModbusDeviceTransportConfigurationTest {
         assertThat(cfg.getEndpoint()).isInstanceOf(ModbusSerialEndpoint.class);
         ModbusSerialEndpoint endpoint = (ModbusSerialEndpoint) cfg.getEndpoint();
         assertThat(endpoint.getBaudRate()).isEqualTo(19200);
-        assertThat(endpoint.getDataBits()).isEqualTo(8);
         assertThat(endpoint.getParity()).isEqualTo(ModbusSerialParity.NONE);
         assertThat(endpoint.getStopBits()).isEqualTo(ModbusSerialStopBits.TWO);
         assertThat(endpoint.getRs485().isRtsActiveHigh()).isFalse();
@@ -56,6 +55,7 @@ class ModbusDeviceTransportConfigurationTest {
         assertThat(endpoint.has("key")).isFalse();
         assertThat(endpoint.has("connectionSettings")).isFalse();
         assertThat(endpoint.has("minUnitId")).isFalse();
+        assertThat(endpoint.has("dataBits")).isFalse();
         assertThat(MAPPER.readValue(json, DeviceTransportConfiguration.class)).isEqualTo(cfg);
     }
 
@@ -70,7 +70,7 @@ class ModbusDeviceTransportConfigurationTest {
     @Test
     void serialConnectionSettingsCoverTheWholeLine() {
         ModbusSerialEndpoint plain = serial("/dev/ttyUSB0");
-        assertThat(plain.getConnectionSettings()).isEqualTo("baud=9600, data=8, parity=EVEN, stop=ONE, rs485=off");
+        assertThat(plain.getConnectionSettings()).isEqualTo("baud=9600, parity=EVEN, stop=ONE, rs485=off");
 
         ModbusSerialEndpoint otherBaudRate = serial("/dev/ttyUSB0");
         otherBaudRate.setBaudRate(19200);

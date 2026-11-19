@@ -163,7 +163,7 @@ public class ModbusConnectionPool {
                     .serialPort(serial.getPort())
                     .baudRate(serial.getBaudRate())
                     .parity(getSerialParity(serial.getParity()))
-                    .dataBits(serial.getDataBits())
+                    .dataBits(ModbusSerialEndpoint.DATA_BITS)
                     .stopBits(getSerialStopBits(serial.getStopBits()))
                     .requestTimeout(requestTimeout)
                     .executor(executor)

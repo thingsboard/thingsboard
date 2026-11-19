@@ -22,12 +22,13 @@ public class ModbusSerialEndpoint implements ModbusEndpoint {
     private static final Pattern WINDOWS_COM =
             Pattern.compile("^(?:\\\\\\\\\\.\\\\)?(com\\d+)$", Pattern.CASE_INSENSITIVE);
 
+    /** Modbus RTU always uses 8 data bits per character, so this is not a setting. */
+    public static final int DATA_BITS = 8;
+
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Serial device name or path", example = "/dev/ttyUSB0")
     private String port;
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Line speed in bits per second", example = "9600")
     private Integer baudRate = 9600;
-    @Schema(description = "Data bits per character; Modbus RTU requires 8", allowableValues = "8", example = "8")
-    private Integer dataBits = 8;
     @Schema(description = "Parity; the Modbus specification default is EVEN", example = "EVEN")
     private ModbusSerialParity parity = ModbusSerialParity.EVEN;
     @Schema(description = "Stop bits; the Modbus specification expects TWO when parity is NONE", example = "ONE")
@@ -58,7 +59,7 @@ public class ModbusSerialEndpoint implements ModbusEndpoint {
 
     @Override
     public String getConnectionSettings() {
-        return "baud=" + baudRate + ", data=" + dataBits + ", parity=" + parity + ", stop=" + stopBits
+        return "baud=" + baudRate + ", parity=" + parity + ", stop=" + stopBits
                 + ", rs485=" + (rs485 == null ? "off" : rs485.describe());
     }
 
@@ -79,9 +80,6 @@ public class ModbusSerialEndpoint implements ModbusEndpoint {
         }
         if (baudRate == null || baudRate <= 0) {
             throw new IllegalArgumentException("Modbus serial baud rate must be positive");
-        }
-        if (dataBits == null || dataBits != 8) {
-            throw new IllegalArgumentException("Modbus RTU requires 8 data bits");
         }
         if (parity == null) {
             throw new IllegalArgumentException("Modbus serial parity is required");
