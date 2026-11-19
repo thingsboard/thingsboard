@@ -71,7 +71,7 @@ def main():
         raise stop('these SBOMs do not exist, and the notices are made from them:\n  ' + '\n  '.join(absent)
                    + f'\n{BUILD_PROBLEM} The Maven build makes them with -Dsbom.skip=false.')
 
-    here = json.load(open(args.license_files_here, encoding='utf-8'))
+    here = read_here(args.license_files_here)
     components, skipped, jars, license_files = {}, {}, {}, set()
     for sbom in args.sboms:
         for component in json.load(open(sbom)).get('components', []):
@@ -84,7 +84,8 @@ def main():
             elif not is_maven(purl) and not purl.startswith('pkg:npm/'):
                 where = license_file(component, here)
                 if where:
-                    license_files.add((component.get('group', ''), component['name'], component.get('version', ''), where))
+                    license_files.add((component.get('group', ''), component['name'], component.get('version', ''),
+                                       tuple(sorted(where.items()))))
                 else:
                     skipped.setdefault('not a Maven or npm package', set()).add(purl or component.get('name'))
             elif is_maven(purl) and own(component, args):
@@ -146,7 +147,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     json.dump({'projectName': 'thingsboard', 'dependencies': dependencies}, open(args.out, 'w'), indent=1)
     json.dump([jars[purl] for purl in sorted(jars)], open(args.jars, 'w'), indent=1)
-    json.dump([{'group': group, 'name': name, 'version': version, **dict([where])}
+    json.dump([{'group': group, 'name': name, 'version': version, **dict(where)}
                for group, name, version, where in sorted(license_files)], open(args.license_files, 'w'), indent=1)
     print(f'{len(dependencies)} packages')
     for reason, items in sorted(skipped.items()):
@@ -158,9 +159,22 @@ def main():
         print(f'  {item}')
 
 
+def read_here(path):
+    """The license files kept in this repository, by the purl of the component, or by its name when it has none: each is
+    the path of the file, or {"path": ..., "platform": ...} for a file with sections for one platform, which the notices
+    of another platform leave out (see license_files.py)."""
+    here = {}
+    for key, value in json.load(open(path, encoding='utf-8')).items():
+        entry = {'path': value} if isinstance(value, str) else value
+        if not isinstance(entry, dict) or 'path' not in entry or set(entry) - {'path', 'platform'}:
+            raise stop(f'the entry of {key} in {path} is neither the path of a file nor {{"path": ..., "platform": ...}}.')
+        here[key] = entry
+    return here
+
+
 def license_file(component, here):
-    """Where the license file of the component is: ('url', the address that the SBOM gives), ('path', the file in this
-    repository that `here` gives for the purl of the component, or for its name when it has none), or None."""
+    """Where the license file of the component is: {'url': the address that the SBOM gives}, the entry that `here` gives
+    for the purl of the component, or for its name when it has none, or None."""
     name = component.get('purl') or component['name']
     urls = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'license']
     if len(urls) > 1:
@@ -168,10 +182,21 @@ def license_file(component, here):
                    'component and what it contains.')
     if urls and name in here:
         raise stop(f'the SBOM gives a license file for {name}, {urls[0]}, and so does license-files-here.json, '
-                   f'{here[name]}. Keep one of them.')
+                   f'{here[name]["path"]}. Keep one of them.')
     if urls:
-        return 'url', urls[0]
-    return ('path', here[name]) if name in here else None
+        return {'url': urls[0]}
+    if name in here:
+        return here[name]
+    # A file kept for another version of the component would leave this version out of the notices without a word
+    other = [key for key in here if key.startswith('pkg:') and without_version(key) == without_version(name)]
+    if other:
+        raise stop(f'license-files-here.json has the license file of {other[0]}, {here[other[0]]["path"]}, and the SBOM '
+                   f'has {name}. Make the file for this version and change its entry.')
+    return None
+
+
+def without_version(purl):
+    return re.sub(r'@[^?#]*', '', purl)
 
 
 def is_maven(purl):

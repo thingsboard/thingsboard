@@ -1,3 +1,5 @@
 {
- "lwm2m-registry": "application/src/main/data/lwm2m-registry/NOTICE.txt"
+ "lwm2m-registry": "application/src/main/data/lwm2m-registry/NOTICE.txt",
+ "pkg:generic/chromium/chromium@156.0.8078.0?os=linux": {"path": "msa/web-report/chromium-credits/CREDITS.txt", "platform": "Linux"},
+ "pkg:generic/chromium/chromium@156.0.8078.0?os=windows": {"path": "msa/web-report/chromium-credits/CREDITS.txt", "platform": "Windows"}
 }

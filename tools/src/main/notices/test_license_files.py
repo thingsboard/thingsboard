@@ -47,3 +47,46 @@ class KeptTest(unittest.TestCase):
         with self.assertRaises(SystemExit) as stopped:
             license_files.kept('/nonexistent/NOTICE.txt', 'lwm2m-registry')
         self.assertIn('the license file of lwm2m-registry cannot be read', str(stopped.exception))
+
+
+CREDITS = """Chromium: the third-party software in it.
+
+========
+zlib
+
+======== Only in the Linux build ========
+
+========
+wayland
+
+======== Only in the Windows build ========
+
+========
+Multimedia Redirection API"""
+
+
+class PlatformsTest(unittest.TestCase):
+    def test_the_platforms_of_the_components_that_have_a_file(self):
+        entries = [{'name': 'chromium', 'path': 'CREDITS.txt', 'platform': 'Linux'},
+                   {'name': 'chromium', 'path': 'CREDITS.txt', 'platform': 'Windows'},
+                   {'name': 'lwm2m-registry', 'path': 'NOTICE.txt'},
+                   {'name': 'node', 'url': 'https://example.com/LICENSE'}]
+        self.assertEqual(license_files.platforms_of(entries), {'CREDITS.txt': {'Linux', 'Windows'}, 'NOTICE.txt': None})
+
+    def test_a_component_for_every_platform_takes_the_whole_file(self):
+        entries = [{'name': 'a', 'path': 'CREDITS.txt', 'platform': 'Linux'}, {'name': 'b', 'path': 'CREDITS.txt'}]
+        self.assertEqual(license_files.platforms_of(entries), {'CREDITS.txt': None})
+        self.assertEqual(license_files.platforms_of(list(reversed(entries))), {'CREDITS.txt': None})
+
+    def test_the_sections_of_other_platforms_are_left_out(self):
+        linux = license_files.for_platforms(CREDITS, {'Linux'})
+        self.assertIn('wayland', linux)
+        self.assertNotIn('Multimedia', linux)
+        self.assertTrue(linux.endswith('wayland'))
+        windows = license_files.for_platforms(CREDITS, {'Windows'})
+        self.assertNotIn('wayland', windows)
+        self.assertIn('zlib\n\n======== Only in the Windows build ========\n\n========\nMultimedia', windows)
+
+    def test_the_file_of_every_platform_is_the_whole_file(self):
+        self.assertEqual(license_files.for_platforms(CREDITS, {'Linux', 'Windows'}), CREDITS)
+        self.assertEqual(license_files.for_platforms(CREDITS, None), CREDITS)

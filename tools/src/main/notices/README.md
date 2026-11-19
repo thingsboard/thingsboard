@@ -30,7 +30,8 @@ of every step, is `target/notices-product/`.
 6. `notice_files.py` collects the NOTICE files of the packages.
 7. `license_files.py` adds the license files of the components that are not scanned: those that the SBOMs give, such as
    the LICENSE of Node.js, downloaded once and kept in `license-files/` of ORT's home; and those kept in this repository,
-   which `license-files-here.json` gives by the purl of the component, or by its name when it has none.
+   which `license-files-here.json` gives by the purl of the component, or by its name when it has none. A file kept here
+   can have sections for one platform, which the notices of the other platforms leave out: see `license_files.py`.
 8. ORT writes the notices with `THIRD-PARTY-NOTICES.ftl`.
 
 ## Scans
