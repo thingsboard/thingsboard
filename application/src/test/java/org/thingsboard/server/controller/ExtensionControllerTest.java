@@ -6,8 +6,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
@@ -50,7 +50,7 @@ public class ExtensionControllerTest extends AbstractControllerTest {
 
     // public-cloud loads the real Kubernetes orchestration beans; replace the reconciler with a mock
     // that reports no live deployment so these HTTP CRUD/lifecycle tests never reach a real cluster.
-    @MockBean
+    @MockitoBean
     private ExtensionReconciler extensionReconciler;
 
     @Before

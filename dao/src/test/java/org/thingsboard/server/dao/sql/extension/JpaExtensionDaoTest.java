@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.extension.Extension;
+import org.thingsboard.server.common.data.extension.ExtensionContainerSpec;
 import org.thingsboard.server.common.data.extension.ExtensionState;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -17,6 +18,7 @@ import org.thingsboard.server.dao.extension.ExtensionDao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,6 +90,28 @@ public class JpaExtensionDaoTest extends AbstractJpaDaoTest {
         assertThat(extensionDao.findInfosByTenantId(tenantId.getId(),
                 new PageLink(10, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC)))
                 .getData()).hasSize(3);
+    }
+
+    @Test
+    public void containerSpecIsStoredAsJsonbAndReadBack() {
+        ExtensionContainerSpec containerSpec = new ExtensionContainerSpec();
+        containerSpec.setImage("registry.example.com/acme/billing-ext");
+        containerSpec.setTag("1.4.0");
+        containerSpec.setReplicas(2);
+        containerSpec.setEnv(Map.of("GREETING", "hello"));
+
+        Extension extension = new Extension();
+        extension.setTenantId(tenantId);
+        extension.setName("ext-with-spec");
+        extension.setSlug("test-spec-ext");
+        extension.setState(ExtensionState.PROVISIONING);
+        extension.setContainerSpec(containerSpec);
+        Extension stored = extensionDao.save(tenantId, extension);
+        saved.add(stored);
+
+        Extension found = extensionDao.findById(tenantId, stored.getId().getId());
+
+        assertThat(found.getContainerSpec()).isEqualTo(containerSpec);
     }
 
 }

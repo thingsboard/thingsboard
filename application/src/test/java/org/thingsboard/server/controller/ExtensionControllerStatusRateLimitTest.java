@@ -4,8 +4,8 @@ package org.thingsboard.server.controller;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.server.common.data.extension.Extension;
 import org.thingsboard.server.common.data.extension.ExtensionContainerSpec;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         properties = {"extensions.mode=public-cloud", "extensions.status.rate-limit=3:60"})
 public class ExtensionControllerStatusRateLimitTest extends AbstractControllerTest {
 
-    @MockBean
+    @MockitoBean
     private ExtensionReconciler extensionReconciler;
 
     @Before

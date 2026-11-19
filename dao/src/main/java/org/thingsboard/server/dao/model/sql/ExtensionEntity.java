@@ -3,7 +3,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -13,7 +12,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.type.PostgreSQLJsonPGObjectJsonbType;
 import org.hibernate.proxy.HibernateProxy;
 import org.thingsboard.server.common.data.extension.Extension;
 import org.thingsboard.server.common.data.extension.ExtensionContainerSpec;
@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.id.ExtensionId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.ExtensionContainerSpecConverter;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.Collections;
@@ -56,7 +57,8 @@ public class ExtensionEntity extends BaseVersionedEntity<Extension> {
     @Column(name = ModelConstants.EXTENSION_STATE_PROPERTY)
     private ExtensionState state;
 
-    @Type(JsonBinaryType.class)
+    @Convert(converter = ExtensionContainerSpecConverter.class)
+    @JdbcType(PostgreSQLJsonPGObjectJsonbType.class)
     @Column(name = ModelConstants.EXTENSION_CONTAINER_SPEC_PROPERTY, columnDefinition = "JSONB")
     private ExtensionContainerSpec containerSpec;
 

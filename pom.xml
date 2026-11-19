@@ -150,7 +150,7 @@
         <kafka.version>3.9.2</kafka.version> <!-- to fix CVE-2026-35554 -->
         <bucket4j.version>8.10.1</bucket4j.version>
         <fabric8.version>7.7.0</fabric8.version>
-        <docker-java.version>3.7.0</docker-java.version>
+        <docker-java.version>3.7.1</docker-java.version>
 
         <antlr.version>3.5.3</antlr.version>
         <amazon-kinesis-producer>0.15.12</amazon-kinesis-producer>
