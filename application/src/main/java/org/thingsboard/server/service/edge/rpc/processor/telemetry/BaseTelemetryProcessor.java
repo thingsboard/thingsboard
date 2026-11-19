@@ -118,15 +118,18 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                 if (entityData.hasPostAttributesMsg()) {
                     metaData.putValue(DataConstants.SCOPE, entityData.getPostAttributeScope());
                     long ts = entityData.hasAttributeTs() ? entityData.getAttributeTs() : System.currentTimeMillis();
-                    result.add(processPostAttributes(tenantId, customerId, entityId, entityData.getPostAttributesMsg(), metaData, ts));
+                    result.add(processPostAttributes(tenantId, customerId, entityId, entityData.getPostAttributesMsg(),
+                            withTypeCastDisabledKeys(metaData, entityData.getAttributesTypeCastDisabledKeysList()), ts));
                 }
                 if (entityData.hasAttributesUpdatedMsg()) {
                     metaData.putValue(DataConstants.SCOPE, entityData.getPostAttributeScope());
                     long ts = entityData.hasAttributeTs() ? entityData.getAttributeTs() : System.currentTimeMillis();
-                    result.add(processAttributesUpdate(tenantId, customerId, entityId, entityData.getAttributesUpdatedMsg(), metaData, ts));
+                    result.add(processAttributesUpdate(tenantId, customerId, entityId, entityData.getAttributesUpdatedMsg(),
+                            withTypeCastDisabledKeys(metaData, entityData.getAttributesTypeCastDisabledKeysList()), ts));
                 }
                 if (entityData.hasPostTelemetryMsg()) {
-                    result.add(processPostTelemetry(tenantId, customerId, entityId, entityData.getPostTelemetryMsg(), metaData));
+                    result.add(processPostTelemetry(tenantId, customerId, entityId, entityData.getPostTelemetryMsg(),
+                            withTypeCastDisabledKeys(metaData, entityData.getTelemetryTypeCastDisabledKeysList())));
                 }
                 if (EntityType.DEVICE.equals(entityId.getEntityType())) {
                     DeviceId deviceId = new DeviceId(entityId.getId());
@@ -154,6 +157,13 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             log.warn("[{}] Skipping telemetry update msg because entity doesn't exists on edge, {}", tenantId, entityData);
         }
         return result;
+    }
+
+    // A copy per part of the message: the keys of the attributes must not leak into the telemetry, and the other way around.
+    private static TbMsgMetaData withTypeCastDisabledKeys(TbMsgMetaData metaData, List<String> typeCastDisabledKeys) {
+        TbMsgMetaData copy = metaData.copy();
+        copy.putTypeCastDisabledKeys(typeCastDisabledKeys);
+        return copy;
     }
 
     private Pair<TbMsgMetaData, CustomerId> getBaseMsgMetadataAndCustomerId(TenantId tenantId, EntityId entityId) {
@@ -263,7 +273,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         AttributeScope scope = AttributeScope.valueOf(metaData.getValue(DataConstants.SCOPE));
-        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json, ts);
+        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json, ts, metaData.getTypeCastDisabledKeys());
         ListenableFuture<List<AttributeKvEntry>> future = filterAttributesByTs(tenantId, entityId, scope, attributes);
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
@@ -311,7 +321,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         AttributeScope scope = AttributeScope.valueOf(metaData.getValue(DataConstants.SCOPE));
-        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json, ts);
+        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(json, ts, metaData.getTypeCastDisabledKeys());
         ListenableFuture<List<AttributeKvEntry>> future = filterAttributesByTs(tenantId, entityId, scope, attributes);
         Futures.addCallback(future, new FutureCallback<>() {
             @Override

@@ -175,6 +175,9 @@ message EntityDataProto {
   string postAttributeScope = 7;
   AttributeDeleteMsg attributeDeleteMsg = 8;
   optional int64 attributeTs = 9;
+  // The keys whose string values stay strings on the receiving side; an older peer sends none and ignores them.
+  repeated string telemetryTypeCastDisabledKeys = 10;
+  repeated string attributesTypeCastDisabledKeys = 11;
 }
 
 message AttributeDeleteMsg {

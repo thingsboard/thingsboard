@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.edge;
 
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -34,6 +36,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
@@ -125,6 +128,58 @@ public class TbMsgPushToEdgeNodeTest {
         for (var event : MISC_EVENTS) {
             testEvent(event, TbMsgMetaData.EMPTY, EdgeEventActionType.TIMESERIES_UPDATED, "data");
         }
+    }
+
+    @Test
+    public void givenTypeCastDisabledKeys_whenPushTelemetryAndAttributes_thenEventBodyCarriesTheKeys() {
+        for (var type : List.of(TbMsgType.POST_TELEMETRY_REQUEST, TbMsgType.POST_ATTRIBUTES_REQUEST, TbMsgType.ATTRIBUTES_UPDATED)) {
+            TbMsgMetaData metaData = new TbMsgMetaData();
+            metaData.putTypeCastDisabledKeys(List.of("joinEui"));
+
+            EdgeEvent edgeEvent = pushAndCaptureEvent(type, metaData, "{\"joinEui\":\"0000000000000000\",\"temperature\":\"21.5\"}");
+
+            String dataKey = type == TbMsgType.POST_TELEMETRY_REQUEST ? "data" : "kv";
+            assertThat(edgeEvent.getBody().get(dataKey).get("joinEui").asText()).isEqualTo("0000000000000000");
+            assertThat(JacksonUtil.convertValue(edgeEvent.getBody().get(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS), String[].class))
+                    .as("type cast disabled keys of %s", type)
+                    .containsExactly("joinEui");
+        }
+    }
+
+    @Test
+    public void givenNoTypeCastDisabledKeys_whenPushTelemetryAndAttributes_thenEventBodyIsUnchanged() {
+        for (var type : List.of(TbMsgType.POST_TELEMETRY_REQUEST, TbMsgType.POST_ATTRIBUTES_REQUEST, TbMsgType.ATTRIBUTES_UPDATED)) {
+            EdgeEvent edgeEvent = pushAndCaptureEvent(type, new TbMsgMetaData(), "{\"temperature\":\"21.5\"}");
+
+            assertThat(edgeEvent.getBody().has(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS))
+                    .as("type cast disabled keys of %s", type)
+                    .isFalse();
+        }
+    }
+
+    private EdgeEvent pushAndCaptureEvent(TbMsgType type, TbMsgMetaData metaData, String data) {
+        Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
+        Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
+        Mockito.when(ctx.getEdgeEventService()).thenReturn(edgeEventService);
+        Mockito.when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
+        Mockito.when(edgeEventService.saveAsync(any())).thenReturn(SettableFuture.create());
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(RELATED_EDGES_CACHE_ITEMS)))
+                .thenReturn(new PageData<>(List.of(new EdgeId(UUID.randomUUID())), 1, 1, false));
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(type)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(data)
+                .build();
+
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<EdgeEvent> eventCaptor = ArgumentCaptor.forClass(EdgeEvent.class);
+        verify(edgeEventService).saveAsync(eventCaptor.capture());
+        Mockito.reset(ctx, edgeService, edgeEventService);
+        return eventCaptor.getValue();
     }
 
     private void testEvent(TbMsgType event, TbMsgMetaData metaData, EdgeEventActionType expectedType, String dataKey) {

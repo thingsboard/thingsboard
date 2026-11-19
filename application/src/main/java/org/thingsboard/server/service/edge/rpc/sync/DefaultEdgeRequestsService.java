@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.rule.engine.api.notification.SlackService;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -56,6 +57,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.settings.MobileAppNotificationDeliveryMethodConfig;
@@ -74,6 +76,7 @@ import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
@@ -296,6 +299,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 if (!attributes.isEmpty()) {
                     entityData.put("kv", attributes);
                     entityData.put("scope", scope);
+                    putTypeCastDisabledKeys(entityData, ssAttributes);
                     JsonNode body = JacksonUtil.valueToTree(entityData);
                     log.debug("[{}] Sending attributes data msg, entityId [{}], attributes [{}]", tenantId, entityId, body);
                     future = saveEdgeEvent(tenantId, edge.getId(), entityType, EdgeEventActionType.ATTRIBUTES_UPDATED, entityId, body, null);
@@ -324,6 +328,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 return Futures.immediateFuture(null);
             }
             Map<Long, Map<String, Object>> tsData = new HashMap<>();
+            Map<Long, List<TsKvEntry>> tsEntries = new HashMap<>();
             for (TsKvEntry tsKvEntry : tsKvEntries) {
                 if (DefaultDeviceStateService.ACTIVITY_KEYS_WITH_INACTIVITY_TIMEOUT.contains(tsKvEntry.getKey())) {
                     continue;
@@ -332,12 +337,14 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     continue;
                 }
                 tsData.computeIfAbsent(tsKvEntry.getTs(), k -> new HashMap<>()).put(tsKvEntry.getKey(), tsKvEntry.getValue());
+                tsEntries.computeIfAbsent(tsKvEntry.getTs(), k -> new ArrayList<>()).add(tsKvEntry);
             }
             List<ListenableFuture<Void>> futures = new ArrayList<>();
             for (Map.Entry<Long, Map<String, Object>> entry : tsData.entrySet()) {
                 Map<String, Object> entityBody = new HashMap<>();
                 entityBody.put("data", entry.getValue());
                 entityBody.put("ts", entry.getKey());
+                putTypeCastDisabledKeys(entityBody, tsEntries.get(entry.getKey()));
                 futures.add(saveEdgeEvent(tenantId, edge.getId(), entityType, EdgeEventActionType.TIMESERIES_UPDATED, entityId, JacksonUtil.valueToTree(entityBody)));
             }
             return Futures.transform(Futures.allAsList(futures), v -> null, dbCallbackExecutorService);
@@ -976,6 +983,14 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return null;
         }
         return secretConfigurationService.replaceSecretUsages(isSystem ? TenantId.SYS_TENANT_ID : tenantId, config, MobileAppNotificationDeliveryMethodConfig.class);
+    }
+
+    // The saved string values that look like numbers are marked in the event body, so that the edge keeps them as strings.
+    private static void putTypeCastDisabledKeys(Map<String, Object> entityBody, List<? extends KvEntry> entries) {
+        List<String> typeCastDisabledKeys = JsonConverter.numericStringKeys(entries);
+        if (!typeCastDisabledKeys.isEmpty()) {
+            entityBody.put(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS, typeCastDisabledKeys);
+        }
     }
 
     private static <T> T parseSendRequest(String request, Class<T> clazz) throws IOException {

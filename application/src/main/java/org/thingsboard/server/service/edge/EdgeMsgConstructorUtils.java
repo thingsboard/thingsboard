@@ -109,6 +109,7 @@ import org.thingsboard.server.common.data.translation.CustomTranslation;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.data.wl.WhiteLabeling;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
@@ -676,7 +677,9 @@ public class EdgeMsgConstructorUtils {
             case TIMESERIES_UPDATED:
                 try {
                     JsonObject data = entityData.getAsJsonObject();
-                    builder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(data.getAsJsonObject("data"), ts));
+                    Set<String> typeCastDisabledKeys = extractTypeCastDisabledKeys(data);
+                    builder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(data.getAsJsonObject("data"), ts, typeCastDisabledKeys));
+                    builder.addAllTelemetryTypeCastDisabledKeys(typeCastDisabledKeys);
                 } catch (Exception e) {
                     log.trace("[{}][{}] Can't convert to telemetry proto, entityData [{}]", tenantId, entityId, entityData, e);
                 }
@@ -684,7 +687,9 @@ public class EdgeMsgConstructorUtils {
             case ATTRIBUTES_UPDATED:
                 try {
                     JsonObject data = entityData.getAsJsonObject();
-                    TransportProtos.PostAttributeMsg attributesUpdatedMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"));
+                    Set<String> typeCastDisabledKeys = extractTypeCastDisabledKeys(data);
+                    TransportProtos.PostAttributeMsg attributesUpdatedMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"), typeCastDisabledKeys);
+                    builder.addAllAttributesTypeCastDisabledKeys(typeCastDisabledKeys);
                     if (data.has("isPostAttributes") && data.getAsJsonPrimitive("isPostAttributes").getAsBoolean()) {
                         builder.setPostAttributesMsg(attributesUpdatedMsg);
                     } else {
@@ -699,7 +704,9 @@ public class EdgeMsgConstructorUtils {
             case POST_ATTRIBUTES:
                 try {
                     JsonObject data = entityData.getAsJsonObject();
-                    TransportProtos.PostAttributeMsg postAttributesMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"));
+                    Set<String> typeCastDisabledKeys = extractTypeCastDisabledKeys(data);
+                    TransportProtos.PostAttributeMsg postAttributesMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"), typeCastDisabledKeys);
+                    builder.addAllAttributesTypeCastDisabledKeys(typeCastDisabledKeys);
                     builder.setPostAttributesMsg(postAttributesMsg);
                     builder.setPostAttributeScope(getScopeOfDefault(data));
                     builder.setAttributeTs(ts);
@@ -729,6 +736,16 @@ public class EdgeMsgConstructorUtils {
             return data.getAsJsonPrimitive("ts").getAsLong();
         }
         return System.currentTimeMillis();
+    }
+
+    // The keys the push node or the sync put into the event body: their string values stay strings in the proto.
+    private static Set<String> extractTypeCastDisabledKeys(JsonObject data) {
+        JsonElement keys = data.get(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS);
+        Set<String> result = new HashSet<>();
+        if (keys != null && keys.isJsonArray()) {
+            keys.getAsJsonArray().forEach(key -> result.add(key.getAsString()));
+        }
+        return result;
     }
 
     private static String getScopeOfDefault(JsonObject data) {

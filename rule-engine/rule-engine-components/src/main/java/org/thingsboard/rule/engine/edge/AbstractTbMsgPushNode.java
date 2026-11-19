@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.edge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -18,10 +19,12 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
@@ -87,6 +90,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                     if (EdgeEventActionType.POST_ATTRIBUTES.equals(actionType)) {
                         entityBody.put("isPostAttributes", true);
                     }
+                    putTypeCastDisabledKeys(entityBody, msg);
                 }
                 case ATTRIBUTES_DELETED -> {
                     List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {
@@ -97,6 +101,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                 case TIMESERIES_UPDATED -> {
                     entityBody.put("data", dataJson);
                     entityBody.put("ts", msg.getMetaDataTs());
+                    putTypeCastDisabledKeys(entityBody, msg);
                 }
             }
             return buildEvent(ctx.getTenantId(),
@@ -104,6 +109,14 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                     msg.getOriginator().getId(),
                     getEventTypeByEntityType(msg.getOriginator().getEntityType()),
                     JacksonUtil.valueToTree(entityBody));
+        }
+    }
+
+    // The keys the message marks to stay strings travel in the event body, so that the other side does not cast them again.
+    private static void putTypeCastDisabledKeys(Map<String, Object> entityBody, TbMsg msg) {
+        Set<String> typeCastDisabledKeys = msg.getTypeCastDisabledKeys();
+        if (!typeCastDisabledKeys.isEmpty()) {
+            entityBody.put(TbMsgMetaData.TYPE_CAST_DISABLED_KEYS, typeCastDisabledKeys);
         }
     }
 
