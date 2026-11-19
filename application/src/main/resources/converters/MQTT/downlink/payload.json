@@ -1,0 +1,4 @@
+{
+  "temperatureUploadFrequency": 60,
+  "humidityUploadFrequency": 30
+}

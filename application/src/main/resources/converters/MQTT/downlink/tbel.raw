@@ -7,14 +7,39 @@
 
 /** Encoder **/
 
-// Publish the ThingsBoard message as JSON to the device upload topic.
+// Publish the ThingsBoard message as JSON to the device commands topic:
+// tb/devices/{deviceType}/{deviceName}/commands
+// Requires deviceName and deviceType in the message metadata,
+// e.g. added by the "Originator fields" rule node (name -> deviceName, type -> deviceType).
 // metadata.topic is read by the integration when Downlink topic pattern is ${topic}.
+
+// Get the device name and type without surrounding spaces and reject the message if one is missing or empty.
+var deviceName = metadata.deviceName != null ? metadata.deviceName.trim() : null;
+if (deviceName == null || deviceName.isEmpty()) {
+  raiseError("Message metadata has no deviceName");
+}
+var deviceType = metadata.deviceType != null ? metadata.deviceType.trim() : null;
+if (deviceType == null || deviceType.isEmpty()) {
+  raiseError("Message metadata has no deviceType");
+}
+
+// Reject values with characters that MQTT does not allow in a topic level ('/', '+', '#', null character):
+// such a topic would be invalid and the command would not be delivered.
+if (!isValidTopicLevel(deviceName) || !isValidTopicLevel(deviceType)) {
+  raiseError("Invalid MQTT downlink topic: deviceName '" + deviceName + "' and deviceType '" + deviceType +
+      "' must not contain '/', '+', '#' or the null character.");
+}
+
 var result = {
   contentType: "JSON",
   data: JSON.stringify(msg),
   metadata: {
-    topic: metadata['deviceType'] + '/' + metadata['deviceName'] + '/upload'
+    topic: 'tb/devices/' + deviceType + '/' + deviceName + '/commands'
   }
 };
+
+function isValidTopicLevel(value) {
+  return value.indexOf('/') < 0 && value.indexOf('+') < 0 && value.indexOf('#') < 0 && value.indexOf('\u0000') < 0;
+}
 
 return result;
