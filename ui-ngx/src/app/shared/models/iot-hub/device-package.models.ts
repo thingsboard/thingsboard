@@ -216,7 +216,7 @@ export interface DeviceInstallStep {
   type: InstallStepType;
   name: string;
   // Optional stable id of the step, unique within the install method: the key of the step's install state,
-  // so the next version can rename the step. Without it, the name is the key.
+  // so the next version can rename the step. Without it, the key is the type and the name; a form's is its name.
   id?: string;
   file?: string;
   template?: string;
@@ -355,10 +355,8 @@ export interface EntityStepOutput {
   baseUrl?: string;
 }
 
-// skipped: a step of an update that failed, so nothing was changed
-export type EntityStepStatus = 'pending' | 'running' | 'success' | 'error' | 'conflict' | 'skipped';
-
-export type ConflictType = 'use-or-overwrite' | 'overwrite-or-copy';
+// skipped: a step of an install or update that failed, so nothing was changed
+export type EntityStepStatus = 'pending' | 'running' | 'success' | 'error' | 'skipped';
 
 export interface EntityStepProgress {
   step: DeviceInstallStep;
@@ -366,7 +364,5 @@ export interface EntityStepProgress {
   resolvedName?: string;
   entityOutput?: EntityStepOutput;
   errorMessage?: string;
-  existingEntity?: EntityStepOutput;
-  conflictType?: ConflictType;
   resolution?: string;
 }

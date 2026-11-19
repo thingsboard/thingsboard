@@ -12,26 +12,26 @@ import java.util.Map;
 
 /**
  * Either everything was applied, or nothing was: on a failure the transaction was rolled back and failedStep
- * names the step that failed, if one did.
+ * is the install state key of the step that failed, if one did.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeviceUpdateResult {
+public class DevicePackageResult {
 
     private boolean success;
     private String errorMessage;
     private String failedStep;
     private DeviceInstalledItemDescriptor descriptor;
-    // By step name: what the install instructions resolve, e.g. ${integration.httpEndpoint}, ${device.token}
+    // By install state key of the step: what the install instructions resolve, e.g. ${integration.httpEndpoint}, ${device.token}
     private Map<String, ObjectNode> outputs;
 
-    public static DeviceUpdateResult success(DeviceInstalledItemDescriptor descriptor, Map<String, ObjectNode> outputs) {
-        return new DeviceUpdateResult(true, null, null, descriptor, outputs);
+    public static DevicePackageResult success(DeviceInstalledItemDescriptor descriptor, Map<String, ObjectNode> outputs) {
+        return new DevicePackageResult(true, null, null, descriptor, outputs);
     }
 
-    public static DeviceUpdateResult error(String errorMessage, String failedStep) {
-        return new DeviceUpdateResult(false, errorMessage, failedStep, null, null);
+    public static DevicePackageResult error(String errorMessage, String failedStep) {
+        return new DevicePackageResult(false, errorMessage, failedStep, null, null);
     }
 
 }

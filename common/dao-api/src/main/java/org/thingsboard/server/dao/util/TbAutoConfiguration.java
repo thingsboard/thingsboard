@@ -1,16 +1,18 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.util;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.cassandra.CassandraAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-@EnableAutoConfiguration(exclude = {CassandraAutoConfiguration.class, CassandraDataAutoConfiguration.class, RedisAutoConfiguration.class})
+@EnableAutoConfiguration(excludeName = {
+        "org.springframework.boot.cassandra.autoconfigure.CassandraAutoConfiguration",
+        "org.springframework.boot.data.cassandra.autoconfigure.DataCassandraAutoConfiguration",
+        "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration"
+})
 public @interface TbAutoConfiguration {
 }

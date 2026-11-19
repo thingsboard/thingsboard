@@ -59,6 +59,7 @@ public class TtnIntegration extends BasicMqttIntegration {
             if (configuration.isSsl()) {
                 Security.addProvider(new BouncyCastleProvider());
                 return Optional.of(SslContextBuilder.forClient()
+                        .endpointIdentificationAlgorithm(null)
                         .keyManager((KeyManagerFactory) null)
                         .trustManager((File) null)
                         .clientAuth(ClientAuth.NONE)

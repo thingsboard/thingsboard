@@ -23,13 +23,15 @@
     <fieldset [disabled]="(isLoading$ | async) || (takingScreenshot$ | async)" class="flex flex-col items-stretch justify-center gap-2">
       <div [formGroup]="dashboardRectFormGroup" class="flex flex-col items-center justify-center gap-2">
         <mat-form-field class="rect-field" appearance="outline">
-          <mat-label>Top %</mat-label>
+          <mat-label>{{ 'position.top' | translate }}</mat-label>
           <input matInput formControlName="top" type="number" step="1" min="0" max="100">
+          <span class="mr-2" matSuffix>%</span>
         </mat-form-field>
         <div class="flex flex-row items-center justify-center gap-2">
-          <mat-form-field  class="rect-field" appearance="outline">
-            <mat-label>Left %</mat-label>
+          <mat-form-field class="rect-field" appearance="outline">
+            <mat-label>{{ 'position.left' | translate }}</mat-label>
             <input matInput formControlName="left" type="number" step="1" min="0" max="100">
+            <span class="mr-2" matSuffix>%</span>
           </mat-form-field>
           <div class="tb-image-preview-container">
             @if (!imageUrl) {
@@ -39,13 +41,15 @@
             }
           </div>
           <mat-form-field class="rect-field" appearance="outline">
-            <mat-label>Right %</mat-label>
+            <mat-label>{{ 'position.right' | translate }}</mat-label>
             <input matInput formControlName="right" type="number" step="1" min="0" max="100">
+            <span class="mr-2" matSuffix>%</span>
           </mat-form-field>
         </div>
         <mat-form-field class="rect-field" appearance="outline">
-          <mat-label>Bottom %</mat-label>
+          <mat-label>{{ 'position.bottom' | translate }}</mat-label>
           <input matInput formControlName="bottom" type="number" step="1" min="0" max="100">
+          <span class="mr-2" matSuffix>%</span>
         </mat-form-field>
       </div>
       <div class="flex flex-row items-center justify-center">

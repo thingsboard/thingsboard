@@ -258,6 +258,10 @@ pre.tb-highlight {
   }
 }
 
+tb-entities-table.white-background {
+  --mat-sidenav-content-background-color: white;
+}
+
 .ace_editor {
   font-size: 16px !important;
   letter-spacing: normal;

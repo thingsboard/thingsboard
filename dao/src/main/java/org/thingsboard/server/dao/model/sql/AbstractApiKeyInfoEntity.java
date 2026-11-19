@@ -4,12 +4,13 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.type.PostgreSQLJsonPGObjectJsonType;
 import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -17,6 +18,7 @@ import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.permission.AuthorityPermissionsInfo;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
 
@@ -51,7 +53,8 @@ public abstract class AbstractApiKeyInfoEntity<T extends ApiKeyInfo> extends Bas
     @Column(name = API_KEY_INTERNAL_COLUMN_NAME)
     private boolean internal;
 
-    @Type(JsonBinaryType.class)
+    @Convert(converter = JsonConverter.class)
+    @JdbcType(PostgreSQLJsonPGObjectJsonType.class)
     @Column(name = API_KEY_PERMISSIONS_COLUMN_NAME, columnDefinition = "json")
     private JsonNode permissions;
 

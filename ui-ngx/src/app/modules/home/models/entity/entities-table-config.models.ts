@@ -188,6 +188,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
 
   customerId: string;
   backNavigationCommands?: any[];
+  backNavigationUrl?: string;
 
   constructor(public groupParams?: EntityGroupParams) {
     this.customerId = groupParams?.customerId;
@@ -195,7 +196,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   }
 
   displayBackButton(): boolean {
-    return isDefinedAndNotNull(this.backNavigationCommands);
+    return isDefinedAndNotNull(this.backNavigationUrl) || isDefinedAndNotNull(this.backNavigationCommands);
   }
 
   private table: IEntitiesTableComponent = null;

@@ -11,8 +11,8 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
-import { BehaviorSubject, ReplaySubject, Subscription } from 'rxjs';
-import { distinctUntilChanged, map, share, skip, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, ReplaySubject, Subject, Subscription } from 'rxjs';
+import { distinctUntilChanged, map, share, shareReplay, skip, takeUntil, tap } from 'rxjs/operators';
 import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
@@ -21,6 +21,8 @@ import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { MenuService } from '@core/services/menu.service';
+import { MenuId } from '@core/services/menu.models';
 
 @Component({
     selector: 'tb-notification-bell',
@@ -33,6 +35,11 @@ export class NotificationBellComponent implements OnDestroy {
   private notificationSubscriber: NotificationSubscriber;
   private notificationCountSubscriber: Subscription;
   private countSubject = new BehaviorSubject(0);
+  private destroy$ = new Subject<void>();
+
+  readonly available$ = this.menuService.isMenuLinkAvailable(MenuId.notification_inbox).pipe(
+    shareReplay({bufferSize: 1, refCount: true})
+  );
 
   count$ = this.countSubject.asObservable().pipe(
     distinctUntilChanged(),
@@ -51,15 +58,25 @@ export class NotificationBellComponent implements OnDestroy {
     private renderer: Renderer2,
     private viewContainerRef: ViewContainerRef,
     private store: Store<AppState>,
+    private menuService: MenuService,
     public wl: WhiteLabelingService) {
-    this.store.pipe(select(selectIsAuthenticated)).subscribe((value) => {
-      if (value) {
+    combineLatest([
+      this.store.pipe(select(selectIsAuthenticated)),
+      this.available$
+    ]).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(([authenticated, available]) => {
+      if (authenticated && available) {
         this.initSubscription();
+      } else {
+        this.unsubscribeSubscription();
       }
     });
   }
 
   ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.unsubscribeSubscription();
   }
 
@@ -89,6 +106,9 @@ export class NotificationBellComponent implements OnDestroy {
   }
 
   private initSubscription() {
+    if (this.notificationSubscriber) {
+      return;
+    }
     this.notificationSubscriber = NotificationSubscriber.createNotificationCountSubscription(this.notificationWsService, this.zone);
     this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.pipe(
       skip(1),
@@ -98,8 +118,9 @@ export class NotificationBellComponent implements OnDestroy {
   }
 
   private unsubscribeSubscription() {
-    this.notificationCountSubscriber.unsubscribe();
-    this.notificationSubscriber.unsubscribe();
+    this.notificationCountSubscriber?.unsubscribe();
+    this.notificationCountSubscriber = null;
+    this.notificationSubscriber?.unsubscribe();
     this.notificationSubscriber = null;
   }
 }

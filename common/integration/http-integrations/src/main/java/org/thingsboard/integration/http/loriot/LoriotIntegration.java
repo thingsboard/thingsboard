@@ -72,10 +72,10 @@ public class LoriotIntegration extends BasicHttpIntegration<JsonHttpIntegrationM
                 createApplicationOutputIfNotExist();
             }
             if (loriotConfiguration.isSendDownlink()) {
-                HttpClient httpClient = HttpClient.create()
-                        .runOn(context.getEventLoopGroup());
                 SslContext sslContext = SslContextBuilder.forClient().build();
-                httpClient.secure(t -> t.sslContext(sslContext));
+                HttpClient httpClient = HttpClient.create()
+                        .runOn(context.getEventLoopGroup())
+                        .secure(t -> t.sslContext(sslContext));
 
                 this.webClient = WebClient.builder()
                         .clientConnector(new ReactorClientHttpConnector(httpClient))
