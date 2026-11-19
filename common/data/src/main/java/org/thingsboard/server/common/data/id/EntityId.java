@@ -43,6 +43,7 @@ import java.util.UUID;
                 @DiscriminatorMapping(value = "EDGE", schema = EdgeId.class),
                 @DiscriminatorMapping(value = "ENTITY_GROUP", schema = EntityGroupId.class),
                 @DiscriminatorMapping(value = "ENTITY_VIEW", schema = EntityViewId.class),
+                @DiscriminatorMapping(value = "EXTENSION", schema = ExtensionId.class),
                 @DiscriminatorMapping(value = "GROUP_PERMISSION", schema = GroupPermissionId.class),
                 @DiscriminatorMapping(value = "INTEGRATION", schema = IntegrationId.class),
                 @DiscriminatorMapping(value = "JOB", schema = JobId.class),

@@ -100,6 +100,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.extension.ExtensionService;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.integration.IntegrationService;
@@ -1283,6 +1284,11 @@ public class DefaultTbContext implements TbContext, TbPeContext {
     @Override
     public AgentBulkActionService getAgentBulkActionService() {
         return mainCtx.getAgentBulkActionService();
+    }
+
+    @Override
+    public ExtensionService getExtensionService() {
+        return mainCtx.getExtensionService();
     }
 
     @Override

@@ -2437,7 +2437,7 @@ public class EntityServiceTest extends AbstractControllerTest {
             To be careful with updating Relation Query while adding new Entity Type,
             this checkup will help to find a place where you could check the correctness of building query
              */
-            Assert.assertEquals(53, EntityType.values().length);
+            Assert.assertEquals(54, EntityType.values().length);
         }
     }
 

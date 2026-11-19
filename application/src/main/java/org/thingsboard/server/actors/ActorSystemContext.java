@@ -88,6 +88,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.extension.ExtensionService;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.integration.IntegrationService;
@@ -718,6 +719,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private AgentBulkActionService agentBulkActionService;
+
+    @Autowired
+    @Getter
+    private ExtensionService extensionService;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter

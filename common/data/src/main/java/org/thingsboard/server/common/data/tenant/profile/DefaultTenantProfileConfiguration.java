@@ -41,6 +41,33 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxIntegrations;
     private long maxConverters;
     private long maxSchedulerEvents;
+
+    // Extensions run tenant-supplied containers on the platform's own infrastructure, so a profile that
+    // says nothing starts at the smallest workable allowance instead of "unlimited": room for exactly one
+    // SMALL extension (see ResourceSize.SMALL — 500m cpu limit, 256Mi memory). Raise it per profile.
+    //
+    // These are coupled to ResourceSize.DEFAULT, the tier applied when a spec omits `resources`: that tier
+    // must FIT here, or the simplest possible create — image and tag, nothing else — is rejected out of the
+    // box on a stock install. Moving either side without the other is caught by
+    // DefaultExtensionServiceQuotaTest.defaultProfileFitsExactlyOneExtensionOfTheDefaultTier.
+    public static final long DEFAULT_MAX_EXTENSIONS = 1;
+    public static final long DEFAULT_MAX_EXTENSION_CPU_MILLICORES = 500;
+    public static final long DEFAULT_MAX_EXTENSION_MEMORY_MB = 256;
+
+    @Schema(description = "Max number of extensions per tenant; 0 = unlimited. Defaults to one SMALL extension.",
+            example = "10")
+    @Builder.Default
+    private long maxExtensions = DEFAULT_MAX_EXTENSIONS;
+    @Schema(description = "Total CPU limit (millicores) across all running extension pods of the tenant, " +
+            "counted as pod cpu limit multiplied by replicas; 0 = unlimited. Defaults to one SMALL extension.",
+            example = "4000")
+    @Builder.Default
+    private long maxExtensionCpuMillicores = DEFAULT_MAX_EXTENSION_CPU_MILLICORES;
+    @Schema(description = "Total memory limit (megabytes) across all running extension pods of the tenant, " +
+            "counted as pod memory limit multiplied by replicas; 0 = unlimited. Defaults to one SMALL extension.",
+            example = "8192")
+    @Builder.Default
+    private long maxExtensionMemoryMb = DEFAULT_MAX_EXTENSION_MEMORY_MB;
     private long maxAgents;
     private long maxAgentApplications;
 
@@ -274,6 +301,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
             case INTEGRATION -> maxIntegrations;
             case CONVERTER -> maxConverters;
             case SCHEDULER_EVENT -> maxSchedulerEvents;
+            case EXTENSION -> maxExtensions;
             case AGENT -> maxAgents;
             case AGENT_APPLICATION -> maxAgentApplications;
             default -> 0;

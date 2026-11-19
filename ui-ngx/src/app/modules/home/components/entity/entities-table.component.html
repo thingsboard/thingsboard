@@ -412,6 +412,7 @@
           <span [class.!hidden]="!dataSource.dataLoading"
           class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
         </div>
+        <tb-anchor #entityTableFooter></tb-anchor>
         @if (displayPagination) {
           <mat-divider></mat-divider>
         }

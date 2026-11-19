@@ -136,6 +136,18 @@ public class EntityActionService {
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
                         entityNode.put("configuration", "");
                     }
+                    if (entityId.getEntityType() == EntityType.EXTENSION
+                            && entityNode.get("containerSpec") instanceof ObjectNode containerSpec) {
+                        // containerSpec.env values and registryAuth.password are secret material; strip them
+                        // so they never reach the rule engine (mirrors the audit_log scrub in AuditLogServiceImpl).
+                        if (containerSpec.has("env")) {
+                            containerSpec.put("env", "");
+                        }
+                        if (containerSpec.get("registryAuth") instanceof ObjectNode registryAuth
+                                && registryAuth.has("password")) {
+                            registryAuth.put("password", "");
+                        }
+                    }
                     metaData.putValue("entityName", entity.getName());
                     metaData.putValue("entityType", entityId.getEntityType().toString());
                 } else {

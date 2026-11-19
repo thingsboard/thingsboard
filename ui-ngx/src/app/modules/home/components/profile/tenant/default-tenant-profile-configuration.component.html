@@ -253,6 +253,66 @@
 
   <fieldset class="fields-group">
     <legend class="group-title">
+      {{ 'tenant-profile.extensions' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.maximum-extensions</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="maxExtensions"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('maxExtensions').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-extensions-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxExtensions').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-extensions-range' | translate}}
+          </mat-error>
+        }
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.maximum-extension-cpu</mat-label>
+        <!-- shown in CPU cores; the component converts to/from the millicores the API expects -->
+        <input matInput required min="0" step="0.25"
+          formControlName="maxExtensionCpuMillicores"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('maxExtensionCpuMillicores').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-extension-cpu-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxExtensionCpuMillicores').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-extension-cpu-range' | translate}}
+          </mat-error>
+        }
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.maximum-extension-memory</mat-label>
+        <input matInput required min="0" step="1"
+          formControlName="maxExtensionMemoryMb"
+          type="number">
+        @if (tenantProfileConfigurationForm.get('maxExtensionMemoryMb').hasError('required')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-extension-memory-required' | translate}}
+          </mat-error>
+        }
+        @if (tenantProfileConfigurationForm.get('maxExtensionMemoryMb').hasError('min')) {
+          <mat-error>
+            {{ 'tenant-profile.maximum-extension-memory-range' | translate}}
+          </mat-error>
+        }
+        <mat-hint></mat-hint>
+      </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
       {{ 'tenant-profile.rule-engine' | translate }} <span translate>tenant-profile.unlimited</span>
     </legend>
     <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">

@@ -1,0 +1,41 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (vm$ | async; as vm) {
+  <div class="tb-extension-quota">
+    <div class="tb-extension-quota-usage">
+      <span class="tb-extension-quota-title">{{ 'extension.available-resources' | translate }}</span>
+      <span class="tb-extension-quota-stat">
+        <span class="tb-quota-label">{{ 'extension.quota-count' | translate }}</span>
+        <span class="tb-quota-value">{{ vm.quota.usedExtensions }} / {{ vm.quota.maxExtensions === null ? unlimited : vm.quota.maxExtensions }}</span>
+      </span>
+      <span class="tb-extension-quota-stat">
+        <span class="tb-quota-label">{{ 'extension.quota-cpu' | translate }}</span>
+        <span class="tb-quota-value">{{ vm.quota.usedCpuMillicores / millicoresInCpu | number:'1.0-2' }} / {{ vm.quota.maxCpuMillicores === null ? unlimited : (vm.quota.maxCpuMillicores / millicoresInCpu | number:'1.0-2') }}</span>
+      </span>
+      <span class="tb-extension-quota-stat">
+        <span class="tb-quota-label">{{ 'extension.quota-memory' | translate }}</span>
+        <span class="tb-quota-value">{{ vm.quota.usedMemoryMb }} / {{ vm.quota.maxMemoryMb === null ? unlimited : vm.quota.maxMemoryMb }} MB</span>
+      </span>
+    </div>
+    <div class="tb-extension-quota-sizes">
+      @if (vm.deployable.length) {
+        <span class="tb-quota-label">{{ 'extension.quota-room-for' | translate }}</span>
+        <!-- every count assumes that size alone; sizes can still be mixed, hence the hint icon -->
+        <mat-icon class="tb-quota-hint-icon"
+                  matTooltip="{{ 'extension.quota-room-for-hint' | translate }}"
+                  matTooltipPosition="above">info_outline</mat-icon>
+        @for (item of vm.deployable; track item.size) {
+          <span class="tb-quota-chip">
+            {{ item.count === null ? unlimited : item.count }} &times; {{ item.size }}
+          </span>
+        }
+      } @else {
+        <span class="tb-quota-label">{{ 'extension.quota-none-left' | translate }}</span>
+      }
+    </div>
+  </div>
+}

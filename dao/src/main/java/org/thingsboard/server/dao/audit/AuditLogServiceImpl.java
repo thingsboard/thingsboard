@@ -178,6 +178,20 @@ public class AuditLogServiceImpl implements AuditLogService {
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
                         entityNode.put("configuration", "");
                     }
+                    if (entityId.getEntityType() == EntityType.EXTENSION
+                            && entityNode.get("containerSpec") instanceof ObjectNode containerSpec) {
+                        // env values are secret material (rendered into a k8s Secret and stripped from
+                        // list responses) — never persist them in audit_log
+                        if (containerSpec.has("env")) {
+                            containerSpec.put("env", "");
+                        }
+                        // registryAuth.password is a ${secret:...} reference — drop it so audit_log
+                        // records neither secret values nor secret-reference names
+                        if (containerSpec.get("registryAuth") instanceof ObjectNode registryAuth
+                                && registryAuth.has("password")) {
+                            registryAuth.put("password", "");
+                        }
+                    }
                     actionData.set("entity", entityNode);
                 }
                 if (entityId.getEntityType() == EntityType.RULE_CHAIN) {
