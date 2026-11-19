@@ -1,0 +1,86 @@
+/** Decoder **/
+
+// Decode the incoming payload to a JSON object.
+var data = decodeToJson(payload);
+
+// The device name comes from deviceId in the payload.
+// Otherwise, it comes from the custom message property deviceId (sysProp:deviceId).
+// Reject the message if neither is present.
+var deviceName = data.deviceId != null ? String(data.deviceId).trim() : "";
+var propertyId = metadata["sysProp:deviceId"];
+if (!deviceName && propertyId) {
+    deviceName = String(propertyId).trim();
+}
+if (!deviceName) {
+    throw new Error("Payload has no deviceId and the message has no deviceId property");
+}
+// The device profile comes from deviceType. If it is missing or empty, the "default" profile is used.
+var deviceType = data.deviceType != null ? String(data.deviceType).trim() : "";
+if (!deviceType) {
+    deviceType = "default";
+}
+
+// Use the timestamp if provided; otherwise, use the current server time.
+// An invalid timestamp rejects the message.
+var ts = data.timestamp != null && String(data.timestamp).trim() !== "" ? new Date(data.timestamp).getTime() : Date.now();
+if (isNaN(ts)) {
+    throw new Error("Invalid timestamp: " + data.timestamp);
+}
+
+// Static device properties become attributes.
+var attributes = {};
+if (data.location != null) {
+    attributes.latitude = data.location.latitude;
+    attributes.longitude = data.location.longitude;
+    attributes.altitude = data.location.altitude;
+}
+if (data.metadata != null) {
+    attributes.version = data.metadata.version;
+    attributes.manufacturer = data.metadata.manufacturer;
+}
+
+// All other top-level fields (temperature, pressure, status, humidity, ...) become telemetry as they are.
+var handled = ["deviceId", "deviceType", "timestamp", "location", "metadata", "vibration", "alarms"];
+var telemetry = {};
+for (var key in data) {
+    if (handled.indexOf(key) < 0) {
+        telemetry[key] = data[key];
+    }
+}
+if (data.alarms != null) {
+    telemetry.receivedAlarms = data.alarms;
+}
+if (data.vibration != null) {
+    telemetry.vibrationX = data.vibration.x;
+    telemetry.vibrationY = data.vibration.y;
+    telemetry.vibrationZ = data.vibration.z;
+}
+if (data.metadata != null) {
+    telemetry.batteryLevel = data.metadata.batteryLevel;
+    telemetry.batteryStatus = data.metadata.batteryStatus;
+}
+
+var result = {
+    deviceName: deviceName,
+    deviceType: deviceType,
+    attributes: attributes,
+    telemetry: {
+        ts: ts,
+        values: telemetry
+    }
+};
+
+/** Helper functions **/
+
+// Convert the byte array to a string.
+function decodeToString(payload) {
+    return String.fromCharCode.apply(String, payload);
+}
+
+// Convert the byte array to a JSON object.
+function decodeToJson(payload) {
+    return JSON.parse(decodeToString(payload));
+}
+
+// Return the converted uplink message.
+return result;
