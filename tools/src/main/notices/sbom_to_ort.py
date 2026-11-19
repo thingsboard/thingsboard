@@ -84,7 +84,8 @@ def main():
             elif not is_maven(purl) and not purl.startswith('pkg:npm/'):
                 where = license_file(component, here)
                 if where:
-                    license_files.add((component.get('group', ''), component['name'], component.get('version', ''), where))
+                    license_files.add((component.get('group', ''), component['name'], component.get('version', ''),
+                                       tuple(sorted(where.items()))))
                 else:
                     skipped.setdefault('not a Maven or npm package', set()).add(purl or component.get('name'))
             elif is_maven(purl) and own(component, args):
@@ -146,7 +147,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     json.dump({'projectName': 'thingsboard', 'dependencies': dependencies}, open(args.out, 'w'), indent=1)
     json.dump([jars[purl] for purl in sorted(jars)], open(args.jars, 'w'), indent=1)
-    json.dump([{'group': group, 'name': name, 'version': version, **dict([where])}
+    json.dump([{'group': group, 'name': name, 'version': version, **dict(where)}
                for group, name, version, where in sorted(license_files)], open(args.license_files, 'w'), indent=1)
     print(f'{len(dependencies)} packages')
     for reason, items in sorted(skipped.items()):
@@ -159,8 +160,10 @@ def main():
 
 
 def license_file(component, here):
-    """Where the license file of the component is: ('url', the address that the SBOM gives), ('path', the file in this
-    repository that `here` gives for the purl of the component, or for its name when it has none), or None."""
+    """Where the license file of the component is: {'url': the address that the SBOM gives}, {'path': the file in this
+    repository that `here` gives for the purl of the component, or for its name when it has none}, or None. A file in this
+    repository also gets the os qualifier of the purl as the platform, whose sections of the file the notices keep (see
+    license_files.py)."""
     name = component.get('purl') or component['name']
     urls = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'license']
     if len(urls) > 1:
@@ -170,8 +173,20 @@ def license_file(component, here):
         raise stop(f'the SBOM gives a license file for {name}, {urls[0]}, and so does license-files-here.json, '
                    f'{here[name]}. Keep one of them.')
     if urls:
-        return 'url', urls[0]
-    return ('path', here[name]) if name in here else None
+        return {'url': urls[0]}
+    if name in here:
+        platform = qualifiers(name).get('os')
+        return {'path': here[name], **({'platform': platform} if platform else {})}
+    # A file kept for another version of the component would leave this version out of the notices without a word
+    other = [key for key in here if key.startswith('pkg:') and without_version(key) == without_version(name)]
+    if other:
+        raise stop(f'license-files-here.json has the license file of {other[0]}, {here[other[0]]}, and the SBOM '
+                   f'has {name}. Make the file for this version, and then change its entry.')
+    return None
+
+
+def without_version(purl):
+    return re.sub(r'@[^?#]*', '', purl)
 
 
 def is_maven(purl):

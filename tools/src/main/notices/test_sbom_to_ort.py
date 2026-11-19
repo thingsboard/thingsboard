@@ -158,16 +158,35 @@ class IsJarTest(unittest.TestCase):
         self.assertFalse(sbom_to_ort.is_jar('pkg:npm/echarts@5.5.4'))
 
 
+CHROMIUM_LINUX = 'pkg:generic/chromium/chromium@156.0.8078.0?os=linux'
+
+
 class LicenseFileTest(unittest.TestCase):
     def test_the_address_of_the_license_file(self):
         component = {'name': 'node', 'externalReferences': [{'type': 'website', 'url': 'https://nodejs.org'},
                                                             {'type': 'license', 'url': 'https://example.com/LICENSE'}]}
-        self.assertEqual(sbom_to_ort.license_file(component, {}), ('url', 'https://example.com/LICENSE'))
+        self.assertEqual(sbom_to_ort.license_file(component, {}), {'url': 'https://example.com/LICENSE'})
 
     def test_a_license_file_kept_in_this_repository(self):
         here = {'lwm2m-registry': 'application/src/main/data/lwm2m-registry/NOTICE.txt'}
         self.assertEqual(sbom_to_ort.license_file({'name': 'lwm2m-registry'}, here),
-                         ('path', 'application/src/main/data/lwm2m-registry/NOTICE.txt'))
+                         {'path': 'application/src/main/data/lwm2m-registry/NOTICE.txt'})
+
+    def test_a_license_file_of_a_platform(self):
+        here = {CHROMIUM_LINUX: 'CREDITS.txt'}
+        self.assertEqual(sbom_to_ort.license_file({'name': 'chromium', 'purl': CHROMIUM_LINUX}, here),
+                         {'path': 'CREDITS.txt', 'platform': 'linux'})
+
+    def test_a_license_file_of_another_version_stops_the_notices(self):
+        here = {CHROMIUM_LINUX: 'CREDITS.txt'}
+        with self.assertRaises(SystemExit) as stopped:
+            sbom_to_ort.license_file({'name': 'chromium', 'purl': 'pkg:generic/chromium/chromium@157.0.1.0?os=linux'}, here)
+        self.assertIn(f'license-files-here.json has the license file of {CHROMIUM_LINUX}, CREDITS.txt', str(stopped.exception))
+
+    def test_a_license_file_of_another_platform_is_not_another_version(self):
+        here = {CHROMIUM_LINUX: 'CREDITS.txt'}
+        windows = 'pkg:generic/chromium/chromium@156.0.8078.0?os=windows'
+        self.assertIsNone(sbom_to_ort.license_file({'name': 'chromium', 'purl': windows}, here))
 
     def test_a_component_without_one(self):
         self.assertIsNone(sbom_to_ort.license_file({'name': 'chromium'}, {}))
