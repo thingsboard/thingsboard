@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -128,7 +129,9 @@ public class ChirpStackIntegration extends BasicHttpIntegration<JsonHttpIntegrat
                     if (!metadata.containsKey(F_PORT)) {
                         throw new ThingsboardException("FPort is missing in the downlink metadata!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
                     }
-                    String payload = new String(downlink.getData(), StandardCharsets.UTF_8);
+                    String payload = "BINARY".equals(downlink.getContentType())
+                            ? Base64.getEncoder().encodeToString(downlink.getData())
+                            : new String(downlink.getData(), StandardCharsets.UTF_8);
                     ObjectNode body = createBodyForParameter(metadata, payload);
                     try {
                         httpClient.postForEntity(devicesUrl + "/" + metadata.get(DEV_EUI) + "/queue", createRequest(body), String.class);
