@@ -306,4 +306,8 @@ export class DeviceService {
       })
     );
   }
+
+  public pingDevice(deviceId: string): Observable<any> {
+  return this.http.get<any>(`/api/device/ping/${deviceId}`);
+  }
 }
