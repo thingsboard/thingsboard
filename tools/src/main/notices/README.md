@@ -21,18 +21,17 @@ of every step, is `target/notices-product/`.
 ## Steps
 
 1. `scan_cache.py download` adds the scans that others have made.
-2. `sbom_to_ort.py` turns the SBOMs into the list of their third-party packages, and checks them against the curations.
-3. ORT analyzes the list and scans the source of each package for licenses and copyright statements.
-4. `package_configurations.py` excludes the paths of a package that are not shipped, such as tests and documentation.
-5. `notice_files.py` collects the NOTICE files of the packages.
-6. `license_files.py` adds the license files of the components that are not scanned: those that the SBOMs give, such as
+2. `lwm2m_notice.py --check` checks that the license file of the LwM2M object models
+   (`application/src/main/data/lwm2m-registry/NOTICE.txt`) is what their headers give. After a change to the models,
+   write it again with `python3 tools/src/main/notices/lwm2m_notice.py`.
+3. `sbom_to_ort.py` turns the SBOMs into the list of their third-party packages, and checks them against the curations.
+4. ORT analyzes the list and scans the source of each package for licenses and copyright statements.
+5. `package_configurations.py` excludes the paths of a package that are not shipped, such as tests and documentation.
+6. `notice_files.py` collects the NOTICE files of the packages.
+7. `license_files.py` adds the license files of the components that are not scanned: those that the SBOMs give, such as
    the LICENSE of Node.js, downloaded once and kept in `license-files/` of ORT's home; and those kept in this repository,
    which `license-files-here.json` gives by the purl of the component, or by its name when it has none.
-
-Before these, `lwm2m_notice.py --check` checks that the license file of the LwM2M object models
-(`application/src/main/data/lwm2m-registry/NOTICE.txt`) is what their headers give. After a change to the models, write
-it again with `python3 tools/src/main/notices/lwm2m_notice.py`.
-7. ORT writes the notices with `THIRD-PARTY-NOTICES.ftl`.
+8. ORT writes the notices with `THIRD-PARTY-NOTICES.ftl`.
 
 ## Scans
 

@@ -12,7 +12,7 @@ or whose license file is kept in this repository, such as the one made from the 
 see sbom_to_ort.py and license-files-here.json. A file is downloaded once and kept, under the SHA-256 of its address:
 an address names one version of the file, such as the LICENSE at the tag of a release.
 
-Usage: license_files.py --list <file of sbom_to_ort.py> --repository <directory> --downloads <directory> --out <file>
+Usage: license_files.py --list <file of sbom_to_ort.py> --downloads <directory> --out <file>
 """
 import argparse
 import hashlib
@@ -23,31 +23,29 @@ import urllib.error
 import urllib.request
 
 from notice_files import clean, coordinates, layout, ordered
-from sbom_to_ort import stop, write_atomically
+from sbom_to_ort import ROOT, stop, write_atomically
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--list', required=True,
                         help='the components and the addresses of their license files, as sbom_to_ort.py lists them')
-    parser.add_argument('--repository', required=True, help='the root of this repository')
     parser.add_argument('--downloads', required=True, help='directory that keeps the files that were downloaded')
     parser.add_argument('--out', required=True)
     args = parser.parse_args()
 
-    found = {}  # text -> set of (component, address)
+    found = {}  # text -> set of (component, address or path of its file)
     for entry in json.load(open(args.list, encoding='utf-8')):
         component = coordinates(entry['group'], entry['name'], entry['version']).rstrip()
         if 'path' in entry:
-            where = entry['path']
-            text = clean(kept(os.path.join(args.repository, where), component))
+            where, fix = entry['path'], 'Check the file that tools/src/main/notices/license-files-here.json gives.'
+            text = clean(kept(os.path.join(ROOT, where), component))
         else:
-            where = entry['url']
+            where, fix = entry['url'], ('Check the address in the external reference of the type license of the '
+                                        'component, in the pom that declares it.')
             text = clean(content(where, component, args.downloads))
         if not text:
-            raise stop(f'the license file of {component} at {where} is empty. Check the address in the external '
-                       'reference of the type license of the component, in the pom that declares it, or the file '
-                       'that license-files-here.json gives.')
+            raise stop(f'the license file of {component} at {where} is empty. {fix}')
         found.setdefault(text, set()).add((component, where))
 
     # ORT reads the file as UTF-8, whatever the locale of the build is
@@ -56,8 +54,8 @@ def main():
     components = {component for carriers in found.values() for component, _ in carriers}
     print(f'{len(found)} license files of {len(components)} components')
     for carriers, _ in ordered(found):
-        for component, url in carriers:
-            print(f'  {component} ({url})')
+        for component, where in carriers:
+            print(f'  {component} ({where})')
 
 
 def kept(path, component):

@@ -24,9 +24,9 @@ import sys
 import textwrap
 import xml.etree.ElementTree as ElementTree
 
-from sbom_to_ort import stop, write_atomically
+from notice_files import clean
+from sbom_to_ort import ROOT, stop, write_atomically
 
-ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
 MODELS = 'application/src/main/data/lwm2m-registry'
 NOTICE = f'{MODELS}/NOTICE.txt'
 POM = 'application/pom.xml'
@@ -48,7 +48,7 @@ def main():
     args = parser.parse_args()
 
     groups, without = read(os.path.join(ROOT, MODELS))
-    check_sbom({spdx for spdx, _ in groups.values()}, os.path.join(ROOT, POM))
+    check_sbom({spdx for spdx, _, _ in groups.values()}, os.path.join(ROOT, POM))
     text = notice(groups)
     path = os.path.join(ROOT, NOTICE)
     if args.check:
@@ -57,26 +57,27 @@ def main():
                        'python3 tools/src/main/notices/lwm2m_notice.py and commit it with the models.')
         return
     write_atomically(path, text.encode())
-    models = sum(len(files) for _, (_, files) in groups.items())
+    models = sum(len(files) for _, _, files in groups.values())
     print(f'{NOTICE}: {models} models, {len(groups)} license texts')
     if without:
         print(f'Without a license in the header, so not in the file: {", ".join(without)}')
 
 
 def read(directory):
-    """The models by the text of their license, as {text: (SPDX identifier, {file: (copyright notices, text)})}, and the models
-    without a license in their header."""
+    """The models by the text of their license, as {text: (SPDX identifier, the text as the first model has it, {file:
+    copyright notices})}, and the models without a license in their header. The other models differ from the first only
+    in spaces and line breaks."""
     groups, without = {}, []
     for name in sorted((name for name in os.listdir(directory) if name.endswith('.xml')), key=order):
-        found = header(open(os.path.join(directory, name), 'rb').read().decode('utf-8-sig'))
+        found = header(clean(open(os.path.join(directory, name), 'rb').read()))
         if not found:
             without.append(name)
             continue
         copyrights, text = found
         key = ' '.join(text.split())
         if key not in groups:
-            groups[key] = (identify(text, name), {})
-        groups[key][1][name] = (copyrights, text)
+            groups[key] = (identify(text, name), text, {})
+        groups[key][2][name] = copyrights
     return groups, without
 
 
@@ -87,8 +88,8 @@ def order(name):
 
 
 def header(content):
-    """The copyright notices and the text of the license in the comment before the first element, or None."""
-    content = content.replace('\r\n', '\n').replace('\r', '\n')
+    """The copyright notices and the text of the license in the comment before the first element, or None. The content is
+    cleaned by notice_files.clean()."""
     # 507.xml and 508.xml end their comment with !-->
     comment = re.match(r'\s*(<\?xml[^>]*\?>)?\s*<!--(.*?)!?-->', content, re.DOTALL)
     if not comment:
@@ -101,7 +102,7 @@ def header(content):
     if disclaimer:
         lines = lines[disclaimer[0] + 1:]
     copyrights = [' '.join(line.split()) for line in lines if COPYRIGHT.match(line)]
-    text = textwrap.dedent('\n'.join(line.rstrip() for line in lines if not COPYRIGHT.match(line))).strip('\n')
+    text = textwrap.dedent('\n'.join(line for line in lines if not COPYRIGHT.match(line))).strip('\n')
     text = re.sub(r'\n{3,}', '\n\n', text)
     return (copyrights, text) if text else None
 
@@ -139,10 +140,10 @@ def check_sbom(licenses, pom):
 def notice(groups):
     """The text of the file: the groups with the most models first."""
     blocks = [INTRODUCTION]
-    for spdx, models in sorted(groups.values(), key=lambda group: (-len(group[1]), order(next(iter(group[1]))))):
+    for spdx, text, models in sorted(groups.values(), key=lambda group: (-len(group[2]), order(next(iter(group[2]))))):
         title = f'{spdx} ({len(models)} {"model" if len(models) == 1 else "models"})'
         holders = {}
-        for name, (copyrights, _) in models.items():
+        for name, copyrights in models.items():
             for line in copyrights:
                 holders.setdefault(line, []).append(name)
         lines = [title, '~' * len(title), '']
@@ -150,8 +151,7 @@ def notice(groups):
             lines.append(line)
             lines += textwrap.wrap(', '.join(names), 76, initial_indent='    ', subsequent_indent='    ',
                                    break_on_hyphens=False)
-        # The text as the first of the models has it: the others differ from it only in spaces and line breaks
-        lines += ['', next(iter(models.values()))[1]]
+        lines += ['', text]
         blocks.append('\n'.join(lines))
     return '\n\n\n'.join(blocks) + '\n'
 

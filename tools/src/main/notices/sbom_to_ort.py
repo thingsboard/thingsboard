@@ -38,6 +38,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+# The root of this repository, which the paths of the files kept in it are relative to
+ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
 CURATIONS = 'tools/src/main/notices/ort-config/curations/curations.json'
 BUILD_PROBLEM = 'This is a problem of the build or of these tools, not something to decide in the files of the notices.'
 

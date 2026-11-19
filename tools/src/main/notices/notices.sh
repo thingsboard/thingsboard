@@ -35,7 +35,6 @@
 set -euo pipefail
 
 HERE=$(dirname "$(realpath "$0")")
-ROOT=$(realpath "$HERE/../../../..")
 if [ $# -lt 4 ]; then
   echo "usage: $0 <work directory> <project version> <notices file> <SBOM> ... [options of sbom_to_ort.py]" >&2
   echo "       $0 <work directory> <project version> <notices file> --sboms-under <directory> [options of sbom_to_ort.py]" >&2
@@ -140,7 +139,7 @@ step "$WORK/notice-files.log" python3 "$HERE/notice_files.py" --jars "$WORK/jars
   --archive "$ORT_HOME/scanner/archive" --maven-repository "${NOTICES_MAVEN_REPOSITORY:-$HOME/.m2/repository}" \
   --downloads "$ORT_HOME/maven-jars" --out "$WORK/notice-files.txt"
 lap "NOTICE files"
-step "$WORK/license-files.log" python3 "$HERE/license_files.py" --list "$WORK/license-files.json" --repository "$ROOT" \
+step "$WORK/license-files.log" python3 "$HERE/license_files.py" --list "$WORK/license-files.json" \
   --downloads "$ORT_HOME/license-files" --out "$WORK/license-files.txt"
 lap "license files"
 # The template includes notice-files.txt and license-files.txt and imports stop.ftl, and can only read what is beside it
