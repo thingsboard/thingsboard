@@ -1,0 +1,12 @@
+{
+  "deviceName": "temp-sensor-02",
+  "deviceType": "default",
+  "attributes": {},
+  "telemetry": {
+    "ts": 1794995570000,
+    "values": {
+      "temperature": 31.7,
+      "humidity": 41
+    }
+  }
+}

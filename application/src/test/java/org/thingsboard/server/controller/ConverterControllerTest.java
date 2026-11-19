@@ -786,6 +786,121 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAzureEventHubDefaultDecoder() throws Exception {
+        String uplinkDir = "converters/AZURE_EVENT_HUB/uplink/";
+        String payload = readResource(uplinkDir + "payload.json").orElseThrow();
+        JsonNode metadata = JacksonUtil.toJsonNode(readResource(uplinkDir + "metadata.json").orElseThrow());
+        JsonNode expectedValues = JacksonUtil.toJsonNode("{\"temperature\":31.7,\"humidity\":41}");
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String decoder = readResource(uplinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // The default payload is a real IoT Hub device message without deviceId and timestamp:
+            // the device name comes from the sender, and ts is the current server time.
+            long before = System.currentTimeMillis();
+            JsonNode response = decodeAzureEventHubUplink(decoder, scriptLang, payload, metadata);
+            long after = System.currentTimeMillis();
+            softly.assertThat(response.get("error").asText()).as(scriptLang + ": default payload error").isEmpty();
+            JsonNode output = JacksonUtil.toJsonNode(response.get("output").asText());
+            softly.assertThat(output).as(scriptLang + ": default payload output").isNotNull();
+            if (output != null) {
+                softly.assertThat(output.path("deviceName").asText()).as(scriptLang + ": deviceName").isEqualTo("temp-sensor-02");
+                softly.assertThat(output.path("deviceType").asText()).as(scriptLang + ": deviceType").isEqualTo("default");
+                softly.assertThat(output.path("attributes")).as(scriptLang + ": attributes").isEqualTo(JacksonUtil.newObjectNode());
+                softly.assertThat(output.path("telemetry").path("values")).as(scriptLang + ": telemetry").isEqualTo(expectedValues);
+                softly.assertThat(output.path("telemetry").path("ts").asLong()).as(scriptLang + ": ts").isBetween(before, after);
+            }
+
+            // An empty timestamp is replaced with the current server time.
+            before = System.currentTimeMillis();
+            JsonNode emptyTimestamp = decodeAzureEventHubUplink(decoder, scriptLang,
+                    "{\"timestamp\":\"\",\"temperature\":31.7,\"humidity\":41}", metadata);
+            after = System.currentTimeMillis();
+            assertAzureEventHubDecoded(softly, scriptLang + ": empty timestamp", emptyTimestamp, "temp-sensor-02", "default");
+            JsonNode emptyTimestampOutput = JacksonUtil.toJsonNode(emptyTimestamp.get("output").asText());
+            if (emptyTimestampOutput != null) {
+                softly.assertThat(emptyTimestampOutput.path("telemetry").path("ts").asLong())
+                        .as(scriptLang + ": empty timestamp ts").isBetween(before, after);
+            }
+
+            // A missing, null or blank deviceId falls back to the sender; spaces around both are trimmed.
+            JsonNode sender = JacksonUtil.toJsonNode("{\"sysProp:iothub-connection-device-id\":\" s-3 \"}");
+            assertAzureEventHubDecoded(softly, scriptLang + ": deviceId null",
+                    decodeAzureEventHubUplink(decoder, scriptLang, "{\"deviceId\":null,\"temperature\":1}", sender), "s-3", "default");
+            assertAzureEventHubDecoded(softly, scriptLang + ": deviceId blank",
+                    decodeAzureEventHubUplink(decoder, scriptLang, "{\"deviceId\":\"   \",\"temperature\":1}", sender), "s-3", "default");
+
+            // A numeric deviceId is used as the device name; a blank deviceType gives the "default" profile.
+            assertAzureEventHubDecoded(softly, scriptLang + ": numeric deviceId",
+                    decodeAzureEventHubUplink(decoder, scriptLang, "{\"deviceId\":12345,\"deviceType\":\"   \",\"temperature\":1}", sender), "12345", "default");
+
+            // Without a device name in the payload or a non-blank sender in the metadata, the message is rejected.
+            for (JsonNode noSender : List.of(JacksonUtil.newObjectNode(),
+                    JacksonUtil.toJsonNode("{\"sysProp:iothub-connection-device-id\":\"   \"}"))) {
+                JsonNode rejected = decodeAzureEventHubUplink(decoder, scriptLang, payload, noSender);
+                softly.assertThat(rejected.get("output").asText()).as(scriptLang + ": no device name output " + noSender).isEmpty();
+                softly.assertThat(rejected.get("error").asText()).as(scriptLang + ": no device name error " + noSender)
+                        .contains("Payload has no deviceId and the message has no sysProp:iothub-connection-device-id");
+            }
+
+            // An invalid timestamp rejects the message.
+            JsonNode invalidTimestamp = decodeAzureEventHubUplink(decoder, scriptLang, "{\"timestamp\":\"abc\",\"temperature\":1}", metadata);
+            softly.assertThat(invalidTimestamp.get("output").asText()).as(scriptLang + ": invalid timestamp output").isEmpty();
+            softly.assertThat(invalidTimestamp.get("error").asText()).as(scriptLang + ": invalid timestamp error").isNotEmpty();
+            if (scriptLang == ScriptLanguage.JS) {
+                softly.assertThat(invalidTimestamp.get("error").asText()).as(scriptLang + ": invalid timestamp error text")
+                        .contains("Invalid timestamp: abc");
+            }
+        }
+        softly.assertAll();
+    }
+
+    @Test
+    public void testAzureEventHubDefaultEncoder() throws Exception {
+        String downlinkDir = "converters/AZURE_EVENT_HUB/downlink/";
+        String msg = readResource(downlinkDir + "payload.json").orElseThrow();
+
+        SoftAssertions softly = new SoftAssertions();
+        for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+            String encoder = readResource(downlinkDir + scriptLang.name().toLowerCase() + ".raw").orElseThrow();
+
+            // Spaces around deviceName are trimmed.
+            JsonNode trimmed = encodeDownlink(encoder, scriptLang, msg, "ATTRIBUTES_UPDATED", "{\"deviceName\":\" temp-sensor-02 \"}");
+            softly.assertThat(trimmed.get("error").asText()).as(scriptLang + ": deviceName with spaces error").isEmpty();
+            softly.assertThat(JacksonUtil.toJsonNode(trimmed.get("output").asText()).path("metadata").path("deviceId").asText())
+                    .as(scriptLang + ": deviceName with spaces").isEqualTo("temp-sensor-02");
+
+            // A missing or blank deviceName rejects the message.
+            for (String metadata : List.of("{}", "{\"deviceName\":\"   \"}")) {
+                JsonNode rejected = encodeDownlink(encoder, scriptLang, msg, "ATTRIBUTES_UPDATED", metadata);
+                softly.assertThat(rejected.get("output").isNull()).as(scriptLang + ": " + metadata + " output").isTrue();
+                softly.assertThat(rejected.get("error").asText()).as(scriptLang + ": " + metadata + " error")
+                        .contains("Message metadata has no deviceName");
+            }
+        }
+        softly.assertAll();
+    }
+
+    private static void assertAzureEventHubDecoded(SoftAssertions softly, String description, JsonNode response, String deviceName, String deviceType) {
+        softly.assertThat(response.get("error").asText()).as(description + " error").isEmpty();
+        JsonNode output = JacksonUtil.toJsonNode(response.get("output").asText());
+        softly.assertThat(output).as(description + " output").isNotNull();
+        if (output != null) {
+            softly.assertThat(output.path("deviceName").asText()).as(description + " deviceName").isEqualTo(deviceName);
+            softly.assertThat(output.path("deviceType").asText()).as(description + " deviceType").isEqualTo(deviceType);
+        }
+    }
+
+    private JsonNode decodeAzureEventHubUplink(String decoder, ScriptLanguage scriptLang, String payload, JsonNode metadata) {
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("decoder", decoder);
+        inputParams.set("metadata", metadata);
+        inputParams.put("payload", Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8)));
+        return doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
+    }
+
+    @Test
     public void testTTINotDefaultDecoder() throws IOException {
         String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"eui-1000000000000001\",\"profile\":\"IndustrialSensorProfile\",\"customer\":\"MyCustomer\",\"group\":\"SensorsGroup\"," +
                 "\"telemetry\":{\"ts\":1684398325906,\"values\":{\"battery\":95,\"temperature\":36.6}},\"attributes\":{\"devAddr\":\"20000001\",\"fPort\":85,\"eui\":\"1000000000000001\"}}";

@@ -1,0 +1,7 @@
+{
+  "contentType": "JSON",
+  "data": "{\"temperatureUploadFrequency\":60}",
+  "metadata": {
+    "deviceId": "temp-sensor-02"
+  }
+}

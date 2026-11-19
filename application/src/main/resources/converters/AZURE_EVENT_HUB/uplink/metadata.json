@@ -1,0 +1,11 @@
+{
+  "sysProp:iothub-connection-auth-generation-id": "639305923345763859",
+  "sysProp:iothub-connection-auth-method": "{\"scope\":\"device\",\"type\":\"sas\",\"issuer\":\"iothub\"}",
+  "sysProp:iothub-connection-device-id": "temp-sensor-02",
+  "sysProp:iothub-enqueuedtime": "Wed Nov 18 11:52:50 EET 2026",
+  "sysProp:iothub-message-source": "Telemetry",
+  "sysProp:x-opt-enqueued-time": "2026-11-18T09:52:50.139Z",
+  "sysProp:x-opt-offset": "0",
+  "sysProp:x-opt-sequence-number": "0",
+  "sysProp:x-opt-sequence-number-epoch": "-1"
+}
