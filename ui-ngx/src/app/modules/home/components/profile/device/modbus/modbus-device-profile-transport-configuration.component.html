@@ -5,7 +5,7 @@
 
 -->
 <form [formGroup]="modbusConfigurationForm" style="padding: 8px 0 16px;">
-  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+  <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>device-profile.modbus.timeout-ms</mat-label>
       <input matInput formControlName="timeoutMs" type="number" min="1" required/>
@@ -26,7 +26,7 @@
       }
     </mat-form-field>
   </section>
-  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+  <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>device-profile.modbus.poll-period-ms</mat-label>
       <input matInput formControlName="pollPeriodMs" type="number" min="1" required/>
@@ -45,7 +45,7 @@
       }
     </mat-form-field>
   </section>
-  <section class="mb-4 flex flex-row gap-2 xs:flex-col xs:gap-4">
+  <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>device-profile.modbus.byte-order</mat-label>
       <mat-select formControlName="byteOrder" required>

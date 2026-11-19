@@ -4,7 +4,7 @@
 /**
  * Modbus transport models. Mirror the backend classes in common/data:
  * ModbusDeviceProfileTransportConfiguration, ModbusMapping, ModbusFunctionCode, ModbusDataType,
- * ModbusDeviceTransportConfiguration and ModbusTcpEndpoint. The server validates the same rules on save.
+ * ModbusDeviceTransportConfiguration, ModbusTcpEndpoint and ModbusSerialEndpoint. The server validates the same rules on save.
  */
 
 export const MODBUS_MAX_ADDRESS = 0xFFFF;
@@ -152,11 +152,25 @@ export enum ModbusTcpFraming {
   RTU = 'RTU'
 }
 
-/** Valid unit ids per framing: RTU excludes 0 (broadcast) and 248-255 (reserved). */
-export const modbusUnitIdRange = new Map<ModbusTcpFraming, { min: number; max: number }>([
-  [ModbusTcpFraming.MBAP, {min: 0, max: 255}],
-  [ModbusTcpFraming.RTU, {min: 1, max: 247}]
-]);
+export enum ModbusEndpointType {
+  TCP = 'TCP',
+  SERIAL = 'SERIAL'
+}
+
+export enum ModbusSerialParity {
+  NONE = 'NONE',
+  ODD = 'ODD',
+  EVEN = 'EVEN'
+}
+
+export enum ModbusSerialStopBits {
+  ONE = 'ONE',
+  TWO = 'TWO'
+}
+
+/** Valid unit ids: RTU frames, on a serial port or over TCP, exclude 0 (broadcast) and 248-255 (reserved). */
+export const modbusUnitIdRangeOf = (endpointType: ModbusEndpointType, framing: ModbusTcpFraming): { min: number; max: number } =>
+  endpointType === ModbusEndpointType.SERIAL || framing === ModbusTcpFraming.RTU ? {min: 1, max: 247} : {min: 0, max: 255};
 
 export interface ModbusTcpEndpoint {
   type: 'TCP';
@@ -165,8 +179,29 @@ export interface ModbusTcpEndpoint {
   framing: ModbusTcpFraming;
 }
 
+/** RS-485 delays are whole milliseconds, limited by the Linux serial layer that applies them. */
+export const MODBUS_RS485_MAX_DELAY_MS = 100;
+
+export interface ModbusRs485Settings {
+  rtsActiveHigh: boolean;
+  termination: boolean;
+  rxDuringTx: boolean;
+  delayBeforeMs: number;
+  delayAfterMs: number;
+}
+
+export interface ModbusSerialEndpoint {
+  type: 'SERIAL';
+  port: string;
+  baudRate: number;
+  dataBits?: number;
+  parity: ModbusSerialParity;
+  stopBits: ModbusSerialStopBits;
+  rs485?: ModbusRs485Settings;
+}
+
 export interface ModbusDeviceTransportConfiguration {
-  endpoint?: ModbusTcpEndpoint;
+  endpoint?: ModbusTcpEndpoint | ModbusSerialEndpoint;
   unitId?: number;
   timeoutMs?: number;
   pollPeriodMs?: number;
