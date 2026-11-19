@@ -46,11 +46,14 @@ def main():
     entries = json.load(open(args.list, encoding='utf-8'))
     platforms = platforms_of(entries)
     found = {}  # text -> set of (component, address or path of its file)
+    texts = {}  # path of a file kept here -> its text for the platforms of its components
     for entry in entries:
         component = coordinates(entry['group'], entry['name'], entry['version']).rstrip()
         if 'path' in entry:
             where, fix = entry['path'], 'Check the file that tools/src/main/notices/license-files-here.json gives.'
-            text = for_platforms(clean(kept(os.path.join(ROOT, where), component)), platforms[where], where)
+            if where not in texts:
+                texts[where] = for_platforms(clean(kept(os.path.join(ROOT, where), component)), platforms[where], where)
+            text = texts[where]
         else:
             where, fix = entry['url'], ('Check the address in the external reference of the type license of the '
                                         'component, in the pom that declares it.')
@@ -82,21 +85,21 @@ def platforms_of(entries):
 def for_platforms(text, platforms, path):
     """The text without its sections for other platforms than these, or all of it for None. A platform without a section
     in a file that has sections is a mistake that would leave its section out of its notices, without a word."""
-    sections = {section[1] for section in map(SECTION.match, text.split('\n')) if section}
-    unknown = sorted((platforms or set()) - sections) if sections else []
+    if platforms is None:
+        return text
+    lines, sections, keep = [], set(), True
+    for line in text.split('\n'):
+        section = SECTION.match(line)
+        if section:
+            sections.add(section[1])
+            keep = section[1] in platforms
+        if keep:
+            lines.append(line)
+    unknown = sorted(platforms - sections) if sections else []
     if unknown:
         raise stop(f'{path} has no section for the platform {", ".join(unknown)}, which license-files-here.json gives: '
                    f'its sections are for {", ".join(sorted(sections))}. Fix the platform in '
                    'tools/src/main/notices/license-files-here.json.')
-    if platforms is None:
-        return text
-    lines, keep = [], True
-    for line in text.split('\n'):
-        section = SECTION.match(line)
-        if section:
-            keep = section[1] in platforms
-        if keep:
-            lines.append(line)
     return '\n'.join(lines).strip('\n')
 
 

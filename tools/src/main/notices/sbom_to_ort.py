@@ -160,9 +160,9 @@ def main():
 
 
 def read_here(path):
-    """The license files kept in this repository, by the purl of the component, or by its name when it has none: each is
-    the path of the file, or {"path": ..., "platform": ...} for a file with sections for one platform, which the notices
-    of another platform leave out (see license_files.py)."""
+    """The license files kept in this repository, by the purl of the component, or by its name when it has none, each as
+    {"path": ...} or {"path": ..., "platform": ...}: the file may give the path alone. A platform is for a file with
+    sections for one platform, which the notices of another platform leave out (see license_files.py)."""
     here = {}
     for key, value in json.load(open(path, encoding='utf-8')).items():
         entry = {'path': value} if isinstance(value, str) else value
@@ -191,7 +191,7 @@ def license_file(component, here):
     other = [key for key in here if key.startswith('pkg:') and without_version(key) == without_version(name)]
     if other:
         raise stop(f'license-files-here.json has the license file of {other[0]}, {here[other[0]]["path"]}, and the SBOM '
-                   f'has {name}. Make the file for this version, as the README beside it says, and then change its entry.')
+                   f'has {name}. Make the file for this version, and then change its entry.')
     return None
 
 
