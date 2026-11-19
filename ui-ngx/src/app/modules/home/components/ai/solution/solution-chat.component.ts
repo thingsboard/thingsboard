@@ -829,6 +829,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   ngOnDestroy(): void {
+    this.keepRunningListed();
     this.clearWork();
     this.cancelPending$.next();
     this.cancelPending$.complete();
@@ -1448,7 +1449,14 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     }));
   }
 
+  private keepRunningListed(): void {
+    if (this.solutionId && this.solutionId !== NEW_SOLUTION_ID && (this.loading() || this.isGenerating())) {
+      this.aiSolutions.keepRunning(this.solutionId);
+    }
+  }
+
   private resetSolution(): void {
+    this.keepRunningListed();
     this.clearWork();
     this.pickedView.set(null);
     this.json.set(false);

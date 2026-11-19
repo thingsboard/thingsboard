@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { inject, Injectable, signal } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, of, Subscription, timer } from 'rxjs';
+import { catchError, finalize, map, switchMap, takeWhile, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ChatLevel } from '@shared/models/ai-chat.models';
 import { SolutionsCreatorService } from '@core/http/solutions-creator.service';
@@ -15,8 +15,12 @@ import {
   SolutionUpdateRequest
 } from '@shared/models/solution-creator.models';
 
+const SOLUTIONS_POLL_MS = 5000;
+
 @Injectable({providedIn: 'root'})
 export class AiSolutionsService {
+
+  private following: Subscription | null = null;
 
   private _solutions = signal<SolutionInfo[]>([]);
   readonly solutions = this._solutions.asReadonly();
@@ -38,10 +42,30 @@ export class AiSolutionsService {
         next: solutions => {
           this._solutions.set(solutions);
           this._loaded.set(true);
+          this.followRunning();
         },
         error: () => this._loaded.set(true)
       })
     );
+  }
+
+  keepRunning(solutionId: string | undefined): void {
+    if (!solutionId) {
+      return;
+    }
+    this.update(solutionId, {status: 'RUNNING', statusReason: undefined});
+    this.followRunning();
+  }
+
+  followRunning(): void {
+    if (this.following) {
+      return;
+    }
+    this.following = timer(SOLUTIONS_POLL_MS, SOLUTIONS_POLL_MS).pipe(
+      takeWhile(() => this._solutions().some(solution => solution.status === 'RUNNING' && !this._running().has(solution.id))),
+      switchMap(() => this.load().pipe(catchError(() => EMPTY))),
+      finalize(() => this.following = null)
+    ).subscribe();
   }
 
   setRunning(solutionId: string | undefined, running: boolean): void {
