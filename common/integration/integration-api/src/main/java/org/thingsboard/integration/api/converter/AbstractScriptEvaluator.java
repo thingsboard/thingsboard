@@ -21,7 +21,7 @@ public abstract class AbstractScriptEvaluator {
     protected final EntityId entityId;
 
     protected volatile UUID scriptId;
-    private volatile boolean isErrorScript = false;
+    private volatile Exception scriptCompilationError;
 
 
     public AbstractScriptEvaluator(TenantId tenantId, ScriptInvokeService scriptInvokeService, EntityId entityId, ScriptType scriptType, String script) {
@@ -43,8 +43,8 @@ public abstract class AbstractScriptEvaluator {
             return;
         }
 
-        if (isErrorScript) {
-            throw new IllegalArgumentException("Can't compile uplink converter script ");
+        if (scriptCompilationError != null) {
+            throw new IllegalArgumentException("Can't compile uplink converter script ", scriptCompilationError);
         }
 
         synchronized (this) {
@@ -53,7 +53,7 @@ public abstract class AbstractScriptEvaluator {
                     this.scriptId = this.scriptInvokeService.eval(tenantId, scriptType, script, this.getArgNames()).get();
                 } catch (Exception e) {
                     if (!(e.getCause() instanceof TimeoutException)) {
-                        isErrorScript = true;
+                        scriptCompilationError = e;
                     }
                     throw new IllegalArgumentException("Can't compile script: " + e.getMessage(), e);
                 }

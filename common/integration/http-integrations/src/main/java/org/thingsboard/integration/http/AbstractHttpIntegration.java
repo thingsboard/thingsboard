@@ -10,6 +10,7 @@ import org.thingsboard.integration.api.AbstractIntegration;
 import org.thingsboard.integration.api.controller.HttpIntegrationMsg;
 import org.thingsboard.integration.api.util.ConvertUtil;
 import org.thingsboard.integration.api.util.ExceptionUtil;
+import org.thingsboard.script.api.TbScriptException;
 
 import javax.script.ScriptException;
 
@@ -50,6 +51,14 @@ public abstract class AbstractHttpIntegration<T extends HttpIntegrationMsg<?>> e
     private void handleException(T msg, Exception e) {
         HttpStatus status;
         Exception se = ExceptionUtil.lookupExceptionInCause(e, ScriptException.class, JsonParseException.class);
+        if (se == null) {
+            // TBEL errors are not wrapped in ScriptException
+            TbScriptException tbelError = ExceptionUtil.lookupException(e, TbScriptException.class);
+            if (tbelError != null && (tbelError.getErrorCode() == TbScriptException.ErrorCode.RUNTIME
+                    || tbelError.getErrorCode() == TbScriptException.ErrorCode.COMPILATION)) {
+                se = tbelError;
+            }
+        }
         if (se != null) {
             e = se;
             status = HttpStatus.BAD_REQUEST;

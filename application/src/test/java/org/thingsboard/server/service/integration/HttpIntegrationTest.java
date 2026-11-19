@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
@@ -312,6 +313,54 @@ public class HttpIntegrationTest extends AbstractIntegrationTest {
                             && "UPDATED".equals(event.getBody().get("event").asText())
                             && "true".equals(event.getBody().get("success").asText());
                 });
+    }
+
+    @Test
+    public void testTbelConverterError_thenBadRequest() throws Exception {
+        createIntegrationWithUplinkScript("TBEL", "raiseError(\"Device name is missing.\"); return {};");
+
+        postUplink().andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testJsConverterError_thenBadRequest() throws Exception {
+        createIntegrationWithUplinkScript("JS", "throw new Error(\"Device name is missing.\");");
+
+        postUplink().andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testTbelConverterCompilationError_thenBadRequestForEveryMessage() throws Exception {
+        createIntegrationWithUplinkScript("TBEL", "return {deviceName: ;");
+
+        postUplink().andExpect(status().isBadRequest());
+        postUplink().andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testJsConverterCompilationError_thenBadRequestForEveryMessage() throws Exception {
+        createIntegrationWithUplinkScript("JS", "return {deviceName: ;");
+
+        postUplink().andExpect(status().isBadRequest());
+        postUplink().andExpect(status().isBadRequest());
+    }
+
+    private void createIntegrationWithUplinkScript(String scriptLang, String script) throws Exception {
+        loginTenantAdmin();
+
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.put("scriptLang", scriptLang);
+        configuration.put("decoder", script);
+        configuration.put("tbelDecoder", script);
+        createConverter(HTTP_UPLINK_CONVERTER_NAME, ConverterType.UPLINK, configuration);
+
+        createIntegration("Test HTTP integration", IntegrationType.HTTP);
+        enableIntegration();
+        waitUntilIntegrationStarted(tenantId, integration.getId());
+    }
+
+    private ResultActions postUplink() throws Exception {
+        return doPostAsync("/api/v1/integrations/http/{routingKey}", TEST_DATA, TimeUnit.SECONDS.toMillis(TIMEOUT), integration.getRoutingKey());
     }
 
     private void createIntegration(boolean isDevice) throws Exception {
