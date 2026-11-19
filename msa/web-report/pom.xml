@@ -284,7 +284,6 @@
                     <execution>
                         <id>bundled-sbom</id>
                         <configuration>
-                            <skip>${skip.ui.build}</skip>
                             <components combine.children="append">
                                 <component>
                                     <type>application</type>
