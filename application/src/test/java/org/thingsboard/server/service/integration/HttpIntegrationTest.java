@@ -30,9 +30,14 @@ import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.secret.Secret;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.cache.DefaultIntegrationExecutorTenantProfileCache;
 import org.thingsboard.server.service.cache.IntegrationExecutorTenantProfileCache;
 
@@ -276,6 +281,57 @@ public class HttpIntegrationTest extends AbstractIntegrationTest {
         Assert.assertNotNull(events);
         Assert.assertEquals(1, events.size());
         Assert.assertEquals("Converter debug rate limits reached!", events.get(0).getBody().get("error").asText());
+    }
+
+    @Test
+    public void testResponseHeadersFromDownlinkMetadata_thenHeaderPrefixIsCaseInsensitive() throws Exception {
+        loginTenantAdmin();
+
+        ObjectNode uplinkConfiguration = JacksonUtil.newObjectNode();
+        uplinkConfiguration.put("scriptLang", "TBEL");
+        uplinkConfiguration.put("decoder", "return {};");
+        uplinkConfiguration.put("tbelDecoder", "return {deviceName: 'http_device', deviceType: 'http', telemetry: {test: 1}};");
+        createConverter(HTTP_UPLINK_CONVERTER_NAME, ConverterType.UPLINK, uplinkConfiguration);
+
+        ObjectNode downlinkConfiguration = JacksonUtil.newObjectNode();
+        downlinkConfiguration.put("scriptLang", "TBEL");
+        downlinkConfiguration.put("encoder", "return {};");
+        downlinkConfiguration.put("tbelEncoder", "return {contentType: 'JSON', data: JSON.stringify(msg), " +
+                "metadata: {'Header:X-Upper-Case': 'upper', 'header:X-Lower-Case': 'lower'}};");
+        createConverter("Test downlink converter", ConverterType.DOWNLINK, downlinkConfiguration);
+
+        createIntegration("Test HTTP integration", IntegrationType.HTTP);
+        enableIntegration();
+        waitUntilIntegrationStarted(tenantId, integration.getId());
+
+        Device device = new Device();
+        device.setName("http_device");
+        device.setType("http");
+        device = doPost("/api/device", device, Device.class);
+
+        TbMsg downlink = TbMsg.newMsg()
+                .type(TbMsgType.ATTRIBUTES_UPDATED)
+                .originator(device.getId())
+                .copyMetaData(new TbMsgMetaData())
+                .data("{\"uploadFrequency\":60}")
+                .build();
+        downlinkService.onRuleEngineDownlinkMsg(tenantId, integration.getId(), TransportProtos.IntegrationDownlinkMsgProto.newBuilder()
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setIntegrationIdLSB(integration.getId().getId().getLeastSignificantBits())
+                .setIntegrationIdMSB(integration.getId().getId().getMostSignificantBits())
+                .setDataProto(TbMsg.toProto(downlink))
+                .build(), TbCallback.EMPTY);
+
+        var response = await("uplink response with the pending downlink")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doPostAsync("/api/v1/integrations/http/{routingKey}", TEST_DATA,
+                        TimeUnit.SECONDS.toMillis(TIMEOUT), integration.getRoutingKey()).andReturn(),
+                        result -> result.getResponse().getStatus() == 200);
+
+        Assert.assertEquals("{\"uploadFrequency\":60}", response.getResponse().getContentAsString());
+        Assert.assertEquals("upper", response.getResponse().getHeader("X-Upper-Case"));
+        Assert.assertEquals("lower", response.getResponse().getHeader("X-Lower-Case"));
     }
 
     @Test
