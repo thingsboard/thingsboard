@@ -63,6 +63,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
@@ -127,7 +128,10 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     protected DefaultLwM2mUplinkMsgHandler defaultUplinkMsgHandlerTest;
 
     @Autowired
-    private LwM2mClientContext clientContextTest;
+    protected LwM2mClientContext clientContextTest;
+
+    @Autowired
+    protected TransportService transportServiceTest;
 
     //  Lwm2m Server
     public static final String LWM2M_HOST = "localhost";
@@ -573,9 +577,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint, resources);
 
-        int clientPort = PortFinder.findAvailableUdpPort();
-        //automatic client port assignment
-        lwM2MTestClient.init(security, securityBs, 0 /* clientPort */, isRpc,
+        lwM2MTestClient.init(security, securityBs, isRpc,
                 this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest,
                 clientDtlsCidLength, queueMode, supportFormatOnly_SenMLJSON_SenMLCBOR, value3_0_9);
         lwM2MTestClient.setDeviceIdStr(deviceIdStr);

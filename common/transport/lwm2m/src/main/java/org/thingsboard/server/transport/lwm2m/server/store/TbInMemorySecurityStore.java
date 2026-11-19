@@ -12,6 +12,7 @@ import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -117,6 +118,26 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
             }
         } finally {
             writeLock.unlock();
+        }
+    }
+    @Override
+    public void removeByDeviceId(UUID deviceId) {
+        String endpointToRemove = null;
+        readLock.lock();
+        try {
+            for (Map.Entry<String, TbLwM2MSecurityInfo> entry : securityByEp.entrySet()) {
+                TbLwM2MSecurityInfo info = entry.getValue();
+                if (info != null && info.getMsg() != null && info.getMsg().getDeviceInfo() != null
+                        && deviceId.equals(info.getMsg().getDeviceInfo().getDeviceId().getId())) {
+                    endpointToRemove = entry.getKey();
+                    break;
+                }
+            }
+        } finally {
+            readLock.unlock();
+        }
+        if (endpointToRemove != null) {
+            remove(endpointToRemove);
         }
     }
 
