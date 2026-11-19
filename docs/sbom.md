@@ -134,7 +134,11 @@ for it, at the address of that version, and the notices include that file as it 
 </externalReferences>
 ```
 
-A component without one is left out of the notices; the notices log lists it.
+When the vendor publishes no such file, keep one in this repository and add it to
+`tools/src/main/notices/license-files-here.json`, by the purl of the component, or by its name when it has none. The LwM2M
+object models have one, made from their headers by `tools/src/main/notices/lwm2m_notice.py`.
+
+A component without either is left out of the notices; the notices log lists it.
 
 ### Copied third-party code
 

@@ -11,8 +11,8 @@
 #
 # The SBOMs are turned into the list of their third-party packages (sbom_to_ort.py). ORT scans the source of each
 # package for licenses and copyright statements, and writes the notices with THIRD-PARTY-NOTICES.ftl. The NOTICE files
-# of the packages are added as they are (notice_files.py), and so are the license files that the SBOMs give for the
-# components that are not scanned (license_files.py).
+# of the packages are added as they are (notice_files.py), and so are the license files of the components that are not
+# scanned (license_files.py): those that the SBOMs give, and those kept in this repository (license-files-here.json).
 #
 # Needs Docker and python3. The results of the scans are kept in ~/.ort/scanner (or in $NOTICES_ORT_HOME/scanner):
 # a package that is not there yet is scanned, which takes minutes. The scans that others have made are downloaded
@@ -110,16 +110,19 @@ ort_step() { # log file, arguments of ORT: the message a template stopped with, 
 rm -rf "$WORK/project" "$WORK/package-configurations" "$WORK/scan-issues"
 rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,license-files.json,notice-files.txt,license-files.txt}
 rm -f "$WORK"/{THIRD-PARTY-NOTICES.ftl,stop.ftl,THIRD-PARTY-NOTICES}
-rm -f "$WORK"/{convert,analyze,scan,scan-issues,package-configurations,notice-files,license-files,report}.log
+rm -f "$WORK"/{lwm2m-notice,convert,analyze,scan,scan-issues,package-configurations,notice-files,license-files,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
 LAP=$SECONDS
 python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" \
   --url "${NOTICES_SCAN_CACHE_URL:-https://repo.thingsboard.io/artifactory/ort/scan-cache.tar.gz}" || { durations >&2; exit 1; }
 lap "cache download"
+# The license file of the LwM2M object models is made from their headers: a model changed since then stops the notices
+step "$WORK/lwm2m-notice.log" python3 "$HERE/lwm2m_notice.py" --check
 step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERSION" --cache "$ORT_HOME/maven-sources.json" \
   --curations "$HERE/ort-config/curations/curations.json" \
   --own org.thingsboard.ai/common --own org.thingsboard.license/client --own org.thingsboard.license/shared \
-  --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" --license-files "$WORK/license-files.json" "$@"
+  --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" --license-files "$WORK/license-files.json" \
+  --license-files-here "$HERE/license-files-here.json" "$@"
 lap convert
 ort_step "$WORK/analyze.log" -P ort.analyzer.enabledPackageManagers=OrtProjectFile analyze -f JSON -i /work/project -o /work
 lap analyze

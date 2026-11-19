@@ -7,9 +7,10 @@
 the components that it belongs to.
 
 These are components that are neither Maven nor npm packages, whose SBOM gives the address of a license file that
-their vendor publishes for them, such as the LICENSE of Node.js, which covers Node.js and the libraries it bundles:
-see sbom_to_ort.py. A file is downloaded once and kept, under the SHA-256 of its address: an address names one
-version of the file, such as the LICENSE at the tag of a release.
+their vendor publishes for them, such as the LICENSE of Node.js, which covers Node.js and the libraries it bundles,
+or whose license file is kept in this repository, such as the one made from the headers of the LwM2M object models:
+see sbom_to_ort.py and license-files-here.json. A file is downloaded once and kept, under the SHA-256 of its address:
+an address names one version of the file, such as the LICENSE at the tag of a release.
 
 Usage: license_files.py --list <file of sbom_to_ort.py> --downloads <directory> --out <file>
 """
@@ -22,7 +23,7 @@ import urllib.error
 import urllib.request
 
 from notice_files import clean, coordinates, layout, ordered
-from sbom_to_ort import stop, write_atomically
+from sbom_to_ort import ROOT, stop, write_atomically
 
 
 def main():
@@ -33,14 +34,19 @@ def main():
     parser.add_argument('--out', required=True)
     args = parser.parse_args()
 
-    found = {}  # text -> set of (component, address)
+    found = {}  # text -> set of (component, address or path of its file)
     for entry in json.load(open(args.list, encoding='utf-8')):
         component = coordinates(entry['group'], entry['name'], entry['version']).rstrip()
-        text = clean(content(entry['url'], component, args.downloads))
+        if 'path' in entry:
+            where, fix = entry['path'], 'Check the file that tools/src/main/notices/license-files-here.json gives.'
+            text = clean(kept(os.path.join(ROOT, where), component))
+        else:
+            where, fix = entry['url'], ('Check the address in the external reference of the type license of the '
+                                        'component, in the pom that declares it.')
+            text = clean(content(where, component, args.downloads))
         if not text:
-            raise stop(f"the license file of {component} at {entry['url']} is empty. Check the address in the "
-                       'external reference of the type license of the component, in the pom that declares it.')
-        found.setdefault(text, set()).add((component, entry['url']))
+            raise stop(f'the license file of {component} at {where} is empty. {fix}')
+        found.setdefault(text, set()).add((component, where))
 
     # ORT reads the file as UTF-8, whatever the locale of the build is
     with open(args.out, 'w', encoding='utf-8') as out:
@@ -48,8 +54,17 @@ def main():
     components = {component for carriers in found.values() for component, _ in carriers}
     print(f'{len(found)} license files of {len(components)} components')
     for carriers, _ in ordered(found):
-        for component, url in carriers:
-            print(f'  {component} ({url})')
+        for component, where in carriers:
+            print(f'  {component} ({where})')
+
+
+def kept(path, component):
+    """The file kept in this repository."""
+    try:
+        return open(path, 'rb').read()
+    except OSError as error:
+        raise stop(f'the license file of {component} cannot be read: {error}. Fix its path in '
+                   'tools/src/main/notices/license-files-here.json.')
 
 
 def content(url, component, downloads):
