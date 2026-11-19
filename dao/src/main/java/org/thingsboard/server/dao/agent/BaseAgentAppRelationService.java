@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 public class BaseAgentAppRelationService implements AgentAppRelationService {
 
     private static final String ACCESS_TOKEN_SECURITY_TYPE = "accessToken";
+    private static final String TLS_ACCESS_TOKEN_SECURITY_TYPE = "tlsAccessToken";
     private static final String USERNAME_PASSWORD_SECURITY_TYPE = "usernamePassword";
 
     private final EdgeService edgeService;
@@ -138,7 +139,7 @@ public class BaseAgentAppRelationService implements AgentAppRelationService {
         String clientId = DockerComposeUtils.getEnvVariable(compose, imagePattern, schema.getClientIdKey());
         String userName = DockerComposeUtils.getEnvVariable(compose, imagePattern, schema.getUsernameKey());
         String securityType = resolveGatewaySecurityType(compose, imagePattern, schema, accessToken, clientId, userName);
-        if (ACCESS_TOKEN_SECURITY_TYPE.equals(securityType)) {
+        if (ACCESS_TOKEN_SECURITY_TYPE.equals(securityType) || TLS_ACCESS_TOKEN_SECURITY_TYPE.equals(securityType)) {
             return accessToken;
         } else if (USERNAME_PASSWORD_SECURITY_TYPE.equals(securityType)) {
             return BasicMqttCredentialsIds.toCredentialsId(clientId, userName);

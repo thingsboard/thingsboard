@@ -166,6 +166,27 @@ class MergeCredentialsToConfigRuleTest {
         assertEquals("my-access-token", env.get("TB_GW_ACCESS_TOKEN").asText());
     }
 
+    @Test
+    void apply_shouldKeepTlsAccessTokenSecurityType() {
+        UUID deviceUuid = UUID.randomUUID();
+        DeviceId deviceId = new DeviceId(deviceUuid);
+
+        DeviceCredentials credentials = new DeviceCredentials();
+        credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        credentials.setCredentialsId("my-access-token");
+        when(deviceCredentialsService.findDeviceCredentialsByDeviceId(TENANT_ID, deviceId)).thenReturn(credentials);
+
+        JsonNode compose = createGatewayAccessTokenCompose("placeholder-token", "tlsAccessToken");
+        AgentApplication app = createGatewayApp(compose);
+
+        AppConfigMergeCtx ctx = AppConfigMergeCtx.builder().relatedEntityId(new DeviceId(deviceUuid)).build();
+        rule.apply(app, ctx);
+
+        JsonNode env = getServiceEnvironment(app, "mygateway");
+        assertEquals("tlsAccessToken", env.get("TB_GW_SECURITY_TYPE").asText());
+        assertEquals("my-access-token", env.get("TB_GW_ACCESS_TOKEN").asText());
+    }
+
     // ==================== apply() - Gateway (MQTT_BASIC) ====================
 
     @Test
