@@ -27,6 +27,7 @@
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
         <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
+        <sbom.bundled.phase>prepare-package</sbom.bundled.phase>
         <sbom.jar.phase>prepare-package</sbom.jar.phase>
         <pkg.name>tb-lwm2m-transport</pkg.name>
         <pkg.copyInstallScripts>false</pkg.copyInstallScripts>

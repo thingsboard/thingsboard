@@ -23,7 +23,7 @@ Each of these stops the notices with a message that says what to do.
 It also writes the list of the jars of the Maven packages, each with its SHA-256, for notice_files.py.
 
 Usage: sbom_to_ort.py --project-version <version> --out <ortproject.json> --cache <file> --curations <file>
-       --jars <file> [--own <group>/<name> ...] [--add <Maven purl>=<SPDX license> ...] <SBOM> ...
+       --jars <file> [--own <group>/<name> ...] <SBOM> ...
 """
 import argparse
 import concurrent.futures
@@ -54,8 +54,6 @@ def main():
     parser.add_argument('--own', action='append', default=[], help='<group>/<name> of our own code released separately')
     parser.add_argument('--cache', required=True, help='file that remembers the sources jars of Maven packages')
     parser.add_argument('--curations', required=True, help='the package curations of ORT, as JSON')
-    parser.add_argument('--add', action='append', default=[], metavar='PURL=LICENSE',
-                        help='a Maven package that the artifact contains and the SBOMs do not list yet')
     parser.add_argument('sboms', nargs='+')
     args = parser.parse_intermixed_args()
 
@@ -80,14 +78,8 @@ def main():
             else:
                 # The same package can be listed several times, as jars with different classifiers
                 components.setdefault(key, component)
-                if is_maven(purl):
+                if is_jar(purl):
                     jars.setdefault(purl, jar(component))
-
-    for added in args.add:
-        purl, _, license = added.partition('=')
-        group, name, version = re.fullmatch(r'pkg:maven/([^/]+)/([^@]+)@(.+)', purl).groups()
-        components.setdefault(purl, {'purl': purl, 'group': group, 'name': name, 'version': version,
-                                     'licenses': [{'license': {'id': license}}]})
 
     cache = read_cache(args.cache)
     missing = [key for key in components if is_maven(key) and key not in cache]
@@ -154,6 +146,21 @@ def is_maven(purl):
     return purl.startswith('pkg:maven/')
 
 
+def is_jar(purl):
+    """Whether a Maven package is a jar, whose NOTICE files notice_files.py reads: a package can also be another file,
+    such as the executable of WinSW."""
+    return is_maven(purl) and file_type(purl) == 'jar'
+
+
+def file_type(purl):
+    """The type of the file of a Maven package, as its purl gives it: jar unless it says otherwise."""
+    return qualifiers(purl).get('type', 'jar')
+
+
+def qualifiers(purl):
+    return dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(purl).query))
+
+
 def read_cache(path):
     """The sources jars found so far. That a package has none is not remembered: it may get one, or be in a repository
     that is added later."""
@@ -169,12 +176,11 @@ def identifier(component):
 
 def jar(component):
     """One file of a Maven package, as the artifact contains it: a package can have several, with classifiers."""
-    qualifiers = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(component['purl']).query))
     sha256 = [h['content'] for h in component.get('hashes', []) if h['alg'] == 'SHA-256']
     if not sha256:
         raise stop(f"the SBOM gives no SHA-256 for {component['purl']}. {BUILD_PROBLEM}")
     return {'group': component['group'], 'name': component['name'], 'version': component['version'],
-            'classifier': qualifiers.get('classifier', ''), 'type': qualifiers.get('type', 'jar'), 'sha256': sha256[0]}
+            'classifier': qualifiers(component['purl']).get('classifier', ''), 'type': file_type(component['purl']), 'sha256': sha256[0]}
 
 
 def own(component, args):

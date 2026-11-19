@@ -28,6 +28,7 @@
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
         <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
+        <sbom.bundled.phase>prepare-package</sbom.bundled.phase>
         <sbom.jar.phase>prepare-package</sbom.jar.phase>
         <pkg.name>thingsboard</pkg.name>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
@@ -572,12 +573,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-winsw-service</id>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -637,7 +632,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>package-sbom</id>
+                        <id>bundled-sbom</id>
                         <configuration>
                             <components combine.children="append">
                                 <component>
@@ -697,6 +692,7 @@
                 <pkg.disabled>true</pkg.disabled>
                 <pkg.package.phase>none</pkg.package.phase>
                 <pkg.process-resources.phase>none</pkg.process-resources.phase>
+                <sbom.bundled.phase>none</sbom.bundled.phase>
             </properties>
             <build>
                 <plugins>

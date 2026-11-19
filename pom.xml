@@ -40,6 +40,11 @@
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
         <sbom.package.phase>none</sbom.package.phase>
+        <!-- The architectures in the purls of the package SBOMs, as packaging/${pkg.type}/build.gradle builds the packages -->
+        <pkg.deb.arch>all</pkg.deb.arch>
+        <pkg.rpm.arch>noarch</pkg.rpm.arch>
+        <!-- The phase of the bundled SBOMs: prepare-package in a module that makes package SBOMs -->
+        <sbom.bundled.phase>none</sbom.bundled.phase>
         <!-- The phase of the SBOM of the Spring Boot jar: prepare-package in a module that builds such a jar -->
         <sbom.jar.phase>none</sbom.jar.phase>
         <!-- The time of the release, written to the SBOMs as their timestamp. Set it together with the release version:
@@ -143,7 +148,7 @@
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <jar-plugin.version>3.5.0</jar-plugin.version>
-        <sbom-maven-plugin.version>2.0.1</sbom-maven-plugin.version>
+        <sbom-maven-plugin.version>3.0.0-SNAPSHOT</sbom-maven-plugin.version>
         <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
@@ -154,8 +159,6 @@
         <jts.version>1.19.0</jts.version>
         <bouncycastle.version>1.86</bouncycastle.version> <!-- to fix CVE-2026-18036, CVE-2026-71888, CVE-2026-71889, CVE-2026-71891, CVE-2026-8763, CVE-2026-12185, CVE-2026-12802, CVE-2026-12803, CVE-2026-12816, CVE-2026-12860, CVE-2026-13506, CVE-2026-14682, CVE-2026-58059, CVE-2026-58060, CVE-2026-58061, CVE-2026-58062, CVE-2026-59639, CVE-2026-59642, CVE-2026-59645, CVE-2026-59650, CVE-2026-59651 (supersedes the earlier 1.84 pin for CVE-2026-5588, CVE-2026-5598, CVE-2025-14813). Not managed by the Spring Boot BOM — this pin is the sole source of the bouncycastle version. -->
         <winsw.version>2.0.1</winsw.version>
-        <!-- The service wrapper of the Windows zip, as the notices add it: see the package-sbom execution -->
-        <notices.winsw>pkg:maven/com.sun.winsw/winsw@${winsw.version}=MIT</notices.winsw>
         <azure-iot-service-client.version>1.13.0</azure-iot-service-client.version>
         <proton-j.version>0.35.0</proton-j.version> <!-- to fix CVE-2026-66257, CVE-2026-66273, CVE-2026-66274, CVE-2026-66275, CVE-2026-66276 and CVE-2026-66277. Not managed by the Spring Boot BOM — this pin is the sole source of the proton-j version. TODO: remove only once a TB dependency pulls proton-j >= 0.35.0 transitively -->
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
@@ -293,6 +296,7 @@
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
                 <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
 
@@ -314,6 +318,7 @@
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
                 <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
         <profile>
@@ -331,6 +336,7 @@
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
                 <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
 
@@ -615,7 +621,8 @@
                             <executions>
                                 <execution>
                                     <id>copy-winsw-service</id>
-                                    <phase>${pkg.package.phase}</phase>
+                                    <!-- Before the bundled SBOMs, which give its hashes -->
+                                    <phase>${pkg.process-resources.phase}</phase>
                                     <goals>
                                         <goal>copy</goal>
                                     </goals>
@@ -854,8 +861,30 @@
                     <groupId>org.thingsboard</groupId>
                     <artifactId>sbom-maven-plugin</artifactId>
                     <version>${sbom-maven-plugin.version}</version>
-                    <!-- For the jar and metadata goals, in every execution of them -->
+                    <!-- For every execution: the organizations for the jar and metadata goals, the packages for the bundled and
+                         package goals -->
                     <configuration>
+                        <name>${pkg.name}</name>
+                        <packages>
+                            <package>
+                                <id>deb</id>
+                                <file>${project.build.directory}/${pkg.name}.deb</file>
+                                <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=${pkg.deb.arch}</purl>
+                                <skip>${pkg.skip.deb}</skip>
+                            </package>
+                            <package>
+                                <id>rpm</id>
+                                <file>${project.build.directory}/${pkg.name}.rpm</file>
+                                <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=${pkg.rpm.arch}</purl>
+                                <skip>${pkg.skip.rpm}</skip>
+                            </package>
+                            <package>
+                                <id>zip</id>
+                                <file>${project.build.directory}/${pkg.name}-windows.zip</file>
+                                <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
+                                <skip>${pkg.skip.zip}</skip>
+                            </package>
+                        </packages>
                         <manufacturer>
                             <name>ThingsBoard, Inc.</name>
                             <urls>
@@ -881,32 +910,25 @@
                         </componentManufacturer>
                     </configuration>
                     <executions>
+                        <!-- What each package bundles besides the application, declared here and in the modules: the notices
+                             that go into the packages, those of the product and the package SBOMs are made with it -->
                         <execution>
-                            <id>package-sbom</id>
-                            <phase>${sbom.package.phase}</phase>
+                            <id>bundled-sbom</id>
+                            <phase>${sbom.bundled.phase}</phase>
                             <goals>
-                                <goal>package</goal>
+                                <goal>bundled</goal>
                             </goals>
                             <configuration>
-                                <name>${pkg.name}</name>
-                                <packages>
+                                <!-- Written also for the packages that are not built, so that the notices can always read them -->
+                                <packages combine.self="override">
                                     <package>
                                         <id>deb</id>
-                                        <file>${project.build.directory}/${pkg.name}.deb</file>
-                                        <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=all</purl>
-                                        <skip>${pkg.skip.deb}</skip>
                                     </package>
                                     <package>
                                         <id>rpm</id>
-                                        <file>${project.build.directory}/${pkg.name}.rpm</file>
-                                        <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=noarch</purl>
-                                        <skip>${pkg.skip.rpm}</skip>
                                     </package>
                                     <package>
                                         <id>zip</id>
-                                        <file>${project.build.directory}/${pkg.name}-windows.zip</file>
-                                        <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
-                                        <skip>${pkg.skip.zip}</skip>
                                     </package>
                                 </packages>
                                 <components>
@@ -925,6 +947,13 @@
                                     </component>
                                 </components>
                             </configuration>
+                        </execution>
+                        <execution>
+                            <id>package-sbom</id>
+                            <phase>${sbom.package.phase}</phase>
+                            <goals>
+                                <goal>package</goal>
+                            </goals>
                         </execution>
                     </executions>
                 </plugin>
@@ -1259,6 +1288,8 @@
                                 <argument>${project.version}</argument>
                                 <argument>${project.build.directory}/notices/linux/THIRD-PARTY-NOTICES</argument>
                                 <argument>${sbom.package.sourceFile}</argument>
+                                <argument>${project.build.directory}/sbom/${pkg.name}-deb.bundled.cdx.json</argument>
+                                <argument>${project.build.directory}/sbom/${pkg.name}-rpm.bundled.cdx.json</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -1276,16 +1307,14 @@
                                 <argument>${project.version}</argument>
                                 <argument>${project.build.directory}/notices/windows/THIRD-PARTY-NOTICES</argument>
                                 <argument>${sbom.package.sourceFile}</argument>
-                                <argument>--add</argument>
-                                <argument>${notices.winsw}</argument>
+                                <argument>${project.build.directory}/sbom/${pkg.name}-zip.bundled.cdx.json</argument>
                             </arguments>
                         </configuration>
                     </execution>
                     <!-- The notices of the whole product: THIRD-PARTY-NOTICES in the root, from the SBOMs that a build
                          with -Dsbom.skip=false left in the modules. Bound to no phase; run it after such a build, from
                          the root: mvn -N exec:exec@notices-product. CI runs it the same way and fails when the
-                         committed file differs. The Windows zip of every service has WinSW, which the SBOMs of what
-                         the modules pack do not list. -->
+                         committed file differs. -->
                     <execution>
                         <id>notices-product</id>
                         <inherited>false</inherited>
@@ -1300,8 +1329,6 @@
                                 <argument>${main.dir}/THIRD-PARTY-NOTICES</argument>
                                 <argument>--sboms-under</argument>
                                 <argument>${main.dir}</argument>
-                                <argument>--add</argument>
-                                <argument>${notices.winsw}</argument>
                             </arguments>
                         </configuration>
                     </execution>
