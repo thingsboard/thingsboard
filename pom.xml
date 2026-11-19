@@ -40,8 +40,10 @@
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
         <sbom.package.phase>none</sbom.package.phase>
-        <!-- What the packages bundle besides the application (the bundled goal): before the notices and the packages are
-             made, which read it. A module that makes package SBOMs sets it to prepare-package. -->
+        <!-- The architectures in the purls of the package SBOMs, as packaging/${pkg.type}/build.gradle builds the packages -->
+        <pkg.deb.arch>all</pkg.deb.arch>
+        <pkg.rpm.arch>noarch</pkg.rpm.arch>
+        <!-- The phase of the bundled SBOMs: prepare-package in a module that makes package SBOMs -->
         <sbom.bundled.phase>none</sbom.bundled.phase>
         <!-- The phase of the SBOM of the Spring Boot jar: prepare-package in a module that builds such a jar -->
         <sbom.jar.phase>none</sbom.jar.phase>
@@ -294,6 +296,7 @@
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
                 <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
 
@@ -315,6 +318,7 @@
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
                 <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
         <profile>
@@ -332,6 +336,7 @@
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
                 <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
 
@@ -856,8 +861,30 @@
                     <groupId>org.thingsboard</groupId>
                     <artifactId>sbom-maven-plugin</artifactId>
                     <version>${sbom-maven-plugin.version}</version>
-                    <!-- For the jar and metadata goals, in every execution of them -->
+                    <!-- For every execution: the organizations for the jar and metadata goals, the packages for the bundled and
+                         package goals -->
                     <configuration>
+                        <name>${pkg.name}</name>
+                        <packages>
+                            <package>
+                                <id>deb</id>
+                                <file>${project.build.directory}/${pkg.name}.deb</file>
+                                <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=${pkg.deb.arch}</purl>
+                                <skip>${pkg.skip.deb}</skip>
+                            </package>
+                            <package>
+                                <id>rpm</id>
+                                <file>${project.build.directory}/${pkg.name}.rpm</file>
+                                <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=${pkg.rpm.arch}</purl>
+                                <skip>${pkg.skip.rpm}</skip>
+                            </package>
+                            <package>
+                                <id>zip</id>
+                                <file>${project.build.directory}/${pkg.name}-windows.zip</file>
+                                <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
+                                <skip>${pkg.skip.zip}</skip>
+                            </package>
+                        </packages>
                         <manufacturer>
                             <name>ThingsBoard, Inc.</name>
                             <urls>
@@ -892,9 +919,8 @@
                                 <goal>bundled</goal>
                             </goals>
                             <configuration>
-                                <name>${pkg.name}</name>
                                 <!-- Written also for the packages that are not built, so that the notices can always read them -->
-                                <packages>
+                                <packages combine.self="override">
                                     <package>
                                         <id>deb</id>
                                     </package>
@@ -928,29 +954,6 @@
                             <goals>
                                 <goal>package</goal>
                             </goals>
-                            <configuration>
-                                <name>${pkg.name}</name>
-                                <packages>
-                                    <package>
-                                        <id>deb</id>
-                                        <file>${project.build.directory}/${pkg.name}.deb</file>
-                                        <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=all</purl>
-                                        <skip>${pkg.skip.deb}</skip>
-                                    </package>
-                                    <package>
-                                        <id>rpm</id>
-                                        <file>${project.build.directory}/${pkg.name}.rpm</file>
-                                        <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=noarch</purl>
-                                        <skip>${pkg.skip.rpm}</skip>
-                                    </package>
-                                    <package>
-                                        <id>zip</id>
-                                        <file>${project.build.directory}/${pkg.name}-windows.zip</file>
-                                        <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
-                                        <skip>${pkg.skip.zip}</skip>
-                                    </package>
-                                </packages>
-                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
@@ -1286,6 +1289,7 @@
                                 <argument>${project.build.directory}/notices/linux/THIRD-PARTY-NOTICES</argument>
                                 <argument>${sbom.package.sourceFile}</argument>
                                 <argument>${project.build.directory}/sbom/${pkg.name}-deb.bundled.cdx.json</argument>
+                                <argument>${project.build.directory}/sbom/${pkg.name}-rpm.bundled.cdx.json</argument>
                             </arguments>
                         </configuration>
                     </execution>

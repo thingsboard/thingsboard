@@ -149,8 +149,16 @@ def is_maven(purl):
 def is_jar(purl):
     """Whether a Maven package is a jar, whose NOTICE files notice_files.py reads: a package can also be another file,
     such as the executable of WinSW."""
-    qualifiers = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(purl).query))
-    return is_maven(purl) and qualifiers.get('type', 'jar') == 'jar'
+    return is_maven(purl) and file_type(purl) == 'jar'
+
+
+def file_type(purl):
+    """The type of the file of a Maven package, as its purl gives it: jar unless it says otherwise."""
+    return qualifiers(purl).get('type', 'jar')
+
+
+def qualifiers(purl):
+    return dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(purl).query))
 
 
 def read_cache(path):
@@ -168,12 +176,11 @@ def identifier(component):
 
 def jar(component):
     """One file of a Maven package, as the artifact contains it: a package can have several, with classifiers."""
-    qualifiers = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(component['purl']).query))
     sha256 = [h['content'] for h in component.get('hashes', []) if h['alg'] == 'SHA-256']
     if not sha256:
         raise stop(f"the SBOM gives no SHA-256 for {component['purl']}. {BUILD_PROBLEM}")
     return {'group': component['group'], 'name': component['name'], 'version': component['version'],
-            'classifier': qualifiers.get('classifier', ''), 'type': qualifiers.get('type', 'jar'), 'sha256': sha256[0]}
+            'classifier': qualifiers(component['purl']).get('classifier', ''), 'type': file_type(component['purl']), 'sha256': sha256[0]}
 
 
 def own(component, args):

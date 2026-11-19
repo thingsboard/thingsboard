@@ -8,7 +8,7 @@ SBOM is missing from the notices too: see [licensing-guide.md](licensing-guide.m
 ## What gets an SBOM
 
 | Artifact                                                                 | SBOM                                                                                           | Made by                                      |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | -------------------------------------------- |
+|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|----------------------------------------------|
 | The Spring Boot jar of each service                                      | `target/sbom/application.cdx.json`, and inside the jar at `META-INF/sbom/application.cdx.json` | the `jar` goal                               |
 | The deb, rpm and Windows zip of those services and of `msa/web-report`   | next to the package: `target/<package file>.cdx.json`                                          | the `package` goal                           |
 | The Angular UI (`ui-ngx`)                                                | inside the UI jar at `META-INF/sbom/ui-ngx.cdx.json`                                           | `tools/src/main/javascript/yarn-sbom.js`     |
@@ -16,7 +16,7 @@ SBOM is missing from the notices too: see [licensing-guide.md](licensing-guide.m
 | The Docker images                                                        | attached to the image in the registry, one per architecture                                    | the `image` goal, when the images are pushed |
 
 The services are the modules that build a Spring Boot jar and declare the plugin in their `pom.xml`, such as
-`application`, the transports and the integrations. The `jar`, `package` and `image` goals belong to
+`application`, the transports and the integrations. The `jar`, `bundled`, `package` and `image` goals belong to
 [sbom-maven-plugin](https://github.com/thingsboard/sbom-maven-plugin). The UI SBOM is also nested in the SBOM of
 `application`, which serves the UI.
 
@@ -36,7 +36,7 @@ No Docker is needed. Node.js and Yarn come from the build, as for any build of t
 for the Node.js services, whose SBOMs read the packages of other platforms from the npm registry.
 
 | Flag                                               | Effect on the SBOMs                                                                                                                                   |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+|----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `-Dsbom.skip=false`                                | Turns on the SBOMs of the jars, the packages and the npm modules                                                                                      |
 | `-Dnotices.skip=false`                             | Also puts the third-party notices of each package into it (needs Docker)                                                                              |
 | `-Dskip.yarn=true`, `-Dskip.ui.build=true`         | `-Dskip.yarn=true` skips every npm SBOM, `-Dskip.ui.build=true` those of `ui-ngx`, `msa/web-ui` and `msa/web-report`; either also skips all packaging |
@@ -57,10 +57,10 @@ library in the jar that is not a Maven dependency of the module fails the build,
 ### Packages
 
 What a package carries beside the jar is declared in the poms: the Windows service wrapper (WinSW) in the zip, and what
-a module declares under `bundled-sbom` in its `pom.xml` (see [Components declared in a pom](#components-declared-in-a-pom)).
-Before the packages are built, the `bundled` goal writes it to `target/sbom/<package name>-<deb|rpm|zip>.bundled.cdx.json`,
-where the third-party notices read it. After they are built, the `package` goal makes one SBOM per package from the
-SBOM of the jar and that file.
+a module declares under `bundled-sbom` in its `pom.xml`
+(see [Components declared in a pom](#components-declared-in-a-pom)). Before the packages are built, the `bundled` goal
+writes it to `target/sbom/<package name>-<deb|rpm|zip>.bundled.cdx.json`, where the third-party notices read it. After
+they are built, the `package` goal makes one SBOM per package from the SBOM of the jar and that file.
 
 ### npm modules
 
@@ -68,7 +68,7 @@ Each npm module has a `sbom` script in its `package.json`, which the Maven build
 reads `yarn.lock` and the installed packages, and lists:
 
 | Module                                                     | What the SBOM lists                                                                                                                       |
-| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
 | `ui-ngx` (`--angular-stats`)                               | Only the packages with code in the production bundle, the packages the styles take CSS from, and the assets and scripts in `angular.json` |
 | `msa/web-report` packages (`sbom:executable`, `--pkg-log`) | Only the packages that `pkg` put into the executables                                                                                     |
 | `msa/web-report` image (`sbom`)                            | The installed production dependencies                                                                                                     |
@@ -147,7 +147,7 @@ See [Regenerating the notices](licensing-guide.md#regenerating-the-notices).
 ## Troubleshooting
 
 | Message                                                                          | Meaning and fix                                                                                                                      |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+|----------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `... which yarn.lock does not list`                                              | A package is installed but not locked. Run `yarn install` in the module and commit `yarn.lock`.                                      |
 | `... names no file of an installed package; was the UI built with --stats-json?` | The UI was built without the stats that the SBOM reads. Build it with `yarn build:prod` or through Maven, which pass `--stats-json`. |
 | `The executables do not contain the same packages`                               | The web-report executables of Linux and Windows differ. Build them from the same `node_modules`.                                     |
