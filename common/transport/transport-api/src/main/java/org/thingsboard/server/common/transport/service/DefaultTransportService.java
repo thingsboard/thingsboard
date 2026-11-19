@@ -49,6 +49,7 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
+import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
@@ -1254,9 +1255,17 @@ public class DefaultTransportService extends TransportActivityManager implements
 
     @Override
     public void createGaugeStats(String statsName, AtomicInteger number, String... tags) {
-        String key = "thingsboard" + "." + StatsType.TRANSPORT.getName() + "." + statsName;
-        statsFactory.createGauge(key, number, tags);
+        statsFactory.createGauge(statsKey(statsName), number, tags);
         statsMap.put(statsName + tagsKey(tags), number);
+    }
+
+    @Override
+    public DefaultCounter createCounterStats(String statsName, String... tags) {
+        return statsFactory.createDefaultCounter(statsKey(statsName), tags);
+    }
+
+    private static String statsKey(String statsName) {
+        return "thingsboard" + "." + StatsType.TRANSPORT.getName() + "." + statsName;
     }
 
     private String tagsKey(String... tags) {

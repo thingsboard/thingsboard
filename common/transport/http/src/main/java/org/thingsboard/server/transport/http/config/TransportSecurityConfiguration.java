@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.http.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.thingsboard.server.transport.http.HttpTransportContext;
 
 @Configuration
 @EnableWebSecurity
@@ -22,6 +24,9 @@ public class TransportSecurityConfiguration {
 
     @Value("${transport.http.max_payload_size:/api/v1/*/rpc/**=65536;/api/v1/**=52428800}")
     private String maxPayloadSizeConfig;
+
+    @Autowired(required = false)
+    private HttpTransportContext transportContext;
 
     @Bean
     protected PayloadSizeFilter transportPayloadSizeFilter() {
@@ -39,6 +44,10 @@ public class TransportSecurityConfiguration {
                 .authorizeHttpRequests(config -> config
                         .requestMatchers(DEVICE_API_ENTRY_POINT).permitAll())
                 .addFilterBefore(transportPayloadSizeFilter(), UsernamePasswordAuthenticationFilter.class);
+        if (transportContext != null) {
+            // Not a bean on purpose: a bean filter would be registered for every servlet request, not only the device API
+            http.addFilterBefore(new HttpTransportStatsFilter(transportContext), PayloadSizeFilter.class);
+        }
         return http.build();
     }
 }

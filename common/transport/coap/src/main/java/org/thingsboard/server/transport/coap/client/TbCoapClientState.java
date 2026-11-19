@@ -38,6 +38,7 @@ public class TbCoapClientState {
     private volatile TbCoapObservationState attrs;
     private volatile TbCoapObservationState rpc;
     private volatile int contentFormat;
+    private volatile boolean dtls;
 
     private TransportProtos.AttributeUpdateNotificationMsg missedAttributeUpdates;
 
