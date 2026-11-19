@@ -1,0 +1,22 @@
+/** Encoder **/
+
+var data = {
+    writeValues: [],
+    callMethods: []
+};
+
+// A shared attribute update, for example {"switchState": true}.
+if (msgType === 'ATTRIBUTES_UPDATED' && msg.switchState !== undefined && msg.switchState !== null) {
+    data.writeValues.push({
+        // For the example device: ns=6;s=MySwitch.
+        nodeId: 'ns=' + metadata['cs_opcUaNamespaceIndex'] + ';s=MySwitch',
+        value: msg.switchState,
+        dataType: 'Boolean'
+    });
+}
+
+return {
+    contentType: 'JSON',
+    data: JSON.stringify(data),
+    metadata: {}
+};

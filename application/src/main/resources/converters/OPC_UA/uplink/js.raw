@@ -1,0 +1,29 @@
+/** Decoder **/
+
+// One string value per subscription tag key, for example {"level": "42.17", "switchState": "true"}.
+var data = JSON.parse(String.fromCharCode.apply(String, payload));
+
+var telemetry = {};
+Object.keys(data).forEach(function (key) {
+    var value = data[key];
+    // A tag without a value yet arrives as null.
+    if (value !== null) {
+        // Boolean values arrive as "true" or "false".
+        if (value === 'true' || value === 'false') {
+            value = value === 'true';
+        }
+        telemetry[key] = value;
+    }
+});
+
+return {
+    // Device node name, for example MyDevice.
+    deviceName: metadata['opcUaNode_name'],
+    deviceType: 'OPC-UA Device',
+    attributes: {
+        opcUaNodeFqn: metadata['opcUaNode_fqn'],
+        opcUaNamespaceIndex: metadata['opcUaNode_namespaceIndex'],
+        opcUaIdentifier: metadata['opcUaNode_identifier']
+    },
+    telemetry: telemetry
+};
