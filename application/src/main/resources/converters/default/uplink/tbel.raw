@@ -8,8 +8,23 @@
 var data = decodeToJson(payload);
 
 // --- Device name and type ---
-var deviceName = data.deviceName != null ? data.deviceName : 'Unknown Device';
-var deviceType = data.deviceType != null ? data.deviceType : 'default';
+// Take the device name and type from the payload.
+// If deviceType is not provided, it falls back to 'default'.
+var deviceName = data.deviceName != null &&
+    data.deviceName.toString().trim() != ''
+    ? data.deviceName
+    : null;
+
+var deviceType = data.deviceType != null &&
+    data.deviceType.toString().trim() != ''
+    ? data.deviceType
+    : 'default';
+
+// Reject messages without a valid device name.
+if (deviceName == null) {
+    raiseError("Device name is missing. Provide deviceName in the payload.");
+}
+
 // var customerName = 'Customer C';
 // var groupName = 'thermostat devices';
 
@@ -19,6 +34,9 @@ var deviceType = data.deviceType != null ? data.deviceType : 'default';
 // var assetType = 'building';
 
 // --- Timestamp parsing ---
+// ts - Unix time in milliseconds (seconds are not converted).
+// timestamp - ISO 8601 string, used only when ts is missing.
+// If neither is provided, the current time is used.
 var timestamp = -1;
 if (data.ts != null) {
     timestamp = data.ts;
