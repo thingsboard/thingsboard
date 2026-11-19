@@ -25,7 +25,7 @@ class ModbusDeviceTransportConfigurationTest {
                   "type": "MODBUS",
                   "endpoint": {
                     "type": "SERIAL", "port": "/dev/ttyUSB0", "baudRate": 19200, "dataBits": 8, "parity": "NONE", "stopBits": "TWO",
-                    "rs485": { "rtsActiveHigh": false, "delayBeforeMs": 5 }
+                    "rs485": { "rtsActiveHigh": false, "delayBeforeMs": 5, "delayAfterMicros": 0 }
                   },
                   "unitId": 3
                 }

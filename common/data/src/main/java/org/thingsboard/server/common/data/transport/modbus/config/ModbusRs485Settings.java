@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.common.data.transport.modbus.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -9,6 +10,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ModbusRs485Settings implements Serializable {
 
     @Serial
