@@ -25,7 +25,7 @@ class ModbusDeviceTransportConfigurationTest {
                   "type": "MODBUS",
                   "endpoint": {
                     "type": "SERIAL", "port": "/dev/ttyUSB0", "baudRate": 19200, "parity": "NONE", "stopBits": "TWO",
-                    "rs485": { "rtsActiveHigh": false, "delayBeforeMicros": 500 }
+                    "rs485": { "rtsActiveHigh": false, "delayBeforeMs": 5 }
                   },
                   "unitId": 3
                 }
@@ -39,7 +39,7 @@ class ModbusDeviceTransportConfigurationTest {
         assertThat(endpoint.getParity()).isEqualTo(ModbusSerialParity.NONE);
         assertThat(endpoint.getStopBits()).isEqualTo(ModbusSerialStopBits.TWO);
         assertThat(endpoint.getRs485().isRtsActiveHigh()).isFalse();
-        assertThat(endpoint.getRs485().getDelayBeforeMicros()).isEqualTo(500);
+        assertThat(endpoint.getRs485().getDelayBeforeMs()).isEqualTo(5);
         assertThat(endpoint.getKey()).isEqualTo("serial:///dev/ttyUSB0");
         assertThatCode(cfg::validate).doesNotThrowAnyException();
     }
@@ -175,6 +175,19 @@ class ModbusDeviceTransportConfigurationTest {
         assertThatThrownBy(config(tcp("h", 0, ModbusTcpFraming.MBAP), 1)::validate).hasMessage("Modbus endpoint port must be in range 1..65535");
         assertThatThrownBy(config(tcp("h", 502, null), 1)::validate).hasMessage("Modbus endpoint framing is required");
         assertThatThrownBy(config(null, 1)::validate).hasMessage("Modbus endpoint is required");
+    }
+
+    @Test
+    void rejectsRs485DelaysOutsideTheRange() {
+        ModbusRs485Settings rs485 = new ModbusRs485Settings();
+        rs485.setDelayBeforeMs(ModbusRs485Settings.MAX_DELAY_MS);
+        rs485.setDelayAfterMs(0);
+        assertThatCode(rs485::validate).doesNotThrowAnyException();
+        rs485.setDelayAfterMs(ModbusRs485Settings.MAX_DELAY_MS + 1);
+        assertThatThrownBy(rs485::validate).hasMessage("Modbus RS-485 delays must be from 0 to 100 ms");
+        rs485.setDelayAfterMs(0);
+        rs485.setDelayBeforeMs(-1);
+        assertThatThrownBy(rs485::validate).hasMessage("Modbus RS-485 delays must be from 0 to 100 ms");
     }
 
     @Test

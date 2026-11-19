@@ -175,8 +175,9 @@ public class ModbusConnectionPool {
                         .rs485RtsActiveHigh(rs485.isRtsActiveHigh())
                         .rs485Termination(rs485.isTermination())
                         .rs485DuringTx(rs485.isRxDuringTx())
-                        .rs485DelayBefore(rs485.getDelayBeforeMicros())
-                        .rs485DelayAfter(rs485.getDelayAfterMicros());
+                        // the serial library takes microseconds
+                        .rs485DelayBefore(rs485.getDelayBeforeMs() * 1000)
+                        .rs485DelayAfter(rs485.getDelayAfterMs() * 1000);
             }
             // the library's serial transport opens the port once and never again, unlike our TCP transports
             return new ModbusClientRetryDecorator(serial.getKey(), builder.build(), reconnectScheduler, serialMaxReconnectDelayMs);
