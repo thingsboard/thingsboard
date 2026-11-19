@@ -1,0 +1,10 @@
+{
+  "dataId": "000657E477596B12C80347616A03002A",
+  "devId": "bfac3c40adca459c9chaar",
+  "productKey": "iq9hwd2bjsdgqiby",
+  "status": [
+    { "code": "cur_voltage", "t": 1785490000000, "value": 2086 },
+    { "code": "cur_power", "t": 1785490000000, "value": 142 },
+    { "code": "cur_current", "t": 1785490000000, "value": 63 }
+  ]
+}
