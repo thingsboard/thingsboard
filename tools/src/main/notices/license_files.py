@@ -7,11 +7,12 @@
 the components that it belongs to.
 
 These are components that are neither Maven nor npm packages, whose SBOM gives the address of a license file that
-their vendor publishes for them, such as the LICENSE of Node.js, which covers Node.js and the libraries it bundles:
-see sbom_to_ort.py. A file is downloaded once and kept, under the SHA-256 of its address: an address names one
-version of the file, such as the LICENSE at the tag of a release.
+their vendor publishes for them, such as the LICENSE of Node.js, which covers Node.js and the libraries it bundles,
+or whose license file is kept in this repository, such as the one made from the headers of the LwM2M object models:
+see sbom_to_ort.py and license-files-here.json. A file is downloaded once and kept, under the SHA-256 of its address:
+an address names one version of the file, such as the LICENSE at the tag of a release.
 
-Usage: license_files.py --list <file of sbom_to_ort.py> --downloads <directory> --out <file>
+Usage: license_files.py --list <file of sbom_to_ort.py> --repository <directory> --downloads <directory> --out <file>
 """
 import argparse
 import hashlib
@@ -29,6 +30,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--list', required=True,
                         help='the components and the addresses of their license files, as sbom_to_ort.py lists them')
+    parser.add_argument('--repository', required=True, help='the root of this repository')
     parser.add_argument('--downloads', required=True, help='directory that keeps the files that were downloaded')
     parser.add_argument('--out', required=True)
     args = parser.parse_args()
@@ -36,11 +38,17 @@ def main():
     found = {}  # text -> set of (component, address)
     for entry in json.load(open(args.list, encoding='utf-8')):
         component = coordinates(entry['group'], entry['name'], entry['version']).rstrip()
-        text = clean(content(entry['url'], component, args.downloads))
+        if 'path' in entry:
+            where = entry['path']
+            text = clean(kept(os.path.join(args.repository, where), component))
+        else:
+            where = entry['url']
+            text = clean(content(where, component, args.downloads))
         if not text:
-            raise stop(f"the license file of {component} at {entry['url']} is empty. Check the address in the "
-                       'external reference of the type license of the component, in the pom that declares it.')
-        found.setdefault(text, set()).add((component, entry['url']))
+            raise stop(f'the license file of {component} at {where} is empty. Check the address in the external '
+                       'reference of the type license of the component, in the pom that declares it, or the file '
+                       'that license-files-here.json gives.')
+        found.setdefault(text, set()).add((component, where))
 
     # ORT reads the file as UTF-8, whatever the locale of the build is
     with open(args.out, 'w', encoding='utf-8') as out:
@@ -50,6 +58,15 @@ def main():
     for carriers, _ in ordered(found):
         for component, url in carriers:
             print(f'  {component} ({url})')
+
+
+def kept(path, component):
+    """The file kept in this repository."""
+    try:
+        return open(path, 'rb').read()
+    except OSError as error:
+        raise stop(f'the license file of {component} cannot be read: {error}. Fix its path in '
+                   'tools/src/main/notices/license-files-here.json.')
 
 
 def content(url, component, downloads):

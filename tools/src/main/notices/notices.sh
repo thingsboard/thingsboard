@@ -11,8 +11,8 @@
 #
 # The SBOMs are turned into the list of their third-party packages (sbom_to_ort.py). ORT scans the source of each
 # package for licenses and copyright statements, and writes the notices with THIRD-PARTY-NOTICES.ftl. The NOTICE files
-# of the packages are added as they are (notice_files.py), and so are the license files that the SBOMs give for the
-# components that are not scanned (license_files.py).
+# of the packages are added as they are (notice_files.py), and so are the license files of the components that are not
+# scanned (license_files.py): those that the SBOMs give, and those kept in this repository (license-files-here.json).
 #
 # Needs Docker and python3. The results of the scans are kept in ~/.ort/scanner (or in $NOTICES_ORT_HOME/scanner):
 # a package that is not there yet is scanned, which takes minutes. The scans that others have made are downloaded
@@ -35,6 +35,7 @@
 set -euo pipefail
 
 HERE=$(dirname "$(realpath "$0")")
+ROOT=$(realpath "$HERE/../../../..")
 if [ $# -lt 4 ]; then
   echo "usage: $0 <work directory> <project version> <notices file> <SBOM> ... [options of sbom_to_ort.py]" >&2
   echo "       $0 <work directory> <project version> <notices file> --sboms-under <directory> [options of sbom_to_ort.py]" >&2
@@ -110,16 +111,19 @@ ort_step() { # log file, arguments of ORT: the message a template stopped with, 
 rm -rf "$WORK/project" "$WORK/package-configurations" "$WORK/scan-issues"
 rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,license-files.json,notice-files.txt,license-files.txt}
 rm -f "$WORK"/{THIRD-PARTY-NOTICES.ftl,stop.ftl,THIRD-PARTY-NOTICES}
-rm -f "$WORK"/{convert,analyze,scan,scan-issues,package-configurations,notice-files,license-files,report}.log
+rm -f "$WORK"/{lwm2m-notice,convert,analyze,scan,scan-issues,package-configurations,notice-files,license-files,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
 LAP=$SECONDS
 python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" \
   --url "${NOTICES_SCAN_CACHE_URL:-https://repo.thingsboard.io/artifactory/ort/scan-cache.tar.gz}" || { durations >&2; exit 1; }
 lap "cache download"
+# The license file of the LwM2M object models is made from their headers: a model changed since then stops the notices
+step "$WORK/lwm2m-notice.log" python3 "$HERE/lwm2m_notice.py" --check
 step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERSION" --cache "$ORT_HOME/maven-sources.json" \
   --curations "$HERE/ort-config/curations/curations.json" \
   --own org.thingsboard.ai/common --own org.thingsboard.license/client --own org.thingsboard.license/shared \
-  --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" --license-files "$WORK/license-files.json" "$@"
+  --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" --license-files "$WORK/license-files.json" \
+  --license-files-here "$HERE/license-files-here.json" "$@"
 lap convert
 ort_step "$WORK/analyze.log" -P ort.analyzer.enabledPackageManagers=OrtProjectFile analyze -f JSON -i /work/project -o /work
 lap analyze
@@ -136,7 +140,7 @@ step "$WORK/notice-files.log" python3 "$HERE/notice_files.py" --jars "$WORK/jars
   --archive "$ORT_HOME/scanner/archive" --maven-repository "${NOTICES_MAVEN_REPOSITORY:-$HOME/.m2/repository}" \
   --downloads "$ORT_HOME/maven-jars" --out "$WORK/notice-files.txt"
 lap "NOTICE files"
-step "$WORK/license-files.log" python3 "$HERE/license_files.py" --list "$WORK/license-files.json" \
+step "$WORK/license-files.log" python3 "$HERE/license_files.py" --list "$WORK/license-files.json" --repository "$ROOT" \
   --downloads "$ORT_HOME/license-files" --out "$WORK/license-files.txt"
 lap "license files"
 # The template includes notice-files.txt and license-files.txt and imports stop.ftl, and can only read what is beside it

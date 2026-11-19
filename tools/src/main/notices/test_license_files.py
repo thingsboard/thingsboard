@@ -34,3 +34,16 @@ class ContentTest(unittest.TestCase):
         with self.assertRaises(SystemExit) as stopped:
             license_files.content(url, 'node 22.23.4', self.downloads)
         self.assertIn(f'the license file of node 22.23.4 cannot be downloaded from {url}', str(stopped.exception))
+
+
+class KeptTest(unittest.TestCase):
+    def test_a_file_of_this_repository(self):
+        with tempfile.NamedTemporaryFile() as file:
+            file.write(b'LwM2M object models')
+            file.flush()
+            self.assertEqual(license_files.kept(file.name, 'lwm2m-registry'), b'LwM2M object models')
+
+    def test_a_missing_file_stops_the_notices(self):
+        with self.assertRaises(SystemExit) as stopped:
+            license_files.kept('/nonexistent/NOTICE.txt', 'lwm2m-registry')
+        self.assertIn('the license file of lwm2m-registry cannot be read', str(stopped.exception))

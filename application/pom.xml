@@ -642,7 +642,8 @@
                                 <component>
                                     <type>data</type>
                                     <name>lwm2m-registry</name>
-                                    <description>LwM2M object model XML files from the OMNA LwM2M Registry. Licenses vary per file, mostly BSD-3-Clause.</description>
+                                    <description>LwM2M object model XML files from the OMNA LwM2M Registry. Each file declares its license in its header.</description>
+                                    <license>BSD-3-Clause AND Apache-2.0 AND MIT AND BSD-2-Clause</license>
                                     <supplier>
                                         <name>Open Mobile Alliance</name>
                                         <urls>

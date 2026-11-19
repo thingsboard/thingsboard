@@ -195,7 +195,8 @@ ${rule}
 
 Some components come with a license file of their own, which covers them and
 the software they contain. Each file below is given as it is, once, under the
-components it belongs to and the address it was taken from.
+components it belongs to and where it was taken from: an address, or a file of
+the ThingsBoard source.
 
 ${licenseFiles}
 [/#if]

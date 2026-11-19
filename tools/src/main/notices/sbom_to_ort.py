@@ -22,11 +22,11 @@ Each of these stops the notices with a message that says what to do.
 
 It also writes the list of the jars of the Maven packages, each with its SHA-256, for notice_files.py.
 
-A component that is neither a Maven nor an npm package, but whose SBOM gives the address of its license file, is
-written to the list for license_files.py.
+A component that is neither a Maven nor an npm package, but whose SBOM gives the address of its license file, or whose
+license file is kept in this repository (--license-files-here), is written to the list for license_files.py.
 
 Usage: sbom_to_ort.py --project-version <version> --out <ortproject.json> --cache <file> --curations <file>
-       --jars <file> --license-files <file> [--own <group>/<name> ...] <SBOM> ...
+       --jars <file> --license-files <file> --license-files-here <file> [--own <group>/<name> ...] <SBOM> ...
 """
 import argparse
 import concurrent.futures
@@ -56,6 +56,8 @@ def main():
     parser.add_argument('--jars', required=True, help='file to write the jars of the Maven packages to')
     parser.add_argument('--license-files', required=True,
                         help='file to write the components that are taken from their license file to')
+    parser.add_argument('--license-files-here', required=True,
+                        help='the license files kept in this repository, of the components that are not scanned')
     parser.add_argument('--own', action='append', default=[], help='<group>/<name> of our own code released separately')
     parser.add_argument('--cache', required=True, help='file that remembers the sources jars of Maven packages')
     parser.add_argument('--curations', required=True, help='the package curations of ORT, as JSON')
@@ -67,6 +69,7 @@ def main():
         raise stop('these SBOMs do not exist, and the notices are made from them:\n  ' + '\n  '.join(absent)
                    + f'\n{BUILD_PROBLEM} The Maven build makes them with -Dsbom.skip=false.')
 
+    here = json.load(open(args.license_files_here, encoding='utf-8'))
     components, skipped, jars, license_files = {}, {}, {}, set()
     for sbom in args.sboms:
         for component in json.load(open(sbom)).get('components', []):
@@ -77,9 +80,9 @@ def main():
             if any(p['name'].startswith('syft:location:') for p in component.get('properties', [])):
                 skipped.setdefault('part of the base image', set()).add(purl or component.get('name'))
             elif not is_maven(purl) and not purl.startswith('pkg:npm/'):
-                url = license_file(component)
-                if url:
-                    license_files.add((component.get('group', ''), component['name'], component.get('version', ''), url))
+                where = license_file(component, here)
+                if where:
+                    license_files.add((component.get('group', ''), component['name'], component.get('version', ''), where))
                 else:
                     skipped.setdefault('not a Maven or npm package', set()).add(purl or component.get('name'))
             elif is_maven(purl) and own(component, args):
@@ -141,8 +144,8 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     json.dump({'projectName': 'thingsboard', 'dependencies': dependencies}, open(args.out, 'w'), indent=1)
     json.dump([jars[purl] for purl in sorted(jars)], open(args.jars, 'w'), indent=1)
-    json.dump([{'group': group, 'name': name, 'version': version, 'url': url}
-               for group, name, version, url in sorted(license_files)], open(args.license_files, 'w'), indent=1)
+    json.dump([{'group': group, 'name': name, 'version': version, **dict([where])}
+               for group, name, version, where in sorted(license_files)], open(args.license_files, 'w'), indent=1)
     print(f'{len(dependencies)} packages')
     for reason, items in sorted(skipped.items()):
         print(f'Left out, {reason}: {len(items)}')
@@ -153,13 +156,20 @@ def main():
         print(f'  {item}')
 
 
-def license_file(component):
-    """The address of the license file of the component, as the SBOM gives it, or None."""
+def license_file(component, here):
+    """Where the license file of the component is: ('url', the address that the SBOM gives), ('path', the file in this
+    repository that `here` gives for the purl of the component, or for its name when it has none), or None."""
+    name = component.get('purl') or component['name']
     urls = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'license']
     if len(urls) > 1:
-        raise stop(f"the SBOM gives several license files for {component.get('purl') or component['name']}: "
-                   f"{', '.join(urls)}. Give the one that covers the component and what it contains.")
-    return urls[0] if urls else None
+        raise stop(f"the SBOM gives several license files for {name}: {', '.join(urls)}. Give the one that covers the "
+                   'component and what it contains.')
+    if urls and name in here:
+        raise stop(f'the SBOM gives a license file for {name}, {urls[0]}, and so does license-files-here.json, '
+                   f'{here[name]}. Keep one of them.')
+    if urls:
+        return 'url', urls[0]
+    return ('path', here[name]) if name in here else None
 
 
 def is_maven(purl):
