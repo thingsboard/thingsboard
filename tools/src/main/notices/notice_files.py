@@ -23,7 +23,7 @@ import os
 import sys
 import zipfile
 
-from sbom_to_ort import BUILD_PROBLEM, MAVEN_REPOSITORIES, from_repositories, maven_path, stop
+from sbom_to_ort import BUILD_PROBLEM, MAVEN_REPOSITORIES, from_repositories, maven_path, stop, write_atomically
 
 SEPARATOR = '-' * 78
 
@@ -131,10 +131,7 @@ def jar_file(jar, args):
             return candidate, None
     for url, content in from_repositories(path, timeout=120):
         if hashlib.sha256(content).hexdigest() == jar['sha256']:
-            os.makedirs(os.path.dirname(downloaded), exist_ok=True)
-            temporary = f'{downloaded}.{os.getpid()}'
-            open(temporary, 'wb').write(content)
-            os.replace(temporary, downloaded)
+            write_atomically(downloaded, content)
             return downloaded, url
     raise stop(f"{path} with the SHA-256 {jar['sha256']} of the SBOM is neither in {args.maven_repository} nor in "
                + ' or '.join(MAVEN_REPOSITORIES) + f', so its NOTICE file cannot be read. {BUILD_PROBLEM}')

@@ -75,8 +75,10 @@ reads `yarn.lock` and the installed packages, and lists:
 | `msa/web-ui`, `msa/js-executor` (`--all-platforms`)        | Every production dependency, including the optional ones of other platforms, read from their tarballs                                     |
 
 A package that is installed but not bundled is not shipped, so it is not listed. devDependencies are not listed either,
-except a package that the UI bundle contains. Every listed package must be in `yarn.lock`. The Node.js runtime inside
-the web-report executables and the bundled Chromium are declared in `msa/web-report/pom.xml`.
+except a package that the UI bundle contains. Every listed package must be in `yarn.lock`. `pkg` and `pkg-fetch` are
+listed in the SBOM of the executables, though they are devDependencies: the executables contain the startup code of
+`pkg` and the Node.js runtime that `pkg-fetch` built with its patches. That runtime and the bundled Chromium are
+declared in `msa/web-report/pom.xml`.
 
 ### Docker images
 
@@ -119,6 +121,20 @@ for example in `application/pom.xml`:
 example the LwM2M object models) and `cryptographic-asset` (a certificate, which must be X.509). A component can also
 take its details from an SBOM of its own, as the gateway extension does. The full list of fields is in the
 [plugin's README](https://github.com/thingsboard/sbom-maven-plugin#bundled-goal).
+
+The notices scan only Maven and npm packages. For any other component, give the license file that its vendor publishes
+for it, at the address of that version, and the notices include that file as it is:
+
+```xml
+<externalReferences>
+    <externalReference>
+        <type>license</type>
+        <url>https://raw.githubusercontent.com/nodejs/node/v${node.linux.version}/LICENSE</url>
+    </externalReference>
+</externalReferences>
+```
+
+A component without one is left out of the notices; the notices log lists it.
 
 ### Copied third-party code
 

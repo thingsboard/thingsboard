@@ -202,6 +202,10 @@ function sassSources(sassFiles, { includePaths = [], sass: { silenceDeprecations
  * The installed packages with a file in the executables that pkg made, as its --debug logs tell. One SBOM describes
  * every executable, so they must contain the same packages. With --node-versions, the version of the Node.js runtime
  * of each executable is written as node.<os>.version.
+ *
+ * pkg and pkg-fetch are in every executable too, though the logs name no file of theirs: pkg adds its prelude, which
+ * starts the application from the files inside the executable, and the Node.js runtime is the one that pkg-fetch
+ * built with its patches.
  */
 function executablePackages() {
   let contained;
@@ -225,6 +229,12 @@ function executablePackages() {
     }
     contained = packages;
   }
+  const pkg = resolvePackageDir(MODULE, '@yao-pkg/pkg');
+  const pkgFetch = pkg && resolvePackageDir(pkg, '@yao-pkg/pkg-fetch');
+  if (!pkgFetch) {
+    throw new Error('@yao-pkg/pkg and the @yao-pkg/pkg-fetch it uses are not installed, but the executables were made with them');
+  }
+  contained.add(pkg).add(pkgFetch);
   if (nodeVersions) {
     const file = path.resolve(MODULE, nodeVersions);
     fs.mkdirSync(path.dirname(file), { recursive: true });
