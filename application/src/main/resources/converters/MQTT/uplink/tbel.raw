@@ -7,15 +7,51 @@
 // decode payload to JSON
 var data = decodeToJson(payload);
 
+// --- MQTT topic configuration ---
+
+// Supported MQTT topic formats:
+// tb/devices/{deviceType}/{deviceName}
+// tb/devices/{deviceType}/{deviceName}/telemetry
+// tb/sensors/{deviceType}/{deviceName}
+// tb/sensors/{deviceType}/{deviceName}/telemetry
+//
+// Adjust these prefixes to match your MQTT topic layout.
+// Each prefix must consist of exactly two topic levels, e.g. "factory/devices":
+// {prefix}/{deviceType}/{deviceName}[/telemetry]
+var topicPrefixes = ["tb/devices", "tb/sensors"];
+
 // --- Device name and type ---
-// Extract from MQTT topic (e.g. "my/topic/deviceType/deviceName")
-var topicParts = metadata['topic'] != null ? metadata['topic'].split('/') : null;
 
-var deviceName = data.deviceName != null ? data.deviceName :
-    (topicParts != null && topicParts.length > 0 ? topicParts[topicParts.length - 1] : 'Unknown Device');
+var topicParts = metadata != null && metadata['topic'] != null
+    ? metadata['topic'].split('/', -1)
+    : null;
 
-var deviceType = data.deviceType != null ? data.deviceType :
-    (topicParts != null && topicParts.length > 1 ? topicParts[topicParts.length - 2] : 'default');
+// Validate the supported topic structure.
+var validTopic = topicParts != null &&
+    (topicParts.length == 4 || topicParts.length == 5) &&
+    topicPrefixes.indexOf(topicParts[0] + "/" + topicParts[1]) >= 0 &&
+    topicParts[2] != '' &&
+    topicParts[3] != '' &&
+    (topicParts.length == 4 || topicParts[4] == 'telemetry');
+
+// Prefer device information from the payload.
+// Otherwise, extract it from the MQTT topic.
+// If neither provides deviceType, it falls back to 'default'.
+var deviceName = data.deviceName != null &&
+    data.deviceName.toString().trim() != ''
+    ? data.deviceName
+    : (validTopic ? topicParts[3] : null);
+
+var deviceType = data.deviceType != null &&
+    data.deviceType.toString().trim() != ''
+    ? data.deviceType
+    : (validTopic ? topicParts[2] : 'default');
+
+// Reject messages without a valid device name.
+if (deviceName == null || deviceName.toString().trim() == '') {
+    raiseError("Device name is missing. Provide deviceName in the payload or use a supported MQTT topic format.");
+}
+
 // var customerName = 'Customer C';
 // var groupName = 'thermostat devices';
 
@@ -25,6 +61,9 @@ var deviceType = data.deviceType != null ? data.deviceType :
 // var assetType = 'building';
 
 // --- Timestamp parsing ---
+// ts - Unix time in milliseconds (seconds are not converted).
+// timestamp - ISO 8601 string, used only when ts is missing.
+// If neither is provided, the current time is used.
 var timestamp = -1;
 if (data.ts != null) {
     timestamp = data.ts;

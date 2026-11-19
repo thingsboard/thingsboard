@@ -1,0 +1,12 @@
+{
+  "deviceName": "Thermostat-01",
+  "deviceType": "thermostat",
+  "telemetry": {
+    "ts": 1791901200000,
+    "values": {
+      "env.temperature": 25.5,
+      "env.humidity": 60,
+      "battery": 95
+    }
+  }
+}
