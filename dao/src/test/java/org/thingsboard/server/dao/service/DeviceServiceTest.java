@@ -13,8 +13,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -54,6 +56,8 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceCredentialsEvictEvent;
+import org.thingsboard.server.dao.device.DeviceCredentialsEvictionHook;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -107,6 +111,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
     private PlatformTransactionManager platformTransactionManager;
     @MockitoSpyBean
     private DeviceCredentialsDataValidator validator;
+    @MockitoBean
+    private DeviceCredentialsEvictionHook credentialsEvictionHook;
     @Autowired
     private EntityGroupService entityGroupService;
     @Autowired
@@ -440,6 +446,67 @@ public class DeviceServiceTest extends AbstractServiceTest {
             pageLink = pageLink.nextPageLink();
         } while (page.hasNext());
         return result;
+    }
+
+    @Test
+    public void testAssignDeviceToTenantEvictsCredentialsFromValidationCaches() {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("Reassigned device");
+        device.setType("default");
+        Device savedDevice = deviceService.saveDevice(device);
+        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+        Mockito.reset(credentialsEvictionHook);
+
+        deviceService.assignDeviceToTenant(anotherTenantId, savedDevice);
+
+        ArgumentCaptor<DeviceCredentialsEvictEvent> captor = ArgumentCaptor.forClass(DeviceCredentialsEvictEvent.class);
+        Mockito.verify(credentialsEvictionHook).onDeviceCredentialsEvict(captor.capture());
+        Assert.assertEquals(credentials.getCredentialsId(), captor.getValue().getNewCredentialsId());
+        Assert.assertNull(captor.getValue().getOldCredentialsId());
+        Assert.assertFalse(captor.getValue().isDeleted());
+    }
+
+    @Test
+    public void testCredentialsLifecycleEmitsCorrectEvictionEvents() {
+        // pins the hook contract: create => (newId, null, false); rotate => (newId, oldId, false);
+        // delete => (id, null, true). A delete that reached hooks as deleted=false would downgrade the
+        // "revoked" marker to a tombstone and let an in-flight validation re-cache the dead token.
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("Credentials lifecycle device");
+        device.setType("default");
+        Mockito.reset(credentialsEvictionHook);
+        Device savedDevice = deviceService.saveDevice(device);
+
+        ArgumentCaptor<DeviceCredentialsEvictEvent> created = ArgumentCaptor.forClass(DeviceCredentialsEvictEvent.class);
+        Mockito.verify(credentialsEvictionHook).onDeviceCredentialsEvict(created.capture());
+        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+        Assert.assertEquals(credentials.getCredentialsId(), created.getValue().getNewCredentialsId());
+        Assert.assertNull(created.getValue().getOldCredentialsId());
+        Assert.assertFalse(created.getValue().isDeleted());
+
+        Mockito.reset(credentialsEvictionHook);
+        String oldCredentialsId = credentials.getCredentialsId();
+        credentials.setCredentialsId("rotated-" + oldCredentialsId);
+        deviceCredentialsService.updateDeviceCredentials(tenantId, credentials);
+
+        ArgumentCaptor<DeviceCredentialsEvictEvent> rotated = ArgumentCaptor.forClass(DeviceCredentialsEvictEvent.class);
+        Mockito.verify(credentialsEvictionHook).onDeviceCredentialsEvict(rotated.capture());
+        Assert.assertEquals("rotated-" + oldCredentialsId, rotated.getValue().getNewCredentialsId());
+        Assert.assertEquals(oldCredentialsId, rotated.getValue().getOldCredentialsId());
+        Assert.assertFalse(rotated.getValue().isDeleted());
+
+        Mockito.reset(credentialsEvictionHook);
+        deviceCredentialsService.deleteDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+
+        ArgumentCaptor<DeviceCredentialsEvictEvent> deleted = ArgumentCaptor.forClass(DeviceCredentialsEvictEvent.class);
+        Mockito.verify(credentialsEvictionHook).onDeviceCredentialsEvict(deleted.capture());
+        Assert.assertEquals("rotated-" + oldCredentialsId, deleted.getValue().getNewCredentialsId());
+        Assert.assertNull(deleted.getValue().getOldCredentialsId());
+        Assert.assertTrue(deleted.getValue().isDeleted());
+
+        deviceService.deleteDevice(tenantId, savedDevice.getId());
     }
 
     private Device saveDeviceForCustomer(TenantId tenantId, CustomerId customerId, String name) {

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.security.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -36,6 +37,8 @@ import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException
 import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
 import org.thingsboard.server.exception.DataValidationException;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -49,6 +52,9 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     private final DeviceCredentialsDao deviceCredentialsDao;
     private final DeviceCredentialsDataValidator credentialsValidator;
 
+    @Autowired(required = false)
+    private List<DeviceCredentialsEvictionHook> evictionHooks = Collections.emptyList();
+
     @TransactionalEventListener(classes = DeviceCredentialsEvictEvent.class)
     @Override
     public void handleEvictEvent(DeviceCredentialsEvictEvent event) {
@@ -56,6 +62,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         if (StringUtils.isNotEmpty(event.getOldCredentialsId()) && !event.getNewCredentialsId().equals(event.getOldCredentialsId())) {
             cache.evict(event.getOldCredentialsId());
         }
+        DeviceCredentialsEvictionHooks.invokeAll(evictionHooks, event);
     }
 
     @Override
@@ -97,13 +104,18 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         }
         try {
             var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
-            publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null, false));
             if (oldDeviceCredentials != null && isCredentialsChanged(oldDeviceCredentials, value)) {
                 eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entity(value).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
             }
             return value;
         } catch (Exception t) {
-            handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            // defensive eviction of the dao cache only; the old credentials are still valid, so the eviction hook must not be invoked
+            cache.evict(deviceCredentials.getCredentialsId());
+            if (oldDeviceCredentials != null && StringUtils.isNotEmpty(oldDeviceCredentials.getCredentialsId())
+                    && !oldDeviceCredentials.getCredentialsId().equals(deviceCredentials.getCredentialsId())) {
+                cache.evict(oldDeviceCredentials.getCredentialsId());
+            }
             ConstraintViolationException e = DaoUtil.extractConstraintViolationException(t).orElse(null);
             if (e != null
                     && (DaoUtil.constraintNameMatches(e.getConstraintName(), "device_credentials_id_unq_key") || DaoUtil.constraintNameMatches(e.getConstraintName(), "device_credentials_device_id_unq_key"))) {
@@ -379,7 +391,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     public void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
-        publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
+        publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null, true));
     }
 
     @Override
@@ -387,7 +399,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         log.trace("Executing deleteDeviceCredentialsByDeviceId [{}]", deviceId);
         DeviceCredentials credentials = deviceCredentialsDao.removeByDeviceId(tenantId, deviceId);
         if (credentials != null) {
-            publishEvictEvent(new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null));
+            publishEvictEvent(new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null, true));
         }
     }
 
