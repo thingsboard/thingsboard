@@ -43,6 +43,7 @@ public class ThingsBoardDbInstaller {
     private final static String TB_HTTP_TRANSPORT_LOG_VOLUME = "tb-http-transport-log-test-volume";
     private final static String TB_MQTT_TRANSPORT_LOG_VOLUME = "tb-mqtt-transport-log-test-volume";
     private final static String TB_SNMP_TRANSPORT_LOG_VOLUME = "tb-snmp-transport-log-test-volume";
+    private final static String TB_MODBUS_TRANSPORT_LOG_VOLUME = "tb-modbus-transport-log-test-volume";
     private final static String TB_INTEGRATION_EXECUTOR_LOG_VOLUME = "tb-ie-log-test-volume";
     private final static String TB_VC_EXECUTOR_LOG_VOLUME = "tb-vc-executor-log-test-volume";
     private final static String TB_HTTP_INTEGRATION_LOG_VOLUME = "tb-http-integration-log-test-volume";
@@ -73,6 +74,7 @@ public class ThingsBoardDbInstaller {
     private final String tbHttpTransportLogVolume;
     private final String tbMqttTransportLogVolume;
     private final String tbSnmpTransportLogVolume;
+    private final String tbModbusTransportLogVolume;
     private final String tbVcExecutorLogVolume;
     private final String tbHttpIntegrationLogVolume;
     private final String tbMqttIntegrationLogVolume;
@@ -132,6 +134,7 @@ public class ThingsBoardDbInstaller {
         tbHttpTransportLogVolume = project + "_" + TB_HTTP_TRANSPORT_LOG_VOLUME;
         tbMqttTransportLogVolume = project + "_" + TB_MQTT_TRANSPORT_LOG_VOLUME;
         tbSnmpTransportLogVolume = project + "_" + TB_SNMP_TRANSPORT_LOG_VOLUME;
+        tbModbusTransportLogVolume = project + "_" + TB_MODBUS_TRANSPORT_LOG_VOLUME;
         tbVcExecutorLogVolume = project + "_" + TB_VC_EXECUTOR_LOG_VOLUME;
         tbHttpIntegrationLogVolume = project + "_" + TB_HTTP_INTEGRATION_LOG_VOLUME;
         tbMqttIntegrationLogVolume = project + "_" + TB_MQTT_INTEGRATION_LOG_VOLUME;
@@ -166,6 +169,7 @@ public class ThingsBoardDbInstaller {
         env.put("TB_HTTP_TRANSPORT_LOG_VOLUME", tbHttpTransportLogVolume);
         env.put("TB_MQTT_TRANSPORT_LOG_VOLUME", tbMqttTransportLogVolume);
         env.put("TB_SNMP_TRANSPORT_LOG_VOLUME", tbSnmpTransportLogVolume);
+        env.put("TB_MODBUS_TRANSPORT_LOG_VOLUME", tbModbusTransportLogVolume);
         env.put("TB_VC_EXECUTOR_LOG_VOLUME", tbVcExecutorLogVolume);
         env.put("TB_HTTP_INTEGRATION_VOLUME", tbHttpIntegrationLogVolume);
         env.put("TB_MQTT_INTEGRATION_VOLUME", tbMqttIntegrationLogVolume);
@@ -253,6 +257,9 @@ public class ThingsBoardDbInstaller {
             dockerCompose.invokeDocker();
 
             dockerCompose.withCommand("volume create " + tbSnmpTransportLogVolume);
+            dockerCompose.invokeDocker();
+
+            dockerCompose.withCommand("volume create " + tbModbusTransportLogVolume);
             dockerCompose.invokeDocker();
 
             dockerCompose.withCommand("volume create " + tbVcExecutorLogVolume);
@@ -351,6 +358,7 @@ public class ThingsBoardDbInstaller {
         copyLogs(tbHttpTransportLogVolume, "./target/tb-http-transport-logs/");
         copyLogs(tbMqttTransportLogVolume, "./target/tb-mqtt-transport-logs/");
         copyLogs(tbSnmpTransportLogVolume, "./target/tb-snmp-transport-logs/");
+        copyLogs(tbModbusTransportLogVolume, "./target/tb-modbus-transport-logs/");
         copyLogs(tbVcExecutorLogVolume, "./target/tb-vc-executor-logs/");
         copyLogs(tbHttpIntegrationLogVolume, "./target/tb-http_integration-logs/");
         copyLogs(tbMqttIntegrationLogVolume, "./target/tb-mqtt_integration-logs/");
@@ -370,6 +378,7 @@ public class ThingsBoardDbInstaller {
                 .add(tbHttpTransportLogVolume)
                 .add(tbMqttTransportLogVolume)
                 .add(tbSnmpTransportLogVolume)
+                .add(tbModbusTransportLogVolume)
                 .add(tbVcExecutorLogVolume)
                 .add(resolveValkeyComposeVolumeLog())
                 .add(tbIntegrationExecutorLogVolume)

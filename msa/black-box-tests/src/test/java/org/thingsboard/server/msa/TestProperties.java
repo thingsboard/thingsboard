@@ -79,6 +79,24 @@ public class TestProperties {
         return System.getProperty("remote.coap.host", "localhost");
     }
 
+    /**
+     * Host of the Modbus simulator as the Modbus transport sees it: the compose service name inside the suite,
+     * and whatever the transport of a locally running platform can reach otherwise.
+     */
+    public static String getModbusSimulatorHost() {
+        if (instance.isActive()) {
+            return "modbus-simulator";
+        }
+        return System.getProperty("modbus.simulator.host", "localhost");
+    }
+
+    public static int getModbusSimulatorPort() {
+        if (instance.isActive()) {
+            return 5020;
+        }
+        return Integer.parseInt(System.getProperty("modbus.simulator.port", "5020"));
+    }
+
     public static int getRemoteCoapPort(){
         if (instance.isActive()) {
             return 15683;

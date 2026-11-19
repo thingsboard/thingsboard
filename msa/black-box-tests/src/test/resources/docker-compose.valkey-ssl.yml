@@ -1,6 +1,7 @@
 #
 # SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 #
 
 services:
@@ -95,6 +96,13 @@ services:
     depends_on:
       - valkey
   tb-snmp-transport:
+    env_file:
+      - cache-valkey.env
+    volumes:
+      - ./valkey-certs:/valkey/certs
+    depends_on:
+      - valkey
+  tb-modbus-transport:
     env_file:
       - cache-valkey.env
     volumes:

@@ -1,0 +1,135 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="modbus-mappings flex flex-1 flex-col" [formGroup]="mappingsForm">
+  @if (mappingsFormArray.controls.length) {
+    <div class="hidden flex-full flex-row items-center justify-start gap-2 gt-sm:flex">
+      <div class="flex flex-1 flex-row gap-2">
+        <label class="tb-title tb-required no-padding column-key" translate>device-profile.modbus.key</label>
+        <label class="tb-title tb-required no-padding column-type" translate>device-profile.modbus.data-type</label>
+        <label class="tb-title tb-required no-padding column-function-code" translate>device-profile.modbus.function-code</label>
+        <label class="tb-title tb-required no-padding column-number" translate>device-profile.modbus.address</label>
+        <label class="tb-title no-padding column-number" translate>device-profile.modbus.count</label>
+        <label class="tb-title no-padding column-number" translate>device-profile.modbus.bit</label>
+        <label class="tb-title no-padding column-number" translate>device-profile.modbus.multiplier</label>
+        <span style="min-width: 40px" [class.!hidden]="disabled"></span>
+      </div>
+    </div>
+    <mat-divider class="hidden gt-sm:block"></mat-divider>
+  }
+  <ng-container formArrayName="mappings">
+    @for (row of mappingsFormArray.controls; track row; let isLast = $last) {
+      <div [formGroup]="row" class="mapping-row flex flex-row items-center justify-start gap-2">
+        <div class="tb-layout-fill flex min-w-0 flex-1 flex-col justify-start gap-1 gt-sm:flex-row gt-sm:items-start gt-sm:gap-2">
+          <mat-form-field class="column-key min-w-0" appearance="outline" subscriptSizing="dynamic">
+            @if (!isGtSm) {
+              <mat-label translate>device-profile.modbus.key</mat-label>
+            }
+            <input matInput formControlName="tag" required/>
+            @if (row.get('tag').hasError('required') || row.get('tag').hasError('pattern')) {
+              <mat-error>{{ 'device-profile.modbus.key-required' | translate }}</mat-error>
+            }
+            @if (row.get('tag').hasError('duplicate')) {
+              <mat-error>{{ 'device-profile.modbus.key-duplicate' | translate }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="column-type min-w-0" appearance="outline" subscriptSizing="dynamic">
+            @if (!isGtSm) {
+              <mat-label translate>device-profile.modbus.data-type</mat-label>
+            }
+            <mat-select formControlName="type" required>
+              @for (dataType of dataTypes; track dataType) {
+                <mat-option [value]="dataType">{{ dataType }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field class="column-function-code min-w-0" appearance="outline" subscriptSizing="dynamic">
+            @if (!isGtSm) {
+              <mat-label translate>device-profile.modbus.function-code</mat-label>
+            }
+            <mat-select formControlName="functionCode" required>
+              @for (functionCode of functionCodesFor(row); track functionCode) {
+                <mat-option [value]="functionCode">{{ functionCodeNames.get(functionCode) | translate }}</mat-option>
+              }
+            </mat-select>
+            @if (row.get('functionCode').hasError('required')) {
+              <mat-error>{{ 'device-profile.modbus.function-code-required' | translate }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="column-number min-w-0" appearance="outline" subscriptSizing="dynamic">
+            @if (!isGtSm) {
+              <mat-label translate>device-profile.modbus.address</mat-label>
+            }
+            <input matInput formControlName="address" type="number" min="0" max="65535" required/>
+            @if (row.get('address').hasError('required')) {
+              <mat-error>{{ 'device-profile.modbus.address-required' | translate }}</mat-error>
+            } @else if (row.get('address').invalid) {
+              <mat-error>{{ 'device-profile.modbus.address-invalid' | translate }}</mat-error>
+            } @else if (row.hasError('addressRange')) {
+              <mat-hint class="range-error">{{ 'device-profile.modbus.address-range-exceeded' | translate }}</mat-hint>
+            }
+          </mat-form-field>
+          <mat-form-field class="column-number min-w-0" appearance="outline" subscriptSizing="dynamic">
+            @if (!isGtSm) {
+              <mat-label translate>device-profile.modbus.count</mat-label>
+            }
+            <input matInput formControlName="objectsCount" type="number" min="1"/>
+            @if (row.get('objectsCount').hasError('required')) {
+              <mat-error>{{ 'device-profile.modbus.count-required' | translate }}</mat-error>
+            } @else if (row.get('objectsCount').invalid) {
+              <mat-error>{{ 'device-profile.modbus.count-invalid' | translate: {max: maxCountFor(row)} }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="column-number min-w-0" appearance="outline" subscriptSizing="dynamic">
+            @if (!isGtSm) {
+              <mat-label translate>device-profile.modbus.bit</mat-label>
+            }
+            <input matInput formControlName="bit" type="number" min="0" max="15"/>
+            @if (row.get('bit').hasError('required')) {
+              <mat-error>{{ 'device-profile.modbus.bit-required' | translate }}</mat-error>
+            } @else if (row.get('bit').invalid) {
+              <mat-error>{{ 'device-profile.modbus.bit-invalid' | translate }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="column-number min-w-0" appearance="outline" subscriptSizing="dynamic">
+            @if (!isGtSm) {
+              <mat-label translate>device-profile.modbus.multiplier</mat-label>
+            }
+            <input matInput formControlName="multiplier" type="number"/>
+            @if (row.get('multiplier').invalid) {
+              <mat-error>{{ 'device-profile.modbus.multiplier-invalid' | translate }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        @if (!disabled) {
+          <button mat-icon-button color="primary"
+                  type="button"
+                  (click)="removeMapping($index)"
+                  matTooltip="{{ 'action.remove' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+      @if (!isLast) {
+        <mat-divider class="my-3 gt-sm:hidden"></mat-divider>
+      }
+    }
+  </ng-container>
+  @if (!mappingsFormArray.controls.length) {
+    <span class="tb-prompt no-mappings flex items-center justify-center" translate>device-profile.modbus.no-mappings</span>
+  }
+  @if (!disabled) {
+    <div>
+      <button mat-stroked-button color="primary"
+              type="button"
+              (click)="addMapping()">
+        <mat-icon class="button-icon">add_circle_outline</mat-icon>
+        {{ 'device-profile.modbus.add-mapping' | translate }}
+      </button>
+    </div>
+  }
+</div>

@@ -1,0 +1,157 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="modbusDeviceForm" style="padding: 8px 0;">
+  <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.connection</mat-label>
+      <mat-select formControlName="endpointType" required>
+        @for (type of endpointTypes; track type) {
+          <mat-option [value]="type">{{ ('device-profile.modbus.connection-' + type.toLowerCase()) | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.unit-id</mat-label>
+      <input matInput formControlName="unitId" type="number" [min]="unitIdRange.min" [max]="unitIdRange.max" required/>
+      @if (showUnitIdZeroHint) {
+        <mat-hint translate>device-profile.modbus.unit-id-zero-hint</mat-hint>
+      }
+      @if (modbusDeviceForm.get('unitId').hasError('required')) {
+        <mat-error>{{ 'device-profile.modbus.unit-id-required' | translate }}</mat-error>
+      } @else if (modbusDeviceForm.get('unitId').invalid) {
+        <mat-error>{{ 'device-profile.modbus.unit-id-invalid' | translate: unitIdRange }}</mat-error>
+      }
+    </mat-form-field>
+  </section>
+  @if (endpointType === ModbusEndpointType.TCP) {
+    <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>device-profile.modbus.host</mat-label>
+        <input matInput formControlName="host" required/>
+        @if (modbusDeviceForm.get('host').invalid) {
+          <mat-error>{{ 'device-profile.modbus.host-required' | translate }}</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>device-profile.modbus.port</mat-label>
+        <input matInput formControlName="port" type="number" min="1" max="65535" required/>
+        @if (modbusDeviceForm.get('port').hasError('required')) {
+          <mat-error>{{ 'device-profile.modbus.port-required' | translate }}</mat-error>
+        } @else if (modbusDeviceForm.get('port').invalid) {
+          <mat-error>{{ 'device-profile.modbus.port-invalid' | translate }}</mat-error>
+        }
+      </mat-form-field>
+    </section>
+    <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>device-profile.modbus.framing</mat-label>
+        <mat-select formControlName="framing" required>
+          @for (framing of framings; track framing) {
+            <mat-option [value]="framing">{{ ('device-profile.modbus.framing-' + framing.toLowerCase()) | translate }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint translate>device-profile.modbus.framing-hint</mat-hint>
+      </mat-form-field>
+    </section>
+  } @else {
+    <ng-container formGroupName="serial">
+      <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>device-profile.modbus.serial-port</mat-label>
+          <input matInput formControlName="port" required/>
+          <mat-hint translate>device-profile.modbus.serial-port-hint</mat-hint>
+          @if (modbusDeviceForm.get('serial.port').invalid) {
+            <mat-error>{{ 'device-profile.modbus.serial-port-required' | translate }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>device-profile.modbus.baud-rate</mat-label>
+          <input matInput formControlName="baudRate" type="number" min="1" required/>
+          @if (modbusDeviceForm.get('serial.baudRate').hasError('required')) {
+            <mat-error>{{ 'device-profile.modbus.baud-rate-required' | translate }}</mat-error>
+          } @else if (modbusDeviceForm.get('serial.baudRate').invalid) {
+            <mat-error>{{ 'device-profile.modbus.baud-rate-invalid' | translate }}</mat-error>
+          }
+        </mat-form-field>
+      </section>
+      <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>device-profile.modbus.parity</mat-label>
+          <mat-select formControlName="parity" required>
+            @for (parity of parities; track parity) {
+              <mat-option [value]="parity">{{ ('device-profile.modbus.parity-' + parity.toLowerCase()) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>device-profile.modbus.stop-bits</mat-label>
+          <mat-select formControlName="stopBits" required>
+            @for (bits of stopBits; track bits) {
+              <mat-option [value]="bits">{{ ('device-profile.modbus.stop-bits-' + bits.toLowerCase()) | translate }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint translate>device-profile.modbus.stop-bits-hint</mat-hint>
+        </mat-form-field>
+      </section>
+    </ng-container>
+    <section class="mb-4 flex flex-col gap-1">
+      <mat-slide-toggle formControlName="rs485Enabled">
+        {{ 'device-profile.modbus.rs485' | translate }}
+      </mat-slide-toggle>
+      <div class="tb-hint">{{ 'device-profile.modbus.rs485-hint' | translate }}</div>
+    </section>
+    @if (rs485Enabled) {
+      <ng-container formGroupName="rs485">
+        <section class="mb-4 flex flex-row gap-4 xs:flex-col">
+          <mat-slide-toggle formControlName="rtsActiveHigh">
+            {{ 'device-profile.modbus.rs485-rts-active-high' | translate }}
+          </mat-slide-toggle>
+          <mat-slide-toggle formControlName="termination">
+            {{ 'device-profile.modbus.rs485-termination' | translate }}
+          </mat-slide-toggle>
+          <mat-slide-toggle formControlName="rxDuringTx">
+            {{ 'device-profile.modbus.rs485-rx-during-tx' | translate }}
+          </mat-slide-toggle>
+        </section>
+        <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>device-profile.modbus.rs485-delay-before</mat-label>
+            <input matInput formControlName="delayBeforeMs" type="number" min="0" [max]="rs485MaxDelayMs" required/>
+            @if (modbusDeviceForm.get('rs485.delayBeforeMs').invalid) {
+              <mat-error>{{ 'device-profile.modbus.rs485-delay-invalid' | translate: {max: rs485MaxDelayMs} }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>device-profile.modbus.rs485-delay-after</mat-label>
+            <input matInput formControlName="delayAfterMs" type="number" min="0" [max]="rs485MaxDelayMs" required/>
+            @if (modbusDeviceForm.get('rs485.delayAfterMs').invalid) {
+              <mat-error>{{ 'device-profile.modbus.rs485-delay-invalid' | translate: {max: rs485MaxDelayMs} }}</mat-error>
+            }
+          </mat-form-field>
+        </section>
+      </ng-container>
+    }
+  }
+  <section class="mb-4 flex flex-row items-start gap-2 xs:flex-col xs:items-stretch xs:gap-4">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.timeout-ms</mat-label>
+      <input matInput formControlName="timeoutMs" type="number" min="1"/>
+      <mat-hint translate>device-profile.modbus.device-override-hint</mat-hint>
+      @if (modbusDeviceForm.get('timeoutMs').invalid) {
+        <mat-error>{{ 'device-profile.modbus.positive-integer' | translate }}</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>device-profile.modbus.poll-period-ms</mat-label>
+      <input matInput formControlName="pollPeriodMs" type="number" min="1"/>
+      <mat-hint translate>device-profile.modbus.device-override-hint</mat-hint>
+      @if (modbusDeviceForm.get('pollPeriodMs').invalid) {
+        <mat-error>{{ 'device-profile.modbus.positive-integer' | translate }}</mat-error>
+      }
+    </mat-form-field>
+  </section>
+</form>

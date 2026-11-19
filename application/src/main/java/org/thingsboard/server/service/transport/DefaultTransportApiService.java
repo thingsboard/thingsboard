@@ -10,8 +10,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +50,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -77,6 +76,8 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceIdsByTransportTypeRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceIdsByTransportTypeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileResponseMsg;
@@ -202,6 +203,8 @@ public class DefaultTransportApiService implements TransportApiService {
             return handle(transportApiRequestMsg.getResourceRequestMsg());
         } else if (transportApiRequestMsg.hasSnmpDevicesRequestMsg()) {
             return handle(transportApiRequestMsg.getSnmpDevicesRequestMsg());
+        } else if (transportApiRequestMsg.hasDeviceIdsByTransportTypeRequestMsg()) {
+            return handle(transportApiRequestMsg.getDeviceIdsByTransportTypeRequestMsg());
         } else if (transportApiRequestMsg.hasDeviceRequestMsg()) {
             return handle(transportApiRequestMsg.getDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasDeviceCredentialsRequestMsg()) {
@@ -651,6 +654,29 @@ public class DefaultTransportApiService implements TransportApiService {
 
         return TransportApiResponseMsg.newBuilder()
                 .setSnmpDevicesResponseMsg(responseMsg)
+                .build();
+    }
+
+    private TransportApiResponseMsg handle(GetDeviceIdsByTransportTypeRequestMsg requestMsg) {
+        DeviceTransportType transportType;
+        try {
+            transportType = DeviceTransportType.valueOf(requestMsg.getTransportType());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unsupported transport type [{}] in device ids request", requestMsg.getTransportType());
+            return getEmptyTransportApiResponse();
+        }
+        PageLink pageLink = new PageLink(requestMsg.getPageSize(), requestMsg.getPage());
+        PageData<UUID> result = deviceService.findDevicesIdsByDeviceProfileTransportType(transportType, pageLink);
+
+        GetDeviceIdsByTransportTypeResponseMsg responseMsg = GetDeviceIdsByTransportTypeResponseMsg.newBuilder()
+                .addAllIds(result.getData().stream()
+                        .map(UUID::toString)
+                        .toList())
+                .setHasNextPage(result.hasNext())
+                .build();
+
+        return TransportApiResponseMsg.newBuilder()
+                .setDeviceIdsByTransportTypeResponseMsg(responseMsg)
                 .build();
     }
 

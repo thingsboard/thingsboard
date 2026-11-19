@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.snmp;
 
 import jakarta.annotation.PreDestroy;
@@ -28,11 +29,11 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.service.DeviceProtoService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbSnmpTransportComponent;
-import org.thingsboard.server.transport.snmp.service.ProtoTransportEntityService;
 import org.thingsboard.server.transport.snmp.service.SnmpAuthService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportBalancingService;
 import org.thingsboard.server.transport.snmp.service.SnmpTransportService;
@@ -48,7 +49,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @TbSnmpTransportComponent
 @Component
@@ -59,7 +59,7 @@ public class SnmpTransportContext extends TransportContext {
     private final SnmpTransportService snmpTransportService;
     private final TransportDeviceProfileCache deviceProfileCache;
     private final TransportService transportService;
-    private final ProtoTransportEntityService protoEntityService;
+    private final DeviceProtoService deviceProtoService;
     private final SnmpTransportBalancingService balancingService;
     @Getter
     private final SnmpAuthService snmpAuthService;
@@ -78,39 +78,13 @@ public class SnmpTransportContext extends TransportContext {
 
     private void bootstrapWithRetries() {
         log.info("Initializing SNMP devices sessions");
-        int batchIndex = 0;
-        int batchSize = 512;
-        boolean nextBatchExists = true;
-
-        while (nextBatchExists) {
-            for (int attempt = 1; attempt <= snmpBootstrapBatchRetries; attempt++) {
-                try {
-                    TransportProtos.GetSnmpDevicesResponseMsg snmpDevicesResponse = protoEntityService.getSnmpDevicesIds(batchIndex, batchSize);
-                    snmpDevicesResponse.getIdsList().stream()
-                            .map(id -> new DeviceId(UUID.fromString(id)))
-                            .peek(allSnmpDevicesIds::add)
-                            .filter(deviceId -> balancingService.isManagedByCurrentTransport(deviceId.getId()))
-                            .map(protoEntityService::getDeviceById)
-                            .forEach(device -> getExecutor().execute(() -> establishDeviceSession(device)));
-                    nextBatchExists = snmpDevicesResponse.getHasNextPage();
-                    batchIndex++;
-                    break;
-                } catch (Exception e) {
-                    if (attempt >= snmpBootstrapBatchRetries) {
-                        log.error("SNMP bootstrap: batch {} failed after {} attempts.", batchIndex, attempt, e);
-                        return;
-                    }
-                    log.warn("SNMP bootstrap: batch {} attempt {}/{} failed.", batchIndex, attempt, snmpBootstrapBatchRetries, e);
-                    try {
-                        TimeUnit.SECONDS.sleep(10);
-                    } catch (InterruptedException ex) {
-                        log.warn("SNMP bootstrap interrupted. Stopping bootstrap task.");
-                        return;
-                    }
-                }
+        deviceProtoService.forEachDeviceIdByTransportType("bootstrap", DeviceTransportType.SNMP, snmpBootstrapBatchRetries, deviceId -> {
+            allSnmpDevicesIds.add(deviceId);
+            if (balancingService.isManagedByCurrentTransport(deviceId.getId())) {
+                Device d = deviceProtoService.getDeviceById(deviceId);
+                getExecutor().execute(() -> establishDeviceSession(d));
             }
-        }
-        log.debug("Found SNMP devices ids: {}", allSnmpDevicesIds);
+        });
     }
 
     private void establishDeviceSession(Device device) {
@@ -120,7 +94,7 @@ public class SnmpTransportContext extends TransportContext {
         DeviceProfileId deviceProfileId = device.getDeviceProfileId();
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
 
-        DeviceCredentials credentials = protoEntityService.getDeviceCredentialsByDeviceId(device.getId());
+        DeviceCredentials credentials = deviceProtoService.getDeviceCredentialsByDeviceId(device.getId());
         if (credentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
             log.warn("[{}] Expected credentials type is {} but found {}", device.getId(), DeviceCredentialsType.ACCESS_TOKEN, credentials.getCredentialsType());
             return;
@@ -153,7 +127,7 @@ public class SnmpTransportContext extends TransportContext {
     private void updateDeviceSession(DeviceSessionContext sessionContext, Device device, DeviceProfile deviceProfile) {
         log.info("Updating SNMP session for device {}", device.getId());
 
-        DeviceCredentials credentials = protoEntityService.getDeviceCredentialsByDeviceId(device.getId());
+        DeviceCredentials credentials = deviceProtoService.getDeviceCredentialsByDeviceId(device.getId());
         if (credentials.getCredentialsType() != DeviceCredentialsType.ACCESS_TOKEN) {
             log.warn("[{}] Expected credentials type is {} but found {}", device.getId(), DeviceCredentialsType.ACCESS_TOKEN, credentials.getCredentialsType());
             destroyDeviceSession(sessionContext);
@@ -291,7 +265,7 @@ public class SnmpTransportContext extends TransportContext {
         for (DeviceId deviceId : allSnmpDevicesIds) {
             if (balancingService.isManagedByCurrentTransport(deviceId.getId())) {
                 if (!sessions.containsKey(deviceId)) {
-                    Device device = protoEntityService.getDeviceById(deviceId);
+                    Device device = deviceProtoService.getDeviceById(deviceId);
                     if (device != null) {
                         log.info("SNMP device {} is now managed by current transport node", deviceId);
                         establishDeviceSession(device);

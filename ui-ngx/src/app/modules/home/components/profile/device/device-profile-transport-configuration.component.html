@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="deviceProfileTransportConfigurationFormGroup">
@@ -32,6 +33,11 @@
         <tb-snmp-device-profile-transport-configuration
           formControlName="configuration">
         </tb-snmp-device-profile-transport-configuration>
+      }
+      @case (deviceTransportType.MODBUS) {
+        <tb-modbus-device-profile-transport-configuration
+          formControlName="configuration">
+        </tb-modbus-device-profile-transport-configuration>
       }
     }
   </div>
