@@ -22,10 +22,8 @@ Each of these stops the notices with a message that says what to do.
 
 It also writes the list of the jars of the Maven packages, each with its SHA-256, for notice_files.py.
 
-A component that is neither a Maven nor an npm package is not scanned. Its vendor may publish a license file that
-covers it and the software it contains, such as the LICENSE of Node.js: when the SBOM gives the address of that file,
-as an external reference of the type license, the component is written to the list for license_files.py, which puts
-the file into the notices as it is.
+A component that is neither a Maven nor an npm package, but whose SBOM gives the address of its license file, is
+written to the list for license_files.py.
 
 Usage: sbom_to_ort.py --project-version <version> --out <ortproject.json> --cache <file> --curations <file>
        --jars <file> --license-files <file> [--own <group>/<name> ...] <SBOM> ...
@@ -69,7 +67,7 @@ def main():
         raise stop('these SBOMs do not exist, and the notices are made from them:\n  ' + '\n  '.join(absent)
                    + f'\n{BUILD_PROBLEM} The Maven build makes them with -Dsbom.skip=false.')
 
-    components, skipped, jars, license_files = {}, {}, {}, {}
+    components, skipped, jars, license_files = {}, {}, {}, set()
     for sbom in args.sboms:
         for component in json.load(open(sbom)).get('components', []):
             purl = component.get('purl') or ''
@@ -81,8 +79,7 @@ def main():
             elif not is_maven(purl) and not purl.startswith('pkg:npm/'):
                 url = license_file(component)
                 if url:
-                    name = ' '.join(filter(None, [component['name'], component.get('version')]))
-                    license_files.setdefault((name, url), purl or component['name'])
+                    license_files.add((component.get('group', ''), component['name'], component.get('version', ''), url))
                 else:
                     skipped.setdefault('not a Maven or npm package', set()).add(purl or component.get('name'))
             elif is_maven(purl) and own(component, args):
@@ -144,12 +141,9 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     json.dump({'projectName': 'thingsboard', 'dependencies': dependencies}, open(args.out, 'w'), indent=1)
     json.dump([jars[purl] for purl in sorted(jars)], open(args.jars, 'w'), indent=1)
-    json.dump([{'component': name, 'url': url} for name, url in sorted(license_files)], open(args.license_files, 'w'),
-              indent=1)
+    json.dump([{'group': group, 'name': name, 'version': version, 'url': url}
+               for group, name, version, url in sorted(license_files)], open(args.license_files, 'w'), indent=1)
     print(f'{len(dependencies)} packages')
-    print(f'Taken from the license file the SBOM names: {len(license_files)}')
-    for (_, url), item in sorted(license_files.items(), key=lambda entry: entry[1]):
-        print(f'  {item} ({url})')
     for reason, items in sorted(skipped.items()):
         print(f'Left out, {reason}: {len(items)}')
         for item in sorted(items):
@@ -225,6 +219,15 @@ def maven_sources(component):
             raise stop(f'{url} is no SHA-1: {sha1}. {BUILD_PROBLEM}')
         return {'url': url.removesuffix('.sha1'), 'sha1': sha1}
     return None
+
+
+def write_atomically(path, data):
+    """Writes the file in one step: several builds can run at once, and none must read a file half written."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    temporary = f'{path}.{os.getpid()}'
+    with open(temporary, 'wb') as file:
+        file.write(data)
+    os.replace(temporary, path)
 
 
 def maven_path(group, name, version, classifier='', type='jar'):

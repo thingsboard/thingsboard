@@ -158,10 +158,6 @@ class IsJarTest(unittest.TestCase):
         self.assertFalse(sbom_to_ort.is_jar('pkg:npm/echarts@5.5.4'))
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 class LicenseFileTest(unittest.TestCase):
     def test_the_address_of_the_license_file(self):
         component = {'name': 'node', 'externalReferences': [{'type': 'website', 'url': 'https://nodejs.org'},
@@ -177,3 +173,7 @@ class LicenseFileTest(unittest.TestCase):
         with self.assertRaises(SystemExit) as stopped:
             sbom_to_ort.license_file(component)
         self.assertIn('several license files for node', str(stopped.exception))
+
+
+if __name__ == '__main__':
+    unittest.main()

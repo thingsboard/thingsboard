@@ -21,8 +21,8 @@ import sys
 import urllib.error
 import urllib.request
 
-from notice_files import clean, layout
-from sbom_to_ort import stop
+from notice_files import clean, coordinates, layout, ordered
+from sbom_to_ort import stop, write_atomically
 
 
 def main():
@@ -35,17 +35,21 @@ def main():
 
     found = {}  # text -> set of (component, address)
     for entry in json.load(open(args.list, encoding='utf-8')):
-        text = clean(content(entry['url'], entry['component'], args.downloads))
+        component = coordinates(entry['group'], entry['name'], entry['version']).rstrip()
+        text = clean(content(entry['url'], component, args.downloads))
         if not text:
-            raise stop(f"the license file of {entry['component']} at {entry['url']} is empty. Check the address in the "
+            raise stop(f"the license file of {component} at {entry['url']} is empty. Check the address in the "
                        'external reference of the type license of the component, in the pom that declares it.')
-        found.setdefault(text, set()).add((entry['component'], entry['url']))
+        found.setdefault(text, set()).add((component, entry['url']))
 
     # ORT reads the file as UTF-8, whatever the locale of the build is
     with open(args.out, 'w', encoding='utf-8') as out:
         out.write(layout(found))
     components = {component for carriers in found.values() for component, _ in carriers}
     print(f'{len(found)} license files of {len(components)} components')
+    for carriers, _ in ordered(found):
+        for component, url in carriers:
+            print(f'  {component} ({url})')
 
 
 def content(url, component, downloads):
@@ -61,10 +65,7 @@ def content(url, component, downloads):
         raise stop(f'the license file of {component} cannot be downloaded from {url}: {error}. If the address is '
                    'wrong, fix it in the external reference of the type license of the component, in the pom that '
                    'declares it.')
-    os.makedirs(downloads, exist_ok=True)
-    temporary = f'{path}.{os.getpid()}'
-    open(temporary, 'wb').write(data)
-    os.replace(temporary, path)
+    write_atomically(path, data)
     return data
 
 
