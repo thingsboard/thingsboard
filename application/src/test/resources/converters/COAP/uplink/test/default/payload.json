@@ -1,0 +1,7 @@
+{
+  "deviceName": "Thermostat-01",
+  "deviceType": "thermostat",
+  "serialNumber": "SN-12345",
+  "temperature": 25.5,
+  "ts": 1791901200000
+}
