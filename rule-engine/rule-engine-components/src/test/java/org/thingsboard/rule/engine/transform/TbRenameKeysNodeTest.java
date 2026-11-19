@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
@@ -28,6 +29,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -67,6 +69,30 @@ public class TbRenameKeysNodeTest {
         assertThat(defaultConfig.getRenameIn()).isEqualTo(TbMsgSource.DATA);
     }
 
+    @ParameterizedTest
+    @EnumSource(TbMsgSource.class)
+    void givenIdentityMapping_whenInit_thenThrow(TbMsgSource source) {
+        config.setRenameIn(source);
+        config.setRenameKeysMapping(Map.of("temperature", "temperature"));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        assertThatThrownBy(() -> node.init(ctx, nodeConfiguration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Source and destination keys must be different: temperature");
+    }
+
+    @ParameterizedTest
+    @EnumSource(TbMsgSource.class)
+    void givenMixedValidAndIdentityMappings_whenInit_thenThrow(TbMsgSource source) {
+        config.setRenameIn(source);
+        config.setRenameKeysMapping(Map.of("temperature", "temperature", "humidity", "relativeHumidity"));
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        assertThatThrownBy(() -> node.init(ctx, nodeConfiguration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Source and destination keys must be different: temperature");
+    }
+
     @Test
     void givenMsg_whenOnMsg_thenVerifyOutput() throws Exception {
         String data = "{\"Temperature_1\":22.5,\"TestKey_2\":10.3}";
@@ -80,7 +106,8 @@ public class TbRenameKeysNodeTest {
         assertThat(newMsg).isNotNull();
 
         JsonNode dataNode = JacksonUtil.toJsonNode(newMsg.getData());
-        assertThat(dataNode.has("Attribute_2")).isEqualTo(true);
+        assertThat(dataNode.get("Attribute_2").asDouble()).isEqualTo(10.3);
+        assertThat(dataNode.has("TestKey_2")).isFalse();
         assertThat(dataNode.has("Temperature_1")).isEqualTo(true);
     }
 
@@ -103,7 +130,7 @@ public class TbRenameKeysNodeTest {
         assertThat(newMsg).isNotNull();
 
         Map<String, String> mdDataMap = newMsg.getMetaData().getData();
-        assertThat(mdDataMap.containsKey("Attribute_1")).isEqualTo(true);
+        assertThat(mdDataMap).containsEntry("Attribute_1", "Test").doesNotContainKey("TestKey_1");
     }
 
     @Test
