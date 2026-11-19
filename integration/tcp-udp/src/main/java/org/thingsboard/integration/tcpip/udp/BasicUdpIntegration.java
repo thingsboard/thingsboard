@@ -9,6 +9,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
@@ -33,6 +34,12 @@ import java.util.function.Function;
 @Slf4j
 public class BasicUdpIntegration extends AbstractIpIntegration {
 
+    // Read buffer for one datagram: covers the largest UDP payload over IPv4 (65,507 bytes) and IPv6 (65,527 bytes).
+    // NioDatagramChannel reads at most 2048 bytes by default, and the OS drops the rest of a longer datagram.
+    private static final int MAX_DATAGRAM_SIZE = 65535;
+    // NioDatagramChannel default; a new allocator set through ChannelOption.RCVBUF_ALLOCATOR would read only 1 datagram per read loop.
+    private static final int MAX_DATAGRAMS_PER_READ = 16;
+
     private UdpConfigurationParameters udpConfigurationParameters;
 
     @Override
@@ -56,7 +63,8 @@ public class BasicUdpIntegration extends AbstractIpIntegration {
         server.channel(NioDatagramChannel.class)
                 .handler(createChannelHandlerInitializer(udpConfigurationParameters.getHandlerConfiguration()))
                 .option(ChannelOption.SO_BROADCAST, udpConfigurationParameters.isSoBroadcast())
-                .option(ChannelOption.SO_RCVBUF, udpConfigurationParameters.getSoRcvBuf() * 1024);
+                .option(ChannelOption.SO_RCVBUF, udpConfigurationParameters.getSoRcvBuf() * 1024)
+                .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(MAX_DATAGRAM_SIZE).maxMessagesPerRead(MAX_DATAGRAMS_PER_READ));
         serverChannel = server.bind(udpConfigurationParameters.getPort()).sync().channel();
         if (bindFuture != null) {
             bindFuture.cancel(true);
