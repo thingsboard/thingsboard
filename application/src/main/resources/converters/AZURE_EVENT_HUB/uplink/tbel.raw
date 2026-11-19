@@ -20,7 +20,7 @@ if (deviceType.isEmpty()) {
     deviceType = "default";
 }
 
-// Use the ISO 8601 timestamp if provided; otherwise, use the current server time.
+// Use the timestamp if provided; otherwise, use the current server time.
 // An invalid timestamp rejects the message.
 var ts = data.timestamp != null && !data.timestamp.toString().trim().isEmpty() ? new Date(data.timestamp).getTime() : Date.now();
 

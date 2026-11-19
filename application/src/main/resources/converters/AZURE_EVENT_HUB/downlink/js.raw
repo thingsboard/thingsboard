@@ -4,7 +4,7 @@
 // metadata.deviceId is the Azure Device ID of the target device; the integration skips messages without it.
 // This template uses the ThingsBoard device name as the Azure Device ID. Add it to the message metadata
 // with the "originator fields" rule node (Name -> deviceName).
-// The integration sends the message only when IoT Hub Name is set in its connection settings.
+// The integration sends the message only when IoT Hub name is set in its connection settings.
 var deviceId = typeof metadata.deviceName === "string" ? metadata.deviceName.trim() : "";
 if (!deviceId) {
     throw new Error("Message metadata has no deviceName");
