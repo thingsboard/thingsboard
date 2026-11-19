@@ -69,6 +69,7 @@ import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -159,7 +160,7 @@ public final class IntegrationGrpcSession implements Closeable {
         if (optional.isPresent()) {
             configuration = optional.get();
             try {
-                if (configuration.isRemote() && configuration.getSecret().equals(request.getIntegrationSecret())) {
+                if (configuration.isRemote() && Objects.equals(configuration.getSecret(), request.getIntegrationSecret())) {
                     Converter defaultConverter = ctx.getConverterService().findConverterById(configuration.getTenantId(),
                             configuration.getDefaultConverterId());
                     ConverterConfigurationProto defaultConverterProto = constructConverterConfigProto(defaultConverter);
@@ -416,13 +417,18 @@ public final class IntegrationGrpcSession implements Closeable {
                 .setConverterIdMSB(converter.getId().getId().getMostSignificantBits())
                 .setConverterIdLSB(converter.getId().getId().getLeastSignificantBits())
                 .setName(converter.getName())
-                .setConfiguration(JacksonUtil.toString(converter.getConfiguration()))
-                .setAdditionalInfo(JacksonUtil.toString(converter.getAdditionalInfo()));
+                .setConfiguration(JacksonUtil.toString(converter.getConfiguration()));
+        if (converter.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(converter.getAdditionalInfo()));
+        }
         if (converter.getDebugSettings() != null) {
             builder.setDebugSettings(JacksonUtil.toString(converter.getDebugSettings()));
         }
         if (converter.getIntegrationType() != null) {
             builder.setIntegrationType(converter.getIntegrationType().toString());
+        }
+        if (converter.getConverterVersion() != null) {
+            builder.setConverterVersion(converter.getConverterVersion());
         }
         return builder.build();
     }
