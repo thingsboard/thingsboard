@@ -41,6 +41,16 @@ export class SolutionDashboardsComponent implements AfterViewInit, OnDestroy {
     this.scroller?.removeEventListener('scroll', this.scrollListener);
   }
 
+  details(dashboard: DashboardsOverview): string {
+    const description = dashboard.description ?? '';
+    if (!dashboard.overview) {
+      return description;
+    }
+    const lines = description.split('\n');
+    const start = lines.findIndex(line => /^\s*(#{4,}\s|[-*+]\s|\d+[.)]\s|\*\*[^*]+\*\*:?\s*$)/.test(line));
+    return start > 0 ? lines.slice(start).join('\n') : description;
+  }
+
   goTo(index: number): void {
     this.active.set(index);
     const target = this.host.nativeElement.querySelector(`[data-dash="${index}"]`) as HTMLElement;

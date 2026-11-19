@@ -115,7 +115,7 @@ export class AiSolutionsService {
     const solution: SolutionInfo = {
       id: info.id,
       createdTime: info.createdTime,
-      solutionTitle: info.data?.solutionTitle ?? '',
+      solutionTitle: info.data?.solutionTitle || info.data?.aiSolutionTitle || this.find(info.id)?.solutionTitle || '',
       built: !!info.metadata?.built,
       installed: !!info.metadata?.installed
     };

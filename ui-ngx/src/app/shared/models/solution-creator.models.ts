@@ -96,6 +96,7 @@ export interface SolutionData {
   dashboardsOverview?: Array<DashboardsOverview>;
   dashboards?: Dashboard & {assignedTo: string};
   solutionTitle?: string;
+  aiSolutionTitle?: string;
   solutionDescription?: string;
   entities?: any;
 }

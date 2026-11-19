@@ -7,7 +7,7 @@
 <header class="sol-head" [class.scrolled]="logScrolled() && !(showPane() && paneOpen())" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
         (fullscreenChanged)="fullscreen.set($event)">
   <mat-icon class="sol-head-mark" fontSet="material-icons-round" aria-hidden="true">layers</mat-icon>
-  <tb-ai-chat-title [title]="title()" [placeholder]="opening() ? '' : ('solution-creator.new-solution' | translate)" [level]="level()"
+  <tb-ai-chat-title [title]="shownTitle()" [placeholder]="opening() ? '' : ('solution-creator.new-solution' | translate)" [level]="level()"
                     [statusTip]="statusTip()" [renamable]="!!info()?.id" (renamed)="renameTo($event)"></tb-ai-chat-title>
   <div class="sol-head-actions">
     @if (title() || built()) {

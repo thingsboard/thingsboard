@@ -60,7 +60,7 @@ import {
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { ClipboardService } from 'ngx-clipboard';
 import { downloadAiFile } from '@home/components/ai/ai-file.models';
-import { EMPTY, Observable, of, Subject, timer } from 'rxjs';
+import { EMPTY, forkJoin, Observable, of, Subject, timer } from 'rxjs';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -133,6 +133,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   fullscreen = signal<boolean>(false);
 
   title = signal<string>('');
+  shownTitle = computed(() => this.title() || this.aiSolutions.find(this.info()?.id)?.solutionTitle || '');
 
   built = signal<boolean>(false);
 
@@ -731,7 +732,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   private set solutionInfo(value: SolutionCreatorInfo) {
     this._solutionInfo = value;
     this.info.set(value ? {...value} : null);
-    this.title.set(value?.data?.solutionTitle ?? '');
+    this.title.set(value?.data?.solutionTitle || value?.data?.aiSolutionTitle || '');
     this.built.set(!!value?.metadata?.built);
     this.installed.set(!!value?.metadata?.installed);
     const main = value?.metadata?.installResult?.mainDashboardId;
@@ -785,6 +786,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   }
 
   ngOnInit() {
+    SolutionChatComponent.watchUnload();
     this.route.queryParams.pipe(
       filter(data => this.solutionId !== data.solutionId),
       tap(() => this.resetSolution()),
@@ -959,11 +961,12 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     if(this.solutionInfo.states[this.solutionStep()]?.status === SolutionStepStatus.READY) {
       if (this.solutionStep() === SolutionStep.INITIAL_CONFIGURATION) {
         const dashboardState = this.solutionInfo.states[SolutionStep.DASHBOARDS_CONFIGURATION];
-        if (!dashboardState) {
+        const notStarted = !dashboardState || (!dashboardState.messages?.length && dashboardState.status !== SolutionStepStatus.READY);
+        if (notStarted) {
           this.solutionInfo.states[SolutionStep.DASHBOARDS_CONFIGURATION] = {
             messages: [],
             status: SolutionStepStatus.IN_PROGRESS,
-            chatId: null
+            chatId: dashboardState?.chatId ?? null
           }
           this.solutionStep.set(SolutionStep.DASHBOARDS_CONFIGURATION);
           this.updatedCurrentMsg();
@@ -983,6 +986,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           this.installProgress.set(null);
           this.makeStartedAt.set(Date.now());
           this.installOnly.set(false);
+          SolutionChatComponent.markMaking(this.solutionId, true);
           const dialogRef = this.initGenerateState('create');
           const uninstallOrContinue$ = !this.solutionInfo.metadata?.installed
             ? of(null)
@@ -1015,11 +1019,15 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           )
             .subscribe({
               next: (value) => {
+                SolutionChatComponent.markMaking(value.id, false);
                 this.solutionInfo = value;
                 this.aiSolutions.upsert(value);
                 this.showInstalled();
               },
               error: (err) => {
+                if (err?.status !== 0 && !SolutionChatComponent.unloading) {
+                  SolutionChatComponent.markMaking(this.solutionId, false);
+                }
                 if (!this.wasStopped(err, () => this.nextStep()) && !this.noticeFor(err)) {
                   this.reportFailure(err);
                 }
@@ -1045,6 +1053,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       finalize(() => work.close())
     ).subscribe({
         next: (value) => {
+          SolutionChatComponent.markMaking(this.solutionId, false);
           if (!this.solutionInfo.metadata) {
             this.solutionInfo.metadata = {} as SolutionMetadata;
           }
@@ -1058,6 +1067,9 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
           this.showInstalled();
         },
         error: (err) => {
+          if (err?.status !== 0 && !SolutionChatComponent.unloading) {
+            SolutionChatComponent.markMaking(this.solutionId, false);
+          }
           if (!this.wasStopped(err, () => this.installSolution()) && !this.noticeFor(err)) {
             this.reportFailure(err, 'install');
           }
@@ -1470,14 +1482,18 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       }
       this.updatedCurrentMsg();
       this.creatorStep.set('result');
+      if (!this.solutionInfo.metadata?.installed) {
+        this.resumeMaking();
+      }
       return;
     }
     this.creatorStep.set('chat');
     const initialStatus = this.solutionInfo.states[SolutionStep.INITIAL_CONFIGURATION]?.status;
     const dashboardState = this.solutionInfo.states[SolutionStep.DASHBOARDS_CONFIGURATION];
-    if (initialStatus === SolutionStepStatus.READY && dashboardState) {
-      this.solutionStep.set(SolutionStep.DASHBOARDS_CONFIGURATION);
-    }
+    const dashboardsStarted = !!dashboardState && (!!dashboardState.messages?.length || dashboardState.status === SolutionStepStatus.READY
+      || !this.aiSolutions.loaded() || this.aiSolutions.find(this.solutionInfo.id)?.status === 'RUNNING');
+    this.solutionStep.set(initialStatus === SolutionStepStatus.READY && dashboardsStarted
+      ? SolutionStep.DASHBOARDS_CONFIGURATION : SolutionStep.INITIAL_CONFIGURATION);
     this.updatedCurrentMsg();
     if (this.isReadyStep()) {
       this.paneOpen.set(true);
@@ -1487,26 +1503,188 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     }
     if (this.designStillRunning()) {
       this.waitForDesign();
+    } else if (this.solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION && this.isReadyStep()) {
+      this.resumeMaking();
     }
   }
 
-  private designStillRunning(): boolean {
-    if (this.solutionStep() !== SolutionStep.INITIAL_CONFIGURATION || this.isReadyStep()) {
+  private static unloading = false;
+
+  private static watchUnload(): void {
+    window.addEventListener('pagehide', () => SolutionChatComponent.unloading = true, {once: true});
+  }
+
+  private static makingKey(solutionId: string): string {
+    return 'tb-ai-solution-making-' + solutionId;
+  }
+
+  private static markMaking(solutionId: string | undefined, making: boolean): void {
+    if (!solutionId) {
+      return;
+    }
+    try {
+      if (making) {
+        sessionStorage.setItem(SolutionChatComponent.makingKey(solutionId), '1');
+      } else {
+        sessionStorage.removeItem(SolutionChatComponent.makingKey(solutionId));
+      }
+    } catch {
+      return;
+    }
+  }
+
+  private static wasMaking(solutionId: string): boolean {
+    try {
+      return sessionStorage.getItem(SolutionChatComponent.makingKey(solutionId)) === '1';
+    } catch {
       return false;
     }
-    const last = this.messages().at(-1) as GeneralChatMessage | undefined;
+  }
+
+  private resumeMaking(): void {
+    const solutionId = this.solutionId;
+    const pending = SolutionChatComponent.wasMaking(solutionId);
+    forkJoin([
+      this.aiSolutions.load().pipe(catchError(() => of([]))),
+      this.aiSolutions.installProgress(solutionId).pipe(catchError(() => of(null))),
+      this.solutionCreator.getSolutionById(solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(catchError(() => of(null)))
+    ]).pipe(takeUntil(this.cancelPending$), takeUntilDestroyed(this.destroyRef)).subscribe(([, progress, fresh]) => {
+      if (this.solutionId !== solutionId || this.isGenerating()) {
+        return;
+      }
+      if (fresh) {
+        this.solutionInfo = fresh;
+        if (fresh.metadata?.built && this.creatorStep() !== 'result') {
+          this.creatorStep.set('result');
+        }
+        if (fresh.metadata?.installed) {
+          SolutionChatComponent.markMaking(solutionId, false);
+          return;
+        }
+      }
+      const running = this.aiSolutions.find(solutionId)?.status === 'RUNNING' || !!progress?.running;
+      const built = !!this.solutionInfo?.metadata?.built;
+      if (!built && running) {
+        this.followCreate();
+      } else if (built && running) {
+        this.followInstall();
+      } else if (built && pending) {
+        this.installSolution();
+      }
+    });
+  }
+
+  private followCreate(): void {
+    const solutionId = this.solutionId;
+    this.installProgress.set(null);
+    this.makeStartedAt.set(Date.now() - this.makeSeconds() * 1000);
+    this.installOnly.set(false);
+    SolutionChatComponent.markMaking(solutionId, true);
+    const dialogRef = this.initGenerateState('create');
+    this.withProgress(timer(SolutionChatComponent.DESIGN_POLL_MS, SolutionChatComponent.DESIGN_POLL_MS).pipe(
+      take(SolutionChatComponent.DESIGN_POLL_LIMIT),
+      switchMap(() => this.solutionCreator.getSolutionById(solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(catchError(() => EMPTY))),
+      filter(solution => !!solution.metadata?.built),
+      take(1)
+    )).pipe(
+      takeUntil(this.cancelPending$),
+      finalize(() => {
+        this.isGenerating.set(false);
+        dialogRef.close();
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(solution => {
+      if (this.solutionId !== solutionId) {
+        return;
+      }
+      this.solutionInfo = solution;
+      this.aiSolutions.upsert(solution);
+      this.creatorStep.set('result');
+      if (!solution.metadata?.installed) {
+        setTimeout(() => this.installSolution(), 0);
+      }
+    });
+  }
+
+  private followInstall(): void {
+    const solutionId = this.solutionId;
+    this.installProgress.set(null);
+    this.makeStartedAt.set(Date.now() - this.makeSeconds() * 1000);
+    this.installOnly.set(true);
+    this.creatorStep.set('result');
+    if (window.innerWidth >= SolutionChatComponent.NARROW_WIDTH) {
+      this.paneOpen.set(true);
+    }
+    const work = this.startWork([{text: 'solution-creator.step-loading-creating-entities', delay: 0}], 'install');
+    this.making.set('solution');
+    timer(800, 1200).pipe(
+      switchMap(() => this.aiSolutions.installProgress(solutionId).pipe(catchError(() => of(null)))),
+      tap(progress => {
+        if (progress?.running) {
+          this.installProgress.set(progress);
+        }
+      }),
+      filter(progress => !progress?.running),
+      take(1),
+      switchMap(() => this.solutionCreator.getSolutionById(solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(catchError(() => EMPTY))),
+      takeUntil(this.cancelPending$),
+      finalize(() => work.close()),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(solution => {
+      if (this.solutionId !== solutionId) {
+        return;
+      }
+      this.solutionInfo = solution;
+      this.aiSolutions.upsert(solution);
+      if (solution.metadata?.installed) {
+        SolutionChatComponent.markMaking(solutionId, false);
+        this.showInstalled();
+      }
+    });
+  }
+
+  private designStillRunning(): boolean {
+    return this.stepAwaitingReply(this.solutionInfo, this.solutionStep());
+  }
+
+  private stepAwaitingReply(solution: SolutionCreatorInfo | undefined, step: SolutionStep): boolean {
+    const state = solution?.states?.[step];
+    const last = state?.messages?.at(-1) as GeneralChatMessage | undefined;
+    if (state && !last && state.status !== SolutionStepStatus.READY) {
+      return !this.aiSolutions.loaded() || this.aiSolutions.find(solution.id)?.status === 'RUNNING';
+    }
+    if (last?.from === 'USER') {
+      return this.awaitingReply(solution.id, last);
+    }
+    return state?.status !== SolutionStepStatus.READY && this.awaitingReply(solution?.id, last);
+  }
+
+  private awaitingReply(solutionId: string, last: GeneralChatMessage | undefined): boolean {
+    if (last?.from === 'USER') {
+      return !this.aiSolutions.loaded() || this.aiSolutions.find(solutionId)?.status === 'RUNNING';
+    }
     return last?.from === 'AI' && /^\s*(✅|🛠️|🛠)/u.test(last.content ?? '');
   }
 
   private waitForDesign(): void {
     const solutionId = this.solutionId;
+    const step = this.solutionStep();
     this.skipInterviewAllowed.set(false);
-    this.isGenerating.set(true);
-    this.startWork([{text: 'solution-creator.work-thinking', delay: 0}], 'think');
+    const since = this.workSince(step);
+    if (step === SolutionStep.DASHBOARDS_CONFIGURATION) {
+      this.initGenerateState('design', since);
+    } else {
+      if ((this.messages().at(-1) as GeneralChatMessage | undefined)?.from === 'AI') {
+        this.messages.set(this.messages().slice(0, -1));
+        this.messageSteps = this.messageSteps.slice(0, -1);
+      }
+      this.isGenerating.set(true);
+      this.startWork([{text: 'solution-creator.work-thinking', delay: 0}], 'think', undefined, since);
+    }
     timer(SolutionChatComponent.DESIGN_POLL_MS, SolutionChatComponent.DESIGN_POLL_MS).pipe(
       take(SolutionChatComponent.DESIGN_POLL_LIMIT),
       switchMap(() => this.solutionCreator.getSolutionById(solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(catchError(() => EMPTY))),
-      filter(solution => solution.states?.[SolutionStep.INITIAL_CONFIGURATION]?.status === SolutionStepStatus.READY),
+      filter(solution => !this.stepAwaitingReply(solution, step)),
       take(1),
       takeUntil(this.cancelPending$),
       finalize(() => {
@@ -1528,7 +1706,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     });
   }
 
-  private initGenerateState(kind: 'design' | 'sync' | 'create') {
+  private initGenerateState(kind: 'design' | 'sync' | 'create', since = Date.now()) {
     this.failure.set(null);
     this.isGenerating.set(true);
     let messages: Array<{text: string; delay: number}>;
@@ -1580,14 +1758,44 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     if (window.innerWidth >= SolutionChatComponent.NARROW_WIDTH) {
       this.paneOpen.set(true);
     }
-    return this.startWork(messages, creating ? 'install' : 'gen', estimateWaitTime);
+    return this.startWork(messages, creating ? 'install' : 'gen', estimateWaitTime, since);
   }
 
-  private startWork(messages: Array<{text: string; delay: number}>, kind: 'think' | 'gen' | 'install', _estimate?: number): {close: () => void} {
+  private static storeWork(solutionId: string, value: string): void {
+    try {
+      sessionStorage.setItem(SolutionChatComponent.workKey(solutionId), value);
+    } catch {
+      return;
+    }
+  }
+
+  private static workKey(solutionId: string): string {
+    return `tb-ai-solution-work-${solutionId}`;
+  }
+
+  private workSince(step: SolutionStep): number {
+    let since = 0;
+    try {
+      const [storedStep, storedSince] = (sessionStorage.getItem(SolutionChatComponent.workKey(this.solutionId)) ?? '').split(':');
+      if (storedStep === step) {
+        since = Number(storedSince) || 0;
+      }
+    } catch {
+      since = 0;
+    }
+    const asked = (this.messages() as GeneralChatMessage[]).filter(message => message.from === 'USER' && message.time).at(-1)?.time ?? 0;
+    const start = Math.max(since, asked);
+    return start > 0 && start <= Date.now() ? start : Date.now();
+  }
+
+  private startWork(messages: Array<{text: string; delay: number}>, kind: 'think' | 'gen' | 'install', _estimate?: number,
+                    since = Date.now()): {close: () => void} {
     const making = this.making();
     this.clearWork();
     this.making.set(making);
-    const since = Date.now();
+    if (kind !== 'install' && this.solutionId && this.solutionId !== NEW_SOLUTION_ID) {
+      SolutionChatComponent.storeWork(this.solutionId, `${this.solutionStep()}:${since}`);
+    }
     const lines = messages.map(message => this.translate.instant(message.text) as string);
     let at = 0;
     messages.forEach((message, index) => {
