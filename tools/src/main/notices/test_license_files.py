@@ -79,14 +79,23 @@ class PlatformsTest(unittest.TestCase):
         self.assertEqual(license_files.platforms_of(list(reversed(entries))), {'CREDITS.txt': None})
 
     def test_the_sections_of_other_platforms_are_left_out(self):
-        linux = license_files.for_platforms(CREDITS, {'Linux'})
+        linux = license_files.for_platforms(CREDITS, {'Linux'}, 'CREDITS.txt')
         self.assertIn('wayland', linux)
         self.assertNotIn('Multimedia', linux)
         self.assertTrue(linux.endswith('wayland'))
-        windows = license_files.for_platforms(CREDITS, {'Windows'})
+        windows = license_files.for_platforms(CREDITS, {'Windows'}, 'CREDITS.txt')
         self.assertNotIn('wayland', windows)
         self.assertIn('zlib\n\n======== Only in the Windows build ========\n\n========\nMultimedia', windows)
 
     def test_the_file_of_every_platform_is_the_whole_file(self):
-        self.assertEqual(license_files.for_platforms(CREDITS, {'Linux', 'Windows'}), CREDITS)
-        self.assertEqual(license_files.for_platforms(CREDITS, None), CREDITS)
+        self.assertEqual(license_files.for_platforms(CREDITS, {'Linux', 'Windows'}, 'CREDITS.txt'), CREDITS)
+        self.assertEqual(license_files.for_platforms(CREDITS, None, 'CREDITS.txt'), CREDITS)
+
+    def test_a_platform_without_a_section_stops_the_notices(self):
+        with self.assertRaises(SystemExit) as stopped:
+            license_files.for_platforms(CREDITS, {'linux'}, 'CREDITS.txt')
+        self.assertIn('CREDITS.txt has no section for the platform linux, which license-files-here.json gives: its '
+                      'sections are for Linux, Windows.', str(stopped.exception))
+
+    def test_a_file_without_sections_is_for_every_platform(self):
+        self.assertEqual(license_files.for_platforms('zlib', {'Linux'}, 'NOTICE.txt'), 'zlib')

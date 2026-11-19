@@ -50,7 +50,7 @@ def main():
         component = coordinates(entry['group'], entry['name'], entry['version']).rstrip()
         if 'path' in entry:
             where, fix = entry['path'], 'Check the file that tools/src/main/notices/license-files-here.json gives.'
-            text = for_platforms(clean(kept(os.path.join(ROOT, where), component)), platforms[where])
+            text = for_platforms(clean(kept(os.path.join(ROOT, where), component)), platforms[where], where)
         else:
             where, fix = entry['url'], ('Check the address in the external reference of the type license of the '
                                         'component, in the pom that declares it.')
@@ -79,8 +79,15 @@ def platforms_of(entries):
     return platforms
 
 
-def for_platforms(text, platforms):
-    """The text without its sections for other platforms than these, or all of it for None."""
+def for_platforms(text, platforms, path):
+    """The text without its sections for other platforms than these, or all of it for None. A platform without a section
+    in a file that has sections is a mistake that would leave its section out of its notices, without a word."""
+    sections = {section[1] for section in map(SECTION.match, text.split('\n')) if section}
+    unknown = sorted((platforms or set()) - sections) if sections else []
+    if unknown:
+        raise stop(f'{path} has no section for the platform {", ".join(unknown)}, which license-files-here.json gives: '
+                   f'its sections are for {", ".join(sorted(sections))}. Fix the platform in '
+                   'tools/src/main/notices/license-files-here.json.')
     if platforms is None:
         return text
     lines, keep = [], True

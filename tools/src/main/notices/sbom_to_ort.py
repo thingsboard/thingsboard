@@ -191,7 +191,7 @@ def license_file(component, here):
     other = [key for key in here if key.startswith('pkg:') and without_version(key) == without_version(name)]
     if other:
         raise stop(f'license-files-here.json has the license file of {other[0]}, {here[other[0]]["path"]}, and the SBOM '
-                   f'has {name}. Make the file for this version and change its entry.')
+                   f'has {name}. Make the file for this version, as the README beside it says, and then change its entry.')
     return None
 
 

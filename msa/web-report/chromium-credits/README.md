@@ -8,8 +8,9 @@ take it as the license file of the chromium components, through `tools/src/main/
 - those of the Windows package get the Windows credits;
 - the root `THIRD-PARTY-NOTICES` gets the whole file.
 
-The Linux and Windows builds have the same entries, except for 9. These are in two sections at the end of the file, each
-under a line `======== Only in the <platform> build ========`, which the notices of the other platform leave out.
+The Linux and Windows builds have nearly the same entries: in 156.0.8078.0, all but 9. Those of one build are in a
+section at the end of the file, under a line `======== Only in the <platform> build ========`, which the notices of the
+other platform leave out.
 
 The file is made by the command below. It is not a script of the build: it runs only when Chromium is updated.
 
