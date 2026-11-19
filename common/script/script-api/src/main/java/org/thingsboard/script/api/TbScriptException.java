@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api;
 
 import lombok.Getter;
@@ -31,6 +32,13 @@ public class TbScriptException extends RuntimeException implements RecoveryAware
 
     public TbScriptException(UUID scriptId, ErrorCode errorCode, String body, Exception cause) {
         super(cause);
+        this.scriptId = scriptId;
+        this.errorCode = errorCode;
+        this.body = body;
+    }
+
+    public TbScriptException(UUID scriptId, ErrorCode errorCode, String body, String message, Exception cause) {
+        super(message, cause);
         this.scriptId = scriptId;
         this.errorCode = errorCode;
         this.body = body;

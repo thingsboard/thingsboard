@@ -1211,7 +1211,7 @@ public class TbUtils {
     }
 
     public static void raiseError(String message) {
-        throw new RuntimeException(message);
+        throw new TbelRaisedErrorException(message);
     }
 
     private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
