@@ -939,6 +939,9 @@ cache:
     otaPackagesData:
       timeToLiveInMinutes: "${CACHE_SPECS_OTA_PACKAGES_DATA_TTL:60}" # Ota packages data cache TTL
       maxSize: "${CACHE_SPECS_OTA_PACKAGES_DATA_MAX_SIZE:10}" # 0 means the cache is disabled
+    otaPackagesDataBlocks:
+      timeToLiveInMinutes: "${CACHE_SPECS_OTA_PACKAGES_DATA_BLOCKS_TTL:60}" # OTA package data blocks cache TTL, counted from when a block was loaded from Redis
+      maxSize: "${CACHE_SPECS_OTA_PACKAGES_DATA_BLOCKS_MAX_SIZE:0}" # Used only when cache.type is redis: number of 1 MiB OTA firmware blocks kept in each node's memory in front of Redis, i.e. the budget in MiB; fit the packages rolled out at the same time. 0 means the cache is disabled
     edges:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGES_TTL:1440}" # Edges cache TTL
       maxSize: "${CACHE_SPECS_EDGES_MAX_SIZE:10000}" # 0 means the cache is disabled

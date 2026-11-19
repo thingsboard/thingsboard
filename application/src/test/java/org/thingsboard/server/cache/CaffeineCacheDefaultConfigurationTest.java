@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_DATA_BLOCKS_CACHE;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = CaffeineCacheDefaultConfigurationTest.class, loader = SpringBootContextLoader.class)
@@ -41,7 +42,12 @@ public class CaffeineCacheDefaultConfigurationTest {
         cacheSpecsMap.getSpecs().forEach((name, cacheSpecs) -> {
             softly.assertThat(name).as("cache name").isNotEmpty();
             softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
-            softly.assertThat(cacheSpecs.getMaxSize()).as("cache %s max size", name).isGreaterThan(0);
+            if (OTA_PACKAGE_DATA_BLOCKS_CACHE.equals(name)) {
+                // opt-in: enabled per deployment for large OTA rollouts, see RedisOtaPackageDataCache
+                softly.assertThat(cacheSpecs.getMaxSize()).as("cache %s max size", name).isZero();
+            } else {
+                softly.assertThat(cacheSpecs.getMaxSize()).as("cache %s max size", name).isGreaterThan(0);
+            }
         });
         softly.assertAll();
     }

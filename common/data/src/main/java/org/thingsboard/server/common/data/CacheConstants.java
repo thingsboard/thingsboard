@@ -47,6 +47,7 @@ public final class CacheConstants {
     public static final String USERS_SESSION_INVALIDATION_CACHE = "userSessionsInvalidation";
     public static final String OTA_PACKAGE_CACHE = "otaPackages";
     public static final String OTA_PACKAGE_DATA_CACHE = "otaPackagesData";
+    public static final String OTA_PACKAGE_DATA_BLOCKS_CACHE = "otaPackagesDataBlocks";
     public static final String INTEGRATIONS_CACHE = "integrations";
     public static final String REPOSITORY_SETTINGS_CACHE = "repositorySettings";
     public static final String AUTO_COMMIT_SETTINGS_CACHE = "autoCommitSettings";
