@@ -1,0 +1,7 @@
+{
+  "contentType": "JSON",
+  "data": "{\"method\":\"setOutput\",\"params\":\"on\"}",
+  "metadata": {
+    "deviceId": "3c003c000f51373331333230"
+  }
+}
