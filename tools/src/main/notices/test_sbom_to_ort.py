@@ -148,5 +148,15 @@ class MessagesTest(unittest.TestCase):
         self.assertIn('{"Apache Software License": "<identifier>"}', text)
 
 
+class IsJarTest(unittest.TestCase):
+    def test_a_maven_package_is_a_jar_unless_its_type_says_otherwise(self):
+        self.assertTrue(sbom_to_ort.is_jar('pkg:maven/org.example/lib@1.0'))
+        self.assertTrue(sbom_to_ort.is_jar('pkg:maven/org.example/lib@1.0?classifier=linux-x86_64&type=jar'))
+        self.assertFalse(sbom_to_ort.is_jar('pkg:maven/com.sun.winsw/winsw@2.0.1?classifier=bin&type=exe'))
+
+    def test_an_npm_package_is_no_jar(self):
+        self.assertFalse(sbom_to_ort.is_jar('pkg:npm/echarts@5.5.4'))
+
+
 if __name__ == '__main__':
     unittest.main()
