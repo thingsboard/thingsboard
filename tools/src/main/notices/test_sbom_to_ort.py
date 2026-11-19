@@ -160,3 +160,20 @@ class IsJarTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class LicenseFileTest(unittest.TestCase):
+    def test_the_address_of_the_license_file(self):
+        component = {'name': 'node', 'externalReferences': [{'type': 'website', 'url': 'https://nodejs.org'},
+                                                            {'type': 'license', 'url': 'https://example.com/LICENSE'}]}
+        self.assertEqual(sbom_to_ort.license_file(component), 'https://example.com/LICENSE')
+
+    def test_a_component_without_one(self):
+        self.assertIsNone(sbom_to_ort.license_file({'name': 'chromium'}))
+
+    def test_several_license_files_stop_the_notices(self):
+        component = {'name': 'node', 'externalReferences': [{'type': 'license', 'url': 'https://example.com/LICENSE'},
+                                                            {'type': 'license', 'url': 'https://example.com/COPYING'}]}
+        with self.assertRaises(SystemExit) as stopped:
+            sbom_to_ort.license_file(component)
+        self.assertIn('several license files for node', str(stopped.exception))

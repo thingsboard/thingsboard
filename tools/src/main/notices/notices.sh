@@ -11,7 +11,8 @@
 #
 # The SBOMs are turned into the list of their third-party packages (sbom_to_ort.py). ORT scans the source of each
 # package for licenses and copyright statements, and writes the notices with THIRD-PARTY-NOTICES.ftl. The NOTICE files
-# of the packages are added as they are (notice_files.py).
+# of the packages are added as they are (notice_files.py), and so are the license files that the SBOMs give for the
+# components that are not scanned (license_files.py).
 #
 # Needs Docker and python3. The results of the scans are kept in ~/.ort/scanner (or in $NOTICES_ORT_HOME/scanner):
 # a package that is not there yet is scanned, which takes minutes. The scans that others have made are downloaded
@@ -107,8 +108,9 @@ ort_step() { # log file, arguments of ORT: the message a template stopped with, 
 
 # Only what an earlier run wrote is removed: the directory may hold other files
 rm -rf "$WORK/project" "$WORK/package-configurations" "$WORK/scan-issues"
-rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,notice-files.txt,THIRD-PARTY-NOTICES.ftl,stop.ftl,THIRD-PARTY-NOTICES}
-rm -f "$WORK"/{convert,analyze,scan,scan-issues,package-configurations,notice-files,report}.log
+rm -f "$WORK"/{analyzer-result.json,scan-result.json,jars.json,license-files.json,notice-files.txt,license-files.txt}
+rm -f "$WORK"/{THIRD-PARTY-NOTICES.ftl,stop.ftl,THIRD-PARTY-NOTICES}
+rm -f "$WORK"/{convert,analyze,scan,scan-issues,package-configurations,notice-files,license-files,report}.log
 mkdir -p "$WORK/project" "$ORT_HOME"
 LAP=$SECONDS
 python3 "$HERE/scan_cache.py" download --home "$ORT_HOME" \
@@ -117,7 +119,7 @@ lap "cache download"
 step "$WORK/convert.log" python3 "$HERE/sbom_to_ort.py" --project-version "$VERSION" --cache "$ORT_HOME/maven-sources.json" \
   --curations "$HERE/ort-config/curations/curations.json" \
   --own org.thingsboard.ai/common --own org.thingsboard.license/client --own org.thingsboard.license/shared \
-  --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" "$@"
+  --out "$WORK/project/ortproject.json" --jars "$WORK/jars.json" --license-files "$WORK/license-files.json" "$@"
 lap convert
 ort_step "$WORK/analyze.log" -P ort.analyzer.enabledPackageManagers=OrtProjectFile analyze -f JSON -i /work/project -o /work
 lap analyze
@@ -134,7 +136,10 @@ step "$WORK/notice-files.log" python3 "$HERE/notice_files.py" --jars "$WORK/jars
   --archive "$ORT_HOME/scanner/archive" --maven-repository "${NOTICES_MAVEN_REPOSITORY:-$HOME/.m2/repository}" \
   --downloads "$ORT_HOME/maven-jars" --out "$WORK/notice-files.txt"
 lap "NOTICE files"
-# The template includes notice-files.txt and imports stop.ftl, and can only read what is beside it
+step "$WORK/license-files.log" python3 "$HERE/license_files.py" --list "$WORK/license-files.json" \
+  --downloads "$ORT_HOME/license-files" --out "$WORK/license-files.txt"
+lap "license files"
+# The template includes notice-files.txt and license-files.txt and imports stop.ftl, and can only read what is beside it
 cp "$HERE/THIRD-PARTY-NOTICES.ftl" "$HERE/stop.ftl" "$WORK/"
 ort_step "$WORK/report.log" --info report -i /work/scan-result.json -o /work -f PlainTextTemplate \
   -O PlainTextTemplate=templatePaths=/work/THIRD-PARTY-NOTICES.ftl \

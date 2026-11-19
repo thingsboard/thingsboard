@@ -564,5 +564,12 @@
    "comment": "Beerware is a notice that names its author, and this package has its own, by Ivan Sanchez Ortega; under 'Beerware' the notices would print the notice of Poul-Henning Kamp. The text is in ort-config/custom-license-texts. MIT is for the code it copies from js-lru.",
    "concluded_license": "MIT AND LicenseRef-thingsboard-beerware-googlemutant"
   }
+ },
+ {
+  "id": "NPM:@yao-pkg:pkg-fetch:[3.0,4.0[",
+  "curations": {
+   "comment": "The scan finds GPL-1.0-or-later in a code comment of lib-es5/build.js, which says that Node.js built for Alpine links the GCC runtime libraries statically under their runtime library exception; it is not a license of this package, which is MIT (package.json, license.md).",
+   "concluded_license": "MIT"
+  }
  }
 ]

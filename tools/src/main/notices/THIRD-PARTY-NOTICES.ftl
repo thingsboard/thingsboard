@@ -186,6 +186,19 @@ ${exceptionText}
     [/#if]
 
 [/#list]
+[#-- The license files of the components that are not scanned, as license_files.py lays them out. --]
+[#assign licenseFiles][#include "license-files.txt" parse=false][/#assign]
+[#if licenseFiles?has_content]
+${rule}
+License files of the components
+${rule}
+
+Some components come with a license file of their own, which covers them and
+the software they contain. Each file below is given as it is, once, under the
+components it belongs to and the address it was taken from.
+
+${licenseFiles}
+[/#if]
 [#-- The NOTICE files of the components, as notice_files.py lays them out. --]
 [#assign noticeFiles][#include "notice-files.txt" parse=false][/#assign]
 [#if noticeFiles?has_content]

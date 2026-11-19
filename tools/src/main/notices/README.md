@@ -25,7 +25,9 @@ of every step, is `target/notices-product/`.
 3. ORT analyzes the list and scans the source of each package for licenses and copyright statements.
 4. `package_configurations.py` excludes the paths of a package that are not shipped, such as tests and documentation.
 5. `notice_files.py` collects the NOTICE files of the packages.
-6. ORT writes the notices with `THIRD-PARTY-NOTICES.ftl`.
+6. `license_files.py` downloads the license files that the SBOMs give for the components that are not scanned, such as
+   the LICENSE of Node.js, and keeps them in `license-files/` of ORT's home.
+7. ORT writes the notices with `THIRD-PARTY-NOTICES.ftl`.
 
 ## Scans
 
