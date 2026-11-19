@@ -12,15 +12,17 @@
                        label="{{ 'integration.connection-string' | translate }}"
                        requiredText="{{ 'integration.connection-string-required' | translate }}">
   </tb-secret-key-input>
-  <mat-form-field appearance="outline" class="mat-block">
-    <mat-label translate>integration.iot-hub-name</mat-label>
-    <input matInput [required]="isSetDownLink" formControlName="iotHubName">
-    @if (azureEventHubIntegrationConfigForm.get('iotHubName').hasError('required')) {
-      <mat-error translate>
-        integration.event-iot-hub-name-required
-      </mat-error>
-    }
-  </mat-form-field>
+  @if (isSetDownLink) {
+    <mat-form-field appearance="outline" class="mat-block">
+      <mat-label translate>integration.iot-hub-name</mat-label>
+      <input matInput required formControlName="iotHubName">
+      @if (azureEventHubIntegrationConfigForm.get('iotHubName').hasError('required')) {
+        <mat-error translate>
+          integration.event-iot-hub-name-required
+        </mat-error>
+      }
+    </mat-form-field>
+  }
 
   <mat-expansion-panel class="expansion-panel-setting"
                        [expanded]="azureEventHubIntegrationConfigForm.get('enablePersistentCheckpoints').value">
