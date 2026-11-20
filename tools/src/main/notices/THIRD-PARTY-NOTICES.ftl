@@ -65,6 +65,24 @@
     [/#list]
     [#return found]
 [/#function]
+[#-- A choice that license-choices.yml does not decide is still in the license of the package after the choices. ORT
+     would list the package under every license of the choice, as if all of them applied. --]
+[#assign undecided = []]
+[#list shipped as package]
+    [#assign effective = (package.license.filterExcluded().effectiveLicense(view, package.licenseChoices)?string)!""]
+    [#if effective?contains(" OR ")]
+        [#assign undecided = undecided + [{"id": package.id.toCoordinates(), "given": effective}]]
+    [/#if]
+[/#list]
+[#if undecided?has_content]
+    [#stop stop.message("these packages let us choose a license, and nobody has chosen.\n"
+        + stop.lines(undecided?map(u -> u.id + ": " + u.given)) + "\n"
+        + "To fix: add the choice to tools/src/main/notices/license-choices.yml. We take the most permissive one,\n"
+        + "and of copyleft licenses EPL, CDDL or MPL before LGPL or GPL:\n"
+        + "    - given: \"" + undecided[0].given + "\"\n"
+        + "      choice: \"<the license we take>\"\n"
+        + "The rule then applies to every package that offers the same choice.")]
+[/#if]
 [#assign forbidden = offending(isForbidden)]
 [#if forbidden?has_content]
     [#stop stop.message("these packages are under licenses that ThingsBoard cannot ship.\n"
@@ -84,7 +102,7 @@
         + "To fix: add the license to tools/src/main/notices/ort-config/license-classifications.yml\nunder one category:\n"
         + "  notice         the copyright lines and the license text (most permissive licenses: MIT, BSD, Apache)\n"
         + "  source-link    as notice, and where the source is (EPL, MPL, CDDL)\n"
-        + "  written-offer  as notice, and our offer of the source (GPL and LGPL with the conditions there)\n"
+        + "  written-offer  as notice, and our offer of the source (LGPL, and GPL with the Classpath exception)\n"
         + "  nothing        no obligation (public domain)\n"
         + "  forbidden      we cannot ship it (strong copyleft such as GPL or AGPL, no commercial use)\n"
         + "If you are not sure which, ask before adding it: a copyleft license may need legal review.")]
@@ -100,24 +118,6 @@
         + "   \"curations\": {\"comment\": \"<where you found it>\", \"concluded_license\": \"<identifier>\"}}\n"
         + "The id may give a range of versions instead, such as [1.0,2.0[, if you checked them all.\n"
         + "If it truly has no license, we may not be allowed to ship it: raise it before merging.")]
-[/#if]
-[#-- A choice that license-choices.yml does not decide is still in the license of the package after the choices. ORT
-     would list the package under every license of the choice, as if all of them applied. --]
-[#assign undecided = []]
-[#list shipped as package]
-    [#assign effective = (package.license.filterExcluded().effectiveLicense(view, package.licenseChoices)?string)!""]
-    [#if effective?contains(" OR ")]
-        [#assign undecided = undecided + [{"id": package.id.toCoordinates(), "given": effective}]]
-    [/#if]
-[/#list]
-[#if undecided?has_content]
-    [#stop stop.message("these packages let us choose a license, and nobody has chosen.\n"
-        + stop.lines(undecided?map(u -> u.id + ": " + u.given)) + "\n"
-        + "To fix: add the choice to tools/src/main/notices/license-choices.yml. We take the most permissive one,\n"
-        + "and of copyleft licenses EPL, CDDL or MPL before LGPL or GPL:\n"
-        + "    - given: \"" + undecided[0].given + "\"\n"
-        + "      choice: \"<the license we take>\"\n"
-        + "The rule then applies to every package that offers the same choice.")]
 [/#if]
 [#-- ThingsBoard is derived from ThingsBoard Community Edition, which is under Apache-2.0, so every notices file has the
      section of Apache-2.0 and opens it with that, with or without components under it. --]
