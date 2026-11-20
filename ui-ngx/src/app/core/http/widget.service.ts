@@ -26,10 +26,7 @@ import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActivationEnd, Router } from '@angular/router';
-import {
-  BasicWidgetConfigComponent,
-  IBasicWidgetConfigComponent
-} from '@home/components/widget/config/widget-config.component.models';
+import type { BasicWidgetConfigComponent, IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { ResourcesService } from '@core/services/resources.service';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
@@ -301,8 +298,8 @@ export class WidgetService {
     this.widgetsInfoInMemoryCache.set(widgetInfo.fullFqn, widgetInfo);
   }
 
-  public registerBasicWidgetConfigComponents(module: any) {
-    Object.assign(this.basicWidgetSettingsComponentsMap, this.resourcesService.extractComponentsFromModule<IBasicWidgetConfigComponent>(module, BasicWidgetConfigComponent));
+  public registerBasicWidgetConfigComponents(module: any, baseType: typeof BasicWidgetConfigComponent) {
+    Object.assign(this.basicWidgetSettingsComponentsMap, this.resourcesService.extractComponentsFromModule<IBasicWidgetConfigComponent>(module, baseType));
   }
 
   public getBasicWidgetSettingsComponentBySelector(selector: string): Type<IBasicWidgetConfigComponent> {
