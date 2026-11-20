@@ -1,6 +1,5 @@
-# The license decisions of the third-party notices, and the template that enforces them: a change to them needs the
-# approval of their owner. See docs/licensing-guide.md.
-/tools/src/main/notices/ort-config/license-classifications.yml @dskarzh
-/tools/src/main/notices/ort-config/curations/curations.json @dskarzh
-/tools/src/main/notices/license-choices.yml @dskarzh
-/tools/src/main/notices/THIRD-PARTY-NOTICES.ftl @dskarzh
+# The third-party notices: the generator, its license decisions and the guide to them. A change to them needs the
+# approval of their owner, and so does a change to this file.
+/tools/src/main/notices/ @dskarzh
+/docs/licensing-guide.md @dskarzh
+/.github/CODEOWNERS @dskarzh

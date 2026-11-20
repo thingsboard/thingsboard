@@ -19,11 +19,10 @@ categories:
     description: "No obligation, so the notices leave it out: a statement that something is in the public domain."
   - name: "forbidden"
     description: "ThingsBoard cannot ship it, and the notices stop: strong copyleft, which would put ThingsBoard itself
-      under that license, and licenses that forbid commercial use. When the component is under it, only removing the component fixes the
-      stop."
+      under that license, and licenses that forbid commercial use. Only removing the component fixes the stop, unless the
+      scan misread the license."
 
 categorizations:
-  # Strong copyleft, and licenses that forbid commercial use: no notice makes them acceptable.
   - id: "GPL-1.0-only"
     categories: ["forbidden"]
   - id: "GPL-1.0-or-later"

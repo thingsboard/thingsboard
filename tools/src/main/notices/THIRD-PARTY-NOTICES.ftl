@@ -29,7 +29,9 @@
 [#function inCategory resolved category][#return helper.filterForCategory([resolved], category)?has_content][/#function]
 [#function isSourceLink resolved][#return inCategory(resolved, "source-link")][/#function]
 [#function isOffer resolved][#return inCategory(resolved, "written-offer")][/#function]
-[#function isForbidden resolved][#return inCategory(resolved, "forbidden")][/#function]
+[#function isUnclassified resolved][#return !helper.filterForClassified([resolved])?has_content][/#function]
+[#-- filterForCategory also gives the licenses of no category, so a forbidden one must be classified. --]
+[#function isForbidden resolved][#return !isUnclassified(resolved) && inCategory(resolved, "forbidden")][/#function]
 [#-- Every license of a package, without what is no license: NONE, and NOASSERTION, which the scanner gives for a
      sentence that points to a license elsewhere. --]
 [#function allLicenses package][#return view.filter(package.license.filterExcluded(), package.licenseChoices).licenses?filter(l -> l.license?string != "NONE" && !l.license?string?starts_with("NOASSERTION"))][/#function]
@@ -53,31 +55,28 @@
 [#assign withOthers = []]
 [#function coordinates id][#return (id.namespace?has_content)?then(id.namespace + ":", "") + id.name + " " + id.version][/#function]
 [#import "stop.ftl" as stop]
-[#-- A license ThingsBoard cannot ship under: no entry in a decision file makes it acceptable. --]
-[#assign forbidden = []]
-[#list shipped as package]
-    [#list allLicenses(package)?filter(isForbidden) as resolved]
-        [#assign forbidden = forbidden + [resolved.license?string + " (" + package.id.toCoordinates() + ")"]]
+[#-- "license (package)" for every license of a shipped package that the test picks: the lines of a stop. --]
+[#function offending test]
+    [#local found = []]
+    [#list shipped as package]
+        [#list allLicenses(package)?filter(test) as resolved]
+            [#local found = found + [resolved.license?string + " (" + package.id.toCoordinates() + ")"]]
+        [/#list]
     [/#list]
-[/#list]
+    [#return found]
+[/#function]
+[#assign forbidden = offending(isForbidden)]
 [#if forbidden?has_content]
     [#stop stop.message("these packages are under licenses that ThingsBoard cannot ship.\n"
         + stop.lines(forbidden) + "\n"
         + "Strong copyleft would put ThingsBoard itself under that license, and the others forbid commercial use.\n"
         + "No change to the configuration makes them acceptable: remove the dependency, or replace it with one\n"
-        + "under another license. Only if the scan misread the license, and the package is not under it, add a\n"
-        + "concluded license to tools/src/main/notices/ort-config/curations/curations.json, with where you\n"
-        + "checked, for the versions you checked. The owners of that file have to approve it.")]
+        + "under another license. Only if the scan misread the license, add a concluded license to\n"
+        + "tools/src/main/notices/ort-config/curations/curations.json, with where you checked, for the versions\n"
+        + "you checked. The owners of that file have to approve it.")]
 [/#if]
 [#-- Nobody has said what the notices owe for a license that is not in license-classifications.yml. --]
-[#assign unclassified = []]
-[#list shipped as package]
-    [#list allLicenses(package) as resolved]
-        [#if !helper.filterForClassified([resolved])?has_content]
-            [#assign unclassified = unclassified + [resolved.license?string + " (" + package.id.toCoordinates() + ")"]]
-        [/#if]
-    [/#list]
-[/#list]
+[#assign unclassified = offending(isUnclassified)]
 [#if unclassified?has_content]
     [#stop stop.message("these licenses are new to the product, and nobody has said what they require of us.\n"
         + stop.lines(unclassified) + "\n"
