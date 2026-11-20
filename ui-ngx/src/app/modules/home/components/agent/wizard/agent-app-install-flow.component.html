@@ -5,28 +5,33 @@
 
 -->
 @if (!embedded) {
-  <mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     @if (showBack) {
       <button mat-icon-button (click)="back.emit()" type="button" tabindex="-1">
-        <mat-icon>arrow_back</mat-icon>
+        <mat-icon class="material-icons">arrow_back</mat-icon>
       </button>
     }
-    <div class="tb-install-wizard-toolbar-content">
-      <h2>{{ 'agent.app-install-title' | translate }}@if (agent) {:}</h2>
-      @if (agent) {
-        <span class="flex-1">
-          {{ 'agent.app-install-on-agent' | translate: { name: agent?.name } }}
-        </span>
-      }
-    </div>
+    <h2>{{ 'agent.app-install-title' | translate }}@if (agent) {: {{ 'agent.app-install-on-agent' | translate: { name: agent?.name } }}}</h2>
+    <span class="flex-1"></span>
     <div [tb-help]="helpLinkId"></div>
-    <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
-      <mat-icon>close</mat-icon>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
 }
+@if (embedded) {
+  <ng-container [ngTemplateOutlet]="body"></ng-container>
+  <ng-container [ngTemplateOutlet]="actions"></ng-container>
+} @else {
+  <div mat-dialog-content>
+    <ng-container [ngTemplateOutlet]="body"></ng-container>
+  </div>
+  <div mat-dialog-actions>
+    <ng-container [ngTemplateOutlet]="actions"></ng-container>
+  </div>
+}
 
-<div mat-dialog-content class="tb-install-wizard-body" [class.tb-install-wizard-embedded]="embedded">
+<ng-template #body>
 
   @if (checkingManaged) {
     <div class="loading-state">
@@ -35,7 +40,7 @@
   }
 
   @if (!checkingManaged && managedApp) {
-    <div class="managed-block">
+    <div class="managed-block p-6">
       <tb-agent-deploy-status
         [agent]="managedAgent"
         [application]="managedApp"
@@ -43,17 +48,11 @@
         (goToAgentApplication)="goToAgentApplication()"
         (goToAgentEvents)="goToAgentEvents()">
       </tb-agent-deploy-status>
-      <div class="step-footer">
-        <span class="flex-1"></span>
-        @if (!embedded) {
-          <button mat-button (click)="cancel()">{{ 'action.close' | translate }}</button>
-        }
-      </div>
     </div>
   }
 
   @if (selectAgent && !embedded && !checkingManaged && !managedApp) {
-    <div class="tb-form-hint tb-primary-fill mb-4">
+    <div class="tb-form-hint tb-primary-fill mx-6 mt-4">
       <mat-icon>info_outline</mat-icon>
       <span translate>agent.deploy-via-agent-desc</span>
     </div>
@@ -62,6 +61,7 @@
   @if (!checkingManaged && !managedApp) {
     <mat-stepper linear #stepper
       [class.tb-steps-locked]="!!installedApplication"
+      (selectionChange)="selectedIndex = $event.selectedIndex"
       [orientation]="(stepperOrientation | async)"
       [labelPosition]="(stepperLabelPosition | async)">
       @if (selectAgent) {
@@ -73,16 +73,10 @@
             [ngModel]="agent"
             (ngModelChange)="onSelectedAgentChange($event)">
           </tb-agent-autocomplete>
-          <div class="step-footer">
-            <button mat-raised-button color="primary" matStepperNext [disabled]="!canProceedFromAgent()">
-              {{ 'action.next' | translate }}
-              <mat-icon iconPositionEnd>chevron_right</mat-icon>
-            </button>
-          </div>
         </mat-step>
       }
       @if (!lockedType) {
-        <mat-step [label]="'agent.app-install-step1' | translate">
+        <mat-step [label]="'agent.app-install-step1' | translate" [completed]="canProceedFromType()">
           <p class="hint" translate>agent.app-install-pick-type</p>
           <div class="type-cards">
             @for (card of typeCards; track card.type) {
@@ -109,23 +103,12 @@
               <span>{{ loadError }}</span>
             </div>
           }
-          <div class="step-footer">
-            @if (selectAgent) {
-              <button mat-button matStepperPrevious>
-                <mat-icon>chevron_left</mat-icon>
-                {{ 'action.back' | translate }}
-              </button>
-            }
-            <button mat-raised-button color="primary" matStepperNext [disabled]="!canProceedFromType()">
-              {{ 'action.next' | translate }}
-              <mat-icon iconPositionEnd>chevron_right</mat-icon>
-            </button>
-          </div>
         </mat-step>
       }
-      <mat-step [label]="'agent.app-install-step3' | translate" [editable]="!installedApplication">
+      <mat-step [label]="'agent.app-install-step3' | translate" [completed]="canSubmit() || !!installedApplication"
+        [editable]="!installedApplication">
         <div class="config-toggle">
-          <tb-toggle-select [(ngModel)]="useProfile" (ngModelChange)="toggleUseProfile($event)" appearance="fill" disablePagination>
+          <tb-toggle-select class="xs:w-full" [(ngModel)]="useProfile" (ngModelChange)="toggleUseProfile($event)" appearance="fill" disablePagination>
             <tb-toggle-option [value]="true">{{ 'agent.app-install-from-profile' | translate }}</tb-toggle-option>
             <tb-toggle-option [value]="false">{{ 'agent.app-install-custom-config' | translate }}</tb-toggle-option>
           </tb-toggle-select>
@@ -269,18 +252,6 @@
           <tb-agent-compose-diff [left]="proposedYaml" [right]="currentYaml" [syncScroll]="diffSyncScroll" (rightChange)="composeYaml = $event"></tb-agent-compose-diff>
           <p class="diff-hint" translate>agent.app-install-diff-hint</p>
         }
-        <div class="step-footer">
-          @if (!installedApplication) {
-            <button mat-button matStepperPrevious [disabled]="submitting">
-              <mat-icon>chevron_left</mat-icon>
-              {{ 'action.back' | translate }}
-            </button>
-          }
-          <button mat-raised-button color="primary" matStepperNext [disabled]="!canSubmit()">
-            {{ 'action.next' | translate }}
-            <mat-icon iconPositionEnd>chevron_right</mat-icon>
-          </button>
-        </div>
       </mat-step>
       <mat-step [label]="'agent.app-install-step4' | translate" [completed]="!!installedApplication"
         [editable]="!installedApplication">
@@ -319,27 +290,6 @@
           <mat-icon>info_outline</mat-icon>
           <span translate>agent.app-install-confirm-info</span>
         </div>
-        <div class="step-footer">
-          @if (!installedApplication) {
-            <button mat-button matStepperPrevious [disabled]="submitting">
-              <mat-icon>chevron_left</mat-icon>
-              {{ 'action.back' | translate }}
-            </button>
-          }
-          @if (!installedApplication) {
-            <button mat-raised-button color="primary"
-              (click)="submit()" [disabled]="!canSubmit()">
-              <mat-icon>save</mat-icon>
-              <span>{{ 'agent.app-install-cta' | translate }}</span>
-            </button>
-          }
-          @if (installedApplication) {
-            <button mat-raised-button color="primary" matStepperNext>
-              {{ 'action.next' | translate }}
-              <mat-icon iconPositionEnd>chevron_right</mat-icon>
-            </button>
-          }
-        </div>
       </mat-step>
       @if (selectAgent) {
         <mat-step [label]="'agent.deploy-install-step' | translate">
@@ -350,14 +300,45 @@
             (goToAgentApplication)="goToAgentApplication()"
             (goToAgentEvents)="goToAgentEvents()">
           </tb-agent-deploy-status>
-          <div class="step-footer">
-            <span class="flex-1"></span>
-            @if (!embedded) {
-              <button mat-button (click)="cancel()">{{ 'action.close' | translate }}</button>
-            }
-          </div>
         </mat-step>
       }
     </mat-stepper>
   }
-</div>
+</ng-template>
+
+<ng-template #actions>
+  @if (!checkingManaged && !managedApp && (canGoBack() || showNext())) {
+    <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
+      @if (canGoBack()) {
+        <button mat-stroked-button
+                [disabled]="submitting"
+                (click)="stepper?.previous()">{{ 'action.back' | translate }}</button>
+      }
+      <span class="flex-1"></span>
+      @if (showNext()) {
+        <button mat-stroked-button
+                color="primary"
+                [disabled]="!canGoNext()"
+                (click)="stepper?.next()">{{ 'action.next-with-label' | translate: { label: (nextStepLabel() | translate) } }}</button>
+      }
+    </div>
+    @if (!embedded || canInstall()) {
+      <mat-divider class="w-full"></mat-divider>
+    }
+  }
+  @if (!embedded || canInstall()) {
+    <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
+      @if (!embedded) {
+        <button mat-button
+                [disabled]="submitting"
+                (click)="cancel()">{{ (managedApp || installedApplication ? 'action.close' : 'action.cancel') | translate }}</button>
+      }
+      @if (canInstall()) {
+        <button mat-raised-button
+                color="primary"
+                [disabled]="currentStep() !== 'summary' || !canSubmit()"
+                (click)="submit()">{{ 'agent.app-install-cta' | translate }}</button>
+      }
+    </div>
+  }
+</ng-template>

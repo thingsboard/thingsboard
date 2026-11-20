@@ -20,7 +20,7 @@ export class AgentAutoProvisionDialogService {
     return this.dialog.open<AgentAutoProvisionDialogComponent, AgentAutoProvisionDialogData, boolean>(
       AgentAutoProvisionDialogComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { appType }
       }
     ).afterClosed();

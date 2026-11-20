@@ -5,30 +5,21 @@
 
 -->
 @if (!embedded) {
-  <mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     @if (showBack) {
       <button mat-icon-button (click)="back.emit()" type="button" tabindex="-1">
-        <mat-icon>arrow_back</mat-icon>
+        <mat-icon class="material-icons">arrow_back</mat-icon>
       </button>
     }
-    <div class="tb-install-wizard-toolbar-content">
-      <h2>{{ 'agent.app-upgrade-title' | translate }}@if (existingApplication) {
-        :
-      }</h2>
-      @if (existingApplication) {
-        <span class="flex-1">
-          {{ 'agent.app-upgrade-heading' | translate: { name: existingApplication?.name, from: fromVersion || '—', to: toVersion || '—' } }}
-        </span>
-      }
-    </div>
+    <h2>{{ 'agent.app-upgrade-title' | translate }}@if (existingApplication) {: {{ 'agent.app-upgrade-heading' | translate: { name: existingApplication?.name, from: fromVersion || '—', to: toVersion || '—' } }}}</h2>
+    <span class="flex-1"></span>
     <div tb-help="agentAppUpgrade"></div>
-    <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
-      <mat-icon>close</mat-icon>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
 }
-
-<div mat-dialog-content class="tb-install-wizard-body" [class.tb-install-wizard-embedded]="embedded">
+<div mat-dialog-content>
 
   @if (loadingTemplate || loadingProfile) {
     <div class="loading-state">
@@ -45,6 +36,7 @@
 
   @if (!(loadingTemplate || loadingProfile || loadError)) {
     <mat-stepper linear #stepper
+      (selectionChange)="selectedIndex = $event.selectedIndex"
       [orientation]="(stepperOrientation | async)"
       [labelPosition]="(stepperLabelPosition | async)">
       @if (showProfileUpgradeStep) {
@@ -95,26 +87,9 @@
             <tb-agent-compose-diff [left]="profileProposedYaml" [right]="profileCurrentYaml" [readOnly]="profileUpgraded" [syncScroll]="diffSyncScroll" (rightChange)="profileComposeYaml = $event"></tb-agent-compose-diff>
             <p class="diff-hint" translate>agent.app-upgrade-diff-hint</p>
           }
-          <div class="step-footer">
-            @if (!profileUpgraded) {
-              <button mat-raised-button color="primary"
-                (click)="submitProfileUpgrade()"
-                [disabled]="!canSubmitProfileUpgrade()"
-                >
-                <mat-icon>upgrade</mat-icon>
-                <span>{{ 'agent.app-upgrade-profile-cta' | translate }}</span>
-              </button>
-            }
-            @if (profileUpgraded) {
-              <button mat-raised-button color="primary" matStepperNext>
-                {{ 'action.next' | translate }}
-                <mat-icon iconPositionEnd>chevron_right</mat-icon>
-              </button>
-            }
-          </div>
         </mat-step>
       }
-      <mat-step [label]="'agent.app-install-step3' | translate">
+      <mat-step [label]="'agent.app-install-step3' | translate" [completed]="canSubmit()">
         @if (canHaveRelatedEntity && isProfileBoundUpgrade) {
           <tb-agent-related-entity-autocomplete
             [appType]="selectedType || existingApplication?.appType"
@@ -141,12 +116,6 @@
           <tb-agent-compose-diff [left]="proposedYaml" [right]="currentYaml" [syncScroll]="diffSyncScroll" (rightChange)="composeYaml = $event"></tb-agent-compose-diff>
           <p class="diff-hint" translate>agent.app-upgrade-diff-hint</p>
         }
-        <div class="step-footer">
-          <button mat-raised-button color="primary" matStepperNext [disabled]="!canSubmit()">
-            {{ 'action.next' | translate }}
-            <mat-icon iconPositionEnd>chevron_right</mat-icon>
-          </button>
-        </div>
       </mat-step>
       <mat-step [label]="'agent.app-install-step4' | translate">
         <div class="summary-card">
@@ -171,17 +140,42 @@
           <mat-icon>info_outline</mat-icon>
           <span translate>agent.app-upgrade-rollback-info</span>
         </div>
-        <div class="step-footer">
-          <button mat-button matStepperPrevious [disabled]="submitting">
-            <mat-icon>chevron_left</mat-icon>
-            {{ 'action.back' | translate }}
-          </button>
-          <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit()">
-            <mat-icon>upgrade</mat-icon>
-            <span>{{ 'agent.app-upgrade-cta' | translate }}</span>
-          </button>
-        </div>
       </mat-step>
     </mat-stepper>
   }
+</div>
+<div mat-dialog-actions>
+  @if (canGoBack() || showNext()) {
+    <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
+      @if (canGoBack()) {
+        <button mat-stroked-button
+                [disabled]="submitting"
+                (click)="stepper.previous()">{{ 'action.back' | translate }}</button>
+      }
+      <span class="flex-1"></span>
+      @if (showNext()) {
+        <button mat-stroked-button
+                color="primary"
+                [disabled]="!canGoNext()"
+                (click)="stepper.next()">{{ 'action.next-with-label' | translate: { label: (nextStepLabel() | translate) } }}</button>
+      }
+    </div>
+    <mat-divider class="w-full"></mat-divider>
+  }
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
+    <button mat-button
+            [disabled]="submitting"
+            (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    @if (currentStep() === 'profile' && !profileUpgraded) {
+      <button mat-raised-button
+              color="primary"
+              [disabled]="!canSubmitProfileUpgrade()"
+              (click)="submitProfileUpgrade()">{{ 'agent.app-upgrade-profile-cta' | translate }}</button>
+    } @else {
+      <button mat-raised-button
+              color="primary"
+              [disabled]="currentStep() !== 'summary' || !canSubmit()"
+              (click)="submit()">{{ 'agent.app-upgrade-cta' | translate }}</button>
+    }
+  </div>
 </div>

@@ -32,7 +32,7 @@ export class AgentDeployDialogService {
     return this.dialog.open<AgentAppInstallWizardComponent, AgentAppInstallWizardData, AgentAppInstallWizardResult>(
       AgentAppInstallWizardComponent, {
         disableClose: false,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           mode: 'install',
           selectAgent: true,

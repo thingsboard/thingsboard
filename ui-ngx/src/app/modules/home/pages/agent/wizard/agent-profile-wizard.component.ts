@@ -62,6 +62,7 @@ export class AgentProfileWizardComponent implements OnInit {
   assignmentsLoadState: 'loading' | 'loaded' | 'failed' = 'loaded';
 
   @ViewChild('stepper', { static: false }) stepper: MatStepper;
+  selectedIndex = 0;
 
   stepperLabelPosition: Observable<'bottom' | 'end'>;
 
@@ -165,7 +166,7 @@ export class AgentProfileWizardComponent implements OnInit {
     this.dialog.open<AgentAppProfileWizardComponent, AgentAppProfileWizardData, AgentAppProfile>(
       AgentAppProfileWizardComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { lockedAppType: this.lockedAppType }
       }
     ).afterClosed().subscribe(saved => {

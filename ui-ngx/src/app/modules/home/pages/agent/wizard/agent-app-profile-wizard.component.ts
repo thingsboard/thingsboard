@@ -60,6 +60,8 @@ export class AgentAppProfileWizardComponent
 
   // Left (read-only) = raw template compose; right (editable) = same content,
   // user-editable. This is the value persisted on submit.
+  selectedIndex = 0;
+
   proposedYaml = '';
   currentYaml = '';
 
@@ -306,6 +308,23 @@ export class AgentAppProfileWizardComponent
 
   cancel() {
     this.dialogRef.close(undefined);
+  }
+
+  isLastStep(): boolean {
+    return this.selectedIndex === this.stepLabels().length - 1;
+  }
+
+  canGoNext(): boolean {
+    return this.stepLabels()[this.selectedIndex] === 'agent.app-install-step1' ? this.canProceedFromType() : this.canSubmit();
+  }
+
+  nextStepLabel(): string {
+    return this.stepLabels()[this.selectedIndex + 1] ?? '';
+  }
+
+  private stepLabels(): string[] {
+    const labels = ['agent.app-install-step3', 'agent.app-profile-step-save'];
+    return this.editMode ? labels : ['agent.app-install-step1', ...labels];
   }
 
   canProceedFromType(): boolean {

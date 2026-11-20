@@ -49,6 +49,16 @@ import { AgentAppWizardSubmitService } from '@home/pages/agent/wizard/agent-app-
 import { AgentAppUpgradeResult, AgentAppWizardFinish, AgentTypeCard } from '@home/pages/agent/wizard/agent-app-wizard.models';
 import { EdgeTemplateCompatibilityService } from '@home/pages/agent/util/edge-template-compatibility.service';
 
+type InstallStepKey = 'agent' | 'type' | 'config' | 'summary' | 'deploy';
+
+const INSTALL_STEP_LABELS: Record<InstallStepKey, string> = {
+  agent: 'agent.deploy-select-agent-step',
+  type: 'agent.app-install-step1',
+  config: 'agent.app-install-step3',
+  summary: 'agent.app-install-step4',
+  deploy: 'agent.deploy-install-step'
+};
+
 @Component({
   selector: 'tb-agent-app-install-flow',
   templateUrl: './agent-app-install-flow.component.html',
@@ -82,6 +92,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   @ViewChild('stepper', { static: false })
   stepper: MatStepper;
+  selectedIndex = 0;
 
   bindings: StepBinding[] = [];
 
@@ -405,7 +416,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     this.dialog.open<AgentAppProfileWizardComponent, AgentAppProfileWizardData, AgentAppProfile>(
       AgentAppProfileWizardComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { lockedAppType: appType, presetName }
       }).afterClosed().subscribe(saved => {
         if (saved) {
@@ -424,7 +435,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     this.dialog.open<AgentAppProfileWizardComponent, AgentAppProfileWizardData, AgentAppProfile>(
       AgentAppProfileWizardComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { profile: this.selectedProfile }
       }).afterClosed().subscribe(saved => {
         if (saved) {
@@ -730,5 +741,59 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   cancel() {
     this.cancelled.emit(null);
+  }
+
+  currentStep(): InstallStepKey {
+    return this.stepKeys()[this.selectedIndex];
+  }
+
+  canGoBack(): boolean {
+    return this.selectedIndex > 0 && !this.installedApplication;
+  }
+
+  canInstall(): boolean {
+    return !this.checkingManaged && !this.managedApp && !this.installedApplication;
+  }
+
+  showNext(): boolean {
+    const step = this.currentStep();
+    if (step === 'summary') {
+      return !!this.installedApplication && this.selectAgent;
+    }
+    return step !== 'deploy';
+  }
+
+  canGoNext(): boolean {
+    switch (this.currentStep()) {
+      case 'agent':
+        return this.canProceedFromAgent();
+      case 'type':
+        return this.canProceedFromType();
+      case 'config':
+        return this.canSubmit();
+      case 'summary':
+        return !!this.installedApplication;
+      default:
+        return false;
+    }
+  }
+
+  nextStepLabel(): string {
+    return INSTALL_STEP_LABELS[this.stepKeys()[this.selectedIndex + 1]] ?? '';
+  }
+
+  private stepKeys(): InstallStepKey[] {
+    const keys: InstallStepKey[] = [];
+    if (this.selectAgent) {
+      keys.push('agent');
+    }
+    if (!this.lockedType) {
+      keys.push('type');
+    }
+    keys.push('config', 'summary');
+    if (this.selectAgent) {
+      keys.push('deploy');
+    }
+    return keys;
   }
 }

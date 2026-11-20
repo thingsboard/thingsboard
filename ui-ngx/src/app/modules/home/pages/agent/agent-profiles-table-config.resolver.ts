@@ -93,7 +93,7 @@ export class AgentProfilesTableConfigResolver {
       this.dialog.open<AgentProfileCreatedDialogComponent, AgentProfileCreatedDialogData>(
         AgentProfileCreatedDialogComponent, {
           disableClose: false,
-          panelClass: ['tb-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: { agentProfile, dockerCommand: res?.instructions || '' }
         });
     });

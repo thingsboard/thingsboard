@@ -31,6 +31,14 @@ import { AgentAppWizardLoaderService } from '@home/pages/agent/wizard/agent-app-
 import { AgentAppWizardSubmitService } from '@home/pages/agent/wizard/agent-app-wizard-submit.service';
 import { AgentAppUpgradeResult, AgentAppWizardFinish } from '@home/pages/agent/wizard/agent-app-wizard.models';
 
+type UpgradeStepKey = 'profile' | 'config' | 'summary';
+
+const UPGRADE_STEP_LABELS: Record<UpgradeStepKey, string> = {
+  profile: 'agent.app-upgrade-profile-step',
+  config: 'agent.app-install-step3',
+  summary: 'agent.app-install-step4'
+};
+
 @Component({
   selector: 'tb-agent-app-upgrade-flow',
   templateUrl: './agent-app-upgrade-flow.component.html',
@@ -69,6 +77,7 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
 
   @ViewChild('stepper', { static: false })
   stepper: MatStepper;
+  selectedIndex = 0;
 
   bindings: StepBinding[] = [];
 
@@ -353,5 +362,30 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
     // If the profile was already committed via the profile-upgrade step, let
     // the caller refresh even when the user backs out before the app upgrade.
     this.cancelled.emit(this.profileUpgraded ? { profileOnly: true } : null);
+  }
+
+  currentStep(): UpgradeStepKey | undefined {
+    return this.loadingTemplate || this.loadingProfile || this.loadError ? undefined : this.stepKeys()[this.selectedIndex];
+  }
+
+  canGoBack(): boolean {
+    return this.selectedIndex > (this.showProfileUpgradeStep ? 1 : 0);
+  }
+
+  showNext(): boolean {
+    const step = this.currentStep();
+    return step === 'config' || (step === 'profile' && this.profileUpgraded);
+  }
+
+  canGoNext(): boolean {
+    return this.currentStep() === 'profile' ? this.profileUpgraded : this.canSubmit();
+  }
+
+  nextStepLabel(): string {
+    return UPGRADE_STEP_LABELS[this.stepKeys()[this.selectedIndex + 1]] ?? '';
+  }
+
+  private stepKeys(): UpgradeStepKey[] {
+    return this.showProfileUpgradeStep ? ['profile', 'config', 'summary'] : ['config', 'summary'];
   }
 }

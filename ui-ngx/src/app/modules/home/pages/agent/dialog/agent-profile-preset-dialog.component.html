@@ -4,29 +4,30 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div mat-dialog-title class="tb-preset-dialog-header">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2 translate>agent.add-profile</h2>
+  <span class="flex-1"></span>
   <div tb-help="agentProfiles"></div>
-  <button mat-icon-button (click)="cancel()" tabindex="-1">
-    <mat-icon>close</mat-icon>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
   </button>
-</div>
-
-<div mat-dialog-content class="tb-preset-dialog-body" [class.tb-preset-body-advanced]="mode === 'advanced'">
-  @if (mode === 'advanced') {
-    <tb-agent-profile-wizard
-      [embedded]="true"
-      [showBack]="true"
-      [defaults]="advancedDefaults"
-      [lockedAppType]="data?.lockedAppType"
-      (finished)="onAdvancedFinished($event)"
-      (cancelled)="cancel()"
-      (backClicked)="onAdvancedBack()">
-    </tb-agent-profile-wizard>
-  }
-
-  @if (mode === 'preset') {
-    <form [formGroup]="form">
+</mat-toolbar>
+@if (mode === 'advanced') {
+  <tb-agent-profile-wizard
+    [embedded]="true"
+    [showBack]="true"
+    [defaults]="advancedDefaults"
+    [lockedAppType]="data?.lockedAppType"
+    (finished)="onAdvancedFinished($event)"
+    (cancelled)="cancel()"
+    (backClicked)="onAdvancedBack()">
+  </tb-agent-profile-wizard>
+}
+@if (mode === 'preset') {
+  <div mat-dialog-content>
+    <div [formGroup]="form">
       <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>agent.profile-name</mat-label>
         <input matInput formControlName="name" required
@@ -38,7 +39,7 @@
           </mat-error>
         }
       </mat-form-field>
-    </form>
+    </div>
     <div class="tb-preset-section-label" translate>agent.preset-setup</div>
     <div class="tb-preset-grid">
       @for (tile of tiles; track tile.labelKey) {
@@ -93,16 +94,14 @@
         </div>
       </div>
     }
-  }
-</div>
-
-@if (mode === 'preset') {
-  <div mat-dialog-actions align="end" class="tb-preset-dialog-footer">
-    <button mat-button (click)="cancel()" [disabled]="submitting">
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit">
-      {{ 'action.add' | translate }}
-    </button>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button
+            [disabled]="submitting"
+            (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+            color="primary"
+            [disabled]="!canSubmit"
+            (click)="submit()">{{ 'action.add' | translate }}</button>
   </div>
 }

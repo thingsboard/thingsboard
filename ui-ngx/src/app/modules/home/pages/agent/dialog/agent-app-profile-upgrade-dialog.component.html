@@ -4,18 +4,15 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
-  <div class="tb-install-wizard-toolbar-content">
-    <h2>{{ 'agent.app-upgrade-title' | translate }}:</h2>
-    <span class="flex-1">{{ profile.name }}</span>
-  </div>
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2>{{ 'agent.app-upgrade-title' | translate }}: {{ profile.name }}</h2>
+  <span class="flex-1"></span>
   <div tb-help="agentAppProfileVersions"></div>
-  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
-    <mat-icon>close</mat-icon>
+  <button mat-icon-button (click)="cancel()" type="button">
+    <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-
-<div mat-dialog-content class="tb-install-wizard-body">
+<div mat-dialog-content>
 
   @if (loadingTemplate) {
     <div class="loading-state">
@@ -27,9 +24,6 @@
     <div class="error-state">
       <mat-icon>error_outline</mat-icon>
       <span>{{ loadError }}</span>
-      <div class="step-footer">
-        <button mat-button (click)="cancel()">{{ 'action.close' | translate }}</button>
-      </div>
     </div>
   }
 
@@ -61,14 +55,19 @@
         <span translate>agent.app-compose-invalid-yaml</span>
       </div>
     }
-    <div class="step-footer">
-      <button mat-button (click)="cancel()" [disabled]="submitting">
-        {{ 'action.cancel' | translate }}
-      </button>
-      <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit()">
-        <mat-icon>upgrade</mat-icon>
-        <span>{{ 'agent.app-upgrade-cta' | translate }}</span>
-      </button>
-    </div>
+  }
+</div>
+<div mat-dialog-actions class="flex items-center justify-end">
+  <button mat-button
+          [disabled]="submitting"
+          (click)="cancel()">{{ (loadError ? 'action.close' : 'action.cancel') | translate }}</button>
+  @if (!loadingTemplate && !loadError) {
+    <button mat-raised-button
+            color="primary"
+            [disabled]="!canSubmit()"
+            (click)="submit()">
+      <mat-icon>upgrade</mat-icon>
+      <span>{{ 'agent.app-upgrade-cta' | translate }}</span>
+    </button>
   }
 </div>

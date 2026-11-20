@@ -4,19 +4,20 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
-  <div class="tb-install-wizard-toolbar-content">
-    <h2>{{ titleKey | translate }}</h2>
-  </div>
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2>{{ titleKey | translate }}</h2>
+  <span class="flex-1"></span>
   <div tb-help="agentAppProfiles"></div>
-  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
-    <mat-icon>close</mat-icon>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
+<div mat-dialog-content>
 
-<div mat-dialog-content class="tb-install-wizard-body flex min-h-[50vh] flex-col">
-
-  <mat-stepper class="flex-1" linear #stepper
+  <mat-stepper linear #stepper
+    (selectionChange)="selectedIndex = $event.selectedIndex"
     [orientation]="(stepperOrientation | async)"
     [labelPosition]="(stepperLabelPosition | async)">
 
@@ -169,29 +170,30 @@
     </mat-step>
 
   </mat-stepper>
-
-  <div class="step-footer">
-    @let stepIndex = stepper?.selectedIndex;
-    @if (stepIndex > 0) {
-      <button mat-button type="button" (click)="stepper.previous()" [disabled]="submitting">
-        <mat-icon>chevron_left</mat-icon>
-        {{ 'action.back' | translate }}
-      </button>
+</div>
+<div mat-dialog-actions>
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
+    @if (selectedIndex > 0) {
+      <button mat-stroked-button
+              [disabled]="submitting"
+              (click)="stepper.previous()">{{ 'action.back' | translate }}</button>
     }
-    <button mat-button type="button" (click)="cancel()" [disabled]="submitting">
-      {{ 'action.cancel' | translate }}
-    </button>
-    @if (stepIndex === stepper?.steps.length - 1) {
-      <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="!canSubmit()">
-        <mat-icon>save</mat-icon>
-        <span>{{ 'action.save' | translate }}</span>
-      </button>
-    } @else {
-      <button mat-raised-button color="primary" type="button" (click)="stepper.next()"
-              [disabled]="!stepper?.selected?.completed">
-        {{ 'action.next' | translate }}
-        <mat-icon iconPositionEnd>chevron_right</mat-icon>
-      </button>
+    <span class="flex-1"></span>
+    @if (!isLastStep()) {
+      <button mat-stroked-button
+              color="primary"
+              [disabled]="!canGoNext()"
+              (click)="stepper.next()">{{ 'action.next-with-label' | translate: { label: (nextStepLabel() | translate) } }}</button>
     }
+  </div>
+  <mat-divider class="w-full"></mat-divider>
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
+    <button mat-button
+            [disabled]="submitting"
+            (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+            color="primary"
+            [disabled]="!isLastStep() || !canSubmit()"
+            (click)="submit()">{{ 'action.save' | translate }}</button>
   </div>
 </div>
