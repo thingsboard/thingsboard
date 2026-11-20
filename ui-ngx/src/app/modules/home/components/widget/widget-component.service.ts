@@ -53,11 +53,7 @@ import { compileTbFunction, TbFunction } from '@shared/models/js-function.models
 import { HttpClient } from '@angular/common/http';
 import { jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 
-/**
- * Libraries that legacy widget controller scripts (and a few widget templates) use as window globals.
- * They used to be imported all at once when the service was created; now each one is imported only when a
- * widget that refers to it is loaded. `test` is matched against the widget's controller script and template.
- */
+// Libraries that legacy widgets use as window globals, loaded for a widget whose controller script or template matches `test`.
 interface WidgetGlobalModule {
   globals: string[];
   test: RegExp;
@@ -321,8 +317,8 @@ export class WidgetComponentService {
     const controllerScript = widgetInfo.controllerScript;
     const source = (typeof controllerScript === 'string' ? controllerScript : controllerScript?.body ?? '') +
       '\n' + (widgetInfo.templateHtml ?? '');
-    // Widget resources (scripts and extension modules) cannot be scanned, and a script that reaches globals by a
-    // computed name cannot be matched, so such widgets get every library, as all widgets did before.
+    // Widget resources cannot be scanned, and a script that reaches globals by a computed name cannot be matched,
+    // so such widgets get every library.
     const loadAll = widgetInfo.resources?.length || DYNAMIC_GLOBAL_ACCESS.test(source);
     const modules = loadAll ? WIDGET_GLOBAL_MODULES : WIDGET_GLOBAL_MODULES.filter(m => m.test.test(source));
     const tasks = modules.map(m => this.loadWidgetGlobalModule(m));
@@ -351,10 +347,8 @@ export class WidgetComponentService {
     Object.defineProperty(this.window, name, {value, writable: true, configurable: true, enumerable: true});
   }
 
-  /**
-   * Last resort for code the scan does not see (for example widget action functions): the first access starts
-   * loading the library and reports it, so widgets created after it has loaded can use it.
-   */
+  // Last resort for code the scan does not see (e.g. widget action functions): the first access starts loading
+  // the library, so widgets created after it has loaded can use it.
   private installWidgetGlobalPlaceholders() {
     WIDGET_GLOBAL_MODULES.forEach(module => module.globals.forEach(name => {
       if (name in this.window) {

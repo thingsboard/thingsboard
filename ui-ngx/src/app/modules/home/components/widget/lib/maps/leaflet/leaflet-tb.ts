@@ -1092,7 +1092,6 @@ const chinaProvider = (type: string, options?: L.TileLayerOptions): L.TB.TileLay
 
 let mapLibreGL: Promise<typeof import('maplibre-gl')>;
 
-// MapLibre GL is large and is needed only by vector tile layers, so it is loaded when the first such layer is added
 const loadMapLibreGL = (): Promise<typeof import('maplibre-gl')> => {
   if (!mapLibreGL) {
     mapLibreGL = import('maplibre-gl').then((module) => {

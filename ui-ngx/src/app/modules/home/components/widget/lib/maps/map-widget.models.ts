@@ -27,7 +27,6 @@ export const mapWidgetDefaultSettings: MapWidgetSettings =
     padding: '8px'
 } as MapWidgetSettings);
 
-// The map implementations pull in Leaflet and its plugins, so they are loaded only when a map widget is created
 export const createMap = async (ctx: WidgetContext,
                                 inputSettings: DeepPartial<MapSetting>,
                                 mapElement: HTMLElement): Promise<TbMap<MapSetting>> => {

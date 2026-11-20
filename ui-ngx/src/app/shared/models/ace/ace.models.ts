@@ -14,7 +14,6 @@ let aceModule: any;
 let aceDiffModule: any;
 let cssLanguageProvider: LanguageProvider;
 
-// Modes, snippets and themes are loaded by Ace on demand, when an editor first uses them
 const aceModuleLoaders: Record<string, () => Promise<unknown>> = {
   'ace/mode/java': () => import('ace-builds/src-noconflict/mode-java'),
   'ace/mode/css': () => import('ace-builds/src-noconflict/mode-css'),
@@ -37,7 +36,7 @@ const aceModuleLoaders: Record<string, () => Promise<unknown>> = {
   'ace/snippets/html': () => import('ace-builds/src-noconflict/snippets/html'),
   'ace/snippets/xml': () => import('ace-builds/src-noconflict/snippets/xml'),
   'ace/snippets/svg': () => import('ace-builds/src-noconflict/snippets/svg'),
-  // The protobuf mode inherits its snippets from the C/C++ mode; mode-protobuf itself bundles the C/C++ mode
+  // Snippets of the protobuf mode, which bundles the C/C++ mode
   'ace/snippets/c_cpp': () => import('ace-builds/src-noconflict/snippets/c_cpp'),
   'ace/theme/github': () => import('ace-builds/src-noconflict/theme-github')
 };
@@ -48,8 +47,8 @@ function loadAceModule(ace: any, moduleName: string): Promise<unknown> {
   let loaded = loadedAceModules.get(moduleName);
   if (!loaded) {
     loaded = aceModuleLoaders[moduleName]().then((module) => {
-      // Ace resolves a module that has a loader asynchronously on every use. Once the module is defined,
-      // drop the loader, so that Ace resolves it synchronously, as it did when all modules were loaded up front.
+      // Ace resolves a module that has a loader asynchronously on every use; dropping the loader once the module
+      // is defined lets Ace resolve it synchronously.
       delete ace.config.dynamicModules[moduleName];
       return module;
     });
@@ -68,8 +67,8 @@ function loadAceDependencies(ace: any): Observable<any> {
     }
     // Extensions register editor options (autocompletion, search box), so they must be loaded before an editor is created
     return forkJoin([
-      from(import('ace-builds/src-noconflict/ext-language_tools')),
-      from(import('ace-builds/src-noconflict/ext-searchbox'))
+      import('ace-builds/src-noconflict/ext-language_tools'),
+      import('ace-builds/src-noconflict/ext-searchbox')
     ]).pipe(
       tap(() => {
         aceDependenciesLoaded = true;
@@ -78,11 +77,8 @@ function loadAceDependencies(ace: any): Observable<any> {
   }
 }
 
-/**
- * Loads Ace. Modes, snippets and themes load on demand when an editor uses them, so the first `setMode` of a mode
- * completes asynchronously. Pass the modes an editor reads synchronously right after `setMode` (for example,
- * `session.$mode`) as `preloadModules`.
- */
+// Modes, snippets and themes load on first use, so the first `setMode` of a mode completes asynchronously.
+// Pass the modes a caller reads synchronously right after `setMode` (e.g. `session.$mode`) as `preloadModules`.
 export function getAce(...preloadModules: string[]): Observable<any> {
   const ace$ = aceModule ? of(aceModule) : from(import('ace-builds/src-noconflict/ace')).pipe(
     mergeMap((module) => {
@@ -99,7 +95,7 @@ export function getAce(...preloadModules: string[]): Observable<any> {
     return ace$;
   }
   return ace$.pipe(
-    mergeMap((ace) => forkJoin(preloadModules.map(moduleName => from(loadAceModule(ace, moduleName)))).pipe(
+    mergeMap((ace) => forkJoin(preloadModules.map(moduleName => loadAceModule(ace, moduleName))).pipe(
       map(() => ace)
     ))
   );

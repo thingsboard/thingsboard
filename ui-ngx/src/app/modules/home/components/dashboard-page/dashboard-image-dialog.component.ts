@@ -118,14 +118,12 @@ export class DashboardImageDialogComponent extends DialogComponent<DashboardImag
     width = Math.max(1, width);
     height = Math.max(1, height);
     const scale = 512 / width;
-    // modern-screenshot is only needed here, so it is loaded on demand to keep it out of the dashboard bundles.
     from(import('modern-screenshot')).pipe(
       switchMap(({domToCanvas}) => domToCanvas(this.dashboardElement, {
         scale,
         filter: (node) => this.includeInScreenshot(node),
         fetch: {requestInit: {mode: 'cors'}}
       })),
-      // The whole dashboard is captured, then the selected area is cut out of it.
       map(canvas => this.cropCanvas(canvas, left * scale, top * scale, width * scale, height * scale)),
       // The capture is rooted at the dashboard element, so the body-level notice was never inside it - and this
       // image is stored and shown to other users. Marked after the capture, where no stylesheet reaches it.
