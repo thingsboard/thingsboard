@@ -558,6 +558,7 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
   private saveMarkerLocation() {
     const location = this.marker.getLatLng();
     this.dataLayer.saveMarkerLocation(this.data, location).subscribe();
+    this.markDataStale();
   }
 
   private updateMarkerLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {

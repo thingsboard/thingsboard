@@ -337,6 +337,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     }
     this.dataLayer.savePolygonCoordinates(this.data, coordinates).subscribe();
     this.appliedGeometryKey = null;
+    this.markDataStale();
   }
 
   private geometryKey(data: FormattedData<TbMapDatasource>): string {

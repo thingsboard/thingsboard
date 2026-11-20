@@ -1525,30 +1525,38 @@ const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): T
 const imageAspectMap: {[key: string]: ImageWithAspect} = {};
 const imageAspectLoading: {[key: string]: Observable<ImageWithAspect>} = {};
 
-const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Observable((observer: Observer<HTMLImageElement>) => {
-  const image = document.createElement('img'); // support IE
+const measureAttachedImage = (image: HTMLImageElement): [number, number] => {
   image.style.position = 'absolute';
   image.style.left = '-99999px';
   image.style.top = '-99999px';
-  image.onload = () => {
-    observer.next(image);
-    observer.complete();
-  };
-  image.onerror = err => {
-    observer.error(err);
-  };
   document.body.appendChild(image);
-  image.src = imageUrl;
-  return () => {
-    image.remove();
-    if (!image.complete) {
-      image.removeAttribute('src');
-    }
-  };
-});
+  const size: [number, number] = [image.width, image.height];
+  image.remove();
+  return size;
+};
 
 export const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
-  imageLoader(imageUrl).pipe(map(image => [image.width, image.height]));
+  new Observable((observer: Observer<[number, number]>) => {
+    const image = new Image();
+    image.onload = () => {
+      if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+        observer.next([image.naturalWidth, image.naturalHeight]);
+      } else {
+        observer.next(measureAttachedImage(image));
+      }
+      observer.complete();
+    };
+    image.onerror = err => {
+      observer.error(err);
+    };
+    image.src = imageUrl;
+    return () => {
+      image.remove();
+      if (!image.complete) {
+        image.removeAttribute('src');
+      }
+    };
+  });
 
 export interface ImageWithAspect {
   url: string;

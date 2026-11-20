@@ -163,6 +163,7 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
     const radius = this.circle.getRadius();
     this.dataLayer.saveCircleCoordinates(this.data, center, radius).subscribe();
     this.geometryDirty = true;
+    this.markDataStale();
   }
 
   private updateCircleShape(data: FormattedData<TbMapDatasource>): boolean {

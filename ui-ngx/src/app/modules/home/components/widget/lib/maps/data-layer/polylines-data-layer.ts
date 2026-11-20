@@ -358,6 +358,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     }
     this.dataLayer.savePolylineCoordinates(this.data, coordinates).subscribe();
     this.appliedGeometryKey = null;
+    this.markDataStale();
   }
 
   private geometryKey(data: FormattedData<TbMapDatasource>): string {

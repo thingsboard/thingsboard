@@ -12,6 +12,17 @@ import L from 'leaflet';
 import { createTooltip, updateTooltip } from './data-layer-utils';
 import { TbDataLayerItem, TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 
+const isSameFormattedData = (a: FormattedData<TbMapDatasource>, b: FormattedData<TbMapDatasource>): boolean => {
+  if (a === b) {
+    return true;
+  }
+  if (!a || !b) {
+    return false;
+  }
+  const aKeys = Object.keys(a);
+  return aKeys.length === Object.keys(b).length && aKeys.every(key => a[key] === b[key]);
+};
+
 export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = MapDataLayerSettings,
   D extends TbLatestMapDataLayer<S,D> = TbLatestMapDataLayer<any>, L extends L.Layer = L.Layer> extends TbDataLayerItem<S,D,L> {
 
@@ -19,6 +30,7 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
   protected labelContent: string;
   protected data: FormattedData<TbMapDatasource>;
   protected selected = false;
+  private dataStale = false;
 
   protected constructor(data: FormattedData<TbMapDatasource>,
                         dsData: FormattedData<TbMapDatasource>[],
@@ -114,9 +126,15 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
     }
   }
 
-  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.data = data;
-    this.doUpdate(data, dsData);
+  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): boolean {
+    if (!this.dataStale && this.dataLayer.canSkipUnchangedItems() && isSameFormattedData(this.data, data)) {
+      return false;
+    } else {
+      this.dataStale = false;
+      this.data = data;
+      this.doUpdate(data, dsData);
+      return true;
+    }
   }
 
   public remove() {
@@ -129,6 +147,10 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
 
   public isEditing() {
     return false;
+  }
+
+  protected markDataStale(): void {
+    this.dataStale = true;
   }
 
   protected bindEvents(): void {
@@ -323,8 +345,9 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
       if (this.isValidLayerData(data)) {
         let layerItem = this.layerItems.get(data.entityId);
         if (layerItem) {
-          layerItem.update(data, dsData);
-          updatedItems.push(layerItem);
+          if (layerItem.update(data, dsData)) {
+            updatedItems.push(layerItem);
+          }
         } else {
           layerItem = this.createLayerItem(data, dsData);
           this.layerItems.set(data.entityId, layerItem);

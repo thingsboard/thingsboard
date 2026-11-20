@@ -310,14 +310,13 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.settings.showPath) {
       const dsData = this.dataLayer.getMap().getData();
       const pathStyle = this.dataLayer.getPathStyle(this.pointData, dsData);
-      if (pathStyle.color === this.appliedPathColor) {
-        return;
+      if (pathStyle.color !== this.appliedPathColor) {
+        this.polyline.setStyle(pathStyle);
+        if (this.settings.usePathDecorator) {
+          this.polylineDecorator.setPatterns(this.dataLayer.getPathDecoratorStyle(pathStyle.color).patterns)
+        }
+        this.appliedPathColor = pathStyle.color;
       }
-      this.polyline.setStyle(pathStyle);
-      if (this.settings.usePathDecorator) {
-        this.polylineDecorator.setPatterns(this.dataLayer.getPathDecoratorStyle(pathStyle.color).patterns)
-      }
-      this.appliedPathColor = pathStyle.color;
     }
   }
 

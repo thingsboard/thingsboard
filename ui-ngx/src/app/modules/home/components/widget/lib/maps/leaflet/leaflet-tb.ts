@@ -1366,14 +1366,13 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _limitVerticalPan(map: L.Map) {
-    if (map.options.maxBounds) {
-      return;
+    if (!map.options.maxBounds) {
+      const maxLat = 85.0511287798;
+      this._ownMaxBounds = L.latLngBounds([-maxLat, -1e5], [maxLat, 1e5]);
+      this._prevMaxBoundsViscosity = map.options.maxBoundsViscosity;
+      map.options.maxBoundsViscosity = 1;
+      map.setMaxBounds(this._ownMaxBounds);
     }
-    const maxLat = 85.0511287798;
-    this._ownMaxBounds = L.latLngBounds([-maxLat, -1e5], [maxLat, 1e5]);
-    this._prevMaxBoundsViscosity = map.options.maxBoundsViscosity;
-    map.options.maxBoundsViscosity = 1;
-    map.setMaxBounds(this._ownMaxBounds);
   }
 
   private _releaseVerticalPan(map: L.Map) {

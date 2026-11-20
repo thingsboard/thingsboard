@@ -34,6 +34,19 @@ import { TbMap } from '@home/components/widget/lib/maps/map';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ColorRange } from '@shared/models/widget-settings.models';
 
+const additionalDataArgsRegex = /\b(dsData|ctx|arguments)\b/;
+
+const settingsUseAdditionalData = (value: any, key?: string): boolean => {
+  if (key?.endsWith('Function')) {
+    const body = typeof value === 'string' ? value : value?.body;
+    return typeof body === 'string' && additionalDataArgsRegex.test(body);
+  }
+  if (value && typeof value === 'object') {
+    return Object.keys(value).some(k => settingsUseAdditionalData(value[k], k));
+  }
+  return false;
+};
+
 export class DataLayerPatternProcessor {
 
   private patternFunction: CompiledTbFunction<MapStringFunction>;
@@ -171,12 +184,15 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   protected snappable = false;
 
+  protected itemsUseAdditionalData: boolean;
+
   public dataLayerLabelProcessor: DataLayerPatternProcessor;
   public dataLayerTooltipProcessor: DataLayerPatternProcessor;
 
   protected constructor(protected map: TbMap<any>,
                         inputSettings: S) {
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultBaseSettings(map) as S, inputSettings);
+    this.itemsUseAdditionalData = settingsUseAdditionalData(this.settings);
     if (this.settings.groups?.length) {
       this.settings.groups.forEach((group) => {
         this.groupsState[group] = true;
@@ -220,6 +236,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   public invalidateCoordinates(): void {
     this.layerItems.forEach(item => item.invalidateCoordinates());
+  }
+
+  public canSkipUnchangedItems(): boolean {
+    return !this.itemsUseAdditionalData;
   }
 
   public getCtx(): WidgetContext {
