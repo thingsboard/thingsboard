@@ -143,6 +143,31 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- After the SBOM, which it reads: the notices of the bundle, served at /THIRD-PARTY-NOTICES.txt.
+                         Off by default like the notices of the packages. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>notices-ui</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${notices.run.skip}</skip>
+                                    <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                                    <arguments>
+                                        <argument>${project.build.directory}/notices/work-ui</argument>
+                                        <argument>${project.version}</argument>
+                                        <argument>${project.build.directory}/generated-resources/public/THIRD-PARTY-NOTICES.txt</argument>
+                                        <argument>${project.build.directory}/generated-resources/META-INF/sbom/ui-ngx.cdx.json</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>

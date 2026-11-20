@@ -86,9 +86,10 @@ notices. The root [THIRD-PARTY-NOTICES](../THIRD-PARTY-NOTICES) lists every such
 - a written offer of the source code, for the LGPL and GPL components.
 
 Each package, and each image of the Node.js services, also carries the notices of exactly what it contains. The same
-generator makes them from its own SBOM during a release build (`-Dsbom.skip=false -Dnotices.skip=false`).
+generator makes them from its own SBOM during a release build (`-Dsbom.skip=false -Dnotices.skip=false`). So does the
+UI, which serves the notices of the npm packages in its bundle at `/THIRD-PARTY-NOTICES.txt`.
 
-The file is generated: never edit it by hand. Commit it whenever you change what the product ships.
+The root file is generated: never edit it by hand. Commit it whenever you change what the product ships.
 
 ## Regenerating the notices
 
