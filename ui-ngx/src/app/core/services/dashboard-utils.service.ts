@@ -65,7 +65,7 @@ import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/m
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
-import { maxGridsterCol, maxGridsterRow } from '@home/models/dashboard-component.models';
+import { maxGridsterCol, maxGridsterRow } from '@shared/models/dashboard.models';
 import {
   findWidgetModelDefinition,
   widgetHasTimewindow,

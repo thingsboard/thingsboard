@@ -62,7 +62,7 @@ public class DevelopmentNoticeCaptureStampTest {
                 .as("no subscribing call to %s in the capture path to order against", STAMP_METHOD)
                 .isTrue();
 
-        int captured = capture.indexOf("html2canvas(");
+        int captured = capture.indexOf("domToCanvas(");
         int serialised = capture.indexOf("toDataURL");
         assertThat(captured).as("no capture call found to order against").isNotNegative();
         assertThat(serialised).as("no serialisation call found to order against").isNotNegative();

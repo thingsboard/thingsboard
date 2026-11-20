@@ -20,7 +20,7 @@
         asButton historyOnly></tb-timewindow>
         <span class="flex-1"></span>
         @if (widgetMode) {
-          <ng-container *ngTemplateOutlet="widgetComponent.widgetHeaderActionsPanel"></ng-container>
+          <ng-container *ngTemplateOutlet="ctx.widgetHeaderActionsPanel"></ng-container>
         } @else {
           <section>
             <button [disabled]="isLoading$ | async"
