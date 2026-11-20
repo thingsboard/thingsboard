@@ -13,6 +13,10 @@ Since version 4.4, ThingsBoard is licensed under the Business Source License 1.1
 Each release converts to the Apache License 2.0 four years after it is published. Versions of this repository released
 before 4.4 remain under the Apache License 2.0.
 
+The code that comes from those versions, ThingsBoard Community Edition, stays under the Apache License 2.0. Its text
+is not kept apart: the Apache-2.0 section of [THIRD-PARTY-NOTICES](../THIRD-PARTY-NOTICES) opens with ThingsBoard
+Community Edition and ends with the license text. The packages and images carry `LICENSE` next to their notices.
+
 Contributions are accepted under the Contributor License Agreement: see
 [CONTRIBUTING.md](../CONTRIBUTING.md#contributor-license-agreement).
 

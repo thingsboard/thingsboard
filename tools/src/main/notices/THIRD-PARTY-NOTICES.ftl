@@ -116,14 +116,19 @@
         [/#if]
     [/#list]
 [/#list]
+[#-- ThingsBoard is derived from ThingsBoard Community Edition, which is under Apache-2.0, so every notices file has the
+     section of Apache-2.0 and opens it with that, with or without components under it. --]
+[#assign ce = "Apache-2.0"]
+[#if !counts[ce]??]
+    [#assign names = names + [ce]]
+    [#assign counts = counts + {ce: 0}]
+[/#if]
 [#assign sections = []]
 [#list names as name][#assign sections = sections + [{"name": name, "count": counts[name]}]][/#list]
 [#-- The licenses with the most components first, and those with as many by name. --]
 [#assign sections = sections?sort_by("name")?reverse?sort_by("count")?reverse]
 THIRD-PARTY NOTICES
 
-[#-- Nothing below is printed without content: no introduction or index without components, no heading without entries. --]
-[#if sections?has_content]
 ThingsBoard contains the third-party software components listed below.
 The components are grouped by license. Each section lists the components under
 that license with their copyright notices, followed by the license text.
@@ -131,18 +136,27 @@ that license with their copyright notices, followed by the license text.
 Licenses in this file:
 
 [#list sections as section]
-  ${title(section.name)} (${section.count} ${(section.count == 1)?then("component", "components")})
+  ${title(section.name)}[#if section.count > 0] (${section.count} ${(section.count == 1)?then("component", "components")})[/#if]
 [/#list]
 
-[/#if]
 [#list sections as section]
 ${rule}
 ${title(section.name)}
 ${rule}
 
+    [#if section.name != ce]
 The following components are licensed under ${title(section.name)}:
 
-    [#assign text = ""]
+    [#elseif section.count > 0]
+ThingsBoard is derived from ThingsBoard Community Edition, Copyright The
+ThingsBoard Authors, which is licensed under Apache-2.0. The components below
+are licensed under Apache-2.0 as well:
+
+    [#else]
+ThingsBoard is derived from ThingsBoard Community Edition, Copyright The
+ThingsBoard Authors, which is licensed under Apache-2.0.
+    [/#if]
+    [#assign text = (section.name == ce)?then(licenseFactProvider.getLicenseText(ce)!"", "")]
     [#assign exceptionText = ""]
     [#list shipped as package]
         [#list licensesOf(package) as resolved]
