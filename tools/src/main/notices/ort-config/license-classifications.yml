@@ -17,8 +17,97 @@ categories:
       offer satisfies."
   - name: "nothing"
     description: "No obligation, so the notices leave it out: a statement that something is in the public domain."
+  - name: "forbidden"
+    description: "ThingsBoard cannot ship it, and the notices stop: strong copyleft, which would put ThingsBoard itself
+      under that license, and licenses that forbid commercial use. When the component is under it, only removing the component fixes the
+      stop."
 
 categorizations:
+  # Strong copyleft, and licenses that forbid commercial use: no notice makes them acceptable.
+  - id: "GPL-1.0-only"
+    categories: ["forbidden"]
+  - id: "GPL-1.0-or-later"
+    categories: ["forbidden"]
+  - id: "GPL-2.0-only"
+    categories: ["forbidden"]
+  - id: "GPL-2.0-or-later"
+    categories: ["forbidden"]
+  - id: "GPL-3.0-only"
+    categories: ["forbidden"]
+  - id: "GPL-3.0-or-later"
+    categories: ["forbidden"]
+  - id: "AGPL-1.0-only"
+    categories: ["forbidden"]
+  - id: "AGPL-1.0-or-later"
+    categories: ["forbidden"]
+  - id: "AGPL-3.0-only"
+    categories: ["forbidden"]
+  - id: "AGPL-3.0-or-later"
+    categories: ["forbidden"]
+  - id: "SSPL-1.0"
+    categories: ["forbidden"]
+  - id: "EUPL-1.0"
+    categories: ["forbidden"]
+  - id: "EUPL-1.1"
+    categories: ["forbidden"]
+  - id: "EUPL-1.2"
+    categories: ["forbidden"]
+  - id: "OSL-1.0"
+    categories: ["forbidden"]
+  - id: "OSL-1.1"
+    categories: ["forbidden"]
+  - id: "OSL-2.0"
+    categories: ["forbidden"]
+  - id: "OSL-2.1"
+    categories: ["forbidden"]
+  - id: "OSL-3.0"
+    categories: ["forbidden"]
+  - id: "RPL-1.1"
+    categories: ["forbidden"]
+  - id: "RPL-1.5"
+    categories: ["forbidden"]
+  - id: "Sleepycat"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-1.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-2.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-2.5"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-3.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-4.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-ND-1.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-ND-2.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-ND-2.5"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-ND-3.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-ND-4.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-SA-1.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-SA-2.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-SA-2.5"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-SA-3.0"
+    categories: ["forbidden"]
+  - id: "CC-BY-NC-SA-4.0"
+    categories: ["forbidden"]
+  - id: "LicenseRef-scancode-commons-clause"
+    categories: ["forbidden"]
+  - id: "Elastic-2.0"
+    categories: ["forbidden"]
+  - id: "BUSL-1.1"
+    categories: ["forbidden"]
+  - id: "PolyForm-Noncommercial-1.0.0"
+    categories: ["forbidden"]
+  - id: "PolyForm-Small-Business-1.0.0"
+    categories: ["forbidden"]
   - id: "LicenseRef-scancode-public-domain"
     categories: ["nothing"]
   - id: "LicenseRef-scancode-public-domain-disclaimer"
