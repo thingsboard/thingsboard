@@ -29,15 +29,12 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import * as YAML from 'yaml';
 import { AgentAppWizardLoaderService } from '@home/pages/agent/wizard/agent-app-wizard-loader.service';
 import { AgentAppWizardSubmitService } from '@home/pages/agent/wizard/agent-app-wizard-submit.service';
-import { AgentAppUpgradeResult, AgentAppWizardFinish } from '@home/pages/agent/wizard/agent-app-wizard.models';
-
-type UpgradeStepKey = 'profile' | 'config' | 'summary';
-
-const UPGRADE_STEP_LABELS: Record<UpgradeStepKey, string> = {
-  profile: 'agent.app-upgrade-profile-step',
-  config: 'agent.app-install-step3',
-  summary: 'agent.app-install-step4'
-};
+import {
+  AGENT_APP_UPGRADE_STEP_LABELS,
+  AgentAppUpgradeResult,
+  AgentAppUpgradeStepKey,
+  AgentAppWizardFinish
+} from '@home/pages/agent/wizard/agent-app-wizard.models';
 
 @Component({
   selector: 'tb-agent-app-upgrade-flow',
@@ -73,10 +70,10 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
   profileLoadError = '';
   profileUpgrading = false;
   profileUpgraded = false;
-  showProfileUpgradeStep = false;
-
   @ViewChild('stepper', { static: false })
   stepper: MatStepper;
+  readonly stepLabels = AGENT_APP_UPGRADE_STEP_LABELS;
+  steps: AgentAppUpgradeStepKey[] = ['config', 'summary'];
   selectedIndex = 0;
 
   bindings: StepBinding[] = [];
@@ -219,7 +216,7 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
   private maybeInitProfileDiff() {
     if (!this.needsProfileUpgrade || !this.template || !this.profile || this.profileMergeRequested) { return; }
     this.profileMergeRequested = true;
-    this.showProfileUpgradeStep = true;
+    this.steps = ['profile', 'config', 'summary'];
     const profileComposeType = dockerComposeConfig(this.profile)?.composeType || undefined;
     this.profileProposedYaml = dumpRawTemplateCompose(this.template, profileComposeType);
     const draft = { ...this.profile, templateVersion: this.template.currentVersion } as AgentAppProfile;
@@ -364,12 +361,12 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
     this.cancelled.emit(this.profileUpgraded ? { profileOnly: true } : null);
   }
 
-  currentStep(): UpgradeStepKey | undefined {
-    return this.loadingTemplate || this.loadingProfile || this.loadError ? undefined : this.stepKeys()[this.selectedIndex];
+  currentStep(): AgentAppUpgradeStepKey | undefined {
+    return this.loadingTemplate || this.loadingProfile || this.loadError ? undefined : this.steps[this.selectedIndex];
   }
 
   canGoBack(): boolean {
-    return this.selectedIndex > (this.showProfileUpgradeStep ? 1 : 0);
+    return this.selectedIndex > 0 && this.steps[this.selectedIndex - 1] !== 'profile';
   }
 
   showNext(): boolean {
@@ -382,10 +379,6 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
   }
 
   nextStepLabel(): string {
-    return UPGRADE_STEP_LABELS[this.stepKeys()[this.selectedIndex + 1]] ?? '';
-  }
-
-  private stepKeys(): UpgradeStepKey[] {
-    return this.showProfileUpgradeStep ? ['profile', 'config', 'summary'] : ['config', 'summary'];
+    return this.stepLabels[this.steps[this.selectedIndex + 1]] ?? '';
   }
 }

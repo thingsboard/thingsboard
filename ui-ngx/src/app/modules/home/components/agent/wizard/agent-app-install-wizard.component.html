@@ -6,7 +6,6 @@
 -->
 @if (mode === 'install') {
   <tb-agent-app-install-flow
-    [class.tb-embedded]="embedded"
     [agentId]="agentId"
     [agent]="agent"
     [lockedType]="lockedType"
@@ -25,7 +24,6 @@
 
 @if (mode === 'update') {
   <tb-agent-app-update-flow
-    [class.tb-embedded]="embedded"
     [agentId]="agentId"
     [agent]="agent"
     [existingApplication]="application"
@@ -42,7 +40,6 @@
 
 @if (mode === 'upgrade') {
   <tb-agent-app-upgrade-flow
-    [class.tb-embedded]="embedded"
     [agentId]="agentId"
     [agent]="agent"
     [existingApplication]="application"

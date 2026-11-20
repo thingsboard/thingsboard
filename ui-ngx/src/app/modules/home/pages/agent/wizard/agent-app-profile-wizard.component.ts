@@ -33,6 +33,10 @@ import {
 import { orderTemplatesNewestFirst } from '@home/pages/agent/util/template-version-order';
 import { EdgeTemplateCompatibilityService } from '@home/pages/agent/util/edge-template-compatibility.service';
 import { AgentAppWizardLoaderService } from '@home/pages/agent/wizard/agent-app-wizard-loader.service';
+import {
+  AGENT_APP_PROFILE_STEP_LABELS,
+  AgentAppProfileStepKey
+} from '@home/pages/agent/wizard/agent-app-wizard.models';
 
 export interface AgentAppProfileWizardData {
   profile?: AgentAppProfile;
@@ -58,10 +62,12 @@ export class AgentAppProfileWizardComponent
   extends DialogComponent<AgentAppProfileWizardComponent, AgentAppProfile>
   implements OnInit {
 
-  // Left (read-only) = raw template compose; right (editable) = same content,
-  // user-editable. This is the value persisted on submit.
+  readonly stepLabels = AGENT_APP_PROFILE_STEP_LABELS;
+  steps: AgentAppProfileStepKey[] = [];
   selectedIndex = 0;
 
+  // Left (read-only) = raw template compose; right (editable) = same content,
+  // user-editable. This is the value persisted on submit.
   proposedYaml = '';
   currentYaml = '';
 
@@ -132,6 +138,7 @@ export class AgentAppProfileWizardComponent
   }
 
   ngOnInit() {
+    this.steps = this.buildSteps();
     const prefetchTypes = this.lockedAppType ? [this.lockedAppType] : this.typeCards.map(card => card.type);
     prefetchTypes.forEach(type => {
       this.loader.loadTemplatesByType(type).subscribe({ error: () => {} });
@@ -311,20 +318,19 @@ export class AgentAppProfileWizardComponent
   }
 
   isLastStep(): boolean {
-    return this.selectedIndex === this.stepLabels().length - 1;
+    return this.selectedIndex === this.steps.length - 1;
   }
 
   canGoNext(): boolean {
-    return this.stepLabels()[this.selectedIndex] === 'agent.app-install-step1' ? this.canProceedFromType() : this.canSubmit();
+    return this.steps[this.selectedIndex] === 'type' ? this.canProceedFromType() : this.canSubmit();
   }
 
   nextStepLabel(): string {
-    return this.stepLabels()[this.selectedIndex + 1] ?? '';
+    return this.stepLabels[this.steps[this.selectedIndex + 1]] ?? '';
   }
 
-  private stepLabels(): string[] {
-    const labels = ['agent.app-install-step3', 'agent.app-profile-step-save'];
-    return this.editMode ? labels : ['agent.app-install-step1', ...labels];
+  private buildSteps(): AgentAppProfileStepKey[] {
+    return this.editMode ? ['config', 'save'] : ['type', 'config', 'save'];
   }
 
   canProceedFromType(): boolean {

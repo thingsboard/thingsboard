@@ -126,7 +126,11 @@ export class AgentProfileWizardComponent implements OnInit {
   }
 
   back() {
-    this.backClicked.emit();
+    if (this.selectedIndex > 0) {
+      this.stepper.previous();
+    } else {
+      this.backClicked.emit();
+    }
   }
 
   canSubmit(): boolean {

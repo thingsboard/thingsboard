@@ -14,10 +14,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  :host(.tb-embedded) {
-    width: auto;
-  }
-
   :host-context(.mat-mdc-dialog-container) {
     .mat-mdc-dialog-content {
       overscroll-behavior: contain;
@@ -60,6 +56,15 @@
     .mat-horizontal-content-container,
     .mat-vertical-content {
       padding-top: 4px;
+    }
+
+    .mat-step-header {
+      &:hover,
+      &.cdk-program-focused,
+      &.cdk-mouse-focused,
+      &.cdk-focused {
+        background-color: transparent !important;
+      }
     }
   }
 }

@@ -10,3 +10,9 @@
 @include wizard-summary;
 @include agent-virtual-profile-badge;
 @include wizard-steps-locked;
+
+:host(.tb-embedded) {
+  display: block;
+  width: auto;
+  height: auto;
+}

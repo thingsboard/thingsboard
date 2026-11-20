@@ -58,9 +58,9 @@ export class AgentAutoProvisionDialogComponent
 
   searchText = '';
   loading = false;
+  selectedIndex = 0;
 
   @ViewChild('stepper', { static: false }) stepper: MatStepper;
-  selectedIndex = 0;
   @ViewChild(MatAutocompleteTrigger) private autocompleteTrigger: MatAutocompleteTrigger;
 
   stepperLabelPosition: Observable<'bottom' | 'end'>;
