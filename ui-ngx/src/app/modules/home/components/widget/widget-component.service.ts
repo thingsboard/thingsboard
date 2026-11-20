@@ -27,6 +27,7 @@ import {
   migrateWidgetTypeToDynamicForms,
   Widget,
   widgetActionSources,
+  WidgetConfig,
   WidgetActionType,
   WidgetControllerDescriptor,
   WidgetType
@@ -125,8 +126,10 @@ const WIDGET_GLOBAL_MODULES: WidgetGlobalModule[] = [
       .then(m => ({TbCanvasDigitalGauge: m.TbCanvasDigitalGauge}))
   },
   {
+    // Leaflet sets the global `L` itself when it is imported, and the legacy map imports it with the plugins that code
+    // using `L` got before. `L` gets no placeholder: Leaflet reads `window.L` on import, also when the new map loads it.
     globals: ['TbMapWidgetV2'],
-    test: /\bTbMapWidgetV2\b/,
+    test: /\bTbMapWidgetV2\b|(?<![\w$.])L\s*[.[]/,
     load: () => import('@home/components/widget/lib/maps-legacy/map-widget2')
       .then(m => ({TbMapWidgetV2: m.TbMapWidgetV2}))
   },
@@ -137,6 +140,28 @@ const WIDGET_GLOBAL_MODULES: WidgetGlobalModule[] = [
       .then(m => ({TbTripAnimationWidget: m.TbTripAnimationWidget}))
   }
 ];
+
+// Collects the strings of a widget config into `sources` and tells whether it has a function with JS modules,
+// whose code cannot be scanned.
+const collectConfigCode = (value: unknown, sources: string[]): boolean => {
+  if (typeof value === 'string') {
+    sources.push(value);
+    return false;
+  }
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  let withModules = false;
+  if (!Array.isArray(value)) {
+    const modules = (value as {modules?: unknown}).modules;
+    withModules = typeof (value as {body?: unknown}).body === 'string'
+      && !!modules && typeof modules === 'object' && Object.keys(modules).length > 0;
+  }
+  for (const item of Object.values(value)) {
+    withModules = collectConfigCode(item, sources) || withModules;
+  }
+  return withModules;
+};
 
 @Injectable()
 export class WidgetComponentService {
@@ -317,10 +342,30 @@ export class WidgetComponentService {
     const controllerScript = widgetInfo.controllerScript;
     const source = (typeof controllerScript === 'string' ? controllerScript : controllerScript?.body ?? '') +
       '\n' + (widgetInfo.templateHtml ?? '');
-    // Widget resources cannot be scanned, and a script that reaches globals by a computed name cannot be matched,
-    // so such widgets get every library.
-    const loadAll = widgetInfo.resources?.length || DYNAMIC_GLOBAL_ACCESS.test(source);
-    const modules = loadAll ? WIDGET_GLOBAL_MODULES : WIDGET_GLOBAL_MODULES.filter(m => m.test.test(source));
+    // Widget resources cannot be scanned, so such widgets get every library.
+    return this.loadGlobalModulesForSource(source, !!widgetInfo.resources?.length);
+  }
+
+  // The code of a widget on a dashboard (actions, settings functions, cell functions and the like) is in its config,
+  // not in its type: it is scanned the same way before the widget is created.
+  public loadWidgetConfigGlobalModules(config: WidgetConfig): Observable<void> {
+    const sources: string[] = [];
+    const withModules = collectConfigCode(config, sources);
+    return this.loadGlobalModulesForSource(sources.join('\n'), withModules).pipe(
+      catchError(e => {
+        const details = this.utils.parseException(e);
+        return throwError(() => ({
+          widgetInfo: this.errorWidgetType,
+          errorMessages: [`Failed to load widget modules. \n Error: ${details.message}`]
+        }));
+      })
+    );
+  }
+
+  private loadGlobalModulesForSource(source: string, loadAll: boolean): Observable<void> {
+    // A script that reaches globals by a computed name cannot be matched, so it gets every library as well.
+    const modules = loadAll || DYNAMIC_GLOBAL_ACCESS.test(source)
+      ? WIDGET_GLOBAL_MODULES : WIDGET_GLOBAL_MODULES.filter(m => m.test.test(source));
     const tasks = modules.map(m => this.loadWidgetGlobalModule(m));
     return tasks.length ? forkJoin(tasks).pipe(map(() => undefined)) : of(undefined);
   }
@@ -347,8 +392,8 @@ export class WidgetComponentService {
     Object.defineProperty(this.window, name, {value, writable: true, configurable: true, enumerable: true});
   }
 
-  // Last resort for code the scan does not see (e.g. widget action functions): the first access starts loading
-  // the library, so widgets created after it has loaded can use it.
+  // Last resort for code the scans do not see (e.g. an action added in edit mode before the dashboard is reloaded):
+  // the first access starts loading the library, so widgets created after it has loaded can use it.
   private installWidgetGlobalPlaceholders() {
     WIDGET_GLOBAL_MODULES.forEach(module => module.globals.forEach(name => {
       if (name in this.window) {
@@ -358,9 +403,12 @@ export class WidgetComponentService {
         configurable: true,
         enumerable: false,
         get: () => {
-          console.warn(`${name} was used before it was loaded: the code that uses it was not scanned for it. ` +
-            'It is being loaded now and will be available to widgets created after it has loaded.');
-          this.loadWidgetGlobalModule(module).subscribe({error: () => {}});
+          // A library may read its own global while it loads; that is not a use the scans missed.
+          if (!this.widgetGlobalModulesLoad.has(module)) {
+            console.warn(`${name} was used before it was loaded: the code that uses it was not scanned for it. ` +
+              'It is being loaded now and will be available to widgets created after it has loaded.');
+            this.loadWidgetGlobalModule(module).subscribe({error: () => {}});
+          }
           return undefined;
         },
         set: (value: unknown) => this.setWidgetGlobal(name, value)

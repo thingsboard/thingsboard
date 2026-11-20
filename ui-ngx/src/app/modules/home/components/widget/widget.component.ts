@@ -351,7 +351,11 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
     this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
 
-    this.widgetComponentService.getWidgetInfo(this.widget.typeFullFqn).subscribe({
+    this.widgetComponentService.getWidgetInfo(this.widget.typeFullFqn).pipe(
+      mergeMap(widgetInfo => this.widgetComponentService.loadWidgetConfigGlobalModules(this.widget.config).pipe(
+        map(() => widgetInfo)
+      ))
+    ).subscribe({
       next: (widgetInfo) => {
         this.widgetInfo = widgetInfo;
         this.loadFromWidgetInfo();
