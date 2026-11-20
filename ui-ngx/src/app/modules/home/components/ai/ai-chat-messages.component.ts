@@ -215,6 +215,11 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     }
   }
 
+  decorationKey(message: ChatMessage): string {
+    const general = message as GeneralChatMessage;
+    return `${general.references?.length ?? 0}:${general.severities?.length ?? 0}:${general.readings?.length ?? 0}`;
+  }
+
   decorateCode(answer: HTMLElement, message?: ChatMessage): void {
     decorateCodeBlocks(answer, this.translate, text => this.clipboard.copyFromContent(text));
     decorateTables(answer);

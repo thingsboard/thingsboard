@@ -74,9 +74,9 @@ import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { AiChatTitleComponent } from '@home/components/ai/ai-chat-title.component';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
 
-export type AiChatVariant = 'page' | 'panel';
+const PROGRESS_TOOLS = new Set(['wait_agent_operation']);
 
-const LIVE_EDITED_TYPES = new Set<EntityType>([EntityType.DASHBOARD, EntityType.REPORT_TEMPLATE, EntityType.WIDGET_TYPE, EntityType.WIDGETS_BUNDLE, EntityType.TB_RESOURCE]);
+export type AiChatVariant = 'page' | 'panel';
 
 @Component({
   selector: 'tb-ai-chat',
@@ -410,7 +410,6 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private messageCancelled = false;
   private shownChatId: string | undefined;
   private replyingChatId: string | undefined;
-  private affectedEntities: EntityId[] = [];
   private appliedEffects = new Set<string>();
   private logScrollBottom: number | undefined;
 
@@ -978,6 +977,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
         this.appendDelta(event.data.text);
         break;
       case 'thinking': {
+        if (event.data?.headline && !event.data.tool && this.showProgress(event.data.headline)) {
+          break;
+        }
         const headline = this.thinkingHeadline(event.data);
         if (headline) {
           this.work.update(work => ({...(work ?? {moment: 'going-through-results' as AiWorkMoment, since: Date.now()}), headline}));
@@ -1010,8 +1012,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
           }
         }
         if (event.data.affectedEntities?.length) {
-          this.affectedEntities.push(...event.data.affectedEntities);
-          this.emitDashboards(event.data.affectedEntities);
+          this.emitUpdated(event.data.affectedEntities);
         }
         break;
       case 'toolStarted':
@@ -1131,6 +1132,18 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.router.navigate(['/reporting/templates', created.id]);
   }
 
+  private showProgress(progress: string): boolean {
+    const running = [...this.messages()].reverse()
+      .find(message => message.from === 'ACTION' && message.data.status === 'RUNNING' && PROGRESS_TOOLS.has(message.data.tool));
+    if (running?.from !== 'ACTION') {
+      return false;
+    }
+    const executionId = running.data.executionId;
+    this.messages.update(list => list.map(message => message.from === 'ACTION' && message.data.executionId === executionId
+      ? {from: 'ACTION', data: {...message.data, progress}} : message));
+    return true;
+  }
+
   private thinkingHeadline(data: {headline?: string; tool?: string; arguments?: unknown} | undefined): string | undefined {
     if (data?.tool) {
       const words = aiActionWords(data.tool, data.arguments);
@@ -1195,10 +1208,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.router.navigate(['/resources/scada-symbols']);
   }
 
-  private emitDashboards(entities: EntityId[]): void {
-    const edited = entities.filter(entity => LIVE_EDITED_TYPES.has(entity.entityType as EntityType));
-    if (edited.length) {
-      this.panelService.emitUpdatedData(edited);
+  private emitUpdated(entities: EntityId[]): void {
+    if (entities.length) {
+      this.panelService.emitUpdatedData(entities);
     }
   }
 
@@ -1293,8 +1305,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       }
     }
     if (finished.affectedEntities?.length) {
-      this.affectedEntities.push(...finished.affectedEntities);
-      this.emitDashboards(finished.affectedEntities);
+      this.emitUpdated(finished.affectedEntities);
     }
     this.messages.update(list => list.map(message => message.from === 'ACTION' && message.data.executionId === finished.executionId
       ? {from: 'ACTION', data: {...message.data, status: finished.status, durationMs: finished.durationMs, result: finished.result,
@@ -1401,11 +1412,6 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.stopping.set(false);
     this.work.set(undefined);
     this.stopRunningActions();
-    const notYetReloaded = this.affectedEntities.filter(entity => !LIVE_EDITED_TYPES.has(entity.entityType as EntityType));
-    this.affectedEntities = [];
-    if (notYetReloaded.length) {
-      this.panelService.emitUpdatedData(notYetReloaded);
-    }
     this.chats.setReplying(this.replyingChatId, false);
     this.replyingChatId = undefined;
   }

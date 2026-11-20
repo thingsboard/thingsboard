@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { inject, Injectable } from '@angular/core';
 
-import { AiAssistantConfigService, isEdgeScope } from '@core/services/ai-assistant-config.service';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
 import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
@@ -23,6 +23,7 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { RuleChainsTableConfig } from '@home/pages/rulechain/rulechains-table-config';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
+import { EdgeId } from '@shared/models/id/edge-id';
 
 @Injectable()
 export class RuleChainsTableConfigResolver  {
@@ -46,8 +47,13 @@ export class RuleChainsTableConfigResolver  {
 
   resolve(route: ActivatedRouteSnapshot): EntityTableConfig<RuleChain> {
     const config = this.resolveRuleChainsTableConfig(route);
-    config.aiAssistantConfig = isEdgeScope(config.componentsData.ruleChainScope) ? null :
-      this.aiAssistantConfigService.tableConfig(AiAssistantViewType.RULE_CHAIN_LIST, AiAssistantViewType.RULE_CHAIN);
+    const scope = config.componentsData.ruleChainScope;
+    config.aiAssistantConfig = scope === 'edges'
+      ? this.aiAssistantConfigService.tableConfig(AiAssistantViewType.RULE_CHAIN_TEMPLATE_LIST, AiAssistantViewType.RULE_CHAIN_TEMPLATE)
+      : scope === 'edge'
+        ? this.aiAssistantConfigService.tableConfig(AiAssistantViewType.RULE_CHAIN_TEMPLATE_LIST, AiAssistantViewType.RULE_CHAIN_TEMPLATE,
+          new EdgeId(config.componentsData.edgeId))
+        : this.aiAssistantConfigService.tableConfig(AiAssistantViewType.RULE_CHAIN_LIST, AiAssistantViewType.RULE_CHAIN);
     return config;
   }
 

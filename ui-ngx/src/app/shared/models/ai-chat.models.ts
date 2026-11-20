@@ -106,6 +106,7 @@ export interface AiReviewField {
 export interface AiApprovalReview {
   entityType: string;
   name: string;
+  verb?: string;
   detail?: string;
   target?: string;
   fields: AiReviewField[];
@@ -215,6 +216,7 @@ export interface AiAction {
   result?: string;
   affectedEntities?: Array<EntityId>;
   edited?: boolean;
+  progress?: string;
 }
 
 export interface ApprovalResult {
@@ -306,6 +308,29 @@ export enum AiAssistantViewType {
   INTEGRATION = 'INTEGRATION',
   CONVERTER_LIST = 'CONVERTER_LIST',
   CONVERTER = 'CONVERTER',
+  EDGE_LIST = 'EDGE_LIST',
+  EDGE = 'EDGE',
+  EDGE_GROUP_LIST = 'EDGE_GROUP_LIST',
+  EDGE_GROUP = 'EDGE_GROUP',
+  EDGE_SCHEDULER = 'EDGE_SCHEDULER',
+  RULE_CHAIN_TEMPLATE_LIST = 'RULE_CHAIN_TEMPLATE_LIST',
+  RULE_CHAIN_TEMPLATE = 'RULE_CHAIN_TEMPLATE',
+  INTEGRATION_TEMPLATE_LIST = 'INTEGRATION_TEMPLATE_LIST',
+  INTEGRATION_TEMPLATE = 'INTEGRATION_TEMPLATE',
+  CONVERTER_TEMPLATE_LIST = 'CONVERTER_TEMPLATE_LIST',
+  CONVERTER_TEMPLATE = 'CONVERTER_TEMPLATE',
+  AGENT_LIST = 'AGENT_LIST',
+  AGENT = 'AGENT',
+  AGENT_GROUP_LIST = 'AGENT_GROUP_LIST',
+  AGENT_GROUP = 'AGENT_GROUP',
+  AGENT_APPLICATION_LIST = 'AGENT_APPLICATION_LIST',
+  AGENT_APPLICATION = 'AGENT_APPLICATION',
+  AGENT_EVENTS = 'AGENT_EVENTS',
+  AGENT_PROFILE_LIST = 'AGENT_PROFILE_LIST',
+  AGENT_PROFILE = 'AGENT_PROFILE',
+  AGENT_APP_PROFILE_LIST = 'AGENT_APP_PROFILE_LIST',
+  AGENT_APP_PROFILE = 'AGENT_APP_PROFILE',
+  AGENT_BULK_ACTION = 'AGENT_BULK_ACTION',
   NOTIFICATION_TEMPLATE_LIST = 'NOTIFICATION_TEMPLATE_LIST',
   NOTIFICATION_RULE_LIST = 'NOTIFICATION_RULE_LIST',
   NOTIFICATION_RECIPIENT_LIST = 'NOTIFICATION_RECIPIENT_LIST',
@@ -392,7 +417,10 @@ const AI_PAGE_VIEWS: Array<[string, AiAssistantViewType]> = [
 ];
 
 const AI_PAGE_VIEW_PATTERNS: Array<[RegExp, AiAssistantViewType]> = [
-  [/^\/resources\/scada-symbols\/(system|tenant)\/[^/]+$/, AiAssistantViewType.SCADA_SYMBOL]
+  [/^\/resources\/scada-symbols\/(system|tenant)\/[^/]+$/, AiAssistantViewType.SCADA_SYMBOL],
+  [/^\/edgeManagement\/.*\/[0-9a-f-]{36}\/scheduler$/, AiAssistantViewType.EDGE_SCHEDULER],
+  [/^\/edgeManagement\/agents\/.*\/[0-9a-f-]{36}\/events$/, AiAssistantViewType.AGENT_EVENTS],
+  [/^\/edgeManagement\/profiles\/.*\/bulk\/[0-9a-f-]{36}$/, AiAssistantViewType.AGENT_BULK_ACTION]
 ];
 
 const AI_TITLED_VIEWS = new Set<string>([AiAssistantViewType.PAGE, ...AI_PAGE_VIEWS.map(([, type]) => type),

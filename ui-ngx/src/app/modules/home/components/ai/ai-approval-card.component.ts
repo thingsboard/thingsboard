@@ -49,10 +49,17 @@ const VALUE_TOKENS: Record<string, string[]> = {
   undo: ['none'],
   defaultDashboard: ['none'],
   homeDashboard: ['none'],
-  clears: ['yes', 'no']
+  clears: ['yes', 'no'],
+  edgeTemplateRoot: ['yes'],
+  autoAssign: ['yes', 'no'],
+  removeVolumes: ['yes', 'no'],
+  default: ['yes'],
+  operation: ['restart', 'update', 'upgrade', 'delete', 'cancel', 'upgrade agent']
 };
 
 const CODE_FIELDS = new Set(['arguments', 'expression', 'output']);
+
+const REVIEW_VERBS = new Set(['install', 'restart', 'update', 'upgrade', 'upgrade-agent', 'delete', 'cancel', 'sync']);
 
 const IMAGE_FIELDS = new Set(['widget-image', 'scada-symbol']);
 
@@ -186,6 +193,9 @@ export class AiApprovalCardComponent implements OnChanges {
   get approveLabel(): string {
     if (this.hubVersionId) {
       return 'ai-assistant.record.install';
+    }
+    if (this.review?.verb && REVIEW_VERBS.has(this.review.verb)) {
+      return 'ai-assistant.review.verb.' + this.review.verb;
     }
     if (this.isDestructive) {
       return 'ai-assistant.review.delete';

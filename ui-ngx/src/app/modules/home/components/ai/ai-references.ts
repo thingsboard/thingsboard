@@ -56,6 +56,11 @@ function replaceIn(node: Text, pattern: RegExp, references: AiReference[]): void
   node.replaceWith(fragment);
 }
 
+const REFERENCE_PAGES: Record<string, string> = {
+  ALARM_RULE: '/alarms/alarm-rules',
+  EDGE_RULE_CHAIN: '/edgeManagement/templates/ruleChains'
+};
+
 function chip(reference: AiReference): HTMLElement {
   const kind = aiEntityKind(reference.entityType);
   const code = document.createElement('code');
@@ -66,7 +71,7 @@ function chip(reference: AiReference): HTMLElement {
   icon.setAttribute('aria-hidden', 'true');
   icon.textContent = kind.icon;
   code.append(icon, reference.name);
-  const base = reference.entityType === 'ALARM_RULE' ? '/alarms/alarm-rules' : baseDetailsPageByEntityType.get(reference.entityType as EntityType);
+  const base = REFERENCE_PAGES[reference.entityType] ?? baseDetailsPageByEntityType.get(reference.entityType as EntityType);
   if (!base || !reference.id) {
     return code;
   }

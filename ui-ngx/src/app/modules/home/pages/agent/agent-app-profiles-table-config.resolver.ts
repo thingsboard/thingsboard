@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   DateEntityTableColumn,
@@ -27,9 +27,13 @@ import {
   AgentAppProfileWizardComponent,
   AgentAppProfileWizardData
 } from '@home/pages/agent/wizard/agent-app-profile-wizard.component';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 
 @Injectable()
 export class AgentAppProfilesTableConfigResolver {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   private readonly config: EntityTableConfig<AgentAppProfile> = new EntityTableConfig<AgentAppProfile>();
   private templateCache = new Map<string, AgentAppTemplate>();
@@ -79,6 +83,7 @@ export class AgentAppProfilesTableConfigResolver {
         this.config.entitiesDeleteEnabled = authUser.authority === Authority.TENANT_ADMIN;
         this.config.deleteEnabled = () => authUser.authority === Authority.TENANT_ADMIN;
         this.config.detailsReadonly = () => authUser.authority !== Authority.TENANT_ADMIN;
+        this.config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.AGENT_APP_PROFILE_LIST, AiAssistantViewType.AGENT_APP_PROFILE);
         return this.config;
       })
     );

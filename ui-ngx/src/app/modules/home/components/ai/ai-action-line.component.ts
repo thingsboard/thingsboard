@@ -107,7 +107,7 @@ export class AiActionLineComponent {
 
   running = computed(() => this.more() > 0
     ? this.translate.instant('ai-assistant.work.more', {words: this.runWords(), count: this.more()})
-    : this.runWords());
+    : this.action().progress ? `${this.runWords()} · ${this.action().progress}` : this.runWords());
 
   outcome = computed(() => {
     const words = this.outcomeWords();
@@ -135,7 +135,9 @@ export class AiActionLineComponent {
   detail = computed(() => {
     const view = aiActionDetailView(this.action(), this.names());
     const facts = this.facts();
-    return facts.length ? {...view, blocks: [...view.blocks, {type: 'facts' as const, rows: facts}]} : view;
+    const reason = this.action().status === 'FAILURE' && this.outcomeText() && !view.blocks.length ? this.reason(this.action().result) : undefined;
+    const blocks = [...view.blocks, ...(reason ? [{type: 'text' as const, text: reason}] : []), ...(facts.length ? [{type: 'facts' as const, rows: facts}] : [])];
+    return {...view, blocks};
   });
 
   records = computed(() => this.action().status === 'SUCCESS' ? this.action().affectedEntities ?? [] : []);

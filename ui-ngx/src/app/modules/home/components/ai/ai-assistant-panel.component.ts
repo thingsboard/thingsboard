@@ -25,6 +25,7 @@ import { AiChatComponent } from '@home/components/ai/ai-chat.component';
   host: {
     '[class.open]': 'isOpen',
     '[class.suppressed]': 'panelService.suppressed()',
+    '[class.restored]': 'panelService.restored()',
     '[attr.inert]': 'isOpen ? null : ""',
     '[class.split]': 'split()',
     '(transitionend)': 'onSlideEnd($event)',
@@ -119,6 +120,8 @@ export class AiAssistantPanelComponent {
 
   private static readonly WIDTH_KEY = 'tbAiPanelWidth';
 
+  private static readonly APPLIED_WIDTH_KEY = 'tb-ai-panel-applied-width';
+
   private lastContextKey: string | null = null;
 
   private dockedEffect = effect(onCleanup => {
@@ -172,6 +175,16 @@ export class AiAssistantPanelComponent {
     }
     this.wanted = stored || this.defaultWidth;
     this.panelWidth = Math.min(this.wanted, this.maxWidth);
+    let applied = 0;
+    try {
+      applied = Number(sessionStorage.getItem(AiAssistantPanelComponent.APPLIED_WIDTH_KEY)) || 0;
+    } catch {
+      applied = 0;
+    }
+    if (applied) {
+      this.width.set(applied);
+      document.documentElement.style.setProperty('--tb-ai-panel-w', applied + 'px');
+    }
     setTimeout(() => this.fit());
   }
 
@@ -197,6 +210,11 @@ export class AiAssistantPanelComponent {
     const value = Math.round(Math.min(this.widest(), Math.max(this.minWidth, width)));
     this.width.set(value);
     document.documentElement.style.setProperty('--tb-ai-panel-w', value + 'px');
+    try {
+      sessionStorage.setItem(AiAssistantPanelComponent.APPLIED_WIDTH_KEY, String(value));
+    } catch {
+      return value;
+    }
     return value;
   }
 

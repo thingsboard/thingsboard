@@ -8,7 +8,7 @@ import {
   EntityGroupStateInfo,
   GroupEntityTableConfig
 } from '@home/models/group/group-entities-table-config.models';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, inject } from '@angular/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { mergeMap, tap } from 'rxjs/operators';
 import { BroadcastService } from '@core/services/broadcast.service';
@@ -35,9 +35,13 @@ import {
   EdgeInstructionsDialogComponent,
   EdgeInstructionsDialogData
 } from '@home/pages/edge/edge-instructions-dialog.component';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 
 @Injectable()
 export class EdgeGroupConfigFactory implements EntityGroupStateConfigFactory<EdgeInfo> {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   constructor(private groupConfigTableConfigService: GroupConfigTableConfigService<EdgeInfo>,
               private userPermissionsService: UserPermissionsService,
@@ -58,6 +62,7 @@ export class EdgeGroupConfigFactory implements EntityGroupStateConfigFactory<Edg
     const authUser: AuthUser = getCurrentAuthUser(this.store);
 
     config.entityComponent = EdgeComponent;
+    config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.EDGE_GROUP, AiAssistantViewType.EDGE, config.entityGroup.id);
     config.addDialogStyle = {height: '1000px'};
 
     config.entityTitle = (edge) => edge ?

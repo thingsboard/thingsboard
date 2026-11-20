@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { computed, DestroyRef, inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { computed, DestroyRef, effect, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { defer, Observable, Subject } from 'rxjs';
 import { distinctUntilChanged, filter, finalize, map } from 'rxjs/operators';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
@@ -33,8 +33,16 @@ export class AiAssistantPanelService implements OnDestroy {
 
   private static readonly WITHOUT_PANEL = ['/home', '/ai-assistant'];
 
-  private _open = signal(false);
+  private static readonly OPEN_KEY = 'tb-ai-panel-open';
+  private static readonly CHATS_KEY = 'tb-ai-panel-chats';
+
+  private _open = signal(AiAssistantPanelService.readSession(AiAssistantPanelService.OPEN_KEY) === 'true');
   readonly open = this._open.asReadonly();
+
+  private openSync = effect(() => AiAssistantPanelService.writeSession(AiAssistantPanelService.OPEN_KEY, this._open() ? 'true' : null));
+
+  private _restored = signal(this._open());
+  readonly restored = this._restored.asReadonly();
 
   private _suppressed = signal(false);
   readonly suppressed = this._suppressed.asReadonly();
@@ -56,7 +64,7 @@ export class AiAssistantPanelService implements OnDestroy {
   private _chats = signal<ChatInfo[] | null>(null);
   readonly chats = this._chats.asReadonly();
 
-  private _lastChatIdByContext = new Map<string, string>();
+  private _lastChatIdByContext = AiAssistantPanelService.readChats();
 
   private static readonly AUTO_APPROVE_STORAGE_KEY = 'aiAssistantAutoApproveChats';
 
@@ -92,6 +100,40 @@ export class AiAssistantPanelService implements OnDestroy {
       }
     });
   })();
+
+  private static readSession(key: string): string | null {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private static writeSession(key: string, value: string | null): void {
+    try {
+      if (value === null) {
+        sessionStorage.removeItem(key);
+      } else {
+        sessionStorage.setItem(key, value);
+      }
+    } catch {
+      return;
+    }
+  }
+
+  private static readChats(): Map<string, string> {
+    try {
+      const stored = JSON.parse(AiAssistantPanelService.readSession(AiAssistantPanelService.CHATS_KEY) ?? '{}');
+      return new Map(Object.entries(stored).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+    } catch {
+      return new Map();
+    }
+  }
+
+  private storeChats(): void {
+    AiAssistantPanelService.writeSession(AiAssistantPanelService.CHATS_KEY,
+      this._lastChatIdByContext.size ? JSON.stringify(Object.fromEntries(this._lastChatIdByContext)) : null);
+  }
 
   private static withoutPanel(url: string): boolean {
     const path = (url || '/').split(/[?#]/)[0];
@@ -144,11 +186,13 @@ export class AiAssistantPanelService implements OnDestroy {
     }
     if (key !== null) {
       this._lastChatIdByContext.set(key, carried.chatId);
+      this.storeChats();
     }
     return carried.chatId;
   }
 
   toggle(): void {
+    this._restored.set(false);
     this._open.update(open => !open);
   }
 
@@ -172,6 +216,7 @@ export class AiAssistantPanelService implements OnDestroy {
         this._lastChatIdByContext.delete(key);
       }
     }
+    this.storeChats();
   }
 
   updateChatAutoApprove(chatId: string, autoApprove: boolean): void {
@@ -276,6 +321,7 @@ export class AiAssistantPanelService implements OnDestroy {
     } else {
       this._lastChatIdByContext.delete(key);
     }
+    this.storeChats();
   }
 
   lastChatIdForContext(): string | undefined {
@@ -284,10 +330,12 @@ export class AiAssistantPanelService implements OnDestroy {
   }
 
   close(): void {
+    this._restored.set(false);
     this._open.set(false);
   }
 
   openPanel(): void {
+    this._restored.set(false);
     this._open.set(true);
   }
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { DestroyRef, inject, Injectable } from '@angular/core';
 
-import { AiAssistantConfigService, isEdgeScope } from '@core/services/ai-assistant-config.service';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
 import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -23,6 +23,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { IntegrationsTableConfig } from '@home/pages/integration/integrations-table-config';
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
+import { EdgeId } from '@shared/models/id/edge-id';
 
 @Injectable()
 export class IntegrationsTableConfigResolver  {
@@ -44,8 +45,13 @@ export class IntegrationsTableConfigResolver  {
 
   resolve(route: ActivatedRouteSnapshot): EntityTableConfig<Integration, PageLink, IntegrationInfo> {
     const config = this.resolveIntegrationsTableConfig(resolveIntegrationParams(route));
-    config.aiAssistantConfig = isEdgeScope(config.componentsData.integrationScope) ? null :
-      this.aiAssistantConfigService.tableConfig(AiAssistantViewType.INTEGRATION_LIST, AiAssistantViewType.INTEGRATION);
+    const scope = config.componentsData.integrationScope;
+    config.aiAssistantConfig = scope === 'edges'
+      ? this.aiAssistantConfigService.tableConfig(AiAssistantViewType.INTEGRATION_TEMPLATE_LIST, AiAssistantViewType.INTEGRATION_TEMPLATE)
+      : scope === 'edge'
+        ? this.aiAssistantConfigService.tableConfig(AiAssistantViewType.INTEGRATION_TEMPLATE_LIST, AiAssistantViewType.INTEGRATION_TEMPLATE,
+          new EdgeId(config.componentsData.edgeId))
+        : this.aiAssistantConfigService.tableConfig(AiAssistantViewType.INTEGRATION_LIST, AiAssistantViewType.INTEGRATION);
     return config;
   }
 

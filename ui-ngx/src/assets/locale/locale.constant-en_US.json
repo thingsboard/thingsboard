@@ -889,6 +889,39 @@
             "gateway-connectors": "Connectors",
             "read-ota": "{ count, plural, =1 {Checked the update of one device} other {Checked the update of # devices} }",
             "read-ota-packages": "Read the OTA packages",
+            "read-edges": "Read the edges",
+            "read-edge": "Read the edge {{name}}",
+            "edge-assigned": "Assigned to the edge",
+            "read-edge-events": "Read the edge's downlinks",
+            "read-edge-install-instructions": "Read the edge install instructions",
+            "read-edge-upgrade-instructions": "Read the edge upgrade instructions",
+            "create-edge": "Create the edge {{name}}",
+            "update-edge": "Update the edge",
+            "assign-to-edge": "Change what the edge receives",
+            "edge-missing-rule-chains": "Rule chains the edge is missing",
+            "sync-edge": "Sync the edge",
+            "read-rule-chain-templates": "Read the edge rule chains",
+            "read-rule-chain-template": "Read the edge rule chain {{name}}",
+            "rule-chain-template-root": "Root rule chain of new edges",
+            "rule-chain-template-auto": "Assigned to new edges",
+            "rule-chain-template-edges": "Assigned to edges",
+            "rule-chain-template-nodes": "Rule nodes",
+            "set-rule-chain-template": "Change how the rule chain reaches new edges",
+            "read-agents": "Read the agents",
+            "read-agent": "Read {{name}}",
+            "agent-applications": "Applications",
+            "agent-units": "Units",
+            "agent-operations": "Recent operations",
+            "read-agent-instructions": "Read the agent install command",
+            "read-agent-profiles": "Read the agent profiles",
+            "create-agent": "Create the agent {{name}}",
+            "update-agent": "Update the agent",
+            "install-agent-application": "Install an application on the agent",
+            "run-agent-operation": "Run an operation on the agent",
+            "save-agent-profile": "Save the agent profile",
+            "save-agent-app-profile": "Save the application profile",
+            "run-agent-bulk-action": "Run a bulk action",
+            "wait-agent-operation": "Followed the agent operation",
             "read-white-labeling": "Read the white labeling",
             "read-website-brand": "Read the brand of {{site}}",
             "website-colors": "Colors",
@@ -1440,6 +1473,94 @@
             "read-ota": {
                 "run": "Checking the OTA updates",
                 "done": "Checked the OTA updates"
+            },
+            "read-edges": {
+                "run": "Checking the edges",
+                "done": "Checked the edges"
+            },
+            "read-edge-events": {
+                "run": "Reading the edge's downlinks",
+                "done": "Read the edge's downlinks"
+            },
+            "read-edge-instructions": {
+                "run": "Getting the edge instructions",
+                "done": "Got the edge instructions"
+            },
+            "save-edge": {
+                "run": "Saving the edge",
+                "done": "Saved the edge"
+            },
+            "assign-to-edge": {
+                "run": "Changing what the edge receives",
+                "done": "Changed what the edge receives"
+            },
+            "sync-edge": {
+                "run": "Syncing the edge",
+                "done": "Started the edge sync"
+            },
+            "delete-edge": {
+                "run": "Deleting the edge",
+                "done": "Deleted the edge"
+            },
+            "read-rule-chain-templates": {
+                "run": "Reading the edge rule chains",
+                "done": "Read the edge rule chains"
+            },
+            "set-rule-chain-template": {
+                "run": "Updating the edge rule chain",
+                "done": "Updated the edge rule chain"
+            },
+            "read-agents": {
+                "run": "Checking the agents",
+                "done": "Checked the agents"
+            },
+            "read-agent-instructions": {
+                "run": "Getting the agent command",
+                "done": "Got the agent command"
+            },
+            "save-agent": {
+                "run": "Saving the agent",
+                "done": "Saved the agent"
+            },
+            "install-agent-application": {
+                "run": "Installing the application",
+                "done": "Started the install"
+            },
+            "run-agent-operation": {
+                "run": "Starting the operation",
+                "done": "Started the operation"
+            },
+            "read-agent-profiles": {
+                "run": "Reading the agent profiles",
+                "done": "Read the agent profiles"
+            },
+            "save-agent-profile": {
+                "run": "Saving the agent profile",
+                "done": "Saved the agent profile"
+            },
+            "save-agent-app-profile": {
+                "run": "Saving the application profile",
+                "done": "Saved the application profile"
+            },
+            "run-agent-bulk-action": {
+                "run": "Starting the bulk action",
+                "done": "Started the bulk action"
+            },
+            "wait-agent-operation": {
+                "run": "Waiting for the agent",
+                "done": "The agent finished"
+            },
+            "delete-agent": {
+                "run": "Deleting the agent",
+                "done": "Deleted the agent"
+            },
+            "delete-agent-profile": {
+                "run": "Deleting the agent profile",
+                "done": "Deleted the agent profile"
+            },
+            "delete-agent-app-profile": {
+                "run": "Deleting the application profile",
+                "done": "Deleted the application profile"
             },
             "read-white-labeling": {
                 "run": "Reading the white labeling",
@@ -2018,6 +2139,16 @@
         "rename-save": "Save (Enter)",
         "rename-discard": "Discard (Esc)",
         "review": {
+            "verb": {
+                "install": "Install",
+                "restart": "Restart",
+                "update": "Update",
+                "upgrade": "Upgrade",
+                "upgrade-agent": "Upgrade the agent",
+                "delete": "Delete",
+                "cancel": "Cancel the operation",
+                "sync": "Sync"
+            },
             "head": {
                 "pending": "Needs your review",
                 "approved": "Approved",
@@ -2038,6 +2169,23 @@
             "ask-again": "Ask again",
             "ask-again-message": "Ask me again for the same change.",
             "field": {
+                "agent": "Agent",
+                "install": "Install",
+                "runs": "Runs",
+                "operation": "Operation",
+                "application": "Application",
+                "applications": "Applications",
+                "removeVolumes": "Delete its data",
+                "provisionType": "Provisioning",
+                "appProfiles": "Application profiles",
+                "default": "Default profile",
+                "variant": "Variant",
+                "edgeTemplateRoot": "Root of new edges",
+                "autoAssign": "Assigned to new edges",
+                "cloudEndpoint": "Cloud endpoint",
+                "assign": "Assign",
+                "unassign": "Unassign",
+                "rootRuleChain": "Root rule chain",
                 "source": "Source",
                 "appTitle": "Title",
                 "platformName": "Platform name",
@@ -2272,6 +2420,18 @@
                 "scope": "Scope"
             },
             "value": {
+                "removeVolumes-yes": "Yes, for good",
+                "removeVolumes-no": "No, keep it",
+                "default-yes": "Yes",
+                "operation-restart": "Restart",
+                "operation-update": "Update to the profile",
+                "operation-upgrade": "Upgrade",
+                "operation-delete": "Delete",
+                "operation-cancel": "Cancel the running operation",
+                "operation-upgrade agent": "Upgrade the agent",
+                "edgeTemplateRoot-yes": "Yes",
+                "autoAssign-yes": "Yes",
+                "autoAssign-no": "No",
                 "undo-none": "No: it is deleted for good",
                 "defaultDashboard-none": "None: the current one is cleared",
                 "homeDashboard-none": "None: the current one is cleared",
@@ -2543,6 +2703,325 @@
         },
         "welcome": {
             "placeholder": "Ask anything or describe what to set up...",
+            "edges": {
+                "title": "Ask about your edges",
+                "title-customer": "Ask about this customer's edges",
+                "line": "Check which edges are connected, add one, or set up what each edge receives.",
+                "suggestion": "Which of my edges are offline?",
+                "example": {
+                    "offline": {
+                        "label": "Offline edges",
+                        "message": "Which of my edges are offline, and since when?"
+                    },
+                    "create": {
+                        "label": "Add an edge",
+                        "message": "Add a new edge and tell me how to install it with Docker."
+                    }
+                }
+            },
+            "edge": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this edge",
+                "line": "Its connection, what is assigned to it, and how to install or upgrade it.",
+                "suggestion": "Is this edge connected, and is anything waiting to reach it?",
+                "example": {
+                    "status": {
+                        "label": "Connection",
+                        "message": "Is this edge connected, and are any downlinks failing?"
+                    },
+                    "assign": {
+                        "label": "What it receives",
+                        "message": "What is assigned to this edge, and is anything missing?"
+                    },
+                    "install": {
+                        "label": "Install it",
+                        "message": "How do I install this edge with Docker?"
+                    }
+                }
+            },
+            "edge-groups": {
+                "title": "Ask about your edge groups",
+                "title-customer": "Ask about this customer's edge groups",
+                "line": "Group edges, share them with customers, and check them together.",
+                "suggestion": "Which edge groups have offline edges?",
+                "example": {
+                    "find": {
+                        "label": "Offline edges",
+                        "message": "Which edge groups have offline edges?"
+                    }
+                }
+            },
+            "edge-group": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this edge group",
+                "line": "Check its edges together.",
+                "suggestion": "Are all edges in this group connected?",
+                "example": {
+                    "status": {
+                        "label": "Connection",
+                        "message": "Are all edges in this group connected?"
+                    }
+                }
+            },
+            "edge-scheduler": {
+                "title": "Ask about this edge's scheduler events",
+                "line": "Which scheduled events run on this edge.",
+                "suggestion": "Which scheduler events are assigned to this edge?",
+                "example": {
+                    "assign": {
+                        "label": "Assign an event",
+                        "message": "Assign one of my scheduler events to this edge."
+                    }
+                }
+            },
+            "rule-chain-templates": {
+                "title": "Ask about your edge rule chains",
+                "line": "Add edge rule chains from IoT Hub, and choose which new edges get them.",
+                "suggestion": "Which rule chain does a new edge start with?",
+                "example": {
+                    "root": {
+                        "label": "New edges",
+                        "message": "Which rule chains does a new edge get?"
+                    },
+                    "hub": {
+                        "label": "From IoT Hub",
+                        "message": "Find an edge rule chain on IoT Hub for my use case."
+                    }
+                }
+            },
+            "rule-chain-template": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this edge rule chain",
+                "line": "Whether new edges get it, and which edges use it.",
+                "suggestion": "Which edges use this rule chain?",
+                "example": {
+                    "edges": {
+                        "label": "Edges using it",
+                        "message": "Which edges use this rule chain?"
+                    },
+                    "auto": {
+                        "label": "New edges",
+                        "message": "Assign this rule chain to every new edge."
+                    }
+                }
+            },
+            "integration-templates": {
+                "title": "Ask about your edge integrations",
+                "line": "Integrations that run on edges.",
+                "suggestion": "Which edges run my integration templates?",
+                "example": {
+                    "edges": {
+                        "label": "Where they run",
+                        "message": "Which edges run my integration templates?"
+                    }
+                }
+            },
+            "integration-template": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this edge integration",
+                "line": "Which edges run it.",
+                "suggestion": "Which edges run this integration?",
+                "example": {
+                    "edges": {
+                        "label": "Where it runs",
+                        "message": "Which edges run this integration?"
+                    }
+                }
+            },
+            "converter-templates": {
+                "title": "Ask about your edge converters",
+                "line": "Converters used by integrations on edges.",
+                "suggestion": "Which edge integrations use these converters?",
+                "example": {
+                    "explain": {
+                        "label": "Explain",
+                        "message": "What do my edge converters do?"
+                    }
+                }
+            },
+            "converter-template": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this edge converter",
+                "line": "What it converts and where it is used.",
+                "suggestion": "What does this converter do?",
+                "example": {
+                    "explain": {
+                        "label": "Explain",
+                        "message": "What does this converter do?"
+                    }
+                }
+            },
+            "agents": {
+                "title": "Ask about your agents",
+                "title-customer": "Ask about this customer's agents",
+                "line": "Agents run edges, gateways and other applications on your hosts.",
+                "suggestion": "Which agents are offline or have failing applications?",
+                "example": {
+                    "status": {
+                        "label": "Health",
+                        "message": "Which agents are offline or have failing applications?"
+                    },
+                    "deploy": {
+                        "label": "Add an agent",
+                        "message": "Add an agent and tell me how to install it on a Linux host."
+                    }
+                }
+            },
+            "agent": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this agent",
+                "line": "Its applications, their health, and upgrades.",
+                "suggestion": "Are all applications on this agent running?",
+                "example": {
+                    "apps": {
+                        "label": "Applications",
+                        "message": "Are all applications on this agent running?"
+                    },
+                    "edge": {
+                        "label": "Run an edge",
+                        "message": "Install an edge on this agent."
+                    },
+                    "upgrade": {
+                        "label": "Upgrade",
+                        "message": "Is an upgrade available for this agent?"
+                    }
+                }
+            },
+            "agent-groups": {
+                "title": "Ask about your agent groups",
+                "title-customer": "Ask about this customer's agent groups",
+                "line": "Group agents and check them together.",
+                "suggestion": "Which agent groups have offline agents?",
+                "example": {
+                    "find": {
+                        "label": "Offline agents",
+                        "message": "Which agent groups have offline agents?"
+                    }
+                }
+            },
+            "agent-group": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this agent group",
+                "line": "Check its agents together.",
+                "suggestion": "Are all agents in this group online?",
+                "example": {
+                    "status": {
+                        "label": "Health",
+                        "message": "Are all agents in this group online?"
+                    }
+                }
+            },
+            "agent-applications": {
+                "title": "Ask about this agent's applications",
+                "line": "Install, restart, update or upgrade the applications it runs.",
+                "suggestion": "Are all applications on this agent running?",
+                "example": {
+                    "status": {
+                        "label": "Health",
+                        "message": "Are all applications on this agent running?"
+                    },
+                    "install": {
+                        "label": "Install",
+                        "message": "Install a gateway on this agent."
+                    }
+                }
+            },
+            "agent-application": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this application",
+                "line": "Its units, logs and recent operations.",
+                "suggestion": "Why did this application fail?",
+                "example": {
+                    "logs": {
+                        "label": "Why it failed",
+                        "message": "Why did this application fail? Check its logs."
+                    },
+                    "restart": {
+                        "label": "Restart",
+                        "message": "Restart this application."
+                    }
+                }
+            },
+            "agent-events": {
+                "title": "Ask about this agent's events",
+                "line": "Operations the agent ran and how they ended.",
+                "suggestion": "Which operations failed on this agent?",
+                "example": {
+                    "failed": {
+                        "label": "Failures",
+                        "message": "Which operations failed on this agent, and why?"
+                    }
+                }
+            },
+            "agent-profiles": {
+                "title": "Ask about your agent profiles",
+                "line": "How agents provision, and which applications they install.",
+                "suggestion": "Which agent profile do new agents use?",
+                "example": {
+                    "create": {
+                        "label": "Add a profile",
+                        "message": "Create an agent profile that installs an edge on every new agent."
+                    },
+                    "default": {
+                        "label": "Default",
+                        "message": "Which agent profile do new agents use?"
+                    }
+                }
+            },
+            "agent-profile": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this agent profile",
+                "line": "Its applications, its agents and bulk updates.",
+                "suggestion": "Update the applications on every agent of this profile.",
+                "example": {
+                    "apps": {
+                        "label": "Applications",
+                        "message": "Which applications does this profile install?"
+                    },
+                    "bulk": {
+                        "label": "Update all",
+                        "message": "Update the applications on every agent of this profile."
+                    }
+                }
+            },
+            "agent-app-profiles": {
+                "title": "Ask about your application profiles",
+                "line": "Ready-made Edge, Gateway and other applications for your agents.",
+                "suggestion": "Create an Edge application profile.",
+                "example": {
+                    "edge": {
+                        "label": "Edge profile",
+                        "message": "Create an Edge application profile."
+                    },
+                    "gateway": {
+                        "label": "Gateway profile",
+                        "message": "Create a Gateway application profile."
+                    }
+                }
+            },
+            "agent-app-profile": {
+                "title": "Ask about {{name}}",
+                "title-unnamed": "Ask about this application profile",
+                "line": "What it installs and which agent profiles use it.",
+                "suggestion": "What does this application profile install?",
+                "example": {
+                    "explain": {
+                        "label": "Explain",
+                        "message": "What does this application profile install, and where is it used?"
+                    }
+                }
+            },
+            "agent-bulk-action": {
+                "title": "Ask about this bulk action",
+                "line": "Its progress on each agent.",
+                "suggestion": "How is this bulk action going?",
+                "example": {
+                    "progress": {
+                        "label": "Progress",
+                        "message": "How is this bulk action going, and which agents failed?"
+                    }
+                }
+            },
             "assets": {
                 "title": "Ask about your assets",
                 "line": "Their telemetry and alarms, or a dashboard to watch them.",

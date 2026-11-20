@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { agentEntityUrl, currentAgentRouteSnapshot } from '@home/pages/agent/util/agent-route-params';
 import {
@@ -54,9 +54,13 @@ import { resolveGroupParams } from '@shared/models/entity-group.models';
 import { AllEntitiesTableConfigService } from '@home/components/entity/all-entities-table-config.service';
 import { GroupEntityTabsComponent } from '@home/components/group/group-entity-tabs.component';
 import { AgentAutoProvisionDialogService } from '@home/components/agent/dialog/agent-auto-provision-dialog.service';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 
 @Injectable()
 export class AgentsTableConfigResolver {
+
+  private aiAssistantConfigService = inject(AiAssistantConfigService);
 
   private agentErrorEvents = new Map<string, AgentAppEventInfo[]>();
 
@@ -109,6 +113,7 @@ export class AgentsTableConfigResolver {
         config.entitiesDeleteEnabled = config.componentsData.agentScope === 'tenant';
         config.deleteEnabled = () => config.componentsData.agentScope === 'tenant';
         config.onDestroy = () => this.agentErrorEvents.clear();
+        config.aiAssistantConfig = this.aiAssistantConfigService.tableConfig(AiAssistantViewType.AGENT_LIST, AiAssistantViewType.AGENT);
         return this.allEntitiesTableConfigService.prepareConfiguration(config);
       })
     );

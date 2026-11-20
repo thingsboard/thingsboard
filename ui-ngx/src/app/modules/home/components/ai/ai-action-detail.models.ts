@@ -1751,6 +1751,59 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: str(values.menuId) ? text('save-custom-menu') : text('create-custom-menu', {name: str(values.name) ?? '—'}), blocks};
     }
+    case 'read_edges': {
+      if (!isObject(result)) {
+        return {hood: text('read-edges'), blocks: generic(result, 'result')};
+      }
+      if (Array.isArray(result.edges)) {
+        const counts: AiDetailFact[] = Object.entries(isObject(result.connection) ? result.connection : {})
+          .map(([state, count]) => ({label: aiHumanize(state), raw: true, value: String(count)}));
+        const rows = result.edges.filter(isObject).slice(0, MAX_ROWS)
+          .map(edge => [edge.name, edge.connection, str(edge.version)].filter(Boolean).join(' · '));
+        const blocks: AiDetailBlock[] = counts.length ? [{type: 'facts', rows: counts}] : [];
+        if (rows.length) {
+          blocks.push({type: 'list', rows});
+        }
+        return {hood: text('read-edges'), blocks};
+      }
+      const rows = facts(result, ['id', 'assigned', 'missingRuleChains']);
+      const blocks: AiDetailBlock[] = rows.length ? [{type: 'facts', rows}] : [];
+      const assigned = isObject(result.assigned) ? result.assigned : {};
+      const lines: string[] = [];
+      for (const [kind, items] of Object.entries(assigned)) {
+        if (Array.isArray(items) && items.length) {
+          lines.push(`${aiHumanize(kind)}: ${items.filter(isObject).map(item => item.name).join(', ')}`);
+        } else if (isObject(items)) {
+          for (const [groupType, groups] of Object.entries(items)) {
+            if (Array.isArray(groups) && groups.length) {
+              lines.push(`${aiHumanize(groupType)}: ${groups.filter(isObject).map(group => group.name).join(', ')}`);
+            }
+          }
+        }
+      }
+      if (lines.length) {
+        blocks.push({type: 'list', label: text('edge-assigned'), rows: lines.slice(0, MAX_ROWS)});
+      }
+      return {hood: text('read-edge', {name: str(result.name) ?? '—'}), blocks};
+    }
+    case 'read_edge_events': {
+      if (!isObject(result)) {
+        return {hood: text('read-edge-events'), blocks: generic(result, 'result')};
+      }
+      const counts: AiDetailFact[] = Object.entries(isObject(result.counts) ? result.counts : {})
+        .map(([state, count]) => ({label: aiHumanize(state), raw: true, value: String(count)}));
+      const rows = (Array.isArray(result.downlinks) ? result.downlinks.filter(isObject) : []).slice(0, MAX_ROWS)
+        .map(event => [event.status, event.type, event.action, str(event.time) ? new Date(event.time).toLocaleString() : undefined]
+          .filter(Boolean).join(' · '));
+      const blocks: AiDetailBlock[] = counts.length ? [{type: 'facts', rows: counts}] : [];
+      if (rows.length) {
+        blocks.push({type: 'list', rows});
+      }
+      return {hood: text('read-edge-events'), blocks};
+    }
+    case 'read_edge_instructions':
+      return {hood: text(values.upgrade ? 'read-edge-upgrade-instructions' : 'read-edge-install-instructions'),
+        blocks: typeof result === 'string' && result.trim() ? [{type: 'markdown', text: result}] : []};
     case 'read_ota': {
       if (!isObject(result)) {
         return {hood: text('read-ota'), blocks: generic(result, 'result')};
@@ -1770,6 +1823,117 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       }
       return {hood: text('read-ota', {count: Number(result.devices) || 0}), blocks};
     }
+    case 'save_edge':
+      return {hood: text(str(values.edgeId) ? 'update-edge' : 'create-edge', {name: str(values.name) ?? '—'}), blocks: generic(result, 'result')};
+    case 'assign_to_edge': {
+      const done = isObject(result) && Array.isArray(result.done) ? result.done.map(String) : [];
+      const failed = isObject(result) && Array.isArray(result.failed) ? result.failed.filter(isObject) : [];
+      const blocks: AiDetailBlock[] = [];
+      if (done.length) {
+        blocks.push({type: 'list', label: text('alarms-done'), rows: done.slice(0, MAX_ROWS)});
+      }
+      if (failed.length) {
+        blocks.push({type: 'list', label: text('alarms-failed'), rows: failed.slice(0, MAX_ROWS).map(row => `${row.item}: ${row.error}`)});
+      }
+      if (isObject(result) && result.missingRuleChains) {
+        blocks.push({type: 'list', label: text('edge-missing-rule-chains'), rows: [typeof result.missingRuleChains === 'string'
+          ? result.missingRuleChains : JSON.stringify(result.missingRuleChains)]});
+      }
+      return {hood: text('assign-to-edge'), blocks: blocks.length ? blocks : generic(result, 'result')};
+    }
+    case 'read_agents': {
+      if (!isObject(result)) {
+        return {hood: text('read-agents'), blocks: generic(result, 'result')};
+      }
+      if (Array.isArray(result.agents)) {
+        const rows = result.agents.filter(isObject).slice(0, MAX_ROWS)
+          .map(agent => [agent.name, agent.online ? '●' : '○', str(agent.version), str(agent.profile)].filter(Boolean).join(' · '));
+        return {hood: text('read-agents'), blocks: rows.length ? [{type: 'list', rows}] : []};
+      }
+      const blocks: AiDetailBlock[] = [];
+      const apps = Array.isArray(result.applications) ? result.applications.filter(isObject) : [];
+      if (apps.length) {
+        blocks.push({type: 'list', label: text('agent-applications'), rows: apps.slice(0, MAX_ROWS)
+          .map(app => [app.name, app.appType, str(app.version), str(app.upgradeTo) ? '→ ' + app.upgradeTo : undefined].filter(Boolean).join(' · '))});
+      }
+      const units = Array.isArray(result.units) ? result.units.filter(isObject) : [];
+      if (units.length) {
+        blocks.push({type: 'list', label: text('agent-units'), rows: units.slice(0, MAX_ROWS)
+          .map(unit => [unit.type, unit.name, str(unit.state)].filter(Boolean).join(' · '))});
+      }
+      const ops = Array.isArray(result.recentOperations) ? result.recentOperations.filter(isObject) : [];
+      if (ops.length) {
+        blocks.push({type: 'list', label: text('agent-operations'), rows: ops.slice(0, MAX_ROWS)
+          .map(op => [op.action, str(op.application), op.status, str(op.error)].filter(Boolean).join(' · '))});
+      }
+      return {hood: text('read-agent', {name: str(result.name) ?? '—'}), blocks};
+    }
+    case 'read_agent_instructions':
+      return {hood: text('read-agent-instructions'), blocks: typeof result === 'string' && result.trim() ? [{type: 'markdown', text: result}] : []};
+    case 'read_agent_profiles': {
+      if (!isObject(result)) {
+        return {hood: text('read-agent-profiles'), blocks: generic(result, 'result')};
+      }
+      const list = (key: string) => Array.isArray(result[key]) ? (result[key] as unknown[]).filter(isObject) : [];
+      const rows = [...list('agentProfiles').map(profile => [profile.name, profile.provisionType, profile.default ? '★' : undefined]),
+        ...list('appProfiles').map(profile => [profile.name, profile.appType, str(profile.templateVersion)])]
+        .slice(0, MAX_ROWS).map(row => row.filter(Boolean).map(String).join(' · '));
+      if (Array.isArray(result.versions)) {
+        rows.push(...result.versions.map(String).slice(0, MAX_ROWS));
+      }
+      return {hood: text('read-agent-profiles'), blocks: rows.length ? [{type: 'list', rows}] : generic(result, 'result')};
+    }
+    case 'save_agent':
+      return {hood: text(str(values.agentId) ? 'update-agent' : 'create-agent', {name: str(values.name) ?? '—'}), blocks: generic(result, 'result')};
+    case 'install_agent_application':
+    case 'run_agent_operation':
+    case 'save_agent_profile':
+    case 'save_agent_app_profile':
+    case 'run_agent_bulk_action':
+      return {hood: text(tool.replace(/_/g, '-')), blocks: generic(result, 'result')};
+    case 'wait_agent_operation': {
+      if (!isObject(result)) {
+        return {hood: text('wait-agent-operation'), blocks: typeof result === 'string' && result.trim() ? [{type: 'markdown', text: result}] : []};
+      }
+      const rows = facts(result, ['operationId']);
+      return {hood: text('wait-agent-operation'), blocks: rows.length ? [{type: 'facts', rows}] : []};
+    }
+    case 'read_rule_chain_templates': {
+      if (!isObject(result)) {
+        return {hood: text('read-rule-chain-templates'), blocks: generic(result, 'result')};
+      }
+      const templates = Array.isArray(result.templates) ? result.templates.filter(isObject) : [];
+      if (templates.length || !str(result.name)) {
+        const blocks: AiDetailBlock[] = [];
+        const roots = templates.filter(template => template.edgeTemplateRoot).map(template => String(template.name));
+        const auto = templates.filter(template => template.autoAssignToNewEdges).map(template => String(template.name));
+        if (roots.length) {
+          blocks.push({type: 'list', label: text('rule-chain-template-root'), rows: roots});
+        }
+        if (auto.length) {
+          blocks.push({type: 'list', label: text('rule-chain-template-auto'), rows: auto.slice(0, MAX_ROWS)});
+        }
+        const rows = templates.slice(0, MAX_ROWS).map(template => String(template.name));
+        if (rows.length) {
+          blocks.push({type: 'list', rows});
+        }
+        return {hood: text('read-rule-chain-templates'), blocks};
+      }
+      const blocks: AiDetailBlock[] = [];
+      const edges = Array.isArray(result.assignedToEdges) ? result.assignedToEdges.map(String) : [];
+      if (edges.length) {
+        blocks.push({type: 'list', label: text('rule-chain-template-edges'), rows: edges.slice(0, MAX_ROWS)});
+      }
+      const nodes = Array.isArray(result.nodes) ? result.nodes.map(String) : [];
+      if (nodes.length) {
+        blocks.push({type: 'list', label: text('rule-chain-template-nodes'), rows: nodes.slice(0, MAX_ROWS)});
+      }
+      return {hood: text('read-rule-chain-template', {name: str(result.name) ?? '—'}), blocks};
+    }
+    case 'set_rule_chain_template':
+      return {hood: text('set-rule-chain-template'), blocks: typeof result === 'string' && result.trim() ? [{type: 'markdown', text: result}] : []};
+    case 'sync_edge':
+      return {hood: text('sync-edge'), blocks: []};
     case 'save_ota_package':
       return {hood: text('save-ota-package', {name: [str(values.title), str(values.version)].filter(Boolean).join(' ') || '—'}), blocks: generic(result, 'result')};
     case 'assign_ota_package': {

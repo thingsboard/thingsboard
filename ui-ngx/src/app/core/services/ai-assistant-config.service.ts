@@ -29,5 +29,3 @@ export class AiAssistantConfigService {
     };
   }
 }
-
-export const isEdgeScope = (scope: string): boolean => scope === 'edge' || scope === 'edges';

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { DestroyRef, inject, Injectable } from '@angular/core';
 
-import { AiAssistantConfigService, isEdgeScope } from '@core/services/ai-assistant-config.service';
+import { AiAssistantConfigService } from '@core/services/ai-assistant-config.service';
 import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
@@ -139,8 +139,9 @@ export class ConvertersTableConfigResolver  {
     this.config.entitiesFetchFunction = this.configureEntityFunctions(this.config.componentsData.converterScope);
 
     defaultEntityTablePermissions(this.userPermissionsService, this.config);
-    this.config.aiAssistantConfig = isEdgeScope(this.config.componentsData.converterScope) ? null :
-      this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CONVERTER_LIST, AiAssistantViewType.CONVERTER);
+    this.config.aiAssistantConfig = this.config.componentsData.converterScope === 'edges'
+      ? this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CONVERTER_TEMPLATE_LIST, AiAssistantViewType.CONVERTER_TEMPLATE)
+      : this.aiAssistantConfigService.tableConfig(AiAssistantViewType.CONVERTER_LIST, AiAssistantViewType.CONVERTER);
     return this.config;
   }
 

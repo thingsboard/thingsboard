@@ -20,6 +20,10 @@
     transition: none;
   }
 
+  &.restored {
+    transition: none;
+  }
+
   &.open {
     transform: translateX(0);
     box-shadow: -1px 0 0 rgba(16, 24, 40, 0.06), -12px 0 32px rgba(16, 24, 40, 0.06);
