@@ -65,7 +65,7 @@ export class AgentProfileAssignProfileDialogComponent
     this.dialog.open<AgentAppProfileWizardComponent, AgentAppProfileWizardData, AgentAppProfile>(
       AgentAppProfileWizardComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { lockedAppType: this.data?.lockedAppType }
       }
     ).afterClosed().subscribe(saved => {

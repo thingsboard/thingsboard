@@ -1,42 +1,11 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-@use '../../../components/agent/agent-shared' as *;
+@use '../../../components/agent/wizard/agent-wizard' as *;
 
-:host {
-  display: block;
-  width: min(720px, 95vw);
-  min-width: 0;
-  max-width: 95vw;
-}
-
-.tb-preset-dialog-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid $agent-divider;
-
-  h2 {
-    flex: 1;
-    font-size: 20px;
-    font-weight: 400;
-    margin: 0;
-  }
-}
-
-.tb-preset-dialog-body {
-  max-height: 75vh;
-  padding: 12px 24px 16px;
-
-  &.tb-preset-body-advanced {
-    padding: 0 !important;
-  }
-}
+@include wizard-dialog(720px);
 
 tb-agent-profile-wizard {
-  display: block;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
+  display: contents;
 }
 
 .tb-preset-section-label {
@@ -179,12 +148,4 @@ tb-agent-profile-wizard {
       }
     }
   }
-}
-
-.tb-preset-dialog-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  border-top: 1px solid $agent-divider-light;
 }

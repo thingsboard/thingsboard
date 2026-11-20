@@ -2,14 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 @use '../wizard/agent-wizard' as *;
 
-@include wizard-chrome;
-
-:host {
-  display: block;
-  width: min(800px, 95vw);
-  min-width: 0;
-  max-width: 95vw;
-}
+@include wizard-stepper-dialog(800px);
 
 .select-form {
   display: block;

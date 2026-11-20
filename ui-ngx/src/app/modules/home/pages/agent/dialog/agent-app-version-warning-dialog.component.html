@@ -4,16 +4,18 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div mat-dialog-title class="tb-app-version-warning-header" [class.destructive]="destructive">
-  <mat-icon class="warn-icon">warning</mat-icon>
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <mat-icon class="material-icons mr-2 flex-none">warning</mat-icon>
   <h2>{{ titleKey | translate }}</h2>
+  <span class="flex-1"></span>
   <div tb-help="agentAppProfileVersions"></div>
-  <button mat-icon-button (click)="cancel()" tabindex="-1">
-    <mat-icon>close</mat-icon>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
   </button>
-</div>
-
-<div mat-dialog-content class="tb-app-version-warning-body">
+</mat-toolbar>
+<div mat-dialog-content>
 
   <p class="warning-text">
     {{ textKey | translate: {
@@ -40,7 +42,7 @@
   </div>
 </div>
 
-<div mat-dialog-actions align="end" class="tb-app-version-warning-footer">
+<div mat-dialog-actions class="flex flex-wrap items-center justify-end">
   <button mat-button (click)="cancel()">
     {{ 'action.cancel' | translate }}
   </button>

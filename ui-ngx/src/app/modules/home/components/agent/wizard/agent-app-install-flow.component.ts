@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, DestroyRef, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, EventEmitter, HostBinding, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -46,7 +46,13 @@ import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { AgentAppWizardLoaderService } from '@home/pages/agent/wizard/agent-app-wizard-loader.service';
 import { AgentAppWizardSubmitService } from '@home/pages/agent/wizard/agent-app-wizard-submit.service';
-import { AgentAppUpgradeResult, AgentAppWizardFinish, AgentTypeCard } from '@home/pages/agent/wizard/agent-app-wizard.models';
+import {
+  AGENT_APP_INSTALL_STEP_LABELS,
+  AgentAppInstallStepKey,
+  AgentAppUpgradeResult,
+  AgentAppWizardFinish,
+  AgentTypeCard
+} from '@home/pages/agent/wizard/agent-app-wizard.models';
 import { EdgeTemplateCompatibilityService } from '@home/pages/agent/util/edge-template-compatibility.service';
 
 @Component({
@@ -63,6 +69,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   @Input() lockedRelatedEntity: EntityId | null = null;
   @Input() navigateToAgentOnFinish = false;
   @Input() selectAgent = false;
+  @HostBinding('class.tb-embedded')
   @Input() embedded = false;
   @Input() showBack = false;
   @Input() stepperOrientation: Observable<StepperOrientation>;
@@ -82,6 +89,9 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   @ViewChild('stepper', { static: false })
   stepper: MatStepper;
+  readonly stepLabels = AGENT_APP_INSTALL_STEP_LABELS;
+  steps: AgentAppInstallStepKey[] = [];
+  selectedIndex = 0;
 
   bindings: StepBinding[] = [];
 
@@ -207,6 +217,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
   }
 
   ngOnInit() {
+    this.steps = this.buildSteps();
     this.relatedEntityId = this.lockedRelatedEntity || null;
     if (this.selectAgent && this.lockedRelatedEntity?.id && this.lockedRelatedEntity?.entityType) {
       this.checkingManaged = true;
@@ -405,7 +416,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     this.dialog.open<AgentAppProfileWizardComponent, AgentAppProfileWizardData, AgentAppProfile>(
       AgentAppProfileWizardComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { lockedAppType: appType, presetName }
       }).afterClosed().subscribe(saved => {
         if (saved) {
@@ -424,7 +435,7 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
     this.dialog.open<AgentAppProfileWizardComponent, AgentAppProfileWizardData, AgentAppProfile>(
       AgentAppProfileWizardComponent, {
         disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-agent-wizard-dialog'],
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: { profile: this.selectedProfile }
       }).afterClosed().subscribe(saved => {
         if (saved) {
@@ -730,5 +741,56 @@ export class AgentAppInstallFlowComponent extends PageComponent implements OnIni
 
   cancel() {
     this.cancelled.emit(null);
+  }
+
+  currentStep(): AgentAppInstallStepKey | undefined {
+    return this.steps[this.selectedIndex];
+  }
+
+  canGoBack(): boolean {
+    return this.selectedIndex > 0 && !this.installedApplication;
+  }
+
+  canInstall(): boolean {
+    return !this.checkingManaged && !this.managedApp && !this.installedApplication;
+  }
+
+  showNext(): boolean {
+    const hasNext = this.selectedIndex < this.steps.length - 1;
+    return hasNext && (this.currentStep() !== 'summary' || !!this.installedApplication);
+  }
+
+  canGoNext(): boolean {
+    switch (this.currentStep()) {
+      case 'agent':
+        return this.canProceedFromAgent();
+      case 'type':
+        return this.canProceedFromType();
+      case 'config':
+        return this.canSubmit();
+      case 'summary':
+        return !!this.installedApplication;
+      default:
+        return false;
+    }
+  }
+
+  nextStepLabel(): string {
+    return this.stepLabels[this.steps[this.selectedIndex + 1]] ?? '';
+  }
+
+  private buildSteps(): AgentAppInstallStepKey[] {
+    const keys: AgentAppInstallStepKey[] = [];
+    if (this.selectAgent) {
+      keys.push('agent');
+    }
+    if (!this.lockedType) {
+      keys.push('type');
+    }
+    keys.push('config', 'summary');
+    if (this.selectAgent) {
+      keys.push('deploy');
+    }
+    return keys;
   }
 }

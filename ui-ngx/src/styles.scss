@@ -1239,16 +1239,6 @@ tb-entities-table.white-background {
     }
   }
 
-  // The agent wizards are opened under the 'tb-agent-wizard-dialog' panelClass and size
-  // themselves, so the surface must not impose its own min-width floor on small displays.
-  .tb-agent-wizard-dialog {
-    .mat-mdc-dialog-surface,
-    .mdc-dialog__surface {
-      min-width: 0 !important;
-      max-width: 95vw !important;
-    }
-  }
-
   .tb-fullscreen-dialog-gt-xs {
     @media #{$mat-gt-xs} {
       min-height: 100%;

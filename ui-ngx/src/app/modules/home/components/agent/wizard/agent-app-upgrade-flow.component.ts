@@ -29,7 +29,12 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import * as YAML from 'yaml';
 import { AgentAppWizardLoaderService } from '@home/pages/agent/wizard/agent-app-wizard-loader.service';
 import { AgentAppWizardSubmitService } from '@home/pages/agent/wizard/agent-app-wizard-submit.service';
-import { AgentAppUpgradeResult, AgentAppWizardFinish } from '@home/pages/agent/wizard/agent-app-wizard.models';
+import {
+  AGENT_APP_UPGRADE_STEP_LABELS,
+  AgentAppUpgradeResult,
+  AgentAppUpgradeStepKey,
+  AgentAppWizardFinish
+} from '@home/pages/agent/wizard/agent-app-wizard.models';
 
 @Component({
   selector: 'tb-agent-app-upgrade-flow',
@@ -65,10 +70,11 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
   profileLoadError = '';
   profileUpgrading = false;
   profileUpgraded = false;
-  showProfileUpgradeStep = false;
-
   @ViewChild('stepper', { static: false })
   stepper: MatStepper;
+  readonly stepLabels = AGENT_APP_UPGRADE_STEP_LABELS;
+  steps: AgentAppUpgradeStepKey[] = ['config', 'summary'];
+  selectedIndex = 0;
 
   bindings: StepBinding[] = [];
 
@@ -210,7 +216,7 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
   private maybeInitProfileDiff() {
     if (!this.needsProfileUpgrade || !this.template || !this.profile || this.profileMergeRequested) { return; }
     this.profileMergeRequested = true;
-    this.showProfileUpgradeStep = true;
+    this.steps = ['profile', 'config', 'summary'];
     const profileComposeType = dockerComposeConfig(this.profile)?.composeType || undefined;
     this.profileProposedYaml = dumpRawTemplateCompose(this.template, profileComposeType);
     const draft = { ...this.profile, templateVersion: this.template.currentVersion } as AgentAppProfile;
@@ -353,5 +359,26 @@ export class AgentAppUpgradeFlowComponent extends PageComponent implements OnIni
     // If the profile was already committed via the profile-upgrade step, let
     // the caller refresh even when the user backs out before the app upgrade.
     this.cancelled.emit(this.profileUpgraded ? { profileOnly: true } : null);
+  }
+
+  currentStep(): AgentAppUpgradeStepKey | undefined {
+    return this.loadingTemplate || this.loadingProfile || this.loadError ? undefined : this.steps[this.selectedIndex];
+  }
+
+  canGoBack(): boolean {
+    return this.selectedIndex > 0 && this.steps[this.selectedIndex - 1] !== 'profile';
+  }
+
+  showNext(): boolean {
+    const step = this.currentStep();
+    return step === 'config' || (step === 'profile' && this.profileUpgraded);
+  }
+
+  canGoNext(): boolean {
+    return this.currentStep() === 'profile' ? this.profileUpgraded : this.canSubmit();
+  }
+
+  nextStepLabel(): string {
+    return this.stepLabels[this.steps[this.selectedIndex + 1]] ?? '';
   }
 }
