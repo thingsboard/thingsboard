@@ -11,7 +11,6 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import html2canvas from 'html2canvas';
 import { map, share, switchMap } from 'rxjs/operators';
 import { BehaviorSubject, from } from 'rxjs';
 import { isNumber } from '@core/utils';
@@ -114,22 +113,18 @@ export class DashboardImageDialogComponent extends DialogComponent<DashboardImag
     const right = rightVal * rect.width;
     const bottom = bottomVal * rect.height;
 
-    const x = rect.left + left;
-    const y = rect.top + top;
     let width = right - left;
     let height = bottom - top;
     width = Math.max(1, width);
     height = Math.max(1, height);
-    from(html2canvas(this.dashboardElement, {
-      logging: false,
-      useCORS: true,
-      foreignObjectRendering: false,
-      scale: 512 / width,
-      x,
-      y,
-      width,
-      height
-    })).pipe(
+    const scale = 512 / width;
+    from(import('modern-screenshot')).pipe(
+      switchMap(({domToCanvas}) => domToCanvas(this.dashboardElement, {
+        scale,
+        filter: (node) => this.includeInScreenshot(node),
+        fetch: {requestInit: {mode: 'cors'}}
+      })),
+      map(canvas => this.cropCanvas(canvas, left * scale, top * scale, width * scale, height * scale)),
       // The capture is rooted at the dashboard element, so the body-level notice was never inside it - and this
       // image is stored and shown to other users. Marked after the capture, where no stylesheet reaches it.
       // Does not cover an image set from the gallery picker instead; that is a question for whoever owns the field.
@@ -150,6 +145,27 @@ export class DashboardImageDialogComponent extends DialogComponent<DashboardImag
           {message: this.translate.instant('dashboard.take-screenshot-failed'), type: 'error'}));
       }
     });
+  }
+
+  private includeInScreenshot(node: Node): boolean {
+    // A video with no source never loads, and the capture would wait for it forever.
+    if (node instanceof HTMLVideoElement && !node.srcObject && !node.currentSrc) {
+      return false;
+    }
+    return !(node instanceof Element && node.hasAttribute('data-html2canvas-ignore'));
+  }
+
+  private cropCanvas(source: HTMLCanvasElement, x: number, y: number, width: number, height: number): HTMLCanvasElement {
+    const targetWidth = Math.max(1, Math.round(width));
+    const targetHeight = Math.max(1, Math.round(height));
+    if (Math.round(x) === 0 && Math.round(y) === 0 && targetWidth === source.width && targetHeight === source.height) {
+      return source;
+    }
+    const target = document.createElement('canvas');
+    target.width = targetWidth;
+    target.height = targetHeight;
+    target.getContext('2d').drawImage(source, x, y, width, height, 0, 0, targetWidth, targetHeight);
+    return target;
   }
 
   cancel(): void {
