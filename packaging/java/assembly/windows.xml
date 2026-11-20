@@ -53,6 +53,12 @@
     </fileSets>
 
     <files>
+        <!-- The license of ThingsBoard -->
+        <file>
+            <source>${project.build.directory}/LICENSE</source>
+            <outputDirectory/>
+            <lineEnding>windows</lineEnding>
+        </file>
         <file>
             <source>${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</source>
             <outputDirectory>lib</outputDirectory>

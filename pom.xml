@@ -610,6 +610,13 @@
                                                 <directory>docker</directory>
                                                 <filtering>true</filtering>
                                             </resource>
+                                            <!-- The license of ThingsBoard: the packages take it from here, and so do the images that install no package of ours -->
+                                            <resource>
+                                                <directory>${main.dir}</directory>
+                                                <includes>
+                                                    <include>LICENSE</include>
+                                                </includes>
+                                            </resource>
                                         </resources>
                                     </configuration>
                                 </execution>

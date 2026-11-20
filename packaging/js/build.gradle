@@ -62,6 +62,13 @@ ospackage {
         into "chromium"
     }
 
+    // The license of ThingsBoard
+    from("${buildDir}/LICENSE") {
+        filePermissions {
+            unix('r--r--r--')  // 0444
+        }
+    }
+
     // The third-party notices, when the build makes them (-Dnotices.skip=false)
     from("${buildDir}/notices/linux") {
         include "THIRD-PARTY-NOTICES"

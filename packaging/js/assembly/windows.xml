@@ -48,6 +48,12 @@
     </fileSets>
 
     <files>
+        <!-- The license of ThingsBoard -->
+        <file>
+            <source>${project.build.directory}/LICENSE</source>
+            <outputDirectory/>
+            <lineEnding>windows</lineEnding>
+        </file>
         <file>
             <source>${pkg.win.dist}/bin/${pkg.name}.exe</source>
             <outputDirectory>bin</outputDirectory>

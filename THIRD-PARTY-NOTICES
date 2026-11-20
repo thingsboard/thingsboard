@@ -60,7 +60,9 @@ Licenses in this file:
 Apache-2.0
 ==============================================================================
 
-The following components are licensed under Apache-2.0:
+ThingsBoard is derived from ThingsBoard Community Edition, Copyright The
+ThingsBoard Authors, which is licensed under Apache-2.0. The components below
+are licensed under Apache-2.0 as well:
 
   at.yawk.lz4:lz4-java 1.11.4
       Copyright 2020 Adrien Grand
