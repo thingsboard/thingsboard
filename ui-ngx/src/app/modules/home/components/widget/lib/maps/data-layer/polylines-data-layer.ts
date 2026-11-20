@@ -65,7 +65,6 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
 
-    this.styleSubscription?.unsubscribe();
     this.styleSubscription = this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polylineStyleInfo = styleInfo;
       if (this.polyline) {

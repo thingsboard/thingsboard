@@ -59,7 +59,6 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
       snapIgnore: !this.dataLayer.isSnappable()
     });
 
-    this.styleSubscription?.unsubscribe();
     this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
       this.circleStyleInfo = styleInfo;
       if (this.circle) {

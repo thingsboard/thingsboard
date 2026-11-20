@@ -60,7 +60,6 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
 
-    this.styleSubscription?.unsubscribe();
     this.styleSubscription = this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polygonStyleInfo = styleInfo;
       if (this.polygon) {

@@ -1587,7 +1587,11 @@ export const loadImageWithAspect = (imagePipe: ImagePipe, imageUrl: string): Obs
             })
           );
         }),
-        finalize(() => delete imageAspectLoading[hash]),
+        finalize(() => {
+          if (imageAspectLoading[hash] === loading$) {
+            delete imageAspectLoading[hash];
+          }
+        }),
         shareReplay({bufferSize: 1, refCount: false})
       );
       imageAspectLoading[hash] = loading$;
