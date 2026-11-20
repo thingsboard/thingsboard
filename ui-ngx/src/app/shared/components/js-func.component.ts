@@ -194,7 +194,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
+    getAce('ace/mode/javascript', 'ace/mode/tbel').subscribe(
       (ace) => {
         this.jsEditor = ace.edit(editorElement, editorOptions);
         this.jsEditor.session.setUseWrapMode(true);
