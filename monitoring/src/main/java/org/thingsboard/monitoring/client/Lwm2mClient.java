@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.monitoring.client;
 
 import lombok.Getter;
@@ -75,11 +76,11 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     }
 
     public void initClient() throws InvalidDDFFileException, IOException {
-        String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "test-model.xml"};
-        List<ObjectModel> models = new ArrayList<>();
-        for (String resourceName : resources) {
-            models.addAll(ObjectLoader.loadDdfFile(ResourceUtils.getResourceAsStream("lwm2m/models/" + resourceName), resourceName));
-        }
+        // The standard objects come with Leshan, and the Device object is the monitoring's own
+        List<ObjectModel> models = new ArrayList<>(ObjectLoader.loadDefault().stream()
+                .filter(model -> model.id == SECURITY || model.id == SERVER || model.id == ACCESS_CONTROL)
+                .toList());
+        models.addAll(ObjectLoader.loadDdfFile(ResourceUtils.getResourceAsStream("lwm2m/models/test-model.xml"), "test-model.xml"));
 
         Security security = noSec(serverUri, 123);
         Configuration coapConfig = new Configuration();
