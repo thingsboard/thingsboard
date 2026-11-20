@@ -38,6 +38,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TbReportFormat } from '@shared/models/report.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isFunction } from '@core/utils';
+import { ReportComponentLayoutService, ReportComponentLayoutTarget } from '@home/pages/reporting/template/components/report-component-layout.service';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import ITooltipsterGeoHelper = JQueryTooltipster.ITooltipsterGeoHelper;
 
@@ -127,9 +128,6 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
   parentScale = 1;
 
   @Input()
-  width: number;
-
-  @Input()
   pageMarginLeft: number;
 
   @Input()
@@ -191,14 +189,21 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
 
   private reportComponentHeight = 0;
 
-  private hostResize$: ResizeObserver;
+  private readonly layoutTarget: ReportComponentLayoutTarget = {
+    element: this.elementRef.nativeElement,
+    measureWidth: () => this.measureHostWidth(),
+    applyWidth: width => this.applyContentWidth(width),
+    measureHeight: () => this.measureContentHeight(),
+    applyHeight: height => this.applyHostHeight(height)
+  };
 
   constructor(private reportComponents: ReportComponentsComponent,
               public elementRef: ElementRef<HTMLElement>,
               private container: ViewContainerRef,
               private renderer: Renderer2,
               private destroyRef: DestroyRef,
-              private cd: ChangeDetectorRef) {}
+              private cd: ChangeDetectorRef,
+              private layoutService: ReportComponentLayoutService) {}
 
   ngOnInit() {
     this.typeData = reportComponentTypesData.getReportComponentTypeData(this.reportComponent.type,
@@ -244,7 +249,7 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (['scale', 'parentScale', 'width'].includes(propName)) {
+        if (['scale', 'parentScale'].includes(propName)) {
           if (propName === 'scale') {
             this.reportComponentPreview.scale = this.scale;
           }
@@ -261,19 +266,14 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
 
   ngAfterViewInit() {
     this.updateComponentLayout();
-    this.hostResize$ = new ResizeObserver(() => {
-      this.updateComponentSize();
-    });
-    this.hostResize$.observe(this.elementRef.nativeElement);
+    this.layoutService.observe(this.layoutTarget);
   }
 
   ngOnDestroy(): void {
     if (this.editReportComponentTooltip && !this.editReportComponentTooltip.status().destroyed) {
       this.editReportComponentTooltip.destroy();
     }
-    if (this.hostResize$) {
-      this.hostResize$.disconnect();
-    }
+    this.layoutService.unobserve(this.layoutTarget);
   }
 
   @HostListener('click', ['$event'])
@@ -320,21 +320,29 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
     this.hovered = false;
   }
 
-  private updateComponentSize() {
-    const parentWidth = this.elementRef.nativeElement.getBoundingClientRect().width / this.parentScale;
-    if (parentWidth > 0) {
-      const border = pointsToPixels(this.borderWidth) * 2;
-      const leftRightPaddings = pointsToPixels(this.paddingLeft) + pointsToPixels(this.paddingRight);
-      this.renderer.setStyle(this.reportComponentElement().nativeElement, 'width', ((parentWidth - leftRightPaddings - border) / this.scale) + 'px');
-      if (!this.innerComponent) {
-        this.renderer.setStyle(this.reportComponentElement().nativeElement, 'transform', `scale(${this.scale})`);
-      }
-      const rect = this.reportComponentElement().nativeElement.getBoundingClientRect();
-      const targetHeight = rect.height > 0 ? rect.height / this.parentScale : this.reportComponentHeight;
-      this.reportComponentHeight = targetHeight;
-      const topBottomPaddings = pointsToPixels(this.paddingTop) + pointsToPixels(this.paddingBottom);
-      this.renderer.setStyle(this.elementRef.nativeElement, 'height', (targetHeight + topBottomPaddings + border) + 'px');
+  private measureHostWidth(): number {
+    return this.elementRef.nativeElement.offsetWidth;
+  }
+
+  private applyContentWidth(parentWidth: number) {
+    const border = pointsToPixels(this.borderWidth) * 2;
+    const leftRightPaddings = pointsToPixels(this.paddingLeft) + pointsToPixels(this.paddingRight);
+    this.renderer.setStyle(this.reportComponentElement().nativeElement, 'width', ((parentWidth - leftRightPaddings - border) / this.scale) + 'px');
+    if (!this.innerComponent) {
+      this.renderer.setStyle(this.reportComponentElement().nativeElement, 'transform', `scale(${this.scale})`);
     }
+  }
+
+  private measureContentHeight(): number {
+    const height = this.reportComponentElement().nativeElement.offsetHeight;
+    return height > 0 ? height * (this.innerComponent ? 1 : this.scale) : this.reportComponentHeight;
+  }
+
+  private applyHostHeight(contentHeight: number) {
+    this.reportComponentHeight = contentHeight;
+    const border = pointsToPixels(this.borderWidth) * 2;
+    const topBottomPaddings = pointsToPixels(this.paddingTop) + pointsToPixels(this.paddingBottom);
+    this.renderer.setStyle(this.elementRef.nativeElement, 'height', (contentHeight + topBottomPaddings + border) + 'px');
   }
 
   private updateComponentLayout() {
@@ -363,7 +371,7 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
         this.marginRight = -this.pageMarginRight / this.scale;
       }
     }
-    this.updateComponentSize();
+    this.layoutService.schedule(this.layoutTarget);
   }
 
   public componentUpdated() {
