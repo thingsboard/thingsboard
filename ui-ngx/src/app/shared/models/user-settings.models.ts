@@ -12,7 +12,17 @@ export interface UserSettings {
   includeResourcesInExportWidgetTypes?: boolean;
   includeResourcesInExportDashboard?: boolean;
   isSolutionSidebarExpanded?: boolean;
+  aiTour?: AiTourSettings;
 }
+
+export enum AiTourStep {
+  WELCOME = 'welcome',
+  ASSISTANT_TOUR = 'assistantTour',
+  AI_BUTTON = 'aiButton',
+  HOME = 'home'
+}
+
+export type AiTourSettings = Partial<Record<AiTourStep, number>>;
 
 export const initialUserSettings: UserSettings = {
   openedMenuSections: []

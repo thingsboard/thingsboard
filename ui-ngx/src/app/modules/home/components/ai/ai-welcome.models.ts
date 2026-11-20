@@ -4,7 +4,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AiAssistantPanelConfig, AiAssistantPromptExample, AiAssistantViewType, AiChatView } from '@shared/models/ai-chat.models';
 
+export type AiWelcomePlace = 'dashboard' | 'list' | 'page';
+
 export interface AiWelcome {
+  place: AiWelcomePlace;
   title?: string;
   line?: string;
   examples: AiAssistantPromptExample[];
@@ -145,7 +148,7 @@ export function aiWelcome(view: AiChatView | undefined, name: string | null, con
   const configExamples = config?.promptExamples ?? [];
   const kind = view ? WELCOMES[view.type] : undefined;
   if (!kind) {
-    return {title: config?.title, line: config?.subTitle, examples: configExamples, suggestion: config?.suggestion ?? shortExample(configExamples)};
+    return {place: 'page', title: config?.title, line: config?.subTitle, examples: configExamples, suggestion: config?.suggestion ?? shortExample(configExamples)};
   }
   const base = 'ai-assistant.welcome.' + (config?.welcomeKey ?? kind.key);
   const own = (kind.examples ?? []).map(example => ({
@@ -154,6 +157,7 @@ export function aiWelcome(view: AiChatView | undefined, name: string | null, con
   }));
   const examples = kind.entity && own.length ? own : [...own, ...configExamples.filter(item => !own.some(mine => mine.message === item.message))];
   return {
+    place: view.type === AiAssistantViewType.DASHBOARD ? 'dashboard' : kind.entity ? 'page' : 'list',
     title: translate.instant(`${base}.${titleKey(kind, view, name)}`, {name}),
     line: translate.instant(`${base}.line`),
     examples,

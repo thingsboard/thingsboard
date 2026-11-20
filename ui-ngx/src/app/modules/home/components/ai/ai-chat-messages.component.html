@@ -268,7 +268,7 @@
     } @else if (work) {
       <tb-ai-work-line class="work" [words]="work.headline || ('ai-assistant.work.' + work.moment | translate)" [since]="work.since"></tb-ai-work-line>
     } @else {
-      <span class="tb-ai-mark" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
+      <tb-ai-mark></tb-ai-mark>
       <div class="glow-container">
         {{ 'ai-assistant.thinking' | translate }}
       </div>

@@ -1,21 +1,11 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { aiPageView, AiChatClientContext } from '@shared/models/ai-chat.models';
-import { getDefaultTimezone } from '@shared/models/time/time.models';
-import { BreadCrumb } from '@shared/components/breadcrumb';
-import { UtilsService } from '@core/services/utils.service';
-import { BreadcrumbService } from '@core/services/breadcrumb.service';
-import { filter, map, startWith } from 'rxjs/operators';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { Router, NavigationEnd } from '@angular/router';
-import { aiWelcome } from '@home/components/ai/ai-welcome.models';
 import { Component, computed, effect, ElementRef, inject, NgZone, signal, untracked, ViewChild } from '@angular/core';
 import { MatTooltip } from '@angular/material/tooltip';
-import { AiAssistantPromptExample } from '@shared/models/ai-chat.models';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
-import { TranslateService } from '@ngx-translate/core';
 import { AiChatsService } from '@core/services/ai-chats.service';
 import { AiChatComponent } from '@home/components/ai/ai-chat.component';
+import { AiAssistantContextService } from '@home/components/ai/ai-assistant-context.service';
 
 @Component({
   selector: 'tb-ai-assistant-panel',
@@ -37,8 +27,6 @@ import { AiChatComponent } from '@home/components/ai/ai-chat.component';
 export class AiAssistantPanelComponent {
 
   panelService = inject(AiAssistantPanelService);
-
-  private translate = inject(TranslateService);
 
   @ViewChild(AiChatComponent) chat: AiChatComponent;
 
@@ -83,37 +71,11 @@ export class AiAssistantPanelComponent {
 
   chatId = signal<string | undefined>(undefined);
 
-  private router = inject(Router);
+  private context = inject(AiAssistantContextService);
 
-  private utils = inject(UtilsService);
+  clientContext = this.context.clientContext;
 
-  private pageTitle = toSignal(inject(BreadcrumbService).breadcrumbs$.pipe(
-    map(crumbs => crumbs.map(crumb => this.crumbLabel(crumb)).filter(label => !!label).join(' › '))
-  ), {initialValue: ''});
-
-  private pagePath = toSignal(this.router.events.pipe(
-    filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-    map(event => event.urlAfterRedirects),
-    startWith(this.router.url),
-    map(url => (url || '/').split(/[?#]/)[0])
-  ), {initialValue: '/'});
-
-  clientContext = computed<AiChatClientContext | undefined>(() => {
-    const context = this.panelService.clientContext();
-    if (context) {
-      const name = this.panelService.viewName();
-      return context.view?.entityId && name && !context.view.title ? {...context, view: {...context.view, title: name}} : context;
-    }
-    const title = this.pageTitle();
-    const path = this.pagePath();
-    const type = aiPageView(path);
-    return title || path !== '/' ? {view: {type, title, path}, timeZone: getDefaultTimezone()} : undefined;
-  });
-
-  promptExamples = computed<AiAssistantPromptExample[]>(() => this.panelService.config()?.promptExamples ?? []);
-
-  welcome = computed(() => aiWelcome(this.clientContext()?.view, this.panelService.viewName(), this.panelService.config(),
-    this.translate));
+  welcome = this.context.welcome;
 
   private chats = inject(AiChatsService);
   private elementRef = inject(ElementRef<HTMLElement>);
@@ -301,15 +263,6 @@ export class AiAssistantPanelComponent {
       grip.addEventListener('pointerup', up);
       grip.addEventListener('pointercancel', up);
     });
-  }
-
-  private crumbLabel(crumb: BreadCrumb): string {
-    try {
-      return crumb.labelFunction ? crumb.labelFunction() : crumb.customTranslate ? this.utils.customTranslation(crumb.label, crumb.label)
-        : this.translate.instant(crumb.label);
-    } catch {
-      return '';
-    }
   }
 
   close(): void {

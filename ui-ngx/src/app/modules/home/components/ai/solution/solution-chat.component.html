@@ -34,7 +34,7 @@
   <div class="sol-hero">
     <div class="sol-hero-scroll">
     <div class="sol-hero-in">
-      <span class="tb-ai-mark m64 sol-mark" aria-hidden="true"><mat-icon>layers</mat-icon></span>
+      <tb-ai-mark class="sol-mark" size="64" icon="layers"></tb-ai-mark>
       <h1 class="sol-title">{{ 'solution-creator.what-should-it-do' | translate }}</h1>
       <p class="sol-lead">{{ 'solution-creator.what-it-becomes' | translate }}</p>
       <tb-ai-prompt-input class="sol-hero-input"
@@ -251,7 +251,7 @@
             <div class="art-loading k-mark sol-loading" role="status">
               <span class="art-load-markwrap">
                 <span class="art-load-glow" aria-hidden="true"></span>
-                <span class="tb-ai-mark m64" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
+                <tb-ai-mark size="64"></tb-ai-mark>
               </span>
               <tb-ai-load-lines [line]="work()?.words" [lines]="work()?.lines ?? []"></tb-ai-load-lines>
               <p class="art-load-note">{{ estimateOf(making()) }}</p>

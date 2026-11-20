@@ -7,7 +7,7 @@
 @if (creating()) {
 } @else if (installed() && !bannerClosed()) {
   <div class="sol-done" role="status">
-    <span class="tb-ai-mark m44 sol-done-mark" aria-hidden="true"><mat-icon>check</mat-icon></span>
+    <tb-ai-mark class="sol-done-mark" size="44" icon="check"></tb-ai-mark>
     <div class="sol-done-t">
       <b>{{ 'solution-creator.pane.installed' | translate }}</b>
       <span>{{ 'solution-creator.pane.installed-line' | translate: {entities: entityCount(), dashboards: dashboardCount()} }}</span>

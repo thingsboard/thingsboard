@@ -97,6 +97,16 @@ export const authReducer = (
       userSettings = {...state.userSettings, ...{ openedMenuSections: Array.from(openedMenuSections)}};
       return { ...state, ...{ userSettings }};
 
+    case AuthActionTypes.UPDATE_AI_TOUR:
+      const aiTour = {...state.userSettings.aiTour};
+      if (action.payload.seen) {
+        aiTour[action.payload.step] = Date.now();
+      } else {
+        delete aiTour[action.payload.step];
+      }
+      userSettings = {...state.userSettings, aiTour};
+      return { ...state, ...{ userSettings }};
+
     case AuthActionTypes.PUT_USER_SETTINGS:
       userSettings = {...state.userSettings, ...action.payload};
       return { ...state, ...{ userSettings }};

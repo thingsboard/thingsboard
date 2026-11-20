@@ -10,7 +10,7 @@
         (fullscreenChanged)="onFullscreenChanged($event)">
   <ng-content select="[aiChatLead]"></ng-content>
   @if (variant() === 'panel') {
-    <span class="tb-ai-mark m32" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
+    <tb-ai-mark size="32"></tb-ai-mark>
   }
   <tb-ai-chat-title [title]="chat()?.title" [placeholder]="historyLoading() ? '' : ('ai-assistant.new-chat' | translate)" [level]="level()"
                     [statusTip]="statusTip()" [compact]="variant() === 'panel'" (renamed)="rename($event)"></tb-ai-chat-title>
@@ -96,7 +96,7 @@
     </div>
   } @else if (!chatId() && docked()) {
     <div class="k-newchat">
-      <span class="tb-ai-mark m44" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
+      <tb-ai-mark size="44"></tb-ai-mark>
       <h3>{{ startTitle() || ('ai-assistant.panel-title' | translate) }}</h3>
       <p>{{ startLine() || ('ai-assistant.panel-line' | translate) }}</p>
       @if (prompts().length) {
@@ -113,7 +113,7 @@
     </div>
   } @else if (!chatId()) {
     <div class="ai-chat-start">
-      <span class="tb-ai-mark m64" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
+      <tb-ai-mark size="64"></tb-ai-mark>
       @if (variant() === 'panel') {
         <h1 class="ai-chat-start-title">{{ startTitle() || ('ai-assistant.panel-title' | translate) }}</h1>
         <p class="ai-chat-start-line">{{ startLine() || ('ai-assistant.panel-line' | translate) }}</p>
@@ -238,60 +238,62 @@
       </div>
       <tb-ai-file-body [file]="file" [wrap]="fileWrap()" [whitespace]="fileWhitespace()" [saver]="fileSaver"
                        [marks]="fileMarks()" (marksChange)="fileMarks.set($event)" (discarded)="onFileDiscarded($event)"></tb-ai-file-body>
-      @if (fileMarks(); as marks) {
-        <footer artFoot class="art-pane-foot art-marks">
-          <span class="file-marked">
-            <span class="file-marked-n">{{ (marks.from === marks.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: marks.from, to: marks.to} }}</span>
-            {{ 'ai-assistant.file.marked' | translate }}
-          </span>
-          <span class="art-spacer"></span>
-          <button mat-button type="button" (click)="fileMarks.set(null)">{{ 'ai-assistant.file.clear' | translate }}</button>
-          <button mat-stroked-button type="button" (click)="copyMarked(file)"><mat-icon>content_copy</mat-icon>{{ 'action.copy' | translate }}</button>
-          <button mat-flat-button type="button" class="art-ask" (click)="askAboutMarks(file)"><mat-icon>auto_awesome</mat-icon>{{ 'ai-assistant.file.ask-about' | translate }}</button>
-        </footer>
-      } @else {
-        <footer artFoot class="art-pane-foot file-bar">
-          <span class="file-bar-info">
-            @if (fileBody()?.editing()) {
-              @if (fileBody()?.dirty()) {
-                <span class="file-bar-state"><i class="file-bar-dot" aria-hidden="true"></i>{{ 'ai-assistant.file.unsaved' | translate }}</span>
+      <ng-container ngProjectAs="[artFoot]">
+        @if (fileMarks(); as marks) {
+          <footer artFoot class="art-pane-foot art-marks">
+            <span class="file-marked">
+              <span class="file-marked-n">{{ (marks.from === marks.to ? 'ai-assistant.file.line' : 'ai-assistant.file.lines-range') | translate: {from: marks.from, to: marks.to} }}</span>
+              {{ 'ai-assistant.file.marked' | translate }}
+            </span>
+            <span class="art-spacer"></span>
+            <button mat-button type="button" (click)="fileMarks.set(null)">{{ 'ai-assistant.file.clear' | translate }}</button>
+            <button mat-stroked-button type="button" (click)="copyMarked(file)"><mat-icon>content_copy</mat-icon>{{ 'action.copy' | translate }}</button>
+            <button mat-flat-button type="button" class="art-ask" (click)="askAboutMarks(file)"><mat-icon>auto_awesome</mat-icon>{{ 'ai-assistant.file.ask-about' | translate }}</button>
+          </footer>
+        } @else {
+          <footer artFoot class="art-pane-foot file-bar">
+            <span class="file-bar-info">
+              @if (fileBody()?.editing()) {
+                @if (fileBody()?.dirty()) {
+                  <span class="file-bar-state"><i class="file-bar-dot" aria-hidden="true"></i>{{ 'ai-assistant.file.unsaved' | translate }}</span>
+                } @else {
+                  <span class="file-bar-state">{{ 'ai-assistant.file.editing' | translate }}</span>
+                }
+                @if (fileBody()?.caret(); as caret) {
+                  <i class="file-bar-sep" aria-hidden="true">·</i>
+                  <span class="file-bar-pos">{{ 'ai-assistant.file.position' | translate: {line: caret.line, col: caret.col} }}@if (caret.selected) { ({{ 'ai-assistant.file.selected' | translate: {count: caret.selected} }})}</span>
+                }
+              } @else if (fileBody()?.saved()) {
+                <span class="file-bar-saved"><mat-icon aria-hidden="true">check</mat-icon>{{ 'ai-assistant.file.saved' | translate }}</span>
               } @else {
-                <span class="file-bar-state">{{ 'ai-assistant.file.editing' | translate }}</span>
-              }
-              @if (fileBody()?.caret(); as caret) {
+                <span>{{ 'ai-assistant.file.lines' | translate: {count: file.lines} }}</span>
                 <i class="file-bar-sep" aria-hidden="true">·</i>
-                <span class="file-bar-pos">{{ 'ai-assistant.file.position' | translate: {line: caret.line, col: caret.col} }}@if (caret.selected) { ({{ 'ai-assistant.file.selected' | translate: {count: caret.selected} }})}</span>
+                <span>{{ file.size }}</span>
+                @if (file.edited) {
+                  <i class="file-bar-sep" aria-hidden="true">·</i>
+                  <span class="file-bar-ed">{{ 'ai-assistant.file.edited-in-chat' | translate }}</span>
+                }
               }
-            } @else if (fileBody()?.saved()) {
-              <span class="file-bar-saved"><mat-icon aria-hidden="true">check</mat-icon>{{ 'ai-assistant.file.saved' | translate }}</span>
-            } @else {
-              <span>{{ 'ai-assistant.file.lines' | translate: {count: file.lines} }}</span>
-              <i class="file-bar-sep" aria-hidden="true">·</i>
-              <span>{{ file.size }}</span>
-              @if (file.edited) {
-                <i class="file-bar-sep" aria-hidden="true">·</i>
-                <span class="file-bar-ed">{{ 'ai-assistant.file.edited-in-chat' | translate }}</span>
-              }
-            }
-          </span>
-          <span class="file-bar-acts">
-            @if (fileBody()?.editing()) {
-              @if (fileBody()?.dirty()) {
-                <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.discard()">{{ 'ai-assistant.file.discard' | translate }}</button>
-                <button mat-flat-button type="button" class="file-bar-b file-bar-save" [disabled]="loading() || fileBody()?.saving()" (click)="fileBody()?.save()">
-                  {{ 'ai-assistant.file.save' | translate }}
+            </span>
+            <span class="file-bar-acts">
+              @if (fileBody()?.editing()) {
+                @if (fileBody()?.dirty()) {
+                  <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.discard()">{{ 'ai-assistant.file.discard' | translate }}</button>
+                  <button mat-flat-button type="button" class="file-bar-b file-bar-save" [disabled]="loading() || fileBody()?.saving()" (click)="fileBody()?.save()">
+                    {{ 'ai-assistant.file.save' | translate }}
+                  </button>
+                } @else {
+                  <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.done()">{{ 'ai-assistant.file.done' | translate }}</button>
+                }
+              } @else if (chatId()) {
+                <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.startEdit()">
+                  <mat-icon>edit</mat-icon>{{ 'ai-assistant.file.edit' | translate }}
                 </button>
-              } @else {
-                <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.done()">{{ 'ai-assistant.file.done' | translate }}</button>
               }
-            } @else if (chatId()) {
-              <button mat-stroked-button type="button" class="file-bar-b" (click)="fileBody()?.startEdit()">
-                <mat-icon>edit</mat-icon>{{ 'ai-assistant.file.edit' | translate }}
-              </button>
-            }
-          </span>
-        </footer>
-      }
+            </span>
+          </footer>
+        }
+      </ng-container>
     </tb-ai-artifact-pane>
     <mat-menu #imageDownloads="matMenu" xPosition="before" class="tb-ai-chat-menu">
       <button mat-menu-item type="button" (click)="downloadFile(file)">
