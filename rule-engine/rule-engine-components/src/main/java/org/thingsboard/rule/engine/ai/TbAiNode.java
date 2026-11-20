@@ -19,6 +19,7 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.output.FinishReason;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.common.util.JacksonUtil;
@@ -177,10 +178,9 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 .responseFormat(responseFormat)
                 .build();
 
-        sendChatRequestAsync(ctx, chatRequest).addCallback(new FutureCallback<>() {
+        sendChatRequestAsync(ctx, chatRequest).transform(TbAiNode::getResponseText, directExecutor()).addCallback(new FutureCallback<>() {
             @Override
-            public void onSuccess(ChatResponse chatResponse) {
-                String response = chatResponse.aiMessage().text();
+            public void onSuccess(String response) {
                 if (!isValidJsonObject(response)) {
                     response = wrapInJsonObject(response);
                 }
@@ -216,6 +216,22 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
             return ctx.getAiChatModelService().sendChatRequestAsync(ctx.getTenantId(), chatModelConfig, chatRequest);
         }, ctx.getDbCallbackExecutor());
+    }
+
+    private static String getResponseText(ChatResponse chatResponse) {
+        FinishReason finishReason = chatResponse.finishReason();
+        if (finishReason == FinishReason.LENGTH) {
+            throw new RuntimeException("AI model response was cut off by the output token limit. " +
+                    "Set a higher 'Maximum output tokens' value in the AI model settings");
+        }
+        if (finishReason == FinishReason.CONTENT_FILTER) {
+            throw new RuntimeException("AI model response was blocked by the provider's content filter");
+        }
+        String text = chatResponse.aiMessage().text();
+        if (text == null || text.isBlank()) {
+            throw new RuntimeException("AI model returned an empty response");
+        }
+        return text;
     }
 
     private static boolean isValidJsonObject(String jsonString) {
