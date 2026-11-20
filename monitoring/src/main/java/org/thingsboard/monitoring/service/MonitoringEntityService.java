@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.RegexUtils;
+import org.thingsboard.monitoring.client.Lwm2mClient;
 import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.config.integration.IntegrationMonitoringConfig;
 import org.thingsboard.monitoring.config.integration.IntegrationMonitoringTarget;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -240,7 +242,10 @@ public class MonitoringEntityService {
             tbClient.getResources(new PageLink(1, 0, "LwM2M Monitoring")).getData()
                     .stream().findFirst()
                     .orElseGet(() -> {
-                        TbResource newResource = ResourceUtils.getResource("lwm2m/resource.json", TbResource.class);
+                        TbResource newResource = new TbResource();
+                        newResource.setResourceType(ResourceType.LWM2M_MODEL);
+                        newResource.setFileName("test-model.xml");
+                        newResource.setData(ResourceUtils.getResourceBytes(Lwm2mClient.MODEL_PATH));
                         log.info("Creating LwM2M resource");
                         return tbClient.saveResource(newResource);
                     });

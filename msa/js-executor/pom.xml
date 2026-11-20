@@ -40,6 +40,7 @@
         <yarn.test.skip>${skip.yarn}</yarn.test.skip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
         <sbom.image.scanExclude></sbom.image.scanExclude>
+        <notices.image.phase>package</notices.image.phase>
     </properties>
 
     <dependencies>
@@ -234,6 +235,9 @@
                 <executions>
                     <execution>
                         <id>sbom-metadata</id>
+                        <goals>
+                            <goal>metadata</goal>
+                        </goals>
                         <configuration>
                             <targetFile>${project.build.directory}/sbom/${pkg.name}.cdx.json</targetFile>
                             <skip>${skip.yarn}</skip>

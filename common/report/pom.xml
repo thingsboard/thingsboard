@@ -138,6 +138,8 @@
                     <include>**/*.html</include>
                     <include>**/*.css</include>
                     <include>**/*.properties</include>
+                    <!-- What the module bundles, the fonts: the jars that pack it fold it into their SBOM -->
+                    <include>META-INF/sbom/report.cdx.json</include>
                 </includes>
             </resource>
         </resources>

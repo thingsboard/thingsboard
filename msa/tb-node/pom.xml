@@ -26,7 +26,6 @@
         <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
         <pkg.name>thingsboard</pkg.name>
         <docker.name>${tb.docker.id}-node</docker.name>
-        <sbom.metadata.skip>true</sbom.metadata.skip>
         <sbom.image.package.dir>${main.dir}/application/target</sbom.image.package.dir>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
