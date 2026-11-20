@@ -37,6 +37,7 @@ const resolveJQueryPlugin: Plugin = {
 
 // The license comments of the bundled packages: the third-party notices of the UI, served at /THIRD-PARTY-NOTICES.txt,
 // give their licenses, so they need not reach every browser. Angular keeps them while its own license file is off.
+// Angular does not pass this plugin to the polyfills bundle, which keeps the license comment of zone.js.
 const stripLegalCommentsPlugin: Plugin = {
   name: 'tb-strip-legal-comments',
   setup(build: PluginBuild) {
