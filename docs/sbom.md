@@ -20,8 +20,9 @@ The services are the modules that build a Spring Boot jar and declare the plugin
 [sbom-maven-plugin](https://github.com/thingsboard/sbom-maven-plugin). The UI SBOM is also nested in the SBOM of
 `application`, which serves the UI.
 
-Library modules (`common/*`, `rest-client`, `netty-mqtt` and the like) get no SBOM of their own: they are described as
-components of the services that pack them. `msa/web-ui` and `msa/js-executor` ship only as Docker images, so they have
+Library modules (`common/*`, `rest-client`, `netty-mqtt` and the like) are described as components of the services that
+pack them. A library that bundles third-party files, such as the fonts of `common/report`, also carries an SBOM of
+those files: see [Libraries that bundle files](#libraries-that-bundle-files). `msa/web-ui` and `msa/js-executor` ship only as Docker images, so they have
 no package SBOMs.
 
 ## Building with SBOMs
@@ -61,6 +62,18 @@ a module declares under `bundled-sbom` in its `pom.xml`
 (see [Components declared in a pom](#components-declared-in-a-pom)). Before the packages are built, the `bundled` goal
 writes it to `target/sbom/<package name>-<deb|rpm|zip>.bundled.cdx.json`, where the third-party notices read it. After
 they are built, the `package` goal makes one SBOM per package from the SBOM of the jar and that file.
+
+### Libraries that bundle files
+
+A library module that bundles third-party files in its jar declares them in
+`src/main/resources/META-INF/sbom/<artifactId>.cdx.json`, which goes into the jar. The services that pack the library
+list it under `nestedSboms` of the `jar` goal, which folds its components into the SBOM of the jar. `common/report` does
+this for its fonts, and `application` and `report` fold it in.
+
+Declare each file as a component of type `file`, under the component of the font family or package it comes from, with
+its SHA-256 and its path in the jar in `evidence.occurrences[].location`. The `jar` goal checks that the library has a
+file at that path with that hash, so a file that changes without its SBOM fails the build. The component it comes from
+gives the license, and a reference of the type `license` to the license text, from which the notices take it.
 
 ### npm modules
 
@@ -158,7 +171,7 @@ expect a reviewer to decide how it is declared.
 | Add, update or remove an npm dependency                                                                            | Update `yarn.lock` with `yarn install` in the module (Yarn 1, which the build provides under the module's `target/`), and commit it. Regenerate the notices.                                                               |
 | Import a package in `ui-ngx` for the first time, stop using one, or change the assets or scripts in `angular.json` | Regenerate the notices: the UI SBOM lists only what the bundle contains.                                                                                                                                                   |
 | Update the gateway extension                                                                                       | See [The gateway management extension](#the-gateway-management-extension).                                                                                                                                                 |
-| Ship a new file that is not a dependency                                                                           | Declare it as a component of the module's `bundled-sbom`, with its license.                                                                                                                                                |
+| Ship a new file that is not a dependency                                                                           | Declare it as a component of the module's `bundled-sbom`, with its license; if a library jar bundles it, in the library's SBOM: see [Libraries that bundle files](#libraries-that-bundle-files). |
 | Add a module that ships a Spring Boot jar or package                                                               | Set `sbom.jar.phase` and `sbom.bundled.phase` to `prepare-package` and `sbom.package.phase` to `${pkg.package.phase}`, and declare `sbom-maven-plugin` after `spring-boot-maven-plugin`, as `transport/mqtt/pom.xml` does. |
 | Copy third-party code                                                                                              | See [Copied third-party code](#copied-third-party-code).                                                                                                                                                                   |
 | Change a Docker base image                                                                                         | Nothing: the image SBOM is made from the pushed image.                                                                                                                                                                     |

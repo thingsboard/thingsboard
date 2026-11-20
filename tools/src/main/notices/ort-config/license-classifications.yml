@@ -143,6 +143,8 @@ categorizations:
     categories: ["notice"]
   - id: "Beerware"
     categories: ["notice"]
+  - id: "Bitstream-Vera"
+    categories: ["notice"]
   - id: "BlueOak-1.0.0"
     categories: ["notice"]
   - id: "BSD-2-Clause"
