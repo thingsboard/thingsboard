@@ -816,6 +816,11 @@ class IntegrationPackageExportServiceTest {
             assertThat(entry.get("secretSupport")).isEqualTo(true);
             assertThat(entry.get("defaultValue")).isEqualTo("");
         }
+
+        assertThat(result.formEntries()).filteredOn(e -> "tuyaAccessId".equals(e.get("key")))
+            .extracting(e -> e.get("label")).containsExactly("Access ID");
+        assertThat(result.formEntries()).filteredOn(e -> "tuyaAccessKey".equals(e.get("key")))
+            .extracting(e -> e.get("label")).containsExactly("Access Secret");
     }
 
     @Test

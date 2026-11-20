@@ -17,7 +17,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeviceUpdateResult {
+public class DevicePackageResult {
 
     private boolean success;
     private String errorMessage;
@@ -26,12 +26,12 @@ public class DeviceUpdateResult {
     // By install state key of the step: what the install instructions resolve, e.g. ${integration.httpEndpoint}, ${device.token}
     private Map<String, ObjectNode> outputs;
 
-    public static DeviceUpdateResult success(DeviceInstalledItemDescriptor descriptor, Map<String, ObjectNode> outputs) {
-        return new DeviceUpdateResult(true, null, null, descriptor, outputs);
+    public static DevicePackageResult success(DeviceInstalledItemDescriptor descriptor, Map<String, ObjectNode> outputs) {
+        return new DevicePackageResult(true, null, null, descriptor, outputs);
     }
 
-    public static DeviceUpdateResult error(String errorMessage, String failedStep) {
-        return new DeviceUpdateResult(false, errorMessage, failedStep, null, null);
+    public static DevicePackageResult error(String errorMessage, String failedStep) {
+        return new DevicePackageResult(false, errorMessage, failedStep, null, null);
     }
 
 }

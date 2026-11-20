@@ -5,7 +5,6 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.JsonParser;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -130,7 +129,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
 
         String src = msg.getData();
-        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(src), ts);
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.telemetryFromMsg(msg, ts);
         if (tsKvMap.isEmpty()) {
             ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;

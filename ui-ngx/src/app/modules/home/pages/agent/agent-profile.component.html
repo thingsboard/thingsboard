@@ -48,10 +48,6 @@
         }
       </mat-form-field>
       <mat-form-field class="mat-block" appearance="outline">
-        <mat-label translate>agent.description</mat-label>
-        <textarea matInput formControlName="description" rows="2"></textarea>
-      </mat-form-field>
-      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>agent.provisioning-strategy</mat-label>
         <mat-select formControlName="provisionType">
           @for (type of agentProvisionTypes; track type) {
@@ -61,20 +57,24 @@
           }
         </mat-select>
       </mat-form-field>
-    </fieldset>
-    <div class="tb-form-hint tb-primary-fill mb-3">
-      <mat-icon>info_outline</mat-icon>
-      <div>
-        <div class="font-medium">
-          {{ 'agent.provisioning-strategy-label' | translate: {
-          strategy: agentProvisionTypeTranslationMap.get(entityForm.get('provisionType').value) | translate
-          } }}
-        </div>
+      <div class="tb-form-hint tb-primary-fill mb-3">
+        <mat-icon>info_outline</mat-icon>
         <div>
-          {{ agentProvisionTypeDescriptionMap.get(entityForm.get('provisionType').value) | translate }}
+          <div class="font-medium">
+            {{ 'agent.provisioning-strategy-label' | translate: {
+            strategy: agentProvisionTypeTranslationMap.get(entityForm.get('provisionType').value) | translate
+            } }}
+          </div>
+          <div>
+            {{ agentProvisionTypeDescriptionMap.get(entityForm.get('provisionType').value) | translate }}
+          </div>
         </div>
       </div>
-    </div>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.description</mat-label>
+        <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
+      </mat-form-field>
+    </fieldset>
 
     @if (!standalone && entity?.id?.id
       && entity?.provisionType && entity?.provisionType !== AgentProvisionType.DISABLED) {
