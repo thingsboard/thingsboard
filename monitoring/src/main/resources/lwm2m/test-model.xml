@@ -19,7 +19,7 @@
         <Mandatory>Mandatory</Mandatory>
         <Resources>
             <Item ID="0">
-                <Name>Manufacturer</Name>
+                <Name>Test data</Name>
                 <Operations>R</Operations>
                 <MultipleInstances>Single</MultipleInstances>
                 <Mandatory>Optional</Mandatory>
