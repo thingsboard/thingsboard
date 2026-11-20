@@ -29,6 +29,9 @@
 [#function inCategory resolved category][#return helper.filterForCategory([resolved], category)?has_content][/#function]
 [#function isSourceLink resolved][#return inCategory(resolved, "source-link")][/#function]
 [#function isOffer resolved][#return inCategory(resolved, "written-offer")][/#function]
+[#function isUnclassified resolved][#return !helper.filterForClassified([resolved])?has_content][/#function]
+[#-- filterForCategory also gives the licenses of no category, so a forbidden one must be classified. --]
+[#function isForbidden resolved][#return !isUnclassified(resolved) && inCategory(resolved, "forbidden")][/#function]
 [#-- Every license of a package, without what is no license: NONE, and NOASSERTION, which the scanner gives for a
      sentence that points to a license elsewhere. --]
 [#function allLicenses package][#return view.filter(package.license.filterExcluded(), package.licenseChoices).licenses?filter(l -> l.license?string != "NONE" && !l.license?string?starts_with("NOASSERTION"))][/#function]
@@ -52,38 +55,16 @@
 [#assign withOthers = []]
 [#function coordinates id][#return (id.namespace?has_content)?then(id.namespace + ":", "") + id.name + " " + id.version][/#function]
 [#import "stop.ftl" as stop]
-[#-- Nobody has said what the notices owe for a license that is not in license-classifications.yml. --]
-[#assign unclassified = []]
-[#list shipped as package]
-    [#list allLicenses(package) as resolved]
-        [#if !helper.filterForClassified([resolved])?has_content]
-            [#assign unclassified = unclassified + [resolved.license?string + " (" + package.id.toCoordinates() + ")"]]
-        [/#if]
+[#-- "license (package)" for every license of a shipped package that the test picks: the lines of a stop. --]
+[#function offending test]
+    [#local found = []]
+    [#list shipped as package]
+        [#list allLicenses(package)?filter(test) as resolved]
+            [#local found = found + [resolved.license?string + " (" + package.id.toCoordinates() + ")"]]
+        [/#list]
     [/#list]
-[/#list]
-[#if unclassified?has_content]
-    [#stop stop.message("these licenses are new to the product, and nobody has said what they require of us.\n"
-        + stop.lines(unclassified) + "\n"
-        + "We must know what a license obliges us to ship before we ship it.\n"
-        + "To fix: add the license to tools/src/main/notices/ort-config/license-classifications.yml\nunder one category:\n"
-        + "  notice         the copyright lines and the license text (most permissive licenses: MIT, BSD, Apache)\n"
-        + "  source-link    as notice, and where the source is (EPL, MPL, CDDL)\n"
-        + "  written-offer  as notice, and our offer of the source (GPL and LGPL with the conditions there)\n"
-        + "  nothing        no obligation (public domain)\n"
-        + "If you are not sure which, ask before adding it: a copyleft license may need legal review.")]
-[/#if]
-[#-- A package without any license would not be in the notices, and nobody would know. --]
-[#assign unlicensed = shipped?filter(p -> !allLicenses(p)?has_content)?map(p -> p.id.toCoordinates())]
-[#if unlicensed?has_content]
-    [#stop stop.message("no license was found for these packages, so they would be left out of the notices silently.\n"
-        + stop.lines(unlicensed) + "\n"
-        + "To fix: find the license yourself (its repository, its README, its package page). Then add to\n"
-        + "tools/src/main/notices/ort-config/curations/curations.json:\n"
-        + "  {\"id\": \"" + unlicensed[0] + "\",\n"
-        + "   \"curations\": {\"comment\": \"<where you found it>\", \"concluded_license\": \"<identifier>\"}}\n"
-        + "The id may give a range of versions instead, such as [1.0,2.0[, if you checked them all.\n"
-        + "If it truly has no license, we may not be allowed to ship it: raise it before merging.")]
-[/#if]
+    [#return found]
+[/#function]
 [#-- A choice that license-choices.yml does not decide is still in the license of the package after the choices. ORT
      would list the package under every license of the choice, as if all of them applied. --]
 [#assign undecided = []]
@@ -101,6 +82,42 @@
         + "    - given: \"" + undecided[0].given + "\"\n"
         + "      choice: \"<the license we take>\"\n"
         + "The rule then applies to every package that offers the same choice.")]
+[/#if]
+[#assign forbidden = offending(isForbidden)]
+[#if forbidden?has_content]
+    [#stop stop.message("these packages are under licenses that ThingsBoard cannot ship.\n"
+        + stop.lines(forbidden) + "\n"
+        + "Strong copyleft would put ThingsBoard itself under that license, and the others forbid commercial use.\n"
+        + "No change to the configuration makes them acceptable: remove the dependency, or replace it with one\n"
+        + "under another license. Only if the scan misread the license, add a concluded license to\n"
+        + "tools/src/main/notices/ort-config/curations/curations.json, with where you checked, for the versions\n"
+        + "you checked. The owners of that file have to approve it.")]
+[/#if]
+[#-- Nobody has said what the notices owe for a license that is not in license-classifications.yml. --]
+[#assign unclassified = offending(isUnclassified)]
+[#if unclassified?has_content]
+    [#stop stop.message("these licenses are new to the product, and nobody has said what they require of us.\n"
+        + stop.lines(unclassified) + "\n"
+        + "We must know what a license obliges us to ship before we ship it.\n"
+        + "To fix: add the license to tools/src/main/notices/ort-config/license-classifications.yml\nunder one category:\n"
+        + "  notice         the copyright lines and the license text (most permissive licenses: MIT, BSD, Apache)\n"
+        + "  source-link    as notice, and where the source is (EPL, MPL, CDDL)\n"
+        + "  written-offer  as notice, and our offer of the source (LGPL, and GPL with the Classpath exception)\n"
+        + "  nothing        no obligation (public domain)\n"
+        + "  forbidden      we cannot ship it (strong copyleft such as GPL or AGPL, no commercial use)\n"
+        + "If you are not sure which, ask before adding it: a copyleft license may need legal review.")]
+[/#if]
+[#-- A package without any license would not be in the notices, and nobody would know. --]
+[#assign unlicensed = shipped?filter(p -> !allLicenses(p)?has_content)?map(p -> p.id.toCoordinates())]
+[#if unlicensed?has_content]
+    [#stop stop.message("no license was found for these packages, so they would be left out of the notices silently.\n"
+        + stop.lines(unlicensed) + "\n"
+        + "To fix: find the license yourself (its repository, its README, its package page). Then add to\n"
+        + "tools/src/main/notices/ort-config/curations/curations.json:\n"
+        + "  {\"id\": \"" + unlicensed[0] + "\",\n"
+        + "   \"curations\": {\"comment\": \"<where you found it>\", \"concluded_license\": \"<identifier>\"}}\n"
+        + "The id may give a range of versions instead, such as [1.0,2.0[, if you checked them all.\n"
+        + "If it truly has no license, we may not be allowed to ship it: raise it before merging.")]
 [/#if]
 [#-- ThingsBoard is derived from ThingsBoard Community Edition, which is under Apache-2.0, so every notices file has the
      section of Apache-2.0 and opens it with that, with or without components under it. --]

@@ -148,6 +148,13 @@ Every entry carries a comment that says where the information comes from, so tha
 - **A license-name mapping has no version**, so it holds wherever a package names its license in the same words.
 - **A new license needs a classification before it ships.** If you are not sure what a license requires, ask before
   adding it: a copyleft license may need legal review.
+- **Some licenses cannot ship at all.** Strong copyleft (GPL and AGPL without an exception, SSPL, EUPL and the like)
+  would put ThingsBoard itself under that license, and some licenses forbid commercial use (CC-BY-NC, Commons Clause,
+  Elastic-2.0, BUSL-1.1). They are classified `forbidden`, and the generator stops on any shipped package under one:
+  the dependency has to go. Only a misread scan is fixed in `curations.json`. A license choice is decided first,
+  so a package that offers `AGPL-3.0-only OR Apache-2.0` needs only a rule in `license-choices.yml`.
+- **The decision files have an owner.** `.github/CODEOWNERS` names who approves a change to the generator and its
+  decision files under `tools/src/main/notices/`.
 - **A package without a license is not shipped** until this is raised and resolved.
 - **Do not change the ScanCode options** in `ort-config/config.yml`: stored scans made with other options are not
   reused, and everything would be scanned again.

@@ -1,0 +1,5 @@
+# The third-party notices: the generator, its license decisions and the guide to them. A change to them needs the
+# approval of their owner, and so does a change to this file.
+/tools/src/main/notices/ @dskarzh
+/docs/licensing-guide.md @dskarzh
+/.github/CODEOWNERS @dskarzh
