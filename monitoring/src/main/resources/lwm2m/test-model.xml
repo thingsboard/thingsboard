@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+
     SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
     SPDX-License-Identifier: BUSL-1.1
 
-    The object of the LwM2M client of the monitoring: the Device object (3), version 1.1, with only the two resources
-    that the client implements. Resource 0 carries the test data, and 16 is mandatory.
 -->
+<!-- The object of the LwM2M client of the monitoring: the Device object (3), version 1.1, with only the two resources
+     that the client implements. -->
 <LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
     <Object ObjectType="MODefinition">
         <Name>LwM2M Monitoring</Name>

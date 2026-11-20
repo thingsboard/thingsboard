@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -60,7 +61,8 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     @Setter
     private LeshanClient leshanClient;
 
-    private static final List<Integer> supportedResources = List.of(0, 16);
+    // The Device object of the client, which the monitoring also uploads to ThingsBoard
+    public static final String MODEL_PATH = "lwm2m/test-model.xml";
 
     private String data = "";
 
@@ -77,10 +79,9 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
 
     public void initClient() throws InvalidDDFFileException, IOException {
         // The standard objects come with Leshan, and the Device object is the monitoring's own
-        List<ObjectModel> models = new ArrayList<>(ObjectLoader.loadDefault().stream()
-                .filter(model -> model.id == SECURITY || model.id == SERVER || model.id == ACCESS_CONTROL)
-                .toList());
-        models.addAll(ObjectLoader.loadDdfFile(ResourceUtils.getResourceAsStream("lwm2m/models/test-model.xml"), "test-model.xml"));
+        List<ObjectModel> models = Stream.concat(
+                ObjectLoader.loadDefault().stream().filter(model -> model.id == SECURITY || model.id == SERVER || model.id == ACCESS_CONTROL),
+                ObjectLoader.loadDdfFile(ResourceUtils.getResourceAsStream(MODEL_PATH), MODEL_PATH).stream()).toList();
 
         Security security = noSec(serverUri, 123);
         Configuration coapConfig = new Configuration();
@@ -224,11 +225,6 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         setLeshanClient(leshanClient);
 
         leshanClient.start();
-    }
-
-    @Override
-    public List<Integer> getAvailableResourceIds(ObjectModel model) {
-        return supportedResources;
     }
 
     @Override
