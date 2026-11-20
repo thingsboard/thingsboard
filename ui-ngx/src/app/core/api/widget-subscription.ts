@@ -48,6 +48,7 @@ import { forkJoin, Observable, of, ReplaySubject, Subject, throwError, timer } f
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { alarmFields } from '@shared/models/alarm.models';
+import { exportDateFormat } from '@shared/models/date-time-format.models';
 import {
   createLabelFromPattern,
   deepClone,
@@ -1339,7 +1340,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           if (dataKey.type === DataKeyType.alarm) {
             const alarmField = alarmFields[dataKey.name];
             const value = getDescendantProp(alarm, alarmField ? alarmField.value : dataKey.name);
-            dataObj[key] = this.ctx.utils.defaultAlarmFieldContent(dataKey, value);
+            dataObj[key] = this.ctx.utils.defaultAlarmFieldContent(dataKey, value, exportDateFormat);
           } else {
             const type = dataKeyTypeToEntityKeyType(dataKey.type);
             let value = '';

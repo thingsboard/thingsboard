@@ -15,7 +15,7 @@
         </div>
         <div class="flex flex-col">
           <span class="mat-mdc-subheader" translate>profile.last-login-time</span>
-          <span class="profile-last-login-ts" style='opacity: 0.7;'>{{ user?.additionalInfo?.lastLoginTs | date:'yyyy-MM-dd HH:mm:ss'  }}</span>
+          <span class="profile-last-login-ts" style='opacity: 0.7;'>{{ user?.additionalInfo?.lastLoginTs | tbDate }}</span>
         </div>
       </div>
     </mat-card-header>
@@ -77,6 +77,17 @@
               }
             </mat-select>
           </mat-form-field>
+          <div class="flex flex-row items-center justify-between gap-2 mb-3">
+            <div>
+              {{ 'date.combined-preview' | translate }}: {{ formatPreviewDate | date: formatPreviewPattern }}
+            </div>
+            <button mat-stroked-button
+                    type="button"
+                    color="primary"
+                    (click)="openCustomizeDateTimeFormatDialog()">
+              {{ 'date.customize-date-time-formats' | translate }}
+            </button>
+          </div>
           @if (authState.whiteLabelingAllowed && (resource.WHITE_LABELING | hasGenericPermission: operation.WRITE)) {
             <section
               class="tb-home-dashboard flex flex-1 flex-col gt-sm:flex-row">

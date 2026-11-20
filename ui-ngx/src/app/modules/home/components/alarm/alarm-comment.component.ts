@@ -9,7 +9,6 @@ import { AlarmCommentService } from '@core/http/alarm-comment.service';
 import { AbstractControl, FormBuilder, FormGroup } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
 import { AuthUser } from '@shared/models/user.model';
-import { Authority } from '@shared/models/authority.enum';
 import { getCurrentAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
@@ -124,7 +123,7 @@ export class AlarmCommentComponent implements OnInit {
         this.displayData.length = 0;
         for (const alarmComment of pagedData.data) {
           const displayDataElement = {} as AlarmCommentsDisplayData;
-          displayDataElement.createdTime = this.datePipe.transform(alarmComment.createdTime, 'yyyy-MM-dd HH:mm:ss');
+          displayDataElement.createdTime = this.datePipe.transform(alarmComment.createdTime);
           displayDataElement.createdDateAgo = this.dateAgoPipe.transform(alarmComment.createdTime);
           displayDataElement.commentText = this.parseSystemComment(alarmComment);
           displayDataElement.isSystemComment = alarmComment.type === AlarmCommentType.SYSTEM;
@@ -136,7 +135,7 @@ export class AlarmCommentComponent implements OnInit {
               this.translate.instant('alarm.user-deleted');
             displayDataElement.edit = false;
             displayDataElement.isEdited = alarmComment.comment.edited;
-            displayDataElement.editedTime = this.datePipe.transform(alarmComment.comment.editedOn, 'yyyy-MM-dd HH:mm:ss');
+            displayDataElement.editedTime = this.datePipe.transform(alarmComment.comment.editedOn);
             displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) + '\n';
             displayDataElement.showActions = false;
             const isCommentAuthor = this.authUser.userId === alarmComment.userId?.id;

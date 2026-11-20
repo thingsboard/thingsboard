@@ -10,6 +10,7 @@ import {
   SimpleChanges
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 import { MatDialog } from '@angular/material/dialog';
 import { Subject, Subscription, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -78,7 +79,8 @@ export class AgentExecutionsSidePanelComponent implements OnChanges, OnDestroy {
   constructor(private agentService: AgentService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
-              private translate: TranslateService) {}
+              private translate: TranslateService,
+              private dateTimeFormatService: DateTimeFormatService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.bulkAction) {
@@ -184,7 +186,7 @@ export class AgentExecutionsSidePanelComponent implements OnChanges, OnDestroy {
 
   formatTime(ts: number): string {
     if (!ts) { return ''; }
-    return this.datePipe.transform(ts, 'HH:mm:ss') || '';
+    return this.datePipe.transform(ts, this.dateTimeFormatService.getTimeFormat()) || '';
   }
 
   statusLabel(status: AgentProcessingStatus): string {

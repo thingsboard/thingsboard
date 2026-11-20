@@ -677,7 +677,7 @@ export class GroupConfigTableConfigService<T extends BaseData<HasId>> {
       if (column.type === EntityGroupColumnType.ENTITY_FIELD) {
         const entityField = entityGroupEntityFields[column.key];
         if (entityField.time) {
-          return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
+          return this.datePipe.transform(value);
         }
       }
       return value;

@@ -20,6 +20,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
@@ -181,7 +182,8 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     private popoverService: TbPopoverService,
     private viewContainerRef: ViewContainerRef,
     private destroyRef: DestroyRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private dateTimeFormatService: DateTimeFormatService
   ) {
     super();
   }
@@ -719,7 +721,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   }
 
   eventInfo(event: SchedulerEventWithCustomerInfo, startTime?: _moment.Moment): string {
-    return scheduleInfo(event.schedule, this.translate, startTime);
+    return scheduleInfo(event.schedule, this.translate, this.dateTimeFormatService, startTime);
   }
 
   unassignFromEdge($event: Event, schedulerEvent: SchedulerEventWithCustomerInfo): void {

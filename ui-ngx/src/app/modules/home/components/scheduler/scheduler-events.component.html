@@ -165,7 +165,7 @@
               <ng-container matColumnDef="createdTime">
                 <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 20%"> {{ 'scheduler.created-time' | translate }} </mat-header-cell>
                 <mat-cell *matCellDef="let schedulerEvent">
-                  {{ schedulerEvent.createdTime | date:'yyyy-MM-dd HH:mm:ss' }}
+                  {{ schedulerEvent.createdTime | tbDate }}
                 </mat-cell>
               </ng-container>
               <ng-container matColumnDef="name">
