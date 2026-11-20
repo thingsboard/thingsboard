@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.ai;
 
+import com.sun.net.httpserver.HttpServer;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.ModelProvider;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
@@ -27,6 +31,11 @@ import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProvid
 import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OllamaProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -255,6 +264,54 @@ class Langchain4jChatModelConfigurerImplTest {
         assertThat(params.temperature()).isEqualTo(0.7);
         assertThat(params.topP()).isEqualTo(0.9);
         assertThat(params.maxOutputTokens()).isEqualTo(500);
+    }
+
+    // Builds the model and actually calls it, so a langchain4j-bedrock / AWS SDK version mismatch
+    // (NoSuchMethodError when the request is built) fails here instead of in production.
+    @Test
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    void shouldSendChatRequest_whenAmazonBedrockModelIsCalled() throws IOException {
+        // GIVEN
+        AtomicReference<String> requestPath = new AtomicReference<>();
+        HttpServer bedrock = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        bedrock.createContext("/", exchange -> {
+            requestPath.set(exchange.getRequestURI().getPath());
+            exchange.getRequestBody().readAllBytes();
+            byte[] body = """
+                    {
+                      "output": {"message": {"role": "assistant", "content": [{"text": "pong"}]}},
+                      "stopReason": "end_turn",
+                      "usage": {"inputTokens": 1, "outputTokens": 1, "totalTokens": 2},
+                      "metrics": {"latencyMs": 1}
+                    }
+                    """.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        bedrock.start();
+        System.setProperty("aws.endpointUrlBedrockRuntime", "http://localhost:" + bedrock.getAddress().getPort());
+        try {
+            var config = AmazonBedrockChatModelConfig.builder()
+                    .providerConfig(new AmazonBedrockProviderConfig(
+                            "us-east-1", "test-access-key-id", "test-secret-access-key"))
+                    .modelId("anthropic.claude-3-5-sonnet-20240620-v1:0")
+                    .timeoutSeconds(10)
+                    .maxRetries(0)
+                    .build();
+            ChatModel chatModel = configurer.configureChatModel(config);
+
+            // WHEN
+            ChatResponse response = chatModel.chat(UserMessage.from("ping"));
+
+            // THEN
+            assertThat(response.aiMessage().text()).isEqualTo("pong");
+            assertThat(requestPath.get()).isEqualTo("/model/anthropic.claude-3-5-sonnet-20240620-v1:0/converse");
+        } finally {
+            System.clearProperty("aws.endpointUrlBedrockRuntime");
+            bedrock.stop(0);
+        }
     }
 
     @Test
