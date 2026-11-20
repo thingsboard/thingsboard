@@ -885,16 +885,17 @@ const timeOfDayToMoment = (date: Date | number): _moment.Moment => {
   return _moment([1970, 0, 1, date.getHours(), date.getMinutes(), 0, 0]);
 };
 
-export const getAlarmScheduleRangeText = (startsOn: Date | number, endsOn: Date | number): string => {
+export const getAlarmScheduleRangeText = (startsOn: Date | number, endsOn: Date | number, timeFormat: string): string => {
   const start = timeOfDayToMoment(startsOn);
   const end = timeOfDayToMoment(endsOn);
+  const midnight = _moment([1970, 0, 1, 0, 0]).format(timeFormat);
   if (start < end) {
-    return `<span><span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">${end.format('hh:mm A')}</span></span>`;
+    return `<span><span class="nowrap">${start.format(timeFormat)}</span> – <span class="nowrap">${end.format(timeFormat)}</span></span>`;
   } else if (start.valueOf() === 0 && end.valueOf() === 0 || start.isSame(_moment([1970, 0])) && end.isSame(_moment([1970, 0]))) {
-    return '<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">12:00 AM</span></span>';
+    return `<span><span class="nowrap">${midnight}</span> – <span class="nowrap">${midnight}</span></span>`;
   }
-  return `<span><span class="nowrap">12:00 AM</span> – <span class="nowrap">${end.format('hh:mm A')}</span>` +
-    ` and <span class="nowrap">${start.format('hh:mm A')}</span> – <span class="nowrap">12:00 AM</span></span>`;
+  return `<span><span class="nowrap">${midnight}</span> – <span class="nowrap">${end.format(timeFormat)}</span>` +
+    ` and <span class="nowrap">${start.format(timeFormat)}</span> – <span class="nowrap">${midnight}</span></span>`;
 };
 
 // The device permission is generic on some pages and group scoped on others, so callers pass it in.

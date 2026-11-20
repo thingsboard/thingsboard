@@ -24,7 +24,7 @@ export function buildAgentErrorEventsTooltip(events: AgentAppEventInfo[],
     const app = e.applicationName || (isAgentScopedAppEventActionType(e.actionType) ? '' : '—');
     const actionKey = agentAppEventActionTypeTranslationMap.get(e.actionType);
     const action = actionKey ? translate.instant(actionKey) : e.actionType;
-    const time = datePipe.transform(e.createdTime, 'yyyy-MM-dd HH:mm:ss');
+    const time = datePipe.transform(e.createdTime);
     return `• ${app ? app + ' — ' : ''}${action} — ${time}`;
   });
   return [header, ...lines].join('\n');

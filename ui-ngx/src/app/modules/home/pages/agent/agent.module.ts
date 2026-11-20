@@ -4,6 +4,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { SharedModule } from '@shared/shared.module';
+import { TbDatePipe } from '@shared/models/date.pipe';
 import { HomeDialogsModule } from '@home/dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@home/components/home-components.module';
 import { AgentSharedComponentsModule } from '@home/components/agent/agent-shared-components.module';
@@ -164,7 +165,7 @@ import {
     AgentRoutingModule,
   ],
   providers: [
-    DatePipe,
+    { provide: DatePipe, useExisting: TbDatePipe },
     {
       provide: AGENT_GROUP_CONFIG_FACTORY,
       useClass: AgentGroupConfigFactory

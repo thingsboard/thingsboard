@@ -8,6 +8,7 @@ import { Authority } from './authority.enum';
 import { TenantId } from './id/tenant-id';
 import { CustomMenuId } from '@shared/models/id/custom-menu-id';
 import { UnitSystem } from '@shared/models/unit.models';
+import { DateTimeFormatPickerState } from '@shared/models/date-time-format.models';
 
 export interface User extends BaseData<UserId> {
   tenantId: TenantId;
@@ -31,6 +32,7 @@ export interface UserAdditionalInfo {
   homeDashboardHideToolbar: boolean;
   unitSystem: UnitSystem;
   lang: string;
+  dateTimeFormat: DateTimeFormatPickerState;
   [key: string]: any;
 }
 

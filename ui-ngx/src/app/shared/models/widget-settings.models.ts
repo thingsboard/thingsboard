@@ -33,7 +33,6 @@ import { distinctUntilChanged, filter, map, share, switchMap } from 'rxjs/operat
 import { DomSanitizer } from '@angular/platform-browser';
 import {
   AVG_MONTH,
-  calculateTsOffset,
   DAY,
   HOUR,
   Interval,

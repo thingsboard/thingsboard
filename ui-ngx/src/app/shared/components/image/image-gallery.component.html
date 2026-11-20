@@ -165,7 +165,7 @@
             <ng-container matColumnDef="createdTime">
               <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 160px; min-width: 160px;"> {{ 'image.created-time' | translate }} </mat-header-cell>
               <mat-cell *matCellDef="let image">
-                {{ image.createdTime | date:'yyyy-MM-dd HH:mm:ss' }}
+                {{ image.createdTime | tbDate }}
               </mat-cell>
             </ng-container>
             <ng-container matColumnDef="resolution">

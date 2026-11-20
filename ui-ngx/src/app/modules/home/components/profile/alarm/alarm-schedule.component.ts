@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
@@ -27,6 +28,7 @@ import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DateTimeFormatService } from '@core/services/date-time-format.service';
 
 @Component({
     selector: 'tb-alarm-schedule',
@@ -69,7 +71,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private dateTimeFormatService: DateTimeFormatService) {
   }
 
   ngOnInit(): void {
@@ -274,7 +277,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
   }
 
   getSchedulerRangeText(control: UntypedFormGroup | AbstractControl): string {
-    return getAlarmScheduleRangeText(control.get('startsOn').value, control.get('endsOn').value);
+    return getAlarmScheduleRangeText(control.get('startsOn').value, control.get('endsOn').value,
+      this.dateTimeFormatService.getMomentTimeFormatWithoutSeconds());
   }
 
   get itemsSchedulerForm(): UntypedFormArray {
