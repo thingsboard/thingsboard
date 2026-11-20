@@ -4,7 +4,7 @@
 import { Inject, Injectable, Optional, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
-import { forkJoin, from, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
+import { defer, forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import {
   ErrorWidgetType, isWidgetWithInfo,
   MissingWidgetType,
@@ -31,7 +31,7 @@ import {
   WidgetControllerDescriptor,
   WidgetType
 } from '@shared/models/widget.models';
-import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, shareReplay, switchMap } from 'rxjs/operators';
 import { isDefinedAndNotNull, isFunction, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
@@ -53,6 +53,91 @@ import { compileTbFunction, TbFunction } from '@shared/models/js-function.models
 import { HttpClient } from '@angular/common/http';
 import { jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 
+// Libraries that legacy widgets use as window globals, loaded for a widget whose controller script or template matches `test`.
+interface WidgetGlobalModule {
+  globals: string[];
+  test: RegExp;
+  load: () => Promise<{[name: string]: unknown}>;
+}
+
+const loadFlot = async (): Promise<{[name: string]: unknown}> => {
+  await import('flot/src/jquery.flot.js');
+  await Promise.all([
+    import('flot/lib/jquery.colorhelpers.js'),
+    import('flot/src/plugins/jquery.flot.time.js'),
+    import('flot/src/plugins/jquery.flot.selection.js'),
+    import('flot/src/plugins/jquery.flot.pie.js'),
+    import('flot/src/plugins/jquery.flot.crosshair.js'),
+    import('flot/src/plugins/jquery.flot.stack.js'),
+    import('flot/src/plugins/jquery.flot.symbol.js'),
+    import('flot.curvedlines/curvedLines.js')
+  ]);
+  const mod = await import('@home/components/widget/lib/flot-widget');
+  return {TbFlot: mod.TbFlot};
+};
+
+// A computed access to the global scope, which can reach any of the libraries without naming it.
+const DYNAMIC_GLOBAL_ACCESS = /\b(?:window|globalThis)\s*\[|\beval\s*\(|\bFunction\s*\(/;
+
+const WIDGET_GLOBAL_MODULES: WidgetGlobalModule[] = [
+  {
+    globals: [],
+    test: /\.terminal\b/,
+    load: () => import('jquery.terminal').then(mod => {
+      mod.default(window, $);
+      return {};
+    })
+  },
+  {
+    // tb-flot-widget is an Angular component that calls $.plot, so it needs the jQuery plugins as well.
+    globals: ['TbFlot'],
+    test: /\bTbFlot\b|\.plot\b|tb-flot-widget/,
+    load: loadFlot
+  },
+  {
+    globals: ['TbTimeSeriesChart'],
+    test: /\bTbTimeSeriesChart\b/,
+    load: () => import('@home/components/widget/lib/chart/time-series-chart')
+      .then(m => ({TbTimeSeriesChart: m.TbTimeSeriesChart}))
+  },
+  {
+    globals: ['TbAnalogueCompass'],
+    test: /\bTbAnalogueCompass\b/,
+    load: () => import('@home/components/widget/lib/analogue-compass')
+      .then(m => ({TbAnalogueCompass: m.TbAnalogueCompass}))
+  },
+  {
+    globals: ['TbAnalogueRadialGauge'],
+    test: /\bTbAnalogueRadialGauge\b/,
+    load: () => import('@home/components/widget/lib/analogue-radial-gauge')
+      .then(m => ({TbAnalogueRadialGauge: m.TbAnalogueRadialGauge}))
+  },
+  {
+    globals: ['TbAnalogueLinearGauge'],
+    test: /\bTbAnalogueLinearGauge\b/,
+    load: () => import('@home/components/widget/lib/analogue-linear-gauge')
+      .then(m => ({TbAnalogueLinearGauge: m.TbAnalogueLinearGauge}))
+  },
+  {
+    globals: ['TbCanvasDigitalGauge'],
+    test: /\bTbCanvasDigitalGauge\b/,
+    load: () => import('@home/components/widget/lib/digital-gauge')
+      .then(m => ({TbCanvasDigitalGauge: m.TbCanvasDigitalGauge}))
+  },
+  {
+    globals: ['TbMapWidgetV2'],
+    test: /\bTbMapWidgetV2\b/,
+    load: () => import('@home/components/widget/lib/maps-legacy/map-widget2')
+      .then(m => ({TbMapWidgetV2: m.TbMapWidgetV2}))
+  },
+  {
+    globals: ['TbTripAnimationWidget'],
+    test: /\bTbTripAnimationWidget\b/,
+    load: () => import('@home/components/widget/lib/trip-animation/trip-animation.component')
+      .then(m => ({TbTripAnimationWidget: m.TbTripAnimationWidget}))
+  }
+];
+
 @Injectable()
 export class WidgetComponentService {
 
@@ -61,6 +146,8 @@ export class WidgetComponentService {
   private widgetsInfoFetchQueue = new Map<string, Array<Subject<WidgetInfo>>>();
 
   private init$: Observable<any>;
+
+  private widgetGlobalModulesLoad = new Map<WidgetGlobalModule, Observable<void>>();
 
   private missingWidgetType: WidgetInfo;
   private errorWidgetType: WidgetInfo;
@@ -123,103 +210,27 @@ export class WidgetComponentService {
       w.cssjs = cssjs;
       w.moment = moment;
 
-      const widgetModulesTasks: Observable<any>[] = [];
-      widgetModulesTasks.push(from(import('jquery.terminal')).pipe(
-        tap((mod) => {
-          mod.default(window, $);
-        })
-      ));
+      this.installWidgetGlobalPlaceholders();
 
-      widgetModulesTasks.push(from(import('flot/src/jquery.flot.js')).pipe(
-        mergeMap(() => {
-          const flotJsPluginsTasks: Observable<any>[] = [];
-          flotJsPluginsTasks.push(from(import('flot/lib/jquery.colorhelpers.js')));
-          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.time.js')));
-          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.selection.js')));
-          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.pie.js')));
-          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.crosshair.js')));
-          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.stack.js')));
-          flotJsPluginsTasks.push(from(import('flot/src/plugins/jquery.flot.symbol.js')));
-          flotJsPluginsTasks.push(from(import('flot.curvedlines/curvedLines.js')));
-          return forkJoin(flotJsPluginsTasks);
-        })
-      ));
-
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/flot-widget')).pipe(
-        tap((mod) => {
-          (window as any).TbFlot = mod.TbFlot;
-        }))
-      );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/chart/time-series-chart')).pipe(
-        tap((mod) => {
-          (window as any).TbTimeSeriesChart = mod.TbTimeSeriesChart;
-        }))
-      );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/analogue-compass')).pipe(
-        tap((mod) => {
-          (window as any).TbAnalogueCompass = mod.TbAnalogueCompass;
-        }))
-      );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/analogue-radial-gauge')).pipe(
-        tap((mod) => {
-          (window as any).TbAnalogueRadialGauge = mod.TbAnalogueRadialGauge;
-        }))
-      );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/analogue-linear-gauge')).pipe(
-        tap((mod) => {
-          (window as any).TbAnalogueLinearGauge = mod.TbAnalogueLinearGauge;
-        }))
-      );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/digital-gauge')).pipe(
-        tap((mod) => {
-          (window as any).TbCanvasDigitalGauge = mod.TbCanvasDigitalGauge;
-        }))
-      );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps-legacy/map-widget2')).pipe(
-        tap((mod) => {
-          (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
-        }))
-      );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/trip-animation/trip-animation.component')).pipe(
-        tap((mod) => {
-          (window as any).TbTripAnimationWidget = mod.TbTripAnimationWidget;
-        }))
-      );
-
-      forkJoin(widgetModulesTasks).subscribe(
+      const loadDefaultWidgetInfoTasks = [
+        this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type',
+          [SharedModule, WidgetComponentsModule, this.homeComponentsModule]),
+        this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type',
+          [SharedModule, WidgetComponentsModule, this.homeComponentsModule]),
+      ];
+      forkJoin(loadDefaultWidgetInfoTasks).subscribe(
         () => {
-          const loadDefaultWidgetInfoTasks = [
-            this.loadWidgetResources(this.missingWidgetType, 'global-widget-missing-type',
-              [SharedModule, WidgetComponentsModule, this.homeComponentsModule]),
-            this.loadWidgetResources(this.errorWidgetType, 'global-widget-error-type',
-              [SharedModule, WidgetComponentsModule, this.homeComponentsModule]),
-          ];
-          forkJoin(loadDefaultWidgetInfoTasks).subscribe(
-            () => {
-              if (this.reportService.reportView) {
-                this.reportService.openReportSubject.subscribe(() => this.widgetService.clearWidgetInfoInMemoryCache());
-              }
-              initSubject.next();
-            },
-            (e) => {
-              let errorMessages = ['Failed to load default widget types!'];
-              if (e && e.length) {
-                errorMessages = errorMessages.concat(e);
-              }
-              console.error('Failed to load default widget types!');
-              initSubject.error({
-                widgetInfo: this.errorWidgetType,
-                errorMessages
-              });
-            }
-          );
+          if (this.reportService.reportView) {
+            this.reportService.openReportSubject.subscribe(() => this.widgetService.clearWidgetInfoInMemoryCache());
+          }
+          initSubject.next();
         },
         (e) => {
-          let errorMessages = ['Failed to load widget modules!'];
+          let errorMessages = ['Failed to load default widget types!'];
           if (e && e.length) {
             errorMessages = errorMessages.concat(e);
           }
-          console.error('Failed to load widget modules!');
+          console.error('Failed to load default widget types!');
           initSubject.error({
             widgetInfo: this.errorWidgetType,
             errorMessages
@@ -292,6 +303,72 @@ export class WidgetComponentService {
 
   private loadWidget(widgetType: WidgetType, widgetInfoSubject: Subject<WidgetInfo>) {
     const widgetInfo = toWidgetInfo(widgetType);
+    this.loadWidgetGlobalModules(widgetInfo).subscribe({
+      next: () => this.compileWidget(widgetInfo, widgetInfoSubject),
+      error: e => {
+        const details = this.utils.parseException(e);
+        const errorMessage = `Failed to load widget modules. \n Error: ${details.message}`;
+        this.processWidgetLoadError([errorMessage], widgetInfo.fullFqn, widgetInfoSubject);
+      }
+    });
+  }
+
+  private loadWidgetGlobalModules(widgetInfo: WidgetInfo): Observable<void> {
+    const controllerScript = widgetInfo.controllerScript;
+    const source = (typeof controllerScript === 'string' ? controllerScript : controllerScript?.body ?? '') +
+      '\n' + (widgetInfo.templateHtml ?? '');
+    // Widget resources cannot be scanned, and a script that reaches globals by a computed name cannot be matched,
+    // so such widgets get every library.
+    const loadAll = widgetInfo.resources?.length || DYNAMIC_GLOBAL_ACCESS.test(source);
+    const modules = loadAll ? WIDGET_GLOBAL_MODULES : WIDGET_GLOBAL_MODULES.filter(m => m.test.test(source));
+    const tasks = modules.map(m => this.loadWidgetGlobalModule(m));
+    return tasks.length ? forkJoin(tasks).pipe(map(() => undefined)) : of(undefined);
+  }
+
+  private loadWidgetGlobalModule(module: WidgetGlobalModule): Observable<void> {
+    let load$ = this.widgetGlobalModulesLoad.get(module);
+    if (!load$) {
+      load$ = defer(() => module.load()).pipe(
+        map(globals => {
+          Object.keys(globals).forEach(name => this.setWidgetGlobal(name, globals[name]));
+        }),
+        catchError(e => {
+          this.widgetGlobalModulesLoad.delete(module);
+          return throwError(() => e);
+        }),
+        shareReplay(1)
+      );
+      this.widgetGlobalModulesLoad.set(module, load$);
+    }
+    return load$;
+  }
+
+  private setWidgetGlobal(name: string, value: unknown) {
+    Object.defineProperty(this.window, name, {value, writable: true, configurable: true, enumerable: true});
+  }
+
+  // Last resort for code the scan does not see (e.g. widget action functions): the first access starts loading
+  // the library, so widgets created after it has loaded can use it.
+  private installWidgetGlobalPlaceholders() {
+    WIDGET_GLOBAL_MODULES.forEach(module => module.globals.forEach(name => {
+      if (name in this.window) {
+        return;
+      }
+      Object.defineProperty(this.window, name, {
+        configurable: true,
+        enumerable: false,
+        get: () => {
+          console.warn(`${name} was used before it was loaded: the code that uses it was not scanned for it. ` +
+            'It is being loaded now and will be available to widgets created after it has loaded.');
+          this.loadWidgetGlobalModule(module).subscribe({error: () => {}});
+          return undefined;
+        },
+        set: (value: unknown) => this.setWidgetGlobal(name, value)
+      });
+    }));
+  }
+
+  private compileWidget(widgetInfo: WidgetInfo, widgetInfoSubject: Subject<WidgetInfo>) {
     this.createWidgetControllerDescriptor(widgetInfo).subscribe(
       {
         next: widgetControllerDescriptor => {
