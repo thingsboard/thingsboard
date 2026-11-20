@@ -94,10 +94,8 @@ import { VersionControlComponent } from '@home/components/vc/version-control.com
 import { TbPopoverService } from '@shared/components/popover.service';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 import { HomeService } from '@core/services/home.service';
-import { PanelsAnimator } from '@home/pages/reporting/template/report-panels-animator';
-import {
-  ReportComponentLayoutService
-} from '@home/pages/reporting/template/components/report-component-layout.service';
+import { PanelsAnimator, PanelsAnimatorElements } from '@home/pages/reporting/template/report-panels-animator';
+import { ReportComponentLayoutService } from '@home/pages/reporting/template/components/report-component-layout.service';
 
 @Component({
     selector: 'tb-report-template-page',
@@ -217,8 +215,6 @@ export class ReportTemplatePageComponent extends PageComponent
   hasScroll = false;
   scrollTop = false;
 
-  editorPanelExpanded = false;
-
   private scrolling = false;
 
   private readonly panelsAnimator: PanelsAnimator;
@@ -257,18 +253,12 @@ export class ReportTemplatePageComponent extends PageComponent
               public homeService: HomeService) {
     super();
     this.panelsAnimator = new PanelsAnimator(
-      {
-        ready: () => this.viewInited,
-        container: () => this.reportTemplateContainerEl()?.nativeElement,
-        content: () => this.reportTemplateContentEl()?.getElementRef().nativeElement,
-        layout: () => this.reportTemplateLayoutEl()?.nativeElement,
-        sections: () => this.reportTemplateSectionsEl()?.nativeElement,
-        settings: () => this.reportSettingsEl()?.nativeElement,
-        library: () => this.reportComponentsLibraryEl()?.nativeElement
-      },
-      this.reportComponentLayoutService,
-      () => this.layoutResize(),
-      () => this.cd.detectChanges()
+      () => this.cd.detectChanges(),
+      () => {
+        this.layoutResize();
+        this.cd.detectChanges();
+        this.reportComponentLayoutService.flush();
+      }
     );
   }
 
@@ -406,11 +396,10 @@ export class ReportTemplatePageComponent extends PageComponent
 
   public editReportComponent(reportComponent: ReportComponentConfig): void {
     if (this.editingReportComponent !== reportComponent) {
-      this.panelsAnimator.run(() => {
+      this.animatePanels(() => {
         this.editingReportComponent = reportComponent;
         this.prevReportComponent = editReportComponent(reportComponent);
         this.selectEditingComponent();
-        this.editorPanelExpanded = true;
       });
     }
   }
@@ -435,22 +424,46 @@ export class ReportTemplatePageComponent extends PageComponent
 
   public cancelReportComponentEdit(): void {
     if (this.editingReportComponent) {
-      assignReportComponent(this.editingReportComponent, this.prevReportComponent);
-      this.reportComponentUpdated(false);
+      this.revertEditingComponent();
       this.closeEditor();
     }
   }
 
+  private revertEditingComponent() {
+    assignReportComponent(this.editingReportComponent, this.prevReportComponent);
+    this.reportComponentUpdated(false);
+  }
+
   private closeEditor() {
-    this.panelsAnimator.run(() => {
-      this.prevReportComponent = null;
-      this.editingReportComponent = null;
-      const reportComponentsComponents = this.allReportComponentsComponents();
-      for (const component of reportComponentsComponents) {
-        component.componentSelected(null);
-      }
-      this.editorPanelExpanded = false;
-    });
+    this.animatePanels(() => this.resetEditor());
+  }
+
+  private resetEditor() {
+    this.prevReportComponent = null;
+    this.editingReportComponent = null;
+    const reportComponentsComponents = this.allReportComponentsComponents();
+    for (const component of reportComponentsComponents) {
+      component.componentSelected(null);
+    }
+  }
+
+  private animatePanels(change: () => void) {
+    this.panelsAnimator.run(this.panelsAnimatorElements(), change);
+  }
+
+  private panelsAnimatorElements(): PanelsAnimatorElements | null {
+    if (!this.viewInited) {
+      return null;
+    }
+    const container = this.reportTemplateContainerEl()?.nativeElement;
+    const content = this.reportTemplateContentEl()?.getElementRef().nativeElement;
+    const layout = this.reportTemplateLayoutEl()?.nativeElement;
+    const sections = this.reportTemplateSectionsEl()?.nativeElement;
+    const settings = this.reportSettingsEl()?.nativeElement;
+    if (!container || !content || !layout || !sections || !settings) {
+      return null;
+    }
+    return {container, content, layout, sections, settings, library: this.reportComponentsLibraryEl()?.nativeElement};
   }
 
   public openFilters($event: Event) {
@@ -777,7 +790,11 @@ export class ReportTemplatePageComponent extends PageComponent
   }
 
   private init(reportTemplate: ReportTemplate) {
-    this.cancelReportComponentEdit();
+    this.panelsAnimator.finish();
+    if (this.editingReportComponent) {
+      this.revertEditingComponent();
+      this.resetEditor();
+    }
     this.headerToggleValue = 'header';
     this.footerToggleValue = 'header';
     this.reportTemplate = validateAndUpdateReportTemplate(reportTemplate);

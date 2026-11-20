@@ -1,9 +1,5 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import {
-  ReportComponentLayoutService
-} from '@home/pages/reporting/template/components/report-component-layout.service';
-
 const PANELS_ANIMATION_OPTIONS: KeyframeAnimationOptions = {
   duration: 400,
   easing: 'cubic-bezier(0.25, 0.8, 0.25, 1)',
@@ -14,18 +10,19 @@ const PANELS_ANIMATING_CLASS = 'tb-panels-animating';
 
 const SETTINGS_EXTEND_PROPERTY = '--tb-report-settings-extend';
 
-type FlipKind = 'page' | 'move' | 'stretch';
+const FLIP_KINDS = ['page', 'move', 'stretch'] as const;
+
+type FlipKind = typeof FLIP_KINDS[number];
 
 const FLIP_SELECTOR = '[data-flip]';
 
-export interface PanelsAnimatorView {
-  ready(): boolean;
-  container(): HTMLElement;
-  content(): HTMLElement;
-  layout(): HTMLElement;
-  sections(): HTMLElement;
-  settings(): HTMLElement;
-  library(): HTMLElement;
+export interface PanelsAnimatorElements {
+  container: HTMLElement;
+  content: HTMLElement;
+  layout: HTMLElement;
+  sections: HTMLElement;
+  settings: HTMLElement;
+  library?: HTMLElement;
 }
 
 interface FlipTarget {
@@ -43,6 +40,7 @@ interface PanelsAnimationRun {
 const collectFlipTargets = (root: HTMLElement): FlipTarget[] =>
   Array.from(root.querySelectorAll<HTMLElement>(FLIP_SELECTOR))
     .filter(element => !root.contains(element.parentElement.closest(FLIP_SELECTOR)))
+    .filter(element => (FLIP_KINDS as readonly string[]).includes(element.dataset.flip))
     .map(element => ({
       element,
       kind: element.dataset.flip as FlipKind,
@@ -75,30 +73,23 @@ export class PanelsAnimator {
 
   private current: PanelsAnimationRun;
 
-  constructor(private view: PanelsAnimatorView,
-              private layoutService: ReportComponentLayoutService,
-              private layoutResize: () => void,
-              private detectChanges: () => void) {
+  constructor(private render: () => void,
+              private relayout: () => void) {
   }
 
-  run(change: () => void): void {
+  run(elements: PanelsAnimatorElements | null, change: () => void): void {
     this.finish();
-    const container = this.view.container();
-    const contentEl = this.view.content();
-    const layoutEl = this.view.layout();
-    const sectionsEl = this.view.sections();
-    const settingsEl = this.view.settings();
-    if (!this.view.ready() || !container || !contentEl || !layoutEl || !sectionsEl || !settingsEl) {
+    if (!elements) {
       change();
       return;
     }
-    const libraryEl = this.view.library();
+    const {container, content: contentEl, layout: layoutEl, sections: sectionsEl, settings: settingsEl, library: libraryEl} = elements;
     const settingsBefore = settingsEl.getBoundingClientRect();
     const libraryTransformBefore = libraryEl ? getComputedStyle(libraryEl).transform : null;
     const targets = collectFlipTargets(sectionsEl);
 
     change();
-    this.detectChanges();
+    this.render();
 
     const settingsAfter = settingsEl.getBoundingClientRect();
     if (Math.abs(settingsAfter.left - settingsBefore.left) < 1) {
@@ -109,23 +100,21 @@ export class PanelsAnimator {
     const libraryTransformAfter = libraryEl ? getComputedStyle(libraryEl).transform : null;
 
     container.classList.add(PANELS_ANIMATING_CLASS);
-    const columnLeft = contentEl.getBoundingClientRect().left;
+    const animatingColumnLeft = contentEl.getBoundingClientRect().left;
     const columnRight = Math.max(settingsBefore.left, settingsAfter.left);
     const columnStyle = getComputedStyle(contentEl);
     const columnExtraWidth = contentEl.offsetWidth - contentEl.clientWidth +
       parseFloat(columnStyle.paddingLeft) + parseFloat(columnStyle.paddingRight);
     contentEl.style.flex = 'none';
-    contentEl.style.width = `${columnRight - columnLeft}px`;
-    layoutEl.style.marginLeft = `${contentAfter.left - columnLeft}px`;
+    contentEl.style.width = `${columnRight - animatingColumnLeft}px`;
+    layoutEl.style.marginLeft = `${contentAfter.left - animatingColumnLeft}px`;
     layoutEl.style.width = `${contentAfter.width - columnExtraWidth}px`;
     layoutEl.style.overflow = 'visible';
     const settingsExtend = containerRect.right - (settingsBefore.left + settingsAfter.width);
     if (settingsExtend > 0) {
       settingsEl.style.setProperty(SETTINGS_EXTEND_PROPERTY, `${settingsExtend}px`);
     }
-    this.layoutResize();
-    this.detectChanges();
-    this.layoutService.flush();
+    this.relayout();
 
     const moves = targets
       .map(target => ({element: target.element, transform: flipTransform(target)}))

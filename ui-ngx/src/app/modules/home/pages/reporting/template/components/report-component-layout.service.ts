@@ -1,16 +1,38 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable } from '@angular/core';
 
 export interface ReportComponentLayoutTarget {
+  element: HTMLElement;
   measureWidth(): number;
   applyWidth(width: number): void;
   measureHeight(): number;
   applyHeight(height: number): void;
 }
 
+const REPORT_COMPONENT_SELECTOR = 'tb-report-component';
+
+const nestingDepth = (element: HTMLElement): number => {
+  let depth = 0;
+  let parent = element.parentElement?.closest(REPORT_COMPONENT_SELECTOR);
+  while (parent) {
+    depth++;
+    parent = parent.parentElement?.closest(REPORT_COMPONENT_SELECTOR);
+  }
+  return depth;
+};
+
+const groupByNestingDepth = (targets: ReportComponentLayoutTarget[]): ReportComponentLayoutTarget[][] => {
+  const levels: ReportComponentLayoutTarget[][] = [];
+  for (const target of targets) {
+    const depth = nestingDepth(target.element);
+    (levels[depth] ??= []).push(target);
+  }
+  return levels.filter(Boolean);
+};
+
 @Injectable({ providedIn: 'root' })
-export class ReportComponentLayoutService implements OnDestroy {
+export class ReportComponentLayoutService {
 
   private readonly pendingTargets = new Set<ReportComponentLayoutTarget>();
   private flushQueued = false;
@@ -18,27 +40,23 @@ export class ReportComponentLayoutService implements OnDestroy {
   private resizeObserver: ResizeObserver;
   private readonly observedTargets = new WeakMap<Element, ReportComponentLayoutTarget>();
 
-  observe(target: ReportComponentLayoutTarget, element: HTMLElement): void {
-    if (!this.resizeObserver) {
-      this.resizeObserver = new ResizeObserver(entries => {
-        for (const entry of entries) {
-          const observedTarget = this.observedTargets.get(entry.target);
-          if (observedTarget) {
-            this.schedule(observedTarget);
-          }
+  observe(target: ReportComponentLayoutTarget): void {
+    this.resizeObserver ??= new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const observedTarget = this.observedTargets.get(entry.target);
+        if (observedTarget) {
+          this.schedule(observedTarget);
         }
-      });
-    }
-    this.observedTargets.set(element, target);
-    this.resizeObserver.observe(element);
+      }
+    });
+    this.observedTargets.set(target.element, target);
+    this.resizeObserver.observe(target.element);
   }
 
-  unobserve(target: ReportComponentLayoutTarget, element: HTMLElement): void {
+  unobserve(target: ReportComponentLayoutTarget): void {
     this.pendingTargets.delete(target);
-    if (this.resizeObserver && this.observedTargets.get(element) === target) {
-      this.observedTargets.delete(element);
-      this.resizeObserver.unobserve(element);
-    }
+    this.observedTargets.delete(target.element);
+    this.resizeObserver?.unobserve(target.element);
   }
 
   schedule(target: ReportComponentLayoutTarget): void {
@@ -56,18 +74,18 @@ export class ReportComponentLayoutService implements OnDestroy {
     if (!this.pendingTargets.size) {
       return;
     }
-    const targets = Array.from(this.pendingTargets);
+    const levels = groupByNestingDepth(Array.from(this.pendingTargets));
     this.pendingTargets.clear();
-    const widths = targets.map(target => target.measureWidth());
-    const sizedTargets = targets.filter((_target, i) => widths[i] > 0);
-    const sizedWidths = widths.filter(width => width > 0);
-    sizedTargets.forEach((target, i) => target.applyWidth(sizedWidths[i]));
-    const heights = sizedTargets.map(target => target.measureHeight());
-    sizedTargets.forEach((target, i) => target.applyHeight(heights[i]));
-  }
-
-  ngOnDestroy(): void {
-    this.resizeObserver?.disconnect();
-    this.pendingTargets.clear();
+    const sizedLevels = levels.map(level => {
+      const sized = level
+        .map(target => ({target, width: target.measureWidth()}))
+        .filter(entry => entry.width > 0);
+      sized.forEach(entry => entry.target.applyWidth(entry.width));
+      return sized.map(entry => entry.target);
+    });
+    sizedLevels.reverse().forEach(level => {
+      const measured = level.map(target => ({target, height: target.measureHeight()}));
+      measured.forEach(entry => entry.target.applyHeight(entry.height));
+    });
   }
 }

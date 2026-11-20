@@ -38,10 +38,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TbReportFormat } from '@shared/models/report.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isFunction } from '@core/utils';
-import {
-  ReportComponentLayoutService,
-  ReportComponentLayoutTarget
-} from '@home/pages/reporting/template/components/report-component-layout.service';
+import { ReportComponentLayoutService, ReportComponentLayoutTarget } from '@home/pages/reporting/template/components/report-component-layout.service';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import ITooltipsterGeoHelper = JQueryTooltipster.ITooltipsterGeoHelper;
 
@@ -193,6 +190,7 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
   private reportComponentHeight = 0;
 
   private readonly layoutTarget: ReportComponentLayoutTarget = {
+    element: this.elementRef.nativeElement,
     measureWidth: () => this.measureHostWidth(),
     applyWidth: width => this.applyContentWidth(width),
     measureHeight: () => this.measureContentHeight(),
@@ -255,7 +253,7 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
           if (propName === 'scale') {
             this.reportComponentPreview.scale = this.scale;
           }
-          this.scheduleComponentLayout();
+          this.updateComponentLayout();
         }
         if (['pageMarginLeft', 'pageMarginRight'].includes(propName)) {
           if (this.typeData.pageBreak) {
@@ -268,14 +266,14 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
 
   ngAfterViewInit() {
     this.updateComponentLayout();
-    this.layoutService.observe(this.layoutTarget, this.elementRef.nativeElement);
+    this.layoutService.observe(this.layoutTarget);
   }
 
   ngOnDestroy(): void {
     if (this.editReportComponentTooltip && !this.editReportComponentTooltip.status().destroyed) {
       this.editReportComponentTooltip.destroy();
     }
-    this.layoutService.unobserve(this.layoutTarget, this.elementRef.nativeElement);
+    this.layoutService.unobserve(this.layoutTarget);
   }
 
   @HostListener('click', ['$event'])
@@ -337,23 +335,17 @@ export class ReportComponentComponent implements IReportComponent, OnInit, After
 
   private measureContentHeight(): number {
     const height = this.reportComponentElement().nativeElement.offsetHeight;
-    return height * (this.innerComponent ? this.parentScale : this.scale);
+    return height > 0 ? height * (this.innerComponent ? 1 : this.scale) : this.reportComponentHeight;
   }
 
   private applyHostHeight(contentHeight: number) {
-    const targetHeight = contentHeight > 0 ? contentHeight / this.parentScale : this.reportComponentHeight;
-    this.reportComponentHeight = targetHeight;
+    this.reportComponentHeight = contentHeight;
     const border = pointsToPixels(this.borderWidth) * 2;
     const topBottomPaddings = pointsToPixels(this.paddingTop) + pointsToPixels(this.paddingBottom);
-    this.renderer.setStyle(this.elementRef.nativeElement, 'height', (targetHeight + topBottomPaddings + border) + 'px');
+    this.renderer.setStyle(this.elementRef.nativeElement, 'height', (contentHeight + topBottomPaddings + border) + 'px');
   }
 
   private updateComponentLayout() {
-    this.scheduleComponentLayout();
-    this.layoutService.flush();
-  }
-
-  private scheduleComponentLayout() {
     if (isLayoutReportComponentConfig(this.reportComponent) && !this.isPlainFormat) {
       this.background = this.reportComponent.background;
       this.borderWidth = (this.reportComponent.borderWidth || 0) * this.scale;
