@@ -628,6 +628,9 @@
                                     <library>org.thingsboard:ui-ngx</library>
                                     <skip>${skip.ui.build}</skip>
                                 </nestedSbom>
+                                <nestedSbom>
+                                    <library>org.thingsboard.common:report</library>
+                                </nestedSbom>
                             </nestedSboms>
                         </configuration>
                     </execution>

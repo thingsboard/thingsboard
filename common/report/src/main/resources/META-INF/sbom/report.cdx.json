@@ -1,0 +1,854 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "library",
+      "name": "report",
+      "bom-ref": "report"
+    }
+  },
+  "components": [
+    {
+      "type": "data",
+      "supplier": {
+        "name": "The Noto Project Authors"
+      },
+      "name": "Noto Sans",
+      "version": "2.015",
+      "description": "Noto Sans, of the Noto fonts for Latin, Greek and Cyrillic: the italic styles.",
+      "licenses": [
+        {
+          "license": {
+            "id": "OFL-1.1"
+          }
+        }
+      ],
+      "purl": "pkg:github/notofonts/latin-greek-cyrillic@NotoSans-v2.015",
+      "bom-ref": "noto-sans@2.015",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/notofonts/latin-greek-cyrillic"
+        },
+        {
+          "type": "license",
+          "url": "https://raw.githubusercontent.com/notofonts/latin-greek-cyrillic/NotoSans-v2.015/OFL.txt"
+        }
+      ],
+      "components": [
+        {
+          "type": "file",
+          "name": "NotoSans-BoldItalic.ttf",
+          "bom-ref": "noto-sans@2.015|NotoSans-BoldItalic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "7e34616e092593c340449baf9a259075a054c6419511ccf21ff0d83a1c9dd0d0"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/cjk/NotoSans-BoldItalic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "NotoSans-Italic.ttf",
+          "bom-ref": "noto-sans@2.015|NotoSans-Italic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "feb3e57888ce3acb604f270c278cfb304c674306518771619ddbdefca42a066b"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/cjk/NotoSans-Italic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "NotoSans-MediumItalic.ttf",
+          "bom-ref": "noto-sans@2.015|NotoSans-MediumItalic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "79c5da7292be70321fc0e4fec579d1e53b6bf6475e1989254a821baa228e5c04"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/cjk/NotoSans-MediumItalic.ttf"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "data",
+      "supplier": {
+        "name": "Adobe"
+      },
+      "name": "Noto Sans SC",
+      "version": "2.004",
+      "description": "Noto Sans CJK, for Simplified Chinese: Adobe's Source Han Sans under the name of Noto.",
+      "licenses": [
+        {
+          "license": {
+            "id": "OFL-1.1"
+          }
+        }
+      ],
+      "purl": "pkg:github/notofonts/noto-cjk@Sans2.004",
+      "bom-ref": "noto-sans-sc@2.004",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/notofonts/noto-cjk"
+        },
+        {
+          "type": "license",
+          "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/Sans2.004/LICENSE"
+        }
+      ],
+      "components": [
+        {
+          "type": "file",
+          "name": "NotoSansSC-Bold.ttf",
+          "bom-ref": "noto-sans-sc@2.004|NotoSansSC-Bold.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "e414444c28bed174ec47f1d968fe8109ab935702022f4f082b2edde99607eb7d"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/cjk/NotoSansSC-Bold.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "NotoSansSC-Medium.ttf",
+          "bom-ref": "noto-sans-sc@2.004|NotoSansSC-Medium.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "df50ef7d0de652bc505cf40251c6580e872942d8f4d6c9ac1dc348995355aebf"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/cjk/NotoSansSC-Medium.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "NotoSansSC-Regular.ttf",
+          "bom-ref": "noto-sans-sc@2.004|NotoSansSC-Regular.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "dc71173babc38dfd019912965f2b4b3421fb347ebd854e7b96f64ad63673924a"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/cjk/NotoSansSC-Regular.ttf"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "data",
+      "supplier": {
+        "name": "The Noto Project Authors"
+      },
+      "name": "Noto Sans Arabic",
+      "version": "2.012",
+      "description": "Noto Sans Arabic.",
+      "licenses": [
+        {
+          "license": {
+            "id": "OFL-1.1"
+          }
+        }
+      ],
+      "purl": "pkg:github/notofonts/arabic@NotoSansArabic-v2.012",
+      "bom-ref": "noto-sans-arabic@2.012",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/notofonts/arabic"
+        },
+        {
+          "type": "license",
+          "url": "https://raw.githubusercontent.com/notofonts/arabic/NotoSansArabic-v2.012/OFL.txt"
+        }
+      ],
+      "components": [
+        {
+          "type": "file",
+          "name": "NotoSansArabic-Bold.ttf",
+          "bom-ref": "noto-sans-arabic@2.012|NotoSansArabic-Bold.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "a86a704ff8b315082f4859b04c2f8f746f4cefb14553ef10505f143e0d4829d3"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/notoSansArabic/NotoSansArabic-Bold.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "NotoSansArabic-Medium.ttf",
+          "bom-ref": "noto-sans-arabic@2.012|NotoSansArabic-Medium.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "3c42cc2fbde4623a2c272870efd8462c744b716d72e02c1085a8f23a5cd8ba3f"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/notoSansArabic/NotoSansArabic-Medium.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "NotoSansArabic-Regular.ttf",
+          "bom-ref": "noto-sans-arabic@2.012|NotoSansArabic-Regular.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "252629ca0e87b6233851249b8cbf7b43445211a8caf199f1b306a19202251508"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/notoSansArabic/NotoSansArabic-Regular.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "NotoSansArabic-SemiBold.ttf",
+          "bom-ref": "noto-sans-arabic@2.012|NotoSansArabic-SemiBold.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "35e3c8bd9e17754ca30497fcd4a82921ee672c0e36a5e2b9aad7ed4b8d92e427"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/notoSansArabic/NotoSansArabic-SemiBold.ttf"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "data",
+      "supplier": {
+        "name": "The Roboto Project Authors"
+      },
+      "name": "Roboto",
+      "version": "3.009",
+      "description": "Roboto, the classic version 3 of Google's font.",
+      "licenses": [
+        {
+          "license": {
+            "id": "OFL-1.1"
+          }
+        }
+      ],
+      "purl": "pkg:github/googlefonts/roboto-3-classic@v3.009",
+      "bom-ref": "roboto@3.009",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/googlefonts/roboto-3-classic"
+        },
+        {
+          "type": "license",
+          "url": "https://raw.githubusercontent.com/googlefonts/roboto-3-classic/v3.009/OFL.txt"
+        }
+      ],
+      "components": [
+        {
+          "type": "file",
+          "name": "Roboto-Bold.ttf",
+          "bom-ref": "roboto@3.009|Roboto-Bold.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "deb990e241954e1af87c6033d40a76cf0f48e0d112541794526051ac4a3ee2c8"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/roboto/Roboto-Bold.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "Roboto-BoldItalic.ttf",
+          "bom-ref": "roboto@3.009|Roboto-BoldItalic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "8480274024a0c325c7a0fe11814c47c057a2264d9c24693b2da9bd56c0c5e1d0"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/roboto/Roboto-BoldItalic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "Roboto-Italic.ttf",
+          "bom-ref": "roboto@3.009|Roboto-Italic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "5a2f18bddbe3ac07f14d38817d1fd22df4e8e3b74f661f7ae7b29cc8140092bc"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/roboto/Roboto-Italic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "Roboto-Medium.ttf",
+          "bom-ref": "roboto@3.009|Roboto-Medium.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "616eee3f9b60ec0196e09700ebca48a375da3323c4d5872e2b982170969ac90e"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/roboto/Roboto-Medium.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "Roboto-MediumItalic.ttf",
+          "bom-ref": "roboto@3.009|Roboto-MediumItalic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "db79d54441d407613d583145f0637a5e614fc92d75fa26bda23a4fbf2fd596c8"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/roboto/Roboto-MediumItalic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "Roboto-Regular.ttf",
+          "bom-ref": "roboto@3.009|Roboto-Regular.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "dbd285b518e398832f6f4a736109c355ce25a49546bfce41bab256c9ef7e56eb"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/roboto/Roboto-Regular.ttf"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "data",
+      "supplier": {
+        "name": "Red Hat, Inc."
+      },
+      "name": "Liberation",
+      "version": "2.1.5",
+      "description": "Liberation Sans and Liberation Serif, metric-compatible with Arial and Times New Roman.",
+      "licenses": [
+        {
+          "license": {
+            "id": "OFL-1.1"
+          }
+        }
+      ],
+      "purl": "pkg:github/liberationfonts/liberation-fonts@2.1.5",
+      "bom-ref": "liberation@2.1.5",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/liberationfonts/liberation-fonts"
+        },
+        {
+          "type": "license",
+          "url": "https://raw.githubusercontent.com/liberationfonts/liberation-fonts/2.1.5/LICENSE"
+        }
+      ],
+      "components": [
+        {
+          "type": "file",
+          "name": "LiberationSans-Bold.ttf",
+          "bom-ref": "liberation@2.1.5|LiberationSans-Bold.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "3973aa5054fb467dd5627245d3dc82e37bf16fe075756156a570455871351582"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/sansserif/LiberationSans-Bold.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "LiberationSans-BoldItalic.ttf",
+          "bom-ref": "liberation@2.1.5|LiberationSans-BoldItalic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "c80fa7f2ffa0e01d4d8dcd6a6d1e43eda665222d1b4db597dde1174c456006cf"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/sansserif/LiberationSans-BoldItalic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "LiberationSans-Italic.ttf",
+          "bom-ref": "liberation@2.1.5|LiberationSans-Italic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "830c5fa600505fb4c1a271b4271c53c44bae43f492b2a240d0e98a3a7a380121"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/sansserif/LiberationSans-Italic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "LiberationSans-Regular.ttf",
+          "bom-ref": "liberation@2.1.5|LiberationSans-Regular.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "4659bc0c58c5028dd488ec928d41d9265db43d9b669fc14ca8b0832daca7b144"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/sansserif/LiberationSans-Regular.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "LiberationSerif-Bold.ttf",
+          "bom-ref": "liberation@2.1.5|LiberationSerif-Bold.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "9e66c25e20868756bf12eb24a520a4552727c9cd108f577f7ae33e3c0110e39c"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/serif/LiberationSerif-Bold.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "LiberationSerif-BoldItalic.ttf",
+          "bom-ref": "liberation@2.1.5|LiberationSerif-BoldItalic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "379010e87421a883f7bbfa7936d23dfe0257a54ce850819b74556e9f2c615a8a"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/serif/LiberationSerif-BoldItalic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "LiberationSerif-Italic.ttf",
+          "bom-ref": "liberation@2.1.5|LiberationSerif-Italic.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "eaeaf7f2b12544ecde64290c1fa7ec403ff70fd58b313637b265400b20249242"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/serif/LiberationSerif-Italic.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "LiberationSerif-Regular.ttf",
+          "bom-ref": "liberation@2.1.5|LiberationSerif-Regular.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/serif/LiberationSerif-Regular.ttf"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "data",
+      "supplier": {
+        "name": "DejaVu fonts team"
+      },
+      "name": "DejaVu Sans Mono",
+      "version": "2.37",
+      "description": "DejaVu Sans Mono, based on Bitstream Vera; the changes of DejaVu are in the public domain.",
+      "licenses": [
+        {
+          "license": {
+            "id": "Bitstream-Vera"
+          }
+        }
+      ],
+      "purl": "pkg:github/dejavu-fonts/dejavu-fonts@version_2_37",
+      "bom-ref": "dejavu-sans-mono@2.37",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/dejavu-fonts/dejavu-fonts"
+        },
+        {
+          "type": "license",
+          "url": "https://raw.githubusercontent.com/dejavu-fonts/dejavu-fonts/version_2_37/LICENSE"
+        }
+      ],
+      "components": [
+        {
+          "type": "file",
+          "name": "DejaVuSansMono-Bold.ttf",
+          "bom-ref": "dejavu-sans-mono@2.37|DejaVuSansMono-Bold.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "3a3c502eeff669a231549e80df9f7c49de109bafe303170409e905d0b31a38fe"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/monospace/DejaVuSansMono-Bold.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "DejaVuSansMono-BoldOblique.ttf",
+          "bom-ref": "dejavu-sans-mono@2.37|DejaVuSansMono-BoldOblique.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "a5251173370e30760e6919711dcd33e149d216ca4814eb74332bda03fcc7e834"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/monospace/DejaVuSansMono-BoldOblique.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "DejaVuSansMono-Oblique.ttf",
+          "bom-ref": "dejavu-sans-mono@2.37|DejaVuSansMono-Oblique.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "3d7955616e69721f7edb8e1b7a580f8fbd7d737111c6b54266ddc1d9ef13202f"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/monospace/DejaVuSansMono-Oblique.ttf"
+              }
+            ]
+          }
+        },
+        {
+          "type": "file",
+          "name": "DejaVuSansMono.ttf",
+          "bom-ref": "dejavu-sans-mono@2.37|DejaVuSansMono.ttf",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "c805f9436dbc268644c1d9584f01a601a653e028e08fd74b9b949f6cf8304d88"
+            }
+          ],
+          "evidence": {
+            "occurrences": [
+              {
+                "location": "fonts/monospace/DejaVuSansMono.ttf"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "report",
+      "dependsOn": [
+        "noto-sans@2.015",
+        "noto-sans-sc@2.004",
+        "noto-sans-arabic@2.012",
+        "roboto@3.009",
+        "liberation@2.1.5",
+        "dejavu-sans-mono@2.37"
+      ]
+    },
+    {
+      "ref": "noto-sans@2.015",
+      "dependsOn": [
+        "noto-sans@2.015|NotoSans-BoldItalic.ttf",
+        "noto-sans@2.015|NotoSans-Italic.ttf",
+        "noto-sans@2.015|NotoSans-MediumItalic.ttf"
+      ]
+    },
+    {
+      "ref": "noto-sans@2.015|NotoSans-BoldItalic.ttf"
+    },
+    {
+      "ref": "noto-sans@2.015|NotoSans-Italic.ttf"
+    },
+    {
+      "ref": "noto-sans@2.015|NotoSans-MediumItalic.ttf"
+    },
+    {
+      "ref": "noto-sans-sc@2.004",
+      "dependsOn": [
+        "noto-sans-sc@2.004|NotoSansSC-Bold.ttf",
+        "noto-sans-sc@2.004|NotoSansSC-Medium.ttf",
+        "noto-sans-sc@2.004|NotoSansSC-Regular.ttf"
+      ]
+    },
+    {
+      "ref": "noto-sans-sc@2.004|NotoSansSC-Bold.ttf"
+    },
+    {
+      "ref": "noto-sans-sc@2.004|NotoSansSC-Medium.ttf"
+    },
+    {
+      "ref": "noto-sans-sc@2.004|NotoSansSC-Regular.ttf"
+    },
+    {
+      "ref": "noto-sans-arabic@2.012",
+      "dependsOn": [
+        "noto-sans-arabic@2.012|NotoSansArabic-Bold.ttf",
+        "noto-sans-arabic@2.012|NotoSansArabic-Medium.ttf",
+        "noto-sans-arabic@2.012|NotoSansArabic-Regular.ttf",
+        "noto-sans-arabic@2.012|NotoSansArabic-SemiBold.ttf"
+      ]
+    },
+    {
+      "ref": "noto-sans-arabic@2.012|NotoSansArabic-Bold.ttf"
+    },
+    {
+      "ref": "noto-sans-arabic@2.012|NotoSansArabic-Medium.ttf"
+    },
+    {
+      "ref": "noto-sans-arabic@2.012|NotoSansArabic-Regular.ttf"
+    },
+    {
+      "ref": "noto-sans-arabic@2.012|NotoSansArabic-SemiBold.ttf"
+    },
+    {
+      "ref": "roboto@3.009",
+      "dependsOn": [
+        "roboto@3.009|Roboto-Bold.ttf",
+        "roboto@3.009|Roboto-BoldItalic.ttf",
+        "roboto@3.009|Roboto-Italic.ttf",
+        "roboto@3.009|Roboto-Medium.ttf",
+        "roboto@3.009|Roboto-MediumItalic.ttf",
+        "roboto@3.009|Roboto-Regular.ttf"
+      ]
+    },
+    {
+      "ref": "roboto@3.009|Roboto-Bold.ttf"
+    },
+    {
+      "ref": "roboto@3.009|Roboto-BoldItalic.ttf"
+    },
+    {
+      "ref": "roboto@3.009|Roboto-Italic.ttf"
+    },
+    {
+      "ref": "roboto@3.009|Roboto-Medium.ttf"
+    },
+    {
+      "ref": "roboto@3.009|Roboto-MediumItalic.ttf"
+    },
+    {
+      "ref": "roboto@3.009|Roboto-Regular.ttf"
+    },
+    {
+      "ref": "liberation@2.1.5",
+      "dependsOn": [
+        "liberation@2.1.5|LiberationSans-Bold.ttf",
+        "liberation@2.1.5|LiberationSans-BoldItalic.ttf",
+        "liberation@2.1.5|LiberationSans-Italic.ttf",
+        "liberation@2.1.5|LiberationSans-Regular.ttf",
+        "liberation@2.1.5|LiberationSerif-Bold.ttf",
+        "liberation@2.1.5|LiberationSerif-BoldItalic.ttf",
+        "liberation@2.1.5|LiberationSerif-Italic.ttf",
+        "liberation@2.1.5|LiberationSerif-Regular.ttf"
+      ]
+    },
+    {
+      "ref": "liberation@2.1.5|LiberationSans-Bold.ttf"
+    },
+    {
+      "ref": "liberation@2.1.5|LiberationSans-BoldItalic.ttf"
+    },
+    {
+      "ref": "liberation@2.1.5|LiberationSans-Italic.ttf"
+    },
+    {
+      "ref": "liberation@2.1.5|LiberationSans-Regular.ttf"
+    },
+    {
+      "ref": "liberation@2.1.5|LiberationSerif-Bold.ttf"
+    },
+    {
+      "ref": "liberation@2.1.5|LiberationSerif-BoldItalic.ttf"
+    },
+    {
+      "ref": "liberation@2.1.5|LiberationSerif-Italic.ttf"
+    },
+    {
+      "ref": "liberation@2.1.5|LiberationSerif-Regular.ttf"
+    },
+    {
+      "ref": "dejavu-sans-mono@2.37",
+      "dependsOn": [
+        "dejavu-sans-mono@2.37|DejaVuSansMono-Bold.ttf",
+        "dejavu-sans-mono@2.37|DejaVuSansMono-BoldOblique.ttf",
+        "dejavu-sans-mono@2.37|DejaVuSansMono-Oblique.ttf",
+        "dejavu-sans-mono@2.37|DejaVuSansMono.ttf"
+      ]
+    },
+    {
+      "ref": "dejavu-sans-mono@2.37|DejaVuSansMono-Bold.ttf"
+    },
+    {
+      "ref": "dejavu-sans-mono@2.37|DejaVuSansMono-BoldOblique.ttf"
+    },
+    {
+      "ref": "dejavu-sans-mono@2.37|DejaVuSansMono-Oblique.ttf"
+    },
+    {
+      "ref": "dejavu-sans-mono@2.37|DejaVuSansMono.ttf"
+    }
+  ]
+}

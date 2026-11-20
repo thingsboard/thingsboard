@@ -181,6 +181,18 @@
             <plugin>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>sbom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>jar-sbom</id>
+                        <configuration>
+                            <nestedSboms>
+                                <nestedSbom>
+                                    <library>org.thingsboard.common:report</library>
+                                </nestedSbom>
+                            </nestedSboms>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
