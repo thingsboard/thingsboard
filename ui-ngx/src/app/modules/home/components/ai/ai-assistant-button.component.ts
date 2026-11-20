@@ -31,10 +31,9 @@ import { Authority } from '@shared/models/authority.enum';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TbPopoverComponent } from '@shared/components/popover.component';
+import { escapeTourText, TourPopupRef, TourPopupService } from '@shared/components/tour/tour-popup.service';
+import { TourService } from '@core/services/tour.service';
 import { AiAssistantContextService } from '@home/components/ai/ai-assistant-context.service';
-import { AiButtonIntroComponent } from '@home/components/ai/ai-button-intro.component';
 import { AiMarkCue } from '@home/components/ai/ai-mark.component';
 
 const INTRO_DELAY_MS = 900;
@@ -91,7 +90,9 @@ export class AiAssistantButtonComponent {
 
   private context = inject(AiAssistantContextService);
 
-  private popoverService = inject(TbPopoverService);
+  private tourPopup = inject(TourPopupService);
+
+  private tourService = inject(TourService);
 
   private renderer = inject(Renderer2);
 
@@ -101,9 +102,11 @@ export class AiAssistantButtonComponent {
 
   private introSeen = toSignal(this.store.select(selectAiTourStepSeen(AiTourStep.AI_BUTTON)), {initialValue: true});
 
+  private welcomeSeen = toSignal(this.store.select(selectAiTourStepSeen(AiTourStep.WELCOME)), {initialValue: false});
+
   readonly introOpen = signal(false);
 
-  private introPopover: TbPopoverComponent<AiButtonIntroComponent> | null = null;
+  private introPopup: TourPopupRef | null = null;
 
   private introTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -137,7 +140,7 @@ export class AiAssistantButtonComponent {
     return level === 'needs' || level === 'error' ? level : null;
   });
 
-  private introWanted = computed(() => this.available && !this.introSeen() && this.cue()?.level !== 'running' && !this.panelService.open()
+  private introWanted = computed(() => this.available && this.welcomeSeen() && !this.tourService.active() && !this.introSeen() && this.cue()?.level !== 'running' && !this.panelService.open()
     && !this.panelService.suppressed() && !!this.buttonRef());
 
   private introEffect = effect(() => {
@@ -206,32 +209,28 @@ export class AiAssistantButtonComponent {
     intro.owner = this;
     const welcome = this.context.welcome();
     const example = welcome.examples[0]?.label?.trim();
+    const lead = this.translate.instant(`ai-assistant.intro.lead-${welcome.place}${example ? '-example' : ''}`, {example});
+    const keys = matchMedia('(hover: hover) and (pointer: fine)').matches ? ' ' + this.translate.instant('ai-assistant.intro.keys') : '';
     this.introOpen.set(true);
-    this.introPopover = this.popoverService.displayPopover({
-      trigger,
-      renderer: this.renderer,
-      componentType: AiButtonIntroComponent,
+    this.introPopup = this.tourPopup.show({
+      target: trigger,
       hostView: this.viewContainerRef,
-      preferredPlacement: ['bottomRight', 'bottom', 'bottomLeft'],
-      hideOnClickOutside: false,
-      showCloseButton: false,
-      context: {
-        title: welcome.title || this.translate.instant('ai-assistant.panel-title'),
-        lead: this.translate.instant(`ai-assistant.intro.lead-${welcome.place}${example ? '-example' : ''}`, {example}),
-        keyboard: matchMedia('(hover: hover) and (pointer: fine)').matches
-      },
-      visibleFn: visible => {
-        if (!visible && this.introOpen()) {
-          this.introPopover = null;
+      renderer: this.renderer,
+      placement: ['bottomRight', 'bottom', 'bottomLeft'],
+      title: welcome.title || this.translate.instant('ai-assistant.panel-title'),
+      text: escapeTourText(lead) + keys,
+      skipLabel: this.translate.instant('ai-assistant.intro.got-it'),
+      nextLabel: this.translate.instant('ai-assistant.intro.open-chat'),
+      onSkip: () => this.closeIntro(),
+      onClose: () => this.closeIntro(),
+      onNext: () => this.openChat(),
+      onHidden: () => {
+        if (this.introOpen()) {
+          this.introPopup = null;
           this.hideIntro();
         }
       }
     });
-    this.introPopover.tbOverlayClassName = 'tb-ai-intro-popover';
-    this.introPopover.updateStyles();
-    const instance = this.introPopover.tbComponentRef.instance;
-    instance.dismiss.subscribe(() => this.closeIntro());
-    instance.openChat.subscribe(() => this.openChat());
   }
 
   private closeIntro(): void {
@@ -246,9 +245,9 @@ export class AiAssistantButtonComponent {
       intro.owner = null;
     }
     this.introOpen.set(false);
-    const popover = this.introPopover;
-    this.introPopover = null;
-    popover?.hide();
+    const popup = this.introPopup;
+    this.introPopup = null;
+    popup?.close();
   }
 
   private clearIntroTimer(): void {

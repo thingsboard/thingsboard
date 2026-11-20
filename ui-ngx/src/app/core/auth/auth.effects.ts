@@ -6,7 +6,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UserSettingsService } from '@core/http/user-settings.service';
-import { mergeMap, withLatestFrom } from 'rxjs/operators';
+import { concatMap, mergeMap, withLatestFrom } from 'rxjs/operators';
 import { AuthActions, AuthActionTypes } from '@core/auth/auth.actions';
 import { selectAuthState } from '@core/auth/auth.selectors';
 
@@ -32,7 +32,7 @@ export class AuthEffects {
       AuthActionTypes.UPDATE_AI_TOUR,
     ),
     withLatestFrom(this.store.pipe(select(selectAuthState))),
-    mergeMap(([action, state]) => this.userSettingsService.putUserSettings({ aiTour: state.userSettings.aiTour ?? {} }))
+    concatMap(([action, state]) => this.userSettingsService.putUserSettings({ aiTour: state.userSettings.aiTour ?? {} }))
   ), {dispatch: false});
 
   putUserSettings = createEffect(() => this.actions$.pipe(

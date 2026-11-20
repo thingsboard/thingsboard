@@ -2575,8 +2575,7 @@
             "lead-list-example": "The chat opens beside the list, already in context: “{{example}}” needs no names.",
             "lead-page": "The chat opens beside the page, already in context.",
             "lead-page-example": "The chat opens beside the page, already in context: “{{example}}” needs no names.",
-            "press": "Press",
-            "on-any-page": "on any page to open the chat.",
+            "keys": "Press <kbd>/</kbd> on any page to open the chat.",
             "got-it": "Got it",
             "open-chat": "Open the chat"
         },
@@ -13185,6 +13184,155 @@
         "background-color": "Background color",
         "background-blur": "Background blur"
     },
+        "tour": {
+            "invite": {
+                "pill-before": "Meet the new AI Assistant",
+                "pill-new": "Meet the AI Assistant",
+                "news": "A working setup in minutes.",
+                "cover-title": "Just ask.",
+                "cover-lead": "The AI Assistant sets up devices, builds dashboards and writes alarm rules. Ask about your data and the answer links to the records.",
+                "note": "The AI solution creator is now Solutions, inside the AI Assistant.",
+                "kicker-before": "What's new",
+                "kicker-new": "How it works",
+                "kicker": "{{kicker}} · {{step}} of {{count}}",
+                "step": "Step {{step}} of {{count}}",
+                "go-before": "See what's new",
+                "go-new": "See how it works",
+                "later": "Maybe later",
+                "back": "Back",
+                "next": "Next",
+                "show-around": "Show me around",
+                "card-1": {
+                    "title": "Home shows what needs you",
+                    "lead": "Critical alarms, inactive devices and chats waiting for your answer are at the top. Ask about any of them from the same page."
+                },
+                "card-2": {
+                    "title": "Ask on any page",
+                    "lead": "The chat sits next to your page and reads it. Say “this meter” and it knows which one."
+                },
+                "card-3": {
+                    "title": "Describe the result, skip the setup",
+                    "lead": "One sentence becomes a plan: the dashboard, the alarm rule, who gets notified. Changes wait for your approval."
+                },
+                "card-4": {
+                    "title": "Click, don’t type",
+                    "lead": "A threshold, a colour, which device: pick from the options. Type only when none fits."
+                },
+                "card-5": {
+                    "title": "Files in. Files out.",
+                    "lead": "Attach a datasheet, a photo or a spreadsheet. Code, configs and documents come back as files to open, edit and save."
+                }
+            },
+            "scene": {
+                "cover": {
+                    "placeholder": "What would you like to work on?",
+                    "ask-1": "What needs my attention today?",
+                    "reply-1": "Two alarms are critical, both in Store 7.",
+                    "record-1-name": "Freezer 2 · Store 7",
+                    "record-1-meta": "critical for 18 min",
+                    "ask-2": "Build a dashboard for the Store 12 freezers",
+                    "reply-2": "Three freezers, their temperatures and doors.",
+                    "record-2-name": "Store 12 freezers",
+                    "record-2-meta": "Dashboard · created",
+                    "ask-3": "Connect the sensor in this datasheet",
+                    "file-3-name": "SHT31 datasheet.pdf",
+                    "file-3-meta": "PDF",
+                    "reply-3": "Temperature and humidity, read from page 3."
+                },
+                "home": {
+                    "ask": "Which devices are inactive?",
+                    "morning": "Good morning",
+                    "afternoon": "Good afternoon",
+                    "evening": "Good evening",
+                    "critical": "3 critical alarms",
+                    "inactive": "4 devices inactive",
+                    "placeholder": "Ask the AI Assistant…",
+                    "chats": "Chats",
+                    "waiting": "Waiting for you",
+                    "chat-1": "Cold room sensors",
+                    "chat-2": "Gateway on the store PC",
+                    "alarms": "Alarms",
+                    "notifications": "Notifications"
+                },
+                "page": {
+                    "ask": "Why did this meter jump at 02:00?",
+                    "load": "Load now",
+                    "today": "Today",
+                    "alarm": "Night load above 8 kW",
+                    "title": "Ask about this dashboard",
+                    "prompt-2": "Add the freezer doors to this chart",
+                    "answer": "Freezer 2 ran without a stop from 01:52. Its door was left open.",
+                    "record-name": "Freezer 2 · Store 12",
+                    "record-meta": "door open 3 h",
+                    "page": "Energy · Store 12",
+                    "range": "Last 6 hours",
+                    "new-chat": "New chat"
+                },
+                "plan": {
+                    "request": "A dashboard for the Store 12 freezers, an alarm when one gets warm, and tell the store manager",
+                    "plan": "Plan",
+                    "steps": "3 steps",
+                    "run": "Run",
+                    "running": "Running",
+                    "done": "Done",
+                    "row-1": "Store 12 freezers",
+                    "row-2": "Freezer too warm",
+                    "row-3": "Tell the manager",
+                    "dashboard": "Dashboard",
+                    "alarm-rule": "Alarm rule",
+                    "notification-rule": "Notification rule",
+                    "planned": "{{type}} · planned",
+                    "created": "{{type}} · created"
+                },
+                "ask": {
+                    "needs-answer": "Needs an answer",
+                    "count-1": "1 of 2",
+                    "count-2": "2 of 2",
+                    "question-1": "Who gets the alert?",
+                    "why-1": "An email when a freezer stays warm.",
+                    "option-1-1": "Me",
+                    "option-1-2": "The store manager",
+                    "option-1-3": "Both",
+                    "other": "Other…",
+                    "hint-1": "The manager is at the store when it happens",
+                    "next": "Next",
+                    "skip": "Skip",
+                    "said": "Who gets the alert",
+                    "question-2": "How warm is too warm?",
+                    "why-2": "Freezer 1 reads −18.4 °C now.",
+                    "option-2-1": "−15 °C",
+                    "option-2-2": "−14 °C",
+                    "option-2-3": "−12 °C",
+                    "hint-2": "A degree of room after a door opening",
+                    "done": "Done"
+                },
+                "files": {
+                    "in": "In",
+                    "out": "Out",
+                    "edit": "Edit"
+                }
+            },
+            "assistant": {
+                "count": "{{step}} of {{count}}",
+                "skip": "Skip tour",
+                "next": "Next",
+                "done": "Done",
+                "menu-title": "AI Assistant in the menu",
+                "menu-text": "Your chats and solutions live here, under IoT Hub. On any other page, the AI Assistant button in the top bar opens the same chats beside the page.",
+                "chats-title": "All chats in one list",
+                "chats-text": "Chats started here, on Home or beside a page. A dot marks a chat that waits for your answer.",
+                "chats-folded-text": "Open the list here: chats started here, on Home or beside a page.",
+                "solutions-title-before": "Solutions moved here",
+                "solutions-text-before": "The AI solution creator is now Solutions. Start one with New solution: each solution is a chat in this list, its design and install beside the chat, as before.",
+                "solutions-title-new": "Build a whole solution",
+                "solutions-text-new": "Describe a use case to New solution. After a few questions, a design of profiles, dashboards and alarm rules opens beside the chat, to review and install.",
+                "try-title": "Try a request",
+                "try-text": "A request is ready to send: what needs attention today. Press Enter; the answer lists alarms and devices, each with a link.",
+                "try-text-fresh": "A request is ready to send: connecting a sensor. Press Enter, answer a few questions, then approve the device and the alarm rule.",
+                "try-ask": "What needs my attention today?",
+                "try-ask-fresh": "Connect my first device: a freezer sensor that sends over MQTT"
+            }
+        },
     "unit": {
         "set-unit-conversion": "Set unit conversion",
         "unit-settings": {

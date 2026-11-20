@@ -1,0 +1,53 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@property --tb-spot-a {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.tb-tour-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: auto;
+
+  &.through {
+    pointer-events: none;
+  }
+}
+
+.tb-tour-spot {
+  position: fixed;
+  border-radius: var(--tb-spot-r, 12px);
+  pointer-events: none;
+  box-shadow: 0 0 22px 4px color-mix(in oklab, var(--ai-light-aqua) 60%, transparent), 0 0 0 9999px rgba(16, 24, 40, 0.32);
+  transition: left .22s cubic-bezier(.2, .7, .3, 1), top .22s cubic-bezier(.2, .7, .3, 1), width .22s cubic-bezier(.2, .7, .3, 1),
+    height .22s cubic-bezier(.2, .7, .3, 1), border-radius .22s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    padding: 3px;
+    border-radius: calc(var(--tb-spot-r, 12px) + 3px);
+    background: conic-gradient(from var(--tb-spot-a) in oklab, var(--ai-light-anchor), var(--ai-light-aqua), var(--ai-light-lilac),
+      var(--ai-light-peach), var(--ai-light-amber), var(--ai-light-mint), var(--ai-light-anchor));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation: tb-tour-spot-turn 8s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &::before {
+      animation: none;
+    }
+  }
+}
+
+@keyframes tb-tour-spot-turn {
+  to { --tb-spot-a: 360deg; }
+}

@@ -38,7 +38,6 @@ import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.co
 import { AiFileBodyComponent } from '@home/components/ai/ai-file-body.component';
 import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
 import { AiMarkComponent } from '@home/components/ai/ai-mark.component';
-import { AiButtonIntroComponent } from '@home/components/ai/ai-button-intro.component';
 
 @NgModule({
   declarations: [
@@ -69,7 +68,6 @@ import { AiButtonIntroComponent } from '@home/components/ai/ai-button-intro.comp
     AiDisclosureComponent,
     AiSparkComponent,
     AiMarkComponent,
-    AiButtonIntroComponent,
     AiQuestionComponent,
     AiPlanComponent,
     AiArtifactPaneComponent,
@@ -93,7 +91,6 @@ import { AiButtonIntroComponent } from '@home/components/ai/ai-button-intro.comp
     AiRunSummaryComponent,
     AiSparkComponent,
     AiMarkComponent,
-    AiButtonIntroComponent,
     AiPromptInputComponent,
     AiAssistantPanelComponent,
     AiChatComponent,
