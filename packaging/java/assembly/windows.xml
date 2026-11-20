@@ -41,15 +41,6 @@
             <directory>${project.build.directory}/data</directory>
             <outputDirectory>data</outputDirectory>
         </fileSet>
-        <!-- The license of ThingsBoard -->
-        <fileSet>
-            <directory>${main.dir}</directory>
-            <outputDirectory/>
-            <includes>
-                <include>LICENSE</include>
-            </includes>
-            <lineEnding>windows</lineEnding>
-        </fileSet>
         <!-- The third-party notices, when the build makes them (-Dnotices.skip=false) -->
         <fileSet>
             <directory>${project.build.directory}/notices/windows</directory>
@@ -62,6 +53,12 @@
     </fileSets>
 
     <files>
+        <!-- The license of ThingsBoard -->
+        <file>
+            <source>${project.build.directory}/LICENSE</source>
+            <outputDirectory/>
+            <lineEnding>windows</lineEnding>
+        </file>
         <file>
             <source>${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</source>
             <outputDirectory>lib</outputDirectory>

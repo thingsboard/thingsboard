@@ -84,7 +84,7 @@ ospackage {
     }
 
     // The license of ThingsBoard
-    from("${packagingDir}/../LICENSE") {
+    from("${buildDir}/LICENSE") {
         filePermissions {
             unix('r--r--r--')  // 0444
         }

@@ -102,9 +102,12 @@
         + "      choice: \"<the license we take>\"\n"
         + "The rule then applies to every package that offers the same choice.")]
 [/#if]
+[#-- ThingsBoard is derived from ThingsBoard Community Edition, which is under Apache-2.0, so every notices file has the
+     section of Apache-2.0 and opens it with that, with or without components under it. --]
+[#assign ce = "Apache-2.0"]
 [#-- Count the packages of every license. --]
-[#assign names = []]
-[#assign counts = {}]
+[#assign names = [ce]]
+[#assign counts = {ce: 0}]
 [#list shipped as package]
     [#list licensesOf(package) as resolved]
         [#assign name = resolved.license?string]
@@ -116,13 +119,6 @@
         [/#if]
     [/#list]
 [/#list]
-[#-- ThingsBoard is derived from ThingsBoard Community Edition, which is under Apache-2.0, so every notices file has the
-     section of Apache-2.0 and opens it with that, with or without components under it. --]
-[#assign ce = "Apache-2.0"]
-[#if !counts[ce]??]
-    [#assign names = names + [ce]]
-    [#assign counts = counts + {ce: 0}]
-[/#if]
 [#assign sections = []]
 [#list names as name][#assign sections = sections + [{"name": name, "count": counts[name]}]][/#list]
 [#-- The licenses with the most components first, and those with as many by name. --]
@@ -147,16 +143,14 @@ ${rule}
     [#if section.name != ce]
 The following components are licensed under ${title(section.name)}:
 
-    [#elseif section.count > 0]
-ThingsBoard is derived from ThingsBoard Community Edition, Copyright The
-ThingsBoard Authors, which is licensed under Apache-2.0. The components below
-are licensed under Apache-2.0 as well:
-
     [#else]
 ThingsBoard is derived from ThingsBoard Community Edition, Copyright The
-ThingsBoard Authors, which is licensed under Apache-2.0.
+ThingsBoard Authors, which is licensed under Apache-2.0.[#if section.count > 0] The components below
+are licensed under Apache-2.0 as well:
+[/#if]
+
     [/#if]
-    [#assign text = (section.name == ce)?then(licenseFactProvider.getLicenseText(ce)!"", "")]
+    [#assign text = ""]
     [#assign exceptionText = ""]
     [#list shipped as package]
         [#list licensesOf(package) as resolved]
@@ -188,6 +182,8 @@ ThingsBoard Authors, which is licensed under Apache-2.0.
             [/#if]
         [/#list]
     [/#list]
+    [#-- A section without components, which only that of Apache-2.0 can be, has no package to take the text from. --]
+    [#if !text?has_content][#assign text = licenseFactProvider.getLicenseText(section.name)!""][/#if]
 
     [#if text?has_content]
 ${text}
