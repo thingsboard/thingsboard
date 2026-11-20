@@ -56,7 +56,7 @@ def main():
             text = texts[where]
         else:
             where, fix = entry['url'], ('Check the address in the external reference of the type license of the '
-                                        'component, in the pom that declares it.')
+                                        'component, in the pom or the SBOM that declares it.')
             text = clean(content(where, component, args.downloads))
         if not text:
             raise stop(f'the license file of {component} at {where} is empty. {fix}')
@@ -123,8 +123,8 @@ def content(url, component, downloads):
             data = response.read()
     except (urllib.error.URLError, OSError) as error:
         raise stop(f'the license file of {component} cannot be downloaded from {url}: {error}. If the address is '
-                   'wrong, fix it in the external reference of the type license of the component, in the pom that '
-                   'declares it.')
+                   'wrong, fix it in the external reference of the type license of the component, in the pom or the '
+                   'SBOM that declares it.')
     write_atomically(path, data)
     return data
 
