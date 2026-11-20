@@ -143,8 +143,8 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- After the SBOM: the third-party notices of what the bundle contains, served with the UI at
-                         /THIRD-PARTY-NOTICES.txt. Off by default like the notices of the packages. -->
+                    <!-- After the SBOM, which it reads: the notices of the bundle, served at /THIRD-PARTY-NOTICES.txt.
+                         Off by default like the notices of the packages. -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
