@@ -3,11 +3,13 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
+import subprocess
 import unittest
+from unittest import mock
 
 from notices.license_files import filter_platforms
 from notices.lwm2m import identify_license, parse_header
-from notices.scanner import is_notice_path
+from notices.scanner import ensure_docker_available, is_notice_path
 
 
 class HelpersTests(unittest.TestCase):
@@ -38,6 +40,18 @@ class HelpersTests(unittest.TestCase):
         self.assertTrue(is_notice_path('META-INF/NOTICE.txt'))
         self.assertTrue(is_notice_path('THIRD_PARTY_NOTICES.md'))
         self.assertFalse(is_notice_path('com/example/NoticeReference.class'))
+
+    def test_ensure_docker_available_reports_missing_and_unreachable_daemon(self):
+        with mock.patch('notices.scanner.subprocess.run', side_effect=FileNotFoundError):
+            with self.assertRaises(SystemExit) as ctx:
+                ensure_docker_available()
+            self.assertIn('not found in PATH', str(ctx.exception))
+
+        failed = subprocess.CompletedProcess(['docker', 'info'], 1, '', 'Cannot connect to the Docker daemon')
+        with mock.patch('notices.scanner.subprocess.run', return_value=failed):
+            with self.assertRaises(SystemExit) as ctx:
+                ensure_docker_available()
+            self.assertIn('Docker daemon is not reachable', str(ctx.exception))
 
 
 if __name__ == '__main__':

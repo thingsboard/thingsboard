@@ -8,7 +8,7 @@ import unittest
 
 from notices.config import Curation, Curations, IgnoreFinding, Policy
 from notices.policy import glob_match, resolve_all
-from notices.sbom import PackageComponent
+from notices.sbom import LicenseFileRef, PackageComponent
 from notices.spdx import License
 
 
@@ -153,6 +153,44 @@ class PolicyTests(unittest.TestCase):
         with self.assertRaises(SystemExit) as ctx:
             resolve_all({pkg.purl: pkg}, {pkg.purl: {'type': 'metadata_only'}}, {}, pol, Curations())
         self.assertIn('equally ranked', str(ctx.exception))
+        self.assertIn('docs/licensing-guide.md', str(ctx.exception))
+
+    def test_license_file_components_enforce_policy_checks(self):
+        # Clean bundled component passes
+        ok_ref = LicenseFileRef(group='', name='node', version='22.0.0', url='https://nodejs.org/LICENSE', declared_raw=('MIT',))
+        or_ref = LicenseFileRef(group='', name='font', version='1.0', path='fonts/LICENSE', declared_raw=('Apache-2.0 OR GPL-3.0-only',))
+        resolve_all({}, {}, {}, _policy(), Curations(), license_files={ok_ref, or_ref})
+
+        # Forbidden license on bundled component hard-stops
+        bad_ref = LicenseFileRef(group='', name='badfont', version='1.0', path='fonts/LICENSE', declared_raw=('GPL-3.0-only',))
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({}, {}, {}, _policy(), Curations(), license_files={bad_ref})
+        self.assertIn('cannot ship', str(ctx.exception))
+        self.assertIn('badfont 1.0', str(ctx.exception))
+        self.assertIn('docs/licensing-guide.md', str(ctx.exception))
+
+        # Unclassified license on bundled component stops
+        new_ref = LicenseFileRef(group='', name='roboto', version='1.0', path='fonts/OFL.txt', declared_raw=('OFL-1.1',))
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({}, {}, {}, _policy(), Curations(), license_files={new_ref})
+        self.assertIn('new to the product', str(ctx.exception))
+        self.assertIn('OFL-1.1 (roboto 1.0)', str(ctx.exception))
+
+        # Unmapped non-SPDX license name on bundled component stops
+        unmapped_ref = LicenseFileRef(
+            group='', name='custom', version='1.0', path='custom/LICENSE',
+            declared_raw=('Some Custom License',), named_raw=frozenset({'Some Custom License'}),
+        )
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({}, {}, {}, _policy(), Curations(), license_files={unmapped_ref})
+        self.assertIn('Some Custom License', str(ctx.exception))
+
+        # Bundled url/path component with no declared license stops
+        empty_ref = LicenseFileRef(group='', name='mystery', version='1.0', path='mystery/LICENSE')
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({}, {}, {}, _policy(), Curations(), license_files={empty_ref})
+        self.assertIn('no license was found', str(ctx.exception))
+        self.assertIn('mystery 1.0', str(ctx.exception))
 
 
 if __name__ == '__main__':

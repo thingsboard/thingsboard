@@ -55,6 +55,8 @@ class LicenseFileRef:
     path: str | None = None
     platform: str | None = None
     generated: str | None = None  # e.g. 'lwm2m-registry'
+    declared_raw: tuple[str, ...] = ()
+    named_raw: frozenset[str] = frozenset()
 
     @property
     def coordinates(self):
@@ -81,7 +83,8 @@ def discover_sboms(root_dir):
     if not sboms:
         raise stop(
             f'no SBOMs in the target/sbom directories under {root_dir}. Build with them first: '
-            'mvn clean package -DskipTests -Dsbom.skip=false'
+            'mvn clean package -DskipTests -Dsbom.skip=false\n'
+            'See docs/licensing-guide.md#regenerating-the-notices.'
         )
     return sboms
 
@@ -134,7 +137,9 @@ def load_sboms(sbom_paths, project_version, policy, check_version=False):
     if wrong_version:
         raise stop(
             f'these SBOMs are not of the version {project_version}, so an older build left them. '
-            'Build again from clean: mvn clean package -DskipTests -Dsbom.skip=false\n' + '\n'.join(wrong_version)
+            'Build again from clean: mvn clean package -DskipTests -Dsbom.skip=false\n'
+            + '\n'.join(wrong_version)
+            + '\nSee docs/licensing-guide.md#regenerating-the-notices.'
         )
 
     return SbomInventory(packages=packages, jars=jars, license_files=license_files)
@@ -228,9 +233,15 @@ def _license_file_ref(component, repo_license_files):
     name = component.get('purl') or comp_name
     group = component.get('group', '')
     version = component.get('version', '')
+    licenses, names = _declared_licenses(component)
+    declared_raw = tuple(licenses)
+    named_raw = frozenset(names)
 
     if comp_name == 'lwm2m-registry' and not component.get('purl'):
-        return LicenseFileRef(group=group, name=comp_name, version=version, generated='lwm2m-registry')
+        return LicenseFileRef(
+            group=group, name=comp_name, version=version, generated='lwm2m-registry',
+            declared_raw=declared_raw, named_raw=named_raw,
+        )
 
     urls = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'license' and r.get('url')]
     if len(urls) > 1:
@@ -247,11 +258,15 @@ def _license_file_ref(component, repo_license_files):
             f'{repo_license_files[matched_key]}. Keep one of them.'
         )
     if urls:
-        return LicenseFileRef(group=group, name=comp_name, version=version, url=urls[0])
+        return LicenseFileRef(
+            group=group, name=comp_name, version=version, url=urls[0],
+            declared_raw=declared_raw, named_raw=named_raw,
+        )
     if matched_key:
         platform = qualifiers(name).get('os')
         return LicenseFileRef(
-            group=group, name=comp_name, version=version, path=repo_license_files[matched_key], platform=platform
+            group=group, name=comp_name, version=version, path=repo_license_files[matched_key], platform=platform,
+            declared_raw=declared_raw, named_raw=named_raw,
         )
     if name.startswith('pkg:'):
         comp_pkg_key, _ = split_curation_id(canonical_purl(name))

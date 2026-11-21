@@ -142,6 +142,29 @@ def resolve_package_source(pkg, curations, maven_sources):
     return None
 
 
+def ensure_docker_available():
+    """Verifies that `docker` is installed and its daemon is reachable before scanning uncached packages."""
+    try:
+        proc = subprocess.run(['docker', 'info'], capture_output=True, text=True, timeout=15)
+    except FileNotFoundError:
+        raise stop(
+            'Docker is required to scan uncached packages, but `docker` was not found in PATH. '
+            'Install Docker or run with a warm scan cache. See docs/licensing-guide.md#regenerating-the-notices.'
+        )
+    except subprocess.TimeoutExpired:
+        raise stop(
+            'Docker is required to scan uncached packages, but `docker info` timed out. '
+            'Check that the Docker daemon is running and responsive.'
+        )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip().splitlines()[:3]
+        suffix = ('\n  ' + '\n  '.join(detail)) if detail else ''
+        raise stop(
+            'Docker is required to scan uncached packages, but the Docker daemon is not reachable '
+            f'(start Docker and re-run).{suffix}'
+        )
+
+
 def scan_source_with_scancode(source, exclude_paths):
     """Downloads/extracts a source archive or VCS checkout, runs ScanCode in Docker, and returns a normalized record."""
     image = os.environ.get('NOTICES_SCANCODE_IMAGE', DEFAULT_SCANCODE_IMAGE)

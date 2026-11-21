@@ -26,6 +26,7 @@ from notices.sbom import discover_sboms, load_sboms
 from notices.scanner import (
     SCANCODE_VERSION,
     collect_jar_notices,
+    ensure_docker_available,
     migrate_ort_cache,
     resolve_maven_sources,
     resolve_package_source,
@@ -104,7 +105,9 @@ def cmd_render(args):
 
     # Resolve source descriptors and fail fast on pre-scan policy issues before hitting remote cache/Docker.
     sources = {purl: resolve_package_source(pkg, curations, maven_sources) for purl, pkg in sorted(inventory.packages.items())}
-    declared_by_purl = validate_pre_scan(inventory.packages, sources, policy, curations)
+    declared_by_purl = validate_pre_scan(
+        inventory.packages, sources, policy, curations, license_files=inventory.license_files
+    )
     keys_by_purl = {
         purl: scan_cache_key(SCANCODE_VERSION, src)
         for purl, src in sources.items()
@@ -131,6 +134,7 @@ def cmd_render(args):
         if args.no_scan:
             missing_purls = [p for p, k in keys_by_purl.items() if k in missing_set]
             raise stop(f'{len(missing_purls)} packages are not in cache (--no-scan):\n  ' + '\n  '.join(missing_purls[:20]))
+        ensure_docker_available()
         for purl, key in sorted(keys_by_purl.items()):
             if key in missing_set and key not in records_by_key:
                 print(f'Scanning {purl} ...', flush=True)
@@ -154,7 +158,10 @@ def cmd_render(args):
                 npm_notices.setdefault(item['text'], set()).add((pkg.coordinates, item['path']))
 
     # Policy evaluation (fail-closed)
-    resolved = resolve_all(inventory.packages, sources, scan_records, policy, curations, declared_by_purl=declared_by_purl)
+    resolved = resolve_all(
+        inventory.packages, sources, scan_records, policy, curations,
+        declared_by_purl=declared_by_purl, license_files=inventory.license_files,
+    )
 
     # Collect binary Maven jar NOTICE files + merge with npm NOTICE files
     all_notices, jar_summary = collect_jar_notices(inventory.jars, args.maven_repository, scan_cache.cache_dir)

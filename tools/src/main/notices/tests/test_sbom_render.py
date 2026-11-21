@@ -47,7 +47,11 @@ class SbomAndRenderTests(unittest.TestCase):
                          'purl': 'pkg:maven/org.thingsboard.ai/common@1.0.0?type=jar'},
                         {'name': 'libc6', 'version': '2.39', 'purl': 'pkg:deb/debian/libc6@2.39',
                          'properties': [{'name': 'syft:location:0:path', 'value': '/usr/lib/libc.so'}]},
-                        {'name': 'lwm2m-registry', 'type': 'data'},
+                        {'name': 'lwm2m-registry', 'type': 'data',
+                         'licenses': [{'expression': 'BSD-3-Clause AND MIT'}]},
+                        {'name': 'node', 'version': '22.0.0', 'purl': 'pkg:github/nodejs/node@v22.0.0?os=linux',
+                         'licenses': [{'license': {'id': 'MIT'}}],
+                         'externalReferences': [{'type': 'license', 'url': 'https://nodejs.org/LICENSE'}]},
                         {'group': 'com.example', 'name': 'demo', 'version': '1.2.3',
                          'purl': 'pkg:maven/com.example/demo@1.2.3?type=jar',
                          'hashes': [{'alg': 'SHA-256', 'content': '0' * 64}],
@@ -58,7 +62,10 @@ class SbomAndRenderTests(unittest.TestCase):
             inv = load_sboms([sbom], '4.4.1-SNAPSHOT', _policy(), check_version=True)
             self.assertEqual(list(inv.packages.keys()), ['pkg:maven/com.example/demo@1.2.3'])
             self.assertEqual(len(inv.jars), 1)
-            self.assertTrue(any(r.generated == 'lwm2m-registry' for r in inv.license_files))
+            by_name = {r.name: r for r in inv.license_files}
+            self.assertEqual(by_name['lwm2m-registry'].generated, 'lwm2m-registry')
+            self.assertEqual(by_name['lwm2m-registry'].declared_raw, ('BSD-3-Clause AND MIT',))
+            self.assertEqual(by_name['node'].declared_raw, ('MIT',))
 
             # Stale SBOM version fails closed when check_version=True
             with self.assertRaises(SystemExit) as ctx:

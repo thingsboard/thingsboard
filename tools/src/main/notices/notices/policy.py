@@ -25,6 +25,7 @@ from notices.spdx import (
 
 POLICY_REL = 'tools/src/main/notices/policy.toml'
 CURATIONS_REL = 'tools/src/main/notices/curations.toml'
+GUIDE_REL = 'docs/licensing-guide.md'
 
 # Root or META-INF license documentation files (never source files!).
 ROOT_LICENSE_FILE_RE = re.compile(r'^(?:META-INF/)?(?:LICENSE|LICENCE|COPYING)(?:\.[^/]+)?$', re.IGNORECASE)
@@ -77,8 +78,30 @@ def is_excluded_path(path, exclude_paths):
     return any(glob_match(path, pattern) for pattern in exclude_paths)
 
 
-def validate_pre_scan(packages, sources, policy, curations):
-    """Runs fast pre-scan fail-closed checks (1-3) and returns resolved declared ASTs by PURL."""
+def _make_branch_rank(policy):
+    default_pref = len(policy.same_category_preference)
+
+    def branch_rank(lic_set):
+        # Worst category among AND-ed licenses in this branch determines branch tier.
+        # Unclassified licenses rank at 3.5 (worse than written-offer=3, better than forbidden=4)
+        # so known permissive branches win cleanly, while unknown vs unknown still surfaces.
+        worst_cat = max(
+            3.5 if (cat := policy.category(str(lic))) is None else CATEGORY_ORDER[cat]
+            for lic in lic_set
+        )
+        # Within the same category, compare preference worst-first so a branch with a less-preferred
+        # license loses; shorter license sets win ties (e.g. MIT beats Apache-2.0 AND MIT).
+        pref_ranks = tuple(sorted(
+            (policy.same_category_preference.get(str(lic), default_pref) for lic in lic_set),
+            reverse=True,
+        ))
+        return (worst_cat, pref_ranks, len(lic_set))
+
+    return branch_rank
+
+
+def validate_pre_scan(packages, sources, policy, curations, license_files=()):
+    """Runs fast pre-scan fail-closed checks (including license-file components) and returns declared ASTs."""
     unreviewed = []
     unmapped = []
     unscanned = []
@@ -98,21 +121,68 @@ def validate_pre_scan(packages, sources, policy, curations):
         if sources.get(purl) is None:
             unscanned.append(pkg.purl)
 
+    lf_unmapped, lf_undecided, lf_forbidden, lf_unclassified, lf_unlicensed = _check_license_files(license_files, policy)
+    unmapped.extend(lf_unmapped)
+
     if unreviewed:
         raise stop(_unreviewed_message(unreviewed))
     if unmapped:
         raise stop(_unmapped_message(unmapped))
     if unscanned:
         raise stop(_unscanned_message(unscanned))
+    if lf_undecided:
+        raise stop(_undecided_message(lf_undecided))
+    if lf_forbidden:
+        raise stop(_forbidden_message(lf_forbidden))
+    if lf_unclassified:
+        raise stop(_unclassified_message(lf_unclassified))
+    if lf_unlicensed:
+        raise stop(_unlicensed_message(lf_unlicensed))
     return declared_by_purl
 
 
-def resolve_all(packages, sources, scan_records, policy, curations, declared_by_purl=None):
+def _check_license_files(license_files, policy):
+    """Validates declared licenses of bundled license-file components (Chromium, Node.js, fonts, LwM2M)."""
+    branch_rank = _make_branch_rank(policy)
+    unmapped, undecided, forbidden, unclassified, unlicensed = [], [], [], [], []
+    ordered = sorted(license_files, key=lambda r: (r.coordinates, r.url or r.path or r.generated or ''))
+    for ref in ordered:
+        if not ref.declared_raw:
+            # lwm2m-registry has its own XML-header vs application/pom.xml check in lwm2m.py;
+            # other license-file components must declare their licenses in the SBOM/POM.
+            if ref.generated != 'lwm2m-registry':
+                unlicensed.append(ref.coordinates)
+            continue
+        parsed_items, ref_unmapped = _parse_declared_items(ref.declared_raw, ref.named_raw, {}, policy, ref.coordinates)
+        for name in ref_unmapped:
+            unmapped.append((ref.coordinates, ref.coordinates, name))
+        if ref_unmapped:
+            continue
+        if not parsed_items:
+            unlicensed.append(ref.coordinates)
+            continue
+        node = parsed_items[0] if len(parsed_items) == 1 else And(tuple(parsed_items))
+        resolved_lics, ref_undecided = resolve_or(node, branch_rank)
+        for expr_str in ref_undecided:
+            undecided.append((ref.coordinates, expr_str))
+        if not resolved_lics:
+            unlicensed.append(ref.coordinates)
+            continue
+        for lic in sorted(resolved_lics, key=str):
+            cat = policy.category(str(lic))
+            if cat is None:
+                unclassified.append(f'{lic} ({ref.coordinates})')
+            elif cat == 'forbidden':
+                forbidden.append(f'{lic} ({ref.coordinates})')
+    return unmapped, undecided, forbidden, unclassified, unlicensed
+
+
+def resolve_all(packages, sources, scan_records, policy, curations, declared_by_purl=None, license_files=()):
     """Validates and resolves every package against policy and curations.
 
     Fail-closed checks run in deterministic order:
       1. Unreviewed version bumps on concluded_license curations
-      2. Unmapped non-SPDX declared license names
+      2. Unmapped non-SPDX declared license names (packages & license-file components)
       3. Unscanned packages (no source and not metadata_only)
       4. Undecided OR ties
       5. Forbidden licenses (checked AFTER OR resolution)
@@ -120,26 +190,9 @@ def resolve_all(packages, sources, scan_records, policy, curations, declared_by_
       7. Unlicensed packages
     """
     if declared_by_purl is None:
-        declared_by_purl = validate_pre_scan(packages, sources, policy, curations)
+        declared_by_purl = validate_pre_scan(packages, sources, policy, curations, license_files=license_files)
 
-    default_pref = len(policy.same_category_preference)
-
-    def branch_rank(lic_set):
-        # Worst category among AND-ed licenses in this branch determines branch tier.
-        # Unclassified licenses rank at 3.5 (worse than written-offer=3, better than forbidden=4)
-        # so known permissive branches win cleanly, while unknown vs unknown still surfaces.
-        worst_cat = max(
-            3.5 if (cat := policy.category(str(lic))) is None else CATEGORY_ORDER[cat]
-            for lic in lic_set
-        )
-        # Within the same category, compare preference worst-first so a branch with a less-preferred
-        # license loses; shorter license sets win ties (e.g. MIT beats Apache-2.0 AND MIT).
-        pref_ranks = tuple(sorted(
-            (policy.same_category_preference.get(str(lic), default_pref) for lic in lic_set),
-            reverse=True,
-        ))
-        return (worst_cat, pref_ranks, len(lic_set))
-
+    branch_rank = _make_branch_rank(policy)
     undecided = []
     forbidden = []
     unclassified = []
@@ -252,27 +305,17 @@ def _parse_config_spdx(expr, context):
         raise stop(f'invalid SPDX expression {expr!r} in {context}: {err}')
 
 
-def _resolve_declared(pkg, policy, curations):
-    """Returns (AST_or_None, list_of_unmapped_names)."""
-    applying = curations.for_package(pkg.package_key, pkg.version)
-    override = next((c.declared_license for c in applying if c.declared_license), None)
-    if override:
-        return _parse_config_spdx(override, f'declared_license for {pkg.purl}'), []
-
-    pkg_map = {}
-    for c in applying:
-        pkg_map.update(c.declared_license_map)
-
+def _parse_declared_items(declared_raw, named_raw, pkg_map, policy, context_id):
     parsed_items = []
     unmapped = []
-    for raw in pkg.declared_raw:
+    for raw in declared_raw:
         mapped = pkg_map.get(raw)
-        if mapped is None and raw in pkg.named_raw:
+        if mapped is None and raw in named_raw:
             mapped = policy.license_aliases.get(raw)
         if mapped is not None:
-            parsed_items.append(_parse_config_spdx(mapped, f'license mapping for {pkg.purl} ({raw!r})'))
+            parsed_items.append(_parse_config_spdx(mapped, f'license mapping for {context_id} ({raw!r})'))
             continue
-        if raw in pkg.named_raw:
+        if raw in named_raw:
             # Some POMs place a valid SPDX expression (e.g. "EPL-2.0 OR BSD-3-Clause") in <name>.
             if any(op in raw for op in (' OR ', ' AND ', ' WITH ')):
                 try:
@@ -293,7 +336,21 @@ def _resolve_declared(pkg, policy, curations):
                 parsed_items.append(_parse_config_spdx(fallback, f'license_aliases for {raw!r}'))
             else:
                 unmapped.append(raw)
+    return parsed_items, unmapped
 
+
+def _resolve_declared(pkg, policy, curations):
+    """Returns (AST_or_None, list_of_unmapped_names)."""
+    applying = curations.for_package(pkg.package_key, pkg.version)
+    override = next((c.declared_license for c in applying if c.declared_license), None)
+    if override:
+        return _parse_config_spdx(override, f'declared_license for {pkg.purl}'), []
+
+    pkg_map = {}
+    for c in applying:
+        pkg_map.update(c.declared_license_map)
+
+    parsed_items, unmapped = _parse_declared_items(pkg.declared_raw, pkg.named_raw, pkg_map, policy, pkg.purl)
     if unmapped or not parsed_items:
         return None, unmapped
     if len(parsed_items) == 1:
@@ -341,7 +398,8 @@ def _unreviewed_message(packages):
         f'To fix: read the license of the new version, then in {CURATIONS_REL} either:\n'
         f'  - widen the range of the entry, if unchanged: id = "{pkg_key}@[<from>,<to>[" '
         f'(covering {version}), or\n'
-        '  - add a new [[curations]] entry for this version with a comment saying where you checked.'
+        '  - add a new [[curations]] entry for this version with a comment saying where you checked.\n'
+        f'See {GUIDE_REL}#rules-for-license-decisions.'
     )
 
 
@@ -358,7 +416,8 @@ def _unmapped_message(packages):
         f'      [[curations]]\n'
         f'      id = "{pkg_key}"\n'
         f'      declared_license_map = {{ "{name}" = "<SPDX-id>" }}\n'
-        f'      comment = "<where you checked>"'
+        f'      comment = "<where you checked>"\n'
+        f'See {GUIDE_REL}#rules-for-license-decisions.'
     )
 
 
@@ -372,7 +431,8 @@ def _unscanned_message(purls):
         f'  id = "{purls[0]}"\n'
         '  vcs = { type = "Git", url = "<repository>", revision = "<commit>", path = "" }\n'
         '  comment = "<why this commit>"\n'
-        '  # or, if no source is published: metadata_only = true'
+        '  # or, if no source is published: metadata_only = true\n'
+        f'See {GUIDE_REL}#when-the-generator-stops.'
     )
 
 
@@ -381,7 +441,8 @@ def _undecided_message(items):
     return (
         'these packages offer a license choice between equally ranked licenses.\n'
         + lines
-        + f'To fix: add the preferred license to `same_category_preference` in {POLICY_REL}.'
+        + f'To fix: add the preferred license to `same_category_preference` in {POLICY_REL}.\n'
+        f'See {GUIDE_REL}#rules-for-license-decisions.'
     )
 
 
@@ -392,7 +453,8 @@ def _forbidden_message(items):
         + lines
         + 'Strong copyleft would put ThingsBoard itself under that license, and others forbid commercial use.\n'
         + 'Remove or replace the dependency. Only if the scan misread a specific file, add a file-scoped\n'
-        f'`ignore_findings` entry to {CURATIONS_REL} with a comment explaining why (CODEOWNERS approval required).'
+        f'`ignore_findings` entry to {CURATIONS_REL} with a comment explaining why (CODEOWNERS approval required).\n'
+        f'See {GUIDE_REL}#rules-for-license-decisions.'
     )
 
 
@@ -406,7 +468,8 @@ def _unclassified_message(items):
         '  source-link    as notice, plus source URL (EPL, MPL, CDDL)\n'
         '  written-offer  as notice, plus written source offer (LGPL, GPL+Classpath)\n'
         '  nothing        no obligation (public domain)\n'
-        '  forbidden      cannot ship (strong copyleft, non-commercial)'
+        '  forbidden      cannot ship (strong copyleft, non-commercial)\n'
+        f'See {GUIDE_REL}#rules-for-license-decisions.'
     )
 
 
@@ -416,5 +479,6 @@ def _unlicensed_message(purls):
         'no license was found for these packages, so they would be left out of the notices silently.\n'
         + lines
         + f'To fix: verify the license from its repository/package page and add a version-ranged\n'
-        f'`concluded_license` entry to {CURATIONS_REL} (or raise it before merging if truly unlicensed).'
+        f'`concluded_license` entry to {CURATIONS_REL} (or declare <license> in pom.xml for bundled components).\n'
+        f'See {GUIDE_REL}#rules-for-license-decisions.'
     )
