@@ -284,12 +284,6 @@ def _license_file_ref(component, repo_license_files):
     declared_raw = tuple(licenses)
     named_raw = frozenset(names)
 
-    if comp_name == 'lwm2m-registry' and not component.get('purl'):
-        return LicenseFileRef(
-            group=group, name=comp_name, version=version, generated='lwm2m-registry',
-            declared_raw=declared_raw, named_raw=named_raw,
-        )
-
     urls = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'license' and r.get('url')]
     if len(urls) > 1:
         raise stop(
@@ -310,9 +304,15 @@ def _license_file_ref(component, repo_license_files):
             declared_raw=declared_raw, named_raw=named_raw,
         )
     if matched_key:
+        target = repo_license_files[matched_key]
+        if target.startswith('generated:'):
+            return LicenseFileRef(
+                group=group, name=comp_name, version=version, generated=target.removeprefix('generated:'),
+                declared_raw=declared_raw, named_raw=named_raw,
+            )
         platform = qualifiers(name).get('os')
         return LicenseFileRef(
-            group=group, name=comp_name, version=version, path=repo_license_files[matched_key], platform=platform,
+            group=group, name=comp_name, version=version, path=target, platform=platform,
             declared_raw=declared_raw, named_raw=named_raw,
         )
     if name.startswith('pkg:'):

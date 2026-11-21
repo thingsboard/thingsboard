@@ -691,37 +691,6 @@
                         </plugin>
                         <plugin>
                             <groupId>org.thingsboard</groupId>
-                            <artifactId>sbom-maven-plugin</artifactId>
-                            <executions>
-                                <!-- The SBOM of the Spring Boot jar, made from the libraries the finished jar packs and put into
-                                     it. The jar is built in prepare-package, so that this runs before the package phase, which
-                                     builds the packages and their SBOMs: Maven runs the goals of one plugin in a phase together.
-                                     Declare this plugin after spring-boot-maven-plugin, so that it runs after the repackaging.
-                                     A module that builds such a jar sets sbom.jar.phase to prepare-package. -->
-                                <execution>
-                                    <id>jar-sbom</id>
-                                    <phase>${sbom.jar.phase}</phase>
-                                    <goals>
-                                        <goal>jar</goal>
-                                    </goals>
-                                    <configuration>
-                                        <jar>${project.build.directory}/${project.build.finalName}-boot.jar</jar>
-                                        <otherJars>
-                                            <otherJar>${project.build.directory}/${project.build.finalName}.jar</otherJar>
-                                        </otherJars>
-                                        <libraries>
-                                            <library>
-                                                <group>org.springframework.boot</group>
-                                                <name>spring-boot-jarmode-tools</name>
-                                            </library>
-                                        </libraries>
-                                        <skip>${pkg.skip.bootjar}</skip>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-                        <plugin>
-                            <groupId>org.thingsboard</groupId>
                             <artifactId>gradle-maven-plugin</artifactId>
                             <configuration>
                                 <gradleProjectDirectory>${main.dir}/packaging/${pkg.type}</gradleProjectDirectory>
@@ -917,6 +886,28 @@
                         </componentManufacturer>
                     </configuration>
                     <executions>
+                        <!-- The SBOM of the Spring Boot jar, made from the libraries the finished jar packs and put into
+                             it. The jar is built in prepare-package, so that this runs before the package phase, which
+                             builds the packages and their SBOMs: Maven runs the goals of one plugin in a phase together.
+                             Declare this plugin after spring-boot-maven-plugin, so that it runs after the repackaging.
+                             A module that builds such a jar sets sbom.jar.phase to prepare-package. -->
+                        <execution>
+                            <id>jar-sbom</id>
+                            <phase>${sbom.jar.phase}</phase>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+                                <jar>${project.build.directory}/${project.build.finalName}-boot.jar</jar>
+                                <libraries>
+                                    <library>
+                                        <group>org.springframework.boot</group>
+                                        <name>spring-boot-jarmode-tools</name>
+                                    </library>
+                                </libraries>
+                                <skip>${pkg.skip.bootjar}</skip>
+                            </configuration>
+                        </execution>
                         <!-- What each package bundles besides the application, declared here and in the modules: the notices
                              that go into the packages, those of the product and the package SBOMs are made with it -->
                         <execution>

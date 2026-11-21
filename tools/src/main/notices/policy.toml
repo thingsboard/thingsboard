@@ -219,10 +219,11 @@ forbidden = [
 "LicenseRef-scancode-adobe-postscript" = "Adobe PostScript mapping files notice"
 "LicenseRef-thingsboard-beerware-googlemutant" = "Beerware (leaflet.gridlayer.googlemutant)"
 
-# License files kept in this repository for non-Maven/non-npm bundled components.
-# Keys are the component's exact purl (stops on version drift) or name when it has no purl.
-# Note: lwm2m-registry is generated on the fly from application/src/main/data/lwm2m-registry/*.xml.
+# License files kept in this repository (or generated from repo XMLs via "generated:<id>") for
+# non-Maven/non-npm bundled components. Keys are the component's exact purl (stops on version drift)
+# or name when it has no purl.
 [license_files]
+"lwm2m-registry" = "generated:lwm2m-registry"
 "pkg:generic/chromium/chromium@156.0.8078.0?os=linux" = "msa/web-report/chromium-credits/CREDITS.txt"
 "pkg:generic/chromium/chromium@156.0.8078.0?os=windows" = "msa/web-report/chromium-credits/CREDITS.txt"
 
