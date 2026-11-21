@@ -37,6 +37,10 @@
             </resource>
             <resource>
                 <directory>${project.build.directory}/generated-resources</directory>
+                <excludes>
+                    <!-- The statistics of the production build, which the SBOM of the UI is made from, and their compressed copies -->
+                    <exclude>public/stats.json*</exclude>
+                </excludes>
             </resource>
         </resources>
         <plugins>
@@ -68,16 +72,6 @@
                         </goals>
                         <configuration>
                             <arguments>install --non-interactive --check-files --network-concurrency 4 --network-timeout 100000 --mutex network</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>generate sbom</id>
-                        <goals>
-                            <goal>yarn</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${sbom.ui.skip}</skip>
-                            <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -134,6 +128,45 @@
                                 </goals>
                                 <configuration>
                                     <arguments>run compress</arguments>
+                                </configuration>
+                            </execution>
+                            <!-- After the build: the SBOM lists what the build put into the bundle, as its statistics tell -->
+                            <execution>
+                                <id>generate sbom</id>
+                                <goals>
+                                    <goal>yarn</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${sbom.ui.skip}</skip>
+                                    <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- After the SBOM, which it reads: the notices of the bundle, served at /THIRD-PARTY-NOTICES.txt.
+                         Off by default like the notices of the packages. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>notices-ui</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${notices.run.skip}</skip>
+                                    <executable>python3</executable>
+                                    <arguments>
+                                        <argument>${main.dir}/tools/src/main/notices</argument>
+                                        <argument>render</argument>
+                                        <argument>--project-version</argument>
+                                        <argument>${project.version}</argument>
+                                        <argument>--out</argument>
+                                        <argument>${project.build.directory}/generated-resources/public/THIRD-PARTY-NOTICES.txt</argument>
+                                        <argument>${project.build.directory}/generated-resources/META-INF/sbom/ui-ngx.cdx.json</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>

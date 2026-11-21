@@ -33,6 +33,7 @@
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
         <sbom.image.scanExclude></sbom.image.scanExclude>
+        <notices.image.phase>package</notices.image.phase>
     </properties>
 
     <dependencies>
@@ -138,25 +139,6 @@
                             </artifactItems>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>copy-winsw-service</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>com.sun.winsw</groupId>
-                                    <artifactId>winsw</artifactId>
-                                    <classifier>bin</classifier>
-                                    <type>exe</type>
-                                    <destFileName>service.exe</destFileName>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${pkg.win.dist}</outputDirectory>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -201,6 +183,15 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
+                    <!-- The image also has the UI, which has its own SBOM -->
+                    <execution>
+                        <id>notices-image</id>
+                        <configuration>
+                            <arguments combine.children="append">
+                                <argument>${project.build.directory}/web/META-INF/sbom/ui-ngx.cdx.json</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>build-docker-image</id>
                         <phase>pre-integration-test</phase>
@@ -240,6 +231,9 @@
                 <executions>
                     <execution>
                         <id>sbom-metadata</id>
+                        <goals>
+                            <goal>metadata</goal>
+                        </goals>
                         <configuration>
                             <targetFile>${project.build.directory}/sbom/${pkg.name}.cdx.json</targetFile>
                             <skip>${skip.ui.build}</skip>

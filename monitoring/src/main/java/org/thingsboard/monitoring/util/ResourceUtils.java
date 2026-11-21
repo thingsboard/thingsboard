@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.monitoring.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,6 +25,13 @@ public class ResourceUtils {
 
     public static InputStream getResourceAsStream(String path) {
         return getResourceStream(path);
+    }
+
+    @SneakyThrows
+    public static byte[] getResourceBytes(String path) {
+        try (InputStream resource = getResourceStream(path)) {
+            return resource.readAllBytes();
+        }
     }
 
     private static InputStream getResourceStream(String path) {

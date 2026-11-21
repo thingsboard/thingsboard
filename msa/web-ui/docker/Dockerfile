@@ -12,7 +12,8 @@ COPY start-web-ui.sh /tmp/
 
 WORKDIR ${pkg.installFolder}
 
-COPY ["src/package.json", "src/yarn.lock", "./"]
+# notice[s] is a pattern, so that the COPY works in a build without the third-party notices (-Dnotices.skip=false makes them)
+COPY ["src/package.json", "src/yarn.lock", "LICENSE", "notice[s]/image/THIRD-PARTY-NOTICES", "./"]
 
 COPY package/linux/conf ./conf
 COPY package/linux/conf ./config

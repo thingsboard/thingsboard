@@ -38,6 +38,8 @@
         <sbom.image.phase>none</sbom.image.phase>
         <sbom.image.latestTag>latest</sbom.image.latestTag>
         <sbom.image.scanExclude>${pkg.installFolder}/**</sbom.image.scanExclude>
+        <!-- Set to package by the modules whose image installs npm packages itself: see the notices-image execution -->
+        <notices.image.phase>none</notices.image.phase>
     </properties>
 
     <modules>
@@ -309,6 +311,31 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>${exec-maven-plugin.version}</version>
+                    <executions>
+                        <!-- The third-party notices of an image that installs no package of ours, which would bring them:
+                             made from the SBOM that the image-sbom execution checks the image against, and copied by
+                             the Dockerfile. Off by default like the notices of the packages. -->
+                        <execution>
+                            <id>notices-image</id>
+                            <phase>${notices.image.phase}</phase>
+                            <goals>
+                                <goal>exec</goal>
+                            </goals>
+                            <configuration>
+                                <skip>${notices.run.skip}</skip>
+                                <executable>python3</executable>
+                                <arguments>
+                                    <argument>${main.dir}/tools/src/main/notices</argument>
+                                    <argument>render</argument>
+                                    <argument>--project-version</argument>
+                                    <argument>${project.version}</argument>
+                                    <argument>--out</argument>
+                                    <argument>${project.build.directory}/notices/image/THIRD-PARTY-NOTICES</argument>
+                                    <argument>${project.build.directory}/sbom/${pkg.name}.cdx.json</argument>
+                                </arguments>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.thingsboard</groupId>
