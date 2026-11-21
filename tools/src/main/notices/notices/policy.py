@@ -208,9 +208,10 @@ def resolve_all(packages, sources, scan_records, policy, curations, declared_by_
         record = scan_records.get(purl) or {'findings': []}
 
         declared_or_atoms = or_branch_atoms(declared_node) if declared_node else set()
-        detected_nodes, raw_copyrights = _collect_findings(
+        detected_nodes, scan_copyrights = _collect_findings(
             record, policy.exclude_paths, ignores, declared_or_atoms, skip_licenses=bool(concluded_expr)
         )
+        raw_copyrights = list(pkg.copyrights) + scan_copyrights
 
         if concluded_expr:
             effective_node = _parse_config_spdx(concluded_expr, f'concluded_license for {pkg.purl}')

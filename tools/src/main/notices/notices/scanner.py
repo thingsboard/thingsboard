@@ -126,6 +126,8 @@ def _make_scan_record(source, findings, notices):
 
 def resolve_package_source(pkg, curations, maven_sources):
     """Returns a scan source descriptor (artifact, vcs, or metadata_only), or None if unavailable."""
+    if pkg.kind == 'declared':
+        return {'type': 'metadata_only'}
     applying = curations.for_package(pkg.package_key, pkg.version)
     if any(c.metadata_only for c in applying):
         return {'type': 'metadata_only'}

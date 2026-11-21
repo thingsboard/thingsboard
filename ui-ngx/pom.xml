@@ -143,6 +143,33 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- Fold vendored UI fonts (e.g. Segment7Standard) into ui-ngx.cdx.json before notices-ui renders it -->
+                    <plugin>
+                        <groupId>org.thingsboard</groupId>
+                        <artifactId>sbom-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>fonts-sbom</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>fonts</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${sbom.ui.skip}</skip>
+                                    <resourcesDirectory>${project.build.directory}/generated-resources</resourcesDirectory>
+                                    <directory>public/assets/fonts</directory>
+                                    <outputFile>${project.build.directory}/generated-resources/META-INF/sbom/ui-ngx.cdx.json</outputFile>
+                                    <merge>true</merge>
+                                    <licenses>
+                                        <fontLicense>
+                                            <font>Segment7</font>
+                                            <license>OFL-1.1</license>
+                                        </fontLicense>
+                                    </licenses>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <!-- After the SBOM, which it reads: the notices of the bundle, served at /THIRD-PARTY-NOTICES.txt.
                          Off by default like the notices of the packages. -->
                     <plugin>

@@ -18,7 +18,7 @@ from notices.config import normalize_purl_scope, split_curation_id
 class PackageComponent:
     purl: str           # canonical purl without qualifiers/fragment (npm scope normalized to @)
     package_key: str    # purl without @version
-    kind: str           # 'maven' or 'npm'
+    kind: str           # 'maven', 'npm', or 'declared' (self-contained SBOM component with license + copyright)
     group: str
     name: str
     version: str
@@ -26,6 +26,7 @@ class PackageComponent:
     named_raw: frozenset[str]       # subset of declared_raw that came as non-SPDX names
     npm_tarball: dict | None        # {'url': ..., 'sha1': ...}
     vcs: dict | None                # {'type': ..., 'url': ..., 'revision': ..., 'path': ''}
+    copyrights: tuple[str, ...] = ()
 
     @property
     def coordinates(self):
@@ -123,6 +124,13 @@ def load_sboms(sbom_paths, project_version, policy, check_version=False):
                 ref = _license_file_ref(component, policy.license_files)
                 if ref:
                     license_files.add(ref)
+                else:
+                    declared = _parse_declared_component(component)
+                    if declared:
+                        packages[declared.purl] = (
+                            _merge_package(packages[declared.purl], declared)
+                            if declared.purl in packages else declared
+                        )
                 continue
 
             canonical = canonical_purl(purl)
@@ -139,8 +147,12 @@ def load_sboms(sbom_paths, project_version, policy, check_version=False):
             f'these SBOMs are not of the version {project_version}, so an older build left them. '
             'Build again from clean: mvn clean package -DskipTests -Dsbom.skip=false\n'
             + '\n'.join(wrong_version)
-            + '\nSee docs/licensing-guide.md#regenerating-the-notices.'
+            + '\nSee docs/licensing-guide.md#checking-the-notices-locally.'
         )
+
+    for pkg in packages.values():
+        if pkg.npm_tarball and not pkg.npm_tarball.get('sha1'):
+            raise stop(f"the SBOM gives no SHA-1 for {pkg.npm_tarball['url']}. {BUILD_PROBLEM}")
 
     return SbomInventory(packages=packages, jars=jars, license_files=license_files)
 
@@ -197,6 +209,11 @@ def _merge_package(existing, incoming):
     """Merges duplicate occurrences of the same PURL across SBOMs so no metadata is lost by order."""
     declared = tuple(sorted(set(existing.declared_raw) | set(incoming.declared_raw)))
     named = existing.named_raw | incoming.named_raw
+    copyrights = tuple(sorted(set(existing.copyrights) | set(incoming.copyrights)))
+    npm_tarball = (
+        existing.npm_tarball if (existing.npm_tarball and existing.npm_tarball.get('sha1'))
+        else incoming.npm_tarball or existing.npm_tarball
+    )
     return PackageComponent(
         purl=existing.purl,
         package_key=existing.package_key,
@@ -206,8 +223,38 @@ def _merge_package(existing, incoming):
         version=existing.version or incoming.version,
         declared_raw=declared,
         named_raw=named,
-        npm_tarball=existing.npm_tarball or incoming.npm_tarball,
+        npm_tarball=npm_tarball,
         vcs=existing.vcs or incoming.vcs,
+        copyrights=copyrights,
+    )
+
+
+def _parse_declared_component(component):
+    """Parses a non-Maven/non-npm component that carries both declared licenses and copyright lines (e.g. bundled fonts)."""
+    purl = component.get('purl') or ''
+    if re.match(r'^pkg:(?:deb|rpm|generic|github)/thingsboard/', purl):
+        return None
+    copyright_text = (component.get('copyright') or '').strip()
+    licenses, names = _declared_licenses(component)
+    if not copyright_text or not licenses:
+        return None
+    canonical = canonical_purl(purl) if purl else (component.get('bom-ref') or component.get('name', ''))
+    if not canonical:
+        return None
+    pkg_key, _ = split_curation_id(canonical)
+    copyrights = tuple(line.strip() for line in copyright_text.replace('\r\n', '\n').replace('\r', '\n').split('\n') if line.strip())
+    return PackageComponent(
+        purl=canonical,
+        package_key=pkg_key,
+        kind='declared',
+        group=component.get('group', ''),
+        name=component.get('name', ''),
+        version=component.get('version', ''),
+        declared_raw=tuple(licenses),
+        named_raw=frozenset(names),
+        npm_tarball=None,
+        vcs=None,
+        copyrights=copyrights,
     )
 
 
@@ -298,11 +345,9 @@ def _npm_tarball(component):
     for reference in component.get('externalReferences', []):
         if reference.get('type') == 'distribution' and reference.get('url'):
             sha1 = [h.get('content', '').lower() for h in reference.get('hashes', []) if h.get('alg') == 'SHA-1' and h.get('content')]
-            if not sha1:
-                raise stop(f"the SBOM gives no SHA-1 for {reference['url']}. {BUILD_PROBLEM}")
             return {
                 'url': reference['url'].replace('https://registry.yarnpkg.com/', 'https://registry.npmjs.org/'),
-                'sha1': sha1[0],
+                'sha1': sha1[0] if sha1 else '',
             }
     return None
 

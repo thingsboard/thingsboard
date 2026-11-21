@@ -8,10 +8,11 @@ import os
 import tempfile
 import unittest
 
-from notices.config import Policy
-from notices.policy import ResolvedPackage
+from notices.config import Curations, Policy
+from notices.policy import ResolvedPackage, resolve_all
 from notices.render import render_notices
 from notices.sbom import load_sboms
+from notices.scanner import resolve_package_source
 from notices.spdx import License
 
 
@@ -22,13 +23,18 @@ def _policy():
         same_category_preference={},
         license_category={
             'Apache-2.0': 'notice',
+            'Bitstream-Vera': 'notice',
             'MIT': 'notice',
+            'OFL-1.1': 'notice',
             'EPL-2.0': 'source-link',
             'LGPL-2.1-or-later': 'written-offer',
         },
         license_aliases={},
         license_titles={},
-        license_files={'pkg:generic/chromium/chromium@1.0.0?os=linux': 'CREDITS.txt'},
+        license_files={
+            'pkg:generic/chromium/chromium@1.0.0?os=linux': 'CREDITS.txt',
+            'lwm2m-registry': 'generated:lwm2m-registry',
+        },
         copyright_garbage=frozenset(),
     )
 
@@ -140,6 +146,66 @@ class SbomAndRenderTests(unittest.TestCase):
             self.assertIn('License files of the components', text)
             self.assertIn('NOTICE files of the components', text)
             self.assertIn('    NOTICE BODY', text)
+
+    def test_declared_font_components_flow_through_policy_and_render(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            sbom = os.path.join(tmp, 'report.cdx.json')
+            with open(sbom, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'components': [
+                        {
+                            'type': 'file', 'name': 'Roboto', 'version': '3.009',
+                            'bom-ref': 'font:roboto@3.009', 'purl': 'pkg:generic/roboto@3.009',
+                            'copyright': 'Copyright 2011 The Roboto Project Authors',
+                            'licenses': [{'license': {'id': 'OFL-1.1'}}],
+                        },
+                        {
+                            'type': 'file', 'name': 'DejaVu Sans Mono', 'version': '2.37',
+                            'bom-ref': 'font:dejavu-sans-mono@2.37', 'purl': 'pkg:generic/dejavu-sans-mono@2.37',
+                            'copyright': 'Copyright (c) 2003 by Bitstream, Inc.\nDejaVu changes are in public domain',
+                            'licenses': [{'license': {'id': 'Bitstream-Vera'}}],
+                        },
+                    ],
+                }, f)
+            pol = _policy()
+            cur = Curations()
+            inv = load_sboms([sbom], '4.4.1-SNAPSHOT', pol)
+            self.assertEqual(sorted(inv.packages), ['pkg:generic/dejavu-sans-mono@2.37', 'pkg:generic/roboto@3.009'])
+            sources = {p: resolve_package_source(pkg, cur, {}) for p, pkg in inv.packages.items()}
+            resolved = resolve_all(inv.packages, sources, {}, pol, cur)
+            custom = {'Apache-2.0': 'APACHE', 'OFL-1.1': 'OFL TEXT', 'Bitstream-Vera': 'VERA TEXT'}
+            text = render_notices(resolved, {}, {}, pol, custom, tmp)
+            self.assertIn('  Roboto 3.009\n      Copyright 2011 The Roboto Project Authors', text)
+            self.assertIn('  DejaVu Sans Mono 2.37', text)
+            self.assertIn('OFL TEXT', text)
+            self.assertIn('VERA TEXT', text)
+
+    def test_load_sboms_merges_npm_sha1_across_sboms_and_fails_if_all_lack_sha1(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            no_hash = os.path.join(tmp, 'bundled.cdx.json')
+            with_hash = os.path.join(tmp, 'ui.cdx.json')
+            url = 'https://github.com/thingsboard/echarts/archive/5.5.4-TB.tar.gz'
+            with open(no_hash, 'w', encoding='utf-8') as f:
+                json.dump({'components': [{
+                    'type': 'library', 'name': 'echarts', 'version': '5.5.4-TB',
+                    'purl': 'pkg:npm/echarts@5.5.4-TB',
+                    'licenses': [{'license': {'id': 'Apache-2.0'}}],
+                    'externalReferences': [{'type': 'distribution', 'url': url}],
+                }]}, f)
+            with open(with_hash, 'w', encoding='utf-8') as f:
+                json.dump({'components': [{
+                    'type': 'library', 'name': 'echarts', 'version': '5.5.4-TB',
+                    'purl': 'pkg:npm/echarts@5.5.4-TB',
+                    'licenses': [{'license': {'id': 'Apache-2.0'}}],
+                    'externalReferences': [{
+                        'type': 'distribution', 'url': url,
+                        'hashes': [{'alg': 'SHA-1', 'content': '05955421715b5a4ceb9b9b1b503d8e2504d0501d'}],
+                    }],
+                }]}, f)
+            inv = load_sboms([no_hash, with_hash], '4.4.1-SNAPSHOT', _policy())
+            self.assertEqual(inv.packages['pkg:npm/echarts@5.5.4-TB'].npm_tarball['sha1'], '05955421715b5a4ceb9b9b1b503d8e2504d0501d')
+            with self.assertRaisesRegex(SystemExit, 'gives no SHA-1'):
+                load_sboms([no_hash], '4.4.1-SNAPSHOT', _policy())
 
 
 if __name__ == '__main__':

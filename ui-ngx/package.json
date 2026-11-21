@@ -82,6 +82,7 @@
     "libphonenumber-js": "^1.13.15",
     "maplibre-gl": "6.15.0",
     "marked": "~16.4.2",
+    "material-icons": "1.13.14",
     "moment": "^2.31.0",
     "moment-timezone": "^0.6.5",
     "ngx-captcha": "^14.0.0",

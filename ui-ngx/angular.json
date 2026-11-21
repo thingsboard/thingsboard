@@ -128,6 +128,8 @@
               },
               "src/styles.scss",
               "src/form.scss",
+              "node_modules/material-icons/iconfont/filled.css",
+              "node_modules/material-icons/iconfont/round.css",
               "node_modules/jquery.terminal/css/jquery.terminal.min.css",
               "node_modules/tooltipster/dist/css/tooltipster.bundle.min.css",
               "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
