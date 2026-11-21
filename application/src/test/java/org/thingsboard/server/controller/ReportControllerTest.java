@@ -13,9 +13,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.mock.web.MockPart;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -87,6 +91,7 @@ import org.thingsboard.server.report.service.TbReportService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -773,6 +778,34 @@ public class ReportControllerTest extends AbstractControllerTest {
     public void testCreateReportJobByCustomer() throws Exception {
         loginCustomerAdminUser();
         testCreateReportJob(Authority.CUSTOMER_USER);
+    }
+
+    @Test
+    public void testCreateReportUsesAuthenticatedCustomer() throws Exception {
+        loginDifferentCustomerAdmin();
+        var otherCustomerId = differentCustomerAdminUser.getCustomerId();
+        loginCustomerAdminUser();
+        ReportTemplate template = doPost("/api/reportTemplate", buildReportTemplate(TbReportFormat.CSV), ReportTemplate.class);
+
+        Report report = new Report();
+        report.setTenantId(tenantId);
+        report.setCustomerId(otherCustomerId);
+        report.setTemplateId(template.getId());
+        report.setFormat(TbReportFormat.CSV);
+        report.setName("Customer-owned report");
+        report.setUserId(currentUserId);
+
+        MockMultipartFile file = new MockMultipartFile("file", "report.csv", "text/csv",
+                "value\n1\n".getBytes(StandardCharsets.UTF_8));
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/v2/report").file(file);
+        request.part(new MockPart("info", JacksonUtil.toString(report).getBytes(StandardCharsets.UTF_8)));
+        setJwtToken(request);
+
+        Report saved = readResponse(mockMvc.perform(request).andExpect(status().isOk()), Report.class);
+        assertThat(saved.getTenantId()).isEqualTo(tenantId);
+        assertThat(saved.getCustomerId()).isEqualTo(customerId);
+        assertThat(saved.getOwnerId()).isEqualTo(customerId);
+        assertThat(doGet("/api/v2/report/" + saved.getId(), Report.class).getCustomerId()).isEqualTo(customerId);
     }
 
     @Test
