@@ -7,12 +7,9 @@
 import hashlib
 import os
 import re
-import urllib.error
-import urllib.request
 
-from notices import ROOT, stop, write_atomically
+from notices import HTTP_ERRORS, ROOT, clean_text, http_get, ort_home, stop, write_atomically
 from notices.lwm2m import generate_lwm2m_notice
-from notices.scanner import clean_text
 
 SECTION_RE = re.compile(r'^======== Only in the (.+) build ========$')
 
@@ -20,7 +17,7 @@ SECTION_RE = re.compile(r'^======== Only in the (.+) build ========$')
 def collect_license_files(refs, cache_dir, root=ROOT):
     """Returns {text -> set of (component_coordinates, origin)} for all bundled license-file components."""
     downloads_dir = os.path.join(cache_dir, 'license-files')
-    legacy_dir = os.path.expanduser('~/.ort/license-files')
+    legacy_dir = os.path.join(ort_home(), 'license-files')
     platforms = _platforms_by_path(refs)
     found = {}
     cached_repo_texts = {}
@@ -101,10 +98,8 @@ def _download_url(url, component, downloads_dir, legacy_dir):
             with open(candidate, 'rb') as file:
                 return file.read()
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'tb-notices'})
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            data = resp.read()
-    except (urllib.error.URLError, OSError) as err:
+        data = http_get(url, timeout=120)
+    except HTTP_ERRORS as err:
         raise stop(
             f'the license file of {component} cannot be downloaded from {url}: {err}. '
             'Check the external reference of type license in the pom that declares it.'

@@ -3,9 +3,7 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
-import gzip
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import json
 import tempfile
 import threading
 import unittest
@@ -14,10 +12,18 @@ from notices.cache import ScanCache, scan_cache_key
 
 
 class CacheTests(unittest.TestCase):
-    def test_scan_cache_key_deterministic(self):
+    def test_scan_cache_key_deterministic_and_normalizes_vcs_path(self):
         src = {'type': 'artifact', 'url': 'https://example.org/a-1.0-sources.jar', 'sha1': 'a' * 40}
         self.assertEqual(scan_cache_key('32.5.0', src), scan_cache_key('32.5.0', src))
         self.assertNotEqual(scan_cache_key('32.5.0', src), scan_cache_key('32.6.0', src))
+
+        vcs_a = {'type': 'vcs', 'vcs_type': 'Git', 'url': 'https://example.org/repo', 'revision': 'abc', 'path': '/sub/dir/'}
+        vcs_b = {'type': 'vcs', 'vcs_type': 'Git', 'url': 'https://example.org/repo', 'revision': 'abc', 'path': 'sub/dir'}
+        self.assertEqual(scan_cache_key('32.5.0', vcs_a), scan_cache_key('32.5.0', vcs_b))
+
+    def test_invalid_remote_url_stops(self):
+        with self.assertRaises(SystemExit):
+            ScanCache(remote_url='ftp://example.org/cache')
 
     def test_parallel_fetch_and_upload_with_retry(self):
         store = {}
@@ -84,7 +90,8 @@ class CacheTests(unittest.TestCase):
                 reader = ScanCache(cache_dir=d2, remote_url=url, concurrency=4)
                 fetched, missing, errors = reader.fetch_missing(['key1', 'key2', 'key3'])
                 self.assertEqual(errors, [])
-                self.assertEqual(fetched, 2)
+                self.assertEqual(len(fetched), 2)
+                self.assertEqual(fetched['key1'], {'schema': 1, 'findings': []})
                 self.assertEqual(missing, ['key3'])
                 self.assertEqual(reader.read_local('key1'), {'schema': 1, 'findings': []})
         finally:

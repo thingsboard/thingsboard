@@ -11,7 +11,7 @@ WITH exceptions, AND, OR, and parentheses. Operator precedence: WITH > AND > OR.
 from dataclasses import dataclass
 import re
 
-TOKEN = re.compile(r'\s*(?:(\()|(\))|\b(AND|OR|WITH)\b|([A-Za-z0-9][A-Za-z0-9._+-]*))')
+TOKEN = re.compile(r'\s*(?:(\()|(\))|(AND|OR|WITH)(?![A-Za-z0-9._+-])|([A-Za-z0-9][A-Za-z0-9._+-]*))')
 
 
 class SpdxSyntaxError(ValueError):
@@ -69,13 +69,12 @@ def normalize_license(identifier, exception=None):
 
 
 def tokenize(text):
-    tokens, pos = [], 0
-    length = len(text)
+    stripped = text.strip()
+    if not stripped:
+        raise SpdxSyntaxError('empty license expression')
+    tokens, pos, length = [], 0, len(stripped)
     while pos < length:
-        if text[pos].isspace():
-            pos += 1
-            continue
-        match = TOKEN.match(text, pos)
+        match = TOKEN.match(stripped, pos)
         if not match:
             raise SpdxSyntaxError(f'unexpected character at {pos} in {text!r}')
         lparen, rparen, op, ident = match.groups()
@@ -88,8 +87,6 @@ def tokenize(text):
         else:
             tokens.append(('ID', ident))
         pos = match.end()
-    if not tokens:
-        raise SpdxSyntaxError('empty license expression')
     return tokens
 
 
@@ -171,9 +168,9 @@ def leaves(node):
 def or_branch_atoms(node):
     """Simple license strings offered as choices inside any OR node of the AST.
 
-    Includes both full `License WITH Exception` and base `License` IDs so that a dual-license
-    LICENSE file containing e.g. the GPL-2.0-only text alongside a Classpath-exception-2.0 header
-    is recognized as documenting the declared offer.
+    Includes both full `License WITH Exception`, base `License` IDs, and `-only` equivalents
+    of `-or-later` licenses so a root LICENSE file containing the verbatim license text is
+    recognized as documenting the declared dual-license offer.
     """
     atoms = set()
 
@@ -182,7 +179,6 @@ def or_branch_atoms(node):
             if inside_or:
                 atoms.add(str(n))
                 atoms.add(n.id)
-                # A root LICENSE file for GPL-3.0-or-later contains the verbatim GPL-3.0 text (detected as -only).
                 if n.id.endswith('-or-later'):
                     atoms.add(n.id.removesuffix('-or-later') + '-only')
         elif isinstance(n, Or):
@@ -197,46 +193,39 @@ def or_branch_atoms(node):
 
 
 def resolve_or(node, branch_key):
-    """Resolves every OR node using branch_key(license_list) -> comparable rank tuple (lower is better).
+    """Resolves every OR node using branch_key(license_set) -> comparable rank tuple (lower is better).
 
-    Returns (resolved_licenses_set, undecided_expressions_list).
-    If an OR node has a tie for best rank among distinct branches, records str(node) in undecided
-    instead of guessing.
+    Returns (resolved_licenses_set, undecided_expressions_list). Only propagates undecided ties from
+    winning branches, so an irrelevant tie inside a losing branch (e.g. Apache-2.0 OR (GPL-2.0 OR GPL-3.0))
+    does not falsely abort resolution.
     """
-    undecided = []
-
     def walk(n):
         if isinstance(n, License):
-            return set() if is_no_license(n) else {n}
+            return (set() if is_no_license(n) else {n}), []
         if isinstance(n, And):
-            merged = set()
+            merged, undecided = set(), []
             for child in n.terms:
-                merged |= walk(child)
-            return merged
-        # Or: evaluate each branch independently, then pick the strictly best one.
-        candidates = []
-        for child in n.terms:
-            child_licenses = walk(child)
-            if not child_licenses:
-                continue
-            rank = branch_key(child_licenses)
-            candidates.append((rank, child_licenses))
-        if not candidates:
-            return set()
-        # Deduplicate identical license sets across branches (e.g. MIT OR MIT)
-        unique = {}
-        for rank, lics in candidates:
-            key = frozenset(lics)
-            if key not in unique or rank < unique[key]:
-                unique[key] = rank
-        ordered = sorted(unique.items(), key=lambda item: item[1])
-        best_rank = ordered[0][1]
-        tied = [lics for lics, rank in ordered if rank == best_rank]
-        if len(tied) > 1:
-            undecided.append(str(n))
-            # Return union only so downstream checks don't crash; caller stops on undecided first.
-            return set().union(*tied)
-        return set(ordered[0][0])
+                child_lics, child_undecided = walk(child)
+                merged |= child_lics
+                undecided.extend(child_undecided)
+            return merged, undecided
 
-    resolved = walk(node)
-    return resolved, undecided
+        # Or: evaluate each branch independently, deduplicate identical license sets, pick strictly best.
+        unique = {}  # frozenset(licenses) -> list of undecided from that branch
+        for child in n.terms:
+            child_lics, child_undecided = walk(child)
+            if not child_lics:
+                continue
+            key = frozenset(child_lics)
+            if key not in unique or (not child_undecided and unique[key]):
+                unique[key] = child_undecided
+        if not unique:
+            return set(), []
+        ranked = sorted(((branch_key(lics), lics, und) for lics, und in unique.items()), key=lambda item: item[0])
+        best_rank = ranked[0][0]
+        winners = [(lics, und) for rank, lics, und in ranked if rank == best_rank]
+        if len(winners) > 1:
+            return set().union(*(lics for lics, _ in winners)), [str(n)]
+        return set(winners[0][0]), winners[0][1]
+
+    return walk(node)

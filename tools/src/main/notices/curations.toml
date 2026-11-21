@@ -8,8 +8,8 @@
 #
 # Prefer file-scoped `ignore_findings` over whole-package `concluded_license`: ignoring only a
 # specific false-positive file keeps the rest of the package actively scanned across upgrades.
-# Every `concluded_license` MUST carry a version or range (e.g. [1.0,2.0[) so newer versions
-# stop for human review.
+# Every `concluded_license` MUST carry a version or range (e.g. @[1.0,2.0[) so newer versions
+# stop for human review. Sibling packages sharing a rule can use `ids = [...]`.
 
 [custom_licenses]
 "LicenseRef-thingsboard-beerware-googlemutant" = """\
@@ -72,12 +72,10 @@ declared_license_map = { "LGPL-2.1-only" = "LGPL-2.1-or-later" }
 comment = "The pom says 'GNU Library General Public License v2.1 or later'; the SBOM gives LGPL-2.1-only."
 
 [[curations]]
-id = "pkg:maven/org.opensmpp/opensmpp-core@[3.0,4.0["
-declared_license_map = { "BSD-4-Clause" = "BSD-3-Clause" }
-comment = "The pom says 'BSD' and prints the three-clause text; the SBOM gives BSD-4-Clause."
-
-[[curations]]
-id = "pkg:maven/org.opensmpp/opensmpp-charset@[3.0,4.0["
+ids = [
+  "pkg:maven/org.opensmpp/opensmpp-core@[3.0,4.0[",
+  "pkg:maven/org.opensmpp/opensmpp-charset@[3.0,4.0[",
+]
 declared_license_map = { "BSD-4-Clause" = "BSD-3-Clause" }
 comment = "The pom says 'BSD' and prints the three-clause text; the SBOM gives BSD-4-Clause."
 
@@ -99,6 +97,10 @@ comment = "The pom omits the version; source file headers say LGPL 2.1 or later.
 [[curations]]
 id = "pkg:maven/xml-apis/xml-apis"
 declared_license = "Apache-2.0 AND SAX-PD AND W3C"
+ignore_findings = [
+  { path = "LICENSE.*", licenses = ["W3C-19980720", "LicenseRef-scancode-w3c-docs-20021231"], comment = "License folder lists other W3C variants; package is Apache-2.0 AND SAX-PD AND W3C." },
+  { path = "org/w3c/**", licenses = ["W3C-19980720", "LicenseRef-scancode-w3c-docs-20021231"], comment = "W3C license variant covered under W3C." },
+]
 comment = "Three parts under three licenses that all apply, not a choice: org.w3c.dom (W3C), org.xml.sax (SAX-PD), javax.xml (Apache-2.0)."
 
 # ---------------------------------------------------------------------------
@@ -116,14 +118,12 @@ concluded_license = "GPL-2.0-only WITH Classpath-exception-2.0"
 comment = "No other license is offered. Covered by the written offer in the notices."
 
 [[curations]]
-id = "pkg:npm/typeface-roboto@[1.0,2.0["
+ids = [
+  "pkg:npm/typeface-roboto@[1.0,2.0[",
+  "pkg:npm/typeface-roboto-mono@[1.0,2.0[",
+]
 concluded_license = "MIT AND Apache-2.0"
 comment = "Stylesheet is MIT; Google Roboto font binaries carry Apache-2.0 in font metadata (ScanCode does not read font files)."
-
-[[curations]]
-id = "pkg:npm/typeface-roboto-mono@[1.0,2.0["
-concluded_license = "MIT AND Apache-2.0"
-comment = "Stylesheet is MIT; Google Roboto Mono font binaries carry Apache-2.0 in font metadata (ScanCode does not read font files)."
 
 [[curations]]
 id = "pkg:npm/leaflet.gridlayer.googlemutant@[0.15,0.16["
@@ -153,13 +153,10 @@ ignore_findings = [
 ]
 
 [[curations]]
-id = "pkg:maven/org.glassfish.jaxb/jaxb-runtime"
-ignore_findings = [
-  { path = "META-INF/NOTICE.md", licenses = ["GPL-1.0-or-later", "xpp", "Apache-1.1", "Apache-2.0", "EPL-2.0", "MIT"], comment = "Eclipse legal NOTICE.md (already included verbatim in NOTICE files); jar code is BSD-3-Clause." },
+ids = [
+  "pkg:maven/org.glassfish.jaxb/jaxb-runtime",
+  "pkg:maven/org.glassfish.jaxb/txw2",
 ]
-
-[[curations]]
-id = "pkg:maven/org.glassfish.jaxb/txw2"
 ignore_findings = [
   { path = "META-INF/NOTICE.md", licenses = ["GPL-1.0-or-later", "xpp", "Apache-1.1", "Apache-2.0", "EPL-2.0", "MIT"], comment = "Eclipse legal NOTICE.md (already included verbatim in NOTICE files); jar code is BSD-3-Clause." },
 ]
@@ -267,17 +264,19 @@ ignore_findings = [
 ]
 
 [[curations]]
-id = "pkg:maven/org.xhtmlrenderer/flying-saucer-core"
+ids = [
+  "pkg:maven/org.xhtmlrenderer/flying-saucer-core",
+  "pkg:maven/org.xhtmlrenderer/flying-saucer-pdf",
+]
 ignore_findings = [
-  { path = "META-INF/LICENSE*", licenses = ["CPL-1.0", "EPL-1.0", "GPL-1.0-or-later", "GPL-3.0-only", "LGPL-2.0-only", "LGPL-2.0-or-later", "LGPL-2.1-only", "LGPL-3.0-only", "LGPL-3.0-or-later", "MPL-1.1", "MPL-2.0", "LicenseRef-scancode-w3c-docs-20021231"], comment = "Flying Saucer is LGPL-2.1-or-later; META-INF/LICENSE mentions later versions and unbundled test/optional deps." },
-  { path = "org/xhtmlrenderer/**/FS*.java", licenses = ["GPL-2.0-or-later", "LGPL-2.0-only"], comment = "Damaged LGPL-2.1-or-later header misread by ScanCode." },
-  { path = "org/xhtmlrenderer/**/DefaultFSMouseListener.java", licenses = ["GPL-2.0-or-later", "LGPL-2.0-only"], comment = "Damaged LGPL-2.1-or-later header misread by ScanCode." },
+  { path = "META-INF/LICENSE*", licenses = ["CPL-1.0", "EPL-1.0", "GPL-1.0-or-later", "GPL-3.0-only", "LGPL-2.0-only", "LGPL-2.0-or-later", "LGPL-2.1-only", "LGPL-3.0-only", "LGPL-3.0-or-later", "MPL-1.1", "MPL-2.0", "LicenseRef-scancode-w3c-docs-20021231"], comment = "Flying Saucer is LGPL-2.1-or-later; META-INF/LICENSE mentions later versions and unbundled deps." },
 ]
 
 [[curations]]
-id = "pkg:maven/org.xhtmlrenderer/flying-saucer-pdf"
+id = "pkg:maven/org.xhtmlrenderer/flying-saucer-core"
 ignore_findings = [
-  { path = "META-INF/LICENSE*", licenses = ["CPL-1.0", "EPL-1.0", "GPL-1.0-or-later", "GPL-3.0-only", "LGPL-2.0-only", "LGPL-2.0-or-later", "LGPL-2.1-only", "LGPL-3.0-only", "LGPL-3.0-or-later", "MPL-1.1", "MPL-2.0", "LicenseRef-scancode-w3c-docs-20021231"], comment = "Flying Saucer is LGPL-2.1-or-later; META-INF/LICENSE mentions later versions and unbundled deps." },
+  { path = "org/xhtmlrenderer/**/FS*.java", licenses = ["GPL-2.0-or-later", "LGPL-2.0-only"], comment = "Damaged LGPL-2.1-or-later header misread by ScanCode." },
+  { path = "org/xhtmlrenderer/**/DefaultFSMouseListener.java", licenses = ["GPL-2.0-or-later", "LGPL-2.0-only"], comment = "Damaged LGPL-2.1-or-later header misread by ScanCode." },
 ]
 
 [[curations]]
@@ -302,35 +301,31 @@ ignore_findings = [
 id = "pkg:npm/ace-linters"
 ignore_findings = [
   { path = "**/typescript-service.js", licenses = ["mplus"], comment = "ScanCode misreads 'ieee754. BSD-3-Clause License.' as M+ fonts license." },
-  { path = "**/*.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
 ]
 
 [[curations]]
-id = "pkg:npm/hugerte"
+ids = [
+  "pkg:npm/ace-linters",
+  "pkg:npm/hugerte",
+]
 ignore_findings = [
   { path = "**/*.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
 ]
 
 [[curations]]
-id = "pkg:maven/ch.qos.logback/logback-classic"
+ids = [
+  "pkg:maven/ch.qos.logback/logback-classic",
+  "pkg:maven/ch.qos.logback/logback-core",
+]
 ignore_findings = [
   { path = "ch/qos/logback/**", licenses = ["EPL-1.0", "LGPL-2.1-only"], comment = "Headers offer EPL v2.0 OR LGPL 2.1; ScanCode misreads EPL-2.0 as EPL-1.0." },
 ]
 
 [[curations]]
-id = "pkg:maven/ch.qos.logback/logback-core"
-ignore_findings = [
-  { path = "ch/qos/logback/**", licenses = ["EPL-1.0", "LGPL-2.1-only"], comment = "Headers offer EPL v2.0 OR LGPL 2.1; ScanCode misreads EPL-2.0 as EPL-1.0." },
+ids = [
+  "pkg:maven/com.upokecenter/cbor",
+  "pkg:maven/com.github.peteroupc/numbers",
 ]
-
-[[curations]]
-id = "pkg:maven/com.upokecenter/cbor"
-ignore_findings = [
-  { path = "**/*.java", licenses = ["Apache-2.0"], comment = "Headers say Public Domain / CC0-1.0; ScanCode misreads Apache-2.0." },
-]
-
-[[curations]]
-id = "pkg:maven/com.github.peteroupc/numbers"
 ignore_findings = [
   { path = "**/*.java", licenses = ["Apache-2.0"], comment = "Headers say Public Domain / CC0-1.0; ScanCode misreads Apache-2.0." },
 ]
@@ -348,22 +343,12 @@ ignore_findings = [
 ]
 
 [[curations]]
-id = "pkg:maven/org.eclipse.californium/californium-core"
+ids = [
+  "pkg:maven/org.eclipse.californium/californium-core",
+  "pkg:maven/org.eclipse.californium/element-connector",
+]
 ignore_findings = [
   { path = "**/*.java", licenses = ["Apache-2.0", "EPL-1.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0 and splits EPL lines." },
-]
-
-[[curations]]
-id = "pkg:maven/org.eclipse.californium/element-connector"
-ignore_findings = [
-  { path = "**/*.java", licenses = ["Apache-2.0", "EPL-1.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0 and splits EPL lines." },
-]
-
-[[curations]]
-id = "pkg:maven/xml-apis/xml-apis"
-ignore_findings = [
-  { path = "LICENSE.*", licenses = ["W3C-19980720", "LicenseRef-scancode-w3c-docs-20021231"], comment = "License folder lists other W3C variants; package is Apache-2.0 AND SAX-PD AND W3C." },
-  { path = "org/w3c/**", licenses = ["W3C-19980720", "LicenseRef-scancode-w3c-docs-20021231"], comment = "W3C license variant covered under W3C." },
 ]
 
 [[curations]]
@@ -373,7 +358,10 @@ ignore_findings = [
 ]
 
 [[curations]]
-id = "pkg:npm/leaflet"
+ids = [
+  "pkg:npm/leaflet",
+  "pkg:npm/leaflet.markercluster",
+]
 ignore_findings = [
   { path = "**/*.js", licenses = ["ODbL-1.0"], comment = "OpenStreetMap tile attribution string in code example (about map data, not the library)." },
 ]
@@ -382,12 +370,6 @@ ignore_findings = [
 id = "pkg:npm/leaflet-providers"
 ignore_findings = [
   { path = "**/leaflet-providers.js", licenses = ["ODbL-1.0", "CC-BY-NC-4.0", "CC-BY-SA-2.0", "CC-BY-SA-3.0", "LicenseRef-scancode-proprietary-license"], comment = "Map tile provider attribution strings (about external map data, not the library)." },
-]
-
-[[curations]]
-id = "pkg:npm/leaflet.markercluster"
-ignore_findings = [
-  { path = "**/*.js", licenses = ["ODbL-1.0"], comment = "OpenStreetMap tile attribution string (about map data, not the library)." },
 ]
 
 [[curations]]

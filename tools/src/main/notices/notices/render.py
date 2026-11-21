@@ -7,10 +7,9 @@
 import os
 import re
 import subprocess
-import urllib.error
-import urllib.request
+import textwrap
 
-from notices import stop, write_atomically
+from notices import HTTP_ERRORS, http_get, normalize_text, stop, write_atomically
 from notices.scanner import DEFAULT_SCANCODE_IMAGE, SCANCODE_VERSION
 
 RULE = '=' * 78
@@ -31,7 +30,7 @@ def render_notices(resolved_packages, license_files, notice_files, policy, custo
     by_license = {CE_LICENSE: []}
     for pkg in resolved_packages:
         for lic in pkg.licenses:
-            by_license.setdefault(str(lic), []).append((pkg, lic))
+            by_license.setdefault(str(lic), []).append(pkg)
 
     sections = sorted(
         by_license.items(),
@@ -49,15 +48,15 @@ def render_notices(resolved_packages, license_files, notice_files, policy, custo
         '',
     ]
 
-    for lic_name, entries in sections:
+    for lic_name, pkgs in sections:
         title = policy.title(lic_name)
-        count = len(entries)
+        count = len(pkgs)
         suffix = f' ({count} {"component" if count == 1 else "components"})' if count > 0 else ''
         out.append(f'  {title}{suffix}')
     out.append('')
 
     offered = []
-    for lic_name, entries in sections:
+    for lic_name, pkgs in sections:
         title = policy.title(lic_name)
         out.extend([RULE, title, RULE, ''])
         if lic_name != CE_LICENSE:
@@ -68,15 +67,13 @@ def render_notices(resolved_packages, license_files, notice_files, policy, custo
                 'ThingsBoard is derived from ThingsBoard Community Edition, Copyright The\n'
                 'ThingsBoard Authors, which is licensed under Apache-2.0.'
             )
-            if entries:
+            if pkgs:
                 ce_intro += ' The components below\nare licensed under Apache-2.0 as well:'
             out.append(ce_intro)
             out.append('')
 
         cat = policy.category(lic_name)
-        sample_lic = None
-        for pkg, lic in sorted(entries, key=lambda pair: pair[0].coordinates):
-            sample_lic = sample_lic or lic
+        for pkg in sorted(pkgs, key=lambda p: p.coordinates):
             out.append(f'  {pkg.coordinates}')
             for cpr in pkg.copyrights:
                 out.append(f'      {cpr}')
@@ -86,7 +83,7 @@ def render_notices(resolved_packages, license_files, notice_files, policy, custo
                 out.append('      Source code: see "Written offer for source code" at the end of this file')
                 offered.append(f'{pkg.coordinates} ({lic_name})')
 
-        text = load_license_text(lic_name, sample_lic, custom_licenses, cache_dir)
+        text = load_license_text(lic_name, custom_licenses, cache_dir)
         out.append('')
         out.append(text)
         out.append('')
@@ -152,18 +149,17 @@ def format_attached_blocks(found):
     blocks = []
     ordered = sorted((sorted(carriers), text) for text, carriers in found.items())
     for carriers, text in ordered:
-        indented = '\n'.join('    ' + line if line else '' for line in text.split('\n'))
+        indented = textwrap.indent(text, '    ')
         header = '\n'.join([SEPARATOR] + [f'{comp} ({where})' for comp, where in carriers])
         blocks.append(f'{header}\n\n{indented}\n')
     return '\n'.join(blocks)
 
 
-def load_license_text(lic_name, lic_obj, custom_licenses, cache_dir):
+def load_license_text(lic_name, custom_licenses, cache_dir):
     """Loads the license text (and exception text if WITH) from custom_licenses, local cache, or upstream."""
     if lic_name in custom_licenses:
         return custom_licenses[lic_name]
-    base_id = lic_obj.id if lic_obj else lic_name
-    exc_id = lic_obj.exception if lic_obj else None
+    base_id, _, exc_id = lic_name.partition(' WITH ')
     base_text = _load_single_license_text(base_id, custom_licenses, cache_dir)
     if exc_id:
         exc_text = _load_single_license_text(exc_id, custom_licenses, cache_dir)
@@ -188,7 +184,7 @@ def _load_single_license_text(identifier, custom_licenses, cache_dir):
             f'license text for {identifier!r} could not be fetched from SPDX/ScanCode. '
             'If it is a custom license, add it under [custom_licenses] in tools/src/main/notices/curations.toml.'
         )
-    text = '\n'.join(line.rstrip() for line in text.replace('\r\n', '\n').split('\n')).strip('\n')
+    text = normalize_text(text)
     write_atomically(cached, (text + '\n').encode('utf-8'))
     return text
 
@@ -196,19 +192,15 @@ def _load_single_license_text(identifier, custom_licenses, cache_dir):
 def _fetch_upstream_license_text(identifier):
     if identifier.startswith('LicenseRef-scancode-'):
         key = identifier.removeprefix('LicenseRef-scancode-')
-        url = SCANCODE_TEXT_URL.format(key=key)
-        raw = _http_get_text(url)
+        raw = _http_get_text(SCANCODE_TEXT_URL.format(key=key))
         return _strip_yaml_frontmatter(raw) if raw is not None else None
-    url = SPDX_TEXT_URL.format(id=identifier)
-    return _http_get_text(url)
+    return _http_get_text(SPDX_TEXT_URL.format(id=identifier))
 
 
 def _http_get_text(url):
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'tb-notices'})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return resp.read().decode('utf-8-sig')
-    except (urllib.error.URLError, OSError):
+        return http_get(url, timeout=30).decode('utf-8-sig')
+    except HTTP_ERRORS:
         return None
 
 
@@ -237,10 +229,13 @@ def _extract_from_scancode_image(identifier):
         '  if f"spdx_license_key: {target}\\n" in txt: print(txt); sys.exit(0)\n'
         'sys.exit(1)'
     )
-    proc = subprocess.run(
-        ['docker', 'run', '--rm', '--entrypoint', 'python3', image, '-c', script, identifier],
-        capture_output=True, text=True,
-    )
+    try:
+        proc = subprocess.run(
+            ['docker', 'run', '--rm', '--entrypoint', 'python3', image, '-c', script, identifier],
+            capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        return None
     if proc.returncode == 0 and proc.stdout:
         return _strip_yaml_frontmatter(proc.stdout)
     return None

@@ -14,14 +14,13 @@ Subcommands:
 import argparse
 import os
 import subprocess
-import sys
 import time
 
-from notices import ROOT, stop, write_atomically
-from notices.cache import DEFAULT_CACHE_DIR, ScanCache, scan_cache_key
+from notices import ROOT, ort_home, stop, write_atomically
+from notices.cache import ScanCache, scan_cache_key
 from notices.config import load_curations, load_policy
 from notices.license_files import collect_license_files
-from notices.policy import resolve_all
+from notices.policy import resolve_all, validate_pre_scan
 from notices.render import render_notices
 from notices.sbom import discover_sboms, load_sboms
 from notices.scanner import (
@@ -59,35 +58,31 @@ def main(argv=None):
     render_p.add_argument('--project-version', required=True)
     render_p.add_argument('--out', required=True, help='Output path for THIRD-PARTY-NOTICES')
     render_p.add_argument('--sboms-under', help='Discover all target/sbom/*.cdx.json under this directory')
-    render_p.add_argument('--cache-dir', default=os.environ.get('NOTICES_CACHE_DIR', DEFAULT_CACHE_DIR))
+    render_p.add_argument('--cache-dir', default=None)
     render_p.add_argument('--cache-url', default=None, help='Remote scan cache base URL, or "none"')
     render_p.add_argument('--maven-repository', default=os.environ.get('NOTICES_MAVEN_REPOSITORY', os.path.expanduser('~/.m2/repository')))
     render_p.add_argument('--no-scan', action='store_true', help='Fail if any package is missing from cache instead of invoking ScanCode')
     render_p.add_argument('sboms', nargs='*')
+    render_p.set_defaults(func=cmd_render)
 
     upload_p = sub.add_parser('cache-upload', help='Upload new local scan results to remote cache')
-    upload_p.add_argument('--cache-dir', default=os.environ.get('NOTICES_CACHE_DIR', DEFAULT_CACHE_DIR))
+    upload_p.add_argument('--cache-dir', default=None)
     upload_p.add_argument('--cache-url', default=None)
+    upload_p.set_defaults(func=cmd_cache_upload)
 
     migrate_p = sub.add_parser('migrate-ort', help='Migrate legacy ~/.ort/scanner cache into per-package cache')
-    migrate_p.add_argument('--ort-home', default=os.environ.get('NOTICES_ORT_HOME', os.path.expanduser('~/.ort')))
-    migrate_p.add_argument('--cache-dir', default=os.environ.get('NOTICES_CACHE_DIR', DEFAULT_CACHE_DIR))
+    migrate_p.add_argument('--ort-home', default=ort_home())
+    migrate_p.add_argument('--cache-dir', default=None)
+    migrate_p.set_defaults(func=cmd_migrate_ort)
 
     ci_p = sub.add_parser('ci-should-run', help='Check if merging HEAD into target branch affects notices')
     ci_p.add_argument('--target-branch', required=True)
     ci_p.add_argument('--repo-url', default='https://github.com/thingsboard/thingsboard.git')
     ci_p.add_argument('--teamcity', action='store_true', help='Emit TeamCity service messages')
+    ci_p.set_defaults(func=cmd_ci_should_run)
 
     args = parser.parse_args(argv)
-    if args.command == 'render':
-        return cmd_render(args)
-    if args.command == 'cache-upload':
-        return cmd_cache_upload(args)
-    if args.command == 'migrate-ort':
-        return cmd_migrate_ort(args)
-    if args.command == 'ci-should-run':
-        return cmd_ci_should_run(args)
-    return 2
+    return args.func(args)
 
 
 def cmd_render(args):
@@ -98,27 +93,27 @@ def cmd_render(args):
 
     sbom_paths = list(args.sboms)
     if args.sboms_under:
-        discovered = discover_sboms(os.path.realpath(args.sboms_under), args.project_version)
+        discovered = discover_sboms(os.path.realpath(args.sboms_under))
         print(f'Third-party notices from {len(discovered)} SBOMs')
         sbom_paths = discovered + sbom_paths
     if not sbom_paths:
         raise stop('no SBOMs given (pass SBOM paths or --sboms-under <directory>)')
 
-    inventory = load_sboms(sbom_paths, args.project_version, policy)
+    inventory = load_sboms(sbom_paths, args.project_version, policy, check_version=bool(args.sboms_under))
     maven_sources = resolve_maven_sources(inventory.packages, curations, scan_cache.cache_dir)
 
-    # Resolve source descriptors and compute cache keys for every scannable package
-    sources = {}
-    keys_by_purl = {}
-    for purl, pkg in sorted(inventory.packages.items()):
-        src = resolve_package_source(pkg, curations, maven_sources)
-        sources[purl] = src
-        if src and src['type'] != 'metadata_only':
-            keys_by_purl[purl] = scan_cache_key(SCANCODE_VERSION, src)
+    # Resolve source descriptors and fail fast on pre-scan policy issues before hitting remote cache/Docker.
+    sources = {purl: resolve_package_source(pkg, curations, maven_sources) for purl, pkg in sorted(inventory.packages.items())}
+    declared_by_purl = validate_pre_scan(inventory.packages, sources, policy, curations)
+    keys_by_purl = {
+        purl: scan_cache_key(SCANCODE_VERSION, src)
+        for purl, src in sources.items()
+        if src and src['type'] != 'metadata_only'
+    }
 
     # Pull missing scan records from remote cache in parallel
     t_cache = time.monotonic()
-    fetched, still_missing, cache_errors = scan_cache.fetch_missing(list(keys_by_purl.values()))
+    fetched_records, still_missing, cache_errors = scan_cache.fetch_missing(list(keys_by_purl.values()))
     if cache_errors:
         raise stop(
             f'remote scan cache {scan_cache.remote_url} had errors ({"; ".join(cache_errors[:3])}), '
@@ -129,27 +124,29 @@ def cmd_render(args):
 
     # Scan only genuinely uncached packages via ScanCode in Docker
     t_scan = time.monotonic()
+    records_by_key = dict(fetched_records)
     missing_set = set(still_missing)
     scanned_now = 0
     if missing_set:
         if args.no_scan:
             missing_purls = [p for p, k in keys_by_purl.items() if k in missing_set]
             raise stop(f'{len(missing_purls)} packages are not in cache (--no-scan):\n  ' + '\n  '.join(missing_purls[:20]))
-        seen_keys = set()
         for purl, key in sorted(keys_by_purl.items()):
-            if key in missing_set and key not in seen_keys:
-                seen_keys.add(key)
+            if key in missing_set and key not in records_by_key:
                 print(f'Scanning {purl} ...', flush=True)
-                record = scan_source_with_scancode(sources[purl], policy.exclude_paths, scan_cache.cache_dir)
+                record = scan_source_with_scancode(sources[purl], policy.exclude_paths)
                 scan_cache.write_local(key, record)
+                records_by_key[key] = record
                 scanned_now += 1
     scan_s = time.monotonic() - t_scan
 
-    # Load all cached scan records into memory
+    # Map scan records by PURL (reusing in-memory records and reading each local key at most once)
     scan_records = {}
     npm_notices = {}
     for purl, key in keys_by_purl.items():
-        record = scan_cache.read_local(key)
+        if key not in records_by_key:
+            records_by_key[key] = scan_cache.read_local(key)
+        record = records_by_key[key]
         scan_records[purl] = record
         pkg = inventory.packages[purl]
         if pkg.kind == 'npm':
@@ -157,11 +154,10 @@ def cmd_render(args):
                 npm_notices.setdefault(item['text'], set()).add((pkg.coordinates, item['path']))
 
     # Policy evaluation (fail-closed)
-    resolved = resolve_all(inventory.packages, sources, scan_records, policy, curations)
+    resolved = resolve_all(inventory.packages, sources, scan_records, policy, curations, declared_by_purl=declared_by_purl)
 
     # Collect binary Maven jar NOTICE files + merge with npm NOTICE files
-    jar_notices, jar_summary = collect_jar_notices(inventory.jars, args.maven_repository, scan_cache.cache_dir)
-    all_notices = {text: set(carriers) for text, carriers in jar_notices.items()}
+    all_notices, jar_summary = collect_jar_notices(inventory.jars, args.maven_repository, scan_cache.cache_dir)
     for text, carriers in npm_notices.items():
         all_notices.setdefault(text, set()).update(carriers)
 
@@ -184,7 +180,7 @@ def cmd_render(args):
     print(
         f'Third-party notices: {len(inventory.packages)} packages, {lines} lines: {args.out}\n'
         f'Third-party notices: took {total_s:.1f}s '
-        f'(cache fetched {fetched} in {cache_s:.1f}s, scanned {scanned_now} in {scan_s:.1f}s)\n'
+        f'(cache fetched {len(fetched_records)} in {cache_s:.1f}s, scanned {scanned_now} in {scan_s:.1f}s)\n'
         f'{jar_summary}'
     )
     return 0

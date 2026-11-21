@@ -8,9 +8,10 @@
   "scripts": {
     "pkg:linux": "pkg -t node22-linux-x64 ./target/src",
     "pkg:win": "pkg -t node22-win-x64 --no-bytecode --public-packages \"*\" --public ./target/src",
-    "pkg": "tsc && (yarn -s pkg:linux --debug --output ./target/thingsboard-web-report-linux > ./target/pkg-linux.log || (cat ./target/pkg-linux.log; exit 1)) && (yarn -s pkg:win --debug --output ./target/thingsboard-web-report-win.exe > ./target/pkg-win.log || (cat ./target/pkg-win.log; exit 1)) && node install.js",
+    "pkg": "tsc && yarn -s pkg:linux --output ./target/thingsboard-web-report-linux && yarn -s pkg:win --output ./target/thingsboard-web-report-win.exe && node install.js",
+    "pkg:debug": "yarn -s pkg:linux --debug --output ./target/pkg-debug/linux > ./target/pkg-linux.log && yarn -s pkg:win --debug --output ./target/pkg-debug/win.exe > ./target/pkg-win.log && node -e \"fs.rmSync('target/pkg-debug', {recursive: true, force: true})\"",
     "sbom": "node ../../tools/src/main/javascript/yarn-sbom.js target/sbom/tb-web-report.cdx.json application",
-    "sbom:executable": "node ../../tools/src/main/javascript/yarn-sbom.js target/sbom/tb-web-report-executable.cdx.json application --pkg-log linux=target/pkg-linux.log --pkg-log windows=target/pkg-win.log --node-versions target/sbom/node-versions.properties",
+    "sbom:executable": "yarn -s pkg:debug && node ../../tools/src/main/javascript/yarn-sbom.js target/sbom/tb-web-report-executable.cdx.json application --pkg-log linux=target/pkg-linux.log --pkg-log windows=target/pkg-win.log --node-versions target/sbom/node-versions.properties",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --watch --watch-preserve-output -r ts-node/register server.ts",
     "start-prod": "NODE_ENV=production node --watch --watch-preserve-output -r ts-node/register server.ts",

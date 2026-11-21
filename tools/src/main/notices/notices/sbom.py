@@ -10,8 +10,8 @@ import os
 import re
 import urllib.parse
 
-from notices import BUILD_PROBLEM, stop
-from notices.config import split_curation_id
+from notices import BUILD_PROBLEM, format_coordinates, stop
+from notices.config import normalize_purl_scope, split_curation_id
 
 
 @dataclass(frozen=True)
@@ -29,7 +29,7 @@ class PackageComponent:
 
     @property
     def coordinates(self):
-        return f'{self.group}:{self.name} {self.version}' if self.group else f'{self.name} {self.version}'
+        return format_coordinates(self.group, self.name, self.version)
 
 
 @dataclass(frozen=True)
@@ -39,12 +39,11 @@ class JarRef:
     name: str
     version: str
     classifier: str
-    file_type: str
     sha256: str
 
     @property
     def coordinates(self):
-        return f'{self.group}:{self.name} {self.version}' if self.group else f'{self.name} {self.version}'
+        return format_coordinates(self.group, self.name, self.version)
 
 
 @dataclass(frozen=True)
@@ -59,8 +58,7 @@ class LicenseFileRef:
 
     @property
     def coordinates(self):
-        base = f'{self.group}:{self.name}' if self.group else self.name
-        return f'{base} {self.version}'.rstrip()
+        return format_coordinates(self.group, self.name, self.version)
 
 
 @dataclass
@@ -68,15 +66,15 @@ class SbomInventory:
     packages: dict[str, PackageComponent]   # canonical purl -> PackageComponent
     jars: dict[str, JarRef]                 # full purl (with qualifiers) -> JarRef
     license_files: set[LicenseFileRef]
-    skipped: dict[str, set[str]]
 
 
-def discover_sboms(root_dir, expected_version):
-    """Finds all target/sbom/*.cdx.json files under root_dir and verifies their project version."""
+def discover_sboms(root_dir):
+    """Finds all */target/sbom/*.cdx.json files under root_dir (excluding Syft raw scan_*.cdx.json)."""
     sboms = []
     for current, dirs, files in os.walk(root_dir):
         dirs[:] = sorted(d for d in dirs if d != 'node_modules' and d != '.git')
-        if current.endswith(os.path.join('target', 'sbom')):
+        parent, leaf = os.path.split(current)
+        if leaf == 'sbom' and os.path.basename(parent) == 'target':
             for name in sorted(files):
                 if name.endswith('.cdx.json') and not name.startswith('scan_'):
                     sboms.append(os.path.join(current, name))
@@ -85,22 +83,11 @@ def discover_sboms(root_dir, expected_version):
             f'no SBOMs in the target/sbom directories under {root_dir}. Build with them first: '
             'mvn clean package -DskipTests -Dsbom.skip=false'
         )
-    wrong = []
-    for path in sboms:
-        with open(path, encoding='utf-8') as file:
-            version = json.load(file).get('metadata', {}).get('component', {}).get('version')
-        if version != expected_version:
-            wrong.append(f'  {path} ({version})')
-    if wrong:
-        raise stop(
-            f'these SBOMs are not of the version {expected_version}, so an older build left them. '
-            'Build again from clean: mvn clean package -DskipTests -Dsbom.skip=false\n' + '\n'.join(wrong)
-        )
     return sboms
 
 
-def load_sboms(sbom_paths, project_version, policy):
-    """Loads one or more CycloneDX SBOM files into a unified SbomInventory."""
+def load_sboms(sbom_paths, project_version, policy, check_version=False):
+    """Loads one or more CycloneDX SBOM files in a single pass into a unified SbomInventory."""
     absent = [p for p in sbom_paths if not os.path.exists(p)]
     if absent:
         raise stop(
@@ -109,46 +96,53 @@ def load_sboms(sbom_paths, project_version, policy):
             + f'\n{BUILD_PROBLEM} The Maven build makes them with -Dsbom.skip=false.'
         )
 
-    packages, jars, license_files, skipped = {}, {}, set(), {}
+    packages, jars, license_files, wrong_version = {}, {}, set(), []
     for sbom_path in sbom_paths:
-        with open(sbom_path, encoding='utf-8') as file:
-            bom = json.load(file)
+        try:
+            with open(sbom_path, encoding='utf-8') as file:
+                bom = json.load(file)
+        except (OSError, json.JSONDecodeError) as err:
+            raise stop(f'could not read SBOM {sbom_path}: {err}. {BUILD_PROBLEM}')
+
+        if check_version:
+            version = bom.get('metadata', {}).get('component', {}).get('version')
+            if version != project_version:
+                wrong_version.append(f'  {sbom_path} ({version})')
+                continue
+
         for component in bom.get('components', []):
             purl = component.get('purl') or ''
             # Components found only by Syft in a Docker base image ship their own license texts there.
             if any(p.get('name', '').startswith('syft:location:') for p in component.get('properties', [])):
-                skipped.setdefault('part of the base image', set()).add(purl or component.get('name', ''))
                 continue
 
             if not is_maven(purl) and not is_npm(purl):
                 ref = _license_file_ref(component, policy.license_files)
                 if ref:
                     license_files.add(ref)
-                else:
-                    skipped.setdefault('not a Maven or npm package', set()).add(purl or component.get('name', ''))
                 continue
 
             canonical = canonical_purl(purl)
             if is_maven(purl) and _is_own(component, project_version, policy.own_modules):
-                skipped.setdefault('our own module', set()).add(canonical)
                 continue
 
-            if canonical not in packages:
-                packages[canonical] = _parse_package(component, canonical)
+            parsed = _parse_package(component, canonical)
+            packages[canonical] = _merge_package(packages[canonical], parsed) if canonical in packages else parsed
             if is_jar(purl) and purl not in jars:
                 jars[purl] = _parse_jar(component, purl)
 
-    return SbomInventory(packages=packages, jars=jars, license_files=license_files, skipped=skipped)
+    if wrong_version:
+        raise stop(
+            f'these SBOMs are not of the version {project_version}, so an older build left them. '
+            'Build again from clean: mvn clean package -DskipTests -Dsbom.skip=false\n' + '\n'.join(wrong_version)
+        )
+
+    return SbomInventory(packages=packages, jars=jars, license_files=license_files)
 
 
 def canonical_purl(purl):
     """Strips qualifiers/fragments and normalizes npm %40 scope encoding."""
-    base = re.sub(r'[?#].*', '', purl)
-    return base.replace('pkg:npm/%40', 'pkg:npm/@')
-
-
-def without_version(purl):
-    return re.sub(r'@[^?#]*', '', purl)
+    return normalize_purl_scope(re.sub(r'[?#].*', '', purl))
 
 
 def qualifiers(purl):
@@ -163,16 +157,12 @@ def is_npm(purl):
     return purl.startswith('pkg:npm/')
 
 
-def file_type(purl):
-    return qualifiers(purl).get('type', 'jar')
-
-
 def is_jar(purl):
-    return is_maven(purl) and file_type(purl) == 'jar'
+    return is_maven(purl) and qualifiers(purl).get('type', 'jar') == 'jar'
 
 
 def _is_own(component, project_version, own_modules):
-    group, name, version = component.get('group', ''), component['name'], component.get('version')
+    group, name, version = component.get('group', ''), component.get('name', ''), component.get('version')
     if f'{group}/{name}' in own_modules:
         return True
     return (group == 'org.thingsboard' or group.startswith('org.thingsboard.')) and version == project_version
@@ -181,7 +171,7 @@ def _is_own(component, project_version, own_modules):
 def _parse_package(component, canonical):
     pkg_key, _ = split_curation_id(canonical)
     kind = 'maven' if is_maven(canonical) else 'npm'
-    licenses, names = _declared_licenses(component, kind)
+    licenses, names = _declared_licenses(component)
     tarball = _npm_tarball(component) if kind == 'npm' else None
     vcs = None if tarball or kind == 'maven' else _vcs_reference(component)
     return PackageComponent(
@@ -189,7 +179,7 @@ def _parse_package(component, canonical):
         package_key=pkg_key,
         kind=kind,
         group=component.get('group', ''),
-        name=component['name'],
+        name=component.get('name', ''),
         version=component.get('version', ''),
         declared_raw=tuple(licenses),
         named_raw=frozenset(names),
@@ -198,61 +188,101 @@ def _parse_package(component, canonical):
     )
 
 
-def _parse_jar(component, purl):
-    sha256 = [h['content'] for h in component.get('hashes', []) if h.get('alg') == 'SHA-256']
-    if not sha256:
-        raise stop(f'the SBOM gives no SHA-256 for {purl}. {BUILD_PROBLEM}')
-    return JarRef(
-        purl=purl,
-        group=component['group'],
-        name=component['name'],
-        version=component['version'],
-        classifier=qualifiers(purl).get('classifier', ''),
-        file_type=file_type(purl),
-        sha256=sha256[0],
+def _merge_package(existing, incoming):
+    """Merges duplicate occurrences of the same PURL across SBOMs so no metadata is lost by order."""
+    declared = tuple(sorted(set(existing.declared_raw) | set(incoming.declared_raw)))
+    named = existing.named_raw | incoming.named_raw
+    return PackageComponent(
+        purl=existing.purl,
+        package_key=existing.package_key,
+        kind=existing.kind,
+        group=existing.group or incoming.group,
+        name=existing.name or incoming.name,
+        version=existing.version or incoming.version,
+        declared_raw=declared,
+        named_raw=named,
+        npm_tarball=existing.npm_tarball or incoming.npm_tarball,
+        vcs=existing.vcs or incoming.vcs,
     )
 
 
+def _parse_jar(component, purl):
+    sha256 = [h.get('content', '').lower() for h in component.get('hashes', []) if h.get('alg') == 'SHA-256' and h.get('content')]
+    if not sha256:
+        raise stop(f'the SBOM gives no SHA-256 for {purl}. {BUILD_PROBLEM}')
+    try:
+        return JarRef(
+            purl=purl,
+            group=component['group'],
+            name=component['name'],
+            version=component['version'],
+            classifier=qualifiers(purl).get('classifier', ''),
+            sha256=sha256[0],
+        )
+    except KeyError as err:
+        raise stop(f'SBOM component {purl} is missing required field {err}. {BUILD_PROBLEM}')
+
+
 def _license_file_ref(component, repo_license_files):
-    name = component.get('purl') or component['name']
+    comp_name = component.get('name', '')
+    name = component.get('purl') or comp_name
     group = component.get('group', '')
-    comp_name = component['name']
     version = component.get('version', '')
 
     if comp_name == 'lwm2m-registry' and not component.get('purl'):
         return LicenseFileRef(group=group, name=comp_name, version=version, generated='lwm2m-registry')
 
-    urls = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'license']
+    urls = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'license' and r.get('url')]
     if len(urls) > 1:
         raise stop(
             f"the SBOM gives several license files for {name}: {', '.join(urls)}. "
             'Give the one that covers the component and what it contains.'
         )
-    if urls and name in repo_license_files:
+
+    # Match repo_license_files by normalized PURL+qualifiers so reordered qualifiers still match.
+    matched_key = _match_license_file_key(name, repo_license_files)
+    if urls and matched_key:
         raise stop(
             f'the SBOM gives a license file for {name}, {urls[0]}, and so does policy.toml [license_files], '
-            f'{repo_license_files[name]}. Keep one of them.'
+            f'{repo_license_files[matched_key]}. Keep one of them.'
         )
     if urls:
         return LicenseFileRef(group=group, name=comp_name, version=version, url=urls[0])
-    if name in repo_license_files:
+    if matched_key:
         platform = qualifiers(name).get('os')
         return LicenseFileRef(
-            group=group, name=comp_name, version=version, path=repo_license_files[name], platform=platform
+            group=group, name=comp_name, version=version, path=repo_license_files[matched_key], platform=platform
         )
-    other = [key for key in repo_license_files if key.startswith('pkg:') and without_version(key) == without_version(name)]
-    if other:
-        raise stop(
-            f'policy.toml [license_files] has the license file of {other[0]}, {repo_license_files[other[0]]}, '
-            f'and the SBOM has {name}. Update the file for this version and then update policy.toml.'
-        )
+    if name.startswith('pkg:'):
+        comp_pkg_key, _ = split_curation_id(canonical_purl(name))
+        other = [
+            key for key in repo_license_files
+            if key.startswith('pkg:') and split_curation_id(canonical_purl(key))[0] == comp_pkg_key
+        ]
+        if other:
+            raise stop(
+                f'policy.toml [license_files] has the license file of {other[0]}, {repo_license_files[other[0]]}, '
+                f'and the SBOM has {name}. Update the file for this version/platform and then update policy.toml.'
+            )
+    return None
+
+
+def _match_license_file_key(name, repo_license_files):
+    if name in repo_license_files:
+        return name
+    if not name.startswith('pkg:'):
+        return None
+    target = (canonical_purl(name), tuple(sorted(qualifiers(name).items())))
+    for key in repo_license_files:
+        if key.startswith('pkg:') and (canonical_purl(key), tuple(sorted(qualifiers(key).items()))) == target:
+            return key
     return None
 
 
 def _npm_tarball(component):
     for reference in component.get('externalReferences', []):
-        if reference.get('type') == 'distribution':
-            sha1 = [h['content'] for h in reference.get('hashes', []) if h.get('alg') == 'SHA-1']
+        if reference.get('type') == 'distribution' and reference.get('url'):
+            sha1 = [h.get('content', '').lower() for h in reference.get('hashes', []) if h.get('alg') == 'SHA-1' and h.get('content')]
             if not sha1:
                 raise stop(f"the SBOM gives no SHA-1 for {reference['url']}. {BUILD_PROBLEM}")
             return {
@@ -263,19 +293,22 @@ def _npm_tarball(component):
 
 
 def _vcs_reference(component):
-    references = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'vcs']
+    references = [r['url'] for r in component.get('externalReferences', []) if r.get('type') == 'vcs' and r.get('url')]
     pinned = [url for url in references if re.search(r'#[0-9a-f]{40}$', url)]
-    url, _, revision = (pinned or references or [''])[0].partition('#')
-    url = re.sub(r'^scm:(git|svn):', '', re.sub(r'^git\+', '', url))
-    if not url:
+    if not pinned:
         return None
-    return {'type': 'Subversion' if 'svn' in url else 'Git', 'url': url, 'revision': revision, 'path': ''}
+    raw_url, _, revision = pinned[0].partition('#')
+    is_svn = raw_url.startswith('scm:svn:') or raw_url.startswith('svn://') or raw_url.startswith('svn+ssh://')
+    url = re.sub(r'^scm:(git|svn):', '', re.sub(r'^git\+', '', raw_url))
+    if not url or not revision:
+        return None
+    return {'type': 'Subversion' if is_svn else 'Git', 'url': url, 'revision': revision, 'path': ''}
 
 
-def _declared_licenses(component, kind):
+def _declared_licenses(component):
     licenses, names = set(), set()
     for entry in component.get('licenses', []):
-        if 'expression' in entry:
+        if 'expression' in entry and entry['expression']:
             licenses.add(entry['expression'])
         else:
             lic = entry.get('license', {})
@@ -284,6 +317,4 @@ def _declared_licenses(component, kind):
                 licenses.add(value)
                 if not lic.get('id'):
                     names.add(value)
-    ordered = sorted(licenses)
-    named = {lic for lic in ordered if lic in names}
-    return ordered, named
+    return sorted(licenses), names

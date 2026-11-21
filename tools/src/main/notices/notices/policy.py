@@ -49,11 +49,14 @@ def _compile_glob(pattern):
     parts = []
     i, n = 0, len(pattern)
     while i < n:
-        if pattern[i:i + 3] == '**/':
+        if pattern[i:i + 4] == '/**/':
+            parts.append('(?:/|/.*/)')
+            i += 4
+        elif pattern[i:i + 3] == '**/':
             parts.append('(?:.*/)?')
             i += 3
         elif pattern[i:i + 3] == '/**':
-            parts.append('(?:/.*)?')
+            parts.append('/.*')
             i += 3
         elif pattern[i:i + 2] == '**':
             parts.append('.*')
@@ -74,7 +77,37 @@ def is_excluded_path(path, exclude_paths):
     return any(glob_match(path, pattern) for pattern in exclude_paths)
 
 
-def resolve_all(packages, sources, scan_records, policy, curations):
+def validate_pre_scan(packages, sources, policy, curations):
+    """Runs fast pre-scan fail-closed checks (1-3) and returns resolved declared ASTs by PURL."""
+    unreviewed = []
+    unmapped = []
+    unscanned = []
+    declared_by_purl = {}
+
+    for purl in sorted(packages):
+        pkg = packages[purl]
+        ranges = curations.unreviewed_concluded(pkg.package_key, pkg.version)
+        if ranges:
+            unreviewed.append((pkg.purl, pkg.package_key, pkg.version, ranges))
+
+        declared_node, pkg_unmapped = _resolve_declared(pkg, policy, curations)
+        declared_by_purl[purl] = declared_node
+        for name in pkg_unmapped:
+            unmapped.append((pkg.purl, pkg.package_key, name))
+
+        if sources.get(purl) is None:
+            unscanned.append(pkg.purl)
+
+    if unreviewed:
+        raise stop(_unreviewed_message(unreviewed))
+    if unmapped:
+        raise stop(_unmapped_message(unmapped))
+    if unscanned:
+        raise stop(_unscanned_message(unscanned))
+    return declared_by_purl
+
+
+def resolve_all(packages, sources, scan_records, policy, curations, declared_by_purl=None):
     """Validates and resolves every package against policy and curations.
 
     Fail-closed checks run in deterministic order:
@@ -86,9 +119,27 @@ def resolve_all(packages, sources, scan_records, policy, curations):
       6. Unclassified licenses
       7. Unlicensed packages
     """
-    unreviewed = []
-    unmapped = []
-    unscanned = []
+    if declared_by_purl is None:
+        declared_by_purl = validate_pre_scan(packages, sources, policy, curations)
+
+    default_pref = len(policy.same_category_preference)
+
+    def branch_rank(lic_set):
+        # Worst category among AND-ed licenses in this branch determines branch tier.
+        # Unclassified licenses rank at 3.5 (worse than written-offer=3, better than forbidden=4)
+        # so known permissive branches win cleanly, while unknown vs unknown still surfaces.
+        worst_cat = max(
+            3.5 if (cat := policy.category(str(lic))) is None else CATEGORY_ORDER[cat]
+            for lic in lic_set
+        )
+        # Within the same category, compare preference worst-first so a branch with a less-preferred
+        # license loses; shorter license sets win ties (e.g. MIT beats Apache-2.0 AND MIT).
+        pref_ranks = tuple(sorted(
+            (policy.same_category_preference.get(str(lic), default_pref) for lic in lic_set),
+            reverse=True,
+        ))
+        return (worst_cat, pref_ranks, len(lic_set))
+
     undecided = []
     forbidden = []
     unclassified = []
@@ -97,87 +148,19 @@ def resolve_all(packages, sources, scan_records, policy, curations):
 
     for purl in sorted(packages):
         pkg = packages[purl]
-        # 1. Check unreviewed concluded_license curations
-        ranges = curations.unreviewed_concluded(pkg.package_key, pkg.version)
-        if ranges:
-            unreviewed.append((pkg.purl, ranges))
-
-        # 2. Resolve declared licenses (apply curations + global aliases; catch unmapped names)
-        declared_node, pkg_unmapped = _resolve_declared(pkg, policy, curations)
-        for name in pkg_unmapped:
-            unmapped.append((pkg.purl, name))
-
-        # 3. Check source availability
-        source = sources.get(purl)
-        if source is None:
-            unscanned.append(pkg.purl)
-
-    # Stop early on pre-resolution issues (these don't depend on scan findings)
-    if unreviewed:
-        raise stop(_unreviewed_message(unreviewed))
-    if unmapped:
-        raise stop(_unmapped_message(unmapped))
-    if unscanned:
-        raise stop(_unscanned_message(unscanned))
-
-    # Build OR branch ranking function: lower rank tuple is better.
-    def branch_rank(lic_set):
-        # Worst category among AND-ed licenses in this branch determines branch tier.
-        worst_cat = max(
-            CATEGORY_ORDER.get(policy.category(str(lic)), -1 if policy.category(str(lic)) is None else 99)
-            for lic in lic_set
-        )
-        # If any license in this branch is unclassified, rank it worse than written-offer (but above forbidden)
-        # so known permissive branches win cleanly, while unknown vs unknown still surfaces clearly.
-        unknown_penalty = 1 if any(policy.category(str(lic)) is None for lic in lic_set) else 0
-        # Within the same category, use same_category_preference; unranked licenses tie at len(prefs).
-        pref_ranks = tuple(sorted(
-            policy.same_category_preference.get(str(lic), len(policy.same_category_preference))
-            for lic in lic_set
-        ))
-        return (worst_cat if worst_cat >= 0 else 3.5, unknown_penalty, pref_ranks)
-
-    for purl in sorted(packages):
-        pkg = packages[purl]
         applying = curations.for_package(pkg.package_key, pkg.version)
-        declared_node, _ = _resolve_declared(pkg, policy, curations)
+        declared_node = declared_by_purl.get(purl)
         concluded_expr = next((c.concluded_license for c in applying if c.concluded_license), None)
         ignores = [ig for c in applying for ig in c.ignore_findings]
         record = scan_records.get(purl) or {'findings': []}
 
-        # Collect copyrights & detected licenses from non-excluded paths
         declared_or_atoms = or_branch_atoms(declared_node) if declared_node else set()
-        detected_nodes = []
-        raw_copyrights = []
+        detected_nodes, raw_copyrights = _collect_findings(
+            record, policy.exclude_paths, ignores, declared_or_atoms, skip_licenses=bool(concluded_expr)
+        )
 
-        for finding in record.get('findings', []):
-            fpath = finding.get('path', '')
-            if is_excluded_path(fpath, policy.exclude_paths):
-                continue
-            raw_copyrights.extend(finding.get('copyrights', ()))
-            if concluded_expr:
-                continue  # concluded_license sets aside detected licenses (copyrights are still kept!)
-            is_root_lic = ROOT_LICENSE_FILE_RE.match(fpath.removeprefix('package/')) is not None
-            for raw_expr in finding.get('licenses', ()):
-                try:
-                    det_node = parse_spdx(raw_expr)
-                except SpdxSyntaxError:
-                    det_node = License(raw_expr)
-                # Strip ignored findings for this path
-                filtered = _filter_ignored(det_node, fpath, ignores)
-                if filtered is None:
-                    continue
-                # Dual-license root LICENSE* rule: if declared has OR and all detected leaves in this
-                # root LICENSE/COPYING file are branches of that declared OR, don't turn OR into AND.
-                if is_root_lic and declared_or_atoms:
-                    det_leaves = [l for l in leaves(filtered) if not is_no_license(l)]
-                    if det_leaves and all(str(l) in declared_or_atoms or l.id in declared_or_atoms for l in det_leaves):
-                        continue
-                detected_nodes.append(filtered)
-
-        # Combine effective expression: concluded OR (declared AND detected)
         if concluded_expr:
-            effective_node = parse_spdx(concluded_expr)
+            effective_node = _parse_config_spdx(concluded_expr, f'concluded_license for {pkg.purl}')
         else:
             terms = ([declared_node] if declared_node else []) + detected_nodes
             if not terms:
@@ -232,12 +215,49 @@ def resolve_all(packages, sources, scan_records, policy, curations):
     return resolved
 
 
+def _collect_findings(record, exclude_paths, ignores, declared_or_atoms, skip_licenses):
+    """Collects non-excluded copyrights and filtered detected license ASTs from a scan record."""
+    detected_nodes = []
+    raw_copyrights = []
+    for finding in record.get('findings', []):
+        fpath = finding.get('path', '')
+        if is_excluded_path(fpath, exclude_paths):
+            continue
+        raw_copyrights.extend(finding.get('copyrights', ()))
+        if skip_licenses:
+            continue
+        is_root_lic = ROOT_LICENSE_FILE_RE.match(fpath.removeprefix('package/')) is not None
+        for raw_expr in finding.get('licenses', ()):
+            try:
+                det_node = parse_spdx(raw_expr)
+            except SpdxSyntaxError:
+                det_node = License(raw_expr)
+            filtered = _filter_ignored(det_node, fpath, ignores)
+            if filtered is None:
+                continue
+            # Dual-license root LICENSE* rule: if declared has OR and all detected leaves in this
+            # root LICENSE/COPYING file are branches of that declared OR, don't turn OR into AND.
+            if is_root_lic and declared_or_atoms:
+                det_leaves = [l for l in leaves(filtered) if not is_no_license(l)]
+                if det_leaves and all(str(l) in declared_or_atoms or l.id in declared_or_atoms for l in det_leaves):
+                    continue
+            detected_nodes.append(filtered)
+    return detected_nodes, raw_copyrights
+
+
+def _parse_config_spdx(expr, context):
+    try:
+        return parse_spdx(expr)
+    except SpdxSyntaxError as err:
+        raise stop(f'invalid SPDX expression {expr!r} in {context}: {err}')
+
+
 def _resolve_declared(pkg, policy, curations):
     """Returns (AST_or_None, list_of_unmapped_names)."""
     applying = curations.for_package(pkg.package_key, pkg.version)
     override = next((c.declared_license for c in applying if c.declared_license), None)
     if override:
-        return parse_spdx(override), []
+        return _parse_config_spdx(override, f'declared_license for {pkg.purl}'), []
 
     pkg_map = {}
     for c in applying:
@@ -250,7 +270,7 @@ def _resolve_declared(pkg, policy, curations):
         if mapped is None and raw in pkg.named_raw:
             mapped = policy.license_aliases.get(raw)
         if mapped is not None:
-            parsed_items.append(parse_spdx(mapped))
+            parsed_items.append(_parse_config_spdx(mapped, f'license mapping for {pkg.purl} ({raw!r})'))
             continue
         if raw in pkg.named_raw:
             # Some POMs place a valid SPDX expression (e.g. "EPL-2.0 OR BSD-3-Clause") in <name>.
@@ -267,10 +287,10 @@ def _resolve_declared(pkg, policy, curations):
         try:
             parsed_items.append(parse_spdx(raw))
         except SpdxSyntaxError:
-            # Some SBOM entries put free text in expression; check maps before failing
-            fallback = pkg_map.get(raw) or policy.license_aliases.get(raw)
+            # Some SBOM entries put free text in expression; check global aliases before failing.
+            fallback = policy.license_aliases.get(raw)
             if fallback:
-                parsed_items.append(parse_spdx(fallback))
+                parsed_items.append(_parse_config_spdx(fallback, f'license_aliases for {raw!r}'))
             else:
                 unmapped.append(raw)
 
@@ -312,9 +332,8 @@ def _filter_ignored(node, fpath, ignores):
 # ---------------------------------------------------------------------------
 
 def _unreviewed_message(packages):
-    purl, _ = packages[0]
-    pkg_key, _, version = purl.rpartition('@')
-    lines = ''.join(f'  {p}   (checked: {", ".join(r)})\n' for p, r in packages)
+    _, pkg_key, version, _ = packages[0]
+    lines = ''.join(f'  {p}   (checked: {", ".join(r)})\n' for p, _, _, r in packages)
     return (
         'we set the license of these packages by hand, but only for older versions.\n'
         + lines
@@ -327,9 +346,8 @@ def _unreviewed_message(packages):
 
 
 def _unmapped_message(packages):
-    purl, name = packages[0]
-    pkg_key = purl.rpartition('@')[0]
-    lines = ''.join(f'  {p}: {n!r}\n' for p, n in packages)
+    _, pkg_key, name = packages[0]
+    lines = ''.join(f'  {p}: {n!r}\n' for p, _, n in packages)
     return (
         'these packages name their license in words that are no standard SPDX identifier.\n'
         + lines
@@ -359,7 +377,6 @@ def _unscanned_message(purls):
 
 
 def _undecided_message(items):
-    purl, expr = items[0]
     lines = ''.join(f'  {p}: {e}\n' for p, e in items)
     return (
         'these packages offer a license choice between equally ranked licenses.\n'

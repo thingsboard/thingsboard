@@ -14,8 +14,7 @@ import re
 import textwrap
 import xml.etree.ElementTree as ElementTree
 
-from notices import ROOT, stop
-from notices.scanner import clean_text
+from notices import ROOT, clean_text, stop
 
 MODELS_REL = 'application/src/main/data/lwm2m-registry'
 POM_REL = 'application/pom.xml'
@@ -35,26 +34,32 @@ def generate_lwm2m_notice(root=ROOT):
     """Generates the LwM2M registry notice text and checks application/pom.xml matches."""
     models_dir = os.path.join(root, MODELS_REL)
     pom_path = os.path.join(root, POM_REL)
-    groups, _ = read_models(models_dir)
+    groups = read_models(models_dir)
     check_pom_license({spdx for spdx, _, _ in groups.values()}, pom_path)
     return format_notice(groups), MODELS_REL
 
 
 def read_models(directory):
     """Groups model XML headers by normalized license text."""
-    groups, without = {}, []
-    for name in sorted((n for n in os.listdir(directory) if n.endswith('.xml')), key=_model_order):
-        with open(os.path.join(directory, name), 'rb') as file:
-            found = parse_header(clean_text(file.read()))
+    try:
+        names = sorted((n for n in os.listdir(directory) if n.endswith('.xml')), key=_model_order)
+    except OSError as err:
+        raise stop(f'could not read LwM2M registry models directory {directory}: {err}')
+    groups = {}
+    for name in names:
+        try:
+            with open(os.path.join(directory, name), 'rb') as file:
+                found = parse_header(clean_text(file.read()))
+        except OSError as err:
+            raise stop(f'could not read LwM2M model {name}: {err}')
         if not found:
-            without.append(name)
             continue
         copyrights, text = found
         key = ' '.join(text.split())
         if key not in groups:
             groups[key] = (identify_license(text, name), text, {})
         groups[key][2][name] = copyrights
-    return groups, without
+    return groups
 
 
 def _model_order(name):
@@ -95,9 +100,13 @@ def identify_license(text, name):
 
 def check_pom_license(licenses, pom_path):
     ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
+    try:
+        root = ElementTree.parse(pom_path).getroot()
+    except (OSError, ElementTree.ParseError) as err:
+        raise stop(f'could not read {pom_path}: {err}')
     expressions = [
         comp.findtext('m:license', '', ns)
-        for comp in ElementTree.parse(pom_path).getroot().iterfind('.//m:component', ns)
+        for comp in root.iterfind('.//m:component', ns)
         if comp.findtext('m:name', '', ns) == COMPONENT_NAME
     ]
     if len(expressions) != 1:

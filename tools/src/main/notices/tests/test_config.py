@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
+import os
+import tempfile
 import unittest
 
 from notices.config import covers, load_curations, load_policy, split_curation_id
@@ -23,6 +25,8 @@ class ConfigAndCopyrightTests(unittest.TestCase):
         self.assertTrue(covers('[1.0,2.0[', '1.9.9'))
         self.assertFalse(covers('[1.0,2.0[', '2.0.0'))
         self.assertTrue(covers('[2.0,3.0[', '2.4.0-b180830.0359'))
+        # Non-numeric versions fail closed rather than matching an arbitrary numeric range
+        self.assertFalse(covers('[1.0,2.0[', 'snapshot'))
 
     def test_real_policy_and_curations_load_cleanly(self):
         policy = load_policy()
@@ -31,19 +35,37 @@ class ConfigAndCopyrightTests(unittest.TestCase):
         self.assertEqual(policy.category('GPL-3.0-only'), 'forbidden')
         self.assertIn('LicenseRef-thingsboard-beerware-googlemutant', curations.custom_licenses)
 
-    def test_copyright_year_merging_and_garbage(self):
+    def test_curations_supports_multi_id_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'curations.toml')
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(
+                    '[[curations]]\n'
+                    'ids = ["pkg:maven/com.example/a@1.0", "pkg:maven/com.example/b@1.0"]\n'
+                    'metadata_only = true\n'
+                )
+            curations = load_curations(path)
+            self.assertEqual(len(curations.for_package('pkg:maven/com.example/a', '1.0')), 1)
+            self.assertEqual(len(curations.for_package('pkg:maven/com.example/b', '1.0')), 1)
+
+    def test_copyright_year_merging_chained_hyphens_and_garbage(self):
         result = process_copyrights(
             [
                 'Copyright (C) 2020 Example Corp.',
                 'Copyright 2021 Example Corp.',
                 'Copyright © 2022-2023 Example Corp.',
                 'Copyright (c) 1989, 1991 Free Software Foundation, Inc.',
+                'Copyright 2010-2015-2020 Weird Range Inc.',
             ],
             garbage=frozenset({'Copyright (c) 1989, 1991 Free Software Foundation, Inc.'}),
         )
-        # Same holder with same prefix merges; different prefix ('Copyright (c)' vs 'Copyright') stays distinct or merges cleanly
-        self.assertNotIn('Copyright (c) 1989, 1991 Free Software Foundation, Inc.', result)
-        self.assertTrue(any('2020' in line and '2022-2023' in line or '2020, 2022-2023' in line for line in result))
+        self.assertEqual(
+            result,
+            [
+                'Copyright (c) 2020-2023 Example Corp.',
+                'Copyright 2010-2015-2020 Weird Range Inc.',
+            ],
+        )
 
 
 if __name__ == '__main__':

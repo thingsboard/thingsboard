@@ -55,10 +55,15 @@ class SbomAndRenderTests(unittest.TestCase):
                     ],
                 }, f)
 
-            inv = load_sboms([sbom], '4.4.1-SNAPSHOT', _policy())
+            inv = load_sboms([sbom], '4.4.1-SNAPSHOT', _policy(), check_version=True)
             self.assertEqual(list(inv.packages.keys()), ['pkg:maven/com.example/demo@1.2.3'])
             self.assertEqual(len(inv.jars), 1)
             self.assertTrue(any(r.generated == 'lwm2m-registry' for r in inv.license_files))
+
+            # Stale SBOM version fails closed when check_version=True
+            with self.assertRaises(SystemExit) as ctx:
+                load_sboms([sbom], '4.5.0-SNAPSHOT', _policy(), check_version=True)
+            self.assertIn('older build', str(ctx.exception))
 
             # Version drift on Chromium in policy.toml [license_files] stops cleanly
             drift = os.path.join(tmp, 'drift.cdx.json')
@@ -69,6 +74,36 @@ class SbomAndRenderTests(unittest.TestCase):
             with self.assertRaises(SystemExit) as ctx:
                 load_sboms([drift], '4.4.1-SNAPSHOT', _policy())
             self.assertIn('policy.toml [license_files]', str(ctx.exception))
+
+    def test_load_sboms_merges_duplicate_purl_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            sbom1 = os.path.join(tmp, 'a.cdx.json')
+            sbom2 = os.path.join(tmp, 'b.cdx.json')
+            with open(sbom1, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'components': [{
+                        'name': 'demo', 'version': '1.0.0', 'purl': 'pkg:npm/demo@1.0.0',
+                        'licenses': [{'license': {'id': 'MIT'}}],
+                    }],
+                }, f)
+            with open(sbom2, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'components': [{
+                        'name': 'demo', 'version': '1.0.0', 'purl': 'pkg:npm/demo@1.0.0',
+                        'externalReferences': [{
+                            'type': 'distribution',
+                            'url': 'https://registry.npmjs.org/demo/-/demo-1.0.0.tgz',
+                            'hashes': [{'alg': 'SHA-1', 'content': 'A' * 40}],
+                        }],
+                    }],
+                }, f)
+            inv = load_sboms([sbom1, sbom2], '4.4.1-SNAPSHOT', _policy())
+            pkg = inv.packages['pkg:npm/demo@1.0.0']
+            self.assertEqual(pkg.declared_raw, ('MIT',))
+            self.assertEqual(pkg.npm_tarball, {
+                'url': 'https://registry.npmjs.org/demo/-/demo-1.0.0.tgz',
+                'sha1': 'a' * 40,
+            })
 
     def test_render_notices_includes_ce_source_link_written_offer_and_attached_sections(self):
         with tempfile.TemporaryDirectory() as tmp:
