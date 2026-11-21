@@ -78,28 +78,29 @@ Pull requests into `master` and the release branches run the same check, and fai
 ## Third-party notices
 
 The licenses of the third-party components ThingsBoard ships require us to pass on their license texts and copyright
-notices. The root [THIRD-PARTY-NOTICES](../THIRD-PARTY-NOTICES) lists every such component, grouped by license, with:
+notices. Each package (`.deb`, `.rpm`, `.zip`) and Docker image carries a `THIRD-PARTY-NOTICES` file generated from its
+own SBOM during a release build (`-Dsbom.skip=false -Dnotices.skip=false`), and the UI bundle serves its notices at
+`/THIRD-PARTY-NOTICES.txt`. Each generated file lists every bundled component grouped by license, with:
 
 - the copyright lines found in its sources, and the text of each license;
 - the NOTICE files that Apache-2.0 components ask us to pass on;
 - where the source code is, for the licenses that require it (EPL, CDDL, MPL);
 - a written offer of the source code, for the LGPL and GPL components.
 
-Each package, and each image of the Node.js services, also carries the notices of exactly what it contains. The same
-generator makes them from its own SBOM during a release build (`-Dsbom.skip=false -Dnotices.skip=false`). So does the
-UI, which serves the notices of the npm packages in its bundle at `/THIRD-PARTY-NOTICES.txt`.
+The root [THIRD-PARTY-NOTICES](../THIRD-PARTY-NOTICES) in Git covers only the third-party files committed directly in
+this source repository (such as vendored fonts, copied sprites, and `gateway-management-extension.js`). External Maven,
+npm, Chromium, Node.js, and OS dependencies are not stored in Git and are handled at build time.
 
-The root file is generated: never edit it by hand. Commit it whenever you change what the product ships.
-
-## Regenerating the notices
+## Checking the notices locally
 
 ```bash
-mvn -T1C clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.windows=true
+mvn -T1C clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true
 mvn -N exec:exec@notices-product
 ```
 
-Build the whole project, without `-pl`, `-Dpkg.skip=true`, `-Dskip.yarn=true` or `-Dskip.ui.build=true`: the generator
-reads every SBOM it finds, and a build that skipped some gives an incomplete file without an error.
+This writes the combined product notices to `target/THIRD-PARTY-NOTICES` without modifying tracked files, and stops on
+any policy, classification, or curation problem. Build the whole project without `-pl`, `-Dpkg.skip=true`,
+`-Dskip.yarn=true`, or `-Dskip.ui.build=true` to check every module's SBOM.
 
 The generator needs Python 3.11 or later (standard library only). Docker is only needed when a new package is not yet
 in the shared scan cache — a run with nothing new to scan runs in pure Python in a couple of seconds. The settings of
@@ -108,18 +109,17 @@ the generator are in [its README](../tools/src/main/notices/README.md).
 ## The pull-request check
 
 CI checks a pull request when it comes from a member of the ThingsBoard organization and its merge changes any file
-that can affect the notices (`pom.xml`, `package.json`, `yarn.lock`, `ui-ngx/src/`, `ui-ngx/angular.json`, LwM2M models,
-gateway extension SBOM, Chromium config/credits, `yarn-sbom.js`, `tools/src/main/notices/`, or `THIRD-PARTY-NOTICES`).
-It builds the merge with SBOMs, regenerates the notices and compares them with the committed file. Other pull requests
-from members pass in seconds. For pull requests from outside the organization, a maintainer makes sure the file is up
-to date before merging.
+that can affect the notices (`pom.xml`, `package.json`, `yarn.lock`, `ui-ngx/src/`, `ui-ngx/angular.json`, report
+fonts, LwM2M models, gateway extension SBOM, Chromium config/credits, `yarn-sbom.js`, or `tools/src/main/notices/`).
+It builds the merge with SBOMs and runs `mvn -N exec:exec@notices-product` to verify every shipped dependency against
+the license policy and curations. Other pull requests from members pass in seconds. For pull requests from outside the
+organization, a maintainer runs the check before merging.
 
-When the files differ, the check fails and attaches the correct file to the build as `THIRD-PARTY-NOTICES`. Download
-it, look at what changed, and commit it. When the generator stops instead (next section), the check fails with its
-message.
+When the generator stops (next section), the check fails with its message telling you which decision to record in
+`tools/src/main/notices/`.
 
 The main branches are also checked every night. This catches what a pull request alone cannot, for example two pull
-requests that were each correct before the other one was merged, and uploads any newly scanned packages to the shared
+requests that each passed independently before merging, and uploads any newly scanned packages to the shared
 Artifactory cache.
 
 ## When the generator stops

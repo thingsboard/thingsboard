@@ -151,7 +151,7 @@ def ensure_docker_available():
     except FileNotFoundError:
         raise stop(
             'Docker is required to scan uncached packages, but `docker` was not found in PATH. '
-            'Install Docker or run with a warm scan cache. See docs/licensing-guide.md#regenerating-the-notices.'
+            'Install Docker or run with a warm scan cache. See docs/licensing-guide.md#checking-the-notices-locally.'
         )
     except subprocess.TimeoutExpired:
         raise stop(

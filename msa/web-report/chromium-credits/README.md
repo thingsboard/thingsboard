@@ -6,7 +6,7 @@ take it as the license file of the chromium components, through `[license_files]
 
 - the notices of the Linux packages get the Linux credits;
 - those of the Windows package get the Windows credits;
-- the root `THIRD-PARTY-NOTICES` gets the whole file.
+- the combined CI check (`target/THIRD-PARTY-NOTICES`) gets the whole file.
 
 The Linux and Windows builds have nearly the same entries: in 156.0.8078.0, all but 9. Those of one build are in a
 section at the end of the file, under a line `======== Only in the <platform> build ========`, which the notices of the
@@ -52,7 +52,7 @@ When `../chromium.js` moves to another Chromium version:
    both builds in the page's order, then the section of each build's own entries.
 4. Change the version in the two chromium entries under `[license_files]` in `tools/src/main/notices/policy.toml`. Until then, the
    notices stop.
-5. Regenerate the third-party notices (see `docs/sbom.md`).
+5. Run the third-party notices check (see `docs/sbom.md`).
 
 ## From the Chromium source
 

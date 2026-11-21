@@ -10,7 +10,7 @@ if sys.version_info < (3, 11):
     ver = f'{sys.version_info.major}.{sys.version_info.minor}'
     sys.exit(
         f'Third-party notices: Python 3.11 or later is required (found Python {ver}). '
-        'See docs/licensing-guide.md#regenerating-the-notices.'
+        'See docs/licensing-guide.md#checking-the-notices-locally.'
     )
 
 from notices.cli import main

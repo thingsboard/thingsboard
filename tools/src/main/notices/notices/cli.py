@@ -40,6 +40,7 @@ CI_WATCHED_PATHS = (
     ':(glob)**/yarn.lock',
     'ui-ngx/angular.json',
     'ui-ngx/src/',
+    'common/report/src/main/resources/fonts/',
     'application/src/main/data/lwm2m-registry/',
     'application/src/main/sbom/',
     'msa/web-report/chromium.js',
@@ -47,7 +48,6 @@ CI_WATCHED_PATHS = (
     'msa/web-report/chromium-credits/',
     'tools/src/main/javascript/yarn-sbom.js',
     'tools/src/main/notices/',
-    'THIRD-PARTY-NOTICES',
 )
 
 

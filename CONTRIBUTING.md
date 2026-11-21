@@ -152,14 +152,14 @@ rm ~/.testcontainers.properties
 
 ## Dependencies, SBOMs and licensing
 
-Every package, service jar and Docker image ThingsBoard ships carries a software bill of materials (SBOM), and the root
-`THIRD-PARTY-NOTICES` is generated from those SBOMs. A change that adds, updates or removes a Maven or npm dependency
-must include the regenerated file.
+Every package, service jar, Docker image, and UI bundle ThingsBoard ships carries a software bill of materials (SBOM)
+and build-generated third-party notices. CI verifies all shipped dependencies against our license policy whenever a PR
+adds, updates, or removes a Maven or npm dependency.
 
 - [docs/sbom.md](docs/sbom.md): which artifacts get an SBOM, how to build with SBOMs, and what to do for each kind of
   dependency change.
 - [docs/licensing-guide.md](docs/licensing-guide.md): the project's license, the file headers, the third-party notices,
-  how to regenerate them, and what to do when the generator stops.
+  how to run the notices check locally, and what to do when the generator stops.
 
 ## Submitting changes
 
@@ -168,8 +168,8 @@ Open a pull request against `master`. Fill out the pull request template, and ma
 - New or changed behavior has test coverage.
 - `mvn license:format` has been run, and `./check-license-headers.sh --since origin/master` passes (see
   [File headers](docs/licensing-guide.md#file-headers)). Do not add your own copyright or author lines to file headers.
-- A change to the dependencies comes with the regenerated `THIRD-PARTY-NOTICES`: see
-  [docs/licensing-guide.md](docs/licensing-guide.md#regenerating-the-notices).
+- If a dependency was added or updated, the notices check passes (with any needed license decision recorded in
+  `tools/src/main/notices/`): see [Checking the notices locally](docs/licensing-guide.md#checking-the-notices-locally).
 - The change builds cleanly: `mvn -pl <module> -am -DskipTests -Dpkg.skip=true test-compile` at minimum for the modules you touched.
 - You have signed the Contributor License Agreement (see below).
 

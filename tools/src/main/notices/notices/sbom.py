@@ -85,7 +85,7 @@ def discover_sboms(root_dir):
         raise stop(
             f'no SBOMs in the target/sbom directories under {root_dir}. Build with them first: '
             'mvn clean package -DskipTests -Dsbom.skip=false\n'
-            'See docs/licensing-guide.md#regenerating-the-notices.'
+            'See docs/licensing-guide.md#checking-the-notices-locally.'
         )
     return sboms
 

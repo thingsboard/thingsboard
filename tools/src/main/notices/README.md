@@ -8,13 +8,13 @@ What the notices are, when to regenerate them, and how to make license decisions
 
 ```bash
 # 1. Build SBOMs (skipping .deb/.rpm/.zip creation makes SBOM-only builds much faster)
-mvn -T1C clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.windows=true
+mvn -T1C clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true
 
-# 2. Generate the root THIRD-PARTY-NOTICES from every target/sbom/*.cdx.json
+# 2. Check and generate combined product notices in target/THIRD-PARTY-NOTICES
 mvn -N exec:exec@notices-product
 ```
 
-Do not use `-pl`, `-Dpkg.skip=true`, `-Dskip.yarn=true`, or `-Dskip.ui.build=true` when regenerating the root file:
+Do not use `-pl`, `-Dpkg.skip=true`, `-Dskip.yarn=true`, or `-Dskip.ui.build=true` when running the full product check:
 every module's SBOM must be present.
 
 The generator needs Python 3.11+ (standard library only, no `pip install`). Docker is only invoked when a brand-new
@@ -62,8 +62,8 @@ Both PR and nightly TeamCity configurations can run the exact same repo-owned st
 
 1. **Unit tests**: `python3 -m unittest discover -s tools/src/main/notices/tests -t tools/src/main/notices`
 2. **PR change gate** (PR config only): `python3 tools/src/main/notices ci-should-run --target-branch "$TARGET" --teamcity`
-3. **Fast SBOM build**: `mvn -T6 clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.windows=true`
-4. **Generate & compare notices**: `mvn -N exec:exec@notices-product` followed by `git diff --exit-code -- THIRD-PARTY-NOTICES`
+3. **Fast SBOM build**: `mvn -T6 clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true`
+4. **Verify notices**: `mvn -N exec:exec@notices-product` (writes `target/THIRD-PARTY-NOTICES` and fails on any policy/curation issue)
 5. **Upload new scans** (nightly/main config): `python3 tools/src/main/notices cache-upload`
 
 Use a persistent `NOTICES_CACHE_DIR` on TeamCity agents (not `%system.teamcity.build.tempDir%`) so warm builds make zero cache downloads.

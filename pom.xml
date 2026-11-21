@@ -1322,10 +1322,10 @@
                             </arguments>
                         </configuration>
                     </execution>
-                    <!-- The notices of the whole product: THIRD-PARTY-NOTICES in the root, from the SBOMs that a build
-                         with -Dsbom.skip=false left in the modules. Bound to no phase; run it after such a build, from
-                         the root: mvn -N exec:exec@notices-product. CI runs it the same way and fails when the
-                         committed file differs. -->
+                    <!-- The notices of the whole product, from the SBOMs that a build with -Dsbom.skip=false left in the
+                         modules. Bound to no phase; run it after such a build, from the root:
+                         mvn -N exec:exec@notices-product. CI runs it to verify license policy and curations across all
+                         shipped artifacts. -->
                     <execution>
                         <id>notices-product</id>
                         <inherited>false</inherited>
@@ -1340,7 +1340,7 @@
                                 <argument>--project-version</argument>
                                 <argument>${project.version}</argument>
                                 <argument>--out</argument>
-                                <argument>${main.dir}/THIRD-PARTY-NOTICES</argument>
+                                <argument>${project.build.directory}/THIRD-PARTY-NOTICES</argument>
                                 <argument>--sboms-under</argument>
                                 <argument>${main.dir}</argument>
                             </arguments>
