@@ -65,7 +65,7 @@
         <sbom.package.sourceFile>${project.build.directory}/sbom/application.cdx.json</sbom.package.sourceFile>
         <!-- Third-party notices are made only on request, together with the SBOMs: build with -Dsbom.skip=false
              -Dnotices.skip=false. A module that makes the SBOMs of its packages then also makes their notices and puts
-             them into the packages: see tools/src/main/notices/notices.sh. -->
+             them into the packages: see tools/src/main/notices/README.md. -->
         <notices.skip>true</notices.skip>
         <!-- What the notices steps follow: a build that skips the packaging makes no notices either, whatever
              notices.skip says. See the skip-pkg profiles: a profile cannot change a property given on the command line. -->
@@ -1027,8 +1027,8 @@
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>3.0.0</version>
                     <configuration>
-                        <!-- For tools/src/main/notices/notices.sh, which every module runs with this plugin. Its other
-                             settings, such as NOTICES_ORT_HOME and NOTICES_SCAN_CACHE_URL, reach it from the
+                        <!-- For tools/src/main/notices, which every module runs with this plugin. Its other
+                             settings, such as NOTICES_CACHE_DIR and NOTICES_SCAN_CACHE_URL, reach it from the
                              environment of Maven. -->
                         <environmentVariables>
                             <NOTICES_MAVEN_REPOSITORY>${settings.localRepository}</NOTICES_MAVEN_REPOSITORY>
@@ -1191,8 +1191,6 @@
                                     <exclude>src/main/scripts/control/**</exclude>
                                     <exclude>src/main/scripts/windows/**</exclude>
                                     <exclude>**/*.tpl.txt</exclude>
-                                    <!-- FreeMarker takes no comment in front of its first directive: the header is after it -->
-                                    <exclude>src/main/notices/*.ftl</exclude>
                                     <exclude>**/src/index.html</exclude>
                                     <exclude>**/public/static/rulenode/**</exclude>
                                     <exclude>**/*.proto.js</exclude>
@@ -1237,6 +1235,7 @@
                             <proto>SINGLE_LINE_DOUBLESLASH_STYLE</proto>
                             <gradle>SINGLE_LINE_DOUBLESLASH_STYLE</gradle>
                             <conf>SCRIPT_STYLE</conf>
+                            <toml>SCRIPT_STYLE</toml>
                             <cql>DOUBLEDASHES_STYLE</cql>
                         </mapping>
                     </configuration>
@@ -1288,10 +1287,13 @@
                         </goals>
                         <configuration>
                             <skip>${notices.run.skip}</skip>
-                            <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                            <executable>python3</executable>
                             <arguments>
-                                <argument>${project.build.directory}/notices/work-linux</argument>
+                                <argument>${main.dir}/tools/src/main/notices</argument>
+                                <argument>render</argument>
+                                <argument>--project-version</argument>
                                 <argument>${project.version}</argument>
+                                <argument>--out</argument>
                                 <argument>${project.build.directory}/notices/linux/THIRD-PARTY-NOTICES</argument>
                                 <argument>${sbom.package.sourceFile}</argument>
                                 <argument>${project.build.directory}/sbom/${pkg.name}-deb.bundled.cdx.json</argument>
@@ -1307,10 +1309,13 @@
                         </goals>
                         <configuration>
                             <skip>${notices.run.skip}</skip>
-                            <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                            <executable>python3</executable>
                             <arguments>
-                                <argument>${project.build.directory}/notices/work-windows</argument>
+                                <argument>${main.dir}/tools/src/main/notices</argument>
+                                <argument>render</argument>
+                                <argument>--project-version</argument>
                                 <argument>${project.version}</argument>
+                                <argument>--out</argument>
                                 <argument>${project.build.directory}/notices/windows/THIRD-PARTY-NOTICES</argument>
                                 <argument>${sbom.package.sourceFile}</argument>
                                 <argument>${project.build.directory}/sbom/${pkg.name}-zip.bundled.cdx.json</argument>
@@ -1328,10 +1333,13 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                            <executable>python3</executable>
                             <arguments>
-                                <argument>${project.build.directory}/notices-product</argument>
+                                <argument>${main.dir}/tools/src/main/notices</argument>
+                                <argument>render</argument>
+                                <argument>--project-version</argument>
                                 <argument>${project.version}</argument>
+                                <argument>--out</argument>
                                 <argument>${main.dir}/THIRD-PARTY-NOTICES</argument>
                                 <argument>--sboms-under</argument>
                                 <argument>${main.dir}</argument>

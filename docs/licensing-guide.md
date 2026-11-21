@@ -94,68 +94,64 @@ The root file is generated: never edit it by hand. Commit it whenever you change
 ## Regenerating the notices
 
 ```bash
-mvn -T1C clean package -DskipTests -Dsbom.skip=false   # the SBOMs, see sbom.md
-mvn -N exec:exec@notices-product                        # the notices, into THIRD-PARTY-NOTICES
+mvn -T1C clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.windows=true
+mvn -N exec:exec@notices-product
 ```
 
-Build the whole project, without `-pl`, `-Dpkg.skip*`, `-Dskip.yarn` or `-Dskip.ui.build`: the generator reads every
-SBOM it finds, and a build that skipped some gives an incomplete file without an error.
+Build the whole project, without `-pl`, `-Dpkg.skip=true`, `-Dskip.yarn=true` or `-Dskip.ui.build=true`: the generator
+reads every SBOM it finds, and a build that skipped some gives an incomplete file without an error.
 
-The generator needs Linux or macOS (WSL on Windows), Docker and Python 3.11 or later. It runs the
-[OSS Review Toolkit](https://oss-review-toolkit.org) (ORT) in a container, which scans the source of every component
-for licenses and copyright lines. Its logs are in `target/notices-product/`.
-
-A package that is new to the product is scanned on your machine the first time, which takes minutes. The scans that
-others have made are downloaded first, from an archive that CI keeps up to date, so a run with nothing new to scan takes
-about a minute. The settings of the generator are in [its README](../tools/src/main/notices/README.md).
+The generator needs Python 3.11 or later (standard library only). Docker is only needed when a new package is not yet
+in the shared scan cache — a run with nothing new to scan runs in pure Python in a couple of seconds. The settings of
+the generator are in [its README](../tools/src/main/notices/README.md).
 
 ## The pull-request check
 
-CI checks a pull request when it comes from a member of the ThingsBoard organization and its merge changes a
-`pom.xml`, `package.json` or `yarn.lock`, the notices tooling or `THIRD-PARTY-NOTICES`. It builds the merge with SBOMs,
-regenerates the notices and compares them with the committed file. Other pull requests from members pass in seconds.
-For pull requests from outside the organization, a maintainer makes sure the file is up to date before merging.
+CI checks a pull request when it comes from a member of the ThingsBoard organization and its merge changes any file
+that can affect the notices (`pom.xml`, `package.json`, `yarn.lock`, `ui-ngx/src/`, `ui-ngx/angular.json`, LwM2M models,
+gateway extension SBOM, Chromium config/credits, `yarn-sbom.js`, `tools/src/main/notices/`, or `THIRD-PARTY-NOTICES`).
+It builds the merge with SBOMs, regenerates the notices and compares them with the committed file. Other pull requests
+from members pass in seconds. For pull requests from outside the organization, a maintainer makes sure the file is up
+to date before merging.
 
 When the files differ, the check fails and attaches the correct file to the build as `THIRD-PARTY-NOTICES`. Download
 it, look at what changed, and commit it. When the generator stops instead (next section), the check fails with its
-message and attaches the logs.
+message.
 
 The main branches are also checked every night. This catches what a pull request alone cannot, for example two pull
-requests that were each correct before the other one was merged.
+requests that were each correct before the other one was merged, and uploads any newly scanned packages to the shared
+Artifactory cache.
 
 ## When the generator stops
 
-The generator stops rather than guess. Most stops start with `Third-party notices:`, name the packages, and say what to
-do: usually, which decision to record in which of these files under `tools/src/main/notices/`. If the scan cache cannot
-be downloaded (`Scan cache: … cannot be read`), check the network. `NOTICES_SCAN_CACHE_URL=none` runs without it, but
-then every package is scanned, which takes hours.
+The generator stops rather than guess. Every stop starts with `Third-party notices:`, names the packages, and says what
+to do — usually which decision to record in one of two TOML files under `tools/src/main/notices/`. If the shared scan
+cache cannot be reached, check the network or run with `NOTICES_SCAN_CACHE_URL=none` to scan locally.
 
-| File                                     | Records                                                                                                |
-|------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| `license-choices.yml`                    | The license we take where a package offers several                                                     |
-| `ort-config/license-classifications.yml` | What the notices owe for each license                                                                  |
-| `ort-config/curations/curations.json`    | What a package states wrongly or not at all: its license for the versions someone has read, its source |
-| `ort-config/resolutions.yml`             | Scan errors that do not affect the notices                                                             |
-| `ort-config/copyright-garbage.yml`       | Copyright lines that cannot be about any component's code, such as the copyright of a license text     |
+| File             | Records                                                                                                                               |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `policy.toml`    | License categories, same-category tie-breakers, global non-SPDX aliases, display titles, excluded paths, repo-local license files, and copyright garbage |
+| `curations.toml` | Per-package exceptions: source overrides / `metadata_only`, POM license fixes, file-scoped `ignore_findings`, version-ranged `concluded_license`, and custom license texts |
 
-Every entry carries a comment that says where the information comes from, so that a reviewer can check it.
+Every curation carries a `comment` that says where the information comes from, so that a reviewer can check it.
 
 ## Rules for license decisions
 
-- **A license choice takes the most permissive license offered**, and among copyleft licenses EPL, CDDL or MPL before
-  LGPL or GPL. A rule applies to every package that offers the same choice.
-- **A license set by hand covers only the versions someone read.** Its entry in `curations.json` names a version or a
-  range such as `[1.0,2.0[`. Widen the range only after reading the license of the new version.
-- **A license-name mapping has no version**, so it holds wherever a package names its license in the same words.
+- **License choices are resolved automatically by category priority** (`nothing > notice > source-link > written-offer > forbidden`),
+  using `same_category_preference` in `policy.toml` to break ties within the same tier. Unranked ties stop the generator.
+- **Prefer file-scoped `ignore_findings` over `concluded_license`.** Ignoring only a specific false-positive file keeps
+  every other file of the package actively scanned across version upgrades.
+- **A `concluded_license` covers only the versions someone read.** Its `id` in `curations.toml` must name a version or
+  a range such as `@[1.0,2.0[`. Widen the range only after reading the license of the new version.
+- **Unambiguous non-SPDX license names** belong in `[license_aliases]` of `policy.toml`; ambiguous ones (e.g. unversioned
+  `"LGPL"`) are mapped per package in `curations.toml`.
 - **A new license needs a classification before it ships.** If you are not sure what a license requires, ask before
-  adding it: a copyleft license may need legal review.
+  adding it to `[licenses]` in `policy.toml`: a copyleft license may need legal review.
 - **Some licenses cannot ship at all.** Strong copyleft (GPL and AGPL without an exception, SSPL, EUPL and the like)
   would put ThingsBoard itself under that license, and some licenses forbid commercial use (CC-BY-NC, Commons Clause,
   Elastic-2.0, BUSL-1.1). They are classified `forbidden`, and the generator stops on any shipped package under one:
-  the dependency has to go. Only a misread scan is fixed in `curations.json`. A license choice is decided first,
-  so a package that offers `AGPL-3.0-only OR Apache-2.0` needs only a rule in `license-choices.yml`.
+  the dependency has to go. Only a misread scan is fixed with a file-scoped `ignore_findings` in `curations.toml`.
+  License choices are resolved first, so `AGPL-3.0-only OR Apache-2.0` automatically selects `Apache-2.0`.
 - **The decision files have an owner.** `.github/CODEOWNERS` names who approves a change to the generator and its
   decision files under `tools/src/main/notices/`.
 - **A package without a license is not shipped** until this is raised and resolved.
-- **Do not change the ScanCode options** in `ort-config/config.yml`: stored scans made with other options are not
-  reused, and everything would be scanned again.

@@ -323,10 +323,13 @@
                             </goals>
                             <configuration>
                                 <skip>${notices.run.skip}</skip>
-                                <executable>${main.dir}/tools/src/main/notices/notices.sh</executable>
+                                <executable>python3</executable>
                                 <arguments>
-                                    <argument>${project.build.directory}/notices/work-image</argument>
+                                    <argument>${main.dir}/tools/src/main/notices</argument>
+                                    <argument>render</argument>
+                                    <argument>--project-version</argument>
                                     <argument>${project.version}</argument>
+                                    <argument>--out</argument>
                                     <argument>${project.build.directory}/notices/image/THIRD-PARTY-NOTICES</argument>
                                     <argument>${project.build.directory}/sbom/${pkg.name}.cdx.json</argument>
                                 </arguments>

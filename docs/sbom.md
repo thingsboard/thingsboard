@@ -134,11 +134,11 @@ for it, at the address of that version, and the notices include that file as it 
 </externalReferences>
 ```
 
-When the vendor publishes no such file, keep one in this repository and add it to
-`tools/src/main/notices/license-files-here.json`, by the purl of the component, or by its name when it has none. The LwM2M
-object models have one, made from their headers by `tools/src/main/notices/lwm2m_notice.py`. The Chromium of web-report
-has one for its Linux and Windows builds, its credits, with a section for each platform that the notices of the other
-leave out: see `msa/web-report/chromium-credits/README.md`.
+When the vendor publishes no such file, keep one in this repository and add it under `[license_files]` in
+`tools/src/main/notices/policy.toml`, by the purl of the component, or by its name when it has none. The LwM2M
+object models have their notice generated on the fly from their XML headers (`tools/src/main/notices/notices/lwm2m.py`).
+The Chromium of web-report has one for its Linux and Windows builds, its credits, with a section for each platform that
+the notices of the other leave out: see `msa/web-report/chromium-credits/README.md`.
 
 A component without either is left out of the notices; the notices log lists it.
 
