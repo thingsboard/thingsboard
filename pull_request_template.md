@@ -13,6 +13,7 @@ Put your PR description here instead of this sentence.
 - [ ] Description contains brief notes about what needs to be added to the documentation.
 - [ ] No merge conflicts, commented blocks of code, code formatting issues.
 - [ ] Changes are backward compatible or upgrade script is provided.
+- [ ] If any dependency or bundled third-party file changed: the third-party notices check passes.
   
 ## Front-End feature checklist
 
@@ -23,7 +24,7 @@ Put your PR description here instead of this sentence.
 ## Back-End feature checklist
 
 - [ ] Added corresponding unit and/or integration test(s). Provide written explanation in the PR description if you have failed to add tests.
-- [ ] If new dependency was added: the dependency tree is checked for conflicts, and the third-party notices check passes.
+- [ ] If new dependency was added: the dependency tree is checked for conflicts.
 - [ ] If new service was added: the service is marked with corresponding @TbCoreComponent, @TbRuleEngineComponent, @TbTransportComponent, etc.
 - [ ] If new REST API was added: the RestClient.java was updated, issue for [Python REST client](https://github.com/thingsboard/thingsboard-python-rest-client) is created.
 - [ ] If new yml property was added: make sure a description is added (above or near the property).

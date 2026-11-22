@@ -1,5 +1,11 @@
-# The third-party notices: the generator, its license decisions and the guide to them. A change to them needs the
-# approval of their owner, and so does a change to this file.
+# The third-party notices: the generator, its license decisions, SBOM generation, shipped legal files, and guides.
+# A change to them needs the approval of their owner, and so does a change to this file.
 /tools/src/main/notices/ @dskarzh
+/tools/src/main/javascript/yarn-sbom.js @dskarzh
+/tools/src/main/python/license-headers/curations.json @dskarzh
+/msa/web-report/chromium-credits/CREDITS.txt @dskarzh
+/THIRD-PARTY-NOTICES @dskarzh
+/LICENSE @dskarzh
 /docs/licensing-guide.md @dskarzh
+/docs/sbom.md @dskarzh
 /.github/CODEOWNERS @dskarzh

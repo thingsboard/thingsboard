@@ -10,9 +10,22 @@ import re
 import tomllib
 
 from notices import NOTICES_DIR, stop
+from notices.spdx import SpdxSyntaxError, parse as parse_spdx
 
 POLICY_PATH = os.path.join(NOTICES_DIR, 'policy.toml')
 CURATIONS_PATH = os.path.join(NOTICES_DIR, 'curations.toml')
+
+_POLICY_KEYS = frozenset({
+    'own_modules', 'exclude_paths', 'same_category_preference', 'copyright_garbage',
+    'licenses', 'license_aliases', 'license_titles', 'license_files',
+})
+_CURATIONS_TOP_KEYS = frozenset({'curations', 'custom_licenses'})
+_CURATION_KEYS = frozenset({
+    'id', 'ids', 'comment', 'metadata_only', 'vcs',
+    'declared_license', 'declared_license_map', 'concluded_license', 'ignore_findings',
+})
+_IGNORE_KEYS = frozenset({'path', 'licenses', 'comment'})
+_VCS_KEYS = frozenset({'type', 'url', 'revision', 'path'})
 
 CATEGORY_ORDER = {
     'nothing': 0,
@@ -26,14 +39,14 @@ RANGE_RE = re.compile(r'([\[\]])([^,]*),([^,]*)([\[\]])')
 
 @dataclass(frozen=True)
 class Policy:
-    own_modules: frozenset[str]
-    exclude_paths: tuple[str, ...]
-    same_category_preference: dict[str, int]
-    license_category: dict[str, str]
-    license_aliases: dict[str, str]
-    license_titles: dict[str, str]
-    license_files: dict[str, str]
-    copyright_garbage: frozenset[str]
+    own_modules: frozenset[str] = frozenset()
+    exclude_paths: tuple[str, ...] = ()
+    same_category_preference: dict[str, int] = field(default_factory=dict)
+    license_category: dict[str, str] = field(default_factory=dict)
+    license_aliases: dict[str, str] = field(default_factory=dict)
+    license_titles: dict[str, str] = field(default_factory=dict)
+    license_files: dict[str, str] = field(default_factory=dict)
+    copyright_garbage: frozenset[str] = frozenset()
 
     def category(self, license_id):
         return self.license_category.get(license_id)
@@ -85,8 +98,6 @@ class Curations:
     def unreviewed_concluded(self, purl_no_version, version):
         """Version specs of concluded_license curations when none of them covers `version`."""
         specs = [c.version_spec for c in self._by_package.get(purl_no_version, ()) if c.concluded_license]
-        if not specs:
-            return []
         return [] if any(covers(spec, version) for spec in specs) else specs
 
     def unused(self, packages, used_licenses=None):
@@ -109,8 +120,22 @@ def _load_toml(path):
         raise stop(f'could not read {path}: {err}')
 
 
+def _reject_unknown_keys(mapping, allowed, context, path):
+    unknown = sorted(set(mapping) - allowed)
+    if unknown:
+        raise stop(f'unknown key(s) {", ".join(repr(k) for k in unknown)} in {context} ({path})')
+
+
+def _validate_spdx(expr, context, path):
+    try:
+        parse_spdx(expr)
+    except SpdxSyntaxError as err:
+        raise stop(f'invalid SPDX expression {expr!r} in {context} ({path}): {err}')
+
+
 def load_policy(path=POLICY_PATH):
     data = _load_toml(path)
+    _reject_unknown_keys(data, _POLICY_KEYS, 'top-level policy', path)
     license_category = {}
     for category, ids in data.get('licenses', {}).items():
         if category not in CATEGORY_ORDER:
@@ -119,41 +144,68 @@ def load_policy(path=POLICY_PATH):
             if lic in license_category:
                 raise stop(f'license {lic!r} is listed under multiple categories in {path}')
             license_category[lic] = category
+    license_aliases = dict(data.get('license_aliases', {}))
+    for alias, expr in license_aliases.items():
+        if not isinstance(expr, str):
+            raise stop(f'license_aliases[{alias!r}] in {path} must be a string')
+        _validate_spdx(expr, f'license_aliases[{alias!r}]', path)
+    license_files = dict(data.get('license_files', {}))
+    for key, val in license_files.items():
+        if not isinstance(val, str):
+            raise stop(f'license_files[{key!r}] in {path} must be a string path (got {type(val).__name__})')
     prefs = {lic: i for i, lic in enumerate(data.get('same_category_preference', []))}
     return Policy(
         own_modules=frozenset(data.get('own_modules', [])),
         exclude_paths=tuple(data.get('exclude_paths', [])),
         same_category_preference=prefs,
         license_category=license_category,
-        license_aliases=dict(data.get('license_aliases', {})),
+        license_aliases=license_aliases,
         license_titles=dict(data.get('license_titles', {})),
-        license_files=dict(data.get('license_files', {})),
+        license_files=license_files,
         copyright_garbage=frozenset(data.get('copyright_garbage', [])),
     )
 
 
 def load_curations(path=CURATIONS_PATH):
     data = _load_toml(path)
+    _reject_unknown_keys(data, _CURATIONS_TOP_KEYS, 'top-level curations', path)
     entries = []
     for raw in data.get('curations', []):
         raw_ids = raw.get('ids') or ([raw['id']] if 'id' in raw else [])
         if not raw_ids:
             raise stop(f'curation entry in {path} is missing "id" (or "ids")')
+        label = f'curation {raw_ids[0]!r}'
+        _reject_unknown_keys(raw, _CURATION_KEYS, label, path)
+        vcs = raw.get('vcs')
+        if vcs is not None:
+            if not isinstance(vcs, dict):
+                raise stop(f'vcs in {label} ({path}) must be a table')
+            _reject_unknown_keys(vcs, _VCS_KEYS, f'vcs of {label}', path)
+            for req in ('url', 'revision'):
+                if not isinstance(vcs.get(req), str) or not vcs[req].strip():
+                    raise stop(f'vcs in {label} ({path}) is missing non-empty string {req!r}')
+        if raw.get('declared_license'):
+            _validate_spdx(raw['declared_license'], f'declared_license of {label}', path)
+        if raw.get('concluded_license'):
+            _validate_spdx(raw['concluded_license'], f'concluded_license of {label}', path)
+        for name, expr in raw.get('declared_license_map', {}).items():
+            _validate_spdx(expr, f'declared_license_map[{name!r}] of {label}', path)
         try:
-            ignores = tuple(
-                IgnoreFinding(
+            ignores = []
+            for item in raw.get('ignore_findings', []):
+                _reject_unknown_keys(item, _IGNORE_KEYS, f'ignore_findings of {label}', path)
+                ignores.append(IgnoreFinding(
                     path=item['path'],
                     licenses=frozenset(item['licenses']),
                     comment=item.get('comment', ''),
-                )
-                for item in raw.get('ignore_findings', [])
-            )
+                ))
+            ignores = tuple(ignores)
         except KeyError as err:
             raise stop(f'ignore_findings entry in {path} for {raw_ids[0]!r} is missing {err}')
 
         for raw_id in raw_ids:
             pkg_key, version_spec = split_curation_id(raw_id)
-            _validate_version_spec(version_spec, raw_id, path)
+            _validate_version_spec(version_spec, raw_id, path, require_upper=bool(raw.get('concluded_license')))
             if raw.get('concluded_license') and not version_spec:
                 raise stop(
                     f'curation {raw_id!r} in {path} sets concluded_license without a version or version range. '
@@ -165,7 +217,7 @@ def load_curations(path=CURATIONS_PATH):
                 version_spec=version_spec,
                 comment=raw.get('comment', ''),
                 metadata_only=bool(raw.get('metadata_only', False)),
-                vcs=raw.get('vcs'),
+                vcs=vcs,
                 declared_license=raw.get('declared_license'),
                 declared_license_map=dict(raw.get('declared_license_map', {})),
                 concluded_license=raw.get('concluded_license'),
@@ -175,7 +227,7 @@ def load_curations(path=CURATIONS_PATH):
     return Curations(entries=tuple(entries), custom_licenses=custom_licenses)
 
 
-def _validate_version_spec(version_spec, raw_id, path):
+def _validate_version_spec(version_spec, raw_id, path, require_upper=False):
     if not version_spec:
         return
     if version_spec[0] in '[]' or version_spec[-1] in '[]':
@@ -183,6 +235,10 @@ def _validate_version_spec(version_spec, raw_id, path):
         if not limits:
             raise stop(f'invalid version range {version_spec!r} in {raw_id!r} ({path}); expected e.g. [1.0,2.0[')
         _, lowest, highest, _ = limits.groups()
+        if not lowest and not highest:
+            raise stop(f'empty version range {version_spec!r} in {raw_id!r} ({path})')
+        if require_upper and not highest:
+            raise stop(f'unbounded version range {version_spec!r} in {raw_id!r} ({path}); concluded_license requires an upper bound')
         if (lowest and not _numbers(lowest)) or (highest and not _numbers(highest)):
             raise stop(f'non-numeric bound in version range {version_spec!r} in {raw_id!r} ({path})')
 

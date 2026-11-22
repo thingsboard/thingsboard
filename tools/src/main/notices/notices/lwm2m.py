@@ -15,6 +15,7 @@ import textwrap
 import xml.etree.ElementTree as ElementTree
 
 from notices import ROOT, clean_text, stop
+from notices.spdx import SpdxSyntaxError, leaves as spdx_leaves, parse as parse_spdx
 
 MODELS_REL = 'application/src/main/data/lwm2m-registry'
 POM_REL = 'application/pom.xml'
@@ -113,7 +114,10 @@ def check_pom_license(licenses, pom_path):
         raise stop(
             f'{POM_REL} has {len(expressions)} bundled components {COMPONENT_NAME}, and expected exactly 1.'
         )
-    given = set(expressions[0].split(' AND ')) if expressions[0] else set()
+    try:
+        given = {str(lic) for lic in spdx_leaves(parse_spdx(expressions[0]))} if expressions[0] else set()
+    except SpdxSyntaxError as err:
+        raise stop(f'invalid SPDX license expression {expressions[0]!r} for {COMPONENT_NAME} in {POM_REL}: {err}')
     if given != licenses:
         expected = ' AND '.join(sorted(licenses))
         raise stop(

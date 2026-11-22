@@ -60,9 +60,24 @@ class SpdxTests(unittest.TestCase):
         self.assertEqual(resolved, {License('MIT')})
         self.assertEqual(undecided, [])
 
+        # Nested OR ties of equal rank must fail closed rather than picking an untied sibling
+        ranks_with_tie = {**ranks, 'Zlib': 1}
+        tie_key = lambda lics: (max(ranks_with_tie[str(l)] for l in lics), len(lics))
+        _, undecided = resolve_or(parse('(Apache-2.0 OR MIT) OR Zlib'), tie_key)
+        self.assertTrue(undecided)
+        _, undecided = resolve_or(parse('((Apache-2.0 OR MIT) AND BSD-3-Clause) OR (Zlib AND BSD-3-Clause)'), tie_key)
+        self.assertTrue(undecided)
+
     def test_leaves_deduplicates(self):
         node = parse('MIT AND (MIT OR Apache-2.0)')
         self.assertEqual(leaves(node), [License('MIT'), License('Apache-2.0')])
+
+    def test_parse_memoizes_valid_expressions(self):
+        first = parse('Apache-2.0 OR MIT')
+        second = parse('Apache-2.0 OR MIT')
+        self.assertIs(first, second)
+        with self.assertRaises(SpdxSyntaxError):
+            parse('not valid spdx')
 
 
 if __name__ == '__main__':

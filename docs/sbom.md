@@ -16,13 +16,13 @@ SBOM is missing from the notices too: see [licensing-guide.md](licensing-guide.m
 | The Docker images                                                        | attached to the image in the registry, one per architecture                                    | the `image` goal, when the images are pushed |
 
 The services are the modules that build a Spring Boot jar and declare the plugin in their `pom.xml`, such as
-`application`, the transports and the integrations. The `jar`, `bundled`, `package` and `image` goals belong to
-[sbom-maven-plugin](https://github.com/thingsboard/sbom-maven-plugin). The UI SBOM is also nested in the SBOM of
-`application`, which serves the UI.
+`application`, the transports and the integrations. The `jar`, `bundled`, `package`, `fonts`, `metadata` and `image`
+goals belong to [sbom-maven-plugin](https://github.com/thingsboard/sbom-maven-plugin). The UI SBOM is also nested in
+the SBOM of `application`, which serves the UI.
 
-Library modules (`common/*`, `rest-client`, `netty-mqtt` and the like) get no SBOM of their own: they are described as
-components of the services that pack them. `msa/web-ui` and `msa/js-executor` ship only as Docker images, so they have
-no package SBOMs.
+Library modules (`common/*`, `rest-client`, `netty-mqtt` and the like) get no SBOM of their own (except `common/report`,
+which runs `fonts` for its bundled PDF fonts): they are described as components of the services that pack them.
+`msa/web-ui` and `msa/js-executor` ship only as Docker images, so they have no package SBOMs.
 
 ## Building with SBOMs
 
@@ -38,7 +38,7 @@ for the Node.js services, whose SBOMs read the packages of other platforms from 
 | Flag                                               | Effect on the SBOMs                                                                                                                                   |
 |----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `-Dsbom.skip=false`                                | Turns on the SBOMs of the jars, the packages and the npm modules                                                                                      |
-| `-Dnotices.skip=false`                             | Also puts the third-party notices of each package into it (needs Docker)                                                                              |
+| `-Dnotices.skip=false`                             | Also generates scoped third-party notices for each package, Docker image, and UI bundle (`/THIRD-PARTY-NOTICES.txt`); combine with `-Dsbom.skip=false` (needs Python 3.11+, and Docker only on scan cache misses) |
 | `-Dskip.yarn=true`, `-Dskip.ui.build=true`         | `-Dskip.yarn=true` skips every npm SBOM, `-Dskip.ui.build=true` those of `ui-ngx`, `msa/web-ui` and `msa/web-report`; either also skips all packaging |
 | `-Dpkg.skip=true` and the finer `pkg.skip.*` flags | Skip the packages and their SBOMs; `pkg.skip.bootjar` also skips the jar's SBOM                                                                       |
 
@@ -74,11 +74,11 @@ reads `yarn.lock` and the installed packages, and lists:
 | `msa/web-report` image (`sbom`)                            | The installed production dependencies                                                                                                     |
 | `msa/web-ui`, `msa/js-executor` (`--all-platforms`)        | Every production dependency, including the optional ones of other platforms, read from their tarballs                                     |
 
-A package that is installed but not bundled is not shipped, so it is not listed. devDependencies are not listed either,
-except a package that the UI bundle contains. Every listed package must be in `yarn.lock`. `pkg` and `pkg-fetch` are
-listed in the SBOM of the executables, though they are devDependencies: the executables contain the startup code of
-`pkg` and the Node.js runtime that `pkg-fetch` built with its patches. That runtime and the bundled Chromium are
-declared in `msa/web-report/pom.xml`.
+A package that is installed but not bundled is not shipped, so it is not listed. `devDependencies` are not listed either,
+except packages whose code ends up in a shipped artifact: bundles imported by the UI build, and `pkg` / `pkg-fetch` in
+the `msa/web-report` executable SBOM (the executables embed the `pkg` prelude and the patched Node.js runtime built by
+`pkg-fetch`). Every listed package must be in `yarn.lock`. The Node.js runtime and bundled Chromium are declared in
+`msa/web-report/pom.xml`.
 
 ### Docker images
 
@@ -140,7 +140,9 @@ object models have their notice generated on the fly from their XML headers (`to
 The Chromium of web-report has one for its Linux and Windows builds, its credits, with a section for each platform that
 the notices of the other leave out: see `msa/web-report/chromium-credits/README.md`.
 
-A component without either is left out of the notices; the notices log lists it.
+Non-Maven/non-npm components that carry both a declared license and copyright text in the SBOM (such as vendored fonts
+from `sbom-maven-plugin:fonts`) are also included directly. Any other component without a license file or declared
+license + copyright is skipped by the notices generator.
 
 ### Copied third-party code
 
@@ -159,7 +161,7 @@ expect a reviewer to decide how it is declared.
 | Import a package in `ui-ngx` for the first time, stop using one, or change the assets or scripts in `angular.json` | Run the notices check (or let CI check it): the UI SBOM lists only what the bundle contains.                                                                                                                               |
 | Update the gateway extension                                                                                       | See [The gateway management extension](#the-gateway-management-extension), and update root `THIRD-PARTY-NOTICES` if its bundled dependencies change.                                                                       |
 | Ship a new file that is not a dependency                                                                           | Declare it as a component of the module's `bundled-sbom`, with its license, and update root `THIRD-PARTY-NOTICES` if the third-party file is committed in Git.                                                             |
-| Add a module that ships a Spring Boot jar or package                                                               | Set `sbom.jar.phase` and `sbom.bundled.phase` to `prepare-package` and `sbom.package.phase` to `${pkg.package.phase}`, and declare `sbom-maven-plugin` after `spring-boot-maven-plugin`, as `transport/mqtt/pom.xml` does. |
+| Add a module that ships a Spring Boot jar or package                                                               | Set `sbom.bundled.phase` to `prepare-package` (`sbom.jar.phase` follows `sbom.bundled.phase` and `sbom.package.phase` follows `pkg.package.phase` automatically), and declare `sbom-maven-plugin` after `spring-boot-maven-plugin`, as `transport/mqtt/pom.xml` does. |
 | Copy third-party code                                                                                              | See [Copied third-party code](#copied-third-party-code), and update root `THIRD-PARTY-NOTICES` for third-party code committed in Git.                                                                                      |
 | Change a Docker base image                                                                                         | Nothing: the image SBOM is made from the pushed image.                                                                                                                                                                     |
 

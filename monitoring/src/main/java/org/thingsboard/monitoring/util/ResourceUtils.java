@@ -23,10 +23,6 @@ public class ResourceUtils {
         return JacksonUtil.OBJECT_MAPPER.readTree(resource);
     }
 
-    public static InputStream getResourceAsStream(String path) {
-        return getResourceStream(path);
-    }
-
     @SneakyThrows
     public static byte[] getResourceBytes(String path) {
         try (InputStream resource = getResourceStream(path)) {

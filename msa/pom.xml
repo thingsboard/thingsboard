@@ -31,7 +31,7 @@
         <!-- Prefix shared by every image name; downstream builds override it as a whole (e.g. tb-paas). -->
         <tb.docker.id>tb</tb.docker.id>
         <blackBoxTests.skip>true</blackBoxTests.skip>
-        <exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
+        <docker.resources.phase>none</docker.resources.phase>
         <docker.push-arm-amd-image.phase>none</docker.push-arm-amd-image.phase>
         <sbom.image.repository>${docker.repo}/${docker.name}</sbom.image.repository>
         <!-- Set by the profiles that push the multi-architecture images -->
@@ -48,7 +48,7 @@
             (web-ui, js-executor, web-report) are serialized via reactor-only
             <dependency> entries in their own poms, forming the chain
             ui-ngx -> web-ui -> js-executor -> web-report. This prevents
-            concurrent yarn install / yarn run pkg invocations under `mvn -T<n>`,
+            concurrent yarn install / yarn build / yarn pkg invocations under `mvn -T<n>`,
             which previously caused intermittent `tsc: not found` failures
             (incomplete typescript extraction in node_modules from racing
             yarn 1.x processes against the shared ~/.cache/yarn).
@@ -308,9 +308,57 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <executions>
+                        <!-- Docker-only JS services (web-ui, js-executor) opt in via docker.resources.phase=process-resources,
+                             outside the root packaging profile so -Dpkg.skip=true still stages Docker build inputs. -->
+                        <execution>
+                            <id>copy-linux-conf</id>
+                            <phase>${docker.resources.phase}</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${pkg.linux.dist}/conf</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>config</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                                <filters>
+                                    <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
+                                </filters>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>copy-docker-config</id>
+                            <phase>${docker.resources.phase}</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>docker</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                    <resource>
+                                        <directory>${main.dir}</directory>
+                                        <includes>
+                                            <include>LICENSE</include>
+                                        </includes>
+                                    </resource>
+                                </resources>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>${exec-maven-plugin.version}</version>
                     <executions>
                         <!-- The third-party notices of an image that installs no package of ours, which would bring them:
                              made from the SBOM that the image-sbom execution checks the image against, and copied by

@@ -28,10 +28,10 @@
         <pkg.type>js</pkg.type>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
-        <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
         <pkg.deb.arch>amd64</pkg.deb.arch>
         <pkg.rpm.arch>x86_64</pkg.rpm.arch>
         <sbom.bundled.phase>prepare-package</sbom.bundled.phase>
+        <sbom.jar.phase>none</sbom.jar.phase>
         <sbom.package.sourceFile>${project.build.directory}/sbom/tb-web-report-executable.cdx.json</sbom.package.sourceFile>
         <notices.image.phase>package</notices.image.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>

@@ -3,32 +3,36 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
-"""Source resolution, direct ScanCode Docker execution, NOTICE extraction, and ORT cache migration."""
+"""Source resolution, direct ScanCode Docker execution, and NOTICE extraction."""
 import concurrent.futures
 import hashlib
 import io
 import json
-import lzma
 import os
 import re
 import shutil
 import subprocess
 import tarfile
 import tempfile
+import threading
 import urllib.error
 import urllib.parse
 import zipfile
 
-from notices import BUILD_PROBLEM, HTTP_ERRORS, clean_text, http_get, ort_home, stop, write_atomically
-from notices.cache import scan_cache_key
+from notices import BUILD_PROBLEM, HTTP_ERRORS, clean_text, http_get, stop, write_atomically
 
 SCANCODE_VERSION = '32.5.0'
-DEFAULT_SCANCODE_IMAGE = 'ghcr.io/oss-review-toolkit/ort:98.0.0'
+DEFAULT_SCANCODE_IMAGE = 'ghcr.io/oss-review-toolkit/ort-minimal:98.0.0'
+SCAN_BATCH_SIZE = 50
 MAVEN_REPOSITORIES = [
     'https://repo1.maven.org/maven2',
     'https://repo.thingsboard.io/artifactory/libs-release-public',
 ]
 SHA1_RE = re.compile(r'^[0-9a-f]{40}$')
+
+
+def scancode_image():
+    return os.environ.get('NOTICES_SCANCODE_IMAGE', DEFAULT_SCANCODE_IMAGE)
 
 
 def maven_path(group, name, version, classifier='', file_type='jar'):
@@ -56,41 +60,53 @@ def resolve_maven_sources(packages, curations, cache_dir):
     cache_path = os.path.join(cache_dir, 'maven-sources.json')
     known = _read_sources_cache(cache_path)
 
-    # Seed from legacy ~/.ort/maven-sources.json if present so warm developer machines skip lookups.
-    seeded = False
-    legacy = os.path.join(ort_home(), 'maven-sources.json')
-    if not known and os.path.exists(legacy):
-        known = _read_sources_cache(legacy)
-        seeded = bool(known)
-
     def has_source_curation(pkg):
         return any(c.metadata_only or c.vcs for c in curations.for_package(pkg.package_key, pkg.version))
 
     missing = [pkg for pkg in packages.values() if pkg.kind == 'maven' and pkg.purl not in known and not has_source_curation(pkg)]
     found = {}
-    if missing:
-        def lookup(pkg):
-            path = maven_path(pkg.group, pkg.name, pkg.version, 'sources')
-            for url, content in from_maven_repositories(path + '.sha1', timeout=30):
-                tokens = content.decode('utf-8', 'replace').split()
-                sha1 = tokens[0].lower() if tokens else ''
-                if not SHA1_RE.match(sha1):
-                    raise stop(f'{url} is no SHA-1: {sha1!r}. {BUILD_PROBLEM}')
-                return pkg.purl, {'url': url.removesuffix('.sha1'), 'sha1': sha1}
-            return pkg.purl, None
+    abort = threading.Event()
+    try:
+        if missing:
+            def lookup(pkg):
+                if abort.is_set():
+                    return pkg.purl, None
+                try:
+                    path = maven_path(pkg.group, pkg.name, pkg.version, 'sources')
+                    for url, content in from_maven_repositories(path + '.sha1', timeout=15):
+                        tokens = content.decode('utf-8', 'replace').split()
+                        sha1 = tokens[0].lower() if tokens else ''
+                        if not SHA1_RE.match(sha1):
+                            raise stop(f'{url} is no SHA-1: {sha1!r}. {BUILD_PROBLEM}')
+                        return pkg.purl, {'url': url.removesuffix('.sha1'), 'sha1': sha1}
+                    return pkg.purl, None
+                except BaseException:
+                    abort.set()
+                    raise
 
-        try:
-            with concurrent.futures.ThreadPoolExecutor(16) as pool:
-                for purl, source in pool.map(lookup, missing):
-                    if source:
-                        found[purl] = source
-        finally:
-            if found or (seeded and not os.path.exists(cache_path)):
-                merged = {**known, **_read_sources_cache(cache_path), **found}
-                write_atomically(cache_path, json.dumps(merged, indent=1, sort_keys=True).encode('utf-8'))
-                known = merged
-    elif seeded and not os.path.exists(cache_path):
-        write_atomically(cache_path, json.dumps(known, indent=1, sort_keys=True).encode('utf-8'))
+            # Probe the first lookup before fanning out so an unreachable repo fails fast.
+            purl0, source0 = lookup(missing[0])
+            if source0:
+                found[purl0] = source0
+            rest = missing[1:]
+            if rest:
+                pool = concurrent.futures.ThreadPoolExecutor(max_workers=min(16, len(rest)))
+                try:
+                    futures = [pool.submit(lookup, pkg) for pkg in rest]
+                    for future in concurrent.futures.as_completed(futures):
+                        purl, source = future.result()
+                        if source:
+                            found[purl] = source
+                except BaseException:
+                    abort.set()
+                    raise
+                finally:
+                    pool.shutdown(wait=True, cancel_futures=True)
+    finally:
+        if found:
+            merged = {**known, **_read_sources_cache(cache_path), **found}
+            write_atomically(cache_path, json.dumps(merged, indent=1, sort_keys=True).encode('utf-8'))
+            known = merged
 
     return known
 
@@ -167,41 +183,60 @@ def ensure_docker_available():
         )
 
 
-def scan_source_with_scancode(source, exclude_paths):
-    """Downloads/extracts a source archive or VCS checkout, runs ScanCode in Docker, and returns a normalized record."""
-    image = os.environ.get('NOTICES_SCANCODE_IMAGE', DEFAULT_SCANCODE_IMAGE)
-    with tempfile.TemporaryDirectory(prefix='tb-scancode-') as work:
-        src_dir = os.path.join(work, 'src')
-        os.makedirs(src_dir)
-        notices = _fetch_and_extract(source, src_dir)
-        out_json = os.path.join(work, 'scancode.json')
-        cmd = [
-            'docker', 'run', '--rm',
-            '-u', f'{os.getuid()}:{os.getgid()}',
-            '-v', f'{work}:/work',
-            '--entrypoint', 'scancode',
-            image,
-            '--copyright', '--license', '--info', '--strip-root',
-            '--timeout', '300',
-            '--processes', str(min(os.cpu_count() or 4, 14)),
-        ]
-        for pattern in exclude_paths:
-            # ScanCode --ignore uses glob patterns without leading **/ when matching anywhere
-            cmd.extend(['--ignore', pattern.removeprefix('**/')])
-        cmd.extend(['--json-pp', '/work/scancode.json', '/work/src'])
+def scan_sources_with_scancode(items, batch_size=SCAN_BATCH_SIZE):
+    """Downloads/extracts uncached sources in batches, runs one ScanCode Docker container per batch,
+    and yields (key, record) pairs as each batch completes.
 
-        try:
-            proc = subprocess.run(cmd, capture_output=True, text=True)
-        except FileNotFoundError:
-            raise stop('docker is required to scan uncached packages, but `docker` was not found in PATH.')
-        if proc.returncode != 0 or not os.path.exists(out_json):
-            raise stop(
-                f"ScanCode failed for {source.get('url')} (exit {proc.returncode}):\n"
-                f'{(proc.stderr or proc.stdout)[-1500:]}'
-            )
-        with open(out_json, encoding='utf-8') as file:
-            raw = json.load(file)
-        return _normalize_scancode_output(raw, source, notices)
+    `items` is a sequence of (key, purl, source) tuples with unique keys. Scans every file in each
+    source archive without policy-specific --ignore flags so cached scan records stay policy-independent;
+    policy.exclude_paths is applied during resolution.
+    """
+    image = scancode_image()
+    items = list(items)
+    for start in range(0, len(items), batch_size):
+        batch = items[start:start + batch_size]
+        with tempfile.TemporaryDirectory(prefix='tb-scancode-') as work:
+            src_root = os.path.join(work, 'src')
+            os.makedirs(src_root)
+            sources_by_key = {}
+            notices_by_key = {}
+            for key, purl, source in batch:
+                print(f'Staging {purl} for ScanCode ...', flush=True)
+                pkg_dir = os.path.join(src_root, key)
+                os.makedirs(pkg_dir)
+                notices_by_key[key] = _fetch_and_extract(source, pkg_dir)
+                sources_by_key[key] = source
+
+            print(f'Running ScanCode on {len(batch)} uncached package(s) ...', flush=True)
+            out_json = os.path.join(work, 'scancode.json')
+            cmd = [
+                'docker', 'run', '--rm',
+                '-u', f'{os.getuid()}:{os.getgid()}',
+                '-v', f'{work}:/work',
+                '--entrypoint', 'scancode',
+                image,
+                '--copyright', '--license', '--info', '--strip-root',
+                '--timeout', '300',
+                '--processes', str(min(os.cpu_count() or 4, 14)),
+                '--json', '/work/scancode.json', '/work/src',
+            ]
+
+            try:
+                proc = subprocess.run(cmd, capture_output=True, text=True)
+            except FileNotFoundError:
+                raise stop('docker is required to scan uncached packages, but `docker` was not found in PATH.')
+            if proc.returncode != 0 or not os.path.exists(out_json):
+                purls = ', '.join(purl for _, purl, _ in batch[:5])
+                suffix = f' (+{len(batch) - 5} more)' if len(batch) > 5 else ''
+                raise stop(
+                    f'ScanCode failed for batch ({purls}{suffix}, exit {proc.returncode}):\n'
+                    f'{(proc.stderr or proc.stdout)[-1500:]}'
+                )
+            with open(out_json, encoding='utf-8') as file:
+                raw = json.load(file)
+            records = _normalize_scancode_batch(raw, sources_by_key, notices_by_key)
+            for key, _, _ in batch:
+                yield key, records[key]
 
 
 def _fetch_and_extract(source, target_dir):
@@ -223,7 +258,8 @@ def _fetch_and_extract(source, target_dir):
             except zipfile.BadZipFile as err:
                 raise stop(f'corrupt zip/jar archive {url}: {err}')
             return []
-        return _extract_tarball(data, url, target_dir)
+        _extract_tarball(data, url, target_dir)
+        return _collect_dir_notices(target_dir)
 
     # VCS checkout (Git or Subversion)
     vcs_type = source['vcs_type']
@@ -249,19 +285,26 @@ def _fetch_and_extract(source, target_dir):
 
 def _extract_tarball(data, url, target_dir):
     real_target = os.path.realpath(target_dir)
-    notices = []
     try:
         with tarfile.open(fileobj=io.BytesIO(data), mode='r:*') as tf:
+            entries = []
             for member in tf.getmembers():
                 if not member.isfile():
                     continue
-                raw_name = member.name[2:] if member.name.startswith('./') else member.name
-                if raw_name.startswith('/') or '..' in raw_name.split('/'):
+                raw_name = member.name
+                while raw_name.startswith('./'):
+                    raw_name = raw_name[2:]
+                if not raw_name or raw_name.startswith('/') or '..' in raw_name.split('/'):
                     continue
-                # Strip leading package/ directory (standard npm tarball root)
-                parts = raw_name.split('/', 1)
-                rel = (parts[1] if len(parts) == 2 else parts[0]).lstrip('/')
-                if not rel or '..' in rel.split('/'):
+                entries.append((member, raw_name))
+
+            # Strip a single wrapper directory (e.g. npm's package/) only when every member shares it.
+            top_dirs = {name.split('/', 1)[0] for _, name in entries if '/' in name}
+            strip_root = bool(entries) and len(top_dirs) == 1 and all('/' in name for _, name in entries)
+
+            for member, raw_name in entries:
+                rel = raw_name.split('/', 1)[1].lstrip('/') if strip_root else raw_name
+                if not rel:
                     continue
                 dest = os.path.realpath(os.path.join(real_target, rel))
                 if os.path.commonpath([real_target, dest]) != real_target:
@@ -274,13 +317,8 @@ def _extract_tarball(data, url, target_dir):
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
                 with open(dest, 'wb') as out:
                     out.write(raw)
-                if is_notice_path(rel):
-                    text = clean_text(raw)
-                    if text:
-                        notices.append({'path': rel, 'text': text})
     except tarfile.TarError as err:
         raise stop(f'corrupt tar archive {url}: {err}')
-    return notices
 
 
 def _collect_dir_notices(directory):
@@ -309,25 +347,40 @@ def _run_cmd(cmd, cwd=None):
         raise stop(f"command {' '.join(cmd)} failed:\n{(proc.stderr or proc.stdout)[-1000:]}")
 
 
-def _normalize_scancode_output(raw, source, notices):
-    findings = []
+def _normalize_scancode_batch(raw, sources_by_key, notices_by_key):
+    headers = raw.get('headers', [])
+    if headers:
+        actual_version = headers[0].get('tool_version')
+        if actual_version and actual_version != SCANCODE_VERSION:
+            raise stop(
+                f'ScanCode version mismatch: image {scancode_image()} ran ScanCode {actual_version}, '
+                f'but cache keys expect {SCANCODE_VERSION}. Update SCANCODE_VERSION or NOTICES_SCANCODE_IMAGE.'
+            )
+    findings_by_key = {key: [] for key in sources_by_key}
     errors = []
     for entry in raw.get('files', []):
         if entry.get('type') != 'file':
             continue
-        path = entry.get('path', '')
+        full_path = entry.get('path', '')
+        if '/' not in full_path:
+            continue
+        key, rel_path = full_path.split('/', 1)
+        if key not in findings_by_key:
+            continue
         for err in entry.get('scan_errors', []):
-            errors.append(f'{path}: {err}')
+            url = sources_by_key[key].get('url', key)
+            errors.append(f'{url} ({rel_path}): {err}')
         expr = entry.get('detected_license_expression_spdx') or ''
         lics = [expr] if expr else []
         cprs = [c['copyright'] for c in entry.get('copyrights', []) if c.get('copyright')]
         if lics or cprs:
-            findings.append({'path': path, 'licenses': lics, 'copyrights': cprs})
+            findings_by_key[key].append({'path': rel_path, 'licenses': lics, 'copyrights': cprs})
     if errors:
-        raise stop(
-            f"ScanCode reported errors for {source.get('url')}:\n  " + '\n  '.join(errors[:20])
-        )
-    return _make_scan_record(source, findings, notices)
+        raise stop('ScanCode reported errors:\n  ' + '\n  '.join(errors[:20]))
+    return {
+        key: _make_scan_record(source, findings_by_key[key], notices_by_key.get(key, []))
+        for key, source in sources_by_key.items()
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -359,7 +412,6 @@ def collect_jar_notices(jars, maven_repo, cache_dir):
     Returns (found_map {text -> set of (coordinates, path)}, stats_summary_line).
     """
     downloads_dir = os.path.join(cache_dir, 'maven-jars')
-    legacy_downloads = os.path.join(ort_home(), 'maven-jars')
     notice_cache_dir = os.path.join(cache_dir, 'jar-notices')
 
     found = {}
@@ -370,11 +422,16 @@ def collect_jar_notices(jars, maven_repo, cache_dir):
     for jar in jars.values():
         cached_path = os.path.join(notice_cache_dir, f'{jar.sha256}.json')
         if os.path.exists(cached_path):
-            with open(cached_path, encoding='utf-8') as file:
-                entries = json.load(file)
+            try:
+                with open(cached_path, encoding='utf-8') as file:
+                    entries = json.load(file)
+                if not isinstance(entries, list):
+                    raise ValueError('expected JSON list')
+            except (OSError, json.JSONDecodeError, ValueError) as err:
+                raise stop(f'corrupt jar-notices cache file {cached_path}: {err}. Remove it and re-run.')
             from_cache += 1
         else:
-            jar_path, origin, url = _locate_jar(jar, maven_repo, downloads_dir, legacy_downloads)
+            jar_path, origin, url = _locate_jar(jar, maven_repo, downloads_dir)
             if origin == 'm2':
                 from_m2 += 1
             elif origin == 'earlier':
@@ -383,7 +440,10 @@ def collect_jar_notices(jars, maven_repo, cache_dir):
                 downloaded_now += 1
                 downloaded_bytes += os.path.getsize(jar_path)
                 downloaded_list.append(f'  {jar.coordinates} ({url})')
-            entries = _extract_zip_notices(jar_path)
+            try:
+                entries = _extract_zip_notices(jar_path)
+            except (OSError, zipfile.BadZipFile) as err:
+                raise stop(f'could not read NOTICE files from {jar_path}: {err}. Remove it and re-run.')
             write_atomically(cached_path, json.dumps(entries).encode('utf-8'))
 
         for item in entries:
@@ -399,12 +459,11 @@ def collect_jar_notices(jars, maven_repo, cache_dir):
     return found, summary
 
 
-def _locate_jar(jar, maven_repo, downloads_dir, legacy_downloads):
+def _locate_jar(jar, maven_repo, downloads_dir):
     rel = maven_path(jar.group, jar.name, jar.version, jar.classifier)
     for origin, candidate in (
         ('m2', os.path.join(maven_repo, rel)),
         ('earlier', os.path.join(downloads_dir, rel)),
-        ('earlier', os.path.join(legacy_downloads, rel)),
     ):
         if os.path.exists(candidate) and _sha256_file(candidate) == jar.sha256:
             return candidate, origin, None
@@ -423,172 +482,3 @@ def _locate_jar(jar, maven_repo, downloads_dir, legacy_downloads):
 def _sha256_file(path):
     with open(path, 'rb') as file:
         return hashlib.file_digest(file, 'sha256').hexdigest()
-
-
-# ---------------------------------------------------------------------------
-# One-shot migration from legacy ~/.ort/scanner into our per-package ScanCache
-# ---------------------------------------------------------------------------
-
-def migrate_ort_cache(legacy_ort_home, scan_cache, curations=None):
-    """Converts ORT's scanner/results YAML files + scanner/archive NOTICE files into ScanCache format.
-
-    Avoids multi-hour rescanning when moving off ORT. Also slices repo-root VCS scans for any
-    curated VCS subpath (e.g. springdoc-swagger-ui, netty/all, xml-commons/java/external).
-    """
-    results_root = os.path.join(legacy_ort_home, 'scanner', 'results')
-    archive_root = os.path.join(legacy_ort_home, 'scanner', 'archive')
-    if not os.path.isdir(results_root):
-        raise stop(f'no ORT scan results directory found at {results_root}')
-
-    curated_vcs = [c.vcs for c in (curations.entries if curations else ()) if c.vcs]
-
-    migrated = skipped = 0
-    for root, _, files in os.walk(results_root):
-        for name in files:
-            if name != 'scan-results.yml':
-                continue
-            path = os.path.join(root, name)
-            records = _parse_ort_scan_results_yml(path)
-            for source, findings, archive_key, declared_rev in records:
-                targets = [(source, findings)]
-                if source['type'] == 'vcs' and not source['path']:
-                    # Also index repo-root scans under declared revision (e.g. SVN tag) and curated subpaths.
-                    revs = {source['revision']} | ({declared_rev} if declared_rev else set())
-                    for vcs in curated_vcs:
-                        if vcs.get('url') == source['url'] and vcs.get('revision') in revs:
-                            subpath = vcs.get('path', '').strip('/')
-                            sliced = _slice_findings(findings, subpath) if subpath else findings
-                            targets.append((
-                                _vcs_source(vcs.get('type', source['vcs_type']), vcs['url'], vcs['revision'], subpath),
-                                sliced,
-                            ))
-                notices = None
-                for target_source, target_findings in targets:
-                    key = scan_cache_key(SCANCODE_VERSION, target_source)
-                    if scan_cache.has_local(key):
-                        skipped += 1
-                        continue
-                    if notices is None:
-                        notices = _read_ort_archive_notices(archive_root, archive_key)
-                    scan_cache.write_local(key, _make_scan_record(target_source, target_findings, notices))
-                    migrated += 1
-    return migrated, skipped
-
-
-def _slice_findings(findings, subpath):
-    prefix = subpath + '/'
-    sliced = []
-    for f in findings:
-        fpath = f['path']
-        if fpath.startswith(prefix):
-            sliced.append({**f, 'path': fpath[len(prefix):]})
-        elif fpath == subpath:
-            sliced.append(f)
-    return sliced
-
-
-def _read_ort_archive_notices(archive_root, archive_key):
-    if not archive_key:
-        return []
-    path = os.path.join(archive_root, hashlib.sha1(archive_key.encode('utf-8')).hexdigest(), 'archive.zip.xz')
-    if not os.path.exists(path):
-        return []
-    with lzma.open(path) as compressed:
-        return _extract_zip_notices(io.BytesIO(compressed.read()))
-
-
-def _parse_ort_scan_results_yml(path):
-    """Parses ORT's flat, quoted scan-results.yml using stdlib only."""
-    results = []
-    for entry in _parse_ort_yml_stdlib(path):
-        prov = entry.get('provenance') or {}
-        declared_rev = ''
-        if 'source_artifact' in prov:
-            sa = prov['source_artifact']
-            source = _artifact_source(sa['url'], sa['hash']['value'])
-            archive_key = sa['url'] + sa['hash']['value']
-        elif 'vcs_info' in prov:
-            vcs = prov['vcs_info']
-            declared_rev = vcs.get('revision', '')
-            rev = prov.get('resolved_revision') or declared_rev
-            source = _vcs_source(vcs['type'], vcs['url'], rev, vcs.get('path', ''))
-            archive_key = vcs['type'] + vcs['url'] + rev
-        else:
-            continue
-
-        summary = entry.get('summary') or {}
-        by_path = {}
-        for lic in summary.get('licenses') or []:
-            fpath = (lic.get('location') or {}).get('path', '')
-            by_path.setdefault(fpath, {'licenses': [], 'copyrights': []})['licenses'].append(lic['license'])
-        for cpr in summary.get('copyrights') or []:
-            fpath = (cpr.get('location') or {}).get('path', '')
-            by_path.setdefault(fpath, {'licenses': [], 'copyrights': []})['copyrights'].append(cpr['statement'])
-        findings = [
-            {'path': fpath, 'licenses': data['licenses'], 'copyrights': data['copyrights']}
-            for fpath, data in sorted(by_path.items())
-        ]
-        results.append((source, findings, archive_key, declared_rev))
-    return results
-
-
-def _parse_ort_yml_stdlib(path):
-    """Minimal stdlib parser for ORT's flat, quoted scan-results.yml format."""
-    def unquote(val):
-        val = val.strip()
-        if len(val) >= 2 and val[0] == '"' and val[-1] == '"':
-            return json.loads(val)
-        return val
-
-    entries, cur, section, item = [], None, None, None
-    sub = None
-    with open(path, encoding='utf-8') as file:
-        for raw in file:
-            line = raw.rstrip('\n')
-            if not line or line == '---':
-                continue
-            if line.startswith('- provenance:'):
-                cur = {'provenance': {}, 'summary': {'licenses': [], 'copyrights': []}}
-                entries.append(cur)
-                section = 'provenance'
-                sub = None
-                continue
-            if cur is None:
-                continue
-            if line.startswith('  summary:'):
-                section = 'summary'
-                sub = None
-            elif line.startswith('  scanner:'):
-                section = 'scanner'
-            elif section == 'provenance':
-                if line.startswith('    source_artifact:'):
-                    cur['provenance']['source_artifact'] = {'hash': {}}
-                    sub = 'sa'
-                elif line.startswith('    vcs_info:'):
-                    cur['provenance']['vcs_info'] = {}
-                    sub = 'vcs'
-                elif line.startswith('    resolved_revision:'):
-                    cur['provenance']['resolved_revision'] = unquote(line.split(':', 1)[1])
-                elif sub == 'sa' and line.startswith('      url:'):
-                    cur['provenance']['source_artifact']['url'] = unquote(line.split(':', 1)[1])
-                elif sub == 'sa' and line.startswith('        value:'):
-                    cur['provenance']['source_artifact']['hash']['value'] = unquote(line.split(':', 1)[1])
-                elif sub == 'vcs' and line.startswith('      '):
-                    k, _, v = line.strip().partition(':')
-                    cur['provenance']['vcs_info'][k] = unquote(v)
-            elif section == 'summary':
-                if line == '    licenses:':
-                    sub = 'licenses'
-                elif line == '    copyrights:':
-                    sub = 'copyrights'
-                elif line.startswith('    ') and not line.startswith('    - ') and not line.startswith('      '):
-                    sub = None
-                elif sub == 'licenses' and line.startswith('    - license:'):
-                    item = {'license': unquote(line.split(':', 1)[1]), 'location': {}}
-                    cur['summary']['licenses'].append(item)
-                elif sub == 'copyrights' and line.startswith('    - statement:'):
-                    item = {'statement': unquote(line.split(':', 1)[1]), 'location': {}}
-                    cur['summary']['copyrights'].append(item)
-                elif item is not None and line.startswith('        path:'):
-                    item['location']['path'] = unquote(line.split(':', 1)[1])
-    return entries

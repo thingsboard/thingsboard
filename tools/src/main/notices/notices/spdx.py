@@ -9,6 +9,7 @@ Supports SPDX 2.x/3.x grammar: simple identifiers (including LicenseRef-*), '+' 
 WITH exceptions, AND, OR, and parentheses. Operator precedence: WITH > AND > OR.
 """
 from dataclasses import dataclass
+import functools
 import re
 
 TOKEN = re.compile(r'\s*(?:(\()|(\))|(AND|OR|WITH)(?![A-Za-z0-9._+-])|([A-Za-z0-9][A-Za-z0-9._+-]*))')
@@ -90,6 +91,7 @@ def tokenize(text):
     return tokens
 
 
+@functools.lru_cache(maxsize=None)
 def parse(text):
     """Parses an SPDX expression into an AST of License / And / Or nodes."""
     tokens = tokenize(text)
@@ -210,9 +212,16 @@ def resolve_or(node, branch_key):
                 undecided.extend(child_undecided)
             return merged, undecided
 
-        # Or: evaluate each branch independently, deduplicate identical license sets, pick strictly best.
+        # Or: flatten nested Or nodes so equally ranked ties cannot be skewed by inflated union sizes.
+        def iter_branches(or_node):
+            for child in or_node.terms:
+                if isinstance(child, Or):
+                    yield from iter_branches(child)
+                else:
+                    yield child
+
         unique = {}  # frozenset(licenses) -> list of undecided from that branch
-        for child in n.terms:
+        for child in iter_branches(n):
             child_lics, child_undecided = walk(child)
             if not child_lics:
                 continue
@@ -225,7 +234,8 @@ def resolve_or(node, branch_key):
         best_rank = ranked[0][0]
         winners = [(lics, und) for rank, lics, und in ranked if rank == best_rank]
         if len(winners) > 1:
-            return set().union(*(lics for lics, _ in winners)), [str(n)]
+            # Return one representative winner (keeping best_rank intact for any enclosing Or) plus the tie.
+            return set(winners[0][0]), [str(n)]
         return set(winners[0][0]), winners[0][1]
 
     return walk(node)

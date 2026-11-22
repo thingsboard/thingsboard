@@ -4,7 +4,6 @@
   "version": "4.4.1",
   "description": "ThingsBoard JavaScript Executor Microservice",
   "main": "server.ts",
-  "bin": "server.js",
   "scripts": {
     "test": "mkdir -p target/surefire-reports && node --require ts-node/register --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=target/surefire-reports/TEST-js-executor.xml test/jsExecutor.test.ts test/oAuthBearerProvider.test.ts",
     "start": "node --watch --watch-preserve-output -r ts-node/register server.ts",

@@ -52,11 +52,6 @@ ospackage {
         into "conf"
     }
 
-    // Copy web files
-    from("${buildDir}/web") {
-        into "web"
-    }
-
     // Copy chromium files
     from("${buildDir}/package/linux/chromium") {
         into "chromium"

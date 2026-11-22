@@ -20,11 +20,6 @@ def stop(text):
     return SystemExit(f'Third-party notices: {text}')
 
 
-def ort_home():
-    """Legacy ORT home directory (for one-shot cache migration and warm-machine seeding)."""
-    return os.path.expanduser(os.environ.get('NOTICES_ORT_HOME') or '~/.ort')
-
-
 def write_atomically(path, data):
     """Writes bytes to path in one atomic rename (thread- and multi-process-safe)."""
     parent = os.path.dirname(os.path.abspath(path))

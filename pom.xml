@@ -30,7 +30,7 @@
         <maven.compiler.target>25</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
         <!-- Set to true to skip only the UI builds: the Angular application in ui-ngx and the
-             `yarn run pkg` launchers of msa/web-ui and msa/web-report. It deliberately does NOT
+             Node.js builds of msa/web-ui and msa/web-report. It deliberately does NOT
              cover msa/js-executor, whose yarn install and sandbox tests keep running.
              frontend-maven-plugin reads skip.yarn itself, so that property cannot be narrowed to a
              subset of the modules; this one can, and it defaults to skip.yarn so that
@@ -39,14 +39,15 @@
         <skip.ui.build>${skip.yarn}</skip.ui.build>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
-        <sbom.package.phase>none</sbom.package.phase>
+        <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
         <!-- The architectures in the purls of the package SBOMs, as packaging/${pkg.type}/build.gradle builds the packages -->
         <pkg.deb.arch>all</pkg.deb.arch>
         <pkg.rpm.arch>noarch</pkg.rpm.arch>
         <!-- The phase of the bundled SBOMs: prepare-package in a module that makes package SBOMs -->
         <sbom.bundled.phase>none</sbom.bundled.phase>
-        <!-- The phase of the SBOM of the Spring Boot jar: prepare-package in a module that builds such a jar -->
-        <sbom.jar.phase>none</sbom.jar.phase>
+        <!-- The phase of the SBOM of the Spring Boot jar: follows sbom.bundled.phase by default;
+             non-Java packaged modules (such as msa/web-report) override this to none. -->
+        <sbom.jar.phase>${sbom.bundled.phase}</sbom.jar.phase>
         <!-- The time of the release, written to the SBOMs as their timestamp. Set it together with the release version:
              mvn versions:set-property -Dproperty=project.build.outputTimestamp -DnewVersion=$(date -u +%Y-%m-%dT%H:%M:%SZ)
              Maven also gives the files inside the jars this time, so that a build can be repeated. -->
@@ -890,7 +891,7 @@
                              it. The jar is built in prepare-package, so that this runs before the package phase, which
                              builds the packages and their SBOMs: Maven runs the goals of one plugin in a phase together.
                              Declare this plugin after spring-boot-maven-plugin, so that it runs after the repackaging.
-                             A module that builds such a jar sets sbom.jar.phase to prepare-package. -->
+                             Follows sbom.bundled.phase by default (set to prepare-package on shipped service modules). -->
                         <execution>
                             <id>jar-sbom</id>
                             <phase>${sbom.jar.phase}</phase>
@@ -899,6 +900,9 @@
                             </goals>
                             <configuration>
                                 <jar>${project.build.directory}/${project.build.finalName}-boot.jar</jar>
+                                <nestedSbomGroups>
+                                    <group>org.thingsboard</group>
+                                </nestedSbomGroups>
                                 <libraries>
                                     <library>
                                         <group>org.springframework.boot</group>
@@ -1016,7 +1020,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.5.1</version>
                     <configuration>
                         <!-- For tools/src/main/notices, which every module runs with this plugin. Its other
                              settings, such as NOTICES_CACHE_DIR and NOTICES_SCAN_CACHE_URL, reach it from the

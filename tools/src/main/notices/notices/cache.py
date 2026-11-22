@@ -16,6 +16,10 @@ Persistent HTTP keep-alive connections across worker threads make cold downloads
 import base64
 import concurrent.futures
 import contextlib
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows fallback
+    fcntl = None
 import gzip
 import hashlib
 import http.client
@@ -46,6 +50,12 @@ def scan_cache_key(scancode_version, source):
         identity = f"vcs|{source['vcs_type']}|{source['url']}|{source['revision']}|{source.get('path', '').strip('/')}"
     raw = f'v1|{scancode_version}|{identity}'.encode('utf-8')
     return hashlib.sha256(raw).hexdigest()[:32]
+
+
+def _validate_scan_record(record, origin):
+    if not isinstance(record, dict) or not isinstance(record.get('findings'), list) or not isinstance(record.get('notices', []), list):
+        raise ValueError(f'malformed scan record in {origin} (expected JSON object with list "findings")')
+    return record
 
 
 class ScanCache:
@@ -83,42 +93,50 @@ class ScanCache:
         try:
             with gzip.open(path, 'rt', encoding='utf-8') as file:
                 record = json.load(file)
-        except (OSError, gzip.BadGzipFile, json.JSONDecodeError) as err:
+            return _validate_scan_record(record, path)
+        except (OSError, gzip.BadGzipFile, json.JSONDecodeError, ValueError) as err:
             raise stop(f'corrupt local scan cache file {path}: {err}. Remove it and re-run.')
-        if not isinstance(record, dict):
-            raise stop(f'corrupt local scan cache file {path}: expected JSON object. Remove it and re-run.')
-        return record
 
     def write_local(self, key, record):
         payload = gzip.compress(json.dumps(record, separators=(',', ':'), sort_keys=True).encode('utf-8'))
         write_atomically(self.scan_path(key), payload)
 
+    @contextlib.contextmanager
+    def scan_lock(self):
+        """Cross-process exclusive lock serializing local ScanCode runs under parallel builds (e.g. mvn -T)."""
+        os.makedirs(self.cache_dir, exist_ok=True)
+        lock_path = os.path.join(self.cache_dir, 'scan.lock')
+        with open(lock_path, 'a+', encoding='utf-8') as lock_file:
+            if fcntl is not None:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                if fcntl is not None:
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
     def fetch_missing(self, keys):
         """Fetches any keys absent from local disk from remote_url in parallel over keep-alive connections.
 
-        Probes the first missing key before fanning out and aborts remaining work on the first error so an
-        unreachable remote cache fails fast instead of timing out across every package.
+        Probes the first missing key before fanning out and aborts fail-closed on the first error so an
+        unreachable remote cache stops quickly instead of timing out across every package.
 
-        Returns (fetched_records_by_key, still_missing_keys, errors). When errors is non-empty,
-        fetched_records_by_key and still_missing_keys are partial.
+        Returns (fetched_records_by_key, still_missing_keys).
         """
         missing = [k for k in dict.fromkeys(keys) if not self.has_local(k)]
         if not missing or not self.remote_url:
-            return {}, missing, []
+            return {}, missing
 
         fetched = {}
         still_missing = []
-        errors = []
         auth_headers = _authorization_headers()
 
         def fetch_one(key, abort):
             rel_path = f'/scans/{key}.json.gz'
             status, body = self._request_with_retry('GET', rel_path, headers=auth_headers, abort=abort)
             if status == 200:
-                # Validate gzip/JSON object before committing locally so a corrupt download never poisons disk.
-                record = json.loads(gzip.decompress(body))
-                if not isinstance(record, dict):
-                    raise ValueError('scan record is not a JSON object')
+                # Validate gzip/JSON schema before committing locally so a corrupt download never poisons disk.
+                record = _validate_scan_record(json.loads(gzip.decompress(body)), f'{self.remote_url}{rel_path}')
                 write_atomically(self.scan_path(key), body)
                 return ('hit', key, record)
             if status == 404:
@@ -135,9 +153,13 @@ class ScanCache:
         try:
             self._run_fail_fast(missing, fetch_one, handle_outcome)
         except Exception as err:
-            errors.append(str(err))
+            raise stop(
+                f'remote scan cache {self.remote_url} error ({err}), '
+                'so the notices stop instead of rescanning everything. '
+                'Check network access or set NOTICES_SCAN_CACHE_URL=none to scan locally.'
+            )
 
-        return fetched, sorted(still_missing), errors
+        return fetched, sorted(still_missing)
 
     def upload_local(self):
         """Uploads locally cached scan files that do not yet exist on remote_url.
@@ -204,8 +226,6 @@ class ScanCache:
                 raise _AbortedError()
             try:
                 return worker(key, abort)
-            except _AbortedError:
-                raise
             except BaseException:
                 # Set abort synchronously before the worker returns so it cannot dequeue another key.
                 abort.set()

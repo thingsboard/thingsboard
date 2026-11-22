@@ -112,6 +112,31 @@ class PolicyTests(unittest.TestCase):
         resolved = resolve_all({pkg.purl: pkg}, {pkg.purl: {'type': 'artifact', 'url': 'https://example/src.jar', 'sha1': 'a' * 40}}, scan, _policy(), curations)
         self.assertEqual(resolved[0].licenses, (License('Apache-2.0'),))
 
+    def test_with_exception_not_silenced_by_base_id_ignore_or_missing_scan_record(self):
+        # Ignoring bare GPL-2.0-only must NOT silently ignore GPL-2.0-only WITH Classpath-exception-2.0
+        pkg = _pkg(declared=('Apache-2.0',))
+        curations = Curations((
+            Curation(
+                raw_id=pkg.package_key, package_key=pkg.package_key, version_spec='',
+                ignore_findings=(IgnoreFinding(path='src/A.java', licenses=frozenset({'GPL-2.0-only'})),),
+            ),
+        ))
+        scan = {
+            pkg.purl: {
+                'findings': [
+                    {'path': 'src/A.java', 'licenses': ['GPL-2.0-only WITH Classpath-exception-2.0'], 'copyrights': []},
+                ]
+            }
+        }
+        src = {pkg.purl: {'type': 'artifact', 'url': 'https://example/src.jar', 'sha1': 'a' * 40}}
+        resolved = resolve_all({pkg.purl: pkg}, src, scan, _policy(), curations)
+        self.assertIn(License('GPL-2.0-only', 'Classpath-exception-2.0'), resolved[0].licenses)
+
+        # Missing scan record for non-metadata_only package must fail closed
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({pkg.purl: pkg}, src, {}, _policy(), Curations())
+        self.assertIn('missing scan record', str(ctx.exception))
+
     def test_unmapped_named_license_stops(self):
         pkg = _pkg(declared=('Mystery License',), named=('Mystery License',))
         with self.assertRaises(SystemExit) as ctx:

@@ -28,6 +28,7 @@
         <pkg.name>tb-web-ui</pkg.name>
         <pkg.type>js</pkg.type>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
+        <docker.resources.phase>process-resources</docker.resources.phase>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
         <sbom.image.scanExclude></sbom.image.scanExclude>
         <notices.image.phase>package</notices.image.phase>
@@ -135,47 +136,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
-                    <execution>
-                        <id>copy-linux-conf</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${pkg.linux.dist}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>config</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                            </resources>
-                            <filters>
-                                <filter>${main.dir}/packaging/${pkg.type}/filters/unix.properties</filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-docker-config</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>docker</directory>
-                                    <filtering>true</filtering>
-                                </resource>
-                                <resource>
-                                    <directory>${main.dir}</directory>
-                                    <includes>
-                                        <include>LICENSE</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>copy-src-root</id>
                         <phase>process-resources</phase>
@@ -353,14 +313,4 @@
             </build>
         </profile>
     </profiles>
-    <repositories>
-        <repository>
-            <id>jenkins</id>
-            <name>Jenkins Repository</name>
-            <url>https://repo.jenkins-ci.org/releases</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>

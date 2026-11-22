@@ -63,6 +63,10 @@ class LicenseFileRef:
     def coordinates(self):
         return format_coordinates(self.group, self.name, self.version)
 
+    @property
+    def sort_key(self):
+        return (self.coordinates, self.url or self.path or self.generated or '')
+
 
 @dataclass
 class SbomInventory:
@@ -242,7 +246,7 @@ def _parse_declared_component(component):
     if not canonical:
         return None
     pkg_key, _ = split_curation_id(canonical)
-    copyrights = tuple(line.strip() for line in copyright_text.replace('\r\n', '\n').replace('\r', '\n').split('\n') if line.strip())
+    copyrights = tuple(line.strip() for line in copyright_text.splitlines() if line.strip())
     return PackageComponent(
         purl=canonical,
         package_key=pkg_key,

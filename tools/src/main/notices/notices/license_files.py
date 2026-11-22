@@ -8,7 +8,7 @@ import hashlib
 import os
 import re
 
-from notices import HTTP_ERRORS, ROOT, clean_text, http_get, ort_home, stop, write_atomically
+from notices import HTTP_ERRORS, ROOT, clean_text, http_get, stop, write_atomically
 from notices.lwm2m import generate_lwm2m_notice
 
 SECTION_RE = re.compile(r'^======== Only in the (.+) build ========$')
@@ -17,12 +17,11 @@ SECTION_RE = re.compile(r'^======== Only in the (.+) build ========$')
 def collect_license_files(refs, cache_dir, root=ROOT):
     """Returns {text -> set of (component_coordinates, origin)} for all bundled license-file components."""
     downloads_dir = os.path.join(cache_dir, 'license-files')
-    legacy_dir = os.path.join(ort_home(), 'license-files')
     platforms = _platforms_by_path(refs)
     found = {}
     cached_repo_texts = {}
 
-    for ref in sorted(refs, key=lambda r: (r.coordinates, r.url or r.path or r.generated or '')):
+    for ref in sorted(refs, key=lambda r: r.sort_key):
         if ref.generated == 'lwm2m-registry':
             text, origin = generate_lwm2m_notice(root=root)
         elif ref.path:
@@ -35,7 +34,7 @@ def collect_license_files(refs, cache_dir, root=ROOT):
                 raise stop(f'the license file of {ref.coordinates} at {origin} is empty. Check policy.toml [license_files].')
         else:
             origin = ref.url
-            text = clean_text(_download_url(origin, ref.coordinates, downloads_dir, legacy_dir))
+            text = clean_text(_download_url(origin, ref.coordinates, downloads_dir))
             if not text:
                 raise stop(
                     f'the license file of {ref.coordinates} at {origin} is empty. '
@@ -90,13 +89,12 @@ def _read_repo_file(full_path, component):
         )
 
 
-def _download_url(url, component, downloads_dir, legacy_dir):
+def _download_url(url, component, downloads_dir):
     digest = hashlib.sha256(url.encode('utf-8')).hexdigest()
-    for directory in (downloads_dir, legacy_dir):
-        candidate = os.path.join(directory, digest)
-        if os.path.exists(candidate):
-            with open(candidate, 'rb') as file:
-                return file.read()
+    candidate = os.path.join(downloads_dir, digest)
+    if os.path.exists(candidate):
+        with open(candidate, 'rb') as file:
+            return file.read()
     try:
         data = http_get(url, timeout=120)
     except HTTP_ERRORS as err:

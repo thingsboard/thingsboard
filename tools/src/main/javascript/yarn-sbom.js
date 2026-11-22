@@ -160,7 +160,8 @@ function bundledPackages() {
       }
     }
   }
-  if (packagesOf(files, angularStats).size === 0) {
+  const packages = packagesOf(files, angularStats);
+  if (packages.size === 0) {
     throw new Error(
       `${angularStats} names no file of an installed package; was the UI built with --stats-json? `
       + 'Rebuild with --stats-json (for example, mvn -pl ui-ngx package -Dsbom.skip=false) and retry.'
@@ -176,11 +177,12 @@ function bundledPackages() {
   const { options, configurations = {} } = projects[0].architect.build;
   // A list of the production configuration replaces the list of the options
   const built = { ...options, ...configurations.production };
-  sassSources([...files].filter(file => SASS_FILE.test(file)), built.stylePreprocessorOptions).forEach(source => files.add(source));
+  const extraFiles = new Set(sassSources([...files].filter(file => SASS_FILE.test(file)), built.stylePreprocessorOptions));
   for (const entry of [...(built.assets || []), ...(built.scripts || [])]) {
-    files.add(typeof entry === 'string' ? entry : entry.input);
+    extraFiles.add(typeof entry === 'string' ? entry : entry.input);
   }
-  return packagesOf(files, 'The output of the Angular build');
+  packagesOf(extraFiles, 'The output of the Angular build').forEach(pkg => packages.add(pkg));
+  return packages;
 }
 
 /**
@@ -318,7 +320,9 @@ function leaveOnly(contained, edges) {
     while (pending.length > 0) {
       const { target } = pending.pop();
       if (kept(target)) {
-        targets.add(target);
+        if (target !== node && target !== MODULE) {
+          targets.add(target);
+        }
       } else if (!followed.has(target)) {
         followed.add(target);
         pending.push(...edges.get(target));
@@ -469,7 +473,9 @@ function makeComponent(manifest, dir) {
     qualifiers = DEFAULT_REGISTRY.test(url) ? {} : { [PurlQualifierNames.DownloadUrl]: url };
     const dist = new Models.ExternalReference(url, Enums.ExternalReferenceType.Distribution, { comment });
     if (entry.integrity) {
-      dist.hashes.set(...Utils.parsePackageIntegrity(entry.integrity));
+      for (const token of entry.integrity.trim().split(/\s+/)) {
+        dist.hashes.set(...Utils.parsePackageIntegrity(token));
+      }
     }
     // What follows the address of a tarball in yarn.lock is its SHA-1
     if (/^[0-9a-f]{40}$/.test(revision)) {

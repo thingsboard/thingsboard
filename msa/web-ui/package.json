@@ -4,7 +4,6 @@
   "version": "4.4.1",
   "description": "ThingsBoard Web UI Microservice",
   "main": "server.ts",
-  "bin": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "WEB_FOLDER=./target/web node --watch --watch-preserve-output -r ts-node/register server.ts",

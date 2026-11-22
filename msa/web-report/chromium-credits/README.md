@@ -52,7 +52,7 @@ When `../chromium.js` moves to another Chromium version:
    both builds in the page's order, then the section of each build's own entries.
 4. Change the version in the two chromium entries under `[license_files]` in `tools/src/main/notices/policy.toml`. Until then, the
    notices stop.
-5. Run the third-party notices check (see `docs/sbom.md`).
+5. Run the third-party notices check (see `docs/licensing-guide.md#checking-the-notices-locally`).
 
 ## From the Chromium source
 

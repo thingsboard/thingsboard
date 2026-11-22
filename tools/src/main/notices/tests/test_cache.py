@@ -99,8 +99,7 @@ class CacheTests(unittest.TestCase):
 
             # Cold reader fetches both (recovering from injected 503) and reports missing key3
             reader = ScanCache(cache_dir=d2, remote_url=url, concurrency=4)
-            fetched, missing, errors = reader.fetch_missing(['key1', 'key2', 'key3'])
-            self.assertEqual(errors, [])
+            fetched, missing = reader.fetch_missing(['key1', 'key2', 'key3'])
             self.assertEqual(len(fetched), 2)
             self.assertEqual(fetched['key1'], {'schema': 1, 'findings': []})
             self.assertEqual(missing, ['key3'])
@@ -133,16 +132,17 @@ class CacheTests(unittest.TestCase):
 
             # Probe fails -> remaining 24 keys are never requested
             requested_paths.clear()
-            fetched, missing, errors = cache.fetch_missing(keys)
-            self.assertEqual(fetched, {})
-            self.assertEqual(len(errors), 1)
+            with self.assertRaises(SystemExit) as ctx:
+                cache.fetch_missing(keys)
+            self.assertIn('HTTP 403', str(ctx.exception))
             self.assertEqual(requested_paths, ['/ort/scans/k0.json.gz'])
 
             # Mid-batch failure -> worker aborts synchronously, bounding total requests to <= 1 + concurrency
             mode['behavior'] = 'fail_after_first'
             requested_paths.clear()
-            fetched, missing, errors = cache.fetch_missing(keys)
-            self.assertEqual(len(errors), 1)
+            with self.assertRaises(SystemExit) as ctx:
+                cache.fetch_missing(keys)
+            self.assertIn('HTTP 403', str(ctx.exception))
             self.assertLessEqual(len(requested_paths), 1 + cache.concurrency)
 
             # Upload probe fails -> remaining keys are never requested
@@ -162,6 +162,23 @@ class CacheTests(unittest.TestCase):
                 cache.upload_local()
             self.assertIn('HTTP 403', str(ctx.exception))
             self.assertLessEqual(len(requested_paths), 1 + cache.concurrency)
+
+    def test_scan_lock_excludes_concurrent_flock_waiters(self):
+        if os.name != 'posix':
+            return
+        import fcntl
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = ScanCache(cache_dir=tmp, remote_url='none')
+            lock_path = os.path.join(tmp, 'scan.lock')
+            with cache.scan_lock():
+                with open(lock_path, 'a+', encoding='utf-8') as other:
+                    with self.assertRaises(BlockingIOError):
+                        fcntl.flock(other.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            # Released after context exits
+            with open(lock_path, 'a+', encoding='utf-8') as other:
+                fcntl.flock(other.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(other.fileno(), fcntl.LOCK_UN)
 
 
 if __name__ == '__main__':

@@ -100,6 +100,35 @@ def _make_branch_rank(policy):
     return branch_rank
 
 
+def _evaluate_license_node(node, label, branch_rank, policy, undecided, forbidden, unclassified, unlicensed):
+    """Resolves OR choices on `node`, records policy errors, and returns sorted effective licenses."""
+    resolved_lics, node_undecided = resolve_or(node, branch_rank)
+    for expr_str in node_undecided:
+        undecided.append((label, expr_str))
+    effective_list = sorted(resolved_lics, key=str)
+    if not effective_list:
+        unlicensed.append(label)
+        return []
+    for lic in effective_list:
+        cat = policy.category(str(lic))
+        if cat is None:
+            unclassified.append(f'{lic} ({label})')
+        elif cat == 'forbidden':
+            forbidden.append(f'{lic} ({label})')
+    return effective_list
+
+
+def _raise_license_errors(undecided, forbidden, unclassified, unlicensed):
+    if undecided:
+        raise stop(_undecided_message(undecided))
+    if forbidden:
+        raise stop(_forbidden_message(forbidden))
+    if unclassified:
+        raise stop(_unclassified_message(unclassified))
+    if unlicensed:
+        raise stop(_unlicensed_message(unlicensed))
+
+
 def validate_pre_scan(packages, sources, policy, curations, license_files=()):
     """Runs fast pre-scan fail-closed checks (including license-file components) and returns declared ASTs."""
     unreviewed = []
@@ -130,14 +159,7 @@ def validate_pre_scan(packages, sources, policy, curations, license_files=()):
         raise stop(_unmapped_message(unmapped))
     if unscanned:
         raise stop(_unscanned_message(unscanned))
-    if lf_undecided:
-        raise stop(_undecided_message(lf_undecided))
-    if lf_forbidden:
-        raise stop(_forbidden_message(lf_forbidden))
-    if lf_unclassified:
-        raise stop(_unclassified_message(lf_unclassified))
-    if lf_unlicensed:
-        raise stop(_unlicensed_message(lf_unlicensed))
+    _raise_license_errors(lf_undecided, lf_forbidden, lf_unclassified, lf_unlicensed)
     return declared_by_purl
 
 
@@ -145,8 +167,7 @@ def _check_license_files(license_files, policy):
     """Validates declared licenses of bundled license-file components (Chromium, Node.js, fonts, LwM2M)."""
     branch_rank = _make_branch_rank(policy)
     unmapped, undecided, forbidden, unclassified, unlicensed = [], [], [], [], []
-    ordered = sorted(license_files, key=lambda r: (r.coordinates, r.url or r.path or r.generated or ''))
-    for ref in ordered:
+    for ref in sorted(license_files, key=lambda r: r.sort_key):
         if not ref.declared_raw:
             # lwm2m-registry has its own XML-header vs application/pom.xml check in lwm2m.py;
             # other license-file components must declare their licenses in the SBOM/POM.
@@ -158,22 +179,8 @@ def _check_license_files(license_files, policy):
             unmapped.append((ref.coordinates, ref.coordinates, name))
         if ref_unmapped:
             continue
-        if not parsed_items:
-            unlicensed.append(ref.coordinates)
-            continue
         node = parsed_items[0] if len(parsed_items) == 1 else And(tuple(parsed_items))
-        resolved_lics, ref_undecided = resolve_or(node, branch_rank)
-        for expr_str in ref_undecided:
-            undecided.append((ref.coordinates, expr_str))
-        if not resolved_lics:
-            unlicensed.append(ref.coordinates)
-            continue
-        for lic in sorted(resolved_lics, key=str):
-            cat = policy.category(str(lic))
-            if cat is None:
-                unclassified.append(f'{lic} ({ref.coordinates})')
-            elif cat == 'forbidden':
-                forbidden.append(f'{lic} ({ref.coordinates})')
+        _evaluate_license_node(node, ref.coordinates, branch_rank, policy, undecided, forbidden, unclassified, unlicensed)
     return unmapped, undecided, forbidden, unclassified, unlicensed
 
 
@@ -205,7 +212,13 @@ def resolve_all(packages, sources, scan_records, policy, curations, declared_by_
         declared_node = declared_by_purl.get(purl)
         concluded_expr = next((c.concluded_license for c in applying if c.concluded_license), None)
         ignores = [ig for c in applying for ig in c.ignore_findings]
-        record = scan_records.get(purl) or {'findings': []}
+        source = sources.get(purl) or {}
+        if source.get('type') == 'metadata_only':
+            record = scan_records.get(purl) or {'findings': []}
+        else:
+            record = scan_records.get(purl)
+            if record is None:
+                raise stop(f'missing scan record for {pkg.purl} (expected scan before policy resolution)')
 
         declared_or_atoms = or_branch_atoms(declared_node) if declared_node else set()
         detected_nodes, scan_copyrights = _collect_findings(
@@ -228,25 +241,14 @@ def resolve_all(packages, sources, scan_records, policy, curations, declared_by_
             unlicensed.append(pkg.purl)
             continue
 
-        resolved_lics, pkg_undecided = resolve_or(effective_node, branch_rank)
-        for expr_str in pkg_undecided:
-            undecided.append((pkg.purl, expr_str))
-
-        effective_list = sorted(resolved_lics, key=str)
+        effective_list = _evaluate_license_node(
+            effective_node, pkg.purl, branch_rank, policy, undecided, forbidden, unclassified, unlicensed
+        )
         if not effective_list:
-            unlicensed.append(pkg.purl)
             continue
-
-        for lic in effective_list:
-            cat = policy.category(str(lic))
-            if cat is None:
-                unclassified.append(f'{lic} ({pkg.purl})')
-            elif cat == 'forbidden':
-                forbidden.append(f'{lic} ({pkg.purl})')
 
         listed_lics = tuple(lic for lic in effective_list if policy.category(str(lic)) != 'nothing')
         cleaned_copyrights = tuple(process_copyrights(raw_copyrights, policy.copyright_garbage))
-        source = sources.get(purl) or {}
         source_url = source.get('url', '') if source.get('type') in ('artifact', 'vcs') else ''
 
         resolved.append(ResolvedPackage(
@@ -257,21 +259,15 @@ def resolve_all(packages, sources, scan_records, policy, curations, declared_by_
             source_url=source_url,
         ))
 
-    if undecided:
-        raise stop(_undecided_message(undecided))
-    if forbidden:
-        raise stop(_forbidden_message(forbidden))
-    if unclassified:
-        raise stop(_unclassified_message(unclassified))
-    if unlicensed:
-        raise stop(_unlicensed_message(unlicensed))
+    _raise_license_errors(undecided, forbidden, unclassified, unlicensed)
 
     return resolved
 
 
 def _collect_findings(record, exclude_paths, ignores, declared_or_atoms, skip_licenses):
-    """Collects non-excluded copyrights and filtered detected license ASTs from a scan record."""
+    """Collects non-excluded copyrights and deduplicated, filtered detected license ASTs from a scan record."""
     detected_nodes = []
+    seen_nodes = set()
     raw_copyrights = []
     for finding in record.get('findings', []):
         fpath = finding.get('path', '')
@@ -293,9 +289,11 @@ def _collect_findings(record, exclude_paths, ignores, declared_or_atoms, skip_li
             # root LICENSE/COPYING file are branches of that declared OR, don't turn OR into AND.
             if is_root_lic and declared_or_atoms:
                 det_leaves = [l for l in leaves(filtered) if not is_no_license(l)]
-                if det_leaves and all(str(l) in declared_or_atoms or l.id in declared_or_atoms for l in det_leaves):
+                if det_leaves and all(str(l) in declared_or_atoms for l in det_leaves):
                     continue
-            detected_nodes.append(filtered)
+            if filtered not in seen_nodes:
+                seen_nodes.add(filtered)
+                detected_nodes.append(filtered)
     return detected_nodes, raw_copyrights
 
 
@@ -372,7 +370,7 @@ def _filter_ignored(node, fpath, ignores):
 
     def strip(n):
         if isinstance(n, License):
-            if str(n) in ignored_ids or n.id in ignored_ids or is_no_license(n):
+            if str(n) in ignored_ids or is_no_license(n):
                 return None
             return n
         kept = [c for c in (strip(child) for child in n.terms) if c is not None]
@@ -438,7 +436,7 @@ def _unscanned_message(purls):
 
 
 def _undecided_message(items):
-    lines = ''.join(f'  {p}: {e}\n' for p, e in items)
+    lines = ''.join(f'  {p}: {e}\n' for p, e in sorted(set(items)))
     return (
         'these packages offer a license choice between equally ranked licenses.\n'
         + lines

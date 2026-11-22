@@ -6,29 +6,14 @@ What the notices are, when to regenerate them, and how to make license decisions
 
 ## Run
 
-```bash
-# 1. Build SBOMs (skipping .deb/.rpm/.zip creation makes SBOM-only builds much faster)
-mvn -T1C clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true
-
-# 2. Check and generate combined product notices in target/THIRD-PARTY-NOTICES
-mvn -N exec:exec@notices-product
-```
-
-Do not use `-pl`, `-Dpkg.skip=true`, `-Dskip.yarn=true`, or `-Dskip.ui.build=true` when running the full product check:
-every module's SBOM must be present.
-
-The generator needs Python 3.11+ (standard library only, no `pip install`). Docker is only invoked when a brand-new
-package is missing from both the local cache and the shared Artifactory cache; warm-cache runs finish in ~1–2 seconds
-without Docker.
+See [Checking the notices locally](../../../../docs/licensing-guide.md#checking-the-notices-locally) for the Maven
+commands and prerequisites (Python 3.11+ stdlib only; Docker only on scan cache misses).
 
 ## Architecture
 
-Everything lives in one self-contained Python package (`tools/src/main/notices/notices/`) driven by two TOML files:
-
-| File | Purpose |
-|---|---|
-| `policy.toml` | All global rules: license categories (`nothing`, `notice`, `source-link`, `written-offer`, `forbidden`), same-category tie-breakers, global non-SPDX aliases, display titles, excluded source paths, repo-local license files, own modules, and copyright garbage |
-| `curations.toml` | Per-package exceptions: source overrides / `metadata_only`, POM declared-license fixes, file-scoped `ignore_findings`, version-ranged `concluded_license`, and inline `[custom_licenses]` |
+Everything lives in one self-contained Python package (`tools/src/main/notices/notices/`) driven by `policy.toml`
+(global rules) and `curations.toml` (per-package overrides and `[custom_licenses]`), as described in
+[docs/licensing-guide.md](../../../../docs/licensing-guide.md#when-the-generator-stops).
 
 ### Pipeline (`python3 tools/src/main/notices render ...`)
 
@@ -44,8 +29,7 @@ Everything lives in one self-contained Python package (`tools/src/main/notices/n
 ```bash
 python3 tools/src/main/notices render --project-version <ver> --out <file> [--sboms-under <dir>] [SBOM ...]
 python3 tools/src/main/notices cache-upload              # CI only: PUTs new immutable scan JSONs to Artifactory
-python3 tools/src/main/notices migrate-ort               # One-shot migration from legacy ~/.ort/scanner
-python3 tools/src/main/notices ci-should-run --target-branch <branch> --teamcity
+python3 tools/src/main/notices ci-should-run --target-branch <branch>
 ```
 
 | Environment variable | Default | Effect |
@@ -53,7 +37,7 @@ python3 tools/src/main/notices ci-should-run --target-branch <branch> --teamcity
 | `NOTICES_CACHE_DIR` | `~/.cache/tb-notices` | Local persistent cache (scans, jar NOTICEs, license texts, maven-sources) |
 | `NOTICES_SCAN_CACHE_URL` | `https://repo.thingsboard.io/artifactory/ort` | Remote per-package cache base URL, or `none` |
 | `NOTICES_MAVEN_REPOSITORY` | `~/.m2/repository` | Local Maven repository for binary jar NOTICE extraction |
-| `NOTICES_SCANCODE_IMAGE` | `ghcr.io/oss-review-toolkit/ort:98.0.0` | Docker image providing `scancode` on cache misses |
+| `NOTICES_SCANCODE_IMAGE` | `ghcr.io/oss-review-toolkit/ort-minimal:98.0.0` | Docker image providing `scancode` on cache misses |
 | `NOTICES_SCAN_CACHE_USER`, `NOTICES_SCAN_CACHE_PASSWORD` | none | Artifactory upload credentials (CI only) |
 | `NOTICES_FAIL_ON_UNUSED_CURATIONS` | `false` | Fail instead of warning when a `curations.toml` entry matches no package in a `--sboms-under` run (nightly CI) |
 
@@ -62,8 +46,8 @@ python3 tools/src/main/notices ci-should-run --target-branch <branch> --teamcity
 Both PR and nightly TeamCity configurations can run the exact same repo-owned steps:
 
 1. **Unit tests**: `python3 -m unittest discover -s tools/src/main/notices/tests -t tools/src/main/notices`
-2. **PR change gate** (PR config only): `python3 tools/src/main/notices ci-should-run --target-branch "$TARGET" --teamcity`
-3. **Fast SBOM build**: `mvn -T6 clean package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true`
+2. **PR change gate** (PR config only): `python3 tools/src/main/notices ci-should-run --target-branch "$TARGET"`
+3. **Fast SBOM build**: `mvn -T6 package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true`
 4. **Verify notices**: `mvn -N exec:exec@notices-product` (writes `target/THIRD-PARTY-NOTICES` and fails on any policy/curation issue)
 5. **Upload new scans** (nightly/main config): `python3 tools/src/main/notices cache-upload`
 

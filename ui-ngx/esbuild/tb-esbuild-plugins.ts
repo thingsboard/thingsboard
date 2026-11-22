@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 import type { Plugin, PluginBuild } from 'esbuild';
 import dirTree from 'directory-tree';
 import * as packageJson from '../package.json';
@@ -35,16 +34,6 @@ const resolveJQueryPlugin: Plugin = {
   }
 };
 
-// The license comments of the bundled packages: the third-party notices of the UI, served at /THIRD-PARTY-NOTICES.txt,
-// give their licenses, so they need not reach every browser. Angular keeps them while its own license file is off.
-// Angular does not pass this plugin to the polyfills bundle, which keeps the license comment of zone.js.
-const stripLegalCommentsPlugin: Plugin = {
-  name: 'tb-strip-legal-comments',
-  setup(build: PluginBuild) {
-    build.initialOptions.legalComments = 'none';
-  },
-};
-
 function isProduction(): boolean {
   const configurationIndex = process.argv.indexOf('--configuration');
   let production = false;
@@ -55,4 +44,4 @@ function isProduction(): boolean {
   return production;
 }
 
-export default [defineTbVariablesPlugin, resolveJQueryPlugin, stripLegalCommentsPlugin];
+export default [defineTbVariablesPlugin, resolveJQueryPlugin];

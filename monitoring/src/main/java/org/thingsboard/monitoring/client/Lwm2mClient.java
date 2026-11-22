@@ -42,6 +42,7 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.monitoring.util.ResourceUtils;
 
 import javax.security.auth.Destroyable;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +82,7 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         // The standard objects come with Leshan, and the Device object is the monitoring's own
         List<ObjectModel> models = Stream.concat(
                 ObjectLoader.loadDefault().stream().filter(model -> model.id == SECURITY || model.id == SERVER || model.id == ACCESS_CONTROL),
-                ObjectLoader.loadDdfFile(ResourceUtils.getResourceAsStream(MODEL_PATH), MODEL_PATH).stream()).toList();
+                ObjectLoader.loadDdfFile(new ByteArrayInputStream(ResourceUtils.getResourceBytes(MODEL_PATH)), MODEL_PATH).stream()).toList();
 
         Security security = noSec(serverUri, 123);
         Configuration coapConfig = new Configuration();

@@ -10,7 +10,7 @@ import subprocess
 import textwrap
 
 from notices import HTTP_ERRORS, http_get, normalize_text, stop, write_atomically
-from notices.scanner import DEFAULT_SCANCODE_IMAGE, SCANCODE_VERSION
+from notices.scanner import SCANCODE_VERSION, scancode_image
 
 RULE = '=' * 78
 SEPARATOR = '-' * 78
@@ -215,26 +215,32 @@ def _strip_yaml_frontmatter(text):
 
 def _extract_from_scancode_image(identifier):
     """Offline fallback: reads license text from ScanCode's bundled license database inside Docker."""
-    image = os.environ.get('NOTICES_SCANCODE_IMAGE', DEFAULT_SCANCODE_IMAGE)
-    script = (
-        'import licensedcode, os, sys; '
-        'd = os.path.join(os.path.dirname(licensedcode.__file__), "data", "licenses"); '
-        'target = sys.argv[1]; '
-        'key = target.removeprefix("LicenseRef-scancode-"); '
-        'p = os.path.join(d, key + ".LICENSE"); '
-        'if os.path.exists(p): print(open(p, encoding="utf-8").read()); sys.exit(0)\n'
-        'for name in os.listdir(d):\n'
-        '  if not name.endswith(".LICENSE"): continue\n'
-        '  txt = open(os.path.join(d, name), encoding="utf-8").read()\n'
-        '  if f"spdx_license_key: {target}\\n" in txt: print(txt); sys.exit(0)\n'
-        'sys.exit(1)'
-    )
+    script = '\n'.join([
+        'import licensedcode, os, sys',
+        'd = os.path.join(os.path.dirname(licensedcode.__file__), "data", "licenses")',
+        'target = sys.argv[1]',
+        'key = target.removeprefix("LicenseRef-scancode-")',
+        'p = os.path.join(d, key + ".LICENSE")',
+        'if os.path.exists(p):',
+        '    with open(p, encoding="utf-8") as f:',
+        '        print(f.read())',
+        '    sys.exit(0)',
+        'for name in os.listdir(d):',
+        '    if not name.endswith(".LICENSE"):',
+        '        continue',
+        '    with open(os.path.join(d, name), encoding="utf-8") as f:',
+        '        txt = f.read()',
+        '    if f"spdx_license_key: {target}\\n" in txt:',
+        '        print(txt)',
+        '        sys.exit(0)',
+        'sys.exit(1)',
+    ])
     try:
         proc = subprocess.run(
-            ['docker', 'run', '--rm', '--entrypoint', 'python3', image, '-c', script, identifier],
-            capture_output=True, text=True,
+            ['docker', 'run', '--rm', '--entrypoint', 'python3', scancode_image(), '-c', script, identifier],
+            capture_output=True, text=True, timeout=60,
         )
-    except FileNotFoundError:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         return None
     if proc.returncode == 0 and proc.stdout:
         return _strip_yaml_frontmatter(proc.stdout)

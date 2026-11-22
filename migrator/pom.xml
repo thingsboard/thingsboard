@@ -26,6 +26,8 @@
         <pkg.name>tb-migrator</pkg.name>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
+        <!-- Internal tool, not shipped to clients: no SBOMs or third-party notices. -->
+        <sbom.package.phase>none</sbom.package.phase>
         <pkg.copyInstallScripts>false</pkg.copyInstallScripts>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.implementationTitle>ThingsBoard Migrator</pkg.implementationTitle>

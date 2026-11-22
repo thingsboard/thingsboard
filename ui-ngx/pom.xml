@@ -38,8 +38,9 @@
             <resource>
                 <directory>${project.build.directory}/generated-resources</directory>
                 <excludes>
-                    <!-- The statistics of the production build, which the SBOM of the UI is made from, and their compressed copies -->
+                    <!-- The build statistics (used to generate the UI SBOM) and Angular's raw license dump (replaced by THIRD-PARTY-NOTICES.txt) -->
                     <exclude>public/stats.json*</exclude>
+                    <exclude>public/3rdpartylicenses.txt*</exclude>
                 </excludes>
             </resource>
         </resources>
@@ -57,6 +58,7 @@
                 <executions>
                     <execution>
                         <id>install node and npm</id>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>install-node-and-yarn</goal>
                         </goals>
@@ -67,6 +69,7 @@
                     </execution>
                     <execution>
                         <id>yarn install</id>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>yarn</goal>
                         </goals>
@@ -114,6 +117,7 @@
                         <executions>
                             <execution>
                                 <id>yarn build</id>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>yarn</goal>
                                 </goals>
@@ -121,24 +125,27 @@
                                     <arguments>--mutex network run build:prod</arguments>
                                 </configuration>
                             </execution>
-                            <execution>
-                                <id>yarn compress</id>
-                                <goals>
-                                    <goal>yarn</goal>
-                                </goals>
-                                <configuration>
-                                    <arguments>run compress</arguments>
-                                </configuration>
-                            </execution>
                             <!-- After the build: the SBOM lists what the build put into the bundle, as its statistics tell -->
                             <execution>
                                 <id>generate sbom</id>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>yarn</goal>
                                 </goals>
                                 <configuration>
                                     <skip>${sbom.ui.skip}</skip>
                                     <arguments>run sbom pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
+                                </configuration>
+                            </execution>
+                            <!-- Runs in generate-resources after notices-ui so THIRD-PARTY-NOTICES.txt is precompressed too -->
+                            <execution>
+                                <id>yarn compress</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>yarn</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>run compress</arguments>
                                 </configuration>
                             </execution>
                         </executions>
@@ -150,7 +157,7 @@
                         <executions>
                             <execution>
                                 <id>fonts-sbom</id>
-                                <phase>generate-resources</phase>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>fonts</goal>
                                 </goals>
@@ -178,7 +185,7 @@
                         <executions>
                             <execution>
                                 <id>notices-ui</id>
-                                <phase>generate-resources</phase>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>exec</goal>
                                 </goals>

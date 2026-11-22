@@ -15,7 +15,7 @@ own_modules = [
 ]
 
 # Paths of a source archive not part of the shipped library.
-# Passed to ScanCode --ignore during scanning AND filtered during resolution.
+# Filtered during resolution so cached scan records remain policy-independent.
 exclude_paths = [
   "**/test/**",
   "**/tests/**",
@@ -67,6 +67,42 @@ same_category_preference = [
   "MPL-2.0",
   "MPL-1.1",
   "EPL-1.0",
+]
+
+# Copyright statements left out of every package because they cannot be about any component's code:
+# statements about license texts, map tile attributions, or code fragments misread by ScanCode.
+copyright_garbage = [
+  # GNU license document copyrights
+  "Copyright (c) 1989, 1991 Free Software Foundation, Inc.",
+  "Copyright (c) 1991, 1999 Free Software Foundation, Inc.",
+  "Copyright (c) 2007 Free Software Foundation, Inc. http://fsf.org",
+  "copyrighted by the Free Software Foundation",
+  "Copyright (c) 1991 Free Software Foundation, Inc.",
+  # Unfilled MPL 1.1 template header
+  "Portions created by the Initial Developer are Copyright (c) 2010 the Initial Developer",
+  # Map tile provider attributions (about external tile data, not the JS library)
+  "(c) Airbus DS",
+  "(c) Jawg Maps",
+  "(c) MapTiles API",
+  "(c) OpenStreetMap France",
+  "(c) PlanetObserver (Contains Copernicus Data)",
+  "(c) contributors, Singapore Land",
+  "Tiles (c) Esri",
+  "Kaartgegevens (c) Kadaster",
+  "Map (c) 1987",
+  "(c) waymarkedtrails.org",
+  "(c) www.opensnowmap.org",
+  "Map style (c) SafeCast",
+  "(c) OpenStreetMap contributors",
+  "(c) href https://www.openstreetmap.org/copyright OpenStreetMap contributors",
+  "(c) OpenStreetMap",
+  "(c) 2012 IEM Nexrad",
+  "MapLibre (c) MapLibre",
+  # Code fragments misread by ScanCode
+  "(c) c.right.cIn.push (c) DEBUG",
+  "(c) copy' (c) COPY (c)",
+  "(c) k+b,s Co (c)",
+  "copyright Char (c)",
 ]
 
 [licenses]
@@ -226,39 +262,3 @@ forbidden = [
 "lwm2m-registry" = "generated:lwm2m-registry"
 "pkg:generic/chromium/chromium@156.0.8078.0?os=linux" = "msa/web-report/chromium-credits/CREDITS.txt"
 "pkg:generic/chromium/chromium@156.0.8078.0?os=windows" = "msa/web-report/chromium-credits/CREDITS.txt"
-
-# Copyright statements left out of every package because they cannot be about any component's code:
-# statements about license texts, map tile attributions, or code fragments misread by ScanCode.
-copyright_garbage = [
-  # GNU license document copyrights
-  "Copyright (c) 1989, 1991 Free Software Foundation, Inc.",
-  "Copyright (c) 1991, 1999 Free Software Foundation, Inc.",
-  "Copyright (c) 2007 Free Software Foundation, Inc. http://fsf.org",
-  "copyrighted by the Free Software Foundation",
-  "Copyright (c) 1991 Free Software Foundation, Inc.",
-  # Unfilled MPL 1.1 template header
-  "Portions created by the Initial Developer are Copyright (c) 2010 the Initial Developer",
-  # Map tile provider attributions (about external tile data, not the JS library)
-  "(c) Airbus DS",
-  "(c) Jawg Maps",
-  "(c) MapTiles API",
-  "(c) OpenStreetMap France",
-  "(c) PlanetObserver (Contains Copernicus Data)",
-  "(c) contributors, Singapore Land",
-  "Tiles (c) Esri",
-  "Kaartgegevens (c) Kadaster",
-  "Map (c) 1987",
-  "(c) waymarkedtrails.org",
-  "(c) www.opensnowmap.org",
-  "Map style (c) SafeCast",
-  "(c) OpenStreetMap contributors",
-  "(c) href https://www.openstreetmap.org/copyright OpenStreetMap contributors",
-  "(c) OpenStreetMap",
-  "(c) 2012 IEM Nexrad",
-  "MapLibre (c) MapLibre",
-  # Code fragments misread by ScanCode
-  "(c) c.right.cIn.push (c) DEBUG",
-  "(c) copy' (c) COPY (c)",
-  "(c) k+b,s Co (c)",
-  "copyright Char (c)",
-]

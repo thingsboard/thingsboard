@@ -42,6 +42,30 @@ class ConfigAndCopyrightTests(unittest.TestCase):
         self.assertEqual(policy.category('Apache-2.0'), 'notice')
         self.assertEqual(policy.category('GPL-3.0-only'), 'forbidden')
         self.assertIn('LicenseRef-thingsboard-beerware-googlemutant', curations.custom_licenses)
+        self.assertGreaterEqual(len(policy.copyright_garbage), 20)
+        self.assertNotIn('copyright_garbage', policy.license_files)
+
+    def test_config_rejects_unknown_keys_and_invalid_curations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad_policy = os.path.join(tmp, 'policy.toml')
+            with open(bad_policy, 'w', encoding='utf-8') as f:
+                f.write('unknown_key = true\n')
+            with self.assertRaises(SystemExit) as ctx:
+                load_policy(bad_policy)
+            self.assertIn('unknown_key', str(ctx.exception))
+
+            bad_cur = os.path.join(tmp, 'curations.toml')
+            for snippet, needle in (
+                ('[[curations]]\nid = "pkg:maven/a/b@1.0"\nmetadata-only = true\n', 'metadata-only'),
+                ('[[curations]]\nid = "pkg:maven/a/b@[1.0,]"\nconcluded_license = "MIT"\n', 'upper bound'),
+                ('[[curations]]\nid = "pkg:maven/a/b@1.0"\nvcs = { url = "https://example.org" }\n', 'revision'),
+                ('[[curations]]\nid = "pkg:maven/a/b@1.0"\ndeclared_license = "MIT OR"\n', 'invalid SPDX'),
+            ):
+                with open(bad_cur, 'w', encoding='utf-8') as f:
+                    f.write(snippet)
+                with self.assertRaises(SystemExit) as ctx:
+                    load_curations(bad_cur)
+                self.assertIn(needle, str(ctx.exception))
 
     def test_curations_supports_multi_id_entries(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -154,66 +178,36 @@ class ConfigAndCopyrightTests(unittest.TestCase):
                     'metadata_only = true\n'
                 )
             curations = load_curations(curations_path)
-            policy = Policy(
-                own_modules=frozenset(),
-                exclude_paths=(),
-                same_category_preference={},
-                license_category={'Apache-2.0': 'notice', 'LicenseRef-used': 'notice'},
-                license_aliases={},
-                license_titles={},
-                license_files={},
-                copyright_garbage=frozenset(),
-            )
-            cache_dir = os.path.join(tmp, 'cache')
+            policy = Policy(license_category={'Apache-2.0': 'notice', 'LicenseRef-used': 'notice'})
+            base_env = {'NOTICES_CACHE_DIR': os.path.join(tmp, 'cache'), 'NOTICES_SCAN_CACHE_URL': 'none'}
 
             with mock.patch('notices.cli.load_policy', return_value=policy), \
                  mock.patch('notices.cli.load_curations', return_value=curations):
                 # 1. --sboms-under default: warns, writes --out, returns 0
                 out_warn = os.path.join(tmp, 'warn.txt')
                 buf = io.StringIO()
-                env_warn = {'TEAMCITY_VERSION': '2024.12.3', 'NOTICES_FAIL_ON_UNUSED_CURATIONS': ''}
+                env_warn = {**base_env, 'TEAMCITY_VERSION': '2024.12.3', 'NOTICES_FAIL_ON_UNUSED_CURATIONS': ''}
                 with mock.patch.dict(os.environ, env_warn, clear=False), contextlib.redirect_stdout(buf):
-                    rc = main([
-                        'render', '--project-version', '1.0.0', '--out', out_warn,
-                        '--sboms-under', tmp, '--cache-dir', cache_dir, '--cache-url', 'none',
-                    ])
+                    rc = main(['render', '--project-version', '1.0.0', '--out', out_warn, '--sboms-under', tmp])
                 self.assertEqual(rc, 0)
                 self.assertTrue(os.path.exists(out_warn))
                 self.assertIn('pkg:npm/demo-stale@1.0.0', buf.getvalue())
                 self.assertIn("status='WARNING']", buf.getvalue())
 
-                # 2. --sboms-under + CLI flag: stops before writing --out
-                out_cli_strict = os.path.join(tmp, 'cli-strict.txt')
-                with mock.patch.dict(os.environ, {'NOTICES_FAIL_ON_UNUSED_CURATIONS': ''}, clear=False):
-                    with self.assertRaises(SystemExit) as ctx:
-                        main([
-                            'render', '--project-version', '1.0.0', '--out', out_cli_strict,
-                            '--sboms-under', tmp, '--cache-dir', cache_dir, '--cache-url', 'none',
-                            '--fail-on-unused-curations',
-                        ])
-                self.assertIn('pkg:npm/demo-stale@1.0.0', str(ctx.exception))
-                self.assertFalse(os.path.exists(out_cli_strict))
-
-                # 3. --sboms-under + env var: stops before writing --out
+                # 2. --sboms-under + strict env var: stops before writing --out
                 out_env_strict = os.path.join(tmp, 'env-strict.txt')
-                with mock.patch.dict(os.environ, {'NOTICES_FAIL_ON_UNUSED_CURATIONS': 'true'}, clear=False):
+                with mock.patch.dict(os.environ, {**base_env, 'NOTICES_FAIL_ON_UNUSED_CURATIONS': 'true'}, clear=False):
                     with self.assertRaises(SystemExit) as ctx:
-                        main([
-                            'render', '--project-version', '1.0.0', '--out', out_env_strict,
-                            '--sboms-under', tmp, '--cache-dir', cache_dir, '--cache-url', 'none',
-                        ])
+                        main(['render', '--project-version', '1.0.0', '--out', out_env_strict, '--sboms-under', tmp])
                 self.assertIn('[custom_licenses] LicenseRef-stale', str(ctx.exception))
                 self.assertFalse(os.path.exists(out_env_strict))
 
-                # 4. Single-SBOM run (no --sboms-under): skips unused check even with strict env var
+                # 3. Single-SBOM run (no --sboms-under): skips unused check even with strict env var
                 out_single = os.path.join(tmp, 'single.txt')
                 buf_single = io.StringIO()
-                with mock.patch.dict(os.environ, {'NOTICES_FAIL_ON_UNUSED_CURATIONS': 'true'}, clear=False), \
+                with mock.patch.dict(os.environ, {**base_env, 'NOTICES_FAIL_ON_UNUSED_CURATIONS': 'true'}, clear=False), \
                      contextlib.redirect_stdout(buf_single):
-                    rc = main([
-                        'render', '--project-version', '1.0.0', '--out', out_single,
-                        '--cache-dir', cache_dir, '--cache-url', 'none', sbom_path,
-                    ])
+                    rc = main(['render', '--project-version', '1.0.0', '--out', out_single, sbom_path])
                 self.assertEqual(rc, 0)
                 self.assertTrue(os.path.exists(out_single))
                 self.assertNotIn('matched no shipped package', buf_single.getvalue())
