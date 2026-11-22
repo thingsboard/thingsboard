@@ -89,6 +89,17 @@ class Curations:
             return []
         return [] if any(covers(spec, version) for spec in specs) else specs
 
+    def unused(self, packages, used_licenses=None):
+        """Returns sorted unused curation raw_ids and unused custom_licenses names."""
+        matched = {
+            c.raw_id
+            for pkg in packages
+            for c in self.for_package(pkg.package_key, pkg.version)
+        }
+        unused_curations = sorted({c.raw_id for c in self.entries} - matched)
+        unused_custom = sorted(self.custom_licenses.keys() - used_licenses) if used_licenses is not None else []
+        return unused_curations, unused_custom
+
 
 def _load_toml(path):
     try:

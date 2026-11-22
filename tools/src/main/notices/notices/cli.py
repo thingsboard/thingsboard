@@ -16,11 +16,11 @@ import os
 import subprocess
 import time
 
-from notices import ROOT, ort_home, stop, write_atomically
+from notices import ROOT, emit_teamcity_warning, ort_home, stop, write_atomically
 from notices.cache import ScanCache, scan_cache_key
 from notices.config import load_curations, load_policy
 from notices.license_files import collect_license_files
-from notices.policy import resolve_all, validate_pre_scan
+from notices.policy import CURATIONS_REL, resolve_all, validate_pre_scan
 from notices.render import render_notices
 from notices.sbom import discover_sboms, load_sboms
 from notices.scanner import (
@@ -63,6 +63,11 @@ def main(argv=None):
     render_p.add_argument('--cache-url', default=None, help='Remote scan cache base URL, or "none"')
     render_p.add_argument('--maven-repository', default=os.environ.get('NOTICES_MAVEN_REPOSITORY', os.path.expanduser('~/.m2/repository')))
     render_p.add_argument('--no-scan', action='store_true', help='Fail if any package is missing from cache instead of invoking ScanCode')
+    render_p.add_argument(
+        '--fail-on-unused-curations',
+        action='store_true',
+        help='Fail (instead of warning) if any curations.toml entry matches no package (only with --sboms-under)',
+    )
     render_p.add_argument('sboms', nargs='*')
     render_p.set_defaults(func=cmd_render)
 
@@ -86,8 +91,18 @@ def main(argv=None):
     return args.func(args)
 
 
+def _parse_env_bool(name):
+    raw = os.environ.get(name, '').strip().lower()
+    if raw in ('', '0', 'false', 'no'):
+        return False
+    if raw in ('1', 'true', 'yes'):
+        return True
+    raise stop(f'invalid {name} value {os.environ.get(name)!r} (expected true/false, yes/no, or 1/0)')
+
+
 def cmd_render(args):
     t0 = time.monotonic()
+    fail_on_unused = bool(args.fail_on_unused_curations) or _parse_env_bool('NOTICES_FAIL_ON_UNUSED_CURATIONS')
     policy = load_policy()
     curations = load_curations()
     scan_cache = ScanCache(cache_dir=args.cache_dir, remote_url=args.cache_url)
@@ -180,6 +195,10 @@ def cmd_render(args):
         custom_licenses=curations.custom_licenses,
         cache_dir=scan_cache.cache_dir,
     )
+    unused_body = _unused_curations_message(curations, inventory.packages.values(), resolved) if args.sboms_under else None
+    if unused_body and fail_on_unused:
+        raise stop(unused_body)
+
     write_atomically(args.out, rendered.encode('utf-8'))
 
     total_s = time.monotonic() - t0
@@ -190,7 +209,40 @@ def cmd_render(args):
         f'(cache fetched {len(fetched_records)} in {cache_s:.1f}s, scanned {scanned_now} in {scan_s:.1f}s)\n'
         f'{jar_summary}'
     )
+    if unused_body:
+        _emit_unused_curations_warning(unused_body)
     return 0
+
+
+def _unused_curations_message(curations, packages, resolved):
+    used_licenses = set()
+    for pkg in resolved:
+        for lic in pkg.licenses:
+            full = str(lic)
+            if full in curations.custom_licenses:
+                used_licenses.add(full)
+            else:
+                used_licenses.add(lic.id)
+                if lic.exception:
+                    used_licenses.add(lic.exception)
+    unused_curations, unused_custom = curations.unused(packages, used_licenses=used_licenses)
+    unused = unused_curations + [f'[custom_licenses] {name}' for name in unused_custom]
+    if not unused:
+        return None
+    lines = ''.join(f'  {item}\n' for item in unused)
+    noun = 'entry' if len(unused) == 1 else 'entries'
+    return (
+        f'{len(unused)} {noun} in {CURATIONS_REL} matched no shipped package.\n'
+        + lines
+        + f'Remove obsolete entries from {CURATIONS_REL}.'
+    )
+
+
+def _emit_unused_curations_warning(body):
+    full = f'Third-party notices: warning: {body}'
+    print(full, flush=True)
+    if os.environ.get('TEAMCITY_VERSION'):
+        emit_teamcity_warning(full)
 
 
 def cmd_cache_upload(args):
