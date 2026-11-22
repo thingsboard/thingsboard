@@ -106,6 +106,84 @@ class CacheTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
 
+    def test_fetch_and_upload_fail_fast_on_probe_and_mid_batch_error(self):
+        requested_paths = []
+        lock = threading.Lock()
+        mode = {'behavior': 'fail_all'}
+
+        class Handler(BaseHTTPRequestHandler):
+            protocol_version = 'HTTP/1.1'
+
+            def log_message(self, format, *args):
+                pass
+
+            def _respond(self, status):
+                self.send_response(status)
+                self.send_header('Content-Length', '0')
+                self.end_headers()
+
+            def do_GET(self):
+                with lock:
+                    requested_paths.append(self.path)
+                    b = mode['behavior']
+                if b == 'fail_all':
+                    self._respond(403)
+                elif b == 'fail_after_first':
+                    self._respond(404 if self.path.endswith('/k0.json.gz') else 403)
+
+            def do_HEAD(self):
+                with lock:
+                    requested_paths.append(self.path)
+                    b = mode['behavior']
+                if b == 'fail_all':
+                    self._respond(403)
+                elif b == 'fail_after_first':
+                    self._respond(200 if self.path.endswith('/k0.json.gz') else 403)
+
+        server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            url = f'http://127.0.0.1:{server.server_port}/ort'
+            keys = [f'k{i}' for i in range(25)]
+            with tempfile.TemporaryDirectory() as d:
+                cache = ScanCache(cache_dir=d, remote_url=url, concurrency=4)
+
+                # Probe fails -> remaining 24 keys are never requested
+                requested_paths.clear()
+                fetched, missing, errors = cache.fetch_missing(keys)
+                self.assertEqual(fetched, {})
+                self.assertEqual(len(errors), 1)
+                self.assertEqual(requested_paths, ['/ort/scans/k0.json.gz'])
+
+                # Mid-batch failure -> aborts before requesting all remaining keys
+                mode['behavior'] = 'fail_after_first'
+                requested_paths.clear()
+                fetched, missing, errors = cache.fetch_missing(keys)
+                self.assertTrue(errors)
+                self.assertLess(len(requested_paths), len(keys))
+
+                # Upload probe fails -> remaining keys are never requested
+                for key in keys[:15]:
+                    cache.write_local(key, {'schema': 1, 'findings': []})
+                mode['behavior'] = 'fail_all'
+                requested_paths.clear()
+                with self.assertRaises(SystemExit) as ctx:
+                    cache.upload_local()
+                self.assertIn('HTTP 403', str(ctx.exception))
+                self.assertEqual(requested_paths, ['/ort/scans/k0.json.gz'])
+
+                # Upload mid-batch failure -> aborts before uploading all keys
+                mode['behavior'] = 'fail_after_first'
+                requested_paths.clear()
+                with self.assertRaises(SystemExit) as ctx:
+                    cache.upload_local()
+                self.assertIn('HTTP 403', str(ctx.exception))
+                self.assertLess(len(requested_paths), 15)
+        finally:
+            server.shutdown()
+            server.server_close()
+
 
 if __name__ == '__main__':
     unittest.main()

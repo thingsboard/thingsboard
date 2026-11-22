@@ -30,9 +30,13 @@ from notices import stop, write_atomically
 
 DEFAULT_CACHE_DIR = os.path.expanduser('~/.cache/tb-notices')
 DEFAULT_CACHE_URL = 'https://repo.thingsboard.io/artifactory/ort'
-REQUEST_TIMEOUT = 30
+REQUEST_TIMEOUT = 15
 MAX_RETRIES = 3
 CONCURRENCY = 20
+
+
+class _AbortedError(Exception):
+    """Internal sentinel raised when another worker already tripped fail-fast abort."""
 
 
 def scan_cache_key(scancode_version, source):
@@ -93,6 +97,9 @@ class ScanCache:
     def fetch_missing(self, keys):
         """Fetches any keys absent from local disk from remote_url in parallel over keep-alive connections.
 
+        Probes the first missing key before fanning out and aborts remaining work on the first error so an
+        unreachable remote cache fails fast instead of timing out across every package.
+
         Returns (fetched_records_by_key, still_missing_keys, errors).
         """
         missing = [k for k in dict.fromkeys(keys) if not self.has_local(k)]
@@ -103,10 +110,13 @@ class ScanCache:
         still_missing = []
         errors = []
         auth_headers = _authorization_headers()
+        abort = threading.Event()
 
         def fetch_one(key):
+            if abort.is_set():
+                raise _AbortedError()
             rel_path = f'/scans/{key}.json.gz'
-            status, body = self._request_with_retry('GET', rel_path, headers=auth_headers)
+            status, body = self._request_with_retry('GET', rel_path, headers=auth_headers, abort=abort)
             if status == 200:
                 # Validate gzip/JSON object before committing locally so a corrupt download never poisons disk.
                 record = json.loads(gzip.decompress(body))
@@ -118,21 +128,43 @@ class ScanCache:
                 return ('miss', key, None)
             return ('error', key, f'HTTP {status}')
 
+        def handle_outcome(kind, key, detail):
+            if kind == 'hit':
+                fetched[key] = detail
+            elif kind == 'miss':
+                still_missing.append(key)
+            else:
+                errors.append(f'{key}: {detail}')
+                abort.set()
+
         try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=min(self.concurrency, len(missing))) as pool:
-                futures = [pool.submit(fetch_one, key) for key in missing]
-                for future in concurrent.futures.as_completed(futures):
-                    try:
-                        kind, key, detail = future.result()
-                    except Exception as err:
-                        errors.append(str(err))
-                        continue
-                    if kind == 'hit':
-                        fetched[key] = detail
-                    elif kind == 'miss':
-                        still_missing.append(key)
-                    else:
-                        errors.append(f'{key}: {detail}')
+            # Probe the first key before opening parallel connections to a potentially unreachable remote.
+            try:
+                handle_outcome(*fetch_one(missing[0]))
+            except _AbortedError:
+                pass
+            except Exception as err:
+                errors.append(str(err))
+                abort.set()
+
+            rest = missing[1:]
+            if rest and not abort.is_set():
+                with concurrent.futures.ThreadPoolExecutor(max_workers=min(self.concurrency, len(rest))) as pool:
+                    futures = [pool.submit(fetch_one, key) for key in rest]
+                    for future in concurrent.futures.as_completed(futures):
+                        if future.cancelled():
+                            continue
+                        try:
+                            handle_outcome(*future.result())
+                        except _AbortedError:
+                            continue
+                        except Exception as err:
+                            errors.append(str(err))
+                            abort.set()
+                        if abort.is_set():
+                            for pending in futures:
+                                pending.cancel()
+                            break
         finally:
             self._close_connections()
 
@@ -142,6 +174,7 @@ class ScanCache:
         """Uploads locally cached scan files that do not yet exist on remote_url.
 
         Uses HEAD to skip already-uploaded keys and PUT for new ones (content-addressed, so race-free).
+        Probes the first key before fanning out and aborts remaining work on the first error.
         Returns (uploaded_count, skipped_count).
         """
         if not self.remote_url:
@@ -155,10 +188,13 @@ class ScanCache:
 
         auth_headers = _authorization_headers()
         uploaded = skipped = 0
+        abort = threading.Event()
 
         def upload_one(key):
+            if abort.is_set():
+                raise _AbortedError()
             rel_path = f'/scans/{key}.json.gz'
-            status, _ = self._request_with_retry('HEAD', rel_path, headers=auth_headers)
+            status, _ = self._request_with_retry('HEAD', rel_path, headers=auth_headers, abort=abort)
             if status == 200:
                 return 'skipped'
             if status not in (404, 405):
@@ -170,7 +206,7 @@ class ScanCache:
                 'Content-Length': str(len(body)),
                 **auth_headers,
             }
-            put_status, _ = self._request_with_retry('PUT', rel_path, body=body, headers=headers)
+            put_status, _ = self._request_with_retry('PUT', rel_path, body=body, headers=headers, abort=abort)
             if put_status not in (200, 201, 204):
                 hint = (
                     ' Set NOTICES_SCAN_CACHE_USER and NOTICES_SCAN_CACHE_PASSWORD.'
@@ -179,13 +215,32 @@ class ScanCache:
                 raise stop(f'PUT {self.remote_url}{rel_path} failed: HTTP {put_status}.{hint}')
             return 'uploaded'
 
+        def record_result(result):
+            nonlocal uploaded, skipped
+            if result == 'uploaded':
+                uploaded += 1
+            else:
+                skipped += 1
+
         try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=min(self.concurrency, len(keys))) as pool:
-                for result in pool.map(upload_one, keys):
-                    if result == 'uploaded':
-                        uploaded += 1
-                    else:
-                        skipped += 1
+            record_result(upload_one(keys[0]))
+            rest = keys[1:]
+            if rest:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=min(self.concurrency, len(rest))) as pool:
+                    futures = [pool.submit(upload_one, key) for key in rest]
+                    try:
+                        for future in concurrent.futures.as_completed(futures):
+                            if future.cancelled():
+                                continue
+                            try:
+                                record_result(future.result())
+                            except _AbortedError:
+                                continue
+                    except BaseException:
+                        abort.set()
+                        for pending in futures:
+                            pending.cancel()
+                        raise
         except RuntimeError as err:
             raise stop(str(err))
         finally:
@@ -226,11 +281,13 @@ class ScanCache:
                 conn.close()
         self._thread_local = threading.local()
 
-    def _request_with_retry(self, method, rel_path, body=None, headers=None):
+    def _request_with_retry(self, method, rel_path, body=None, headers=None, abort=None):
         req_headers = {'User-Agent': 'tb-notices-cache', 'Connection': 'keep-alive', **(headers or {})}
         full_path = f'{self._parsed_remote.path}{rel_path}'
         last_error = None
         for attempt in range(MAX_RETRIES):
+            if abort is not None and abort.is_set():
+                raise _AbortedError()
             try:
                 conn = self._get_connection()
                 conn.request(method, full_path, body=body, headers=req_headers)
@@ -239,15 +296,24 @@ class ScanCache:
                 if resp.will_close or resp.status >= 500:
                     self._reset_connection()
                 if resp.status >= 500 and attempt < MAX_RETRIES - 1:
-                    time.sleep(0.5 * (2 ** attempt))
+                    _wait_backoff(attempt, abort)
                     continue
                 return resp.status, data
             except (http.client.HTTPException, OSError) as err:
                 last_error = err
                 self._reset_connection()
                 if attempt < MAX_RETRIES - 1:
-                    time.sleep(0.5 * (2 ** attempt))
+                    _wait_backoff(attempt, abort)
         raise RuntimeError(f'{method} {self.remote_url}{rel_path} failed after {MAX_RETRIES} attempts: {last_error}')
+
+
+def _wait_backoff(attempt, abort):
+    delay = 0.5 * (2 ** attempt)
+    if abort is not None:
+        if abort.wait(delay):
+            raise _AbortedError()
+    else:
+        time.sleep(delay)
 
 
 def _authorization_headers():
