@@ -29,7 +29,7 @@ import urllib.parse
 from notices import stop, write_atomically
 
 DEFAULT_CACHE_DIR = os.path.expanduser('~/.cache/tb-notices')
-DEFAULT_CACHE_URL = 'https://repo.thingsboard.io/artifactory/ort/v2'
+DEFAULT_CACHE_URL = 'https://repo.thingsboard.io/artifactory/ort'
 REQUEST_TIMEOUT = 30
 MAX_RETRIES = 3
 CONCURRENCY = 20

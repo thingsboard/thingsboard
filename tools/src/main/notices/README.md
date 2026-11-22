@@ -51,7 +51,7 @@ python3 tools/src/main/notices ci-should-run --target-branch <branch> --teamcity
 | Environment variable | Default | Effect |
 |---|---|---|
 | `NOTICES_CACHE_DIR` | `~/.cache/tb-notices` | Local persistent cache (scans, jar NOTICEs, license texts, maven-sources) |
-| `NOTICES_SCAN_CACHE_URL` | `https://repo.thingsboard.io/artifactory/ort/v2` | Remote per-package cache base URL, or `none` |
+| `NOTICES_SCAN_CACHE_URL` | `https://repo.thingsboard.io/artifactory/ort` | Remote per-package cache base URL, or `none` |
 | `NOTICES_MAVEN_REPOSITORY` | `~/.m2/repository` | Local Maven repository for binary jar NOTICE extraction |
 | `NOTICES_SCANCODE_IMAGE` | `ghcr.io/oss-review-toolkit/ort:98.0.0` | Docker image providing `scancode` on cache misses |
 | `NOTICES_SCAN_CACHE_USER`, `NOTICES_SCAN_CACHE_PASSWORD` | none | Artifactory upload credentials (CI only) |
