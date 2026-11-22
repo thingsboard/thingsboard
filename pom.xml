@@ -95,7 +95,7 @@
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.controlScriptsFolder>control</pkg.controlScriptsFolder>
-        <thingsboard.ai.version>2.1.10-SNAPSHOT</thingsboard.ai.version>
+        <thingsboard.ai.version>2.1.10</thingsboard.ai.version>
         <thingsboard.client.version>4.4.0</thingsboard.client.version>
         <spring-boot.version>3.5.15</spring-boot.version>
         <!-- Pins spring-boot-test to 3.5.13: the ImportsContextCustomizer change in 3.5.14 causes "Duplicate spy
@@ -110,7 +110,7 @@
         <tomcat.version>10.1.61</tomcat.version> <!-- to fix CVE-2026-53434, CVE-2026-55955, CVE-2026-65182, CVE-2026-65905, CVE-2026-68525, CVE-2026-76183, CVE-2026-101296 and CVE-2026-101356. Pinned via the tomcat-embed overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <httpcore5.version>5.4.3</httpcore5.version> <!-- to fix CVE-2026-54399 and CVE-2026-54428 (no fix exists on the 5.3.x line; the httpclient5 5.6.4 pin below requires httpcore5 5.4.3). Pinned via the httpcore5 overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <logback.version>1.5.38</logback.version> <!-- to fix CVE-2026-13006 (1.5.36 as reported by the scanner is still vulnerable; 1.5.37 removed Janino conditional processing entirely, 1.5.38 adds a HardenedObjectInputStream fix). Pinned via the logback overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
-        <jackson-bom.version>2.21.7</jackson-bom.version> <!-- to fix CVE-2026-59889, CVE-2026-68497, CVE-2026-89425 and CVE-2026-91777. Pinned via the jackson-bom import below: spring-boot-dependencies re-imports jackson-bom with its own placeholder, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
+        <jackson-bom.version>2.21.8</jackson-bom.version> <!-- to fix CVE-2026-59889, CVE-2026-68497, CVE-2026-89425, CVE-2026-91777, CVE-2026-106554 and CVE-2026-110879. Pinned via the jackson-bom import below: spring-boot-dependencies re-imports jackson-bom with its own placeholder, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <postgresql.version>42.7.14</postgresql.version> <!-- to fix CVE-2026-54291 and CVE-2026-107314. Pinned via the postgresql override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <lz4-java.version>1.11.4</lz4-java.version> <!-- to fix CVE-2026-59949, CVE-2026-106450 and CVE-2026-106451. Transitive dependency of amazon-kinesis-producer 0.15.12 and kafka-clients 3.9.2; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once amazon-kinesis-producer and kafka-clients pull lz4-java >= 1.11.4 -->
         <amqp-client.version>5.34.0</amqp-client.version> <!-- to fix CVE-2026-63337, CVE-2026-69219, CVE-2026-69220 and CVE-2026-75516. Pinned via the amqp-client override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
@@ -174,7 +174,7 @@
         <bucket4j.version>8.10.1</bucket4j.version>
         <antlr.version>3.5.3</antlr.version>
         <amazon-kinesis-producer>0.15.12</amazon-kinesis-producer>
-        <org.json.version>20250517</org.json.version> <!-- Transitive dependency by amazon-kinesis-producer 0.15.10, 0.15.12 to address CVE-2023-5072 -->
+        <org.json.version>20260719</org.json.version> <!-- Transitive dependency by amazon-kinesis-producer 0.15.10, 0.15.12 and jedis; to fix CVE-2023-5072 and CVE-2026-59171 -->
         <amazon-kinesis-client>3.1.2</amazon-kinesis-client>
         <apache-avro.version>1.11.4</apache-avro.version> <!--vulnerability fix, related to the kinesis client-->
         <aws.sdk.version>1.12.701</aws.sdk.version>

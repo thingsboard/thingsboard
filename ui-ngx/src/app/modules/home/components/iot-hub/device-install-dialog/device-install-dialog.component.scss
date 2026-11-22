@@ -356,17 +356,17 @@
   color: #198038;
 }
 
-// Update: the outcome of a row shows in when the row gets it
-.tb-update-reveal {
+// The outcome of a row shows in when the row gets it
+.tb-package-reveal {
   display: inline-block;
-  animation: tb-update-reveal 200ms ease-out;
+  animation: tb-package-reveal 200ms ease-out;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
 }
 
-@keyframes tb-update-reveal {
+@keyframes tb-package-reveal {
   from {
     opacity: 0;
     transform: scale(0.6);
@@ -392,8 +392,8 @@
   color: rgba(0, 0, 0, 0.54);
 }
 
-// Update: above the actions, so the list doesn't move when it goes away
-.tb-update-banner {
+// Above the actions, so the list doesn't move when it goes away
+.tb-package-banner {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -411,7 +411,7 @@
     height: 20px;
   }
 
-  &.tb-update-banner-warning {
+  &.tb-package-banner-warning {
     background: rgba(246, 103, 22, 0.08);
     color: #b5470b;
 
@@ -420,7 +420,7 @@
     }
   }
 
-  &.tb-update-banner-error {
+  &.tb-package-banner-error {
     background: rgba(211, 47, 47, 0.06);
     color: #c62828;
   }

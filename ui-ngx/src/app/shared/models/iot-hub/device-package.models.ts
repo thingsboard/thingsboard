@@ -355,10 +355,8 @@ export interface EntityStepOutput {
   baseUrl?: string;
 }
 
-// skipped: a step of an update that failed, so nothing was changed
-export type EntityStepStatus = 'pending' | 'running' | 'success' | 'error' | 'conflict' | 'skipped';
-
-export type ConflictType = 'use-or-overwrite' | 'overwrite-or-copy';
+// skipped: a step of an install or update that failed, so nothing was changed
+export type EntityStepStatus = 'pending' | 'running' | 'success' | 'error' | 'skipped';
 
 export interface EntityStepProgress {
   step: DeviceInstallStep;
@@ -366,7 +364,5 @@ export interface EntityStepProgress {
   resolvedName?: string;
   entityOutput?: EntityStepOutput;
   errorMessage?: string;
-  existingEntity?: EntityStepOutput;
-  conflictType?: ConflictType;
   resolution?: string;
 }

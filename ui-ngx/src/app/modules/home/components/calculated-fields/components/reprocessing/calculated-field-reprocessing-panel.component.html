@@ -37,7 +37,7 @@
             <span class="tb-task-status">{{ reprocessingLabel | translate }}</span>
             <span class="tb-task-status info">{{ processInfo() }}</span>
           </div>
-          <mat-progress-bar mode="determinate" [value]="processProgress()"></mat-progress-bar>
+          <mat-progress-bar mode="buffer" [value]="processProgress()" [bufferValue]="processProgress()"></mat-progress-bar>
         </div>
       }
       @case (ReprocessingState.RESULTS) {

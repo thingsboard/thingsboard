@@ -140,16 +140,25 @@ export function updateEditorSize(editorElement: any, content: string, editor: Ac
       newWidth += 32;
     }
   }
-  if (!options.ignoreHeight) {
-    renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
-  }
-  if (options.setMinHeight) {
-    renderer.setStyle(editorElement, 'minHeight', newHeight.toString() + 'px');
-  }
+  const setHeight = (height: number) => {
+    if (!options.ignoreHeight) {
+      renderer.setStyle(editorElement, 'height', height.toString() + 'px');
+    }
+    if (options.setMinHeight) {
+      renderer.setStyle(editorElement, 'minHeight', height.toString() + 'px');
+    }
+  };
+  setHeight(newHeight);
   if (!options.ignoreWidth) {
     renderer.setStyle(editorElement, 'width', newWidth.toString() + 'px');
   }
-  editor.resize();
+  editor.resize(true);
+  // Ace's horizontal scrollbar overlaps the last row; grow the editor by its height so no vertical scrollbar appears
+  const scrollBarHeight: number = editor.renderer.scrollBarH.getHeight();
+  if (scrollBarHeight) {
+    setHeight(newHeight + scrollBarHeight);
+    editor.resize();
+  }
 }
 
 export class Range implements Ace.Range {

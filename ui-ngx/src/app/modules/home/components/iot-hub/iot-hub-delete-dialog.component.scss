@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@import "../../../../../scss/constants";
+
 :host {
   display: block;
   max-width: 600px;
@@ -13,6 +15,12 @@
   letter-spacing: 0.1px;
   color: rgba(0, 0, 0, 0.87);
   margin: 0;
+  padding: 24px 24px 20px;
+
+  // No baseline strut: the title keeps its own line height
+  &::before {
+    display: none;
+  }
 }
 
 .tb-iot-hub-delete-desc {
@@ -22,4 +30,29 @@
   letter-spacing: 0.2px;
   color: rgba(0, 0, 0, 0.54);
   margin: 0;
+}
+
+.tb-iot-hub-kept-groups {
+  border: 1px solid color-mix(in srgb, var(--tb-primary-500) 40%, transparent);
+
+  // Groups share the outer border; hide tb-image-references' own
+  ::ng-deep tb-image-references table.tb-entities-list-table {
+    padding: 0 10px 0 4px;
+    background: transparent;
+
+    &:before {
+      display: none;
+    }
+
+    // Narrow dialog: let type and name wrap
+    td.tb-entity-type {
+      @media #{$mat-xs} {
+        white-space: normal !important;
+      }
+    }
+
+    td.tb-entity-name {
+      overflow-wrap: anywhere;
+    }
+  }
 }

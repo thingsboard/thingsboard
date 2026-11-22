@@ -17,18 +17,15 @@ import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models
 import {
   DeviceInstalledItemDescriptor,
   DevicePackageEntityState,
-  DeviceUpdateResult,
-  DeviceUpdateStep
+  DevicePackageRequest,
+  DevicePackageResult,
+  DevicePackageStep
 } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceService } from '@core/http/device.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { AttributeService } from '@core/http/attribute.service';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
-import { EntityId } from '@shared/models/id/entity-id';
-import { CustomerId } from '@shared/models/id/customer-id';
 import { generateSecret, isEqual } from '@core/utils';
 import { ConverterService } from '@core/http/converter.service';
 import { IntegrationService } from '@core/http/integration.service';
@@ -38,8 +35,9 @@ import { AiDashboardGenerationService } from '@home/components/ai/ai-dashboard-g
 import { ResourcesService } from '@core/services/resources.service';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
-import { IntegrationType } from '@shared/models/integration.models';
-import { differsFromDefaultConverter, loadDefaultUplinkConverter, loadOwnDefaultConverterIds } from '@home/components/iot-hub/iot-hub-default-converter';
+import { Integration, IntegrationType } from '@shared/models/integration.models';
+import { HasVersion } from '@shared/models/entity.models';
+import { loadDefaultUplinkConverter } from '@home/components/iot-hub/iot-hub-default-converter';
 import { downloadEntityJson, readableMessage, requestFailureMessage, splitTextWithLink } from '@home/components/iot-hub/iot-hub-utils';
 import {
   cleanFormFieldValue,
@@ -89,7 +87,7 @@ interface PreviousEntity {
   state?: DevicePackageEntityState;
 }
 
-/** Update: what the update does with the entity of a step, decided on the Update step before anything changes. */
+/** What an update or install does with the entity of a step, decided on its progress step before anything changes. */
 interface EntityStepPlan {
   // keep: the new version doesn't change it; overwrite: it takes the new version's template; create: a new entity
   action: 'keep' | 'overwrite' | 'create';
@@ -101,12 +99,23 @@ interface EntityStepPlan {
   existing?: EntityStepOutput;
   resolution?: string;
   confirmed: boolean;
-  // Overwrite: the version the user reviewed; the server rejects the update if someone changed the entity since
+  // Overwrite: the version the user reviewed; the server rejects the request if someone changed the entity since
   version?: number;
   // Modified: the entity as the check found it, which the user can download before it is overwritten
   current?: any;
-  // A step with "default": true whose converter differs from ThingsBoard's default converter now
-  newDefaultConverter?: boolean;
+}
+
+// Install: the conflict choice a Retry keeps while the existing entity is the same one
+interface InstallConflictChoice {
+  existingId: string;
+  resolution: string;
+}
+
+/** Install: an entity found under the name a step's template gives. */
+interface ExistingEntity {
+  output: EntityStepOutput;
+  // Sent with an overwrite
+  version?: number;
 }
 
 /**
@@ -209,11 +218,11 @@ export interface WizardStep {
   entitySteps?: EntityStepProgress[];
   progressError?: string;
   progressDone?: boolean;
-  // Update: the user reviews what the update changes and confirms the warnings (checking: still finding it out)
+  // The user reviews what the install or update does and confirms the warnings (checking: still finding it out)
   reviewing?: boolean;
   checking?: boolean;
-  // Update: the entities are being changed
-  updating?: boolean;
+  // The server is applying the plan
+  applying?: boolean;
 }
 
 export interface ConnectionCheck {
@@ -224,9 +233,8 @@ export interface ConnectionCheck {
   checkedValues?: string;
 }
 
-const ENTITY_STEP_MIN_DELAY = 2000;
-// Update: the rows show the outcome of the one request one after another, this far apart
-const UPDATE_REVEAL_INTERVAL = 150;
+// The rows show the outcome of the one request one after another, this far apart
+const REVEAL_INTERVAL = 150;
 // Where the wizard keeps the converter it builds for a step with "default": true, as if the package had that file
 const DEFAULT_CONVERTER_PATH = 'tb-default-converter/';
 const DEFAULT_RANDOM_SIZE = 20;
@@ -378,21 +386,23 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   reviewMode = false;
   allowAiDashboardGenerate = false;
   /**
-   * Set once the server has an installed item for this device. From that moment every way out of
+   * Set once the server has installed or updated the package. From that moment every way out of
    * the wizard — including the header X and the Cancel button on a still-pending later step —
    * has to report 'installed', or the caller keeps showing pre-install counts and badges.
    */
-  private installRegistered = false;
+  private packageInstalled = false;
+  // Update: the hint of an entity someone changed since install, with a link to save it
+  readonly modifiedHintText = splitTextWithLink(this.translate.instant('iot-hub.device-update-modified'));
+  // Set however the dialog closes: a check of the steps still running then installs nothing
+  private closed = false;
   // Update: the package's entities as the server finds them, by install step
   private updateStates = new Map<string, DevicePackageEntityState>();
   // Update: the files of the installed version, which the new version is compared with
   private previousFiles = new Map<string, string>();
   private previousPackageInfo: DevicePackageInfo | null = null;
   private entityPlans = new WeakMap<EntityStepProgress, EntityStepPlan>();
-  // Update: for each step with "default": true, whether its converter differs from ThingsBoard's default one now
-  private defaultConverterChanges = new Map<DeviceInstallStep, boolean>();
-  // Update: the check of the update in progress; a way back meanwhile starts a new one, which drops this one's result
-  private updateCheckRun = 0;
+  // The check of the plan in progress; a way back meanwhile starts a new one, which drops this one's result
+  private checkRun = 0;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -405,9 +415,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private pendingRoutingKey: string | undefined;
   // protocol → where the server took its host from
   private transportHostSources: Partial<Record<DeviceConnectivityProtocol, DeviceConnectivityHostSource>> = {};
-  // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
+  // form-field key → definition. Its type lets resolveTemplateJson() emit BOOLEAN/INTEGER
   // placeholders as raw JSON values instead of quoted strings.
-  private fieldTypes = new Map<string, FormFieldType>();
+  private formFieldDefs = new Map<string, FormFieldDefinition>();
   // Transport whose ${<protocol>.host} the transport host field overrides
   private hostFieldProtocol: DeviceConnectivityProtocol | null = null;
   gatewayDockerComposeContent: string | null = null;
@@ -425,7 +435,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     private deviceService: DeviceService,
     private dashboardService: DashboardService,
     private ruleChainService: RuleChainService,
-    private attributeService: AttributeService,
     private iotHubApiService: IotHubApiService,
     private converterService: ConverterService,
     private integrationService: IntegrationService,
@@ -438,6 +447,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   async ngOnInit(): Promise<void> {
+    this.dialogRef.beforeClosed().subscribe(() => this.closed = true);
     this.allowAiDashboardGenerate = this.aiDashboardGenerationService.isAllowedDashboardGenerate({ requireTelemetry: true });
     try {
       await this.loadPackageFiles(this.data.item.id as string, this.zipFiles, this.zipImages);
@@ -476,7 +486,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // Update: the package keeps the method it was installed with
       this.selectedInstallMethod = this.data.update.descriptor.selectedInstallMethod;
       await this.loadPreviousVersion();
-      await this.checkDefaultConverters();
       if (this.isTextOnlyUpdate() && await this.registerTextOnlyUpdate()) {
         return;
       }
@@ -578,14 +587,17 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return this.wizardSteps[this.stepper.selectedIndex + 1]?.label || '';
   }
 
-  /** Update: coming back to the Update step checks the update again, e.g. with the configuration changed. */
-  private resetUpdatePlan(ws: WizardStep): void {
-    if (ws.type === 'progress' && !ws.progressDone && !ws.updating) {
+  /**
+   * Coming back to the progress step checks the package again, e.g. with the configuration changed, so a plan made
+   * before is never sent. A check still running is dropped when its result comes.
+   */
+  private resetPlan(ws: WizardStep): void {
+    if (ws.type === 'progress' && !ws.progressDone && !ws.applying) {
       if (ws.checking) {
-        // E.g. back through the stepper header during the check: its result is dropped when it comes
-        this.updateCheckRun++;
+        this.checkRun++;
         ws.checking = false;
       }
+      ws.entitySteps?.forEach(ep => this.entityPlans.delete(ep));
       ws.entitySteps = null;
       ws.reviewing = false;
       ws.progressError = null;
@@ -597,13 +609,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return;
     }
     const step = this.currentWizardStep;
-    if (this.data.update && step?.type === 'progress') {
-      if (step.updating || step.checking) {
-        return;
-      }
-      this.resetUpdatePlan(step);
-      this.stepper.previous();
-    } else if (step?.type === 'progress' && step.progressError) {
+    if (step?.type === 'progress' && (step.applying || step.checking)) {
+      return;
+    }
+    // Install: a failed install goes back to the form, whose values it was planned with; the selection change resets the plan
+    if (!this.data.update && step?.type === 'progress' && step.progressError) {
       this.goBackToForm();
     } else {
       this.stepper.previous();
@@ -745,10 +755,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   onStepSelectionChange(event: StepperSelectionEvent): void {
     if (event.selectedIndex <= event.previouslySelectedIndex) {
-      // Back through the stepper header too, not only the Back button: the Update step checks the update again
-      if (this.data.update) {
-        this.wizardSteps.slice(event.selectedIndex + 1).forEach(ws => this.resetUpdatePlan(ws));
-      }
+      // Back through the stepper header too, not only the Back button: the progress steps after it check again
+      this.wizardSteps.slice(event.selectedIndex + 1).forEach(ws => this.resetPlan(ws));
       return;
     }
     // Forward moves can come from the stepper header, which bypasses nextStep(). A step whose connection isn't
@@ -832,53 +840,44 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   done(): void {
-    // Update: the installed item keeps the old version until the registration succeeds
-    this.dialogRef.close(this.data.update && !this.installRegistered ? false : 'installed');
+    // Update: the installed item keeps the old version until the update succeeds
+    this.dialogRef.close(this.data.update && !this.packageInstalled ? false : 'installed');
   }
 
   cancel(): void {
-    // Update: the server is applying it; closing now would hide whether it did
-    if (this.isUpdating) {
+    // The server is applying the package; closing now would hide whether it did
+    if (this.isApplying) {
       return;
     }
-    this.dialogRef.close(this.installRegistered ? 'installed' : false);
+    this.dialogRef.close(this.packageInstalled ? 'installed' : false);
   }
 
-  get isUpdating(): boolean {
-    return this.wizardSteps.some(ws => ws.updating);
+  get isApplying(): boolean {
+    return this.wizardSteps.some(ws => ws.applying);
   }
 
-  retryEntitySteps(step: WizardStep): void {
-    step.progressError = null;
-    void this.runEntitySteps(step);
+  /** A check or an install is running: the stepper header must not leave the step and start a second one. */
+  get isBusy(): boolean {
+    return this.wizardSteps.some(ws => ws.applying || ws.checking);
   }
 
-  async resolveConflict(ws: WizardStep, ep: EntityStepProgress, resolution: string): Promise<void> {
-    ep.status = 'running';
-    ep.errorMessage = null;
-    this.cdr.detectChanges();
-    try {
-      let output: EntityStepOutput;
-      if (resolution === 'use-existing') {
-        output = await this.useExistingEntity(ep.step, ep.existingEntity);
-      } else if (resolution === 'overwrite') {
-        output = await this.overwriteEntity(ep.step, ep.existingEntity);
-      } else {
-        // create-copy — just create normally
-        output = await this.createEntity(ep.step);
+  /**
+   * Nothing was changed, so trying again starts from the check: the entities may have changed meanwhile. An update
+   * asks to confirm every warning again; an install keeps a conflict choice while the existing entity is the same one,
+   * except on the step that failed: the choice may be why it failed, so the user chooses again.
+   */
+  retry(ws: WizardStep): void {
+    let choices: Map<DeviceInstallStep, InstallConflictChoice> | undefined;
+    if (!this.data.update) {
+      choices = new Map();
+      for (const ep of ws.entitySteps ?? []) {
+        const plan = this.entityPlans.get(ep);
+        if (plan?.existing && plan.resolution && ep.status !== 'error') {
+          choices.set(ep.step, { existingId: plan.existing.id, resolution: plan.resolution });
+        }
       }
-      await this.saveStepAttributes(ep.step, output);
-      ep.existingEntity = null;
-      ep.conflictType = null;
-      this.markEntityStepSuccess(ws, ep, output, resolution);
-      // Resume running remaining steps
-      await this.runEntitySteps(ws);
-    } catch (err: any) {
-      ep.status = 'error';
-      ep.errorMessage = this.failureMessage(err);
-      ws.progressError = ep.errorMessage;
-      this.cdr.detectChanges();
     }
+    void this.planPackage(ws, choices);
   }
 
   goBackToForm(): void {
@@ -886,10 +885,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const currentIdx = this.stepper.selectedIndex;
     for (let i = currentIdx - 1; i >= 0; i--) {
       if (this.wizardSteps[i].type === 'form') {
-        // Reset the progress step so it re-runs when we come back
+        // The plan was made with the form values before: the selection change below resets it, so the check runs
+        // again with the new ones
         const progressStep = this.wizardSteps[currentIdx];
-        progressStep.entitySteps = null;
-        progressStep.progressError = null;
         progressStep.progressDone = false;
         progressStep.completed = false;
         // Allow navigation back by making intermediate steps editable
@@ -940,19 +938,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // --- Variable Resolution ---
 
   /** escape: applied to each substituted value, e.g. to keep a JSON template valid. */
-  resolveVariables(content: string, escape: (value: string) => string = value => value): string {
+  resolveVariables(content: string, escape: (value: string) => string = value => value,
+                   outputs: Map<string, EntityStepOutput> = this.entityOutputs): string {
     return content.replace(/\$\{([^}]+)}/g, (_match, key) => {
-      const res = this.resolveVariable(key);
-      if (res) {
+      const res = this.resolveVariable(key, outputs);
+      if (this.isResolved(key, res)) {
         return escape(res);
       }
       return '${' + key + '}';
     });
   }
 
-  resolveVariable(key: string): string | undefined {
+  resolveVariable(key: string, outputs: Map<string, EntityStepOutput> = this.entityOutputs): string | undefined {
     if (key in this.formValues) {
-      return String(this.formValues[key]);
+      return String(this.formValues[key] ?? (this.formFieldDefs.get(key)?.type === FormFieldType.BOOLEAN ? false : ''));
     }
     if (this.hostFieldProtocol && key === `${this.hostFieldProtocol}.host`) {
       const host = toBareHost(String(this.formValues[TRANSPORT_HOST_FIELD_KEY] ?? ''));
@@ -982,7 +981,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (dotIdx > 0) {
       const alias = key.substring(0, dotIdx);
       const prop = key.substring(dotIdx + 1);
-      const output = this.entityOutputs.get(alias);
+      const output = outputs.get(alias);
       if (output && prop in output) {
         return String((output as any)[prop]);
       }
@@ -1014,13 +1013,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * embedded in a larger string (e.g. "v3/${mqttUsername}/...") and STRING/PASSWORD/SELECT
    * fields are left quoted and handled by the regular resolveVariables() pass.
    */
-  resolveTemplateJson(raw: string): any {
+  resolveTemplateJson(raw: string, outputs: Map<string, EntityStepOutput> = this.entityOutputs): any {
     const typed = raw.replace(/"\$\{([^"{}]+)}"/g, (whole, key) => {
-      const type = this.fieldTypes.get(key);
+      const type = this.formFieldDefs.get(key)?.type;
       if (type !== FormFieldType.BOOLEAN && type !== FormFieldType.INTEGER) {
         return whole;
       }
-      const res = this.resolveVariable(key);
+      const res = this.resolveVariable(key, outputs);
       if (res === undefined) {
         return whole;
       }
@@ -1035,12 +1034,24 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     });
     // Placeholders sit inside JSON strings (or are booleans and numbers, which escaping leaves as they are): a value
     // with a quote, a backslash or a line break, e.g. a pasted password, must not end the string
-    return JSON.parse(this.resolveVariables(typed, value => JSON.stringify(value).slice(1, -1)));
+    return JSON.parse(this.resolveVariables(typed, value => JSON.stringify(value).slice(1, -1), outputs));
+  }
+
+  /**
+   * An optional text field left empty is resolved, e.g. no Wi-Fi password for an open network. Any other empty value
+   * keeps its placeholder, so a missing value stays visible.
+   */
+  private isResolved(key: string, res: string | undefined): boolean {
+    if (res) {
+      return true;
+    }
+    const field = this.formFieldDefs.get(key);
+    return res === '' && !!field && !field.required && field.type !== FormFieldType.INTEGER && field.type !== FormFieldType.BOOLEAN;
   }
 
   private _resolveMarkdownVariable(key: string): string | undefined {
     const res = this.resolveVariable(key);
-    if (res) {
+    if (this.isResolved(key, res)) {
       return res;
     }
     // Special action placeholders
@@ -1062,13 +1073,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         Object.assign(this.formValues, state?.formValues);
       }
     }
+    this.installedEntityOutputs().forEach((output, alias) => this.entityOutputs.set(alias, output));
+  }
+
+  /** The outputs of the installed package's entity steps, by alias, as its install state records them. */
+  private installedEntityOutputs(): Map<string, EntityStepOutput> {
+    const outputs = new Map<string, EntityStepOutput>();
     for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] || []) {
       const alias = stepTypeAliasMap[step.type];
       const output = alias ? this.storedStateOf(step)?.state.entityOutput : undefined;
       if (output) {
-        this.entityOutputs.set(alias, output);
+        outputs.set(alias, output);
       }
     }
+    return outputs;
   }
 
   private resolveGatewayDockerCompose(): void {
@@ -1164,20 +1182,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           completed: this.reviewMode
         });
         i++;
-      } else if (ENTITY_STEP_TYPES.has(step.type) && this.data.update) {
-        // An update is one transaction: every entity step goes in one Update step, after the last form
+      } else if (ENTITY_STEP_TYPES.has(step.type) && !this.reviewMode) {
+        // An install or update is one transaction: every entity step goes in one progress step, after the last form
         // the entities may use, i.e. where the last group of entity steps is
         if (!rawSteps.slice(i + 1).some(s => ENTITY_STEP_TYPES.has(s.type))) {
           this.wizardSteps.push({
             type: 'progress',
-            label: this.translate.instant('iot-hub.device-update-step'),
+            label: this.translate.instant(this.data.update ? 'iot-hub.device-update-step' : 'iot-hub.step-provisioning'),
             rawSteps: rawSteps.filter(s => ENTITY_STEP_TYPES.has(s.type)),
             completed: false
           });
         }
         i++;
       } else if (ENTITY_STEP_TYPES.has(step.type)) {
-        // Group consecutive entity steps
+        // Review mode: consecutive entity steps, as installs before the one-transaction install showed them
         const group: DeviceInstallStep[] = [];
         while (i < rawSteps.length && ENTITY_STEP_TYPES.has(rawSteps[i].type)) {
           group.push(rawSteps[i]);
@@ -1185,9 +1203,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         }
         this.wizardSteps.push({
           type: 'progress',
-          label: 'Provisioning',
+          label: this.translate.instant('iot-hub.step-provisioning'),
           rawSteps: group,
-          completed: this.reviewMode
+          completed: true
         });
       } else {
         // Unknown step type — skip
@@ -1313,7 +1331,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       ws.formFields = ws.formFields.map(field => locked.has(field.key) ? { ...field, readOnly: true, resettable: false } : field);
     }
     for (const field of ws.formFields) {
-      this.fieldTypes.set(field.key, field.type);
+      this.formFieldDefs.set(field.key, field);
       const validators = [];
       if (field.required) {
         validators.push(Validators.required);
@@ -1447,15 +1465,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       step.markdown = this.zipFiles.get(step.rawSteps[0].file) || '';
       // Nothing to validate here, so the linear stepper header may move past it right away.
       step.completed = true;
-    } else if (step.type === 'progress' && !step.progressDone) {
+    } else if (step.type === 'progress' && !step.progressDone && !step.applying && !step.checking) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);
-      } else if (this.data.update) {
-        if (!step.entitySteps) {
-          void this.checkUpdate(step);
-        }
-      } else {
-        this.initAndRunEntitySteps(step);
+      } else if (!step.entitySteps) {
+        void this.planPackage(step);
       }
     }
   }
@@ -1475,19 +1489,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.completed = true;
   }
 
-  private initAndRunEntitySteps(ws: WizardStep): void {
-    ws.entitySteps = ws.rawSteps.map(s => ({
-      step: s,
-      status: 'pending' as const,
-      resolvedName: this.resolveVariables(s.name)
-    }));
-    ws.progressError = null;
-    ws.progressDone = false;
-    void this.runEntitySteps(ws);
-  }
-
-  private markEntityStepSuccess(ws: WizardStep, ep: EntityStepProgress,
-                                output: EntityStepOutput, resolution: string): void {
+  private markEntityStepSuccess(ep: EntityStepProgress, output: EntityStepOutput, resolution: string): void {
     ep.entityOutput = output;
     ep.resolution = resolution;
     ep.status = 'success';
@@ -1495,220 +1497,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (alias) {
       this.entityOutputs.set(alias, output);
     }
-    for (const remaining of ws.entitySteps) {
-      if (remaining.status === 'pending') {
-        remaining.resolvedName = this.resolveVariables(remaining.step.name);
-      }
-    }
     this.cdr.detectChanges();
-  }
-
-  private async runEntitySteps(ws: WizardStep): Promise<void> {
-    const duplicateKey = this.duplicateStateKey();
-    if (duplicateKey) {
-      ws.progressError = this.translate.instant('iot-hub.device-install-duplicate-step', { key: duplicateKey });
-      this.cdr.detectChanges();
-      return;
-    }
-    for (const ep of ws.entitySteps) {
-      if (ep.status === 'success') {
-        continue;
-      }
-      ep.status = 'running';
-      ep.errorMessage = null;
-      this.cdr.detectChanges();
-      try {
-        // Pre-check for existing entity
-        const existing = await this.preCheckEntity(ep.step);
-        if (existing) {
-          ep.status = 'conflict';
-          ep.existingEntity = existing;
-          ep.conflictType = this.getConflictType(ep.step.type);
-          this.cdr.detectChanges();
-          return; // Pause — user must choose a resolution
-        }
-        const startTime = Date.now();
-        const output = await this.createEntity(ep.step);
-        // Save optional attributes after entity creation
-        await this.saveStepAttributes(ep.step, output);
-        // Ensure minimum visible time per step
-        const elapsed = Date.now() - startTime;
-        if (elapsed < ENTITY_STEP_MIN_DELAY) {
-          await this.delay(ENTITY_STEP_MIN_DELAY - elapsed);
-        }
-        this.markEntityStepSuccess(ws, ep, output, 'created');
-      } catch (err: any) {
-        ep.status = 'error';
-        ep.errorMessage = this.failureMessage(err);
-        ws.progressError = ep.errorMessage;
-        this.cdr.detectChanges();
-        return;
-      }
-    }
-
-    // All done — register install with created entity IDs
-    ws.progressDone = true;
-    ws.completed = true;
-    try {
-      const createdEntityIds = this.collectCreatedEntityIds();
-      const dashboardId = this.findCreatedDashboardId();
-      await firstValueFrom(
-        this.iotHubApiService.registerDeviceInstall(
-          this.data.item.id as string,
-          { createdEntityIds, usedExistingEntityIds: this.collectUsedExistingEntityIds(), dashboardId,
-            selectedInstallMethod: this.selectedInstallMethod, installState: this.buildInstallState() },
-          { ignoreLoading: true }
-        )
-      );
-      this.installRegistered = true;
-    } catch (_e) {
-      // Non-critical — entities are created, tracking registration failed
-      console.error('Failed to register device install', _e);
-    }
-
-    // Auto-advance to next step after a short pause
-    if (!this.isLastWizardStep) {
-      await this.delay(500);
-      this.stepper.next();
-      this.cdr.detectChanges();
-    }
-  }
-
-  private async createEntity(step: DeviceInstallStep): Promise<EntityStepOutput> {
-    const raw = this.zipFiles.get(step.template);
-    if (!raw) {
-      throw new Error(`Template file not found: ${step.template}`);
-    }
-    if (step.type === InstallStepType.INTEGRATION) {
-      this.pendingRoutingKey = this.generateUuid();
-    }
-    try {
-    const template = this.resolveTemplateJson(raw);
-
-    switch (step.type) {
-      case InstallStepType.DEVICE_PROFILE: {
-        const existing = await this.findDeviceProfileByName(template.name);
-        if (existing) {
-          return existing;
-        }
-        const result = await firstValueFrom(this.deviceProfileService.saveDeviceProfile(template, {ignoreErrors: true}));
-        return { id: result.id.id, name: result.name, url: `/profiles/deviceProfiles/${result.id.id}` };
-      }
-      case InstallStepType.DEVICE: {
-        if (this.data.customerId) {
-          template.customerId = new CustomerId(this.data.customerId);
-        }
-        const entityGroupIds = this.data.entityGroupId ? [this.data.entityGroupId] : null;
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, entityGroupIds, {ignoreErrors: false}));
-        const creds = await this.resolveCredentials(step, result.id.id);
-        return { id: result.id.id, name: result.name, url: `/entities/devices/all/${result.id.id}`, token: creds.credentialsId };
-      }
-      case InstallStepType.GATEWAY: {
-        if (this.data.customerId) {
-          template.customerId = new CustomerId(this.data.customerId);
-        }
-        const entityGroupIds = this.data.entityGroupId ? [this.data.entityGroupId] : null;
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, entityGroupIds, {ignoreErrors: false}));
-        const creds = await this.resolveCredentials(step, result.id.id);
-        const output = {
-          id: result.id.id,
-          name: result.name,
-          url: '/entities/gateways',
-          token: creds.credentialsId,
-          dockerComposeUrl: `/api/device-connectivity/gateway-launch/${result.id.id}/docker-compose/download`
-        };
-        this.setGatewayOutput(step, output);
-        return output;
-      }
-      case InstallStepType.GATEWAY_CONNECTOR: {
-        const gatewayOutput = this.entityOutputs.get('gateway');
-        if (!gatewayOutput) {
-          throw new Error('GATEWAY step must precede GATEWAY_CONNECTOR');
-        }
-        const gatewayEntityId = { entityType: 'DEVICE', id: gatewayOutput.id } as EntityId;
-        const connectorName = template.name;
-
-        // Fetch current active_connectors
-        let activeConnectors: string[] = [];
-        try {
-          const attrs = await firstValueFrom(
-            this.attributeService.getEntityAttributes(gatewayEntityId, AttributeScope.SHARED_SCOPE, ['active_connectors'], {ignoreErrors: true})
-          );
-          const existing = attrs?.find(a => a.key === 'active_connectors');
-          if (existing?.value && Array.isArray(existing.value)) {
-            activeConnectors = existing.value;
-          }
-        } catch (_e) {
-          // First connector — no existing attributes
-        }
-
-        // Append connector name
-        if (!activeConnectors.includes(connectorName)) {
-          activeConnectors.push(connectorName);
-        }
-
-        // Save attributes
-        await firstValueFrom(this.attributeService.saveEntityAttributes(
-          gatewayEntityId, AttributeScope.SHARED_SCOPE,
-          [
-            { key: 'active_connectors', value: activeConnectors },
-            { key: connectorName, value: template }
-          ],
-          {ignoreErrors: true}
-        ));
-
-        return { id: gatewayOutput.id, name: connectorName };
-      }
-      case InstallStepType.DASHBOARD: {
-        if (this.data.customerId) {
-          template.customerId = new CustomerId(this.data.customerId);
-        }
-        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, null, {ignoreErrors: false}));
-        return { id: result.id.id, name: result.title, url: `/dashboards/all/${result.id.id}` };
-      }
-      case InstallStepType.RULE_CHAIN: {
-        const ruleChain = template.ruleChain || template;
-        const metadata = template.metadata;
-        const existing = await this.findRuleChainByName(ruleChain.name);
-        if (existing) {
-          return existing;
-        }
-        return this.saveRuleChainWithMetadata(ruleChain, metadata);
-      }
-      case InstallStepType.UPLINK_CONVERTER: {
-        const converter: Converter = { ...template, type: ConverterType.UPLINK } as Converter;
-        const result = await firstValueFrom(this.converterService.saveConverter(converter, {ignoreErrors: true}));
-        return { id: result.id.id, name: result.name, url: `/converters/${result.id.id}` };
-      }
-      case InstallStepType.DOWNLINK_CONVERTER: {
-        const converter: Converter = { ...template, type: ConverterType.DOWNLINK } as Converter;
-        const result = await firstValueFrom(this.converterService.saveConverter(converter, {ignoreErrors: true}));
-        return { id: result.id.id, name: result.name, url: `/converters/${result.id.id}` };
-      }
-      case InstallStepType.INTEGRATION: {
-        // ${formKey} / ${alias.prop} / ${tb.baseUrl} / ${routingKey} substituted by
-        // resolveVariables() above. The secret picker may have inserted
-        // ${secret:NAME;type:TYPE} references — PE resolves those at runtime via
-        // SecretConfigurationService.
-        const body: any = template;
-
-        this.attachConverterReferences(body);
-
-        if (!body.routingKey) body.routingKey = this.pendingRoutingKey;
-        if (!body.configuration) body.configuration = {};
-        body.configuration.metadata = this.withStepMetadata(step, body.configuration.metadata);
-
-        const result = await firstValueFrom(
-          this.integrationService.saveIntegration(body, { ignoreErrors: true })
-        );
-        return this.buildIntegrationOutput(result);
-      }
-      default:
-        throw new Error(`Unsupported entity step type: ${step.type}`);
-    }
-    } finally {
-      this.pendingRoutingKey = undefined;
-    }
   }
 
   private buildIntegrationOutput(result: any): EntityStepOutput {
@@ -1726,53 +1515,36 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     };
   }
 
-  private async saveRuleChainWithMetadata(ruleChain: any, metadata: any): Promise<EntityStepOutput> {
-    const saved = await firstValueFrom(this.ruleChainService.saveRuleChain(ruleChain, {ignoreErrors: true}));
-    if (metadata) {
-      metadata.ruleChainId = saved.id;
-      await firstValueFrom(this.ruleChainService.saveRuleChainMetadata(metadata, {ignoreErrors: true}));
-    }
-    return { id: saved.id.id, name: saved.name, url: `/ruleChains/${saved.id.id}` };
-  }
-
-  private async resolveCredentials(step: DeviceInstallStep, deviceId: string): Promise<any> {
-    const creds = await firstValueFrom(this.deviceService.getDeviceCredentials(deviceId, false, {ignoreErrors: true}));
-    if (step.credentials) {
-      const raw = this.zipFiles.get(step.credentials);
-      if (raw) {
-        const credTemplate = this.resolveTemplateJson(raw);
-        creds.credentialsType = credTemplate.credentialsType || creds.credentialsType;
-        if (credTemplate.credentialsValue) {
-          creds.credentialsValue = typeof credTemplate.credentialsValue === 'string'
-            ? credTemplate.credentialsValue
-            : JSON.stringify(credTemplate.credentialsValue);
-        }
-        if (credTemplate.credentialsId) {
-          creds.credentialsId = credTemplate.credentialsId;
-        }
-        await firstValueFrom(this.deviceService.saveDeviceCredentials(creds, {ignoreErrors: true}));
-      }
-    }
-    return creds;
-  }
-
-  private async findDeviceProfileByName(name: string): Promise<EntityStepOutput | null> {
+  private async findDeviceProfileByName(name: string): Promise<ExistingEntity | null> {
     const profiles = await firstValueFrom(this.deviceProfileService.getDeviceProfileNames());
     const match = profiles.find(p => p.name === name);
-    return match ? { id: match.id.id, name: match.name, url: `/profiles/deviceProfiles/${match.id.id}` } : null;
+    if (!match) {
+      return null;
+    }
+    const output = { id: match.id.id, name: match.name, url: `/profiles/deviceProfiles/${match.id.id}` };
+    try {
+      // The names lookup carries no version; read the matched profile so an overwrite can send it
+      const profile = await firstValueFrom(this.deviceProfileService.getDeviceProfile(match.id.id, {ignoreErrors: true}));
+      return { output, version: profile.version };
+    } catch (_e) {
+      return { output };
+    }
   }
 
-  private async findRuleChainByName(name: string): Promise<EntityStepOutput | null> {
+  private async findRuleChainByName(name: string): Promise<ExistingEntity | null> {
     const page = await firstValueFrom(this.ruleChainService.getRuleChains(new PageLink(100, 0, name)));
     const match = page.data.find(rc => rc.name === name);
-    return match ? { id: match.id.id, name: match.name, url: `/ruleChains/${match.id.id}` } : null;
+    return match ? { output: { id: match.id.id, name: match.name, url: `/ruleChains/${match.id.id}` }, version: match.version } : null;
   }
 
   /** Converters are unique by (tenant, name, type). Match both. */
-  private async findConverterByNameAndType(name: string, type: ConverterType): Promise<EntityStepOutput | null> {
+  private async findConverterByNameAndType(name: string, type: ConverterType): Promise<ExistingEntity | null> {
     const page = await firstValueFrom(this.converterService.getConverters(new PageLink(100, 0, name), {ignoreErrors: true}));
     const match = page.data.find(c => c.name === name && c.type === type);
-    return match ? { id: match.id.id, name: match.name, url: `/converters/${match.id.id}` } : null;
+    return match ? {
+      output: { id: match.id.id, name: match.name, url: `/converters/${match.id.id}` },
+      version: (match as Converter & HasVersion).version
+    } : null;
   }
 
   /** Wire converter references from earlier UPLINK_CONVERTER / DOWNLINK_CONVERTER steps onto the
@@ -1790,17 +1562,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /** Integrations are unique by name within tenant. */
-  private async findIntegrationByName(name: string): Promise<EntityStepOutput | null> {
+  private async findIntegrationByName(name: string): Promise<ExistingEntity | null> {
     const page = await firstValueFrom(this.integrationService.getIntegrations(new PageLink(100, 0, name), {ignoreErrors: true}));
     const match = page.data.find(i => i.name === name);
-    return match ? { id: match.id.id, name: match.name, url: `/integrations/${match.id.id}`, routingKey: match.routingKey } : null;
+    return match ? {
+      output: { id: match.id.id, name: match.name, url: `/integrations/${match.id.id}`, routingKey: match.routingKey },
+      version: (match as Integration & HasVersion).version
+    } : null;
   }
 
-  private async findDeviceByName(name: string): Promise<EntityStepOutput | null> {
+  private async findDeviceByName(name: string): Promise<ExistingEntity | null> {
     try {
       const device = await firstValueFrom(this.deviceService.findByName(name, {ignoreErrors: true}));
       if (device) {
-        return { id: device.id.id, name: device.name, url: `/entities/devices/all/${device.id.id}` };
+        return { output: { id: device.id.id, name: device.name, url: `/entities/devices/all/${device.id.id}` }, version: device.version };
       }
     } catch (_e) {
       // 404 = not found
@@ -1808,123 +1583,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return null;
   }
 
-  private async findDashboardByTitle(title: string): Promise<EntityStepOutput | null> {
+  private async findDashboardByTitle(title: string): Promise<ExistingEntity | null> {
     const page = await firstValueFrom(this.dashboardService.getTenantDashboards(new PageLink(10, 0, title), {ignoreErrors: true}));
     const match = page.data.find(d => d.title === title);
-    return match ? { id: match.id.id, name: match.title, url: `/dashboards/${match.id.id}` } : null;
-  }
-
-  private async overwriteEntity(step: DeviceInstallStep, existing: EntityStepOutput): Promise<EntityStepOutput> {
-    const raw = this.zipFiles.get(step.template);
-    if (!raw) throw new Error(`Template file not found: ${step.template}`);
-    // Overwriting an existing integration reuses its routingKey, so resolve
-    // ${routingKey} placeholders against that value rather than allocating a new one.
-    if (step.type === InstallStepType.INTEGRATION) {
-      this.pendingRoutingKey = existing.routingKey ?? this.generateUuid();
-    }
-    try {
-    const template = this.resolveTemplateJson(raw);
-    // A version exported with the template (e.g. "version": 1) would be rejected as stale by the entity it overwrites
-    delete template.version;
-    delete template.ruleChain?.version;
-    switch (step.type) {
-      case InstallStepType.DEVICE_PROFILE: {
-        template.id = { id: existing.id, entityType: 'DEVICE_PROFILE' };
-        const result = await firstValueFrom(this.deviceProfileService.saveDeviceProfile(template, {ignoreErrors: true}));
-        return { id: result.id.id, name: result.name, url: `/profiles/deviceProfiles/${result.id.id}` };
-      }
-      case InstallStepType.DEVICE: {
-        template.id = { id: existing.id, entityType: 'DEVICE' };
-        if (this.data.customerId) {
-          template.customerId = new CustomerId(this.data.customerId);
-        }
-        const entityGroupIds = this.data.entityGroupId ? [this.data.entityGroupId] : null;
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, entityGroupIds, {ignoreErrors: false}));
-        const creds = await this.resolveCredentials(step, result.id.id);
-        return { id: result.id.id, name: result.name, url: `/entities/devices/all/${result.id.id}`, token: creds.credentialsId };
-      }
-      case InstallStepType.GATEWAY: {
-        template.id = { id: existing.id, entityType: 'DEVICE' };
-        if (this.data.customerId) {
-          template.customerId = new CustomerId(this.data.customerId);
-        }
-        const entityGroupIds = this.data.entityGroupId ? [this.data.entityGroupId] : null;
-        const result = await firstValueFrom(this.deviceService.saveDevice(template, entityGroupIds, {ignoreErrors: false}));
-        const creds = await this.resolveCredentials(step, result.id.id);
-        const output: EntityStepOutput = {
-          id: result.id.id,
-          name: result.name,
-          url: '/entities/gateways',
-          token: creds.credentialsId,
-          dockerComposeUrl: `/api/device-connectivity/gateway-launch/${result.id.id}/docker-compose/download`
-        };
-        this.setGatewayOutput(step, output);
-        return output;
-      }
-      case InstallStepType.DASHBOARD: {
-        template.id = { id: existing.id, entityType: 'DASHBOARD' };
-        if (this.data.customerId) {
-          template.customerId = new CustomerId(this.data.customerId);
-        }
-        const result = await firstValueFrom(this.dashboardService.saveDashboard(template, null, {ignoreErrors: false}));
-        return { id: result.id.id, name: result.title, url: `/dashboards/all/${result.id.id}` };
-      }
-      case InstallStepType.RULE_CHAIN: {
-        const ruleChain = template.ruleChain || template;
-        const metadata = template.metadata;
-        ruleChain.id = { id: existing.id, entityType: 'RULE_CHAIN' };
-        return this.saveRuleChainWithMetadata(ruleChain, metadata);
-      }
-      case InstallStepType.UPLINK_CONVERTER: {
-        const converter: Converter = { ...template, type: ConverterType.UPLINK, id: { id: existing.id, entityType: 'CONVERTER' } } as Converter;
-        const result = await firstValueFrom(this.converterService.saveConverter(converter, {ignoreErrors: true}));
-        return { id: result.id.id, name: result.name, url: `/converters/${result.id.id}` };
-      }
-      case InstallStepType.DOWNLINK_CONVERTER: {
-        const converter: Converter = { ...template, type: ConverterType.DOWNLINK, id: { id: existing.id, entityType: 'CONVERTER' } } as Converter;
-        const result = await firstValueFrom(this.converterService.saveConverter(converter, {ignoreErrors: true}));
-        return { id: result.id.id, name: result.name, url: `/converters/${result.id.id}` };
-      }
-      case InstallStepType.INTEGRATION: {
-        const body: any = template;
-
-        this.attachConverterReferences(body);
-
-        body.id = { id: existing.id, entityType: 'INTEGRATION' };
-        body.routingKey = this.pendingRoutingKey;
-        if (!body.configuration) body.configuration = {};
-        const current = await firstValueFrom(this.integrationService.getIntegration(existing.id, {ignoreErrors: true}));
-        body.configuration.metadata = this.withStepMetadata(step,
-          { ...current?.configuration?.metadata, ...body.configuration.metadata });
-
-        const result = await firstValueFrom(
-          this.integrationService.saveIntegration(body, { ignoreErrors: true })
-        );
-        return this.buildIntegrationOutput(result);
-      }
-      default:
-        throw new Error(`Unsupported overwrite for step type: ${step.type}`);
-    }
-    } finally {
-      this.pendingRoutingKey = undefined;
-    }
-  }
-
-  /** A device or gateway taken as it is: the token comes from its current credentials. */
-  private async useExistingEntity(step: DeviceInstallStep, existing: EntityStepOutput): Promise<EntityStepOutput> {
-    if (step.type === InstallStepType.INTEGRATION && step.metadata) {
-      return this.addStepMetadata(step, existing);
-    }
-    if (step.type !== InstallStepType.DEVICE && step.type !== InstallStepType.GATEWAY) {
-      return existing;
-    }
-    const creds = await firstValueFrom(this.deviceService.getDeviceCredentials(existing.id, false, {ignoreErrors: true}));
-    const output: EntityStepOutput = { ...existing, token: creds.credentialsId };
-    if (step.type === InstallStepType.GATEWAY) {
-      output.dockerComposeUrl = `/api/device-connectivity/gateway-launch/${output.id}/docker-compose/download`;
-      this.setGatewayOutput(step, output);
-    }
-    return output;
+    return match ? { output: { id: match.id.id, name: match.title, url: `/dashboards/${match.id.id}` }, version: match.version } : null;
   }
 
   /**
@@ -1975,12 +1637,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return step.type === InstallStepType.INTEGRATION && step.metadata ? this.stepMetadataEntries(step) : undefined;
   }
 
-  /** The entries the INTEGRATION step adds to the integration's metadata, which a delete of the package removes. */
-  private addedMetadataOf(step: DeviceInstallStep): Record<string, string> | undefined {
-    const entries = Object.entries(this.integrationMetadataOf(step) ?? {}).filter(([, value]) => value !== null);
-    return entries.length ? Object.fromEntries(entries) : undefined;
-  }
-
   /** The INTEGRATION step's metadata entries, resolved: null for a self-mapping, whose earlier value is removed. */
   private stepMetadataEntries(step: DeviceInstallStep): Record<string, string | null> {
     const entries: Record<string, string | null> = {};
@@ -1992,18 +1648,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
     }
     return entries;
-  }
-
-  /** An integration taken as it is still gets the step's metadata: the package's converter reads it. */
-  private async addStepMetadata(step: DeviceInstallStep, existing: EntityStepOutput): Promise<EntityStepOutput> {
-    const integration = await firstValueFrom(this.integrationService.getIntegration(existing.id, {ignoreErrors: true}));
-    const metadata = this.withStepMetadata(step, integration.configuration?.metadata);
-    if (isEqual(metadata, integration.configuration?.metadata ?? {})) {
-      return existing;
-    }
-    integration.configuration = { ...integration.configuration, metadata };
-    const result = await firstValueFrom(this.integrationService.saveIntegration(integration, {ignoreErrors: true}));
-    return this.buildIntegrationOutput(result);
   }
 
   /** Stores the gateway output early, so the custom docker-compose template, if any, resolves ${gateway.token} etc. */
@@ -2098,25 +1742,36 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return requestFailureMessage(error, this.translate);
   }
 
-  // --- Update ---
+  // --- Plan, review and apply: install and update ---
 
-  /** Update: what the update does with the entity of a step, once the Update step has checked it. */
-  updatePlanOf(ep: EntityStepProgress): EntityStepPlan | undefined {
+  /** What the update or install does with the entity of a step, once its progress step has checked it. */
+  planOf(ep: EntityStepProgress): EntityStepPlan | undefined {
     return this.entityPlans.get(ep);
   }
 
-  /** Update: the warnings and name conflicts the user hasn't confirmed yet. */
-  unconfirmedUpdateWarnings(ws: WizardStep): number {
+  /** The warnings and name conflicts the user hasn't confirmed yet. */
+  unconfirmedWarnings(ws: WizardStep): number {
     return (ws.entitySteps ?? []).filter(ep => this.entityPlans.get(ep)?.confirmed === false).length;
   }
 
-  /** Update: true when the error is about the whole update, e.g. its check or the registration of the new version. */
-  hasUpdateError(ws: WizardStep): boolean {
-    return !!ws.progressError && !ws.entitySteps?.some(ep => ep.status === 'error');
+  /**
+   * True when the banner shows the error: an update's error about the whole request, e.g. its check, as a step's
+   * error shows on its row; every install error, as the banner also says that nothing was installed.
+   */
+  hasPackageError(ws: WizardStep): boolean {
+    return !!ws.progressError && (!this.data.update || !ws.entitySteps?.some(ep => ep.status === 'error'));
   }
 
-  /** Update: resolution is the user's choice for an entity whose name is taken, as at install. */
-  confirmUpdateWarning(ep: EntityStepProgress, resolution?: string): void {
+  /**
+   * An install never overwrites an existing device or gateway: its credentials are what its firmware uses. The user
+   * can use it as it is.
+   */
+  canOverwriteExisting(ep: EntityStepProgress): boolean {
+    return !!this.data.update || (ep.step.type !== InstallStepType.DEVICE && ep.step.type !== InstallStepType.GATEWAY);
+  }
+
+  /** resolution is the user's choice for an entity whose name is taken. */
+  confirmWarning(ep: EntityStepProgress, resolution?: string): void {
     const plan = this.entityPlans.get(ep);
     if (plan) {
       plan.resolution = resolution;
@@ -2124,20 +1779,29 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** Update: what the update will do with the entity of a row; the same as updateOutcomeOf says once it succeeded. */
+  /** What the plan will do with the entity of a row; the same as appliedOutcomeOf says once it succeeded. */
   plannedOutcomeOf(plan: EntityStepPlan): string {
-    return { update: 'iot-hub.device-update-will-update', create: 'iot-hub.device-update-will-create',
+    return { update: 'iot-hub.device-update-will-update', create: 'iot-hub.device-package-will-create',
       keep: 'iot-hub.device-update-no-changes' }[this.outcomeOf(plan)];
   }
 
-  /** Update: what the update did with the entity of a row, once it succeeded. */
-  updateOutcomeOf(plan: EntityStepPlan | undefined): string {
-    return { update: 'iot-hub.device-update-updated', create: 'iot-hub.device-update-created',
-      keep: 'iot-hub.device-update-skipped' }[this.outcomeOf(plan)];
+  /**
+   * What the request did with the entity of a row, once it succeeded. Review mode has no plan: the row is done.
+   * An install names the resolution, as there is nothing older to compare with.
+   */
+  appliedOutcomeOf(plan: EntityStepPlan | undefined): string {
+    if (!plan) {
+      return 'iot-hub.done';
+    }
+    if (!this.data.update) {
+      return `iot-hub.device-install-resolution-${plan.resolution ?? 'created'}`;
+    }
+    return { update: 'iot-hub.device-package-updated', create: 'iot-hub.device-package-created',
+      keep: 'iot-hub.device-package-skipped' }[this.outcomeOf(plan)];
   }
 
   /**
-   * Update: an entity kept or used as it is counts as not changed, even an integration the server adds the step's
+   * An entity kept or used as it is counts as not changed, even an integration the server adds the step's
    * metadata entries to; one a name conflict resolves to overwrite counts as updated.
    */
   private outcomeOf(plan: EntityStepPlan | undefined): 'update' | 'create' | 'keep' {
@@ -2147,8 +1811,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return plan.action === 'create' && plan.resolution !== 'overwrite' ? 'create' : 'update';
   }
 
-  textWithLink(key: string): { before: string; link: string; after: string } {
-    return splitTextWithLink(this.translate.instant(key));
+  /** What happens to the step's entity: on an update the resolution chosen at install, else the one chosen now. */
+  private resolutionOf(plan: EntityStepPlan | undefined): string {
+    return plan?.previous?.resolution ?? plan?.resolution ?? 'created';
   }
 
   /** Update: saves the entity the user changed, as it is before the update overwrites it, to a JSON file. */
@@ -2160,42 +1825,44 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     downloadEntityJson(current, ep.resolvedName || ep.step.name);
   }
 
-  /**
-   * Update: nothing was changed, so trying again starts from the check: the entities may have changed meanwhile
-   * (e.g. someone saved one, which is why it failed), and the user confirms what the update overwrites again.
-   */
-  retryUpdate(ws: WizardStep): void {
-    void this.checkUpdate(ws);
+  /** The label of the button that applies the plan: Install or Update. */
+  get applyActionKey(): string {
+    return this.data.update ? 'action.update' : 'iot-hub.install';
   }
 
   /**
-   * Update: sends what the check planned to the server, which applies all of it in one transaction together with
-   * the new version of the installed item, or nothing. The rows run together: the request is one. A success shows
-   * row by row, and the update counts as running until the last row shows it.
+   * Sends the plan in one request, which the server applies in one transaction together with the installed item, or
+   * nothing. The rows run together: the request is one. A success shows row by row, and the request counts as running
+   * until the last row shows it, so the dialog can't be closed meanwhile.
    */
-  async runUpdate(ws: WizardStep): Promise<void> {
+  async apply(ws: WizardStep): Promise<void> {
     ws.reviewing = false;
-    ws.updating = true;
+    ws.applying = true;
     ws.progressError = null;
     for (const ep of ws.entitySteps) {
       ep.status = 'running';
       ep.errorMessage = null;
     }
     this.cdr.detectChanges();
-    let result: DeviceUpdateResult;
+    let result: DevicePackageResult;
     try {
-      result = await firstValueFrom(this.iotHubApiService.updateDevicePackage(this.data.update.installedItemId, {
+      const request: DevicePackageRequest = {
         versionId: this.data.item.id as string,
-        fromVersionId: this.data.update.fromVersionId,
         selectedInstallMethod: this.selectedInstallMethod,
         installState: this.buildFormState(),
-        steps: await this.buildUpdateSteps(ws)
-      }, { ignoreLoading: true, ignoreErrors: true }));
+        steps: await this.buildPackageSteps(ws)
+      };
+      const config = { ignoreLoading: true, ignoreErrors: true };
+      result = await firstValueFrom(this.data.update ?
+        this.iotHubApiService.updateDevicePackage(this.data.update.installedItemId,
+          { ...request, fromVersionId: this.data.update.fromVersionId }, config) :
+        this.iotHubApiService.installDevicePackage(
+          { ...request, customerId: this.data.customerId, entityGroupId: this.data.entityGroupId }, config));
     } catch (e: any) {
       result = { success: false, errorMessage: this.failureMessage(e) };
     }
     if (!result.success) {
-      ws.updating = false;
+      ws.applying = false;
       // Nothing was changed: the transaction was rolled back
       const message = readableMessage(result.errorMessage) ?? this.translate.instant('iot-hub.device-install-unexpected-error');
       for (const ep of ws.entitySteps) {
@@ -2203,39 +1870,43 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         ep.status = failed ? 'error' : 'skipped';
         ep.errorMessage = failed ? message : null;
       }
-      ws.progressError = message;
-      // The steps refer to the installed entities again
-      this.restoreInstallState(false);
+      if (this.data.update) {
+        ws.progressError = message;
+        // The steps refer to the installed entities again
+        this.restoreInstallState(false);
+      } else {
+        ws.progressError = `${message} ${this.translate.instant('iot-hub.device-install-nothing-installed')}`;
+      }
       this.cdr.detectChanges();
       return;
     }
-    const interval = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : UPDATE_REVEAL_INTERVAL;
+    const interval = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : REVEAL_INTERVAL;
     for (const [index, ep] of ws.entitySteps.entries()) {
       if (index > 0 && interval) {
         await this.delay(interval);
       }
       const output = result.outputs?.[this.stateKeyOf(ep.step)];
       const plan = this.entityPlans.get(ep);
-      const resolution = plan?.previous?.resolution ?? plan?.resolution ?? 'created';
+      const resolution = this.resolutionOf(plan);
       if (output) {
         const entityOutput = this.withEntityUrl(ep.step, output);
         if (ep.step.type === InstallStepType.GATEWAY) {
           this.setGatewayOutput(ep.step, entityOutput);
         }
-        this.markEntityStepSuccess(ws, ep, entityOutput, resolution);
+        this.markEntityStepSuccess(ep, entityOutput, resolution);
       } else {
         ep.status = 'success';
         this.cdr.detectChanges();
       }
     }
-    ws.updating = false;
-    this.installRegistered = true;
+    ws.applying = false;
+    this.packageInstalled = true;
     ws.progressDone = true;
     ws.completed = true;
     this.cdr.detectChanges();
   }
 
-  /** Update: the values of the forms, which the install state keeps for the next update. */
+  /** The values of the forms, which the install state keeps for the next update. */
   private buildFormState(): Record<string, any> {
     const state: Record<string, any> = {};
     for (const ws of this.wizardSteps) {
@@ -2246,8 +1917,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return state;
   }
 
-  /** Update: the steps the server applies, each with its entity resolved from the template of the new version. */
-  private async buildUpdateSteps(ws: WizardStep): Promise<DeviceUpdateStep[]> {
+  /** The steps the server applies, each with its entity resolved from the template of the version being installed. */
+  private async buildPackageSteps(ws: WizardStep): Promise<DevicePackageStep[]> {
     for (const ep of ws.entitySteps) {
       const plan = this.entityPlans.get(ep);
       const alias = stepTypeAliasMap[ep.step.type];
@@ -2262,20 +1933,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         this.entityOutputs.delete(alias);
       }
     }
-    const steps: DeviceUpdateStep[] = [];
+    const steps: DevicePackageStep[] = [];
     for (const ep of ws.entitySteps) {
-      steps.push(await this.buildUpdateStep(ws, ep.step, this.entityPlans.get(ep)));
+      steps.push(await this.buildPackageStep(ws, ep.step, this.entityPlans.get(ep)));
     }
     return steps;
   }
 
-  private async buildUpdateStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): Promise<DeviceUpdateStep> {
-    const base: DeviceUpdateStep = {
+  private async buildPackageStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): Promise<DevicePackageStep> {
+    const base: DevicePackageStep = {
       name: step.name,
       id: step.id,
       type: step.type,
       action: 'KEEP',
-      resolution: plan.previous?.resolution ?? plan.resolution ?? 'created',
+      resolution: this.resolutionOf(plan),
       defaultConverter: step.default || undefined,
       // A kept integration, e.g. one the package took as it was, gets them merged by the server: the converter reads them
       metadata: this.integrationMetadataOf(step)
@@ -2286,11 +1957,16 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (plan.action === 'keep') {
       return { ...base, entityId: plan.previous.output.id };
     }
+    // The entity gets the step's attributes, at install also one the user chose to use as it is
+    const attributes = {
+      serverAttributes: this.resolvePackageFile(this.zipFiles, step.serverAttributes, this.formValues),
+      sharedAttributes: this.resolvePackageFile(this.zipFiles, step.sharedAttributes, this.formValues)
+    };
     if (plan.resolution === 'use-existing') {
       // The package's own entity, under a step not matched to its installed one (e.g. renamed without an id),
       // stays the package's, so later versions still update it
       const resolution = this.isPackageEntity(plan.existing.id) ? 'created' : base.resolution;
-      return { ...base, resolution, entityId: plan.existing.id, confirmed: true };
+      return { ...base, resolution, entityId: plan.existing.id, confirmed: true, ...(this.data.update ? {} : attributes) };
     }
     const overwritten = plan.action === 'overwrite' ? plan.previous.output : plan.resolution === 'overwrite' ? plan.existing : null;
     const entity = this.buildEntityBody(ws, step, overwritten);
@@ -2300,12 +1976,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         await firstValueFrom(this.integrationService.getIntegration(overwritten.id, {ignoreErrors: true})) : null;
       entity.configuration.metadata = this.withStepMetadata(step, { ...current?.configuration?.metadata, ...entity.configuration.metadata });
     }
-    // As at install, the entity gets the step's attributes
-    const attributes = {
-      serverAttributes: this.resolvePackageFile(this.zipFiles, step.serverAttributes, this.formValues),
-      sharedAttributes: this.resolvePackageFile(this.zipFiles, step.sharedAttributes, this.formValues)
-    };
     if (overwritten) {
+      // An overwrite keeps the entity's credentials: only an update overwrites a device, and never the package's own
       return { ...base, action: 'OVERWRITE', entityId: overwritten.id, expectedVersion: plan.version, confirmed: true, entity, ...attributes };
     }
     return {
@@ -2318,7 +1990,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /**
-   * Update: the entity of a step resolved from the template of the new version, as the server saves it. The server
+   * The entity of a step resolved from the template of the version being installed, as the server saves it. The server
    * keeps what the entity it overwrites must keep: its id, name, owner and an integration's routing key.
    */
   private buildEntityBody(ws: WizardStep, step: DeviceInstallStep, overwritten: EntityStepOutput | null): any {
@@ -2337,7 +2009,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       delete entity.ruleChain?.version;
       if (step.type === InstallStepType.INTEGRATION) {
         this.attachConverterReferences(entity);
-        // A converter this update creates gets its id on the server
+        // A converter the request creates gets its id on the server
         const steps = ws.rawSteps.map(s => s.type);
         if (entity.defaultConverterId == null && steps.includes(InstallStepType.UPLINK_CONVERTER)) {
           entity.defaultConverterId = { entityType: 'CONVERTER', id: '${uplinkConverter.id}' };
@@ -2361,7 +2033,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** Update: a step output from the server, with the URL the wizard opens it at. */
+  /** A step output from the server, with the URL the wizard opens it at. */
   private withEntityUrl(step: DeviceInstallStep, output: EntityStepOutput): EntityStepOutput {
     const urls: Partial<Record<InstallStepType, string>> = {
       [InstallStepType.DEVICE_PROFILE]: `/profiles/deviceProfiles/${output.id}`,
@@ -2401,7 +2073,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /**
    * A converter step with "default": true takes the converter ThingsBoard creates for a new integration of the method's
-   * type (INTEGRATION_TTN: TTN). It becomes the step's template, so it installs, overwrites and updates like a file of the package.
+   * type (INTEGRATION_TTN: TTN). It becomes the step's template, so it installs and overwrites like a file of the package; an update
+   * counts it as changed only when the step switches to or from the default converter (see entityStepChanged).
    */
   private async addDefaultConverters(): Promise<void> {
     const scriptLang = getCurrentAuthState(this.store).tbelEnabled ? ScriptLanguage.TBEL : ScriptLanguage.JS;
@@ -2418,38 +2091,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         step.template = `${DEFAULT_CONVERTER_PATH}${integrationType}.json`;
         this.zipFiles.set(step.template, JSON.stringify(converter));
       }
-    }
-  }
-
-  /**
-   * Update: ThingsBoard's default converter changes with ThingsBoard, not with the package, so a step with "default": true
-   * changed when the package's converter differs from the default one now. A converter the user changed differs too:
-   * the update shows that someone changed it.
-   */
-  private async checkDefaultConverters(): Promise<void> {
-    this.restoreInstallState();
-    let ownDefaultConverterIds: Set<string> | undefined;
-    try {
-      for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
-        const stored = step.default ? this.storedStateOf(step)?.state : undefined;
-        let id: string = stored?.entityOutput?.id;
-        // A converter taken as it was may be any converter with that name: only another package's default one is checked
-        if (id && stored.resolution === 'use-existing') {
-          ownDefaultConverterIds ??= await loadOwnDefaultConverterIds(this.iotHubApiService);
-          if (!ownDefaultConverterIds.has(id)) {
-            id = undefined;
-          }
-        }
-        const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true})).catch(() => null) : null;
-        if (converter) {
-          const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
-            converter.configuration.scriptLang, converter.name);
-          this.defaultConverterChanges.set(step, !!defaultConverter && differsFromDefaultConverter(converter, defaultConverter));
-        }
-      }
-    } finally {
-      this.formValues = {};
-      this.entityOutputs.clear();
     }
   }
 
@@ -2495,7 +2136,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    */
   private async registerTextOnlyUpdate(): Promise<boolean> {
     const installState = this.data.update.descriptor.installState ?? {};
-    const steps: DeviceUpdateStep[] = [];
+    const steps: DevicePackageStep[] = [];
     for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
       if (!ENTITY_STEP_TYPES.has(step.type)) {
         continue;
@@ -2609,8 +2250,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   /**
    * The key of the step's install state: its id, or else its type and name, so that two steps of an install method
    * never share it. A form without an id keeps its name, which no entity step's type-and-name key equals; a step id
-   * equal to a form's name is caught by the duplicate check on install, and by the server on update.
-   * The server keys the steps of an update the same way.
+   * equal to a form's name is caught by the duplicate check before the plan is sent, and by the server.
+   * The server keys the steps of a request the same way.
    */
   private stateKeyOf(step: DeviceInstallStep): string {
     return step.id ?? (step.type === InstallStepType.SHOW_FORM ? step.name : `${step.type}:${step.name}`);
@@ -2666,12 +2307,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /** Update: true when the new version's files give the entity something else than the installed version's gave it. */
   private entityStepChanged(step: DeviceInstallStep): boolean {
-    if (this.defaultConverterChanges.has(step)) {
-      return this.defaultConverterChanges.get(step);
-    }
     const previousStep = this.findPreviousStep(step);
     if (!previousStep) {
       return true;
+    }
+    // The default converter's template isn't a file of the package: it changes only when the step switches to or from the default converter
+    if (step.default) {
+      return !previousStep.default;
     }
     const previousFormValues = this.previousFormValues();
     const files: ('template' | 'serverAttributes' | 'sharedAttributes' | 'credentials')[] = ['template', 'serverAttributes', 'sharedAttributes', 'credentials'];
@@ -2709,43 +2351,63 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** Update: finds out what the update changes and what the user has to confirm, before anything changes. */
-  private async checkUpdate(ws: WizardStep): Promise<void> {
-    const run = ++this.updateCheckRun;
-    // Templates refer to the package's entities, e.g. ${deviceProfile.id}: until the steps run, the installed ones
-    this.restoreInstallState(false);
+  /**
+   * Finds out what the install or update does and what the user has to confirm, before anything changes. An install
+   * with nothing to confirm starts at once. choices: on an install's Retry, the conflict choices to keep.
+   */
+  private async planPackage(ws: WizardStep, choices?: Map<DeviceInstallStep, InstallConflictChoice>): Promise<void> {
+    const run = ++this.checkRun;
+    if (this.data.update) {
+      // Templates refer to the package's entities, e.g. ${deviceProfile.id}: until the steps run, the installed ones
+      this.restoreInstallState(false);
+    }
     ws.entitySteps = ws.rawSteps.map(s => ({
       step: s,
       status: 'pending' as const,
       resolvedName: this.resolveVariables(s.name)
     }));
     ws.reviewing = true;
-    ws.checking = true;
     ws.progressError = null;
+    const duplicateKey = this.duplicateStateKey();
+    if (duplicateKey) {
+      ws.progressError = this.translate.instant('iot-hub.device-install-duplicate-step', { key: duplicateKey });
+      this.cdr.detectChanges();
+      return;
+    }
+    ws.checking = true;
     this.cdr.detectChanges();
     try {
-      const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId, { ignoreLoading: true }));
-      this.updateStates = new Map(states.map(state => [state.stepName, state]));
-      const plans = await Promise.all(ws.entitySteps.map(ep => this.planEntityStep(ep)));
-      if (run !== this.updateCheckRun) {
-        // The user went back meanwhile: the plan is of the form values before
+      if (this.data.update) {
+        const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId, { ignoreLoading: true }));
+        this.updateStates = new Map(states.map(state => [state.stepName, state]));
+      }
+      const checkTemplates = this.preCheckTemplates(ws);
+      const plans = await Promise.all(ws.entitySteps.map(ep => this.planEntityStep(ep, checkTemplates, choices)));
+      if (this.closed || run !== this.checkRun) {
+        // The dialog closed or the user went back meanwhile: the plan is of the form values before
         return;
       }
       ws.entitySteps.forEach((ep, i) => this.entityPlans.set(ep, plans[i]));
-      this.overwriteReferencesToCreated(ws);
+      if (this.data.update) {
+        this.overwriteReferencesToCreated(ws);
+      }
     } catch (e: any) {
-      if (run !== this.updateCheckRun) {
+      if (this.closed || run !== this.checkRun) {
         return;
       }
       ws.progressError = this.failureMessage(e);
     }
     ws.checking = false;
     this.cdr.detectChanges();
+    if (!this.data.update && !ws.progressError && this.unconfirmedWarnings(ws) === 0) {
+      await this.apply(ws);
+    }
   }
 
-  private async planEntityStep(ep: EntityStepProgress): Promise<EntityStepPlan> {
+  private async planEntityStep(ep: EntityStepProgress, checkTemplates: Map<DeviceInstallStep, any>,
+                               choices?: Map<DeviceInstallStep, InstallConflictChoice>): Promise<EntityStepPlan> {
     const step = ep.step;
-    if (step.type === InstallStepType.GATEWAY_CONNECTOR) {
+    if (this.data.update && step.type === InstallStepType.GATEWAY_CONNECTOR) {
       // A connector lives in the gateway's attributes, which the step sets again when it changed
       return { action: this.entityStepChanged(step) ? 'overwrite' : 'keep', confirmed: true };
     }
@@ -2753,13 +2415,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (previous) {
       // Its current name: the user may have renamed it
       ep.resolvedName = previous.output.name;
-      const newDefaultConverter = this.defaultConverterChanges.get(step);
-      // The default converter of a package that took another package's converter is that package's: the update
-      // of either brings it to ThingsBoard's default, which changes it for both
-      if (previous.useExisting && newDefaultConverter) {
-        const current = await this.loadEntitySnapshot(step, previous.output.id);
-        return { action: 'overwrite', previous, shared: true, confirmed: false, version: current.version, newDefaultConverter };
-      }
       // The device and its credentials, which the firmware uses, never change on update
       if (previous.useExisting || step.type === InstallStepType.DEVICE || step.type === InstallStepType.GATEWAY) {
         return { action: 'keep', previous, confirmed: true };
@@ -2778,13 +2433,16 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         action: 'overwrite', previous, shared: previous.shared, modified: modified && !previous.shared,
         confirmed: !previous.shared && !modified,
         version,
-        current: modified && !previous.shared ? current : undefined,
-        newDefaultConverter
+        current: modified && !previous.shared ? current : undefined
       };
     }
-    // New in this version, or deleted since: created as at install, with the same name conflict check
-    const existing = await this.preCheckEntity(step);
-    return { action: 'create', existing, confirmed: !existing };
+    // At install, or new in this version, or deleted since: created, unless the user chooses otherwise for an entity
+    // that has its name. A kept choice counts as confirmed
+    const found = await this.preCheckEntity(step, checkTemplates.get(step));
+    const existing = found?.output;
+    const choice = existing ? choices?.get(step) : undefined;
+    const resolution = choice && choice.existingId === existing.id ? choice.resolution : undefined;
+    return { action: 'create', existing, resolution, confirmed: !existing || !!resolution, version: found?.version };
   }
 
   /**
@@ -2868,125 +2526,62 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  private async preCheckEntity(step: DeviceInstallStep): Promise<EntityStepOutput | null> {
-    const raw = this.zipFiles.get(step.template);
-    if (!raw) return null;
-    const template = this.resolveTemplateJson(raw);
+  /**
+   * Names that refer to earlier steps resolve to the names the plan gives those steps, so a retry checks the same names;
+   * ids stay placeholders. On an update the installed entities are used.
+   */
+  private preCheckTemplates(ws: WizardStep): Map<DeviceInstallStep, any> {
+    const installed = this.data.update ? this.installedEntityOutputs() : new Map<string, EntityStepOutput>();
+    const outputs = new Map(installed);
+    const templates = new Map<DeviceInstallStep, any>();
+    for (const ep of ws.entitySteps) {
+      const raw = this.zipFiles.get(ep.step.template);
+      if (!raw) {
+        continue;
+      }
+      const template = this.resolveTemplateJson(raw, outputs);
+      templates.set(ep.step, template);
+      const alias = stepTypeAliasMap[ep.step.type];
+      const name = this.templateNameOf(ep.step, template);
+      if (alias && name && !installed.has(alias)) {
+        outputs.set(alias, { name } as EntityStepOutput);
+      }
+    }
+    return templates;
+  }
 
+  private templateNameOf(step: DeviceInstallStep, template: any): string | undefined {
+    switch (step.type) {
+      case InstallStepType.RULE_CHAIN:
+        return template.ruleChain?.name || template.name;
+      case InstallStepType.DASHBOARD:
+        return template.title;
+      default:
+        return template.name;
+    }
+  }
+
+  private async preCheckEntity(step: DeviceInstallStep, template: any): Promise<ExistingEntity | null> {
+    if (!template) return null;
+    const name = this.templateNameOf(step, template);
     switch (step.type) {
       case InstallStepType.DEVICE_PROFILE:
-        return this.findDeviceProfileByName(template.name);
-      case InstallStepType.RULE_CHAIN: {
-        const name = template.ruleChain?.name || template.name;
+        return this.findDeviceProfileByName(name);
+      case InstallStepType.RULE_CHAIN:
         return this.findRuleChainByName(name);
-      }
       case InstallStepType.DEVICE:
       case InstallStepType.GATEWAY:
-        return this.findDeviceByName(template.name);
+        return this.findDeviceByName(name);
       case InstallStepType.DASHBOARD:
-        return this.findDashboardByTitle(template.title);
+        return this.findDashboardByTitle(name);
       case InstallStepType.UPLINK_CONVERTER:
-        return this.findConverterByNameAndType(template.name, ConverterType.UPLINK);
+        return this.findConverterByNameAndType(name, ConverterType.UPLINK);
       case InstallStepType.DOWNLINK_CONVERTER:
-        return this.findConverterByNameAndType(template.name, ConverterType.DOWNLINK);
+        return this.findConverterByNameAndType(name, ConverterType.DOWNLINK);
       case InstallStepType.INTEGRATION:
-        return this.findIntegrationByName(template.name);
+        return this.findIntegrationByName(name);
       default:
         return null;
-    }
-  }
-
-  private getConflictType(stepType: InstallStepType): 'use-or-overwrite' | 'overwrite-or-copy' {
-    return stepType === InstallStepType.DASHBOARD ? 'overwrite-or-copy' : 'use-or-overwrite';
-  }
-
-  private buildInstallState(): Record<string, any> {
-    const state: Record<string, any> = {};
-    for (const ws of this.wizardSteps) {
-      if (ws.type === 'form' && ws.formGroup) {
-        state[ws.stateKey] = { formValues: ws.formGroup.getRawValue() };
-      } else if (ws.type === 'progress' && ws.entitySteps) {
-        for (const ep of ws.entitySteps) {
-          if (ep.status === 'success' && ep.entityOutput) {
-            const metadata = this.addedMetadataOf(ep.step);
-            state[this.stateKeyOf(ep.step)] = { entityOutput: ep.entityOutput, resolution: ep.resolution || 'created',
-              ...(ep.step.default ? { defaultConverter: true } : {}), ...(metadata ? { metadata } : {}) };
-          }
-        }
-      }
-    }
-    return state;
-  }
-
-  /** Of the created entity ids, the ones the user chose to use as they were: the package doesn't own them. */
-  private collectUsedExistingEntityIds(): { entityType: string; id: string }[] {
-    const ids: { entityType: string; id: string }[] = [];
-    for (const ws of this.wizardSteps) {
-      for (const ep of ws.type === 'progress' ? ws.entitySteps ?? [] : []) {
-        const entityType = this.stepTypeToEntityType(ep.step.type);
-        if (ep.status === 'success' && ep.entityOutput && ep.resolution === 'use-existing' && entityType) {
-          ids.push({ entityType, id: ep.entityOutput.id });
-        }
-      }
-    }
-    return ids;
-  }
-
-  private collectCreatedEntityIds(): { entityType: string; id: string }[] {
-    const ids: { entityType: string; id: string }[] = [];
-    for (const ws of this.wizardSteps) {
-      if (ws.type === 'progress' && ws.entitySteps) {
-        for (const ep of ws.entitySteps) {
-          if (ep.status === 'success' && ep.entityOutput) {
-            const entityType = this.stepTypeToEntityType(ep.step.type);
-            if (entityType) {
-              ids.push({ entityType, id: ep.entityOutput.id });
-            }
-          }
-        }
-      }
-    }
-    return ids;
-  }
-
-  private findCreatedDashboardId(): { entityType: string; id: string } | undefined {
-    for (const ws of this.wizardSteps) {
-      if (ws.type === 'progress' && ws.entitySteps) {
-        for (const ep of ws.entitySteps) {
-          if (ep.step.type === InstallStepType.DASHBOARD && ep.status === 'success' && ep.entityOutput) {
-            return { entityType: 'DASHBOARD', id: ep.entityOutput.id };
-          }
-        }
-      }
-    }
-    return undefined;
-  }
-
-  private async saveStepAttributes(step: DeviceInstallStep, output: EntityStepOutput): Promise<void> {
-    const entityType = this.stepTypeToEntityType(step.type);
-    if (!entityType) {
-      return;
-    }
-    const entityId = { entityType, id: output.id } as EntityId;
-    if (step.serverAttributes) {
-      const raw = this.zipFiles.get(step.serverAttributes);
-      if (raw) {
-        const resolved = this.resolveTemplateJson(raw);
-        const attrs = Object.entries(resolved).map(([key, value]) => ({ key, value }));
-        await firstValueFrom(this.attributeService.saveEntityAttributes(
-          entityId, AttributeScope.SERVER_SCOPE, attrs, {ignoreErrors: true}
-        ));
-      }
-    }
-    if (step.sharedAttributes) {
-      const raw = this.zipFiles.get(step.sharedAttributes);
-      if (raw) {
-        const resolved = this.resolveTemplateJson(raw);
-        const attrs = Object.entries(resolved).map(([key, value]) => ({ key, value }));
-        await firstValueFrom(this.attributeService.saveEntityAttributes(
-          entityId, AttributeScope.SHARED_SCOPE, attrs, {ignoreErrors: true}
-        ));
-      }
     }
   }
 

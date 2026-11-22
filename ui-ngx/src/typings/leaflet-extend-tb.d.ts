@@ -23,6 +23,8 @@ declare module 'leaflet' {
     removePattern(pattern: L.TB.Pattern): Map;
     hasPattern(pattern: L.TB.Pattern): boolean;
     _initDefRoot(): void;
+    _addZoomLimit(layer: Layer): void;
+    _removeZoomLimit(layer: Layer): void;
   }
 
   interface PathOptions {

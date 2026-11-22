@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.telemetry;
 
-import com.google.gson.JsonParser;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -54,7 +54,7 @@ public class TbCalculatedFieldsNode implements TbNode {
     }
 
     private void processPostTelemetryRequest(TbContext ctx, TbMsg msg) {
-        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(msg.getData()), System.currentTimeMillis());
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.telemetryFromMsg(msg, System.currentTimeMillis());
 
         if (tsKvMap.isEmpty()) {
             ctx.tellSuccess(msg);
@@ -84,7 +84,7 @@ public class TbCalculatedFieldsNode implements TbNode {
     }
 
     private void processPostAttributesRequest(TbContext ctx, TbMsg msg) {
-        List<AttributeKvEntry> newAttributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
+        List<AttributeKvEntry> newAttributes = JsonConverter.attributesFromMsg(msg);
         if (newAttributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;

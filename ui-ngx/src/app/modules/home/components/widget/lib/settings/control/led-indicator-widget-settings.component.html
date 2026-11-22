@@ -14,7 +14,7 @@
         <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
-    <div class="tb-form-row column-xs">
+    <div class="tb-form-row column-xs space-between">
       <div class="fixed-title-width" translate>widgets.rpc.led-color</div>
       <tb-color-input asBoxInput
                       colorClearButton
@@ -51,16 +51,19 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="tb-form-row" [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
+      <div class="tb-form-row column-xs" [class.!hidden]="ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">
+        @let isAttribute = ledIndicatorWidgetSettingsForm.get('retrieveValueMethod').value === 'attribute';
+        <div class="fixed-title-width tb-required">
+          {{ (isAttribute ? 'widgets.rpc.attribute-value-key' : 'widgets.rpc.timeseries-value-key') | translate }}
+        </div>
         <tb-device-key-autocomplete class="flex-1"
+                                    formControlName="valueAttribute"
+                                    required
+                                    inlineField
+                                    [requiredText]="isAttribute ? 'widgets.value-action.attribute-key-required' : 'widgets.value-action.time-series-key-required'"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
-                                    appearance="outline"
-                                    [keyType]="ledIndicatorWidgetSettingsForm.get('retrieveValueMethod').value === 'attribute' ? dataKeyType.attribute : dataKeyType.timeseries"
-                                    attributeLabel="widgets.rpc.led-status-value-attribute"
-                                    timeseriesLabel="widgets.rpc.led-status-value-timeseries"
-                                    required
-                                    formControlName="valueAttribute">
+                                    [keyType]="isAttribute ? dataKeyType.attribute : dataKeyType.timeseries">
         </tb-device-key-autocomplete>
       </div>
       <div class="tb-form-row column-xs" [class.!hidden]="!ledIndicatorWidgetSettingsForm.get('performCheckStatus').value">

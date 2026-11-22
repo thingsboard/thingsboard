@@ -10,13 +10,7 @@
   min-width: 0;
   max-width: 95vw;
 
-  .tb-install-wizard-body {
-    min-height: 50vh;
-  }
-
   .tb-install-wizard-body.tb-install-wizard-embedded {
-    display: flex;
-    flex-direction: column;
     padding: 16px 24px 0 !important;
 
     mat-stepper {

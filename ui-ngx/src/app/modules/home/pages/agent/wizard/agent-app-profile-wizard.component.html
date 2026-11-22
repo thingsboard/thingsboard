@@ -14,9 +14,9 @@
   </button>
 </mat-toolbar>
 
-<div mat-dialog-content class="tb-install-wizard-body">
+<div mat-dialog-content class="tb-install-wizard-body flex min-h-[50vh] flex-col">
 
-  <mat-stepper linear #stepper
+  <mat-stepper class="flex-1" linear #stepper
     [orientation]="(stepperOrientation | async)"
     [labelPosition]="(stepperLabelPosition | async)">
 
@@ -57,19 +57,18 @@
                 <span translate>agent.app-install-loading-template</span>
               </div>
             }
+            @if (selectedType && !loadingTemplates && !loadError && !availableTemplates.length) {
+              <div class="tb-form-hint tb-primary-fill tb-form-hint-warning">
+                <mat-icon>warning_amber</mat-icon>
+                <span translate>agent.app-no-templates</span>
+              </div>
+            }
             @if (loadError) {
               <div class="error-state">
                 <mat-icon>error_outline</mat-icon>
                 <span>{{ loadError }}</span>
               </div>
             }
-          </div>
-          <div class="step-footer">
-            <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-            <button mat-raised-button color="primary" matStepperNext [disabled]="!canProceedFromType()">
-              {{ 'action.next' | translate }}
-              <mat-icon iconPositionEnd>chevron_right</mat-icon>
-            </button>
           </div>
         </div>
       </mat-step>
@@ -90,7 +89,7 @@
 
           <mat-form-field class="mat-block" appearance="outline">
             <mat-label translate>agent.app-profile-description</mat-label>
-            <input matInput formControlName="description">
+            <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
           </mat-form-field>
         </form>
 
@@ -127,22 +126,6 @@
         <tb-agent-compose-diff [left]="proposedYaml" [right]="currentYaml"
         [syncScroll]="diffSyncScroll" (rightChange)="composeYaml = $event"></tb-agent-compose-diff>
         <p class="diff-hint" translate>agent.app-install-diff-hint</p>
-
-        <div class="step-footer">
-          @if (!editMode) {
-            <button mat-button matStepperPrevious [disabled]="submitting">
-              <mat-icon>chevron_left</mat-icon>
-              {{ 'action.back' | translate }}
-            </button>
-          }
-          <button mat-button (click)="cancel()" [disabled]="submitting">
-            {{ 'action.cancel' | translate }}
-          </button>
-          <button mat-raised-button color="primary" matStepperNext [disabled]="!canSubmit()">
-            {{ 'action.next' | translate }}
-            <mat-icon iconPositionEnd>chevron_right</mat-icon>
-          </button>
-        </div>
       </div>
     </mat-step>
 
@@ -182,22 +165,33 @@
             <span translate>agent.app-profile-wizard-confirm-info</span>
           </div>
         </div>
-
-        <div class="step-footer">
-          <button mat-button matStepperPrevious [disabled]="submitting">
-            <mat-icon>chevron_left</mat-icon>
-            {{ 'action.back' | translate }}
-          </button>
-          <button mat-button (click)="cancel()" [disabled]="submitting">
-            {{ 'action.cancel' | translate }}
-          </button>
-          <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit()">
-            <mat-icon>save</mat-icon>
-            <span>{{ 'action.save' | translate }}</span>
-          </button>
-        </div>
       </div>
     </mat-step>
 
   </mat-stepper>
+
+  <div class="step-footer">
+    @let stepIndex = stepper?.selectedIndex;
+    @if (stepIndex > 0) {
+      <button mat-button type="button" (click)="stepper.previous()" [disabled]="submitting">
+        <mat-icon>chevron_left</mat-icon>
+        {{ 'action.back' | translate }}
+      </button>
+    }
+    <button mat-button type="button" (click)="cancel()" [disabled]="submitting">
+      {{ 'action.cancel' | translate }}
+    </button>
+    @if (stepIndex === stepper?.steps.length - 1) {
+      <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="!canSubmit()">
+        <mat-icon>save</mat-icon>
+        <span>{{ 'action.save' | translate }}</span>
+      </button>
+    } @else {
+      <button mat-raised-button color="primary" type="button" (click)="stepper.next()"
+              [disabled]="!stepper?.selected?.completed">
+        {{ 'action.next' | translate }}
+        <mat-icon iconPositionEnd>chevron_right</mat-icon>
+      </button>
+    }
+  </div>
 </div>
