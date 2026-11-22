@@ -150,3 +150,5 @@ Starting with version 4.4, ThingsBoard is licensed under the [Business Source Li
 
 Versions released before 4.4 remain under the Apache 2.0 License.
 
+
+<!-- CI fast-skip test -->
