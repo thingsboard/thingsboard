@@ -4,12 +4,14 @@
 #
 
 import os
+import stat
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
-from notices import NOTICES_DIR, escape_teamcity, format_teamcity_problem
+from notices import NOTICES_DIR, escape_teamcity, format_teamcity_problem, write_atomically
 from notices.license_files import filter_platforms
 from notices.lwm2m import identify_license, parse_header
 from notices.scanner import ensure_docker_available, is_notice_path
@@ -94,6 +96,15 @@ class HelpersTests(unittest.TestCase):
             tc.stdout,
         )
         self.assertIn('Third-party notices: no SBOMs given', tc.stderr)
+
+    def test_write_atomically_sets_world_readable_mode(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, 'nested', 'THIRD-PARTY-NOTICES')
+            write_atomically(out, b'hello\n')
+            with open(out, 'rb') as f:
+                self.assertEqual(f.read(), b'hello\n')
+            if os.name == 'posix':
+                self.assertEqual(stat.S_IMODE(os.stat(out).st_mode), 0o644)
 
 
 if __name__ == '__main__':

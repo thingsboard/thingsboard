@@ -1202,6 +1202,7 @@
                                     <exclude>**/NetworkReceive.java</exclude>
                                     <exclude>**/lwm2m-registry/**</exclude>
                                     <exclude>**/test/resources/lwm2m/**</exclude>
+                                    <exclude>**/test/resources/chirpstack/**</exclude>
                                     <exclude>src/main/data/resources/**</exclude>
                                     <exclude>src/main/resources/html/**</exclude>
                                     <exclude>.claude/**</exclude>

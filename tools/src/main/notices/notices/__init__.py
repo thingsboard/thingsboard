@@ -33,6 +33,7 @@ def write_atomically(path, data):
     try:
         with os.fdopen(fd, 'wb') as file:
             file.write(data)
+        os.chmod(temporary, 0o644)
         os.replace(temporary, path)
     except BaseException:
         if os.path.exists(temporary):
