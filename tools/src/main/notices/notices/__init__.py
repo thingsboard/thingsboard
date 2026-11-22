@@ -136,3 +136,10 @@ def emit_teamcity_problem(message):
     summary = format_teamcity_problem(message)
     if summary:
         print(f"##teamcity[buildProblem description='{escape_teamcity(summary)}']", flush=True)
+
+
+def emit_teamcity_warning(message):
+    """Emits a non-fatal TeamCity warning service message."""
+    summary = format_teamcity_problem(message)
+    if summary:
+        print(f"##teamcity[message text='{escape_teamcity(summary)}' status='WARNING']", flush=True)

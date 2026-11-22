@@ -3,12 +3,19 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
+import contextlib
+import io
 import os
 import tempfile
 import unittest
+from unittest import mock
 
+from notices.cli import _report_unused_curations
 from notices.config import covers, load_curations, load_policy, split_curation_id
 from notices.copyrights import process_copyrights
+from notices.policy import ResolvedPackage
+from notices.sbom import PackageComponent
+from notices.spdx import License
 
 
 class ConfigAndCopyrightTests(unittest.TestCase):
@@ -66,6 +73,52 @@ class ConfigAndCopyrightTests(unittest.TestCase):
                 'Copyright 2010-2015-2020 Weird Range Inc.',
             ],
         )
+
+    def test_unused_curations_warns_by_default_and_stops_when_strict(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'curations.toml')
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(
+                    '[custom_licenses]\n'
+                    '"LicenseRef-used" = "USED TEXT"\n'
+                    '"LicenseRef-stale" = "STALE TEXT"\n'
+                    '[[curations]]\n'
+                    'ids = ["pkg:maven/com.example/used@1.0", "pkg:maven/com.example/stale@1.0"]\n'
+                    'metadata_only = true\n'
+                )
+            curations = load_curations(path)
+            pkg = PackageComponent(
+                purl='pkg:maven/com.example/used@1.0',
+                package_key='pkg:maven/com.example/used',
+                kind='maven', group='com.example', name='used', version='1.0',
+                declared_raw=('MIT',), named_raw=frozenset(), npm_tarball=None, vcs=None,
+            )
+            resolved = [ResolvedPackage(
+                purl=pkg.purl, coordinates='com.example:used 1.0',
+                licenses=(License('LicenseRef-used'),), copyrights=(), source_url='',
+            )]
+
+            unused_cur, unused_custom = curations.unused([pkg], used_licenses={'LicenseRef-used'})
+            self.assertEqual(unused_cur, ['pkg:maven/com.example/stale@1.0'])
+            self.assertEqual(unused_custom, ['LicenseRef-stale'])
+
+            # Default mode warns without failing (and emits TeamCity WARNING when TEAMCITY_VERSION is set)
+            buf = io.StringIO()
+            with mock.patch.dict(os.environ, {'TEAMCITY_VERSION': '2024.12.3'}, clear=False):
+                with contextlib.redirect_stdout(buf):
+                    _report_unused_curations(curations, [pkg], resolved, fail_on_unused=False)
+            out = buf.getvalue()
+            self.assertIn('Third-party notices: warning: 2 entries in tools/src/main/notices/curations.toml', out)
+            self.assertIn('pkg:maven/com.example/stale@1.0', out)
+            self.assertIn('[custom_licenses] LicenseRef-stale', out)
+            self.assertIn("##teamcity[message text='Third-party notices: warning:", out)
+            self.assertIn("status='WARNING']", out)
+
+            # Strict mode fails closed via stop()
+            with self.assertRaises(SystemExit) as ctx:
+                _report_unused_curations(curations, [pkg], resolved, fail_on_unused=True)
+            self.assertIn('pkg:maven/com.example/stale@1.0', str(ctx.exception))
+            self.assertIn('[custom_licenses] LicenseRef-stale', str(ctx.exception))
 
 
 if __name__ == '__main__':

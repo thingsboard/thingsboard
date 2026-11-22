@@ -55,6 +55,7 @@ python3 tools/src/main/notices ci-should-run --target-branch <branch> --teamcity
 | `NOTICES_MAVEN_REPOSITORY` | `~/.m2/repository` | Local Maven repository for binary jar NOTICE extraction |
 | `NOTICES_SCANCODE_IMAGE` | `ghcr.io/oss-review-toolkit/ort:98.0.0` | Docker image providing `scancode` on cache misses |
 | `NOTICES_SCAN_CACHE_USER`, `NOTICES_SCAN_CACHE_PASSWORD` | none | Artifactory upload credentials (CI only) |
+| `NOTICES_FAIL_ON_UNUSED_CURATIONS` | `false` | Fail instead of warning when a `curations.toml` entry matches no package in a `--sboms-under` run (nightly CI) |
 
 ## TeamCity CI Integration
 
