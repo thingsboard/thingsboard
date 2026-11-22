@@ -805,3 +805,5 @@
         </profile>
     </profiles>
 </project>
+
+<!-- temp 4-state CI gate test: full (java) -->

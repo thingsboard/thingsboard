@@ -191,3 +191,5 @@ export class AppComponent {
   }
 
 }
+
+// temp 4-state CI gate test: full (ui)
