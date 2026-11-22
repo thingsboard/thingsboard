@@ -103,6 +103,12 @@
       "version": "5.5.4-TB",
       "bom-ref": "pkg:npm/echarts@5.5.4-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fecharts%2Farchive%2F5.5.4-TB.tar.gz",
       "description": "Apache ECharts is a powerful, interactive charting and data visualization library for browser",
+      "hashes": [
+        {
+          "alg": "SHA-1",
+          "content": "05955421715b5a4ceb9b9b1b503d8e2504d0501d"
+        }
+      ],
       "licenses": [
         {
           "license": {
@@ -147,6 +153,12 @@
       "version": "5.5.1-TB",
       "bom-ref": "pkg:npm/zrender@5.5.1-TB?download_url=https%3A%2F%2Fgithub.com%2Fthingsboard%2Fzrender%2Farchive%2F5.5.1-TB.tar.gz",
       "description": "A lightweight graphic library providing 2d draw for Apache ECharts",
+      "hashes": [
+        {
+          "alg": "SHA-1",
+          "content": "30d441616d8125f78ce4de9a45033207b87d5fd9"
+        }
+      ],
       "licenses": [
         {
           "license": {

@@ -40,15 +40,19 @@ python3 tools/src/main/notices ci-should-run --target-branch <branch>
 | `NOTICES_SCANCODE_IMAGE` | `ghcr.io/oss-review-toolkit/ort-minimal:98.0.0` | Docker image providing `scancode` on cache misses |
 | `NOTICES_SCAN_CACHE_USER`, `NOTICES_SCAN_CACHE_PASSWORD` | none | Artifactory upload credentials (CI only) |
 | `NOTICES_FAIL_ON_UNUSED_CURATIONS` | `false` | Fail instead of warning when a `curations.toml` entry matches no package in a `--sboms-under` run (nightly CI) |
+| `NOTICES_SKIP_UNUSED_CURATIONS` | `false` | Skip the unused-curations check in partial `--sboms-under` runs (set automatically by `ci-should-run` in `java` mode) |
 
 ## TeamCity CI Integration
 
 Both PR and nightly TeamCity configurations can run the exact same repo-owned steps:
 
 1. **Unit tests**: `python3 -m unittest discover -s tools/src/main/notices/tests -t tools/src/main/notices`
-2. **PR change gate** (PR config only): `python3 tools/src/main/notices ci-should-run --target-branch "$TARGET"`
-3. **Fast SBOM build**: `mvn -T6 package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true`
-4. **Verify notices**: `mvn -N exec:exec@notices-product` (writes `target/THIRD-PARTY-NOTICES` and fails on any policy/curation issue)
+2. **PR change gate** (PR config only): `python3 tools/src/main/notices ci-should-run --target-branch "$TARGET"` — sets `notices.check` to `none`, `ui`, `java`, or `full`
+3. **Fast SBOM build**:
+   - `ui`: `mvn generate-sources -pl ui-ngx -Dsbom.skip=false -Dnotices.skip=false`
+   - `java`: `mvn -T6 -Ppackaging package -DskipTests -Dskip.yarn=true -Dsbom.skip=false -Dpkg.skip.bootjar=false -Dsbom.bundled.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true -pl '!msa/web-ui,!msa/js-executor,!msa/web-report'`
+   - `full`: `mvn -T6 package -DskipTests -Dsbom.skip=false -Dpkg.skip.deb=true -Dpkg.skip.rpm=true -Dpkg.skip.zip=true`
+4. **Verify notices** (`java` and `full`): `mvn -N exec:exec@notices-product` (writes `target/THIRD-PARTY-NOTICES` and fails on any policy/curation issue)
 5. **Upload new scans** (nightly/main config): `python3 tools/src/main/notices cache-upload`
 
 Use a persistent `NOTICES_CACHE_DIR` on TeamCity agents (not `%system.teamcity.build.tempDir%`) so warm builds make zero cache downloads, and give the nightly upload job its own directory (e.g. `NOTICES_CACHE_DIR=~/.cache/tb-notices-nightly`) so scans from unmerged PR builds on the same agent cannot be uploaded.

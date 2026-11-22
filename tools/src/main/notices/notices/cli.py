@@ -53,6 +53,53 @@ CI_WATCHED_PATHS = (
     'tools/src/main/notices/',
 )
 
+# Subset of CI_WATCHED_PATHS that only affect ui-ngx's SBOM/notices (can run UI-only check).
+CI_UI_ONLY_PREFIXES = (
+    'ui-ngx/src/',
+    'ui-ngx/esbuild/',
+    'ui-ngx/patches/',
+)
+CI_UI_ONLY_FILES = {
+    'ui-ngx/angular.json',
+    'ui-ngx/package.json',
+    'ui-ngx/yarn.lock',
+}
+
+# Subset of CI_WATCHED_PATHS that only affect Java services (can skip UI/Node modules).
+CI_JAVA_ONLY_PREFIXES = (
+    'common/report/src/main/resources/fonts/',
+    'application/src/main/data/lwm2m-registry/',
+    'application/src/main/data/resources/js_extensions/',
+    'application/src/main/sbom/',
+)
+# POMs that affect UI/JS modules or global build settings and therefore require a full check.
+CI_FULL_POM_FILES = {
+    'pom.xml',
+    'msa/pom.xml',
+    'ui-ngx/pom.xml',
+    'msa/web-ui/pom.xml',
+    'msa/js-executor/pom.xml',
+    'msa/web-report/pom.xml',
+}
+
+
+def classify_ci_changes(changed_paths):
+    """Classifies changed watched paths into 'none', 'ui', 'java', or 'full'."""
+    if not changed_paths:
+        return 'none'
+    modes = set()
+    for path in changed_paths:
+        if path in CI_UI_ONLY_FILES or path.startswith(CI_UI_ONLY_PREFIXES):
+            modes.add('ui')
+        elif (
+            path.startswith(CI_JAVA_ONLY_PREFIXES)
+            or ((path == 'pom.xml' or path.endswith('/pom.xml')) and path not in CI_FULL_POM_FILES)
+        ):
+            modes.add('java')
+        else:
+            return 'full'
+    return next(iter(modes)) if len(modes) == 1 else 'full'
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog='notices', description='ThingsBoard third-party notices generator')
@@ -164,7 +211,8 @@ def cmd_render(args):
         inventory.packages, sources, scan_records, policy, curations,
         declared_by_purl=declared_by_purl, license_files=inventory.license_files,
     )
-    unused_body = _unused_curations_message(curations, inventory.packages.values(), resolved) if args.sboms_under else None
+    check_unused = bool(args.sboms_under) and not _parse_env_bool('NOTICES_SKIP_UNUSED_CURATIONS')
+    unused_body = _unused_curations_message(curations, inventory.packages.values(), resolved) if check_unused else None
     if unused_body and fail_on_unused:
         raise stop(unused_body)
 
@@ -244,14 +292,18 @@ def cmd_cache_upload(args):
 
 
 def cmd_ci_should_run(args):
-    """Checks if merging HEAD into target_branch modifies any notice-affecting file."""
+    """Classifies whether merging HEAD into target_branch needs 'none', 'ui', 'java', or 'full' notice checks."""
     on_teamcity = bool(os.environ.get('TEAMCITY_VERSION'))
     repo_url = os.environ.get('NOTICES_CI_REPO_URL') or 'https://github.com/thingsboard/thingsboard.git'
 
-    def emit_check(reason):
-        print(f'{reason}: the notices will be checked.')
+    def emit_mode(mode, reason):
+        print(f'{reason}: notices check mode = {mode}.')
         if on_teamcity:
-            print("##teamcity[setParameter name='notices.check' value='true']")
+            print(f"##teamcity[setParameter name='notices.check' value='{mode}']")
+            if mode == 'java':
+                print("##teamcity[setParameter name='env.NOTICES_SKIP_UNUSED_CURATIONS' value='true']")
+            elif mode == 'none':
+                print("##teamcity[buildStatus text='No dependency changes: the notices are not checked']")
         return 0
 
     fetch = subprocess.run(
@@ -259,14 +311,14 @@ def cmd_ci_should_run(args):
         cwd=ROOT, capture_output=True, text=True,
     )
     if fetch.returncode != 0:
-        return emit_check(f'{args.target_branch} could not be fetched')
+        return emit_mode('full', f'{args.target_branch} could not be fetched')
 
     merged = subprocess.run(
         ['git', 'merge-tree', '--write-tree', '--no-messages', 'FETCH_HEAD', 'HEAD'],
         cwd=ROOT, capture_output=True, text=True,
     )
     if merged.returncode != 0:
-        return emit_check(f'PR does not merge cleanly into {args.target_branch}')
+        return emit_mode('full', f'PR does not merge cleanly into {args.target_branch}')
     tree = merged.stdout.strip().splitlines()[0]
 
     diff = subprocess.run(
@@ -274,16 +326,14 @@ def cmd_ci_should_run(args):
         cwd=ROOT, capture_output=True, text=True,
     )
     if diff.returncode != 0:
-        return emit_check(f'merge could not be diffed against {args.target_branch}')
+        return emit_mode('full', f'merge could not be diffed against {args.target_branch}')
 
     changed = [line for line in diff.stdout.splitlines() if line.strip()]
+    mode = classify_ci_changes(changed)
     if changed:
         print(f'Merging into {args.target_branch} changes:')
         for path in changed:
             print(f'  {path}')
-        return emit_check('Dependency/notice inputs changed')
+        return emit_mode(mode, 'Dependency/notice inputs changed')
 
-    print(f'Merging into {args.target_branch} changes no file that the notices depend on.')
-    if on_teamcity:
-        print("##teamcity[buildStatus text='No dependency changes: the notices are not checked']")
-    return 0
+    return emit_mode('none', f'Merging into {args.target_branch} changes no file that the notices depend on')

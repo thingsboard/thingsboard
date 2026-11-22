@@ -15,6 +15,7 @@ import unittest
 from unittest import mock
 
 from notices import NOTICES_DIR, escape_teamcity, format_teamcity_problem, write_atomically
+from notices.cli import classify_ci_changes
 from notices.license_files import filter_platforms
 from notices.lwm2m import identify_license, parse_header
 from notices.render import _extract_from_scancode_image
@@ -231,6 +232,33 @@ class HelpersTests(unittest.TestCase):
         self.assertEqual(set(results.keys()), {'k1', 'k2', 'k3'})
         for k in ('k1', 'k2', 'k3'):
             self.assertEqual(results[k]['findings'], [{'path': 'index.js', 'licenses': ['Apache-2.0'], 'copyrights': []}])
+
+    def test_classify_ci_changes_modes(self):
+        self.assertEqual(classify_ci_changes([]), 'none')
+        self.assertEqual(classify_ci_changes(['ui-ngx/src/app/app.component.ts']), 'ui')
+        self.assertEqual(classify_ci_changes(['ui-ngx/package.json', 'ui-ngx/yarn.lock', 'ui-ngx/angular.json']), 'ui')
+        self.assertEqual(classify_ci_changes(['ui-ngx/patches/@angular+core+20.patch']), 'ui')
+        self.assertEqual(classify_ci_changes(['application/pom.xml', 'dao/pom.xml', 'msa/vc-executor/pom.xml']), 'java')
+        self.assertEqual(classify_ci_changes(['common/report/src/main/resources/fonts/NotoSans-Regular.ttf']), 'java')
+        self.assertEqual(classify_ci_changes(['application/src/main/data/lwm2m-registry/1.xml']), 'java')
+        self.assertEqual(classify_ci_changes(['application/src/main/data/resources/js_extensions/ext.js']), 'java')
+        self.assertEqual(classify_ci_changes(['application/src/main/sbom/bundled.cdx.json']), 'java')
+        # Mixed UI + Java falls back to full
+        self.assertEqual(classify_ci_changes(['ui-ngx/src/app/a.ts', 'application/pom.xml']), 'full')
+        # Root, msa, and JS-module POMs + tooling require full
+        for path in (
+            'pom.xml',
+            'msa/pom.xml',
+            'ui-ngx/pom.xml',
+            'msa/web-ui/pom.xml',
+            'msa/js-executor/pom.xml',
+            'msa/web-report/pom.xml',
+            'msa/web-report/package.json',
+            'msa/web-report/server.ts',
+            'tools/src/main/notices/policy.toml',
+            'tools/src/main/javascript/yarn-sbom.js',
+        ):
+            self.assertEqual(classify_ci_changes([path]), 'full', msg=path)
 
 
 if __name__ == '__main__':
