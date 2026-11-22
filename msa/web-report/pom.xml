@@ -292,7 +292,7 @@
                                     <description>Node.js runtime embedded in the ${pkg.name} executable by pkg (base binary from yao-pkg/pkg-fetch).</description>
                                     <purl>pkg:github/nodejs/node@v${node.linux.version}?os=linux</purl>
                                     <cpe>cpe:2.3:a:nodejs:node.js:${node.linux.version}:*:*:*:*:*:*:*</cpe>
-                                    <license>MIT</license>
+                                    <license>GPL-3.0-only</license>
                                     <!-- Covers Node.js and the libraries it bundles: the notices take it as it is -->
                                     <externalReferences>
                                         <externalReference>
