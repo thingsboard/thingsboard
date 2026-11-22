@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from notices.cli import _report_unused_curations
+from notices.cli import _emit_unused_curations_warning, _parse_env_bool, _unused_curations_message
 from notices.config import covers, load_curations, load_policy, split_curation_id
 from notices.copyrights import process_copyrights
 from notices.policy import ResolvedPackage
@@ -103,10 +103,12 @@ class ConfigAndCopyrightTests(unittest.TestCase):
             self.assertEqual(unused_custom, ['LicenseRef-stale'])
 
             # Default mode warns without failing (and emits TeamCity WARNING when TEAMCITY_VERSION is set)
+            body = _unused_curations_message(curations, [pkg], resolved)
+            self.assertIsNotNone(body)
             buf = io.StringIO()
             with mock.patch.dict(os.environ, {'TEAMCITY_VERSION': '2024.12.3'}, clear=False):
                 with contextlib.redirect_stdout(buf):
-                    _report_unused_curations(curations, [pkg], resolved, fail_on_unused=False)
+                    _emit_unused_curations_warning(body)
             out = buf.getvalue()
             self.assertIn('Third-party notices: warning: 2 entries in tools/src/main/notices/curations.toml', out)
             self.assertIn('pkg:maven/com.example/stale@1.0', out)
@@ -114,11 +116,15 @@ class ConfigAndCopyrightTests(unittest.TestCase):
             self.assertIn("##teamcity[message text='Third-party notices: warning:", out)
             self.assertIn("status='WARNING']", out)
 
-            # Strict mode fails closed via stop()
-            with self.assertRaises(SystemExit) as ctx:
-                _report_unused_curations(curations, [pkg], resolved, fail_on_unused=True)
-            self.assertIn('pkg:maven/com.example/stale@1.0', str(ctx.exception))
-            self.assertIn('[custom_licenses] LicenseRef-stale', str(ctx.exception))
+            # Invalid env var fails closed instead of silently disabling strict mode
+            with mock.patch.dict(os.environ, {'NOTICES_FAIL_ON_UNUSED_CURATIONS': 'true'}, clear=False):
+                self.assertTrue(_parse_env_bool('NOTICES_FAIL_ON_UNUSED_CURATIONS'))
+            with mock.patch.dict(os.environ, {'NOTICES_FAIL_ON_UNUSED_CURATIONS': 'false'}, clear=False):
+                self.assertFalse(_parse_env_bool('NOTICES_FAIL_ON_UNUSED_CURATIONS'))
+            with mock.patch.dict(os.environ, {'NOTICES_FAIL_ON_UNUSED_CURATIONS': 'ture'}, clear=False):
+                with self.assertRaises(SystemExit) as ctx:
+                    _parse_env_bool('NOTICES_FAIL_ON_UNUSED_CURATIONS')
+                self.assertIn('invalid NOTICES_FAIL_ON_UNUSED_CURATIONS', str(ctx.exception))
 
 
 if __name__ == '__main__':

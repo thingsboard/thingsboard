@@ -91,15 +91,13 @@ class Curations:
 
     def unused(self, packages, used_licenses=None):
         """Returns sorted unused curation raw_ids and unused custom_licenses names."""
-        matched = set()
-        for pkg in packages:
-            for curation in self.for_package(pkg.package_key, pkg.version):
-                matched.add(id(curation))
-        unused_curations = sorted({c.raw_id for c in self.entries if id(c) not in matched})
-        unused_custom = (
-            sorted(name for name in self.custom_licenses if name not in used_licenses)
-            if used_licenses is not None else []
-        )
+        matched = {
+            c.raw_id
+            for pkg in packages
+            for c in self.for_package(pkg.package_key, pkg.version)
+        }
+        unused_curations = sorted({c.raw_id for c in self.entries} - matched)
+        unused_custom = sorted(self.custom_licenses.keys() - used_licenses) if used_licenses is not None else []
         return unused_curations, unused_custom
 
 
