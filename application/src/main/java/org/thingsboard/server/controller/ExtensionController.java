@@ -351,8 +351,9 @@ public class ExtensionController extends BaseController {
         if (StringUtils.isBlank(slug)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        Extension extension = extensionService.findBySlug(slug);
-        if (extension == null || !extension.getTenantId().equals(user.getTenantId())) {
+        // This runs on every data-plane request, so it asks for the owner only, not for the whole row.
+        TenantId owner = extensionService.findTenantIdBySlug(slug);
+        if (owner == null || !owner.equals(user.getTenantId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok().build();

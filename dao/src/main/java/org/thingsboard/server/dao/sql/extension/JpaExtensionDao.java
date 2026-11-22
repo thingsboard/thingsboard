@@ -50,6 +50,11 @@ public class JpaExtensionDao extends JpaAbstractDao<ExtensionEntity, Extension> 
     }
 
     @Override
+    public TenantId findTenantIdBySlug(String slug) {
+        return extensionRepository.findTenantIdBySlug(slug).map(TenantId::fromUUID).orElse(null);
+    }
+
+    @Override
     public List<Extension> findByIds(Collection<UUID> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();

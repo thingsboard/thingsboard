@@ -25,6 +25,11 @@ public interface ExtensionRepository extends JpaRepository<ExtensionEntity, UUID
 
     ExtensionEntity findBySlug(String slug);
 
+    // The /api/ext-auth gateway runs this on every data-plane request. It needs only the owner, so it
+    // reads one column through the unique slug index and leaves the JSONB container spec in the table.
+    @Query("SELECT e.tenantId FROM ExtensionEntity e WHERE e.slug = :slug")
+    Optional<UUID> findTenantIdBySlug(@Param("slug") String slug);
+
     ExtensionEntity findByTenantIdAndName(UUID tenantId, String name);
 
     // Bulk read by primary key for the status collector, which otherwise issued one SELECT per registered

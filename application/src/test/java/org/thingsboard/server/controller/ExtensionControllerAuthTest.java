@@ -34,7 +34,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -78,22 +81,33 @@ class ExtensionControllerAuthTest {
 
     @Test
     void allowsWhenCallerTenantOwnsSlug() throws Exception {
-        when(extensionService.findBySlug("acme-9f3a")).thenReturn(extensionOwnedBy(tenantId));
+        when(extensionService.findTenantIdBySlug("acme-9f3a")).thenReturn(tenantId);
         assertThat(controller.authorizeExtensionRequest("acme-9f3a").getStatusCode())
                 .isEqualTo(HttpStatus.OK);
     }
 
+    // The check runs on every data-plane request, so it must ask for the owner only and never load
+    // the extension row with its container spec.
+    @Test
+    void readsOnlyTheOwnerOfTheSlug() throws Exception {
+        when(extensionService.findTenantIdBySlug("acme-9f3a")).thenReturn(tenantId);
+
+        controller.authorizeExtensionRequest("acme-9f3a");
+
+        verify(extensionService).findTenantIdBySlug("acme-9f3a");
+        verify(extensionService, never()).findBySlug(any());
+    }
+
     @Test
     void deniesWhenSlugOwnedByAnotherTenant() throws Exception {
-        when(extensionService.findBySlug("acme-9f3a"))
-                .thenReturn(extensionOwnedBy(new TenantId(UUID.randomUUID())));
+        when(extensionService.findTenantIdBySlug("acme-9f3a")).thenReturn(new TenantId(UUID.randomUUID()));
         assertThat(controller.authorizeExtensionRequest("acme-9f3a").getStatusCode())
                 .isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
     void deniesWhenSlugUnknown() throws Exception {
-        when(extensionService.findBySlug("ghost-0000")).thenReturn(null);
+        when(extensionService.findTenantIdBySlug("ghost-0000")).thenReturn(null);
         assertThat(controller.authorizeExtensionRequest("ghost-0000").getStatusCode())
                 .isEqualTo(HttpStatus.FORBIDDEN);
     }
@@ -110,7 +124,7 @@ class ExtensionControllerAuthTest {
     @Test
     void deniesPublicPrincipalEvenForAnOwnedSlug() throws Exception {
         authenticateAs(new UserPrincipal(UserPrincipal.Type.PUBLIC_ID, UUID.randomUUID().toString()));
-        when(extensionService.findBySlug("acme-9f3a")).thenReturn(extensionOwnedBy(tenantId));
+        when(extensionService.findTenantIdBySlug("acme-9f3a")).thenReturn(tenantId);
 
         assertThat(controller.authorizeExtensionRequest("acme-9f3a").getStatusCode())
                 .isEqualTo(HttpStatus.FORBIDDEN);
@@ -120,7 +134,7 @@ class ExtensionControllerAuthTest {
     @Test
     void deniesWhenPrincipalIsMissing() throws Exception {
         authenticateAs(null);
-        when(extensionService.findBySlug("acme-9f3a")).thenReturn(extensionOwnedBy(tenantId));
+        when(extensionService.findTenantIdBySlug("acme-9f3a")).thenReturn(tenantId);
 
         assertThat(controller.authorizeExtensionRequest("acme-9f3a").getStatusCode())
                 .isEqualTo(HttpStatus.FORBIDDEN);

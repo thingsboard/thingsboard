@@ -29,6 +29,13 @@ public interface ExtensionService extends EntityDaoService {
     Extension findBySlug(String slug);
 
     /**
+     * The tenant that owns a slug, or null when no extension has it. Global like
+     * {@link #findBySlug(String)}, but it reads the tenant id only. This is the lookup for the
+     * /api/ext-auth check, which runs on every data-plane request and needs nothing else.
+     */
+    TenantId findTenantIdBySlug(String slug);
+
+    /**
      * Tenant-scoped lookup by the human-readable name, which is unique within a tenant
      * ({@code extension_tenant_name_unq_key}). Unlike {@link #findBySlug(String)} this one is safe to
      * expose to tenant-scoped reads: it can only ever resolve inside the caller's own tenant.

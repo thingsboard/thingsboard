@@ -114,4 +114,15 @@ public class JpaExtensionDaoTest extends AbstractJpaDaoTest {
         assertThat(found.getContainerSpec()).isEqualTo(containerSpec);
     }
 
+    // The /api/ext-auth check reads the owner of a slug on every data-plane request.
+    @Test
+    public void findTenantIdBySlugReturnsTheOwner() {
+        assertThat(extensionDao.findTenantIdBySlug("test-sort-ext-1")).isEqualTo(tenantId);
+    }
+
+    @Test
+    public void findTenantIdBySlugReturnsNullForAnUnknownSlug() {
+        assertThat(extensionDao.findTenantIdBySlug("no-such-slug")).isNull();
+    }
+
 }

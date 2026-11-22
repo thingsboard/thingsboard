@@ -23,6 +23,9 @@ public interface ExtensionDao extends TenantEntityDao<Extension>, ExportableEnti
 
     Extension findBySlug(String slug);
 
+    /** The owner of a slug, or null. Reads the tenant id only; see ExtensionRepository.findTenantIdBySlug. */
+    TenantId findTenantIdBySlug(String slug);
+
     /** Bulk read by primary key, not tenant-scoped; see ExtensionRepository.findByIdIn. */
     List<Extension> findByIds(Collection<UUID> ids);
 

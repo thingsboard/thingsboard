@@ -262,6 +262,14 @@ public class DefaultExtensionService extends AbstractEntityService implements Ex
     }
 
     @Override
+    public TenantId findTenantIdBySlug(String slug) {
+        if (StringUtils.isBlank(slug)) {
+            return null;
+        }
+        return extensionDao.findTenantIdBySlug(slug);
+    }
+
+    @Override
     public Extension findByTenantIdAndName(TenantId tenantId, String name) {
         if (tenantId == null || StringUtils.isBlank(name)) {
             return null;

@@ -181,6 +181,16 @@ public class EntityStateSourcingListener {
             }
             case SECRET -> {
                 Secret secret = (Secret) event.getEntity();
+                if (isCreated) {
+                    // A CREATED secret matters only to extensions: an extension may reference a secret
+                    // by name before it exists (its apply then fails with "Unresolved secret reference"),
+                    // and creating the secret afterwards must heal it without waiting for the resync.
+                    // So this searches the extensions only: a search of every entity type that can hold
+                    // a secret would run on each new secret and its other results would not be used.
+                    secretService.findEntitiesBySecret(tenantId, secret, EntityType.EXTENSION)
+                            .forEach(entityInfo -> tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityInfo.getId(), lifecycleEvent));
+                    break;
+                }
                 var entities = secretService.findEntitiesBySecret(tenantId, secret);
                 entities.forEach((type, entityInfos) -> {
                     // EXTENSION belongs here too: JpaExtensionDao implements HasSecretsEntityDao, so
@@ -188,15 +198,6 @@ public class EntityStateSourcingListener {
                     // broadcast nothing re-applies them, and a rotated credential keeps living in their
                     // rendered Secrets until the next periodic resync — or forever where an operator has
                     // set extensions.reconcile.resync-interval-ms=0.
-                    // A CREATED secret matters only to extensions: an extension may reference a secret
-                    // by name before it exists (its apply then fails with "Unresolved secret reference"),
-                    // and creating the secret afterwards must heal it without waiting for the resync.
-                    if (isCreated) {
-                        if (type == EntityType.EXTENSION) {
-                            entityInfos.forEach(entityInfo -> tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityInfo.getId(), lifecycleEvent));
-                        }
-                        return;
-                    }
                     if (type == EntityType.RULE_CHAIN || type == EntityType.INTEGRATION || type == EntityType.EXTENSION) {
                         entityInfos.forEach(entityInfo -> tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityInfo.getId(), lifecycleEvent));
                     } else if (type == EntityType.ADMIN_SETTINGS && gitServiceQueue.isPresent() && versionControlService.isPresent()) {
