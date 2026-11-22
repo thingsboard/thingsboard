@@ -68,3 +68,71 @@ def format_coordinates(group, name, version=''):
 
 
 HTTP_ERRORS = (urllib.error.URLError, http.client.HTTPException, OSError)
+
+_TEAMCITY_ESCAPE_TABLE = str.maketrans({
+    '|': '||',
+    "'": "|'",
+    '\n': '|n',
+    '\r': '|r',
+    '\u0085': '|x',
+    '\u2028': '|l',
+    '\u2029': '|p',
+    '[': '|[',
+    ']': '|]',
+})
+
+
+def escape_teamcity(text):
+    """Escapes a value for a TeamCity service message attribute."""
+    return text.translate(_TEAMCITY_ESCAPE_TABLE)
+
+
+def format_teamcity_problem(message, max_len=300):
+    """Builds a concise one-line summary for TeamCity's buildProblem description.
+
+    Preserves the headline and as many immediately following indented items (package/license lines)
+    as fit within max_len so the failure reason and offending packages appear directly on the build
+    summary and Slack alert.
+    """
+    lines = message.strip().splitlines()
+    if not lines:
+        return ''
+    headline = lines[0].strip()
+    items = []
+    for line in lines[1:]:
+        if line.startswith('  ') and line.strip():
+            items.append(line.strip())
+        else:
+            break
+
+    prefix = f'{headline} - '
+    shown = []
+    result = ''
+    for idx, item in enumerate(items):
+        remaining = len(items) - idx - 1
+        suffix = f' (+{remaining} more)' if remaining else ''
+        candidate = prefix + ', '.join([*shown, item]) + suffix
+        if len(candidate) <= max_len:
+            shown.append(item)
+            result = candidate
+            continue
+        if not shown:
+            budget = max_len - len(prefix) - len(suffix) - 3
+            if budget >= 10:
+                result = f'{prefix}{item[:budget].rstrip()}...{suffix}'
+        break
+
+    if result:
+        return result
+    if len(headline) <= max_len:
+        return headline
+    if max_len <= 3:
+        return headline[:max(0, max_len)]
+    return headline[:max_len - 3].rstrip() + '...'
+
+
+def emit_teamcity_problem(message):
+    """Emits a TeamCity buildProblem service message for a fail-closed stop."""
+    summary = format_teamcity_problem(message)
+    if summary:
+        print(f"##teamcity[buildProblem description='{escape_teamcity(summary)}']", flush=True)
