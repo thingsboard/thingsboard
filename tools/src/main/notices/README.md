@@ -67,7 +67,7 @@ Both PR and nightly TeamCity configurations can run the exact same repo-owned st
 4. **Verify notices**: `mvn -N exec:exec@notices-product` (writes `target/THIRD-PARTY-NOTICES` and fails on any policy/curation issue)
 5. **Upload new scans** (nightly/main config): `python3 tools/src/main/notices cache-upload`
 
-Use a persistent `NOTICES_CACHE_DIR` on TeamCity agents (not `%system.teamcity.build.tempDir%`) so warm builds make zero cache downloads.
+Use a persistent `NOTICES_CACHE_DIR` on TeamCity agents (not `%system.teamcity.build.tempDir%`) so warm builds make zero cache downloads, and give the nightly upload job its own directory (e.g. `NOTICES_CACHE_DIR=~/.cache/tb-notices-nightly`) so scans from unmerged PR builds on the same agent cannot be uploaded.
 
 ## Test
 

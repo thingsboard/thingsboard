@@ -49,7 +49,8 @@ class ScanCache:
     """Local + remote content-addressed scan cache."""
 
     def __init__(self, cache_dir=None, remote_url=None, concurrency=CONCURRENCY):
-        self.cache_dir = os.path.abspath(cache_dir or os.environ.get('NOTICES_CACHE_DIR') or DEFAULT_CACHE_DIR)
+        raw_dir = cache_dir or os.environ.get('NOTICES_CACHE_DIR') or DEFAULT_CACHE_DIR
+        self.cache_dir = os.path.abspath(os.path.expanduser(raw_dir))
         raw_url = remote_url if remote_url is not None else os.environ.get('NOTICES_SCAN_CACHE_URL', DEFAULT_CACHE_URL)
         self.remote_url = None if not raw_url or raw_url == 'none' else raw_url.rstrip('/')
         self._parsed_remote = None
