@@ -203,6 +203,44 @@ class ExtensionDataValidatorTest {
                 .hasMessageContaining("too long");
     }
 
+    // Only ${secret:name;type:TYPE} is resolved at deploy time. Any other form would reach the
+    // container as plain text, and the extension would still look healthy.
+    @Test
+    void rejectsEnvValueWithSecretReferenceWithoutType() {
+        Extension ext = validExtension();
+        ext.getContainerSpec().setEnv(Map.of("WEATHER_API_KEY", "${secret:weather-key}"));
+
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, ext))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("WEATHER_API_KEY")
+                .hasMessageContaining("malformed");
+    }
+
+    @Test
+    void rejectsEnvValueWithOneGoodAndOneBrokenSecretReference() {
+        Extension ext = validExtension();
+        ext.getContainerSpec().setEnv(Map.of("AUTH", "${secret:user;type:TEXT}:${secret:password;type}"));
+
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, ext))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("malformed");
+    }
+
+    @Test
+    void acceptsEnvValuesWithFullSecretReferencesAndPlainText() {
+        Extension ext = validExtension();
+        Map<String, String> env = new HashMap<>();
+        env.put("WEATHER_API_KEY", "${secret:weather-key;type:TEXT}");
+        env.put("AUTH_HEADER", "Bearer ${secret:token;type:TEXT}");
+        env.put("PAIR", "${secret:user;type:TEXT}:${secret:password;type:TEXT}");
+        env.put("PLAIN", "hello ${NOT_A_SECRET} world");
+        env.put("EMPTY", "");
+        env.put("NO_VALUE", null);
+        ext.getContainerSpec().setEnv(env);
+
+        assertThatCode(() -> validator.validateDataImpl(tenantId, ext)).doesNotThrowAnyException();
+    }
+
     @Test
     void rejectsInvalidEnvKey() {
         Extension ext = validExtension();

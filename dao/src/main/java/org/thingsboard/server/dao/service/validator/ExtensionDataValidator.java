@@ -58,6 +58,9 @@ public class ExtensionDataValidator extends DataValidator<Extension> {
     // validation form of the canonical placeholder shape defined (unanchored, with capture groups for
     // resolution) by DefaultSecretConfigurationService.SECRET_PATTERN; keep the body in sync with it.
     private static final Pattern SECRET_REF_PATTERN = Pattern.compile("^\\$\\{secret:[^;{}]+;type:[^;{}]+}$");
+    // The same shape, not anchored: an env value may hold a reference inside a longer string.
+    private static final Pattern SECRET_REF_IN_TEXT_PATTERN = Pattern.compile("\\$\\{secret:[^;{}]+;type:[^;{}]+}");
+    private static final String SECRET_REF_START = "${secret:";
     // Docker image reference WITHOUT tag/digest: optional registry host[:port] then lowercase repo path.
     private static final Pattern IMAGE_REFERENCE_PATTERN = Pattern.compile(
             "^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*(?::[0-9]+)?/)?"
@@ -220,12 +223,29 @@ public class ExtensionDataValidator extends DataValidator<Extension> {
             if (value != null && value.length() > MAX_ENV_VALUE_LENGTH) {
                 throw new DataValidationException("Extension containerSpec.env value for '" + key + "' is too long (max " + MAX_ENV_VALUE_LENGTH + ")!");
             }
+            if (value != null && hasMalformedSecretReference(value)) {
+                throw new DataValidationException("Extension containerSpec.env value for '" + key + "' has a malformed "
+                        + "ThingsBoard Secret reference! Use the form ${secret:name;type:TYPE}, e.g. ${secret:weather-key;type:TEXT}.");
+            }
             totalLength += key.length() + (value != null ? value.length() : 0);
         }
         if (totalLength > MAX_ENV_TOTAL_LENGTH) {
             throw new DataValidationException("Extension containerSpec.env is too large (" + totalLength
                     + " characters, max " + MAX_ENV_TOTAL_LENGTH + " in total)!");
         }
+    }
+
+    // Only a full ${secret:name;type:TYPE} is resolved at deploy time. A shorter form, for example
+    // ${secret:name}, would reach the container as plain text while the extension looks healthy.
+    private static boolean hasMalformedSecretReference(String value) {
+        int starts = 0;
+        for (int i = value.indexOf(SECRET_REF_START); i >= 0; i = value.indexOf(SECRET_REF_START, i + 1)) {
+            starts++;
+        }
+        if (starts == 0) {
+            return false;
+        }
+        return SECRET_REF_IN_TEXT_PATTERN.matcher(value).results().count() != starts;
     }
 
     private void validateResources(ResourceSpec resources) {
