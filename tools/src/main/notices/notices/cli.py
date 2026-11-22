@@ -52,11 +52,8 @@ CI_JAVA_ONLY_PREFIXES = (
     'application/src/main/sbom/',
 )
 
-# Paths that affect JS microservices, notices tooling, or global builds (require full check).
+# Paths that always require a full check (JS microservices and notices/SBOM tooling).
 CI_FULL_ONLY_PATHS = (
-    ':(glob)**/pom.xml',
-    ':(glob)**/package.json',
-    ':(glob)**/yarn.lock',
     'msa/web-report/api/',
     'msa/web-report/chromium.js',
     'msa/web-report/config/logger.ts',
@@ -69,8 +66,12 @@ CI_FULL_ONLY_PATHS = (
     'tools/src/main/notices/',
 )
 
-# All repository paths whose changes can alter the third-party notices (composed from the subsets above).
+# All repository paths whose changes can alter the third-party notices.
+# Multi-mode globs (pom.xml, package.json, yarn.lock) are classified per-path in classify_ci_changes().
 CI_WATCHED_PATHS = (
+    ':(glob)**/pom.xml',
+    ':(glob)**/package.json',
+    ':(glob)**/yarn.lock',
     *CI_FULL_ONLY_PATHS,
     *CI_UI_ONLY_PREFIXES,
     *sorted(CI_UI_ONLY_FILES),
