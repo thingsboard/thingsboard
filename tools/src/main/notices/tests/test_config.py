@@ -179,7 +179,11 @@ class ConfigAndCopyrightTests(unittest.TestCase):
                 )
             curations = load_curations(curations_path)
             policy = Policy(license_category={'Apache-2.0': 'notice', 'LicenseRef-used': 'notice'})
-            base_env = {'NOTICES_CACHE_DIR': os.path.join(tmp, 'cache'), 'NOTICES_SCAN_CACHE_URL': 'none'}
+            base_env = {
+                'NOTICES_CACHE_DIR': os.path.join(tmp, 'cache'),
+                'NOTICES_SCAN_CACHE_URL': 'none',
+                'NOTICES_SKIP_UNUSED_CURATIONS': '',
+            }
 
             with mock.patch('notices.cli.load_policy', return_value=policy), \
                  mock.patch('notices.cli.load_curations', return_value=curations):
@@ -211,6 +215,16 @@ class ConfigAndCopyrightTests(unittest.TestCase):
                 self.assertEqual(rc, 0)
                 self.assertTrue(os.path.exists(out_single))
                 self.assertNotIn('matched no shipped package', buf_single.getvalue())
+
+                # 4. --sboms-under + NOTICES_SKIP_UNUSED_CURATIONS=true (java-only CI mode): skips unused check
+                out_skip = os.path.join(tmp, 'skip.txt')
+                buf_skip = io.StringIO()
+                env_skip = {**base_env, 'NOTICES_SKIP_UNUSED_CURATIONS': 'true', 'NOTICES_FAIL_ON_UNUSED_CURATIONS': 'true'}
+                with mock.patch.dict(os.environ, env_skip, clear=False), contextlib.redirect_stdout(buf_skip):
+                    rc = main(['render', '--project-version', '1.0.0', '--out', out_skip, '--sboms-under', tmp])
+                self.assertEqual(rc, 0)
+                self.assertTrue(os.path.exists(out_skip))
+                self.assertNotIn('matched no shipped package', buf_skip.getvalue())
 
 
 if __name__ == '__main__':
