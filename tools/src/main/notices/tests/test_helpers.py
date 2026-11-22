@@ -58,8 +58,8 @@ class HelpersTests(unittest.TestCase):
 
     def test_escape_and_format_teamcity_problem(self):
         self.assertEqual(
-            escape_teamcity("a|b'c[d]e\nf\rg"),
-            "a||b|'c|[d|]e|nf|rg",
+            escape_teamcity("a|b'c[d]e\nf\rg\u0085h\u2028i\u2029j"),
+            "a||b|'c|[d|]e|nf|rg|xh|li|pj",
         )
         msg = (
             'Third-party notices: these packages are under licenses that ThingsBoard cannot ship.\n'
@@ -76,6 +76,7 @@ class HelpersTests(unittest.TestCase):
         self.assertLessEqual(len(truncated), 145)
         self.assertIn('pkg:maven/com.example/a@1.0: GPL-3.0-only', truncated)
         self.assertTrue(truncated.endswith('(+1 more)'))
+        self.assertEqual(format_teamcity_problem('Hello world', max_len=2), 'He')
 
     def test_main_emits_teamcity_build_problem_only_on_teamcity(self):
         cmd = [sys.executable, NOTICES_DIR, 'render', '--project-version', '1.0', '--out', '/dev/null']
