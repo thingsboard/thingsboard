@@ -53,8 +53,12 @@ def scan_cache_key(scancode_version, source):
 
 
 def _validate_scan_record(record, origin):
-    if not isinstance(record, dict) or not isinstance(record.get('findings'), list) or not isinstance(record.get('notices', []), list):
-        raise ValueError(f'malformed scan record in {origin} (expected JSON object with list "findings")')
+    if (
+        not isinstance(record, dict)
+        or not isinstance(record.get('findings'), list)
+        or not isinstance(record.get('notices'), list)
+    ):
+        raise ValueError(f'malformed scan record in {origin} (expected JSON object with list "findings" and "notices")')
     return record
 
 

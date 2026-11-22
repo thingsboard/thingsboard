@@ -3,15 +3,15 @@
   "version": "4.4.1",
   "scripts": {
     "ng": "ng",
-    "start": "node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
-    "build": "ng build",
-    "build:prod": "node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng build --configuration production --stats-json",
+    "start": "node inline-fonts.js && node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
+    "build": "node inline-fonts.js && ng build",
+    "build:prod": "node inline-fonts.js && node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng build --configuration production --stats-json",
     "compress": "node compress-build.js",
     "build:types": "node generate-types.js",
     "build:icon-metadata": "node generate-icon-metadata.js",
     "sbom": "node ../tools/src/main/javascript/yarn-sbom.js target/generated-resources/META-INF/sbom/ui-ngx.cdx.json library --angular-stats target/generated-resources/public/stats.json",
     "lint": "ng lint",
-    "prepare": "patch-package --error-on-fail"
+    "prepare": "patch-package --error-on-fail && node inline-fonts.js"
   },
   "private": true,
   "dependencies": {

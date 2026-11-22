@@ -209,9 +209,10 @@ def scan_sources_with_scancode(items, batch_size=SCAN_BATCH_SIZE):
 
             print(f'Running ScanCode on {len(batch)} uncached package(s) ...', flush=True)
             out_json = os.path.join(work, 'scancode.json')
-            cmd = [
-                'docker', 'run', '--rm',
-                '-u', f'{os.getuid()}:{os.getgid()}',
+            cmd = ['docker', 'run', '--rm']
+            if hasattr(os, 'getuid'):
+                cmd.extend(['-u', f'{os.getuid()}:{os.getgid()}'])
+            cmd.extend([
                 '-v', f'{work}:/work',
                 '--entrypoint', 'scancode',
                 image,
@@ -219,24 +220,33 @@ def scan_sources_with_scancode(items, batch_size=SCAN_BATCH_SIZE):
                 '--timeout', '300',
                 '--processes', str(min(os.cpu_count() or 4, 14)),
                 '--json', '/work/scancode.json', '/work/src',
-            ]
+            ])
 
             try:
                 proc = subprocess.run(cmd, capture_output=True, text=True)
             except FileNotFoundError:
                 raise stop('docker is required to scan uncached packages, but `docker` was not found in PATH.')
-            if proc.returncode != 0 or not os.path.exists(out_json):
-                purls = ', '.join(purl for _, purl, _ in batch[:5])
-                suffix = f' (+{len(batch) - 5} more)' if len(batch) > 5 else ''
-                raise stop(
-                    f'ScanCode failed for batch ({purls}{suffix}, exit {proc.returncode}):\n'
-                    f'{(proc.stderr or proc.stdout)[-1500:]}'
-                )
-            with open(out_json, encoding='utf-8') as file:
-                raw = json.load(file)
-            records = _normalize_scancode_batch(raw, sources_by_key, notices_by_key)
-            for key, _, _ in batch:
-                yield key, records[key]
+            raw = None
+            if os.path.exists(out_json):
+                try:
+                    with open(out_json, encoding='utf-8') as file:
+                        raw = json.load(file)
+                except (OSError, json.JSONDecodeError):
+                    raw = None
+            if raw is not None:
+                # Parse even on non-zero exit (ScanCode exits 1 on per-file scan_errors while still writing JSON)
+                # so _normalize_scancode_batch can surface per-source URL/path errors instead of opaque key hashes.
+                records = _normalize_scancode_batch(raw, sources_by_key, notices_by_key)
+                if proc.returncode == 0:
+                    for key, _, _ in batch:
+                        yield key, records[key]
+                    continue
+            purls = ', '.join(purl for _, purl, _ in batch[:5])
+            suffix = f' (+{len(batch) - 5} more)' if len(batch) > 5 else ''
+            raise stop(
+                f'ScanCode failed for batch ({purls}{suffix}, exit {proc.returncode}):\n'
+                f'{(proc.stderr or proc.stdout)[-1500:]}'
+            )
 
 
 def _fetch_and_extract(source, target_dir):

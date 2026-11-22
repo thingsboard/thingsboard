@@ -16,6 +16,7 @@ YEAR_PATTERN = re.compile(
 )
 SINGLE_YEAR_RE = re.compile(r'^\d{4}$')
 YEAR_RANGE_RE = re.compile(r'^(\d{4})\s*-\s*(\d{4})$')
+OPEN_RANGE_TAIL_RE = re.compile(r'^\s*[-–—]')
 SYMBOL_RE = re.compile(r'\s*\(c\)', re.IGNORECASE)
 
 
@@ -44,6 +45,10 @@ def process_copyrights(statements, garbage):
             unparsed.add(stmt)
             continue
         prefix, years_text, rest = match.group('prefix'), match.group('years'), match.group('rest')
+        # Preserve open-ended or en/em-dash ranges verbatim (e.g. "2011-present", "2004-", "2014–2020").
+        if OPEN_RANGE_TAIL_RE.match(rest):
+            unparsed.add(stmt)
+            continue
         years = _parse_years(years_text)
         if not years:
             unparsed.add(stmt)

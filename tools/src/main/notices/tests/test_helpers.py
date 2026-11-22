@@ -18,7 +18,7 @@ from notices import NOTICES_DIR, escape_teamcity, format_teamcity_problem, write
 from notices.cli import classify_ci_changes
 from notices.license_files import collect_license_files, filter_platforms
 from notices.sbom import LicenseFileRef
-from notices.lwm2m import identify_license, parse_header
+from notices.lwm2m import identify_license, parse_header, read_models
 from notices.render import _extract_from_scancode_image
 from notices.scanner import (
     SCANCODE_VERSION,
@@ -56,6 +56,18 @@ class HelpersTests(unittest.TestCase):
         copyrights, text = parse_header(xml)
         self.assertEqual(copyrights, ['Copyright 2020 OMA.'])
         self.assertEqual(identify_license(text, '1.xml'), 'MIT')
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with open(os.path.join(tmp, '1.xml'), 'w', encoding='utf-8') as f:
+                f.write(xml)
+            with open(os.path.join(tmp, '10244.xml'), 'w', encoding='utf-8') as f:
+                f.write('<?xml version="1.0"?><LWM2M/>')
+            groups = read_models(tmp)
+            self.assertEqual(len(groups), 1)
+            with open(os.path.join(tmp, '99999.xml'), 'w', encoding='utf-8') as f:
+                f.write('<?xml version="1.0"?><LWM2M/>')
+            with self.assertRaisesRegex(SystemExit, '99999.xml.*no leading XML license header'):
+                read_models(tmp)
 
     def test_is_notice_path(self):
         self.assertTrue(is_notice_path('META-INF/NOTICE'))
@@ -268,6 +280,23 @@ class HelpersTests(unittest.TestCase):
         self.assertEqual(set(results.keys()), {'k1', 'k2', 'k3'})
         for k in ('k1', 'k2', 'k3'):
             self.assertEqual(results[k]['findings'], [{'path': 'index.js', 'licenses': ['Apache-2.0'], 'copyrights': []}])
+
+        # Non-zero ScanCode exit with per-file scan_errors in JSON must surface the exact source URL/path
+        def fake_run_with_scan_error(cmd, **kwargs):
+            mount = cmd[cmd.index('-v') + 1]
+            host_work = mount.split(':', 1)[0]
+            with open(os.path.join(host_work, 'scancode.json'), 'w', encoding='utf-8') as out:
+                json.dump({
+                    'headers': [{'tool_version': SCANCODE_VERSION}],
+                    'files': [{'type': 'file', 'path': 'k1/bad.js', 'scan_errors': ['decode error']}],
+                }, out)
+            return subprocess.CompletedProcess(cmd, 1, '', 'generic stderr')
+
+        with mock.patch('notices.scanner._fetch_and_extract', side_effect=fake_fetch), \
+             mock.patch('notices.scanner.subprocess.run', side_effect=fake_run_with_scan_error):
+            with self.assertRaises(SystemExit) as ctx:
+                list(scan_sources_with_scancode(items[:1]))
+        self.assertIn('https://example/a.tgz (bad.js): decode error', str(ctx.exception))
 
     def test_classify_ci_changes_modes(self):
         self.assertEqual(classify_ci_changes([]), 'none')

@@ -20,6 +20,10 @@ from notices.spdx import SpdxSyntaxError, leaves as spdx_leaves, parse as parse_
 MODELS_REL = 'application/src/main/data/lwm2m-registry'
 POM_REL = 'application/pom.xml'
 COMPONENT_NAME = 'lwm2m-registry'
+# Upstream OMA models that have no leading license comment (accepted risk):
+# 10244.xml (Works System VehicleControlUnit) was committed to OpenMobileAlliance/lwm2m-registry
+# in Nov 2018 before OMA enforced per-file headers and was never backfilled.
+HEADERLESS_MODELS = frozenset({'10244.xml'})
 
 COPYRIGHT_RE = re.compile(r'^\s*Copyright\s*(\(c\)|©)?\s*\d', re.IGNORECASE)
 INTRODUCTION = '''\
@@ -54,7 +58,12 @@ def read_models(directory):
         except OSError as err:
             raise stop(f'could not read LwM2M model {name}: {err}')
         if not found:
-            continue
+            if name in HEADERLESS_MODELS:
+                continue
+            raise stop(
+                f'LwM2M object model {name} in {MODELS_REL} has no leading XML license header comment. '
+                'Verify its upstream license, or remove the model if unlicensed.'
+            )
         copyrights, text = found
         key = ' '.join(text.split())
         if key not in groups:
@@ -95,7 +104,8 @@ def identify_license(text, name):
     raise stop(
         f'the header of the LwM2M object model {name} is not a license that notices/lwm2m.py knows: '
         'Apache-2.0, MIT, BSD-2-Clause or BSD-3-Clause. Find out which license it is, add it to '
-        f'identify_license() and to the license of {COMPONENT_NAME} in {POM_REL}.'
+        f'identify_license(), update the license of {COMPONENT_NAME} in {POM_REL}, and update the '
+        'LwM2M registry section of root THIRD-PARTY-NOTICES.'
     )
 
 
@@ -122,7 +132,8 @@ def check_pom_license(licenses, pom_path):
         expected = ' AND '.join(sorted(licenses))
         raise stop(
             f'the license of the bundled component {COMPONENT_NAME} in {POM_REL} is "{expressions[0]}", '
-            f'and the headers of the models give {expected}. Set it to "{expected}".'
+            f'and the headers of the models give {expected}. Set it to "{expected}" and update the '
+            'LwM2M registry section of root THIRD-PARTY-NOTICES.'
         )
 
 

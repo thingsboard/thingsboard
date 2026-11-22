@@ -171,21 +171,33 @@ def _load_single_license_text(identifier, custom_licenses, cache_dir):
     if identifier in custom_licenses:
         return custom_licenses[identifier]
     safe = re.sub(r'[^A-Za-z0-9._-]', '_', identifier)
-    cached = os.path.join(cache_dir, 'license-texts', f'{safe}.txt')
-    if os.path.exists(cached):
-        with open(cached, encoding='utf-8') as file:
+    is_scancode = identifier.startswith('LicenseRef-scancode-')
+    primary_dir = f'scancode-{SCANCODE_VERSION}' if is_scancode else f'spdx-{SPDX_VERSION}'
+    primary_cache = os.path.join(cache_dir, 'license-texts', primary_dir, f'{safe}.txt')
+    if os.path.exists(primary_cache):
+        with open(primary_cache, encoding='utf-8') as file:
             return file.read().strip('\n')
 
     text = _fetch_upstream_license_text(identifier)
-    if text is None:
-        text = _extract_from_scancode_image(identifier)
+    if text is not None:
+        text = normalize_text(text)
+        write_atomically(primary_cache, (text + '\n').encode('utf-8'))
+        return text
+
+    # Offline fallback: store ScanCode-extracted text under scancode-<version> so a transient SPDX fetch
+    # failure never pins a ScanCode variant inside the spdx-<version> cache.
+    fallback_cache = os.path.join(cache_dir, 'license-texts', f'scancode-{SCANCODE_VERSION}', f'{safe}.txt')
+    if os.path.exists(fallback_cache):
+        with open(fallback_cache, encoding='utf-8') as file:
+            return file.read().strip('\n')
+    text = _extract_from_scancode_image(identifier)
     if text is None:
         raise stop(
             f'license text for {identifier!r} could not be fetched from SPDX/ScanCode. '
             'If it is a custom license, add it under [custom_licenses] in tools/src/main/notices/curations.toml.'
         )
     text = normalize_text(text)
-    write_atomically(cached, (text + '\n').encode('utf-8'))
+    write_atomically(fallback_cache, (text + '\n').encode('utf-8'))
     return text
 
 

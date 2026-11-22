@@ -15,7 +15,8 @@ from notices.spdx import License
 def _policy():
     return Policy(
         own_modules=frozenset(),
-        exclude_paths=('**/test/**', '**/docs/**', '**/*.map'),
+        exclude_paths=('**/*.map', '**/pom.xml'),
+        source_tree_exclude_paths=('**/test/**', '**/docs/**'),
         same_category_preference={'Apache-2.0': 0, 'MIT': 1},
         license_category={
             'Apache-2.0': 'notice',
@@ -125,6 +126,23 @@ class PolicyTests(unittest.TestCase):
             resolve_all({pkg.purl: pkg}, {pkg.purl: {'type': 'artifact', 'url': 'https://example/src.jar', 'sha1': 'a' * 40}}, scan_unignored, _policy(), curations)
         self.assertIn('GPL-3.0-only', str(ctx.exception))
 
+        # Compound expressions: ignoring one leaf keeps remaining leaves; forbidden sibling still stops
+        comp_curations = Curations((
+            Curation(
+                raw_id=pkg.package_key, package_key=pkg.package_key, version_spec='',
+                ignore_findings=(IgnoreFinding(path='src/**', licenses=frozenset({'EPL-2.0', 'MIT'})),),
+            ),
+        ))
+        src = {pkg.purl: {'type': 'artifact', 'url': 'https://example/src.jar', 'sha1': 'a' * 40}}
+        scan_or = {pkg.purl: {'findings': [{'path': 'src/A.java', 'licenses': ['BSD-3-Clause OR EPL-2.0'], 'copyrights': []}]}}
+        resolved_or = resolve_all({pkg.purl: pkg}, src, scan_or, _policy(), comp_curations)
+        self.assertEqual(resolved_or[0].licenses, (License('Apache-2.0'), License('BSD-3-Clause')))
+
+        scan_and_gpl = {pkg.purl: {'findings': [{'path': 'src/A.java', 'licenses': ['MIT AND GPL-3.0-only'], 'copyrights': []}]}}
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({pkg.purl: pkg}, src, scan_and_gpl, _policy(), comp_curations)
+        self.assertIn('GPL-3.0-only', str(ctx.exception))
+
     def test_with_exception_not_silenced_by_base_id_ignore_or_missing_scan_record(self):
         # Ignoring bare GPL-2.0-only must NOT silently ignore GPL-2.0-only WITH Classpath-exception-2.0
         pkg = _pkg(declared=('Apache-2.0',))
@@ -230,6 +248,53 @@ class PolicyTests(unittest.TestCase):
             resolve_all({}, {}, {}, _policy(), Curations(), license_files={empty_ref})
         self.assertIn('no license was found', str(ctx.exception))
         self.assertIn('mystery 1.0', str(ctx.exception))
+
+    def test_multi_declared_or_for_maven_and_cumulative_for_npm(self):
+        # Maven: multiple <license> entries are a choice (OR) -> Apache-2.0 wins over GPL-3.0-only
+        mvn_pkg = _pkg(purl='pkg:maven/com.example/lib@1.0.0', declared=('Apache-2.0', 'GPL-3.0-only'))
+        resolved = resolve_all({mvn_pkg.purl: mvn_pkg}, {mvn_pkg.purl: {'type': 'metadata_only'}}, {}, _policy(), Curations())
+        self.assertEqual(resolved[0].licenses, (License('Apache-2.0'),))
+
+        # npm: multiple declared entries are cumulative (AND) -> GPL-3.0-only stops as forbidden
+        npm_pkg = _pkg(purl='pkg:npm/example-lib@1.0.0', declared=('Apache-2.0', 'GPL-3.0-only'))
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({npm_pkg.purl: npm_pkg}, {npm_pkg.purl: {'type': 'metadata_only'}}, {}, _policy(), Curations())
+        self.assertIn('GPL-3.0-only', str(ctx.exception))
+
+    def test_unscanned_unlicensed_excludes_and_concluded_skips_scan_licenses(self):
+        # Package with no source fails closed as unscanned
+        pkg = _pkg(declared=('Apache-2.0',))
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({pkg.purl: pkg}, {pkg.purl: None}, {}, _policy(), Curations())
+        self.assertIn('cannot be found', str(ctx.exception))
+
+        # Package with no declared license and empty scan fails closed as unlicensed
+        empty_pkg = _pkg(declared=())
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({empty_pkg.purl: empty_pkg}, {empty_pkg.purl: {'type': 'metadata_only'}}, {}, _policy(), Curations())
+        self.assertIn('no license was found', str(ctx.exception))
+
+        # exclude_paths: npm tarball excludes test/ directory; Maven -sources.jar does NOT exclude Java test package
+        npm_pkg = _pkg(purl='pkg:npm/demo@1.0.0', declared=('MIT',))
+        npm_src = {npm_pkg.purl: {'type': 'artifact', 'url': 'https://registry.npmjs.org/demo/-/demo-1.0.0.tgz', 'sha1': 'a' * 40}}
+        npm_scan = {npm_pkg.purl: {'findings': [{'path': 'test/fixture.js', 'licenses': ['GPL-3.0-only'], 'copyrights': []}]}}
+        resolved_npm = resolve_all({npm_pkg.purl: npm_pkg}, npm_src, npm_scan, _policy(), Curations())
+        self.assertEqual(resolved_npm[0].licenses, (License('MIT'),))
+
+        mvn_src = {pkg.purl: {'type': 'artifact', 'url': 'https://repo1.maven.org/maven2/com/example/lib/1.0.0/lib-1.0.0-sources.jar', 'sha1': 'a' * 40}}
+        mvn_scan_test_pkg = {pkg.purl: {'findings': [{'path': 'org/springframework/test/Helper.java', 'licenses': ['GPL-3.0-only'], 'copyrights': []}]}}
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({pkg.purl: pkg}, mvn_src, mvn_scan_test_pkg, _policy(), Curations())
+        self.assertIn('GPL-3.0-only', str(ctx.exception))
+
+        # concluded_license skips scanned licenses (even forbidden ones) while preserving copyrights
+        concluded_cur = Curations((
+            Curation(raw_id=pkg.purl, package_key=pkg.package_key, version_spec='1.0.0', concluded_license='MIT'),
+        ))
+        concluded_scan = {pkg.purl: {'findings': [{'path': 'src/A.java', 'licenses': ['GPL-3.0-only'], 'copyrights': ['Copyright 2025 Demo']}]}}
+        resolved_conc = resolve_all({pkg.purl: pkg}, mvn_src, concluded_scan, _policy(), concluded_cur)
+        self.assertEqual(resolved_conc[0].licenses, (License('MIT'),))
+        self.assertEqual(resolved_conc[0].copyrights, ('Copyright 2025 Demo',))
 
 
 if __name__ == '__main__':

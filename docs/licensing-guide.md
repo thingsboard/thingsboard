@@ -112,7 +112,7 @@ CI checks a pull request when it comes from a member of the ThingsBoard organiza
 that can affect the notices (see `CI_WATCHED_PATHS` in `tools/src/main/notices/notices/cli.py` — build/dependency files,
 UI sources/config/patches/esbuild, bundled fonts, LwM2M models, gateway extension, Chromium/web-report files,
 `yarn-sbom.js`, and `tools/src/main/notices/`).
-It builds the merge with SBOMs and runs `mvn -N exec:exec@notices-product` to verify every shipped dependency against
+It builds the pull request with SBOMs and runs `mvn -N exec:exec@notices-product` to verify every shipped dependency against
 the license policy and curations. Other pull requests from members pass in seconds. For pull requests from outside the
 organization, a maintainer runs the check before merging.
 

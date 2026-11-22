@@ -40,6 +40,11 @@
         <sbom.image.scanExclude>${pkg.installFolder}/**</sbom.image.scanExclude>
         <!-- Set to package by the modules whose image installs npm packages itself: see the notices-image execution -->
         <notices.image.phase>none</notices.image.phase>
+        <!-- Image notices follow notices.skip (not notices.run.skip) so partial Docker builds with -Dpkg.skip=true
+             still generate THIRD-PARTY-NOTICES. Skipped only when the module's yarn/UI SBOM itself is skipped. -->
+        <notices.yarn.skip>${notices.skip}</notices.yarn.skip>
+        <notices.ui.skip>${notices.yarn.skip}</notices.ui.skip>
+        <notices.image.skip>${notices.ui.skip}</notices.image.skip>
     </properties>
 
     <modules>
@@ -109,6 +114,7 @@
             </activation>
             <properties>
                 <pkg.deb.phase>none</pkg.deb.phase>
+                <notices.yarn.skip>true</notices.yarn.skip>
             </properties>
         </profile>
         <profile>
@@ -121,6 +127,7 @@
             </activation>
             <properties>
                 <pkg.deb.phase>none</pkg.deb.phase>
+                <notices.ui.skip>true</notices.ui.skip>
             </properties>
         </profile>
         <!-- Activated by -Ddocker.skip.latest.tag=true, which stops the LTS profiles pushing the latest tag:
@@ -370,7 +377,7 @@
                                 <goal>exec</goal>
                             </goals>
                             <configuration>
-                                <skip>${notices.run.skip}</skip>
+                                <skip>${notices.image.skip}</skip>
                                 <executable>python3</executable>
                                 <arguments>
                                     <argument>${main.dir}/tools/src/main/notices</argument>

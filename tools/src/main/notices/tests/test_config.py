@@ -14,7 +14,7 @@ from unittest import mock
 from notices.cli import _emit_unused_curations_warning, _parse_env_bool, _unused_curations_message, main
 from notices.config import Policy, covers, load_curations, load_policy, split_curation_id
 from notices.copyrights import process_copyrights
-from notices.policy import ResolvedPackage
+from notices.policy import ResolvedPackage, resolve_all
 from notices.sbom import PackageComponent
 from notices.spdx import License
 
@@ -93,14 +93,26 @@ class ConfigAndCopyrightTests(unittest.TestCase):
                 'Copyright © 2022-2023 Example Corp.',
                 'Copyright (c) 1989, 1991 Free Software Foundation, Inc.',
                 'Copyright 2010-2015-2020 Weird Range Inc.',
+                'Copyright 2011-present the original author or authors',
+                'Copyright 2025-present the original author or authors',
+                'Copyright (c) 2004- Tatu Saloranta',
+                'Copyright (c) 2005- Tatu Saloranta',
+                'Copyright 2014–2020 En Dash Corp.',
+                'Copyright 2015–2020 En Dash Corp.',
             ],
             garbage=frozenset({'Copyright (c) 1989, 1991 Free Software Foundation, Inc.'}),
         )
         self.assertEqual(
             result,
             [
+                'Copyright (c) 2004- Tatu Saloranta',
+                'Copyright (c) 2005- Tatu Saloranta',
                 'Copyright (c) 2020-2023 Example Corp.',
                 'Copyright 2010-2015-2020 Weird Range Inc.',
+                'Copyright 2011-present the original author or authors',
+                'Copyright 2014–2020 En Dash Corp.',
+                'Copyright 2015–2020 En Dash Corp.',
+                'Copyright 2025-present the original author or authors',
             ],
         )
 
@@ -230,6 +242,45 @@ class ConfigAndCopyrightTests(unittest.TestCase):
                 self.assertEqual(rc, 0)
                 self.assertTrue(os.path.exists(out_skip))
                 self.assertNotIn('matched no shipped package', buf_skip.getvalue())
+
+    def test_unused_ignore_findings_reports_unmatched_rule_per_package(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'curations.toml')
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(
+                    '[[curations]]\n'
+                    'ids = ["pkg:npm/used-rule", "pkg:npm/dead-rule"]\n'
+                    'ignore_findings = [\n'
+                    '  { path = "**/*.js", licenses = ["ODbL-1.0"], comment = "test" },\n'
+                    ']\n'
+                )
+            curations = load_curations(path)
+            policy = Policy(license_category={'MIT': 'notice', 'ODbL-1.0': 'forbidden'})
+            pkg_used = PackageComponent(
+                purl='pkg:npm/used-rule@1.0.0', package_key='pkg:npm/used-rule',
+                kind='npm', group='', name='used-rule', version='1.0.0',
+                declared_raw=('MIT',), named_raw=frozenset(), npm_tarball=None, vcs=None,
+            )
+            pkg_dead = PackageComponent(
+                purl='pkg:npm/dead-rule@1.0.0', package_key='pkg:npm/dead-rule',
+                kind='npm', group='', name='dead-rule', version='1.0.0',
+                declared_raw=('MIT',), named_raw=frozenset(), npm_tarball=None, vcs=None,
+            )
+            packages = {pkg_used.purl: pkg_used, pkg_dead.purl: pkg_dead}
+            sources = {p: {'type': 'artifact', 'url': 'https://example/x.tgz', 'sha1': '0' * 40} for p in packages}
+            scans = {
+                pkg_used.purl: {'findings': [{'path': 'dist/a.js', 'licenses': ['ODbL-1.0'], 'copyrights': []}]},
+                pkg_dead.purl: {'findings': [{'path': 'dist/b.js', 'licenses': ['MIT'], 'copyrights': []}]},
+            }
+            matched_ignores = set()
+            resolved = resolve_all(packages, sources, scans, policy, curations, matched_ignores=matched_ignores)
+            self.assertEqual(
+                curations.unused_ignores(packages.values(), matched_ignores),
+                ["pkg:npm/dead-rule ignore_findings['**/*.js']"],
+            )
+            msg = _unused_curations_message(curations, packages.values(), resolved, matched_ignores=matched_ignores)
+            self.assertIn("pkg:npm/dead-rule ignore_findings['**/*.js']", msg)
+            self.assertNotIn('pkg:npm/used-rule', msg)
 
 
 if __name__ == '__main__':

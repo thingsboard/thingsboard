@@ -54,12 +54,8 @@ CI_JAVA_ONLY_PREFIXES = (
 
 # Paths that always require a full check (JS microservices and notices/SBOM tooling).
 CI_FULL_ONLY_PATHS = (
-    'msa/web-report/api/',
-    'msa/web-report/chromium.js',
-    'msa/web-report/config/logger.ts',
-    'msa/web-report/inspectorShim.ts',
-    'msa/web-report/install.js',
-    'msa/web-report/server.ts',
+    ':(glob)msa/web-report/**/*.ts',
+    ':(glob)msa/web-report/**/*.js',
     'msa/web-report/tsconfig.json',
     'msa/web-report/chromium-credits/',
     'tools/src/main/javascript/yarn-sbom.js',
@@ -213,12 +209,17 @@ def cmd_render(args):
                 npm_notices.setdefault(item['text'], set()).add((pkg.coordinates, item['path']))
 
     # Policy evaluation (fail-closed)
+    matched_ignores = set()
     resolved = resolve_all(
         inventory.packages, sources, scan_records, policy, curations,
         declared_by_purl=declared_by_purl, license_files=inventory.license_files,
+        matched_ignores=matched_ignores,
     )
     check_unused = bool(args.sboms_under) and not _parse_env_bool('NOTICES_SKIP_UNUSED_CURATIONS')
-    unused_body = _unused_curations_message(curations, inventory.packages.values(), resolved) if check_unused else None
+    unused_body = (
+        _unused_curations_message(curations, inventory.packages.values(), resolved, matched_ignores=matched_ignores)
+        if check_unused else None
+    )
     if unused_body and fail_on_unused:
         raise stop(unused_body)
 
@@ -256,7 +257,7 @@ def cmd_render(args):
     return 0
 
 
-def _unused_curations_message(curations, packages, resolved):
+def _unused_curations_message(curations, packages, resolved, matched_ignores=None):
     used_licenses = {CE_LICENSE}
     for pkg in resolved:
         for lic in pkg.licenses:
@@ -268,13 +269,14 @@ def _unused_curations_message(curations, packages, resolved):
                 if lic.exception:
                     used_licenses.add(lic.exception)
     unused_curations, unused_custom = curations.unused(packages, used_licenses=used_licenses)
-    unused = unused_curations + [f'[custom_licenses] {name}' for name in unused_custom]
+    unused_ignores = curations.unused_ignores(packages, matched_ignores) if matched_ignores is not None else []
+    unused = unused_curations + unused_ignores + [f'[custom_licenses] {name}' for name in unused_custom]
     if not unused:
         return None
     lines = ''.join(f'  {item}\n' for item in unused)
     noun = 'entry' if len(unused) == 1 else 'entries'
     return (
-        f'{len(unused)} {noun} in {CURATIONS_REL} matched no shipped package.\n'
+        f'{len(unused)} {noun} in {CURATIONS_REL} matched no shipped package or scan finding.\n'
         + lines
         + f'Remove obsolete entries from {CURATIONS_REL}.'
     )

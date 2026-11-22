@@ -100,6 +100,7 @@ declared_license = "Apache-2.0 AND SAX-PD AND W3C"
 ignore_findings = [
   { path = "LICENSE.*", licenses = ["W3C-19980720", "LicenseRef-scancode-w3c-docs-20021231"], comment = "License folder lists other W3C variants; package is Apache-2.0 AND SAX-PD AND W3C." },
   { path = "org/w3c/**", licenses = ["W3C-19980720", "LicenseRef-scancode-w3c-docs-20021231"], comment = "W3C license variant covered under W3C." },
+  { path = "org/xml/sax/helpers/ParserFactory.java", licenses = ["NOASSERTION WITH Classpath-exception-2.0"], comment = "False positive on '@exception ... (check your CLASSPATH)' Javadoc in SAX Public Domain file." },
 ]
 comment = "Three parts under three licenses that all apply, not a choice: org.w3c.dom (W3C), org.xml.sax (SAX-PD), javax.xml (Apache-2.0)."
 
@@ -111,11 +112,6 @@ comment = "Three parts under three licenses that all apply, not a choice: org.w3
 id = "pkg:maven/com.sun.mail/jakarta.mail@[2.0,3.0["
 concluded_license = "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0"
 comment = "The pom also declares EDL 1.0 (BSD-3-Clause), but 260 of 262 source files have only 'EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0'."
-
-[[curations]]
-id = "pkg:maven/org.openjdk.nashorn/nashorn-core@[15.0,16.0["
-concluded_license = "GPL-2.0-only WITH Classpath-exception-2.0"
-comment = "No other license is offered. Covered by the written offer in the notices."
 
 [[curations]]
 ids = [
@@ -143,7 +139,7 @@ ignore_findings = [
 [[curations]]
 id = "pkg:maven/jakarta.activation/jakarta.activation-api"
 ignore_findings = [
-  { path = "META-INF/NOTICE.md", licenses = ["GPL-2.0-only", "GPL-2.0-only WITH Classpath-exception-2.0", "EPL-2.0", "EPL-1.0", "Apache-2.0", "MIT", "OFL-1.1", "W3C"], comment = "Eclipse legal NOTICE.md (already included verbatim in NOTICE files); jar code is BSD-3-Clause." },
+  { path = "META-INF/NOTICE.md", licenses = ["GPL-2.0-only", "GPL-2.0-only WITH Classpath-exception-2.0", "NOASSERTION WITH Classpath-exception-2.0", "EPL-2.0", "EPL-1.0", "Apache-2.0", "MIT", "OFL-1.1", "W3C"], comment = "Eclipse legal NOTICE.md (already included verbatim in NOTICE files); jar code is BSD-3-Clause." },
 ]
 
 [[curations]]
@@ -228,6 +224,12 @@ ignore_findings = [
 ]
 
 [[curations]]
+id = "pkg:maven/org.openjdk.nashorn/nashorn-core"
+ignore_findings = [
+  { path = "LICENSE", licenses = ["GPL-2.0-only WITH LicenseRef-scancode-oracle-openjdk-exception-2.0"], comment = "OpenJDK LICENSE file with the Classpath exception; ScanCode tags the preamble separately from Classpath-exception-2.0." },
+]
+
+[[curations]]
 id = "pkg:maven/org.opensmpp/opensmpp-core"
 ignore_findings = [
   { path = "org/smpp/**/*.java", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "Stale Logica header; project relicensed to BSD-3-Clause (see LICENSE)." },
@@ -283,6 +285,7 @@ ignore_findings = [
 id = "pkg:maven/xml-apis/xml-apis-ext"
 ignore_findings = [
   { path = "KEYS", licenses = ["LicenseRef-scancode-proprietary-license"], comment = "False positive on PGP key block in KEYS file." },
+  { path = "**/org/xml/sax/helpers/ParserFactory.java", licenses = ["NOASSERTION WITH Classpath-exception-2.0"], comment = "False positive on '@exception ... (check your CLASSPATH)' Javadoc in SAX Public Domain file." },
 ]
 
 [[curations]]
@@ -301,21 +304,21 @@ ignore_findings = [
 id = "pkg:npm/ace-linters"
 ignore_findings = [
   { path = "**/typescript-service.js", licenses = ["mplus"], comment = "ScanCode misreads 'ieee754. BSD-3-Clause License.' as M+ fonts license." },
+  { path = "**/build/ace-language-client.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
+  { path = "**/build/ace-linters.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
 ]
 
 [[curations]]
-ids = [
-  "pkg:npm/ace-linters",
-  "pkg:npm/hugerte",
-]
+id = "pkg:npm/hugerte"
 ignore_findings = [
-  { path = "**/*.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
+  { path = "**/hugerte*.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
+  { path = "**/themes/silver/theme*.js", licenses = ["MPL-2.0"], comment = "Bundled DOMPurify is dual-licensed Apache-2.0 OR MPL-2.0; we take Apache-2.0." },
 ]
 
 [[curations]]
 ids = [
-  "pkg:maven/ch.qos.logback/logback-classic",
-  "pkg:maven/ch.qos.logback/logback-core",
+  "pkg:maven/ch.qos.logback/logback-classic@[1.5,2.0[",
+  "pkg:maven/ch.qos.logback/logback-core@[1.5,2.0[",
 ]
 ignore_findings = [
   { path = "ch/qos/logback/**", licenses = ["EPL-1.0", "LGPL-2.1-only"], comment = "Headers offer EPL v2.0 OR LGPL 2.1; ScanCode misreads EPL-2.0 as EPL-1.0." },
@@ -323,8 +326,8 @@ ignore_findings = [
 
 [[curations]]
 ids = [
-  "pkg:maven/com.upokecenter/cbor",
-  "pkg:maven/com.github.peteroupc/numbers",
+  "pkg:maven/com.upokecenter/cbor@[4.5,5.0[",
+  "pkg:maven/com.github.peteroupc/numbers@[1.8,2.0[",
 ]
 ignore_findings = [
   { path = "**/*.java", licenses = ["Apache-2.0"], comment = "Headers say Public Domain / CC0-1.0; ScanCode misreads Apache-2.0." },
@@ -343,12 +346,18 @@ ignore_findings = [
 ]
 
 [[curations]]
-ids = [
-  "pkg:maven/org.eclipse.californium/californium-core",
-  "pkg:maven/org.eclipse.californium/element-connector",
-]
+id = "pkg:maven/org.eclipse.californium/californium-core"
 ignore_findings = [
-  { path = "**/*.java", licenses = ["Apache-2.0", "EPL-1.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0 and splits EPL lines." },
+  { path = "org/eclipse/californium/core/coap/option/*.java", licenses = ["Apache-2.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0." },
+]
+
+[[curations]]
+id = "pkg:maven/org.eclipse.californium/element-connector"
+ignore_findings = [
+  { path = "org/eclipse/californium/elements/util/CheckedExecutor.java", licenses = ["Apache-2.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0." },
+  { path = "org/eclipse/californium/elements/util/Filter.java", licenses = ["Apache-2.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0." },
+  { path = "org/eclipse/californium/elements/util/SystemResourceMonitors.java", licenses = ["Apache-2.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode misreads EDL-1.0 as Apache-2.0." },
+  { path = "org/eclipse/californium/elements/util/LeastRecentlyUsedCache.java", licenses = ["EPL-1.0", "EPL-2.0"], comment = "Headers offer EPL-2.0 OR BSD-3-Clause (EDL-1.0); ScanCode splits EPL lines and misreads EPL-2.0 as EPL-1.0." },
 ]
 
 [[curations]]
@@ -358,12 +367,10 @@ ignore_findings = [
 ]
 
 [[curations]]
-ids = [
-  "pkg:npm/leaflet",
-  "pkg:npm/leaflet.markercluster",
-]
+id = "pkg:npm/leaflet"
 ignore_findings = [
-  { path = "**/*.js", licenses = ["ODbL-1.0"], comment = "OpenStreetMap tile attribution string in code example (about map data, not the library)." },
+  { path = "**/dist/leaflet-src*.js", licenses = ["ODbL-1.0"], comment = "OpenStreetMap tile attribution string in code example (about map data, not the library)." },
+  { path = "**/src/layer/tile/TileLayer.js", licenses = ["ODbL-1.0"], comment = "OpenStreetMap tile attribution string in code example (about map data, not the library)." },
 ]
 
 [[curations]]
@@ -375,7 +382,7 @@ ignore_findings = [
 [[curations]]
 id = "pkg:npm/@yao-pkg/pkg-fetch"
 ignore_findings = [
-  { path = "**/lib-es5/build.js", licenses = ["GPL-1.0-or-later"], comment = "Code comment describing Alpine GCC runtime exception; pkg-fetch is MIT." },
+  { path = "**/lib-es5/build.js", licenses = ["GPL-1.0-or-later", "NOASSERTION WITH GCC-exception-3.1"], comment = "Code comment describing Alpine GCC runtime exception; pkg-fetch is MIT." },
 ]
 
 [[curations]]

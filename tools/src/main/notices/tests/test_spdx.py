@@ -5,7 +5,7 @@
 
 import unittest
 
-from notices.spdx import And, License, Or, SpdxSyntaxError, leaves, or_branch_atoms, parse, resolve_or
+from notices.spdx import And, License, Or, SpdxSyntaxError, is_no_license, leaves, or_branch_atoms, parse, resolve_or
 
 
 class SpdxTests(unittest.TestCase):
@@ -83,6 +83,20 @@ class SpdxTests(unittest.TestCase):
         self.assertIs(first, second)
         with self.assertRaises(SpdxSyntaxError):
             parse('not valid spdx')
+
+    def test_is_no_license_preserves_noassertion_with_real_exception(self):
+        self.assertTrue(is_no_license(License('NONE')))
+        self.assertTrue(is_no_license(License('NOASSERTION')))
+        self.assertTrue(is_no_license(License('NOASSERTION', 'NOASSERTION')))
+        self.assertFalse(is_no_license(License('NOASSERTION', 'Classpath-exception-2.0')))
+        self.assertFalse(is_no_license(License('NOASSERTION-CUSTOM')))
+
+        branch_key = lambda lics: len(lics)
+        resolved, undecided = resolve_or(parse('MIT AND NOASSERTION AND NONE'), branch_key)
+        self.assertEqual(resolved, {License('MIT')})
+        self.assertEqual(undecided, [])
+        resolved_exc, _ = resolve_or(parse('MIT AND NOASSERTION WITH Classpath-exception-2.0'), branch_key)
+        self.assertEqual(resolved_exc, {License('MIT'), License('NOASSERTION', 'Classpath-exception-2.0')})
 
 
 if __name__ == '__main__':

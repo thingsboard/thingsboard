@@ -38,9 +38,11 @@
             <resource>
                 <directory>${project.build.directory}/generated-resources</directory>
                 <excludes>
-                    <!-- The build statistics (used to generate the UI SBOM) and Angular's raw license dump (replaced by THIRD-PARTY-NOTICES.txt) -->
+                    <!-- The build statistics (used to generate the UI SBOM), Angular's raw license dump (replaced by THIRD-PARTY-NOTICES.txt),
+                         and Segment7Standard.otf (inlined into styles.css by inline-fonts.js; kept in generated-resources only for fonts-sbom) -->
                     <exclude>public/stats.json*</exclude>
                     <exclude>public/3rdpartylicenses.txt*</exclude>
+                    <exclude>public/assets/fonts/Segment7Standard.otf*</exclude>
                 </excludes>
             </resource>
         </resources>

@@ -39,6 +39,8 @@
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
         <sbom.image.scanExclude></sbom.image.scanExclude>
         <notices.image.phase>package</notices.image.phase>
+        <!-- js-executor is not skipped by -Dskip.ui.build=true (only by -Dskip.yarn=true). -->
+        <notices.image.skip>${notices.yarn.skip}</notices.image.skip>
     </properties>
 
     <dependencies>

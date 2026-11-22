@@ -14,21 +14,9 @@ own_modules = [
   "org.thingsboard.license/shared",
 ]
 
-# Paths of a source archive not part of the shipped library.
+# Non-code metadata/build files excluded from all sources (Maven sources jars, npm tarballs, VCS checkouts).
 # Filtered during resolution so cached scan records remain policy-independent.
 exclude_paths = [
-  "**/test/**",
-  "**/tests/**",
-  "**/__tests__/**",
-  "**/testing/**",
-  "**/spec/**",
-  "**/specs/**",
-  "**/fixtures/**",
-  "**/benchmark/**",
-  "**/benchmarks/**",
-  "**/doc/**",
-  "**/docs/**",
-  "**/xdocs/**",
   "**/README*",
   "**/CHANGELOG*",
   "**/CHANGES*",
@@ -43,6 +31,23 @@ exclude_paths = [
   "**/build/preamble.js",
   "**/Gruntfile*",
   "**/*.map",
+]
+
+# Directory trees excluded only for npm tarballs and VCS checkouts (NOT Maven -sources.jar, where
+# directory names such as test, testing, spec, examples, or docs are shipped Java packages).
+source_tree_exclude_paths = [
+  "**/test/**",
+  "**/tests/**",
+  "**/__tests__/**",
+  "**/testing/**",
+  "**/spec/**",
+  "**/specs/**",
+  "**/fixtures/**",
+  "**/benchmark/**",
+  "**/benchmarks/**",
+  "**/doc/**",
+  "**/docs/**",
+  "**/xdocs/**",
   "**/example/**",
   "**/examples/**",
   "**/sample/**",
@@ -106,11 +111,18 @@ copyright_garbage = [
 ]
 
 [licenses]
-# No obligation, so the notices leave it out (public domain statements).
+# No obligation, so the notices leave it out (public domain statements and non-license ScanCode catch-alls).
+# Real unknown/copyleft/permissive catch-alls (unknown, other-copyleft, other-permissive, free-unknown)
+# are intentionally left unclassified so fresh scans still fail closed for human review.
 nothing = [
   "LicenseRef-scancode-public-domain",
   "LicenseRef-scancode-public-domain-disclaimer",
   "CC-PDDC",
+  "LicenseRef-scancode-unknown-license-reference",
+  "LicenseRef-scancode-warranty-disclaimer",
+  "LicenseRef-scancode-generic-cla",
+  "LicenseRef-scancode-generic-export-compliance",
+  "LicenseRef-scancode-generic-tos",
 ]
 
 # Copyright statements and license text (most permissive licenses).

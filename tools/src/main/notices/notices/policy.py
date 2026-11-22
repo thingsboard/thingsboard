@@ -184,7 +184,10 @@ def _check_license_files(license_files, policy):
     return unmapped, undecided, forbidden, unclassified, unlicensed
 
 
-def resolve_all(packages, sources, scan_records, policy, curations, declared_by_purl=None, license_files=()):
+def resolve_all(
+    packages, sources, scan_records, policy, curations,
+    declared_by_purl=None, license_files=(), matched_ignores=None,
+):
     """Validates and resolves every package against policy and curations.
 
     Fail-closed checks run in deterministic order:
@@ -221,9 +224,23 @@ def resolve_all(packages, sources, scan_records, policy, curations, declared_by_
                 raise stop(f'missing scan record for {pkg.purl} (expected scan before policy resolution)')
 
         declared_or_atoms = or_branch_atoms(declared_node) if declared_node else set()
-        detected_nodes, scan_copyrights = _collect_findings(
-            record, policy.exclude_paths, ignores, declared_or_atoms, skip_licenses=bool(concluded_expr)
+        # Maven -sources.jar directories are Java packages (e.g. org/springframework/test), so only apply
+        # directory-tree excludes to npm tarballs and VCS checkouts.
+        is_maven_sources_jar = pkg.kind == 'maven' and source.get('type') == 'artifact'
+        effective_excludes = (
+            policy.exclude_paths if is_maven_sources_jar
+            else policy.exclude_paths + policy.source_tree_exclude_paths
         )
+        pkg_matched = set() if matched_ignores is not None else None
+        detected_nodes, scan_copyrights = _collect_findings(
+            record, effective_excludes, ignores, declared_or_atoms,
+            skip_licenses=bool(concluded_expr), matched=pkg_matched,
+        )
+        if matched_ignores is not None and pkg_matched:
+            for c in applying:
+                for ig in c.ignore_findings:
+                    if ig in pkg_matched:
+                        matched_ignores.add((c.raw_id, ig))
         raw_copyrights = list(pkg.copyrights) + scan_copyrights
 
         if concluded_expr:
@@ -264,7 +281,7 @@ def resolve_all(packages, sources, scan_records, policy, curations, declared_by_
     return resolved
 
 
-def _collect_findings(record, exclude_paths, ignores, declared_or_atoms, skip_licenses):
+def _collect_findings(record, exclude_paths, ignores, declared_or_atoms, skip_licenses, matched=None):
     """Collects non-excluded copyrights and deduplicated, filtered detected license ASTs from a scan record."""
     detected_nodes = []
     seen_nodes = set()
@@ -282,7 +299,7 @@ def _collect_findings(record, exclude_paths, ignores, declared_or_atoms, skip_li
                 det_node = parse_spdx(raw_expr)
             except SpdxSyntaxError:
                 det_node = License(raw_expr)
-            filtered = _filter_ignored(det_node, fpath, ignores)
+            filtered = _filter_ignored(det_node, fpath, ignores, matched=matched)
             if filtered is None:
                 continue
             # Dual-license root LICENSE* rule: if declared has OR and all detected leaves in this
@@ -359,18 +376,24 @@ def _resolve_declared(pkg, policy, curations):
     return (Or(tuple(parsed_items)) if pkg.kind == 'maven' else And(tuple(parsed_items))), []
 
 
-def _filter_ignored(node, fpath, ignores):
+def _filter_ignored(node, fpath, ignores, matched=None):
     """Removes ignored licenses from a detected AST node for `fpath`; returns None if nothing remains."""
-    ignored_ids = set()
-    for ig in ignores:
-        if glob_match(fpath, ig.path):
-            ignored_ids.update(ig.licenses)
-    if not ignored_ids:
+    matching_rules = [ig for ig in ignores if glob_match(fpath, ig.path)]
+    if not matching_rules:
         return node
+    ignored_ids = set()
+    for ig in matching_rules:
+        ignored_ids.update(ig.licenses)
+    stripped_ids = set() if matched is not None else None
 
     def strip(n):
         if isinstance(n, License):
-            if str(n) in ignored_ids or is_no_license(n):
+            lic_str = str(n)
+            if lic_str in ignored_ids:
+                if stripped_ids is not None:
+                    stripped_ids.add(lic_str)
+                return None
+            if is_no_license(n):
                 return None
             return n
         kept = [c for c in (strip(child) for child in n.terms) if c is not None]
@@ -380,7 +403,12 @@ def _filter_ignored(node, fpath, ignores):
             return kept[0]
         return And(tuple(kept)) if isinstance(n, And) else Or(tuple(kept))
 
-    return strip(node)
+    result = strip(node)
+    if matched is not None and stripped_ids:
+        for ig in matching_rules:
+            if stripped_ids & ig.licenses:
+                matched.add(ig)
+    return result
 
 
 # ---------------------------------------------------------------------------

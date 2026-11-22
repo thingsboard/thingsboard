@@ -127,6 +127,7 @@
                 "bundleName": "report-component"
               },
               "src/styles.scss",
+              "target/generated-sources/fonts.css",
               "src/form.scss",
               "node_modules/material-icons/iconfont/filled.css",
               "node_modules/material-icons/iconfont/round.css",

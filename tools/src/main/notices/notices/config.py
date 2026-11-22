@@ -16,8 +16,8 @@ POLICY_PATH = os.path.join(NOTICES_DIR, 'policy.toml')
 CURATIONS_PATH = os.path.join(NOTICES_DIR, 'curations.toml')
 
 _POLICY_KEYS = frozenset({
-    'own_modules', 'exclude_paths', 'same_category_preference', 'copyright_garbage',
-    'licenses', 'license_aliases', 'license_titles', 'license_files',
+    'own_modules', 'exclude_paths', 'source_tree_exclude_paths', 'same_category_preference',
+    'copyright_garbage', 'licenses', 'license_aliases', 'license_titles', 'license_files',
 })
 _CURATIONS_TOP_KEYS = frozenset({'curations', 'custom_licenses'})
 _CURATION_KEYS = frozenset({
@@ -41,6 +41,7 @@ RANGE_RE = re.compile(r'([\[\]])([^,]*),([^,]*)([\[\]])')
 class Policy:
     own_modules: frozenset[str] = frozenset()
     exclude_paths: tuple[str, ...] = ()
+    source_tree_exclude_paths: tuple[str, ...] = ()
     same_category_preference: dict[str, int] = field(default_factory=dict)
     license_category: dict[str, str] = field(default_factory=dict)
     license_aliases: dict[str, str] = field(default_factory=dict)
@@ -111,6 +112,16 @@ class Curations:
         unused_custom = sorted(self.custom_licenses.keys() - used_licenses) if used_licenses is not None else []
         return unused_curations, unused_custom
 
+    def unused_ignores(self, packages, matched_ignores):
+        """Returns sorted ignore_findings rules on shipped packages that suppressed zero findings."""
+        return sorted({
+            f'{c.raw_id} ignore_findings[{ig.path!r}]'
+            for pkg in packages
+            for c in self.for_package(pkg.package_key, pkg.version)
+            for ig in c.ignore_findings
+            if (c.raw_id, ig) not in matched_ignores
+        })
+
 
 def _load_toml(path):
     try:
@@ -157,6 +168,7 @@ def load_policy(path=POLICY_PATH):
     return Policy(
         own_modules=frozenset(data.get('own_modules', [])),
         exclude_paths=tuple(data.get('exclude_paths', [])),
+        source_tree_exclude_paths=tuple(data.get('source_tree_exclude_paths', [])),
         same_category_preference=prefs,
         license_category=license_category,
         license_aliases=license_aliases,

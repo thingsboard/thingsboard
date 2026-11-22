@@ -145,8 +145,8 @@ def parse(text):
 
 
 def is_no_license(lic):
-    """NONE and NOASSERTION carry no license grant."""
-    return lic.id == 'NONE' or lic.id.startswith('NOASSERTION')
+    """NONE and plain NOASSERTION carry no license grant; NOASSERTION WITH <real-exception> does not."""
+    return lic.id == 'NONE' or (lic.id == 'NOASSERTION' and lic.exception in (None, 'NOASSERTION'))
 
 
 def leaves(node):
