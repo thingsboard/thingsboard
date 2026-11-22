@@ -207,6 +207,30 @@ class SbomAndRenderTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, 'gives no SHA-1'):
                 load_sboms([no_hash], '4.4.1-SNAPSHOT', _policy())
 
+            # Component-level SHA-1 fallback (e.g. gateway-management-extension.cdx.json)
+            comp_hash = os.path.join(tmp, 'comp-hash.cdx.json')
+            with open(comp_hash, 'w', encoding='utf-8') as f:
+                json.dump({'components': [{
+                    'type': 'library', 'name': 'echarts', 'version': '5.5.4-TB',
+                    'purl': 'pkg:npm/echarts@5.5.4-TB',
+                    'hashes': [{'alg': 'SHA-1', 'content': '05955421715b5a4ceb9b9b1b503d8e2504d0501d'}],
+                    'licenses': [{'license': {'id': 'Apache-2.0'}}],
+                    'externalReferences': [{'type': 'distribution', 'url': url}],
+                }]}, f)
+            inv_comp = load_sboms([comp_hash], '4.4.1-SNAPSHOT', _policy())
+            self.assertEqual(inv_comp.packages['pkg:npm/echarts@5.5.4-TB'].npm_tarball['sha1'], '05955421715b5a4ceb9b9b1b503d8e2504d0501d')
+
+            # Declared component with license but no copyright (or copyright without license) is NOT silently dropped
+            partial = os.path.join(tmp, 'partial-font.cdx.json')
+            with open(partial, 'w', encoding='utf-8') as f:
+                json.dump({'components': [{
+                    'type': 'file', 'name': 'BadFont', 'version': '1.0',
+                    'purl': 'pkg:generic/bad-font@1.0',
+                    'licenses': [{'license': {'id': 'GPL-3.0-only'}}],
+                }]}, f)
+            inv_partial = load_sboms([partial], '4.4.1-SNAPSHOT', _policy())
+            self.assertIn('pkg:generic/bad-font@1.0', inv_partial.packages)
+
 
 if __name__ == '__main__':
     unittest.main()

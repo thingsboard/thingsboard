@@ -171,8 +171,17 @@ def load_curations(path=CURATIONS_PATH):
     _reject_unknown_keys(data, _CURATIONS_TOP_KEYS, 'top-level curations', path)
     entries = []
     for raw in data.get('curations', []):
-        raw_ids = raw.get('ids') or ([raw['id']] if 'id' in raw else [])
-        if not raw_ids:
+        if 'id' in raw and 'ids' in raw:
+            raise stop(f'curation entry in {path} cannot specify both "id" and "ids"')
+        if 'ids' in raw:
+            raw_ids = raw['ids']
+            if not isinstance(raw_ids, list) or not raw_ids or not all(isinstance(x, str) and x.strip() for x in raw_ids):
+                raise stop(f'curation "ids" in {path} must be a non-empty list of non-empty strings')
+        elif 'id' in raw:
+            if not isinstance(raw['id'], str) or not raw['id'].strip():
+                raise stop(f'curation "id" in {path} must be a non-empty string')
+            raw_ids = [raw['id']]
+        else:
             raise stop(f'curation entry in {path} is missing "id" (or "ids")')
         label = f'curation {raw_ids[0]!r}'
         _reject_unknown_keys(raw, _CURATION_KEYS, label, path)
@@ -227,6 +236,9 @@ def load_curations(path=CURATIONS_PATH):
     return Curations(entries=tuple(entries), custom_licenses=custom_licenses)
 
 
+NUMERIC_BOUND_RE = re.compile(r'^\d+(?:\.\d+)*$')
+
+
 def _validate_version_spec(version_spec, raw_id, path, require_upper=False):
     if not version_spec:
         return
@@ -239,8 +251,8 @@ def _validate_version_spec(version_spec, raw_id, path, require_upper=False):
             raise stop(f'empty version range {version_spec!r} in {raw_id!r} ({path})')
         if require_upper and not highest:
             raise stop(f'unbounded version range {version_spec!r} in {raw_id!r} ({path}); concluded_license requires an upper bound')
-        if (lowest and not _numbers(lowest)) or (highest and not _numbers(highest)):
-            raise stop(f'non-numeric bound in version range {version_spec!r} in {raw_id!r} ({path})')
+        if (lowest and not NUMERIC_BOUND_RE.fullmatch(lowest)) or (highest and not NUMERIC_BOUND_RE.fullmatch(highest)):
+            raise stop(f'non-numeric bound in version range {version_spec!r} in {raw_id!r} ({path}); expected dot-separated digits e.g. 1.0')
 
 
 def normalize_purl_scope(purl):

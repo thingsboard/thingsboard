@@ -153,6 +153,4 @@ Every curation carries a `comment` that says where the information comes from, s
   Elastic-2.0, BUSL-1.1). They are classified `forbidden`, and the generator stops on any shipped package under one:
   the dependency has to go. Only a misread scan is fixed with a file-scoped `ignore_findings` in `curations.toml`.
   License choices are resolved first, so `AGPL-3.0-only OR Apache-2.0` automatically selects `Apache-2.0`.
-- **The decision files have an owner.** `.github/CODEOWNERS` names who approves a change to the generator and its
-  decision files under `tools/src/main/notices/`.
 - **A package without a license is not shipped** until this is raised and resolved.

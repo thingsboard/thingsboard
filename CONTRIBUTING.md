@@ -152,9 +152,10 @@ rm ~/.testcontainers.properties
 
 ## Dependencies, SBOMs and licensing
 
-Every package, service jar, Docker image, and UI bundle ThingsBoard ships carries a software bill of materials (SBOM)
-and build-generated third-party notices. CI verifies all shipped dependencies against our license policy whenever a PR
-adds, updates, or removes a Maven or npm dependency.
+Every service jar carries an embedded software bill of materials (SBOM), and every OS package (`.deb`, `.rpm`, Windows
+`.zip`), Docker image, and UI bundle ThingsBoard ships carries both an SBOM and build-generated third-party notices. CI
+verifies all shipped dependencies against our license policy whenever a PR adds, updates, or removes a Maven or npm
+dependency.
 
 - [docs/sbom.md](docs/sbom.md): which artifacts get an SBOM, how to build with SBOMs, and what to do for each kind of
   dependency change.

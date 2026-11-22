@@ -60,6 +60,11 @@ class ConfigAndCopyrightTests(unittest.TestCase):
                 ('[[curations]]\nid = "pkg:maven/a/b@[1.0,]"\nconcluded_license = "MIT"\n', 'upper bound'),
                 ('[[curations]]\nid = "pkg:maven/a/b@1.0"\nvcs = { url = "https://example.org" }\n', 'revision'),
                 ('[[curations]]\nid = "pkg:maven/a/b@1.0"\ndeclared_license = "MIT OR"\n', 'invalid SPDX'),
+                ('[[curations]]\nid = "pkg:maven/a/b"\nids = ["pkg:maven/a/c"]\nmetadata_only = true\n', 'both "id" and "ids"'),
+                ('[[curations]]\nid = ""\nmetadata_only = true\n', 'non-empty string'),
+                ('[[curations]]\nids = [""]\nmetadata_only = true\n', 'non-empty list'),
+                ('[[curations]]\nid = "pkg:maven/a/b@[1.0,2.0-rc1]"\nconcluded_license = "MIT"\n', 'non-numeric bound'),
+                ('[[curations]]\nid = "pkg:maven/a/b@[1.0,2..0["\nconcluded_license = "MIT"\n', 'non-numeric bound'),
             ):
                 with open(bad_cur, 'w', encoding='utf-8') as f:
                     f.write(snippet)

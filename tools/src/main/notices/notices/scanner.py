@@ -264,11 +264,13 @@ def _fetch_and_extract(source, target_dir):
     # VCS checkout (Git or Subversion)
     vcs_type = source['vcs_type']
     url, revision, subpath = source['url'], source['revision'], source.get('path', '').strip('/')
+    if url.startswith('-') or revision.startswith('-'):
+        raise stop(f'invalid VCS reference (leading dash not allowed): {url!r}@{revision!r}')
     if vcs_type == 'Git':
         with tempfile.TemporaryDirectory(prefix='tb-git-') as repo_dir:
             _run_cmd(['git', 'init', '-q'], cwd=repo_dir)
-            _run_cmd(['git', 'remote', 'add', 'origin', url], cwd=repo_dir)
-            _run_cmd(['git', 'fetch', '--depth', '1', 'origin', revision], cwd=repo_dir)
+            _run_cmd(['git', 'remote', 'add', '--', 'origin', url], cwd=repo_dir)
+            _run_cmd(['git', 'fetch', '--depth', '1', '--', 'origin', revision], cwd=repo_dir)
             _run_cmd(['git', 'checkout', '-q', 'FETCH_HEAD'], cwd=repo_dir)
             real_repo = os.path.realpath(repo_dir)
             copy_from = os.path.realpath(os.path.join(real_repo, subpath)) if subpath else real_repo
@@ -277,7 +279,7 @@ def _fetch_and_extract(source, target_dir):
             shutil.copytree(copy_from, target_dir, dirs_exist_ok=True, symlinks=True, ignore=shutil.ignore_patterns('.git'))
     elif vcs_type == 'Subversion':
         svn_url = f"{url.rstrip('/')}/{revision.strip('/')}" + (f'/{subpath}' if subpath else '')
-        _run_cmd(['svn', 'export', '--force', '--non-interactive', svn_url, target_dir])
+        _run_cmd(['svn', 'export', '--force', '--non-interactive', '--', svn_url, target_dir])
     else:
         raise stop(f'unsupported VCS type {vcs_type!r} for {url}')
     return _collect_dir_notices(target_dir)
@@ -348,28 +350,32 @@ def _run_cmd(cmd, cwd=None):
 
 
 def _normalize_scancode_batch(raw, sources_by_key, notices_by_key):
-    headers = raw.get('headers', [])
-    if headers:
-        actual_version = headers[0].get('tool_version')
-        if actual_version and actual_version != SCANCODE_VERSION:
-            raise stop(
-                f'ScanCode version mismatch: image {scancode_image()} ran ScanCode {actual_version}, '
-                f'but cache keys expect {SCANCODE_VERSION}. Update SCANCODE_VERSION or NOTICES_SCANCODE_IMAGE.'
-            )
-    findings_by_key = {key: [] for key in sources_by_key}
+    headers = raw.get('headers')
+    if not isinstance(headers, list) or not headers or not isinstance(headers[0], dict):
+        raise stop(f'ScanCode output from {scancode_image()} is missing required headers metadata.')
+    actual_version = headers[0].get('tool_version')
+    if actual_version != SCANCODE_VERSION:
+        raise stop(
+            f'ScanCode version mismatch: image {scancode_image()} ran ScanCode {actual_version!r}, '
+            f'but cache keys expect {SCANCODE_VERSION}. Update SCANCODE_VERSION or NOTICES_SCANCODE_IMAGE.'
+        )
     errors = []
+    for header in headers:
+        if isinstance(header, dict):
+            for err in header.get('errors', []):
+                errors.append(f'header: {err}')
+    findings_by_key = {key: [] for key in sources_by_key}
     for entry in raw.get('files', []):
+        full_path = entry.get('path', '')
+        key, sep, rel_path = full_path.partition('/')
+        for err in entry.get('scan_errors', []):
+            origin = sources_by_key[key].get('url', key) if key in sources_by_key else full_path
+            errors.append(f'{origin} ({rel_path or full_path}): {err}')
         if entry.get('type') != 'file':
             continue
-        full_path = entry.get('path', '')
-        if '/' not in full_path:
+        if not sep or key not in findings_by_key:
+            errors.append(f'unexpected ScanCode path {full_path!r} (expected "<key>/<rel_path>")')
             continue
-        key, rel_path = full_path.split('/', 1)
-        if key not in findings_by_key:
-            continue
-        for err in entry.get('scan_errors', []):
-            url = sources_by_key[key].get('url', key)
-            errors.append(f'{url} ({rel_path}): {err}')
         expr = entry.get('detected_license_expression_spdx') or ''
         lics = [expr] if expr else []
         cprs = [c['copyright'] for c in entry.get('copyrights', []) if c.get('copyright')]

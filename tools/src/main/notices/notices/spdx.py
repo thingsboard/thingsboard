@@ -220,21 +220,26 @@ def resolve_or(node, branch_key):
                 else:
                     yield child
 
-        unique = {}  # frozenset(licenses) -> list of undecided from that branch
+        # Keep decided branches and undecided branches distinct so a decided sibling cannot erase an
+        # undecided tie on an arbitrary representative winner.
+        unique = {}  # (frozenset(licenses), has_undecided) -> list of undecided from that branch
         for child in iter_branches(n):
             child_lics, child_undecided = walk(child)
             if not child_lics:
                 continue
-            key = frozenset(child_lics)
-            if key not in unique or (not child_undecided and unique[key]):
+            key = (frozenset(child_lics), bool(child_undecided))
+            if key not in unique:
                 unique[key] = child_undecided
         if not unique:
             return set(), []
-        ranked = sorted(((branch_key(lics), lics, und) for lics, und in unique.items()), key=lambda item: item[0])
+        ranked = sorted(
+            ((branch_key(lics), sorted(str(l) for l in lics), lics, und) for (lics, _), und in unique.items()),
+            key=lambda item: (item[0], item[1]),
+        )
         best_rank = ranked[0][0]
-        winners = [(lics, und) for rank, lics, und in ranked if rank == best_rank]
+        winners = [(lics, und) for rank, _, lics, und in ranked if rank == best_rank]
         if len(winners) > 1:
-            # Return one representative winner (keeping best_rank intact for any enclosing Or) plus the tie.
+            # Return one deterministic representative winner (keeping best_rank intact for any enclosing Or) plus the tie.
             return set(winners[0][0]), [str(n)]
         return set(winners[0][0]), winners[0][1]
 

@@ -176,7 +176,7 @@ def _check_license_files(license_files, policy):
             continue
         parsed_items, ref_unmapped = _parse_declared_items(ref.declared_raw, ref.named_raw, {}, policy, ref.coordinates)
         for name in ref_unmapped:
-            unmapped.append((ref.coordinates, ref.coordinates, name))
+            unmapped.append((ref.coordinates, None, name))
         if ref_unmapped:
             continue
         node = parsed_items[0] if len(parsed_items) == 1 else And(tuple(parsed_items))
@@ -403,20 +403,30 @@ def _unreviewed_message(packages):
 
 
 def _unmapped_message(packages):
-    _, pkg_key, name = packages[0]
     lines = ''.join(f'  {p}: {n!r}\n' for p, _, n in packages)
+    curatable = next(((pkg_key, name) for _, pkg_key, name in packages if pkg_key is not None), None)
+    if curatable:
+        pkg_key, name = curatable
+        curation_hint = (
+            f'  - if the name is unambiguous everywhere, add it to [license_aliases] in {POLICY_REL}, or\n'
+            f'  - add a [[curations]] entry in {CURATIONS_REL}:\n'
+            f'      [[curations]]\n'
+            f'      id = "{pkg_key}"\n'
+            f'      declared_license_map = {{ "{name}" = "<SPDX-id>" }}\n'
+            f'      comment = "<where you checked>"\n'
+        )
+    else:
+        curation_hint = (
+            f'  - declare an SPDX identifier in the pom.xml that bundles this component, or\n'
+            f'  - if the name is unambiguous everywhere, add it to [license_aliases] in {POLICY_REL}.\n'
+        )
     return (
         'these packages name their license in words that are no standard SPDX identifier.\n'
         + lines
         + 'We do not guess what non-standard license names mean.\n'
-        f'To fix: find the SPDX identifier (https://spdx.org/licenses), then either:\n'
-        f'  - if the name is unambiguous everywhere, add it to [license_aliases] in {POLICY_REL}, or\n'
-        f'  - add a [[curations]] entry in {CURATIONS_REL}:\n'
-        f'      [[curations]]\n'
-        f'      id = "{pkg_key}"\n'
-        f'      declared_license_map = {{ "{name}" = "<SPDX-id>" }}\n'
-        f'      comment = "<where you checked>"\n'
-        f'See {GUIDE_REL}#rules-for-license-decisions.'
+        + 'To fix: find the SPDX identifier (https://spdx.org/licenses), then:\n'
+        + curation_hint
+        + f'See {GUIDE_REL}#rules-for-license-decisions.'
     )
 
 
@@ -452,7 +462,7 @@ def _forbidden_message(items):
         + lines
         + 'Strong copyleft would put ThingsBoard itself under that license, and others forbid commercial use.\n'
         + 'Remove or replace the dependency. Only if the scan misread a specific file, add a file-scoped\n'
-        f'`ignore_findings` entry to {CURATIONS_REL} with a comment explaining why (CODEOWNERS approval required).\n'
+        f'`ignore_findings` entry to {CURATIONS_REL} with a comment explaining why.\n'
         f'See {GUIDE_REL}#rules-for-license-decisions.'
     )
 

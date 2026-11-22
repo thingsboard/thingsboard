@@ -67,6 +67,11 @@ class SpdxTests(unittest.TestCase):
         self.assertTrue(undecided)
         _, undecided = resolve_or(parse('((Apache-2.0 OR MIT) AND BSD-3-Clause) OR (Zlib AND BSD-3-Clause)'), tie_key)
         self.assertTrue(undecided)
+        # Branch-order invariance when a decided sibling overlaps an undecided And branch's representative
+        _, und_a = resolve_or(parse('((Apache-2.0 OR MIT) AND BSD-3-Clause) OR (Apache-2.0 AND BSD-3-Clause)'), tie_key)
+        _, und_b = resolve_or(parse('((MIT OR Apache-2.0) AND BSD-3-Clause) OR (Apache-2.0 AND BSD-3-Clause)'), tie_key)
+        self.assertTrue(und_a)
+        self.assertTrue(und_b)
 
     def test_leaves_deduplicates(self):
         node = parse('MIT AND (MIT OR Apache-2.0)')

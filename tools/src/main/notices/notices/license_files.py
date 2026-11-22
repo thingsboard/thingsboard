@@ -22,7 +22,12 @@ def collect_license_files(refs, cache_dir, root=ROOT):
     cached_repo_texts = {}
 
     for ref in sorted(refs, key=lambda r: r.sort_key):
-        if ref.generated == 'lwm2m-registry':
+        if ref.generated is not None:
+            if ref.generated != 'lwm2m-registry':
+                raise stop(
+                    f'unknown generated license file {ref.generated!r} for {ref.coordinates}. '
+                    'Check policy.toml [license_files].'
+                )
             text, origin = generate_lwm2m_notice(root=root)
         elif ref.path:
             origin = ref.path
@@ -32,7 +37,7 @@ def collect_license_files(refs, cache_dir, root=ROOT):
             text = cached_repo_texts[origin]
             if not text:
                 raise stop(f'the license file of {ref.coordinates} at {origin} is empty. Check policy.toml [license_files].')
-        else:
+        elif ref.url:
             origin = ref.url
             text = clean_text(_download_url(origin, ref.coordinates, downloads_dir))
             if not text:
@@ -40,6 +45,8 @@ def collect_license_files(refs, cache_dir, root=ROOT):
                     f'the license file of {ref.coordinates} at {origin} is empty. '
                     'Check the external reference of type license in the pom that declares it.'
                 )
+        else:
+            raise stop(f'license file reference for {ref.coordinates} has no generated source, path, or URL.')
         found.setdefault(text, set()).add((ref.coordinates, origin))
 
     return found

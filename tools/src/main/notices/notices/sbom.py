@@ -234,13 +234,13 @@ def _merge_package(existing, incoming):
 
 
 def _parse_declared_component(component):
-    """Parses a non-Maven/non-npm component that carries both declared licenses and copyright lines (e.g. bundled fonts)."""
+    """Parses a non-Maven/non-npm component carrying declared licenses or copyrights (e.g. bundled fonts)."""
     purl = component.get('purl') or ''
     if re.match(r'^pkg:(?:deb|rpm|generic|github)/thingsboard/', purl):
         return None
     copyright_text = (component.get('copyright') or '').strip()
     licenses, names = _declared_licenses(component)
-    if not copyright_text or not licenses:
+    if not copyright_text and not licenses:
         return None
     canonical = canonical_purl(purl) if purl else (component.get('bom-ref') or component.get('name', ''))
     if not canonical:
@@ -349,6 +349,8 @@ def _npm_tarball(component):
     for reference in component.get('externalReferences', []):
         if reference.get('type') == 'distribution' and reference.get('url'):
             sha1 = [h.get('content', '').lower() for h in reference.get('hashes', []) if h.get('alg') == 'SHA-1' and h.get('content')]
+            if not sha1:
+                sha1 = [h.get('content', '').lower() for h in component.get('hashes', []) if h.get('alg') == 'SHA-1' and h.get('content')]
             return {
                 'url': reference['url'].replace('https://registry.yarnpkg.com/', 'https://registry.npmjs.org/'),
                 'sha1': sha1[0] if sha1 else '',
@@ -361,10 +363,10 @@ def _vcs_reference(component):
     pinned = [url for url in references if re.search(r'#[0-9a-f]{40}$', url)]
     if not pinned:
         return None
-    raw_url, _, revision = pinned[0].partition('#')
+    raw_url, _, revision = pinned[0].rpartition('#')
     is_svn = raw_url.startswith('scm:svn:') or raw_url.startswith('svn://') or raw_url.startswith('svn+ssh://')
     url = re.sub(r'^scm:(git|svn):', '', re.sub(r'^git\+', '', raw_url))
-    if not url or not revision:
+    if not url or not revision or url.startswith('-'):
         return None
     return {'type': 'Subversion' if is_svn else 'Git', 'url': url, 'revision': revision, 'path': ''}
 

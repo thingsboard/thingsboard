@@ -16,7 +16,8 @@ from unittest import mock
 
 from notices import NOTICES_DIR, escape_teamcity, format_teamcity_problem, write_atomically
 from notices.cli import classify_ci_changes
-from notices.license_files import filter_platforms
+from notices.license_files import collect_license_files, filter_platforms
+from notices.sbom import LicenseFileRef
 from notices.lwm2m import identify_license, parse_header
 from notices.render import _extract_from_scancode_image
 from notices.scanner import (
@@ -45,6 +46,10 @@ class HelpersTests(unittest.TestCase):
         self.assertEqual(filter_platforms(text, None, 'CREDITS.txt'), text)
         with self.assertRaises(SystemExit):
             filter_platforms(text, {'macos'}, 'CREDITS.txt')
+        with tempfile.TemporaryDirectory() as tmp:
+            bad_ref = LicenseFileRef(group='g', name='n', version='1.0', generated='unknown-gen')
+            with self.assertRaisesRegex(SystemExit, 'unknown generated license file'):
+                collect_license_files({bad_ref}, tmp)
 
     def test_lwm2m_header_and_identify(self):
         xml = '<?xml version="1.0"?>\n<!--\nLEGAL DISCLAIMER\nCopyright 2020 OMA.\nPermission is hereby granted, free of charge, to any person.\n-->\n<LWM2M/>'
@@ -157,11 +162,42 @@ class HelpersTests(unittest.TestCase):
         }
         notices = {'k1': [{'path': 'NOTICE', 'text': 'Notice A'}]}
 
-        # Version mismatch stops fail-closed
+        # Version mismatch, missing headers, header errors, directory errors, and unexpected paths all stop fail-closed
         bad_ver = {'headers': [{'tool_version': '99.0.0'}], 'files': []}
         with self.assertRaises(SystemExit) as ctx:
             _normalize_scancode_batch(bad_ver, sources, notices)
         self.assertIn('ScanCode version mismatch', str(ctx.exception))
+
+        with self.assertRaises(SystemExit) as ctx:
+            _normalize_scancode_batch({'files': []}, sources, notices)
+        self.assertIn('missing required headers', str(ctx.exception))
+
+        with self.assertRaises(SystemExit) as ctx:
+            _normalize_scancode_batch(
+                {'headers': [{'tool_version': SCANCODE_VERSION, 'errors': ['plugin crash']}], 'files': []},
+                sources, notices,
+            )
+        self.assertIn('plugin crash', str(ctx.exception))
+
+        with self.assertRaises(SystemExit) as ctx:
+            _normalize_scancode_batch(
+                {
+                    'headers': [{'tool_version': SCANCODE_VERSION}],
+                    'files': [{'type': 'directory', 'path': 'k1', 'scan_errors': ['dir unreadable']}],
+                },
+                sources, notices,
+            )
+        self.assertIn('dir unreadable', str(ctx.exception))
+
+        with self.assertRaises(SystemExit) as ctx:
+            _normalize_scancode_batch(
+                {
+                    'headers': [{'tool_version': SCANCODE_VERSION}],
+                    'files': [{'type': 'file', 'path': 'unexpected.js'}],
+                },
+                sources, notices,
+            )
+        self.assertIn('unexpected ScanCode path', str(ctx.exception))
 
         # Per-file scan error stops fail-closed with source URL
         errored = {
@@ -236,7 +272,7 @@ class HelpersTests(unittest.TestCase):
     def test_classify_ci_changes_modes(self):
         self.assertEqual(classify_ci_changes([]), 'none')
         self.assertEqual(classify_ci_changes(['ui-ngx/src/app/app.component.ts']), 'ui')
-        self.assertEqual(classify_ci_changes(['ui-ngx/package.json', 'ui-ngx/yarn.lock', 'ui-ngx/angular.json']), 'ui')
+        self.assertEqual(classify_ci_changes(['ui-ngx/package.json', 'ui-ngx/yarn.lock', 'ui-ngx/angular.json', 'ui-ngx/tsconfig.json']), 'ui')
         self.assertEqual(classify_ci_changes(['ui-ngx/patches/@angular+core+20.patch']), 'ui')
         self.assertEqual(classify_ci_changes(['application/pom.xml', 'dao/pom.xml', 'msa/vc-executor/pom.xml']), 'java')
         self.assertEqual(classify_ci_changes(['common/report/src/main/resources/fonts/NotoSans-Regular.ttf']), 'java')
@@ -255,6 +291,9 @@ class HelpersTests(unittest.TestCase):
             'msa/web-report/pom.xml',
             'msa/web-report/package.json',
             'msa/web-report/server.ts',
+            'msa/web-report/config/logger.ts',
+            'msa/web-report/inspectorShim.ts',
+            'msa/web-report/tsconfig.json',
             'tools/src/main/notices/policy.toml',
             'tools/src/main/javascript/yarn-sbom.js',
         ):

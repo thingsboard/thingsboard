@@ -31,7 +31,7 @@
         <!-- Prefix shared by every image name; downstream builds override it as a whole (e.g. tb-paas). -->
         <tb.docker.id>tb</tb.docker.id>
         <blackBoxTests.skip>true</blackBoxTests.skip>
-        <docker.resources.phase>none</docker.resources.phase>
+        <docker.resources.phase>${pkg.process-resources.phase}</docker.resources.phase>
         <docker.push-arm-amd-image.phase>none</docker.push-arm-amd-image.phase>
         <sbom.image.repository>${docker.repo}/${docker.name}</sbom.image.repository>
         <!-- Set by the profiles that push the multi-architecture images -->

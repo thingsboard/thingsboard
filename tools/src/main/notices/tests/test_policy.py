@@ -112,6 +112,19 @@ class PolicyTests(unittest.TestCase):
         resolved = resolve_all({pkg.purl: pkg}, {pkg.purl: {'type': 'artifact', 'url': 'https://example/src.jar', 'sha1': 'a' * 40}}, scan, _policy(), curations)
         self.assertEqual(resolved[0].licenses, (License('Apache-2.0'),))
 
+        # Same forbidden license on a non-matching file MUST still fail closed
+        scan_unignored = {
+            pkg.purl: {
+                'findings': [
+                    {'path': 'com/example/ModelCard.java', 'licenses': ['GPL-3.0-only'], 'copyrights': []},
+                    {'path': 'com/example/Real.java', 'licenses': ['GPL-3.0-only'], 'copyrights': []},
+                ]
+            }
+        }
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({pkg.purl: pkg}, {pkg.purl: {'type': 'artifact', 'url': 'https://example/src.jar', 'sha1': 'a' * 40}}, scan_unignored, _policy(), curations)
+        self.assertIn('GPL-3.0-only', str(ctx.exception))
+
     def test_with_exception_not_silenced_by_base_id_ignore_or_missing_scan_record(self):
         # Ignoring bare GPL-2.0-only must NOT silently ignore GPL-2.0-only WITH Classpath-exception-2.0
         pkg = _pkg(declared=('Apache-2.0',))
@@ -209,6 +222,7 @@ class PolicyTests(unittest.TestCase):
         with self.assertRaises(SystemExit) as ctx:
             resolve_all({}, {}, {}, _policy(), Curations(), license_files={unmapped_ref})
         self.assertIn('Some Custom License', str(ctx.exception))
+        self.assertNotIn('[[curations]]', str(ctx.exception))
 
         # Bundled url/path component with no declared license stops
         empty_ref = LicenseFileRef(group='', name='mystery', version='1.0', path='mystery/LICENSE')

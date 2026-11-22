@@ -31,29 +31,7 @@ from notices.scanner import (
     scan_sources_with_scancode,
 )
 
-# All repository paths whose changes can alter the third-party notices.
-CI_WATCHED_PATHS = (
-    ':(glob)**/pom.xml',
-    ':(glob)**/package.json',
-    ':(glob)**/yarn.lock',
-    'ui-ngx/angular.json',
-    'ui-ngx/esbuild/',
-    'ui-ngx/patches/',
-    'ui-ngx/src/',
-    'common/report/src/main/resources/fonts/',
-    'application/src/main/data/lwm2m-registry/',
-    'application/src/main/data/resources/js_extensions/',
-    'application/src/main/sbom/',
-    'msa/web-report/api/',
-    'msa/web-report/chromium.js',
-    'msa/web-report/install.js',
-    'msa/web-report/server.ts',
-    'msa/web-report/chromium-credits/',
-    'tools/src/main/javascript/yarn-sbom.js',
-    'tools/src/main/notices/',
-)
-
-# Subset of CI_WATCHED_PATHS that only affect ui-ngx's SBOM/notices (can run UI-only check).
+# Paths that only affect ui-ngx's SBOM/notices (can run UI-only check).
 CI_UI_ONLY_PREFIXES = (
     'ui-ngx/src/',
     'ui-ngx/esbuild/',
@@ -62,16 +40,43 @@ CI_UI_ONLY_PREFIXES = (
 CI_UI_ONLY_FILES = {
     'ui-ngx/angular.json',
     'ui-ngx/package.json',
+    'ui-ngx/tsconfig.json',
     'ui-ngx/yarn.lock',
 }
 
-# Subset of CI_WATCHED_PATHS that only affect Java services (can skip UI/Node modules).
+# Paths that only affect Java services (can skip UI/Node modules).
 CI_JAVA_ONLY_PREFIXES = (
     'common/report/src/main/resources/fonts/',
     'application/src/main/data/lwm2m-registry/',
     'application/src/main/data/resources/js_extensions/',
     'application/src/main/sbom/',
 )
+
+# Paths that affect JS microservices, notices tooling, or global builds (require full check).
+CI_FULL_ONLY_PATHS = (
+    ':(glob)**/pom.xml',
+    ':(glob)**/package.json',
+    ':(glob)**/yarn.lock',
+    'msa/web-report/api/',
+    'msa/web-report/chromium.js',
+    'msa/web-report/config/logger.ts',
+    'msa/web-report/inspectorShim.ts',
+    'msa/web-report/install.js',
+    'msa/web-report/server.ts',
+    'msa/web-report/tsconfig.json',
+    'msa/web-report/chromium-credits/',
+    'tools/src/main/javascript/yarn-sbom.js',
+    'tools/src/main/notices/',
+)
+
+# All repository paths whose changes can alter the third-party notices (composed from the subsets above).
+CI_WATCHED_PATHS = (
+    *CI_FULL_ONLY_PATHS,
+    *CI_UI_ONLY_PREFIXES,
+    *sorted(CI_UI_ONLY_FILES),
+    *CI_JAVA_ONLY_PREFIXES,
+)
+
 # POMs that affect UI/JS modules or global build settings and therefore require a full check.
 CI_FULL_POM_FILES = {
     'pom.xml',
