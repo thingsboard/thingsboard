@@ -4,9 +4,11 @@
 #
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import os
 import tempfile
 import threading
 import unittest
+from unittest import mock
 
 from notices.cache import ScanCache, scan_cache_key
 
@@ -24,6 +26,12 @@ class CacheTests(unittest.TestCase):
     def test_invalid_remote_url_stops(self):
         with self.assertRaises(SystemExit):
             ScanCache(remote_url='ftp://example.org/cache')
+
+    def test_cache_dir_expands_tilde_from_arg_and_env(self):
+        expected = os.path.abspath(os.path.expanduser('~/.cache/tb-notices-nightly'))
+        self.assertEqual(ScanCache(cache_dir='~/.cache/tb-notices-nightly', remote_url='none').cache_dir, expected)
+        with mock.patch.dict(os.environ, {'NOTICES_CACHE_DIR': '~/.cache/tb-notices-nightly'}, clear=False):
+            self.assertEqual(ScanCache(remote_url='none').cache_dir, expected)
 
     def test_parallel_fetch_and_upload_with_retry(self):
         store = {}

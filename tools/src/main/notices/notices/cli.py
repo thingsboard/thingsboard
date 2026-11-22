@@ -61,7 +61,7 @@ def main(argv=None):
     render_p.add_argument('--sboms-under', help='Discover all target/sbom/*.cdx.json under this directory')
     render_p.add_argument('--cache-dir', default=None)
     render_p.add_argument('--cache-url', default=None, help='Remote scan cache base URL, or "none"')
-    render_p.add_argument('--maven-repository', default=os.environ.get('NOTICES_MAVEN_REPOSITORY', os.path.expanduser('~/.m2/repository')))
+    render_p.add_argument('--maven-repository', default=os.environ.get('NOTICES_MAVEN_REPOSITORY') or '~/.m2/repository')
     render_p.add_argument('--no-scan', action='store_true', help='Fail if any package is missing from cache instead of invoking ScanCode')
     render_p.add_argument(
         '--fail-on-unused-curations',
@@ -179,7 +179,8 @@ def cmd_render(args):
     )
 
     # Collect binary Maven jar NOTICE files + merge with npm NOTICE files
-    all_notices, jar_summary = collect_jar_notices(inventory.jars, args.maven_repository, scan_cache.cache_dir)
+    maven_repo = os.path.abspath(os.path.expanduser(args.maven_repository))
+    all_notices, jar_summary = collect_jar_notices(inventory.jars, maven_repo, scan_cache.cache_dir)
     for text, carriers in npm_notices.items():
         all_notices.setdefault(text, set()).update(carriers)
 
