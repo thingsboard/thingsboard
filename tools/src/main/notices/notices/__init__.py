@@ -6,6 +6,7 @@
 """ThingsBoard third-party notices generator."""
 import http.client
 import os
+import sys
 import tempfile
 import urllib.error
 import urllib.request
@@ -68,3 +69,72 @@ def format_coordinates(group, name, version=''):
 
 
 HTTP_ERRORS = (urllib.error.URLError, http.client.HTTPException, OSError)
+
+_TEAMCITY_ESCAPES = (
+    ('|', '||'),
+    ("'", "|'"),
+    ('\n', '|n'),
+    ('\r', '|r'),
+    ('[', '|['),
+    (']', '|]'),
+)
+
+
+def escape_teamcity(text):
+    """Escapes a value for a TeamCity service message attribute."""
+    for old, new in _TEAMCITY_ESCAPES:
+        text = text.replace(old, new)
+    return text
+
+
+def format_teamcity_problem(message, max_len=300):
+    """Builds a concise one-line summary for TeamCity's buildProblem description.
+
+    Preserves the headline and as many immediately following indented items (package/license lines)
+    as fit within max_len so the failure reason and offending packages appear directly on the build
+    summary and Slack alert.
+    """
+    lines = message.strip().splitlines()
+    if not lines:
+        return ''
+    headline = lines[0].strip()
+    items = []
+    for line in lines[1:]:
+        if line.startswith('  ') and line.strip():
+            items.append(line.strip())
+        else:
+            break
+
+    if not items:
+        return headline if len(headline) <= max_len else headline[:max_len - 3].rstrip() + '...'
+
+    prefix = f'{headline} - '
+    shown = []
+    for idx, item in enumerate(items):
+        remaining = len(items) - (idx + 1)
+        suffix = f' (+{remaining} more)' if remaining else ''
+        candidate = prefix + ', '.join(shown + [item]) + suffix
+        if len(candidate) <= max_len:
+            shown.append(item)
+        elif not shown:
+            budget = max_len - len(prefix) - len(suffix) - 3
+            if budget >= 10:
+                shown.append(item[:budget].rstrip() + '...')
+            break
+        else:
+            break
+
+    if not shown:
+        return headline if len(headline) <= max_len else headline[:max_len - 3].rstrip() + '...'
+    omitted = len(items) - len(shown)
+    suffix = f' (+{omitted} more)' if omitted else ''
+    return prefix + ', '.join(shown) + suffix
+
+
+def emit_teamcity_problem(message, stream=None):
+    """Emits a TeamCity buildProblem service message for a fail-closed stop."""
+    summary = format_teamcity_problem(message)
+    if not summary:
+        return
+    out = sys.stdout if stream is None else stream
+    print(f"##teamcity[buildProblem description='{escape_teamcity(summary)}']", file=out, flush=True)
