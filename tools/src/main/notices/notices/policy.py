@@ -293,7 +293,7 @@ def _collect_findings(record, exclude_paths, ignores, declared_or_atoms, skip_li
         raw_copyrights.extend(finding.get('copyrights', ()))
         if skip_licenses:
             continue
-        is_root_lic = ROOT_LICENSE_FILE_RE.match(fpath.removeprefix('package/')) is not None
+        is_root_lic = ROOT_LICENSE_FILE_RE.match(fpath) is not None
         for raw_expr in finding.get('licenses', ()):
             try:
                 det_node = parse_spdx(raw_expr)
