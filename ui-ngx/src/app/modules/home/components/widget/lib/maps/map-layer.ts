@@ -182,7 +182,11 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
         `https://cdn.arcgis.com/sharing/rest/content/items/${itemId}/resources/styles/root.json`
       ).pipe(
         map(spec => prepareReferenceLayerStyle(spec, attribution)),
-        catchError(() => of(null)),
+        catchError((e) => {
+          console.error(`Map reference layer style load failed!`, e);
+          referenceLayerCache.delete(referenceLayer);
+          return of(null);
+        }),
         shareReplay({
           bufferSize: 1,
           refCount: true
