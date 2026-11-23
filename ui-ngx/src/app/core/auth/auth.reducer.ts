@@ -107,6 +107,10 @@ export const authReducer = (
       userSettings = {...state.userSettings, aiTour};
       return { ...state, ...{ userSettings }};
 
+    case AuthActionTypes.UPDATE_HOME_CARDS:
+      userSettings = {...state.userSettings, homeCards: {...state.userSettings.homeCards, ...action.payload}};
+      return { ...state, ...{ userSettings }};
+
     case AuthActionTypes.PUT_USER_SETTINGS:
       userSettings = {...state.userSettings, ...action.payload};
       return { ...state, ...{ userSettings }};

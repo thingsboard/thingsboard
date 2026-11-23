@@ -5,13 +5,7 @@ import { defer, Observable, Subject } from 'rxjs';
 import { distinctUntilChanged, filter, finalize, map } from 'rxjs/operators';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  AiAssistantPanelConfig,
-  AiAssistantViewType,
-  AiChatClientContext,
-  AiChatView,
-  ChatInfo
-} from '@shared/models/ai-chat.models';
+import { AiAssistantPanelConfig, AiAssistantViewType, AiChatClientContext, AiChatView, ChatInfo, AiPromptMessage } from '@shared/models/ai-chat.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
 import { LocalStorageService } from '@core/local-storage/local-storage.service';
@@ -159,6 +153,18 @@ export class AiAssistantPanelService implements OnDestroy {
   private static readonly FROM_AI_PAGE = 'ai-assistant-page';
 
   private _openOnArrival = false;
+
+  private _handOff: AiPromptMessage | null = null;
+
+  handOff(prompt: AiPromptMessage): void {
+    this._handOff = prompt;
+  }
+
+  takeHandOff(): AiPromptMessage | null {
+    const prompt = this._handOff;
+    this._handOff = null;
+    return prompt;
+  }
 
   carryChat(chatId: string): void {
     this._carried = {chatId, from: this.contextKey(), at: Date.now()};

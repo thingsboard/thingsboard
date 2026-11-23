@@ -235,9 +235,14 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     ]).subscribe({
       next: ([, chats]) => {
         const params = this.route.snapshot.queryParamMap;
-        const first = !params.get('chatId') && !params.get('solutionId') && !chats.length;
+        const handOff = this.panelService.takeHandOff();
+        const first = !handOff && !params.get('chatId') && !params.get('solutionId') && !chats.length;
         this.openFromUrl(params.get('chatId'), params.get('solutionId'), chats, first || params.get('getStarted') === 'true');
         this.ready.set(true);
+        if (handOff) {
+          this.newChat();
+          setTimeout(() => this.chat?.sendMsgFromUser(handOff));
+        }
       },
       error: err => {
         this.ready.set(true);

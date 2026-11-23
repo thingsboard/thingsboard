@@ -35,6 +35,14 @@ export class AuthEffects {
     concatMap(([action, state]) => this.userSettingsService.putUserSettings({ aiTour: state.userSettings.aiTour ?? {} }))
   ), {dispatch: false});
 
+  persistHomeCards = createEffect(() => this.actions$.pipe(
+    ofType(
+      AuthActionTypes.UPDATE_HOME_CARDS,
+    ),
+    withLatestFrom(this.store.pipe(select(selectAuthState))),
+    concatMap(([action, state]) => this.userSettingsService.putUserSettings({ homeCards: state.userSettings.homeCards ?? {} }))
+  ), {dispatch: false});
+
   putUserSettings = createEffect(() => this.actions$.pipe(
     ofType(
       AuthActionTypes.PUT_USER_SETTINGS,

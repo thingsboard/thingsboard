@@ -86,6 +86,8 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   @Input() docked = false;
 
+  @Input() slim = false;
+
   @Input() pinned = false;
 
   @Input() dropZone: HTMLElement;
@@ -222,6 +224,11 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     if (event.key === 'Escape' && this.working) {
       event.preventDefault();
       this.stop();
+      return;
+    }
+    if (event.key === 'Escape' && this.slim) {
+      event.preventDefault();
+      this.textarea?.nativeElement.blur();
       return;
     }
     if (event.key === 'Enter' && (!event.shiftKey || event.metaKey || event.ctrlKey)) {

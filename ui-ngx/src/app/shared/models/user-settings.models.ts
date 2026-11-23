@@ -13,6 +13,7 @@ export interface UserSettings {
   includeResourcesInExportDashboard?: boolean;
   isSolutionSidebarExpanded?: boolean;
   aiTour?: AiTourSettings;
+  homeCards?: HomeCardsSettings;
 }
 
 export enum AiTourStep {
@@ -23,6 +24,21 @@ export enum AiTourStep {
 }
 
 export type AiTourSettings = Partial<Record<AiTourStep, number>>;
+
+export enum HomeCardId {
+  IOT_HUB = 'iotHub',
+  ALARMS = 'alarms',
+  DASHBOARDS = 'dashboards',
+  DEVICES = 'devices',
+  ACTIVITY = 'activity',
+  GET_STARTED = 'getStarted',
+  NOTIFICATIONS = 'notifications',
+  QUICK_LINKS = 'quickLinks',
+  USAGE = 'usage',
+  MOBILE_APP = 'mobileApp'
+}
+
+export type HomeCardsSettings = Partial<Record<HomeCardId, boolean>>;
 
 export const initialUserSettings: UserSettings = {
   openedMenuSections: []

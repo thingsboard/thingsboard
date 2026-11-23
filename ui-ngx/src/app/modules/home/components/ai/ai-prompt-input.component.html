@@ -4,7 +4,7 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div class="tb-ai-composer" [class.docked]="docked" [class.drop]="dragging()" [class.has-text]="hasText()">
+<div class="tb-ai-composer" [class.docked]="docked" [class.slim]="slim" [class.drop]="dragging()" [class.has-text]="hasText()">
   @if (attachEnabled()) {
     <input #fileInput type="file" hidden multiple [accept]="accept()" (change)="onFilesPicked($event)">
   }
@@ -57,7 +57,7 @@
         <span id="composer-suggestion" class="tb-ai-sr-only">{{ 'ai-assistant.suggestion-sr' | translate: {text: suggestion} }}</span>
       }
       <textarea #textarea
-                rows="2"
+                [rows]="slim ? 1 : 2"
                 spellcheck="false"
                 [attr.aria-label]="'ai-assistant.ask-the-assistant' | translate"
                 [attr.aria-describedby]="suggestion && !hasText() ? 'composer-suggestion' : null"
@@ -66,6 +66,9 @@
                 (input)="onInput()"
                 (paste)="onPaste($event)"
                 (keydown)="onKeydown($event)"></textarea>
+      @if (slim) {
+        <kbd class="composer-slash" aria-hidden="true">/</kbd>
+      }
       <span class="composer-send-slot">
         @if (canStop) {
           <button type="button" class="composer-send composer-stop"

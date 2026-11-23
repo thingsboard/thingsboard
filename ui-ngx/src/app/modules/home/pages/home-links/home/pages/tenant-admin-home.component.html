@@ -1,0 +1,65 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<ng-template #homeCard let-id>
+  @switch (id) {
+    @case (HomeCardId.IOT_HUB) {
+      <tb-iot-hub-home></tb-iot-hub-home>
+    }
+    @case (HomeCardId.ALARMS) {
+      <tb-alarms-home></tb-alarms-home>
+    }
+    @case (HomeCardId.DASHBOARDS) {
+      <tb-dashboards-home></tb-dashboards-home>
+    }
+    @case (HomeCardId.DEVICES) {
+      <tb-devices-home></tb-devices-home>
+    }
+    @case (HomeCardId.ACTIVITY) {
+      <tb-devices-activity-home></tb-devices-activity-home>
+    }
+    @case (HomeCardId.GET_STARTED) {
+      <tb-get-started-home></tb-get-started-home>
+    }
+    @case (HomeCardId.NOTIFICATIONS) {
+      <tb-notifications-home></tb-notifications-home>
+    }
+    @case (HomeCardId.QUICK_LINKS) {
+      <tb-quick-links-home></tb-quick-links-home>
+    }
+    @case (HomeCardId.USAGE) {
+      <tb-api-usage-home></tb-api-usage-home>
+    }
+    @case (HomeCardId.MOBILE_APP) {
+      <tb-mobile-app-home></tb-mobile-app-home>
+    }
+  }
+</ng-template>
+<div class="tb-home">
+  <div class="tb-home-head">
+    <tb-welcome-home [spark]="aiAvailable"></tb-welcome-home>
+    <tb-status-line-home></tb-status-line-home>
+  </div>
+  <div class="tb-home-grid" [class.with-hero]="aiAvailable">
+    @if (aiAvailable) {
+      <div class="tb-grid-hero">
+        <tb-ai-assistant-home></tb-ai-assistant-home>
+        <tb-waiting-ai-chats-home></tb-waiting-ai-chats-home>
+      </div>
+    }
+    <div class="tb-col tb-col-main">
+      @for (id of mainCards(); track id) {
+        <ng-container [ngTemplateOutlet]="homeCard" [ngTemplateOutletContext]="{$implicit: id}"></ng-container>
+      }
+    </div>
+    <div class="tb-col tb-col-side">
+      @for (id of sideCards(); track id) {
+        <ng-container [ngTemplateOutlet]="homeCard" [ngTemplateOutletContext]="{$implicit: id}"></ng-container>
+      }
+    </div>
+  </div>
+  <tb-home-cards-footer [cards]="cards"></tb-home-cards-footer>
+</div>

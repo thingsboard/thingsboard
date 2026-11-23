@@ -1,0 +1,73 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-customize-home-panel .mat-mdc-dialog-surface {
+  border-radius: 14px;
+}
+
+.tb-customize-home {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px 20px 16px 24px;
+
+  h2 {
+    margin: 0;
+    font: 500 17px/24px var(--tb-font, Roboto, sans-serif);
+    letter-spacing: 0;
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+  }
+
+  .tb-sections {
+    display: flex;
+    flex-direction: column;
+    margin: 0 -8px;
+  }
+
+  .tb-section-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 40px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    input {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--tb-primary-500);
+      cursor: pointer;
+    }
+
+    .mat-icon {
+      flex: none;
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+      color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+    }
+  }
+
+  .tb-customize-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+
+    .mdc-button {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 8px;
+    }
+  }
+}

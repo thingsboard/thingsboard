@@ -8525,6 +8525,62 @@
         "show-help": "Show help"
     },
     "home": {
+            "iot-hub": {
+                "search": "Search IoT Hub",
+                "open-results": "Open results in IoT Hub",
+                "all-devices": "All {{count}} devices",
+                "also": "Also in IoT Hub",
+                "unavailable": "IoT Hub is not available right now.",
+            "templates": "Solution templates",
+            "device-library": "Device library",
+            "widgets": "Widgets",
+            "calculated-fields": "Calculated fields",
+            "alarm-rules": "Alarm rules",
+            "rule-chains": "Rule chains"
+            },
+            "status": {
+                "critical-alarms": "{ count, plural, =1 {1 critical alarm} other {# critical alarms} }",
+                "active-alarms": "{ count, plural, =1 {1 active alarm, none critical} other {# active alarms, none critical} }",
+                "no-alarms": "No active alarms",
+                "inactive-devices": "{ count, plural, =1 {1 device inactive} other {# devices inactive} }",
+                "device-active": "Device active",
+                "all-devices-active": "All {{count}} devices active",
+                "nothing-assigned": "No devices or dashboards assigned to you yet"
+            },
+            "greeting": {
+                "morning": "Good morning",
+                "afternoon": "Good afternoon",
+                "evening": "Good evening",
+                "morning-name": "Good morning, {{name}}",
+                "afternoon-name": "Good afternoon, {{name}}",
+                "evening-name": "Good evening, {{name}}"
+            },
+            "cards": {
+                "iot-hub": "IoT Hub",
+                "alarms": "Alarms",
+                "dashboards": "Dashboards",
+                "devices": "Devices",
+                "activity": "Activity",
+                "get-started": "Get started",
+                "notifications": "Notifications",
+                "quick-links": "Quick links",
+                "usage": "Usage",
+                "mobile-app": "Mobile app"
+            },
+            "ai": {
+                "placeholder": "Ask the AI Assistant…",
+                "chats": "Chats",
+                "waiting": "Waiting for you"
+            },
+            "customize": {
+                "title": "Customize Home",
+                "show-on-home": "Show on Home",
+                "show-all": "Show all",
+                "cards": "Cards on Home",
+            "hide": "Hide {{name}}",
+            "hidden": "{{name}} hidden",
+            "undo": "Undo"
+            },
         "home": "Home",
         "profile": "Profile",
         "logout": "Logout",

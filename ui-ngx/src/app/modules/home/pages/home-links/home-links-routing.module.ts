@@ -25,7 +25,6 @@ import { MenuId } from '@core/services/menu.models';
 import { MenuService } from '@core/services/menu.service';
 
 const sysAdminHomePageJson = '/assets/dashboard/sys_admin_home_page.json';
-const tenantAdminHomePageJson = '/assets/dashboard/tenant_admin_home_page.json';
 // const customerUserHomePageJson = '/assets/dashboard/customer_user_home_page.json';
 
 const getHomeDashboard = (store: Store<AppState>, resourcesService: ResourcesService) => {
@@ -33,8 +32,6 @@ const getHomeDashboard = (store: Store<AppState>, resourcesService: ResourcesSer
   switch (authority) {
     case Authority.SYS_ADMIN:
       return applySystemParametersToHomeDashboard(store, resourcesService.loadJsonResource(sysAdminHomePageJson), authority);
-    case Authority.TENANT_ADMIN:
-      return applySystemParametersToHomeDashboard(store, resourcesService.loadJsonResource(tenantAdminHomePageJson), authority);
     // case Authority.CUSTOMER_USER:
     //   return applySystemParametersToHomeDashboard(store, resourcesService.loadJsonResource(customerUserHomePageJson), authority);
     default:

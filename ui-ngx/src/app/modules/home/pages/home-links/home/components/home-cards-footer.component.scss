@@ -1,0 +1,70 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+}
+
+.tb-home-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 8px;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--tb-line-soft, rgba(0, 0, 0, 0.05));
+}
+
+.tb-hidden-cards {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tb-hidden-lbl {
+  margin: 0 6px 0 4px;
+  font: 400 13px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+}
+
+.tb-foot-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+
+  .mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    line-height: 18px;
+    color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+
+    .mat-icon {
+      color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: -2px;
+  }
+}
+
+.tb-customize-btn {
+  margin-left: auto;
+}

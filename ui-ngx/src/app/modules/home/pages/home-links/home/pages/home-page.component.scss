@@ -1,0 +1,69 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  --tb-home-page: #f4f6f7;
+  --tb-home-ai-glow: oklch(0.80 0.11 182);
+  --tb-home-card-shadow: 0 1px 1px rgba(20, 52, 58, 0.06), 0 2px 6px -1px rgba(20, 52, 58, 0.08);
+  position: relative;
+  isolation: isolate;
+  display: block;
+  min-height: 100%;
+  box-sizing: border-box;
+  container: tb-home / inline-size;
+  background-color: var(--tb-home-page);
+  background-image:
+    radial-gradient(1300px 560px at 16% -120px, color-mix(in oklab, var(--tb-home-ai-glow) 34%, var(--tb-home-page)) 0%,
+      color-mix(in oklab, var(--tb-home-ai-glow) 12%, var(--tb-home-page)) 42%, var(--tb-home-page) 78%),
+    linear-gradient(180deg, #eaedef 0px, var(--tb-home-page) 360px);
+  background-repeat: no-repeat;
+}
+
+.tb-home-sky {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  height: 600px;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--ai-field-wash);
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 200px, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0, #000 200px, transparent 100%);
+  animation: tb-home-sky-in 1.2s cubic-bezier(.4, 0, .2, 1);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes tb-home-sky-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@supports (color: oklch(from red l c h)) {
+  :host(.tenant-brand) {
+    --tb-home-tenant-glow: oklch(from var(--tb-primary-500) 0.80 min(c, 0.11) h);
+    background-image:
+      radial-gradient(820px 520px at 6% -120px, color-mix(in oklab, var(--tb-home-tenant-glow) 34%, transparent) 0%,
+        color-mix(in oklab, var(--tb-home-tenant-glow) 12%, transparent) 42%, transparent 78%),
+      radial-gradient(900px 520px at 80% -140px, color-mix(in oklab, var(--tb-home-ai-glow) 34%, transparent) 0%,
+        color-mix(in oklab, var(--tb-home-ai-glow) 12%, transparent) 42%, transparent 78%),
+      linear-gradient(180deg, #eaedef 0px, var(--tb-home-page) 360px);
+  }
+
+  :host(.tenant-brand) .tb-home-sky {
+    --tb-home-sky-field: oklch(from var(--tb-primary-500) 0.86 min(c, 0.08) h);
+    --tb-home-sky-soft: oklch(from var(--tb-primary-500) 0.89 min(c, 0.05) h);
+    background:
+      radial-gradient(46% 80% at 41% 24%, color-mix(in oklab, var(--ai-light-lilac) calc(var(--ai-w-lilac) * .87), transparent), transparent 72%),
+      radial-gradient(70% 88% at 14% 2%, color-mix(in oklab, var(--tb-home-sky-field) calc(var(--ai-w-teal) * .87), transparent), transparent 70%),
+      radial-gradient(72% 82% at 66% 0%, color-mix(in oklab, var(--ai-light-teal) calc(var(--ai-w-teal) * .87), transparent), transparent 70%),
+      radial-gradient(44% 56% at 2% 96%, color-mix(in oklab, var(--tb-home-sky-soft) calc(var(--ai-w-mint) * .87), transparent), transparent 70%),
+      radial-gradient(45% 60% at 100% 100%, color-mix(in oklab, var(--ai-light-peach) calc(var(--ai-w-peach) * .87), transparent), transparent 70%),
+      radial-gradient(50% 70% at 100% 52%, color-mix(in oklab, var(--ai-light-amber) calc(var(--ai-w-amber) * .87), transparent), transparent 70%),
+      var(--ai-light-paper);
+  }
+}

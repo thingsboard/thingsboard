@@ -101,6 +101,11 @@ export const selectAiTourStepSeen = (step: AiTourStep) => createSelector(
   aiTour => !!aiTour[step]
 );
 
+export const selectHomeCards = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.userSettings?.homeCards ?? {}
+);
+
 export const getCurrentAuthState = (store: Store<AppState>): AuthState => {
   let state: AuthState;
   store.pipe(select(selectAuth), take(1)).subscribe(

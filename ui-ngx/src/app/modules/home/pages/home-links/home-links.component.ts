@@ -1,15 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  OnInit
-} from '@angular/core';
-import { MenuService } from '@core/services/menu.service';
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { MediaBreakpoints } from '@shared/models/constants';
-import { HomeSection } from '@core/services/menu.models';
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HomeDashboard } from '@shared/models/dashboard.models';
 
@@ -22,50 +14,14 @@ import { HomeDashboard } from '@shared/models/dashboard.models';
 })
 export class HomeLinksComponent implements OnInit {
 
-  homeSections$ = this.menuService.homeSections();
-
-  cols = 2;
-
   homeDashboard: HomeDashboard = this.route.snapshot.data.homeDashboard;
 
   hideMainToolbar = true;
 
-  constructor(private menuService: MenuService,
-              public breakpointObserver: BreakpointObserver,
-              private cd: ChangeDetectorRef,
-              private route: ActivatedRoute) {
+  constructor(private route: ActivatedRoute) {
   }
 
   ngOnInit() {
     this.hideMainToolbar = (!!this.homeDashboard && !this.homeDashboard.isSystemDashboard);
-    if (!this.homeDashboard) {
-      this.updateColumnCount();
-      this.breakpointObserver
-        .observe([MediaBreakpoints.lg, MediaBreakpoints['gt-lg']])
-        .subscribe((state: BreakpointState) => this.updateColumnCount());
-    }
-  }
-
-  private updateColumnCount() {
-    this.cols = 2;
-    if (this.breakpointObserver.isMatched(MediaBreakpoints.lg)) {
-      this.cols = 3;
-    }
-    if (this.breakpointObserver.isMatched(MediaBreakpoints['gt-lg'])) {
-      this.cols = 4;
-    }
-    this.cd.detectChanges();
-  }
-
-  sectionColspan(section: HomeSection): number {
-    if (this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm'])) {
-      let colspan = this.cols;
-      if (section && section.places && section.places.length <= colspan) {
-        colspan = section.places.length;
-      }
-      return colspan;
-    } else {
-      return 2;
-    }
   }
 }

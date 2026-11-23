@@ -650,3 +650,99 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     opacity: 1;
   }
 }
+
+.tb-ai-composer.slim {
+  .composer-field {
+    border-radius: 12px;
+
+    &:not(:focus-within) {
+      border-color: transparent;
+      box-shadow: var(--tb-home-card-shadow, 0 1px 1px rgba(20, 52, 58, 0.06), 0 2px 6px -1px rgba(20, 52, 58, 0.08));
+    }
+  }
+
+  .composer-row {
+    padding-bottom: 12px;
+    transition: padding .24s ease;
+  }
+
+  textarea {
+    min-height: 24px;
+    transition: min-height .24s cubic-bezier(.2, .7, .2, 1);
+  }
+
+  .composer-foot {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-width: 0;
+    opacity: 0;
+    overflow: clip;
+    transition: max-height .24s cubic-bezier(.2, .7, .2, 1), padding .24s cubic-bezier(.2, .7, .2, 1), opacity .18s ease;
+  }
+
+  .composer-slash {
+    position: absolute;
+    top: 50%;
+    right: 19px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border: 1px solid var(--tb-line);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: var(--tb-surface);
+    color: var(--tb-ink-54);
+    font: 500 12px/1 var(--tb-font);
+    pointer-events: none;
+    transform: translateY(-50%);
+  }
+
+  &:not(:focus-within):not(.has-text) .composer-send-slot {
+    visibility: hidden;
+  }
+
+  &:is(:focus-within, .has-text) {
+    .composer-row {
+      padding-bottom: 8px;
+    }
+
+    textarea {
+      min-height: 72px;
+    }
+
+    .composer-foot {
+      max-height: 56px;
+      padding-top: 2px;
+      padding-bottom: 6px;
+      border-top-width: 1px;
+      opacity: 1;
+      overflow: visible;
+    }
+
+    .composer-slash {
+      display: none;
+    }
+  }
+
+  @media (hover: none), (max-width: 599px) {
+    .composer-slash {
+      display: none;
+    }
+
+    &:not(:focus-within):not(.has-text) .composer-send-slot {
+      visibility: visible;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    textarea, .composer-foot, .composer-row {
+      transition: none;
+    }
+  }
+}
+

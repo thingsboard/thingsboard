@@ -1,0 +1,49 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.tb-home-kicker {
+  margin: 0 0 4px;
+  font: 500 12px/16px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+}
+
+.tb-greeting {
+  margin: 0;
+  font: 600 28px/36px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: -0.2px;
+  color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+
+  &.with-spark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.tb-greeting .tb-greet-spark {
+  --m: 44px;
+  --ai-mark-ink-a: color-mix(in oklab, var(--tb-primary-500) 50%, var(--ai-mark-ink-c));
+  --ai-mark-ink-b: color-mix(in oklab, var(--tb-primary-500) 20%, var(--ai-mark-ink-c));
+  width: calc(var(--m) * var(--ai-spark));
+  height: calc(var(--m) * var(--ai-spark));
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  animation: none;
+}
+
+@media (max-width: 959px) {
+  .tb-greeting .tb-greet-spark {
+    --m: 34px;
+  }
+
+  .tb-greeting.with-spark {
+    gap: 8px;
+  }
+}

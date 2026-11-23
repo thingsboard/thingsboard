@@ -1,0 +1,105 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="card" [hideable]="true" [expanded]="searching()">
+  <ng-container homeCardActions>
+    @if (searching()) {
+      <label class="tb-iot-hub-search" [class.has-text]="!!query().trim()" (focusout)="onSearchFocusOut($event)">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <input #searchInput type="search" class="tb-search-input" [placeholder]="'home.iot-hub.search' | translate"
+               [attr.aria-label]="'home.iot-hub.search' | translate" [value]="query()"
+               (input)="query.set($any($event.target).value)" (keydown)="onSearchKeydown($event)">
+        <button mat-icon-button type="button" class="tb-search-clear" [matTooltip]="'action.clear' | translate"
+                [attr.aria-label]="'action.clear' | translate" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+        <button mat-icon-button type="button" class="tb-search-go" [matTooltip]="'home.iot-hub.open-results' | translate"
+                [attr.aria-label]="'home.iot-hub.open-results' | translate" (click)="search()">
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </label>
+    } @else {
+      <button #searchOpener mat-icon-button type="button" class="tb-iot-hub-find" aria-expanded="false"
+              [matTooltip]="'home.iot-hub.search' | translate" matTooltipPosition="above"
+              [attr.aria-label]="'home.iot-hub.search' | translate" (click)="openSearch()">
+        <mat-icon>search</mat-icon>
+      </button>
+    }
+  </ng-container>
+  @if (failed()) {
+    <p class="tb-iot-hub-unavailable">{{ 'home.iot-hub.unavailable' | translate }}</p>
+  } @else {
+    <div class="tb-iot-hub-row">
+      <a class="tb-iot-hub-row-title" routerLink="/iot-hub/solution-templates">{{ 'home.iot-hub.templates' | translate }}</a>
+      <tb-home-hscroll [label]="'home.iot-hub.templates' | translate">
+        @for (tile of templates(); track tile.item.id; let first = $first) {
+          <button type="button" class="tb-iot-hub-card" (click)="open(tile.item)">
+            <span class="tb-iot-hub-card-image" [style.background]="tile.tint" [attr.data-hscroll-anchor]="first ? '' : null">
+              @if (tile.image) {
+                <img [src]="tile.image" alt="" loading="lazy" (error)="tile.image = null">
+              }
+              @if (isInstalled(tile.item)) {
+                <mat-icon class="tb-iot-hub-card-installed" role="img"
+                          [attr.aria-label]="'iot-hub.installed' | translate"
+                          [matTooltip]="'iot-hub.installed' | translate" matTooltipPosition="left" [matTooltipShowDelay]="0">check_circle</mat-icon>
+              }
+            </span>
+            <span class="tb-iot-hub-card-label">
+              <span class="tb-iot-hub-card-name" [title]="tile.item.name">{{ tile.item.name }}</span>
+              @if (tile.meta) {
+                <span class="tb-iot-hub-card-meta">{{ tile.meta }}</span>
+              }
+            </span>
+          </button>
+        } @empty {
+          @if (!loaded()) {
+            @for (n of [1, 2, 3, 4]; track n) {
+              <span class="tb-iot-hub-card placeholder"><span class="tb-iot-hub-card-image"></span></span>
+            }
+          }
+        }
+      </tb-home-hscroll>
+    </div>
+    <div class="tb-iot-hub-row">
+      <a class="tb-iot-hub-row-title" routerLink="/iot-hub/devices">{{ 'home.iot-hub.device-library' | translate }}</a>
+      <tb-home-hscroll [label]="'home.iot-hub.device-library' | translate">
+        @for (tile of devices(); track tile.item.id) {
+          <button type="button" class="tb-iot-hub-device" (click)="open(tile.item)">
+            <span class="tb-iot-hub-device-thumb" [style.background]="tile.tint">
+              @if (tile.image) {
+                <img [src]="tile.image" alt="" loading="lazy" (error)="tile.image = null">
+              }
+            </span>
+            <span class="tb-iot-hub-device-text">
+              <b>{{ tile.item.name }}</b>
+              <small>{{ tile.meta }}</small>
+            </span>
+          </button>
+        }
+        @if (deviceTotal()) {
+          <button type="button" class="tb-iot-hub-device tb-iot-hub-all" (click)="browse('devices')">
+            <span class="tb-iot-hub-device-thumb"><mat-icon>arrow_forward</mat-icon></span>
+            <span class="tb-iot-hub-device-text">
+              <b>{{ 'home.iot-hub.all-devices' | translate: {count: deviceTotal()} }}</b>
+              <small>{{ 'home.iot-hub.device-library' | translate }}</small>
+            </span>
+          </button>
+        }
+      </tb-home-hscroll>
+    </div>
+  }
+  <div class="tb-iot-hub-row">
+    <div class="tb-iot-hub-row-title plain">{{ 'home.iot-hub.also' | translate }}</div>
+    <nav class="tb-iot-hub-kinds" [attr.aria-label]="'home.iot-hub.also' | translate">
+      @for (kind of kinds; track kind.type) {
+        <a class="tb-iot-hub-kind" [routerLink]="['/iot-hub', kind.route]">
+          <mat-icon aria-hidden="true">{{ kind.icon }}</mat-icon>
+          <span>{{ kind.name | translate }}</span>
+        </a>
+      }
+    </nav>
+  </div>
+</tb-home-card>
