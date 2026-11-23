@@ -2660,7 +2660,7 @@
 
     <pluginRepositories>
         <pluginRepository>
-            <id>thingsboard-repo</id>
+            <id>thingsboard-public-repo</id>
             <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
         </pluginRepository>
     </pluginRepositories>
