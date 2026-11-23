@@ -52,8 +52,11 @@ public class DefaultFirebaseService implements FirebaseService {
             }
         });
 
+        // mutable-content lets the iOS app's notification service extension
+        // add the template icon to the push before iOS shows it
         Aps.Builder apsConfig = Aps.builder()
-                .setSound("default");
+                .setSound("default")
+                .setMutableContent(true);
         if (badge != null) {
             apsConfig.setBadge(badge);
         }
