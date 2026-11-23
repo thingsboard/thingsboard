@@ -92,6 +92,10 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
     this.settings = mergeDeep({} as S, this.defaultSettings(), this.inputSettings as S);
   }
 
+  public missingApiKey(): boolean {
+    return false;
+  }
+
   public loadLayer(theMap: L.Map): Observable<L.TB.LayerData> {
     return this.generateLayer().pipe(
       switchMap((layerData) => {
@@ -307,6 +311,10 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
     return defaultGoogleMapLayerSettings;
   }
 
+  public missingApiKey(): boolean {
+    return !this.settings.apiKey;
+  }
+
   protected createLayer(): Observable<L.Layer> {
     return this.loadGoogle().pipe(
       map((loaded) => {
@@ -322,7 +330,7 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
   }
 
   private loadGoogle(): Observable<boolean> {
-    const apiKey = this.settings.apiKey || defaultGoogleMapLayerSettings.apiKey;
+    const apiKey = this.settings.apiKey;
     if (TbGoogleMapLayer.loadedApiKeysGlobal[apiKey]) {
       return of(true);
     } else {
@@ -373,9 +381,12 @@ class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
     return defaultHereMapLayerSettings;
   }
 
+  public missingApiKey(): boolean {
+    return !this.settings.apiKey;
+  }
+
   protected createLayer(): Observable<L.Layer> {
-    const apiKey = this.settings.apiKey || defaultHereMapLayerSettings.apiKey;
-    const layer = L.tileLayer.provider(hereV3Provider(this.settings.layerType), {apiKey});
+    const layer = L.tileLayer.provider(hereV3Provider(this.settings.layerType), {apiKey: this.settings.apiKey});
     return of(layer);
   }
 

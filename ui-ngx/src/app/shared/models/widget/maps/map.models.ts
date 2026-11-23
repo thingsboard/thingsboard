@@ -1147,7 +1147,7 @@ export interface GoogleMapLayerSettings extends MapLayerSettings {
 export const defaultGoogleMapLayerSettings: GoogleMapLayerSettings = {
   provider: MapProvider.google,
   layerType: GoogleLayerType.roadmap,
-  apiKey: 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q'
+  apiKey: null
 };
 
 export enum HereLayerType {
@@ -1177,7 +1177,7 @@ export interface HereMapLayerSettings extends MapLayerSettings {
 export const defaultHereMapLayerSettings: HereMapLayerSettings = {
   provider: MapProvider.here,
   layerType: HereLayerType.hereNormalDay,
-  apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
+  apiKey: null
 }
 
 const hereV3Variants: {[v2Variant: string]: string} = {
@@ -1269,18 +1269,7 @@ export const defaultMapLayers: MapLayerSettings[] = [
     label: '{i18n:widgets.maps.layer.roadmap}',
     provider: MapProvider.openfreemap,
     layerType: OpenFreeMapStyleType.bright,
-  } as OpenFreeMapLayerSettings,
-  {
-    label: '{i18n:widgets.maps.layer.satellite}',
-    provider: MapProvider.openstreet,
-    layerType: OpenStreetLayerType.esriWorldImagery,
-  } as OpenStreetMapLayerSettings,
-  {
-    label: '{i18n:widgets.maps.layer.hybrid}',
-    provider: MapProvider.openstreet,
-    layerType: OpenStreetLayerType.esriWorldImagery,
-    referenceLayer: ReferenceLayerType.openstreetmap_hybrid
-  } as OpenStreetMapLayerSettings
+  } as OpenFreeMapLayerSettings
 ];
 
 export interface GeoMapSettings extends BaseMapSettings {

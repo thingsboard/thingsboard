@@ -12743,6 +12743,7 @@
                 "satellite": "Satellite",
                 "hybrid": "Hybrid",
                 "webgl-not-available": "The selected map layer requires graphics acceleration to display. Please enable 'Hardware acceleration' in your browser settings, or switch to a different layer.",
+                "api-key-required": "Some map layers are hidden because they require an API key. Specify your API key in the map layer settings.",
                 "reference": {
                     "reference-layer": "Reference layer",
                     "no-layer": "No layer",

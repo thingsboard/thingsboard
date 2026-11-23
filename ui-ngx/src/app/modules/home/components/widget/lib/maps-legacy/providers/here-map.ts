@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import L from 'leaflet';
 import LeafletMap from '../leaflet-map';
-import { DEFAULT_ZOOM_LEVEL, defaultHereMapProviderSettings, WidgetUnitedMapSettings } from '../map-models';
+import { DEFAULT_ZOOM_LEVEL, WidgetUnitedMapSettings } from '../map-models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { hereV3Provider } from '@shared/models/widget/maps/map.models';
 
@@ -19,8 +19,7 @@ export class HEREMap extends LeafletMap {
           zoomControl: !this.options.disableZoomControl,
           fadeAnimation: !ctx.reportService.reportView
         }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
-        const apiKey = options.credentials?.apiKey || defaultHereMapProviderSettings.credentials.apiKey;
-        const tileLayer = L.tileLayer.provider(hereV3Provider(options.mapProviderHere), {apiKey});
+        const tileLayer = L.tileLayer.provider(hereV3Provider(options.mapProviderHere), {apiKey: options.credentials?.apiKey});
         tileLayer.addTo(map);
         if (this.ctx.reportService.reportView) {
           tileLayer.once('load', () => {

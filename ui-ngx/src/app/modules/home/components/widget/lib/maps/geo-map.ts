@@ -89,12 +89,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
           const defaultLayer = layers[0];
           layers.forEach(layer => {
             layer.layer.once(WEBGL_ERROR_EVENT, () => {
-              const toastPosition = this.settings.controlsPosition === MapControlsPosition.bottomleft
-              || this.settings.controlsPosition === MapControlsPosition.bottomright ? 'top' : 'bottom';
-              this.ctx.showErrorToast(
-                this.ctx.translate.instant('widgets.maps.layer.webgl-not-available'),
-                toastPosition, 'left', this.ctx.toastTargetId, true
-              );
+              this.showLayerErrorToast('widgets.maps.layer.webgl-not-available');
             });
           });
           defaultLayer.layer.addTo(this.map);
@@ -115,6 +110,8 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
               buttonTitle: this.ctx.translate.instant('widgets.maps.layer.layers'),
             }).addTo(this.map);
           }
+        } else if (this.ctx.reportService.reportView) {
+          this.ctx.reportService.onMapLoaded(this.mapUuid);
         }
       })
     );
@@ -123,10 +120,26 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
 
   private loadLayers(): Observable<L.TB.LayerData[]> {
     const layers = this.settings.layers.map(settings => TbMapLayer.fromSettings(this.ctx, settings));
-    return forkJoin(layers.map(layer => layer.loadLayer(this.map))).pipe(
+    const availableLayers = layers.filter(layer => !layer.missingApiKey());
+    if (availableLayers.length < layers.length) {
+      this.showLayerErrorToast('widgets.maps.layer.api-key-required');
+    }
+    if (!availableLayers.length) {
+      return of([]);
+    }
+    return forkJoin(availableLayers.map(layer => layer.loadLayer(this.map))).pipe(
       map((layersData) => {
         return layersData.filter(l => l !== null);
       })
+    );
+  }
+
+  private showLayerErrorToast(messageKey: string) {
+    const toastPosition = this.settings.controlsPosition === MapControlsPosition.bottomleft
+    || this.settings.controlsPosition === MapControlsPosition.bottomright ? 'top' : 'bottom';
+    this.ctx.showErrorToast(
+      this.ctx.translate.instant(messageKey),
+      toastPosition, 'left', this.ctx.toastTargetId, true
     );
   }
 

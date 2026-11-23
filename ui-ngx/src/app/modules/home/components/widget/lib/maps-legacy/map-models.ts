@@ -64,7 +64,7 @@ export interface GoogleMapProviderSettings {
 }
 
 export const defaultGoogleMapProviderSettings: GoogleMapProviderSettings = {
-  gmApiKey: 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q',
+  gmApiKey: null,
   gmDefaultMapType: GoogleMapType.roadmap
 };
 
@@ -128,7 +128,7 @@ export interface HereMapProviderSettings {
 export const defaultHereMapProviderSettings: HereMapProviderSettings = {
   mapProviderHere: HereMapProvider.hereNormalDay,
   credentials: {
-    apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
+    apiKey: null
   }
 };
 
