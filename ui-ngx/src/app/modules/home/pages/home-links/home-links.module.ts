@@ -33,6 +33,7 @@ import { CustomizeHomeDialogComponent } from '@home/pages/home-links/home/compon
 import { HomeHscrollComponent } from '@home/pages/home-links/home/components/home-hscroll.component';
 import { HomeToggleComponent } from '@home/pages/home-links/home/components/home-toggle.component';
 import { HomeListFooterComponent } from '@home/pages/home-links/home/components/home-list-footer.component';
+import { AiStartHomeComponent } from '@home/pages/home-links/home/components/ai-start-home.component';
 import { AiModule } from '@home/components/ai/ai.module';
 
 @NgModule({
@@ -62,7 +63,8 @@ import { AiModule } from '@home/components/ai/ai.module';
       CustomizeHomeDialogComponent,
       HomeHscrollComponent,
       HomeToggleComponent,
-      HomeListFooterComponent
+      HomeListFooterComponent,
+      AiStartHomeComponent
     ],
   imports: [
     CommonModule,

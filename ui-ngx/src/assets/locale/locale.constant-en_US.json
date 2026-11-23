@@ -8573,6 +8573,9 @@
                 "mine": "Mine",
                 "add-rule": "Add alarm rule",
                 "no-active": "No active alarms.",
+                "no-rules": "No alarm rules yet. Add a rule to see its alarms here.",
+                "how-rules-work": "How alarm rules work",
+                "no-alarms-yet": "No alarms yet",
                 "view-cleared": "View cleared",
                 "show-only": "Show {{severity}} only",
                 "show-every": "Show every severity",
@@ -8652,6 +8655,14 @@
                 "none-inactive": "No inactive devices.",
                 "none-active": "No active devices."
             },
+            "activity": {
+                "period": "Last 30 days",
+                "series": "Activity series",
+                "devices": "Active devices",
+                "messages": "Messages",
+                "today": "Today",
+                "none": "No activity yet"
+            },
             "list": {
                 "show-more": "Show more",
                 "show-all": "Show all",
@@ -8670,6 +8681,11 @@
                 "placeholder": "Ask the AI Assistant…",
                 "chats": "Chats",
                 "waiting": "Waiting for you",
+                "start-title": "Get started with AI",
+                "start-device": "Connect a device",
+                "start-device-tip": "The AI Assistant's Get started: one device, from an example",
+                "start-solution": "Create a solution",
+                "start-solution-tip": "The AI Assistant's New solution: describe it, or start from an example",
                 "offer-title": "Ask from Home",
                 "offer-text": "Ask a question, or have it connect a device, build a dashboard or add an alarm rule.",
                 "offer-action": "Ask",

@@ -22,7 +22,12 @@ import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service'
 import { AlarmService } from '@core/http/alarm.service';
 import { DialogService } from '@core/services/dialog.service';
 import { ToastNotificationService } from '@core/services/toast-notification.service';
-import { AlarmCountCmd, AlarmDataCmd, TelemetrySubscriber } from '@shared/models/telemetry/telemetry.models';
+import { AlarmCountCmd, AlarmDataCmd, EntityCountCmd, TelemetrySubscriber } from '@shared/models/telemetry/telemetry.models';
+import { AlarmRulesService } from '@core/http/alarm-rules.service';
+import { AliasFilterType } from '@shared/models/alias.models';
+import { PageLink } from '@shared/models/page/page-link';
+import { HelpLinks } from '@shared/models/constants';
+import { catchError, of } from 'rxjs';
 import { AlarmData, AlarmDataPageLink, EntityKeyType } from '@shared/models/query/query.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { AlarmSearchStatus, AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
@@ -102,6 +107,7 @@ export class AlarmsHomeComponent {
   private alarmService = inject(AlarmService);
   private toast = inject(ToastNotificationService);
   private translate = inject(TranslateService);
+  private alarmRulesService = inject(AlarmRulesService);
 
   private readonly authUser = getCurrentAuthUser(this.store);
   private readonly userId = this.authUser?.userId;
@@ -114,6 +120,21 @@ export class AlarmsHomeComponent {
   readonly sortDesc = signal(true);
 
   readonly total = signal<number | null>(null);
+  readonly hasRules = signal<boolean | null>(null);
+  readonly devices = signal<number | null>(null);
+  readonly howToLink = HelpLinks.linksMap.alarmRules;
+
+  readonly emptyState = computed<'rules' | 'devices' | 'clear' | null>(() => {
+    if (this.total() !== 0 || this.hasRules() === null || this.devices() === null) {
+      return null;
+    }
+    if (this.tenantAdmin && !this.hasRules()) {
+      return 'rules';
+    }
+    return this.devices() ? 'clear' : 'devices';
+  });
+
+  private devicesSubscriber: TelemetrySubscriber | null = null;
   private readonly severityCounts = new Map<AlarmSeverity, WritableSignal<number | null>>(
     SEVERITIES.map(severity => [severity, signal<number | null>(null)])
   );
@@ -179,6 +200,14 @@ export class AlarmsHomeComponent {
 
   constructor() {
     this.totalSubscriber = this.subscribeCount(this.total);
+    this.devicesSubscriber = this.subscribeDevices();
+    if (this.tenantAdmin) {
+      this.alarmRulesService.getAlarmRules(new PageLink(1), undefined, {ignoreLoading: true}).pipe(
+        catchError(() => of(null))
+      ).subscribe(page => this.hasRules.set(!page || page.totalElements > 0));
+    } else {
+      this.hasRules.set(true);
+    }
     effect(() => {
       const mine = this.mine();
       untracked(() => this.subscribeSeverityCounts(mine));
@@ -191,6 +220,7 @@ export class AlarmsHomeComponent {
     inject(DestroyRef).onDestroy(() => {
       clearInterval(tick);
       this.totalSubscriber?.unsubscribe();
+      this.devicesSubscriber?.unsubscribe();
       this.severitySubscribers.forEach(subscriber => subscriber.unsubscribe());
       this.dataSubscriber?.unsubscribe();
     });
@@ -341,6 +371,16 @@ export class AlarmsHomeComponent {
     const subscriber = new TelemetrySubscriber(this.telemetryWsService, this.zone);
     subscriber.subscriptionCommands.push(cmd);
     subscriber.alarmCount$.subscribe(update => target.set(update.count ?? 0));
+    subscriber.subscribe();
+    return subscriber;
+  }
+
+  private subscribeDevices(): TelemetrySubscriber {
+    const cmd = new EntityCountCmd();
+    cmd.query = {entityFilter: {type: AliasFilterType.entityType, entityType: EntityType.DEVICE}};
+    const subscriber = new TelemetrySubscriber(this.telemetryWsService, this.zone);
+    subscriber.subscriptionCommands.push(cmd);
+    subscriber.entityCount$.subscribe(update => this.devices.set(update.count ?? 0));
     subscriber.subscribe();
     return subscriber;
   }

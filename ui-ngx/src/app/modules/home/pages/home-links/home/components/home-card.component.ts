@@ -16,20 +16,23 @@ const UNDO_MS = 6000;
     <section class="tb-home-card" [class.hideable]="hideable()" [attr.data-home-card]="card().id" [style.min-height.px]="card().height"
              [attr.aria-label]="card().name | translate">
       <div class="tb-home-card-header" [class.expanded]="expanded()">
-        @if (card().link) {
-          <a class="tb-home-card-title link" [routerLink]="card().link">
-            <mat-icon class="tb-home-card-icon">{{ card().icon }}</mat-icon>
-            <span>{{ card().name | translate }}</span>
-            @if (count()) {
-              <span class="tb-home-card-count">{{ count() | shortNumber }}</span>
-            }
-          </a>
-        } @else {
-          <span class="tb-home-card-title">
-            <mat-icon class="tb-home-card-icon">{{ card().icon }}</mat-icon>
-            <span>{{ card().name | translate }}</span>
-          </span>
-        }
+        <div class="tb-home-card-title-group">
+          @if (card().link) {
+            <a class="tb-home-card-title link" [routerLink]="card().link">
+              <mat-icon class="tb-home-card-icon">{{ card().icon }}</mat-icon>
+              <span>{{ card().name | translate }}</span>
+              @if (count()) {
+                <span class="tb-home-card-count">{{ count() | shortNumber }}</span>
+              }
+            </a>
+          } @else {
+            <span class="tb-home-card-title">
+              <mat-icon class="tb-home-card-icon">{{ card().icon }}</mat-icon>
+              <span>{{ card().name | translate }}</span>
+            </span>
+          }
+          <ng-content select="[homeCardTitleExtra]"></ng-content>
+        </div>
         <div class="tb-home-card-actions">
           @if (hideable() && !expanded()) {
             <button mat-icon-button type="button" class="tb-home-card-hide"

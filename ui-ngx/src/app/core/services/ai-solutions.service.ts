@@ -1,8 +1,12 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { inject, Injectable, signal } from '@angular/core';
+import { DestroyRef, inject, Injectable, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { selectAuthUser } from '@core/auth/auth.selectors';
 import { EMPTY, Observable, of, Subscription, timer } from 'rxjs';
-import { catchError, finalize, map, switchMap, takeWhile, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, finalize, map, skip, switchMap, takeWhile, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ChatLevel } from '@shared/models/ai-chat.models';
 import { SolutionsCreatorService } from '@core/http/solutions-creator.service';
@@ -36,8 +40,46 @@ export class AiSolutionsService {
   private dialog = inject(DialogService);
   private translate = inject(TranslateService);
 
+  private generation = 0;
+
+  private userWatch = inject(Store<AppState>).select(selectAuthUser).pipe(
+    map(user => user?.userId ?? null),
+    distinctUntilChanged(),
+    skip(1),
+    takeUntilDestroyed(inject(DestroyRef))
+  ).subscribe(() => this.reset());
+
+  private reset(): void {
+    this.generation++;
+    this.ensuring = false;
+    this.following?.unsubscribe();
+    this.following = null;
+    this._solutions.set([]);
+    this._loaded.set(false);
+    this._running.set(new Set());
+    this._failed.set(new Map());
+  }
+
+  private ensuring = false;
+
+  ensureLoaded(): void {
+    if (this._loaded() || this.ensuring) {
+      return;
+    }
+    this.ensuring = true;
+    const generation = this.generation;
+    const done = () => {
+      if (generation === this.generation) {
+        this.ensuring = false;
+      }
+    };
+    this.load().subscribe({error: done, complete: done});
+  }
+
   load(): Observable<SolutionInfo[]> {
+    const generation = this.generation;
     return this.api.getSolutions({ignoreLoading: true, ignoreErrors: true}).pipe(
+      filter(() => generation === this.generation),
       tap({
         next: solutions => {
           this._solutions.set(solutions);

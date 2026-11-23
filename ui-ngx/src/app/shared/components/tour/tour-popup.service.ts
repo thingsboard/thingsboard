@@ -77,6 +77,10 @@ export class TourPopupService {
         }
       }
     });
+    popover.tbDestroy.subscribe(() => {
+      open = false;
+      document.removeEventListener('keydown', onKey, true);
+    });
     popover.tbOverlayClassName = 'tb-tour-popover';
     popover.updateStyles();
     const instance = popover.tbComponentRef.instance;

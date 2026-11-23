@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   ElementRef,
   HostListener,
@@ -21,6 +22,7 @@ import { ActionPreferencesUpdateAiTour } from '@core/auth/auth.actions';
 import { AiTourStep } from '@shared/models/user-settings.models';
 import { TourService } from '@core/services/tour.service';
 import { AiChatsService } from '@core/services/ai-chats.service';
+import { AiSolutionsService } from '@core/services/ai-solutions.service';
 import { escapeTourText, TourPopupRef, TourPopupService } from '@shared/components/tour/tour-popup.service';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -39,11 +41,13 @@ const OFFER_DELAY_MS = 900;
                           (focusin)="composerFocused.set(true)" (focusout)="composerFocused.set(false)"
                           [placeholder]="'home.ai.placeholder' | translate"
                           (messageSent)="send($event)"></tb-ai-prompt-input>
-      <a class="tb-ai-chats-btn" routerLink="/ai-assistant">
-        <mat-icon aria-hidden="true">forum</mat-icon>
-        <span class="tb-ai-chats-t">{{ 'home.ai.chats' | translate }}</span>
-        <mat-icon class="tb-ai-chats-go" aria-hidden="true">chevron_right</mat-icon>
-      </a>
+      @if (hasChats()) {
+        <a class="tb-ai-chats-btn" routerLink="/ai-assistant">
+          <mat-icon aria-hidden="true">forum</mat-icon>
+          <span class="tb-ai-chats-t">{{ 'home.ai.chats' | translate }}</span>
+          <mat-icon class="tb-ai-chats-go" aria-hidden="true">chevron_right</mat-icon>
+        </a>
+      }
     </div>
   `,
   styleUrls: ['./ai-assistant-home.component.scss'],
@@ -65,6 +69,10 @@ export class AiAssistantHomeComponent implements AfterViewInit {
   private store = inject(Store<AppState>);
   private tourService = inject(TourService);
   private chats = inject(AiChatsService);
+  private solutions = inject(AiSolutionsService);
+
+  readonly hasChats = computed(() => !this.chats.loaded() || !this.solutions.loaded()
+    || this.chats.chats().length > 0 || this.solutions.solutions().length > 0);
   private tourPopup = inject(TourPopupService);
   private renderer = inject(Renderer2);
   private viewContainerRef = inject(ViewContainerRef);
@@ -73,6 +81,8 @@ export class AiAssistantHomeComponent implements AfterViewInit {
   private offerTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
+    this.chats.ensureLoaded();
+    this.solutions.ensureLoaded();
     inject(DestroyRef).onDestroy(() => {
       clearTimeout(this.offerTimer);
       this.offer?.close();

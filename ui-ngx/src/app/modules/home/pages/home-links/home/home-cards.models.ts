@@ -11,11 +11,11 @@ export interface HomeCardDefinition {
 }
 
 export const HOME_CARDS: Record<HomeCardId, HomeCardDefinition> = {
-  [HomeCardId.IOT_HUB]: {id: HomeCardId.IOT_HUB, icon: 'hub', name: 'home.cards.iot-hub', link: '/iot-hub', height: 500},
+  [HomeCardId.IOT_HUB]: {id: HomeCardId.IOT_HUB, icon: 'hub', name: 'home.cards.iot-hub', link: '/iot-hub'},
   [HomeCardId.ALARMS]: {id: HomeCardId.ALARMS, icon: 'warning', name: 'home.cards.alarms', link: '/alarms'},
   [HomeCardId.DASHBOARDS]: {id: HomeCardId.DASHBOARDS, icon: 'dashboard', name: 'home.cards.dashboards', link: '/dashboards'},
-  [HomeCardId.DEVICES]: {id: HomeCardId.DEVICES, icon: 'memory', name: 'home.cards.devices', link: '/entities/devices', height: 430},
-  [HomeCardId.ACTIVITY]: {id: HomeCardId.ACTIVITY, icon: 'show_chart', name: 'home.cards.activity', height: 250},
+  [HomeCardId.DEVICES]: {id: HomeCardId.DEVICES, icon: 'memory', name: 'home.cards.devices', link: '/entities/devices'},
+  [HomeCardId.ACTIVITY]: {id: HomeCardId.ACTIVITY, icon: 'show_chart', name: 'home.cards.activity'},
   [HomeCardId.GET_STARTED]: {id: HomeCardId.GET_STARTED, icon: 'rocket_launch', name: 'home.cards.get-started', height: 405},
   [HomeCardId.NOTIFICATIONS]: {id: HomeCardId.NOTIFICATIONS, icon: 'notifications', name: 'home.cards.notifications',
     link: '/notification/inbox', height: 525},

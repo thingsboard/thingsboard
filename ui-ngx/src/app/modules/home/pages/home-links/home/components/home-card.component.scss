@@ -27,6 +27,13 @@
   flex-wrap: wrap;
 }
 
+.tb-home-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .tb-home-card-title {
   &:hover, &:focus, &:active {
     border-bottom: none;
@@ -80,6 +87,7 @@
 
 .tb-home-card-icon {
   flex: none;
+  margin-right: 2px;
   width: 20px;
   height: 20px;
   font-size: 20px;

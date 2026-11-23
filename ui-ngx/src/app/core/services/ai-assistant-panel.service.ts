@@ -140,7 +140,21 @@ export class AiAssistantPanelService implements OnDestroy {
     map(user => user?.userId ?? null),
     distinctUntilChanged(),
     takeUntilDestroyed(this.destroyRef)
-  ).subscribe(userId => this._autoApproveUserId = userId);
+  ).subscribe(userId => {
+    if (this._autoApproveUserId !== null && userId !== this._autoApproveUserId) {
+      this.resetUserState();
+    }
+    this._autoApproveUserId = userId;
+  });
+
+  private resetUserState(): void {
+    this._chats.set(null);
+    this._sentClientContextByChat.clear();
+    this._lastChatIdByContext.clear();
+    this._carried = null;
+    this._handOff = null;
+    this.storeChats();
+  }
 
   private _updatedData$ = new Subject<Array<EntityId>>();
   readonly updatedData$ = this._updatedData$.asObservable();

@@ -239,6 +239,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
         const first = !handOff && !params.get('chatId') && !params.get('solutionId') && !chats.length;
         this.openFromUrl(params.get('chatId'), params.get('solutionId'), chats, first || params.get('getStarted') === 'true');
         this.ready.set(true);
+        if (params.get('focus') === 'composer') {
+          this.landOnComposer();
+        }
         if (handOff) {
           this.newChat();
           setTimeout(() => this.chat?.sendMsgFromUser(handOff));
@@ -540,6 +543,18 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       this.chatId.set(next);
     }
     this.getStarted.set(getStarted && !nextSolution && !next);
+  }
+
+  private landOnComposer(): void {
+    this.railOpen.set(false);
+    this.router.navigate([], {relativeTo: this.route, queryParams: {focus: null}, queryParamsHandling: 'merge', replaceUrl: true});
+    if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      setTimeout(() => {
+        const field = this.host.nativeElement.querySelector<HTMLTextAreaElement>('.tb-ai-composer textarea');
+        field?.focus({preventScroll: true});
+        field?.scrollIntoView({block: 'nearest'});
+      }, 300);
+    }
   }
 
   private setRailOpen(open: boolean): void {

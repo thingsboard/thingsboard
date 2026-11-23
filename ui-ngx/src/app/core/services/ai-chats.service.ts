@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { computed, DestroyRef, effect, inject, Injectable, Injector, signal, untracked, WritableSignal } from '@angular/core';
 import { interval, Observable, of } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, skip, switchMap, tap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { selectAuthUser } from '@core/auth/auth.selectors';
 import { TranslateService } from '@ngx-translate/core';
 import { AiChatService } from '@core/http/ai-chat.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
@@ -44,6 +48,31 @@ export class AiChatsService {
 
   private polling = false;
 
+  private generation = 0;
+
+  private userWatch = inject(Store<AppState>).select(selectAuthUser).pipe(
+    map(user => user?.userId ?? null),
+    distinctUntilChanged(),
+    skip(1),
+    takeUntilDestroyed(this.destroyRef)
+  ).subscribe(userId => this.reset(userId));
+
+  private reset(userId: string | null): void {
+    this.generation++;
+    this.polling = false;
+    this.ensuring = false;
+    this._chats.set([]);
+    this._loaded.set(false);
+    this._replying.set(new Set());
+    this._waiting.set(new Set());
+    this._open.set(new Set());
+    this._failed.set(new Map());
+    this._statuses.set([]);
+    if (userId && this.watching) {
+      this.pollStatus();
+    }
+  }
+
   watchStatus(): void {
     if (this.watching) {
       return;
@@ -75,7 +104,10 @@ export class AiChatsService {
       return;
     }
     this.polling = true;
-    this.aiChat.listChatStatuses({ignoreLoading: true, ignoreErrors: true}).subscribe({
+    const generation = this.generation;
+    this.aiChat.listChatStatuses({ignoreLoading: true, ignoreErrors: true}).pipe(
+      filter(() => generation === this.generation)
+    ).subscribe({
       next: statuses => {
         this.polling = false;
         this._statuses.set(statuses);
@@ -88,7 +120,11 @@ export class AiChatsService {
           }));
         }
       },
-      error: () => this.polling = false
+      error: () => {
+        if (generation === this.generation) {
+          this.polling = false;
+        }
+      }
     });
   }
 
@@ -154,13 +190,36 @@ export class AiChatsService {
   }
 
   refresh(): Observable<ChatInfo[]> {
+    const generation = this.generation;
     return this.aiChat.listChats({ignoreLoading: true, ignoreErrors: true}).pipe(
-      tap(chats => this._chats.set(chats))
+      tap(chats => {
+        if (generation === this.generation) {
+          this._chats.set(chats);
+        }
+      })
     );
   }
 
+  private ensuring = false;
+
+  ensureLoaded(): void {
+    if (this._loaded() || this.ensuring) {
+      return;
+    }
+    this.ensuring = true;
+    const generation = this.generation;
+    const done = () => {
+      if (generation === this.generation) {
+        this.ensuring = false;
+      }
+    };
+    this.load().subscribe({error: done, complete: done});
+  }
+
   load(): Observable<ChatInfo[]> {
+    const generation = this.generation;
     return this.aiChat.listChats({ignoreLoading: true, ignoreErrors: true}).pipe(
+      filter(() => generation === this.generation),
       tap({
         next: chats => {
           this._chats.set(chats);

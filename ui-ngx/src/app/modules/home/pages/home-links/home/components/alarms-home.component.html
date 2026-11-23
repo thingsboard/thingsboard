@@ -16,7 +16,22 @@
       </button>
     }
   </ng-container>
-  @if (total() === 0) {
+  @if (emptyState() === 'rules') {
+    <div class="tb-home-setup-empty">
+      <span class="tb-home-setup-empty-glyph" aria-hidden="true"><mat-icon>rule</mat-icon></span>
+      <div class="tb-home-setup-empty-text">
+        <p>{{ 'home.alarms.no-rules' | translate }}</p>
+        <div class="tb-home-setup-empty-actions">
+          <a [href]="howToLink" target="_blank" rel="noopener">{{ 'home.alarms.how-rules-work' | translate }}<mat-icon class="tb-home-ext" aria-hidden="true">north_east</mat-icon><span class="tb-home-sr-only">{{ 'home.dashboards.opens-new-tab' | translate }}</span></a>
+        </div>
+      </div>
+    </div>
+  } @else if (emptyState() === 'devices') {
+    <div class="tb-home-setup-empty">
+      <span class="tb-home-setup-empty-glyph" aria-hidden="true"><mat-icon>notifications_none</mat-icon></span>
+      <div class="tb-home-setup-empty-title">{{ 'home.alarms.no-alarms-yet' | translate }}</div>
+    </div>
+  } @else if (emptyState() === 'clear') {
     <div class="tb-home-all-clear">
       <span class="tb-home-all-clear-glyph" aria-hidden="true"><mat-icon>check</mat-icon></span>
       <span>{{ 'home.alarms.no-active' | translate }} <a class="tb-alarms-clear-link" routerLink="/alarms/alarms" [queryParams]="{statusList: ['CLEARED']}">{{ 'home.alarms.view-cleared' | translate }}</a></span>
