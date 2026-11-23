@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -44,6 +45,12 @@ import java.util.stream.Collectors;
 public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
 
     private static final Map<String, String> alarmFieldColumnMap = new HashMap<>();
+
+    private static final Set<String> ALARM_TABLE_SORT_COLUMNS = Set.of(ModelConstants.CREATED_TIME_PROPERTY, ModelConstants.ALARM_ACK_TS_PROPERTY,
+            ModelConstants.ALARM_CLEAR_TS_PROPERTY, ModelConstants.ALARM_ASSIGN_TS_PROPERTY, ModelConstants.ALARM_END_TS_PROPERTY,
+            ModelConstants.ALARM_START_TS_PROPERTY, ModelConstants.ALARM_ACKNOWLEDGED_PROPERTY, ModelConstants.ALARM_CLEARED_PROPERTY,
+            ModelConstants.ALARM_TYPE_PROPERTY, ModelConstants.ALARM_SEVERITY_PROPERTY, ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY,
+            ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY, ModelConstants.ALARM_ASSIGNEE_ID_PROPERTY);
 
     private static final String ASSIGNEE_EMAIL_KEY = "assigneeEmail";
     private static final String ASSIGNEE_LAST_NAME_KEY = "assigneeLastName";
@@ -339,8 +346,11 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             String dataQuery = mainQuery + sortPart;
 
             int startIndex = pageLink.getPageSize() * pageLink.getPage();
-            if (pageLink.getPageSize() > 0) {
-                dataQuery = String.format("%s limit %s offset %s", dataQuery, pageLink.getPageSize(), startIndex);
+            String limitPart = pageLink.getPageSize() > 0 ? String.format(" limit %s offset %s", pageLink.getPageSize(), startIndex) : "";
+            if (ownerScoped && textSearchQuery.isEmpty() && ALARM_TABLE_SORT_COLUMNS.contains(alarmFieldColumnMap.getOrDefault(sortOrder.getKey().getKey(), sortOrder.getKey().getKey()))) {
+                dataQuery = String.format("%s%s where a.id in (select a.id from alarm a %s%s%s)%s", selectPart, fromPart, wherePart, sortPart, limitPart, sortPart);
+            } else {
+                dataQuery = dataQuery + limitPart;
             }
             queryTs = System.currentTimeMillis();
             List<Map<String, Object>> rows;
