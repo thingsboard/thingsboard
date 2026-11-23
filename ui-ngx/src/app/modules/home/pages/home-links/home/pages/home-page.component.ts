@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -27,7 +27,8 @@ const DEFAULT_PRIMARY = '#00695c';
       }
     }
   `,
-  styleUrls: ['./home-page.component.scss'],
+  styleUrls: ['./home-page.component.scss', '../components/home-toast.scss'],
+  encapsulation: ViewEncapsulation.None,
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {

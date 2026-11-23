@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-:host {
+tb-home-page {
   --tb-home-page: #f4f6f7;
   --tb-home-ai-glow: oklch(0.80 0.11 182);
   --tb-home-card-shadow: 0 1px 1px rgba(20, 52, 58, 0.06), 0 2px 6px -1px rgba(20, 52, 58, 0.08);
@@ -18,7 +18,7 @@
   background-repeat: no-repeat;
 }
 
-.tb-home-sky {
+tb-home-page .tb-home-sky {
   position: absolute;
   top: 0;
   left: 0;
@@ -44,7 +44,7 @@
 }
 
 @supports (color: oklch(from red l c h)) {
-  :host(.tenant-brand) {
+  tb-home-page.tenant-brand {
     --tb-home-tenant-glow: oklch(from var(--tb-primary-500) 0.80 min(c, 0.11) h);
     background-image:
       radial-gradient(820px 520px at 6% -120px, color-mix(in oklab, var(--tb-home-tenant-glow) 34%, transparent) 0%,
@@ -54,7 +54,7 @@
       linear-gradient(180deg, #eaedef 0px, var(--tb-home-page) 360px);
   }
 
-  :host(.tenant-brand) .tb-home-sky {
+  tb-home-page.tenant-brand .tb-home-sky {
     --tb-home-sky-field: oklch(from var(--tb-primary-500) 0.86 min(c, 0.08) h);
     --tb-home-sky-soft: oklch(from var(--tb-primary-500) 0.89 min(c, 0.05) h);
     background:

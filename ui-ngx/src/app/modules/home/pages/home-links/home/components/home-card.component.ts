@@ -41,7 +41,7 @@ const UNDO_MS = 6000;
       <ng-content></ng-content>
     </section>
   `,
-  styleUrls: ['./home-card.component.scss', './home-toast.scss'],
+  styleUrls: ['./home-card.component.scss'],
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
