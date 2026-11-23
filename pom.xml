@@ -83,9 +83,9 @@
         <pkg.controlScriptsFolder>control</pkg.controlScriptsFolder>
         <thingsboard.ai.version>2.1.10</thingsboard.ai.version>
         <thingsboard.client.version>4.4.0</thingsboard.client.version>
-        <spring-boot.version>4.1.1</spring-boot.version>
-        <netty.version>4.2.19.Final</netty.version> <!-- to fix CVE-2026-44891, CVE-2026-55831, CVE-2026-55833, CVE-2026-55851, CVE-2026-56745, CVE-2026-56817, CVE-2026-56819, CVE-2026-56820, CVE-2026-56821, CVE-2026-56822, CVE-2026-59901, CVE-2026-59902, CVE-2026-59903, CVE-2026-59920, CVE-2026-62243, CVE-2026-73507, CVE-2026-75595, CVE-2026-93488, CVE-2026-93491, CVE-2026-93560, CVE-2026-100655, CVE-2026-100656, CVE-2026-100657 (Boot manages 4.2.17.Final). TODO: remove when fixed in spring-boot-dependencies -->
-        <netty-tcnative.version>2.0.84.Final</netty-tcnative.version> <!-- must match netty-bom -->
+        <spring-boot.version>4.1.3</spring-boot.version>
+        <netty.version>4.2.20.Final</netty.version> <!-- must match spring-boot-dependencies -->
+        <netty-tcnative.version>2.0.85.Final</netty-tcnative.version> <!-- must match netty-bom -->
         <tomcat.version>11.0.27</tomcat.version> <!-- to fix CVE-2026-53434, CVE-2026-55955, CVE-2026-65182, CVE-2026-65905, CVE-2026-68525, CVE-2026-76183, CVE-2026-101296 and CVE-2026-101356 (Boot manages 11.0.24). Pinned via the tomcat-embed overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <jackson-2-bom.version>2.21.8</jackson-2-bom.version> <!-- Jackson 2, to fix CVE-2026-59889, CVE-2026-68497, CVE-2026-89425, CVE-2026-91777, CVE-2026-106554 and CVE-2026-110879. Pinned via the com.fasterxml.jackson:jackson-bom import below: spring-boot-dependencies imports Jackson 2 through its own jackson-2-bom, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <postgresql.version>42.7.14</postgresql.version> <!-- to fix CVE-2026-54291 and CVE-2026-107314. Pinned via the postgresql override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
@@ -117,7 +117,7 @@
         <grpc.version>1.76.0</grpc.version>
         <groovy.version>4.0.32</groovy.version> <!-- rest-assured 5.5 requires Groovy 4 (Boot 4.1 manages Groovy 5) -->
         <tbel.version>1.2.12</tbel.version>
-        <lombok.version>1.18.46</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
+        <lombok.version>1.18.48</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
