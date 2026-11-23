@@ -104,6 +104,61 @@ public class AdminSettingsServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void whenSavingSystemMailSettingsWithTenantId_thenRefreshTokenIsNotDropped() {
+        AdminSettings system = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
+        JsonNode originalSystemJson = system.getJsonValue().deepCopy();
+        try {
+            // System mail: OAuth2 / Office 365. The first save sets the provider fields
+            // (the token is dropped because they changed), the second adds the token.
+            ObjectNode systemJson = (ObjectNode) system.getJsonValue();
+            systemJson.put("enableOauth2", true);
+            systemJson.put("providerId", "OFFICE_365");
+            systemJson.put("clientId", "system-client");
+            systemJson.put("clientSecret", "system-secret");
+            systemJson.put("redirectUri", "https://system.example/redirect");
+            systemJson.put("providerTenantId", "system-azure-tenant");
+            adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, system);
+
+            system = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
+            systemJson = (ObjectNode) system.getJsonValue();
+            systemJson.put("refreshToken", "system-refresh-token");
+            systemJson.put("refreshTokenExpires", System.currentTimeMillis() + 86_400_000L);
+            systemJson.put("tokenGenerated", true);
+            adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, system);
+
+            // Tenant mail: uses system settings, but its OAuth2 fields differ
+            AdminSettings tenantMail = new AdminSettings();
+            tenantMail.setTenantId(tenantId);
+            tenantMail.setKey("mail");
+            tenantMail.setJsonValue(JacksonUtil.newObjectNode()
+                    .put("useSystemMailSettings", true)
+                    .put("enableOauth2", true)
+                    .put("providerId", "OFFICE_365")
+                    .put("clientId", "tenant-client")
+                    .put("clientSecret", "tenant-secret")
+                    .put("redirectUri", "https://tenant.example/redirect")
+                    .put("providerTenantId", "tenant-azure-tenant"));
+            adminSettingsService.saveAdminSettings(tenantId, tenantMail);
+
+            // What TbMailSender.refreshAccessToken did before the fix:
+            // saving the SYSTEM row with the TENANT's id
+            AdminSettings systemToRefresh = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
+            ((ObjectNode) systemToRefresh.getJsonValue()).put("refreshToken", "rotated-refresh-token");
+            adminSettingsService.saveAdminSettings(tenantId, systemToRefresh);
+
+            JsonNode after = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail").getJsonValue();
+            assertThat(after.get("refreshToken").asText()).isEqualTo("rotated-refresh-token");
+            assertThat(after.get("tokenGenerated").asBoolean()).isTrue();
+            assertThat(after.has("refreshTokenExpires")).isTrue();
+        } finally {
+            adminSettingsService.deleteAdminSettingsByTenantIdAndKey(tenantId, "mail");
+            AdminSettings restore = adminSettingsService.findAdminSettingsByKey(SYSTEM_TENANT_ID, "mail");
+            restore.setJsonValue(originalSystemJson);
+            adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, restore);
+        }
+    }
+
+    @Test
     public void testFindAllByTenantId() {
         int pageSize = 10;
         int totalElements = 100;
