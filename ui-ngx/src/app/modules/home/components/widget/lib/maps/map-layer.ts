@@ -31,15 +31,28 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import L, { LeafletEvent } from 'leaflet';
 import { catchError, map } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
-import { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
+import { StyleSpecification, VectorSourceSpecification } from '@maplibre/maplibre-gl-style-spec';
 
-const referenceLayerStyleUrlMap = new Map<ReferenceLayerType, string>(
+const esriWorldBasemapAttribution =
+  'Sources: Esri, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community';
+
+// Esri content (Esri Master License Agreement): must not be bundled or self-hosted, so it is loaded from ArcGIS Online.
+const referenceLayerStyleMap = new Map<ReferenceLayerType, { itemId: string; attribution: string }>(
   [
-    [ReferenceLayerType.openstreetmap_hybrid, '/assets/map/openstreetmap_hybrid_reference_style.json'],
-    [ReferenceLayerType.world_edition_hybrid, '/assets/map/world_edition_hybrid_reference_style.json'],
-    [ReferenceLayerType.enhanced_contrast_hybrid, '/assets/map/enhanced_contrast_hybrid_reference_style.json']
+    [ReferenceLayerType.openstreetmap_hybrid, {
+      itemId: 'f240fe360b434afc87dd989bf0c0b825',
+      attribution: 'Map data (c) OpenStreetMap contributors, Microsoft, Facebook, Google, Esri Community Maps contributors, Map layer by Esri'
+    }],
+    [ReferenceLayerType.world_edition_hybrid, {itemId: '30d6b8271e1849cd9c3042060001f425', attribution: esriWorldBasemapAttribution}],
+    [ReferenceLayerType.enhanced_contrast_hybrid, {itemId: 'c8ec7c62427d484a81397aefb7e59c5f', attribution: esriWorldBasemapAttribution}]
   ]
 );
+
+// ArcGIS VectorTileServer metadata is not TileJSON: relative tile URL, no attribution
+const prepareReferenceLayerStyle = (spec: StyleSpecification, attribution: string): StyleSpecification => {
+  const source = spec.sources.esri as VectorSourceSpecification;
+  return {...spec, sources: {esri: {...source, attribution, tiles: [`${source.url}/tile/{z}/{y}/{x}.pbf`]}}};
+};
 
 const referenceLayerCache = new Map<ReferenceLayerType, Observable<StyleSpecification>>();
 
@@ -164,8 +177,12 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
   private loadReferenceLayer(referenceLayer: ReferenceLayerType): Observable<L.Layer> {
     let spec$ = referenceLayerCache.get(referenceLayer);
     if (!spec$) {
-      const styleUrl = referenceLayerStyleUrlMap.get(referenceLayer);
-      spec$ = this.ctx.http.get<StyleSpecification>(styleUrl).pipe(
+      const {itemId, attribution} = referenceLayerStyleMap.get(referenceLayer);
+      spec$ = this.ctx.http.get<StyleSpecification>(
+        `https://cdn.arcgis.com/sharing/rest/content/items/${itemId}/resources/styles/root.json`
+      ).pipe(
+        map(spec => prepareReferenceLayerStyle(spec, attribution)),
+        catchError(() => of(null)),
         shareReplay({
           bufferSize: 1,
           refCount: true
@@ -175,6 +192,9 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
     }
     return spec$.pipe(
       map(spec => {
+        if (!spec) {
+          return null;
+        }
         return L.TB.MapLibreGL.mapLibreGLLayer({
           style: spec,
           // The reference layer is drawn over a raster base, so the base layer's zoom limit applies
