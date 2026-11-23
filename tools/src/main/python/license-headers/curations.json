@@ -1070,6 +1070,12 @@
       "contentHash": "sha256:cb5c91b3db565f7378a2e4876568d438492c46dd212fb34a82fa99cb40a7ddf5"
     },
     {
+      "path": "monitoring/src/main/resources/lwm2m/test-model.xml",
+      "header": "busl",
+      "reason": "Rewritten ThingsBoard monitoring test LwM2M object (43 lines) replacing the old 331-line third-party OMA Device (3) XML previously at monitoring/src/main/resources/lwm2m/models/test-model.xml. Commit f2f2ed3eac8 replaced all OMA content in place before 21b4e27e7a0 moved the file, so the rename-aware check traces the path back to CE even though no CE or OMA text remains.",
+      "contentHash": "sha256:5fc049e53f935411a5c328cc13a083dabc97d88040fc1872ce27ffba9e90eaa6"
+    },
+    {
       "path": "msa/black-box-tests/src/test/java/org/thingsboard/server/msa/ui/tests/customerSmoke/ManageCustomerEntityView.java",
       "header": "busl",
       "reason": "New PE customer/entity-view UI scenario; shared TestNG/Selenium customer setup and navigation conventions do not make it the CE customer-user management test. Reviewed CE candidate msa/black-box-tests/src/test/java/org/thingsboard/server/msa/ui/tests/customerSmoke/ManageCustomersUsersTest.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 6207b643a76b1101e57a8ec3165f7e10e23289bc).",
