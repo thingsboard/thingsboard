@@ -1,12 +1,35 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { ChangeDetectionStrategy, Component, HostListener, inject, signal, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject,
+  Renderer2,
+  signal,
+  untracked,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { getCurrentUserSettings } from '@core/auth/auth.selectors';
+import { ActionPreferencesUpdateAiTour } from '@core/auth/auth.actions';
+import { AiTourStep } from '@shared/models/user-settings.models';
+import { TourService } from '@core/services/tour.service';
+import { AiChatsService } from '@core/services/ai-chats.service';
+import { escapeTourText, TourPopupRef, TourPopupService } from '@shared/components/tour/tour-popup.service';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AiPromptMessage } from '@shared/models/ai-chat.models';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
+
+const OFFER_DELAY_MS = 900;
 
 @Component({
   selector: 'tb-ai-assistant-home',
@@ -27,9 +50,11 @@ import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.comp
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AiAssistantHomeComponent {
+export class AiAssistantHomeComponent implements AfterViewInit {
 
   @ViewChild(AiPromptInputComponent) composer: AiPromptInputComponent;
+
+  @ViewChild(AiPromptInputComponent, {read: ElementRef}) composerHost: ElementRef<HTMLElement>;
 
   readonly composerFocused = signal(false);
 
@@ -37,6 +62,71 @@ export class AiAssistantHomeComponent {
   private panelService = inject(AiAssistantPanelService);
   private dialog = inject(MatDialog);
   private translate = inject(TranslateService);
+  private store = inject(Store<AppState>);
+  private tourService = inject(TourService);
+  private chats = inject(AiChatsService);
+  private tourPopup = inject(TourPopupService);
+  private renderer = inject(Renderer2);
+  private viewContainerRef = inject(ViewContainerRef);
+
+  private offer: TourPopupRef | null = null;
+  private offerTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.offerTimer);
+      this.offer?.close();
+    });
+  }
+
+  ngAfterViewInit(): void {
+    if (this.tourService.aiAvailable() && this.seen(AiTourStep.WELCOME) && !this.seen(AiTourStep.HOME)) {
+      this.chats.watchStatus();
+      this.offerTimer = setTimeout(() => this.showOffer(), OFFER_DELAY_MS);
+    }
+  }
+
+  private showOffer(): void {
+    this.offerTimer = null;
+    const host = this.composerHost?.nativeElement;
+    const target = host?.querySelector('.tb-ai-composer') ?? host;
+    if (!target || this.seen(AiTourStep.HOME) || this.tourService.active() || this.dialog.openDialogs.length
+      || untracked(this.chats.statusChats).some(chat => this.chats.levelOf(chat) === 'running')) {
+      return;
+    }
+    const keyboard = matchMedia('(hover: hover) and (pointer: fine)').matches;
+    this.offer = this.tourPopup.show({
+      target,
+      hostView: this.viewContainerRef,
+      renderer: this.renderer,
+      placement: ['bottom', 'top'],
+      hint: true,
+      title: this.translate.instant('home.ai.offer-title'),
+      text: escapeTourText(this.translate.instant('home.ai.offer-text')),
+      foot: keyboard ? `<kbd>/</kbd> ${escapeTourText(this.translate.instant('home.ai.offer-key'))}` : null,
+      nextLabel: this.translate.instant('home.ai.offer-action'),
+      onNext: () => this.closeOffer(true),
+      onClose: () => this.closeOffer(false),
+      onEscape: () => this.closeOffer(false),
+      onHidden: () => this.offer = null
+    });
+  }
+
+  private closeOffer(ask: boolean): void {
+    const offer = this.offer;
+    this.offer = null;
+    offer?.close();
+    if (!this.seen(AiTourStep.HOME)) {
+      this.store.dispatch(new ActionPreferencesUpdateAiTour({step: AiTourStep.HOME, seen: true}));
+    }
+    if (ask) {
+      this.composer?.focus();
+    }
+  }
+
+  private seen(step: AiTourStep): boolean {
+    return !!getCurrentUserSettings(this.store)?.aiTour?.[step];
+  }
 
   send(prompt: AiPromptMessage): void {
     this.panelService.handOff(prompt);

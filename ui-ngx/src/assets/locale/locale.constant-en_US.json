@@ -8570,7 +8570,11 @@
             "ai": {
                 "placeholder": "Ask the AI Assistant…",
                 "chats": "Chats",
-                "waiting": "Waiting for you"
+                "waiting": "Waiting for you",
+                "offer-title": "Ask from Home",
+                "offer-text": "Ask a question, or have it connect a device, build a dashboard or add an alarm rule.",
+                "offer-action": "Ask",
+                "offer-key": "to ask"
             },
             "customize": {
                 "title": "Customize Home",

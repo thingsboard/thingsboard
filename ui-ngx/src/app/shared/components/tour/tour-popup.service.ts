@@ -17,9 +17,12 @@ export interface TourPopupConfig {
   count?: string | null;
   skipLabel?: string | null;
   closable?: boolean;
+  hint?: boolean;
+  foot?: string | null;
   onNext?: () => void;
   onSkip?: () => void;
   onClose?: () => void;
+  onEscape?: () => void;
   onHidden?: () => void;
 }
 
@@ -37,6 +40,15 @@ export class TourPopupService {
 
   show(config: TourPopupConfig): TourPopupRef {
     let open = true;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && open) {
+        event.preventDefault();
+        config.onEscape();
+      }
+    };
+    if (config.onEscape) {
+      document.addEventListener('keydown', onKey, true);
+    }
     const popover: TbPopoverComponent<TourPopupComponent> = this.popoverService.displayPopover({
       trigger: config.target,
       renderer: config.renderer,
@@ -51,9 +63,14 @@ export class TourPopupService {
         nextLabel: config.nextLabel,
         count: config.count ?? null,
         skipLabel: config.skipLabel ?? null,
-        closable: config.closable ?? true
+        closable: config.closable ?? true,
+        hint: config.hint ?? false,
+        foot: config.foot ?? null
       },
       visibleFn: visible => {
+        if (!visible) {
+          document.removeEventListener('keydown', onKey, true);
+        }
         if (!visible && open) {
           open = false;
           config.onHidden?.();
@@ -68,6 +85,7 @@ export class TourPopupService {
     instance.closed.subscribe(() => config.onClose?.());
     return {
       close: () => {
+        document.removeEventListener('keydown', onKey, true);
         if (open) {
           open = false;
           popover.hide();
