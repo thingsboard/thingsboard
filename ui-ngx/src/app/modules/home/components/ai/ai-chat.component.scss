@@ -585,3 +585,139 @@ tb-ai-chat-title:has(.ai-chat-status) + .ai-chat-actions {
     display: none;
   }
 }
+
+.ai-sec-lg {
+  margin-top: 32px;
+
+  .ai-sec-head h2 {
+    font: 500 16px/22px var(--tb-font);
+    color: var(--tb-ink);
+  }
+
+  .ai-sec-head p {
+    margin: 2px 0 0;
+    font: 400 14px/20px var(--tb-font);
+    color: var(--tb-ink-60);
+  }
+}
+
+.k-pcards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.k-pcard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: var(--tb-surface);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .15s ease;
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.18);
+
+    .k-pcard-tile::before {
+      background-position: 100% 100%;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 2px;
+  }
+}
+
+.k-pcard-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--tb-surface);
+  color: var(--tb-ink);
+  box-shadow: var(--ai-mark-edge);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--ai-mark-fill);
+    background-size: 240% 240%;
+    background-position: 0% 0%;
+    transition: background-position 1.2s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.k-pcard-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+
+  b {
+    font: 500 15px/21px var(--tb-font);
+    color: var(--tb-ink);
+  }
+
+  span {
+    font: 400 13.5px/19px var(--tb-font);
+    color: var(--tb-ink-76);
+  }
+}
+
+@container k-col (max-width: 560px) {
+  .k-pcards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ai-tour-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 4px 0 0;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  white-space: nowrap;
+  cursor: pointer;
+  font: 500 var(--chat-line)/var(--chat-line-lh) var(--tb-font);
+  color: var(--ai-link);
+
+  &:hover {
+    background: var(--ai-selected-wash);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 2px;
+  }
+
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}

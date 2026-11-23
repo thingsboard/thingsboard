@@ -2117,6 +2117,36 @@
             "none-left": "No credits left",
             "aria": "AI credits: {{used}} of {{max}} used this month"
         },
+        "get-started": {
+            "title": "Get started",
+            "heading": "What are you building, or what device do you have?",
+            "take-tour": "Take the tour",
+            "suggestion": "A freezer in Store 12 on Main Street: an ESP32 reads the temperature and the door and publishes over MQTT. Alert me if it gets warm.",
+            "examples": "Start from an example",
+            "examples-hint": "A card puts its prompt in the composer, to read and change before you send it.",
+            "example": {
+                "mqtt": {
+                    "title": "A freezer sensor sending over MQTT",
+                    "what": "A device, its dashboard, an alert; you put the token on it",
+                    "prompt": "A freezer in Store 12 on Main Street: an ESP32 reads the temperature and the door and publishes over MQTT. Alert me if it gets warm."
+                },
+                "things-stack": {
+                    "title": "EM300-TH sensors on The Things Stack",
+                    "what": "An integration with the library decoder; you create an API key",
+                    "prompt": "Milesight EM300-TH sensors in the cold rooms of my store, registered on The Things Stack. Alert me if a room gets warm."
+                },
+                "modbus": {
+                    "title": "Freezer controllers on Modbus",
+                    "what": "A gateway and a Modbus connector; you run it on the store PC",
+                    "prompt": "Our six freezer controllers speak Modbus through a serial-to-IP box at 192.168.1.50. Alert me if a freezer gets warm."
+                },
+                "datasheet": {
+                    "title": "A sensor, from its datasheet",
+                    "what": "The keys and units read from the PDF; you put the token on it",
+                    "prompt": "Connect the sensor in this datasheet: an SHT31 on an ESP32 in the Store 12 cold room, publishing over MQTT. Alert me if it gets warm."
+                }
+            }
+        },
         "create-solution": "Create a solution",
         "create-solution-hint": "Devices, dashboards and alarms, set up as one",
         "create-solution-start": "Start",
@@ -13337,11 +13367,8 @@
                 "solutions-text-before": "The AI solution creator is now Solutions. Start one with New solution: each solution is a chat in this list, its design and install beside the chat, as before.",
                 "solutions-title-new": "Build a whole solution",
                 "solutions-text-new": "Describe a use case to New solution. After a few questions, a design of profiles, dashboards and alarm rules opens beside the chat, to review and install.",
-                "try-title": "Try a request",
-                "try-text": "A request is ready to send: what needs attention today. Press Enter; the answer lists alarms and devices, each with a link.",
-                "try-text-fresh": "A request is ready to send: connecting a sensor. Press Enter, answer a few questions, then approve the device and the alarm rule.",
-                "try-ask": "What needs my attention today?",
-                "try-ask-fresh": "Connect my first device: a freezer sensor that sends over MQTT"
+                "start-title": "Start here",
+            "start-text": "Describe what you are building or the device you have. Or start from an example below: a card puts its prompt here to edit before you send it."
             }
         },
     "unit": {

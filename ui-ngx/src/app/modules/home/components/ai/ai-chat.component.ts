@@ -78,6 +78,12 @@ const PROGRESS_TOOLS = new Set(['wait_agent_operation']);
 
 export type AiChatVariant = 'page' | 'panel';
 
+interface AiGetStartedExample {
+  key: string;
+  icon: string;
+  file?: boolean;
+}
+
 @Component({
   selector: 'tb-ai-chat',
   templateUrl: './ai-chat.component.html',
@@ -131,6 +137,19 @@ export class AiChatComponent implements OnInit, OnDestroy {
   splitToggle = output<void>();
 
   newSolution = output<void>();
+
+  getStarted = input(false);
+
+  takeTour = output<void>();
+
+  showGetStarted = computed(() => this.variant() === 'page' && this.getStarted() && !this.chatId());
+
+  readonly examples: AiGetStartedExample[] = [
+    {key: 'mqtt', icon: 'memory'},
+    {key: 'things-stack', icon: 'input'},
+    {key: 'modbus', icon: 'lan'},
+    {key: 'datasheet', icon: 'attach_file', file: true}
+  ];
 
   recentChats = computed(() => this.chats.chats()
     .filter(chat => chat.id !== this.chatId())
@@ -375,7 +394,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
       if (this.chatId()) {
         return null;
       }
-      return this.docked() ? this.startSuggestion() : this.translate.instant('ai-assistant.start-suggestion');
+      return this.docked() ? this.startSuggestion()
+        : this.translate.instant(this.showGetStarted() ? 'ai-assistant.get-started.suggestion' : 'ai-assistant.start-suggestion');
     }
     return aiTurnPrompts(this.messages())[0]?.text ?? null;
   });
@@ -711,6 +731,13 @@ export class AiChatComponent implements OnInit, OnDestroy {
       result.reason = event.reason;
     }
     this.aiChat.resolveToolApproval(result, {ignoreLoading: true, ignoreErrors: true}).subscribe();
+  }
+
+  startExample(example: AiGetStartedExample): void {
+    this.promptInput?.setValue(this.translate.instant('ai-assistant.get-started.example.' + example.key + '.prompt'));
+    if (example.file) {
+      this.promptInput?.openFilePicker();
+    }
   }
 
   startTask(task: string): void {

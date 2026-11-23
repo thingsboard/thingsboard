@@ -12,7 +12,7 @@
   @if (variant() === 'panel') {
     <tb-ai-mark size="32"></tb-ai-mark>
   }
-  <tb-ai-chat-title [title]="chat()?.title" [placeholder]="historyLoading() ? '' : ('ai-assistant.new-chat' | translate)" [level]="level()"
+  <tb-ai-chat-title [title]="chat()?.title" [placeholder]="historyLoading() ? '' : ((showGetStarted() ? 'ai-assistant.get-started.title' : 'ai-assistant.new-chat') | translate)" [level]="level()"
                     [statusTip]="statusTip()" [compact]="variant() === 'panel'" (renamed)="rename($event)"></tb-ai-chat-title>
   <div class="ai-chat-actions">
     @if (chatFiles().length && !titleRef?.renaming()) {
@@ -49,6 +49,12 @@
       </button>
     }
     <ng-content select="[aiChatActions]"></ng-content>
+    @if (showGetStarted()) {
+      <button type="button" class="ai-tour-link" (click)="takeTour.emit()">
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">tour</mat-icon>
+        <span>{{ 'ai-assistant.get-started.take-tour' | translate }}</span>
+      </button>
+    }
     @if (fullscreenEnabled()) {
       <button type="button" class="ai-ib" (click)="toggleFullscreen()"
               [matTooltip]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate" matTooltipPosition="above"
@@ -118,7 +124,7 @@
         <h1 class="ai-chat-start-title">{{ startTitle() || ('ai-assistant.panel-title' | translate) }}</h1>
         <p class="ai-chat-start-line">{{ startLine() || ('ai-assistant.panel-line' | translate) }}</p>
       } @else {
-        <h1 class="ai-chat-start-title">{{ 'ai-assistant.what-to-work-on' | translate }}</h1>
+        <h1 class="ai-chat-start-title">{{ (showGetStarted() ? 'ai-assistant.get-started.heading' : 'ai-assistant.what-to-work-on') | translate }}</h1>
       }
     </div>
   }
@@ -173,7 +179,26 @@
       </div>
     </section>
   }
-  @if (variant() === 'page' && !chatId() && !messages().length && !loading()) {
+  @if (showGetStarted() && !messages().length && !loading()) {
+    <section class="ai-sec ai-sec-lg" aria-labelledby="ai-sec-examples">
+      <div class="ai-sec-head">
+        <h2 id="ai-sec-examples">{{ 'ai-assistant.get-started.examples' | translate }}</h2>
+        <p>{{ 'ai-assistant.get-started.examples-hint' | translate }}</p>
+      </div>
+      <div class="k-pcards">
+        @for (example of examples; track example.key) {
+          <button type="button" class="k-pcard" (click)="startExample(example)">
+            <span class="k-pcard-tile"><mat-icon fontSet="material-icons-round" aria-hidden="true">{{ example.icon }}</mat-icon></span>
+            <span class="k-pcard-body">
+              <b>{{ ('ai-assistant.get-started.example.' + example.key + '.title') | translate }}</b>
+              <span>{{ ('ai-assistant.get-started.example.' + example.key + '.what') | translate }}</span>
+            </span>
+          </button>
+        }
+      </div>
+    </section>
+  }
+  @if (variant() === 'page' && !showGetStarted() && !chatId() && !messages().length && !loading()) {
     <section class="ai-sec" aria-labelledby="ai-sec-tasks">
       <div class="ai-sec-head"><h2 id="ai-sec-tasks">{{ 'ai-assistant.start-a-task' | translate }}</h2></div>
       <div class="ai-tasks">
@@ -187,7 +212,7 @@
       </div>
     </section>
   }
-  @if (variant() === 'page' && !chatId() && !messages().length && !loading()) {
+  @if (variant() === 'page' && !showGetStarted() && !chatId() && !messages().length && !loading()) {
     <button type="button" class="ai-sol-card" (click)="newSolution.emit()">
       <tb-ai-mark class="ai-sol-card-mark" size="44" icon="layers"></tb-ai-mark>
       <span class="ai-sol-card-text">

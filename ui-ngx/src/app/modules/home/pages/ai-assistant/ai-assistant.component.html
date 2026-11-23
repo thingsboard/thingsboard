@@ -21,10 +21,15 @@
           <ng-container *ngTemplateOutlet="panelIcon; context: {open: false}"></ng-container>
         </button>
       </div>
-      <button type="button" class="ai-nav" [class.active]="!chatId() && !solutionId()"
-              [attr.aria-current]="!chatId() && !solutionId() ? 'page' : null" (click)="newChat()">
+      <button type="button" class="ai-nav" [class.active]="!chatId() && !solutionId() && !getStarted()"
+              [attr.aria-current]="!chatId() && !solutionId() && !getStarted() ? 'page' : null" (click)="newChat()">
         <mat-icon fontSet="material-icons-round">add</mat-icon>
         <span>{{ 'ai-assistant.new-chat' | translate }}</span>
+      </button>
+      <button type="button" class="ai-nav" [class.active]="getStarted()"
+              [attr.aria-current]="getStarted() ? 'page' : null" (click)="openGetStarted()">
+        <mat-icon fontSet="material-icons-round">rocket_launch</mat-icon>
+        <span>{{ 'ai-assistant.get-started.title' | translate }}</span>
       </button>
       <button type="button" class="ai-nav" [class.active]="solutionId() === newSolutionId"
               [attr.aria-current]="solutionId() === newSolutionId ? 'page' : null" (click)="newSolution()">
@@ -105,6 +110,10 @@
               [matTooltip]="'ai-assistant.new-chat' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.new-chat' | translate">
         <mat-icon fontSet="material-icons-round">add</mat-icon>
       </button>
+      <button type="button" class="ai-ib" (click)="openGetStarted()"
+              [matTooltip]="'ai-assistant.get-started.title' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.get-started.title' | translate">
+        <mat-icon fontSet="material-icons-round">rocket_launch</mat-icon>
+      </button>
       <button type="button" class="ai-ib" (click)="newSolution()"
               [matTooltip]="'ai-assistant.new-solution' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.new-solution' | translate">
         <mat-icon fontSet="material-icons-round">layers</mat-icon>
@@ -122,7 +131,7 @@
 <tb-solution-chat class="ai-canvas ai-solution" (loaded)="onSolutionLoaded($event)" (click)="onChatClick($event)"></tb-solution-chat>
 } @else {
 <tb-ai-chat class="ai-canvas" variant="page" [toastTarget]="toastTarget" [(chatId)]="chatId"
-            (click)="onChatClick($event)" (newSolution)="newSolution()">
+            [getStarted]="getStarted()" (click)="onChatClick($event)" (newSolution)="newSolution()" (takeTour)="takeTour()">
   @if (!railOpen()) {
     <button aiChatLead type="button" class="ai-ib ai-bar-chats" (click)="toggleRail()"
             [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.open-chats' | translate">

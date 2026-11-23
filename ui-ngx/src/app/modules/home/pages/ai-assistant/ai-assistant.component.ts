@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { TourService } from '@core/services/tour.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { AiChatService } from '@core/http/ai-chat.service';
 import {
@@ -13,6 +14,7 @@ import {
   OnDestroy,
   OnInit,
   signal,
+  untracked,
   ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -84,6 +86,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   chatId = signal<string | undefined>(undefined);
 
   solutionId = signal<string | undefined>(undefined);
+
+  getStarted = signal(false);
 
   aiChats = inject(AiChatsService);
 
@@ -160,6 +164,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private panelService = inject(AiAssistantPanelService);
 
+  private tourService = inject(TourService);
+
   private initialSelection = (() => {
     const params = this.route.snapshot.queryParamMap;
     const solutionId = params.get('solutionId');
@@ -167,6 +173,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       this.solutionId.set(solutionId);
     } else if (params.get('chatId')) {
       this.chatId.set(params.get('chatId'));
+    } else if (params.get('getStarted') === 'true') {
+      this.getStarted.set(true);
     }
     return true;
   })();
@@ -181,22 +189,29 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   private urlEffect = effect(() => {
     const chatId = this.chatId() ?? null;
     const solutionId = this.solutionId() ?? null;
+    const getStarted = this.getStarted() && !chatId && !solutionId ? 'true' : null;
     const params = this.route.snapshot.queryParamMap;
-    if ((params.get('chatId') !== chatId || params.get('solutionId') !== solutionId) && this.ready()) {
+    if ((params.get('chatId') !== chatId || params.get('solutionId') !== solutionId || params.get('getStarted') !== getStarted) && this.ready()) {
       const browsing = this.browsing;
       this.browsing = false;
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: {chatId, solutionId},
+        queryParams: {chatId, solutionId, getStarted},
         queryParamsHandling: 'merge',
         replaceUrl: !browsing
       });
     }
   });
 
+  private leaveGetStarted = effect(() => {
+    if (this.chatId() || this.solutionId()) {
+      untracked(() => this.getStarted.set(false));
+    }
+  });
+
   private urlSubscription = this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
     if (this.ready()) {
-      this.openFromUrl(params.get('chatId'), params.get('solutionId'));
+      this.openFromUrl(params.get('chatId'), params.get('solutionId'), undefined, params.get('getStarted') === 'true');
     }
   });
 
@@ -220,7 +235,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     ]).subscribe({
       next: ([, chats]) => {
         const params = this.route.snapshot.queryParamMap;
-        this.openFromUrl(params.get('chatId'), params.get('solutionId'), chats);
+        const first = !params.get('chatId') && !params.get('solutionId') && !chats.length;
+        this.openFromUrl(params.get('chatId'), params.get('solutionId'), chats, first || params.get('getStarted') === 'true');
         this.ready.set(true);
       },
       error: err => {
@@ -331,10 +347,23 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   newChat(): void {
     this.settleRail();
-    this.browsing = !!this.chatId() || !!this.solutionId();
+    this.browsing = !!this.chatId() || !!this.solutionId() || this.getStarted();
     this.solutionId.set(undefined);
     this.chatId.set(undefined);
+    this.getStarted.set(false);
     setTimeout(() => this.chat?.focus());
+  }
+
+  openGetStarted(): void {
+    this.settleRail();
+    this.browsing = !!this.chatId() || !!this.solutionId() || !this.getStarted();
+    this.solutionId.set(undefined);
+    this.chatId.set(undefined);
+    this.getStarted.set(true);
+  }
+
+  takeTour(): void {
+    this.tourService.playAssistantTour();
   }
 
   newSolution(): void {
@@ -485,7 +514,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     this.aiChats.confirmAndDelete(chat).subscribe({error: err => this.showErrorMessage(err)});
   }
 
-  private openFromUrl(chatId: string | null, solutionId: string | null, chats = this.aiChats.chats()): void {
+  private openFromUrl(chatId: string | null, solutionId: string | null, chats = this.aiChats.chats(), getStarted = false): void {
     const knownSolution = !solutionId || solutionId === NEW_SOLUTION_ID || !this.aiSolutions.loaded() || !!this.aiSolutions.find(solutionId);
     if (!knownSolution) {
       this.router.navigate([], {
@@ -505,6 +534,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     if (next !== this.chatId()) {
       this.chatId.set(next);
     }
+    this.getStarted.set(getStarted && !nextSolution && !next);
   }
 
   private setRailOpen(open: boolean): void {

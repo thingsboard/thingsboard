@@ -5,14 +5,11 @@ import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { firstValueFrom } from 'rxjs';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { ActionPreferencesUpdateAiTour } from '@core/auth/auth.actions';
 import { AiTourStep } from '@shared/models/user-settings.models';
 import { TourLauncherApi, TourService } from '@core/services/tour.service';
-import { DeviceService } from '@core/http/device.service';
-import { PageLink } from '@shared/models/page/page-link';
 import { PopoverPreferredPlacement } from '@shared/components/popover.models';
 import { escapeTourText, TourPopupRef, TourPopupService } from '@shared/components/tour/tour-popup.service';
 import { TourHostComponent } from '@modules/tour/tour-host.component';
@@ -59,7 +56,6 @@ export class TourLauncher implements TourLauncherApi {
   private translate = inject(TranslateService);
   private tourService = inject(TourService);
   private tourPopup = inject(TourPopupService);
-  private deviceService = inject(DeviceService);
   private appRef = inject(ApplicationRef);
   private environmentInjector = inject(EnvironmentInjector);
 
@@ -90,11 +86,12 @@ export class TourLauncher implements TourLauncherApi {
     }
     this.tourService.active.set(true);
     this.markSeen(AiTourStep.ASSISTANT_TOUR);
-    if (this.router.url.split(/[?#]/)[0] !== AI_PAGE || this.router.url.includes('?')) {
+    const tree = this.router.parseUrl(this.router.url);
+    const path = this.router.url.split(/[?#]/)[0];
+    if (path !== AI_PAGE || tree.queryParamMap.has('chatId') || tree.queryParamMap.has('solutionId')) {
       await this.router.navigateByUrl(AI_PAGE);
     }
     await this.until(() => this.composer(), 6000);
-    const fresh = await this.noDevices();
     const before = this.person() === 'before';
     const t = (key: string) => this.translate.instant('tour.assistant.' + key);
     this.play([
@@ -119,9 +116,9 @@ export class TourLauncher implements TourLauncherApi {
       {
         target: () => this.composer(),
         side: 'above', radius: 20, interactive: true,
-        title: t('try-title'),
-        text: () => t(fresh ? 'try-text-fresh' : 'try-text'),
-        enter: async () => this.fill(t(fresh ? 'try-ask-fresh' : 'try-ask'))
+        title: t('start-title'),
+        text: () => t('start-text'),
+        enter: async () => this.openGetStarted()
       }
     ]);
   }
@@ -275,21 +272,11 @@ export class TourLauncher implements TourLauncherApi {
     return visible(document.querySelector<HTMLElement>('tb-ai-chat.ai-canvas .tb-ai-composer'));
   }
 
-  private fill(text: string): void {
-    const field = this.composer()?.querySelector('textarea');
-    if (field) {
-      field.value = text;
-      field.dispatchEvent(new Event('input', {bubbles: true}));
+  private async openGetStarted(): Promise<void> {
+    if (this.router.parseUrl(this.router.url).queryParamMap.get('getStarted') !== 'true') {
+      await this.router.navigateByUrl(AI_PAGE + '?getStarted=true');
     }
-  }
-
-  private async noDevices(): Promise<boolean> {
-    try {
-      const page = await firstValueFrom(this.deviceService.getTenantDevices(new PageLink(1), '', {ignoreLoading: true, ignoreErrors: true}));
-      return !page.totalElements;
-    } catch {
-      return false;
-    }
+    await this.until(() => this.composer() && document.querySelector('tb-ai-chat.ai-canvas .k-pcards'), 4000);
   }
 
   private async until(found: () => unknown, timeoutMs: number): Promise<void> {
