@@ -31,6 +31,8 @@ import { MobileAppHomeComponent } from '@home/pages/home-links/home/components/m
 import { HomeCardsFooterComponent } from '@home/pages/home-links/home/components/home-cards-footer.component';
 import { CustomizeHomeDialogComponent } from '@home/pages/home-links/home/components/customize-home-dialog.component';
 import { HomeHscrollComponent } from '@home/pages/home-links/home/components/home-hscroll.component';
+import { HomeToggleComponent } from '@home/pages/home-links/home/components/home-toggle.component';
+import { HomeListFooterComponent } from '@home/pages/home-links/home/components/home-list-footer.component';
 import { AiModule } from '@home/components/ai/ai.module';
 
 @NgModule({
@@ -58,7 +60,9 @@ import { AiModule } from '@home/components/ai/ai.module';
       MobileAppHomeComponent,
       HomeCardsFooterComponent,
       CustomizeHomeDialogComponent,
-      HomeHscrollComponent
+      HomeHscrollComponent,
+      HomeToggleComponent,
+      HomeListFooterComponent
     ],
   imports: [
     CommonModule,

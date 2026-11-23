@@ -7,10 +7,7 @@
 <tb-home-card [card]="card" [count]="total()">
   <ng-container homeCardActions>
     @if (total()) {
-      <div class="tb-toggle-header" role="group" [attr.aria-label]="'home.alarms.whose' | translate">
-        <button type="button" class="tb-toggle-option" [attr.aria-pressed]="!mine()" (click)="setMine(false)">{{ 'home.alarms.all' | translate }}</button>
-        <button type="button" class="tb-toggle-option" [attr.aria-pressed]="mine()" (click)="setMine(true)">{{ 'home.alarms.mine' | translate }}</button>
-      </div>
+      <tb-home-toggle [options]="whoseOptions" [value]="mine()" [label]="'home.alarms.whose' | translate" (valueChange)="setMine($event)"></tb-home-toggle>
     }
     @if (tenantAdmin) {
       <button mat-button color="primary" type="button" class="tb-alarms-add" (click)="addAlarmRule()">
@@ -132,23 +129,8 @@
     } @else if (alarmsLoaded()) {
       <div class="tb-alarms-empty-note">{{ emptyNote().key | translate: emptyNote().params }}</div>
     }
-    @if (!few() || listed()) {
-      <div class="tb-alarms-footer">
-        @if (!few()) {
-          <button mat-button type="button" class="tb-alarms-toggle" (click)="toggleExpanded()">
-            <mat-icon>{{ expanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
-            {{ toggleLabel() | translate }}
-          </button>
-        }
-        <span class="tb-alarms-spacer"></span>
-        @if (shown() < listed()) {
-          <span class="tb-alarms-footer-count">{{ 'home.alarms.shown-of' | translate: {shown: shown(), total: (listed() | shortNumber)} }}</span>
-        }
-        @if (listed()) {
-          <a class="tb-alarms-view-all" routerLink="/alarms/alarms" [queryParams]="viewAllParams()">{{ 'home.alarms.view-all' | translate }}<mat-icon>chevron_right</mat-icon></a>
-        }
-      </div>
-    }
+    <tb-home-list-footer [total]="listed()" [expanded]="expanded()" link="/alarms/alarms" [params]="viewAllParams()"
+                         (expandedChange)="expanded.set($event)"></tb-home-list-footer>
   }
 </tb-home-card>
 

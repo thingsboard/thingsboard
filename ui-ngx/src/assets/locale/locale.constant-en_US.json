@@ -8603,19 +8603,44 @@
                 "none-active": "No active alarms.",
                 "none-mine": "No alarms assigned to you.",
                 "none-severity": "No {{severity}} alarms.",
-                "none-severity-mine": "No {{severity}} alarms assigned to you.",
+                "none-severity-mine": "No {{severity}} alarms assigned to you."
+            },
+            "dashboards": {
+                "view": "Dashboards view",
+                "last-viewed": "Last viewed",
+                "starred": "Starred",
+                "add": "Add dashboard",
+                "name": "Name",
+                "star": "Star {{title}}",
+                "unstar": "Unstar {{title}}",
+                "star-tip": "Star",
+                "unstar-tip": "Unstar",
+                "none": "No dashboards yet. Add a dashboard to open it from here.",
+                "none-assigned": "No dashboards assigned to you yet",
+                "from-template": "Start from a template",
+                "how-to": "How to build dashboards",
+                "none-viewed": "No dashboards viewed yet.",
+                "none-starred": "No starred dashboards yet.",
+                "star-a-dashboard": "Star a dashboard",
+                "all-starred": "Every dashboard is starred",
+                "search-to-star": "Search dashboards to star",
+                "no-match": "No dashboards match “{{query}}”.",
+                "starred-toast": "“{{title}}” starred",
+                "opens-new-tab": "(opens in a new tab)"
+            },
+            "list": {
                 "show-more": "Show more",
                 "show-all": "Show all",
                 "show-less": "Show less",
                 "shown-of": "{{shown}} of {{total}}",
-                "view-all": "View all",
-                "ago": {
-                    "now": "now",
-                    "min": "{{count}} min ago",
-                    "hour": "{{count}}h ago",
-                    "day": "{{count}}d ago",
-                    "week": "{{count}}w ago"
-                }
+                "view-all": "View all"
+            },
+            "ago": {
+                "now": "now",
+                "min": "{{count}} min ago",
+                "hour": "{{count}}h ago",
+                "day": "{{count}}d ago",
+                "week": "{{count}}w ago"
             },
             "ai": {
                 "placeholder": "Ask the AI Assistant…",

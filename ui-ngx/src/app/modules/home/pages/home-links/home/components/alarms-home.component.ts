@@ -32,10 +32,9 @@ import { HomeCardId } from '@shared/models/user-settings.models';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
 import { AlarmDetailsDialogComponent, AlarmDetailsDialogData } from '@home/components/alarm/alarm-details-dialog.component';
+import { homeAgo, homeListPageSize, homeListShown } from '@home/pages/home-links/home/home-list.models';
+import { HomeToggleOption } from '@home/pages/home-links/home/components/home-toggle.component';
 
-const PREVIEW = 5;
-const SLACK = 2;
-const ROW_LIMIT = 10;
 const MINUTE = 60000;
 const MINE_KEY = 'tb-home-alarms-mine';
 const SEVERITIES = [AlarmSeverity.CRITICAL, AlarmSeverity.MAJOR, AlarmSeverity.MINOR, AlarmSeverity.WARNING];
@@ -89,6 +88,11 @@ export class AlarmsHomeComponent {
 
   readonly card = HOME_CARDS[HomeCardId.ALARMS];
 
+  readonly whoseOptions: HomeToggleOption<boolean>[] = [
+    {value: false, label: 'home.alarms.all'},
+    {value: true, label: 'home.alarms.mine'}
+  ];
+
   private telemetryWsService = inject(TelemetryWebsocketService);
   private zone = inject(NgZone);
   private store = inject(Store<AppState>);
@@ -131,26 +135,9 @@ export class AlarmsHomeComponent {
     }).filter(tile => tile.severity === AlarmSeverity.CRITICAL || tile.count > 0 || tile.pressed);
   });
 
-  readonly few = computed(() => this.listed() <= PREVIEW + SLACK);
-
-  readonly shown = computed(() => {
-    const listed = this.listed();
-    if (this.few()) {
-      return listed;
-    }
-    return this.expanded() ? Math.min(listed, ROW_LIMIT) : PREVIEW;
-  });
-
-  readonly toggleLabel = computed(() => {
-    if (this.expanded()) {
-      return 'home.alarms.show-less';
-    }
-    return this.listed() <= ROW_LIMIT ? 'home.alarms.show-all' : 'home.alarms.show-more';
-  });
-
   readonly rows = computed<AlarmHomeRow[]>(() => {
     const now = this.now();
-    return (this.alarms() ?? []).slice(0, this.shown()).map(alarm => this.toRow(alarm, now));
+    return (this.alarms() ?? []).slice(0, homeListShown(this.listed(), this.expanded())).map(alarm => this.toRow(alarm, now));
   });
 
   readonly emptyNote = computed<{key: string; params: Record<string, string>}>(() => {
@@ -179,7 +166,7 @@ export class AlarmsHomeComponent {
     const desc = this.sortDesc();
     return {
       page: 0,
-      pageSize: this.expanded() ? ROW_LIMIT : PREVIEW + SLACK,
+      pageSize: homeListPageSize(this.expanded()),
       sortOrder: {
         key: {type: EntityKeyType.ALARM_FIELD, key},
         direction: key === 'severity' ? (desc ? Direction.ASC : Direction.DESC) : (desc ? Direction.DESC : Direction.ASC)
@@ -240,10 +227,6 @@ export class AlarmsHomeComponent {
       return 'none';
     }
     return this.sortDesc() ? 'descending' : 'ascending';
-  }
-
-  toggleExpanded(): void {
-    this.expanded.set(!this.expanded());
   }
 
   addAlarmRule(): void {
@@ -400,28 +383,11 @@ export class AlarmsHomeComponent {
     const originator = alarm.originator;
     return {
       alarm,
-      ago: this.ago(now - (alarm.createdTime ?? now)),
+      ago: homeAgo(this.translate, now - (alarm.createdTime ?? now)),
       originatorLink: originator ? getEntityDetailsPageURL(originator.id, originator.entityType as EntityType) : null,
       assigneeName,
       initials,
       mine: !!alarm.assigneeId && alarm.assigneeId.id === this.userId
     };
-  }
-
-  private ago(ms: number): string {
-    const min = ms / MINUTE;
-    if (min < 1) {
-      return this.translate.instant('home.alarms.ago.now');
-    }
-    if (min < 60) {
-      return this.translate.instant('home.alarms.ago.min', {count: Math.round(min)});
-    }
-    if (min < 24 * 60) {
-      return this.translate.instant('home.alarms.ago.hour', {count: Math.floor(min / 60)});
-    }
-    if (min < 7 * 24 * 60) {
-      return this.translate.instant('home.alarms.ago.day', {count: Math.floor(min / (24 * 60))});
-    }
-    return this.translate.instant('home.alarms.ago.week', {count: Math.floor(min / (7 * 24 * 60))});
   }
 }

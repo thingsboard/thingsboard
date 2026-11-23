@@ -1,0 +1,66 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+}
+
+.tb-home-list-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+}
+
+.tb-home-list-toggle.mat-mdc-button {
+  margin-left: -8px;
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+}
+
+.tb-home-list-spacer {
+  flex: 1 1 auto;
+}
+
+.tb-home-list-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.tb-home-list-view-all {
+  &, &:hover, &:focus, &:active {
+    border-bottom: none;
+  }
+
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  margin-right: -8px;
+  padding: 0 4px 0 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.03125em;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+  transition: background-color .15s ease;
+
+  .mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: -2px;
+  }
+}
