@@ -247,7 +247,7 @@ export class AlarmsHomeComponent {
   }
 
   addAlarmRule(): void {
-    this.router.navigateByUrl('/alarms/alarm-rules');
+    this.router.navigate(['/alarms/alarm-rules'], {queryParams: {action: 'add'}});
   }
 
   openDetails(row: AlarmHomeRow, $event?: Event): void {
