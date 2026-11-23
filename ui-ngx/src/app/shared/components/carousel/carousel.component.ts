@@ -166,8 +166,8 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
 
   private rendered = false;
   private animation: string = null;
-  private hovered = false;
   private labelledItems = new WeakSet<HTMLElement>();
+  private hovered = false;
   private focused = false;
   private autoplayTimer: ReturnType<typeof setTimeout>;
 
@@ -269,7 +269,7 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
   protected onHover(hovered: boolean): void {
     this.hovered = hovered;
     if (!hovered) {
-      // Focus a dialog returns to the carousel must not keep autoplay paused for a mouse user
+      // A dialog may return focus here; leaving with the mouse resumes autoplay
       this.focused = false;
     }
     this.restartAutoplay();
@@ -369,8 +369,7 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
       root.addEventListener('pointercancel', event => this.onPointerUp(event, false));
       // Native image drag would take the gesture over
       root.addEventListener('dragstart', event => event.preventDefault());
-      // The carousel is focusable for the keyboard only: focus taken by a click would come back
-      // with a focus ring when a dialog opened from a slide (the screenshot viewer) closes
+      // Focusable for the keyboard only: focus from a click would return with a focus ring when a dialog opened from a slide closes
       root.addEventListener('mousedown', event => {
         if ((event.target as Element).closest(FOCUSABLE) === this.host) {
           event.preventDefault();

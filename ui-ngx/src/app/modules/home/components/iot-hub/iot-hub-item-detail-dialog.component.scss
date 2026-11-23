@@ -467,16 +467,6 @@
 }
 
 .dlg-carousel {
-  height: 100%;
-
-  ::ng-deep .carousel {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1;
-
-    > section { flex: 1; min-height: 0; }
-  }
-
   .dlg-carousel-container {
     display: flex;
     height: 100%;
