@@ -27,7 +27,6 @@
         <main.dir>${maven.multiModuleProjectDirectory}</main.dir>
         <pkg.name>tb-azure-integration</pkg.name>
         <docker.name>${tb.docker.id}-azure-integration</docker.name>
-        <sbom.metadata.skip>true</sbom.metadata.skip>
         <sbom.image.package.dir>${main.dir}/integration/azure/target</sbom.image.package.dir>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>

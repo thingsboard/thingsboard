@@ -6171,6 +6171,11 @@ marked@^16.3.0, marked@~16.4.2:
   resolved "https://registry.yarnpkg.com/marked/-/marked-16.4.2.tgz#4959a64be6c486f0db7467ead7ce288de54290a3"
   integrity sha512-TI3V8YYWvkVf3KJe1dRkpnjs68JUPyEa5vjKrp1XEEJUAOaQc+Qj+L1qWbPd0SJuAdQkFU0h73sXXqwDYxsiDA==
 
+material-icons@1.13.14:
+  version "1.13.14"
+  resolved "https://registry.yarnpkg.com/material-icons/-/material-icons-1.13.14.tgz#65ae8693550b9f789036bd4cf29e775f1bd389ed"
+  integrity sha512-kZOfc7xCC0rAT8Q3DQixYAeT+tBqZnxkseQtp2bxBxz7q5pMAC+wmit7vJn1g/l7wRU+HEPq23gER4iPjGs5Cg==
+
 math-intrinsics@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/math-intrinsics/-/math-intrinsics-1.1.0.tgz#a0dd74be81e2aa5c2f27e65ce283605ee4e2b7f9"
@@ -6462,9 +6467,9 @@ ngx-drag-drop@^20.0.1:
   dependencies:
     tslib "^2.3.0"
 
-"ngx-flowchart@https://github.com/thingsboard/ngx-flowchart.git#release/4.1.0":
-  version "4.1.0"
-  resolved "https://github.com/thingsboard/ngx-flowchart.git#a3dee1761ecaa96c7d0ca22b1c6538b9e27103af"
+"ngx-flowchart@https://github.com/thingsboard/ngx-flowchart.git#release/4.1.1":
+  version "4.1.1"
+  resolved "https://github.com/thingsboard/ngx-flowchart.git#6f77d660cdc6fd81144200a96178ae10cdf982c0"
   dependencies:
     tslib "^2.3.0"
 

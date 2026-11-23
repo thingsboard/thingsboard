@@ -1,0 +1,276 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+# Global policy for the third-party notices generator.
+# Every license of a shipped component must appear in one category below;
+# the generator stops on any license, unranked choice, or unmapped license name not listed here.
+
+# Own Maven modules released on independent version cycles (excluded from third-party notices)
+own_modules = [
+  "org.thingsboard.ai/common",
+  "org.thingsboard.license/client",
+  "org.thingsboard.license/shared",
+]
+
+# Non-code metadata/build files excluded from all sources (Maven sources jars, npm tarballs, VCS checkouts).
+# Filtered during resolution so cached scan records remain policy-independent.
+exclude_paths = [
+  "**/README*",
+  "**/CHANGELOG*",
+  "**/CHANGES*",
+  "**/HISTORY*",
+  "**/CONTRIBUTING*",
+  "**/pom.xml",
+  "**/package.json",
+  "**/bower.json",
+  "**/composer.lock",
+  "**/META-INF/DEPENDENCIES",
+  "**/.github/**",
+  "**/build/preamble.js",
+  "**/Gruntfile*",
+  "**/*.map",
+]
+
+# Directory trees excluded only for npm tarballs and VCS checkouts (NOT Maven -sources.jar, where
+# directory names such as test, testing, spec, examples, or docs are shipped Java packages).
+source_tree_exclude_paths = [
+  "**/test/**",
+  "**/tests/**",
+  "**/__tests__/**",
+  "**/testing/**",
+  "**/spec/**",
+  "**/specs/**",
+  "**/fixtures/**",
+  "**/benchmark/**",
+  "**/benchmarks/**",
+  "**/doc/**",
+  "**/docs/**",
+  "**/xdocs/**",
+  "**/example/**",
+  "**/examples/**",
+  "**/sample/**",
+  "**/samples/**",
+  "**/demo/**",
+  "**/demos/**",
+]
+
+# Preference order when an OR expression offers two licenses in the SAME category.
+# Across categories, preference is always: nothing > notice > source-link > written-offer > forbidden.
+same_category_preference = [
+  "Apache-2.0",
+  "MIT",
+  "BSD-3-Clause",
+  "BSD-2-Clause",
+  "ISC",
+  "0BSD",
+  "CC0-1.0",
+  "EPL-2.0",
+  "CDDL-1.1",
+  "CDDL-1.0",
+  "MPL-2.0",
+  "MPL-1.1",
+  "EPL-1.0",
+]
+
+# Copyright statements left out of every package because they cannot be about any component's code:
+# statements about license texts, map tile attributions, or code fragments misread by ScanCode.
+copyright_garbage = [
+  # GNU license document copyrights
+  "Copyright (c) 1989, 1991 Free Software Foundation, Inc.",
+  "Copyright (c) 1991, 1999 Free Software Foundation, Inc.",
+  "Copyright (c) 2007 Free Software Foundation, Inc. http://fsf.org",
+  "copyrighted by the Free Software Foundation",
+  "Copyright (c) 1991 Free Software Foundation, Inc.",
+  # Unfilled MPL 1.1 template header
+  "Portions created by the Initial Developer are Copyright (c) 2010 the Initial Developer",
+  # Map tile provider attributions (about external tile data, not the JS library)
+  "(c) Airbus DS",
+  "(c) Jawg Maps",
+  "(c) MapTiles API",
+  "(c) OpenStreetMap France",
+  "(c) PlanetObserver (Contains Copernicus Data)",
+  "(c) contributors, Singapore Land",
+  "Tiles (c) Esri",
+  "Kaartgegevens (c) Kadaster",
+  "Map (c) 1987",
+  "(c) waymarkedtrails.org",
+  "(c) www.opensnowmap.org",
+  "Map style (c) SafeCast",
+  "(c) OpenStreetMap contributors",
+  "(c) href https://www.openstreetmap.org/copyright OpenStreetMap contributors",
+  "(c) OpenStreetMap",
+  "(c) 2012 IEM Nexrad",
+  "MapLibre (c) MapLibre",
+  # Code fragments misread by ScanCode
+  "(c) c.right.cIn.push (c) DEBUG",
+  "(c) copy' (c) COPY (c)",
+  "(c) k+b,s Co (c)",
+  "copyright Char (c)",
+]
+
+[licenses]
+# No obligation, so the notices leave it out (public domain statements and non-license ScanCode catch-alls).
+# Real unknown/copyleft/permissive catch-alls (unknown, other-copyleft, other-permissive, free-unknown)
+# are intentionally left unclassified so fresh scans still fail closed for human review.
+nothing = [
+  "LicenseRef-scancode-public-domain",
+  "LicenseRef-scancode-public-domain-disclaimer",
+  "CC-PDDC",
+  "LicenseRef-scancode-unknown-license-reference",
+  "LicenseRef-scancode-warranty-disclaimer",
+  "LicenseRef-scancode-generic-cla",
+  "LicenseRef-scancode-generic-export-compliance",
+  "LicenseRef-scancode-generic-tos",
+]
+
+# Copyright statements and license text (most permissive licenses).
+notice = [
+  "0BSD",
+  "Apache-1.1",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "Beerware",
+  "Bitstream-Vera",
+  "BlueOak-1.0.0",
+  "BSD-2-Clause",
+  "BSD-2-Clause-Views",
+  "BSD-3-Clause",
+  "BSD-3-Clause-No-Nuclear-Warranty",
+  "BSL-1.0",
+  "CC-BY-2.5",
+  "CC-BY-3.0",
+  "CC-BY-4.0",
+  "CC0-1.0",
+  "DocBook-DTD",
+  "DocBook-Stylesheet",
+  "HTMLTIDY",
+  "ISC",
+  "JSON",
+  "LicenseRef-scancode-adobe-postscript",
+  "LicenseRef-scancode-google-patent-license-webm",
+  "LicenseRef-scancode-iso-8879",
+  "LicenseRef-scancode-paulo-soares",
+  "LicenseRef-scancode-red-hat-attribution",
+  "LicenseRef-scancode-unicode",
+  "LicenseRef-scancode-unicode-icu-58",
+  "LicenseRef-scancode-w3c-docs-20021231",
+  "LicenseRef-thingsboard-beerware-googlemutant",
+  "MIT",
+  "MIT-0",
+  "NCSA",
+  "NTP",
+  "OFL-1.1",
+  "Python-2.0",
+  "SAX-PD",
+  "Unicode-3.0",
+  "W3C",
+  "W3C-19980720",
+  "WTFPL",
+  "Zlib",
+]
+
+# As 'notice', plus a "Source code:" link.
+source-link = [
+  "EPL-1.0",
+  "EPL-2.0",
+  "CDDL-1.0",
+  "CDDL-1.1",
+  "MPL-1.1",
+  "MPL-2.0",
+  "APSL-1.0",
+  "APSL-2.0",
+]
+
+# As 'notice', plus our written offer for source code (3 years, cost of distribution).
+written-offer = [
+  "LGPL-2.1-or-later",
+  "GPL-2.0-only WITH Classpath-exception-2.0",
+]
+
+# ThingsBoard cannot ship these: strong copyleft without exception, or non-commercial licenses.
+forbidden = [
+  "GPL-1.0-only",
+  "GPL-1.0-or-later",
+  "GPL-2.0-only",
+  "GPL-2.0-or-later",
+  "GPL-3.0-only",
+  "GPL-3.0-or-later",
+  "AGPL-1.0-only",
+  "AGPL-1.0-or-later",
+  "AGPL-3.0-only",
+  "AGPL-3.0-or-later",
+  "SSPL-1.0",
+  "EUPL-1.0",
+  "EUPL-1.1",
+  "EUPL-1.2",
+  "OSL-1.0",
+  "OSL-1.1",
+  "OSL-2.0",
+  "OSL-2.1",
+  "OSL-3.0",
+  "RPL-1.1",
+  "RPL-1.5",
+  "Sleepycat",
+  "CC-BY-NC-1.0",
+  "CC-BY-NC-2.0",
+  "CC-BY-NC-2.5",
+  "CC-BY-NC-3.0",
+  "CC-BY-NC-4.0",
+  "CC-BY-NC-ND-1.0",
+  "CC-BY-NC-ND-2.0",
+  "CC-BY-NC-ND-2.5",
+  "CC-BY-NC-ND-3.0",
+  "CC-BY-NC-ND-4.0",
+  "CC-BY-NC-SA-1.0",
+  "CC-BY-NC-SA-2.0",
+  "CC-BY-NC-SA-2.5",
+  "CC-BY-NC-SA-3.0",
+  "CC-BY-NC-SA-4.0",
+  "LicenseRef-scancode-commons-clause",
+  "Elastic-2.0",
+  "BUSL-1.1",
+  "PolyForm-Noncommercial-1.0.0",
+  "PolyForm-Small-Business-1.0.0",
+]
+
+# Global mappings for unambiguous non-SPDX license names declared in Maven POMs.
+# Ambiguous names (e.g. unversioned "LGPL") must be mapped per-package in curations.toml.
+[license_aliases]
+"AL 2.0" = "Apache-2.0"
+"Bouncy Castle Licence" = "MIT"
+"Eclipse Distribution License - Version 1.0" = "BSD-3-Clause"
+"GNU General Public License Version 2" = "GPL-2.0-only"
+"GNU General Public License, version 2" = "GPL-2.0-only"
+"GNU General Public License, version 2 with the GNU Classpath Exception" = "GPL-2.0-only WITH Classpath-exception-2.0"
+"GNU Lesser General Public License (LGPL), Version 2.1" = "LGPL-2.1-only"
+"GNU Lesser General Public License Version 2.1" = "LGPL-2.1-only"
+"GPL v2" = "GPL-2.0-only"
+"GPL v2 with the Classpath exception" = "GPL-2.0-only WITH Classpath-exception-2.0"
+"Go License" = "BSD-3-Clause"
+"Java HTML Tidy License" = "HTMLTIDY"
+"Mozilla Public License Version 2.0" = "MPL-2.0"
+"Public Domain" = "LicenseRef-scancode-public-domain"
+"SPDX-License-Identifier: MIT" = "MIT"
+"The W3C License" = "W3C"
+
+# Readable section titles for licenses without standard SPDX names.
+[license_titles]
+"LicenseRef-scancode-unicode" = "Unicode License Agreement for Data Files and Software"
+"LicenseRef-scancode-unicode-icu-58" = "Unicode License (ICU 58 and later)"
+"LicenseRef-scancode-red-hat-attribution" = "Red Hat attribution notice"
+"LicenseRef-scancode-paulo-soares" = "Paulo Soares font metrics notice"
+"LicenseRef-scancode-w3c-docs-20021231" = "W3C Document License (2002-12-31)"
+"LicenseRef-scancode-iso-8879" = "ISO 8879 character entity sets notice"
+"LicenseRef-scancode-google-patent-license-webm" = "Google additional patent grant for WebM"
+"LicenseRef-scancode-adobe-postscript" = "Adobe PostScript mapping files notice"
+"LicenseRef-thingsboard-beerware-googlemutant" = "Beerware (leaflet.gridlayer.googlemutant)"
+
+# License files kept in this repository (or generated from repo XMLs via "generated:<id>") for
+# non-Maven/non-npm bundled components. Keys are the component's exact purl (stops on version drift)
+# or name when it has no purl.
+[license_files]
+"lwm2m-registry" = "generated:lwm2m-registry"
+"pkg:generic/chromium/chromium@156.0.8078.0?os=linux" = "msa/web-report/chromium-credits/CREDITS.txt"
+"pkg:generic/chromium/chromium@156.0.8078.0?os=windows" = "msa/web-report/chromium-credits/CREDITS.txt"

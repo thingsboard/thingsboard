@@ -17,6 +17,7 @@
 // 3. Set the version (the release from the error, ending in .0) and the two paths, and build the module. It fails with
 //    the SHA-256 of an archive: put it in the sha256 of that platform and build again, until both pass.
 //    install.js also fails if an unpacked build is not the version set here.
+// 4. Update the credits, as chromium-credits/README.md says: the third-party notices stop until they are for this version.
 module.exports = {
     // The packages: snapshot builds of the open source code, published by the Chromium project.
     // exclude: glob patterns of the files that are not packaged

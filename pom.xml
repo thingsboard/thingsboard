@@ -30,7 +30,7 @@
         <maven.compiler.target>25</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
         <!-- Set to true to skip only the UI builds: the Angular application in ui-ngx and the
-             `yarn run pkg` launchers of msa/web-ui and msa/web-report. It deliberately does NOT
+             Node.js builds of msa/web-ui and msa/web-report. It deliberately does NOT
              cover msa/js-executor, whose yarn install and sandbox tests keep running.
              frontend-maven-plugin reads skip.yarn itself, so that property cannot be narrowed to a
              subset of the modules; this one can, and it defaults to skip.yarn so that
@@ -39,7 +39,15 @@
         <skip.ui.build>${skip.yarn}</skip.ui.build>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
-        <sbom.package.phase>none</sbom.package.phase>
+        <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
+        <!-- The architectures in the purls of the package SBOMs, as packaging/${pkg.type}/build.gradle builds the packages -->
+        <pkg.deb.arch>all</pkg.deb.arch>
+        <pkg.rpm.arch>noarch</pkg.rpm.arch>
+        <!-- The phase of the bundled SBOMs: prepare-package in a module that makes package SBOMs -->
+        <sbom.bundled.phase>none</sbom.bundled.phase>
+        <!-- The phase of the SBOM of the Spring Boot jar: follows sbom.bundled.phase by default;
+             non-Java packaged modules (such as msa/web-report) override this to none. -->
+        <sbom.jar.phase>${sbom.bundled.phase}</sbom.jar.phase>
         <!-- The time of the release, written to the SBOMs as their timestamp. Set it together with the release version:
              mvn versions:set-property -Dproperty=project.build.outputTimestamp -DnewVersion=$(date -u +%Y-%m-%dT%H:%M:%SZ)
              Maven also gives the files inside the jars this time, so that a build can be repeated. -->
@@ -54,6 +62,15 @@
         <!-- The yarn SBOM steps of the UI modules: ui-ngx, msa/web-ui and msa/web-report. Also skipped with
              -Dskip.ui.build=true, which leaves them without node and node_modules: see the skip-pkg-without-ui-build profile. -->
         <sbom.ui.skip>${sbom.yarn.skip}</sbom.ui.skip>
+        <!-- The SBOM of what the packages of the module contain: their SBOMs and their notices are made from it -->
+        <sbom.package.sourceFile>${project.build.directory}/sbom/application.cdx.json</sbom.package.sourceFile>
+        <!-- Third-party notices are made only on request, together with the SBOMs: build with -Dsbom.skip=false
+             -Dnotices.skip=false. A module that makes the SBOMs of its packages then also makes their notices and puts
+             them into the packages: see tools/src/main/notices/README.md. -->
+        <notices.skip>true</notices.skip>
+        <!-- What the notices steps follow: a build that skips the packaging makes no notices either, whatever
+             notices.skip says. See the skip-pkg profiles: a profile cannot change a property given on the command line. -->
+        <notices.run.skip>${notices.skip}</notices.run.skip>
         <!-- Use -Dpkg.skip=true to skip all packaging at once (bootjar + deb + rpm + zip).
              Individual flags below can be set independently for finer control. -->
         <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
@@ -117,8 +134,7 @@
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <jar-plugin.version>3.5.0</jar-plugin.version>
-        <cyclonedx-maven-plugin.version>2.9.3</cyclonedx-maven-plugin.version>
-        <sbom-maven-plugin.version>1.0.0</sbom-maven-plugin.version>
+        <sbom-maven-plugin.version>3.3.0</sbom-maven-plugin.version>
         <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
@@ -261,6 +277,8 @@
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
+                <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
 
@@ -281,6 +299,8 @@
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
+                <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
         <profile>
@@ -297,6 +317,8 @@
                 <pkg.skip.deb>true</pkg.skip.deb>
                 <pkg.skip.rpm>true</pkg.skip.rpm>
                 <pkg.skip.zip>true</pkg.skip.zip>
+                <notices.run.skip>true</notices.run.skip>
+                <sbom.bundled.skip>true</sbom.bundled.skip>
             </properties>
         </profile>
 
@@ -570,6 +592,13 @@
                                                 <directory>docker</directory>
                                                 <filtering>true</filtering>
                                             </resource>
+                                            <!-- The license of ThingsBoard: the packages take it from here, and so do the images that install no package of ours -->
+                                            <resource>
+                                                <directory>${main.dir}</directory>
+                                                <includes>
+                                                    <include>LICENSE</include>
+                                                </includes>
+                                            </resource>
                                         </resources>
                                     </configuration>
                                 </execution>
@@ -581,7 +610,8 @@
                             <executions>
                                 <execution>
                                     <id>copy-winsw-service</id>
-                                    <phase>${pkg.package.phase}</phase>
+                                    <!-- Before the bundled SBOMs, which give its hashes -->
+                                    <phase>${pkg.process-resources.phase}</phase>
                                     <goals>
                                         <goal>copy</goal>
                                     </goals>
@@ -616,8 +646,7 @@
                                 <attach>false</attach>
                                 <layout>ZIP</layout>
                                 <excludeDevtools>true</excludeDevtools>
-                                <!-- Lombok is needed only to compile. Its provided scope keeps it out of the SBOM,
-                                     so it must stay out of the jar too. -->
+                                <!-- Lombok is needed only to compile, so it stays out of the jar -->
                                 <excludes>
                                     <exclude>
                                         <groupId>org.projectlombok</groupId>
@@ -627,6 +656,8 @@
                             </configuration>
                             <executions>
                                 <execution>
+                                    <!-- With the jar, before the package phase: see the jar-sbom execution -->
+                                    <phase>prepare-package</phase>
                                     <goals>
                                         <goal>repackage</goal>
                                     </goals>
@@ -752,9 +783,19 @@
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>${jar-plugin.version}</version>
                     <!-- Outside the packaging profile: activating any other root profile (e.g. skip-pkg) disables it -->
+                    <executions>
+                        <execution>
+                            <id>default-jar</id>
+                            <!-- Before the package phase: see the jar-sbom execution -->
+                            <phase>prepare-package</phase>
+                        </execution>
+                    </executions>
                     <configuration>
                         <excludes>
                             <exclude>**/logback.xml</exclude>
+                            <!-- The SBOM of the jar is put into the finished jar by the jar-sbom execution only,
+                                 so one left in the output directory by an earlier build is not packed -->
+                            <exclude>META-INF/sbom/application.cdx.json</exclude>
                         </excludes>
                         <archive>
                             <manifestEntries>
@@ -770,90 +811,102 @@
                     <version>3.0.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.cyclonedx</groupId>
-                    <artifactId>cyclonedx-maven-plugin</artifactId>
-                    <version>${cyclonedx-maven-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>generate-sbom</id>
-                            <phase>generate-resources</phase>
-                            <goals>
-                                <goal>makeBom</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <projectType>application</projectType>
-                        <outputDirectory>${project.build.outputDirectory}/META-INF/sbom</outputDirectory>
-                        <outputFormat>json</outputFormat>
-                        <outputName>application.cdx</outputName>
-                        <includeProvidedScope>false</includeProvidedScope>
-                        <skipNotDeployed>false</skipNotDeployed>
-                        <skip>${sbom.skip}</skip>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>sbom-maven-plugin</artifactId>
                     <version>${sbom-maven-plugin.version}</version>
+                    <!-- For every execution: the organizations for the jar and metadata goals, the packages for the bundled and
+                         package goals -->
+                    <configuration>
+                        <name>${pkg.name}</name>
+                        <packages>
+                            <package>
+                                <id>deb</id>
+                                <file>${project.build.directory}/${pkg.name}.deb</file>
+                                <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=${pkg.deb.arch}</purl>
+                                <skip>${pkg.skip.deb}</skip>
+                            </package>
+                            <package>
+                                <id>rpm</id>
+                                <file>${project.build.directory}/${pkg.name}.rpm</file>
+                                <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=${pkg.rpm.arch}</purl>
+                                <skip>${pkg.skip.rpm}</skip>
+                            </package>
+                            <package>
+                                <id>zip</id>
+                                <file>${project.build.directory}/${pkg.name}-windows.zip</file>
+                                <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
+                                <skip>${pkg.skip.zip}</skip>
+                            </package>
+                        </packages>
+                        <manufacturer>
+                            <name>ThingsBoard, Inc.</name>
+                            <urls>
+                                <url>https://thingsboard.io</url>
+                            </urls>
+                            <contacts>
+                                <contact>
+                                    <email>security@thingsboard.io</email>
+                                </contact>
+                            </contacts>
+                        </manufacturer>
+                        <supplier>
+                            <name>ThingsBoard, Inc.</name>
+                            <urls>
+                                <url>https://thingsboard.io</url>
+                            </urls>
+                        </supplier>
+                        <componentManufacturer>
+                            <name>ThingsBoard, Inc.</name>
+                            <urls>
+                                <url>https://thingsboard.io</url>
+                            </urls>
+                        </componentManufacturer>
+                    </configuration>
                     <executions>
+                        <!-- The SBOM of the Spring Boot jar, made from the libraries the finished jar packs and put into
+                             it. The jar is built in prepare-package, so that this runs before the package phase, which
+                             builds the packages and their SBOMs: Maven runs the goals of one plugin in a phase together.
+                             Declare this plugin after spring-boot-maven-plugin, so that it runs after the repackaging.
+                             Follows sbom.bundled.phase by default (set to prepare-package on shipped service modules). -->
                         <execution>
-                            <id>sbom-metadata</id>
+                            <id>jar-sbom</id>
+                            <phase>${sbom.jar.phase}</phase>
                             <goals>
-                                <goal>metadata</goal>
+                                <goal>jar</goal>
                             </goals>
                             <configuration>
-                                <manufacturer>
-                                    <name>ThingsBoard, Inc.</name>
-                                    <urls>
-                                        <url>https://thingsboard.io</url>
-                                    </urls>
-                                    <contacts>
-                                        <contact>
-                                            <email>security@thingsboard.io</email>
-                                        </contact>
-                                    </contacts>
-                                </manufacturer>
-                                <supplier>
-                                    <name>ThingsBoard, Inc.</name>
-                                    <urls>
-                                        <url>https://thingsboard.io</url>
-                                    </urls>
-                                </supplier>
-                                <componentManufacturer>
-                                    <name>ThingsBoard, Inc.</name>
-                                    <urls>
-                                        <url>https://thingsboard.io</url>
-                                    </urls>
-                                </componentManufacturer>
+                                <jar>${project.build.directory}/${project.build.finalName}-boot.jar</jar>
+                                <nestedSbomGroups>
+                                    <group>org.thingsboard</group>
+                                </nestedSbomGroups>
+                                <libraries>
+                                    <library>
+                                        <group>org.springframework.boot</group>
+                                        <name>spring-boot-jarmode-tools</name>
+                                    </library>
+                                </libraries>
+                                <skip>${pkg.skip.bootjar}</skip>
                             </configuration>
                         </execution>
+                        <!-- What each package bundles besides the application, declared here and in the modules: the notices
+                             that go into the packages, those of the product and the package SBOMs are made with it -->
                         <execution>
-                            <id>package-sbom</id>
-                            <phase>${sbom.package.phase}</phase>
+                            <id>bundled-sbom</id>
+                            <phase>${sbom.bundled.phase}</phase>
                             <goals>
-                                <goal>package</goal>
+                                <goal>bundled</goal>
                             </goals>
                             <configuration>
-                                <name>${pkg.name}</name>
-                                <packages>
+                                <!-- Written also for the packages that are not built, so that the notices can always read them -->
+                                <packages combine.self="override">
                                     <package>
                                         <id>deb</id>
-                                        <file>${project.build.directory}/${pkg.name}.deb</file>
-                                        <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=all</purl>
-                                        <skip>${pkg.skip.deb}</skip>
                                     </package>
                                     <package>
                                         <id>rpm</id>
-                                        <file>${project.build.directory}/${pkg.name}.rpm</file>
-                                        <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=noarch</purl>
-                                        <skip>${pkg.skip.rpm}</skip>
                                     </package>
                                     <package>
                                         <id>zip</id>
-                                        <file>${project.build.directory}/${pkg.name}-windows.zip</file>
-                                        <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
-                                        <skip>${pkg.skip.zip}</skip>
                                     </package>
                                 </packages>
                                 <components>
@@ -872,6 +925,13 @@
                                     </component>
                                 </components>
                             </configuration>
+                        </execution>
+                        <execution>
+                            <id>package-sbom</id>
+                            <phase>${sbom.package.phase}</phase>
+                            <goals>
+                                <goal>package</goal>
+                            </goals>
                         </execution>
                     </executions>
                 </plugin>
@@ -936,7 +996,15 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.5.1</version>
+                    <configuration>
+                        <!-- For tools/src/main/notices, which every module runs with this plugin. Its other
+                             settings, such as NOTICES_CACHE_DIR and NOTICES_SCAN_CACHE_URL, reach it from the
+                             environment of Maven. -->
+                        <environmentVariables>
+                            <NOTICES_MAVEN_REPOSITORY>${settings.localRepository}</NOTICES_MAVEN_REPOSITORY>
+                        </environmentVariables>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -1115,7 +1183,7 @@
                                     <exclude>**/NetworkReceive.java</exclude>
                                     <exclude>**/lwm2m-registry/**</exclude>
                                     <exclude>**/test/resources/lwm2m/**</exclude>
-                                    <exclude>**/resources/lwm2m/models/**</exclude>
+                                    <exclude>**/test/resources/chirpstack/**</exclude>
                                     <exclude>src/main/data/resources/**</exclude>
                                     <exclude>src/main/resources/html/**</exclude>
                                     <exclude>.claude/**</exclude>
@@ -1140,6 +1208,7 @@
                             <proto>SINGLE_LINE_DOUBLESLASH_STYLE</proto>
                             <gradle>SINGLE_LINE_DOUBLESLASH_STYLE</gradle>
                             <conf>SCRIPT_STYLE</conf>
+                            <toml>SCRIPT_STYLE</toml>
                             <cql>DOUBLEDASHES_STYLE</cql>
                         </mapping>
                     </configuration>
@@ -1177,6 +1246,81 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <!-- Declared here, before the plugins of the modules, so that the notices are ready when the packages are built.
+                 The .deb and the .rpm contain the same, so they share a file; the Windows zip has its own. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>notices-linux</id>
+                        <phase>${sbom.package.phase}</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${notices.run.skip}</skip>
+                            <executable>python3</executable>
+                            <arguments>
+                                <argument>${main.dir}/tools/src/main/notices</argument>
+                                <argument>render</argument>
+                                <argument>--project-version</argument>
+                                <argument>${project.version}</argument>
+                                <argument>--out</argument>
+                                <argument>${project.build.directory}/notices/linux/THIRD-PARTY-NOTICES</argument>
+                                <argument>${sbom.package.sourceFile}</argument>
+                                <argument>${project.build.directory}/sbom/${pkg.name}-deb.bundled.cdx.json</argument>
+                                <argument>${project.build.directory}/sbom/${pkg.name}-rpm.bundled.cdx.json</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>notices-windows</id>
+                        <phase>${sbom.package.phase}</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${notices.run.skip}</skip>
+                            <executable>python3</executable>
+                            <arguments>
+                                <argument>${main.dir}/tools/src/main/notices</argument>
+                                <argument>render</argument>
+                                <argument>--project-version</argument>
+                                <argument>${project.version}</argument>
+                                <argument>--out</argument>
+                                <argument>${project.build.directory}/notices/windows/THIRD-PARTY-NOTICES</argument>
+                                <argument>${sbom.package.sourceFile}</argument>
+                                <argument>${project.build.directory}/sbom/${pkg.name}-zip.bundled.cdx.json</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <!-- The notices of the whole product, from the SBOMs that a build with -Dsbom.skip=false left in the
+                         modules. Bound to no phase; run it after such a build, from the root:
+                         mvn -N exec:exec@notices-product. CI runs it to verify license policy and curations across all
+                         shipped artifacts. -->
+                    <execution>
+                        <id>notices-product</id>
+                        <inherited>false</inherited>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>python3</executable>
+                            <arguments>
+                                <argument>${main.dir}/tools/src/main/notices</argument>
+                                <argument>render</argument>
+                                <argument>--project-version</argument>
+                                <argument>${project.version}</argument>
+                                <argument>--out</argument>
+                                <argument>${project.build.directory}/THIRD-PARTY-NOTICES</argument>
+                                <argument>--sboms-under</argument>
+                                <argument>${main.dir}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>

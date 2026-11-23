@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 // Writes .br and .gz copies of the production build's files, served as-is by the monolith and msa/web-ui.
 // Not an esbuild plugin: Angular gives custom plugins only the browser code bundle, not polyfills,
@@ -59,6 +60,7 @@ async function compress(file, { ext, encode }) {
 async function main() {
   // largest first, so the main chunk does not start last
   const files = listFiles(buildDir)
+    .filter(file => !['stats.json', '3rdpartylicenses.txt'].includes(path.basename(file)))
     .map(file => ({ file, size: fs.statSync(file).size }))
     .filter(({ file, size }) => compressibleExtensions.has(path.extname(file).toLowerCase()) && size >= minSize)
     .sort((a, b) => b.size - a.size)

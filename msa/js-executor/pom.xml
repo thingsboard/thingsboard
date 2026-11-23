@@ -27,10 +27,8 @@
         <docker.name>${tb.docker.id}-js-executor</docker.name>
         <pkg.name>tb-js-executor</pkg.name>
         <pkg.type>js</pkg.type>
-        <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
-        <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
-        <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
+        <docker.resources.phase>process-resources</docker.resources.phase>
         <!-- The `yarn test` execution has to be skipped when tests are skipped and also when the
              yarn build as a whole is skipped: with `yarn install` skipped there is no node_modules
              to run the tests from. Maven has no boolean OR, so skip.yarn is used as the default
@@ -40,23 +38,19 @@
         <yarn.test.skip>${skip.yarn}</yarn.test.skip>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
         <sbom.image.scanExclude></sbom.image.scanExclude>
+        <notices.image.phase>package</notices.image.phase>
+        <!-- js-executor is not skipped by -Dskip.ui.build=true (only by -Dskip.yarn=true). -->
+        <notices.image.skip>${notices.yarn.skip}</notices.image.skip>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.sun.winsw</groupId>
-            <artifactId>winsw</artifactId>
-            <classifier>bin</classifier>
-            <type>exe</type>
-            <scope>provided</scope>
-        </dependency>
         <!--
             Reactor-only ordering dep (NOT a real classpath dependency).
             Forces `mvn -T<n>` to serialize this module after web-ui so that
-            no two `yarn install` / `yarn run pkg` invocations can overlap on
+            no two `yarn install` / `yarn run build` invocations can overlap on
             the same agent. Concurrent yarn 1.x processes share ~/.cache/yarn
             and have intermittently produced `tsc: not found` failures during
-            yarn pkg (incomplete typescript extraction in node_modules).
+            yarn build (incomplete typescript extraction in node_modules).
             The chain is: ui-ngx -> msa/web-ui -> msa/js-executor -> msa/web-report
             (web-report is PE-only; the upstream CE chain ends at msa/js-executor).
             type=pom + provided + wildcard exclusions keep nothing on the classpath.
@@ -116,13 +110,13 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>yarn pkg</id>
+                        <id>yarn build</id>
                         <goals>
                             <goal>yarn</goal>
                         </goals>
                         <phase>compile</phase>
                         <configuration>
-                            <arguments>--mutex network run pkg</arguments>
+                            <arguments>--mutex network run build</arguments>
                         </configuration>
                     </execution>
                     <execution>
@@ -151,10 +145,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
@@ -178,18 +168,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>gradle-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -234,6 +212,9 @@
                 <executions>
                     <execution>
                         <id>sbom-metadata</id>
+                        <goals>
+                            <goal>metadata</goal>
+                        </goals>
                         <configuration>
                             <targetFile>${project.build.directory}/sbom/${pkg.name}.cdx.json</targetFile>
                             <skip>${skip.yarn}</skip>
@@ -342,14 +323,4 @@
             </build>
         </profile>
     </profiles>
-    <repositories>
-        <repository>
-            <id>jenkins</id>
-            <name>Jenkins Repository</name>
-            <url>https://repo.jenkins-ci.org/releases</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>

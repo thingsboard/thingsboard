@@ -29,16 +29,27 @@
             <lineEnding>windows</lineEnding>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/web</directory>
-            <outputDirectory>web</outputDirectory>
-        </fileSet>
-        <fileSet>
             <directory>${pkg.win.dist}/chromium</directory>
             <outputDirectory>chromium</outputDirectory>
+        </fileSet>
+        <!-- The third-party notices, when the build makes them (-Dnotices.skip=false) -->
+        <fileSet>
+            <directory>${project.build.directory}/notices/windows</directory>
+            <outputDirectory/>
+            <includes>
+                <include>THIRD-PARTY-NOTICES</include>
+            </includes>
+            <lineEnding>windows</lineEnding>
         </fileSet>
     </fileSets>
 
     <files>
+        <!-- The license of ThingsBoard -->
+        <file>
+            <source>${project.build.directory}/LICENSE</source>
+            <outputDirectory/>
+            <lineEnding>windows</lineEnding>
+        </file>
         <file>
             <source>${pkg.win.dist}/bin/${pkg.name}.exe</source>
             <outputDirectory>bin</outputDirectory>

@@ -28,7 +28,12 @@
         <pkg.type>js</pkg.type>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
-        <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
+        <pkg.deb.arch>amd64</pkg.deb.arch>
+        <pkg.rpm.arch>x86_64</pkg.rpm.arch>
+        <sbom.bundled.phase>prepare-package</sbom.bundled.phase>
+        <sbom.jar.phase>none</sbom.jar.phase>
+        <sbom.package.sourceFile>${project.build.directory}/sbom/tb-web-report-executable.cdx.json</sbom.package.sourceFile>
+        <notices.image.phase>package</notices.image.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
@@ -122,14 +127,14 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>sbom check</id>
+                        <id>generate executable sbom</id>
                         <goals>
                             <goal>yarn</goal>
                         </goals>
                         <phase>compile</phase>
                         <configuration>
                             <skip>${sbom.ui.skip}</skip>
-                            <arguments>run sbom-check</arguments>
+                            <arguments>run sbom:executable pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -180,29 +185,24 @@
                 <artifactId>build-helper-maven-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>gradle-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-            </plugin>
-            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>
                 <version>1.2.1</version>
                 <executions>
                     <execution>
                         <id>read-bundled-versions</id>
-                        <phase>${sbom.package.phase}</phase>
+                        <!-- Before the bundled SBOMs, which name the versions; both files are written at compile -->
+                        <phase>process-classes</phase>
                         <goals>
                             <goal>read-project-properties</goal>
                         </goals>
                         <configuration>
                             <files>
-                                <file>${project.build.directory}/sbom/bundled-versions.properties</file>
+                                <file>${project.build.directory}/sbom/node-versions.properties</file>
+                                <file>${project.build.directory}/sbom/chromium-versions.properties</file>
                             </files>
-                            <!-- "sbom check" writes the file only when SBOMs are made -->
+                            <!-- "generate executable sbom" writes the first file only when SBOMs are made, "yarn pkg" the second
+                                 only when the service is built -->
                             <quiet>true</quiet>
                         </configuration>
                     </execution>
@@ -244,6 +244,15 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- After exec-maven-plugin, which makes the notices of the root pom: they go into the packages -->
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>gradle-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
             <!-- After exec-maven-plugin: the image SBOM is made in the phase that pushes the image, once it is pushed -->
             <plugin>
                 <groupId>org.thingsboard</groupId>
@@ -251,36 +260,30 @@
                 <executions>
                     <execution>
                         <id>sbom-metadata</id>
+                        <goals>
+                            <goal>metadata</goal>
+                        </goals>
                         <configuration>
                             <targetFile>${project.build.directory}/sbom/tb-web-report.cdx.json</targetFile>
                             <skip>${skip.ui.build}</skip>
                         </configuration>
                     </execution>
+                    <!-- The packages ship the executables and the image installs the dependencies, so each has its own SBOM -->
                     <execution>
-                        <id>package-sbom</id>
+                        <id>sbom-metadata-executable</id>
+                        <!-- After the compile phase, which makes that SBOM -->
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>metadata</goal>
+                        </goals>
                         <configuration>
-                            <sourceFile>${project.build.directory}/sbom/tb-web-report.cdx.json</sourceFile>
+                            <targetFile>${project.build.directory}/sbom/tb-web-report-executable.cdx.json</targetFile>
                             <skip>${skip.ui.build}</skip>
-                            <packages combine.self="override">
-                                <package>
-                                    <id>deb</id>
-                                    <file>${project.build.directory}/${pkg.name}.deb</file>
-                                    <purl>pkg:deb/thingsboard/${pkg.name}@${pkg.version}-1?arch=amd64</purl>
-                                    <skip>${pkg.skip.deb}</skip>
-                                </package>
-                                <package>
-                                    <id>rpm</id>
-                                    <file>${project.build.directory}/${pkg.name}.rpm</file>
-                                    <purl>pkg:rpm/thingsboard/${pkg.name}@${pkg.version}-1?arch=x86_64</purl>
-                                    <skip>${pkg.skip.rpm}</skip>
-                                </package>
-                                <package>
-                                    <id>zip</id>
-                                    <file>${project.build.directory}/${pkg.name}-windows.zip</file>
-                                    <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
-                                    <skip>${pkg.skip.zip}</skip>
-                                </package>
-                            </packages>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>bundled-sbom</id>
+                        <configuration>
                             <components combine.children="append">
                                 <component>
                                     <type>application</type>
@@ -290,6 +293,13 @@
                                     <purl>pkg:github/nodejs/node@v${node.linux.version}?os=linux</purl>
                                     <cpe>cpe:2.3:a:nodejs:node.js:${node.linux.version}:*:*:*:*:*:*:*</cpe>
                                     <license>MIT</license>
+                                    <!-- Covers Node.js and the libraries it bundles: the notices take it as it is -->
+                                    <externalReferences>
+                                        <externalReference>
+                                            <type>license</type>
+                                            <url>https://raw.githubusercontent.com/nodejs/node/v${node.linux.version}/LICENSE</url>
+                                        </externalReference>
+                                    </externalReferences>
                                     <supplier>
                                         <name>OpenJS Foundation</name>
                                         <urls>
@@ -309,6 +319,12 @@
                                     <purl>pkg:github/nodejs/node@v${node.windows.version}?os=windows</purl>
                                     <cpe>cpe:2.3:a:nodejs:node.js:${node.windows.version}:*:*:*:*:*:*:*</cpe>
                                     <license>MIT</license>
+                                    <externalReferences>
+                                        <externalReference>
+                                            <type>license</type>
+                                            <url>https://raw.githubusercontent.com/nodejs/node/v${node.windows.version}/LICENSE</url>
+                                        </externalReference>
+                                    </externalReferences>
                                     <supplier>
                                         <name>OpenJS Foundation</name>
                                         <urls>
@@ -359,6 +375,12 @@
                                     </packages>
                                 </component>
                             </components>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>package-sbom</id>
+                        <configuration>
+                            <skip>${skip.ui.build}</skip>
                         </configuration>
                     </execution>
                     <execution>
