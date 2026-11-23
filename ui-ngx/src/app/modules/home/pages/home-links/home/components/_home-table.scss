@@ -1,0 +1,121 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-home-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    height: 32px;
+    padding: 0 12px 0 0;
+    border-bottom: 1px solid var(--tb-line, rgba(0, 0, 0, 0.12));
+    font: 400 12px/16px var(--tb-font, Roboto, sans-serif);
+    letter-spacing: 0.25px;
+    text-align: left;
+    white-space: nowrap;
+    color: var(--tb-text-muted, rgba(0, 0, 0, 0.56));
+  }
+
+  .th-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+      color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+
+      .tb-sort-icon {
+        opacity: .6;
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tb-primary-500);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+
+  .tb-sort-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    opacity: 0;
+    color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+    transition: opacity .15s ease;
+  }
+
+  th.sorted .tb-sort-icon {
+    opacity: 1;
+  }
+
+  td {
+    height: 36px;
+    padding: 0 12px 0 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+    letter-spacing: 0.2px;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+  }
+
+  tbody tr {
+    cursor: pointer;
+
+    &:last-child td {
+      border-bottom: none;
+    }
+
+    &:hover td {
+      background: rgba(0, 0, 0, 0.02);
+    }
+  }
+
+  .col-time {
+    text-align: right;
+  }
+
+  td.col-time {
+    color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+  }
+
+  th.col-time .th-label {
+    flex-direction: row-reverse;
+  }
+}
+
+.tb-home-cell-link {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tb-ink, rgba(0, 0, 0, 0.87));
+  text-decoration: none;
+
+  &, &:hover, &:focus, &:active {
+    border-bottom: none;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.tb-home-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

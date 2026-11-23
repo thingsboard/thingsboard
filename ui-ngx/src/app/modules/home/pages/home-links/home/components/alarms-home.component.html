@@ -10,28 +10,28 @@
       <tb-home-toggle [options]="whoseOptions" [value]="mine()" [label]="'home.alarms.whose' | translate" (valueChange)="setMine($event)"></tb-home-toggle>
     }
     @if (tenantAdmin) {
-      <button mat-button color="primary" type="button" class="tb-alarms-add" (click)="addAlarmRule()">
+      <button mat-button color="primary" type="button" class="tb-home-add" (click)="addAlarmRule()">
         <mat-icon>add</mat-icon>
-        <span class="tb-alarms-add-label">{{ 'home.alarms.add-rule' | translate }}</span>
+        <span class="tb-home-add-label">{{ 'home.alarms.add-rule' | translate }}</span>
       </button>
     }
   </ng-container>
   @if (total() === 0) {
-    <div class="tb-alarms-clear">
-      <span class="tb-alarms-clear-glyph" aria-hidden="true"><mat-icon>check</mat-icon></span>
+    <div class="tb-home-all-clear">
+      <span class="tb-home-all-clear-glyph" aria-hidden="true"><mat-icon>check</mat-icon></span>
       <span>{{ 'home.alarms.no-active' | translate }} <a class="tb-alarms-clear-link" routerLink="/alarms/alarms" [queryParams]="{statusList: ['CLEARED']}">{{ 'home.alarms.view-cleared' | translate }}</a></span>
     </div>
   } @else if (total()) {
-    <div class="tb-alarms-tiles">
+    <div class="tb-home-tiles">
       @for (tile of tiles(); track tile.severity) {
-        <button type="button" class="tb-alarms-tile" [class]="tile.severity.toLowerCase()" [class.zero]="!tile.count"
+        <button type="button" class="tb-home-tile" [class]="tile.severity.toLowerCase()" [class.zero]="!tile.count"
                 [class.can-reset]="tile.pressed" [disabled]="!tile.count && !tile.pressed"
                 [attr.aria-pressed]="tile.count || tile.pressed ? tile.pressed : null"
                 [matTooltip]="(tile.pressed ? 'home.alarms.show-every' : 'home.alarms.show-only') | translate: {severity: (severityLabel(tile.severity) | translate)}"
                 [matTooltipDisabled]="!tile.count && !tile.pressed" matTooltipPosition="above"
                 (click)="pick(tile)">
-          <span class="tb-alarms-tile-label">{{ severityLabel(tile.severity) | translate }}</span>
-          <span class="tb-alarms-tile-count">
+          <span class="tb-home-tile-label">{{ severityLabel(tile.severity) | translate }}</span>
+          <span class="tb-home-tile-count">
             {{ tile.count | shortNumber }}
             @if (tile.hot) {
               <tb-ai-sev-mark class="tb-alarms-tile-mark" severity="CRITICAL"></tb-ai-sev-mark>
@@ -41,7 +41,7 @@
       }
     </div>
     @if (rows().length) {
-      <table class="tb-alarms-table" [class.mine]="mine()">
+      <table class="tb-home-table tb-alarms-table" [class.mine]="mine()">
         <thead>
           <tr>
             <th class="col-severity sortable" [class.sorted]="sortKey() === 'severity'" [attr.aria-sort]="ariaSort('severity')">
@@ -52,7 +52,7 @@
             </th>
             <th class="col-type">{{ 'home.alarms.type' | translate }}</th>
             <th class="col-origin">{{ 'home.alarms.originator' | translate }}</th>
-            <th class="col-age sortable" [class.sorted]="sortKey() === 'createdTime'" [attr.aria-sort]="ariaSort('createdTime')">
+            <th class="col-age col-time sortable" [class.sorted]="sortKey() === 'createdTime'" [attr.aria-sort]="ariaSort('createdTime')">
               <button type="button" class="th-label" [matTooltip]="'home.alarms.sort-started' | translate" (click)="sortBy('createdTime')">
                 <span class="th-text">{{ 'home.alarms.started' | translate }}</span>
                 <mat-icon class="tb-sort-icon">{{ sortKey() === 'createdTime' && !sortDesc() ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
@@ -86,7 +86,7 @@
               <td class="col-origin">
                 <a class="tb-alarms-link tb-alarms-origin" [routerLink]="row.originatorLink" (click)="stop($event)">{{ row.alarm.originatorDisplayName || row.alarm.originatorName }}</a>
               </td>
-              <td class="col-age" [matTooltip]="'home.alarms.started-at' | translate: {time: (row.alarm.createdTime | date: 'd MMM, HH:mm')}">{{ row.ago }}</td>
+              <td class="col-age col-time" [matTooltip]="'home.alarms.started-at' | translate: {time: (row.alarm.createdTime | date: 'd MMM, HH:mm')}">{{ row.ago }}</td>
               @if (!mine()) {
                 <td class="col-assignee">
                   @if (row.assigneeName) {
@@ -127,7 +127,7 @@
         </tbody>
       </table>
     } @else if (alarmsLoaded()) {
-      <div class="tb-alarms-empty-note">{{ emptyNote().key | translate: emptyNote().params }}</div>
+      <div class="tb-home-empty-note">{{ emptyNote().key | translate: emptyNote().params }}</div>
     }
     <tb-home-list-footer [total]="listed()" [expanded]="expanded()" link="/alarms/alarms" [params]="viewAllParams()"
                          (expandedChange)="expanded.set($event)"></tb-home-list-footer>

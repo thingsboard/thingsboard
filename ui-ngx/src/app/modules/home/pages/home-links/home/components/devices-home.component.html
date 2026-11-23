@@ -1,0 +1,96 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="card" [count]="total()">
+  <ng-container homeCardActions>
+    @if (canAdd) {
+      <a mat-button color="primary" class="tb-home-add" routerLink="/entities/devices/all" [queryParams]="{action: 'add'}">
+        <mat-icon>add</mat-icon>
+        <span class="tb-home-add-label">{{ 'home.devices.add' | translate }}</span>
+      </a>
+    }
+  </ng-container>
+  @if (total() === 0) {
+    <div class="tb-home-setup-empty">
+      <span class="tb-home-setup-empty-glyph" aria-hidden="true"><mat-icon>memory</mat-icon></span>
+      @if (tenantAdmin) {
+        <div class="tb-home-setup-empty-text">
+          <p>{{ 'home.devices.none' | translate }}</p>
+          <div class="tb-home-setup-empty-actions">
+            <a [href]="howToLink" target="_blank" rel="noopener">{{ 'home.devices.how-to' | translate }}<mat-icon class="tb-home-ext" aria-hidden="true">north_east</mat-icon><span class="tb-home-sr-only">{{ 'home.dashboards.opens-new-tab' | translate }}</span></a>
+          </div>
+        </div>
+      } @else {
+        <div class="tb-home-setup-empty-title">{{ 'home.devices.none-assigned' | translate }}</div>
+      }
+    </div>
+  } @else if (total()) {
+    <div class="tb-home-tiles">
+      @for (tile of tiles(); track tile.state) {
+        <button type="button" class="tb-home-tile" [class]="tile.state" [class.zero]="!tile.count" [class.can-reset]="tile.pressed"
+                [disabled]="!tile.count && !tile.pressed" [attr.aria-pressed]="tile.count || tile.pressed ? tile.pressed : null"
+                [matTooltip]="(tile.pressed ? 'home.devices.show-every' : 'home.devices.show-only-' + tile.state) | translate"
+                [matTooltipDisabled]="!tile.count && !tile.pressed" matTooltipPosition="above" (click)="pick(tile)">
+          <span class="tb-home-tile-label">{{ 'home.devices.' + tile.state | translate }}</span>
+          <span class="tb-home-tile-count">{{ tile.count | shortNumber }}</span>
+        </button>
+      }
+    </div>
+    @if (allActive()) {
+      <div class="tb-home-all-clear">
+        <span class="tb-home-all-clear-glyph" aria-hidden="true"><mat-icon>check</mat-icon></span>
+        <span>{{ (total() === 1 ? 'home.devices.one-active' : 'home.devices.all-active') | translate: {count: total()} }}</span>
+      </div>
+    }
+    @if (rows().length) {
+      <table class="tb-home-table tb-devices-table">
+        <thead>
+          <tr>
+            <th class="col-name sortable" [class.sorted]="sortKey() === 'name'" [attr.aria-sort]="ariaSort('name')">
+              <button type="button" class="th-label" [matTooltip]="'home.devices.sort-name' | translate" (click)="sortBy('name')">
+                <span>{{ 'home.devices.name' | translate }}</span>
+                <mat-icon class="tb-sort-icon">{{ sortIcon('name') }}</mat-icon>
+              </button>
+            </th>
+            <th class="col-profile">{{ 'home.devices.profile' | translate }}</th>
+            <th class="col-state"><span class="th-text">{{ 'home.devices.state' | translate }}</span></th>
+            <th class="col-time sortable" [class.sorted]="sortKey() === 'last'" [attr.aria-sort]="ariaSort('last')">
+              <button type="button" class="th-label" [matTooltip]="'home.devices.sort-last' | translate" (click)="sortBy('last')">
+                <span>{{ 'home.devices.last-activity' | translate }}</span>
+                <mat-icon class="tb-sort-icon">{{ sortIcon('last') }}</mat-icon>
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <tr (click)="open(row)">
+              <td class="col-name">
+                <span class="tb-devices-cell-main"><a class="tb-home-cell-link" [routerLink]="row.url" (click)="$event.stopPropagation()">{{ row.name }}</a></span>
+                <span class="tb-devices-cell-sub">{{ row.profile }}</span>
+              </td>
+              <td class="col-profile">{{ row.profile }}</td>
+              <td class="col-state">
+                <span class="tb-devices-state" [class.active]="row.active" [class.inactive]="!row.active">
+                  <span class="tb-devices-state-word">{{ (row.active ? 'home.devices.active' : 'home.devices.inactive') | translate }}</span>
+                </span>
+              </td>
+              @if (row.lastActivity) {
+                <td class="col-time" [matTooltip]="'home.devices.last-activity-at' | translate: {time: (row.lastActivity | date: 'd MMM, HH:mm')}">{{ row.ago }}</td>
+              } @else {
+                <td class="col-time"><span class="tb-devices-never" [matTooltip]="'home.devices.no-data' | translate">{{ 'home.devices.never' | translate }}</span></td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else if (loaded()) {
+      <div class="tb-home-empty-note">{{ ('home.devices.none-' + (filter() ?? 'active')) | translate }}</div>
+    }
+    <tb-home-list-footer [total]="listed()" [expanded]="expanded()" link="/entities/devices/all" [params]="viewAllParams()"
+                         (expandedChange)="expanded.set($event)"></tb-home-list-footer>
+  }
+</tb-home-card>

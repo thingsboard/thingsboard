@@ -1,0 +1,118 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use './home-tiles';
+@use './home-table';
+
+:host {
+  display: block;
+  min-width: 0;
+  container: tb-devices-home / inline-size;
+}
+
+.tb-home-tile {
+  &.inactive:not(.zero) {
+    --tb-sel: var(--tb-crit, #D12730);
+  }
+
+  &.active {
+    --tb-sel: var(--tb-ok, #198038);
+  }
+}
+
+.tb-devices-table {
+  .tb-devices-cell-main {
+    display: flex;
+    min-width: 0;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  td.col-profile {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+  }
+
+  .col-state {
+    white-space: nowrap;
+  }
+}
+
+.tb-devices-cell-sub {
+  display: none;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+}
+
+.tb-devices-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 13px/20px var(--tb-font, Roboto, sans-serif);
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+
+  &::before {
+    content: '';
+    box-sizing: border-box;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
+  }
+
+  &.active::before {
+    background: var(--tb-ok, #198038);
+  }
+
+  &.inactive::before {
+    border: 2px solid var(--tb-crit, #D12730);
+    background: transparent;
+  }
+}
+
+.tb-devices-never {
+  color: var(--tb-text-muted, rgba(0, 0, 0, 0.56));
+}
+
+@container tb-devices-home (max-width: 599px) {
+  .tb-devices-state {
+    gap: 0;
+  }
+
+  .tb-devices-state-word, .tb-devices-table th.col-state .th-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@container tb-devices-home (max-width: 459px) {
+  .tb-devices-table {
+    .col-profile {
+      display: none;
+    }
+
+    td.col-name {
+      width: 99%;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .tb-devices-cell-main {
+      max-width: none;
+    }
+  }
+
+  .tb-devices-cell-sub {
+    display: block;
+  }
+}

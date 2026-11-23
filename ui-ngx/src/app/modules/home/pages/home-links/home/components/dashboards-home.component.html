@@ -10,26 +10,26 @@
       <tb-home-toggle [options]="tabOptions" [value]="tab()" [label]="'home.dashboards.view' | translate" (valueChange)="setTab($event)"></tb-home-toggle>
     }
     @if (canAdd) {
-      <a mat-button color="primary" class="tb-dashboards-add" routerLink="/dashboards/all" [queryParams]="{action: 'add'}">
+      <a mat-button color="primary" class="tb-home-add" routerLink="/dashboards/all" [queryParams]="{action: 'add'}">
         <mat-icon>add</mat-icon>
-        <span class="tb-dashboards-add-label">{{ 'home.dashboards.add' | translate }}</span>
+        <span class="tb-home-add-label">{{ 'home.dashboards.add' | translate }}</span>
       </a>
     }
   </ng-container>
   @if (loaded()) {
     @if (!total()) {
-      <div class="tb-dashboards-empty">
-        <span class="tb-dashboards-empty-glyph" aria-hidden="true"><mat-icon>{{ tenantAdmin ? 'dashboard_customize' : 'dashboard' }}</mat-icon></span>
+      <div class="tb-home-setup-empty">
+        <span class="tb-home-setup-empty-glyph" aria-hidden="true"><mat-icon>{{ tenantAdmin ? 'dashboard_customize' : 'dashboard' }}</mat-icon></span>
         @if (tenantAdmin) {
-          <div class="tb-dashboards-empty-text">
+          <div class="tb-home-setup-empty-text">
             <p>{{ 'home.dashboards.none' | translate }}</p>
-            <div class="tb-dashboards-empty-actions">
+            <div class="tb-home-setup-empty-actions">
               <a routerLink="/iot-hub/solution-templates">{{ 'home.dashboards.from-template' | translate }}</a>
-              <a [href]="howToLink" target="_blank" rel="noopener">{{ 'home.dashboards.how-to' | translate }}<mat-icon class="tb-dashboards-ext" aria-hidden="true">north_east</mat-icon><span class="tb-dashboards-sr">{{ 'home.dashboards.opens-new-tab' | translate }}</span></a>
+              <a [href]="howToLink" target="_blank" rel="noopener">{{ 'home.dashboards.how-to' | translate }}<mat-icon class="tb-home-ext" aria-hidden="true">north_east</mat-icon><span class="tb-home-sr-only">{{ 'home.dashboards.opens-new-tab' | translate }}</span></a>
             </div>
           </div>
         } @else {
-          <div class="tb-dashboards-empty-title">{{ 'home.dashboards.none-assigned' | translate }}</div>
+          <div class="tb-home-setup-empty-title">{{ 'home.dashboards.none-assigned' | translate }}</div>
         }
       </div>
     } @else {
@@ -60,7 +60,7 @@
           </tbody>
         </table>
       } @else {
-        <div class="tb-dashboards-empty-note">{{ (tab() === 'last' ? 'home.dashboards.none-viewed' : 'home.dashboards.none-starred') | translate }}</div>
+        <div class="tb-home-empty-note">{{ (tab() === 'last' ? 'home.dashboards.none-viewed' : 'home.dashboards.none-starred') | translate }}</div>
       }
       @if (tab() === 'starred') {
         <div class="tb-dashboards-picker">

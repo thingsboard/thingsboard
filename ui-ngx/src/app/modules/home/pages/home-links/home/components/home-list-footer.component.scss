@@ -30,10 +30,6 @@
 }
 
 .tb-home-list-view-all {
-  &, &:hover, &:focus, &:active {
-    border-bottom: none;
-  }
-
   display: inline-flex;
   align-items: center;
   height: 36px;
@@ -47,6 +43,10 @@
   text-decoration: none;
   color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
   transition: background-color .15s ease;
+
+  &, &:hover, &:focus, &:active {
+    border-bottom: none;
+  }
 
   .mat-icon {
     width: 18px;

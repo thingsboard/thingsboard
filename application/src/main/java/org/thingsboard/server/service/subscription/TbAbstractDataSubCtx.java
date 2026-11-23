@@ -66,6 +66,9 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         return query != null && query.getPageLink().isDynamic();
     }
 
+    protected void onSameEntities(Map<EntityId, EntityData> newDataMap) {
+    }
+
     @Override
     protected synchronized void update() {
         PageData<EntityData> newData = findEntityData();
@@ -78,6 +81,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
         Map<EntityId, EntityData> newDataMap = newData.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity(), (a, b) -> a));
         if (oldDataMap.size() == newDataMap.size() && oldDataMap.keySet().equals(newDataMap.keySet())) {
             log.trace("[{}][{}] No updates to entity data found", sessionRef.getSessionId(), cmdId);
+            onSameEntities(newDataMap);
         } else {
             this.data = newData;
             doUpdate(newDataMap);
