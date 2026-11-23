@@ -1,0 +1,11 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.mat-mdc-menu-panel.tb-alarms-home-menu {
+  &.mat-menu-below {
+    margin-top: 4px;
+  }
+
+  &.mat-menu-above {
+    margin-bottom: 4px;
+  }
+}

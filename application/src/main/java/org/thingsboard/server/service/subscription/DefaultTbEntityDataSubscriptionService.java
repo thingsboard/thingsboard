@@ -422,7 +422,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         List<EntityData> entities = ctx.getEntitiesData();
         ctx.cancelTasks();
         ctx.clearEntitySubscriptions();
-        if (entities.isEmpty()) {
+        if (ctx.isOwnerScoped()) {
+            ctx.fetchAlarms();
+            TbAlarmDataSubCtx finalCtx = ctx;
+            ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
+                    () -> refreshAlarmQuery(finalCtx), dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+            finalCtx.setRefreshTask(task);
+        } else if (entities.isEmpty()) {
             AlarmDataUpdate update = new AlarmDataUpdate(cmd.getCmdId(), new PageData<>(), null, 0, 0);
             ctx.sendWsMsg(update);
         } else {

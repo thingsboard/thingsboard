@@ -71,6 +71,13 @@
   }
 }
 
+.tb-home-card-count {
+  margin-left: 2px;
+  font-weight: 500;
+  color: var(--tb-text-muted, rgba(0, 0, 0, 0.54));
+  font-variant-numeric: tabular-nums;
+}
+
 .tb-home-card-icon {
   flex: none;
   width: 20px;

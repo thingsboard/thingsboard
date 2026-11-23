@@ -27,7 +27,7 @@ const DEFAULT_PRIMARY = '#00695c';
       }
     }
   `,
-  styleUrls: ['./home-page.component.scss', '../components/home-toast.scss'],
+  styleUrls: ['./home-page.component.scss', '../components/home-toast.scss', '../components/home-menu.scss'],
   encapsulation: ViewEncapsulation.None,
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,

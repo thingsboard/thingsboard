@@ -20,6 +20,9 @@ const UNDO_MS = 6000;
           <a class="tb-home-card-title link" [routerLink]="card().link">
             <mat-icon class="tb-home-card-icon">{{ card().icon }}</mat-icon>
             <span>{{ card().name | translate }}</span>
+            @if (count()) {
+              <span class="tb-home-card-count">{{ count() | shortNumber }}</span>
+            }
           </a>
         } @else {
           <span class="tb-home-card-title">
@@ -52,6 +55,8 @@ export class HomeCardComponent {
   hideable = input(false);
 
   expanded = input(false);
+
+  count = input<number | null>(null);
 
   private store = inject(Store<AppState>);
   private translate = inject(TranslateService);

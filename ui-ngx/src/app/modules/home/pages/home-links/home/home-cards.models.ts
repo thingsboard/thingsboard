@@ -7,12 +7,12 @@ export interface HomeCardDefinition {
   icon: string;
   name: string;
   link?: string;
-  height: number;
+  height?: number;
 }
 
 export const HOME_CARDS: Record<HomeCardId, HomeCardDefinition> = {
   [HomeCardId.IOT_HUB]: {id: HomeCardId.IOT_HUB, icon: 'hub', name: 'home.cards.iot-hub', link: '/iot-hub', height: 500},
-  [HomeCardId.ALARMS]: {id: HomeCardId.ALARMS, icon: 'warning', name: 'home.cards.alarms', link: '/alarms', height: 430},
+  [HomeCardId.ALARMS]: {id: HomeCardId.ALARMS, icon: 'warning', name: 'home.cards.alarms', link: '/alarms'},
   [HomeCardId.DASHBOARDS]: {id: HomeCardId.DASHBOARDS, icon: 'dashboard', name: 'home.cards.dashboards', link: '/dashboards', height: 357},
   [HomeCardId.DEVICES]: {id: HomeCardId.DEVICES, icon: 'memory', name: 'home.cards.devices', link: '/entities/devices', height: 430},
   [HomeCardId.ACTIVITY]: {id: HomeCardId.ACTIVITY, icon: 'show_chart', name: 'home.cards.activity', height: 250},
