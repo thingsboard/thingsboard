@@ -98,13 +98,11 @@
               <div class="dlg-hero-carousel">
                 <ngx-hm-carousel
                   [(ngModel)]="carouselIndex"
-                  [data]="carouselImages"
                   [infinite]="true"
                   [autoplay-speed]="3000"
                   [between-delay]="0"
                   [autoplay]="!lightboxOpen"
                   [mouse-enable]="true"
-                  [show-num]="1"
                   class="dlg-carousel">
                   <section ngx-hm-carousel-container class="dlg-carousel-container">
                     @for (imageUrl of carouselImages; track imageUrl) {
@@ -113,9 +111,6 @@
                       </article>
                     }
                   </section>
-                  <ng-template #carouselPrev><span class="dlg-carousel-hidden-nav"></span></ng-template>
-                  <ng-template #carouselNext><span class="dlg-carousel-hidden-nav"></span></ng-template>
-                  <ng-template #carouselDot><span></span></ng-template>
                 </ngx-hm-carousel>
                 <div class="dlg-carousel-controls">
                   <button mat-icon-button class="dlg-carousel-nav" (click)="goToPrevSlide()">

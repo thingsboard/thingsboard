@@ -475,9 +475,6 @@
     flex: 1;
 
     > section { flex: 1; min-height: 0; }
-
-    ul.indicators { display: none !important; }
-    .direction { display: none !important; }
   }
 
   .dlg-carousel-container {
@@ -497,10 +494,6 @@
       }
     }
   }
-}
-
-.dlg-carousel-hidden-nav {
-  display: none;
 }
 
 .dlg-carousel-controls {

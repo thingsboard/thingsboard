@@ -49,6 +49,7 @@ const EDGE_RESISTANCE = 0.2;
 const VELOCITY_WINDOW_MS = 100;
 const MIN_SWIPE_DISTANCE = 10;
 const DEFAULT_AUTOPLAY_SPEED = 5000;
+const FOCUSABLE = 'a[href], button, input, select, textarea, [tabindex], [contenteditable]';
 
 interface DragSample {
   x: number;
@@ -96,8 +97,8 @@ export class NgxHmCarouselDynamicDirective {
     '(click)': 'onClick($event)',
     '(mouseenter)': 'onHover(true)',
     '(mouseleave)': 'onHover(false)',
-    '(focusin)': 'onFocus(true)',
-    '(focusout)': 'onFocus(false)'
+    '(focusin)': 'onFocusIn($event)',
+    '(focusout)': 'onFocusOut()'
   },
   templateUrl: './carousel.component.html',
   styleUrl: './carousel.component.scss'
@@ -105,6 +106,7 @@ export class NgxHmCarouselDynamicDirective {
 export class NgxHmCarouselComponent implements ControlValueAccessor {
 
   private zone = inject(NgZone);
+  private host: HTMLElement = inject(ElementRef).nativeElement;
 
   /** @deprecated No effect. */
   data = input<unknown[]>([]);
@@ -165,6 +167,7 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
   private rendered = false;
   private animation: string = null;
   private hovered = false;
+  private labelledItems = new WeakSet<HTMLElement>();
   private focused = false;
   private autoplayTimer: ReturnType<typeof setTimeout>;
 
@@ -247,14 +250,12 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
 
   /** Handles the prev/next areas and the dots; keyboard users switch slides with the arrow keys. */
   protected onClick(event: Event): void {
+    const root = this.root().nativeElement;
     const target = (event.target as Element).closest('.direction, .indicators > li');
-    if (target?.parentElement?.closest('.carousel') !== this.root().nativeElement) {
-      return;
-    }
-    if (target.matches('li')) {
-      this.goTo(Number(target.getAttribute('data-index')));
-    } else {
+    if (target?.parentElement === root) {
       this.step(target.classList.contains('left') ? -1 : 1);
+    } else if (target?.matches('li') && target.parentElement.parentElement === root) {
+      this.goTo(Number(target.getAttribute('data-index')));
     }
   }
 
@@ -267,11 +268,21 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
 
   protected onHover(hovered: boolean): void {
     this.hovered = hovered;
+    if (!hovered) {
+      // Focus a dialog returns to the carousel must not keep autoplay paused for a mouse user
+      this.focused = false;
+    }
     this.restartAutoplay();
   }
 
-  protected onFocus(focused: boolean): void {
-    this.focused = focused;
+  /** Autoplay pauses while the keyboard focus is inside; a mouse click on a slide does not pause it. */
+  protected onFocusIn(event: FocusEvent): void {
+    this.focused = (event.target as Element).matches(':focus-visible');
+    this.restartAutoplay();
+  }
+
+  protected onFocusOut(): void {
+    this.focused = false;
     this.restartAutoplay();
   }
 
@@ -281,7 +292,7 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
   }
 
   private get container(): HTMLElement {
-    return this.root().nativeElement.firstElementChild as HTMLElement;
+    return this.root().nativeElement.querySelector(':scope > [ngx-hm-carousel-container]');
   }
 
   private layout(): void {
@@ -297,12 +308,17 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
     items.forEach((item, i) => {
       item.style.width = `${100 / count}%`;
       item.style.flexShrink = '0';
-      // An element with a role of its own (article, li…) may not take another one
-      if (item.tagName === 'DIV' || item.tagName === 'SPAN') {
+      // Keeps what the slide author set; an element with a role of its own (article, li…) may not take another one
+      if (!item.hasAttribute('role') && (item.tagName === 'DIV' || item.tagName === 'SPAN')) {
         item.setAttribute('role', 'group');
       }
-      item.setAttribute('aria-roledescription', 'slide');
-      item.setAttribute('aria-label', `${i + 1} / ${count}`);
+      if (!item.hasAttribute('aria-roledescription')) {
+        item.setAttribute('aria-roledescription', 'slide');
+      }
+      if (!item.hasAttribute('aria-label') || this.labelledItems.has(item)) {
+        item.setAttribute('aria-label', `${i + 1} / ${count}`);
+        this.labelledItems.add(item);
+      }
       // Off-screen slides must not take the focus
       item.inert = i <= firstVisible - 1 || i >= firstVisible + this.shown();
     });
@@ -353,6 +369,13 @@ export class NgxHmCarouselComponent implements ControlValueAccessor {
       root.addEventListener('pointercancel', event => this.onPointerUp(event, false));
       // Native image drag would take the gesture over
       root.addEventListener('dragstart', event => event.preventDefault());
+      // The carousel is focusable for the keyboard only: focus taken by a click would come back
+      // with a focus ring when a dialog opened from a slide (the screenshot viewer) closes
+      root.addEventListener('mousedown', event => {
+        if ((event.target as Element).closest(FOCUSABLE) === this.host) {
+          event.preventDefault();
+        }
+      });
       // The click that ends a drag must not reach the slide
       root.addEventListener('click', event => {
         if (this.suppressClick) {
