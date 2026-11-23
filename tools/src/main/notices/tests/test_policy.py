@@ -268,10 +268,17 @@ class PolicyTests(unittest.TestCase):
             resolve_all({pkg.purl: pkg}, {pkg.purl: None}, {}, _policy(), Curations())
         self.assertIn('cannot be found', str(ctx.exception))
 
-        # Package with no declared license and empty scan fails closed as unlicensed
+        # Package with no declared license and empty scan fails closed as unlicensed (effective_node is None)
         empty_pkg = _pkg(declared=())
         with self.assertRaises(SystemExit) as ctx:
             resolve_all({empty_pkg.purl: empty_pkg}, {empty_pkg.purl: {'type': 'metadata_only'}}, {}, _policy(), Curations())
+        self.assertIn('no license was found', str(ctx.exception))
+
+        # Package whose only detected license is NOASSERTION resolves to empty set in _evaluate_license_node
+        noassert_src = {empty_pkg.purl: {'type': 'artifact', 'url': 'https://repo1.maven.org/maven2/com/example/lib/1.0.0/lib-1.0.0-sources.jar', 'sha1': 'a' * 40}}
+        noassert_scan = {empty_pkg.purl: {'findings': [{'path': 'A.java', 'licenses': ['NOASSERTION'], 'copyrights': []}]}}
+        with self.assertRaises(SystemExit) as ctx:
+            resolve_all({empty_pkg.purl: empty_pkg}, noassert_src, noassert_scan, _policy(), Curations())
         self.assertIn('no license was found', str(ctx.exception))
 
         # exclude_paths: npm tarball excludes test/ directory; Maven -sources.jar does NOT exclude Java test package
