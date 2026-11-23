@@ -187,6 +187,19 @@
       </div>
     </section>
   }
+  @if (variant() === 'page' && !chatId() && !messages().length && !loading()) {
+    <button type="button" class="ai-sol-card" (click)="newSolution.emit()">
+      <tb-ai-mark class="ai-sol-card-mark" size="44" icon="layers"></tb-ai-mark>
+      <span class="ai-sol-card-text">
+        <b>{{ 'ai-assistant.create-solution' | translate }}</b>
+        <small>{{ 'ai-assistant.create-solution-hint' | translate }}</small>
+      </span>
+      <span class="ai-sol-card-go">
+        <span class="ai-sol-card-go-t">{{ 'ai-assistant.create-solution-start' | translate }}</span>
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">arrow_forward</mat-icon>
+      </span>
+    </button>
+  }
 </div>
 </div>
 @if (shownFile(); as file) {

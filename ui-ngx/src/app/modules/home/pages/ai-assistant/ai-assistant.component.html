@@ -122,7 +122,7 @@
 <tb-solution-chat class="ai-canvas ai-solution" (loaded)="onSolutionLoaded($event)" (click)="onChatClick($event)"></tb-solution-chat>
 } @else {
 <tb-ai-chat class="ai-canvas" variant="page" [toastTarget]="toastTarget" [(chatId)]="chatId"
-            (click)="onChatClick($event)">
+            (click)="onChatClick($event)" (newSolution)="newSolution()">
   @if (!railOpen()) {
     <button aiChatLead type="button" class="ai-ib ai-bar-chats" (click)="toggleRail()"
             [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.open-chats' | translate">

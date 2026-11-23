@@ -130,6 +130,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   splitToggle = output<void>();
 
+  newSolution = output<void>();
+
   recentChats = computed(() => this.chats.chats()
     .filter(chat => chat.id !== this.chatId())
     .sort((a, b) => b.createdTime - a.createdTime)

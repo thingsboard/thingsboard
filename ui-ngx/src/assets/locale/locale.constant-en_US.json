@@ -2109,6 +2109,9 @@
         "run-failed": "The run stopped with an error.",
         "new-count": "{{ count }} new",
         "start-a-task": "Start a task",
+        "create-solution": "Create a solution",
+        "create-solution-hint": "Devices, dashboards and alarms, set up as one",
+        "create-solution-start": "Start",
         "code": {
             "script": "Script",
             "lines": "{ count, plural, =1 {1 line} other {# lines} }",

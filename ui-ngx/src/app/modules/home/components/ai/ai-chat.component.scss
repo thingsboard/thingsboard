@@ -503,3 +503,85 @@ tb-ai-chat-title:has(.ai-chat-status) + .ai-chat-actions {
     }
   }
 }
+
+.ai-sol-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  width: 100%;
+  max-width: 680px;
+  margin-top: 24px;
+  padding: 14px 16px 14px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tb-surface);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.03), 0 1px 2px rgba(16, 24, 40, 0.06), 0 2px 10px rgba(16, 24, 40, 0.06);
+  transition: box-shadow .15s ease;
+
+  &:hover {
+    box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.05), 0 2px 4px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.10);
+
+    .ai-sol-card-go .mat-icon {
+      transform: translateX(2px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 2px var(--ai-focus);
+  }
+}
+
+.ai-sol-card-mark {
+  --ai-mark-fill: radial-gradient(80% 80% at 16% 10%, color-mix(in srgb, var(--tb-surface) 16%, transparent), transparent 62%),
+    linear-gradient(135deg in oklab,
+      color-mix(in oklab, var(--ai-light-teal) 34%, var(--tb-ink)) 0%,
+      color-mix(in oklab, var(--ai-light-aqua) 32%, var(--tb-ink)) 36%,
+      color-mix(in oklab, var(--ai-light-lilac) 36%, var(--tb-ink)) 68%,
+      color-mix(in oklab, var(--ai-light-peach) 34%, var(--tb-ink)) 100%);
+  --ai-mark-edge: 0 4px 12px color-mix(in oklab, var(--tb-ink) 18%, transparent);
+  --ai-mark-ink: var(--ai-on-action);
+  --ai-mark-ink-fill: linear-gradient(var(--ai-on-action), var(--ai-on-action));
+}
+
+.ai-sol-card-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+
+  b {
+    font: 500 var(--chat-text)/var(--chat-text-lh) var(--tb-font);
+    color: var(--tb-ink);
+  }
+
+  small {
+    font: 400 var(--chat-line)/var(--chat-line-lh) var(--tb-font);
+    color: var(--tb-ink-54);
+  }
+}
+
+.ai-sol-card-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  font: 500 var(--chat-line)/var(--chat-line-lh) var(--tb-font);
+  color: var(--ai-link);
+
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    transition: transform .12s cubic-bezier(.2, 0, 0, 1);
+  }
+}
+
+@media (max-width: 599px) {
+  .ai-sol-card-go-t {
+    display: none;
+  }
+}
