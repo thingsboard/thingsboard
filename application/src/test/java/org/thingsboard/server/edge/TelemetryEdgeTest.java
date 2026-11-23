@@ -304,4 +304,44 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
                 });
     }
 
+    @Test
+    public void testSendTelemetryForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        loginDifferentTenant();
+        String attributesUrl = "/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/attributes/";
+        doPost(attributesUrl + DataConstants.SHARED_SCOPE, JacksonUtil.toJsonNode("{\"key1\":\"value1\"}"));
+        doPost(attributesUrl + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"key2\":\"value2\"}"));
+        loginTenantAdmin();
+
+        TransportProtos.PostAttributeMsg attributesMsg = TransportProtos.PostAttributeMsg.newBuilder()
+                .addKv(TransportProtos.KeyValueProto.newBuilder()
+                        .setKey("key1")
+                        .setType(TransportProtos.KeyValueType.STRING_V)
+                        .setStringV("updatedValue1").build())
+                .build();
+        EntityDataProto entityData = EntityDataProto.newBuilder()
+                .setEntityIdMSB(device.getUuidId().getMostSignificantBits())
+                .setEntityIdLSB(device.getUuidId().getLeastSignificantBits())
+                .setEntityType(device.getId().getEntityType().name())
+                .setAttributesUpdatedMsg(attributesMsg)
+                .setPostAttributeScope(DataConstants.SHARED_SCOPE)
+                .setAttributeDeleteMsg(AttributeDeleteMsg.newBuilder()
+                        .setScope(DataConstants.SERVER_SCOPE)
+                        .addAttributeNames("key2").build())
+                .build();
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityData(entityData));
+
+        loginDifferentTenant();
+        String valuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/values/attributes/";
+        Awaitility.await()
+                .pollDelay(3, TimeUnit.SECONDS)
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode sharedAttributes = doGetAsync(valuesUrl + DataConstants.SHARED_SCOPE, JsonNode.class);
+                    Assert.assertEquals("value1", sharedAttributes.get(0).get("value").asText());
+                    JsonNode serverAttributes = doGetAsync(valuesUrl + DataConstants.SERVER_SCOPE, JsonNode.class);
+                    Assert.assertTrue(serverAttributes.findValuesAsText("key").contains("key2"));
+                });
+    }
+
 }

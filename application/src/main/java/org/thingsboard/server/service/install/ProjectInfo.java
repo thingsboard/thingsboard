@@ -16,7 +16,7 @@ public class ProjectInfo {
 
     public String getProjectVersion() {
         return buildProperties.orElseThrow(() -> new IllegalStateException("Build properties are missing. Please rebuild the project with maven"))
-                .getVersion().replaceAll("[^\\d.]", "");
+                .getVersion().replaceAll("[^\\d.].*$", "");
     }
 
     public String getProductType() {

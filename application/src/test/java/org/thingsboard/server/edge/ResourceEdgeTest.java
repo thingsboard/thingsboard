@@ -11,11 +11,15 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -178,6 +182,19 @@ public class ResourceEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(tb);
         Assert.assertEquals(resourceTitle, tb.getName());
         Assert.assertEquals(TEST_DATA, tb.getEncodedData());
+    }
+
+    @Test
+    public void testSendResourceWithSystemTenantIdToCloud() throws Exception {
+        TbResource resource = createTbResource();
+        resource.setId(new TbResourceId(Uuids.timeBased()));
+        resource.setTenantId(TenantId.SYS_TENANT_ID);
+        resource.setResourceKey("system_" + FILE_NAME);
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addResourceUpdateMsg(
+                EdgeMsgConstructorUtils.constructResourceUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, resource)));
+
+        TbResourceInfo resourceInfo = doGet("/api/resource/info/" + resource.getUuidId(), TbResourceInfo.class);
+        Assert.assertEquals(tenantId, resourceInfo.getTenantId());
     }
 
 }

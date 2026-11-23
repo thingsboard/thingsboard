@@ -602,7 +602,10 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static UserCredentialsUpdateMsg constructUserCredentialsUpdatedMsg(UserCredentials userCredentials) {
-        return UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(userCredentials)).build();
+        // activation and reset tokens allow taking over the account and are not used by edge
+        ObjectNode userCredentialsNode = (ObjectNode) JacksonUtil.valueToTree(userCredentials);
+        userCredentialsNode.remove(List.of("activateToken", "activateTokenExpTime", "resetToken", "resetTokenExpTime"));
+        return UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(userCredentialsNode)).build();
     }
 
     public static WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets) {

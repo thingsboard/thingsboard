@@ -13,6 +13,8 @@ import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class TenantProfileEdgeTest extends AbstractEdgeTest {
@@ -51,6 +54,24 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals("Tenant Profile Edge Test", tenantProfileMsg.getName());
 
         doPost("/api/tenantProfile", originalTenantProfile, TenantProfile.class);
+        loginTenantAdmin();
+    }
+
+    @Test
+    public void testTenantProfileOfDifferentTenantNotSentToEdge() throws Exception {
+        loginSysAdmin();
+        TenantProfile otherTenantProfile = new TenantProfile();
+        otherTenantProfile.setName("Other Tenant Profile Edge Test");
+        otherTenantProfile.setProfileData(new TenantProfileData());
+        otherTenantProfile.getProfileData().setConfiguration(new DefaultTenantProfileConfiguration());
+        otherTenantProfile = doPost("/api/tenantProfile", otherTenantProfile, TenantProfile.class);
+
+        otherTenantProfile.setDescription("Updated other tenant profile");
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/tenantProfile", otherTenantProfile, TenantProfile.class);
+        Assert.assertFalse(edgeImitator.waitForMessages(2));
+
+        doDelete("/api/tenantProfile/" + otherTenantProfile.getUuidId()).andExpect(status().isOk());
         loginTenantAdmin();
     }
 

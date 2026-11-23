@@ -3,6 +3,9 @@
 import { FilterParamInfo, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { parseHttpErrorMessage } from '@core/utils';
 
 export const IOT_HUB_FILTER_GROUPING_THRESHOLD = 11;
 export const IOT_HUB_FILTER_POPULAR_LIMIT = 10;
@@ -122,4 +125,9 @@ export function resolveIotHubItemImageUrl(item: MpItemVersionView, api: IotHubAp
     return api.resolveResourceUrl(`/api/resources/${resource.id}`);
   }
   return null;
+}
+
+export function iotHubErrorMessage(err: any, translate: TranslateService, fallback?: string): string {
+  const message = err instanceof HttpErrorResponse ? parseHttpErrorMessage(err, translate).message : err?.message;
+  return message || fallback || translate.instant('error.unknown-error');
 }

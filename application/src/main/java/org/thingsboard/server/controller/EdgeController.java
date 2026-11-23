@@ -148,9 +148,7 @@ public class EdgeController extends BaseController {
             }
         }
 
-        Operation operation = created ? Operation.CREATE : Operation.WRITE;
-
-        accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edge.getId(), edge);
+        checkEntity(edge.getId(), edge, Resource.EDGE);
 
         return tbEdgeService.save(edge, edgeTemplateRootRuleChain, getCurrentUser());
     }
