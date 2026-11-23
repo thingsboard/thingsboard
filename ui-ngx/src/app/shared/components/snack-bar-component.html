@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="flex flex-row items-center justify-start"
@@ -15,7 +16,7 @@
      [class.info-toast]="notification.type === 'info'">
   @if (!notification.modern) {
     <div class="toast-text" [innerHTML]="notification.message | safe: 'html'"></div>
-    <button #actionButton type="button" mat-button (click)="action($event)">{{ 'action.close' | translate }}</button>
+    <button #actionButton type="button" mat-button (click)="action($event)">{{ notification.actionLabel || ('action.close' | translate) }}</button>
   } @else {
     <div class="tb-modern-toast-panel"
          [class.error-toast]="notification.type === 'error'"
@@ -23,7 +24,11 @@
          [class.success-toast]="notification.type === 'success'"
          [class.info-toast]="notification.type === 'info'">
       <div class="toast-text" [innerHTML]="notification.message | safe: 'html'"></div>
-      <button #actionButton class="tb-mat-20" mat-icon-button (click)="action($event)"><mat-icon>close</mat-icon></button>
+      @if (notification.actionLabel) {
+        <button #actionButton type="button" mat-button (click)="action($event)">{{ notification.actionLabel }}</button>
+      } @else {
+        <button #actionButton class="tb-mat-20" mat-icon-button (click)="action($event)"><mat-icon>close</mat-icon></button>
+      }
     </div>
   }
 </div>

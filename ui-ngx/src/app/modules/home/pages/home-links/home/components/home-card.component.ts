@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastNotificationService } from '@core/services/toast-notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateHomeCards } from '@core/auth/auth.actions';
@@ -41,7 +41,7 @@ const UNDO_MS = 6000;
       <ng-content></ng-content>
     </section>
   `,
-  styleUrls: ['./home-card.component.scss'],
+  styleUrls: ['./home-card.component.scss', './home-toast.scss'],
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -54,17 +54,22 @@ export class HomeCardComponent {
   expanded = input(false);
 
   private store = inject(Store<AppState>);
-  private snackBar = inject(MatSnackBar);
   private translate = inject(TranslateService);
+  private toast = inject(ToastNotificationService);
 
   hide(): void {
     const id = this.card().id;
     const name = this.translate.instant(this.card().name);
     this.store.dispatch(new ActionPreferencesUpdateHomeCards({[id]: false}));
-    this.snackBar.open(this.translate.instant('home.customize.hidden', {name}), this.translate.instant('home.customize.undo'), {
+    this.toast.dispatchNotification({
+      message: this.translate.instant('home.customize.hidden', {name}),
+      type: 'info',
       duration: UNDO_MS,
-      horizontalPosition: 'end',
-      verticalPosition: 'bottom'
-    }).onAction().subscribe(() => this.store.dispatch(new ActionPreferencesUpdateHomeCards({[id]: true})));
+      horizontalPosition: 'right',
+      verticalPosition: 'bottom',
+      panelClass: 'tb-home-toast',
+      actionLabel: this.translate.instant('home.customize.undo'),
+      onAction: () => this.store.dispatch(new ActionPreferencesUpdateHomeCards({[id]: true}))
+    });
   }
 }
