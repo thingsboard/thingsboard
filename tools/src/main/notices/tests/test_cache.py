@@ -4,7 +4,9 @@
 #
 
 import contextlib
+import gzip
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
 import os
 import tempfile
 import threading
@@ -12,6 +14,13 @@ import unittest
 from unittest import mock
 
 from notices.cache import ScanCache, scan_cache_key
+
+
+def _make_scan_record(idx):
+    source = {'type': 'artifact', 'url': f'https://example.org/pkg-{idx}.tgz', 'sha1': f'{idx:040x}'}
+    key = scan_cache_key('32.5.0', source)
+    record = {'schema': 1, 'scanner': 'ScanCode 32.5.0', 'source': source, 'findings': [], 'notices': []}
+    return key, record
 
 
 class _QuietHandler(BaseHTTPRequestHandler):
@@ -88,10 +97,14 @@ class CacheTests(unittest.TestCase):
                     store[self.path] = body
                 self._respond(201)
 
+        key1, rec1 = _make_scan_record(1)
+        key2, rec2 = _make_scan_record(2)
+        key3, _ = _make_scan_record(3)
+
         with _http_server(Handler, '/ort/v2') as url, tempfile.TemporaryDirectory() as d1, tempfile.TemporaryDirectory() as d2:
             writer = ScanCache(cache_dir=d1, remote_url=url, concurrency=4)
-            writer.write_local('key1', {'schema': 1, 'findings': [], 'notices': []})
-            writer.write_local('key2', {'schema': 1, 'findings': [], 'notices': []})
+            writer.write_local(key1, rec1)
+            writer.write_local(key2, rec2)
             uploaded, skipped = writer.upload_local()
             self.assertEqual((uploaded, skipped), (2, 0))
             # Second upload skips already-present keys
@@ -100,28 +113,55 @@ class CacheTests(unittest.TestCase):
 
             # Cold reader fetches both (recovering from injected 503) and reports missing key3
             reader = ScanCache(cache_dir=d2, remote_url=url, concurrency=4)
-            fetched, missing = reader.fetch_missing(['key1', 'key2', 'key3'])
+            fetched, missing = reader.fetch_missing([key1, key2, key3])
             self.assertEqual(len(fetched), 2)
-            self.assertEqual(fetched['key1'], {'schema': 1, 'findings': [], 'notices': []})
-            self.assertEqual(missing, ['key3'])
-            self.assertEqual(reader.read_local('key1'), {'schema': 1, 'findings': [], 'notices': []})
+            self.assertEqual(fetched[key1], rec1)
+            self.assertEqual(missing, [key3])
+            self.assertEqual(reader.read_local(key1), rec1)
 
-            # Records missing required "notices" list fail closed on read
-            writer.write_local('bad', {'schema': 1, 'findings': []})
+            # Records missing required "notices" list or with mismatched key fail closed on read
+            bad_key, bad_rec = _make_scan_record(99)
+            writer.write_local(bad_key, {'schema': 1, 'scanner': 'ScanCode 32.5.0', 'source': bad_rec['source'], 'findings': []})
             with self.assertRaisesRegex(SystemExit, 'malformed scan record'):
-                writer.read_local('bad')
+                writer.read_local(bad_key)
+
+            writer.write_local(bad_key, rec1)
+            with self.assertRaisesRegex(SystemExit, 'scan cache key mismatch'):
+                writer.read_local(bad_key)
+
+            # Upload rejects mismatched records without PUTting them
+            with self.assertRaisesRegex(SystemExit, 'refusing to upload invalid scan cache file'):
+                writer.upload_local()
+            self.assertNotIn(f'/ort/v2/scans/{bad_key}.json.gz', store)
+            os.remove(writer.scan_path(bad_key))
+
+            # Upload rejects filenames that are not 32 lowercase hex chars
+            writer.write_local('not-a-hex-key', rec1)
+            with self.assertRaisesRegex(SystemExit, 'unexpected scan cache filename'):
+                writer.upload_local()
+            os.remove(writer.scan_path('not-a-hex-key'))
+
+            # Fetch rejects a poisoned remote record whose source does not match the requested key
+            store[f'/ort/v2/scans/{key3}.json.gz'] = gzip.compress(json.dumps(rec1).encode('utf-8'))
+            with self.assertRaisesRegex(SystemExit, 'scan cache key mismatch'):
+                reader.fetch_missing([key3])
+            self.assertFalse(reader.has_local(key3))
 
     def test_fetch_and_upload_fail_fast_on_probe_and_mid_batch_error(self):
         requested_paths = []
         lock = threading.Lock()
         mode = {'behavior': 'fail_all'}
 
+        items = sorted(_make_scan_record(i) for i in range(25))
+        keys = [k for k, _ in items]
+        first_key = keys[0]
+
         class Handler(_QuietHandler):
             def _handle(self, probe_status):
                 with lock:
                     requested_paths.append(self.path)
                     behavior = mode['behavior']
-                if behavior == 'fail_after_first' and self.path.endswith('/k0.json.gz'):
+                if behavior == 'fail_after_first' and self.path.endswith(f'/{first_key}.json.gz'):
                     self._respond(probe_status)
                 else:
                     self._respond(403)
@@ -132,7 +172,6 @@ class CacheTests(unittest.TestCase):
             def do_HEAD(self):
                 self._handle(200)
 
-        keys = [f'k{i}' for i in range(25)]
         with _http_server(Handler, '/ort') as url, tempfile.TemporaryDirectory() as d:
             cache = ScanCache(cache_dir=d, remote_url=url, concurrency=4)
 
@@ -141,7 +180,7 @@ class CacheTests(unittest.TestCase):
             with self.assertRaises(SystemExit) as ctx:
                 cache.fetch_missing(keys)
             self.assertIn('HTTP 403', str(ctx.exception))
-            self.assertEqual(requested_paths, ['/ort/scans/k0.json.gz'])
+            self.assertEqual(requested_paths, [f'/ort/scans/{first_key}.json.gz'])
 
             # Mid-batch failure -> worker aborts synchronously, bounding total requests to <= 1 + concurrency
             mode['behavior'] = 'fail_after_first'
@@ -152,14 +191,14 @@ class CacheTests(unittest.TestCase):
             self.assertLessEqual(len(requested_paths), 1 + cache.concurrency)
 
             # Upload probe fails -> remaining keys are never requested
-            for key in keys[:15]:
-                cache.write_local(key, {'schema': 1, 'findings': [], 'notices': []})
+            for key, rec in items[:15]:
+                cache.write_local(key, rec)
             mode['behavior'] = 'fail_all'
             requested_paths.clear()
             with self.assertRaises(SystemExit) as ctx:
                 cache.upload_local()
             self.assertIn('HTTP 403', str(ctx.exception))
-            self.assertEqual(requested_paths, ['/ort/scans/k0.json.gz'])
+            self.assertEqual(requested_paths, [f'/ort/scans/{first_key}.json.gz'])
 
             # Upload mid-batch failure -> bounded to <= 1 + concurrency requests
             mode['behavior'] = 'fail_after_first'

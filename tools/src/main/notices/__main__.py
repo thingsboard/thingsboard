@@ -26,4 +26,5 @@ if __name__ == '__main__':
     except SystemExit as err:
         if isinstance(err.code, str) and err.code and os.environ.get('TEAMCITY_VERSION'):
             emit_teamcity_problem(err.code)
+            sys.exit(err.code.replace('##teamcity[', '# #teamcity['))
         raise

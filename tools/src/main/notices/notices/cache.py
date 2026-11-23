@@ -25,6 +25,7 @@ import hashlib
 import http.client
 import json
 import os
+import re
 import ssl
 import threading
 import urllib.parse
@@ -36,6 +37,7 @@ DEFAULT_CACHE_URL = 'https://repo.thingsboard.io/artifactory/ort'
 REQUEST_TIMEOUT = 15
 MAX_RETRIES = 3
 CONCURRENCY = 20
+CACHE_KEY_RE = re.compile(r'^[0-9a-f]{32}$')
 
 
 class _AbortedError(Exception):
@@ -52,13 +54,38 @@ def scan_cache_key(scancode_version, source):
     return hashlib.sha256(raw).hexdigest()[:32]
 
 
-def _validate_scan_record(record, origin):
+def _validate_scan_record(record, origin, expected_key=None):
     if (
         not isinstance(record, dict)
         or not isinstance(record.get('findings'), list)
         or not isinstance(record.get('notices'), list)
     ):
         raise ValueError(f'malformed scan record in {origin} (expected JSON object with list "findings" and "notices")')
+    if expected_key is not None:
+        if not CACHE_KEY_RE.fullmatch(expected_key):
+            raise ValueError(f'invalid scan cache key {expected_key!r} for {origin} (expected 32 lowercase hex chars)')
+        scanner = record.get('scanner')
+        parts = scanner.split() if isinstance(scanner, str) else []
+        source = record.get('source')
+        if len(parts) != 2 or parts[0] != 'ScanCode' or not isinstance(source, dict):
+            raise ValueError(f'malformed scan record metadata in {origin} (missing scanner or source)')
+        src_type = source.get('type')
+        if src_type == 'artifact':
+            valid_src = isinstance(source.get('url'), str) and isinstance(source.get('sha1'), str)
+        elif src_type == 'vcs':
+            valid_src = (
+                isinstance(source.get('vcs_type'), str)
+                and isinstance(source.get('url'), str)
+                and isinstance(source.get('revision'), str)
+                and isinstance(source.get('path', ''), str)
+            )
+        else:
+            valid_src = False
+        if not valid_src:
+            raise ValueError(f'malformed scan record source descriptor in {origin}')
+        actual_key = scan_cache_key(parts[1], source)
+        if actual_key != expected_key:
+            raise ValueError(f'scan cache key mismatch in {origin}: expected {expected_key}, got {actual_key}')
     return record
 
 
@@ -97,7 +124,7 @@ class ScanCache:
         try:
             with gzip.open(path, 'rt', encoding='utf-8') as file:
                 record = json.load(file)
-            return _validate_scan_record(record, path)
+            return _validate_scan_record(record, path, expected_key=key)
         except (OSError, gzip.BadGzipFile, json.JSONDecodeError, ValueError) as err:
             raise stop(f'corrupt local scan cache file {path}: {err}. Remove it and re-run.')
 
@@ -139,8 +166,10 @@ class ScanCache:
             rel_path = f'/scans/{key}.json.gz'
             status, body = self._request_with_retry('GET', rel_path, headers=auth_headers, abort=abort)
             if status == 200:
-                # Validate gzip/JSON schema before committing locally so a corrupt download never poisons disk.
-                record = _validate_scan_record(json.loads(gzip.decompress(body)), f'{self.remote_url}{rel_path}')
+                # Validate gzip/JSON schema and key binding before committing locally so a corrupt/forged download never poisons disk.
+                record = _validate_scan_record(
+                    json.loads(gzip.decompress(body)), f'{self.remote_url}{rel_path}', expected_key=key
+                )
                 write_atomically(self.scan_path(key), body)
                 return ('hit', key, record)
             if status == 404:
@@ -180,6 +209,12 @@ class ScanCache:
         keys = sorted(name.removesuffix('.json.gz') for name in os.listdir(scans_dir) if name.endswith('.json.gz'))
         if not keys:
             return 0, 0
+        invalid = [key for key in keys if not CACHE_KEY_RE.fullmatch(key)]
+        if invalid:
+            raise stop(
+                f'unexpected scan cache filename(s) in {scans_dir}: '
+                f'{", ".join(f"{k}.json.gz" for k in invalid[:5])} (expected 32 lowercase hex chars).'
+            )
 
         auth_headers = _authorization_headers()
         uploaded = skipped = 0
@@ -191,8 +226,13 @@ class ScanCache:
                 return 'skipped'
             if status not in (404, 405):
                 raise stop(f'HEAD {self.remote_url}{rel_path} failed: HTTP {status}')
-            with open(self.scan_path(key), 'rb') as file:
+            local_path = self.scan_path(key)
+            with open(local_path, 'rb') as file:
                 body = file.read()
+            try:
+                _validate_scan_record(json.loads(gzip.decompress(body)), local_path, expected_key=key)
+            except (OSError, gzip.BadGzipFile, json.JSONDecodeError, ValueError) as err:
+                raise stop(f'refusing to upload invalid scan cache file {local_path}: {err}')
             headers = {
                 'Content-Type': 'application/gzip',
                 'Content-Length': str(len(body)),

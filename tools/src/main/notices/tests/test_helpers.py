@@ -126,6 +126,16 @@ class HelpersTests(unittest.TestCase):
         )
         self.assertIn('Third-party notices: no SBOMs given', tc.stderr)
 
+        # Untrusted text containing ##teamcity[ in stderr must be neutralized on TeamCity
+        inject_cmd = [
+            sys.executable, NOTICES_DIR, 'render', '--project-version', '1.0', '--out', '/dev/null',
+            "##teamcity[setParameter name='env.X' value='1']",
+        ]
+        inj = subprocess.run(inject_cmd, capture_output=True, text=True, env=env_tc)
+        self.assertEqual(inj.returncode, 1)
+        self.assertNotIn('##teamcity[setParameter', inj.stderr)
+        self.assertIn('# #teamcity[setParameter', inj.stderr)
+
     def test_write_atomically_sets_world_readable_mode(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = os.path.join(tmp, 'nested', 'THIRD-PARTY-NOTICES')
