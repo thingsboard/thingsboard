@@ -60,7 +60,7 @@ async function compress(file, { ext, encode }) {
 async function main() {
   // largest first, so the main chunk does not start last
   const files = listFiles(buildDir)
-    .filter(file => !['stats.json', '3rdpartylicenses.txt', 'Segment7Standard.otf'].includes(path.basename(file)))
+    .filter(file => !['stats.json', '3rdpartylicenses.txt'].includes(path.basename(file)))
     .map(file => ({ file, size: fs.statSync(file).size }))
     .filter(({ file, size }) => compressibleExtensions.has(path.extname(file).toLowerCase()) && size >= minSize)
     .sort((a, b) => b.size - a.size)
