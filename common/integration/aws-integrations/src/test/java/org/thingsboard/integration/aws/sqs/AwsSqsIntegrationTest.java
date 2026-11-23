@@ -9,6 +9,9 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -30,6 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -112,6 +116,31 @@ class AwsSqsIntegrationTest {
         JsonNode debugMessage = JacksonUtil.toJsonNode(event.getMessage());
         assertThat(debugMessage.get("messageId").asText()).isEqualTo("id-1");
         assertThat(debugMessage.get("payload").asText()).isEqualTo("hello");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("validJsonBodies")
+    void validJsonBodyIsParsedAsIs(String name, String body, String expectedJson) {
+        SqsIntegrationMsg msg = ReflectionTestUtils.invokeMethod(integration, "toSqsIntegrationMsg", message("id-1", "rh-1", body));
+
+        assertThat(msg.getJson()).isEqualTo(JacksonUtil.toJsonNode(expectedJson));
+    }
+
+    private static Stream<Arguments> validJsonBodies() {
+        String plain = "{\"deviceName\":\"Plain\",\"temperature\":20}";
+        String quote = "{\"deviceName\":\"Quote test\",\"note\":\"say \\\"hi\\\"\",\"temperature\":20}";
+        String newline = "{\"deviceName\":\"Newline test\",\"note\":\"line1\\nline2\",\"temperature\":20}";
+        String backslash = "{\"deviceName\":\"Backslash test\",\"path\":\"C:\\\\data\",\"temperature\":20}";
+        String unicode = "{\"deviceName\":\"Unicode test\",\"note\":\"\\u00b0C\",\"temperature\":20}";
+        String encodedString = "\"{\\\"deviceName\\\":\\\"Escaped string\\\",\\\"temperature\\\":20}\"";
+        return Stream.of(
+                Arguments.of("plain object", plain, plain),
+                Arguments.of("escaped quote in a string value", quote, quote),
+                Arguments.of("escaped line break in a string value", newline, newline),
+                Arguments.of("escaped backslash in a string value", backslash, backslash),
+                Arguments.of("unicode escape in a string value", unicode, unicode),
+                Arguments.of("JSON-encoded string", encodedString, "{\"deviceName\":\"Escaped string\",\"temperature\":20}")
+        );
     }
 
     private List<IntegrationDebugEvent> uplinkEvents() {

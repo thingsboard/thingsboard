@@ -11,7 +11,6 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.AbstractIntegration;
@@ -20,7 +19,6 @@ import org.thingsboard.integration.api.TbIntegrationInitParams;
 import org.thingsboard.integration.api.data.ContentType;
 import org.thingsboard.integration.api.data.UplinkData;
 import org.thingsboard.integration.api.data.UplinkMetaData;
-import org.thingsboard.server.common.data.StringUtils;
 
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -106,10 +104,10 @@ public class AwsSqsIntegration extends AbstractIntegration<SqsIntegrationMsg> {
     }
 
     private SqsIntegrationMsg toSqsIntegrationMsg(Message message) {
-        String unescaped = StringEscapeUtils.unescapeJson(message.getBody());
-        unescaped = StringUtils.removeStart(unescaped, "\"");
-        unescaped = StringUtils.removeEnd(unescaped, "\"");
-        JsonNode node = JacksonUtil.toJsonNode(unescaped);
+        JsonNode node = JacksonUtil.toJsonNode(message.getBody());
+        if (node.isTextual()) {
+            node = JacksonUtil.toJsonNode(node.asText());
+        }
         return new SqsIntegrationMsg(node, metadataTemplate.getKvMap());
     }
 
