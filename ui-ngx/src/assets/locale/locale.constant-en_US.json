@@ -2610,12 +2610,12 @@
         "panel-title": "Ask about this page",
         "panel-line": "What is on it, what to change, or something new.",
         "intro": {
-            "lead-dashboard": "The chat opens beside the dashboard, already in context.",
-            "lead-dashboard-example": "The chat opens beside the dashboard, already in context: “{{example}}” needs no names.",
-            "lead-list": "The chat opens beside the list, already in context.",
-            "lead-list-example": "The chat opens beside the list, already in context: “{{example}}” needs no names.",
-            "lead-page": "The chat opens beside the page, already in context.",
-            "lead-page-example": "The chat opens beside the page, already in context: “{{example}}” needs no names.",
+            "lead-dashboard": "The chat opens beside the dashboard and sees what’s on it.",
+            "lead-dashboard-example": "The chat opens beside the dashboard and sees what’s on it. Try “{{example}}”.",
+            "lead-list": "The chat opens beside the list and sees what’s on it.",
+            "lead-list-example": "The chat opens beside the list and sees what’s on it. Try “{{example}}”.",
+            "lead-page": "The chat opens beside the page and sees what’s on it.",
+            "lead-page-example": "The chat opens beside the page and sees what’s on it. Try “{{example}}”.",
             "keys": "Press <kbd>/</kbd> on any page to open the chat.",
             "got-it": "Got it",
             "open-chat": "Open the chat"
@@ -13291,8 +13291,8 @@
                 "pill-new": "Meet the AI Assistant",
                 "news": "A working setup in minutes.",
                 "cover-title": "Just ask.",
-                "cover-lead": "The AI Assistant sets up devices, builds dashboards and writes alarm rules. Ask about your data and the answer links to the records.",
-                "note": "The AI solution creator is now Solutions, inside the AI Assistant.",
+                "cover-lead": "The AI Assistant sets up devices, builds dashboards and writes alarm rules. Ask about your data and it explains what changed and why.",
+                "note": "The AI solution creator has moved to the AI Assistant.",
                 "kicker-before": "What's new",
                 "kicker-new": "How it works",
                 "kicker": "{{kicker}} · {{step}} of {{count}}",
@@ -13304,24 +13304,24 @@
                 "next": "Next",
                 "show-around": "Show me around",
                 "card-1": {
-                    "title": "Home shows what needs you",
-                    "lead": "Critical alarms, inactive devices and chats waiting for your answer are at the top. Ask about any of them from the same page."
+                    "title": "Start here",
+                    "lead": "The new Home opens on what needs a decision: critical alarms, devices gone quiet, chats waiting for you. Ask about any of it from the same page."
                 },
                 "card-2": {
                     "title": "Ask on any page",
                     "lead": "The chat sits next to your page and reads it. Say “this meter” and it knows which one."
                 },
                 "card-3": {
-                    "title": "Describe the result, skip the setup",
+                    "title": "Describe the result, not the steps",
                     "lead": "One sentence becomes a plan: the dashboard, the alarm rule, who gets notified. Changes wait for your approval."
                 },
                 "card-4": {
                     "title": "Click, don’t type",
-                    "lead": "A threshold, a colour, which device: pick from the options. Type only when none fits."
+                    "lead": "A threshold, a color, which device: pick from the options. Type only when none fits."
                 },
                 "card-5": {
                     "title": "Files in. Files out.",
-                    "lead": "Attach a datasheet, a photo or a spreadsheet. Code, configs and documents come back as files to open, edit and save."
+                    "lead": "Attach a datasheet, a photo or a spreadsheet. Code, configs and documents come back as files to open, edit and download."
                 }
             },
             "scene": {
@@ -13362,7 +13362,7 @@
                     "alarm": "Night load above 8 kW",
                     "title": "Ask about this dashboard",
                     "prompt-2": "Add the freezer doors to this chart",
-                    "answer": "Freezer 2 ran without a stop from 01:52. Its door was left open.",
+                    "answer": "Freezer 2 has run nonstop since 01:52. Its door was left open.",
                     "record-name": "Freezer 2 · Store 12",
                     "record-meta": "door open 3 h",
                     "page": "Energy · Store 12",
@@ -13404,7 +13404,7 @@
                     "option-2-1": "−15 °C",
                     "option-2-2": "−14 °C",
                     "option-2-3": "−12 °C",
-                    "hint-2": "A degree of room after a door opening",
+                    "hint-2": "So a short door opening won’t trigger it",
                     "done": "Done"
                 },
                 "files": {
@@ -13419,16 +13419,16 @@
                 "next": "Next",
                 "done": "Done",
                 "menu-title": "AI Assistant in the menu",
-                "menu-text": "Your chats and solutions live here, under IoT Hub. On any other page, the AI Assistant button in the top bar opens the same chats beside the page.",
+                "menu-text": "Your chats and solutions live here. On any other page, the AI Assistant button in the top bar opens the same chats beside the page.",
                 "chats-title": "All chats in one list",
-                "chats-text": "Chats started here, on Home or beside a page. A dot marks a chat that waits for your answer.",
-                "chats-folded-text": "Open the list here: chats started here, on Home or beside a page.",
-                "solutions-title-before": "Solutions moved here",
-                "solutions-text-before": "The AI solution creator is now Solutions. Start one with New solution: each solution is a chat in this list, its design and install beside the chat, as before.",
+                "chats-text": "Chats started here, on Home or beside any page. A dot marks a chat that waits for your answer.",
+                "chats-folded-text": "Open the list here: chats started here, on Home or beside any page.",
+                "solutions-title-before": "AI solution creator moved here",
+                "solutions-text-before": "Click New solution to start one. Each solution is a chat in this list, with its design and installation beside it, as before.",
                 "solutions-title-new": "Build a whole solution",
-                "solutions-text-new": "Describe a use case to New solution. After a few questions, a design of profiles, dashboards and alarm rules opens beside the chat, to review and install.",
-                "start-title": "Start here",
-            "start-text": "Describe what you are building or the device you have. Or start from an example below: a card puts its prompt here to edit before you send it."
+                "solutions-text-new": "Click New solution and describe a use case. After a few questions, a design of profiles, dashboards and alarm rules opens beside the chat, to review and install.",
+                "start-title": "Your first chat",
+            "start-text": "Describe what you’re building or the device you have. Or pick an example below and edit it before you send."
             }
         },
     "unit": {
