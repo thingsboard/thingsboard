@@ -178,7 +178,7 @@
                             <arguments>
                                 <argument>tag</argument>
                                 <argument>${docker.repo}/${tb-postgres.docker.name}:latest</argument>
-                                <argument>${docker.repo}/${tb-postgres.docker.name}:${project.version}</argument>
+                                <argument>${docker.repo}/${tb-postgres.docker.name}:${docker.version.tag}</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -209,7 +209,7 @@
                             <arguments>
                                 <argument>tag</argument>
                                 <argument>${docker.repo}/${tb-cassandra.docker.name}:latest</argument>
-                                <argument>${docker.repo}/${tb-cassandra.docker.name}:${project.version}</argument>
+                                <argument>${docker.repo}/${tb-cassandra.docker.name}:${docker.version.tag}</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -251,7 +251,7 @@
                                     <executable>docker</executable>
                                     <arguments>
                                         <argument>push</argument>
-                                        <argument>${docker.repo}/${tb-postgres.docker.name}:${project.version}</argument>
+                                        <argument>${docker.repo}/${tb-postgres.docker.name}:${docker.version.tag}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -275,7 +275,7 @@
                                     <executable>docker</executable>
                                     <arguments>
                                         <argument>push</argument>
-                                        <argument>${docker.repo}/${tb-cassandra.docker.name}:${project.version}</argument>
+                                        <argument>${docker.repo}/${tb-cassandra.docker.name}:${docker.version.tag}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -331,7 +331,7 @@
                                         <argument>buildx</argument>
                                         <argument>build</argument>
                                         <argument>-t</argument>
-                                        <argument>${docker.repo}/${tb-postgres.docker.name}:${project.version}</argument>
+                                        <argument>${docker.repo}/${tb-postgres.docker.name}:${docker.version.tag}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
@@ -373,7 +373,7 @@
                                         <argument>buildx</argument>
                                         <argument>build</argument>
                                         <argument>-t</argument>
-                                        <argument>${docker.repo}/${tb-cassandra.docker.name}:${project.version}</argument>
+                                        <argument>${docker.repo}/${tb-cassandra.docker.name}:${docker.version.tag}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
