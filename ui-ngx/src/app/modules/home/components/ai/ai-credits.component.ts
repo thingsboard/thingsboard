@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -36,6 +37,7 @@ export class AiCreditsComponent implements OnDestroy {
 
   expanded = input<boolean>(false);
   asButton = input<boolean>(false);
+  composer = input(false, {transform: booleanAttribute});
   active = input<boolean>(true);
   popoverPlacement = input<PopoverPreferredPlacement>(null);
   tooltipPosition = input<'above' | 'below' | 'before' | 'after'>(null);
@@ -61,14 +63,25 @@ export class AiCreditsComponent implements OnDestroy {
 
   status = computed(() => this.aiApiState() ?? ApiUsageStateValue.ENABLED);
 
+  over = computed(() => this.status() === ApiUsageStateValue.DISABLED || this.usagePercent() >= 100);
+
+  near = computed(() => !this.over() && (this.status() === ApiUsageStateValue.WARNING || this.usagePercent() >= 80));
+
+  arcDash = computed(() => {
+    const circumference = 2 * Math.PI * 8;
+    const share = Math.max(this.usagePercent() / 100, this.aiCreditsCount() > 0 ? 0.02 : 0);
+    return `${(share * circumference).toFixed(2)} ${circumference.toFixed(2)}`;
+  });
+
   private shortNumber = inject(ShortNumberPipe);
 
   usedLabel = computed(() => this.shortNumber.transform(this.aiCreditsCount(), {roundDown: true}));
   maxLabel = computed(() => this.shortNumber.transform(this.aiCreditsLimit()));
+  leftLabel = computed(() => this.shortNumber.transform(Math.max(0, this.aiCreditsLimit() - this.aiCreditsCount()), {roundDown: true}));
 
   resetDate = computed(() => {
     const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth() + 1, 2);
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
   });
 
   private telemetryWsService = inject(TelemetryWebsocketService);

@@ -68,3 +68,79 @@
     box-sizing: border-box;
   }
 }
+
+.cred {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cred-line {
+  font: 400 var(--chat-meta)/var(--chat-meta-lh) var(--tb-font);
+  color: var(--tb-ink-76);
+  white-space: nowrap;
+}
+
+.cred.near .cred-line {
+  color: var(--tb-caution);
+}
+
+.cred-ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: default;
+  transition: background-color .12s ease;
+
+  &:hover, &[aria-describedby] {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 2px;
+  }
+
+  svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
+
+  circle {
+    fill: none;
+    stroke-width: 2.5;
+  }
+
+  .track {
+    stroke: rgba(0, 0, 0, 0.1);
+  }
+
+  .arc {
+    stroke: var(--ai-teal-500);
+    stroke-linecap: round;
+  }
+}
+
+.cred.over .arc {
+  stroke: var(--tb-crit);
+}
+
+:host-context(.tb-ai-composer.docked) .cred-ring {
+  width: 28px;
+  height: 28px;
+}
+
+.tb-ai-tip-body .tip-value {
+  &.warn {
+    color: #f2c98a;
+  }
+
+  &.crit {
+    color: #ff9d92;
+  }
+}
+

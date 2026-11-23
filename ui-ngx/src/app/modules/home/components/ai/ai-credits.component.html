@@ -5,7 +5,30 @@
 
 -->
 @if (hasData()) {
-  @if (asButton()) {
+  @if (composer()) {
+    <span class="cred" [class.near]="near()" [class.over]="over()">
+      @if (near() || over()) {
+        <span class="cred-line">{{ over() ? ('ai-assistant.credits.none-left' | translate) : ('ai-assistant.credits.left' | translate: {left: leftLabel()}) }}</span>
+      }
+      <span class="cred-ring" tabindex="0" role="img" tb-popover [tbAiTip]="credTip"
+            [attr.aria-label]="'ai-assistant.credits.aria' | translate: {used: usedLabel(), max: maxLabel()}">
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <circle class="track" cx="10" cy="10" r="8"/>
+          <circle class="arc" cx="10" cy="10" r="8" [attr.stroke-dasharray]="arcDash()" transform="rotate(-90 10 10)"/>
+        </svg>
+      </span>
+    </span>
+    <ng-template #credTip>
+      <div class="tb-ai-tip-body">
+        <div class="tip-head">
+          <b>{{ 'ai-assistant.credits.title' | translate }}</b>
+          <span class="tip-value" [class.warn]="near()" [class.crit]="over()">{{ usagePercent() | number: '1.0-0' }}%</span>
+        </div>
+        <p>{{ 'ai-assistant.credits.used' | translate: {used: usedLabel(), max: maxLabel()} }}</p>
+        <p class="tip-sub">{{ 'ai-assistant.credits.resets' | translate: {date: (resetDate() | date: 'MMMM d')} }}</p>
+      </div>
+    </ng-template>
+  } @else if (asButton()) {
     <button mat-icon-button
             type="button"
             #buttonTrigger

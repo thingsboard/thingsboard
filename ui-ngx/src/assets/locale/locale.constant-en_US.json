@@ -2109,6 +2109,14 @@
         "run-failed": "The run stopped with an error.",
         "new-count": "{{ count }} new",
         "start-a-task": "Start a task",
+        "credits": {
+            "title": "AI credits",
+            "used": "{{used}} of {{max}} used this month",
+            "resets": "Resets on {{date}}.",
+            "left": "{{left}} credits left",
+            "none-left": "No credits left",
+            "aria": "AI credits: {{used}} of {{max}} used this month"
+        },
         "create-solution": "Create a solution",
         "create-solution-hint": "Devices, dashboards and alarms, set up as one",
         "create-solution-start": "Start",
