@@ -5,17 +5,25 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<a mat-button routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'subset', queryParams: section.isCustom ? 'subset' : 'ignored', matrixParams: 'ignored', fragment: 'ignored'}"
+@let name = section.customTranslate ? (section.name | customTranslate) : (section.name | translate);
+@let count = active() ? 0 : needYou();
+<a mat-button routerLinkActive="tb-active" (isActiveChange)="active.set($event)" [routerLinkActiveOptions]="{paths: 'subset', queryParams: section.isCustom ? 'subset' : 'ignored', matrixParams: 'ignored', fragment: 'ignored'}"
   [queryParams]="section.queryParams"
   [routerLink]="section.path"
-  [matTooltip]="collapsed ? (section.customTranslate ? (section.name | customTranslate) : (section.name | translate)) : null"
+  [matTooltip]="collapsed ? (count ? name + ' · ' + ('ai-assistant.waiting-many' | translate: {count}) : name) : null"
   matTooltipPosition="right"
-  [class.is-new]="section.isNew">
+  [attr.aria-label]="count ? name + ' · ' + ('ai-assistant.waiting-many' | translate: {count}) : null"
+  [class.is-new]="section.isNew && !count">
   @if (section.icon !== null) {
     <tb-icon class="tb-filled-icon" matButtonIcon>{{section.icon}}</tb-icon>
   }
   @if (section.outlinedIcon !== null) {
     <tb-icon class="tb-outlined-icon" matButtonIcon>{{section.outlinedIcon}}</tb-icon>
   }
-  <span>{{section.customTranslate ? (section.name | customTranslate) : (section.name | translate)}}</span>
+  <span>{{ name }}</span>
+  @if (count) {
+    <span class="tb-menu-count" matButtonIcon iconPositionEnd aria-hidden="true"
+          [matTooltip]="collapsed ? null : name + ' · ' + ('ai-assistant.waiting-many' | translate: {count})"
+          matTooltipPosition="right" [matTooltipShowDelay]="500">{{ count }}</span>
+  }
 </a>

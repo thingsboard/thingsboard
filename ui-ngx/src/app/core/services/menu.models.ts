@@ -2007,8 +2007,8 @@ export const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
     Authority.TENANT_ADMIN,
     [
       {id: MenuId.home},
-      {id: MenuId.iot_hub},
       {id: MenuId.ai_assistant},
+      {id: MenuId.iot_hub},
       {
         id: MenuId.monitor,
         pages: [
