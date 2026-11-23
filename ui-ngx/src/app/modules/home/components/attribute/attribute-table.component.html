@@ -267,6 +267,7 @@
         <ng-template #carouselPrev>
           @if (widgetsCarouselIndex > 0) {
             <button mat-icon-button
+                    [attr.aria-label]="'attribute.prev-widget' | translate"
                     matTooltip="{{ 'attribute.prev-widget' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>keyboard_arrow_left</mat-icon>
@@ -276,6 +277,7 @@
         <ng-template #carouselNext>
           @if (widgetsCarouselIndex < widgetsList.length - 1) {
             <button mat-icon-button
+                    [attr.aria-label]="'attribute.next-widget' | translate"
                     matTooltip="{{ 'attribute.next-widget' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>keyboard_arrow_right</mat-icon>

@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import 'hammerjs';
-
 import { Component } from '@angular/core';
 
 import { environment as env } from '@env/environment';
