@@ -141,8 +141,16 @@ public class TbMailSender extends JavaMailSenderImpl {
         try {
             if (System.currentTimeMillis() > getTokenExpires()) {
                 AdminSettings settings = getMailSettings(tenantId);
+                if (settings == null) {
+                    throw new IncorrectParameterException("Mail settings not found!");
+                }
+                // The resolved row may be the system one even if a tenant ID was passed in
+                TenantId ownerId = settings.getTenantId() != null ? settings.getTenantId() : TenantId.SYS_TENANT_ID;
                 JsonNode jsonValue = settings.getJsonValue().deepCopy();
-                ctx.getSecretConfigurationService().replaceSecretUsages(tenantId, jsonValue);
+                ctx.getSecretConfigurationService().replaceSecretUsages(ownerId, jsonValue);
+                if (!jsonValue.hasNonNull("refreshToken")) {
+                    throw new IncorrectParameterException("OAuth2 refresh token is not generated for the mail settings!");
+                }
                 String clientId = jsonValue.get("clientId").asText();
                 String clientSecret = jsonValue.get("clientSecret").asText();
                 String refreshToken = jsonValue.get("refreshToken").asText();
@@ -156,7 +164,7 @@ public class TbMailSender extends JavaMailSenderImpl {
                 if (MailOauth2Provider.OFFICE_365.name().equals(providerId)) {
                     ((ObjectNode) settings.getJsonValue()).put("refreshToken", tokenResponse.getRefreshToken());
                     ((ObjectNode) settings.getJsonValue()).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
-                    ctx.getAdminSettingsService().saveAdminSettings(tenantId, settings);
+                    ctx.getAdminSettingsService().saveAdminSettings(ownerId, settings);
                 }
                 accessToken = tokenResponse.getAccessToken();
                 tokenExpires = System.currentTimeMillis() + (tokenResponse.getExpiresInSeconds().intValue() * 1000);
