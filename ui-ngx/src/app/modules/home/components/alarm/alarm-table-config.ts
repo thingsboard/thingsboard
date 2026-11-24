@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { aiSevMarkElement } from '@home/components/ai/ai-sev-mark.component';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import {
   CellActionDescriptorType,
@@ -24,7 +25,6 @@ import {
   AlarmInfo,
   AlarmQueryV2,
   AlarmSearchStatus,
-  alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmsMode,
   alarmStatusTranslations,
@@ -139,11 +139,9 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           entity => this.utilsService.customTranslation(entity.type, entity.type)));
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('severity', 'alarm.severity', '25%',
-        (entity) => this.translate.instant(alarmSeverityTranslations.get(entity.severity)),
-        entity => ({
-          fontWeight: 'bold',
-          color: alarmSeverityColors.get(entity.severity)
-        })));
+        (entity) => '<span style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">' +
+          aiSevMarkElement(entity.severity).outerHTML +
+          `<span>${this.translate.instant(alarmSeverityTranslations.get(entity.severity))}</span></span>`));
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '240px',
         (entity) => this.getAssigneeTemplate(entity), () => ({}), false, () => ({}), () => undefined, false,
