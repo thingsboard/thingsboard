@@ -5,7 +5,8 @@ import { ChangeDetectionStrategy, Component, inject, ViewEncapsulation } from '@
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthUser, selectIsAuthenticated } from '@core/auth/auth.selectors';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Authority } from '@shared/models/authority.enum';
 import { HomeDashboard } from '@shared/models/dashboard.models';
 import { TourService } from '@core/services/tour.service';
@@ -27,6 +28,8 @@ const DEFAULT_PRIMARY = '#00695c';
 export class HomePageComponent {
 
   readonly Authority = Authority;
+
+  readonly authenticated = toSignal(inject(Store<AppState>).select(selectIsAuthenticated), {initialValue: true});
 
   readonly homeDashboard: HomeDashboard = inject(ActivatedRoute).snapshot.data.homeDashboard;
 

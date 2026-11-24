@@ -6,7 +6,10 @@ import { distinctUntilChanged, filter, map, skip, switchMap, tap } from 'rxjs/op
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { selectAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, selectAuthUser } from '@core/auth/auth.selectors';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Authority } from '@shared/models/authority.enum';
+import { Operation, Resource } from '@shared/models/security.models';
 import { TranslateService } from '@ngx-translate/core';
 import { AiChatService } from '@core/http/ai-chat.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
@@ -50,7 +53,11 @@ export class AiChatsService {
 
   private generation = 0;
 
-  private userWatch = inject(Store<AppState>).select(selectAuthUser).pipe(
+  private store = inject(Store<AppState>);
+
+  private userPermissions = inject(UserPermissionsService);
+
+  private userWatch = this.store.select(selectAuthUser).pipe(
     map(user => user?.userId ?? null),
     distinctUntilChanged(),
     skip(1),
@@ -71,6 +78,12 @@ export class AiChatsService {
     if (userId && this.watching) {
       this.pollStatus();
     }
+  }
+
+  private aiAvailable(): boolean {
+    const authState = getCurrentAuthState(this.store);
+    return !!authState?.aiEnabled && authState.authUser?.authority === Authority.TENANT_ADMIN
+      && this.userPermissions.hasGenericPermission(Resource.AI, Operation.ALL);
   }
 
   watchStatus(): void {
@@ -100,7 +113,7 @@ export class AiChatsService {
   }
 
   private pollStatus(): void {
-    if (this.polling) {
+    if (this.polling || !this.aiAvailable()) {
       return;
     }
     this.polling = true;
