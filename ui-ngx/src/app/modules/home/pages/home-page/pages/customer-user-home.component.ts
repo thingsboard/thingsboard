@@ -10,6 +10,17 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         <tb-welcome-home></tb-welcome-home>
         <tb-status-line-home></tb-status-line-home>
       </div>
+      <div class="tb-home-grid">
+        <div class="tb-col tb-col-main">
+          <tb-alarms-home></tb-alarms-home>
+          <tb-dashboards-home></tb-dashboards-home>
+          <tb-devices-home></tb-devices-home>
+        </div>
+        <div class="tb-col tb-col-side">
+          <tb-notifications-home></tb-notifications-home>
+          <tb-quick-links-home [hideable]="false"></tb-quick-links-home>
+        </div>
+      </div>
     </div>
   `,
   styleUrls: ['./tenant-admin-home.component.scss'],
