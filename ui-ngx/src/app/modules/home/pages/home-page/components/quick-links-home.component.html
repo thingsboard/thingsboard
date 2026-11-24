@@ -4,7 +4,7 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<tb-home-card [card]="card" [hideable]="hideable()" [expanded]="editing()" [class.editing]="editing()">
+<tb-home-card [card]="card" [hideable]="true" [expanded]="editing()" [class.editing]="editing()">
   <ng-container homeCardActions>
     @if (loaded()) {
       @if (editing()) {

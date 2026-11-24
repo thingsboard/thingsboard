@@ -10,7 +10,6 @@ import {
   ElementRef,
   inject,
   Injector,
-  input,
   signal,
   viewChild
 } from '@angular/core';
@@ -54,8 +53,6 @@ import {
 export class QuickLinksHomeComponent {
 
   readonly card = HOME_CARDS[HomeCardId.QUICK_LINKS];
-
-  hideable = input(true);
   readonly max = QUICK_LINKS_MAX;
 
   private store = inject(Store<AppState>);

@@ -1,10 +1,38 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { selectHomeCards } from '@core/auth/auth.selectors';
+import { HomeCardId } from '@shared/models/user-settings.models';
+import { isHomeCardShown } from '@home/pages/home-page/home-cards.models';
+
+const MAIN_CARDS = [HomeCardId.ALARMS, HomeCardId.DASHBOARDS, HomeCardId.DEVICES];
+const SIDE_CARDS = [HomeCardId.NOTIFICATIONS, HomeCardId.QUICK_LINKS];
 
 @Component({
   selector: 'tb-customer-user-home',
   template: `
+    <ng-template #homeCard let-id>
+      @switch (id) {
+        @case (HomeCardId.ALARMS) {
+          <tb-alarms-home></tb-alarms-home>
+        }
+        @case (HomeCardId.DASHBOARDS) {
+          <tb-dashboards-home></tb-dashboards-home>
+        }
+        @case (HomeCardId.DEVICES) {
+          <tb-devices-home></tb-devices-home>
+        }
+        @case (HomeCardId.NOTIFICATIONS) {
+          <tb-notifications-home></tb-notifications-home>
+        }
+        @case (HomeCardId.QUICK_LINKS) {
+          <tb-quick-links-home></tb-quick-links-home>
+        }
+      }
+    </ng-template>
     <div class="tb-home">
       <div class="tb-home-head">
         <tb-welcome-home></tb-welcome-home>
@@ -12,15 +40,17 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       </div>
       <div class="tb-home-grid">
         <div class="tb-col tb-col-main">
-          <tb-alarms-home></tb-alarms-home>
-          <tb-dashboards-home></tb-dashboards-home>
-          <tb-devices-home></tb-devices-home>
+          @for (id of mainCards(); track id) {
+            <ng-container [ngTemplateOutlet]="homeCard" [ngTemplateOutletContext]="{$implicit: id}"></ng-container>
+          }
         </div>
         <div class="tb-col tb-col-side">
-          <tb-notifications-home></tb-notifications-home>
-          <tb-quick-links-home [hideable]="false"></tb-quick-links-home>
+          @for (id of sideCards(); track id) {
+            <ng-container [ngTemplateOutlet]="homeCard" [ngTemplateOutletContext]="{$implicit: id}"></ng-container>
+          }
         </div>
       </div>
+      <tb-home-cards-footer [cards]="cards"></tb-home-cards-footer>
     </div>
   `,
   styleUrls: ['./tenant-admin-home.component.scss'],
@@ -28,4 +58,14 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CustomerUserHomeComponent {
+
+  readonly HomeCardId = HomeCardId;
+
+  readonly cards = [...MAIN_CARDS, ...SIDE_CARDS];
+
+  private settings = toSignal(inject(Store<AppState>).select(selectHomeCards), {initialValue: {}});
+
+  readonly mainCards = computed(() => MAIN_CARDS.filter(id => isHomeCardShown(this.settings(), id)));
+
+  readonly sideCards = computed(() => SIDE_CARDS.filter(id => isHomeCardShown(this.settings(), id)));
 }
