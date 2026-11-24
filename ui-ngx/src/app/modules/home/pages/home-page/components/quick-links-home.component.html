@@ -61,7 +61,7 @@
         <span>{{ 'home.quick-links.drag-hint' | translate }}</span>
       </div>
     } @else {
-      <div #columns class="tb-quick-links-list tb-quick-links-columns" [attr.role]="links().length ? 'list' : null">
+      <div #columns class="tb-quick-links-list" [class.tb-quick-links-columns]="links().length" [attr.role]="links().length ? 'list' : null">
         @for (link of links(); track link.id) {
           @if (link.page) {
             <a class="tb-quick-link" role="listitem" [routerLink]="link.page.path" [queryParams]="link.page.queryParams">
