@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CartoMapLayerSettings,
   CustomMapLayerSettings,
@@ -36,6 +37,7 @@ import { catchError, map } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
 import { StyleSpecification, VectorSourceSpecification } from '@maplibre/maplibre-gl-style-spec';
 
+const poweredByEsriAttribution = 'Powered by Esri';
 const esriWorldBasemapAttribution =
   'Sources: Esri, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community';
 
@@ -91,16 +93,16 @@ interface TbMapLayerData {
   attribution: boolean;
 }
 
-// Stands in for a layer that cannot be displayed, e.g. a provider layer without the required API key
+// Placeholder for a provider layer without the required API key
 class TbEmptyMapLayer extends L.Layer {
 
-  onAdd(_map: L.Map): this {
+  onAdd(): this {
     // The map waits for the 'load' event of its default layer, e.g. to generate a report
     setTimeout(() => this.fire('load'));
     return this;
   }
 
-  onRemove(_map: L.Map): this {
+  onRemove(): this {
     return this;
   }
 }
@@ -367,11 +369,12 @@ class TbEsriMapLayer extends TbMapLayer<EsriMapLayerSettings> {
       return of(L.TB.MapLibreGL.mapLibreGLLayer({
         style: withArcGISToken(tokenStyle, apiKey),
         attributionControl: {
-          customAttribution: `Powered by Esri | ${esriWorldBasemapAttribution}`
+          customAttribution: `${poweredByEsriAttribution} | ${esriWorldBasemapAttribution}`
         }
       }));
     }
     const layer = L.tileLayer.provider(this.settings.layerType);
+    L.Util.setOptions(layer, {attribution: `${poweredByEsriAttribution} | ${layer.options.attribution}`});
     if (apiKey && this.settings.layerType === EsriLayerType.esriWorldImagery) {
       layer.setUrl(withArcGISToken(esriWorldImageryTokenTilesUrl, apiKey), true);
     }

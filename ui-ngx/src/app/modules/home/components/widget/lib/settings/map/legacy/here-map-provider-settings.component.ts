@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -16,7 +17,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  defaultHereMapProviderSettings,
   HereMapProvider,
   HereMapProviderSettings,
   hereMapProviderTranslationMap
@@ -67,7 +67,7 @@ export class HereMapProviderSettingsComponent extends PageComponent implements O
     this.providerSettingsFormGroup = this.fb.group({
       mapProviderHere: [null, [Validators.required]],
       credentials: this.fb.group({
-        apiKey: [null, [Validators.required]]
+        apiKey: [null, []]
       })
     });
     this.providerSettingsFormGroup.valueChanges.pipe(
@@ -98,7 +98,7 @@ export class HereMapProviderSettingsComponent extends PageComponent implements O
     this.providerSettingsFormGroup.patchValue({
       mapProviderHere: value?.mapProviderHere,
       credentials: {
-        apiKey: value?.credentials?.apiKey || defaultHereMapProviderSettings.credentials.apiKey
+        apiKey: value?.credentials?.apiKey
       }
     }, {emitEvent: false});
   }

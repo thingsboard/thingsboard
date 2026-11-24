@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -22,7 +23,7 @@ import {
   openFreeMapStyleTranslationMap,
   openFreeMapStyleTypes,
   mapProviderHasApiKey,
-  mapProviderRequiresApiKey,
+  mapProviderApiKeyMissingWarningMap,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap, referenceLayerTypes, referenceLayerTypeTranslationMap,
   tencentLayerTranslationMap,
@@ -145,8 +146,13 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     return !!this.layerFormGroup.get('referenceLayer').value && this.layerFormGroup.get('provider').value !== MapProvider.esri;
   }
 
-  apiKeyMissing(): boolean {
-    return mapProviderRequiresApiKey(this.layerFormGroup.get('provider').value) && !this.layerFormGroup.get('apiKey').value;
+  apiKeyMissingWarning(): string {
+    return this.layerFormGroup.get('apiKey').value ? null :
+      mapProviderApiKeyMissingWarningMap.get(this.layerFormGroup.get('provider').value);
+  }
+
+  referenceLayerApiKeyMissing(): boolean {
+    return !this.layerFormGroup.get('referenceLayerApiKey').value;
   }
 
   applyLayerSettings() {

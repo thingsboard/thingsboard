@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-map-layer-settings-panel" [formGroup]="layerFormGroup">
@@ -134,11 +135,16 @@
           <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>
           <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="apiKey" placeholder="{{ 'widget-config.set' | translate }}">
-            @if (apiKeyMissing()) {
+            @if (apiKeyMissingWarning(); as warning) {
               <mat-icon matSuffix
                         class="tb-warning"
+                        tabindex="0"
+                        role="img"
+                        aria-hidden="false"
+                        [attr.aria-label]="warning | translate"
                         matTooltipPosition="above"
-                        matTooltip="{{ 'widgets.maps.layer.credentials.api-key-missing' | translate }}">
+                        matTooltipClass="tb-warning-tooltip"
+                        [matTooltip]="warning | translate">
                 warning
               </mat-icon>
             }
@@ -164,11 +170,16 @@
         <div class="fixed-title-width" translate>widgets.maps.layer.reference.api-key</div>
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="referenceLayerApiKey" placeholder="{{ 'widget-config.set' | translate }}">
-          @if (!layerFormGroup.get('referenceLayerApiKey').value) {
+          @if (referenceLayerApiKeyMissing()) {
             <mat-icon matSuffix
                       class="tb-warning"
+                      tabindex="0"
+                      role="img"
+                      aria-hidden="false"
+                      [attr.aria-label]="'widgets.maps.layer.credentials.arcgis-api-key-missing' | translate"
                       matTooltipPosition="above"
-                      matTooltip="{{ 'widgets.maps.layer.credentials.api-key-missing' | translate }}">
+                      matTooltipClass="tb-warning-tooltip"
+                      matTooltip="{{ 'widgets.maps.layer.credentials.arcgis-api-key-missing' | translate }}">
               warning
             </mat-icon>
           }

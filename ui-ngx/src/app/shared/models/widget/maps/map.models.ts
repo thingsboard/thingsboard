@@ -1262,8 +1262,14 @@ export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
 export const mapProviderHasApiKey = (provider: MapProvider): boolean =>
   [MapProvider.carto, MapProvider.esri, MapProvider.google, MapProvider.here].includes(provider);
 
-export const mapProviderRequiresApiKey = (provider: MapProvider): boolean =>
-  [MapProvider.esri, MapProvider.google, MapProvider.here].includes(provider);
+// The API key is optional; without it these providers may limit the layer or its use
+export const mapProviderApiKeyMissingWarningMap = new Map<MapProvider, string>(
+  [
+    [MapProvider.esri, 'widgets.maps.layer.credentials.arcgis-api-key-missing'],
+    [MapProvider.google, 'widgets.maps.layer.credentials.api-key-missing'],
+    [MapProvider.here, 'widgets.maps.layer.credentials.api-key-missing']
+  ]
+);
 
 const legacyOpenStreetCartoLayerTypes = new Set<string>(cartoLayerTypes);
 const legacyOpenStreetEsriLayerTypes = new Set<string>(esriLayerTypes);
