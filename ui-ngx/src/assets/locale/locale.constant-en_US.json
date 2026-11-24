@@ -8701,6 +8701,12 @@
                     "text": "Add a customer and assign the dashboard. The customer's users see only what is assigned to them."
                 }
             },
+            "notifications": {
+                "none": "No unread notifications.",
+                "show-full": "Show the full notification",
+                "marked-read": "Notification marked as read",
+                "marked-all-read": "{{count}} notifications marked as read"
+            },
             "list": {
                 "show-more": "Show more",
                 "show-all": "Show all",
