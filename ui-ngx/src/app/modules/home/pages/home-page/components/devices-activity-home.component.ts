@@ -8,13 +8,11 @@ import {
   DestroyRef,
   ElementRef,
   inject,
-  Injector,
   NgZone,
   Renderer2,
   signal,
   viewChild
 } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -28,14 +26,11 @@ import { EntityDataCmd, IntervalType, TelemetrySubscriber } from '@shared/models
 import { AliasFilterType } from '@shared/models/alias.models';
 import { EntityKeyType } from '@shared/models/query/query.models';
 import { AggregationType } from '@shared/models/time/time.models';
-import { DateFormatProcessor } from '@shared/models/widget-settings.models';
 import { HomeCardId } from '@shared/models/user-settings.models';
-import { formatValue } from '@core/utils';
 import { ECharts, echartsModule, EChartsOption } from '@home/components/widget/lib/chart/echarts-widget.models';
-import { TimeSeriesChartTooltip } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
-import { TimeSeriesChartDataItem } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
 import { HomeToggleOption } from '@home/pages/home-page/components/home-toggle.component';
+import { homeChartHoverSymbol, homeChartTooltipHtml, homeChartTooltipOptions } from '@home/pages/home-page/home-chart.models';
 
 type ActivitySeries = 'devices' | 'messages';
 
@@ -81,8 +76,6 @@ const SERIES: ActivitySeriesConfig[] = [
   {id: 'messages', key: 'transportMsgCountHourly', label: 'home.activity.messages', daily: true}
 ];
 
-const font = (size: number, weight: string) => ({family: 'Roboto', size, sizeUnit: 'px', style: 'normal', weight, lineHeight: '16px'});
-
 @Component({
   selector: 'tb-devices-activity-home',
   templateUrl: './devices-activity-home.component.html',
@@ -103,9 +96,7 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
   private telemetryWsService = inject(TelemetryWebsocketService);
   private zone = inject(NgZone);
   private renderer = inject(Renderer2);
-  private sanitizer = inject(DomSanitizer);
   private translate = inject(TranslateService);
-  private injector = inject(Injector);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly tab = signal<ActivitySeries>(this.series[0].id);
@@ -123,24 +114,6 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
   private charts: Partial<Record<ActivitySeries, ECharts>> = {};
   private subscribers: TelemetrySubscriber[] = [];
   private resizeObserver: ResizeObserver;
-
-  private readonly tooltip = new TimeSeriesChartTooltip(this.renderer, this.sanitizer, {
-    showTooltip: true,
-    tooltipTrigger: undefined,
-    tooltipLabelFont: font(12, '400'),
-    tooltipLabelColor: 'rgba(0, 0, 0, 0.76)',
-    tooltipValueFont: font(12, '500'),
-    tooltipValueColor: 'rgba(0, 0, 0, 0.76)',
-    tooltipShowDate: true,
-    tooltipDateInterval: false,
-    tooltipDateFormat: {format: null, lastUpdateAgo: false, custom: false, auto: true, autoDateFormatSettings: {}},
-    tooltipDateFont: {...font(11, '400')},
-    tooltipDateColor: 'rgba(0, 0, 0, 0.76)',
-    tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
-    tooltipBackgroundBlur: 4
-  }, DateFormatProcessor.fromSettings(this.injector,
-    {format: null, lastUpdateAgo: false, custom: false, auto: true, autoDateFormatSettings: {}}),
-    (value, _latestData, units, decimals) => formatValue(value, decimals, units, false), this.translate);
 
   private endTs = Date.now();
 
@@ -267,6 +240,16 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
     return `${String(date.getDate()).padStart(2, '0')} ${date.toLocaleString(this.translate.currentLang?.replace('_', '-') || 'en-US', {month: 'short'})}`;
   }
 
+  private tooltipHeader(series: ActivitySeriesConfig, offset: number): string {
+    const span = this.endTs - this.startTs;
+    const date = new Date(this.startTs + offset);
+    const day = `${String(date.getDate()).padStart(2, '0')} ${date.toLocaleString(this.translate.currentLang?.replace('_', '-') || 'en-US', {month: 'short'})}`;
+    if (series.daily) {
+      return offset >= span - 1000 ? this.translate.instant('home.activity.today') : day;
+    }
+    return `${day}, ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  }
+
   setTab(tab: ActivitySeries): void {
     this.tab.set(tab);
     setTimeout(() => Object.values(this.charts).forEach(chart => chart.resize()));
@@ -300,25 +283,17 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
 
   private option(series: ActivitySeriesConfig, points: [number, number][], color: string): EChartsOption {
     const label = this.translate.instant(series.label);
-    const daily = series.daily;
-    const dataItems = [{id: series.id, units: '', decimals: 0, latestData: {}} as unknown as TimeSeriesChartDataItem];
     const span = this.endTs - this.startTs;
     const yScale = scale(points);
-    const toAbsolute = (params: CallbackDataParams[]) => params.map(param =>
-      ({...param, value: [Number(param.value[0]) + this.startTs, param.value[1]]}) as CallbackDataParams);
     return {
       backgroundColor: 'transparent',
       tooltip: [{
-        trigger: 'axis',
-        confine: true,
-        appendTo: 'body',
-        axisPointer: {type: 'line'},
-        formatter: (params: CallbackDataParams[]) =>
-          this.tooltip.formatted(toAbsolute(params.filter(param => param.seriesId === series.id)), -1, dataItems, daily ? DAY : null),
-        padding: [8, 12],
-        backgroundColor: 'rgba(255, 255, 255, 0.76)',
-        borderWidth: 0,
-        extraCssText: 'line-height: 1; backdrop-filter: blur(4px);'
+        ...homeChartTooltipOptions,
+        formatter: (params: CallbackDataParams[]) => {
+          const param = params.find(item => item.seriesId === series.id);
+          return param ? homeChartTooltipHtml(this.tooltipHeader(series, Number(param.value[0])),
+            [{color, name: label, value: shortNumber(Number(param.value[1]))}]) : '';
+        }
       }],
       grid: [{left: 36, right: 28, top: 6, bottom: 26, containLabel: false}],
       xAxis: [{
@@ -360,6 +335,7 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
         color,
         smooth: false,
         showSymbol: false,
+        ...homeChartHoverSymbol(color),
         lineStyle: {width: 2, color, cap: 'round', join: 'round'},
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [

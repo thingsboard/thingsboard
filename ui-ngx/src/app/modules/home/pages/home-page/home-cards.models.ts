@@ -24,7 +24,7 @@ export const HOME_CARDS: Record<HomeCardId, HomeCardDefinition> = {
   [HomeCardId.MOBILE_APP]: {id: HomeCardId.MOBILE_APP, icon: 'phone_iphone', name: 'home.cards.mobile-app'},
   [HomeCardId.PRODUCT_RELEASE]: {id: HomeCardId.PRODUCT_RELEASE, icon: 'new_releases', name: 'home.cards.product-release', height: 100},
   [HomeCardId.GET_STARTED_SYS_ADMIN]: {id: HomeCardId.GET_STARTED_SYS_ADMIN, icon: 'rocket_launch', name: 'home.cards.get-started'},
-  [HomeCardId.SYSTEM_STATUS]: {id: HomeCardId.SYSTEM_STATUS, icon: 'dns', name: 'home.cards.system-status', height: 304},
+  [HomeCardId.SYSTEM_STATUS]: {id: HomeCardId.SYSTEM_STATUS, icon: 'dns', name: 'home.cards.system-status'},
   [HomeCardId.LICENSE]: {id: HomeCardId.LICENSE, icon: 'verified', name: 'home.cards.license', link: '/license', height: 398},
   [HomeCardId.INSTALL_ITEMS]: {id: HomeCardId.INSTALL_ITEMS, icon: 'domain', name: 'home.cards.install-items'}
 };

@@ -1,0 +1,102 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="cardDefinition()">
+  @if (loaded()) {
+    <span homeCardTitleExtra class="tb-system-period">{{ cluster() ? ('home.system.services' | translate: {count: services().length}) : ('home.system.last-hour' | translate) }}</span>
+  }
+  <ng-container homeCardActions>
+    @if (update(); as info) {
+      <span class="tb-system-version">
+        @if (info.currentVersionReleaseNotesUrl) {
+          <a class="tb-system-version-link" [href]="info.currentVersionReleaseNotesUrl" target="_blank" rel="noopener noreferrer"
+             [matTooltip]="'home.system.release-notes' | translate: {version: info.currentVersion}">{{ 'home.system.version' | translate: {version: info.currentVersion} }}</a>
+        } @else {
+          <span class="tb-system-version-link">{{ 'home.system.version' | translate: {version: info.currentVersion} }}</span>
+        }
+        @if (releaseHidden()) {
+          <button type="button" class="tb-system-version-new" [matTooltip]="'home.system.show-update' | translate" (click)="showRelease()">
+            {{ 'home.system.available' | translate: {version: info.latestVersion} }}
+          </button>
+        }
+      </span>
+    }
+  </ng-container>
+  @if (loaded()) {
+    @if (cluster()) {
+      <div class="tb-system-services-wrap" [class.scrolling]="scrolling()" [style.--tb-system-rows]="servicesLimit">
+        <table class="tb-home-table tb-system-services">
+          <thead>
+            <tr>
+              <th class="col-service sortable" [class.sorted]="sort()[0] === 'serviceId'" [attr.aria-sort]="ariaSort('serviceId')">
+                <button type="button" class="th-label" (click)="sortBy('serviceId')">
+                  <span>{{ 'home.system.service-id' | translate }}</span>
+                  <mat-icon class="tb-sort-icon">{{ sortIcon('serviceId') }}</mat-icon>
+                </button>
+              </th>
+              <th class="col-type sortable" [class.sorted]="sort()[0] === 'serviceType'" [attr.aria-sort]="ariaSort('serviceType')">
+                <button type="button" class="th-label" (click)="sortBy('serviceType')">
+                  <span>{{ 'home.system.service-type' | translate }}</span>
+                  <mat-icon class="tb-sort-icon">{{ sortIcon('serviceType') }}</mat-icon>
+                </button>
+              </th>
+              @for (metric of metrics; track metric.id) {
+                <th class="col-num sortable" [class.sorted]="sort()[0] === metric.id" [attr.aria-sort]="ariaSort(metric.id)">
+                  <button type="button" class="th-label" (click)="sortBy(metric.id)">
+                    <span>{{ metric.label | translate }}</span>
+                    <mat-icon class="tb-sort-icon">{{ sortIcon(metric.id) }}</mat-icon>
+                  </button>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (service of shownServices(); track service.serviceId) {
+              <tr>
+                <td class="col-service"><span class="tb-system-mono">{{ service.serviceId }}</span></td>
+                <td class="col-type">{{ service.serviceType }}</td>
+                @for (metric of metrics; track metric.id) {
+                  @let figLevel = serviceLevel(service, metric.id);
+                  <td class="col-num">
+                    <span class="tb-system-fig" [class]="figLevel" [matTooltip]="serviceTooltip(service, metric.id)" matTooltipClass="tb-system-tooltip">
+                      @if (figLevel) {
+                        <mat-icon>{{ figLevel === 'crit' ? 'error' : 'warning' }}</mat-icon>
+                      }
+                      {{ serviceValue(service, metric.id) }}%
+                    </span>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <tb-home-list-footer [total]="services().length" [expanded]="expanded()" [preview]="servicesPreview" [slack]="servicesSlack"
+                           [limit]="servicesLimit" [scroll]="true" (expandedChange)="expanded.set($event)"></tb-home-list-footer>
+    } @else {
+      <div class="tb-system-gauges">
+        @for (gauge of gauges(); track gauge.id) {
+          <div class="tb-system-gauge" [class]="gauge.level" [matTooltip]="gauge.tooltip" matTooltipClass="tb-system-tooltip">
+            <div class="tb-system-gauge-head">
+              <span class="tb-system-gauge-title"><i class="tb-system-key" [style.background]="gauge.color"></i>{{ gauge.label | translate }}</span>
+              @if (gauge.level) {
+                <mat-icon class="tb-system-gauge-mark">{{ gauge.level === 'crit' ? 'error' : 'warning' }}</mat-icon>
+              }
+            </div>
+            <div class="tb-system-gauge-count">{{ gauge.value | number: '1.0-0' }}%<span class="tb-system-gauge-total">{{ gauge.total }}</span></div>
+          </div>
+        }
+      </div>
+      <div #chart class="tb-system-chart" role="img" [attr.aria-label]="'home.system.chart' | translate"></div>
+    }
+    @if (callout(); as note) {
+      <div class="tb-system-callout" [class]="note.level">
+        <mat-icon>{{ note.level === 'crit' ? 'error_outline' : 'warning_amber' }}</mat-icon>
+        <span><b>{{ note.title }}.</b> {{ note.text }}</span>
+      </div>
+    }
+  }
+</tb-home-card>

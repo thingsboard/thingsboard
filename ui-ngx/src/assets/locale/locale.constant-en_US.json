@@ -8851,6 +8851,23 @@
                 "configured": "configured",
                 "not-configured": "not configured"
             },
+            "system": {
+                "last-hour": "Last hour",
+                "services": "{ count, plural, =1 {1 service} other {# services} }",
+                "version": "ThingsBoard {{version}}",
+                "release-notes": "Release notes of {{version}}",
+                "available": "{{version}} available",
+                "show-update": "Show the update again",
+                "cores": "{ count, plural, =1 {1 core} other {# cores} }",
+                "gb": "{{value}} GB",
+                "at": "{{name}} at {{value}}%",
+                "at-on": "{{name}} at {{value}}% on {{services}}",
+                "and": " and ",
+                "now": "now",
+                "chart": "CPU, RAM and disk over the last hour",
+                "service-id": "Service id",
+                "service-type": "Service type"
+            },
             "list": {
                 "show-more": "Show more",
                 "show-all": "Show all",
