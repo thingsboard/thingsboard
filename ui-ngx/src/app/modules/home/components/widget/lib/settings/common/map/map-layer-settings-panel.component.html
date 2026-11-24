@@ -134,9 +134,11 @@
         <div class="tb-form-row space-between column-xs">
           <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>
           <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="apiKey" placeholder="{{ 'widget-config.set' | translate }}">
+            <input matInput formControlName="apiKey" placeholder="{{ 'widget-config.set' | translate }}"
+                   [aria-describedby]="apiKeyMissingWarning() ? 'tb-map-layer-api-key-warning' : null">
             @if (apiKeyMissingWarning(); as warning) {
               <mat-icon matSuffix
+                        id="tb-map-layer-api-key-warning"
                         class="tb-warning"
                         tabindex="0"
                         role="img"
@@ -169,9 +171,11 @@
       <div class="tb-form-row space-between column-xs">
         <div class="fixed-title-width" translate>widgets.maps.layer.reference.api-key</div>
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="referenceLayerApiKey" placeholder="{{ 'widget-config.set' | translate }}">
+          <input matInput formControlName="referenceLayerApiKey" placeholder="{{ 'widget-config.set' | translate }}"
+                 [aria-describedby]="referenceLayerApiKeyMissing() ? 'tb-map-layer-reference-api-key-warning' : null">
           @if (referenceLayerApiKeyMissing()) {
             <mat-icon matSuffix
+                      id="tb-map-layer-reference-api-key-warning"
                       class="tb-warning"
                       tabindex="0"
                       role="img"

@@ -22,6 +22,7 @@ import {
   mapProviderTranslationMap,
   openFreeMapStyleTranslationMap,
   openFreeMapStyleTypes,
+  mapLayerHasReferenceLayerApiKey,
   mapProviderHasApiKey,
   mapProviderApiKeyMissingWarningMap,
   openStreetLayerTypes,
@@ -117,6 +118,11 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     ).subscribe((newProvider: MapProvider) => {
       this.onProviderChanged(newProvider);
     });
+    this.layerFormGroup.get('referenceLayer').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateValidators();
+    });
     this.layerFormGroup.get('vectorTiles').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
@@ -141,9 +147,8 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     return mapProviderHasApiKey(this.layerFormGroup.get('provider').value);
   }
 
-  // An Esri layer uses its own ArcGIS API key for the reference layer too
   referenceLayerHasOwnApiKey(): boolean {
-    return !!this.layerFormGroup.get('referenceLayer').value && this.layerFormGroup.get('provider').value !== MapProvider.esri;
+    return mapLayerHasReferenceLayerApiKey(this.layerFormGroup.get('provider').value, this.layerFormGroup.get('referenceLayer').value);
   }
 
   apiKeyMissingWarning(): string {
@@ -186,6 +191,11 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});
+    }
+    if (mapLayerHasReferenceLayerApiKey(provider, this.layerFormGroup.get('referenceLayer').value)) {
+      this.layerFormGroup.get('referenceLayerApiKey').enable({emitEvent: false});
+    } else {
+      this.layerFormGroup.get('referenceLayerApiKey').disable({emitEvent: false});
     }
   }
 }

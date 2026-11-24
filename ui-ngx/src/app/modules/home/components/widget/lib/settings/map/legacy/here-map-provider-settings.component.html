@@ -21,9 +21,11 @@
       <legend class="group-title" translate>widgets.maps.credentials</legend>
       <mat-form-field>
         <mat-label translate>widgets.maps.here-api-key</mat-label>
-        <input matInput formControlName="apiKey">
+        <input matInput formControlName="apiKey"
+               [aria-describedby]="providerSettingsFormGroup.get('credentials.apiKey').value ? null : 'tb-here-maps-api-key-warning'">
         @if (!providerSettingsFormGroup.get('credentials.apiKey').value) {
           <mat-icon matSuffix
+                    id="tb-here-maps-api-key-warning"
                     class="tb-warning"
                     tabindex="0"
                     role="img"

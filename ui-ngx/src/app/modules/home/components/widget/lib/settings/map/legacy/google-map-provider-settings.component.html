@@ -8,9 +8,11 @@
 <section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
   <mat-form-field class="mat-block">
     <mat-label translate>widgets.maps.google-maps-api-key</mat-label>
-    <input matInput formControlName="gmApiKey">
+    <input matInput formControlName="gmApiKey"
+           [aria-describedby]="providerSettingsFormGroup.get('gmApiKey').value ? null : 'tb-google-maps-api-key-warning'">
     @if (!providerSettingsFormGroup.get('gmApiKey').value) {
       <mat-icon matSuffix
+                id="tb-google-maps-api-key-warning"
                 class="tb-warning"
                 tabindex="0"
                 role="img"

@@ -42,6 +42,7 @@ import {
   mapProviderTranslationMap,
   openFreeMapStyleTranslationMap,
   openFreeMapStyleTypes,
+  mapLayerHasReferenceLayerApiKey,
   mapProviderHasApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap,
@@ -238,6 +239,11 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});
+    }
+    if (mapLayerHasReferenceLayerApiKey(provider, this.layerFormGroup.get('referenceLayer').value)) {
+      this.layerFormGroup.get('referenceLayerApiKey').enable({emitEvent: false});
+    } else {
+      this.layerFormGroup.get('referenceLayerApiKey').disable({emitEvent: false});
     }
   }
 

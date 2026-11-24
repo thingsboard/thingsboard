@@ -249,7 +249,7 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
           return null;
         }
         return L.TB.MapLibreGL.mapLibreGLLayer({
-          style: spec,
+          style: this.referenceLayerStyle(spec),
           // The reference layer is drawn over a raster base, so the base layer's zoom limit applies
           maxZoom: undefined
         });
@@ -259,6 +259,14 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
 
   protected referenceLayerApiKey(): string {
     return this.settings.referenceLayerApiKey;
+  }
+
+  protected referenceLayerStyle(spec: StyleSpecification): StyleSpecification {
+    const source = spec.sources.esri as VectorSourceSpecification;
+    return {
+      ...spec,
+      sources: {...spec.sources, esri: {...source, attribution: `${poweredByEsriAttribution} | ${source.attribution}`}}
+    };
   }
 
   private title(): string {
@@ -360,6 +368,11 @@ class TbEsriMapLayer extends TbMapLayer<EsriMapLayerSettings> {
 
   protected referenceLayerApiKey(): string {
     return this.settings.apiKey;
+  }
+
+  // The base Esri layer already shows 'Powered by Esri'
+  protected referenceLayerStyle(spec: StyleSpecification): StyleSpecification {
+    return spec;
   }
 
   protected createLayer(): Observable<L.Layer> {

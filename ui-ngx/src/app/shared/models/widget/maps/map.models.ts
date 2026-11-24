@@ -1262,6 +1262,10 @@ export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
 export const mapProviderHasApiKey = (provider: MapProvider): boolean =>
   [MapProvider.carto, MapProvider.esri, MapProvider.google, MapProvider.here].includes(provider);
 
+// An Esri layer uses its own ArcGIS API key for the reference layer too
+export const mapLayerHasReferenceLayerApiKey = (provider: MapProvider, referenceLayer: ReferenceLayerType): boolean =>
+  !!referenceLayer && provider !== MapProvider.esri;
+
 // The API key is optional; without it these providers may limit the layer or its use
 export const mapProviderApiKeyMissingWarningMap = new Map<MapProvider, string>(
   [
