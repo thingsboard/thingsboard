@@ -15,7 +15,7 @@
       [hovered]="state === widgetButtonToggleState.hovered"
       [disabled]="state === widgetButtonToggleState.disabled">
     </tb-widget-button-toggle>
-    <button *ngIf="modelValue"
+    <button type="button" *ngIf="modelValue"
             mat-icon-button
             [matTooltip]="'widgets.button.clear-style' | translate"
             matTooltipPosition="above"
@@ -24,7 +24,7 @@
       <tb-icon>mdi:broom</tb-icon>
     </button>
   </div>
-  <button mat-icon-button
+  <button type="button" mat-icon-button
           class="tb-mat-32"
           #matIconButton
           (click)="openButtonCustomStylePopup($event, matIconButton)">

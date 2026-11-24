@@ -8,11 +8,11 @@
   <mat-select [formControl]="dateFormatFormControl" [compareWith]="dateFormatsCompare" >
     <mat-option *ngFor="let dateFormat of dateFormatList" [value]="dateFormat">{{ dateFormatDisplayValue(dateFormat) }}</mat-option>
   </mat-select>
-  <button #customFormatButton
+  <button type="button" #customFormatButton
           *ngIf="dateFormatFormControl.value?.custom" matSuffix mat-icon-button (click)="openDateFormatSettingsPopup($event, customFormatButton)">
     <tb-icon>edit</tb-icon>
   </button>
-  <button #autoFormatButton
+  <button type="button" #autoFormatButton
           *ngIf="dateFormatFormControl.value?.auto && !dateFormatFormControl.value?.custom"
           matSuffix mat-icon-button (click)="openAutoFormatSettingsPopup($event, autoFormatButton)">
     <tb-icon>edit</tb-icon>
