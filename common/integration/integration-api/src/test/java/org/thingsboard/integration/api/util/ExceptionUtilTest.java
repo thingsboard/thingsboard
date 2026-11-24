@@ -3,6 +3,9 @@
 package org.thingsboard.integration.api.util;
 
 import org.junit.jupiter.api.Test;
+import org.mvel2.CompileException;
+import org.mvel2.ScriptRuntimeException;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.IntegrationId;
@@ -45,6 +48,42 @@ class ExceptionUtilTest {
         var e = new ThingsboardException(ThingsboardErrorCode.GENERAL);
 
         assertThat(ExceptionUtil.toString(e, INTEGRATION_ID, false)).isEqualTo(MASKED);
+    }
+
+    @Test
+    void showsTbelRuntimeErrorMessage() {
+        var cause = new ScriptRuntimeException("Cannot invoke method foo on null");
+        var e = new TbScriptException(UUID.randomUUID(), TbScriptException.ErrorCode.RUNTIME, "return msg.foo();", cause);
+
+        assertThat(ExceptionUtil.toString(e, INTEGRATION_ID, false)).isEqualTo("Cannot invoke method foo on null");
+    }
+
+    @Test
+    void showsTbelCompilationErrorMessage() {
+        var cause = new CompileException("unexpected token", "return {".toCharArray(), 7);
+        var e = new TbScriptException(UUID.randomUUID(), TbScriptException.ErrorCode.COMPILATION, "return {", cause);
+
+        assertThat(ExceptionUtil.toString(e, INTEGRATION_ID, false)).isEqualTo(cause.getMessage());
+    }
+
+    @Test
+    void showsRemoteJsRuntimeErrorMessageFromCause() {
+        var scriptException = new TbScriptException(UUID.randomUUID(), TbScriptException.ErrorCode.RUNTIME, null,
+                new RuntimeException("ReferenceError: x is not defined"));
+        var e = new ExecutionException(scriptException);
+
+        assertThat(ExceptionUtil.toString(e, INTEGRATION_ID, false)).isEqualTo("ReferenceError: x is not defined");
+    }
+
+    @Test
+    void masksScriptErrorsOtherThanRuntimeAndCompilation() {
+        var other = new TbScriptException(UUID.randomUUID(), TbScriptException.ErrorCode.OTHER, null,
+                new RuntimeException("SELECT * FROM device"));
+        var timeout = new TbScriptException(UUID.randomUUID(), TbScriptException.ErrorCode.TIMEOUT, null,
+                new RuntimeException("SELECT * FROM device"));
+
+        assertThat(ExceptionUtil.toString(other, INTEGRATION_ID, false)).isEqualTo(MASKED);
+        assertThat(ExceptionUtil.toString(timeout, INTEGRATION_ID, false)).isEqualTo(MASKED);
     }
 
     @Test

@@ -4,6 +4,7 @@ package org.thingsboard.integration.api.util;
 
 import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -44,6 +45,10 @@ public class ExceptionUtil {
                 ThingsboardException.class, ThingsboardRuntimeException.class);
         if (exception != null && StringUtils.isNotEmpty(exception.getMessage())) {
             return exception.getMessage();
+        }
+        String scriptErrorMessage = getScriptErrorMessage(e);
+        if (StringUtils.isNotEmpty(scriptErrorMessage)) {
+            return scriptErrorMessage;
         } else {
             if (stackTraceEnabled) {
                 StringWriter sw = new StringWriter();
@@ -55,4 +60,16 @@ public class ExceptionUtil {
             }
         }
     }
+
+    private static String getScriptErrorMessage(Throwable e) {
+        TbScriptException scriptException = lookupException(e, TbScriptException.class);
+        if (scriptException == null || scriptException.getCause() == null) {
+            return null;
+        }
+        return switch (scriptException.getErrorCode()) {
+            case RUNTIME, COMPILATION -> scriptException.getCause().getMessage();
+            case TIMEOUT, OTHER -> null;
+        };
+    }
+
 }
