@@ -152,7 +152,8 @@ export class NotificationComponent implements OnInit {
     } else if (this.notification.type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST ||
                this.notification.type === NotificationType.ADDON_ACCESS_REQUEST ||
                this.notification.type === NotificationType.ADDON_ACCESS_ERROR ||
-               this.notification.type === NotificationType.PLAN_UPGRADE_REQUEST) {
+               this.notification.type === NotificationType.PLAN_UPGRADE_REQUEST ||
+               this.notification.type === NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST) {
       return {color: 'var(--tb-primary-500)'};
     }
     return null;

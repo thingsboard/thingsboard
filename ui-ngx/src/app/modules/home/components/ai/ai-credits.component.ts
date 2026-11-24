@@ -14,12 +14,9 @@ import {
   signal,
   ViewContainerRef
 } from '@angular/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { TelemetrySubscriber } from '@shared/models/telemetry/telemetry.models';
-import { AliasFilterType } from '@shared/models/alias.models';
-import { EntityKeyType } from '@shared/models/query/query.models';
+import { aiCreditsResetDate, watchAiCredits } from '@home/components/ai/ai-credits.models';
 import { ApiUsageStateValue } from '@shared/models/api-usage.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { PopoverPreferredPlacement } from '@shared/components/popover.models';
@@ -79,10 +76,7 @@ export class AiCreditsComponent implements OnDestroy {
   maxLabel = computed(() => this.shortNumber.transform(this.aiCreditsLimit()));
   leftLabel = computed(() => this.shortNumber.transform(Math.max(0, this.aiCreditsLimit() - this.aiCreditsCount()), {roundDown: true}));
 
-  resetDate = computed(() => {
-    const now = new Date();
-    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-  });
+  resetDate = computed(() => aiCreditsResetDate());
 
   private telemetryWsService = inject(TelemetryWebsocketService);
   private zone = inject(NgZone);
@@ -91,7 +85,6 @@ export class AiCreditsComponent implements OnDestroy {
   private viewContainerRef = inject(ViewContainerRef);
 
   private telemetrySubscriber: TelemetrySubscriber;
-  private cancelSubscription$ = new Subject<void>();
 
   private activeEffect = effect(() => {
     if (this.active()) {
@@ -103,11 +96,9 @@ export class AiCreditsComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.unsubscribeFromCredits();
-    this.cancelSubscription$.complete();
   }
 
   private unsubscribeFromCredits(): void {
-    this.cancelSubscription$.next();
     if (this.telemetrySubscriber) {
       this.telemetrySubscriber.unsubscribe();
       this.telemetrySubscriber = null;
@@ -148,38 +139,15 @@ export class AiCreditsComponent implements OnDestroy {
     if (this.telemetrySubscriber) {
       return;
     }
-    const latestKeys = [
-      { key: 'aiApiState', type: EntityKeyType.TIME_SERIES },
-      { key: 'aiCreditsLimit', type: EntityKeyType.TIME_SERIES },
-      { key: 'aiCreditsCount', type: EntityKeyType.TIME_SERIES }
-    ];
-
-    this.telemetrySubscriber = TelemetrySubscriber.createEntityFilterLatestSubscription(
-      this.telemetryWsService,
-      { type: AliasFilterType.apiUsageState },
-      this.zone,
-      latestKeys
-    );
-
-    this.telemetrySubscriber.subscribe();
-    this.telemetrySubscriber.entityData$.pipe(
-      takeUntil(this.cancelSubscription$)
-    ).subscribe(update => {
-      const entityData = update.data?.data ?? update.update;
-      if (entityData?.length) {
-        const latest = entityData[0].latest;
-        if (latest?.[EntityKeyType.TIME_SERIES]) {
-          const ts = latest[EntityKeyType.TIME_SERIES];
-          if (ts.aiCreditsCount) {
-            this.aiCreditsCount.set(Number(ts.aiCreditsCount.value) || 0);
-          }
-          if (ts.aiCreditsLimit) {
-            this.aiCreditsLimit.set(Number(ts.aiCreditsLimit.value) || 0);
-          }
-          if (ts.aiApiState) {
-            this.aiApiState.set(ts.aiApiState.value);
-          }
-        }
+    this.telemetrySubscriber = watchAiCredits(this.telemetryWsService, this.zone, update => {
+      if (update.count !== undefined) {
+        this.aiCreditsCount.set(update.count);
+      }
+      if (update.limit !== undefined) {
+        this.aiCreditsLimit.set(update.limit);
+      }
+      if (update.state) {
+        this.aiApiState.set(update.state);
       }
     });
   }

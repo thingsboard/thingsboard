@@ -128,7 +128,7 @@
       }
     </div>
   }
-  <div class="ai-chat-composer">
+  <div #composer class="ai-chat-composer">
     @if (pill(); as current) {
       <button type="button" class="k-pill" [class.new]="current.mode === 'new'"
               [matTooltip]="current.label" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.go-to-end' | translate"
@@ -140,13 +140,15 @@
         }
       </button>
     }
-    @if (notice(); as current) {
+    @if (creditsOut(); as limitType) {
+      <tb-ai-credits-out [limitType]="limitType" (dismissed)="creditsOut.set(null)"></tb-ai-credits-out>
+    } @else if (notice(); as current) {
       <div class="k-notice k-notice-edge" [class]="'k-notice k-notice-edge ' + (current.kind === 'block' ? 'blocking' : current.kind)" [attr.role]="current.kind === 'block' ? 'alert' : 'status'">
         <mat-icon aria-hidden="true">{{ current.icon }}</mat-icon><span>{{ current.text }}</span>
       </div>
     }
     <tb-ai-prompt-input
-      [blocked]="notice()?.kind === 'block'"
+      [blocked]="notice()?.kind === 'block' || !!creditsOut()"
       [docked]="docked()"
       [placeholder]="placeholder()"
       [suggestion]="suggestion()"

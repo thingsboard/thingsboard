@@ -560,6 +560,7 @@ export enum NotificationType {
   ADDON_ACCESS_REQUEST = 'ADDON_ACCESS_REQUEST',
   ADDON_ACCESS_ERROR = 'ADDON_ACCESS_ERROR',
   PLAN_UPGRADE_REQUEST = 'PLAN_UPGRADE_REQUEST',
+  AI_CREDITS_LIMIT_INCREASE_REQUEST = 'AI_CREDITS_LIMIT_INCREASE_REQUEST',
   API_USAGE_LIMIT = 'API_USAGE_LIMIT',
   NEW_PLATFORM_VERSION = 'NEW_PLATFORM_VERSION',
   RULE_NODE = 'RULE_NODE',
@@ -586,6 +587,7 @@ export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.ADDON_ACCESS_REQUEST, 'pending_actions'],
   [NotificationType.ADDON_ACCESS_ERROR, 'warning'],
   [NotificationType.PLAN_UPGRADE_REQUEST, 'mdi:file-cog'],
+  [NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST, 'auto_awesome'],
   [NotificationType.API_USAGE_LIMIT, 'insert_chart'],
   [NotificationType.INTEGRATION_LIFECYCLE_EVENT, 'integration_instructions'],
   [NotificationType.TASK_PROCESSING_FAILURE, 'warning'],
@@ -679,6 +681,12 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
     {
       name: 'notification.template-type.plan-upgrade-request',
       helpId: 'notification/plan_upgrade_request'
+    }
+  ],
+  [NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST,
+    {
+      name: 'notification.template-type.ai-credits-limit-increase-request',
+      helpId: 'notification/ai_credits_limit_increase_request'
     }
   ],
   [NotificationType.API_USAGE_LIMIT,
@@ -803,7 +811,8 @@ export interface NotificationUserSetting {
 export const singleNotificationTypeTemplate = (type: NotificationType) => {
   return type === NotificationType.USER_ACTIVATED ||
          type === NotificationType.USER_REGISTERED ||
-         type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST;
+         type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST ||
+         type === NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST;
 }
 
 const sysAdminNotificationTypes: ReadonlySet<NotificationType> = new Set([
@@ -812,6 +821,7 @@ const sysAdminNotificationTypes: ReadonlySet<NotificationType> = new Set([
   NotificationType.ADDON_ACCESS_REQUEST,
   NotificationType.ADDON_ACCESS_ERROR,
   NotificationType.PLAN_UPGRADE_REQUEST,
+  NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST,
   NotificationType.API_USAGE_LIMIT,
   NotificationType.NEW_PLATFORM_VERSION,
   NotificationType.RATE_LIMITS,
@@ -823,7 +833,8 @@ const adminRequestNotificationTypes: ReadonlySet<NotificationType> = new Set([
   NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
   NotificationType.ADDON_ACCESS_REQUEST,
   NotificationType.ADDON_ACCESS_ERROR,
-  NotificationType.PLAN_UPGRADE_REQUEST
+  NotificationType.PLAN_UPGRADE_REQUEST,
+  NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST
 ]);
 
 const edgeNotificationTypes: ReadonlySet<NotificationType> = new Set([
@@ -844,7 +855,7 @@ export const isNotificationTypeReceivable = (type: NotificationType, authority: 
       }
       break;
     default:
-      if (type === NotificationType.PLAN_UPGRADE_REQUEST) {
+      if (type === NotificationType.PLAN_UPGRADE_REQUEST || type === NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST) {
         return false;
       }
   }

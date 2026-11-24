@@ -210,6 +210,7 @@ export class NotificationsHomeComponent {
       case NotificationType.ADDON_ACCESS_REQUEST:
       case NotificationType.ADDON_ACCESS_ERROR:
       case NotificationType.PLAN_UPGRADE_REQUEST:
+      case NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST:
         return 'var(--tb-primary-500)';
       default:
         return null;

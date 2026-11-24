@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { aiCreditsLimitOf, AiCreditsLimitType } from '@home/components/ai/ai-credits.models';
 import { AiCardAction } from '@home/components/ai/ai-card-actions.component';
 import { AiNotice } from '@shared/models/ai-chat.models';
 import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.component';
@@ -9,6 +10,7 @@ import {
   DestroyRef,
   effect,
   ElementRef,
+  viewChild,
   EventEmitter,
   HostListener,
   inject,
@@ -99,6 +101,8 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   private static readonly NARROW_WIDTH = 1100;
   private static readonly END_IN_VIEW = 160;
+
+  private static readonly CREDITS_PIN_MS = 1500;
   private static readonly CONNECTIVITY_GUIDE = 'https://thingsboard.io/docs/getting-started-guides/connectivity/';
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
@@ -143,6 +147,40 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
 
   logScrolled = signal(false);
   private atEnd = signal(true);
+
+  private chatArea = viewChild<ElementRef<HTMLElement>>('chatArea');
+
+  private composer = viewChild<ElementRef<HTMLElement>>('composer');
+
+  private pinToEndUntil = 0;
+
+  private creditsOutEffect = effect(() => {
+    if (this.creditsOut()) {
+      this.pinToEndUntil = Date.now() + SolutionChatComponent.CREDITS_PIN_MS;
+      setTimeout(() => this.scrollLogToEnd());
+    }
+  });
+
+  private composerSizeEffect = effect(onCleanup => {
+    const area = this.chatArea()?.nativeElement;
+    const composer = this.composer()?.nativeElement;
+    if (!area || !composer) {
+      return;
+    }
+    let composerHeight = composer.offsetHeight;
+    const observer = new ResizeObserver(() => {
+      const height = composer.offsetHeight;
+      if (Date.now() < this.pinToEndUntil || (height > composerHeight && untracked(this.atEnd))) {
+        area.scrollTop = area.scrollHeight;
+      }
+      composerHeight = height;
+    });
+    observer.observe(composer);
+    if (area.firstElementChild) {
+      observer.observe(area.firstElementChild);
+    }
+    onCleanup(() => observer.disconnect());
+  });
   private newTurns = signal(0);
   private seenTurns = 0;
 
@@ -296,6 +334,10 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
   stopping = signal(false);
 
   notice = signal<AiNotice | null>(null);
+
+  creditsOut = signal<AiCreditsLimitType | null>(null);
+
+  private freshSolutionId: string | null = null;
 
   private stoppedAction: (() => void) | null = null;
 
@@ -890,13 +932,45 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
     action?.();
   }
 
+  private creditsLimitOf(err: any, message?: string): AiCreditsLimitType | null {
+    const limitType = aiCreditsLimitOf(err);
+    if (limitType) {
+      return limitType;
+    }
+    const text = message ?? (parseHttpErrorMessage(err, this.translate, isNotEmptyStr(err?.error) ? 'text' : undefined, this.sanitizer).message ?? '').toString();
+    return /out of ai credits|ai_credits limit exceeded/i.test(text) ? 'POOL' : null;
+  }
+
+  private restorePrompt(msg: string): void {
+    const messages = this.messages();
+    const last = messages.map(message => message.from).lastIndexOf('USER');
+    if (last >= 0 && (messages[last] as GeneralChatMessage).content === msg) {
+      this.messages.set([...messages.slice(0, last), ...messages.slice(last + 1)]);
+      this.messageSteps = this.messageSteps.slice(0, -1);
+    }
+    setTimeout(() => this.promptInput?.setValue(msg));
+  }
+
+  private discardFreshSolution(msg: string): boolean {
+    const solutionId = this.freshSolutionId;
+    this.freshSolutionId = null;
+    if (!solutionId || solutionId !== this.solutionId) {
+      return false;
+    }
+    this.aiSolutions.discard(solutionId).subscribe();
+    this.router.navigate([], {relativeTo: this.route, queryParams: {solutionId: NEW_SOLUTION_ID}, queryParamsHandling: 'merge', replaceUrl: true})
+      .then(() => setTimeout(() => this.promptInput?.setValue(msg)));
+    return true;
+  }
+
   private noticeFor(err: any): boolean {
     const status = err?.status;
     const message = (parseHttpErrorMessage(err, this.translate, isNotEmptyStr(err?.error) ? 'text' : undefined, this.sanitizer).message ?? '').toString();
+    const limitType = this.creditsLimitOf(err, message);
     if (status === 0) {
       this.setNotice('warn', 'wifi_off', 'connection-failed');
-    } else if (/out of ai credits|ai_credits limit exceeded/i.test(message)) {
-      this.setNotice('block', 'block', 'credits-used-up');
+    } else if (limitType) {
+      this.creditsOut.set(limitType);
     } else if (status === 429) {
       this.setNotice('warn', 'hourglass_top', 'rate-limited');
     } else {
@@ -1343,6 +1417,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
       ? of(null)
       : this.solutionCreator.startSolution({ignoreLoading: true, ignoreErrors: true}).pipe(
         tap(solution => {
+          this.freshSolutionId = solution.id;
           this.solutionId = solution.id;
           this.solutionInfo = solution;
           this.rememberSolution();
@@ -1359,6 +1434,7 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         this.solutionCreator.chatSolution(this.solutionId, this.solutionStep(), msg, {ignoreLoading: true, ignoreErrors: true}, resources)
       ),
       tap(solution => {
+        this.freshSolutionId = null;
         this.solutionInfo = solution;
         this.rememberSolution();
         this.updatedCurrentMsg();
@@ -1367,6 +1443,14 @@ export class SolutionChatComponent extends PageComponent implements OnInit, OnDe
         }
       }),
       catchError(err => {
+        if (this.creditsLimitOf(err)) {
+          this.restorePrompt(msg);
+          if (this.discardFreshSolution(msg)) {
+            this.noticeFor(err);
+            return EMPTY;
+          }
+        }
+        this.freshSolutionId = null;
         if (!this.wasStopped(err, () => this.sendMessage(msg, resources).subscribe(() => {})) && !this.noticeFor(err)) {
           this.showErrorMessage(err);
         }

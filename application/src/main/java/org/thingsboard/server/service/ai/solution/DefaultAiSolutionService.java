@@ -37,7 +37,7 @@ public class DefaultAiSolutionService implements AiSolutionService {
     @Override
     public JsonNode startNew(SecurityUser user) {
         return tbAiService.process(tokenProvider -> operations.execute(
-                new TbAiOperation(ChannelProtocol.SOLUTION_START, null), user, tokenProvider), user, false);
+                new TbAiOperation(ChannelProtocol.SOLUTION_START, null), user, tokenProvider), user, true);
     }
 
     @Override

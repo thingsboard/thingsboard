@@ -66,6 +66,10 @@ export class NotificationService {
     return this.http.post<void>(`/api/notification/sendAddonAccessRequest/${addonType}`, null, defaultHttpOptionsFromConfig(config));
   }
 
+  public sendAiCreditsLimitIncreaseRequest(limitType: 'TENANT' | 'POOL', config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/notification/aiCreditsLimitIncreaseRequest?limitType=${limitType}`, null, defaultHttpOptionsFromConfig(config));
+  }
+
   public sendPlanUpgradeRequest(planName: string, config?: RequestConfig): Observable<void> {
     return this.http.post<void>(`/api/notification/sendPlanUpgradeRequest/${planName}`,  null, defaultHttpOptionsFromConfig(config));
   }

@@ -10,6 +10,7 @@ import { AiChatComponent } from '@home/components/ai/ai-chat.component';
 import { AiApprovalCardComponent } from '@home/components/ai/ai-approval-card.component';
 import { AiRenameDialogComponent } from '@home/components/ai/ai-rename-dialog.component';
 import { AiCreditsComponent } from '@home/components/ai/ai-credits.component';
+import { AiCreditsOutComponent } from '@home/components/ai/ai-credits-out.component';
 import { AiCreditsPopupComponent } from '@home/components/ai/ai-credits-popup.component';
 import { AiLoadingModalComponent } from '@home/components/ai/ai-loading-modal.component';
 import { AiNoTelemetryModalComponent } from '@home/components/ai/ai-no-telemetry-modal.component';
@@ -48,6 +49,7 @@ import { AiMarkComponent } from '@home/components/ai/ai-mark.component';
     AiApprovalCardComponent,
     AiRenameDialogComponent,
     AiCreditsComponent,
+    AiCreditsOutComponent,
     AiCreditsPopupComponent,
     AiLoadingModalComponent,
     AiNoTelemetryModalComponent,
@@ -98,6 +100,7 @@ import { AiMarkComponent } from '@home/components/ai/ai-mark.component';
     AiApprovalCardComponent,
     AiRenameDialogComponent,
     AiCreditsComponent,
+    AiCreditsOutComponent,
     AiLoadingModalComponent,
     AiNoTelemetryModalComponent,
     AiAttachmentsComponent,

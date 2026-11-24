@@ -2117,6 +2117,16 @@
             "none-left": "No credits left",
             "aria": "AI credits: {{used}} of {{max}} used this month"
         },
+        "credits-out": {
+            "title": "AI credits used up",
+            "tenant-text": "Your tenant has used all {{limit}} AI credits for this month. They reset on {{date}}, or your system administrator can raise the limit.",
+            "tenant-text-plain": "Your tenant has used all its AI credits for this month. They reset on {{date}}, or your system administrator can raise the limit.",
+            "pool-text": "All available AI credits have been used for this month. You can ask your administrator to add more AI credits.",
+            "request": "Request more credits",
+            "sent": "Request sent to your system administrator.",
+            "failed": "Couldn't send the request. Try again.",
+            "view-usage": "View usage"
+        },
         "get-started": {
             "title": "Get started",
             "heading": "What are you building, or what device do you have?",
@@ -10883,6 +10893,7 @@
             "addon-access-error": "Add-on/Feature access error",
             "addon-access-request": "Add-on/Feature access request",
             "plan-upgrade-request": "Plan upgrade request",
+                "ai-credits-limit-increase-request": "AI credits limit increase request",
             "entity-action": "Entity action",
             "general": "General",
             "integration-lifecycle-event": "Integration lifecycle event",

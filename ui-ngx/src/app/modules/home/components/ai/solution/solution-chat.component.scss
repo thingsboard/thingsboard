@@ -212,6 +212,15 @@ tb-ai-chat-title:has(.ai-chat-status) + .sol-head-actions {
   text-align: left;
 }
 
+.sol-hero-credits {
+  margin-top: 24px;
+  text-align: left;
+
+  + .sol-hero-input {
+    margin-top: 0;
+  }
+}
+
 .sol-examples {
   display: flex;
   flex-wrap: wrap;

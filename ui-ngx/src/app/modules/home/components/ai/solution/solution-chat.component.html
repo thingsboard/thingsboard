@@ -37,9 +37,13 @@
       <tb-ai-mark class="sol-mark" size="64" icon="layers"></tb-ai-mark>
       <h1 class="sol-title">{{ 'solution-creator.what-should-it-do' | translate }}</h1>
       <p class="sol-lead">{{ 'solution-creator.what-it-becomes' | translate }}</p>
+      @if (creditsOut(); as limitType) {
+        <tb-ai-credits-out class="sol-hero-credits" [limitType]="limitType" (dismissed)="creditsOut.set(null)"></tb-ai-credits-out>
+      }
       <tb-ai-prompt-input class="sol-hero-input"
                           [placeholder]="activePlaceholder() | translate"
                           [loading]="loading()"
+                          [blocked]="!!creditsOut()"
                           (messageSent)="sendMsgFromUser($event)">
       </tb-ai-prompt-input>
       <div class="sol-examples">
@@ -140,7 +144,7 @@
           }
         </div>
       </div>
-      <div class="sol-composer">
+      <div #composer class="sol-composer">
         <div class="sol-toast-chat" tb-toast toastTarget="solution-creator-chat"></div>
         @if (pill(); as current) {
           <button type="button" class="k-pill" [class.new]="current.mode === 'new'"
@@ -169,7 +173,9 @@
             <mat-icon class="art-tray-chev" aria-hidden="true">chevron_right</mat-icon>
           </button>
         }
-        @if (notice(); as current) {
+        @if (creditsOut(); as limitType) {
+          <tb-ai-credits-out [limitType]="limitType" (dismissed)="creditsOut.set(null)"></tb-ai-credits-out>
+        } @else if (notice(); as current) {
           <div class="k-notice k-notice-edge" [class]="'k-notice k-notice-edge ' + (current.kind === 'block' ? 'blocking' : current.kind)" [attr.role]="current.kind === 'block' ? 'alert' : 'status'">
             <mat-icon aria-hidden="true">{{ current.icon }}</mat-icon><span>{{ current.text }}</span>
           </div>
@@ -178,7 +184,7 @@
           [placeholder]="activePlaceholder() | translate"
           [loading]="loading() || isGenerating() || making() === 'solution'"
           [stoppable]="!!info()?.id"
-          [blocked]="notice()?.kind === 'block'"
+          [blocked]="notice()?.kind === 'block' || !!creditsOut()"
           [stopping]="stopping()"
           (stopped)="stop()"
           [pinned]="true"

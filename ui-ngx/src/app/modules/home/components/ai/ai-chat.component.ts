@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { aiCreditsLimitOf, AiCreditsLimitType } from '@home/components/ai/ai-credits.models';
 import { aiPageView, isAiTitledView } from '@shared/models/ai-chat.models';
 import {
   Component,
@@ -211,16 +212,30 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   private chatLog = viewChild(AiChatMessagesComponent, {read: ElementRef});
 
+  private composer = viewChild<ElementRef<HTMLElement>>('composer');
+
   private logSizeEffect = effect(onCleanup => {
     const area = this.chatArea()?.nativeElement;
     const log = this.chatLog()?.nativeElement;
+    const composer = this.composer()?.nativeElement;
     if (!area) {
       return;
     }
-    const observer = new ResizeObserver(() => this.onLogScroll(area));
+    let composerHeight = composer?.offsetHeight ?? 0;
+    const observer = new ResizeObserver(() => {
+      const height = composer?.offsetHeight ?? 0;
+      if (height > composerHeight && untracked(this.atEnd)) {
+        area.scrollTop = area.scrollHeight;
+      }
+      composerHeight = height;
+      this.onLogScroll(area);
+    });
     observer.observe(area);
     if (log) {
       observer.observe(log);
+    }
+    if (composer) {
+      observer.observe(composer);
     }
     onCleanup(() => observer.disconnect());
   });
@@ -333,6 +348,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private newTurns = signal(0);
 
   notice = signal<AiNotice | null>(null);
+
+  creditsOut = signal<AiCreditsLimitType | null>(null);
+
+  private freshChatId: string | null = null;
 
   private noticeTimer: ReturnType<typeof setTimeout>;
 
@@ -823,8 +842,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
           this.resumeTurn(this.chatId(), true);
           return;
         }
-        this.messages.update(list => list.filter(message => message !== userMessage));
-        setTimeout(() => this.showErrorMessage(err), 0);
+        this.onSendFailed(err, userMessage);
       }
     });
   }
@@ -889,11 +907,31 @@ export class AiChatComponent implements OnInit, OnDestroy {
         }
       })
     ).subscribe({
-      error: err => {
-        this.messages.update(list => list.filter(message => message !== userMessage));
-        setTimeout(() => this.showErrorMessage(err), 0);
-      }
+      error: err => this.onSendFailed(err, userMessage)
     });
+  }
+
+  private discardFreshChat(): void {
+    const chatId = this.freshChatId;
+    this.freshChatId = null;
+    if (!chatId || chatId !== this.chatId()) {
+      return;
+    }
+    this.chats.discard(chatId).subscribe();
+    this.shownChatId = undefined;
+    this.chatId.set(undefined);
+  }
+
+  private onSendFailed(err: any, userMessage: ChatMessage): void {
+    const limitType = aiCreditsLimitOf(err);
+    if (limitType) {
+      this.restoreLastPrompt();
+      this.discardFreshChat();
+      this.creditsOut.set(limitType);
+      return;
+    }
+    this.messages.update(list => list.filter(message => message !== userMessage));
+    setTimeout(() => this.showErrorMessage(err), 0);
   }
 
   private chatRequest(prompt: AiPromptMessage): SendChatMessageRequest {
@@ -920,6 +958,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       ? of(null)
       : this.chats.create('New chat', this.newChatAutoApprove()).pipe(
         tap(chat => {
+          this.freshChatId = chat.id;
           this.shownChatId = chat.id;
           this.chatId.set(chat.id);
         })
@@ -1001,6 +1040,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   private handleChatEvent(event: ChatEvent): Observable<ChatEvent> {
+    if (event.event !== 'error' && event.event !== 'chatTitleGenerated') {
+      this.freshChatId = null;
+    }
     switch (event.event) {
       case 'assistantDelta':
         this.appendDelta(event.data.text);
@@ -1063,9 +1105,12 @@ export class AiChatComponent implements OnInit, OnDestroy {
       default:
         if (event.event === 'error' && event.data?.code) {
           this.restoreLastPrompt();
-          this.setNotice(event.data.code === 'CREDITS_USED_UP' ? 'block' : 'warn',
-            event.data.code === 'CREDITS_USED_UP' ? 'block' : 'hourglass_top',
-            event.data.code === 'CREDITS_USED_UP' ? 'credits-used-up' : 'rate-limited');
+          if (event.data.code === 'CREDITS_USED_UP') {
+            this.discardFreshChat();
+            this.creditsOut.set('POOL');
+          } else {
+            this.setNotice('warn', 'hourglass_top', 'rate-limited');
+          }
         } else if (event.event === 'error') {
           const message = event.data?.message || this.translate.instant('ai-assistant.run-failed');
           this.chats.setFailed(this.chatId(), message);

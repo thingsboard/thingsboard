@@ -17,6 +17,7 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.exception.AiCreditsExceededException;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.transport.TbAiChannelRejectedException;
@@ -182,7 +183,7 @@ class DefaultTbAiService implements TbAiService {
 
     private void checkApiUsage(SecurityUser user) {
         if (!apiUsageStateService.getApiUsageState(user.getTenantId()).isAiEnabled()) {
-            throw new ThingsboardRuntimeException("Out of AI credits", ThingsboardErrorCode.TOO_MANY_REQUESTS);
+            throw new AiCreditsExceededException(AiCreditsExceededException.TENANT_LIMIT);
         }
     }
 

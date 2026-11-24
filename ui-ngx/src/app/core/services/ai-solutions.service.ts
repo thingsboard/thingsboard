@@ -229,6 +229,12 @@ export class AiSolutionsService {
     );
   }
 
+  discard(solutionId: string): Observable<void> {
+    return this.api.deleteSolution(solutionId, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap(() => this._solutions.update(list => list.filter(item => item.id !== solutionId)))
+    );
+  }
+
   confirmAndDelete(solution: SolutionInfo): Observable<boolean> {
     return this.dialog.confirm(
       this.translate.instant('solution-creator.delete-solution-title', {name: this.titleOf(solution)}),

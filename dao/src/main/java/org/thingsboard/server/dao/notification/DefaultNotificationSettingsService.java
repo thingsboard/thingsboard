@@ -158,6 +158,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             defaultNotifications.create(tenantId, DefaultNotifications.addonAccessRequest, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.addonAccessError, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.planUpgradeRequest, sysAdmins.getId());
+            defaultNotifications.create(tenantId, DefaultNotifications.aiCreditsLimitIncreaseRequest, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.apiFeatureWarningForSysadmin, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.apiFeatureWarningForTenant, affectedTenantAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.apiFeatureDisabledForSysadmin, sysAdmins.getId());
@@ -219,6 +220,9 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             }
             if (!isNotificationConfigured(tenantId, NotificationType.PLAN_UPGRADE_REQUEST)) {
                 defaultNotifications.create(tenantId, DefaultNotifications.planUpgradeRequest, sysAdmins.getId());
+            }
+            if (!isNotificationConfigured(tenantId, NotificationType.AI_CREDITS_LIMIT_INCREASE_REQUEST)) {
+                defaultNotifications.create(tenantId, DefaultNotifications.aiCreditsLimitIncreaseRequest, sysAdmins.getId());
             }
         } else {
             NotificationTarget tenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.TENANT_ADMINISTRATORS)

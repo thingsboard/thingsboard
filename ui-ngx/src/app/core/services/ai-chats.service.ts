@@ -313,6 +313,15 @@ export class AiChatsService {
     this.panelService.updateChatTitle(chatId, title);
   }
 
+  discard(chatId: string): Observable<void> {
+    return this.aiChat.deleteChat(chatId, {ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap(() => {
+        this._chats.update(list => list.filter(c => c.id !== chatId));
+        this.panelService.removeChat(chatId);
+      })
+    );
+  }
+
   confirmAndDelete(chat: ChatInfo): Observable<boolean> {
     const title = chat.title || this.translate.instant('ai-assistant.new-chat');
     return this.dialog.confirm(
