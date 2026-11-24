@@ -8752,6 +8752,11 @@
                 "of-limit": "{{percent}}% of limit",
                 "no-limit": "No limit"
             },
+            "mobile-app": {
+                "qr": "QR code to connect the mobile app",
+                "download-on-the": "Download on the",
+                "get-it-on": "Get it on"
+            },
             "list": {
                 "show-more": "Show more",
                 "show-all": "Show all",

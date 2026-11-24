@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { selectHomeCards } from '@core/auth/auth.selectors';
+import { selectHomeCards, selectMobileQrEnabled } from '@core/auth/auth.selectors';
 import { TourService } from '@core/services/tour.service';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
@@ -25,16 +25,22 @@ export class TenantAdminHomeComponent {
 
   readonly HomeCardId = HomeCardId;
 
-  private readonly sideCardIds = inject(UserPermissionsService).hasGenericPermission(Resource.ALL, Operation.READ)
-    ? SIDE_CARDS : SIDE_CARDS.filter(id => id !== HomeCardId.USAGE);
+  private readonly store = inject(Store<AppState>);
 
-  readonly cards = [...MAIN_CARDS, ...this.sideCardIds];
+  private readonly usageAccess = inject(UserPermissionsService).hasGenericPermission(Resource.ALL, Operation.READ);
+
+  private readonly mobileQrEnabled = toSignal(this.store.select(selectMobileQrEnabled), {initialValue: false});
+
+  private readonly sideCardIds = computed(() => SIDE_CARDS.filter(id =>
+    (id !== HomeCardId.USAGE || this.usageAccess) && (id !== HomeCardId.MOBILE_APP || this.mobileQrEnabled())));
+
+  readonly cards = computed(() => [...MAIN_CARDS, ...this.sideCardIds()]);
 
   readonly aiAvailable = inject(TourService).aiAvailable();
 
-  private settings = toSignal(inject(Store<AppState>).select(selectHomeCards), {initialValue: {}});
+  private settings = toSignal(this.store.select(selectHomeCards), {initialValue: {}});
 
   readonly mainCards = computed(() => MAIN_CARDS.filter(id => isHomeCardShown(this.settings(), id)));
 
-  readonly sideCards = computed(() => this.sideCardIds.filter(id => isHomeCardShown(this.settings(), id)));
+  readonly sideCards = computed(() => this.sideCardIds().filter(id => isHomeCardShown(this.settings(), id)));
 }

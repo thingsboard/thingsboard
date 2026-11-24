@@ -1,0 +1,138 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  min-width: 0;
+  container: tb-mobile-app-home / inline-size;
+}
+
+.tb-app-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.tb-app-widget-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.badges-left .tb-app-widget-row {
+  flex-direction: row-reverse;
+}
+
+.tb-app-qr {
+  flex: none;
+  box-sizing: border-box;
+  width: 96px;
+  height: 96px;
+  padding: 4px;
+  border-radius: 6px;
+  background: #fff;
+
+  ::ng-deep svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.tb-store-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tb-store-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 136px;
+  height: 40px;
+  padding: 0 12px 0 10px;
+  border: 1px solid #a6a6a6;
+  border-radius: 7px;
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color .2s ease, border-color .2s ease;
+
+  &:hover {
+    border-color: #c8c8c8;
+    background: #1f1f1f;
+    color: #fff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: 2px;
+  }
+}
+
+.tb-store-mark {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+
+  svg {
+    display: block;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.apple .tb-store-mark svg {
+  width: 24px;
+  height: 24px;
+  margin-top: -2px;
+}
+
+.tb-store-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: var(--tb-font, Roboto, sans-serif);
+  text-align: left;
+
+  small {
+    font-size: 10px;
+    line-height: 11px;
+    letter-spacing: 0.1px;
+    opacity: 0.92;
+  }
+
+  b {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 18px;
+    letter-spacing: -0.1px;
+  }
+}
+
+.play .tb-store-text small {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.tb-app-widget-label {
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: 0.2px;
+  text-align: center;
+  color: var(--tb-ink-60, rgba(0, 0, 0, 0.6));
+}
+
+@container tb-mobile-app-home (max-width: 290px) {
+  .tb-store-badges {
+    display: none;
+  }
+}

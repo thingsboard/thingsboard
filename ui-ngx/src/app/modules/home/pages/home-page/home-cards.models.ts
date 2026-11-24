@@ -21,7 +21,7 @@ export const HOME_CARDS: Record<HomeCardId, HomeCardDefinition> = {
     link: '/notification/inbox'},
   [HomeCardId.QUICK_LINKS]: {id: HomeCardId.QUICK_LINKS, icon: 'link', name: 'home.cards.quick-links'},
   [HomeCardId.USAGE]: {id: HomeCardId.USAGE, icon: 'data_usage', name: 'home.cards.usage', link: '/usage'},
-  [HomeCardId.MOBILE_APP]: {id: HomeCardId.MOBILE_APP, icon: 'phone_iphone', name: 'home.cards.mobile-app', height: 225}
+  [HomeCardId.MOBILE_APP]: {id: HomeCardId.MOBILE_APP, icon: 'phone_iphone', name: 'home.cards.mobile-app'}
 };
 
 export const isHomeCardShown = (settings: HomeCardsSettings, id: HomeCardId): boolean => settings?.[id] !== false;
