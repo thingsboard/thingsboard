@@ -81,16 +81,6 @@ import java.util.function.Consumer;
 @Slf4j
 public final class IntegrationGrpcSession implements Closeable {
 
-    private static final IntegrationCallback<Void> UPLINK_CALLBACK = new IntegrationCallback<>() {
-        @Override
-        public void onSuccess(Void msg) {}
-
-        @Override
-        public void onError(Throwable e) {
-            log.warn("Failed to push remote integration uplink to the rule engine", e);
-        }
-    };
-
     private final UUID sessionId;
     private final BiConsumer<IntegrationId, IntegrationGrpcSession> sessionOpenListener;
     private final Consumer<IntegrationId> sessionCloseListener;
@@ -209,6 +199,7 @@ public final class IntegrationGrpcSession implements Closeable {
     }
 
     UplinkResponseMsg processUplinkMsg(UplinkMsg msg) {
+        IntegrationCallback<Void> callback = uplinkCallback(configuration.getTenantId(), configuration.getId());
         try {
             if (msg.getDeviceDataCount() > 0) {
                 for (DeviceUplinkDataProto data : msg.getDeviceDataList()) {
@@ -216,7 +207,7 @@ public final class IntegrationGrpcSession implements Closeable {
                     ctx.getRateLimitService().checkLimitPerDevice(configuration.getTenantId(), data.getDeviceName(), data::toString);
 
                     final UUID sessionId = this.sessionId;
-                    ctx.getPlatformIntegrationService().processUplinkData(configuration, sessionId, data, UPLINK_CALLBACK).run();
+                    ctx.getPlatformIntegrationService().processUplinkData(configuration, sessionId, data, callback).run();
                 }
             }
 
@@ -224,13 +215,13 @@ public final class IntegrationGrpcSession implements Closeable {
                 for (AssetUplinkDataProto data : msg.getAssetDataList()) {
                     ctx.getRateLimitService().checkLimit(configuration.getTenantId(), data::toString);
                     ctx.getRateLimitService().checkLimitPerAsset(configuration.getTenantId(), data.getAssetName(), data::toString);
-                    ctx.getPlatformIntegrationService().processUplinkData(configuration, data, UPLINK_CALLBACK).run();
+                    ctx.getPlatformIntegrationService().processUplinkData(configuration, data, callback).run();
                 }
             }
 
             if (msg.getEntityViewDataCount() > 0) {
                 for (EntityViewDataProto data : msg.getEntityViewDataList()) {
-                    ctx.getPlatformIntegrationService().processUplinkData(configuration, data, UPLINK_CALLBACK).run();
+                    ctx.getPlatformIntegrationService().processUplinkData(configuration, data, callback).run();
                 }
             }
 
@@ -270,14 +261,14 @@ public final class IntegrationGrpcSession implements Closeable {
             if (msg.getTbMsgProtoCount() > 0) {
                 for (MsgProtos.TbMsgProto tbMsgProto : msg.getTbMsgProtoList()) {
                     TbMsg tbMsg = TbMsg.fromProto(null, tbMsgProto, TbMsgCallback.EMPTY);
-                    ctx.getPlatformIntegrationService().process(this.configuration.getTenantId(), tbMsg, UPLINK_CALLBACK);
+                    ctx.getPlatformIntegrationService().process(this.configuration.getTenantId(), tbMsg, callback);
                 }
             }
         } catch (Exception e) {
             if (e instanceof TbRateLimitsException) {
-                sendIntegrationRateLimitEvent((TbRateLimitsException) e, msg.toString());
+                sendIntegrationRateLimitEvent((TbRateLimitsException) e, msg);
             } else {
-                sendUplinkErrorEvent(e, msg.toString());
+                sendUplinkErrorEvent(e, msg);
             }
 
             String errorMsg = e.getMessage() != null ? e.getMessage() : "";
@@ -292,7 +283,7 @@ public final class IntegrationGrpcSession implements Closeable {
                 .build();
     }
 
-    private void sendIntegrationRateLimitEvent(TbRateLimitsException exception, String message) {
+    private void sendIntegrationRateLimitEvent(TbRateLimitsException exception, UplinkMsg msg) {
         IntegrationId integrationId = configuration.getId();
         EntityType limitedEntity = exception.getEntityType();
         if (ctx.getRateLimitService().alreadyProcessed(integrationId, limitedEntity)) {
@@ -305,18 +296,18 @@ public final class IntegrationGrpcSession implements Closeable {
                 .entityId(configuration.getId().getId())
                 .serviceId(serviceId)
                 .eventType("Uplink")
-                .message(message)
+                .message(msg.toString())
                 .status("ERROR")
                 .error(exception.getMessage());
         saveEvent(configuration.getTenantId(), configuration.getId(), event.build());
     }
 
-    private void sendUplinkErrorEvent(Exception exception, String message) {
+    private void sendUplinkErrorEvent(Exception exception, UplinkMsg msg) {
         if (!DebugModeUtil.isDebugAvailable(configuration, "ERROR")) {
             return;
         }
         if (!ctx.getRateLimitService().checkLimit(configuration.getTenantId(), configuration.getId(), false)) {
-            sendIntegrationRateLimitEvent(new TbRateLimitsException(EntityType.INTEGRATION, "Integration debug rate limits reached!"), message);
+            sendIntegrationRateLimitEvent(new TbRateLimitsException(EntityType.INTEGRATION, "Integration debug rate limits reached!"), msg);
             return;
         }
         var event = IntegrationDebugEvent.builder()
@@ -324,10 +315,22 @@ public final class IntegrationGrpcSession implements Closeable {
                 .entityId(configuration.getId().getId())
                 .serviceId(serviceId)
                 .eventType("Uplink")
-                .message(message)
+                .message(msg.toString())
                 .status("ERROR")
                 .error(ExceptionUtil.toString(exception, configuration.getId(), ctx.isExceptionStackTraceEnabled()));
         saveEvent(configuration.getTenantId(), configuration.getId(), event.build());
+    }
+
+    private static IntegrationCallback<Void> uplinkCallback(TenantId tenantId, IntegrationId integrationId) {
+        return new IntegrationCallback<>() {
+            @Override
+            public void onSuccess(Void msg) {}
+
+            @Override
+            public void onError(Throwable e) {
+                log.warn("[{}][{}] Failed to push remote integration uplink to the rule engine", tenantId, integrationId, e);
+            }
+        };
     }
 
     private void sendConverterRateLimitEvent(TbEventProto proto) {

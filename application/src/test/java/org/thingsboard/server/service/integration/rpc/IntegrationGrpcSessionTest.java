@@ -164,6 +164,7 @@ class IntegrationGrpcSessionTest {
 
         assertThat(logAppender.list).singleElement().satisfies(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.WARN);
+            assertThat(event.getFormattedMessage()).isEqualTo("[" + tenantId + "][" + configuration.getId() + "] Failed to push remote integration uplink to the rule engine");
             assertThat(event.getThrowableProxy().getMessage()).isEqualTo("Queue is unavailable");
         });
     }
