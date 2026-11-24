@@ -8545,7 +8545,17 @@
                 "inactive-devices": "{ count, plural, =1 {1 device inactive} other {# devices inactive} }",
                 "device-active": "Device active",
                 "all-devices-active": "All {{count}} devices active",
-                "nothing-assigned": "No devices or dashboards assigned to you yet"
+                "nothing-assigned": "No devices or dashboards assigned to you yet",
+            "system-ok": "CPU, RAM and disk under 75%",
+            "system-high": "{{name}} at {{value}}%",
+            "system-high-on": "{{name}} at {{value}}% on {{service}}",
+            "system-high-services": "{{name}} at {{value}}% on {{count}} services",
+            "license-near": "License: {{items}}",
+            "license-devices": "devices {{percent}}%",
+            "license-assets": "assets {{percent}}%",
+            "license-ai-credits": "AI credits {{percent}}%",
+            "no-tenants": "No tenants yet",
+            "features-off": "{ count, plural, =1 {1 feature not configured} other {# features not configured} }"
             },
             "greeting": {
                 "morning": "Good morning",
@@ -8565,7 +8575,11 @@
                 "notifications": "Notifications",
                 "quick-links": "Quick links",
                 "usage": "Usage",
-                "mobile-app": "Mobile app"
+                "mobile-app": "Mobile app",
+            "product-release": "Product release",
+            "system-status": "System",
+            "license": "License",
+            "install-items": "Install"
             },
             "alarms": {
                 "whose": "Whose alarms",
@@ -8661,7 +8675,8 @@
                 "devices": "Active devices",
                 "messages": "Messages",
                 "today": "Today",
-                "none": "No activity yet"
+                "none": "No activity yet",
+                "no-messages": "No messages from devices yet"
             },
             "get-started": {
                 "progress": "{{done}} of {{total}}",
@@ -8723,6 +8738,10 @@
                 "opens-new-tab": "(opens in a new tab)",
                 "documentation": "Documentation",
                 "user-guide": "User guide",
+                "getting-started": "Getting started",
+                "tenant-profiles": "Tenant profiles",
+                "api": "API",
+                "widgets-library": "Widgets library",
                 "add-title": "Add quick link",
                 "edit-web-link": "Edit web link",
                 "link-type": "Link type",
@@ -8756,6 +8775,81 @@
                 "qr": "QR code to connect the mobile app",
                 "download-on-the": "Download on the",
                 "get-it-on": "Get it on"
+            },
+            "release": {
+                "available": "Update available",
+                "title": "ThingsBoard {{version}} is available",
+                "read-notes": "Read the release notes before upgrading.",
+                "notes": "Release notes",
+                "upgrade": "Upgrade",
+                "hide": "Hide",
+                "hidden": "{{version}} hidden"
+            },
+            "get-started-sys-admin": {
+                "before-tenants": "Before tenants sign in",
+                "when-needed": "When you need them",
+                "progress": "{{done}} of {{total}}",
+                "tenants": "{ count, plural, =1 {1 tenant} other {# tenants} }",
+                "configured": "Configured",
+                "skipped": "Skipped",
+                "skip": "Skip",
+                "undo-skip": "Undo skip",
+                "finished": "Every step is done. Install's Features takes this place.",
+                "finished-skipped": "{{count}} skipped. Install's Features takes this place; each stays there to set up.",
+                "tenant": {
+                    "title": "Create a tenant and its administrator",
+                    "text": "A tenant owns devices and assets; its administrators create and manage its devices, assets, customers and dashboards.",
+                    "action": "Add tenant"
+                },
+                "email": {
+                    "title": "Mail server",
+                    "text": "Mail server configuration is essential for user activation, password recovery, and alarm notification delivery.",
+                    "action": "Open Mail server"
+                },
+                "sms": {
+                    "title": "SMS provider",
+                    "text": "Configure SMS providers to notify the customers about the alarms via SMS.",
+                    "action": "Open Notifications settings"
+                },
+                "wl": {
+                    "title": "White labeling",
+                    "text": "Customize your company's or product's logo and color scheme without coding and without restarting the service.",
+                    "action": "Open White labeling"
+                },
+                "2fa": {
+                    "title": "Two-factor authentication (2FA)",
+                    "text": "Improve security of the platform accounts with two-factor authentication.",
+                    "action": "Open Two-factor authentication"
+                },
+                "oauth": {
+                    "title": "OAuth 2.0 single sign-on",
+                    "text": "Simplify login for the tenant and customer users with Single Sign-On functionality via OAuth 2.0.",
+                    "action": "Open OAuth 2.0"
+                },
+                "slack": {
+                    "title": "Slack",
+                    "text": "Distribute notifications to the tenant and customer users via Slack according to the notification rules you set.",
+                    "action": "Open Notifications settings"
+                }
+            },
+            "install": {
+                "add-tenant": "Add tenant",
+                "tenants": "Tenants",
+                "tenant-profiles": "Tenant profiles",
+                "users": "Users",
+                "customers": "Customers",
+                "dashboards": "Dashboards",
+                "integrations": "Integrations",
+                "features": "Features",
+                "features-count": "{{on}} of {{total}}",
+                "white-labeling": "White labeling",
+                "mail-server": "Mail server",
+                "sms-provider": "SMS provider",
+                "slack": "Slack",
+                "oauth": "OAuth 2.0",
+                "two-fa": "2FA",
+                "configured": "configured",
+                "not-configured": "not configured"
             },
             "list": {
                 "show-more": "Show more",

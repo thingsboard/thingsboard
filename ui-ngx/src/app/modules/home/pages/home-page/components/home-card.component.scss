@@ -111,7 +111,7 @@
   padding-top: var(--tb-home-card-hideable-top, 16px);
 
   .tb-home-card-header {
-    min-height: 32px;
+    min-height: var(--tb-home-card-hideable-header, 32px);
     flex-wrap: nowrap;
   }
 }

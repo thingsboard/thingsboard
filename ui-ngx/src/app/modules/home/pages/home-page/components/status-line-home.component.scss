@@ -63,3 +63,21 @@
 .warn .tb-status-dot {
   background: rgb(246, 103, 22);
 }
+
+.tb-status-line-reserved {
+  min-height: 32px;
+}
+
+.tb-status-line-in {
+  animation: tb-status-line-in .2s ease both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes tb-status-line-in {
+  from {
+    opacity: 0;
+  }
+}

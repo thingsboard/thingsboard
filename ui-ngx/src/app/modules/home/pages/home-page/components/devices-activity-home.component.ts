@@ -16,6 +16,10 @@ import {
 } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
 import * as echarts from 'echarts/core';
 import tinycolor from 'tinycolor2';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
@@ -38,7 +42,8 @@ type ActivitySeries = 'devices' | 'messages';
 const DAY = 86400000;
 const DAYS = 30;
 const LABEL_STEP = 7;
-const SCALE_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
+const SCALE_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000,
+  1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 1e8, 2e8, 5e8, 1e9];
 
 const startOfFirstDay = (now: number): number => {
   const date = new Date(now - (DAYS - 1) * DAY);
@@ -89,9 +94,11 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
 
   readonly card = HOME_CARDS[HomeCardId.ACTIVITY];
 
-  readonly series = SERIES;
+  readonly sysAdmin = getCurrentAuthUser(inject(Store<AppState>))?.authority === Authority.SYS_ADMIN;
 
-  readonly tabOptions: HomeToggleOption<ActivitySeries>[] = SERIES.map(series => ({value: series.id, label: series.label}));
+  readonly series = this.sysAdmin ? SERIES.filter(series => series.id === 'messages') : SERIES;
+
+  readonly tabOptions: HomeToggleOption<ActivitySeries>[] = this.series.map(series => ({value: series.id, label: series.label}));
 
   private telemetryWsService = inject(TelemetryWebsocketService);
   private zone = inject(NgZone);
@@ -101,13 +108,13 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
   private injector = inject(Injector);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  readonly tab = signal<ActivitySeries>('devices');
+  readonly tab = signal<ActivitySeries>(this.series[0].id);
   private readonly data = signal<Record<ActivitySeries, [number, number][]> | null>(null);
 
   readonly loaded = computed(() => this.data() !== null);
   readonly empty = computed(() => {
     const data = this.data();
-    return !!data && SERIES.every(series => !data[series.id].some(point => point[1] > 0));
+    return !!data && this.series.every(series => !data[series.id].some(point => point[1] > 0));
   });
 
   private readonly devicesChart = viewChild<ElementRef<HTMLElement>>('devicesChart');
@@ -163,7 +170,7 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
     this.startTs = startOfFirstDay(this.endTs);
     this.historyLoaded = false;
     SERIES.forEach(series => this.raw[series.id].clear());
-    const keys = SERIES.map(series => series.key);
+    const keys = this.series.map(series => series.key);
     const cmd = new EntityDataCmd();
     cmd.query = {
       entityFilter: {type: AliasFilterType.apiUsageState},
@@ -187,7 +194,7 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
     subscriber.entityData$.subscribe(update => {
       const entities = update.data?.data ?? update.update ?? [];
       entities.forEach(entity => {
-        SERIES.forEach(series => {
+        this.series.forEach(series => {
           (entity.timeseries?.[series.key] ?? []).forEach(value => this.put(series.id, value.ts, value.value));
           const latest = entity.latest?.[EntityKeyType.TIME_SERIES]?.[series.key];
           if (latest?.ts) {
@@ -272,7 +279,7 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
     }
     echartsModule.init();
     const color = getComputedStyle(this.host.nativeElement).getPropertyValue('--tb-primary-500').trim() || '#305680';
-    SERIES.forEach(series => {
+    this.series.forEach(series => {
       const element = (series.id === 'devices' ? this.devicesChart() : this.messagesChart())?.nativeElement;
       if (!element) {
         return;
@@ -343,7 +350,7 @@ export class DevicesActivityHomeComponent implements AfterViewInit {
         axisLabel: {
           ...AXIS_LABEL,
           margin: 8,
-          formatter: (value: number) => value >= 1000 ? `${value / 1000}k` : `${value}`
+          formatter: (value: number) => value >= 1e6 ? `${value / 1e6}M` : value >= 1000 ? `${value / 1000}k` : `${value}`
         }
       }],
       series: [{

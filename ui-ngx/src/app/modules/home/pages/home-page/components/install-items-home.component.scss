@@ -1,0 +1,157 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use './home-tiles';
+@use './home-table';
+
+:host {
+  display: block;
+  min-width: 0;
+  container: tb-install-home / inline-size;
+}
+
+.tb-install-add.mat-mdc-button {
+  &, &:hover, &:focus, &:active {
+    border-bottom: none;
+  }
+
+  .mat-icon {
+    margin-right: 6px;
+  }
+}
+
+.tb-install-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+
+  .tb-home-tile.tb-home-tile {
+    width: auto;
+    max-width: none;
+    height: 60px;
+    padding: 5px 10px;
+    text-decoration: none;
+
+    &, &:hover, &:focus, &:active {
+      border-bottom-style: solid;
+    }
+
+    &.static {
+      cursor: default;
+
+      &:hover {
+        border-color: rgba(0, 0, 0, 0.10);
+      }
+    }
+
+    &.zero {
+      border-style: dashed;
+      background: transparent;
+
+      &:hover {
+        border-style: dashed;
+      }
+
+      .tb-home-tile-label {
+        color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+      }
+    }
+  }
+}
+
+@container tb-install-home (max-width: 440px) {
+  .tb-install-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tb-install-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  font: 500 12px/16px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+}
+
+.tb-install-head-count {
+  letter-spacing: 0.25px;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--tb-text-secondary, rgba(0, 0, 0, 0.6));
+}
+
+.tb-install-features {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0 -8px;
+}
+
+.tb-install-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+
+  &:hover {
+    border: none;
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: -2px;
+  }
+}
+
+.tb-install-feature-icon.mat-icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  color: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
+}
+
+.tb-install-feature.on .tb-install-feature-icon.mat-icon {
+  color: var(--tb-primary-500);
+}
+
+.tb-install-feature-text {
+  min-width: 0;
+  overflow: hidden;
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@container tb-install-home (min-width: 260px) {
+  .tb-install-features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 12px;
+    clip-path: inset(1px -8px 0 -8px);
+
+    > .tb-install-feature {
+      position: relative;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 8px;
+        left: 8px;
+        border-top: 1px solid var(--tb-line-soft, rgba(0, 0, 0, 0.05));
+        pointer-events: none;
+      }
+    }
+  }
+}

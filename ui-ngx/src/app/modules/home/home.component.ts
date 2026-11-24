@@ -74,6 +74,8 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
 
   private tourService = inject(TourService);
 
+  readonly aiAvailable = this.tourService.aiAvailable();
+
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               private activeComponentService: ActiveComponentService,

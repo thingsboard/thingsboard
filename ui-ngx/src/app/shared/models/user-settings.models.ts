@@ -35,7 +35,12 @@ export enum HomeCardId {
   NOTIFICATIONS = 'notifications',
   QUICK_LINKS = 'quickLinks',
   USAGE = 'usage',
-  MOBILE_APP = 'mobileApp'
+  MOBILE_APP = 'mobileApp',
+  PRODUCT_RELEASE = 'productRelease',
+  GET_STARTED_SYS_ADMIN = 'getStartedSysAdmin',
+  SYSTEM_STATUS = 'systemStatus',
+  LICENSE = 'license',
+  INSTALL_ITEMS = 'installItems'
 }
 
 export type HomeCardsSettings = Partial<Record<HomeCardId, boolean>>;
@@ -72,6 +77,7 @@ export interface QuickLinks {
 export interface GettingStarted {
   maxSelectedIndex?: number;
   lastSelectedIndex?: number;
+  skipped?: string[];
 }
 
 export interface AbstractUserDashboardInfo {

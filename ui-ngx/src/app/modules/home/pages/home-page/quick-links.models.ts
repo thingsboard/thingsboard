@@ -37,7 +37,15 @@ export const defaultQuickLinks = (authority: Authority, docsUrl: string, transla
   const web = (id: string, name: string, icon: string, link: string) => ({[QUICK_WEB_LINK_PREFIX + id]: {name, icon, link}});
   switch (authority) {
     case Authority.SYS_ADMIN:
-      return {links: ['tenants', 'tenant_profiles']};
+      return {
+        links: ['getting-started', 'tenant-profiles', 'api', 'widgets-library'].map(id => QUICK_WEB_LINK_PREFIX + id),
+        webLinks: {
+          ...web('getting-started', translate('home.quick-links.getting-started'), 'rocket_launch', docsUrl + 'getting-started/'),
+          ...web('tenant-profiles', translate('home.quick-links.tenant-profiles'), 'account_box', docsUrl + 'user-guide/tenant-profiles/'),
+          ...web('api', translate('home.quick-links.api'), 'api', docsUrl + 'apis-and-sdks/'),
+          ...web('widgets-library', translate('home.quick-links.widgets-library'), 'widgets', docsUrl + 'reference/widgets/widget-library/')
+        }
+      };
     case Authority.CUSTOMER_USER:
       return {
         links: ['assets', 'entity_views', 'notification_inbox', QUICK_WEB_LINK_PREFIX + 'user-guide'],

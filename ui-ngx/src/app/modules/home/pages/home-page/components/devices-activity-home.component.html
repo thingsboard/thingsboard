@@ -7,7 +7,7 @@
 <tb-home-card [card]="card">
   <span homeCardTitleExtra class="tb-activity-period">{{ 'home.activity.period' | translate }}</span>
   <ng-container homeCardActions>
-    @if (loaded() && !empty()) {
+    @if (loaded() && !empty() && series.length > 1) {
       <tb-home-toggle class="tb-activity-toggle" [options]="tabOptions" [value]="tab()" [label]="'home.activity.series' | translate"
                       (valueChange)="setTab($event)"></tb-home-toggle>
     }
@@ -15,10 +15,10 @@
   @if (empty()) {
     <div class="tb-home-setup-empty">
       <span class="tb-home-setup-empty-glyph" aria-hidden="true"><mat-icon>show_chart</mat-icon></span>
-      <div class="tb-home-setup-empty-title">{{ 'home.activity.none' | translate }}</div>
+      <div class="tb-home-setup-empty-title">{{ (sysAdmin ? 'home.activity.no-messages' : 'home.activity.none') | translate }}</div>
     </div>
   } @else {
-    <div class="tb-activity-pair" [attr.data-tab]="tab()">
+    <div class="tb-activity-pair" [class.single]="series.length === 1" [attr.data-tab]="tab()">
       @for (series of series; track series.id) {
         <div class="tb-activity-series" [attr.data-series]="series.id">
           <div class="tb-activity-name">{{ series.label | translate }}</div>
