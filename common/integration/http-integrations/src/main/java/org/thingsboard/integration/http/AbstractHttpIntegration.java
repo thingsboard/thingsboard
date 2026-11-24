@@ -4,20 +4,26 @@ package org.thingsboard.integration.http;
 
 import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.thingsboard.common.util.DeduplicationUtil;
 import org.thingsboard.integration.api.AbstractIntegration;
 import org.thingsboard.integration.api.controller.HttpIntegrationMsg;
 import org.thingsboard.integration.api.util.ConvertUtil;
 import org.thingsboard.integration.api.util.ExceptionUtil;
+import org.thingsboard.server.common.data.id.IntegrationId;
 
 import javax.script.ScriptException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by ashvayka on 04.12.17.
  */
 @Slf4j
 public abstract class AbstractHttpIntegration<T extends HttpIntegrationMsg<?>> extends AbstractIntegration<T> {
+
+    private static final long UPLINK_ERROR_LOG_INTERVAL_MS = TimeUnit.SECONDS.toMillis(15);
 
     @Override
     public void process(T msg) {
@@ -35,7 +41,7 @@ public abstract class AbstractHttpIntegration<T extends HttpIntegrationMsg<?>> e
             }
             integrationStatistics.incMessagesProcessed();
         } catch (Exception e) {
-            log.debug("Failed to apply data converter function: {}", e.getMessage(), e);
+            logUplinkError(e);
             exception = e;
             status = "ERROR";
             handleException(msg, e);
@@ -45,6 +51,14 @@ public abstract class AbstractHttpIntegration<T extends HttpIntegrationMsg<?>> e
         }
         persistDebug(context, getTypeUplink(msg), msg.getContentType(),
                 () -> ConvertUtil.toDebugMessage(msg.getContentType(), msg.getMsgInBytes()), status, exception);
+    }
+
+    private void logUplinkError(Exception e) {
+        IntegrationId integrationId = configuration.getId();
+        if (!ExceptionUtil.isShownInDebugEvent(e) && !DeduplicationUtil.alreadyProcessed(new UplinkErrorLogKey(integrationId), UPLINK_ERROR_LOG_INTERVAL_MS)) {
+            log.warn("[{}] Failed to process uplink: {}", integrationId, StringUtils.replaceChars(e.getMessage(), "\r\n", "  "));
+        }
+        log.debug("[{}] Failed to process uplink: {}", integrationId, e.getMessage(), e);
     }
 
     private void handleException(T msg, Exception e) {
@@ -71,4 +85,7 @@ public abstract class AbstractHttpIntegration<T extends HttpIntegrationMsg<?>> e
     public void destroy() {
 
     }
+
+    private record UplinkErrorLogKey(IntegrationId integrationId) {}
+
 }

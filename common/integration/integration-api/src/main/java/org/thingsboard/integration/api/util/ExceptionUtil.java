@@ -40,15 +40,17 @@ public class ExceptionUtil {
         return lookupExceptionInCause(source.getCause(), clazzes);
     }
 
+    /**
+     * True if {@link #toString} shows the message of this error in the debug event instead of "Please contact system administrator".
+     */
+    public static boolean isShownInDebugEvent(Throwable e) {
+        return findShownMessage(e) != null;
+    }
+
     public static String toString(Throwable e, EntityId componentId, boolean stackTraceEnabled) {
-        Exception exception = lookupExceptionInCause(e, ScriptException.class, JsonParseException.class, TbRateLimitsException.class,
-                ThingsboardException.class, ThingsboardRuntimeException.class);
-        if (exception != null && StringUtils.isNotEmpty(exception.getMessage())) {
-            return exception.getMessage();
-        }
-        String scriptErrorMessage = getScriptErrorMessage(e);
-        if (StringUtils.isNotEmpty(scriptErrorMessage)) {
-            return scriptErrorMessage;
+        String shownMessage = findShownMessage(e);
+        if (shownMessage != null) {
+            return shownMessage;
         } else {
             if (stackTraceEnabled) {
                 StringWriter sw = new StringWriter();
@@ -59,6 +61,16 @@ public class ExceptionUtil {
                 return "Please contact system administrator";
             }
         }
+    }
+
+    private static String findShownMessage(Throwable e) {
+        Exception exception = lookupExceptionInCause(e, ScriptException.class, JsonParseException.class, TbRateLimitsException.class,
+                ThingsboardException.class, ThingsboardRuntimeException.class);
+        if (exception != null && StringUtils.isNotEmpty(exception.getMessage())) {
+            return exception.getMessage();
+        }
+        String scriptErrorMessage = getScriptErrorMessage(e);
+        return StringUtils.isNotEmpty(scriptErrorMessage) ? scriptErrorMessage : null;
     }
 
     private static String getScriptErrorMessage(Throwable e) {

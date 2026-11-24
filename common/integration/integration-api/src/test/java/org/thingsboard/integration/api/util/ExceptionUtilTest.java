@@ -93,4 +93,26 @@ class ExceptionUtilTest {
         assertThat(ExceptionUtil.toString(e, INTEGRATION_ID, false)).isEqualTo(MASKED);
     }
 
+    @Test
+    void thingsboardErrorIsShownInDebugEvent() {
+        var cause = new ThingsboardRuntimeException("Creating devices is forbidden!", ThingsboardErrorCode.PERMISSION_DENIED);
+
+        assertThat(ExceptionUtil.isShownInDebugEvent(new ExecutionException(cause))).isTrue();
+    }
+
+    @Test
+    void scriptRuntimeErrorIsShownInDebugEvent() {
+        var e = new TbScriptException(UUID.randomUUID(), TbScriptException.ErrorCode.RUNTIME, null, new RuntimeException("Index 0 out of bounds"));
+
+        assertThat(ExceptionUtil.isShownInDebugEvent(new ExecutionException(e))).isTrue();
+    }
+
+    @Test
+    void maskedErrorIsNotShownInDebugEvent() {
+        assertThat(ExceptionUtil.isShownInDebugEvent(new RuntimeException("SELECT * FROM device"))).isFalse();
+        assertThat(ExceptionUtil.isShownInDebugEvent(new ThingsboardException(ThingsboardErrorCode.GENERAL))).isFalse();
+        assertThat(ExceptionUtil.isShownInDebugEvent(new TbScriptException(UUID.randomUUID(), TbScriptException.ErrorCode.TIMEOUT, null,
+                new RuntimeException("Script timeout!")))).isFalse();
+    }
+
 }
