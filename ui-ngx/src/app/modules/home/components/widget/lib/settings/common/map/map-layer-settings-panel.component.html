@@ -122,6 +122,14 @@
           <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>
           <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="apiKey" placeholder="{{ 'widget-config.set' | translate }}">
+            @if (apiKeyMissing()) {
+              <mat-icon matSuffix
+                        class="tb-warning"
+                        matTooltipPosition="above"
+                        matTooltip="{{ 'widgets.maps.layer.credentials.api-key-missing' | translate }}">
+                warning
+              </mat-icon>
+            }
           </mat-form-field>
         </div>
       </div>

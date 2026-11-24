@@ -61,6 +61,20 @@ interface TbMapLayerData {
   attribution: boolean;
 }
 
+// Stands in for a layer that cannot be displayed, e.g. a provider layer without the required API key
+class TbEmptyMapLayer extends L.Layer {
+
+  onAdd(_map: L.Map): this {
+    // The map waits for the 'load' event of its default layer, e.g. to generate a report
+    setTimeout(() => this.fire('load'));
+    return this;
+  }
+
+  onRemove(_map: L.Map): this {
+    return this;
+  }
+}
+
 export abstract class TbMapLayer<S extends MapLayerSettings> {
 
   static fromSettings(ctx: WidgetContext,
@@ -90,10 +104,6 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<MapLayerSettings>) {
     this.settings = mergeDeep({} as S, this.defaultSettings(), this.inputSettings as S);
-  }
-
-  public missingApiKey(): boolean {
-    return false;
   }
 
   public loadLayer(theMap: L.Map): Observable<L.TB.LayerData> {
@@ -311,10 +321,6 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
     return defaultGoogleMapLayerSettings;
   }
 
-  public missingApiKey(): boolean {
-    return !this.settings.apiKey;
-  }
-
   protected createLayer(): Observable<L.Layer> {
     return this.loadGoogle().pipe(
       map((loaded) => {
@@ -330,12 +336,12 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
   }
 
   private loadGoogle(): Observable<boolean> {
-    const apiKey = this.settings.apiKey;
+    const apiKey = this.settings.apiKey || '';
     if (TbGoogleMapLayer.loadedApiKeysGlobal[apiKey]) {
       return of(true);
     } else {
       const resourceService = this.ctx.$injector.get(ResourcesService);
-      return resourceService.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`).pipe(
+      return resourceService.loadResource(`https://maps.googleapis.com/maps/api/js?${apiKey ? `key=${apiKey}&` : ''}loading=async`).pipe(
         map(() => {
           TbGoogleMapLayer.loadedApiKeysGlobal[apiKey] = true;
           return true;
@@ -381,11 +387,10 @@ class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
     return defaultHereMapLayerSettings;
   }
 
-  public missingApiKey(): boolean {
-    return !this.settings.apiKey;
-  }
-
   protected createLayer(): Observable<L.Layer> {
+    if (!this.settings.apiKey) {
+      return of(new TbEmptyMapLayer());
+    }
     const layer = L.tileLayer.provider(hereV3Provider(this.settings.layerType), {apiKey: this.settings.apiKey});
     return of(layer);
   }

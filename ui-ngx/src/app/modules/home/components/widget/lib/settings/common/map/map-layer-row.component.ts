@@ -40,7 +40,6 @@ import {
   openFreeMapStyleTranslationMap,
   openFreeMapStyleTypes,
   mapProviderHasApiKey,
-  mapProviderRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap,
   tencentLayerTranslationMap,
@@ -126,7 +125,7 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       tileUrl: [null, [Validators.required]],
       vectorTiles: [false, []],
       customAttribution: [null, []],
-      apiKey: [null, [Validators.required]],
+      apiKey: [null, []],
       referenceLayer: [null, []]
     });
     this.layerFormGroup.valueChanges.pipe(
@@ -228,7 +227,6 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
     if (mapProviderHasApiKey(provider)) {
-      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});

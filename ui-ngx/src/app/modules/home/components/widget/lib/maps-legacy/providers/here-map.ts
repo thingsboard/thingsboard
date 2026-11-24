@@ -19,12 +19,17 @@ export class HEREMap extends LeafletMap {
           zoomControl: !this.options.disableZoomControl,
           fadeAnimation: !ctx.reportService.reportView
         }).setView(options?.parsedDefaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
-        const tileLayer = L.tileLayer.provider(hereV3Provider(options.mapProviderHere), {apiKey: options.credentials?.apiKey});
-        tileLayer.addTo(map);
-        if (this.ctx.reportService.reportView) {
-          tileLayer.once('load', () => {
-            this.ctx.reportService.onMapLoaded(mapUuid);
-          });
+        const apiKey = options.credentials?.apiKey;
+        if (apiKey) {
+          const tileLayer = L.tileLayer.provider(hereV3Provider(options.mapProviderHere), {apiKey});
+          tileLayer.addTo(map);
+          if (this.ctx.reportService.reportView) {
+            tileLayer.once('load', () => {
+              this.ctx.reportService.onMapLoaded(mapUuid);
+            });
+          }
+        } else if (this.ctx.reportService.reportView) {
+          this.ctx.reportService.onMapLoaded(mapUuid);
         }
         super.setMap(map);
     }

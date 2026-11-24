@@ -97,7 +97,7 @@ export class MapLayerSettingsPanelComponent implements OnInit {
         tileUrl: [null, [Validators.required]],
         vectorTiles: [false, []],
         customAttribution: [null, []],
-        apiKey: [null, [Validators.required]],
+        apiKey: [null, []],
         referenceLayer: [null, []]
       }
     );
@@ -133,6 +133,10 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     return mapProviderHasApiKey(this.layerFormGroup.get('provider').value);
   }
 
+  apiKeyMissing(): boolean {
+    return mapProviderRequiresApiKey(this.layerFormGroup.get('provider').value) && !this.layerFormGroup.get('apiKey').value;
+  }
+
   applyLayerSettings() {
     const layerSettings: MapLayerSettings = this.layerFormGroup.value;
     this.mapLayerSettingsApplied.emit(layerSettings);
@@ -161,7 +165,6 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
     if (mapProviderHasApiKey(provider)) {
-      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});
