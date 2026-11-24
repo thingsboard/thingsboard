@@ -99,6 +99,14 @@
   }
 }
 
+.tb-chat-pill-m {
+  flex: none;
+  margin-left: 2px;
+  font: 400 13px/20px var(--tb-font, Roboto, sans-serif);
+  font-variant-numeric: tabular-nums;
+  color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+}
+
 .tb-chat-pill-t {
   flex: 0 1 auto;
   min-width: 0;

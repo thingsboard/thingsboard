@@ -19,19 +19,23 @@ export const homeListShown = (total: number, expanded: boolean): number => {
   return expanded ? Math.min(total, HOME_LIST_LIMIT) : HOME_LIST_PREVIEW;
 };
 
-export const homeAgo = (translate: TranslateService, ms: number): string => {
+const agoText = (translate: TranslateService, ms: number, prefix: string): string => {
   const min = ms / MINUTE;
   if (min < 1) {
-    return translate.instant('home.ago.now');
+    return translate.instant(`${prefix}.now`);
   }
   if (min < 60) {
-    return translate.instant('home.ago.min', {count: Math.round(min)});
+    return translate.instant(`${prefix}.min`, {count: Math.round(min)});
   }
   if (min < 24 * 60) {
-    return translate.instant('home.ago.hour', {count: Math.floor(min / 60)});
+    return translate.instant(`${prefix}.hour`, {count: Math.floor(min / 60)});
   }
   if (min < 7 * 24 * 60) {
-    return translate.instant('home.ago.day', {count: Math.floor(min / (24 * 60))});
+    return translate.instant(`${prefix}.day`, {count: Math.floor(min / (24 * 60))});
   }
-  return translate.instant('home.ago.week', {count: Math.floor(min / (7 * 24 * 60))});
+  return translate.instant(`${prefix}.week`, {count: Math.floor(min / (7 * 24 * 60))});
 };
+
+export const homeAgo = (translate: TranslateService, ms: number): string => agoText(translate, ms, 'home.ago');
+
+export const homeElapsed = (translate: TranslateService, ms: number): string => agoText(translate, ms, 'home.elapsed');

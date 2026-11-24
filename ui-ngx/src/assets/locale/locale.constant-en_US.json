@@ -8901,10 +8901,18 @@
                 "day": "{{count}}d ago",
                 "week": "{{count}}w ago"
             },
+            "elapsed": {
+                "now": "now",
+                "min": "{{count}} min",
+                "hour": "{{count}}h",
+                "day": "{{count}}d",
+                "week": "{{count}}w"
+            },
             "ai": {
                 "placeholder": "Ask the AI Assistant…",
                 "chats": "Chats",
                 "waiting": "Waiting for you",
+                "waiting-tip": "{{tip}}, {{ago}}",
                 "start-title": "Get started with AI",
                 "start-device": "Connect a device",
                 "start-device-tip": "The AI Assistant's Get started: one device, from an example",

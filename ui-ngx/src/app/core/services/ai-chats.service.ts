@@ -134,8 +134,8 @@ export class AiChatsService {
           const byId = new Map(statuses.map(chat => [chat.id, chat]));
           this._chats.update(list => list.map(chat => {
             const live = byId.get(chat.id);
-            return live?.status === chat.status && live?.statusReason === chat.statusReason
-              ? chat : {...chat, status: live?.status, statusReason: live?.statusReason};
+            return live?.status === chat.status && live?.statusReason === chat.statusReason && (!live || live.updatedTime === chat.updatedTime)
+              ? chat : {...chat, status: live?.status, statusReason: live?.statusReason, updatedTime: live?.updatedTime ?? chat.updatedTime};
           }));
         }
       },

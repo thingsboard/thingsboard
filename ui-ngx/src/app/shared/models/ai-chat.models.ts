@@ -41,6 +41,7 @@ export interface ChatInfo extends ChatConfiguration {
   prompt?: string;
   status?: ChatStatus;
   statusReason?: string;
+  updatedTime?: number;
 }
 
 export type ChatStatus = 'RUNNING' | 'NEEDS_YOU' | 'FAILED';
