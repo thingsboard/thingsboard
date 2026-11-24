@@ -45,7 +45,11 @@ export class AiChatsService {
 
   private _statuses = signal<ChatInfo[]>([]);
 
+  private _statusResolved = signal(false);
+
   readonly statusChats = computed(() => this._loaded() ? this._chats() : this._statuses());
+
+  readonly statusResolved = computed(() => this._loaded() || this._statusResolved());
 
   private watching = false;
 
@@ -75,6 +79,7 @@ export class AiChatsService {
     this._open.set(new Set());
     this._failed.set(new Map());
     this._statuses.set([]);
+    this._statusResolved.set(false);
     if (userId && this.watching) {
       this.pollStatus();
     }
@@ -124,6 +129,7 @@ export class AiChatsService {
       next: statuses => {
         this.polling = false;
         this._statuses.set(statuses);
+        this._statusResolved.set(true);
         if (untracked(this._loaded)) {
           const byId = new Map(statuses.map(chat => [chat.id, chat]));
           this._chats.update(list => list.map(chat => {
@@ -136,6 +142,7 @@ export class AiChatsService {
       error: () => {
         if (generation === this.generation) {
           this.polling = false;
+          this._statusResolved.set(true);
         }
       }
     });

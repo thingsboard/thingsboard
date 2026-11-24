@@ -62,10 +62,43 @@
 
   &.placeholder {
     cursor: default;
+  }
+}
 
-    .tb-iot-hub-card-image {
-      background: rgba(0, 0, 0, 0.04);
-    }
+.tb-iot-hub-skeleton {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.09) 50%, rgba(0, 0, 0, 0.05) 100%) 0 0 / 200% 100%;
+  animation: tb-iot-hub-shimmer 1.4s ease-in-out infinite;
+}
+
+.tb-iot-hub-skeleton-line {
+  display: block;
+  border-radius: 4px;
+
+  &.name {
+    width: 62%;
+    height: 12px;
+    margin: 3px 0;
+  }
+
+  &.meta {
+    width: 38%;
+    height: 10px;
+    margin: 3px 0;
+  }
+}
+
+@keyframes tb-iot-hub-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-iot-hub-skeleton {
+    animation: none;
   }
 }
 
@@ -86,7 +119,12 @@
     height: auto;
     border-radius: 4px;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 6px 16px rgba(16, 24, 40, 0.14);
-    transition: transform .2s ease;
+    opacity: 0;
+    transition: transform .2s ease, opacity .25s ease;
+
+    &.loaded {
+      opacity: 1;
+    }
   }
 }
 
@@ -153,6 +191,22 @@
     outline: 2px solid var(--tb-primary-500);
     outline-offset: 2px;
   }
+
+  &.placeholder {
+    cursor: default;
+
+    .tb-iot-hub-device-text {
+      flex: 1;
+    }
+
+    .tb-iot-hub-skeleton-line.name {
+      width: 80%;
+    }
+
+    .tb-iot-hub-skeleton-line.meta {
+      width: 50%;
+    }
+  }
 }
 
 .tb-iot-hub-device-thumb {
@@ -170,6 +224,12 @@
     height: 100%;
     object-fit: contain;
     background: #fff;
+    opacity: 0;
+    transition: opacity .25s ease;
+
+    &.loaded {
+      opacity: 1;
+    }
   }
 }
 

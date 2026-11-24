@@ -39,7 +39,7 @@
           <button type="button" class="tb-iot-hub-card" (click)="open(tile.item)">
             <span class="tb-iot-hub-card-image" [style.background]="tile.tint" [attr.data-hscroll-anchor]="first ? '' : null">
               @if (tile.image) {
-                <img [src]="tile.image" alt="" loading="lazy" (error)="tile.image = null">
+                <img [src]="tile.image" alt="" loading="lazy" (load)="$any($event.target).classList.add('loaded')" (error)="tile.image = null">
               }
               @if (isInstalled(tile.item)) {
                 <mat-icon class="tb-iot-hub-card-installed" role="img"
@@ -56,8 +56,14 @@
           </button>
         } @empty {
           @if (!loaded()) {
-            @for (n of [1, 2, 3, 4]; track n) {
-              <span class="tb-iot-hub-card placeholder"><span class="tb-iot-hub-card-image"></span></span>
+            @for (n of skeleton; track n) {
+              <span class="tb-iot-hub-card placeholder" aria-hidden="true">
+                <span class="tb-iot-hub-card-image tb-iot-hub-skeleton"></span>
+                <span class="tb-iot-hub-card-label">
+                  <span class="tb-iot-hub-skeleton-line name tb-iot-hub-skeleton"></span>
+                  <span class="tb-iot-hub-skeleton-line meta tb-iot-hub-skeleton"></span>
+                </span>
+              </span>
             }
           }
         }
@@ -70,7 +76,7 @@
           <button type="button" class="tb-iot-hub-device" (click)="open(tile.item)">
             <span class="tb-iot-hub-device-thumb" [style.background]="tile.tint">
               @if (tile.image) {
-                <img [src]="tile.image" alt="" loading="lazy" (error)="tile.image = null">
+                <img [src]="tile.image" alt="" loading="lazy" (load)="$any($event.target).classList.add('loaded')" (error)="tile.image = null">
               }
             </span>
             <span class="tb-iot-hub-device-text">
@@ -78,6 +84,19 @@
               <small>{{ tile.meta }}</small>
             </span>
           </button>
+        }
+        @empty {
+          @if (!loaded()) {
+            @for (n of skeleton; track n) {
+              <span class="tb-iot-hub-device placeholder" aria-hidden="true">
+                <span class="tb-iot-hub-device-thumb tb-iot-hub-skeleton"></span>
+                <span class="tb-iot-hub-device-text">
+                  <span class="tb-iot-hub-skeleton-line name tb-iot-hub-skeleton"></span>
+                  <span class="tb-iot-hub-skeleton-line meta tb-iot-hub-skeleton"></span>
+                </span>
+              </span>
+            }
+          }
         }
         @if (deviceTotal()) {
           <button type="button" class="tb-iot-hub-device tb-iot-hub-all" (click)="browse('devices')">

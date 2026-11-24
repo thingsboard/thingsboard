@@ -15,6 +15,42 @@ import { PageLink } from '@shared/models/page/page-link';
 
 const SHOWN = 8;
 
+const SKELETON_TILES = 6;
+
+const CACHE_KEY = 'tb-home-iot-hub';
+
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+interface HubSnapshot {
+  at: number;
+  templates: MpItemVersionView[];
+  devices: MpItemVersionView[];
+  deviceTotal: number;
+}
+
+let lastSnapshot: HubSnapshot | null = null;
+
+const readSnapshot = (): HubSnapshot | null => {
+  if (lastSnapshot) {
+    return lastSnapshot;
+  }
+  try {
+    const snapshot: HubSnapshot = JSON.parse(localStorage.getItem(CACHE_KEY));
+    return snapshot?.at && Date.now() - snapshot.at < CACHE_TTL_MS ? snapshot : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeSnapshot = (snapshot: HubSnapshot): void => {
+  lastSnapshot = snapshot;
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot));
+  } catch {
+    return;
+  }
+};
+
 const TEMPLATE_TINTS = ['#e0f2f1,#80cbc4', '#e3f2fd,#90caf9', '#fff3e0,#ffcc80', '#f3e5f5,#ce93d8', '#e8f5e9,#a5d6a7',
   '#e0f7fa,#80deea', '#fbe9e7,#ffab91', '#ede7f6,#b39ddb'];
 
@@ -54,6 +90,8 @@ export class IoTHubHomeComponent {
   readonly card = HOME_CARDS[HomeCardId.IOT_HUB];
 
   readonly kinds = KINDS;
+
+  readonly skeleton = Array.from({length: SKELETON_TILES}, (_, i) => i);
 
   readonly templates = signal<HubTile[]>([]);
   readonly devices = signal<HubTile[]>([]);
@@ -140,6 +178,10 @@ export class IoTHubHomeComponent {
   }
 
   private load(): void {
+    const cached = readSnapshot();
+    if (cached) {
+      this.apply(cached);
+    }
     const config = {ignoreLoading: true, ignoreErrors: true};
     const sortOrder: SortOrder = {property: 'totalInstallCount', direction: Direction.DESC};
     const query = (type: ItemType) => new MpItemVersionQuery(new PageLink(SHOWN, 0, null, sortOrder), {type});
@@ -148,17 +190,26 @@ export class IoTHubHomeComponent {
       devices: this.api.getPublishedVersions(query(ItemType.DEVICE), config)
     }).subscribe({
       next: ({templates, devices}) => {
-        this.templates.set(templates.data.map((item, i) => this.tile(item, TEMPLATE_TINTS[i % TEMPLATE_TINTS.length], item.useCases?.[0] ?? '')));
-        this.devices.set(devices.data.map((item, i) => this.tile(item, DEVICE_TINTS[i % DEVICE_TINTS.length], this.deviceMeta(item))));
-        this.deviceTotal.set(devices.totalElements);
-        this.loaded.set(true);
+        const snapshot = {at: Date.now(), templates: templates.data, devices: devices.data, deviceTotal: devices.totalElements};
+        writeSnapshot(snapshot);
+        this.apply(snapshot);
       },
       error: () => {
-        this.failed.set(true);
-        this.loaded.set(true);
+        if (!cached) {
+          this.failed.set(true);
+          this.loaded.set(true);
+        }
       }
     });
     this.loadInstalled();
+  }
+
+  private apply(snapshot: HubSnapshot): void {
+    this.templates.set(snapshot.templates.map((item, i) =>
+      this.tile(item, TEMPLATE_TINTS[i % TEMPLATE_TINTS.length], item.useCases?.[0] ?? '')));
+    this.devices.set(snapshot.devices.map((item, i) => this.tile(item, DEVICE_TINTS[i % DEVICE_TINTS.length], this.deviceMeta(item))));
+    this.deviceTotal.set(snapshot.deviceTotal);
+    this.loaded.set(true);
   }
 
   private loadInstalled(): void {
