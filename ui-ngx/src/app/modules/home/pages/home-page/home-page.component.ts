@@ -33,8 +33,6 @@ export class HomePageComponent {
 
   readonly homeDashboard: HomeDashboard = inject(ActivatedRoute).snapshot.data.homeDashboard;
 
-  readonly hideMainToolbar = !!this.homeDashboard && !this.homeDashboard.isSystemDashboard;
-
   readonly authority = getCurrentAuthUser(inject(Store<AppState>))?.authority;
 
   readonly aiSky = !this.homeDashboard && inject(TourService).aiAvailable();

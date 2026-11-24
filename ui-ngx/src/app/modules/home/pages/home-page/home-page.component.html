@@ -6,7 +6,7 @@
 
 -->
 @if (homeDashboard) {
-  <tb-dashboard-page [embedded]="true" [dashboard]="homeDashboard" [hideToolbar]="homeDashboard.hideDashboardToolbar" [hideMainToolbar]="hideMainToolbar"></tb-dashboard-page>
+  <tb-dashboard-page [embedded]="true" [dashboard]="homeDashboard" [hideToolbar]="homeDashboard.hideDashboardToolbar" [hideMainToolbar]="true"></tb-dashboard-page>
 } @else if (authenticated()) {
   @if (aiSky) {
     <div class="tb-home-sky" aria-hidden="true"></div>

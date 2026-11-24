@@ -13,8 +13,6 @@ import { catchError, first, map } from 'rxjs/operators';
 import { MenuId } from '@core/services/menu.models';
 import { MenuService } from '@core/services/menu.service';
 
-const getHomeDashboard = (): Observable<HomeDashboard> => of(null);
-
 const resolveMenuHomeDashboard = (menuService: MenuService,
                                   dashboardService: DashboardService): Observable<HomeDashboard> =>
   menuService.menuSections().pipe(first()).pipe(
@@ -26,11 +24,10 @@ const resolveMenuHomeDashboard = (menuService: MenuService,
             ...dashboard,
             hideDashboardToolbar: homeSection.homeHideDashboardToolbar
           })),
-          catchError(() => getHomeDashboard())
+          catchError(() => of(null))
         );
-      } else {
-        return getHomeDashboard();
       }
+      return of(null);
     })
   );
 
