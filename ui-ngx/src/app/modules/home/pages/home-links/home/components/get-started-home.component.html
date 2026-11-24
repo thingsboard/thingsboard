@@ -1,0 +1,63 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="card" [hideable]="true" [countText]="progress()">
+  @if (loaded()) {
+    <ol class="tb-gs-steps">
+      @for (step of steps; track step.key; let i = $index) {
+        <li [class.done]="isDone(i)" [class.open]="open() === i">
+          <div class="tb-gs-row">
+            <button type="button" class="tb-gs-mark" role="checkbox" [attr.aria-checked]="isDone(i)"
+                    [attr.aria-label]="'home.get-started.done-aria' | translate: {title: ('home.get-started.' + step.key + '.title' | translate)}"
+                    [matTooltip]="(isDone(i) ? 'home.get-started.mark-undone' : 'home.get-started.mark-done') | translate"
+                    (click)="toggle(i)">
+              @if (isDone(i)) {
+                <mat-icon>check</mat-icon>
+              } @else {
+                {{ i + 1 }}
+              }
+            </button>
+            <button type="button" class="tb-gs-title" [attr.aria-current]="open() === i ? 'step' : null" (click)="select(i)">
+              <span>{{ 'home.get-started.' + step.key + '.title' | translate }}</span>
+            </button>
+          </div>
+          @if (open() === i) {
+            <div class="tb-gs-body">
+              <div class="tb-gs-head">
+                <span class="tb-gs-head-n">{{ 'home.get-started.step-of' | translate: {step: i + 1, total: steps.length} }}</span>
+                <span class="tb-gs-head-t">{{ 'home.get-started.' + step.key + '.title' | translate }}</span>
+              </div>
+              <p>{{ 'home.get-started.' + step.key + '.text' | translate }}
+                <a class="tb-gs-guide" [href]="docUrl(step)" target="_blank" rel="noopener">{{ 'home.get-started.guide' | translate }}<mat-icon aria-hidden="true">north_east</mat-icon><span class="tb-home-sr-only">{{ 'home.dashboards.opens-new-tab' | translate }}</span></a>
+              </p>
+              @if (step.code) {
+                <div class="tb-gs-code"><pre><code class="language-bash">{{ step.code }}</code></pre></div>
+              }
+              @if (step.link || !isDone(i)) {
+                <div class="tb-gs-actions">
+                  @if (step.link) {
+                    <a mat-stroked-button class="tb-gs-open" [routerLink]="step.link">{{ 'home.get-started.open' | translate: {page: (step.page | translate)} }}</a>
+                  }
+                  <span class="tb-gs-spacer"></span>
+                  @if (!isDone(i)) {
+                    <button mat-button type="button" class="tb-gs-done" (click)="toggle(i)">
+                      <mat-icon>check</mat-icon>{{ 'home.get-started.done' | translate }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ol>
+    @if (allDone()) {
+      <div class="tb-gs-again">
+        <button mat-button type="button" (click)="startOver()"><mat-icon>restart_alt</mat-icon>{{ 'home.get-started.start-over' | translate }}</button>
+      </div>
+    }
+  }
+</tb-home-card>

@@ -16,7 +16,7 @@ export const HOME_CARDS: Record<HomeCardId, HomeCardDefinition> = {
   [HomeCardId.DASHBOARDS]: {id: HomeCardId.DASHBOARDS, icon: 'dashboard', name: 'home.cards.dashboards', link: '/dashboards'},
   [HomeCardId.DEVICES]: {id: HomeCardId.DEVICES, icon: 'memory', name: 'home.cards.devices', link: '/entities/devices'},
   [HomeCardId.ACTIVITY]: {id: HomeCardId.ACTIVITY, icon: 'show_chart', name: 'home.cards.activity'},
-  [HomeCardId.GET_STARTED]: {id: HomeCardId.GET_STARTED, icon: 'rocket_launch', name: 'home.cards.get-started', height: 405},
+  [HomeCardId.GET_STARTED]: {id: HomeCardId.GET_STARTED, icon: 'rocket_launch', name: 'home.cards.get-started'},
   [HomeCardId.NOTIFICATIONS]: {id: HomeCardId.NOTIFICATIONS, icon: 'notifications', name: 'home.cards.notifications',
     link: '/notification/inbox', height: 525},
   [HomeCardId.QUICK_LINKS]: {id: HomeCardId.QUICK_LINKS, icon: 'link', name: 'home.cards.quick-links', height: 205},

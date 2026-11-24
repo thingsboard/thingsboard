@@ -8663,6 +8663,44 @@
                 "today": "Today",
                 "none": "No activity yet"
             },
+            "get-started": {
+                "progress": "{{done}} of {{total}}",
+                "all-done": "All done",
+                "step-of": "Step {{step}} of {{total}}",
+                "guide": "Guide",
+                "open": "Open {{page}}",
+                "done": "Done",
+                "done-aria": "Done: {{title}}",
+                "mark-done": "Mark as done",
+                "mark-undone": "Mark as not done",
+                "start-over": "Start over",
+                "started-over": "Get started is back to its first step",
+                "alarm-rules": "Alarm rules",
+                "add-device": {
+                    "title": "Add a device",
+                    "text": "Add a device on the Devices page and copy its access token."
+                },
+                "send-value": {
+                    "title": "Send the first value",
+                    "text": "Run this with the device's access token in place of $ACCESS_TOKEN."
+                },
+                "add-dashboard": {
+                    "title": "Add a dashboard",
+                    "text": "Add a dashboard and a widget that shows the device's temperature."
+                },
+                "add-alarm-rule": {
+                    "title": "Add an alarm rule",
+                    "text": "Add a rule that raises an alarm when the temperature goes above 25 °C."
+                },
+                "raise-alarm": {
+                    "title": "Raise the alarm",
+                    "text": "Send a value above 25 °C to raise the alarm."
+                },
+                "share": {
+                    "title": "Share with a customer",
+                    "text": "Add a customer and assign the dashboard. The customer's users see only what is assigned to them."
+                }
+            },
             "list": {
                 "show-more": "Show more",
                 "show-all": "Show all",

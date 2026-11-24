@@ -9,7 +9,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--tb-home-card-gap, 12px);
   box-sizing: border-box;
   min-width: 0;
   padding: var(--tb-home-card-padding, 20px);
@@ -23,7 +23,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px 12px;
-  min-height: 36px;
+  min-height: var(--tb-home-card-header-height, 36px);
   flex-wrap: wrap;
 }
 
