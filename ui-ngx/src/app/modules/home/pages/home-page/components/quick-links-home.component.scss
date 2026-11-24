@@ -15,7 +15,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 16px;
-    clip-path: inset(1px -8px 0 -8px);
+    clip-path: inset(0 -8px 1px -8px);
 
     > .tb-quick-link {
       position: relative;
@@ -24,10 +24,10 @@
       &::before {
         content: "";
         position: absolute;
-        top: 0;
         right: 8px;
+        bottom: 0;
         left: 8px;
-        border-top: 1px solid var(--tb-line-soft, rgba(0, 0, 0, 0.05));
+        border-bottom: 1px solid var(--tb-line-soft, rgba(0, 0, 0, 0.05));
         pointer-events: none;
       }
     }

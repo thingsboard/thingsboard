@@ -34,7 +34,7 @@ import { AlarmSearchStatus, AlarmSeverity, alarmSeverityTranslations } from '@sh
 import { Authority } from '@shared/models/authority.enum';
 import { EntityType } from '@shared/models/entity-type.models';
 import { HomeCardId } from '@shared/models/user-settings.models';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { HomePermissionsService } from '@home/pages/home-page/home-permissions.service';
 import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
 import { AlarmDetailsDialogComponent, AlarmDetailsDialogData } from '@home/components/alarm/alarm-details-dialog.component';
 import { homeAgo, homeListPageSize, homeListShown } from '@home/pages/home-page/home-list.models';
@@ -108,10 +108,15 @@ export class AlarmsHomeComponent {
   private toast = inject(ToastNotificationService);
   private translate = inject(TranslateService);
   private alarmRulesService = inject(AlarmRulesService);
+  private permissions = inject(HomePermissionsService);
 
   private readonly authUser = getCurrentAuthUser(this.store);
   private readonly userId = this.authUser?.userId;
   readonly tenantAdmin = this.authUser?.authority === Authority.TENANT_ADMIN;
+  readonly canWrite = this.permissions.canWriteAlarms();
+  readonly canAddRule = this.permissions.canAddAlarmRules();
+  private readonly canReadRules = this.permissions.canReadAlarmRules();
+  private readonly canReadDevices = this.permissions.canReadEntities(EntityType.DEVICE);
 
   readonly mine = signal(readMine());
   readonly severity = signal<AlarmSeverity | null>(null);
@@ -128,7 +133,7 @@ export class AlarmsHomeComponent {
     if (this.total() !== 0 || this.hasRules() === null || this.devices() === null) {
       return null;
     }
-    if (this.tenantAdmin && !this.hasRules()) {
+    if (this.canReadRules && !this.hasRules()) {
       return 'rules';
     }
     return this.devices() ? 'clear' : 'devices';
@@ -200,8 +205,12 @@ export class AlarmsHomeComponent {
 
   constructor() {
     this.totalSubscriber = this.subscribeCount(this.total);
-    this.devicesSubscriber = this.subscribeDevices();
-    if (this.tenantAdmin) {
+    if (this.canReadDevices) {
+      this.devicesSubscriber = this.subscribeDevices();
+    } else {
+      this.devices.set(1);
+    }
+    if (this.canReadRules) {
       this.alarmRulesService.getAlarmRules(new PageLink(1), undefined, {ignoreLoading: true}).pipe(
         catchError(() => of(null))
       ).subscribe(page => this.hasRules.set(!page || page.totalElements > 0));
@@ -272,10 +281,10 @@ export class AlarmsHomeComponent {
       data: {
         alarmId: row.alarm.id.id,
         alarm: row.alarm,
-        allowAcknowledgment: true,
-        allowClear: true,
+        allowAcknowledgment: this.canWrite,
+        allowClear: this.canWrite,
         displayDetails: true,
-        allowAssign: true
+        allowAssign: this.canWrite
       }
     }).afterClosed().subscribe(changed => {
       if (changed) {
@@ -424,7 +433,7 @@ export class AlarmsHomeComponent {
     return {
       alarm,
       ago: homeAgo(this.translate, now - (alarm.createdTime ?? now)),
-      originatorLink: originator ? getEntityDetailsPageURL(originator.id, originator.entityType as EntityType) : null,
+      originatorLink: originator ? this.permissions.entityDetailsLink(originator.entityType as EntityType, originator.id) : null,
       assigneeName,
       initials,
       mine: !!alarm.assigneeId && alarm.assigneeId.id === this.userId

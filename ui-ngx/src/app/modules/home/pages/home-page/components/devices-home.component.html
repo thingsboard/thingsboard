@@ -16,7 +16,7 @@
   @if (total() === 0) {
     <div class="tb-home-setup-empty">
       <span class="tb-home-setup-empty-glyph" aria-hidden="true"><mat-icon>memory</mat-icon></span>
-      @if (tenantAdmin) {
+      @if (canAdd) {
         <div class="tb-home-setup-empty-text">
           <p>{{ 'home.devices.none' | translate }}</p>
           <div class="tb-home-setup-empty-actions">
@@ -69,7 +69,13 @@
           @for (row of rows(); track row.id) {
             <tr (click)="open(row)">
               <td class="col-name">
-                <span class="tb-devices-cell-main"><a class="tb-home-cell-link" [routerLink]="row.url" (click)="$event.stopPropagation()">{{ row.name }}</a></span>
+                <span class="tb-devices-cell-main">
+                  @if (row.url) {
+                    <a class="tb-home-cell-link" [routerLink]="row.url" (click)="$event.stopPropagation()">{{ row.name }}</a>
+                  } @else {
+                    {{ row.name }}
+                  }
+                </span>
                 <span class="tb-devices-cell-sub">{{ row.profile }}</span>
               </td>
               <td class="col-profile">{{ row.profile }}</td>
@@ -90,7 +96,7 @@
     } @else if (loaded()) {
       <div class="tb-home-empty-note">{{ ('home.devices.none-' + (filter() ?? 'active')) | translate }}</div>
     }
-    <tb-home-list-footer [total]="listed()" [expanded]="expanded()" link="/entities/devices/all" [params]="viewAllParams()"
+    <tb-home-list-footer [total]="listed()" [expanded]="expanded()" [link]="devicesLink" [params]="viewAllParams()"
                          (expandedChange)="expanded.set($event)"></tb-home-list-footer>
   }
 </tb-home-card>

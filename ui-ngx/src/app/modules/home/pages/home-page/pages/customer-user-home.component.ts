@@ -7,6 +7,7 @@ import { AppState } from '@core/core.state';
 import { selectHomeCards } from '@core/auth/auth.selectors';
 import { HomeCardId } from '@shared/models/user-settings.models';
 import { isHomeCardShown } from '@home/pages/home-page/home-cards.models';
+import { HomePermissionsService } from '@home/pages/home-page/home-permissions.service';
 
 const MAIN_CARDS = [HomeCardId.ALARMS, HomeCardId.DASHBOARDS, HomeCardId.DEVICES];
 const SIDE_CARDS = [HomeCardId.NOTIFICATIONS, HomeCardId.QUICK_LINKS];
@@ -61,11 +62,21 @@ export class CustomerUserHomeComponent {
 
   readonly HomeCardId = HomeCardId;
 
-  readonly cards = [...MAIN_CARDS, ...SIDE_CARDS];
+  private readonly permissions = inject(HomePermissionsService);
+
+  private readonly mainCardIds = MAIN_CARDS.filter(id => this.permissions.cardAvailable(id));
+
+  private readonly sideCardIds = SIDE_CARDS.filter(id => this.permissions.cardAvailable(id));
+
+  readonly cards = [...this.mainCardIds, ...this.sideCardIds];
 
   private settings = toSignal(inject(Store<AppState>).select(selectHomeCards), {initialValue: {}});
 
-  readonly mainCards = computed(() => MAIN_CARDS.filter(id => isHomeCardShown(this.settings(), id)));
+  private readonly shownMainCards = computed(() => this.mainCardIds.filter(id => isHomeCardShown(this.settings(), id)));
 
-  readonly sideCards = computed(() => SIDE_CARDS.filter(id => isHomeCardShown(this.settings(), id)));
+  private readonly shownSideCards = computed(() => this.sideCardIds.filter(id => isHomeCardShown(this.settings(), id)));
+
+  readonly mainCards = computed(() => this.shownMainCards().length ? this.shownMainCards() : this.shownSideCards());
+
+  readonly sideCards = computed(() => this.shownMainCards().length ? this.shownSideCards() : []);
 }

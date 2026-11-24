@@ -190,12 +190,16 @@
   }
 }
 
-.tb-alarms-acked {
+.tb-alarms-acked, .tb-alarms-unacked {
   width: 20px;
   height: 20px;
   font-size: 20px;
   vertical-align: middle;
   color: var(--tb-ink-54, rgba(0, 0, 0, 0.54));
+}
+
+.tb-alarms-unacked {
+  color: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
 }
 
 @container tb-alarms-home (max-width: 599px) {

@@ -9,7 +9,7 @@
     @if (total()) {
       <tb-home-toggle [options]="whoseOptions" [value]="mine()" [label]="'home.alarms.whose' | translate" (valueChange)="setMine($event)"></tb-home-toggle>
     }
-    @if (tenantAdmin) {
+    @if (canAddRule) {
       <button mat-button color="primary" type="button" class="tb-home-add" (click)="addAlarmRule()">
         <mat-icon>add</mat-icon>
         <span class="tb-home-add-label">{{ 'home.alarms.add-rule' | translate }}</span>
@@ -94,12 +94,20 @@
                   <a class="tb-alarms-link" href="#" (click)="openDetails(row, $event)">{{ row.alarm.type }}</a>
                 </span>
                 <span class="tb-alarms-cell-sub">
-                  <a class="tb-alarms-link tb-alarms-origin" [routerLink]="row.originatorLink" (click)="stop($event)">{{ row.alarm.originatorDisplayName || row.alarm.originatorName }}</a>
+                  @if (row.originatorLink) {
+                    <a class="tb-alarms-link tb-alarms-origin" [routerLink]="row.originatorLink" (click)="stop($event)">{{ row.alarm.originatorDisplayName || row.alarm.originatorName }}</a>
+                  } @else {
+                    <span class="tb-alarms-origin">{{ row.alarm.originatorDisplayName || row.alarm.originatorName }}</span>
+                  }
                   <span class="tb-alarms-sub-age"> · {{ row.ago }}</span>
                 </span>
               </td>
               <td class="col-origin">
-                <a class="tb-alarms-link tb-alarms-origin" [routerLink]="row.originatorLink" (click)="stop($event)">{{ row.alarm.originatorDisplayName || row.alarm.originatorName }}</a>
+                @if (row.originatorLink) {
+                  <a class="tb-alarms-link tb-alarms-origin" [routerLink]="row.originatorLink" (click)="stop($event)">{{ row.alarm.originatorDisplayName || row.alarm.originatorName }}</a>
+                } @else {
+                  <span class="tb-alarms-origin">{{ row.alarm.originatorDisplayName || row.alarm.originatorName }}</span>
+                }
               </td>
               <td class="col-age col-time" [matTooltip]="'home.alarms.started-at' | translate: {time: (row.alarm.createdTime | date: 'd MMM, HH:mm')}">{{ row.ago }}</td>
               @if (!mine()) {
@@ -111,10 +119,12 @@
                   } @else {
                     <span class="tb-alarms-assign-cell">
                       <span class="tb-alarms-dash" [matTooltip]="'home.alarms.not-assigned' | translate">—</span>
-                      <button mat-icon-button type="button" class="tb-alarms-assign" [matTooltip]="'home.alarms.assign-me' | translate"
-                              [attr.aria-label]="'home.alarms.assign-me' | translate" (click)="assignToMe(row, $event)">
-                        <mat-icon>person_add</mat-icon>
-                      </button>
+                      @if (canWrite) {
+                        <button mat-icon-button type="button" class="tb-alarms-assign" [matTooltip]="'home.alarms.assign-me' | translate"
+                                [attr.aria-label]="'home.alarms.assign-me' | translate" (click)="assignToMe(row, $event)">
+                          <mat-icon>person_add</mat-icon>
+                        </button>
+                      }
                     </span>
                   }
                 </td>
@@ -123,12 +133,15 @@
                 @if (row.alarm.acknowledged) {
                   <mat-icon class="tb-alarms-acked" role="img" [matTooltip]="'home.alarms.acknowledged-tip' | translate"
                             [attr.aria-label]="'home.alarms.acknowledged-tip' | translate">check_circle</mat-icon>
-                } @else {
+                } @else if (canWrite) {
                   <button mat-icon-button type="button" class="tb-alarms-ack" [matTooltip]="'home.alarms.acknowledge' | translate"
                           [attr.aria-label]="'home.alarms.acknowledge' | translate" (click)="acknowledge(row, $event)">
                     <mat-icon class="off">radio_button_unchecked</mat-icon>
                     <mat-icon class="on">check_circle_outline</mat-icon>
                   </button>
+                } @else {
+                  <mat-icon class="tb-alarms-unacked" role="img" [matTooltip]="'home.alarms.not-acknowledged' | translate"
+                            [attr.aria-label]="'home.alarms.not-acknowledged' | translate">radio_button_unchecked</mat-icon>
                 }
               </td>
               <td class="col-actions">
@@ -151,11 +164,13 @@
 
 <mat-menu #alarmMenu="matMenu" xPosition="before" class="tb-ai-chat-menu tb-alarms-home-menu">
   <ng-template matMenuContent let-row="row">
-    <button mat-menu-item [disabled]="row.alarm.acknowledged" (click)="acknowledge(row)">
-      <mat-icon fontSet="material-icons-round">{{ row.alarm.acknowledged ? 'done_all' : 'done' }}</mat-icon>
-      <span>{{ (row.alarm.acknowledged ? 'home.alarms.acknowledged-tip' : 'home.alarms.acknowledge') | translate }}</span>
-    </button>
-    @if (!row.mine) {
+    @if (canWrite) {
+      <button mat-menu-item [disabled]="row.alarm.acknowledged" (click)="acknowledge(row)">
+        <mat-icon fontSet="material-icons-round">{{ row.alarm.acknowledged ? 'done_all' : 'done' }}</mat-icon>
+        <span>{{ (row.alarm.acknowledged ? 'home.alarms.acknowledged-tip' : 'home.alarms.acknowledge') | translate }}</span>
+      </button>
+    }
+    @if (canWrite && !row.mine) {
       <button mat-menu-item (click)="assignToMe(row)">
         <mat-icon fontSet="material-icons-round">person_add</mat-icon>
         <span>{{ 'home.alarms.assign-me' | translate }}</span>
@@ -165,9 +180,11 @@
       <mat-icon fontSet="material-icons-round">open_in_new</mat-icon>
       <span>{{ 'home.alarms.open-details' | translate }}</span>
     </button>
-    <button mat-menu-item class="danger" (click)="clear(row)">
-      <mat-icon fontSet="material-icons-round">clear</mat-icon>
-      <span>{{ 'home.alarms.clear' | translate }}</span>
-    </button>
+    @if (canWrite) {
+      <button mat-menu-item class="danger" (click)="clear(row)">
+        <mat-icon fontSet="material-icons-round">clear</mat-icon>
+        <span>{{ 'home.alarms.clear' | translate }}</span>
+      </button>
+    }
   </ng-template>
 </mat-menu>

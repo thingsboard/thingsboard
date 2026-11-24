@@ -11,11 +11,10 @@ import { AppState } from '@core/core.state';
 import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { DashboardService } from '@core/http/dashboard.service';
-import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { HomePermissionsService } from '@home/pages/home-page/home-permissions.service';
 import { ToastNotificationService } from '@core/services/toast-notification.service';
 import { Authority } from '@shared/models/authority.enum';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Operation, Resource } from '@shared/models/security.models';
 import { HelpLinks } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -68,16 +67,15 @@ export class DashboardsHomeComponent {
   private translate = inject(TranslateService);
   private userSettingsService = inject(UserSettingsService);
   private dashboardService = inject(DashboardService);
-  private userPermissions = inject(UserPermissionsService);
   private toast = inject(ToastNotificationService);
 
   private readonly authUser = getCurrentAuthUser(this.store);
   private readonly fullscreen = getCurrentAuthState(this.store).forceFullscreen;
 
-  readonly tenantAdmin = this.authUser?.authority === Authority.TENANT_ADMIN;
-  readonly canAdd = this.tenantAdmin && this.userPermissions.hasGenericPermission(Resource.DASHBOARD, Operation.CREATE);
-  readonly dashboardsLink = this.userPermissions.hasReadGenericPermission(Resource.DASHBOARD) ? '/dashboards/all'
-    : this.userPermissions.hasSharedReadGroupsPermission(EntityType.DASHBOARD) ? '/dashboards/shared' : null;
+  readonly canAdd = inject(HomePermissionsService).canReadAllEntities(EntityType.DASHBOARD) &&
+    inject(HomePermissionsService).canCreateEntities(EntityType.DASHBOARD);
+  readonly dashboardsLink = inject(HomePermissionsService).entitiesLink(EntityType.DASHBOARD);
+  readonly canUseIotHub = inject(HomePermissionsService).canUseIotHub();
 
   readonly tab = signal<DashboardsTab>('last');
   readonly expanded = signal(false);

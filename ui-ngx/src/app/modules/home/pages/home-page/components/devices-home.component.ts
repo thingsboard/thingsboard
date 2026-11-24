@@ -17,9 +17,9 @@ import { Store } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthUser, selectPersistDeviceStateToTelemetry } from '@core/auth/auth.selectors';
+import { selectPersistDeviceStateToTelemetry } from '@core/auth/auth.selectors';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
-import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { HomePermissionsService } from '@home/pages/home-page/home-permissions.service';
 import { EntityCountCmd, EntityDataCmd, TelemetrySubscriber } from '@shared/models/telemetry/telemetry.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -35,11 +35,8 @@ import {
   NumericOperation
 } from '@shared/models/query/query.models';
 import { Direction } from '@shared/models/page/sort-order';
-import { Authority } from '@shared/models/authority.enum';
-import { Operation, Resource } from '@shared/models/security.models';
 import { HelpLinks } from '@shared/models/constants';
 import { HomeCardId } from '@shared/models/user-settings.models';
-import { getEntityDetailsPageURL } from '@core/utils';
 import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
 import { homeAgo, homeListPageSize, homeListShown } from '@home/pages/home-page/home-list.models';
 
@@ -91,11 +88,10 @@ export class DevicesHomeComponent {
   private store = inject(Store<AppState>);
   private router = inject(Router);
   private translate = inject(TranslateService);
-  private userPermissions = inject(UserPermissionsService);
+  private permissions = inject(HomePermissionsService);
 
-  private readonly authUser = getCurrentAuthUser(this.store);
-  readonly tenantAdmin = this.authUser?.authority === Authority.TENANT_ADMIN;
-  readonly canAdd = this.tenantAdmin && this.userPermissions.hasGenericPermission(Resource.DEVICE, Operation.CREATE);
+  readonly canAdd = this.permissions.canReadAllEntities(EntityType.DEVICE) && this.permissions.canCreateEntities(EntityType.DEVICE);
+  readonly devicesLink = this.permissions.entitiesLink(EntityType.DEVICE);
 
   readonly filter = signal<DeviceState | null>(null);
   readonly expanded = signal(false);
@@ -145,7 +141,7 @@ export class DevicesHomeComponent {
 
   readonly viewAllParams = computed(() => {
     const filter = this.filter();
-    return filter ? {active: filter === 'active'} : null;
+    return filter && this.devicesLink?.endsWith('/all') ? {active: filter === 'active'} : null;
   });
 
   private readonly queries = computed<DeviceQuery[]>(() => {
@@ -226,7 +222,9 @@ export class DevicesHomeComponent {
   }
 
   open(row: DeviceHomeRow): void {
-    this.router.navigateByUrl(row.url);
+    if (row.url) {
+      this.router.navigateByUrl(row.url);
+    }
   }
 
   private subscribeLists(queries: DeviceQuery[], pageSize: number): void {
@@ -350,7 +348,7 @@ export class DevicesHomeComponent {
       active: state.active?.value === 'true',
       lastActivity,
       ago: lastActivity ? homeAgo(this.translate, now - lastActivity) : '',
-      url: getEntityDetailsPageURL(data.entityId.id, EntityType.DEVICE)
+      url: this.permissions.entityDetailsLink(EntityType.DEVICE, data.entityId.id)
     };
   }
 }

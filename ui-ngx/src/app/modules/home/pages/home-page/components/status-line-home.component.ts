@@ -12,6 +12,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { EntityKeyType, EntityKeyValueType, FilterPredicateType, BooleanOperation, KeyFilter } from '@shared/models/query/query.models';
 import { AlarmSearchStatus, AlarmSeverity } from '@shared/models/alarm.models';
 import { Authority } from '@shared/models/authority.enum';
+import { HomePermissionsService } from '@home/pages/home-page/home-permissions.service';
 import { HomeCardId } from '@shared/models/user-settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { SysAdminHomeService } from '@home/pages/home-page/sys-admin-home.service';
@@ -96,6 +97,10 @@ export class StatusLineHomeComponent {
   private readonly authority = getCurrentAuthUser(this.store)?.authority;
   private readonly customer = this.authority === Authority.CUSTOMER_USER;
   readonly sysAdmin = this.authority === Authority.SYS_ADMIN;
+  private readonly homePermissions = inject(HomePermissionsService);
+  private readonly canReadAlarms = !this.sysAdmin && this.homePermissions.canReadAlarms();
+  private readonly canReadDevices = !this.sysAdmin && this.homePermissions.canReadEntities(EntityType.DEVICE);
+  private readonly devicesLink = this.canReadDevices ? this.homePermissions.entitiesLink(EntityType.DEVICE) : null;
 
   private readonly shownKey = `tb-home-status-line:${getCurrentAuthUser(this.store)?.userId}`;
 
@@ -122,26 +127,28 @@ export class StatusLineHomeComponent {
   readonly kind = computed<StatusKind>(() => this.sysAdmin ? this.sysAdminKind() : this.critical() ? 'crit' : this.inactive() ? 'warn' : 'ok');
 
   private tenantParts(): StatusPart[] {
-    const critical = this.critical();
-    const active = this.active();
-    const devices = this.devices();
-    const inactive = this.inactive();
+    const critical = this.canReadAlarms ? this.critical() : 0;
+    const active = this.canReadAlarms ? this.active() : 0;
+    const devices = this.canReadDevices ? this.devices() : 0;
+    const inactive = this.canReadDevices ? this.inactive() : 0;
     if (critical === null || active === null || devices === null || inactive === null) {
       return [];
     }
     if (!devices) {
-      return this.customer ? [{key: 'home.status.nothing-assigned'}] : [];
+      return this.customer && this.canReadDevices ? [{key: 'home.status.nothing-assigned'}] : [];
     }
     const parts: StatusPart[] = [];
-    if (critical) {
-      parts.push({key: 'home.status.critical-alarms', params: {count: critical}, cards: [HomeCardId.ALARMS], link: '/alarms'});
-    } else if (active) {
-      parts.push({key: 'home.status.active-alarms', params: {count: active}, cards: [HomeCardId.ALARMS], link: '/alarms'});
-    } else {
-      parts.push({key: 'home.status.no-alarms'});
+    if (this.canReadAlarms) {
+      if (critical) {
+        parts.push({key: 'home.status.critical-alarms', params: {count: critical}, cards: [HomeCardId.ALARMS], link: '/alarms'});
+      } else if (active) {
+        parts.push({key: 'home.status.active-alarms', params: {count: active}, cards: [HomeCardId.ALARMS], link: '/alarms'});
+      } else {
+        parts.push({key: 'home.status.no-alarms'});
+      }
     }
     if (inactive) {
-      parts.push({key: 'home.status.inactive-devices', params: {count: inactive}, cards: [HomeCardId.DEVICES], link: '/entities/devices'});
+      parts.push({key: 'home.status.inactive-devices', params: {count: inactive}, cards: [HomeCardId.DEVICES], link: this.devicesLink});
     } else {
       parts.push({key: devices === 1 ? 'home.status.device-active' : 'home.status.all-devices-active', params: {count: devices}});
     }
@@ -226,8 +233,13 @@ export class StatusLineHomeComponent {
   private watchTenant(): void {
     this.store.select(selectPersistDeviceStateToTelemetry).pipe(take(1)).subscribe(persisted => {
       const activeKeyType = persisted ? EntityKeyType.TIME_SERIES : EntityKeyType.SERVER_ATTRIBUTE;
-      this.countAlarms(this.critical, [AlarmSeverity.CRITICAL]);
-      this.countAlarms(this.active);
+      if (this.canReadAlarms) {
+        this.countAlarms(this.critical, [AlarmSeverity.CRITICAL]);
+        this.countAlarms(this.active);
+      }
+      if (!this.canReadDevices) {
+        return;
+      }
       this.countDevices(this.devices);
       this.countDevices(this.inactive, [{
         key: {type: activeKeyType, key: 'active'},

@@ -8608,6 +8608,7 @@
                 "assign-me": "Assign to me",
                 "acknowledge": "Acknowledge",
                 "acknowledged-tip": "Acknowledged",
+                "not-acknowledged": "Not acknowledged",
                 "open-details": "Open details",
                 "clear": "Clear",
                 "clear-title": "Clear {{name}}?",
