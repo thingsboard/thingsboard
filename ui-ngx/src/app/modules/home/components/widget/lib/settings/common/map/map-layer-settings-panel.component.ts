@@ -9,6 +9,8 @@ import {
   cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
+  esriLayerTranslationMap,
+  esriLayerTypes,
   googleMapLayerTranslationMap,
   googleMapLayerTypes,
   hereLayerTranslationMap,
@@ -56,6 +58,10 @@ export class MapLayerSettingsPanelComponent implements OnInit {
 
   cartoLayerTranslationMap = cartoLayerTranslationMap;
 
+  esriLayerTypes = esriLayerTypes;
+
+  esriLayerTranslationMap = esriLayerTranslationMap;
+
   googleMapLayerTypes = googleMapLayerTypes;
 
   googleMapLayerTranslationMap = googleMapLayerTranslationMap;
@@ -98,7 +104,8 @@ export class MapLayerSettingsPanelComponent implements OnInit {
         vectorTiles: [false, []],
         customAttribution: [null, []],
         apiKey: [null, []],
-        referenceLayer: [null, []]
+        referenceLayer: [null, []],
+        referenceLayerApiKey: [null, []]
       }
     );
     this.layerFormGroup.patchValue(
@@ -131,6 +138,11 @@ export class MapLayerSettingsPanelComponent implements OnInit {
 
   hasApiKey(): boolean {
     return mapProviderHasApiKey(this.layerFormGroup.get('provider').value);
+  }
+
+  // An Esri layer uses its own ArcGIS API key for the reference layer too
+  referenceLayerHasOwnApiKey(): boolean {
+    return !!this.layerFormGroup.get('referenceLayer').value && this.layerFormGroup.get('provider').value !== MapProvider.esri;
   }
 
   apiKeyMissing(): boolean {

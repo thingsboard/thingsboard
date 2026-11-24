@@ -72,6 +72,18 @@
           </mat-select>
         </mat-form-field>
       }
+      @if (MapProvider.esri === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of esriLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ esriLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
       @if (MapProvider.google === layerFormGroup.get('provider').value) {
         <mat-form-field
           class="flex"  appearance="outline" subscriptSizing="dynamic">
@@ -147,6 +159,22 @@
         </mat-select>
       </mat-form-field>
     </div>
+    @if (referenceLayerHasOwnApiKey()) {
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" translate>widgets.maps.layer.reference.api-key</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="referenceLayerApiKey" placeholder="{{ 'widget-config.set' | translate }}">
+          @if (!layerFormGroup.get('referenceLayerApiKey').value) {
+            <mat-icon matSuffix
+                      class="tb-warning"
+                      matTooltipPosition="above"
+                      matTooltip="{{ 'widgets.maps.layer.credentials.api-key-missing' | translate }}">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
+      </div>
+    }
     @if (MapProvider.custom === layerFormGroup.get('provider').value) {
       <div class="tb-form-row space-between column-xs">
         <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.attribution-hint' | translate }}" translate>widgets.maps.layer.provider.custom.attribution</div>

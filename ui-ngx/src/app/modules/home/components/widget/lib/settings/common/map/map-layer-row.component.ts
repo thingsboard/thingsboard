@@ -29,6 +29,8 @@ import {
   cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
+  esriLayerTranslationMap,
+  esriLayerTypes,
   googleMapLayerTranslationMap,
   googleMapLayerTypes,
   hereLayerTranslationMap,
@@ -84,6 +86,10 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
 
   cartoLayerTranslationMap = cartoLayerTranslationMap;
 
+  esriLayerTypes = esriLayerTypes;
+
+  esriLayerTranslationMap = esriLayerTranslationMap;
+
   googleMapLayerTypes = googleMapLayerTypes;
 
   googleMapLayerTranslationMap = googleMapLayerTranslationMap;
@@ -126,7 +132,8 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       vectorTiles: [false, []],
       customAttribution: [null, []],
       apiKey: [null, []],
-      referenceLayer: [null, []]
+      referenceLayer: [null, []],
+      referenceLayerApiKey: [null, []]
     });
     this.layerFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)

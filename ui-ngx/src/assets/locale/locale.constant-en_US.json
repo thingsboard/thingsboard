@@ -12745,6 +12745,7 @@
                 "webgl-not-available": "The selected map layer requires graphics acceleration to display. Please enable 'Hardware acceleration' in your browser settings, or switch to a different layer.",
                 "reference": {
                     "reference-layer": "Reference layer",
+                    "api-key": "ArcGIS API Key",
                     "no-layer": "No layer",
                     "openstreetmap-hybrid": "OpenStreetMap Hybrid",
                     "world-edition-hybrid": "World Edition Hybrid",
@@ -12764,6 +12765,9 @@
                         "title": "CARTO",
                         "positron": "Positron",
                         "dark-matter": "DarkMatter"
+                    },
+                    "esri": {
+                        "title": "Esri"
                     },
                     "google": {
                         "title": "Google",
