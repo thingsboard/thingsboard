@@ -1,12 +1,20 @@
-// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: BUSL-1.1
-tb-home-page {
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+tb-home-page.tb-home-dashboard {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+tb-home-page:not(.tb-home-dashboard) {
   --tb-home-page: #f4f6f7;
   --tb-home-ai-glow: oklch(0.80 0.11 182);
   --tb-home-card-shadow: 0 1px 1px rgba(20, 52, 58, 0.06), 0 2px 6px -1px rgba(20, 52, 58, 0.08);
   position: relative;
   isolation: isolate;
   display: block;
+  flex: none;
   min-height: 100%;
   box-sizing: border-box;
   container: tb-home / inline-size;
@@ -44,7 +52,7 @@ tb-home-page .tb-home-sky {
 }
 
 @supports (color: oklch(from red l c h)) {
-  tb-home-page.tenant-brand {
+  tb-home-page.tenant-brand:not(.tb-home-dashboard) {
     --tb-home-tenant-glow: oklch(from var(--tb-primary-500) 0.80 min(c, 0.11) h);
     background-image:
       radial-gradient(820px 520px at 6% -120px, color-mix(in oklab, var(--tb-home-tenant-glow) 34%, transparent) 0%,
@@ -54,7 +62,7 @@ tb-home-page .tb-home-sky {
       linear-gradient(180deg, #eaedef 0px, var(--tb-home-page) 360px);
   }
 
-  tb-home-page.tenant-brand .tb-home-sky {
+  tb-home-page.tenant-brand:not(.tb-home-dashboard) .tb-home-sky {
     --tb-home-sky-field: oklch(from var(--tb-primary-500) 0.86 min(c, 0.08) h);
     --tb-home-sky-soft: oklch(from var(--tb-primary-500) 0.89 min(c, 0.05) h);
     background:

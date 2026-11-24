@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, inject, signal, ViewChi
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { HomeCardId } from '@shared/models/user-settings.models';
-import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
+import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';

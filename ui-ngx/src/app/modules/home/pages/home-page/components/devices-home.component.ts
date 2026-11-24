@@ -40,8 +40,8 @@ import { Operation, Resource } from '@shared/models/security.models';
 import { HelpLinks } from '@shared/models/constants';
 import { HomeCardId } from '@shared/models/user-settings.models';
 import { getEntityDetailsPageURL } from '@core/utils';
-import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
-import { homeAgo, homeListPageSize, homeListShown } from '@home/pages/home-links/home/home-list.models';
+import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
+import { homeAgo, homeListPageSize, homeListShown } from '@home/pages/home-page/home-list.models';
 
 type DeviceState = 'inactive' | 'active';
 type DeviceSortKey = 'last' | 'name';

@@ -28,7 +28,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { ToastNotificationService } from '@core/services/toast-notification.service';
 import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { DocumentationLink, HomeCardId, QuickLinks } from '@shared/models/user-settings.models';
-import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
+import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
 import {
   defaultQuickLinks,
   isQuickWebLinkId,
@@ -37,11 +37,11 @@ import {
   quickLinkPages,
   QuickLinkView,
   quickWebLinkId
-} from '@home/pages/home-links/home/quick-links.models';
+} from '@home/pages/home-page/quick-links.models';
 import {
   QuickLinkDialogComponent,
   QuickLinkDialogData
-} from '@home/pages/home-links/home/components/quick-link-dialog.component';
+} from '@home/pages/home-page/components/quick-link-dialog.component';
 
 @Component({
   selector: 'tb-quick-links-home',

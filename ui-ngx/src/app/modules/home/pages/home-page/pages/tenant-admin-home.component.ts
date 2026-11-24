@@ -7,7 +7,7 @@ import { AppState } from '@core/core.state';
 import { selectHomeCards } from '@core/auth/auth.selectors';
 import { TourService } from '@core/services/tour.service';
 import { HomeCardId } from '@shared/models/user-settings.models';
-import { isHomeCardShown } from '@home/pages/home-links/home/home-cards.models';
+import { isHomeCardShown } from '@home/pages/home-page/home-cards.models';
 
 const MAIN_CARDS = [HomeCardId.IOT_HUB, HomeCardId.ALARMS, HomeCardId.DASHBOARDS, HomeCardId.DEVICES, HomeCardId.ACTIVITY];
 const SIDE_CARDS = [HomeCardId.GET_STARTED, HomeCardId.NOTIFICATIONS, HomeCardId.QUICK_LINKS, HomeCardId.USAGE, HomeCardId.MOBILE_APP];

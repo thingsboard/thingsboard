@@ -4,7 +4,7 @@
 import { inject, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
-import { HomeLinksComponent } from './home-links.component';
+import { HomePageComponent } from './home-page.component';
 import { Authority } from '@shared/models/authority.enum';
 import { mergeMap, Observable, of } from 'rxjs';
 import { HomeDashboard } from '@shared/models/dashboard.models';
@@ -135,7 +135,7 @@ export const homeDashboardResolver: ResolveFn<HomeDashboard> = (
 const routes: Routes = [
   {
     path: 'home',
-    component: HomeLinksComponent,
+    component: HomePageComponent,
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       title: 'home.home',
@@ -153,4 +153,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
-export class HomeLinksRoutingModule { }
+export class HomePageRoutingModule { }

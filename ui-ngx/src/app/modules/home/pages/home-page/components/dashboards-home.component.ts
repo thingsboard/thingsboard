@@ -20,9 +20,9 @@ import { HelpLinks } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { HomeCardId, UserDashboardAction, UserDashboardsInfo } from '@shared/models/user-settings.models';
-import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
-import { homeAgo, homeListShown } from '@home/pages/home-links/home/home-list.models';
-import { HomeToggleOption } from '@home/pages/home-links/home/components/home-toggle.component';
+import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
+import { homeAgo, homeListShown } from '@home/pages/home-page/home-list.models';
+import { HomeToggleOption } from '@home/pages/home-page/components/home-toggle.component';
 
 type DashboardsTab = 'last' | 'starred';
 

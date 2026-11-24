@@ -30,8 +30,8 @@ import { formatValue } from '@core/utils';
 import { ECharts, echartsModule, EChartsOption } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { TimeSeriesChartTooltip } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 import { TimeSeriesChartDataItem } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
-import { HomeToggleOption } from '@home/pages/home-links/home/components/home-toggle.component';
+import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
+import { HomeToggleOption } from '@home/pages/home-page/components/home-toggle.component';
 
 type ActivitySeries = 'devices' | 'messages';
 

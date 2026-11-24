@@ -19,7 +19,7 @@ import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { ToastNotificationService } from '@core/services/toast-notification.service';
 import { baseUrl } from '@core/utils';
 import { GettingStarted, HomeCardId } from '@shared/models/user-settings.models';
-import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
+import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
 import { decorateCodeBlocks } from '@home/components/ai/ai-code-block';
 
 export interface GetStartedStep {

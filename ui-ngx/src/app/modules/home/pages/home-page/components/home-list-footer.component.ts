@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { Params } from '@angular/router';
-import { HOME_LIST_LIMIT, homeListFew, homeListShown } from '@home/pages/home-links/home/home-list.models';
+import { HOME_LIST_LIMIT, homeListFew, homeListShown } from '@home/pages/home-page/home-list.models';
 
 @Component({
   selector: 'tb-home-list-footer',

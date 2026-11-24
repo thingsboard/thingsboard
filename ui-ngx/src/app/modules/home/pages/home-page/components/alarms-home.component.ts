@@ -35,10 +35,10 @@ import { Authority } from '@shared/models/authority.enum';
 import { EntityType } from '@shared/models/entity-type.models';
 import { HomeCardId } from '@shared/models/user-settings.models';
 import { getEntityDetailsPageURL } from '@core/utils';
-import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
+import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
 import { AlarmDetailsDialogComponent, AlarmDetailsDialogData } from '@home/components/alarm/alarm-details-dialog.component';
-import { homeAgo, homeListPageSize, homeListShown } from '@home/pages/home-links/home/home-list.models';
-import { HomeToggleOption } from '@home/pages/home-links/home/components/home-toggle.component';
+import { homeAgo, homeListPageSize, homeListShown } from '@home/pages/home-page/home-list.models';
+import { HomeToggleOption } from '@home/pages/home-page/components/home-toggle.component';
 
 const MINUTE = 60000;
 const MINE_KEY = 'tb-home-alarms-mine';

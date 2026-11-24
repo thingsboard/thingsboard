@@ -6,7 +6,7 @@ import { ToastNotificationService } from '@core/services/toast-notification.serv
 import { TranslateService } from '@ngx-translate/core';
 import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateHomeCards } from '@core/auth/auth.actions';
-import { HomeCardDefinition } from '@home/pages/home-links/home/home-cards.models';
+import { HomeCardDefinition } from '@home/pages/home-page/home-cards.models';
 
 const UNDO_MS = 6000;
 

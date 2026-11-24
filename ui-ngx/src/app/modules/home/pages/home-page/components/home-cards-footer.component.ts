@@ -8,11 +8,11 @@ import { AppState } from '@core/core.state';
 import { selectHomeCards } from '@core/auth/auth.selectors';
 import { ActionPreferencesUpdateHomeCards } from '@core/auth/auth.actions';
 import { HomeCardId } from '@shared/models/user-settings.models';
-import { HOME_CARDS, isHomeCardShown } from '@home/pages/home-links/home/home-cards.models';
+import { HOME_CARDS, isHomeCardShown } from '@home/pages/home-page/home-cards.models';
 import {
   CustomizeHomeDialogComponent,
   CustomizeHomeDialogData
-} from '@home/pages/home-links/home/components/customize-home-dialog.component';
+} from '@home/pages/home-page/components/customize-home-dialog.component';
 
 @Component({
   selector: 'tb-home-cards-footer',

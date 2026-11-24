@@ -18,7 +18,7 @@ import { ResourcesService } from '@core/services/resources.service';
 import { getMaterialIcons, splitIconName } from '@shared/models/icon.models';
 import { Subscription } from 'rxjs';
 import { DocumentationLink } from '@shared/models/user-settings.models';
-import { HomeToggleOption } from '@home/pages/home-links/home/components/home-toggle.component';
+import { HomeToggleOption } from '@home/pages/home-page/components/home-toggle.component';
 import {
   parseQuickWebLink,
   QUICK_LINK_ICONS,
@@ -26,7 +26,7 @@ import {
   quickLinkIconFromUrl,
   quickLinkNameFromUrl,
   QuickLinkPage
-} from '@home/pages/home-links/home/quick-links.models';
+} from '@home/pages/home-page/quick-links.models';
 
 export interface QuickLinkDialogData {
   pages: QuickLinkPage[];

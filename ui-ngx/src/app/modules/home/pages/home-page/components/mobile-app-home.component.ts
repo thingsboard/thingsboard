@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { HomeCardId } from '@shared/models/user-settings.models';
-import { HOME_CARDS } from '@home/pages/home-links/home/home-cards.models';
+import { HOME_CARDS } from '@home/pages/home-page/home-cards.models';
 
 @Component({
-  selector: 'tb-api-usage-home',
+  selector: 'tb-mobile-app-home',
   template: `<tb-home-card [card]="card"></tb-home-card>`,
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ApiUsageHomeComponent {
+export class MobileAppHomeComponent {
 
-  readonly card = HOME_CARDS[HomeCardId.USAGE];
+  readonly card = HOME_CARDS[HomeCardId.MOBILE_APP];
 }

@@ -8,5 +8,18 @@
 @if (homeDashboard) {
   <tb-dashboard-page [embedded]="true" [dashboard]="homeDashboard" [hideToolbar]="homeDashboard.hideDashboardToolbar" [hideMainToolbar]="hideMainToolbar"></tb-dashboard-page>
 } @else {
-  <tb-home-page></tb-home-page>
+  @if (aiSky) {
+    <div class="tb-home-sky" aria-hidden="true"></div>
+  }
+  @switch (authority) {
+    @case (Authority.SYS_ADMIN) {
+      <tb-sys-admin-home></tb-sys-admin-home>
+    }
+    @case (Authority.TENANT_ADMIN) {
+      <tb-tenant-admin-home></tb-tenant-admin-home>
+    }
+    @case (Authority.CUSTOMER_USER) {
+      <tb-customer-user-home></tb-customer-user-home>
+    }
+  }
 }

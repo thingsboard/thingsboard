@@ -4,7 +4,7 @@
 import { NgModule } from '@angular/core';
 
 import { AdminModule } from './admin/admin.module';
-import { HomeLinksModule } from './home-links/home-links.module';
+import { HomePageModule } from './home-page/home-page.module';
 import { ProfileModule } from './profile/profile.module';
 import { SecurityModule } from '@home/pages/security/security.module';
 import { TenantModule } from '@modules/home/pages/tenant/tenant.module';
@@ -56,7 +56,7 @@ import { AiAssistantModule } from '@home/pages/ai-assistant/ai-assistant.module'
 @NgModule({
   exports: [
     AdminModule,
-    HomeLinksModule,
+    HomePageModule,
     ProfileModule,
     SecurityModule,
     TenantProfileModule,
