@@ -58,11 +58,10 @@ export class InstallItemsHomeComponent {
 
   readonly features = computed(() => {
     const info = this.featuresInfo();
-    if (!info) {
-      return [];
-    }
-    return FEATURES.map(feature => ({...feature, on: !!info[feature.key]}));
+    return FEATURES.map(feature => ({...feature, on: info ? !!info[feature.key] : null}));
   });
+
+  readonly loaded = computed(() => !!this.featuresInfo());
 
   readonly configured = computed(() => this.features().filter(feature => feature.on).length);
 

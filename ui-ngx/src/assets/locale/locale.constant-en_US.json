@@ -8832,6 +8832,23 @@
                     "action": "Open Notifications settings"
                 }
             },
+            "license": {
+                "development-mode": "Development mode",
+                "development-line": "Non-production use only. Limits do not apply; White labeling is not available.",
+                "updated-tooltip": "When the license info was last read from the License Portal",
+                "devices-and-assets": "Devices and assets",
+                "installations": "Installations",
+                "this-month": "This month",
+                "of-limit": "{{percent}}% of your limit",
+                "at-limit": "At your limit",
+                "not-in-license": "Not in your license",
+                "go-to-production": "Go to production",
+                "see-plans": "See plans",
+                "production-use": "Production use",
+                "production-use-text": "Real devices and customers on this install.",
+                "ai-credits-text": "A monthly pool for the AI Assistant across the install.",
+                "add-ons-text": "Edge Computing and Trendz Analytics, added to the license."
+            },
             "install": {
                 "add-tenant": "Add tenant",
                 "tenants": "Tenants",
@@ -8841,6 +8858,7 @@
                 "dashboards": "Dashboards",
                 "integrations": "Integrations",
                 "features": "Features",
+                "checking": "Checking the configuration",
                 "features-count": "{{on}} of {{total}}",
                 "white-labeling": "White labeling",
                 "mail-server": "Mail server",

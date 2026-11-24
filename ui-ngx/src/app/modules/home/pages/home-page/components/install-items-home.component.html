@@ -26,18 +26,20 @@
       }
     }
   </div>
-  @if (withFeatures() && features().length) {
+  @if (withFeatures()) {
     <div class="tb-install-head">
       <span>{{ 'home.install.features' | translate }}</span>
-      <span class="tb-install-head-count">{{ 'home.install.features-count' | translate: {on: configured(), total: features().length} }}</span>
+      @if (loaded()) {
+        <span class="tb-install-head-count">{{ 'home.install.features-count' | translate: {on: configured(), total: features().length} }}</span>
+      }
     </div>
     <div class="tb-install-features" role="list">
       @for (feature of features(); track feature.key) {
-        <a class="tb-install-feature" role="listitem" [class.on]="feature.on" [routerLink]="feature.link"
-           [matTooltip]="(feature.on ? 'widgets.configured-features.feature-configured' : 'widgets.configured-features.feature-not-configured') | translate">
+        <a class="tb-install-feature" role="listitem" [class.on]="feature.on" [class.pending]="feature.on === null" [routerLink]="feature.link"
+           [matTooltip]="(feature.on === null ? 'home.install.checking' : feature.on ? 'widgets.configured-features.feature-configured' : 'widgets.configured-features.feature-not-configured') | translate">
           <mat-icon class="tb-install-feature-icon">{{ feature.on ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
           <span class="tb-install-feature-text">{{ feature.label | translate }}</span>
-          <span class="tb-home-sr-only">{{ (feature.on ? 'home.install.configured' : 'home.install.not-configured') | translate }}</span>
+          <span class="tb-home-sr-only">{{ (feature.on === null ? 'home.install.checking' : feature.on ? 'home.install.configured' : 'home.install.not-configured') | translate }}</span>
         </a>
       }
     </div>

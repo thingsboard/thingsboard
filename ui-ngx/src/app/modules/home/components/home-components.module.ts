@@ -273,10 +273,12 @@ import {
 } from '@home/components/converter/converter-library-model-autocomplete.component';
 import { AiModule } from '@home/components/ai/ai.module';
 import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack.component';
+import { LicenseHandOffDialogComponent } from '@home/components/license/license-hand-off-dialog.component';
 
 @NgModule({
   declarations:
     [
+      LicenseHandOffDialogComponent,
       RouterTabsComponent,
       EntitiesTableComponent,
       AddEntityDialogComponent,
@@ -488,6 +490,7 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
     AiModule,
   ],
   exports: [
+    LicenseHandOffDialogComponent,
     SharedHomeComponentsModule,
     RouterTabsComponent,
     EntitiesTableComponent,

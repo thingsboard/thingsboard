@@ -121,6 +121,26 @@
   color: var(--tb-ink-38, rgba(0, 0, 0, 0.38));
 }
 
+.tb-install-feature.pending .tb-install-feature-icon.mat-icon {
+  color: var(--tb-ink-12, rgba(0, 0, 0, 0.12));
+  animation: tb-install-pending 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes tb-install-pending {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-install-feature.pending .tb-install-feature-icon.mat-icon {
+    animation: none;
+  }
+}
+
 .tb-install-feature.on .tb-install-feature-icon.mat-icon {
   color: var(--tb-primary-500);
 }
