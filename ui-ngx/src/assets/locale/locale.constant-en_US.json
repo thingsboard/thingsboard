@@ -8747,6 +8747,11 @@
                 "trust": "A web link opens another site. Add only sites you trust.",
                 "insecure": "This address is not encrypted (http). Use https if the site supports it."
             },
+            "usage": {
+                "view": "Usage view",
+                "of-limit": "{{percent}}% of limit",
+                "no-limit": "No limit"
+            },
             "list": {
                 "show-more": "Show more",
                 "show-all": "Show all",

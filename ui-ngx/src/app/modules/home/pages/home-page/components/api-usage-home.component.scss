@@ -1,0 +1,115 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  min-width: 0;
+  container: tb-usage-home / inline-size;
+}
+
+.tb-usage-group-label {
+  display: none;
+  align-self: flex-start;
+  font: 500 12px/16px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: 0.25px;
+  color: var(--tb-text-muted, rgba(0, 0, 0, 0.56));
+}
+
+.tb-usage-groups {
+  display: grid;
+}
+
+.tb-usage-group {
+  grid-area: 1 / 1;
+  align-self: start;
+  container-type: inline-size;
+}
+
+.tb-usage-groups[data-tab="entities"] > [data-group="api"], .tb-usage-groups[data-tab="api"] > [data-group="entities"] {
+  visibility: hidden;
+}
+
+.tb-usage-list {
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) max-content minmax(32px, 112px);
+  column-gap: 10px;
+  row-gap: 10px;
+  align-items: center;
+}
+
+@container (max-width: 280px) {
+  .tb-usage-list {
+    grid-template-columns: minmax(0, 1fr) max-content 32px;
+  }
+}
+
+.tb-usage-item {
+  overflow: hidden;
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--tb-text-muted, rgba(0, 0, 0, 0.56));
+
+  &.critical {
+    color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+  }
+}
+
+.tb-usage-item-counts {
+  font: 400 14px/20px var(--tb-font, Roboto, sans-serif);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--tb-ink-76, rgba(0, 0, 0, 0.76));
+
+  &.critical {
+    color: var(--tb-sev-critical, #D12730);
+  }
+}
+
+.tb-usage-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.08);
+
+  > i {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--tb-primary-500);
+  }
+
+  &.critical {
+    background: rgba(209, 39, 48, 0.06);
+
+    > i {
+      background: var(--tb-sev-critical, #D12730);
+    }
+  }
+}
+
+@container tb-usage-home (min-width: 560px) {
+  .tb-usage-tabs {
+    display: none;
+  }
+
+  .tb-usage-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 40px;
+  }
+
+  .tb-usage-groups[data-tab] > .tb-usage-group {
+    display: flex;
+    flex-direction: column;
+    grid-area: auto;
+    gap: 10px;
+    visibility: visible;
+  }
+
+  .tb-usage-group-label {
+    display: inline-flex;
+  }
+}

@@ -1,0 +1,35 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="card">
+  <ng-container homeCardActions>
+    @if (groups().length) {
+      <tb-home-toggle class="tb-usage-tabs" [options]="tabOptions" [value]="tab()" [label]="'home.usage.view' | translate"
+                      (valueChange)="tab.set($event)"></tb-home-toggle>
+    }
+  </ng-container>
+  @if (groups().length) {
+    <div class="tb-usage-groups" [attr.data-tab]="tab()">
+      @for (group of groups(); track group.id) {
+        <div class="tb-usage-group" [attr.data-group]="group.id">
+          <div class="tb-usage-group-label">{{ group.label | translate }}</div>
+          <div class="tb-usage-list">
+            @for (row of group.rows; track row.name) {
+              <div class="tb-usage-item" [class.critical]="row.critical">{{ row.name | translate }}</div>
+              <div class="tb-usage-item-counts" [class.critical]="row.critical">
+                {{ row.used | shortNumber: {roundDown: true} }} / {{ row.limit ? (row.limit | shortNumber: {roundDown: true}) : '∞' }}
+              </div>
+              <div class="tb-usage-progress" [class.critical]="row.critical"
+                   [attr.title]="row.limit ? ('home.usage.of-limit' | translate: {percent: (row.percent | number: '1.0-0')}) : ('home.usage.no-limit' | translate)">
+                <i [style.width.%]="row.percent"></i>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</tb-home-card>

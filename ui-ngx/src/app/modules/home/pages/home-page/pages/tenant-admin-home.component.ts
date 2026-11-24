@@ -6,6 +6,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectHomeCards } from '@core/auth/auth.selectors';
 import { TourService } from '@core/services/tour.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { HomeCardId } from '@shared/models/user-settings.models';
 import { isHomeCardShown } from '@home/pages/home-page/home-cards.models';
 
@@ -23,7 +25,10 @@ export class TenantAdminHomeComponent {
 
   readonly HomeCardId = HomeCardId;
 
-  readonly cards = [...MAIN_CARDS, ...SIDE_CARDS];
+  private readonly sideCardIds = inject(UserPermissionsService).hasGenericPermission(Resource.ALL, Operation.READ)
+    ? SIDE_CARDS : SIDE_CARDS.filter(id => id !== HomeCardId.USAGE);
+
+  readonly cards = [...MAIN_CARDS, ...this.sideCardIds];
 
   readonly aiAvailable = inject(TourService).aiAvailable();
 
@@ -31,5 +36,5 @@ export class TenantAdminHomeComponent {
 
   readonly mainCards = computed(() => MAIN_CARDS.filter(id => isHomeCardShown(this.settings(), id)));
 
-  readonly sideCards = computed(() => SIDE_CARDS.filter(id => isHomeCardShown(this.settings(), id)));
+  readonly sideCards = computed(() => this.sideCardIds.filter(id => isHomeCardShown(this.settings(), id)));
 }
