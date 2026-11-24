@@ -62,8 +62,11 @@ export interface DocumentationLinks {
   links?: DocumentationLink[];
 }
 
+export const QUICK_WEB_LINK_PREFIX = 'url:';
+
 export interface QuickLinks {
   links?: string[];
+  webLinks?: {[id: string]: DocumentationLink};
 }
 
 export interface GettingStarted {

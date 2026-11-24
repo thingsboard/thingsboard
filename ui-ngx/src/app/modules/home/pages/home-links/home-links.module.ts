@@ -30,6 +30,7 @@ import { ApiUsageHomeComponent } from '@home/pages/home-links/home/components/ap
 import { MobileAppHomeComponent } from '@home/pages/home-links/home/components/mobile-app-home.component';
 import { HomeCardsFooterComponent } from '@home/pages/home-links/home/components/home-cards-footer.component';
 import { CustomizeHomeDialogComponent } from '@home/pages/home-links/home/components/customize-home-dialog.component';
+import { QuickLinkDialogComponent } from '@home/pages/home-links/home/components/quick-link-dialog.component';
 import { HomeHscrollComponent } from '@home/pages/home-links/home/components/home-hscroll.component';
 import { HomeToggleComponent } from '@home/pages/home-links/home/components/home-toggle.component';
 import { HomeListFooterComponent } from '@home/pages/home-links/home/components/home-list-footer.component';
@@ -61,6 +62,7 @@ import { AiModule } from '@home/components/ai/ai.module';
       MobileAppHomeComponent,
       HomeCardsFooterComponent,
       CustomizeHomeDialogComponent,
+      QuickLinkDialogComponent,
       HomeHscrollComponent,
       HomeToggleComponent,
       HomeListFooterComponent,

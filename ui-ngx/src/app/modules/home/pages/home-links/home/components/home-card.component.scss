@@ -108,7 +108,7 @@
 }
 
 .tb-home-card.hideable {
-  padding-top: 16px;
+  padding-top: var(--tb-home-card-hideable-top, 16px);
 
   .tb-home-card-header {
     min-height: 32px;

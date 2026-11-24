@@ -1,0 +1,91 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<tb-home-card [card]="card" [hideable]="true" [expanded]="editing()" [class.editing]="editing()">
+  <ng-container homeCardActions>
+    @if (loaded()) {
+      @if (editing()) {
+        <button mat-flat-button color="primary" type="button" class="tb-quick-links-done" (click)="toggleEdit()">
+          {{ 'action.done' | translate }}
+        </button>
+      } @else {
+        <button mat-icon-button type="button" class="tb-quick-links-edit"
+                [matTooltip]="'home.quick-links.edit' | translate" matTooltipPosition="above"
+                [attr.aria-label]="'home.quick-links.edit' | translate" (click)="toggleEdit()">
+          <mat-icon>edit</mat-icon>
+        </button>
+      }
+    }
+  </ng-container>
+  @if (loaded()) {
+    @if (editing()) {
+      <div class="tb-quick-links-list" role="list" cdkDropList [cdkDropListData]="links()" (cdkDropListDropped)="drop($event)">
+        @for (link of links(); track link.id) {
+          <div class="tb-quick-link tb-quick-link-editing" role="listitem" cdkDrag cdkDragLockAxis="y" cdkDragBoundary=".tb-quick-links-list">
+            <mat-icon class="tb-quick-link-drag" aria-hidden="true">drag_indicator</mat-icon>
+            <tb-icon class="tb-quick-link-icon">{{ link.icon }}</tb-icon>
+            <span class="tb-quick-link-text">{{ link.name }}</span>
+            @if (link.web) {
+              <mat-icon class="tb-quick-link-ext" aria-hidden="true">north_east</mat-icon>
+              <button type="button" class="tb-quick-link-action tb-quick-link-change"
+                      [matTooltip]="'home.quick-links.edit-link' | translate: {name: link.name}"
+                      [attr.aria-label]="'home.quick-links.edit-link' | translate: {name: link.name}"
+                      (mousedown)="$event.stopPropagation()" (click)="editLink(link)">
+                <mat-icon>edit</mat-icon>
+              </button>
+            }
+            <button type="button" class="tb-quick-link-action tb-quick-link-remove"
+                    [matTooltip]="'home.quick-links.remove' | translate: {name: link.name}"
+                    [attr.aria-label]="'home.quick-links.remove' | translate: {name: link.name}"
+                    (mousedown)="$event.stopPropagation()" (click)="remove(link)">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        } @empty {
+          <div class="tb-home-empty-note">{{ 'home.quick-links.none' | translate }}</div>
+        }
+      </div>
+      <button type="button" class="tb-quick-links-add" [disabled]="full()" (click)="addLink()">
+        <mat-icon>{{ full() ? 'block' : 'add' }}</mat-icon>
+        {{ (full() ? 'home.quick-links.full' : 'home.quick-links.add') | translate: {max: max} }}
+      </button>
+      <div class="tb-quick-links-edit-footer">
+        <button mat-button type="button" (click)="reset()">
+          <mat-icon>restart_alt</mat-icon>
+          {{ 'home.quick-links.reset' | translate }}
+        </button>
+        <span class="flex-1"></span>
+        <span>{{ 'home.quick-links.drag-hint' | translate }}</span>
+      </div>
+    } @else {
+      <div #columns class="tb-quick-links-list tb-quick-links-columns" [attr.role]="links().length ? 'list' : null">
+        @for (link of links(); track link.id) {
+          @if (link.page) {
+            <a class="tb-quick-link" role="listitem" [routerLink]="link.page.path" [queryParams]="link.page.queryParams">
+              <tb-icon class="tb-quick-link-icon">{{ link.icon }}</tb-icon>
+              <span class="tb-quick-link-text">{{ link.name }}</span>
+            </a>
+          } @else {
+            <a class="tb-quick-link" role="listitem" [href]="link.web.link" target="_blank" rel="noopener noreferrer" [attr.title]="link.web.link">
+              <tb-icon class="tb-quick-link-icon">{{ link.icon }}</tb-icon>
+              <span class="tb-quick-link-text">{{ link.name }}</span>
+              <mat-icon class="tb-quick-link-ext" aria-hidden="true">north_east</mat-icon>
+              <span class="tb-home-sr-only">{{ 'home.quick-links.opens-new-tab' | translate }}</span>
+            </a>
+          }
+        } @empty {
+          <div class="tb-home-empty-note">{{ 'home.quick-links.none' | translate }}</div>
+        }
+      </div>
+      @if (!links().length) {
+        <button type="button" class="tb-quick-links-add" (click)="addLink()">
+          <mat-icon>add</mat-icon>
+          {{ 'home.quick-links.add' | translate }}
+        </button>
+      }
+    }
+  }
+</tb-home-card>
