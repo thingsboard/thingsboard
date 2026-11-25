@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.http;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.ProtocolHandler;
@@ -11,6 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.transport.TransportContext;
 
 @Slf4j
@@ -25,6 +27,26 @@ public class HttpTransportContext extends TransportContext {
     @Getter
     @Value("${transport.http.max_request_timeout}")
     private long maxRequestTimeout;
+
+    private DefaultCounter requestsHttp;
+    private DefaultCounter requestsHttpsTransport;
+    private DefaultCounter requestsHttpsProxy;
+
+    @PostConstruct
+    public void init() {
+        super.init();
+        requestsHttp = transportService.createCounterStats("requests", "protocol", "HTTP", "tls_termination", "none");
+        requestsHttpsTransport = transportService.createCounterStats("requests", "protocol", "HTTPS", "tls_termination", "transport");
+        requestsHttpsProxy = transportService.createCounterStats("requests", "protocol", "HTTPS", "tls_termination", "proxy");
+    }
+
+    public void onRequest(HttpTlsTermination tlsTermination) {
+        switch (tlsTermination) {
+            case TRANSPORT -> requestsHttpsTransport.increment();
+            case PROXY -> requestsHttpsProxy.increment();
+            default -> requestsHttp.increment();
+        }
+    }
 
     @Bean
     public TomcatConnectorCustomizer tomcatAsyncTimeoutConnectorCustomizer() {
