@@ -96,3 +96,10 @@ export const toPlaceMapItemAction = (action: WidgetAction): CustomActionDescript
 
 export const CustomActionEditorCompleter = new TbEditorCompleter(customActionCompletions);
 export const CustomPrettyActionEditorCompleter = new TbEditorCompleter(customPrettyActionCompletions);
+
+export type CustomActionCodeField = 'customCss' | 'customHtml' | 'customFunction';
+
+export interface CustomActionCodeValidity {
+  field: CustomActionCodeField;
+  valid: boolean;
+}

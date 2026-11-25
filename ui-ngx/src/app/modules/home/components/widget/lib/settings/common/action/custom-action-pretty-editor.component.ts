@@ -7,20 +7,20 @@ import {
   forwardRef,
   Input,
   QueryList,
-  ViewChildren,
-  ViewEncapsulation
+  ViewChildren
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { CustomActionDescriptor, WidgetActionType } from '@shared/models/widget.models';
 import {
+  CustomActionCodeField,
+  CustomActionCodeValidity,
   CustomPrettyActionEditorCompleter
 } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 
 @Component({
     selector: 'tb-custom-action-pretty-editor',
     templateUrl: './custom-action-pretty-editor.component.html',
-    styleUrls: ['./custom-action-pretty-editor.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -28,7 +28,6 @@ import {
             multi: true
         }
     ],
-    encapsulation: ViewEncapsulation.None,
     standalone: false
 })
 export class CustomActionPrettyEditorComponent implements AfterViewInit, ControlValueAccessor {
@@ -58,10 +57,11 @@ export class CustomActionPrettyEditorComponent implements AfterViewInit, Control
 
   customPrettyActionEditorCompleter = CustomPrettyActionEditorCompleter;
 
-  private propagateChange = (_: any) => {};
+  private resourcesValid = true;
 
-  constructor() {
-  }
+  private invalidCodeFields = new Set<CustomActionCodeField>();
+
+  private propagateChange = (_: any) => {};
 
   ngAfterViewInit(): void {
     combineLatest([this.leftPanelElmRef.changes, this.rightPanelElmRef.changes]).subscribe(() => {
@@ -91,15 +91,36 @@ export class CustomActionPrettyEditorComponent implements AfterViewInit, Control
     this.disabled = isDisabled;
   }
 
-  writeValue(obj: CustomActionDescriptor): void {
-    this.action = obj;
+  toggleFullScreen(): void {
+    this.fullscreen = !this.fullscreen;
   }
 
-  public onActionUpdated(valid: boolean = true) {
-    if (!valid) {
-      this.propagateChange(null);
+  writeValue(obj: CustomActionDescriptor): void {
+    this.action = obj;
+    this.resourcesValid = true;
+    this.invalidCodeFields.clear();
+  }
+
+  public onCodeValidityChange({field, valid}: CustomActionCodeValidity) {
+    if (valid) {
+      this.invalidCodeFields.delete(field);
     } else {
-      this.propagateChange(this.action);
+      this.invalidCodeFields.add(field);
     }
+  }
+
+  public onCodeChange(field: CustomActionCodeField, model: NgModel) {
+    this.onCodeValidityChange({field, valid: model.valid});
+    this.updateModel();
+  }
+
+  public onActionUpdated(action: CustomActionDescriptor | null) {
+    this.resourcesValid = !!action;
+    this.updateModel();
+  }
+
+  private updateModel() {
+    const valid = this.resourcesValid && !this.invalidCodeFields.size;
+    this.propagateChange(valid ? this.action : null);
   }
 }

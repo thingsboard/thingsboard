@@ -4,35 +4,48 @@
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<mat-tab-group selectedIndex="{{hasCustomFunction ? 3 : 2}}" dynamicHeight="true" style="width: 100%; height: 100%;">
-  <mat-tab label="{{ 'widget.resources' | translate }}" style="width: 100%; height: 100%;">
-    <div class="tb-custom-action-editor-container" style="background-color: #fff;">
-      <div class="mat-padding">
-        <div class="flex flex-1 flex-row items-center justify-start"
-             *ngFor="let resource of action.customResources; let i = index" style="padding-top: 10px;">
-          <tb-resource-autocomplete class="mat-block flex-1"
-                                    subscriptSizing="dynamic"
-                                    hideRequiredMarker required
-                                    [allowAutocomplete]="resource.isModule"
-                                    [(ngModel)]="resource.url"
-                                    (ngModelChange)="notifyActionUpdated()"
-                                    placeholder="{{ 'widget.resource-url' | translate }}">
-          </tb-resource-autocomplete>
-          <mat-checkbox [(ngModel)]="resource.isModule"
-                        (ngModelChange)="notifyActionUpdated()">
-            {{ 'widget.resource-is-extension' | translate }}
-          </mat-checkbox>
-          <button mat-icon-button color="primary"
-                  [disabled]="isLoading$ | async"
-                  type="button"
-                  (click)="removeResource(i)"
-                  matTooltip="{{'widget.remove-resource' | translate}}"
-                  matTooltipPosition="above">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-        <button mat-button mat-raised-button color="primary"
-                style="margin-top: 18px;"
+<mat-tab-group [mat-stretch-tabs]="fullscreen"
+               [selectedIndex]="fullscreen ? 2 : 3"
+               [disablePagination]="fullscreen"
+               class="size-full">
+  <mat-tab #resourceTab="matTab">
+    <ng-template mat-tab-label>
+      <div [matBadge]="action.customResources?.length" [matBadgeHidden]="resourceTab.isActive || !action.customResources?.length"
+           matBadgeSize="small">{{ 'widget.resources' | translate }}</div>
+    </ng-template>
+    <div class="flex flex-col gap-2 pt-4" [class.px-2]="fullscreen">
+      @if (action.customResources?.length) {
+        @for (resource of action.customResources; track resource; let i = $index) {
+          <div class="tb-form-row no-border no-padding">
+            <tb-resource-autocomplete class="flex-1"
+                                      subscriptSizing="dynamic"
+                                      inlineField
+                                      hideRequiredMarker required
+                                      [allowAutocomplete]="resource.isModule"
+                                      [(ngModel)]="resource.url"
+                                      (ngModelChange)="notifyActionUpdated()"
+                                      placeholder="{{ 'widget.resource-url' | translate }}">
+            </tb-resource-autocomplete>
+            <mat-checkbox [(ngModel)]="resource.isModule"
+                          (ngModelChange)="notifyActionUpdated()">
+              {{ 'widget.resource-is-extension' | translate }}
+            </mat-checkbox>
+            <button mat-icon-button color="primary"
+                    [disabled]="isLoading$ | async"
+                    type="button"
+                    (click)="removeResource(i)"
+                    matTooltip="{{'widget.remove-resource' | translate}}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        }
+      } @else {
+        <span translate
+              class="tb-prompt flex items-center justify-center">widget.no-resources</span>
+      }
+      <div>
+        <button mat-raised-button color="primary"
                 [disabled]="isLoading$ | async"
                 type="button"
                 (click)="addResource()"
@@ -43,55 +56,38 @@
       </div>
     </div>
   </mat-tab>
-  <mat-tab label="{{ 'widget.css' | translate }}" style="width: 100%; height: 100%;">
-    <div class="tb-custom-action-editor-container" tb-fullscreen [fullscreen]="cssFullscreen">
-      <div class="tb-editor-area-title-panel">
-        <button mat-button
-                type="button"
-                (click)="beautifyCss()">
-          {{ 'widget.tidy' | translate }}
-        </button>
-        <button type="button"
-                mat-icon-button class="tb-mat-32"
-                (click)="cssFullscreen = !cssFullscreen"
-                matTooltip="{{(cssFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                matTooltipPosition="above">
-          <mat-icon>{{ cssFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        </button>
-      </div>
-      <div #cssInput class="css-panel"></div>
-    </div>
+  <mat-tab label="{{ 'widget.css' | translate }}">
+    <tb-css class="flex-1"
+            [fillHeight]="true"
+            #cssModel="ngModel"
+            [(ngModel)]="action.customCss"
+            (ngModelChange)="onCodeChange('customCss', cssModel)"
+            label="{{ 'widget.css' | translate }}">
+    </tb-css>
   </mat-tab>
-  <mat-tab label="{{ 'widget.html' | translate }}" style="width: 100%; height: 100%;">
-    <div class="tb-custom-action-editor-container" tb-fullscreen [fullscreen]="htmlFullscreen">
-      <div class="tb-editor-area-title-panel">
-        <button mat-button
-                type="button" (click)="beautifyHtml()">
-          {{ 'widget.tidy' | translate }}
-        </button>
-        <button type="button"
-                mat-icon-button class="tb-mat-32"
-                (click)="htmlFullscreen = !htmlFullscreen"
-                matTooltip="{{(htmlFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                matTooltipPosition="above">
-          <mat-icon>{{ htmlFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        </button>
-      </div>
-      <div #htmlInput class="html-panel"></div>
-    </div>
+  <mat-tab label="{{ 'widget.html' | translate }}">
+    <tb-html class="flex-1"
+             [fillHeight]="true"
+             #htmlModel="ngModel"
+             [(ngModel)]="action.customHtml"
+             (ngModelChange)="onCodeChange('customHtml', htmlModel)"
+             label="{{ 'widget.html' | translate }}">
+    </tb-html>
   </mat-tab>
-  <mat-tab *ngIf="hasCustomFunction" label="{{ 'widget.js' | translate }}" style="width: 100%; height: 100%;">
-    <tb-js-func
-      [(ngModel)]="action.customFunction"
-      (ngModelChange)="notifyActionUpdated()"
-      withModules
-      [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
-      [disableUndefinedCheck]="true"
-      [validationArgs]="[]"
-      [editorCompleter]="customPrettyActionEditorCompleter"
-      functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
-      [helpId]="helpId"
-      [helpPopupStyle]="{width: '900px'}">
-    </tb-js-func>
-  </mat-tab>
+  @if (!fullscreen) {
+    <mat-tab label="{{ 'widget.js' | translate }}">
+      <tb-js-func class="flex-1"
+                  [fillHeight]="true"
+                  #jsModel="ngModel"
+                  [(ngModel)]="action.customFunction"
+                  (ngModelChange)="onCodeChange('customFunction', jsModel)"
+                  withModules
+                  [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
+                  [disableUndefinedCheck]="true"
+                  [validationArgs]="[]"
+                  [editorCompleter]="customPrettyActionEditorCompleter"
+                  functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}">
+      </tb-js-func>
+    </mat-tab>
+  }
 </mat-tab-group>
