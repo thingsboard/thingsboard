@@ -13,7 +13,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { NEW_SOLUTION_ID } from '@shared/models/solution-creator.models';
 import { Router } from '@angular/router';
 import { ClipboardService } from 'ngx-clipboard';
-import { cliInstallCommand } from '@home/components/ai/ai-cli.models';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-ai-start-home',
@@ -70,6 +70,7 @@ export class AiStartHomeComponent {
   private solutions = inject(AiSolutionsService);
   private router = inject(Router);
   private clipboard = inject(ClipboardService);
+  private translate = inject(TranslateService);
 
   private readonly devices = signal<number | null>(null);
 
@@ -104,7 +105,7 @@ export class AiStartHomeComponent {
       return;
     }
     event.preventDefault();
-    const copied = this.clipboard.copyFromContent(cliInstallCommand());
+    const copied = this.clipboard.copyFromContent(this.translate.instant('ai-assistant.cli.setup-prompt'));
     this.router.navigate(['/ai-assistant'], {queryParams: {cli: true, copied: copied ? 'prompt' : null}});
   }
 

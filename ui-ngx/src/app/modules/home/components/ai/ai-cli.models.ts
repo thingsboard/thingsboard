@@ -45,7 +45,7 @@ export const CLI_BUILDS: CliBuildInfo[] = [
   {
     id: 'sensor',
     prompt: 'My office has a sensor that sends {"temperature": 22.5, "humidity": 41, "co2": 650} every minute. '
-      + 'Create the device and a dashboard for it. Alert me when CO2 goes above 1000.'
+      + 'Create the device and a dashboard. Alert me when CO2 goes above 1000.'
   },
   {
     id: 'solution',
@@ -55,7 +55,7 @@ export const CLI_BUILDS: CliBuildInfo[] = [
   },
   {
     id: 'change',
-    prompt: 'Each freezer in my stores needs its own alarm limit. Let me set it from the dashboard.',
+    prompt: 'Each freezer in my stores needs its own alarm limit. Let me set the limit from the dashboard.',
     link: 'guides/alarms/'
   }
 ];
@@ -75,10 +75,6 @@ export const CLI_DOCS_LINKS: CliDocsLink[] = [
 export function cliOs(): CliOs {
   const nav = navigator as Navigator & {userAgentData?: {platform?: string}};
   return /win/i.test(nav.userAgentData?.platform || navigator.platform || '') ? 'windows' : 'unix';
-}
-
-export function cliInstallCommand(): string {
-  return CLI_INSTALL[cliOs()];
 }
 
 export function asciiGlobe(rows: number, cols: number, cx: number, cy: number, radius: number): string {

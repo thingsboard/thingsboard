@@ -81,7 +81,7 @@ export class AiCliGuideComponent {
 
   readonly links = CLI_DOCS_LINKS;
 
-  readonly ways: CliWay[] = ['terminal', 'agent'];
+  readonly ways: CliWay[] = ['agent', 'terminal'];
 
   readonly globe = asciiGlobe(36, 210, 160, 9, 24);
 
@@ -97,7 +97,7 @@ export class AiCliGuideComponent {
 
   private readonly picks = AiCliGuideComponent.readPicks();
 
-  way = signal<CliWay>(this.picks.way === 'agent' ? 'agent' : 'terminal');
+  way = signal<CliWay>(this.picks.way === 'terminal' ? 'terminal' : 'agent');
 
   build = signal<CliBuild>(CLI_BUILDS.some(item => item.id === this.picks.build) ? this.picks.build : 'sensor');
 
@@ -194,7 +194,7 @@ export class AiCliGuideComponent {
 
   private fillSlots(): void {
     this.hostElement.querySelectorAll<HTMLElement>('.ai-cli-slot').forEach(slot => {
-      const key = slot.dataset.kind + ':' + (slot.dataset.key ?? '') + (slot.dataset.kind === 'install-hero' ? ':' + this.copiedUntil() : '');
+      const key = slot.dataset.kind + ':' + (slot.dataset.key ?? '') + (slot.dataset.kind === 'prompt-hero' ? ':' + this.copiedUntil() : '');
       if (slot.dataset.built !== key) {
         slot.dataset.built = key;
         slot.replaceChildren(this.blockFor(slot.dataset.kind, slot.dataset.key));
@@ -212,7 +212,7 @@ export class AiCliGuideComponent {
         return this.installBlock(false);
       case 'prompt-hero':
         return labelledCodeBlock(say('setup-prompt'), say('setup-prompt-label'), 'text', this.translate, copy,
-          {labelledCopy: true, classes: 'wrap'});
+          {labelledCopy: true, classes: 'wrap', copiedFor: Math.max(0, this.copiedUntil() - Date.now())});
       case 'prompt':
         return labelledCodeBlock(say('setup-prompt'), say('setup-prompt-label'), 'text', this.translate, copy,
           {check: true, classes: 'wrap'});
@@ -220,6 +220,8 @@ export class AiCliGuideComponent {
         return valueBlock(say('setup.url'), this.url, this.translate, copy, say('setup.copy-url'));
       case 'agent-start':
         return this.agentBlock(agent => `mkdir thingsboard-project && cd thingsboard-project && ${agent.run}`);
+      case 'agent-return':
+        return this.agentBlock(agent => `cd thingsboard-project && ${agent.run}`);
       case 'agent-restart':
         return this.agentBlock(agent => agent.restart);
       case 'build':
@@ -233,14 +235,13 @@ export class AiCliGuideComponent {
   }
 
   private installBlock(hero: boolean): HTMLElement {
-    const left = Math.max(0, this.copiedUntil() - Date.now());
     return codeTabsBlock([
       {id: 'unix', label: this.translate.instant('ai-assistant.cli.mac-linux'), text: CLI_INSTALL.unix, lang: 'shell'},
       {id: 'windows', label: this.translate.instant('ai-assistant.cli.windows'), text: CLI_INSTALL.windows, lang: 'powershell'}
     ], 'shell', this.translate, text => this.clipboard.copyFromContent(text), this.os() === 'windows' ? 1 : 0,
       tab => this.os.set(tab.id === 'windows' ? 'windows' : 'unix'),
       {group: CLI_OS_GROUP, label: this.translate.instant('ai-assistant.cli.terminal'), icon: false,
-        labelledCopy: hero, copiedFor: hero ? left : 0, check: !hero});
+        labelledCopy: hero, check: !hero});
   }
 
   private agentBlock(text: (agent: CliAgentInfo) => string): HTMLElement {

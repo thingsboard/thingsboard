@@ -2248,7 +2248,7 @@
             },
             "how-to-set-up": "How to set up",
             "way": {
-                "terminal": "Run in a terminal",
+                "terminal": "Install it yourself",
                 "agent": "Ask your agent"
             },
             "terminal": "Terminal",
@@ -2288,7 +2288,7 @@
                 "run-install": "Run the install command",
                 "accept-folder": "Accept the project folder",
                 "accept-before": "Press Enter at “Project folder” to keep ",
-                "accept-after": " and again at “Connect it now?”",
+                "accept-after": " Press Enter again when the setup offers to connect.",
                 "paste-url": "Paste your ThingsBoard URL",
                 "url": "URL",
                 "copy-url": "Copy the url",
@@ -2296,7 +2296,10 @@
                 "api-key-text": "The setup opens Security in your browser. Under API keys, click Manage, then + Generate, and paste the key in the terminal.",
                 "open-api-keys": "Open API keys",
                 "start-agent": "Start your agent",
-                "start-agent-text": "At “Start Claude Code now?” press Enter. Claude Code opens in the project folder with the ThingsBoard skills loaded. To come back later, start your agent from the same folder.",
+                "start-agent-text": "Press Enter at “Start Claude Code now?” or “Start Antigravity now?” Your agent opens in the project folder with the ThingsBoard skills loaded.",
+                "both-agents": "With both agents installed, the setup first asks which one to set up. Pick ",
+                "both-agents-or": " or ",
+                "come-back-folder": "To come back later, start your agent from the project folder:",
                 "agent-start": "Start your agent in a new folder",
                 "agent-send": "Send the setup prompt",
                 "agent-allow": "Allow the commands your agent asks to run.",
@@ -2315,16 +2318,16 @@
                 "examples": "Examples",
                 "prompt": "Prompt",
                 "sensor": {
-                    "label": "A sensor",
+                    "label": "Start with one sensor",
                     "what": "Your agent writes one device, one dashboard and one alarm, then asks to deploy."
                 },
                 "solution": {
-                    "label": "A solution",
+                    "label": "Build a full solution",
                     "what": "Your agent asks how to approve, shows the design and then the dashboards, and builds after each yes.",
                     "link": "The full example"
                 },
                 "change": {
-                    "label": "A change",
+                    "label": "Change a solution",
                     "what": "Your agent adds a threshold to each freezer, an alarm that reads the threshold and a dashboard card to set the limit, then asks to deploy.",
                     "link": "Add alarms with your agent"
                 }
@@ -2337,7 +2340,7 @@
             },
             "connect-device": {
                 "title": "Connect your device",
-                "text": "After the deploy, your agent asks “Connect a real device to it?” Say Yes and name the device: an ESP32 board, a Raspberry Pi, or your own code. Your agent prepares the sketch, script or settings, then waits for the first value. No device yet? Say Later."
+                "text": "After the deploy, your agent offers to connect a real device. Say Yes and name the device: an ESP32 board, a Raspberry Pi, or your own code. Your agent prepares the sketch, script or settings, then waits for the first value. No device yet? Say Later."
             },
             "docs": {
                 "title": "Go further in the CLI docs",

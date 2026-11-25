@@ -1022,11 +1022,13 @@ $hero-bg: #1b252c;
     }
 
     &.shut .tb-code {
-      max-height: 188px;
+      $fade: linear-gradient(#000 calc(100% - 132px), rgba(0, 0, 0, 0.82) calc(100% - 108px), rgba(0, 0, 0, 0.5) calc(100% - 82px),
+        rgba(0, 0, 0, 0.2) calc(100% - 58px), rgba(0, 0, 0, 0.05) calc(100% - 40px), transparent calc(100% - 26px));
+      max-height: 204px;
       box-sizing: border-box;
       overflow: hidden;
-      -webkit-mask-image: linear-gradient(#000 calc(100% - 96px), transparent calc(100% - 40px));
-      mask-image: linear-gradient(#000 calc(100% - 96px), transparent calc(100% - 40px));
+      -webkit-mask-image: $fade;
+      mask-image: $fade;
     }
   }
 }
