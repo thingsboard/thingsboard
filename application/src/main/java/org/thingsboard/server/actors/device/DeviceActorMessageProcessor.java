@@ -195,7 +195,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
         boolean sent = false;
         int requestId = rpcRequest.getRequestId();
-        if (systemContext.isEdgesEnabled() && edgeId != null) {
+        // prefer a direct RPC-subscribed session (device fell back to the server) over the edge queue
+        if (systemContext.isEdgesEnabled() && edgeId != null && rpcSubscriptions.isEmpty()) {
             log.debug("[{}][{}] device is related to edge: [{}]. Saving RPC request: [{}][{}] to edge queue", tenantId, deviceId, edgeId.getId(), rpcId, requestId);
             try {
                 if (systemContext.getEdgeService().isEdgeActiveAsync(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE).get()) {
