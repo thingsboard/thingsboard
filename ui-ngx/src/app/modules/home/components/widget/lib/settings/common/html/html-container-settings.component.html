@@ -13,7 +13,11 @@
       </tb-toggle-select>
     </div>
     <div class="tb-html-container-settings-panel flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen">
-      <div class="tb-action-expand-button flex flex-row items-center justify-end">
+      <div class="tb-html-container-toolbar flex flex-row items-center justify-end gap-1">
+        <div [tb-help-popup]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? 'widget/lib/html_container/container_angular_fn' : 'widget/lib/html_container/container_plain_fn'"
+             [tb-help-popup-style]="{maxWidth: '820px'}"
+             tb-help-popup-placement="left">
+        </div>
         <button mat-stroked-button
                 matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
                 matTooltipPosition="above"
@@ -111,8 +115,7 @@
                 [editorCompleter]="containerFunctionEditorCompleter"
                 [functionArgs]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? ['ctx'] : ['ctx', 'container']"
                 withModules
-                functionTitle="{{ 'widgets.html-container.js-function' | translate }}"
-                [helpId]="htmlContainerSettingsForm.get('type').value === HtmlContainerWidgetType.ANGULAR ? 'widget/lib/html_container/container_angular_fn' : 'widget/lib/html_container/container_plain_fn'">
+                functionTitle="{{ 'widgets.html-container.js-function' | translate }}">
     </tb-js-func>
   </ng-container>
 </ng-template>

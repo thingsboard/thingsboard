@@ -12,11 +12,18 @@
     top: 0;
     flex: 1;
   }
-  .tb-action-expand-button {
+  .tb-html-container-toolbar {
     position: absolute;
     top: 4px;
     right: 0;
     z-index: 2;
+    button.tb-help-popup-button {
+      background: rgba(220, 220, 220, .35);
+      padding: 4px;
+    }
+    .tb-help-popup-button-loading {
+      background: #f3f3f3;
+    }
   }
   .gutter {
     display: none;
@@ -78,7 +85,7 @@
   &.tb-fullscreen {
     padding: 8px;
     gap: 8px;
-    .tb-action-expand-button {
+    .tb-html-container-toolbar {
       position: relative;
       top: 0;
       right: 0;
