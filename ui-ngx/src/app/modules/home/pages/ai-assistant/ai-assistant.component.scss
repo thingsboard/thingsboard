@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+@import "constants";
+
 :host {
   position: relative;
   display: flex;
@@ -57,11 +59,53 @@
 }
 
 .ai-rail {
+  position: relative;
   flex: none;
   display: flex;
   flex-direction: column;
   width: 48px;
   min-height: 0;
+  overflow: hidden;
+  transition: width $sidenav-anim-timing;
+}
+
+.ai-rail-in {
+  animation: ai-rail-fade-in $sidenav-anim-timing both;
+}
+
+.ai-rail-out {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  animation: ai-rail-fade-out 200ms ease-out both;
+}
+
+.ai-strip.ai-rail-out {
+  width: 48px;
+}
+
+.ai-rail-panel.ai-rail-out {
+  width: 256px;
+}
+
+@keyframes ai-rail-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ai-rail-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ai-rail-hold {
+  to {
+    opacity: 1;
+  }
 }
 
 :host(.rail-open) .ai-rail {
@@ -77,6 +121,7 @@
 }
 
 .ai-rail-panel {
+  min-width: 256px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -451,18 +496,45 @@
       border-radius: inherit;
       background: rgba(16, 24, 40, 0.24);
       cursor: pointer;
+      animation: ai-rail-fade-in $sidenav-anim-timing both;
     }
   }
 }
 
 @media (max-width: 599px) {
+  .ai-rail, :host(.rail-open) .ai-rail {
+    position: absolute;
+    z-index: 40;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(300px, 86vw);
+    background: #f4f6f7;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.12);
+  }
+
   .ai-rail {
-    display: none;
+    visibility: hidden;
+    transform: translateX(-100%);
+    transition: transform $sidenav-anim-timing, visibility 0s linear 400ms;
   }
 
   :host(.rail-open) .ai-rail {
-    display: flex;
-    width: min(300px, 86vw);
+    visibility: visible;
+    transform: none;
+    transition: transform $sidenav-anim-timing;
+  }
+
+  .ai-strip {
+    display: none;
+  }
+
+  .ai-rail-in {
+    animation: none;
+  }
+
+  .ai-rail-panel.ai-rail-out {
+    animation: ai-rail-hold $sidenav-anim-timing both;
   }
 
   .ai-canvas, :host(.rail-open) .ai-canvas {
@@ -641,4 +713,14 @@
 
 .ai-nav.ai-nav-cli.active:hover .ai-cli-lbl > span {
   color: var(--tb-ink-76);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-rail, :host(.rail-open) .ai-rail {
+    transition: none;
+  }
+
+  .ai-rail-in, .ai-rail-out, :host(.rail-open) .ai-canvas::after {
+    animation-duration: 1ms;
+  }
 }

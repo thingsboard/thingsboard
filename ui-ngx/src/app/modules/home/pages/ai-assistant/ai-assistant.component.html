@@ -13,7 +13,7 @@
 
 <aside class="ai-rail" [attr.aria-label]="'ai-assistant.chats' | translate">
   @if (railOpen()) {
-    <div class="ai-rail-panel">
+    <div class="ai-rail-panel" animate.enter="ai-rail-in" animate.leave="ai-rail-out">
       <div class="ai-rail-head">
         <h2>{{ 'ai-assistant.chats' | translate }}</h2>
         <button type="button" class="ai-ib" (click)="toggleRail()"
@@ -104,7 +104,7 @@
       </div>
     </div>
   } @else {
-    <div class="ai-strip">
+    <div class="ai-strip" animate.enter="ai-rail-in" animate.leave="ai-rail-out">
       <button type="button" class="ai-ib" (click)="toggleRail()"
               [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.open-chats' | translate">
         <ng-container *ngTemplateOutlet="panelIcon; context: {open: true}"></ng-container>
