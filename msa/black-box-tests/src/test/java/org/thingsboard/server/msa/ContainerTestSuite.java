@@ -121,6 +121,7 @@ public class ContainerTestSuite {
                     new File(targetDir + "docker-compose.mosquitto.yml"),
                     new File(targetDir + "docker-compose.chirpstack.yml"),
                     new File(targetDir + "docker-compose.opc-ua.yml"),
+                    new File(targetDir + "docker-compose.modbus.yml"),
                     new File(targetDir + "advanced/docker-compose.kafka.yml"),
                     new File(targetDir + "advanced/docker-compose.trendz.yml"),
                     new File(targetDir + "advanced/" + resolveValkeyComposeFile()),
@@ -170,6 +171,7 @@ public class ContainerTestSuite {
                     .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-coap-transport", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-lwm2m-transport", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-modbus-transport", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-mqtt-integration", Wait.forLogMessage(INTEGRATION_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-http-integration", Wait.forLogMessage(INTEGRATION_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-tcp-integration", Wait.forLogMessage(INTEGRATION_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))

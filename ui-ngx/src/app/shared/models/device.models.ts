@@ -19,6 +19,12 @@ import { DashboardId } from '@shared/models/id/dashboard-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DataType } from '@shared/models/constants';
 import {
+  ModbusByteOrder,
+  ModbusDeviceProfileTransportConfiguration,
+  ModbusDeviceTransportConfiguration,
+  ModbusTcpFraming
+} from '@shared/models/modbus.models';
+import {
   getDefaultProfileClientLwM2mSettingsConfig,
   getDefaultProfileObserveAttrConfig,
   PowerMode
@@ -43,7 +49,8 @@ export enum DeviceTransportType {
   MQTT = 'MQTT',
   COAP = 'COAP',
   LWM2M = 'LWM2M',
-  SNMP = 'SNMP'
+  SNMP = 'SNMP',
+  MODBUS = 'MODBUS'
 }
 
 export enum BasicTransportType {
@@ -106,6 +113,7 @@ export const deviceTransportTypeTranslationMap = new Map<TransportType, string>(
     [DeviceTransportType.COAP, 'device-profile.transport-type-coap'],
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m'],
     [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp'],
+    [DeviceTransportType.MODBUS, 'device-profile.transport-type-modbus'],
     [BasicTransportType.HTTP, 'device-profile.transport-type-http']
   ]
 );
@@ -127,6 +135,7 @@ export const deviceTransportTypeHintMap = new Map<TransportType, string>(
     [DeviceTransportType.COAP, 'device-profile.transport-type-coap-hint'],
     [DeviceTransportType.LWM2M, 'device-profile.transport-type-lwm2m-hint'],
     [DeviceTransportType.SNMP, 'device-profile.transport-type-snmp-hint'],
+    [DeviceTransportType.MODBUS, 'device-profile.transport-type-modbus-hint'],
     [BasicTransportType.HTTP, '']
   ]
 );
@@ -228,6 +237,13 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
         hasProfileConfiguration: true,
         hasDeviceConfiguration: true
       }
+    ],
+    [
+      DeviceTransportType.MODBUS,
+      {
+        hasProfileConfiguration: true,
+        hasDeviceConfiguration: true
+      }
     ]
   ]
 );
@@ -320,7 +336,8 @@ export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransport
                                                    MqttDeviceProfileTransportConfiguration &
                                                    CoapDeviceProfileTransportConfiguration &
                                                    Lwm2mDeviceProfileTransportConfiguration &
-                                                   SnmpDeviceProfileTransportConfiguration;
+                                                   SnmpDeviceProfileTransportConfiguration &
+                                                   ModbusDeviceProfileTransportConfiguration;
 
 export interface DeviceProfileTransportConfiguration extends DeviceProfileTransportConfigurations {
   type: DeviceTransportType;
@@ -413,6 +430,22 @@ export const createDeviceProfileTransportConfiguration = (type: DeviceTransportT
         };
         transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
         break;
+      case DeviceTransportType.MODBUS:
+        const modbusTransportConfiguration: ModbusDeviceProfileTransportConfiguration = {
+          timeoutMs: 1000,
+          retries: 1,
+          pollPeriodMs: 5000,
+          attributesPollPeriodMs: null,
+          byteOrder: ModbusByteOrder.BIG,
+          wordOrder: ModbusByteOrder.BIG,
+          sendDataOnlyOnChange: false,
+          timeseries: [],
+          attributes: [],
+          attributeUpdates: [],
+          rpc: []
+        };
+        transportConfiguration = {...modbusTransportConfiguration, type: DeviceTransportType.MODBUS};
+        break;
     }
   }
   return transportConfiguration;
@@ -450,6 +483,15 @@ export const createDeviceTransportConfiguration = (type: DeviceTransportType): D
           community: 'public'
         };
         transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
+        break;
+      case DeviceTransportType.MODBUS:
+        const modbusTransportConfiguration: ModbusDeviceTransportConfiguration = {
+          endpoint: {type: 'TCP', host: 'localhost', port: 502, framing: ModbusTcpFraming.MBAP},
+          unitId: 1,
+          timeoutMs: null,
+          pollPeriodMs: null
+        };
+        transportConfiguration = {...modbusTransportConfiguration, type: DeviceTransportType.MODBUS};
         break;
     }
   }
@@ -695,7 +737,8 @@ export type DeviceTransportConfigurations = DefaultDeviceTransportConfiguration 
   MqttDeviceTransportConfiguration &
   CoapDeviceTransportConfiguration &
   Lwm2mDeviceTransportConfiguration &
-  SnmpDeviceTransportConfiguration;
+  SnmpDeviceTransportConfiguration &
+  ModbusDeviceTransportConfiguration;
 
 export interface DeviceTransportConfiguration extends DeviceTransportConfigurations {
   type: DeviceTransportType;
@@ -791,7 +834,8 @@ export const credentialTypesByTransportType = new Map<DeviceTransportType, Devic
     ]],
     [DeviceTransportType.COAP, [DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE]],
     [DeviceTransportType.LWM2M, [DeviceCredentialsType.LWM2M_CREDENTIALS]],
-    [DeviceTransportType.SNMP, [DeviceCredentialsType.ACCESS_TOKEN]]
+    [DeviceTransportType.SNMP, [DeviceCredentialsType.ACCESS_TOKEN]],
+    [DeviceTransportType.MODBUS, [DeviceCredentialsType.ACCESS_TOKEN]]
   ]
 );
 

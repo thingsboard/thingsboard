@@ -1,0 +1,47 @@
+{
+  "server": {
+    "listenerAddress": "0.0.0.0",
+    "listenerPort": 5020,
+    "protocol": "TCP",
+    "tlsParams": {
+      "privateKey": null,
+      "certificate": null
+    },
+    "logging": {
+      "format": "%(asctime)-15s %(levelname)-8s %(message)s",
+      "logLevel": "INFO"
+    }
+  },
+  "persistence": {
+    "enabled": false,
+    "file": "/data/modbus_registers.json",
+    "saveInterval": 30
+  },
+  "metrics": {
+    "enabled": false,
+    "address": "0.0.0.0",
+    "port": 9090,
+    "path": "/metrics"
+  },
+  "registers": {
+    "description": "Fixed values read by ModbusClientTest. This server stores wire address N under key N+1: voltage FLOAT32 231.5 at input 0-1, temperature INT16 215 at input 2, serial STRING TB-00001 at holding 64-67, relay at coil 0; holding 30 and 31 are written by the test",
+    "initializeUndefinedRegisters": true,
+    "discreteInput": {},
+    "coils": {
+      "1": true
+    },
+    "holdingRegister": {
+      "31": 0,
+      "32": 0,
+      "65": "0x5442",
+      "66": "0x2D30",
+      "67": "0x3030",
+      "68": "0x3031"
+    },
+    "inputRegister": {
+      "1": "0x4367",
+      "2": "0x8000",
+      "3": 215
+    }
+  }
+}

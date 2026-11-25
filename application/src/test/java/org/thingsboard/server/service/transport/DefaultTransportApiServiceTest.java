@@ -19,9 +19,12 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -39,6 +42,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -52,9 +56,12 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -177,6 +184,43 @@ public class DefaultTransportApiServiceTest {
         verify(service, times(1)).getDeviceInfo(any());
         verify(deviceCredentialsService, times(1)).findDeviceCredentialsByCredentialsId(any());
         verify(deviceProvisionService, times(1)).provisionDeviceViaX509Chain(any(), any());
+    }
+
+    @Test
+    public void getDeviceIdsByTransportTypeReturnsRequestedPage() throws Exception {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        when(deviceService.findDevicesIdsByDeviceProfileTransportType(eq(DeviceTransportType.MODBUS), any()))
+                .thenReturn(new PageData<>(List.of(first, second), 3, 5, true));
+
+        TransportProtos.TransportApiResponseMsg response = handle(TransportProtos.TransportApiRequestMsg.newBuilder()
+                .setDeviceIdsByTransportTypeRequestMsg(TransportProtos.GetDeviceIdsByTransportTypeRequestMsg.newBuilder()
+                        .setTransportType("MODBUS")
+                        .setPage(1)
+                        .setPageSize(2))
+                .build());
+
+        assertThat(response.hasDeviceIdsByTransportTypeResponseMsg()).isTrue();
+        assertThat(response.getDeviceIdsByTransportTypeResponseMsg().getIdsList()).containsExactly(first.toString(), second.toString());
+        assertThat(response.getDeviceIdsByTransportTypeResponseMsg().getHasNextPage()).isTrue();
+        verify(deviceService).findDevicesIdsByDeviceProfileTransportType(eq(DeviceTransportType.MODBUS), eq(new PageLink(2, 1)));
+    }
+
+    @Test
+    public void getDeviceIdsByTransportTypeWithUnknownTypeReturnsEmptyResponse() throws Exception {
+        TransportProtos.TransportApiResponseMsg response = handle(TransportProtos.TransportApiRequestMsg.newBuilder()
+                .setDeviceIdsByTransportTypeRequestMsg(TransportProtos.GetDeviceIdsByTransportTypeRequestMsg.newBuilder()
+                        .setTransportType("DOMBUS")
+                        .setPage(0)
+                        .setPageSize(512))
+                .build());
+
+        assertThat(response.hasDeviceIdsByTransportTypeResponseMsg()).isFalse();
+        verify(deviceService, never()).findDevicesIdsByDeviceProfileTransportType(any(), any());
+    }
+
+    private TransportProtos.TransportApiResponseMsg handle(TransportProtos.TransportApiRequestMsg request) throws Exception {
+        return service.handle(new TbProtoQueueMsg<>(UUID.randomUUID(), request)).get().getValue();
     }
 
     private DeviceProfile createDeviceProfile(String certificateValue) {

@@ -1,0 +1,12 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+version: '3.0'
+services:
+  modbus-simulator:
+    restart: always
+    image: "oitc/modbus-server:2.3.0"
+    volumes:
+      - ./modbus/modbus_server.json:/app/modbus_server.json

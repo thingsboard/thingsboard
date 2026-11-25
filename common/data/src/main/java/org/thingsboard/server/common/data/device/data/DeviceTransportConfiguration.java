@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.device.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,7 +21,8 @@ import java.io.Serializable;
                 @DiscriminatorMapping(value = "MQTT", schema = MqttDeviceTransportConfiguration.class),
                 @DiscriminatorMapping(value = "COAP", schema = CoapDeviceTransportConfiguration.class),
                 @DiscriminatorMapping(value = "LWM2M", schema = Lwm2mDeviceTransportConfiguration.class),
-                @DiscriminatorMapping(value = "SNMP", schema = SnmpDeviceTransportConfiguration.class)
+                @DiscriminatorMapping(value = "SNMP", schema = SnmpDeviceTransportConfiguration.class),
+                @DiscriminatorMapping(value = "MODBUS", schema = ModbusDeviceTransportConfiguration.class)
         }
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -33,7 +35,8 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = MqttDeviceTransportConfiguration.class, name = "MQTT"),
         @JsonSubTypes.Type(value = CoapDeviceTransportConfiguration.class, name = "COAP"),
         @JsonSubTypes.Type(value = Lwm2mDeviceTransportConfiguration.class, name = "LWM2M"),
-        @JsonSubTypes.Type(value = SnmpDeviceTransportConfiguration.class, name = "SNMP")})
+        @JsonSubTypes.Type(value = SnmpDeviceTransportConfiguration.class, name = "SNMP"),
+        @JsonSubTypes.Type(value = ModbusDeviceTransportConfiguration.class, name = "MODBUS")})
 public interface DeviceTransportConfiguration extends Serializable {
 
     @JsonIgnore
