@@ -147,58 +147,209 @@ function decorate(pre: HTMLElement, translate: TranslateService, copy: (text: st
 export interface CodeTab {
   label: string;
   text: string;
+  id?: string;
+  lang?: string;
+}
+
+export interface CodeBlockOptions {
+  group?: string;
+  label?: string;
+  icon?: boolean;
+  check?: boolean;
+  labelledCopy?: boolean;
+  copiedFor?: number;
+  classes?: string;
+}
+
+const GROUP_EVENT = 'tb-code-tab';
+const LABELLED_COPIED_MS = 1600;
+
+interface GroupPick {
+  group: string;
+  id: string;
+  from: HTMLElement;
+}
+
+type PickableBlock = HTMLElement & {tbPick?: (id: string) => void};
+
+let groupListening = false;
+
+function listenToGroups(): void {
+  if (groupListening) {
+    return;
+  }
+  groupListening = true;
+  document.addEventListener(GROUP_EVENT, (event: CustomEvent<GroupPick>) => {
+    document.querySelectorAll<PickableBlock>('[data-code-group]').forEach(block => {
+      if (block !== event.detail.from && block.dataset.codeGroup === event.detail.group) {
+        block.tbPick?.(event.detail.id);
+      }
+    });
+  });
+}
+
+export function codeTabGroup(group: string): string | null {
+  try {
+    return localStorage.getItem('tb-code-' + group);
+  } catch {
+    return null;
+  }
+}
+
+function storeCodeTab(group: string, id: string): void {
+  try {
+    localStorage.setItem('tb-code-' + group, id);
+  } catch {
+    return;
+  }
+}
+
+export function pickCodeTab(group: string, id: string, from: HTMLElement = document.body): void {
+  storeCodeTab(group, id);
+  listenToGroups();
+  document.dispatchEvent(new CustomEvent<GroupPick>(GROUP_EVENT, {detail: {group, id, from}}));
+}
+
+export function onCodeTabGroup(group: string, picked: (id: string) => void): () => void {
+  const listener = (event: CustomEvent<GroupPick>) => {
+    if (event.detail.group === group) {
+      picked(event.detail.id);
+    }
+  };
+  document.addEventListener(GROUP_EVENT, listener);
+  return () => document.removeEventListener(GROUP_EVENT, listener);
 }
 
 export function codeTabsBlock(tabs: CodeTab[], lang: string, translate: TranslateService, copy: (text: string) => boolean,
-                              initial = 0, picked?: (tab: CodeTab) => void): HTMLElement {
-  const language = LANGUAGES[lang] ?? {lang: 'text', label: lang.toUpperCase(), icon: 'code'};
-  const shell = language.lang === 'shell' || language.lang === 'powershell';
+                              initial = 0, picked?: (tab: CodeTab) => void, options: CodeBlockOptions = {}): HTMLElement {
+  const languageOf = (tab: CodeTab) => {
+    const name = tab.lang ?? lang;
+    return LANGUAGES[name] ?? {lang: 'text', label: name.toUpperCase(), icon: 'code'};
+  };
+  const keyOf = (tab: CodeTab) => tab.id ?? tab.label;
   let current = Math.min(Math.max(initial, 0), tabs.length - 1);
-  const block = element('div', 'tb-codeblock labeled tabbed');
-  block.dataset.lang = language.lang;
-  block.classList.toggle('shell', shell);
+  if (options.group) {
+    const stored = codeTabGroup(options.group);
+    const index = tabs.findIndex(tab => keyOf(tab) === stored);
+    if (index >= 0) {
+      current = index;
+    }
+  }
+  const block: PickableBlock = element('div', 'tb-codeblock labeled tabbed' + (options.classes ? ' ' + options.classes : ''));
   const head = element('div', 'tb-codeblock-head');
   const list = element('div', 'tb-codetabs');
   list.setAttribute('role', 'tablist');
-  const code = element('code', 'lang-' + language.lang);
+  if (options.label) {
+    list.setAttribute('aria-label', options.label);
+  }
+  const code = element('code', '');
   const pre = element('pre', 'tb-code');
   pre.append(code);
+  const select = (index: number, byPerson: boolean) => {
+    if (index === current) {
+      return;
+    }
+    current = index;
+    paint();
+    if (byPerson) {
+      if (options.group) {
+        pickCodeTab(options.group, keyOf(tabs[current]), block);
+      }
+      picked?.(tabs[current]);
+    }
+  };
   const buttons = tabs.map((tab, index) => {
     const button = element('button', 'tb-codetab') as HTMLButtonElement;
     button.type = 'button';
     button.setAttribute('role', 'tab');
     button.textContent = tab.label;
-    button.addEventListener('click', () => {
-      if (index !== current) {
-        current = index;
-        paint();
-        picked?.(tabs[current]);
-      }
-    });
+    button.addEventListener('click', () => select(index, true));
     button.addEventListener('keydown', event => {
       const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
       if (step) {
         event.preventDefault();
-        current = (current + step + tabs.length) % tabs.length;
-        paint();
+        select((current + step + tabs.length) % tabs.length, true);
         buttons[current].focus();
-        picked?.(tabs[current]);
       }
     });
     return button;
   });
   const paint = () => {
+    const language = languageOf(tabs[current]);
+    block.dataset.lang = language.lang;
+    block.classList.toggle('shell', language.lang === 'shell' || language.lang === 'powershell');
+    code.className = 'lang-' + language.lang;
     buttons.forEach((button, index) => {
       button.setAttribute('aria-selected', String(index === current));
       button.tabIndex = index === current ? 0 : -1;
     });
     code.replaceChildren(...lines(language.lang, tabs[current].text));
   };
+  if (options.group) {
+    listenToGroups();
+    block.dataset.codeGroup = options.group;
+    block.tbPick = id => {
+      const index = tabs.findIndex(tab => keyOf(tab) === id);
+      if (index >= 0) {
+        select(index, false);
+      }
+    };
+  }
   list.append(...buttons);
-  head.append(icon(language.icon, 'tb-mat-16'), list, copyBtn(() => tabs[current].text, translate, copy));
+  head.append(...[options.icon === false ? null : icon(languageOf(tabs[current]).icon, 'tb-mat-16'), list,
+    copyBtn(() => tabs[current].text, translate, copy, options)].filter(Boolean));
   block.append(head, pre);
   paint();
   return block;
+}
+
+export function labelledCodeBlock(text: string, label: string, lang: string, translate: TranslateService, copy: (text: string) => boolean,
+                                  options: CodeBlockOptions = {}): HTMLElement {
+  const language = LANGUAGES[lang]?.lang ?? 'text';
+  const block = element('div', 'tb-codeblock labeled' + (options.classes ? ' ' + options.classes : ''));
+  block.dataset.lang = language;
+  block.classList.toggle('shell', language === 'shell' || language === 'powershell');
+  const head = element('div', 'tb-codeblock-head');
+  const name = element('span', 'tb-codeblock-label');
+  name.textContent = label;
+  head.append(name, copyBtn(text, translate, copy, options));
+  const pre = element('pre', 'tb-code');
+  const code = element('code', 'lang-' + language);
+  code.append(...lines(language, text));
+  pre.append(code);
+  block.append(head, pre);
+  return block;
+}
+
+export function valueBlock(label: string, value: string, translate: TranslateService, copy: (text: string) => boolean,
+                           ariaLabel?: string): HTMLElement {
+  const block = element('div', 'tb-codeblock value');
+  block.dataset.lang = 'text';
+  const name = element('span', 'tb-codeblock-label');
+  name.textContent = label;
+  const shown = element('code', 'tb-value');
+  shown.textContent = value;
+  shown.title = value;
+  const button = copyBtn(value, translate, copy, {check: true});
+  if (ariaLabel) {
+    button.setAttribute('aria-label', ariaLabel);
+  }
+  block.append(name, shown, button);
+  return block;
+}
+
+export function commandRow(text: string, windows: boolean, translate: TranslateService, copy: (text: string) => boolean): HTMLElement {
+  const row = element('div', 'tb-cmdrow');
+  const mark = element('span', 'tb-cmd-p');
+  mark.setAttribute('aria-hidden', 'true');
+  mark.textContent = windows ? '>' : '$';
+  const command = element('code', 'tb-cmd-t');
+  command.append(...lines('shell', text).flatMap(line => Array.from(line.childNodes)));
+  const button = copyBtn(text, translate, copy, {check: true});
+  button.classList.add('tb-cmd-copy');
+  button.setAttribute('aria-label', translate.instant('ai-assistant.copy') + ': ' + text);
+  row.append(mark, command, button);
+  return row;
 }
 
 function wrapBtn(block: HTMLElement, text: string, translate: TranslateService): HTMLButtonElement | null {
@@ -226,14 +377,46 @@ function commandCopyBtn(text: string, translate: TranslateService, copy: (text: 
   return button;
 }
 
-function copyBtn(text: string | (() => string), translate: TranslateService, copy: (text: string) => boolean): HTMLButtonElement {
+function copyBtn(text: string | (() => string), translate: TranslateService, copy: (text: string) => boolean,
+                 options: CodeBlockOptions = {}): HTMLButtonElement {
   const button = element('button', 'tb-codecopy') as HTMLButtonElement;
   button.type = 'button';
   button.dataset.tip = translate.instant('ai-assistant.copy');
   button.dataset.copied = translate.instant('ai-assistant.copied');
   button.setAttribute('aria-label', translate.instant('ai-assistant.copy'));
-  button.append(icon('content_copy', 'tb-mat-16'));
+  const glyph = icon('content_copy', 'tb-mat-16');
+  button.append(glyph);
   let timer: ReturnType<typeof setTimeout>;
+  if (options.labelledCopy) {
+    button.classList.add('labelled');
+    const word = element('span', 'lbl');
+    word.setAttribute('aria-live', 'polite');
+    word.textContent = translate.instant('ai-assistant.copy');
+    button.append(word);
+    const done = (ms: number) => {
+      clearTimeout(timer);
+      button.classList.add('done');
+      word.textContent = translate.instant('ai-assistant.copied');
+      glyph.textContent = 'check';
+      timer = setTimeout(() => {
+        button.classList.remove('done');
+        word.textContent = translate.instant('ai-assistant.copy');
+        glyph.textContent = 'content_copy';
+      }, ms);
+    };
+    button.addEventListener('click', () => {
+      if (copy(typeof text === 'function' ? text() : text)) {
+        done(LABELLED_COPIED_MS);
+      }
+    });
+    if (options.copiedFor > 0) {
+      done(options.copiedFor);
+    }
+    return button;
+  }
+  if (options.check) {
+    button.append(icon('check', 'tb-mat-16 tb-copy-ok'));
+  }
   button.addEventListener('click', () => {
     if (copy(typeof text === 'function' ? text() : text)) {
       button.classList.add('copied');

@@ -139,6 +139,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   newSolution = output<void>();
 
+  openCli = output<void>();
+
   getStarted = input(false);
 
   takeTour = output<void>();

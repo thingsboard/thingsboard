@@ -721,3 +721,102 @@ tb-ai-chat-title:has(.ai-chat-status) + .ai-chat-actions {
     height: 18px;
   }
 }
+
+.ai-cli-band {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  column-gap: 14px;
+  align-items: center;
+  width: 100%;
+  max-width: 680px;
+  box-sizing: border-box;
+  margin-top: 32px;
+  padding: 14px 14px 14px 16px;
+  border-radius: 14px;
+  text-align: left;
+  color: var(--tb-ink);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--ai-dark-accent-pale) 62%, var(--tb-surface)), color-mix(in srgb, var(--ai-dark-accent-pale) 34%, var(--tb-surface)));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ai-dark-accent-soft) 40%, transparent);
+
+  @media (max-width: 599px) {
+    grid-template-columns: 40px minmax(0, 1fr);
+    row-gap: 12px;
+  }
+}
+
+.ai-cli-band-tile {
+  width: 40px;
+  height: 40px;
+  border-radius: 38%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ai-dark);
+  color: var(--ai-dark-accent);
+
+  .mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.ai-cli-band-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font: 500 var(--chat-text)/var(--chat-text-lh) var(--tb-font);
+    color: var(--tb-ink);
+  }
+
+  p {
+    margin: 0;
+    font: 400 var(--chat-line)/var(--chat-line-lh) var(--tb-font);
+    color: var(--tb-ink-54);
+  }
+}
+
+.ai-cli-band-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ai-dark);
+  color: var(--ai-on-dark);
+  font: 500 var(--chat-line)/1 var(--tb-font);
+  letter-spacing: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color .15s cubic-bezier(.2, 0, 0, 1);
+
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    transition: transform .15s cubic-bezier(.2, 0, 0, 1);
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--ai-dark) 86%, var(--ai-on-dark));
+
+    .mat-icon {
+      transform: translateX(2px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ai-focus);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 599px) {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}

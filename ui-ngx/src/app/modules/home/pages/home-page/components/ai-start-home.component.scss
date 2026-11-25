@@ -135,6 +135,13 @@
     linear-gradient(135deg in oklab, var(--ai-dark-accent-pale, #c4f3ea), var(--ai-light-teal));
 }
 
+.tb-ai-start.cli .tb-ai-start-ic {
+  color: var(--ai-dark-accent, #8fe3d3);
+  box-shadow: 0 2px 6px color-mix(in oklab, var(--tb-ink, rgba(0, 0, 0, 0.87)) 18%, transparent);
+  background: radial-gradient(80% 80% at 16% 10%, color-mix(in oklab, var(--ai-dark-accent-soft, #80d6c8) 18%, transparent), transparent 62%),
+    linear-gradient(160deg in oklab, var(--ai-dark, #24323b), color-mix(in oklab, var(--ai-dark, #24323b) 72%, var(--tb-ink, rgba(0, 0, 0, 0.87))));
+}
+
 .tb-ai-start-t {
   display: -webkit-box;
   flex: 1 1 auto;

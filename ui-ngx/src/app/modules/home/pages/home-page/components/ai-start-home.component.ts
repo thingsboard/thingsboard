@@ -11,6 +11,9 @@ import { EntityCountCmd, TelemetrySubscriber } from '@shared/models/telemetry/te
 import { AliasFilterType } from '@shared/models/alias.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { NEW_SOLUTION_ID } from '@shared/models/solution-creator.models';
+import { Router } from '@angular/router';
+import { ClipboardService } from 'ngx-clipboard';
+import { cliInstallCommand } from '@home/components/ai/ai-cli.models';
 
 @Component({
   selector: 'tb-ai-start-home',
@@ -20,7 +23,7 @@ import { NEW_SOLUTION_ID } from '@shared/models/solution-creator.models';
         <div class="tb-ai-start-block reserve" aria-hidden="true">
           <div class="tb-ai-start-h">{{ 'home.ai.start-title' | translate }}</div>
           <div class="tb-ai-starts">
-            @for (n of [0, 1]; track n) {
+            @for (n of [0, 1, 2]; track n) {
               <span class="tb-ai-start placeholder">
                 <span class="tb-ai-start-ic tb-ai-start-skeleton"></span>
                 <span class="tb-ai-start-line tb-ai-start-skeleton"></span>
@@ -45,6 +48,12 @@ import { NEW_SOLUTION_ID } from '@shared/models/solution-creator.models';
             <span class="tb-ai-start-t">{{ 'home.ai.start-solution' | translate }}</span>
             <mat-icon class="tb-ai-start-go" aria-hidden="true">chevron_right</mat-icon>
           </a>
+          <a class="tb-ai-start cli" href="/ai-assistant?cli=true" (click)="useCli($event)"
+             [matTooltip]="'home.ai.start-cli-tip' | translate" matTooltipPosition="above">
+            <span class="tb-ai-start-ic" aria-hidden="true"><mat-icon fontSet="material-icons-round">terminal</mat-icon></span>
+            <span class="tb-ai-start-t">{{ 'home.ai.start-cli' | translate }}</span>
+            <mat-icon class="tb-ai-start-go" aria-hidden="true">chevron_right</mat-icon>
+          </a>
         </div>
       </div>
     }
@@ -59,6 +68,8 @@ export class AiStartHomeComponent {
 
   private chats = inject(AiChatsService);
   private solutions = inject(AiSolutionsService);
+  private router = inject(Router);
+  private clipboard = inject(ClipboardService);
 
   private readonly devices = signal<number | null>(null);
 
@@ -86,6 +97,15 @@ export class AiStartHomeComponent {
         this.writeShown(this.show());
       }
     });
+  }
+
+  useCli(event: MouseEvent): void {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    event.preventDefault();
+    const copied = this.clipboard.copyFromContent(cliInstallCommand());
+    this.router.navigate(['/ai-assistant'], {queryParams: {cli: true, copied: copied ? 'prompt' : null}});
   }
 
   private readShown(): boolean {

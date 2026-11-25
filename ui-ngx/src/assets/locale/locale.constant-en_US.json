@@ -2231,6 +2231,130 @@
                 "appProfiles": "Application profiles",
                 "default": "Default profile",
                 "variant": "Variant",
+        "cli": {
+            "title": "ThingsBoard CLI",
+            "kicker": "ThingsBoard CLI",
+            "connect-agents": "Connect to your agents",
+            "strip-tip": "ThingsBoard CLI: connect to your agents",
+            "close": "Close, back to Get started",
+            "band": {
+                "heading": "Build it with your coding agent",
+                "line": "Claude Code or Antigravity, through the ThingsBoard CLI",
+                "action": "Try CLI now"
+            },
+            "hero": {
+                "title": "Build on ThingsBoard with your coding agent",
+                "lead": "Describe your devices to Claude Code or Antigravity. Your agent builds the solution and deploys to ThingsBoard when you approve."
+            },
+            "how-to-set-up": "How to set up",
+            "way": {
+                "terminal": "Run in a terminal",
+                "agent": "Ask your agent"
+            },
+            "terminal": "Terminal",
+            "mac-linux": "macOS or Linux",
+            "windows": "Windows",
+            "setup-prompt-label": "Setup prompt",
+            "setup-prompt": "Set up ThingsBoard CLI in this folder:\n\n1. Install or upgrade it. On macOS or Linux, run: curl -LsSf https://thingsboard.io/cli/install.sh | sh\n   On Windows, run: powershell -ExecutionPolicy ByPass -c \"irm https://thingsboard.io/cli/install.ps1 | iex\"\n2. Run \"tb init --agent-format <agent> --browser\". Use \"claude\" for Claude Code or \"antigravity\" for Antigravity. It opens a page where I enter my ThingsBoard URL and API key. Tell me to complete the page, then wait. Never ask me for the API key in the chat, and never print secrets.\n3. Check the connection with \"tb device list\".\n\nIf everything works, reply with one sentence: the setup is complete, and I must restart you to load the ThingsBoard skills. Then show the restart commands for you only. Claude Code: type /exit, then run claude --continue. Antigravity: close it, then run agy in this folder. If a step fails, tell me what failed and how to fix it.",
+            "show-more": "Show more",
+            "show-less": "Show less",
+            "note-terminal": "Installs the CLI, then walks you through the setup.",
+            "note-agent": "Paste into your agent, in a new folder. One restart at the end.",
+            "step-by-step": "Step-by-step setup",
+            "how": {
+                "title": "How it works",
+                "agent": {
+                    "title": "The agent does the work",
+                    "text": "Claude Code or Antigravity, using the ThingsBoard skills the CLI adds."
+                },
+                "files": {
+                    "title": "The solution is files",
+                    "text": "Devices, dashboards and alarms as JSON in a folder, each step committed to git."
+                },
+                "deploy": {
+                    "title": "The deploy waits for a yes",
+                    "text": "The CLI checks the files against ThingsBoard, and the agent asks before deploying.",
+                    "question": "Deploy to ThingsBoard?",
+                    "yes": "Deploy",
+                    "no": "Not now"
+                }
+            },
+            "steps": {
+                "title": "Get started",
+                "hint": "About 10 minutes to live data on a dashboard."
+            },
+            "setup": {
+                "title": "Set up the CLI",
+                "run-install": "Run the install command",
+                "accept-folder": "Accept the project folder",
+                "accept-before": "Press Enter at “Project folder” to keep ",
+                "accept-after": " and again at “Connect it now?”",
+                "paste-url": "Paste your ThingsBoard URL",
+                "url": "URL",
+                "copy-url": "Copy the url",
+                "api-key": "Create and paste an API key",
+                "api-key-text": "The setup opens Security in your browser. Under API keys, click Manage, then + Generate, and paste the key in the terminal.",
+                "open-api-keys": "Open API keys",
+                "start-agent": "Start your agent",
+                "start-agent-text": "At “Start Claude Code now?” press Enter. Claude Code opens in the project folder with the ThingsBoard skills loaded. To come back later, start your agent from the same folder.",
+                "agent-start": "Start your agent in a new folder",
+                "agent-send": "Send the setup prompt",
+                "agent-allow": "Allow the commands your agent asks to run.",
+                "agent-connect": "Choose your ThingsBoard on the Connect page",
+                "agent-connect-text": "The page opens in your browser. Pick your cloud region, or pick “Your own server” and paste the URL.",
+                "agent-key": "Create an API key for the Connect page",
+                "agent-key-text": "Click “Create an API key”. Under API keys, click Manage, then + Generate, and paste the key on the page. The key stays out of the chat.",
+                "agent-restart": "Restart your agent",
+                "restart-before": "Skills load only when an agent starts. Type ",
+                "restart-after": " in Claude Code, or close Antigravity, then run:",
+                "come-back": "To come back later, start your agent from the same folder."
+            },
+            "describe": {
+                "title": "Describe what to build",
+                "text": "Tell your agent what sends data, what the data looks like, what to show and when to alert.",
+                "examples": "Examples",
+                "prompt": "Prompt",
+                "sensor": {
+                    "label": "A sensor",
+                    "what": "Your agent writes one device, one dashboard and one alarm, then asks to deploy."
+                },
+                "solution": {
+                    "label": "A solution",
+                    "what": "Your agent asks how to approve, shows the design and then the dashboards, and builds after each yes.",
+                    "link": "The full example"
+                },
+                "change": {
+                    "label": "A change",
+                    "what": "Your agent adds a threshold to each freezer, an alarm that reads the threshold and a dashboard card to set the limit, then asks to deploy.",
+                    "link": "Add alarms with your agent"
+                }
+            },
+            "deploy": {
+                "title": "Deploy and open the dashboard",
+                "text": "Your agent asks before the deploy, unless your request already said to deploy. Pick “Deploy and stream live data” and open the dashboard link in the reply.",
+                "push-note": "A push replaces changes made in the ThingsBoard UI. Ask your agent to pull first.",
+                "stream": "Stream demo data again:"
+            },
+            "connect-device": {
+                "title": "Connect your device",
+                "text": "After the deploy, your agent asks “Connect a real device to it?” Say Yes and name the device: an ESP32 board, a Raspberry Pi, or your own code. Your agent prepares the sketch, script or settings, then waits for the first value. No device yet? Say Later."
+            },
+            "docs": {
+                "title": "Go further in the CLI docs",
+                "device": {
+                    "title": "Connect a real device",
+                    "line": "HTTP, MQTT or CoAP, by firmware or script"
+                },
+                "troubleshooting": {
+                    "title": "Troubleshooting",
+                    "line": "Connection, setup, push and demo data"
+                },
+                "all": {
+                    "title": "All CLI docs",
+                    "line": "Alarms, customers, CI and the commands"
+                }
+            }
+        },
                 "edgeTemplateRoot": "Root of new edges",
                 "autoAssign": "Assigned to new edges",
                 "cloudEndpoint": "Cloud endpoint",
@@ -9010,6 +9134,8 @@
         "embed-to-angular-template": "Embed to Angular HTML template",
         "embed-to-angular-template-text": "Using the following code snippet, you may embed an image into the Angular HTML template that will be used for components.<br/>Such components include the Markdown widget, HTML section in the widget editor, custom actions, etc."
     },
+                "start-cli": "Use the CLI",
+                "start-cli-tip": "Copies a prompt for your coding agent and opens the ThingsBoard CLI",
     "image-input": {
         "drop-images-or": "Drag and drop an images or",
         "drag-and-drop": "Drag & Drop",

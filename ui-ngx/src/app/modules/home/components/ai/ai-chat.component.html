@@ -199,6 +199,17 @@
         }
       </div>
     </section>
+    <section class="ai-cli-band" aria-labelledby="ai-cli-band-h">
+      <span class="ai-cli-band-tile" aria-hidden="true"><mat-icon fontSet="material-icons-round">terminal</mat-icon></span>
+      <div class="ai-cli-band-text">
+        <h2 id="ai-cli-band-h">{{ 'ai-assistant.cli.band.heading' | translate }}</h2>
+        <p>{{ 'ai-assistant.cli.band.line' | translate }}</p>
+      </div>
+      <button type="button" class="ai-cli-band-btn" (click)="openCli.emit()">
+        <span>{{ 'ai-assistant.cli.band.action' | translate }}</span>
+        <mat-icon fontSet="material-icons-round" aria-hidden="true">arrow_forward</mat-icon>
+      </button>
+    </section>
   }
   @if (variant() === 'page' && !showGetStarted() && !chatId() && !messages().length && !loading()) {
     <section class="ai-sec" aria-labelledby="ai-sec-tasks">

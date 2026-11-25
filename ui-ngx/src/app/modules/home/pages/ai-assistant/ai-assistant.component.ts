@@ -34,6 +34,7 @@ import { AiChatComponent } from '@home/components/ai/ai-chat.component';
 import { AiSolutionsService } from '@core/services/ai-solutions.service';
 import { NEW_SOLUTION_ID, SolutionInfo } from '@shared/models/solution-creator.models';
 import { SolutionChatComponent } from '@home/components/ai/solution/solution-chat.component';
+import { CLI_COPIED_MS } from '@home/components/ai/ai-cli.models';
 
 export interface AiRailRow {
   id: string;
@@ -88,6 +89,10 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   solutionId = signal<string | undefined>(undefined);
 
   getStarted = signal(false);
+
+  cli = signal(false);
+
+  cliCopiedUntil = signal(0);
 
   aiChats = inject(AiChatsService);
 
@@ -173,6 +178,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       this.solutionId.set(solutionId);
     } else if (params.get('chatId')) {
       this.chatId.set(params.get('chatId'));
+    } else if (params.get('cli') === 'true') {
+      this.cli.set(true);
     } else if (params.get('getStarted') === 'true') {
       this.getStarted.set(true);
     }
@@ -189,14 +196,16 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   private urlEffect = effect(() => {
     const chatId = this.chatId() ?? null;
     const solutionId = this.solutionId() ?? null;
-    const getStarted = this.getStarted() && !chatId && !solutionId ? 'true' : null;
+    const cli = this.cli() && !chatId && !solutionId ? 'true' : null;
+    const getStarted = this.getStarted() && !cli && !chatId && !solutionId ? 'true' : null;
     const params = this.route.snapshot.queryParamMap;
-    if ((params.get('chatId') !== chatId || params.get('solutionId') !== solutionId || params.get('getStarted') !== getStarted) && this.ready()) {
+    if ((params.get('chatId') !== chatId || params.get('solutionId') !== solutionId || params.get('getStarted') !== getStarted
+      || params.get('cli') !== cli) && this.ready()) {
       const browsing = this.browsing;
       this.browsing = false;
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: {chatId, solutionId, getStarted},
+        queryParams: {chatId, solutionId, getStarted, cli},
         queryParamsHandling: 'merge',
         replaceUrl: !browsing
       });
@@ -205,13 +214,16 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private leaveGetStarted = effect(() => {
     if (this.chatId() || this.solutionId()) {
-      untracked(() => this.getStarted.set(false));
+      untracked(() => {
+        this.getStarted.set(false);
+        this.cli.set(false);
+      });
     }
   });
 
   private urlSubscription = this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
     if (this.ready()) {
-      this.openFromUrl(params.get('chatId'), params.get('solutionId'), undefined, params.get('getStarted') === 'true');
+      this.openFromUrl(params.get('chatId'), params.get('solutionId'), undefined, params.get('getStarted') === 'true', params.get('cli') === 'true');
     }
   });
 
@@ -237,10 +249,14 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
         const params = this.route.snapshot.queryParamMap;
         const handOff = this.panelService.takeHandOff();
         const first = !handOff && !params.get('chatId') && !params.get('solutionId') && !chats.length;
-        this.openFromUrl(params.get('chatId'), params.get('solutionId'), chats, first || params.get('getStarted') === 'true');
+        this.openFromUrl(params.get('chatId'), params.get('solutionId'), chats, first || params.get('getStarted') === 'true',
+          params.get('cli') === 'true');
         this.ready.set(true);
         if (params.get('focus') === 'composer') {
           this.landOnComposer();
+        }
+        if (params.has('copied')) {
+          this.landOnCli(params.get('copied') === 'prompt');
         }
         if (handOff) {
           this.newChat();
@@ -355,19 +371,34 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   newChat(): void {
     this.settleRail();
-    this.browsing = !!this.chatId() || !!this.solutionId() || this.getStarted();
+    this.browsing = !!this.chatId() || !!this.solutionId() || this.getStarted() || this.cli();
     this.solutionId.set(undefined);
     this.chatId.set(undefined);
     this.getStarted.set(false);
+    this.cli.set(false);
     setTimeout(() => this.chat?.focus());
   }
 
   openGetStarted(): void {
     this.settleRail();
-    this.browsing = !!this.chatId() || !!this.solutionId() || !this.getStarted();
+    this.browsing = !!this.chatId() || !!this.solutionId() || !this.getStarted() || this.cli();
     this.solutionId.set(undefined);
     this.chatId.set(undefined);
+    this.cli.set(false);
     this.getStarted.set(true);
+  }
+
+  openCli(): void {
+    if (this.cli()) {
+      this.openGetStarted();
+      return;
+    }
+    this.settleRail();
+    this.browsing = true;
+    this.solutionId.set(undefined);
+    this.chatId.set(undefined);
+    this.getStarted.set(false);
+    this.cli.set(true);
   }
 
   takeTour(): void {
@@ -431,7 +462,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   }
 
   private openSolution(solutionId: string): void {
-    this.browsing = solutionId !== this.solutionId();
+    this.browsing = solutionId !== this.solutionId() || this.cli();
+    this.cli.set(false);
     this.chatId.set(undefined);
     this.solutionId.set(solutionId);
   }
@@ -465,8 +497,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   selectChat(chat: ChatInfo): void {
     this.settleRail();
-    this.browsing = chat.id !== this.chatId() || !!this.solutionId();
+    this.browsing = chat.id !== this.chatId() || !!this.solutionId() || this.cli();
     this.solutionId.set(undefined);
+    this.cli.set(false);
     this.chatId.set(chat.id);
   }
 
@@ -522,7 +555,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     this.aiChats.confirmAndDelete(chat).subscribe({error: err => this.showErrorMessage(err)});
   }
 
-  private openFromUrl(chatId: string | null, solutionId: string | null, chats = this.aiChats.chats(), getStarted = false): void {
+  private openFromUrl(chatId: string | null, solutionId: string | null, chats = this.aiChats.chats(), getStarted = false, cli = false): void {
     const knownSolution = !solutionId || solutionId === NEW_SOLUTION_ID || !this.aiSolutions.loaded() || !!this.aiSolutions.find(solutionId);
     if (!knownSolution) {
       this.router.navigate([], {
@@ -542,7 +575,17 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     if (next !== this.chatId()) {
       this.chatId.set(next);
     }
-    this.getStarted.set(getStarted && !nextSolution && !next);
+    const showCli = cli && !nextSolution && !next;
+    this.cli.set(showCli);
+    this.getStarted.set(getStarted && !showCli && !nextSolution && !next);
+  }
+
+  private landOnCli(copied: boolean): void {
+    this.railOpen.set(false);
+    if (copied) {
+      this.cliCopiedUntil.set(Date.now() + CLI_COPIED_MS);
+    }
+    this.router.navigate([], {relativeTo: this.route, queryParams: {copied: null}, queryParamsHandling: 'merge', replaceUrl: true});
   }
 
   private landOnComposer(): void {

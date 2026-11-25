@@ -39,6 +39,7 @@ import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.co
 import { AiFileBodyComponent } from '@home/components/ai/ai-file-body.component';
 import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
 import { AiMarkComponent } from '@home/components/ai/ai-mark.component';
+import { AiCliGuideComponent } from '@home/components/ai/ai-cli-guide.component';
 
 @NgModule({
   declarations: [
@@ -77,7 +78,8 @@ import { AiMarkComponent } from '@home/components/ai/ai-mark.component';
     AiSevMarkComponent,
     AiLoadLinesComponent,
     AiShortcutsDialogComponent,
-    AiChatTitleComponent
+    AiChatTitleComponent,
+    AiCliGuideComponent
   ],
   imports: [
     CommonModule,
@@ -112,7 +114,8 @@ import { AiMarkComponent } from '@home/components/ai/ai-mark.component';
     AiRecordCardComponent,
     AiRecordsComponent,
     AiCardActionsComponent,
-    AiDisclosureComponent
+    AiDisclosureComponent,
+    AiCliGuideComponent
   ]
 })
 export class AiModule {}

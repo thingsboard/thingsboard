@@ -21,8 +21,8 @@
           <ng-container *ngTemplateOutlet="panelIcon; context: {open: false}"></ng-container>
         </button>
       </div>
-      <button type="button" class="ai-nav" [class.active]="!chatId() && !solutionId() && !getStarted()"
-              [attr.aria-current]="!chatId() && !solutionId() && !getStarted() ? 'page' : null" (click)="newChat()">
+      <button type="button" class="ai-nav" [class.active]="!chatId() && !solutionId() && !getStarted() && !cli()"
+              [attr.aria-current]="!chatId() && !solutionId() && !getStarted() && !cli() ? 'page' : null" (click)="newChat()">
         <mat-icon fontSet="material-icons-round">add</mat-icon>
         <span>{{ 'ai-assistant.new-chat' | translate }}</span>
       </button>
@@ -93,6 +93,15 @@
           }
         }
       </nav>
+      <div class="ai-panel-foot">
+        <button type="button" class="ai-nav ai-nav-cli" [class.active]="cli()" [attr.aria-current]="cli() ? 'page' : null" (click)="openCli()">
+          <span class="ai-cli-ic" aria-hidden="true"><mat-icon fontSet="material-icons-round">terminal</mat-icon></span>
+          <span class="ai-cli-lbl">
+            <small>{{ 'ai-assistant.cli.kicker' | translate }}</small>
+            <span>{{ 'ai-assistant.cli.connect-agents' | translate }}</span>
+          </span>
+        </button>
+      </div>
     </div>
   } @else {
     <div class="ai-strip">
@@ -123,15 +132,31 @@
               [attr.aria-label]="'ai-assistant.search-chats' | translate">
         <mat-icon fontSet="material-icons-round">search</mat-icon>
       </button>
+      <button type="button" class="ai-ib ai-strip-cli" [class.active]="cli()" [attr.aria-current]="cli() ? 'page' : null" (click)="openCli()"
+              [matTooltip]="'ai-assistant.cli.strip-tip' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.cli.kicker' | translate">
+        <span class="ai-cli-ic" aria-hidden="true"><mat-icon fontSet="material-icons-round">terminal</mat-icon></span>
+      </button>
     </div>
   }
 </aside>
 
 @if (solutionId()) {
 <tb-solution-chat class="ai-canvas ai-solution" (loaded)="onSolutionLoaded($event)" (click)="onChatClick($event)"></tb-solution-chat>
+} @else if (cli()) {
+<tb-ai-cli-guide class="ai-canvas" [copiedUntil]="cliCopiedUntil()" (closed)="openGetStarted()" (click)="onChatClick($event)">
+  @if (!railOpen()) {
+    <button aiChatLead type="button" class="ai-ib ai-bar-chats" (click)="toggleRail()"
+            [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.open-chats' | translate">
+      <ng-container *ngTemplateOutlet="panelIcon; context: {open: true}"></ng-container>
+      @if (waiting().length; as count) {
+        <i class="ai-badge" aria-hidden="true">{{ count }}</i>
+      }
+    </button>
+  }
+</tb-ai-cli-guide>
 } @else {
 <tb-ai-chat class="ai-canvas" variant="page" [toastTarget]="toastTarget" [(chatId)]="chatId"
-            [getStarted]="getStarted()" (click)="onChatClick($event)" (newSolution)="newSolution()" (takeTour)="takeTour()">
+            [getStarted]="getStarted()" (click)="onChatClick($event)" (newSolution)="newSolution()" (openCli)="openCli()" (takeTour)="takeTour()">
   @if (!railOpen()) {
     <button aiChatLead type="button" class="ai-ib ai-bar-chats" (click)="toggleRail()"
             [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.open-chats' | translate">
