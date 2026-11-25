@@ -252,6 +252,24 @@ public class AutoInstallAgentTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAutoInstallGatewayProfileWithTlsAccessToken() throws Exception {
+        AgentAppTemplate template = createGatewayTemplate("tlsAccessToken");
+        AgentAppProfile profile = createProfile("auto-install-gateway-tls-token", template);
+        AgentApplicationInfo app = provisionAndAwaitAutoInstalledApp(profile);
+
+        Assert.assertNotNull("Auto-installed GATEWAY app should reference the created Device", app.getRelatedEntityId());
+        DeviceId deviceId = (DeviceId) app.getRelatedEntityId();
+        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceId);
+        Assert.assertEquals(DeviceCredentialsType.ACCESS_TOKEN, credentials.getCredentialsType());
+
+        AgentApplicationInfo saved = doGet("/api/agent/app/" + app.getId().getId(), AgentApplicationInfo.class);
+        JsonNode env = ((DockerComposeConfig) saved.getConfig()).getCompose()
+                .get("services").get("tb-gateway").get("environment");
+        Assert.assertEquals("tlsAccessToken", env.get("TB_GW_SECURITY_TYPE").asText());
+        Assert.assertEquals(credentials.getCredentialsId(), env.get("TB_GW_ACCESS_TOKEN").asText());
+    }
+
+    @Test
     public void testAutoInstallGatewayProfileWithUsernamePassword() throws Exception {
         AgentAppTemplate template = createGatewayTemplate("usernamePassword");
         AgentAppProfile profile = createProfile("auto-install-gateway-mqtt", template);
@@ -452,8 +470,8 @@ public class AutoInstallAgentTest extends AbstractControllerTest {
     }
 
     private AgentAppTemplate createGatewayTemplate(String securityType) {
-        String envBlock = "accessToken".equals(securityType)
-                ? "\"TB_GW_SECURITY_TYPE\":\"accessToken\"," +
+        String envBlock = !"usernamePassword".equals(securityType)
+                ? "\"TB_GW_SECURITY_TYPE\":\"" + securityType + "\"," +
                   "\"TB_GW_ACCESS_TOKEN\":\"placeholder-token\""
                 : "\"TB_GW_SECURITY_TYPE\":\"usernamePassword\"," +
                   "\"TB_GW_CLIENT_ID\":\"placeholder-client\"," +

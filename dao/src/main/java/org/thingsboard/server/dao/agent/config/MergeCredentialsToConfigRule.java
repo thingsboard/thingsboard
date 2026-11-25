@@ -17,6 +17,7 @@ import org.thingsboard.server.common.data.agent.config.AgentAppConfig;
 import org.thingsboard.server.common.data.agent.config.DockerComposeConfig;
 import org.thingsboard.server.common.data.agent.config.DockerComposeUtils;
 import org.thingsboard.server.common.data.agent.config.GatewayEnvSchema;
+import org.thingsboard.server.common.data.agent.config.GatewaySecurityType;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -31,7 +32,6 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Merge rule that injects entity credentials into the compose configuration.
@@ -142,11 +142,12 @@ public class MergeCredentialsToConfigRule implements AppConfigMergeRule {
         Map<String, String> envVars = new LinkedHashMap<>();
         switch (credentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                putSecurityType(envVars, schema, resolveAccessTokenSecurityType(compose, imagePattern, schema));
+                GatewaySecurityType declared = schema.readSecurityType(compose, imagePattern);
+                putSecurityType(envVars, schema, declared != null && declared.isTokenBased() ? declared : GatewaySecurityType.ACCESS_TOKEN);
                 envVars.put(schema.getAccessTokenKey(), credentials.getCredentialsId());
                 break;
             case MQTT_BASIC:
-                putSecurityType(envVars, schema, "usernamePassword");
+                putSecurityType(envVars, schema, GatewaySecurityType.USERNAME_PASSWORD);
                 BasicMqttCredentials mqttCredentials = JacksonUtil.fromString(
                         credentials.getCredentialsValue(), BasicMqttCredentials.class);
                 if (mqttCredentials != null) {
@@ -172,19 +173,10 @@ public class MergeCredentialsToConfigRule implements AppConfigMergeRule {
         DockerComposeUtils.upsertEnvVariables(compose, imagePattern, envVars);
     }
 
-    // tlsAccessToken is the same token auth, so a compose that asks for it keeps it instead of being reset to accessToken
-    private static String resolveAccessTokenSecurityType(JsonNode compose, Pattern imagePattern, GatewayEnvSchema schema) {
-        if (schema.getSecurityTypeKey() != null
-                && "tlsAccessToken".equals(DockerComposeUtils.getEnvVariable(compose, imagePattern, schema.getSecurityTypeKey()))) {
-            return "tlsAccessToken";
-        }
-        return "accessToken";
-    }
-
     // legacy gateway images have no security-type variable; they infer the auth type from the credential keys
-    private static void putSecurityType(Map<String, String> envVars, GatewayEnvSchema schema, String securityType) {
+    private static void putSecurityType(Map<String, String> envVars, GatewayEnvSchema schema, GatewaySecurityType securityType) {
         if (schema.getSecurityTypeKey() != null) {
-            envVars.put(schema.getSecurityTypeKey(), securityType);
+            envVars.put(schema.getSecurityTypeKey(), securityType.getValue());
         }
     }
 }

@@ -4007,7 +4007,6 @@
         "app-install-cred-routing-secret": "Routing secret",
         "app-install-cred-security-type": "Security type",
         "app-install-cred-security-access-token": "Access token",
-        "app-install-cred-security-tls-access-token": "TLS + access token",
         "app-install-cred-security-username-password": "Username / password",
         "app-install-cred-access-token": "Access token",
         "app-install-cred-client-id": "Client ID",

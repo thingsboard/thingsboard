@@ -285,6 +285,26 @@ class AgentAutoInstallServiceTest {
     }
 
     @Test
+    void whenGatewayProfileWithTlsAccessToken_shouldCreateDeviceWithAutoToken() {
+        AgentAppProfile profile = newProfile(AgentApplicationType.GATEWAY, gatewayComposeConfig("tlsAccessToken"));
+        when(agentService.findAgentById(TENANT_ID, AGENT_ID)).thenReturn(agentWithProfile);
+        mockAgentProfile(AgentProvisionType.AUTO_INSTALL_PER_APP_PROFILE);
+        when(profileService.findUninstalledAppProfilesForAgentProfile(TENANT_ID, AGENT_PROFILE_ID, AGENT_ID))
+                .thenReturn(List.of(profile));
+
+        Device createdDevice = new Device();
+        createdDevice.setId(new DeviceId(UUID.randomUUID()));
+        when(deviceService.saveDeviceWithAccessToken(any(Device.class), isNull())).thenReturn(createdDevice);
+        when(appProvisioner.saveWithLifecycleEvent(eq(TENANT_ID), any(AgentApplication.class), any(), eq(AgentAppEventActionType.INSTALL)))
+                .thenAnswer(inv -> inv.getArgument(1));
+
+        autoInstallService.autoInstall(TENANT_ID, AGENT_ID);
+
+        verify(deviceService).saveDeviceWithAccessToken(any(Device.class), isNull());
+        verify(deviceService, never()).saveDeviceWithCredentials(any(), any());
+    }
+
+    @Test
     void whenGatewayProfileWithUsernamePassword_shouldCreateDeviceWithMqttBasicCredentials() {
         AgentAppProfile profile = newProfile(AgentApplicationType.GATEWAY, gatewayComposeConfig("usernamePassword"));
         when(agentService.findAgentById(TENANT_ID, AGENT_ID)).thenReturn(agentWithProfile);

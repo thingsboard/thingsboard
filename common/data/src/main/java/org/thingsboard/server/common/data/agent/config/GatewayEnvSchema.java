@@ -48,6 +48,34 @@ public enum GatewayEnvSchema {
     }
 
     /**
+     * Resolves the security type of the gateway service in the given compose: the declared one when the
+     * schema has a security-type variable and the compose sets it (unsupported values resolve to {@code null}),
+     * otherwise the one implied by which credential keys are present.
+     */
+    @Nullable
+    public GatewaySecurityType readSecurityType(JsonNode compose, Pattern imagePattern) {
+        return readSecurityTypeFromEnv(DockerComposeUtils.findServiceEnvironment(compose, imagePattern));
+    }
+
+    /**
+     * Same as {@link #readSecurityType(JsonNode, Pattern)} but for an already-resolved environment node.
+     */
+    @Nullable
+    public GatewaySecurityType readSecurityTypeFromEnv(@Nullable JsonNode env) {
+        if (securityTypeKey != null) {
+            String declared = DockerComposeUtils.envGet(env, securityTypeKey);
+            if (declared != null) {
+                return GatewaySecurityType.fromValue(declared);
+            }
+        }
+        if (DockerComposeUtils.envHasKey(env, accessTokenKey)) {
+            return GatewaySecurityType.ACCESS_TOKEN;
+        }
+        return DockerComposeUtils.envHasKey(env, clientIdKey) || DockerComposeUtils.envHasKey(env, usernameKey)
+                ? GatewaySecurityType.USERNAME_PASSWORD : null;
+    }
+
+    /**
      * Same as {@link #detect(JsonNode, Pattern)} but for an already-resolved environment node.
      */
     public static GatewayEnvSchema detectFromEnv(@Nullable JsonNode env) {

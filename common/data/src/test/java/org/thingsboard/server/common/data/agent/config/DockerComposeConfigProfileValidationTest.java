@@ -147,7 +147,8 @@ class DockerComposeConfigProfileValidationTest {
 
         assertThatThrownBy(() -> config.validateForProfile(AgentApplicationType.GATEWAY))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessageContaining("Unsupported gateway security type");
+                .hasMessageContaining("Unsupported gateway security type: x509")
+                .hasMessageContaining("Supported types: accessToken, tlsAccessToken, usernamePassword");
     }
 
     @Test

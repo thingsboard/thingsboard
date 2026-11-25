@@ -26,11 +26,10 @@ export const CREDENTIAL_SCHEMAS: Partial<Record<AgentApplicationType, CredField[
     { key: 'TB_GW_SECURITY_TYPE', labelKey: 'agent.app-install-cred-security-type', type: 'select',
       options: [
         { value: 'accessToken', labelKey: 'agent.app-install-cred-security-access-token' },
-        { value: 'tlsAccessToken', labelKey: 'agent.app-install-cred-security-tls-access-token' },
         { value: 'usernamePassword', labelKey: 'agent.app-install-cred-security-username-password' }
       ] },
     { key: 'TB_GW_ACCESS_TOKEN', labelKey: 'agent.app-install-cred-access-token', type: 'password',
-      showWhen: { key: 'TB_GW_SECURITY_TYPE', values: ['accessToken', 'tlsAccessToken'] } },
+      showWhen: { key: 'TB_GW_SECURITY_TYPE', values: ['accessToken'] } },
     { key: 'TB_GW_CLIENT_ID', labelKey: 'agent.app-install-cred-client-id', type: 'text',
       showWhen: { key: 'TB_GW_SECURITY_TYPE', values: ['usernamePassword'] } },
     { key: 'TB_GW_USERNAME', labelKey: 'agent.app-install-cred-username', type: 'text',
