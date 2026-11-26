@@ -1303,17 +1303,6 @@
                 "label": "{i18n:widgets.maps.layer.roadmap}",
                 "provider": "openstreet",
                 "layerType": "OpenStreetMap.Mapnik"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.satellite}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.hybrid}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery",
-                "referenceLayer": "openstreetmap_hybrid"
               }
             ],
             "imageSource": null,
@@ -1561,17 +1550,6 @@
                 "label": "{i18n:widgets.maps.layer.roadmap}",
                 "provider": "openstreet",
                 "layerType": "OpenStreetMap.Mapnik"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.satellite}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.hybrid}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery",
-                "referenceLayer": "openstreetmap_hybrid"
               }
             ],
             "imageSource": null,
@@ -1820,17 +1798,6 @@
                 "label": "{i18n:widgets.maps.layer.roadmap}",
                 "provider": "openstreet",
                 "layerType": "OpenStreetMap.Mapnik"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.satellite}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery"
-              },
-              {
-                "label": "{i18n:widgets.maps.layer.hybrid}",
-                "provider": "openstreet",
-                "layerType": "Esri.WorldImagery",
-                "referenceLayer": "openstreetmap_hybrid"
               }
             ],
             "imageSource": null,
