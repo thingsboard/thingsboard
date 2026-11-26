@@ -136,6 +136,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   protected disableDrag(): void {
     this.polygon.pm.disableLayerDrag();
     this.polygon.off('pm:dragstart');
+    this.polygon.off('pm:drag');
     this.polygon.off('pm:dragend');
   }
 

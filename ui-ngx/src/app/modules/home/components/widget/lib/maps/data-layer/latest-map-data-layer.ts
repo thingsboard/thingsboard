@@ -216,7 +216,7 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
     }
   }
 
-protected createLabelContent(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): string {
+  protected createLabelContent(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): string {
     const label = this.dataLayer.dataLayerLabelProcessor.processPattern(data, dsData);
     const labelColor = this.dataLayer.getCtx().widgetConfig.color;
     return `<div style="color: ${labelColor};"><b>${label}</b></div>`;

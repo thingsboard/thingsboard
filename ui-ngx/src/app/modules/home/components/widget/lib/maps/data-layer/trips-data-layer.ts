@@ -27,7 +27,10 @@ import {
   TbDataLayerItem,
   TbMapDataLayer
 } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
-import { MarkerDataProcessor } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
+import {
+  createPlaceholderMarkerIcon,
+  MarkerDataProcessor
+} from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
 
 type TripRouteData = {[time: number]: FormattedData<TbMapDatasource>};
 
@@ -164,6 +167,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
         return;
       }
       this.marker = L.marker(location, {
+        icon: createPlaceholderMarkerIcon(),
         tbMarkerData: this.pointData,
         snapIgnore: true
       });

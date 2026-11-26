@@ -25,7 +25,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L, { FeatureGroup } from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { forkJoin, Observable, of, Subscription } from 'rxjs';
+import { forkJoin, Observable, of, Subscription, throwError } from 'rxjs';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import {
   deepClone,
@@ -36,7 +36,7 @@ import {
   parseTbFunction, plainColorFromVariable,
   safeExecuteTbFunction
 } from '@core/utils';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, shareReplay, switchMap } from 'rxjs/operators';
 import tinycolor from 'tinycolor2';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { TbMap } from '@home/components/widget/lib/maps/map';
@@ -63,6 +63,7 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   private positionFunction: CompiledTbFunction<MarkerPositionFunction>;
   private markerIconProcessor: MarkerIconProcessor<any>;
   private markerIconCache = new Map<string, MarkerIconInfo>();
+  private markerAssetCache = new Map<string, Observable<unknown>>();
 
   constructor(public dataLayer: TbMapDataLayer,
               private settings: S,
@@ -133,82 +134,116 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   }
 
   public createColoredMarkerShape(shape: MarkerShape, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
-    const key = `shape|${shape}|${color.toHex8()}|${rotationAngle}|${size}`;
-    return this.cachedMarkerIcon(key, () => this.buildColoredMarkerShape(shape, color, rotationAngle, size));
+    const assetKey = `shape|${shape}|${color.toHex8()}`;
+    return this.cachedMarkerIcon(assetKey, rotationAngle, size,
+      () => createColorMarkerShapeURI(this.dataLayer.getCtx().$injector.get(MatIconRegistry),
+        this.dataLayer.getCtx().$injector.get(DomSanitizer), shape, color),
+      (iconUrl: string) => this.buildColoredMarkerShape(iconUrl, rotationAngle, size));
   }
 
   public createColoredMarkerIcon(iconContainer: MarkerIconContainer,
                                  icon: string, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
-    const key = `icon|${iconContainer}|${icon}|${color.toHex8()}|${rotationAngle}|${size}`;
-    return this.cachedMarkerIcon(key, () => this.buildColoredMarkerIcon(iconContainer, icon, color, rotationAngle, size));
+    const assetKey = `icon|${iconContainer}|${icon}|${color.toHex8()}`;
+    return this.cachedMarkerIcon(assetKey, rotationAngle, size,
+      () => createColorMarkerIconElement(this.dataLayer.getCtx().$injector.get(MatIconRegistry),
+        this.dataLayer.getCtx().$injector.get(DomSanitizer), iconContainer, icon, color),
+      (element: SVGElement) => this.buildColoredMarkerIcon(element, rotationAngle, size));
   }
 
-  private cachedMarkerIcon(key: string, create: () => Observable<MarkerIconInfo>): Observable<MarkerIconInfo> {
-    const cached = this.markerIconCache.get(key);
-    if (cached) {
-      this.markerIconCache.delete(key);
-      this.markerIconCache.set(key, cached);
-      return of(cached);
+  private cachedMarkerIcon<T>(assetKey: string, rotationAngle: number, size: number,
+                              loadAsset: () => Observable<T>,
+                              buildIcon: (asset: T) => MarkerIconInfo): Observable<MarkerIconInfo> {
+    const iconKey = `${assetKey}|${size}`;
+    const cachedIcon = rotationAngle === 0 ? this.lruGet(this.markerIconCache, iconKey) : undefined;
+    let result: Observable<MarkerIconInfo>;
+    if (cachedIcon) {
+      result = of(cachedIcon);
+    } else {
+      let asset$ = this.lruGet(this.markerAssetCache, assetKey) as Observable<T>;
+      if (!asset$) {
+        const shared$: Observable<T> = loadAsset().pipe(
+          catchError((error) => {
+            if (this.markerAssetCache.get(assetKey) === shared$) {
+              this.markerAssetCache.delete(assetKey);
+            }
+            return throwError(() => error);
+          }),
+          shareReplay({bufferSize: 1, refCount: false})
+        );
+        this.lruSet(this.markerAssetCache, assetKey, shared$);
+        asset$ = shared$;
+      }
+      result = asset$.pipe(
+        map((asset) => {
+          const iconInfo = buildIcon(asset);
+          if (rotationAngle === 0) {
+            this.lruSet(this.markerIconCache, iconKey, iconInfo);
+          }
+          return iconInfo;
+        })
+      );
     }
-    return create().pipe(
-      tap((iconInfo) => {
-        this.markerIconCache.set(key, iconInfo);
-        if (this.markerIconCache.size > MarkerDataProcessor.MARKER_ICON_CACHE_SIZE) {
-          this.markerIconCache.delete(this.markerIconCache.keys().next().value);
-        }
-      })
-    );
+    return result;
   }
 
-  private buildColoredMarkerShape(shape: MarkerShape, color: tinycolor.Instance, rotationAngle: number, size: number): Observable<MarkerIconInfo> {
-    return createColorMarkerShapeURI(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer), shape, color).pipe(
-      map((iconUrl) => {
-        let icon: L.Icon<L.BaseIconOptions>;
-        if (rotationAngle === 0) {
-          icon = L.icon({
-            iconUrl,
-            iconSize: [size, size],
-            iconAnchor: [size * this.markerOffset[0], size * this.markerOffset[1]],
-            popupAnchor: [size * this.tooltipOffset[0], size * this.tooltipOffset[1]]
-          });
-        } else {
-          const style = `background-image: url(${iconUrl}); transform: rotate(${rotationAngle}deg); height: ${size}px; width: ${size}px;`;
-          icon = L.divIcon({
-            html: `<div style="${style}"></div>`,
-            className: 'tb-marker-div-icon',
-            iconSize: [size, size],
-            iconAnchor: [size * this.markerOffset[0], size * this.markerOffset[1]],
-            popupAnchor: [size * this.tooltipOffset[0], size * this.tooltipOffset[1]]
-          });
-        }
-        return {
-          size: [size, size],
-          icon
-        }
-      })
-    );
+  private lruGet<V>(cache: Map<string, V>, key: string): V | undefined {
+    const value = cache.get(key);
+    if (value !== undefined) {
+      cache.delete(key);
+      cache.set(key, value);
+    }
+    return value;
   }
 
-  private buildColoredMarkerIcon(iconContainer: MarkerIconContainer,
-                                 icon: string, color: tinycolor.Instance, rotationAngle: number, size: number): Observable<MarkerIconInfo> {
-    return createColorMarkerIconElement(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer),
-      iconContainer, icon, color).pipe(
-      map((element) => {
-        if (rotationAngle !== 0) {
-          element.style.transform = `rotate(${rotationAngle}deg)`;
-        }
-        return {
-          size: [size, size],
-          icon: L.divIcon({
-            html: element.outerHTML,
-            className: 'tb-marker-div-icon',
-            iconSize: [size, size],
-            iconAnchor: [size * this.markerOffset[0], size * this.markerOffset[1]],
-            popupAnchor: [size * this.tooltipOffset[0], size * this.tooltipOffset[1]]
-          })
-        };
+  private lruSet<V>(cache: Map<string, V>, key: string, value: V) {
+    cache.set(key, value);
+    if (cache.size > MarkerDataProcessor.MARKER_ICON_CACHE_SIZE) {
+      cache.delete(cache.keys().next().value);
+    }
+  }
+
+  private buildColoredMarkerShape(iconUrl: string, rotationAngle: number, size: number): MarkerIconInfo {
+    let icon: L.Icon<L.BaseIconOptions>;
+    if (rotationAngle === 0) {
+      icon = L.icon({
+        iconUrl,
+        iconSize: [size, size],
+        iconAnchor: [size * this.markerOffset[0], size * this.markerOffset[1]],
+        popupAnchor: [size * this.tooltipOffset[0], size * this.tooltipOffset[1]]
+      });
+    } else {
+      const style = `background-image: url(${iconUrl}); transform: rotate(${rotationAngle}deg); height: ${size}px; width: ${size}px;`;
+      icon = L.divIcon({
+        html: `<div style="${style}"></div>`,
+        className: 'tb-marker-div-icon',
+        iconSize: [size, size],
+        iconAnchor: [size * this.markerOffset[0], size * this.markerOffset[1]],
+        popupAnchor: [size * this.tooltipOffset[0], size * this.tooltipOffset[1]]
+      });
+    }
+    return {
+      size: [size, size],
+      icon
+    };
+  }
+
+  private buildColoredMarkerIcon(sourceElement: SVGElement, rotationAngle: number, size: number): MarkerIconInfo {
+    let html = sourceElement.outerHTML;
+    if (rotationAngle !== 0) {
+      const element = sourceElement.cloneNode(true) as SVGElement;
+      element.style.transform = `rotate(${rotationAngle}deg)`;
+      html = element.outerHTML;
+    }
+    return {
+      size: [size, size],
+      icon: L.divIcon({
+        html,
+        className: 'tb-marker-div-icon',
+        iconSize: [size, size],
+        iconAnchor: [size * this.markerOffset[0], size * this.markerOffset[1]],
+        popupAnchor: [size * this.tooltipOffset[0], size * this.tooltipOffset[1]]
       })
-    );
+    };
   }
 }
 
@@ -409,6 +444,9 @@ class ImageMarkerIconProcessor extends MarkerIconProcessor<MarkerImageSettings> 
   }
 }
 
+export const createPlaceholderMarkerIcon = (): L.DivIcon =>
+  L.divIcon({ html: '', className: 'tb-marker-div-icon', iconSize: [0, 0] });
+
 class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettings, TbMarkersDataLayer, L.Marker> {
 
   private marker: L.Marker;
@@ -447,6 +485,7 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
     this.dragStart = this._dragStart.bind(this);
     this.dragEnd = this._dragEnd.bind(this);
     this.marker = L.marker(location, {
+      icon: createPlaceholderMarkerIcon(),
       tbMarkerData: data,
       snapIgnore: !this.dataLayer.isSnappable(),
       bubblingMouseEvents: !this.dataLayer.isEditMode(),

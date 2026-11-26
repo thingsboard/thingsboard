@@ -177,6 +177,7 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
       map(spec => {
         return L.TB.MapLibreGL.mapLibreGLLayer({
           style: spec,
+          overlay: true
         });
       })
     );

@@ -142,6 +142,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   protected disableDrag(): void {
     this.polyline.pm.disableLayerDrag();
     this.polyline.off('pm:dragstart');
+    this.polyline.off('pm:drag');
     this.polyline.off('pm:dragend');
   }
 

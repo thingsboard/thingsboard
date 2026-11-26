@@ -34,12 +34,13 @@ import { TbMap } from '@home/components/widget/lib/maps/map';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ColorRange } from '@shared/models/widget-settings.models';
 
-const additionalDataArgsRegex = /\b(dsData|ctx|arguments)\b/;
+const additionalDataArgsRegex = /\b(dsData|ctx|arguments|Date|moment|performance)\b/;
 
 const settingsUseAdditionalData = (value: any, key?: string): boolean => {
   if (key?.endsWith('Function')) {
     const body = typeof value === 'string' ? value : value?.body;
-    return typeof body === 'string' && additionalDataArgsRegex.test(body);
+    const hasModules = !!value?.modules && Object.keys(value.modules).length > 0;
+    return typeof body === 'string' && (hasModules || additionalDataArgsRegex.test(body));
   }
   if (value && typeof value === 'object') {
     return Object.keys(value).some(k => settingsUseAdditionalData(value[k], k));

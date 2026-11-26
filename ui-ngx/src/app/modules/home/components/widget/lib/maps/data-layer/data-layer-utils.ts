@@ -13,7 +13,6 @@ import { DataLayerPatternProcessor } from '@home/components/widget/lib/maps/data
 interface TooltipState {
   processor: DataLayerPatternProcessor;
   data: FormattedData<TbMapDatasource>;
-  dsData: FormattedData<TbMapDatasource>[];
 }
 
 const tooltipStates = new WeakMap<L.Popup, TooltipState>();
@@ -28,7 +27,7 @@ export const createTooltip = (map: TbMap<any>,
   const open = (beforeOpen?: () => void) => {
     if ((tooltip as any)._prepareOpen((layer as any)._latlng)) {
       beforeOpen?.();
-      renderTooltip(tooltip);
+      renderTooltip(tooltip, map.getData());
       tooltip.openOn(map.getMap());
     }
   };
@@ -72,19 +71,19 @@ export const updateTooltip = (map: TbMap<any>,
                               processor: DataLayerPatternProcessor,
                               data: FormattedData<TbMapDatasource>,
                               dsData: FormattedData<TbMapDatasource>[]): void => {
-  tooltipStates.set(tooltip, {processor, data, dsData});
+  tooltipStates.set(tooltip, {processor, data});
   if (tooltip.isOpen()) {
-    renderTooltip(tooltip);
+    renderTooltip(tooltip, dsData);
     if (tooltip.getElement()) {
       bindTooltipActions(map, tooltip, settings, data);
     }
   }
 }
 
-const renderTooltip = (tooltip: L.Popup): void => {
+const renderTooltip = (tooltip: L.Popup, dsData: FormattedData<TbMapDatasource>[]): void => {
   const state = tooltipStates.get(tooltip);
   if (state) {
-    tooltip.setContent(processTooltipTemplate(state.processor.processPattern(state.data, state.dsData)));
+    tooltip.setContent(processTooltipTemplate(state.processor.processPattern(state.data, dsData)));
   }
 }
 

@@ -5,7 +5,7 @@ import L, { TB } from 'leaflet';
 import { guid, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
 import { GestureHandling } from 'leaflet-gesture-handling';
-import { Map as MapLibreGLMap, setWorkerUrl } from 'maplibre-gl';
+import { LngLat, Map as MapLibreGLMap, setWorkerUrl } from 'maplibre-gl';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -1104,8 +1104,6 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   private _offset: L.Point;
   private _zooming: boolean;
   private _glError = false;
-  private _ownMaxBounds: L.LatLngBounds;
-  private _prevMaxBoundsViscosity: number;
 
   constructor(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions) {
     super();
@@ -1128,8 +1126,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     const paneName = this.getPaneName();
     map.getPane(paneName).appendChild(this._container);
     this._initGL();
-    this._updateZoomLimits();
-    this._limitVerticalPan(map);
+    this._updateMaxZoom();
 
     this._offset = this._map.containerPointToLayerPoint([0, 0]);
     if ((this._map as any)._proxy && map.options.zoomAnimation) {
@@ -1146,7 +1143,6 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
     const paneName = this.getPaneName();
     map.getPane(paneName).removeChild(this._container);
     (map as any)._removeZoomLimit(this);
-    this._releaseVerticalPan(map);
 
     if (this._glMap) {
       this._glMap.remove();
@@ -1216,10 +1212,12 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       container: this._container,
       center: [center.lng, center.lat],
       zoom: this._map.getZoom() - 1,
-      attributionControl: false
+      attributionControl: false,
+      transformConstrain: (lngLat: LngLat, zoom: number) => ({center: lngLat, zoom})
     });
     delete options.minZoom;
     delete options.maxZoom;
+    delete options.overlay;
     this._glError = false;
     try {
       this._glMap = new MapLibreGLMap(options);
@@ -1276,7 +1274,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
 
     this._transformGL(gl);
 
-    L.DomUtil.setPosition(container, this._roundPoint(topLeft.add([0, this._getGLOffsetY(gl)])));
+    L.DomUtil.setPosition(container, this._roundPoint(topLeft));
   }
 
   private _transformGL(gl: MapLibreGLMap) {
@@ -1285,12 +1283,6 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       center: [center.lng, center.lat],
       zoom: this._map.getZoom() - 1
     });
-  }
-
-  private _getGLOffsetY(gl: MapLibreGLMap): number {
-    const lat = this._map.getCenter().lat;
-    const offsetY = this.getSize().y / 2 - gl.project([gl.getCenter().lng, lat]).y;
-    return Number.isFinite(offsetY) ? offsetY : 0;
   }
 
   private _pinchZoom() {
@@ -1361,34 +1353,14 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
   }
 
   private _resize() {
-    this._updateZoomLimits();
     this._transitionEnd();
   }
 
-  private _limitVerticalPan(map: L.Map) {
-    if (!map.options.maxBounds) {
-      const maxLat = 85.0511287798;
-      this._ownMaxBounds = L.latLngBounds([-maxLat, -1e5], [maxLat, 1e5]);
-      this._prevMaxBoundsViscosity = map.options.maxBoundsViscosity;
-      map.options.maxBoundsViscosity = 1;
-      map.setMaxBounds(this._ownMaxBounds);
+  private _updateMaxZoom() {
+    if (!this.options.overlay) {
+      this.options.maxZoom = (this._glMap ? this._glMap.getMaxZoom() : 22) + 1;
+      (this._map as any)._addZoomLimit(this);
     }
-  }
-
-  private _releaseVerticalPan(map: L.Map) {
-    if (this._ownMaxBounds && map.options.maxBounds === this._ownMaxBounds) {
-      map.setMaxBounds(null);
-      map.options.maxBoundsViscosity = this._prevMaxBoundsViscosity;
-    }
-    this._ownMaxBounds = null;
-  }
-
-  private _updateZoomLimits() {
-    const height = this.getSize().y;
-    const worldSize = this._map.options.crs.scale(0);
-    this.options.minZoom = height > 0 ? Math.max(0, Math.ceil(Math.log2(height / worldSize))) : 0;
-    this.options.maxZoom = (this._glMap ? this._glMap.getMaxZoom() : 22) + 1;
-    (this._map as any)._addZoomLimit(this);
   }
 
   private _loadAttribution(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions): string {
