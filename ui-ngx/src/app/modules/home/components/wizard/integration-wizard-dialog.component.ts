@@ -283,6 +283,17 @@ export class IntegrationWizardDialogComponent extends
     }
   }
 
+  get isDownlinkConverterSet(): boolean {
+    switch (this.downlinkConverterForm.get('converterType').value) {
+      case ConverterSourceType.EXISTING:
+        return !!this.downlinkConverterForm.get('downlinkConverterId').value;
+      case ConverterSourceType.SKIP:
+        return false;
+      default:
+        return true;
+    }
+  }
+
   private createDownlinkConverter(): Observable<ConverterId> {
     const converterType = this.downlinkConverterForm.get('converterType').value;
     if (converterType === ConverterSourceType.SKIP) {
