@@ -1,0 +1,116 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="k-hand" [class.folded]="folded()" [attr.aria-label]="'ai-assistant.hand-over.needs-you' | translate">
+  @if (folded()) {
+    <button type="button" class="k-hand-fold" (click)="open.set(true)" [attr.aria-expanded]="false">
+      <mat-icon class="tb-mat-18" aria-hidden="true">check_circle</mat-icon>
+      <span>{{ handOver().title }}</span>
+      <mat-icon class="tb-mat-18 k-hand-fold-tg" aria-hidden="true">expand_more</mat-icon>
+    </button>
+  } @else {
+    <div class="k-head">
+      <mat-icon class="tb-mat-18" aria-hidden="true">person</mat-icon>{{ 'ai-assistant.hand-over.needs-you' | translate }}
+      <span class="k-sub">{{ handOver().title }}</span>
+      @if (arrived()) {
+        <button mat-icon-button type="button" class="k-hand-close" (click)="open.set(false)"
+                [attr.aria-label]="'ai-assistant.hand-over.fold' | translate"><mat-icon>expand_less</mat-icon></button>
+      }
+    </div>
+    <div class="k-body">
+      @if (handOver().text) {
+        <tb-markdown usePlainMarkdown [data]="handOver().text"></tb-markdown>
+      }
+      @if (handOver().choice; as choice) {
+        <div class="k-choice-panel">
+          <div class="k-choice">
+            <span class="k-qi"><mat-icon class="tb-mat-18" aria-hidden="true">{{ choice.icon }}</mat-icon></span>
+            <span class="k-qt">{{ choice.question }}</span>
+            <span class="ob-seg k-seg" role="group" [attr.aria-label]="choice.question">
+              @for (option of choice.options; track option.id) {
+                <button type="button" [attr.aria-pressed]="choiceValue() === option.id" (click)="pick(option.id)">
+                  @if (option.icon) {
+                    <mat-icon class="tb-mat-18" aria-hidden="true">{{ option.icon }}</mat-icon>
+                  }
+                  {{ option.label }}
+                </button>
+              }
+            </span>
+          </div>
+          @if (choiceText()) {
+            <div class="k-choice-body"><tb-markdown usePlainMarkdown [data]="choiceText()"></tb-markdown></div>
+          }
+        </div>
+      }
+      @if (handOver().steps.length) {
+        <ol class="k-steps">
+          @for (step of handOver().steps; track $index; let i = $index) {
+            <li [class.done]="done(i)">
+              <label>
+                <input type="checkbox" [checked]="done(i)" (change)="tick(i)">
+                <span class="k-step-t">{{ step.title }}</span>
+                @if (step.detail) {
+                  <span class="k-step-d">{{ step.detail }}</span>
+                }
+              </label>
+              @if (step.values.length || step.markdown) {
+                <div class="k-step-x">
+                  @for (value of step.values; track $index; let v = $index) {
+                    <div class="k-value" [class.secret]="value.secret">
+                      <mat-icon class="tb-mat-18 k-value-ic" aria-hidden="true">{{ value.icon }}</mat-icon>
+                      <span class="k-value-l">{{ value.label }}</span>
+                      <code class="k-value-v">{{ value.secret && !shown().has(i + '-' + v) ? masked(value.value) : value.value }}</code>
+                      @if (value.secret) {
+                        <button mat-icon-button type="button" class="k-value-b" (click)="reveal(i + '-' + v)"
+                                [matTooltip]="(shown().has(i + '-' + v) ? 'ai-assistant.hand-over.hide' : 'ai-assistant.hand-over.show') | translate"
+                                [attr.aria-label]="(shown().has(i + '-' + v) ? 'ai-assistant.hand-over.hide' : 'ai-assistant.hand-over.show') | translate">
+                          <mat-icon class="tb-mat-18">{{ shown().has(i + '-' + v) ? 'visibility_off' : 'visibility' }}</mat-icon>
+                        </button>
+                      }
+                      <button mat-icon-button type="button" class="k-value-b" (click)="copy(i + '-' + v, value.value)"
+                              [matTooltip]="(copied() === i + '-' + v ? 'ai-assistant.hand-over.copied' : 'action.copy') | translate"
+                              [attr.aria-label]="'action.copy' | translate">
+                        <mat-icon class="tb-mat-18">{{ copied() === i + '-' + v ? 'check' : 'content_copy' }}</mat-icon>
+                      </button>
+                    </div>
+                  }
+                  @if (step.markdown) {
+                    <tb-markdown usePlainMarkdown [data]="step.markdown"></tb-markdown>
+                  }
+                </div>
+              }
+            </li>
+          }
+        </ol>
+      }
+      @if (quiet() || stoppedQuiet()) {
+        <div class="k-quiet">
+          <div class="k-wait warn" role="status">
+            <mat-icon class="tb-mat-18" aria-hidden="true">schedule</mat-icon>
+            <span>{{ 'ai-assistant.hand-over.nothing-heard' | translate: {minutes: quietMinutes()} }}</span>
+            @if (waiting()) {
+              <span class="clock">{{ clock() }}</span>
+            }
+          </div>
+          <div class="k-chips">
+            <button type="button" class="ob-chip" (click)="say('ai-assistant.hand-over.keep-waiting-prompt')">
+              <mat-icon aria-hidden="true">check</mat-icon>{{ 'ai-assistant.hand-over.keep-waiting' | translate }}
+            </button>
+            <button type="button" class="ob-chip" (click)="say('ai-assistant.hand-over.what-wrong-prompt')">
+              <mat-icon aria-hidden="true">help_outline</mat-icon>{{ 'ai-assistant.hand-over.what-wrong' | translate }}
+            </button>
+          </div>
+        </div>
+      } @else if (waiting()) {
+        <div class="k-wait" role="status">
+          <tb-ai-spin kind="think" aria-hidden="true"></tb-ai-spin>
+          <span class="k-wait-t">{{ waitLabel() }}</span>
+          <span class="clock">{{ clock() }}</span>
+        </div>
+      }
+    </div>
+  }
+</section>

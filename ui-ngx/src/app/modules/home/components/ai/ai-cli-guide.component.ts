@@ -9,7 +9,7 @@ import {
   ElementRef,
   inject,
   Injector,
-  input,
+  NgZone,
   output,
   signal
 } from '@angular/core';
@@ -39,17 +39,18 @@ import {
   CliOs,
   CliWay
 } from '@home/components/ai/ai-cli.models';
+import { cliTerm, CliTerm } from '@home/components/ai/ai-cli-term';
 
 interface CliPicks {
   way?: CliWay;
   build?: CliBuild;
-  open?: boolean;
 }
 
 interface CliTreeRow {
   depth: number;
   name: string;
   last: boolean;
+  first: boolean;
   icon: string;
   tone?: string;
 }
@@ -69,8 +70,6 @@ export class AiCliGuideComponent {
 
   private static readonly PICKS_KEY = 'tb-ai-cli';
 
-  copiedUntil = input<number>(0);
-
   closed = output<void>();
 
   readonly docs = CLI_DOCS;
@@ -88,11 +87,10 @@ export class AiCliGuideComponent {
   readonly url = window.location.origin;
 
   readonly tree: CliTreeRow[] = [
-    {depth: 0, name: 'thingsboard-project', last: true, icon: 'folder'},
-    {depth: 1, name: 'solutions/office', last: true, icon: 'folder'},
-    {depth: 2, name: 'devices', last: false, icon: 'memory', tone: 'device'},
-    {depth: 2, name: 'dashboards', last: false, icon: 'dashboard', tone: 'view'},
-    {depth: 2, name: 'device-profiles', last: true, icon: 'category', tone: 'device'}
+    {depth: 0, name: 'smart-retail', last: true, first: false, icon: 'folder'},
+    {depth: 1, name: 'devices', last: false, first: true, icon: 'memory', tone: 'device'},
+    {depth: 1, name: 'dashboards', last: false, first: false, icon: 'dashboard', tone: 'view'},
+    {depth: 1, name: 'alarm-rules', last: true, first: false, icon: 'rule', tone: 'rule'}
   ];
 
   private readonly picks = AiCliGuideComponent.readPicks();
@@ -100,8 +98,6 @@ export class AiCliGuideComponent {
   way = signal<CliWay>(this.picks.way === 'terminal' ? 'terminal' : 'agent');
 
   build = signal<CliBuild>(CLI_BUILDS.some(item => item.id === this.picks.build) ? this.picks.build : 'sensor');
-
-  promptOpen = signal(!!this.picks.open);
 
   os = signal<CliOs>(AiCliGuideComponent.storedOs());
 
@@ -114,12 +110,17 @@ export class AiCliGuideComponent {
   private router = inject(Router);
   private injector = inject(Injector);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private zone = inject(NgZone);
+  private term: CliTerm | null = null;
 
   readonly hostElement = this.host.nativeElement;
 
   constructor() {
     const stop = onCodeTabGroup(CLI_OS_GROUP, id => this.os.set(id === 'windows' ? 'windows' : 'unix'));
-    inject(DestroyRef).onDestroy(stop);
+    inject(DestroyRef).onDestroy(() => {
+      stop();
+      this.term?.destroy();
+    });
     afterRenderEffect(() => {
       this.way();
       this.build();
@@ -150,22 +151,6 @@ export class AiCliGuideComponent {
     this.savePicks();
   }
 
-  togglePrompt(event: Event): void {
-    const control = event.currentTarget as HTMLElement;
-    const top = control.getBoundingClientRect().top;
-    const open = !this.promptOpen();
-    this.promptOpen.set(open);
-    this.savePicks();
-    if (!open) {
-      afterNextRender(() => {
-        const scroller = this.scroller();
-        if (scroller) {
-          scroller.scrollTop += control.getBoundingClientRect().top - top;
-        }
-      }, {injector: this.injector});
-    }
-  }
-
   toSteps(): void {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.hostElement.querySelector('#ai-cli-steps')?.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block: 'start'});
@@ -194,7 +179,7 @@ export class AiCliGuideComponent {
 
   private fillSlots(): void {
     this.hostElement.querySelectorAll<HTMLElement>('.ai-cli-slot').forEach(slot => {
-      const key = slot.dataset.kind + ':' + (slot.dataset.key ?? '') + (slot.dataset.kind === 'prompt-hero' ? ':' + this.copiedUntil() : '');
+      const key = slot.dataset.kind + ':' + (slot.dataset.key ?? '');
       if (slot.dataset.built !== key) {
         slot.dataset.built = key;
         slot.replaceChildren(this.blockFor(slot.dataset.kind, slot.dataset.key));
@@ -206,13 +191,10 @@ export class AiCliGuideComponent {
     const copy = (text: string) => this.clipboard.copyFromContent(text);
     const say = (word: string) => this.translate.instant('ai-assistant.cli.' + word);
     switch (kind) {
-      case 'install-hero':
-        return this.installBlock(true);
+      case 'term':
+        return this.termBlock();
       case 'install':
-        return this.installBlock(false);
-      case 'prompt-hero':
-        return labelledCodeBlock(say('setup-prompt'), say('setup-prompt-label'), 'text', this.translate, copy,
-          {labelledCopy: true, classes: 'wrap', copiedFor: Math.max(0, this.copiedUntil() - Date.now())});
+        return this.installBlock();
       case 'prompt':
         return labelledCodeBlock(say('setup-prompt'), say('setup-prompt-label'), 'text', this.translate, copy,
           {check: true, classes: 'wrap'});
@@ -234,14 +216,19 @@ export class AiCliGuideComponent {
     }
   }
 
-  private installBlock(hero: boolean): HTMLElement {
+  private termBlock(): HTMLElement {
+    this.term?.destroy();
+    this.term = this.zone.runOutsideAngular(() => cliTerm((key, params) => this.translate.instant(key, params)));
+    return this.term.element;
+  }
+
+  private installBlock(): HTMLElement {
     return codeTabsBlock([
       {id: 'unix', label: this.translate.instant('ai-assistant.cli.mac-linux'), text: CLI_INSTALL.unix, lang: 'shell'},
       {id: 'windows', label: this.translate.instant('ai-assistant.cli.windows'), text: CLI_INSTALL.windows, lang: 'powershell'}
     ], 'shell', this.translate, text => this.clipboard.copyFromContent(text), this.os() === 'windows' ? 1 : 0,
       tab => this.os.set(tab.id === 'windows' ? 'windows' : 'unix'),
-      {group: CLI_OS_GROUP, label: this.translate.instant('ai-assistant.cli.terminal'), icon: false,
-        labelledCopy: hero, check: !hero});
+      {group: CLI_OS_GROUP, label: this.translate.instant('ai-assistant.cli.terminal'), icon: false, check: true});
   }
 
   private agentBlock(text: (agent: CliAgentInfo) => string): HTMLElement {
@@ -251,7 +238,7 @@ export class AiCliGuideComponent {
   }
 
   private savePicks(): void {
-    const picks: CliPicks = {way: this.way(), build: this.build(), open: this.promptOpen()};
+    const picks: CliPicks = {way: this.way(), build: this.build()};
     try {
       localStorage.setItem(AiCliGuideComponent.PICKS_KEY, JSON.stringify(picks));
     } catch {

@@ -11,7 +11,7 @@ export interface AiReference {
   id: string;
 }
 
-const SKIP = 'code, pre, a, table, .tb-chiplink, .k-ent';
+const SKIP = 'code, pre, a, .tb-chiplink, .k-ent';
 
 export function decorateReferences(root: HTMLElement, references: AiReference[] | undefined): void {
   if (!references?.length) {
@@ -78,29 +78,71 @@ function chip(reference: AiReference): HTMLElement {
   const link = document.createElement('a');
   link.className = 'tb-chiplink';
   link.href = `${base}/${reference.id}`;
+  code.append(chipChevron());
   link.append(code);
   return link;
+}
+
+export function chipChevron(): HTMLElement {
+  const chevron = document.createElement('span');
+  chevron.className = 'mat-icon notranslate material-icons mat-ligature-font tb-chip-go';
+  chevron.setAttribute('aria-hidden', 'true');
+  chevron.textContent = 'chevron_right';
+  return chevron;
 }
 
 function escape(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function decorateLinks(root: HTMLElement): void {
+export function decorateLinks(root: HTMLElement, newTab: string): void {
   root.querySelectorAll<HTMLAnchorElement>('a[href]:not(.tb-chiplink)').forEach(link => {
     if (link.closest('pre, code') || link.origin === location.origin || !/^https?:$/.test(link.protocol)) {
       return;
     }
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    if (!link.querySelector('.k-ext')) {
-      const icon = document.createElement('span');
-      icon.className = 'mat-icon notranslate material-icons mat-ligature-font k-ext';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = 'open_in_new';
-      link.append(icon);
+    if (link.querySelector('.k-ext')) {
+      return;
     }
+    const last = lastText(link);
+    const tail = document.createElement('span');
+    tail.className = 'k-ext-tail';
+    if (last) {
+      const text = last.textContent ?? '';
+      const cut = text.trimEnd().lastIndexOf(' ') + 1;
+      tail.append(text.slice(cut));
+      last.textContent = text.slice(0, cut);
+      last.after(tail);
+    } else {
+      link.append(tail);
+    }
+    const icon = document.createElement('span');
+    icon.className = 'mat-icon notranslate material-icons mat-ligature-font k-ext';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = 'north_east';
+    tail.append(icon);
+    const hidden = document.createElement('span');
+    hidden.className = 'tb-ai-sr-only';
+    hidden.textContent = ' ' + newTab;
+    link.append(hidden);
   });
+}
+
+function lastText(root: Node): Text | null {
+  for (let node = root.lastChild; node; node = node.previousSibling) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.textContent?.trim()) {
+        return node as Text;
+      }
+    } else {
+      const found = lastText(node);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
 }
 
 const SEVERITY_SKIP = 'code, pre, a, table, .k-sev, .tb-chiplink';

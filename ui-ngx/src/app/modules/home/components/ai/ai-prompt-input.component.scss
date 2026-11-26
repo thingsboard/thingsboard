@@ -689,15 +689,17 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    min-width: 22px;
-    height: 22px;
-    padding: 0 6px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
     border: 1px solid var(--tb-line);
     border-bottom-width: 2px;
-    border-radius: 6px;
-    background: var(--tb-surface);
-    color: var(--tb-ink-54);
-    font: 500 12px/1 var(--tb-font);
+    border-radius: 5px;
+    background: none;
+    color: var(--k-faint);
+    font: 400 11px/1 var(--tb-font);
+    letter-spacing: .2px;
+    white-space: nowrap;
     pointer-events: none;
     transform: translateY(-50%);
   }

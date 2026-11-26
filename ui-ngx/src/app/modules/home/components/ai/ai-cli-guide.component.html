@@ -29,32 +29,18 @@
         <h1 class="ob-title">{{ 'ai-assistant.cli.hero.title' | translate }}</h1>
         <p class="ob-lead">{{ 'ai-assistant.cli.hero.lead' | translate }}</p>
       </div>
-      <div class="ai-cli-hero-set ai-cli-cta">
-        <div class="ai-cli-seg" role="group" [attr.aria-label]="'ai-assistant.cli.how-to-set-up' | translate">
-          @for (item of ways; track item) {
-            <button type="button" [attr.data-way]="item" [attr.aria-pressed]="way() === item" (click)="pickWay(item, $event)">
-              <b>{{ ('ai-assistant.cli.way.' + item) | translate }}</b>
-            </button>
-          }
-        </div>
-        @if (way() === 'terminal') {
-          <div class="ai-cli-slot" data-kind="install-hero"></div>
-        } @else {
-          <div class="ai-cli-clamp" [class.shut]="!promptOpen()">
-            <div class="ai-cli-slot" data-kind="prompt-hero"></div>
-            <button type="button" class="ai-cli-alt ai-cli-more-t" [attr.aria-expanded]="promptOpen()" (click)="togglePrompt($event)">
-              <span>{{ (promptOpen() ? 'ai-assistant.cli.show-less' : 'ai-assistant.cli.show-more') | translate }}</span>
-              <mat-icon fontSet="material-icons-round" aria-hidden="true">{{ promptOpen() ? 'expand_less' : 'expand_more' }}</mat-icon>
-            </button>
-          </div>
-        }
-        <div class="ai-cli-foot">
-          <p class="ai-cli-prompt-note">{{ (way() === 'terminal' ? 'ai-assistant.cli.note-terminal' : 'ai-assistant.cli.note-agent') | translate }}</p>
-          <button type="button" class="ai-cli-alt" (click)="toSteps()">
-            <span>{{ 'ai-assistant.cli.step-by-step' | translate }}</span>
+      <div class="ai-cli-hero-set">
+        <div class="ai-cli-acts">
+          <button type="button" class="ai-cli-start" (click)="toSteps()">
+            {{ 'ai-assistant.cli.hero.start' | translate }}
             <mat-icon fontSet="material-icons-round" aria-hidden="true">arrow_downward</mat-icon>
           </button>
+          <a class="ai-cli-alt" [href]="docs" target="_blank" rel="noopener">
+            <span>{{ 'ai-assistant.cli.hero.docs' | translate }}</span>
+            <mat-icon fontSet="material-icons-round" aria-hidden="true">arrow_outward</mat-icon>
+          </a>
         </div>
+        <div class="ai-cli-slot" data-kind="term"></div>
       </div>
     </div>
   </div>
@@ -66,7 +52,8 @@
         <li>
           <div class="ai-cli-pic agents">
             @for (agent of agents; track agent.id) {
-              <a class="ai-cli-logo" [href]="agent.get" target="_blank" rel="noopener" [attr.title]="agent.name" [attr.aria-label]="agent.name">
+              <a class="ai-cli-logo" [href]="agent.get" target="_blank" rel="noopener" [attr.title]="agent.name" [attr.aria-label]="agent.name"
+                 [style.--glow]="agent.glow">
                 <img [src]="'assets/ai/agents/' + agent.id + '.svg'" alt="" width="34" height="34">
               </a>
             }
@@ -77,8 +64,13 @@
         <li>
           <div class="ai-cli-pic tree" aria-hidden="true">
             <div class="ai-cli-tree">
+              <span class="commit">
+                <mat-icon fontSet="material-icons-round">commit</mat-icon>
+                <b>a3f9c21</b>
+                <span>{{ 'ai-assistant.cli.how.files.commit' | translate }}</span>
+              </span>
               @for (row of tree; track row.name) {
-                <span class="row" [class.last]="row.last" [style.--d]="row.depth">
+                <span class="row" [class.top]="!row.depth" [class.last]="row.last" [class.first]="row.first" [style.--d]="row.depth">
                   <mat-icon fontSet="material-icons-round" [class]="row.tone ? 'tone-' + row.tone : ''">{{ row.icon }}</mat-icon>
                   <span>{{ row.name }}</span>
                 </span>
@@ -91,8 +83,9 @@
         <li>
           <div class="ai-cli-pic ask" aria-hidden="true">
             <div class="ai-cli-ask">
+              <span class="chk"><i>✔</i><span>tb validate</span></span>
               <span class="q">{{ 'ai-assistant.cli.how.deploy.question' | translate }}</span>
-              <span class="opt on"><i>❯</i><span>{{ 'ai-assistant.cli.how.deploy.yes' | translate }}</span></span>
+              <span class="opt on"><i>❯</i><span>{{ 'ai-assistant.cli.how.deploy.yes' | translate }}</span><span class="enter">↵</span></span>
               <span class="opt"><i></i><span>{{ 'ai-assistant.cli.how.deploy.no' | translate }}</span></span>
             </div>
           </div>

@@ -142,6 +142,8 @@
     }
     @if (creditsOut(); as limitType) {
       <tb-ai-credits-out [limitType]="limitType" (dismissed)="creditsOut.set(null)"></tb-ai-credits-out>
+    } @else if (limitOut(); as platformLimit) {
+      <tb-ai-limit-out [platformLimit]="platformLimit" (dismissed)="limitOut.set(null)"></tb-ai-limit-out>
     } @else if (notice(); as current) {
       <div class="k-notice k-notice-edge" [class]="'k-notice k-notice-edge ' + (current.kind === 'block' ? 'blocking' : current.kind)" [attr.role]="current.kind === 'block' ? 'alert' : 'status'">
         <mat-icon aria-hidden="true">{{ current.icon }}</mat-icon><span>{{ current.text }}</span>

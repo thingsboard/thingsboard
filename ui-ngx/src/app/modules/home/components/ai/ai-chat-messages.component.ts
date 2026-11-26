@@ -30,6 +30,11 @@ import {
   isHiddenAiAction,
   isKitCardTool,
   PROPOSE_PLAN_TOOL,
+  HAND_OVER_TOOL,
+  CHECK_CONNECTION_TOOL,
+  AiHandOver,
+  aiHandOverOf,
+  aiConnectionCheckOf,
   SUGGEST_PROMPTS_TOOL,
   UPDATE_PLAN_TOOL
 } from '@home/components/ai/ai-action.models';
@@ -57,7 +62,8 @@ export interface AnswerReportEvent {
   problem: AnswerProblem;
   comment?: string;
 }
-import { decorateCodeBlocks, decorateTables, fileLanguage } from '@home/components/ai/ai-code-block';
+import { announceCopied, decorateCodeBlocks, decorateTables, fileLanguage } from '@home/components/ai/ai-code-block';
+import { AiHandOverWait } from '@home/components/ai/ai-hand-over.component';
 import { aiDetailNames, AiDetailNames } from '@home/components/ai/ai-action-detail.models';
 import { decorateFileChips, decorateHints, decorateLinks, decorateReferences, decorateSeverities, decorateValues } from '@home/components/ai/ai-references';
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
@@ -141,6 +147,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   made: Record<number, string[]> = {};
   plans: Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> = {};
+  handOvers: Record<number, {handOver: AiHandOver; wait: AiHandOverWait | null}> = {};
+  private waitsInCards = new Set<number>();
 
   private keptAsking = new Set<number>();
 
@@ -151,7 +159,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   private dayTimer: ReturnType<typeof setTimeout>;
 
   private static readonly PIN_TO_BOTTOM_MS = 1500;
-  private static readonly COPIED_MS = 1200;
+  private static readonly COPIED_MS = 1500;
   private static readonly FOLD_LINES = 6;
   private static readonly FOLD_CHARS = 600;
 
@@ -210,6 +218,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   copyText(text: string, index: number): void {
     if (this.clipboard.copyFromContent(text)) {
       this.copiedIndex = index;
+      announceCopied(this.translate.instant('ai-assistant.copied'));
       clearTimeout(this.copiedTimeout);
       this.copiedTimeout = setTimeout(() => this.copiedIndex = -1, AiChatMessagesComponent.COPIED_MS);
     }
@@ -225,7 +234,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     decorateTables(answer);
     decorateSections(answer, this.sectionScope(message));
     decorateReferences(answer, (message as GeneralChatMessage)?.references);
-    decorateLinks(answer);
+    decorateLinks(answer, this.translate.instant('ai-assistant.opens-new-tab'));
     decorateHints(answer);
     decorateValues(answer, (message as GeneralChatMessage)?.readings);
     decorateFileChips(answer, this.latestFiles, this.shownFileName());
@@ -274,6 +283,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     const text = (answer.querySelector<HTMLElement>('tb-markdown') ?? answer).innerText.trim();
     if (this.clipboard.copyFromContent(text)) {
       this.copiedIndex = index;
+      announceCopied(this.translate.instant('ai-assistant.copied'));
       clearTimeout(this.copiedTimeout);
       this.copiedTimeout = setTimeout(() => this.copiedIndex = -1, AiChatMessagesComponent.COPIED_MS);
     }
@@ -404,6 +414,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
         setTimeout(() => this.keepAskInView());
       }
       this.plans = this.findPlans();
+      this.handOvers = this.findHandOvers();
       this.files = this.findFiles();
       this.latestFiles = new Map(Object.values(this.files).map(file => [file.name, file]));
       this.madeFiles = this.findMadeFiles();
@@ -613,8 +624,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     return summaries;
   }
 
-  isListedAction(message: ChatMessage): boolean {
-    return message.from === 'ACTION' && !isKitCardTool(message.data.tool) && !isHiddenAiAction(message.data.tool);
+  isListedAction(message: ChatMessage, index = -1): boolean {
+    return message.from === 'ACTION' && !isKitCardTool(message.data.tool) && !isHiddenAiAction(message.data.tool)
+      && !(index >= 0 && this.waitsInCards.has(index));
   }
 
   answerQuestions(answers: AiQuestionAnswer[]): void {
@@ -798,6 +810,38 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       }
     });
     return files;
+  }
+
+  private findHandOvers(): Record<number, {handOver: AiHandOver; wait: AiHandOverWait | null}> {
+    const cards: Record<number, {handOver: AiHandOver; wait: AiHandOverWait | null}> = {};
+    const waits = new Set<number>();
+    let current = -1;
+    this.messages.forEach((message, index) => {
+      if (message.from === 'USER') {
+        current = -1;
+        return;
+      }
+      if (message.from !== 'ACTION') {
+        return;
+      }
+      if (message.data.tool === HAND_OVER_TOOL) {
+        const handOver = aiHandOverOf(message.data.arguments);
+        if (handOver) {
+          cards[index] = {handOver, wait: null};
+          current = index;
+        }
+      } else if (message.data.tool === CHECK_CONNECTION_TOOL && current >= 0 && cards[current].handOver.waitFor
+        && Number((message.data.arguments as {waitSeconds?: unknown})?.waitSeconds) > 0) {
+        const running = message.data.status === 'RUNNING' && this.loading;
+        cards[current].wait = {running, startedAt: message.data.startedAt, progress: message.data.progress,
+          check: running ? null : aiConnectionCheckOf(message.data.result)};
+        if (running) {
+          waits.add(index);
+        }
+      }
+    });
+    this.waitsInCards = waits;
+    return cards;
   }
 
   private findPlans(): Record<number, {steps: AiPlanStep[]; progress: AiPlanProgress | null; gate: boolean}> {

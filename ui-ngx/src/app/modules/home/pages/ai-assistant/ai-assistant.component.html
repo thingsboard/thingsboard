@@ -143,7 +143,7 @@
 @if (solutionId()) {
 <tb-solution-chat class="ai-canvas ai-solution" (loaded)="onSolutionLoaded($event)" (click)="onChatClick($event)"></tb-solution-chat>
 } @else if (cli()) {
-<tb-ai-cli-guide class="ai-canvas" [copiedUntil]="cliCopiedUntil()" (closed)="openGetStarted()" (click)="onChatClick($event)">
+<tb-ai-cli-guide class="ai-canvas" (closed)="openGetStarted()" (click)="onChatClick($event)">
   @if (!railOpen()) {
     <button aiChatLead type="button" class="ai-ib ai-bar-chats" (click)="toggleRail()"
             [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.open-chats' | translate">

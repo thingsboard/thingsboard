@@ -11,6 +11,7 @@ import { AiApprovalCardComponent } from '@home/components/ai/ai-approval-card.co
 import { AiRenameDialogComponent } from '@home/components/ai/ai-rename-dialog.component';
 import { AiCreditsComponent } from '@home/components/ai/ai-credits.component';
 import { AiCreditsOutComponent } from '@home/components/ai/ai-credits-out.component';
+import { AiLimitOutComponent } from '@home/components/ai/ai-limit-out.component';
 import { AiCreditsPopupComponent } from '@home/components/ai/ai-credits-popup.component';
 import { AiLoadingModalComponent } from '@home/components/ai/ai-loading-modal.component';
 import { AiNoTelemetryModalComponent } from '@home/components/ai/ai-no-telemetry-modal.component';
@@ -35,6 +36,7 @@ import { AiCardActionsComponent } from '@home/components/ai/ai-card-actions.comp
 import { AiDisclosureComponent } from '@home/components/ai/ai-disclosure.component';
 import { AiQuestionComponent } from '@home/components/ai/ai-question.component';
 import { AiPlanComponent } from '@home/components/ai/ai-plan.component';
+import { AiHandOverComponent } from '@home/components/ai/ai-hand-over.component';
 import { AiArtifactPaneComponent } from '@home/components/ai/ai-artifact-pane.component';
 import { AiFileBodyComponent } from '@home/components/ai/ai-file-body.component';
 import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
@@ -51,6 +53,7 @@ import { AiCliGuideComponent } from '@home/components/ai/ai-cli-guide.component'
     AiRenameDialogComponent,
     AiCreditsComponent,
     AiCreditsOutComponent,
+    AiLimitOutComponent,
     AiCreditsPopupComponent,
     AiLoadingModalComponent,
     AiNoTelemetryModalComponent,
@@ -73,6 +76,7 @@ import { AiCliGuideComponent } from '@home/components/ai/ai-cli-guide.component'
     AiMarkComponent,
     AiQuestionComponent,
     AiPlanComponent,
+    AiHandOverComponent,
     AiArtifactPaneComponent,
     AiFileBodyComponent,
     AiSevMarkComponent,
@@ -103,11 +107,13 @@ import { AiCliGuideComponent } from '@home/components/ai/ai-cli-guide.component'
     AiRenameDialogComponent,
     AiCreditsComponent,
     AiCreditsOutComponent,
+    AiLimitOutComponent,
     AiLoadingModalComponent,
     AiNoTelemetryModalComponent,
     AiAttachmentsComponent,
     AiQuestionComponent,
     AiPlanComponent,
+    AiHandOverComponent,
     AiArtifactPaneComponent,
     AiFileBodyComponent,
     AiRecordComponent,

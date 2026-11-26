@@ -43,7 +43,7 @@ export function aiWidgetThumb(): string {
   template: `
     @let rec = view();
     <div #card class="tb-rec card" [attr.data-pal]="kind().palette"
-         [class.with-pic]="picture()" [class.primary]="!!primaryAction()" [class.tight]="tight()" [class.with-details]="hasFoot()">
+         [class.with-pic]="picture()" [class.primary]="!!primaryAction()" [class.open-icon]="primaryAction() === 'open'" [class.tight]="tight()" [class.with-details]="hasFoot()">
       <div class="tb-rec-row">
         @if (picture()) {
           <span class="tb-rec-pic" [class.sq]="rec.square" [class.wide]="rec.wide" aria-hidden="true">
@@ -100,8 +100,9 @@ export function aiWidgetThumb(): string {
               </button>
             }
             @case ('open') {
-              <a mat-flat-button class="tb-open-btn" [routerLink]="rec.url">
-                <mat-icon aria-hidden="true">{{ kind().icon }}</mat-icon>{{ openLabel() }}
+              <a mat-flat-button class="tb-open-btn icon" [routerLink]="rec.url" [matTooltip]="openLabel()" matTooltipPosition="above"
+                 [attr.aria-label]="openLabel() + ': ' + rec.name">
+                <mat-icon aria-hidden="true">arrow_forward</mat-icon>
               </a>
             }
             @default {

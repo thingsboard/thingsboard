@@ -32,6 +32,9 @@ const TOOL_WORDS: Record<string, string> = {
   delete_attributes: 'delete-attributes',
   read_entity_relations: 'read-relations',
   read_device_credentials: 'read-credentials',
+  save_device_credentials: 'save-credentials',
+  test_converter: 'test-converter',
+  read_converter_library: 'read-converter-library',
   create_dashboard: 'create-dashboard',
   update_dashboard: 'update-dashboard',
   add_dashboard_state: 'add-dashboard-state',
@@ -168,6 +171,9 @@ const SAVED_KINDS: Record<string, [string, string]> = {
   save_entity_view: ['entity-view', ''],
   save_asset: ['asset', ''],
   save_asset_profile: ['asset-profile', ''],
+  save_device_profile: ['device-profile', ''],
+  save_converter: ['converter', ''],
+  save_integration: ['integration', ''],
   save_secret: ['secret', ''],
   save_ai_model: ['ai-model', ''],
   save_resource: ['resource', '']
@@ -210,6 +216,9 @@ const DELETED_TARGETS: Record<string, string> = {
   IMAGE: 'delete-image',
   ENTITY_VIEW: 'delete-entity-view',
   ASSET_PROFILE: 'delete-asset-profile',
+  DEVICE_PROFILE: 'delete-device-profile',
+  INTEGRATION: 'delete-integration',
+  CONVERTER: 'delete-converter',
   SECRET: 'delete-secret',
   AI_MODEL: 'delete-ai-model',
   RESOURCE: 'delete-resource',
@@ -286,7 +295,115 @@ export function aiSourcesOf(args: unknown): AiSource[] {
 
 export const UPDATE_PLAN_TOOL = 'update_plan';
 
-const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file', 'create_file', CITE_SOURCES_TOOL, 'show_records']);
+export const HAND_OVER_TOOL = 'hand_over';
+
+export const CHECK_CONNECTION_TOOL = 'check_connection';
+
+const KIT_CARD_TOOLS = new Set([SUGGEST_PROMPTS_TOOL, ASK_USER_TOOL, PROPOSE_PLAN_TOOL, UPDATE_PLAN_TOOL, 'write_file', 'create_file', CITE_SOURCES_TOOL, 'show_records',
+  HAND_OVER_TOOL]);
+
+export interface AiHandOverValue {
+  label: string;
+  value: string;
+  secret: boolean;
+  icon: string;
+}
+
+export interface AiHandOverStep {
+  title: string;
+  detail?: string;
+  markdown?: string;
+  values: AiHandOverValue[];
+  done: boolean;
+}
+
+export interface AiHandOverOption {
+  id: string;
+  label: string;
+  icon?: string;
+  text: string;
+}
+
+export interface AiHandOver {
+  title: string;
+  text?: string;
+  choice?: {question: string; icon: string; value: string; options: AiHandOverOption[]};
+  steps: AiHandOverStep[];
+  waitFor?: 'message' | 'uplink' | 'gateway';
+  intervalSeconds?: number;
+}
+
+const text = (value: unknown): string | undefined => typeof value === 'string' && value.trim() ? value.trim() : undefined;
+
+const ICON_NAME = /^[a-z0-9_]{2,40}$/;
+
+const iconOf = (value: unknown, fallback: string): string => typeof value === 'string' && ICON_NAME.test(value) ? value : fallback;
+
+export function aiHandOverOf(args: unknown): AiHandOver | null {
+  const values = (args ?? {}) as Record<string, any>;
+  const title = text(values.title);
+  if (!title) {
+    return null;
+  }
+  const steps: AiHandOverStep[] = (Array.isArray(values.steps) ? values.steps : [])
+    .filter(step => text(step?.title))
+    .slice(0, 6)
+    .map(step => ({
+      title: text(step.title),
+      detail: text(step.detail),
+      markdown: text(step.markdown),
+      done: step.done === true,
+      values: (Array.isArray(step.values) ? step.values : [])
+        .filter(value => text(value?.label) && typeof value?.value === 'string' && value.value)
+        .slice(0, 4)
+        .map(value => ({label: text(value.label), value: value.value, secret: value.secret === true,
+          icon: iconOf(value.icon, value.secret === true ? 'key' : /^https?:\/\//.test(value.value) ? 'link' : 'label')}))
+    }));
+  const options: AiHandOverOption[] = (Array.isArray(values.choice?.options) ? values.choice.options : [])
+    .filter(option => text(option?.id) && text(option?.label))
+    .slice(0, 4)
+    .map(option => ({id: text(option.id), label: text(option.label), icon: typeof option.icon === 'string' && ICON_NAME.test(option.icon) ? option.icon : undefined,
+      text: text(option.text) ?? ''}));
+  const choice = options.length >= 2 ? {
+    question: text(values.choice.question) ?? '',
+    icon: iconOf(values.choice.icon, 'tune'),
+    value: options.some(option => option.id === values.choice.value) ? values.choice.value : options[0].id,
+    options
+  } : undefined;
+  const waitFor = ['message', 'uplink', 'gateway'].includes(values.waitFor) ? values.waitFor : undefined;
+  const interval = Number(values.intervalSeconds);
+  return {title, text: text(values.text), choice, steps, waitFor,
+    intervalSeconds: Number.isFinite(interval) && interval > 0 ? interval : undefined};
+}
+
+export interface AiConnectionCheck {
+  dataArriving: boolean;
+  failedStep?: string;
+  name?: string;
+  note?: string;
+  readings: {key: string; value: string}[];
+}
+
+export function aiConnectionCheckOf(result: unknown): AiConnectionCheck | null {
+  let values: any = result;
+  if (typeof result === 'string') {
+    try {
+      values = JSON.parse(result);
+    } catch {
+      return null;
+    }
+  }
+  if (!values || typeof values !== 'object' || !values.steps) {
+    return null;
+  }
+  const readings: {key: string; value: string}[] = [];
+  const add = (telemetry: unknown) => Object.entries(telemetry && typeof telemetry === 'object' ? telemetry : {})
+    .forEach(([key, item]) => readings.push({key, value: String((item as any)?.value ?? '')}));
+  add(values.telemetry);
+  (Array.isArray(values.devices) ? values.devices : []).forEach(device => add(device?.telemetry));
+  return {dataArriving: values.steps.dataArriving === true, failedStep: text(values.failedStep), name: text(values.name),
+    note: text(values.note), readings: readings.slice(0, 6)};
+}
 
 export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);
 
@@ -442,6 +559,8 @@ export function aiActionWords(tool: string, args: unknown): AiActionWords {
       return {key: ACTION_PREFIX + telemetryWords(values), kind: 'think'};
     case 'delete':
       return {key: ACTION_PREFIX + (DELETED_TARGETS[values.targetType] ?? 'delete-other'), kind: 'think'};
+    case 'check_connection':
+      return {key: ACTION_PREFIX + (Number(values.waitSeconds) > 0 ? 'wait-for-data' : 'check-connection'), kind: 'think'};
     case 'fetch_web_page': {
       const site = siteOf(values.url);
       return site ? {key: ACTION_PREFIX + 'read-site', params: {site}, kind: 'think'} : {key: ACTION_PREFIX + 'read-page', kind: 'think'};

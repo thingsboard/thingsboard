@@ -256,10 +256,20 @@
 
 .ai-find-key {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
   padding: 0 5px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.05);
-  font: 500 11px/18px var(--tb-font);
+  border: 1px solid var(--tb-line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: none;
+  font: 400 11px/1 var(--tb-font);
+  letter-spacing: .2px;
+  white-space: nowrap;
   color: var(--k-faint);
 
   @media (max-width: 599px), (pointer: coarse) {

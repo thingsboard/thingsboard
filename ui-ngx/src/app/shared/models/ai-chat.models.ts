@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { EntityId } from '@shared/models/id/entity-id';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export interface ChatConfiguration {
   title: string;
@@ -44,9 +45,9 @@ export interface ChatInfo extends ChatConfiguration {
   updatedTime?: number;
 }
 
-export type ChatStatus = 'RUNNING' | 'NEEDS_YOU' | 'FAILED';
+export type ChatStatus = 'RUNNING' | 'NEEDS_YOU' | 'NO_DATA' | 'FAILED';
 
-export type ChatLevel = 'needs' | 'running' | 'error';
+export type ChatLevel = 'needs' | 'nodata' | 'running' | 'error';
 
 export interface BaseChatEvent {
   event: string;
@@ -250,8 +251,23 @@ export interface ThinkingChatEvent extends BaseChatEvent {
   data: {headline?: string; tool?: string; arguments?: unknown};
 }
 
+export interface LimitReachedChatEvent extends BaseChatEvent {
+  event: 'limitReached';
+  data: AiPlatformLimit;
+}
+
+export interface AiPlatformLimit {
+  errorCode: number;
+  message?: string;
+  entityType?: EntityType;
+  limit?: number;
+  subscriptionErrorCode?: 'LIMIT_REACHED' | 'FEATURE_DISABLED';
+  subscriptionEntry?: string;
+  subscriptionValue?: number;
+}
+
 export type ChatEvent = AssistantChatEvent | AssistantDeltaChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
-  | TurnResumedEvent | TurnStoppedEvent | MessageQueuedEvent | ToolStartedEvent | ToolFinishedEvent | ThinkingChatEvent;
+  | TurnResumedEvent | TurnStoppedEvent | MessageQueuedEvent | ToolStartedEvent | ToolFinishedEvent | ThinkingChatEvent | LimitReachedChatEvent;
 
 export enum AiAssistantViewType {
   PAGE = 'PAGE',

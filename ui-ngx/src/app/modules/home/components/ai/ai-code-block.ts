@@ -157,7 +157,6 @@ export interface CodeBlockOptions {
   icon?: boolean;
   check?: boolean;
   labelledCopy?: boolean;
-  copiedFor?: number;
   classes?: string;
 }
 
@@ -409,22 +408,32 @@ function copyBtn(text: string | (() => string), translate: TranslateService, cop
         done(LABELLED_COPIED_MS);
       }
     });
-    if (options.copiedFor > 0) {
-      done(options.copiedFor);
-    }
     return button;
   }
-  if (options.check) {
-    button.append(icon('check', 'tb-mat-16 tb-copy-ok'));
-  }
+  button.append(icon('check', 'tb-mat-16 tb-copy-ok'));
   button.addEventListener('click', () => {
     if (copy(typeof text === 'function' ? text() : text)) {
       button.classList.add('copied');
+      announceCopied(translate.instant('ai-assistant.copied'));
       clearTimeout(timer);
       timer = setTimeout(() => button.classList.remove('copied'), COPIED_MS);
     }
   });
   return button;
+}
+
+let copiedRegion: HTMLElement | null = null;
+
+export function announceCopied(words: string): void {
+  if (!copiedRegion?.isConnected) {
+    copiedRegion = element('div', 'tb-ai-sr-only');
+    copiedRegion.setAttribute('role', 'status');
+    copiedRegion.setAttribute('aria-live', 'polite');
+    document.body.append(copiedRegion);
+  }
+  const region = copiedRegion;
+  region.textContent = '';
+  setTimeout(() => region.textContent = words, 30);
 }
 
 function icon(name: string, size: string): HTMLElement {
@@ -789,5 +798,13 @@ const LONG_CELL = 32;
 export function decorateTables(root: HTMLElement): void {
   root.querySelectorAll('table td, table th').forEach((cell: HTMLElement) => {
     cell.classList.toggle('long', (cell.textContent ?? '').trim().length > LONG_CELL);
+  });
+  root.querySelectorAll('table td:first-child').forEach((cell: HTMLElement) => {
+    if (cell.firstElementChild?.classList.contains('k-md-lead') && cell.childNodes.length === 1) {
+      return;
+    }
+    const lead = element('span', 'k-md-lead');
+    lead.append(...Array.from(cell.childNodes));
+    cell.append(lead);
   });
 }

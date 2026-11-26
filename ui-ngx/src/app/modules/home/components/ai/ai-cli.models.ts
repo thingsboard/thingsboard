@@ -13,8 +13,6 @@ export const CLI_OS_GROUP = 'cli-os';
 
 export const CLI_AGENT_GROUP = 'cli-agent';
 
-export const CLI_COPIED_MS = 4000;
-
 export const CLI_DOCS = 'https://thingsboard.io/docs/cli/';
 
 export const CLI_INSTALL: Record<CliOs, string> = {
@@ -28,11 +26,12 @@ export interface CliAgentInfo {
   run: string;
   restart: string;
   get: string;
+  glow: string;
 }
 
 export const CLI_AGENTS: CliAgentInfo[] = [
-  {id: 'claude', name: 'Claude Code', run: 'claude', restart: 'claude --continue', get: 'https://claude.com/claude-code'},
-  {id: 'antigravity', name: 'Antigravity', run: 'agy', restart: 'agy', get: 'https://antigravity.google/'}
+  {id: 'claude', name: 'Claude Code', run: 'claude', restart: 'claude --continue', get: 'https://claude.com/claude-code', glow: '#D97757'},
+  {id: 'antigravity', name: 'Antigravity', run: 'agy', restart: 'agy', get: 'https://antigravity.google/', glow: '#3186FF'}
 ];
 
 export interface CliBuildInfo {
@@ -70,6 +69,108 @@ export const CLI_DOCS_LINKS: CliDocsLink[] = [
   {key: 'device', icon: 'sensors', path: 'guides/connect-real-device/'},
   {key: 'troubleshooting', icon: 'build', path: 'reference/troubleshooting/'},
   {key: 'all', icon: 'menu_book', path: ''}
+];
+
+export type CliTermKind = 'you' | 'pick' | 'tool' | 'out' | 'say' | 'ok' | 'ask' | 'done';
+
+export interface CliTermRow {
+  kind: CliTermKind;
+  text?: string;
+  tool?: string;
+  arg?: string;
+  ms?: number;
+  options?: string[];
+  seconds?: number;
+}
+
+export interface CliTermSession {
+  tab: string;
+  banner?: boolean;
+  intro?: CliTermRow[];
+  rows: CliTermRow[];
+}
+
+export const CLI_VERSION = 'thingsboard-cli 4.4.0.2.post1';
+
+export const CLI_ART = [
+  ' _____ _     _                 ____                      _ ',
+  '|_   _| |__ (_)_ __   __ _ ___| __ )  ___   __ _ _ __ __| |',
+  '  | | | \'_ \\| | \'_ \\ / _` / __|  _ \\ / _ \\ / _` | \'__/ _` |',
+  '  | | | | | | | | | | (_| \\__ \\ |_) | (_) | (_| | | | (_| |',
+  '  |_| |_| |_|_|_| |_|\\__, |___/____/ \\___/ \\__,_|_|  \\__,_|',
+  '                     |___/                                 '
+].join('\n');
+
+export const CLI_TERM_WAIT: Record<string, number> = {you: 1200, pick: 300, tool: 380, out: 60, say: 520, ok: 110, ask: 260};
+
+export const CLI_TERM_HOLD = 6000;
+
+export const CLI_TERM_SESSIONS: CliTermSession[] = [
+  {
+    tab: 'office-sensor',
+    banner: true,
+    rows: [
+      {kind: 'you', text: 'office-sensor.you'},
+      {kind: 'tool', tool: 'Skill', arg: 'create-solution'},
+      {kind: 'out', text: 'office-sensor.written', ms: 2600},
+      {kind: 'say', text: 'office-sensor.ready'},
+      {kind: 'ok', text: 'office-sensor.device'},
+      {kind: 'ok', text: 'office-sensor.alarm'},
+      {kind: 'ok', text: 'office-sensor.dashboard'},
+      {kind: 'ask', text: 'office-sensor.ask'},
+      {kind: 'pick', options: ['office-sensor.stream', 'office-sensor.deploy-only', 'office-sensor.not-now']},
+      {kind: 'tool', tool: 'Bash', arg: 'tb push office'},
+      {kind: 'out', text: 'office-sensor.deployed', ms: 1500},
+      {kind: 'tool', tool: 'Bash', arg: 'tb emulator run --duration 5m'},
+      {kind: 'out', text: 'office-sensor.streaming', ms: 1100}
+    ]
+  },
+  {
+    tab: 'smart-retail',
+    intro: [
+      {kind: 'tool', tool: 'Bash', arg: 'tb device list'},
+      {kind: 'out', text: 'smart-retail.devices'},
+      {kind: 'say', text: 'smart-retail.connected'},
+      {kind: 'done', seconds: 6}
+    ],
+    rows: [
+      {kind: 'you', text: 'smart-retail.you'},
+      {kind: 'tool', tool: 'Skill', arg: 'design-solution-architecture'},
+      {kind: 'out', text: 'smart-retail.designed', ms: 2800},
+      {kind: 'say', text: 'smart-retail.approve'},
+      {kind: 'pick', options: ['smart-retail.step', 'smart-retail.whole']},
+      {kind: 'say', text: 'smart-retail.first'},
+      {kind: 'ok', text: 'smart-retail.overview'},
+      {kind: 'ok', text: 'smart-retail.store'},
+      {kind: 'ask', text: 'smart-retail.build'},
+      {kind: 'pick', options: ['smart-retail.yes', 'smart-retail.not-yet']},
+      {kind: 'tool', tool: 'Skill', arg: 'create-solution'},
+      {kind: 'out', text: 'smart-retail.built', ms: 3000},
+      {kind: 'say', text: 'smart-retail.next'}
+    ]
+  },
+  {
+    tab: 'freezer-limits',
+    intro: [
+      {kind: 'tool', tool: 'Skill', arg: 'create-solution'},
+      {kind: 'out', text: 'smart-retail.built'},
+      {kind: 'say', text: 'smart-retail.next'},
+      {kind: 'done', seconds: 41}
+    ],
+    rows: [
+      {kind: 'you', text: 'freezer-limits.you'},
+      {kind: 'tool', tool: 'Skill', arg: 'update-solution'},
+      {kind: 'out', text: 'freezer-limits.updated', ms: 2400},
+      {kind: 'say', text: 'freezer-limits.done'},
+      {kind: 'ok', text: 'freezer-limits.attribute'},
+      {kind: 'ok', text: 'freezer-limits.alarm'},
+      {kind: 'ok', text: 'freezer-limits.dashboard'},
+      {kind: 'ask', text: 'freezer-limits.ask'},
+      {kind: 'pick', options: ['freezer-limits.push', 'freezer-limits.not-now']},
+      {kind: 'tool', tool: 'Bash', arg: 'tb push smart-retail --profile dev'},
+      {kind: 'out', text: 'freezer-limits.deployed', ms: 1600}
+    ]
+  }
 ];
 
 export function cliOs(): CliOs {

@@ -34,7 +34,6 @@ import { AiChatComponent } from '@home/components/ai/ai-chat.component';
 import { AiSolutionsService } from '@core/services/ai-solutions.service';
 import { NEW_SOLUTION_ID, SolutionInfo } from '@shared/models/solution-creator.models';
 import { SolutionChatComponent } from '@home/components/ai/solution/solution-chat.component';
-import { CLI_COPIED_MS } from '@home/components/ai/ai-cli.models';
 
 export interface AiRailRow {
   id: string;
@@ -91,8 +90,6 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   getStarted = signal(false);
 
   cli = signal(false);
-
-  cliCopiedUntil = signal(0);
 
   aiChats = inject(AiChatsService);
 
@@ -255,8 +252,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
         if (params.get('focus') === 'composer') {
           this.landOnComposer();
         }
-        if (params.has('copied')) {
-          this.landOnCli(params.get('copied') === 'prompt');
+        if (params.get('chats') === 'closed') {
+          this.landFolded();
         }
         if (handOff) {
           this.newChat();
@@ -580,12 +577,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     this.getStarted.set(getStarted && !showCli && !nextSolution && !next);
   }
 
-  private landOnCli(copied: boolean): void {
+  private landFolded(): void {
     this.railOpen.set(false);
-    if (copied) {
-      this.cliCopiedUntil.set(Date.now() + CLI_COPIED_MS);
-    }
-    this.router.navigate([], {relativeTo: this.route, queryParams: {copied: null}, queryParamsHandling: 'merge', replaceUrl: true});
+    this.router.navigate([], {relativeTo: this.route, queryParams: {chats: null}, queryParamsHandling: 'merge', replaceUrl: true});
   }
 
   private landOnComposer(): void {

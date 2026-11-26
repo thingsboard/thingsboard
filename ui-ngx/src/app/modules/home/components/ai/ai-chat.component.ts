@@ -48,6 +48,7 @@ import { ActionChatMessage, AiStartedFrom, ApprovalChatMessage, ChatMessage, Gen
 import {
   AiAssistantPromptExample,
   AiChatClientContext,
+  AiPlatformLimit,
   AiLinesQuote,
   AiNotice,
   AiPromptMessage,
@@ -352,6 +353,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
   notice = signal<AiNotice | null>(null);
 
   creditsOut = signal<AiCreditsLimitType | null>(null);
+
+  limitOut = signal<AiPlatformLimit | null>(null);
 
   private freshChatId: string | null = null;
 
@@ -872,6 +875,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.shownChatId = chatId;
     this.resetLogPosition(0);
     this.messages.set([]);
+    this.limitOut.set(null);
     this.completedExecutions.set({});
     this.denyReasons.set({});
     this.answeredApprovals.set(new Set());
@@ -1095,6 +1099,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
         break;
       case 'toolFinished':
         this.finishAction(event.data);
+        break;
+      case 'limitReached':
+        this.limitOut.set(event.data);
         break;
       case 'turnStopped':
         this.messages.update(list => [...this.endStreaming(list), {from: 'AI', content: this.translate.instant('ai-assistant.stopped'), status: 'STOPPED', time: Date.now()}]);

@@ -161,7 +161,7 @@ export class AiChatsService {
     if (this._open().has(chat.id)) {
       return chat.status === 'FAILED' ? 'error' : null;
     }
-    return chat.status === 'NEEDS_YOU' ? 'needs' : chat.status === 'RUNNING' ? 'running' : chat.status === 'FAILED' ? 'error' : null;
+    return chat.status === 'NEEDS_YOU' ? 'needs' : chat.status === 'NO_DATA' ? 'nodata' : chat.status === 'RUNNING' ? 'running' : chat.status === 'FAILED' ? 'error' : null;
   }
 
   needsAttention(chat: ChatInfo): boolean {
