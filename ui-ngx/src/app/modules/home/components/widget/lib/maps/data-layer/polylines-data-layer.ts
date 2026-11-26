@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   defaultBasePolylinesDataLayerSettings,
   isCutPolygon,
@@ -31,6 +32,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   private styleSubscription: Subscription;
   private appliedGeometryKey: string;
   private editing = false;
+  private pendingGeometryUpdate = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -320,6 +322,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     const map = this.dataLayer.getMap().getMap();
     map.pm.disableGlobalCutMode();
     cutButton?.setActive(false);
+    this.applyPendingGeometryUpdate();
   }
 
   private enablePolylineRotateMode(rotateButton?: L.TB.ToolbarButton) {
@@ -342,6 +345,14 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     this.polyline.off('pm:rotateend');
     this.polyline.off('pm:rotatedisable');
     rotateButton?.setActive(false);
+    this.applyPendingGeometryUpdate();
+  }
+
+  private applyPendingGeometryUpdate() {
+    if (this.pendingGeometryUpdate) {
+      this.pendingGeometryUpdate = false;
+      this.reapplyData();
+    }
   }
 
   private savePolylineCoordinates() {
@@ -357,6 +368,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       }
     }
     this.dataLayer.savePolylineCoordinates(this.data, coordinates).subscribe();
+    this.pendingGeometryUpdate = false;
     this.appliedGeometryKey = null;
     this.markDataStale();
   }
@@ -368,6 +380,8 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
 
   private updatePolylineShape(data: FormattedData<TbMapDatasource>, force = false): boolean {
     if (this.editing) {
+      this.pendingGeometryUpdate = true;
+      this.markDataStale();
       return false;
     }
     const geometryKey = this.geometryKey(data);

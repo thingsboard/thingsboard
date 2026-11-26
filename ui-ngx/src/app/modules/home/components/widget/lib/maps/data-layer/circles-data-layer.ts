@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CirclesDataLayerSettings,
   defaultBaseCirclesDataLayerSettings,
@@ -167,6 +168,7 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
 
   private updateCircleShape(data: FormattedData<TbMapDatasource>): boolean {
     if (this.editing) {
+      this.markDataStale();
       return false;
     }
     let changed = this.geometryDirty;

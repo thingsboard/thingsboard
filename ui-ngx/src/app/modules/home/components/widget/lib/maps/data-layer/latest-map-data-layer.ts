@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataLayerEditAction,
   MapDataLayerSettings,
@@ -153,6 +154,11 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
 
   protected markDataStale(): void {
     this.dataStale = true;
+  }
+
+  protected reapplyData(): void {
+    this.dataStale = false;
+    this.doUpdate(this.data, this.dataLayer.getMap().getData());
   }
 
   protected bindEvents(): void {

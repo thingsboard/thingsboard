@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   defaultBasePolygonsDataLayerSettings,
   isCutPolygon, isJSON, MapDataLayerType,
@@ -26,6 +27,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   private styleSubscription: Subscription;
   private appliedGeometryKey: string;
   private editing = false;
+  private pendingGeometryUpdate = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -299,6 +301,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     const map = this.dataLayer.getMap().getMap();
     map.pm.disableGlobalCutMode();
     cutButton?.setActive(false);
+    this.applyPendingGeometryUpdate();
   }
 
   private enablePolygonRotateMode(rotateButton?: L.TB.ToolbarButton) {
@@ -321,6 +324,14 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     this.polygon.off('pm:rotateend');
     this.polygon.off('pm:rotatedisable');
     rotateButton?.setActive(false);
+    this.applyPendingGeometryUpdate();
+  }
+
+  private applyPendingGeometryUpdate() {
+    if (this.pendingGeometryUpdate) {
+      this.pendingGeometryUpdate = false;
+      this.reapplyData();
+    }
   }
 
   private savePolygonCoordinates() {
@@ -336,6 +347,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       }
     }
     this.dataLayer.savePolygonCoordinates(this.data, coordinates).subscribe();
+    this.pendingGeometryUpdate = false;
     this.appliedGeometryKey = null;
     this.markDataStale();
   }
@@ -347,6 +359,8 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
 
   private updatePolygonShape(data: FormattedData<TbMapDatasource>, force = false): boolean {
     if (this.editing) {
+      this.pendingGeometryUpdate = true;
+      this.markDataStale();
       return false;
     }
     const geometryKey = this.geometryKey(data);
