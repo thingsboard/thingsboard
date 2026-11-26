@@ -331,6 +331,7 @@ export interface AiHandOver {
   steps: AiHandOverStep[];
   waitFor?: 'message' | 'uplink' | 'gateway';
   intervalSeconds?: number;
+  quiet?: string;
 }
 
 const text = (value: unknown): string | undefined => typeof value === 'string' && value.trim() ? value.trim() : undefined;
@@ -373,7 +374,7 @@ export function aiHandOverOf(args: unknown): AiHandOver | null {
   const waitFor = ['message', 'uplink', 'gateway'].includes(values.waitFor) ? values.waitFor : undefined;
   const interval = Number(values.intervalSeconds);
   return {title, text: text(values.text), choice, steps, waitFor,
-    intervalSeconds: Number.isFinite(interval) && interval > 0 ? interval : undefined};
+    intervalSeconds: Number.isFinite(interval) && interval > 0 ? interval : undefined, quiet: text(values.quiet)};
 }
 
 export interface AiConnectionCheck {
@@ -382,6 +383,7 @@ export interface AiConnectionCheck {
   name?: string;
   note?: string;
   readings: {key: string; value: string}[];
+  keyCount: number;
 }
 
 export function aiConnectionCheckOf(result: unknown): AiConnectionCheck | null {
@@ -402,7 +404,7 @@ export function aiConnectionCheckOf(result: unknown): AiConnectionCheck | null {
   add(values.telemetry);
   (Array.isArray(values.devices) ? values.devices : []).forEach(device => add(device?.telemetry));
   return {dataArriving: values.steps.dataArriving === true, failedStep: text(values.failedStep), name: text(values.name),
-    note: text(values.note), readings: readings.slice(0, 6)};
+    note: text(values.note), readings: readings.slice(0, 6), keyCount: new Set(readings.map(reading => reading.key)).size};
 }
 
 export const isKitCardTool = (tool: string): boolean => KIT_CARD_TOOLS.has(tool);

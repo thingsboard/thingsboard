@@ -30,9 +30,15 @@
         <dl class="k-fields">
           @for (fact of facts; track $index) {
             <dt>@if (fact.labelCode) { <code>{{ fact.label }}</code> } @else { {{ fact.label }} }</dt>
-            <dd>@if (fact.image) { <img tbAiFadeIn class="k-img" [src]="fact.value | image: {preview: true, ignoreLoadingImage: true} | async" alt=""> } @else if (fact.valueCode) { <code>{{ fact.value }}</code> } @else { {{ fact.value }} }</dd>
+            <dd>@if (fact.chip; as chip) { <span class="k-fact-chip">@if (chip.image) { <img [src]="chip.image" alt="" aria-hidden="true"> } @else if (chip.icon) { <mat-icon class="tb-mat-16" aria-hidden="true">{{ chip.icon }}</mat-icon> }{{ fact.value }}</span> } @else if (fact.image) { <img tbAiFadeIn class="k-img" [src]="fact.value | image: {preview: true, ignoreLoadingImage: true} | async" alt=""> } @else if (fact.valueCode) { <code>{{ fact.value }}</code> } @else { {{ fact.value }} }</dd>
           }
         </dl>
+      }
+      @for (block of codeBlocks; track $index) {
+        @if (block.current !== undefined) {
+          <div class="k-review-code"><pre><code [class]="'language-' + block.lang" [attr.data-label]="block.label + ' · ' + ('ai-assistant.review.current' | translate)">{{ block.current }}</code></pre></div>
+        }
+        <div class="k-review-code"><pre><code [class]="'language-' + block.lang" [attr.data-nocopy]="block.lang === 'diff' ? '' : null" [attr.data-label]="block.current !== undefined ? block.label + ' · ' + ('ai-assistant.review.new' | translate) : block.label">{{ block.value }}</code></pre></div>
       }
       @if (changes.length) {
         <table class="k-diff" [class.k-diff-stacked]="stackedDiff">

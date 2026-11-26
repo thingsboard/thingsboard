@@ -65,3 +65,31 @@
     margin: 8px 0 4px;
   }
 }
+
+.k-arrived {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 4px 0 0 28px;
+  font-size: var(--chat-line, 14px);
+  line-height: 22px;
+
+  .k-reading {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  code {
+    padding: 0 6px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.06);
+    font: 13px/18px var(--tb-mono);
+    color: var(--tb-ink);
+  }
+
+  b {
+    font: 600 13px/18px var(--tb-mono);
+    color: var(--tb-ink);
+  }
+}

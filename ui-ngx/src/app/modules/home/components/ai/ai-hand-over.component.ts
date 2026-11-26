@@ -4,12 +4,13 @@ import { Component, computed, DestroyRef, effect, ElementRef, EventEmitter, inje
 import { Clipboard } from '@angular/cdk/clipboard';
 import { TranslateService } from '@ngx-translate/core';
 import { AiConnectionCheck, AiHandOver } from '@home/components/ai/ai-action.models';
-import { announceCopied, decorateCodeBlocks } from '@home/components/ai/ai-code-block';
+import { aiFileFences, announceCopied, decorateCodeBlocks, labelFileBlocks } from '@home/components/ai/ai-code-block';
 
 export interface AiHandOverWait {
   running: boolean;
   startedAt: number;
   progress?: string;
+  endedAt?: number;
   check?: AiConnectionCheck | null;
 }
 
@@ -29,6 +30,8 @@ export class AiHandOverComponent {
 
   @Output() prompt = new EventEmitter<string>();
 
+  @Output() stop = new EventEmitter<void>();
+
   private host = inject(ElementRef<HTMLElement>);
   private translate = inject(TranslateService);
   private clipboard = inject(Clipboard);
@@ -45,6 +48,11 @@ export class AiHandOverComponent {
 
   readonly arrived = computed(() => this.wait()?.check?.dataArriving === true);
   readonly folded = computed(() => this.arrived() && !this.open());
+  readonly arrivedLine = computed(() => {
+    const wait = this.wait();
+    const at = wait?.endedAt ? new Date(wait.endedAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}) : '';
+    return this.translate.instant('ai-assistant.hand-over.arrived-' + (this.handOver().waitFor ?? 'message'), {time: at});
+  });
 
   readonly waiting = computed(() => !!this.wait()?.running);
   readonly elapsed = computed(() => Math.max(0, this.now() - (this.wait()?.startedAt ?? this.now())));
@@ -71,8 +79,23 @@ export class AiHandOverComponent {
       this.choiceText();
       this.handOver();
       this.folded();
-      setTimeout(() => decorateCodeBlocks(this.host.nativeElement, this.translate, text => this.clipboard.copy(text)));
+      setTimeout(() => this.decorate());
     });
+  }
+
+  md(text: string): string {
+    return aiFileFences(text).text;
+  }
+
+  files(text: string): string {
+    return aiFileFences(text).files.join('|');
+  }
+
+  decorate(): void {
+    const root = this.host.nativeElement as HTMLElement;
+    root.querySelectorAll<HTMLElement>('tb-markdown[data-files]').forEach(markdown =>
+      labelFileBlocks(markdown, (markdown.dataset.files ?? '').split('|')));
+    decorateCodeBlocks(root, this.translate, text => this.clipboard.copy(text));
   }
 
   waitLabel(): string {

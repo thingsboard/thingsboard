@@ -72,9 +72,52 @@ export function decorateCodeBlocks(root: HTMLElement, translate: TranslateServic
   });
 }
 
+export function aiFileFences(markdown: string): {text: string; files: string[]} {
+  const files: string[] = [];
+  let open: string | null = null;
+  const text = (markdown ?? '').split('\n').map(line => {
+    const fence = /^(\s*)(`{3,}|~{3,})(.*)$/.exec(line);
+    if (!fence) {
+      return line;
+    }
+    if (open) {
+      if (fence[2].startsWith(open) && !fence[3].trim()) {
+        open = null;
+      }
+      return line;
+    }
+    open = fence[2];
+    const info = fence[3].trim();
+    const words = info.split(/\s+/);
+    const fileOf = (word: string) => /^[\w.-]+\.\w+$/.test(word ?? '') ? word : null;
+    const name = words.length > 1 ? fileOf(words[1]) : fileOf(words[0]);
+    files.push(name ?? '');
+    if (!name) {
+      return line;
+    }
+    const lang = words.length > 1 ? words[0] : fileLanguage(name).lang;
+    return fence[1] + fence[2] + lang;
+  }).join('\n');
+  return {text, files};
+}
+
+export function labelFileBlocks(root: HTMLElement, files: string[]): void {
+  root.querySelectorAll('pre > code').forEach((code, index) => {
+    const name = files[index];
+    if (name && !code.hasAttribute('data-file')) {
+      code.setAttribute('data-file', name);
+      code.setAttribute('data-label', name);
+    }
+  });
+}
+
 function languageOf(pre: HTMLElement): CodeLanguage | null {
   const classes = [pre.className, pre.querySelector('code')?.className ?? ''].join(' ');
   const name = /(?:^|\s)language-([\w+#-]+)/.exec(classes)?.[1]?.toLowerCase();
+  const file = pre.querySelector('code')?.getAttribute('data-file');
+  if (file && (!name || name === 'text' || name === 'plaintext' || name === 'none')) {
+    return {...fileLanguage(file), label: file};
+  }
   if (!name || name === 'text' || name === 'plaintext' || name === 'none') {
     return null;
   }
@@ -85,6 +128,8 @@ function languageOf(pre: HTMLElement): CodeLanguage | null {
 
 function decorate(pre: HTMLElement, translate: TranslateService, copy: (text: string) => boolean): void {
   const text = (pre.textContent ?? '').replace(/\n$/, '');
+  const file = pre.querySelector('code')?.getAttribute('data-file');
+  const noCopy = pre.querySelector('code')?.hasAttribute('data-nocopy');
   const language = languageOf(pre);
   const lang = language?.lang ?? 'text';
   const shell = lang === 'shell' || lang === 'powershell';
@@ -102,7 +147,7 @@ function decorate(pre: HTMLElement, translate: TranslateService, copy: (text: st
   pre.className = 'tb-code';
   pre.replaceChildren(code);
   const lineCount = text.split('\n').length;
-  const folds = lineCount > FOLD_LINES;
+  const folds = lineCount > FOLD_LINES && lang !== 'diff';
   const block = element('div', 'tb-codeblock');
   const wrapper = pre.closest('.code-wrapper');
   if (wrapper) {
@@ -136,11 +181,11 @@ function decorate(pre: HTMLElement, translate: TranslateService, copy: (text: st
       head.append(icon(language.icon, 'tb-mat-16'), label);
     }
     const wrap = wrapBtn(block, text, translate);
-    head.append(...[wrap, copyButton].filter(Boolean));
+    head.append(...[wrap, noCopy ? null : copyButton, file ? downloadBtn(file, text, translate) : null].filter(Boolean));
     block.append(head, pre);
   } else {
     copyButton.classList.add('floating');
-    block.append(pre, copyButton);
+    block.append(...[pre, noCopy ? null : copyButton].filter(Boolean));
   }
 }
 
@@ -434,6 +479,24 @@ export function announceCopied(words: string): void {
   const region = copiedRegion;
   region.textContent = '';
   setTimeout(() => region.textContent = words, 30);
+}
+
+function downloadBtn(file: string, text: string, translate: TranslateService): HTMLButtonElement {
+  const button = element('button', 'tb-codecopy labelled tb-download') as HTMLButtonElement;
+  button.type = 'button';
+  button.setAttribute('aria-label', translate.instant('ai-assistant.code.download-file', {name: file}));
+  const word = element('span', 'lbl');
+  word.textContent = translate.instant('ai-assistant.code.download');
+  button.append(icon('download', 'tb-mat-16'), word);
+  button.addEventListener('click', () => {
+    const url = URL.createObjectURL(new Blob([text.endsWith('\n') ? text : text + '\n'], {type: 'text/plain'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url));
+  });
+  return button;
 }
 
 function icon(name: string, size: string): HTMLElement {

@@ -161,7 +161,7 @@ export class AiActionDetailComponent {
     if (fact.entity) {
       return this.nameOf(fact.entity) ?? fact.entity.id ?? '—';
     }
-    return fact.value?.startsWith('ai-assistant.') ? this.translate.instant(fact.value) : fact.value ?? '';
+    return fact.value && (fact.chip || fact.value.startsWith('ai-assistant.')) ? this.translate.instant(fact.value) : fact.value ?? '';
   }
 
   factLink(fact: AiDetailFact): string | null {

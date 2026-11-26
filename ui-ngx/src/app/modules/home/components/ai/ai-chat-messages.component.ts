@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
 import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { AiQuestion, AiQuestionAnswer, ApprovalChatMessage, ChatMessage, GeneralChatMessage } from '@shared/models/solution-creator.models';
+import { ActionChatMessage, AiQuestion, AiQuestionAnswer, ApprovalChatMessage, ChatMessage, GeneralChatMessage } from '@shared/models/solution-creator.models';
 import { ClipboardService } from 'ngx-clipboard';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -116,6 +116,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Output() changePlan = new EventEmitter<void>();
   @Output() openFile = new EventEmitter<AiFile>();
   @Output() prompt = new EventEmitter<string>();
+  @Output() stopRun = new EventEmitter<void>();
 
   @Output() compose = new EventEmitter<string>();
   @Output() answer = new EventEmitter<{message: string; secrets?: Record<string, string>}>();
@@ -816,9 +817,20 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     const cards: Record<number, {handOver: AiHandOver; wait: AiHandOverWait | null}> = {};
     const waits = new Set<number>();
     let current = -1;
+    let early = -1;
+    const waitOf = (message: ActionChatMessage, index: number): AiHandOverWait => {
+      const running = message.data.status === 'RUNNING' && this.loading;
+      if (running) {
+        waits.add(index);
+      }
+      return {running, startedAt: message.data.startedAt, progress: message.data.progress,
+        endedAt: message.data.durationMs != null ? message.data.startedAt + message.data.durationMs : undefined,
+        check: running ? null : aiConnectionCheckOf(message.data.result)};
+    };
     this.messages.forEach((message, index) => {
       if (message.from === 'USER') {
         current = -1;
+        early = -1;
         return;
       }
       if (message.from !== 'ACTION') {
@@ -829,14 +841,17 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
         if (handOver) {
           cards[index] = {handOver, wait: null};
           current = index;
+          if (early >= 0 && handOver.waitFor) {
+            cards[index].wait = waitOf(this.messages[early] as ActionChatMessage, early);
+            early = -1;
+          }
         }
-      } else if (message.data.tool === CHECK_CONNECTION_TOOL && current >= 0 && cards[current].handOver.waitFor
+      } else if (message.data.tool === CHECK_CONNECTION_TOOL
         && Number((message.data.arguments as {waitSeconds?: unknown})?.waitSeconds) > 0) {
-        const running = message.data.status === 'RUNNING' && this.loading;
-        cards[current].wait = {running, startedAt: message.data.startedAt, progress: message.data.progress,
-          check: running ? null : aiConnectionCheckOf(message.data.result)};
-        if (running) {
-          waits.add(index);
+        if (current >= 0 && cards[current].handOver.waitFor) {
+          cards[current].wait = waitOf(message, index);
+        } else if (current < 0) {
+          early = index;
         }
       }
     });

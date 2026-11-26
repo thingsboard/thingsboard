@@ -94,6 +94,15 @@
                   {{ 'ai-assistant.review.not-set' | translate }}
                 }
               </span>
+            } @else if (fact.chip; as chip) {
+              <span class="k-fact-chip">
+                @if (chip.image) {
+                  <img [src]="chip.image" alt="" aria-hidden="true">
+                } @else if (chip.icon) {
+                  <mat-icon class="tb-mat-16" aria-hidden="true">{{ chip.icon }}</mat-icon>
+                }
+                {{ factValue(fact) }}
+              </span>
             } @else if (factLink(fact); as url) {
               <a [routerLink]="url">{{ factValue(fact) }}</a>
             } @else if (fact.secret && !revealed().has(view().hood?.key + $index)) {
@@ -122,6 +131,9 @@
       <div class="k-codetabs-slot" [attr.data-block]="$index"></div>
     }
     @case ('code') {
+      @if (block.title) {
+        <div class="k-detail-label">{{ ('ai-assistant.action.' + block.title) | translate }}</div>
+      }
       <pre><code [class]="'language-' + (block.lang || block.label.toLowerCase())" [attr.data-label]="block.lang ? block.label : null">{{ block.text }}</code></pre>
     }
     @case ('links') {

@@ -634,6 +634,24 @@
   &::ng-deep tb-ai-action-detail {
     @include ai-code-blocks;
   }
+
+  &::ng-deep tb-ai-hand-over {
+    @include ai-code-blocks;
+  }
+
+  &::ng-deep tb-ai-approval-card {
+    @include ai-code-blocks;
+
+    .k-review-code {
+      margin-top: 10px;
+
+      .tb-code {
+        max-height: 320px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+    }
+  }
 }
 
 .action-ways {

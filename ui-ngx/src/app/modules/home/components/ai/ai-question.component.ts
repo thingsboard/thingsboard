@@ -214,7 +214,7 @@ export class AiQuestionComponent {
   }
 
   shown(item: {question: AiQuestion; answer: string}): string {
-    return item.question.secret && item.answer ? '••••••••' : item.answer;
+    return item.question.secret && item.answer && item.answer !== this.translate.instant('ai-assistant.question.no-answer') ? '••••••••' : item.answer;
   }
 
   next(): void {
@@ -237,7 +237,9 @@ export class AiQuestionComponent {
 
   skipAll(): void {
     if (!this.disabled()) {
-      this.skip.emit(this.questions().map(question => ({question, answer: this.defaultOf(question)})));
+      this.skip.emit(this.questions().map(question => this.given(question)
+        ? {question, answer: this.answerOf(question), secret: !!question.secret && !question.options?.length}
+        : {question, answer: this.defaultOf(question)}));
     }
   }
 
@@ -251,6 +253,12 @@ export class AiQuestionComponent {
         this.next();
       }
     }
+  }
+
+  private given(question: AiQuestion): boolean {
+    return question.multiple && !this.isFree(question)
+      ? this.answerOf(question) !== this.translate.instant('ai-assistant.question.none')
+      : this.ready(question);
   }
 
   private answers(): AiQuestionAnswer[] {

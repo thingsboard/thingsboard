@@ -1144,6 +1144,7 @@
             "yes": "Yes",
             "no": "No",
             "fact": {
+                "integration-type": "Integration type",
                 "link": "Link",
                 "subject": "Subject",
                 "last-connect": "Last connected",
@@ -2151,6 +2152,11 @@
             "details": "Details",
             "request": "Request",
             "result": "Result",
+            "payload": "Payload",
+            "script": "Script",
+            "metadata": "Metadata",
+            "output": "Output",
+            "error": "Error",
             "template": "Template",
             "event": "Event",
             "account": "Account",
@@ -2174,8 +2180,20 @@
             "aria": "AI credits: {{used}} of {{max}} used this month"
         },
         "hand-over": {
+            "stop-listening": "Stop listening",
             "needs-you": "Needs you",
             "fold": "Fold",
+            "unfold": "Show the steps",
+            "arrived-message": "The first message arrived at {{time}}.",
+            "arrived-message-from": "The first message from {{name}} arrived at {{time}}.",
+            "arrived-uplink": "The first uplink arrived at {{time}}.",
+            "arrived-uplink-from": "The first uplink from {{name}} arrived at {{time}}.",
+            "arrived-gateway": "The gateway connected at {{time}}.",
+            "arrived-gateway-from": "{{name}} connected at {{time}}.",
+            "arrived-keys": "The first message arrived at {{time}}, with {{count}} keys:",
+            "arrived-keys-from": "The first message from {{name}} arrived at {{time}}, with {{count}} keys:",
+            "arrived-key": "The first message arrived at {{time}}, with 1 key:",
+            "arrived-key-from": "The first message from {{name}} arrived at {{time}}, with 1 key:",
             "show": "Show",
             "hide": "Hide",
             "copied": "Copied",
@@ -2438,7 +2456,9 @@
             "lines": "{ count, plural, =1 {1 line} other {# lines} }",
             "wrap-lines": "Wrap lines",
             "one-line-each": "One line each",
-            "wrap-long-lines": "Wrap long lines"
+            "wrap-long-lines": "Wrap long lines",
+            "download": "Download",
+            "download-file": "Download {{name}}"
         },
         "task": {
             "connect-device": {
@@ -2493,6 +2513,7 @@
             "ask-again": "Ask again",
             "ask-again-message": "Ask me again for the same change.",
             "field": {
+                "integrationType": "Integration type",
                 "agent": "Agent",
                 "install": "Install",
                 "runs": "Runs",

@@ -91,6 +91,7 @@
       [ghostFirst]="true"
       (openFile)="showFile($event)"
       (prompt)="ask($event)"
+      (stopRun)="stop()"
       (compose)="composeText($event)"
       (answer)="ask($event.message, $event.secrets)"
       (editMessage)="promptInput?.setValue($event)">

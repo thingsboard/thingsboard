@@ -12,6 +12,7 @@ import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-t
 import { aiActionDetailView, AiDetailFact, AiDetailNames, aiParse } from '@home/components/ai/ai-action-detail.models';
 import {
   AiAction,
+  aiConnectionCheckOf,
   aiEntityKind,
   aiActionDuration,
   aiActionWords
@@ -114,10 +115,31 @@ export class AiActionLineComponent {
     return this.autoApproved() ? this.translate.instant('ai-assistant.action.auto-approved', {words}) : words;
   });
 
+  arrival = computed(() => {
+    const action = this.action();
+    const values = aiParse(action.arguments) as {waitSeconds?: unknown} | null;
+    if (action.tool !== 'check_connection' || action.status !== 'SUCCESS' || !(Number(values?.waitSeconds) > 0)) {
+      return null;
+    }
+    const check = aiConnectionCheckOf(action.result);
+    if (!check?.dataArriving) {
+      return null;
+    }
+    const time = new Date(action.startedAt + (action.durationMs ?? 0)).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hourCycle: 'h23'});
+    return {
+      text: this.translate.instant('ai-assistant.hand-over.' + (!check.keyCount ? 'arrived-message' : check.keyCount === 1 ? 'arrived-key' : 'arrived-keys')
+        + (check.name ? '-from' : ''), {name: check.name, time, count: check.keyCount}),
+      readings: check.readings
+    };
+  });
+
   private outcomeWords(): string {
     const action = this.action();
     if (this.outcomeText()) {
       return this.outcomeText();
+    }
+    if (this.arrival()) {
+      return this.arrival().text;
     }
     if (action.status === 'FAILURE') {
       return this.reason(action.result) ?? this.translate.instant('ai-assistant.action.failed', {words: this.lowerFirst(this.runWords())});

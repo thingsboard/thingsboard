@@ -19,6 +19,13 @@
         <span class="dur">{{ duration() }}</span>
       }
     </div>
+    @if (arrival()?.readings?.length) {
+      <div class="k-arrived">
+        @for (reading of arrival().readings; track reading.key) {
+          <span class="k-reading"><code>{{ reading.key }}</code><b>{{ reading.value }}</b></span>
+        }
+      </div>
+    }
     @if (listing(); as hub) {
       <div class="k-recs k-out-recs">
         <tb-ai-record [entityType]="hub.entityType" [alarmRule]="hub.alarmRule" [name]="hub.name" [url]="hub.url" [hub]="hub.hub"></tb-ai-record>

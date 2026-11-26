@@ -85,7 +85,7 @@
     </div>
   } @else if (msg.from === 'ACTION' && handOvers[$index]; as card) {
     <div class="ai hand">
-      <tb-ai-hand-over [handOver]="card.handOver" [wait]="card.wait" [time]="msg.data.startedAt" (prompt)="prompt.emit($event)"></tb-ai-hand-over>
+      <tb-ai-hand-over [handOver]="card.handOver" [wait]="card.wait" [time]="msg.data.startedAt" (prompt)="prompt.emit($event)" (stop)="stopRun.emit()"></tb-ai-hand-over>
     </div>
   } @else if (msg.from === 'ACTION' && asking?.index === $index) {
     <div class="ai ask">

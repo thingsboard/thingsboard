@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { AiAction } from '@shared/models/ai-chat.models';
 import { SCADA_SYMBOL_PART_WORDS, WIDGET_PART_WORDS, widgetParts } from '@home/components/ai/ai-action.models';
+import { IntegrationType, integrationTypeInfoMap } from '@shared/models/integration.models';
+import { ConverterType, converterTypeTranslationMap } from '@shared/models/converter.models';
 
 const WIDGET_PART_LANGS: Record<string, string> = {html: 'html', css: 'css', js: 'javascript'};
 
@@ -61,6 +63,7 @@ export interface AiDetailFact {
   mono?: boolean;
   secret?: boolean;
   images?: {current?: string; value?: string};
+  chip?: {icon?: string; image?: string};
 }
 
 export interface AiDetailCommand {
@@ -86,7 +89,7 @@ export type AiDetailBlock =
   | {type: 'commands'; rows: AiDetailCommand[]}
   | {type: 'links'; rows: AiDetailLink[]}
   | {type: 'markdown'; text: string}
-  | {type: 'code'; label: string; text: string; lang?: string}
+  | {type: 'code'; label: string; text: string; lang?: string; title?: string}
   | {type: 'note'; text: AiDetailText}
   | {type: 'text'; text: string}
   | {type: 'json'; label: string; text: string}
@@ -250,10 +253,71 @@ function scadaSymbolOverviewBlocks(overview: Values): AiDetailBlock[] {
     ...(problems.length ? [{type: 'list' as const, label: text('scada-symbol-problems'), rows: problems.slice(0, MAX_ROWS)}] : [])];
 }
 
+const CODE_KEYS = new Set(['script', 'decoder', 'encoder', 'tbelDecoder', 'tbelEncoder', 'jsDecoder', 'jsEncoder']);
+
+const CONVERTER_ICONS: Record<string, string> = {UPLINK: 'call_received', DOWNLINK: 'call_made'};
+
+function converterTypeFact(type: unknown, label = K + 'fact.type'): AiDetailFact[] {
+  const key = converterTypeTranslationMap.get(type as ConverterType);
+  return key ? [{label, value: key, chip: {icon: CONVERTER_ICONS[type as string]}}] : [];
+}
+
+function integrationTypeFact(type: unknown): AiDetailFact[] {
+  const info = integrationTypeInfoMap.get(type as IntegrationType);
+  return info ? [{label: K + 'fact.integration-type', value: info.name, chip: {image: info.icon}}] : [];
+}
+
+function typedFact(key: string, value: unknown): AiDetailFact[] {
+  if (key === 'integrationType') {
+    return integrationTypeFact(value);
+  }
+  if (key === 'type' || key === 'converterType') {
+    return converterTypeFact(value);
+  }
+  return [];
+}
+
+function codeBlocks(values: Values): AiDetailBlock[] {
+  return Object.entries(values).filter(([key, value]) => CODE_KEYS.has(key) && str(value))
+    .map(([, value]) => ({type: 'code', title: 'script', label: 'TBEL', lang: 'tbel', text: (value as string).replace(/\n+$/, '')}));
+}
+
+function messageBlock(label: string, value: unknown): AiDetailBlock[] {
+  if (isObject(value) || Array.isArray(value)) {
+    return [{type: 'json', label, text: JSON.stringify(value, null, 2)}];
+  }
+  const text = str(value);
+  if (!text) {
+    return [];
+  }
+  const parsed = /^[[{]/.test(text) ? aiParse(text) : undefined;
+  return isObject(parsed) || Array.isArray(parsed) ? [{type: 'json', label, text: JSON.stringify(parsed, null, 2)}] : [{type: 'json', label, text}];
+}
+
+function converterBlocks(values: Values, result: unknown): AiDetailBlock[] {
+  const rows = [...converterTypeFact(values.type), ...integrationTypeFact(values.integrationType),
+    ...facts(values, ['type', 'integrationType', 'payload', 'metadata', 'integrationMetadata', ...CODE_KEYS])];
+  const outcome = isObject(result) ? result : {};
+  return [
+    ...(rows.length ? [{type: 'facts' as const, rows}] : []),
+    ...codeBlocks(values),
+    ...messageBlock('payload', values.payload),
+    ...messageBlock('metadata', values.metadata),
+    ...messageBlock('error', outcome.error),
+    ...messageBlock('output', outcome.output),
+    ...messageBlock('result', outcome.result)
+  ];
+}
+
 function facts(values: Values, skip: string[] = [], names?: AiDetailNames): AiDetailFact[] {
   const rows: AiDetailFact[] = [];
   for (const [key, value] of Object.entries(values)) {
     if (skip.includes(key) || value === null || value === undefined || value === '') {
+      continue;
+    }
+    const typed = typedFact(key, value);
+    if (typed.length) {
+      rows.push(...typed);
       continue;
     }
     if (names && /Id$/.test(key) && (typeof value === 'string' || isObject(value)) && idOf(value)) {
@@ -292,8 +356,8 @@ function json(label: string, value: unknown): AiDetailBlock[] {
 
 function generic(value: unknown, label: string, skip: string[] = [], names?: AiDetailNames): AiDetailBlock[] {
   if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return !trimmed || /^OK\.?$/i.test(trimmed) ? [] : [{type: 'text', text: trimmed.replace(/^OK:\s*/i, '')}];
+    const trimmed = value.trim().replace(/^OK:\s*/i, '');
+    return !trimmed || /^OK\.?$/i.test(trimmed) || UUID.test(trimmed) ? [] : [{type: 'text', text: trimmed}];
   }
   if (isObject(value) && Object.keys(value).length <= 16 && flat(value)) {
     const rows = facts(value, skip, names);
@@ -2018,10 +2082,14 @@ function describe(tool: string, values: Values, result: unknown, names: AiDetail
       return {hood: text('save-image', {name: str(saved.title) ?? str(values.title) ?? '—'}),
         blocks: rows.length ? [{type: 'facts', rows}, ...images([{value: saved.link}])] : generic(result, 'result')};
     }
+    case 'test_converter':
+      return {blocks: converterBlocks(values, result)};
+    case 'save_converter':
+      return {blocks: [...converterBlocks(values, undefined), ...generic(result, 'result', [], names)]};
     case 'reprocess_calculated_field':
       return {hood: text('reprocess', {entity: of(values.calculatedFieldId, 'CALCULATED_FIELD'), from: dateText(values.startTime ?? values.startTs), to: endText(values.endTime ?? values.endTs)}), blocks: generic(result, 'result')};
   }
-  const request = Object.keys(values).length ? (flat(values) ? [{type: 'facts', rows: facts(values, [], names)} as AiDetailBlock] : json('request', values)) : [];
+  const request = Object.keys(values).length ? (flat(values) ? [{type: 'facts', rows: facts(values, [...CODE_KEYS], names)} as AiDetailBlock, ...codeBlocks(values)] : json('request', values)) : [];
   return {blocks: [...request, ...generic(result, 'result', [], names)]};
 }
 
