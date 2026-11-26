@@ -38,7 +38,7 @@ public class DefaultGitSyncService implements GitSyncService {
     private final Map<String, RevCommit> lastCommits = new ConcurrentHashMap<>();
 
     @Override
-    public void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate) {
+    public void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate, boolean notifyOnEveryFetch) {
         RepositorySettings settings = new RepositorySettings();
         settings.setRepositoryUri(repoUri);
         settings.setDefaultBranch(branch);
@@ -60,7 +60,7 @@ public class DefaultGitSyncService implements GitSyncService {
             try {
                 log.debug("[{}] Fetching repository", key);
                 boolean updated = repository.fetch();
-                if (updated) {
+                if (updated || notifyOnEveryFetch) {
                     onUpdate(key);
                 } else {
                     log.debug("[{}] No changes in the repository", key);

@@ -108,7 +108,7 @@ public class AgentAppTemplateSyncService {
         if (StringUtils.isBlank(branch)) {
             branch = "main";
         }
-        gitSyncService.registerSync(REPO_KEY, repoUri, branch, fetchFrequencyMs, this::update);
+        gitSyncService.registerSync(REPO_KEY, repoUri, branch, fetchFrequencyMs, this::update, true);
     }
 
     private void update() {

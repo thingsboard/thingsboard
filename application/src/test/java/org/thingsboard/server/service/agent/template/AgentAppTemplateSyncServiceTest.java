@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +42,19 @@ class AgentAppTemplateSyncServiceTest {
     private AgentAppTemplateSyncService newService(String platformVersion) {
         when(projectInfo.getProjectVersion()).thenReturn(platformVersion);
         return new AgentAppTemplateSyncService(gitSyncService, templateRegistry, materializer, projectInfo);
+    }
+
+    @Test
+    void syncIsRegisteredToRebuildTemplatesOnEveryFetch() throws Exception {
+        AgentAppTemplateSyncService service = newService("4.4.1");
+        ReflectionTestUtils.setField(service, "repoUri", "https://github.com/thingsboard/agent-app-templates");
+        ReflectionTestUtils.setField(service, "branch", "main");
+        ReflectionTestUtils.setField(service, "fetchFrequencyMs", 3600000L);
+
+        service.init();
+
+        verify(gitSyncService).registerSync(eq("agent-app-templates"), eq("https://github.com/thingsboard/agent-app-templates"),
+                eq("main"), eq(3600000L), any(Runnable.class), eq(true));
     }
 
     @Test

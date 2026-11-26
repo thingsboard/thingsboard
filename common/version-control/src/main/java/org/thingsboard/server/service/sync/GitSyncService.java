@@ -9,7 +9,11 @@ import java.util.List;
 
 public interface GitSyncService {
 
-    void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate);
+    default void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate) {
+        registerSync(key, repoUri, branch, fetchFrequencyMs, onUpdate, false);
+    }
+
+    void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate, boolean notifyOnEveryFetch);
 
     List<RepoFile> listFiles(String key, String path, int depth, FileType type);
 
