@@ -156,6 +156,60 @@ public class AdminSettingsServiceTest extends AbstractServiceTest {
             restore.setJsonValue(originalSystemJson);
             adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, restore);
         }
+    public void whenUpdatingSettingsOfAnotherTenantById_thenSaveIsRejectedAndStoredSettingsUnchanged() {
+        AdminSettings systemSettings = saveSettings(SYSTEM_TENANT_ID, 1);
+        AdminSettings systemSettingsCopy = new AdminSettings(systemSettings);
+        systemSettingsCopy.setTenantId(tenantId);
+        systemSettingsCopy.setJsonValue(JacksonUtil.newObjectNode().put("v", 2));
+        assertThatThrownBy(() -> adminSettingsService.saveAdminSettings(tenantId, systemSettingsCopy))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("different tenant");
+        AdminSettings storedSystemSettings = adminSettingsService.findAdminSettingsById(SYSTEM_TENANT_ID, systemSettings.getId());
+        assertThat(storedSystemSettings.getTenantId()).isEqualTo(SYSTEM_TENANT_ID);
+        assertThat(storedSystemSettings.getJsonValue()).isEqualTo(systemSettings.getJsonValue());
+
+        AdminSettings tenantSettings = saveSettings(tenantId, 1);
+        AdminSettings tenantSettingsCopy = new AdminSettings(tenantSettings);
+        tenantSettingsCopy.setTenantId(SYSTEM_TENANT_ID);
+        tenantSettingsCopy.setJsonValue(JacksonUtil.newObjectNode().put("v", 2));
+        assertThatThrownBy(() -> adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, tenantSettingsCopy))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("different tenant");
+        AdminSettings storedTenantSettings = adminSettingsService.findAdminSettingsById(tenantId, tenantSettings.getId());
+        assertThat(storedTenantSettings.getTenantId()).isEqualTo(tenantId);
+        assertThat(storedTenantSettings.getJsonValue()).isEqualTo(tenantSettings.getJsonValue());
+    }
+
+    @Test
+    public void whenUpdatingOwnSettingsById_thenSaved() {
+        AdminSettings tenantSettings = saveSettings(tenantId, 1);
+        tenantSettings.setJsonValue(JacksonUtil.newObjectNode().put("v", 2));
+        adminSettingsService.saveAdminSettings(tenantId, tenantSettings);
+        AdminSettings storedTenantSettings = adminSettingsService.findAdminSettingsById(tenantId, tenantSettings.getId());
+        assertThat(storedTenantSettings.getTenantId()).isEqualTo(tenantId);
+        assertThat(storedTenantSettings.getJsonValue()).isEqualTo(tenantSettings.getJsonValue());
+
+        AdminSettings systemSettings = saveSettings(SYSTEM_TENANT_ID, 1);
+        systemSettings.setTenantId(null);
+        systemSettings.setJsonValue(JacksonUtil.newObjectNode().put("v", 2));
+        adminSettingsService.saveAdminSettings(SYSTEM_TENANT_ID, systemSettings);
+        AdminSettings storedSystemSettings = adminSettingsService.findAdminSettingsById(SYSTEM_TENANT_ID, systemSettings.getId());
+        assertThat(storedSystemSettings.getTenantId()).isEqualTo(SYSTEM_TENANT_ID);
+        assertThat(storedSystemSettings.getJsonValue()).isEqualTo(systemSettings.getJsonValue());
+
+        storedSystemSettings.setJsonValue(JacksonUtil.newObjectNode().put("v", 3));
+        adminSettingsService.saveAdminSettings(tenantId, storedSystemSettings);
+        AdminSettings updatedSystemSettings = adminSettingsService.findAdminSettingsById(SYSTEM_TENANT_ID, systemSettings.getId());
+        assertThat(updatedSystemSettings.getTenantId()).isEqualTo(SYSTEM_TENANT_ID);
+        assertThat(updatedSystemSettings.getJsonValue()).isEqualTo(storedSystemSettings.getJsonValue());
+    }
+
+    private AdminSettings saveSettings(TenantId tenantId, int value) {
+        AdminSettings settings = new AdminSettings();
+        settings.setTenantId(tenantId);
+        settings.setKey(RandomStringUtils.randomAlphanumeric(15));
+        settings.setJsonValue(JacksonUtil.newObjectNode().put("v", value));
+        return adminSettingsService.saveAdminSettings(tenantId, settings);
     }
 
     @Test

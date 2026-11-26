@@ -79,7 +79,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
-import org.thingsboard.server.utils.MiscUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -209,7 +208,7 @@ public class SignUpController extends BaseController {
         UserCredentials savedUserCredentials = saveUserCredentials(savedUser, signUpRequest);
 
         try {
-            sendEmailVerification(tenantId, request, savedUserCredentials, email, null, signUpRequest.getPkgName(), signUpRequest.getPlatform());
+            sendEmailVerification(tenantId, request, savedUser, savedUserCredentials, email, signUpRequest.getPkgName(), signUpRequest.getPlatform());
         } catch (ThingsboardException e) {
             customerService.deleteCustomer(tenantId, savedCustomer.getId());
             throw e;
@@ -227,11 +226,9 @@ public class SignUpController extends BaseController {
         return SignUpResult.SUCCESS;
     }
 
-    private void sendEmailVerification(TenantId tenantId, HttpServletRequest request, UserCredentials userCredentials,
-                                       String targetEmail, String baseUrl, String pkgName, PlatformType platformType) throws ThingsboardException {
-        if (baseUrl == null) {
-            baseUrl = MiscUtils.constructBaseUrl(request);
-        }
+    private void sendEmailVerification(TenantId tenantId, HttpServletRequest request, User user, UserCredentials userCredentials,
+                                       String targetEmail, String pkgName, PlatformType platformType) throws ThingsboardException {
+        String baseUrl = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), request);
         String activationLink = String.format("%s/api/noauth/activateEmail?emailCode=%s", baseUrl, userCredentials.getActivateToken());
         if (!StringUtils.isEmpty(pkgName)) {
             checkNotNull(platformType);
@@ -265,7 +262,7 @@ public class SignUpController extends BaseController {
     }
 
     @ApiOperation(value = "Resend Activation Email (resendEmailActivation)",
-            notes = "Request to resend the activation email for the user. Checks that user was not activated yet.")
+            notes = "Request to resend the activation email for a user who signed up through this domain or mobile application and has not verified the email yet.")
     @PostMapping(value = "/noauth/resendEmailActivation")
     public void resendEmailActivation(
             @Parameter(description = "Email of the user.", required = true, example = "john.doe@company.com")
@@ -285,19 +282,17 @@ public class SignUpController extends BaseController {
         }
 
         User existingUser = userService.findUserByEmail(TenantId.SYS_TENANT_ID, email);
-        if (existingUser != null) {
-            UserCredentials credentials = userService.findUserCredentialsByUserId(existingUser.getTenantId(), existingUser.getId());
-            if (credentials.isEnabled()) {
-                throw new DataValidationException("User with email '" + existingUser.getEmail() + "' "
-                        + " is already active!");
-            } else {
-                credentials = userService.checkUserActivationToken(tenantId, credentials);
-                sendEmailVerification(tenantId, request, credentials, email, null, pkgName, platform);
-            }
-        } else {
+        if (existingUser == null || !tenantId.equals(existingUser.getTenantId())) {
             throw new DataValidationException("User with email '" + email + "' "
                     + " is not registered!");
         }
+        UserCredentials credentials = userService.findUserCredentialsByUserId(tenantId, existingUser.getId());
+        if (credentials.isEnabled() || credentials.getActivateToken() == null || credentials.getPassword() == null) {
+            throw new DataValidationException("User with email '" + existingUser.getEmail() + "' "
+                    + " is already active!");
+        }
+        credentials = userService.checkUserActivationToken(tenantId, credentials);
+        sendEmailVerification(tenantId, request, existingUser, credentials, email, pkgName, platform);
     }
 
     @ApiOperation(value = "Activate User using code from Email (activateEmail)",
@@ -395,16 +390,19 @@ public class SignUpController extends BaseController {
         if (userCredentials.getPassword() == null) {
             throw new ThingsboardException("Unable to activate user!", ThingsboardErrorCode.PERMISSION_DENIED);
         }
+        User user = userService.findUserById(TenantId.SYS_TENANT_ID, userCredentials.getUserId());
+        if (user == null || !tenantId.equals(user.getTenantId())) {
+            throw new ThingsboardException("Invalid email code!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
         String encodedPassword = userCredentials.getPassword();
         UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, emailCode, encodedPassword);
-        User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
         long acceptedTs = System.currentTimeMillis();
         user.setPrivacyPolicyAccepted(acceptedTs);
         user.setTermsOfUseAccepted(acceptedTs);
         user = userService.saveUser(tenantId, user);
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
         SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal, getMergedUserPermissions(user, false));
-        String baseUrl = MiscUtils.constructBaseUrl(request);
+        String baseUrl = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), request);
         String loginUrl;
         if (!StringUtils.isEmpty(pkgName)) {
             loginUrl = UriComponentsBuilder.fromUriString(baseUrl).path("/api/noauth/login")
@@ -574,10 +572,11 @@ public class SignUpController extends BaseController {
 
         List<GroupPermission> permissions = selfRegistrationParams.getPermissions();
         for (GroupPermission permission : permissions) {
+            permission.setId(null);
             permission.setTenantId(tenantId);
             permission.setUserGroupId(usersEntityGroup.getId());
             if (permission.getEntityGroupId() != null) {
-                EntityGroup entityGroup = entityGroupService.findEntityGroupById(tenantId, permission.getEntityGroupId());
+                EntityGroup entityGroup = entityGroupService.findEntityGroupInfoByTenantIdAndId(tenantId, permission.getEntityGroupId());
                 if (entityGroup != null) {
                     permission.setEntityGroupType(entityGroup.getType());
                     groupPermissionService.saveGroupPermission(tenantId, permission);

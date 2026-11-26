@@ -83,16 +83,11 @@
         <pkg.controlScriptsFolder>control</pkg.controlScriptsFolder>
         <thingsboard.ai.version>2.1.10</thingsboard.ai.version>
         <thingsboard.client.version>4.4.0</thingsboard.client.version>
-        <spring-boot.version>4.1.1</spring-boot.version>
-        <netty.version>4.2.19.Final</netty.version> <!-- to fix CVE-2026-44891, CVE-2026-55831, CVE-2026-55833, CVE-2026-55851, CVE-2026-56745, CVE-2026-56817, CVE-2026-56819, CVE-2026-56820, CVE-2026-56821, CVE-2026-56822, CVE-2026-59901, CVE-2026-59902, CVE-2026-59903, CVE-2026-59920, CVE-2026-62243, CVE-2026-73507, CVE-2026-75595, CVE-2026-93488, CVE-2026-93491, CVE-2026-93560, CVE-2026-100655, CVE-2026-100656, CVE-2026-100657 (Boot manages 4.2.17.Final). TODO: remove when fixed in spring-boot-dependencies -->
-        <netty-tcnative.version>2.0.84.Final</netty-tcnative.version> <!-- must match netty-bom -->
-        <tomcat.version>11.0.27</tomcat.version> <!-- to fix CVE-2026-53434, CVE-2026-55955, CVE-2026-65182, CVE-2026-65905, CVE-2026-68525, CVE-2026-76183, CVE-2026-101296 and CVE-2026-101356 (Boot manages 11.0.24). Pinned via the tomcat-embed overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
-        <jackson-2-bom.version>2.21.8</jackson-2-bom.version> <!-- Jackson 2, to fix CVE-2026-59889, CVE-2026-68497, CVE-2026-89425, CVE-2026-91777, CVE-2026-106554 and CVE-2026-110879. Pinned via the com.fasterxml.jackson:jackson-bom import below: spring-boot-dependencies imports Jackson 2 through its own jackson-2-bom, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
-        <postgresql.version>42.7.14</postgresql.version> <!-- to fix CVE-2026-54291 and CVE-2026-107314. Pinned via the postgresql override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
+        <spring-boot.version>4.1.3</spring-boot.version>
+        <netty.version>4.2.20.Final</netty.version> <!-- must match spring-boot-dependencies -->
+        <netty-tcnative.version>2.0.85.Final</netty-tcnative.version> <!-- must match netty-bom -->
         <lz4-java.version>1.11.4</lz4-java.version> <!-- to fix CVE-2026-59949, CVE-2026-106450 and CVE-2026-106451. Transitive dependency of amazon-kinesis-producer 0.15.12 and kafka-clients 3.9.2; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once amazon-kinesis-producer and kafka-clients pull lz4-java >= 1.11.4 -->
-        <amqp-client.version>5.34.0</amqp-client.version> <!-- to fix CVE-2026-63337, CVE-2026-69219, CVE-2026-69220 and CVE-2026-75516. Pinned via the amqp-client override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <zstd-jni.version>1.5.7-14</zstd-jni.version> <!-- to fix CVE-2026-87795, CVE-2026-87823, CVE-2026-87824, CVE-2026-87825, CVE-2026-87877, CVE-2026-90560 and CVE-2026-90852. Transitive dependency of kafka-clients 3.9.2; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once kafka-clients pulls zstd-jni >= 1.5.7-14 -->
-        <freemarker.version>2.3.35</freemarker.version> <!-- to fix CVE-2026-84939. Pinned via the freemarker override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <jjwt.version>0.13.0</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
         <metrics.version>4.2.25</metrics.version>
@@ -116,8 +111,8 @@
         <protobuf.version>3.25.5</protobuf.version> <!-- Boot 4.1 manages protobuf 4.x; this pin keeps 3.x until the protobuf 4 upgrade -->
         <grpc.version>1.76.0</grpc.version>
         <groovy.version>4.0.32</groovy.version> <!-- rest-assured 5.5 requires Groovy 4 (Boot 4.1 manages Groovy 5) -->
-        <tbel.version>1.2.12</tbel.version>
-        <lombok.version>1.18.46</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
+        <tbel.version>1.2.13</tbel.version>
+        <lombok.version>1.18.48</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
@@ -1259,15 +1254,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Temporary netty-bom version override -->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-bom</artifactId>
-                <version>${netty.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <!-- End of netty-bom version override -->
             <!-- netty-bom 4.2 scopes the native artifacts as runtime, which drops netty-all's core modules from the compile classpath -->
             <dependency>
                 <groupId>io.netty</groupId>
@@ -1431,46 +1417,6 @@
                 <version>${netty-tcnative.version}</version>
                 <classifier>windows-x86_64</classifier>
             </dependency>
-            <!-- Temporary tomcat-embed version override -->
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-el</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-websocket</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <!-- End of tomcat-embed version override -->
-            <!-- Temporary Jackson 2 BOM version override -->
-            <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>${jackson-2-bom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <!-- End of Jackson 2 BOM version override -->
-            <!-- Temporary postgresql version override -->
-            <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>${postgresql.version}</version>
-            </dependency>
-            <!-- End of postgresql version override -->
-            <!-- Temporary amqp-client version override -->
-            <dependency>
-                <groupId>com.rabbitmq</groupId>
-                <artifactId>amqp-client</artifactId>
-                <version>${amqp-client.version}</version>
-            </dependency>
-            <!-- End of amqp-client version override -->
             <!-- Temporary zstd-jni version override -->
             <dependency>
                 <groupId>com.github.luben</groupId>
@@ -1478,13 +1424,6 @@
                 <version>${zstd-jni.version}</version>
             </dependency>
             <!-- End of zstd-jni version override -->
-            <!-- Temporary freemarker version override -->
-            <dependency>
-                <groupId>org.freemarker</groupId>
-                <artifactId>freemarker</artifactId>
-                <version>${freemarker.version}</version>
-            </dependency>
-            <!-- End of freemarker version override -->
             <dependency>
                 <groupId>org.apache.pulsar</groupId>
                 <artifactId>pulsar-bom</artifactId>
@@ -2658,6 +2597,14 @@
             <id>thingsboard-public-repo</id>
             <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
         </repository>
+        <!-- Private; a build without its credentials skips it -->
+        <repository>
+            <id>thingsboard-repo</id>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-local</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>spring-snapshots</id>
             <name>Spring Snapshots</name>
@@ -2691,7 +2638,7 @@
 
     <pluginRepositories>
         <pluginRepository>
-            <id>thingsboard-repo</id>
+            <id>thingsboard-public-repo</id>
             <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
         </pluginRepository>
     </pluginRepositories>

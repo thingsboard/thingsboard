@@ -5,6 +5,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { WidgetService } from '@core/http/widget.service';
+import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
 import {
   SimpleCardBasicConfigComponent
@@ -246,6 +247,6 @@ import {
 })
 export class BasicWidgetConfigModule {
   constructor(private widgetService: WidgetService) {
-    this.widgetService.registerBasicWidgetConfigComponents(this.constructor)
+    this.widgetService.registerBasicWidgetConfigComponents(this.constructor, BasicWidgetConfigComponent)
   }
 }

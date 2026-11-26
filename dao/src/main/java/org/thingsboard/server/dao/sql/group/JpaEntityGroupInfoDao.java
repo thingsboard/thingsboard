@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.sql.group;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,16 @@ public class JpaEntityGroupInfoDao extends JpaAbstractDao<EntityGroupInfoEntity,
     @Override
     protected JpaRepository<EntityGroupInfoEntity, UUID> getRepository() {
         return entityGroupInfoRepository;
+    }
+
+    @Override
+    public EntityGroupInfo findByTenantIdAndId(TenantId tenantId, UUID entityGroupId) {
+        return DaoUtil.getData(entityGroupInfoRepository.findByTenantIdAndId(tenantId.getId(), entityGroupId));
+    }
+
+    @Override
+    public ListenableFuture<EntityGroupInfo> findByTenantIdAndIdAsync(TenantId tenantId, UUID entityGroupId) {
+        return service.submit(() -> findByTenantIdAndId(tenantId, entityGroupId));
     }
 
     @Override
@@ -90,6 +101,7 @@ public class JpaEntityGroupInfoDao extends JpaAbstractDao<EntityGroupInfoEntity,
     public PageData<EntityGroupInfo> findEntityGroupsByIds(UUID tenantId, List<UUID> entityGroupIds, PageLink pageLink) {
         return DaoUtil.toPageData(entityGroupInfoRepository
                 .findEntityGroupsByIds(
+                        tenantId,
                         entityGroupIds,
                         pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
@@ -99,6 +111,7 @@ public class JpaEntityGroupInfoDao extends JpaAbstractDao<EntityGroupInfoEntity,
     public PageData<EntityInfo> findEntityGroupEntityInfosByIds(UUID tenantId, List<UUID> entityGroupIds, PageLink pageLink) {
         return DaoUtil.pageToPageData(entityGroupInfoRepository
                 .findEntityGroupEntityInfosByIds(
+                        tenantId,
                         entityGroupIds,
                         pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
