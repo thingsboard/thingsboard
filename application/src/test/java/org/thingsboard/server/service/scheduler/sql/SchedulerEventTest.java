@@ -4,6 +4,8 @@ package org.thingsboard.server.service.scheduler.sql;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -11,13 +13,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.ota.DeviceGroupOtaPackageService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.scheduler.DefaultSchedulerService;
 
+import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,7 +42,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.DataConstants.UPDATE_FIRMWARE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.dao.scheduler.BaseSchedulerEventService.getOriginatorId;
 
 @DaoSqlTest
@@ -42,6 +55,9 @@ public class SchedulerEventTest extends AbstractControllerTest {
 
     @Autowired
     TbServiceInfoProvider serviceInfoProvider;
+
+    @Autowired
+    DeviceGroupOtaPackageService deviceGroupOtaPackageService;
 
     @Before
     public void before() throws Exception {
@@ -124,6 +140,52 @@ public class SchedulerEventTest extends AbstractControllerTest {
                     return tbMsg.isTypeOf(RPC_CALL_FROM_SERVER_TO_DEVICE);
                 }
         ), any());
+    }
+
+    @Test
+    public void shouldNotUpdateFirmwareOfDeviceGroupOfAnotherTenant() throws Exception {
+        DeviceProfileInfo deviceProfile = doGet("/api/deviceProfileInfo/default", DeviceProfileInfo.class);
+        SaveOtaPackageInfoRequest firmwareRequest = new SaveOtaPackageInfoRequest();
+        firmwareRequest.setDeviceProfileId(new DeviceProfileId(deviceProfile.getId().getId()));
+        firmwareRequest.setType(FIRMWARE);
+        firmwareRequest.setTitle("My firmware");
+        firmwareRequest.setVersion("v1.0");
+        firmwareRequest.setUsesUrl(false);
+        OtaPackageInfo firmware = doPost("/api/otaPackage", firmwareRequest, OtaPackageInfo.class);
+
+        loginDifferentTenant();
+        EntityGroup otherTenantGroup = new EntityGroup();
+        otherTenantGroup.setName("Other Tenant Devices");
+        otherTenantGroup.setType(EntityType.DEVICE);
+        otherTenantGroup = doPost("/api/entityGroup", otherTenantGroup, EntityGroup.class);
+        loginTenantAdmin();
+
+        Object originalExecutor = ReflectionTestUtils.getField(schedulerService, "scheduledExecutor");
+        ListeningScheduledExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor());
+        ReflectionTestUtils.setField(schedulerService, "scheduledExecutor", executor);
+        try {
+            SchedulerEvent schedulerEvent = new SchedulerEvent();
+            schedulerEvent.setName("Firmware update");
+            schedulerEvent.setType(UPDATE_FIRMWARE);
+            schedulerEvent.setEnabled(true);
+            ObjectNode schedule = JacksonUtil.newObjectNode();
+            schedule.put("startTime", Long.MAX_VALUE);
+            schedule.put("timezone", "UTC");
+            schedulerEvent.setSchedule(schedule);
+            schedulerEvent.setOriginatorId(otherTenantGroup.getId());
+            ObjectNode configuration = JacksonUtil.newObjectNode();
+            configuration.set("msgBody", JacksonUtil.valueToTree(firmware.getId()));
+            schedulerEvent.setConfiguration(configuration);
+            SchedulerEvent savedSchedulerEvent = doPost("/api/schedulerEvent", schedulerEvent, SchedulerEvent.class);
+
+            Map<?, ?> eventsMetaData = (Map<?, ?>) ReflectionTestUtils.getField(schedulerService, "eventsMetaData");
+            Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> eventsMetaData.containsKey(savedSchedulerEvent.getId()));
+            ReflectionTestUtils.invokeMethod(schedulerService, "processEvent", tenantId, savedSchedulerEvent.getId());
+        } finally {
+            ReflectionTestUtils.setField(schedulerService, "scheduledExecutor", originalExecutor);
+            executor.shutdownNow();
+        }
+        assertThat(deviceGroupOtaPackageService.findDeviceGroupOtaPackageByGroupIdAndType(otherTenantGroup.getId(), FIRMWARE)).isNull();
     }
 
     private SchedulerEvent createSchedulerEvent(EntityId originatorId, boolean enabled) {

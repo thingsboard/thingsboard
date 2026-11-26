@@ -9,9 +9,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.IdBased;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.common.data.notification.rule.DefaultNotificationRuleRecipientsConfig;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EntityActionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
@@ -21,6 +30,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -84,6 +94,91 @@ public class NotificationTemplateApiTest extends AbstractNotificationApiTest {
 
         assertThat(findTemplates()).extracting(IdBased::getId)
                 .containsOnly(generalNotificationTemplate.getId(), alarmNotificationTemplate.getId(), entityActionNotificationTemplate.getId());
+    }
+
+    @Test
+    public void testSaveTemplateWithReportRequiresPermissionOverReportUser() throws Exception {
+        UserId otherTenantUserId = getDifferentTenantUserId();
+
+        NotificationTemplate notificationTemplate = buildTemplateWithReport(otherTenantUserId);
+        save(notificationTemplate, status().isForbidden());
+
+        notificationTemplate.getConfiguration().setUserId(tenantAdminUserId);
+        save(notificationTemplate, status().isOk());
+    }
+
+    @Test
+    public void testNotificationRequestWithReportRequiresPermissionOverReportUser() throws Exception {
+        UserId otherTenantUserId = getDifferentTenantUserId();
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+
+        NotificationRequest inlineTemplateRequest = NotificationRequest.builder()
+                .targets(List.of(target.getUuidId()))
+                .template(buildTemplateWithReport(otherTenantUserId))
+                .additionalConfig(new NotificationRequestConfig())
+                .build();
+        doPost("/api/notification/request", inlineTemplateRequest).andExpect(status().isForbidden());
+
+        NotificationTemplate storedTemplate = saveTemplateWithReportUser(otherTenantUserId);
+        NotificationRequest storedTemplateRequest = NotificationRequest.builder()
+                .targets(List.of(target.getUuidId()))
+                .templateId(storedTemplate.getId())
+                .additionalConfig(new NotificationRequestConfig())
+                .build();
+        doPost("/api/notification/request", storedTemplateRequest).andExpect(status().isForbidden());
+
+        assertThat(findNotificationRequests().getData()).isEmpty();
+    }
+
+    @Test
+    public void testSaveRuleWithReportTemplateRequiresPermissionOverReportUser() throws Exception {
+        UserId otherTenantUserId = getDifferentTenantUserId();
+        NotificationTemplate storedTemplate = saveTemplateWithReportUser(otherTenantUserId);
+
+        EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
+        triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
+        triggerConfig.setCreated(true);
+        NotificationRule rule = new NotificationRule();
+        rule.setName("Device created");
+        rule.setEnabled(true);
+        rule.setTemplateId(storedTemplate.getId());
+        rule.setTriggerType(triggerConfig.getTriggerType());
+        rule.setTriggerConfig(triggerConfig);
+        DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(triggerConfig.getTriggerType());
+        recipientsConfig.setTargets(List.of(createNotificationTarget(tenantAdminUserId).getUuidId()));
+        rule.setRecipientsConfig(recipientsConfig);
+
+        doPost("/api/notification/rule", rule).andExpect(status().isForbidden());
+        assertThat(findNotificationRules().getData()).extracting(NotificationRuleInfo::getName).doesNotContain(rule.getName());
+    }
+
+    private UserId getDifferentTenantUserId() throws Exception {
+        loginDifferentTenant();
+        UserId userId = savedDifferentTenantUser.getId();
+        loginTenantAdmin();
+        return userId;
+    }
+
+    private NotificationTemplate buildTemplateWithReport(UserId userId) {
+        NotificationTemplate notificationTemplate = new NotificationTemplate();
+        notificationTemplate.setName("Template with report");
+        notificationTemplate.setNotificationType(NotificationType.GENERAL);
+        NotificationTemplateConfig config = new NotificationTemplateConfig();
+        EmailDeliveryMethodNotificationTemplate emailTemplate = new EmailDeliveryMethodNotificationTemplate();
+        emailTemplate.setEnabled(true);
+        emailTemplate.setSubject("Report");
+        emailTemplate.setBody("Report");
+        config.setDeliveryMethodsTemplates(Map.of(NotificationDeliveryMethod.EMAIL, emailTemplate));
+        config.setAttachReport(true);
+        config.setUserId(userId);
+        notificationTemplate.setConfiguration(config);
+        return notificationTemplate;
+    }
+
+    private NotificationTemplate saveTemplateWithReportUser(UserId userId) {
+        NotificationTemplate notificationTemplate = buildTemplateWithReport(userId);
+        notificationTemplate.setTenantId(tenantId);
+        return notificationTemplateService.saveNotificationTemplate(tenantId, notificationTemplate);
     }
 
     private String saveAndGetError(NotificationTemplate notificationTemplate, ResultMatcher statusMatcher) throws Exception {

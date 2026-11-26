@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EventEmitter, Injectable } from '@angular/core';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { BehaviorSubject, Observable, shareReplay, Subject } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { RouterTabsComponent } from '@home/components/router-tabs.component';
+import type { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { isDefinedAndNotNull } from '@core/utils';
 import { PageComponent } from '@shared/components/page.component';
 
@@ -43,7 +44,7 @@ export class HomeService {
   private activeComponentChanged(activeComponent: any) {
     this.hideMainToolbarSubject.next(false);
     let hideLoadingBar = false;
-    if (activeComponent && activeComponent instanceof RouterTabsComponent
+    if (activeComponent && (activeComponent as RouterTabsComponent).isRouterTabsComponent
       && isDefinedAndNotNull(activeComponent.activatedRoute?.snapshot?.data?.showMainLoadingBar)) {
       hideLoadingBar = !activeComponent.activatedRoute.snapshot.data.showMainLoadingBar;
     } else if (activeComponent && activeComponent instanceof PageComponent

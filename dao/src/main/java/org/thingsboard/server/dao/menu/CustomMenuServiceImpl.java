@@ -185,8 +185,10 @@ public class CustomMenuServiceImpl extends AbstractCachedEntityService<CustomMen
         return switch (customMenuInfo.getAssigneeType()) {
             case NO_ASSIGN, ALL, USER_GROUPS -> Collections.emptyList();
             case CUSTOMERS -> customerService.findCustomersByCustomMenuId(customMenuInfo.getId()).stream()
+                    .filter(customer -> isAvailableToTenant(customMenuInfo, customer.getTenantId()))
                     .map(customer -> new EntityInfo(customer.getId(), customer.getName())).toList();
             case USERS -> userService.findUsersByCustomMenuId(customMenuInfo.getId()).stream()
+                    .filter(user -> isAvailableToTenant(customMenuInfo, user.getTenantId()))
                     .map(user -> new EntityInfo(user.getId(), user.getName())).toList();
             default ->
                     throw new RuntimeException("Invalid custom menu assignee type '" + customMenuInfo.getAssigneeType() + "' specified for custom menu!");
@@ -334,7 +336,7 @@ public class CustomMenuServiceImpl extends AbstractCachedEntityService<CustomMen
             return null;
         }
         if (user.getCustomMenuId() != null) {
-            CustomMenu customMenu = findCustomMenuById(tenantId, user.getCustomMenuId());
+            CustomMenu customMenu = findTenantCustomMenu(tenantId, user.getCustomMenuId());
             if (customMenu != null) {
                 return customMenu;
             }
@@ -365,13 +367,22 @@ public class CustomMenuServiceImpl extends AbstractCachedEntityService<CustomMen
         return null;
     }
 
+    private CustomMenu findTenantCustomMenu(TenantId tenantId, CustomMenuId customMenuId) {
+        CustomMenu customMenu = findCustomMenuById(tenantId, customMenuId);
+        return customMenu != null && isAvailableToTenant(customMenu, tenantId) ? customMenu : null;
+    }
+
+    private static boolean isAvailableToTenant(CustomMenuInfo customMenu, TenantId tenantId) {
+        return customMenu.getTenantId().isSysTenantId() || customMenu.getTenantId().equals(tenantId);
+    }
+
     private CustomMenu findCustomerHierarchyCustomMenu(TenantId tenantId, CustomerId customerId) {
         CustomMenu result = findDefaultCustomMenuByScope(tenantId, customerId, CMScope.CUSTOMER);
         if (result == null) {
             Customer customer = customerService.findCustomerById(tenantId, customerId);
             CustomMenuId customerCustomMenuId = customer.getCustomMenuId();
             if (customerCustomMenuId != null) {
-                result = findCustomMenuById(tenantId, customerCustomMenuId);
+                result = findTenantCustomMenu(tenantId, customerCustomMenuId);
             }
             if (result == null) {
                 if (customer.isSubCustomer()) {

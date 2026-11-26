@@ -358,7 +358,8 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     private GitRepository openOrCloneRepository(TenantId tenantId, RepositorySettings settings, boolean fetch) throws Exception {
         log.debug("[{}] Init tenant repository started.", tenantId);
-        Path repositoryDirectory = Path.of(repositoriesFolder, settings.isLocalOnly() ? "local_" + settings.getRepositoryUri() : tenantId.getId().toString());
+        String directoryName = settings.isLocalOnly() ? "local_" + settings.getRepositoryUri() : tenantId.getId().toString();
+        Path repositoryDirectory = GitRepository.resolveDirectory(repositoriesFolder, directoryName);
         GitRepository repository = GitRepository.openOrClone(repositoryDirectory, settings, fetch);
         repositories.put(tenantId, repository);
         log.debug("[{}] Init tenant repository completed.", tenantId);

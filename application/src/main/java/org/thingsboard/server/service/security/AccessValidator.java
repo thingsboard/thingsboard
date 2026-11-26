@@ -647,7 +647,7 @@ public class AccessValidator {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
-            ListenableFuture<EntityGroupInfo> entityGroupFuture = entityGroupService.findEntityGroupInfoByIdAsync(currentUser.getTenantId(), new EntityGroupId(entityId.getId()));
+            ListenableFuture<EntityGroupInfo> entityGroupFuture = entityGroupService.findEntityGroupInfoByTenantIdAndIdAsync(currentUser.getTenantId(), new EntityGroupId(entityId.getId()));
             Futures.addCallback(entityGroupFuture, getCallback(callback, entityGroup -> {
                 if (entityGroup == null) {
                     return ValidationResult.entityNotFound("Entity group with requested id wasn't found!");

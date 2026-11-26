@@ -54,7 +54,7 @@
             <properties>
                 <!-- With -Dsbom.skip=false, sbom-maven-plugin attaches an SBOM to each image once it is pushed: the tags are those pushed below -->
                 <sbom.integration-image.phase>${docker.push-integration-arm-amd-image.phase}</sbom.integration-image.phase>
-                <sbom.integration-image.tags>latest,${project.version}</sbom.integration-image.tags>
+                <sbom.integration-image.tags>latest,${docker.version.tag}</sbom.integration-image.tags>
             </properties>
             <build>
                 <plugins>
@@ -96,7 +96,7 @@
                                         <argument>buildx</argument>
                                         <argument>build</argument>
                                         <argument>-t</argument>
-                                        <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                                        <argument>${docker.repo}/${docker.name}:${docker.version.tag}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
@@ -121,7 +121,7 @@
                 <docker.skip.latest.tag>false</docker.skip.latest.tag>
                 <!-- With -Dsbom.skip=false, sbom-maven-plugin attaches an SBOM to each image once it is pushed: the tags are those pushed below -->
                 <sbom.integration-image.phase>${docker.push-integration-arm-amd-image.phase}</sbom.integration-image.phase>
-                <sbom.integration-image.tags>${sbom.image.latestTag},${project.version},${docker.lts.tag}</sbom.integration-image.tags>
+                <sbom.integration-image.tags>${sbom.image.latestTag},${docker.version.tag},${docker.lts.tag}</sbom.integration-image.tags>
             </properties>
             <build>
                 <plugins>
@@ -164,7 +164,7 @@
                                         <argument>buildx</argument>
                                         <argument>build</argument>
                                         <argument>-t</argument>
-                                        <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                                        <argument>${docker.repo}/${docker.name}:${docker.version.tag}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>

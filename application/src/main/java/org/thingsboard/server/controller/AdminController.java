@@ -75,7 +75,9 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
+import org.thingsboard.server.service.sync.vc.autocommit.DefaultTbAutoCommitSettingsService;
 import org.thingsboard.server.service.sync.vc.autocommit.TbAutoCommitSettingsService;
+import org.thingsboard.server.service.sync.vc.repository.DefaultTbRepositorySettingsService;
 import org.thingsboard.server.service.system.SystemInfoService;
 import org.thingsboard.server.service.update.UpdateService;
 
@@ -165,6 +167,10 @@ public class AdminController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
         } else {
             accessControlService.checkPermission(getCurrentUser(), Resource.WHITE_LABELING, Operation.WRITE);
+        }
+        String key = adminSettings.getKey();
+        if (DefaultTbRepositorySettingsService.SETTINGS_KEY.equals(key) || DefaultTbAutoCommitSettingsService.SETTINGS_KEY.equals(key)) {
+            throw new ThingsboardException("Settings with key '" + key + "' can be saved only through the version control API", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(tenantId, adminSettings));
         if (adminSettings.getKey().equals(MAIL_SETTINGS_KEY)) {
