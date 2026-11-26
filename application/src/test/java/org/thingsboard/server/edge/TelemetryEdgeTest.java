@@ -390,4 +390,49 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
                 });
     }
 
+    @Test
+    public void testSendEntityGroupAttributesAndTelemetryForGroupOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setType(EntityType.DEVICE);
+        entityGroup.setName("Different Tenant Device Group");
+        EntityGroup savedEntityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+        loginTenantAdmin();
+
+        EntityDataProto entityData = EntityDataProto.newBuilder()
+                .setEntityIdMSB(savedEntityGroup.getUuidId().getMostSignificantBits())
+                .setEntityIdLSB(savedEntityGroup.getUuidId().getLeastSignificantBits())
+                .setEntityType(EntityType.ENTITY_GROUP.name())
+                .setAttributesUpdatedMsg(TransportProtos.PostAttributeMsg.newBuilder()
+                        .addKv(TransportProtos.KeyValueProto.newBuilder()
+                                .setKey("groupKey")
+                                .setType(TransportProtos.KeyValueType.STRING_V)
+                                .setStringV("groupValue").build())
+                        .build())
+                .setPostAttributeScope(DataConstants.SERVER_SCOPE)
+                .setPostTelemetryMsg(TransportProtos.PostTelemetryMsg.newBuilder()
+                        .addTsKvList(TransportProtos.TsKvListProto.newBuilder()
+                                .setTs(System.currentTimeMillis())
+                                .addKv(TransportProtos.KeyValueProto.newBuilder()
+                                        .setKey("groupTemperature")
+                                        .setType(TransportProtos.KeyValueType.LONG_V)
+                                        .setLongV(25).build())
+                                .build())
+                        .build())
+                .build();
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityData(entityData));
+
+        loginDifferentTenant();
+        String keysUrl = "/api/plugins/telemetry/ENTITY_GROUP/" + savedEntityGroup.getUuidId() + "/keys/";
+        Awaitility.await()
+                .pollDelay(3, TimeUnit.SECONDS)
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    List<String> attributeKeys = doGetAsyncTyped(keysUrl + "attributes/" + DataConstants.SERVER_SCOPE, new TypeReference<>() {});
+                    Assert.assertTrue(attributeKeys.isEmpty());
+                    List<String> timeseriesKeys = doGetAsyncTyped(keysUrl + "timeseries", new TypeReference<>() {});
+                    Assert.assertTrue(timeseriesKeys.isEmpty());
+                });
+    }
+
 }

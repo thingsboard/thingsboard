@@ -4,7 +4,7 @@
 package org.thingsboard.server.service.security.auth.jwt;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -19,8 +19,9 @@ public class SkipPathRequestMatcher implements RequestMatcher {
 
     public SkipPathRequestMatcher(List<String> pathsToSkip, List<String> pathsToProcess) {
         Assert.notNull(pathsToSkip, "List of paths to skip is required.");
-        List<RequestMatcher> skip = pathsToSkip.stream().map(AntPathRequestMatcher::new).collect(Collectors.toList());
-        List<RequestMatcher> process = pathsToProcess.stream().map(AntPathRequestMatcher::new).collect(Collectors.toList());
+        PathPatternRequestMatcher.Builder builder = PathPatternRequestMatcher.withDefaults();
+        List<RequestMatcher> skip = pathsToSkip.stream().<RequestMatcher>map(builder::matcher).collect(Collectors.toList());
+        List<RequestMatcher> process = pathsToProcess.stream().<RequestMatcher>map(builder::matcher).collect(Collectors.toList());
         skipMatchers = new OrRequestMatcher(skip);
         processMatchers = new OrRequestMatcher(process);
     }

@@ -4,7 +4,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { BaseData, GroupEntityInfo } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { baseDetailsPageByEntityType, EntityType, groupUrlPrefixByEntityType } from '@app/shared/public-api';
+import { baseDetailsPageByEntityType, EntityType, groupUrlPrefixByEntityType } from '@shared/models/entity-type.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { isEqual, isNotEmptyStr, isObject } from '@core/utils';
 

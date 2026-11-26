@@ -332,7 +332,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     @Override
     public AccessJwtToken createUserAccessToken(TenantId tenantId, UserId userId) throws ThingsboardException {
         User user = userService.findUserById(tenantId, userId);
-        if (user == null) {
+        if (user == null || !user.getTenantId().equals(tenantId)) {
             throw new ThingsboardException("Configured user [id: " + userId + "] was not found in system. Please use other user credentials.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         UserCredentials credentials = userService.findUserCredentialsByUserId(tenantId, userId);

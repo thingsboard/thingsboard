@@ -116,6 +116,10 @@ public class ApiKeyController extends BaseController {
         UserId userId = new UserId(toUUID(userIdStr));
         accessControlService.checkPermission(securityUser, Resource.API_KEY, Operation.READ);
         User user = checkUserId(userId, Operation.READ);
+        ApiKeyInfo keyOwner = new ApiKeyInfo();
+        keyOwner.setTenantId(user.getTenantId());
+        keyOwner.setUserId(userId);
+        accessControlService.checkPermission(securityUser, Resource.API_KEY, Operation.READ, null, keyOwner);
         return apiKeyService.findApiKeysByUserId(user.getTenantId(), userId, pageLink);
     }
 

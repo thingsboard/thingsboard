@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div #root class="carousel"
+     [class.grab]="dragEnabled()"
+     [class.grabbing]="grabbing()">
+  <ng-content select="[ngx-hm-carousel-container]"/>
+  @if (contentPrev(); as prevTemplate) {
+    <div class="direction left">
+      <ng-container *ngTemplateOutlet="prevTemplate"/>
+    </div>
+  }
+  @if (contentNext(); as nextTemplate) {
+    <div class="direction right">
+      <ng-container *ngTemplateOutlet="nextTemplate"/>
+    </div>
+  }
+  @if (contentDot(); as dotTemplate) {
+    <ul class="indicators">
+      @for (item of itemElms(); track item; let i = $index) {
+        <li [attr.data-index]="i">
+          <ng-container *ngTemplateOutlet="dotTemplate; context: {$implicit: {index: i, currentIndex: index()}}"/>
+        </li>
+      }
+    </ul>
+  }
+</div>

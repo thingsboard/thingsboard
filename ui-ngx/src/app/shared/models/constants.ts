@@ -295,6 +295,7 @@ export const HelpLinks = {
     integrationCustom:  `${integrationsBase}/custom`,
     integrationTuya:  `${integrationsBase}/tuya`,
     whiteLabeling: `${docsBase}/user-guide/white-labeling/`,
+    loginWhiteLabeling: `${docsBase}/user-guide/white-labeling-login/`,
     entityGroups: `${docsBase}/user-guide/groups/`,
     customTranslation: `${docsBase}/user-guide/white-labeling-translation/`,
     customMenu: `${docsBase}/user-guide/white-labeling-menu/`,

@@ -71,7 +71,7 @@ import * as momentPlugin from '@fullcalendar/moment';
 import * as interactionPlugin from '@fullcalendar/interaction';
 import * as FullCalendar from '@fullcalendar/angular';
 import * as CanvasGauges from 'canvas-gauges';
-import * as NgxHmCarousel from 'ngx-hm-carousel';
+import * as NgxHmCarousel from '@shared/components/carousel/carousel.component';
 
 import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';

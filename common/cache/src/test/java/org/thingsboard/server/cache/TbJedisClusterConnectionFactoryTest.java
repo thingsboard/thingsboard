@@ -5,7 +5,9 @@ package org.thingsboard.server.cache;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisClusterConnection;
 import redis.clients.jedis.JedisClientConfig;
+import redis.clients.jedis.RedisClusterClient;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.time.Duration;
@@ -58,6 +60,25 @@ class TbJedisClusterConnectionFactoryTest {
         assertThat(config.getPassword()).isEqualTo("secret");
         assertThat(config.isSsl()).isTrue();
         assertThat(config.getSslSocketFactory()).isSameAs(sslSocketFactory);
+    }
+
+    @Test
+    void whenStart_thenClusterClientIsBuiltThroughOverride() {
+        RedisClusterConfiguration clusterConfig = new RedisClusterConfiguration(List.of("127.0.0.1:6379"));
+        RedisClusterClient client = mock(RedisClusterClient.class);
+        var factory = new TbJedisClusterConnectionFactory(clusterConfig, JedisClientConfiguration.defaultConfiguration(), null) {
+            @Override
+            protected RedisClusterClient createRedisClusterClient(RedisClusterConfiguration config) {
+                return client;
+            }
+        };
+
+        factory.start();
+        try {
+            assertThat(((JedisClusterConnection) factory.getClusterConnection()).getNativeConnection()).isSameAs(client);
+        } finally {
+            factory.stop();
+        }
     }
 
 }

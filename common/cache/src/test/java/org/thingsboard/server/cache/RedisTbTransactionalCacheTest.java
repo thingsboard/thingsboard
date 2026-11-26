@@ -11,10 +11,10 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisScriptingCommands;
 import org.springframework.data.redis.connection.ReturnType;
-import org.springframework.data.redis.connection.jedis.JedisClusterConnection;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.exceptions.JedisMovedDataException;
 
 import java.nio.charset.StandardCharsets;
@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -41,7 +42,8 @@ class RedisTbTransactionalCacheTest {
 
     private static final String CACHE_NAME = "testCache";
 
-    private JedisConnectionFactory connectionFactory;
+    private TbJedisClusterConnectionFactory connectionFactory;
+    private RedisConnection connection;
     private RedisScriptingCommands scriptingCommands;
 
     @Test
@@ -86,7 +88,7 @@ class RedisTbTransactionalCacheTest {
     @Test
     void givenClusterTopologyError_whenRetryOnClusterTopologyChange_thenRenewsSlotMapAndRetriesOnce() {
         TestRedisCache cache = createCache("");
-        TbJedisCluster cluster = mockCluster();
+        TbJedisClusterConnectionFactory cluster = mockClusterAwareFactory();
         AtomicInteger attempts = new AtomicInteger();
 
         String result = cache.retryOnClusterTopologyChange(() -> {
@@ -104,7 +106,7 @@ class RedisTbTransactionalCacheTest {
     @Test
     void givenClusterTopologyErrorTwice_whenRetryOnClusterTopologyChange_thenThrowsAfterOneRetry() {
         TestRedisCache cache = createCache("");
-        TbJedisCluster cluster = mockCluster();
+        TbJedisClusterConnectionFactory cluster = mockClusterAwareFactory();
         AtomicInteger attempts = new AtomicInteger();
 
         assertThatThrownBy(() -> cache.retryOnClusterTopologyChange(() -> {
@@ -119,7 +121,7 @@ class RedisTbTransactionalCacheTest {
     @Test
     void givenOtherError_whenRetryOnClusterTopologyChange_thenThrowsWithoutRenewing() {
         TestRedisCache cache = createCache("");
-        TbJedisCluster cluster = mockCluster();
+        TbJedisClusterConnectionFactory cluster = mockClusterAwareFactory();
         AtomicInteger attempts = new AtomicInteger();
 
         assertThatThrownBy(() -> cache.retryOnClusterTopologyChange(() -> {
@@ -142,7 +144,20 @@ class RedisTbTransactionalCacheTest {
         })).isInstanceOf(RedisConnectionFailureException.class);
 
         assertThat(attempts).hasValue(1);
-        verify(connectionFactory, never()).getClusterConnection();
+        verify(connectionFactory, never()).renewSlotCache();
+    }
+
+    @Test
+    void givenWatchFailsAndCloseFails_whenWatch_thenThrowsWatchErrorWithCloseErrorSuppressed() {
+        TestRedisCache cache = createCache("");
+        JedisConnectionException watchError = new JedisConnectionException("Failed to connect to 10.0.0.1:6379.");
+        JedisException closeError = new JedisException("Could not return the broken resource to the pool");
+        doThrow(watchError).when(connection).watch(any(byte[][].class));
+        doThrow(closeError).when(connection).close();
+
+        assertThatThrownBy(() -> cache.watch(new byte[][]{cache.getRawKey("myKey")}))
+                .isSameAs(watchError)
+                .hasSuppressedException(closeError);
     }
 
     @Test
@@ -155,18 +170,14 @@ class RedisTbTransactionalCacheTest {
         assertThat(RedisTbTransactionalCache.isClusterTopologyError(new IllegalStateException())).isFalse();
     }
 
-    private TbJedisCluster mockCluster() {
-        TbJedisCluster cluster = mock(TbJedisCluster.class);
-        JedisClusterConnection clusterConnection = mock(JedisClusterConnection.class);
-        when(clusterConnection.getNativeConnection()).thenReturn(cluster);
+    private TbJedisClusterConnectionFactory mockClusterAwareFactory() {
         when(connectionFactory.isRedisClusterAware()).thenReturn(true);
-        when(connectionFactory.getClusterConnection()).thenReturn(clusterConnection);
-        return cluster;
+        return connectionFactory;
     }
 
     private TestRedisCache createCache(String keyPrefix) {
-        connectionFactory = mock(JedisConnectionFactory.class);
-        RedisConnection connection = mock(RedisConnection.class);
+        connectionFactory = mock(TbJedisClusterConnectionFactory.class);
+        connection = mock(RedisConnection.class);
         scriptingCommands = mock(RedisScriptingCommands.class);
         when(connectionFactory.isRedisClusterAware()).thenReturn(false);
         when(connectionFactory.getConnection()).thenReturn(connection);

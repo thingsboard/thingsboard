@@ -6,12 +6,15 @@ import {
   CustomMapLayerSettings,
   defaultCartoMapLayerSettings,
   defaultCustomMapLayerSettings,
+  defaultEsriMapLayerSettings,
   defaultGoogleMapLayerSettings,
   defaultHereMapLayerSettings,
   defaultLayerTitle,
   defaultOpenFreeMapLayerSettings,
   defaultOpenStreetMapLayerSettings,
   defaultTencentMapLayerSettings,
+  EsriLayerType,
+  EsriMapLayerSettings,
   GoogleMapLayerSettings,
   HereMapLayerSettings,
   hereV3Provider,
@@ -32,21 +35,76 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import L, { LeafletEvent } from 'leaflet';
 import { catchError, map } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
-import { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
+import { StyleSpecification, VectorSourceSpecification } from '@maplibre/maplibre-gl-style-spec';
 
-const referenceLayerStyleUrlMap = new Map<ReferenceLayerType, string>(
+const poweredByEsriAttribution = 'Powered by Esri';
+const esriWorldBasemapAttribution =
+  'Sources: Esri, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community';
+
+// Esri content (Esri Master License Agreement): must not be bundled or self-hosted, so it is loaded from ArcGIS Online,
+// with the user's own ArcGIS API key when one is specified.
+const referenceLayerStyleMap = new Map<ReferenceLayerType, { itemId: string; attribution: string }>(
   [
-    [ReferenceLayerType.openstreetmap_hybrid, '/assets/map/openstreetmap_hybrid_reference_style.json'],
-    [ReferenceLayerType.world_edition_hybrid, '/assets/map/world_edition_hybrid_reference_style.json'],
-    [ReferenceLayerType.enhanced_contrast_hybrid, '/assets/map/enhanced_contrast_hybrid_reference_style.json']
+    [ReferenceLayerType.openstreetmap_hybrid, {
+      itemId: 'f240fe360b434afc87dd989bf0c0b825',
+      attribution: 'Map data (c) OpenStreetMap contributors, Microsoft, Facebook, Google, Esri Community Maps contributors, Map layer by Esri'
+    }],
+    [ReferenceLayerType.world_edition_hybrid, {itemId: '30d6b8271e1849cd9c3042060001f425', attribution: esriWorldBasemapAttribution}],
+    [ReferenceLayerType.enhanced_contrast_hybrid, {itemId: 'c8ec7c62427d484a81397aefb7e59c5f', attribution: esriWorldBasemapAttribution}]
   ]
 );
 
-const referenceLayerCache = new Map<ReferenceLayerType, Observable<StyleSpecification>>();
+// With an API key: the World Street Map and World Topo Map raster services are retired (mature support),
+// ArcGIS replaces them with the ArcGIS Streets and ArcGIS Topographic vector basemap styles.
+const esriWorldImageryTokenTilesUrl = 'https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const esriBasemapStylesUrl = 'https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/styles';
+const esriLayerTokenStyles = new Map<EsriLayerType, string>(
+  [
+    [EsriLayerType.esriWorldStreetMap, `${esriBasemapStylesUrl}/arcgis/streets`],
+    [EsriLayerType.esriWorldTopoMap, `${esriBasemapStylesUrl}/arcgis/topographic`]
+  ]
+);
+
+const withArcGISToken = (url: string, token: string): string =>
+  token ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : url;
+
+// ArcGIS VectorTileServer metadata is not TileJSON: relative tile URL, no attribution
+const prepareReferenceLayerStyle = (spec: StyleSpecification, attribution: string, token: string): StyleSpecification => {
+  const source = spec.sources.esri as VectorSourceSpecification;
+  return {
+    ...spec,
+    sprite: typeof spec.sprite === 'string' ? withArcGISToken(spec.sprite, token) : spec.sprite,
+    glyphs: spec.glyphs ? withArcGISToken(spec.glyphs, token) : spec.glyphs,
+    sources: {
+      esri: {
+        ...source,
+        attribution,
+        url: withArcGISToken(source.url, token),
+        tiles: [withArcGISToken(`${source.url}/tile/{z}/{y}/{x}.pbf`, token)]
+      }
+    }
+  };
+};
+
+const referenceLayerCache = new Map<string, Observable<StyleSpecification>>();
 
 interface TbMapLayerData {
   layer: L.Layer;
   attribution: boolean;
+}
+
+// Placeholder for a provider layer without the required API key
+class TbEmptyMapLayer extends L.Layer {
+
+  onAdd(): this {
+    // The map waits for the 'load' event of its default layer, e.g. to generate a report
+    setTimeout(() => this.fire('load'));
+    return this;
+  }
+
+  onRemove(): this {
+    return this;
+  }
 }
 
 export abstract class TbMapLayer<S extends MapLayerSettings> {
@@ -62,6 +120,8 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
         return new TbOpenStreetMapLayer(ctx, inputSettings);
       case MapProvider.carto:
         return new TbCartoMapLayer(ctx, inputSettings);
+      case MapProvider.esri:
+        return new TbEsriMapLayer(ctx, inputSettings);
       case MapProvider.google:
         return new TbGoogleMapLayer(ctx, inputSettings);
       case MapProvider.tencent:
@@ -111,7 +171,7 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
       switchMap((baseLayer) => {
         if (baseLayer) {
           if (this.settings.referenceLayer) {
-            return this.loadReferenceLayer(this.settings.referenceLayer).pipe(
+            return this.loadReferenceLayer(this.settings.referenceLayer, this.referenceLayerApiKey()).pipe(
               map((referenceLayer) => {
                   if (referenceLayer) {
                     const layer = L.featureGroup();
@@ -162,27 +222,51 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
     ));
   }
 
-  private loadReferenceLayer(referenceLayer: ReferenceLayerType): Observable<L.Layer> {
-    let spec$ = referenceLayerCache.get(referenceLayer);
+  private loadReferenceLayer(referenceLayer: ReferenceLayerType, token: string): Observable<L.Layer> {
+    const cacheKey = `${referenceLayer}:${token || ''}`;
+    let spec$ = referenceLayerCache.get(cacheKey);
     if (!spec$) {
-      const styleUrl = referenceLayerStyleUrlMap.get(referenceLayer);
-      spec$ = this.ctx.http.get<StyleSpecification>(styleUrl).pipe(
+      const {itemId, attribution} = referenceLayerStyleMap.get(referenceLayer);
+      spec$ = this.ctx.http.get<StyleSpecification>(withArcGISToken(
+        `https://cdn.arcgis.com/sharing/rest/content/items/${itemId}/resources/styles/root.json`, token)
+      ).pipe(
+        map(spec => prepareReferenceLayerStyle(spec, attribution, token)),
+        catchError((e) => {
+          console.error(`Map reference layer style load failed!`, e);
+          referenceLayerCache.delete(cacheKey);
+          return of(null);
+        }),
         shareReplay({
           bufferSize: 1,
           refCount: true
         })
       );
-      referenceLayerCache.set(referenceLayer, spec$);
+      referenceLayerCache.set(cacheKey, spec$);
     }
     return spec$.pipe(
       map(spec => {
+        if (!spec) {
+          return null;
+        }
         return L.TB.MapLibreGL.mapLibreGLLayer({
-          style: spec,
+          style: this.referenceLayerStyle(spec),
           // The reference layer is drawn over a raster base, so the base layer's zoom limit applies
           maxZoom: undefined
         });
       })
     );
+  }
+
+  protected referenceLayerApiKey(): string {
+    return this.settings.referenceLayerApiKey;
+  }
+
+  protected referenceLayerStyle(spec: StyleSpecification): StyleSpecification {
+    const source = spec.sources.esri as VectorSourceSpecification;
+    return {
+      ...spec,
+      sources: {...spec.sources, esri: {...source, attribution: `${poweredByEsriAttribution} | ${source.attribution}`}}
+    };
   }
 
   private title(): string {
@@ -271,6 +355,47 @@ class TbCartoMapLayer extends TbMapLayer<CartoMapLayerSettings> {
 
 }
 
+class TbEsriMapLayer extends TbMapLayer<EsriMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): EsriMapLayerSettings {
+    return defaultEsriMapLayerSettings;
+  }
+
+  protected referenceLayerApiKey(): string {
+    return this.settings.apiKey;
+  }
+
+  // The base Esri layer already shows 'Powered by Esri'
+  protected referenceLayerStyle(spec: StyleSpecification): StyleSpecification {
+    return spec;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const apiKey = this.settings.apiKey;
+    const tokenStyle = esriLayerTokenStyles.get(this.settings.layerType);
+    if (apiKey && tokenStyle) {
+      return of(L.TB.MapLibreGL.mapLibreGLLayer({
+        style: withArcGISToken(tokenStyle, apiKey),
+        attributionControl: {
+          customAttribution: `${poweredByEsriAttribution} | ${esriWorldBasemapAttribution}`
+        }
+      }));
+    }
+    const layer = L.tileLayer.provider(this.settings.layerType);
+    L.Util.setOptions(layer, {attribution: `${poweredByEsriAttribution} | ${layer.options.attribution}`});
+    if (apiKey && this.settings.layerType === EsriLayerType.esriWorldImagery) {
+      layer.setUrl(withArcGISToken(esriWorldImageryTokenTilesUrl, apiKey), true);
+    }
+    return of(layer);
+  }
+
+}
+
 class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
 
   static loadedApiKeysGlobal: {[key: string]: boolean} = {};
@@ -299,12 +424,12 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
   }
 
   private loadGoogle(): Observable<boolean> {
-    const apiKey = this.settings.apiKey || defaultGoogleMapLayerSettings.apiKey;
+    const apiKey = this.settings.apiKey || '';
     if (TbGoogleMapLayer.loadedApiKeysGlobal[apiKey]) {
       return of(true);
     } else {
       const resourceService = this.ctx.$injector.get(ResourcesService);
-      return resourceService.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`).pipe(
+      return resourceService.loadResource(`https://maps.googleapis.com/maps/api/js?${apiKey ? `key=${apiKey}&` : ''}loading=async`).pipe(
         map(() => {
           TbGoogleMapLayer.loadedApiKeysGlobal[apiKey] = true;
           return true;
@@ -351,8 +476,10 @@ class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
-    const apiKey = this.settings.apiKey || defaultHereMapLayerSettings.apiKey;
-    const layer = L.tileLayer.provider(hereV3Provider(this.settings.layerType), {apiKey});
+    if (!this.settings.apiKey) {
+      return of(new TbEmptyMapLayer());
+    }
+    const layer = L.tileLayer.provider(hereV3Provider(this.settings.layerType), {apiKey: this.settings.apiKey});
     return of(layer);
   }
 

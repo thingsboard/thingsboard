@@ -22,6 +22,8 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 })
 export class RouterTabsComponent extends PageComponent implements OnInit {
 
+  readonly isRouterTabsComponent = true;
+
   @ViewChild('replaceComponentAnchor', {static: true}) replaceComponentAnchor: TbAnchorComponent;
 
   @ViewChild('tabsHeaderComponent', {static: true}) tabsHeaderComponentAnchor: TbAnchorComponent;

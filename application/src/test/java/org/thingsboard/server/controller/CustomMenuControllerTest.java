@@ -5,6 +5,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -655,6 +655,120 @@ public class CustomMenuControllerTest extends AbstractControllerTest {
 
         JsonNode currentMenu = doGet("/api/customMenu", JsonNode.class);
         assertThat(currentMenu.get("items")).isEmpty();
+    }
+
+    @Test
+    public void testCustomerUserMenuIgnoresMenuOfOtherTenant() throws Exception {
+        loginDifferentTenant();
+        CustomMenu otherTenantMenu = new CustomMenu();
+        otherTenantMenu.setName(RandomStringUtils.randomAlphabetic(10));
+        otherTenantMenu.setScope(CMScope.CUSTOMER);
+        otherTenantMenu.setAssigneeType(CMAssigneeType.NO_ASSIGN);
+        otherTenantMenu = doPost("/api/customMenu", otherTenantMenu, CustomMenu.class);
+        idsToRemove.add(otherTenantMenu.getUuidId());
+        CustomMenuConfig otherTenantMenuConfig = putRandomMenuConfig(otherTenantMenu.getId());
+        String otherTenantMenuUrl = ((CustomMenuItem) otherTenantMenuConfig.getItems().get(2)).getUrl();
+
+        loginTenantAdmin();
+        Customer customer = doGet("/api/customer/" + customerId.getId(), Customer.class);
+        customer.setCustomMenuId(otherTenantMenu.getId());
+        doPost("/api/customer", customer).andExpect(status().isOk());
+
+        loginCustomerUser();
+        JsonNode customerUserMenu = doGet("/api/customMenu", JsonNode.class);
+        assertThat(customerUserMenu.toString()).doesNotContain(otherTenantMenuUrl);
+    }
+
+    @Test
+    public void testTenantUserMenuIgnoresMenuOfOtherTenant() throws Exception {
+        loginDifferentTenant();
+        CustomMenu otherTenantMenu = new CustomMenu();
+        otherTenantMenu.setName(RandomStringUtils.randomAlphabetic(10));
+        otherTenantMenu.setScope(CMScope.TENANT);
+        otherTenantMenu.setAssigneeType(CMAssigneeType.NO_ASSIGN);
+        otherTenantMenu = doPost("/api/customMenu", otherTenantMenu, CustomMenu.class);
+        idsToRemove.add(otherTenantMenu.getUuidId());
+        CustomMenuConfig otherTenantMenuConfig = putRandomMenuConfig(otherTenantMenu.getId());
+        String otherTenantMenuUrl = ((CustomMenuItem) otherTenantMenuConfig.getItems().get(2)).getUrl();
+
+        loginTenantAdmin();
+        User tenantAdmin = doGet("/api/user/" + tenantAdminUserId.getId(), User.class);
+        tenantAdmin.setCustomMenuId(otherTenantMenu.getId());
+        doPost("/api/user", tenantAdmin).andExpect(status().isOk());
+        assertThat(doGet("/api/user/" + tenantAdminUserId.getId(), User.class).getCustomMenuId()).isEqualTo(otherTenantMenu.getId());
+
+        JsonNode tenantAdminMenu = doGet("/api/customMenu", JsonNode.class);
+        assertThat(tenantAdminMenu.toString()).doesNotContain(otherTenantMenuUrl);
+    }
+
+    @Test
+    public void testCustomMenuAssigneeListContainsOnlyCustomersOfMenuTenant() throws Exception {
+        loginTenantAdmin();
+        CustomMenu customerMenu = new CustomMenu();
+        customerMenu.setName(RandomStringUtils.randomAlphabetic(10));
+        customerMenu.setScope(CMScope.CUSTOMER);
+        customerMenu.setAssigneeType(CMAssigneeType.CUSTOMERS);
+        customerMenu = doPost("/api/customMenu?assignToList=" + customerId, customerMenu, CustomMenu.class);
+
+        loginDifferentTenant();
+        Customer otherTenantCustomer = new Customer();
+        otherTenantCustomer.setTitle("Other Tenant Customer");
+        otherTenantCustomer.setCustomMenuId(customerMenu.getId());
+        otherTenantCustomer = doPost("/api/customer", otherTenantCustomer, Customer.class);
+
+        loginTenantAdmin();
+        List<EntityInfo> assigneeList = doGetTyped("/api/customMenu/" + customerMenu.getId() + "/assigneeList", new TypeReference<>() {});
+        assertThat(assigneeList).extracting(EntityInfo::getId).containsExactly(customerId);
+        doDelete("/api/customMenu/" + customerMenu.getId() + "?force=true").andExpect(status().isOk());
+
+        loginDifferentTenant();
+        Customer otherTenantCustomerAfterDelete = doGet("/api/customer/" + otherTenantCustomer.getId(), Customer.class);
+        assertThat(otherTenantCustomerAfterDelete.getCustomMenuId()).isEqualTo(customerMenu.getId());
+    }
+
+    @Test
+    public void testCustomMenuAssigneeListContainsOnlyUsersOfMenuTenant() throws Exception {
+        loginTenantAdmin();
+        CustomMenu userMenu = new CustomMenu();
+        userMenu.setName(RandomStringUtils.randomAlphabetic(10));
+        userMenu.setScope(CMScope.TENANT);
+        userMenu.setAssigneeType(CMAssigneeType.USERS);
+        userMenu = doPost("/api/customMenu?assignToList=" + tenantAdminUserId, userMenu, CustomMenu.class);
+
+        loginDifferentTenant();
+        User otherTenantUser = new User();
+        otherTenantUser.setAuthority(Authority.TENANT_ADMIN);
+        otherTenantUser.setTenantId(differentTenantId);
+        otherTenantUser.setEmail("othertenantuser@thingsboard.org");
+        otherTenantUser.setCustomMenuId(userMenu.getId());
+        otherTenantUser = doPost("/api/user", otherTenantUser, User.class);
+        assertThat(otherTenantUser.getCustomMenuId()).isEqualTo(userMenu.getId());
+
+        loginTenantAdmin();
+        List<EntityInfo> assigneeList = doGetTyped("/api/customMenu/" + userMenu.getId() + "/assigneeList", new TypeReference<>() {});
+        assertThat(assigneeList).extracting(EntityInfo::getId).containsExactly(tenantAdminUserId);
+        doDelete("/api/customMenu/" + userMenu.getId() + "?force=true").andExpect(status().isOk());
+
+        loginDifferentTenant();
+        User otherTenantUserAfterDelete = doGet("/api/user/" + otherTenantUser.getId(), User.class);
+        assertThat(otherTenantUserAfterDelete.getCustomMenuId()).isEqualTo(userMenu.getId());
+    }
+
+    @Test
+    public void testTenantUserGetsAssignedSystemMenu() throws Exception {
+        loginSysAdmin();
+        CustomMenu systemMenu = new CustomMenu();
+        systemMenu.setName(RandomStringUtils.randomAlphabetic(10));
+        systemMenu.setScope(CMScope.TENANT);
+        systemMenu.setAssigneeType(CMAssigneeType.NO_ASSIGN);
+        systemMenu = doPost("/api/customMenu", systemMenu, CustomMenu.class);
+        idsToRemove.add(systemMenu.getUuidId());
+        CustomMenuConfig systemMenuConfig = putRandomMenuConfig(systemMenu.getId());
+        doPut("/api/customMenu/" + systemMenu.getId() + "/assign/USERS", List.of(tenantAdminUserId.getId()));
+
+        loginTenantAdmin();
+        JsonNode tenantAdminMenu = doGet("/api/customMenu", JsonNode.class);
+        assertCustomMenuConfig(tenantAdminMenu, systemMenuConfig);
     }
 
     private MvcResult getUserCustomMenu() throws Exception {
