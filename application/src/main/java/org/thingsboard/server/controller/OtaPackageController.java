@@ -82,7 +82,7 @@ public class OtaPackageController extends BaseController {
 
         ByteArrayResource resource = new ByteArrayResource(otaPackage.getData().array());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackage.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(otaPackage.getFileName()))
                 .header("x-filename", otaPackage.getFileName())
                 .contentLength(resource.contentLength())
                 .contentType(parseMediaType(otaPackage.getContentType()))
@@ -149,7 +149,7 @@ public class OtaPackageController extends BaseController {
         ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
         byte[] data = file.getBytes();
         return tbOtaPackageService.saveOtaPackageData(otaPackageInfo, checksum, checksumAlgorithm,
-                data, file.getOriginalFilename(), file.getContentType(), getCurrentUser());
+                data, getFileName(file), file.getContentType(), getCurrentUser());
     }
 
     @ApiOperation(value = "Get OTA Package Infos (getOtaPackages)",

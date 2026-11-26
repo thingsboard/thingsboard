@@ -18,7 +18,6 @@
     <startargument>-Dinstall.data_dir=%BASE%\data</startargument>
     <startargument>-Xlog:gc*,heap*,age*,safepoint=debug:file=%BASE%\logs\gc.log:time,uptime,level,tags:filecount=10,filesize=10M</startargument>
     <startargument>-XX:+HeapDumpOnOutOfMemoryError</startargument>
-    <startargument>-XX:-UseBiasedLocking</startargument>
     <startargument>-XX:+UseTLAB</startargument>
     <startargument>-XX:+ResizeTLAB</startargument>
     <startargument>-XX:+PerfDisableSharedMem</startargument>

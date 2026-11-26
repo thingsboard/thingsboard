@@ -460,6 +460,30 @@ public class HashPartitionServiceTest {
     }
 
     @Test
+    public void testEvictTenantProfileInfo_reResolvesIsolationOnlyForTenantsOfThatProfile() {
+        TenantProfileId isolatedProfileId = new TenantProfileId(UUID.randomUUID());
+        TenantProfileId otherProfileId = new TenantProfileId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        TenantId otherTenantId = TenantId.fromUUID(UUID.randomUUID());
+        mockQueues(List.of(createQueue(TenantId.SYS_TENANT_ID, 10), createQueue(tenantId, 3), createQueue(otherTenantId, 3)));
+        mockRoutingInfo(tenantId, isolatedProfileId, false);
+        mockRoutingInfo(otherTenantId, otherProfileId, false);
+        HashPartitionService partitionService = createPartitionService();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        // routing info is cached as "not isolated"
+        assertThat(partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, deviceId).getFullTopicName()).doesNotContain(".isolated.");
+        assertThat(partitionService.resolve(ServiceType.TB_RULE_ENGINE, otherTenantId, deviceId).getFullTopicName()).doesNotContain(".isolated.");
+
+        mockRoutingInfo(tenantId, isolatedProfileId, true);
+        mockRoutingInfo(otherTenantId, otherProfileId, true);
+        partitionService.evictTenantProfileInfo(isolatedProfileId);
+
+        assertThat(partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, deviceId).getFullTopicName()).contains(".isolated." + tenantId.getId());
+        assertThat(partitionService.resolve(ServiceType.TB_RULE_ENGINE, otherTenantId, deviceId).getFullTopicName()).doesNotContain(".isolated.");
+    }
+
+    @Test
     public void testPartitionsDistribution_sameTenantDifferentQueues() {
         List<ServiceInfo> ruleEngines = new ArrayList<>();
         int serviceId = 0;

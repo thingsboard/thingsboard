@@ -51,7 +51,7 @@
         <mat-label translate>integration.coap-endpoint</mat-label>
         <input matInput formControlName="coapEndpoint">
       </mat-form-field>
-      <button mat-icon-button ngxClipboard type="button" color="primary"
+      <button mat-icon-button ngxClipboard type="button"
               (cbOnSuccess)="onCoapEndpointCopied()"
               [cbContent]="coapIntegrationConfigForm.get('coapEndpoint').value"
               matTooltip="{{'integration.copy-coap-endpoint-url' | translate }}">
@@ -65,7 +65,7 @@
         <mat-label translate>integration.coap-dtls-endpoint</mat-label>
         <input matInput formControlName="dtlsCoapEndpoint">
       </mat-form-field>
-      <button mat-icon-button ngxClipboard type="button" color="primary"
+      <button mat-icon-button ngxClipboard type="button"
               (cbOnSuccess)="onDtlsCoapEndpointCopied()"
               [cbContent]="coapIntegrationConfigForm.get('dtlsCoapEndpoint').value"
               matTooltip="{{'integration.copy-coap-dtls-endpoint-url' | translate }}">

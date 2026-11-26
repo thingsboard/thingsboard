@@ -31,7 +31,7 @@ class EntityViewGroupAllUpdater extends EntityGroupAllPaginatedUpdater<EntityVie
     @Override
     protected void unassignFromCustomer(EntityView entity) {
         entity.setCustomerId(new CustomerId(CustomerId.NULL_UUID));
-        entityViewService.saveEntityView(entity);
+        entityViewService.saveEntityView(entity, false);
     }
 
     @Override

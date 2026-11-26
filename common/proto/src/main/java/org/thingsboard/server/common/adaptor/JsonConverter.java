@@ -17,12 +17,14 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -51,12 +53,15 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class JsonConverter {
 
@@ -70,12 +75,19 @@ public class JsonConverter {
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
-        convertToTelemetry(jsonElement, ts, null, builder);
+        convertToTelemetry(jsonElement, ts, null, builder, Collections.emptySet());
         return builder.build();
     }
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
         return convertToTelemetryProto(jsonElement, System.currentTimeMillis());
+    }
+
+    // String values of typeCastDisabledKeys stay strings even when type cast is enabled.
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, Set<String> typeCastDisabledKeys) throws JsonSyntaxException {
+        PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
+        convertToTelemetry(jsonElement, System.currentTimeMillis(), null, builder, typeCastDisabledKeys);
+        return builder.build();
     }
 
     public static TbPair<TransportProtos.PostTelemetryMsg, List<GatewayMetadata>> convertToGatewayTelemetry(JsonElement jsonElement, long systemTs) {
@@ -102,7 +114,7 @@ public class JsonConverter {
                             throw new JsonSyntaxException("Can't parse gateway metadata: " + metadataElem);
                         }
                     }
-                    parseObject(systemTs, null, builder, jo);
+                    parseObject(systemTs, null, builder, jo, Collections.emptySet());
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
@@ -121,13 +133,13 @@ public class JsonConverter {
         return element;
     }
 
-    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
+    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, Set<String> typeCastDisabledKeys) {
         if (jsonElement.isJsonObject()) {
-            parseObject(systemTs, result, builder, jsonElement.getAsJsonObject());
+            parseObject(systemTs, result, builder, jsonElement.getAsJsonObject(), typeCastDisabledKeys);
         } else if (jsonElement.isJsonArray()) {
             jsonElement.getAsJsonArray().forEach(je -> {
                 if (je.isJsonObject()) {
-                    parseObject(systemTs, result, builder, je.getAsJsonObject());
+                    parseObject(systemTs, result, builder, je.getAsJsonObject(), typeCastDisabledKeys);
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
@@ -137,12 +149,12 @@ public class JsonConverter {
         }
     }
 
-    private static void parseObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo) {
+    private static void parseObject(long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, JsonObject jo, Set<String> typeCastDisabledKeys) {
         try {
             if (result != null) {
-                parseObject(result, systemTs, jo);
+                parseObject(result, systemTs, jo, typeCastDisabledKeys);
             } else {
-                parseObject(builder, systemTs, jo);
+                parseObject(builder, systemTs, jo, typeCastDisabledKeys);
             }
         } catch (Exception e) {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jo);
@@ -185,9 +197,14 @@ public class JsonConverter {
     }
 
     public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject) throws JsonSyntaxException {
+        return convertToAttributesProto(jsonObject, Collections.emptySet());
+    }
+
+    // String values of typeCastDisabledKeys stay strings even when type cast is enabled.
+    public static PostAttributeMsg convertToAttributesProto(JsonElement jsonObject, Set<String> typeCastDisabledKeys) throws JsonSyntaxException {
         if (jsonObject.isJsonObject()) {
             PostAttributeMsg.Builder result = PostAttributeMsg.newBuilder();
-            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject());
+            List<KeyValueProto> keyValueList = parseProtoValues(jsonObject.getAsJsonObject(), typeCastDisabledKeys);
             result.addAllKv(keyValueList);
             return result.build();
         } else {
@@ -205,22 +222,22 @@ public class JsonConverter {
         return result;
     }
 
-    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonObject jo) {
+    private static void parseObject(PostTelemetryMsg.Builder builder, long systemTs, JsonObject jo, Set<String> typeCastDisabledKeys) {
         if (jo.has("ts") && jo.has("values")) {
-            parseWithTs(builder, jo);
+            parseWithTs(builder, jo, typeCastDisabledKeys);
         } else {
-            parseWithoutTs(builder, systemTs, jo);
+            parseWithoutTs(builder, systemTs, jo, typeCastDisabledKeys);
         }
     }
 
-    private static void parseWithoutTs(PostTelemetryMsg.Builder request, long systemTs, JsonObject jo) {
+    private static void parseWithoutTs(PostTelemetryMsg.Builder request, long systemTs, JsonObject jo, Set<String> typeCastDisabledKeys) {
         TsKvListProto.Builder builder = TsKvListProto.newBuilder();
         builder.setTs(systemTs);
-        builder.addAllKv(parseProtoValues(jo));
+        builder.addAllKv(parseProtoValues(jo, typeCastDisabledKeys));
         request.addTsKvList(builder.build());
     }
 
-    private static void parseWithTs(PostTelemetryMsg.Builder request, JsonObject jo) {
+    private static void parseWithTs(PostTelemetryMsg.Builder request, JsonObject jo, Set<String> typeCastDisabledKeys) {
         JsonElement tsJsonElement = jo.get("ts");
         if (tsJsonElement.isJsonNull()) {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + "ts is null!");
@@ -229,12 +246,12 @@ public class JsonConverter {
         } else {
             TsKvListProto.Builder builder = TsKvListProto.newBuilder();
             builder.setTs(tsJsonElement.getAsLong());
-            builder.addAllKv(parseProtoValues(jo.get("values").getAsJsonObject()));
+            builder.addAllKv(parseProtoValues(jo.get("values").getAsJsonObject(), typeCastDisabledKeys));
             request.addTsKvList(builder.build());
         }
     }
 
-    private static List<KeyValueProto> parseProtoValues(JsonObject valuesObject) {
+    private static List<KeyValueProto> parseProtoValues(JsonObject valuesObject, Set<String> typeCastDisabledKeys) {
         List<KeyValueProto> result = new ArrayList<>();
         for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
             JsonElement element = valueEntry.getValue();
@@ -245,7 +262,7 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (isTypeCastEnabled && !typeCastDisabledKeys.contains(valueEntry.getKey()) && isNumericString(value.getAsString())) {
                         try {
                             result.add(buildNumericKeyValueProto(value, valueEntry.getKey()));
                         } catch (RuntimeException th) {
@@ -617,10 +634,41 @@ public class JsonConverter {
     }
 
     public static List<AttributeKvEntry> convertToAttributes(JsonElement element, long ts) {
-        return parseValues(element.getAsJsonObject()).stream().<AttributeKvEntry>map(kv -> new BaseAttributeKvEntry(kv, ts)).toList();
+        return convertToAttributes(element, ts, Collections.emptySet());
     }
 
-    private static List<KvEntry> parseValues(JsonObject valuesObject) {
+    /**
+     * Returns the keys of the string entries that this converter would cast to a number, in entry order, so that a message
+     * built from typed entries, such as an attributes updated notification, can mark them to read back as strings.
+     */
+    public static List<String> numericStringKeys(Collection<? extends KvEntry> entries) {
+        if (entries == null) {
+            return Collections.emptyList();
+        }
+        return entries.stream()
+                .filter(entry -> entry.getDataType() == DataType.STRING && isNumericString(entry.getValueAsString()))
+                .map(KvEntry::getKey)
+                .collect(Collectors.toList());
+    }
+
+    private static boolean isNumericString(String value) {
+        return NumberUtils.isParsable(value);
+    }
+
+    /**
+     * Turns a rule engine message's data into attributes, with the current time as their ts.
+     * Honours {@link TbMsg#getTypeCastDisabledKeys()}: the keys marked to stay strings by the integration on an uplink,
+     * and by the save attributes node on its attributes updated notification.
+     */
+    public static List<AttributeKvEntry> attributesFromMsg(TbMsg msg) {
+        return convertToAttributes(JsonParser.parseString(msg.getData()), System.currentTimeMillis(), msg.getTypeCastDisabledKeys());
+    }
+
+    private static List<AttributeKvEntry> convertToAttributes(JsonElement element, long ts, Set<String> typeCastDisabledKeys) {
+        return parseValues(element.getAsJsonObject(), typeCastDisabledKeys).stream().<AttributeKvEntry>map(kv -> new BaseAttributeKvEntry(kv, ts)).toList();
+    }
+
+    private static List<KvEntry> parseValues(JsonObject valuesObject, Set<String> typeCastDisabledKeys) {
         List<KvEntry> result = new ArrayList<>();
         for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
             JsonElement element = valueEntry.getValue();
@@ -631,7 +679,7 @@ public class JsonConverter {
                         String message = String.format("String value length [%d] for key [%s] is greater than maximum allowed [%d]", value.getAsString().length(), valueEntry.getKey(), maxStringValueLength);
                         throw new JsonSyntaxException(message);
                     }
-                    if (isTypeCastEnabled && NumberUtils.isParsable(value.getAsString())) {
+                    if (isTypeCastEnabled && !typeCastDisabledKeys.contains(valueEntry.getKey()) && isNumericString(value.getAsString())) {
                         try {
                             parseNumericValue(result, valueEntry, value);
                         } catch (RuntimeException th) {
@@ -666,29 +714,53 @@ public class JsonConverter {
         return convertToTelemetry(jsonElement, systemTs, true);
     }
 
+    /**
+     * Turns a rule engine message's data into telemetry; {@code ts} is used for values that carry no ts of their own.
+     * Honours {@link TbMsg#getTypeCastDisabledKeys()}: the keys the integration marked to stay strings.
+     */
+    public static Map<Long, List<KvEntry>> telemetryFromMsg(TbMsg msg, long ts) throws JsonSyntaxException {
+        return convertToTelemetry(JsonParser.parseString(msg.getData()), ts, false, msg.getTypeCastDisabledKeys());
+    }
+
+    /**
+     * Same as {@link #telemetryFromMsg(TbMsg, long)}, with the result sorted by ts.
+     */
+    public static Map<Long, List<KvEntry>> sortedTelemetryFromMsg(TbMsg msg, long ts) throws JsonSyntaxException {
+        return convertToTelemetry(JsonParser.parseString(msg.getData()), ts, true, msg.getTypeCastDisabledKeys());
+    }
+
     public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted) throws
             JsonSyntaxException {
+        return convertToTelemetry(jsonElement, systemTs, sorted, Collections.emptySet());
+    }
+
+    private static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted, Set<String> typeCastDisabledKeys) throws
+            JsonSyntaxException {
         Map<Long, List<KvEntry>> result = sorted ? new TreeMap<>() : new HashMap<>();
-        convertToTelemetry(jsonElement, systemTs, result, null);
+        convertToTelemetry(jsonElement, systemTs, result, null, typeCastDisabledKeys);
         return result;
     }
 
 
-    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
+    private static void parseObject(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo, Set<String> typeCastDisabledKeys) {
         if (jo.has("ts") && jo.has("values")) {
-            parseWithTs(result, jo);
+            parseWithTs(result, jo, typeCastDisabledKeys);
         } else {
-            parseWithoutTs(result, systemTs, jo);
+            parseWithoutTs(result, systemTs, jo, typeCastDisabledKeys);
         }
     }
 
-    private static void parseWithoutTs(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo) {
-        for (KvEntry entry : parseValues(jo)) {
+    private static void parseWithoutTs(Map<Long, List<KvEntry>> result, long systemTs, JsonObject jo, Set<String> typeCastDisabledKeys) {
+        for (KvEntry entry : parseValues(jo, typeCastDisabledKeys)) {
             result.computeIfAbsent(systemTs, tmp -> new ArrayList<>()).add(entry);
         }
     }
 
     public static void parseWithTs(Map<Long, List<KvEntry>> result, JsonObject jo) {
+        parseWithTs(result, jo, Collections.emptySet());
+    }
+
+    private static void parseWithTs(Map<Long, List<KvEntry>> result, JsonObject jo, Set<String> typeCastDisabledKeys) {
         JsonElement tsJsonElement = jo.get("ts");
         if (tsJsonElement.isJsonNull()) {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + "ts is null!");
@@ -697,7 +769,7 @@ public class JsonConverter {
         } else {
             long ts = tsJsonElement.getAsLong();
             JsonObject valuesObject = jo.get("values").getAsJsonObject();
-            for (KvEntry entry : parseValues(valuesObject)) {
+            for (KvEntry entry : parseValues(valuesObject, typeCastDisabledKeys)) {
                 result.computeIfAbsent(ts, tmp -> new ArrayList<>()).add(entry);
             }
         }

@@ -5,14 +5,23 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="flex flex-row items-center justify-start">
-  <tb-entity-subtype-select
-    subscriptSizing="dynamic"
-    [showLabel]="true"
-    [entityType]="entityType.EDGE"
-    [ngModel]="entitiesTableConfig.componentsData.edgeType"
-    (ngModelChange)="edgeTypeChanged($event)">
-  </tb-entity-subtype-select>
+<div class="flex min-w-0 flex-row items-center justify-start">
+  <tb-filter-button emptyLabel="edge.edge-filter-title"
+                    emptyValue=""
+                    [ngModel]="entitiesTableConfig.componentsData.edgeType"
+                    (ngModelChange)="edgeTypeChanged($event)">
+    <ng-template let-control>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>edge.edge-type</div>
+        <tb-entity-subtype-select
+          class="min-w-0 flex-1"
+          [formControl]="control"
+          [inlineField]="true"
+          [entityType]="entityType.EDGE">
+        </tb-entity-subtype-select>
+      </div>
+    </ng-template>
+  </tb-filter-button>
   <mat-slide-toggle
     style="margin-left: 32px;"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"

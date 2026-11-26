@@ -7,6 +7,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.pat.ApiKey;
@@ -15,6 +17,7 @@ import org.thingsboard.server.common.data.permission.AuthorityPermissionsInfo;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.HashMap;
@@ -26,6 +29,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 public class ApiKeyControllerTest extends AbstractControllerTest {
+
+    @Autowired
+    private ApiKeyService apiKeyService;
 
     @Before
     public void setUp() throws Exception {
@@ -153,6 +159,68 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testRotateInternalApiKey_oldValueNoLongerAuthenticates() throws Exception {
+        loginSysAdmin();
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo(sysAdminPermissionsInfo());
+        apiKeyInfo.setTenantId(TenantId.SYS_TENANT_ID);
+        // internal keys cannot be created via REST, so build it directly through the service
+        ApiKey internalApiKey = apiKeyService.saveApiKey(TenantId.SYS_TENANT_ID, apiKeyInfo);
+        String originalValue = internalApiKey.getValue();
+        try {
+            // authenticate with the original value to warm up the API key cache
+            setApiKey(originalValue);
+            doGetWithApiKey("/api/auth/user").andExpect(status().isOk());
+
+            ApiKey rotatedApiKey = doPost("/api/apiKey/" + internalApiKey.getId().getId() + "/rotate", ApiKey.class);
+            Assert.assertNotNull(rotatedApiKey);
+            Assert.assertNotNull(rotatedApiKey.getValue());
+            Assert.assertNotEquals(originalValue, rotatedApiKey.getValue());
+
+            doGetWithApiKey("/api/auth/user").andExpect(status().isUnauthorized());
+
+            setApiKey(rotatedApiKey.getValue());
+            doGetWithApiKey("/api/auth/user").andExpect(status().isOk());
+        } finally {
+            resetApiKey();
+            apiKeyService.deleteApiKey(TenantId.SYS_TENANT_ID, apiKeyService.findApiKeyById(TenantId.SYS_TENANT_ID, internalApiKey.getId()), true);
+        }
+    }
+
+    @Test
+    public void testRotateApiKeyAsTenantAdmin_shouldBeForbidden() throws Exception {
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Tenant admin API key", true);
+        ApiKey apiKey = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        doPost("/api/apiKey/" + apiKey.getId().getId() + "/rotate").andExpect(status().isForbidden());
+
+        doDelete("/api/apiKey/" + apiKey.getId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testRotateApiKeyAsCustomerUser_shouldBeForbidden() throws Exception {
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Tenant admin API key", true);
+        ApiKey apiKey = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        loginCustomerUser();
+        doPost("/api/apiKey/" + apiKey.getId().getId() + "/rotate").andExpect(status().isForbidden());
+
+        loginTenantAdmin();
+        doDelete("/api/apiKey/" + apiKey.getId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testRotateRegularApiKeyOfAnotherUserAsSysAdmin_shouldBeBadRequest() throws Exception {
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Tenant admin API key", true);
+        ApiKey apiKey = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        loginSysAdmin();
+        doPost("/api/apiKey/" + apiKey.getId().getId() + "/rotate").andExpect(status().isBadRequest());
+
+        loginTenantAdmin();
+        doDelete("/api/apiKey/" + apiKey.getId()).andExpect(status().isOk());
+    }
+
+    @Test
     public void testDeleteApiKey() throws Exception {
         doDelete("/api/apiKey/" + UUID.randomUUID()).andExpect(status().isNotFound());
 
@@ -166,12 +234,73 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
         doDelete("/api/apiKey/" + savedApiKey.getId().getId()).andExpect(status().isOk());
     }
 
+    @Test
+    public void testCustomerUserListsOwnApiKeys() throws Exception {
+        loginCustomerAdminUser();
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
+        apiKeyInfo.setUserId(customerAdminUserId);
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + customerAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(customerAdminUserId, pageData.getData().get(0).getUserId());
+    }
+
+    @Test
+    public void testTenantAdminListsCustomerUserApiKeys() throws Exception {
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
+        apiKeyInfo.setUserId(customerUserId);
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + customerUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(customerUserId, pageData.getData().get(0).getUserId());
+    }
+
+    @Test
+    public void testCustomerUserCannotListOtherUserApiKeys() throws Exception {
+        loginCustomerAdminUser();
+        doGet("/api/user/" + customerUserId).andExpect(status().isOk());
+        doGet("/api/apiKeys/" + customerUserId + "?pageSize=10&page=0").andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testCustomerUserCannotReadOtherUserApiKeyRelations() throws Exception {
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
+        apiKeyInfo.setUserId(customerUserId);
+        ApiKey apiKey = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        loginCustomerAdminUser();
+        doGet("/api/relations?fromId=" + apiKey.getId().getId() + "&fromType=API_KEY").andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testCustomerUserCannotDeleteTenantAdminApiKey() throws Exception {
+        ApiKey apiKey = doPost("/api/apiKey", constructApiKeyInfo("Test API key description", true), ApiKey.class);
+
+        loginCustomerAdminUser();
+        doDelete("/api/apiKey/" + apiKey.getId().getId()).andExpect(status().isForbidden());
+
+        loginTenantAdmin();
+        doDelete("/api/apiKey/" + apiKey.getId().getId()).andExpect(status().isOk());
+    }
+
     private ApiKeyInfo constructApiKeyInfo(String description, boolean enabled) {
         ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
         apiKeyInfo.setDescription(description);
         apiKeyInfo.setEnabled(enabled);
         apiKeyInfo.setUserId(tenantAdminUserId);
         return apiKeyInfo;
+    }
+
+    private AuthorityPermissionsInfo sysAdminPermissionsInfo() {
+        Map<Resource, Set<Operation>> permissions = new HashMap<>();
+        permissions.put(Resource.DEVICE, Set.of(Operation.READ));
+        Map<Authority, Map<Resource, Set<Operation>>> operationsByResource = new HashMap<>();
+        operationsByResource.put(Authority.SYS_ADMIN, permissions);
+        AuthorityPermissionsInfo authorityPermissionsInfo = new AuthorityPermissionsInfo();
+        authorityPermissionsInfo.setOperationsByResource(operationsByResource);
+        return authorityPermissionsInfo;
     }
 
     private ApiKeyInfo constructApiKeyInfo(AuthorityPermissionsInfo info) {

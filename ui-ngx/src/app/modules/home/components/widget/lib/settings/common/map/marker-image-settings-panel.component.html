@@ -1,10 +1,11 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-marker-image-settings-panel" [formGroup]="markerImageSettingsFormGroup">
+<div class="tb-marker-image-settings-panel" [formGroup]="markerImageSettingsFormGroup" tbPopoverContentResize>
   <div class="tb-marker-image-settings-title" translate>widgets.maps.data-layer.marker.marker-image</div>
   <div class="flex flex-row">
     <tb-toggle-select formControlName="type" class="flex-1">

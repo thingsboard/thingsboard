@@ -55,7 +55,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
                     if (assetUpdateMsg.hasEntityGroupIdMSB() && assetUpdateMsg.hasEntityGroupIdLSB()) {
                         EntityGroupId entityGroupId = new EntityGroupId(
                                 new UUID(assetUpdateMsg.getEntityGroupIdMSB(), assetUpdateMsg.getEntityGroupIdLSB()));
-                        edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, assetId);
+                        safeRemoveEntityFromGroup(tenantId, entityGroupId, assetId);
                     } else if (EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
                         deleteAsset(tenantId, edge, assetId);
                     } else {

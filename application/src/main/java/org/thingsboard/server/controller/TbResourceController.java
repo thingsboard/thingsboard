@@ -101,7 +101,7 @@ public class TbResourceController extends BaseController {
 
         ByteArrayResource resource = new ByteArrayResource(tbResource.getData());
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(tbResource.getFileName()))
                 .header("x-filename", tbResource.getFileName())
                 .contentLength(resource.contentLength())
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -237,7 +237,7 @@ public class TbResourceController extends BaseController {
                                          @RequestPart MultipartFile file) throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(getTenantId());
-        resource.setTitle(StringUtils.isNotEmpty(title) ? title : file.getOriginalFilename());
+        resource.setTitle(StringUtils.isNotEmpty(title) ? title : getFileName(file));
         ResourceType resourceType = ResourceType.valueOf(resourceTypeStr);
         resource.setResourceType(resourceType);
 
@@ -251,7 +251,7 @@ public class TbResourceController extends BaseController {
         if (StringUtils.isNotEmpty(resourceSubTypeStr)) {
             resource.setResourceSubType(ResourceSubType.valueOf(resourceSubTypeStr));
         }
-        resource.setFileName(file.getOriginalFilename());
+        resource.setFileName(getFileName(file));
         resource.setData(file.getBytes());
 
         checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
@@ -266,7 +266,7 @@ public class TbResourceController extends BaseController {
                                              @RequestPart MultipartFile file) throws Exception {
         TbResourceId tbResourceId = new TbResourceId(id);
         TbResource resource = checkResourceId(tbResourceId, Operation.WRITE);
-        resource.setFileName(file.getOriginalFilename());
+        resource.setFileName(getFileName(file));
         resource.setData(file.getBytes());
         return tbResourceService.save(resource, getCurrentUser());
     }
@@ -452,7 +452,7 @@ public class TbResourceController extends BaseController {
         byte[] data = resourceService.getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
         ByteArrayResource resource = new ByteArrayResource(data);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + resourceInfo.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, toContentDisposition(resourceInfo.getFileName()))
                 .header("x-filename", resourceInfo.getFileName())
                 .contentLength(resource.contentLength())
                 .header("Content-Type", resourceInfo.getResourceType().getMediaType())

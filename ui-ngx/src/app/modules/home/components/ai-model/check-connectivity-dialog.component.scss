@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   width: 560px;
   height: 100%;
@@ -38,7 +39,7 @@
   }
 
   .error {
-    color: #D12730;
+    color: var(--tb-crit);
   }
 
   ::ng-deep {

@@ -2,13 +2,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiHeaders;
 import org.thingsboard.server.dao.subscription.SubscriptionService;
-import org.thingsboard.server.service.install.ProjectInfo;
 
 import java.util.Map;
 
@@ -24,8 +22,6 @@ public abstract class AbstractOnPremiseAiControllerTest extends AbstractAiContro
 
     @MockitoSpyBean
     protected SubscriptionService subscriptionService;
-    @Autowired
-    protected ProjectInfo projectInfo;
 
     protected void givenSubscriptionProvidesAiToken() {
         doReturn(AI_TOKEN).when(subscriptionService).getAiToken();
@@ -36,8 +32,7 @@ public abstract class AbstractOnPremiseAiControllerTest extends AbstractAiContro
         assertThat(tokenProvider.getToken()).isEqualTo(AI_TOKEN);
         assertThat(tokenProvider.getAdditionalInfo()).containsExactlyInAnyOrderEntriesOf(Map.of(
                 TbAiHeaders.USER_ID, tenantAdminUserId.getId().toString(),
-                TbAiHeaders.TENANT_ID, tenantId.getId().toString(),
-                TbAiHeaders.TB_VERSION, projectInfo.getProjectVersion()
+                TbAiHeaders.TENANT_ID, tenantId.getId().toString()
         ));
     }
 

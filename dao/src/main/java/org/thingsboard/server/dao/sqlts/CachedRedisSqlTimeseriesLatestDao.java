@@ -31,6 +31,8 @@ import org.thingsboard.server.dao.util.SqlTsLatestAnyDaoCachedRedis;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Component
@@ -39,6 +41,7 @@ import java.util.Optional;
 @Primary
 public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao implements TimeseriesLatestDao {
     public static final String STATS_NAME = "ts_latest.cache";
+    private static final long FAILURE_LOG_INTERVAL_MS = TimeUnit.SECONDS.toMillis(30);
     final CacheExecutorService cacheExecutorService;
     final SqlTimeseriesLatestDao sqlDao;
     final StatsFactory statsFactory;
@@ -46,6 +49,8 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
     final CitusSettings citusSettings;
     DefaultCounter hitCounter;
     DefaultCounter missCounter;
+    private final AtomicLong lastFailureLogTime = new AtomicLong();
+    private final AtomicLong suppressedFailures = new AtomicLong();
 
     @PostConstruct
     public void init() {
@@ -62,19 +67,17 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
                     return version;
                 },
                 cacheExecutorService);
-        if (log.isTraceEnabled()) {
-            Futures.addCallback(future, new FutureCallback<>() {
-                @Override
-                public void onSuccess(Long result) {
-                    log.trace("saveLatest onSuccess [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry);
-                }
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Long result) {
+                log.trace("saveLatest onSuccess [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry);
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    log.info("saveLatest onFailure [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry, t);
-                }
-            }, MoreExecutors.directExecutor());
-        }
+            @Override
+            public void onFailure(Throwable t) {
+                logFailure("saveLatest", entityId, tsKvEntry.getKey(), t);
+            }
+        }, MoreExecutors.directExecutor());
         return future;
     }
 
@@ -107,20 +110,33 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
                     return x;
                 },
                 cacheExecutorService);
-        if (log.isTraceEnabled()) {
-            Futures.addCallback(future, new FutureCallback<>() {
-                @Override
-                public void onSuccess(TsKvLatestRemovingResult result) {
-                    log.trace("removeLatest onSuccess [{}][{}][{}]", entityId, query.getKey(), query);
-                }
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(TsKvLatestRemovingResult result) {
+                log.trace("removeLatest onSuccess [{}][{}][{}]", entityId, query.getKey(), query);
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    log.info("removeLatest onFailure [{}][{}][{}]", entityId, query.getKey(), query, t);
-                }
-            }, MoreExecutors.directExecutor());
-        }
+            @Override
+            public void onFailure(Throwable t) {
+                logFailure("removeLatest", entityId, query.getKey(), t);
+            }
+        }, MoreExecutors.directExecutor());
         return future;
+    }
+
+    /**
+     * A failed save or remove fails the returned future, so the caller does not publish the subscription update.
+     * Log it, at most once per {@link #FAILURE_LOG_INTERVAL_MS}: when Redis fails, every write fails.
+     */
+    private void logFailure(String operation, EntityId entityId, String key, Throwable t) {
+        long now = System.currentTimeMillis();
+        long lastLogTime = lastFailureLogTime.get();
+        if (now - lastLogTime >= FAILURE_LOG_INTERVAL_MS && lastFailureLogTime.compareAndSet(lastLogTime, now)) {
+            log.warn("[{}][{}] {} failed ({} more latest-value write failures since the previous log)",
+                    entityId, key, operation, suppressedFailures.getAndSet(0), t);
+        } else {
+            suppressedFailures.incrementAndGet();
+        }
     }
 
     @Override

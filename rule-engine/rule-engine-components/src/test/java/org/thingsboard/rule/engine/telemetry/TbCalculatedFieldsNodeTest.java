@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.telemetry;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,14 +23,18 @@ import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
@@ -180,6 +185,49 @@ class TbCalculatedFieldsNodeTest {
         then(telemetryServiceMock).should().saveAttributes(assertArg(
                 actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(AttributesSaveRequest.Strategy.CF_ONLY)
         ));
+    }
+
+    @Test
+    void givenTelemetryMsgWithTypeCastDisabledKeys_whenOnMsg_thenListedKeysAreSavedAsStrings() {
+        var metadata = new TbMsgMetaData();
+        metadata.putTypeCastDisabledKeys(Set.of("devAddr"));
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .data("{\"devAddr\": \"01020304\", \"temperature\": \"22.5\"}")
+                .metaData(metadata)
+                .build();
+
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<TimeseriesSaveRequest> captor = ArgumentCaptor.forClass(TimeseriesSaveRequest.class);
+        then(telemetryServiceMock).should().saveTimeseries(captor.capture());
+        assertThat(captor.getValue().getEntries()).extracting(KvEntry::getKey, KvEntry::getDataType, KvEntry::getValue).containsExactlyInAnyOrder(
+                tuple("devAddr", DataType.STRING, "01020304"),
+                tuple("temperature", DataType.DOUBLE, 22.5));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void givenAttributesMsg_whenOnMsg_thenTypeCastDisabledKeysKeepStrings(boolean withTypeCastDisabledKeys) {
+        var metadata = new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name()));
+        if (withTypeCastDisabledKeys) {
+            metadata.putTypeCastDisabledKeys(Set.of("joinEui"));
+        }
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data("{\"joinEui\": \"0000000000000000\", \"hardwareVersion\": \"1.0\"}")
+                .metaData(metadata)
+                .build();
+
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<AttributesSaveRequest> captor = ArgumentCaptor.forClass(AttributesSaveRequest.class);
+        then(telemetryServiceMock).should().saveAttributes(captor.capture());
+        assertThat(captor.getValue().getEntries()).extracting(KvEntry::getKey, KvEntry::getDataType, KvEntry::getValue).containsExactlyInAnyOrder(
+                withTypeCastDisabledKeys ? tuple("joinEui", DataType.STRING, "0000000000000000") : tuple("joinEui", DataType.LONG, 0L),
+                tuple("hardwareVersion", DataType.DOUBLE, 1.0));
     }
 
 }

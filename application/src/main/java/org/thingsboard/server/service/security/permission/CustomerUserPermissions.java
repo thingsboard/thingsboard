@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.ReportTemplateId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.menu.CustomMenuInfo;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
@@ -229,7 +230,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     }
                 }
             } else {
-                if (operation == Operation.CLAIM_DEVICES) {
+                if (operation == Operation.CLAIM_DEVICES && user.getTenantId().equals(((HasOwnerId) entity).getOwnerId())) {
                     return user.getUserPermissions().hasGenericPermission(resource, operation);
                 }
                 if (entity.getEntityType() == EntityType.CUSTOMER && user.getCustomerId().equals(entityId) ||
@@ -523,6 +524,9 @@ public class CustomerUserPermissions extends AbstractPermissions {
         @SuppressWarnings("unchecked")
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, TenantEntity entity) {
             if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            if (!(entity instanceof ApiKeyInfo apiKeyInfo) || !user.getId().equals(apiKeyInfo.getUserId())) {
                 return false;
             }
             // This entity does not have groups, so we are checking only generic level permissions

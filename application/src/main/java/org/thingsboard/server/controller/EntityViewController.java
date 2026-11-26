@@ -48,6 +48,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -132,6 +133,11 @@ public class EntityViewController extends BaseController {
         SecurityUser user = getCurrentUser();
         return saveGroupEntity(entityView, strEntityGroupId, strEntityGroupIds, (entityView1, entityGroups) -> {
             try {
+                EntityView existingEntityView = entityView1.getId() == null ? null :
+                        entityViewService.findEntityViewById(user.getTenantId(), entityView1.getId());
+                if (existingEntityView == null || !hasSameSourceData(existingEntityView, entityView1)) {
+                    checkEntityId(entityView1.getEntityId(), Operation.READ);
+                }
                 return tbEntityViewService.save(entityView1, entityGroups, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), user);
             } catch (Exception e) {
                 throw handleException(e);
@@ -449,6 +455,13 @@ public class EntityViewController extends BaseController {
         TenantId tenantId = user.getTenantId();
         ListenableFuture<List<EntitySubtype>> entityViewTypes = entityViewService.findEntityViewTypesByTenantId(tenantId);
         return checkNotNull(entityViewTypes.get());
+    }
+
+    private static boolean hasSameSourceData(EntityView existing, EntityView entityView) {
+        return Objects.equals(existing.getEntityId(), entityView.getEntityId())
+                && Objects.equals(existing.getKeys(), entityView.getKeys())
+                && existing.getStartTimeMs() == entityView.getStartTimeMs()
+                && existing.getEndTimeMs() == entityView.getEndTimeMs();
     }
 
 }

@@ -5,11 +5,13 @@ package org.thingsboard.server.service.security.auth.pat;
 
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.ApiKeyAuthRequest;
 
 import java.io.Serial;
+import java.util.Collection;
 
 public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
 
@@ -23,7 +25,7 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
     private ApiKeyId apiKeyId;
 
     public ApiKeyAuthenticationToken(ApiKeyAuthRequest apiKeyAuthRequest) {
-        super(null);
+        super((Collection<? extends GrantedAuthority>) null);
         this.apiKeyAuthRequest = apiKeyAuthRequest;
         setAuthenticated(false);
     }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.queue.settings;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import javax.annotation.PostConstruct;
 import java.util.Map;
 
 @Lazy

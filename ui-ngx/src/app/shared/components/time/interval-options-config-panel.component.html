@@ -1,14 +1,16 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="intervalOptionsConfigForm" class="tb-interval-options-form tb-form-panel no-border"
       [style]="aggregation ? {maxWidth: '600px'} : {maxWidth: '350px'}">
   <div class="tb-form-panel-title">{{ 'timewindow.edit-intervals-list' | translate }}</div>
   <div class="tb-form-hint tb-primary-fill">
-    {{ 'timewindow.edit-intervals-list-hint' | translate }} {{ aggregation ? ('timewindow.edit-grouping-intervals-list-hint' | translate) : '' }}
+    <mat-icon>info_outline</mat-icon>
+    <span>{{ 'timewindow.edit-intervals-list-hint' | translate }} {{ aggregation ? ('timewindow.edit-grouping-intervals-list-hint' | translate) : '' }}</span>
   </div>
   <div class="tb-form-table">
     <div class="tb-form-table-header">

@@ -16,7 +16,6 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
-import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Map;
@@ -30,12 +29,9 @@ import static org.mockito.BDDMockito.given;
 class OnPremiseTbAiTokenProviderTest {
 
     private final String aiToken = "on-premise-ai-token";
-    private final String tbVersion = "4.3.0-AI-TEST";
 
     @Mock
     SubscriptionService subscriptionService;
-    @Mock
-    ProjectInfo projectInfo;
 
     UUID userId;
     TenantId tenantId;
@@ -48,7 +44,7 @@ class OnPremiseTbAiTokenProviderTest {
         userId = UUID.randomUUID();
         tenantId = TenantId.fromUUID(UUID.randomUUID());
         user = user(userId, tenantId);
-        provider = new OnPremiseTbAiTokenProvider(subscriptionService, projectInfo);
+        provider = new OnPremiseTbAiTokenProvider(subscriptionService);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -89,9 +85,6 @@ class OnPremiseTbAiTokenProviderTest {
 
     @Test
     void shouldBuildHeadersWithoutOrigin_whenCalledForUser() {
-        // GIVEN
-        given(projectInfo.getProjectVersion()).willReturn(tbVersion);
-
         // WHEN
         Map<String, String> additionalInfo = provider.getAdditionalInfo(user);
 
@@ -149,9 +142,6 @@ class OnPremiseTbAiTokenProviderTest {
 
     @Test
     void shouldBuildHeadersWithoutOrigin_whenCalledWithRawIds() {
-        // GIVEN
-        given(projectInfo.getProjectVersion()).willReturn(tbVersion);
-
         // WHEN
         Map<String, String> additionalInfo = provider.getAdditionalInfo(tenantId, new UserId(userId));
 
@@ -166,8 +156,7 @@ class OnPremiseTbAiTokenProviderTest {
     private Map<String, String> expectedHeaders() {
         return Map.of(
                 TbAiHeaders.USER_ID, userId.toString(),
-                TbAiHeaders.TENANT_ID, tenantId.getId().toString(),
-                TbAiHeaders.TB_VERSION, tbVersion
+                TbAiHeaders.TENANT_ID, tenantId.getId().toString()
         );
     }
 

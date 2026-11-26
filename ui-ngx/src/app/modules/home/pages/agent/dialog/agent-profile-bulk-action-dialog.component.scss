@@ -29,16 +29,6 @@
   overflow-y: auto;
 }
 
-.tb-bulk-hint {
-  margin: 0 0 12px;
-  padding: 10px 12px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--tb-primary-500) 6%, transparent);
-  color: rgba(0, 0, 0, 0.72);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
 .tb-bulk-summary {
   background: rgba(0, 0, 0, 0.03);
   border-radius: 4px;
@@ -189,81 +179,59 @@
     }
   }
 
-  .tb-bulk-skipped-block {
-    margin-top: 10px;
-    padding: 8px 12px;
-    background: rgba(239, 108, 0, 0.06);
-    border-radius: 4px;
+  .tb-bulk-skipped-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    margin-bottom: 4px;
 
-    .tb-bulk-skipped-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      color: $agent-color-warning;
-      margin-bottom: 4px;
-
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-      }
-
-      &.error {
-        color: $agent-color-error;
-      }
-
-      .tb-bulk-skipped-count {
-        margin-left: auto;
-        background: $agent-divider-light;
-        color: rgba(0, 0, 0, 0.67);
-        padding: 0 8px;
-        border-radius: 10px;
-        font-size: 11px;
-      }
-    }
-
-    ul {
-      margin: 0;
-      padding-left: 24px;
-      font-size: 12px;
+    .tb-bulk-skipped-count {
+      margin-left: auto;
+      background: $agent-divider-light;
       color: rgba(0, 0, 0, 0.67);
-      line-height: 1.55;
+      padding: 0 8px;
+      border-radius: 10px;
+      font-size: 11px;
     }
+  }
 
-    .tb-bulk-skipped-agent {
-      font-weight: 500;
-      color: rgba(0, 0, 0, 0.76);
-    }
-    .tb-bulk-skipped-sep {
-      margin: 0 4px;
-      color: $agent-text-hint;
-    }
-    .tb-bulk-skipped-app {
-      color: var(--tb-primary-500);
-      cursor: pointer;
-      text-decoration: none;
-      // styles.scss adds a blue border-bottom to every <a> (and a darker
-      // variant on hover/focus). Override both so we get exactly one underline
-      // on hover via text-decoration.
+  .tb-bulk-skipped-list {
+    margin: 0;
+    padding-left: 24px;
+  }
+
+  .tb-bulk-skipped-agent {
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.76);
+  }
+  .tb-bulk-skipped-sep {
+    margin: 0 4px;
+    color: $agent-text-hint;
+  }
+  .tb-bulk-skipped-app {
+    color: var(--tb-primary-500);
+    cursor: pointer;
+    text-decoration: none;
+    // styles.scss adds a blue border-bottom to every <a> (and a darker
+    // variant on hover/focus). Override both so we get exactly one underline
+    // on hover via text-decoration.
+    border-bottom: none;
+    &:hover,
+    &:focus {
+      text-decoration: underline;
       border-bottom: none;
-      &:hover,
-      &:focus {
-        text-decoration: underline;
-        border-bottom: none;
-      }
     }
-    .tb-bulk-skipped-msg {
-      margin-left: 4px;
-      color: $agent-text-secondary;
-    }
-    .tb-bulk-skipped-more {
-      list-style: none;
-      margin-left: -16px;
-      font-style: italic;
-      color: $agent-text-secondary;
-    }
+  }
+  .tb-bulk-skipped-msg {
+    margin-left: 4px;
+    color: $agent-text-secondary;
+  }
+  .tb-bulk-skipped-more {
+    list-style: none;
+    margin-left: -16px;
+    font-style: italic;
+    color: $agent-text-secondary;
   }
 
   .tb-bulk-no-eligible {

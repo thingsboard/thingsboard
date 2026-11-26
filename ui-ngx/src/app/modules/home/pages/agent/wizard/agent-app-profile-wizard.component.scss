@@ -9,15 +9,10 @@
 @include wizard-summary;
 
 :host {
-  .tb-install-wizard-body {
-    min-height: 50vh;
-  }
-
   .step-content {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-height: calc(50vh - 140px);
 
     .hint,
     .type-cards {
@@ -31,19 +26,11 @@
       justify-content: center;
       gap: 16px;
     }
-
-    .step-footer {
-      margin-top: auto;
-    }
   }
 
   .summary-section {
     display: flex;
     flex-direction: column;
     gap: 16px;
-  }
-
-  .tb-app-compose-hint {
-    margin-bottom: -16px;
   }
 }

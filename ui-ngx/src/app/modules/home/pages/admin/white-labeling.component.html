@@ -11,7 +11,7 @@
         <span class="mat-headline-5">{{ (isLoginWl ? 'white-labeling.login-white-labeling' : 'white-labeling.white-labeling') | translate }}</span>
       </mat-card-title>
       <span class="flex-1"></span>
-      <div tb-help="whiteLabeling"></div>
+      <div [tb-help]="isLoginWl ? 'loginWhiteLabeling' : 'whiteLabeling'"></div>
     </mat-card-header>
     @if (isLoading$ | async) {
       <mat-progress-bar color="warn" mode="indeterminate">

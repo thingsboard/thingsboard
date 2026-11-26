@@ -155,7 +155,7 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId>
         return this.secret;
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Edge license key obtained from license portal", example = "AgcnI24Z06XC&m6Sxsdgf")
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "Edge license key obtained from license portal", example = "AgcnI24Z06XC&m6Sxsdgf")
     public String getEdgeLicenseKey() {
         return this.edgeLicenseKey;
     }

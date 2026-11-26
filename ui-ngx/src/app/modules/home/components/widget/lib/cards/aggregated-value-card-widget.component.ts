@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Input,
   OnDestroy,
@@ -12,6 +14,7 @@ import {
   TemplateRef,
   ViewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   aggregatedValueCardDefaultSettings,
   AggregatedValueCardKeyPosition,
@@ -107,7 +110,8 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -153,6 +157,12 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = this.settings.dateColor;
+
+    if (this.showDate) {
+      this.dateFormat.formattedUpdated?.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => this.cd.detectChanges());
+    }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);

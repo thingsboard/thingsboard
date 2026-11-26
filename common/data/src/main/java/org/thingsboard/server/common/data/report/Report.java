@@ -32,6 +32,7 @@ public class Report extends BaseData<ReportId> implements HasName, TenantEntity,
     @NotNull
     private TenantId tenantId;
     private CustomerId customerId;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     @NotNull
     private ReportTemplateId templateId;
     @NotNull

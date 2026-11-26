@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.iot_hub;
 
 import org.springframework.data.domain.Page;
@@ -21,6 +22,9 @@ interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledIte
 
     Optional<IotHubInstalledItemEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
+    @Query(value = "SELECT * FROM iot_hub_installed_item i WHERE i.tenant_id = :tenantId AND i.id = :id FOR UPDATE", nativeQuery = true)
+    Optional<IotHubInstalledItemEntity> findByTenantIdAndIdForUpdate(@Param("tenantId") UUID tenantId, @Param("id") UUID id);
+
     @Query("SELECT DISTINCT item.itemId FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId")
     List<UUID> findInstalledItemIdsByTenantId(@Param("tenantId") UUID tenantId);
 
@@ -29,17 +33,29 @@ interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledIte
     List<UUID> findInstalledItemIdsByTenantIdAndItemIdIn(@Param("tenantId") UUID tenantId,
                                                          @Param("itemIds") Collection<UUID> itemIds);
 
+    /**
+     * The tenant's installed items, by type, item and text. With {@code updatesOnly}, only the items with an update: an item
+     * of {@code publishedItemIds} whose installed version is not among {@code publishedVersionIds} (version ids are unique,
+     * so: not the published version of its item). A flag, as Hibernate can't type {@code :uuids IS NULL}.
+     */
     @Query("""
             SELECT item FROM IotHubInstalledItemEntity item
             WHERE item.tenantId = :tenantId
               AND (:itemTypes IS NULL OR item.itemType IN :itemTypes)
               AND (:itemId IS NULL OR item.itemId = :itemId)
+              AND (:updatesOnly = false
+                OR (item.itemId IN :publishedItemIds AND item.itemVersionId NOT IN :publishedVersionIds))
               AND (:textSearch IS NULL
                 OR ilike(item.itemName, CONCAT('%', :textSearch, '%')) = true
                 OR ilike(item.itemType, CONCAT('%', :textSearch, '%')) = true
                 OR ilike(item.version, CONCAT('%', :textSearch, '%')) = true)
             """)
-    Page<IotHubInstalledItemEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("itemTypes") List<String> itemTypes, @Param("itemId") UUID itemId, @Param("textSearch") String textSearch, Pageable pageable);
+    Page<IotHubInstalledItemEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("itemTypes") List<String> itemTypes,
+                                                   @Param("itemId") UUID itemId, @Param("textSearch") String textSearch,
+                                                   @Param("updatesOnly") boolean updatesOnly,
+                                                   @Param("publishedItemIds") Collection<UUID> publishedItemIds,
+                                                   @Param("publishedVersionIds") Collection<UUID> publishedVersionIds,
+                                                   Pageable pageable);
 
     @Query("""
             SELECT COUNT(item) FROM IotHubInstalledItemEntity item

@@ -1,0 +1,43 @@
+{
+  "end_device_ids": {
+    "device_id": "macro-tracker-1",
+    "application_ids": {
+      "application_id": "my-app"
+    },
+    "dev_eui": "70B3D57ED006F371"
+  },
+  "received_at": "2026-11-10T10:00:00.123Z",
+  "uplink_message": {
+    "f_port": 1,
+    "f_cnt": 5,
+    "frm_payload": "IWQ+Az4AbFA=",
+    "decoded_payload": {
+      "tbVersionIds": {
+        "brand_id": "lansitec",
+        "model_id": "macro-tracker"
+      },
+      "batteryLevel": 100,
+      "chargeState": "Charging",
+      "temperatureUnit": "°C"
+    },
+    "rx_metadata": [
+      {
+        "gateway_ids": {
+          "gateway_id": "ug56"
+        },
+        "rssi": -70,
+        "snr": 7
+      }
+    ],
+    "settings": {
+      "data_rate": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreading_factor": 9
+        }
+      },
+      "frequency": "868300000"
+    },
+    "received_at": "2026-11-10T10:00:00.100Z"
+  }
+}

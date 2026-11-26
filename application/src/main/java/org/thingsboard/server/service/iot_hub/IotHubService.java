@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -19,6 +20,8 @@ public interface IotHubService {
     InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor);
 
     void deleteInstalledItem(SecurityUser user, IotHubInstalledItemId installedItemId);
+
+    InstalledItemKeptEntities findKeptEntities(TenantId tenantId, IotHubInstalledItemId installedItemId);
 
     InstallPlan resolveInstallPlan(SecurityUser user, String versionId);
 

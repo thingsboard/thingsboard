@@ -11,6 +11,7 @@ import org.thingsboard.integration.api.util.LogSettingsComponent;
 import org.thingsboard.script.api.ScriptInvokeService;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
@@ -58,7 +59,7 @@ public class DedicatedScriptUplinkDataConverter extends AbstractUplinkDataConver
 
     @Override
     protected UplinkData parseUplinkData(JsonObject src, UplinkMetaData metadata) {
-        DedicatedUplinkData uplinkData = DedicatedConverterUtil.parseUplinkData(config, src, metadata);
+        DedicatedUplinkData uplinkData = DedicatedConverterUtil.parseUplinkData(config, src, metadata, converterUnwrapper.getKeys());
 
         boolean isAsset = uplinkData.getEntityType() == EntityType.ASSET;
 
@@ -95,17 +96,19 @@ public class DedicatedScriptUplinkDataConverter extends AbstractUplinkDataConver
         Map<String, String> currentOnValueTelemetryUpdate = this.currentUpdateOnlyTelemetryPerEntity.getOrDefault(name, new ConcurrentHashMap<>());
         Map<String, String> currentOnValueAttributesUpdate = this.currentUpdateOnlyAttributesPerEntity.getOrDefault(name, new ConcurrentHashMap<>());
 
-        TransportProtos.PostTelemetryMsg parsedTelemetry = parseTelemetry(uplinkData.getTelemetryJson());
+        TransportProtos.PostTelemetryMsg parsedTelemetry = JsonConverter.convertToTelemetryProto(uplinkData.getTelemetryJson(), uplinkData.getTelemetryTypeCastDisabledKeys());
         if (!this.updateOnlyKeys.isEmpty()) {
             parsedTelemetry = filterTelemetryOnKeyValueUpdateAndUpdateMap(parsedTelemetry, currentOnValueTelemetryUpdate);
         }
         builder.telemetry(parsedTelemetry);
 
-        TransportProtos.PostAttributeMsg parsedAttributes = parseAttributesUpdate(uplinkData.getAttributesJson());
+        TransportProtos.PostAttributeMsg parsedAttributes = JsonConverter.convertToAttributesProto(uplinkData.getAttributesJson(), uplinkData.getAttributesTypeCastDisabledKeys());
         if (!this.updateOnlyKeys.isEmpty()) {
             parsedAttributes = filterAttributeOnKeyValueUpdateAndUpdateMap(parsedAttributes, currentOnValueAttributesUpdate);
         }
         builder.attributesUpdate(parsedAttributes);
+        builder.telemetryTypeCastDisabledKeys(uplinkData.getTelemetryTypeCastDisabledKeys());
+        builder.attributesTypeCastDisabledKeys(uplinkData.getAttributesTypeCastDisabledKeys());
 
         if (!currentOnValueTelemetryUpdate.isEmpty()) {
             this.currentUpdateOnlyTelemetryPerEntity.put(name, currentOnValueTelemetryUpdate);

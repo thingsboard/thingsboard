@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.subscription;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +33,6 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.subscription.LicenseCapacity.CappedEntity;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;

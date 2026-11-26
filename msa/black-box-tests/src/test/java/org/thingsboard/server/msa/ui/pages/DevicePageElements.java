@@ -42,7 +42,7 @@ public class DevicePageElements extends OtherPageElementsHelper {
     private static final String DEVICE_LABEL_EDIT = "//input[@formcontrolname='label']";
     private static final String DEVICE_DEVICE_PROFILE_PAGE = DEVICE + "/ancestor::mat-row//mat-cell[contains(@class,'cdk-column-type')]/span";
     protected static final String CHANGE_OWNER_BTN = "//mat-icon[text() = 'assignment_ind']/parent::button";
-    private static final String FILTER_BTN = "//tb-device-info-filter/button";
+    private static final String FILTER_BTN = "//tb-device-table-header//tb-filter-button/button";
     private static final String DEVICE_PROFILE_FIELD = "(//input[@formcontrolname='deviceProfile'])[2]";
     private static final String DEVICE_STATE_SELECT = "//div[contains(@class,'tb-filter-panel')]//mat-select[@role='combobox']";
     private static final String LIST_OF_DEVICES_STATE = "//div[@class='status']";

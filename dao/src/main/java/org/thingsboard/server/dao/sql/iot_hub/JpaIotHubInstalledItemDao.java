@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.iot_hub;
 
 import lombok.RequiredArgsConstructor;
@@ -41,12 +42,36 @@ class JpaIotHubInstalledItemDao extends JpaAbstractDao<IotHubInstalledItemEntity
     }
 
     @Override
+    public Optional<IotHubInstalledItem> findByTenantIdAndIdForUpdate(TenantId tenantId, IotHubInstalledItemId installedItemId) {
+        return repository.findByTenantIdAndIdForUpdate(tenantId.getId(), installedItemId.getId()).map(DaoUtil::getData);
+    }
+
+    @Override
     public PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink) {
+        return find(tenantId, itemTypes, itemId, null, pageLink);
+    }
+
+    @Override
+    public PageData<IotHubInstalledItem> findByTenantIdWithUpdates(TenantId tenantId, List<String> itemTypes,
+                                                                   Map<UUID, UUID> publishedVersionIds, PageLink pageLink) {
+        return find(tenantId, itemTypes, null, publishedVersionIds, pageLink);
+    }
+
+    // Never matches: the query binds the published ids even when it doesn't filter by them
+    private static final Set<UUID> NO_IDS = Set.of(new UUID(0, 0));
+
+    // One query for both lists, so the only-updates list filters and searches as the plain one does
+    private PageData<IotHubInstalledItem> find(TenantId tenantId, List<String> itemTypes, UUID itemId,
+                                               Map<UUID, UUID> publishedVersionIds, PageLink pageLink) {
+        boolean updatesOnly = publishedVersionIds != null;
         return DaoUtil.toPageData(repository.findByTenantId(
                 tenantId.getId(),
                 itemTypes == null || itemTypes.isEmpty() ? null : itemTypes,
                 itemId,
                 StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null),
+                updatesOnly,
+                updatesOnly ? publishedVersionIds.keySet() : NO_IDS,
+                updatesOnly ? publishedVersionIds.values() : NO_IDS,
                 toPageRequest(pageLink))
         );
     }

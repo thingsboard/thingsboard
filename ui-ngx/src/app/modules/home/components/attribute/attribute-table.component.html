@@ -179,7 +179,7 @@
                 tooltipText="{{ 'attribute.copy-key' | translate }}"
                 tooltipPosition="above"
                 icon="content_copy"
-                [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+                [style]="{padding: '4px', 'font-size': '16px'}"
                 >
               </tb-copy-button>
             </div>
@@ -201,7 +201,7 @@
                     tooltipText="{{ 'attribute.copy-value' | translate }}"
                     tooltipPosition="above"
                     icon="content_copy"
-                    [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+                    [style]="{padding: '4px', 'font-size': '16px'}"
                     >
                   </tb-copy-button>
                 }
@@ -239,11 +239,8 @@
     showFirstLastButtons></mat-paginator>
     @if (mode === 'widget' && widgetsList.length > 0) {
       <ngx-hm-carousel
-        #carousel
         [(ngModel)]="widgetsCarouselIndex"
         (ngModelChange)="onWidgetsCarouselIndexChanged()"
-        [data]="widgetsList"
-        [infinite]="false"
         class="carousel c-accent flex-1">
         <section ngx-hm-carousel-container class="content">
           @for (widgets of widgetsList; track widgets) {
@@ -267,6 +264,7 @@
         <ng-template #carouselPrev>
           @if (widgetsCarouselIndex > 0) {
             <button mat-icon-button
+                    [attr.aria-label]="'attribute.prev-widget' | translate"
                     matTooltip="{{ 'attribute.prev-widget' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>keyboard_arrow_left</mat-icon>
@@ -276,6 +274,7 @@
         <ng-template #carouselNext>
           @if (widgetsCarouselIndex < widgetsList.length - 1) {
             <button mat-icon-button
+                    [attr.aria-label]="'attribute.next-widget' | translate"
                     matTooltip="{{ 'attribute.next-widget' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>keyboard_arrow_right</mat-icon>

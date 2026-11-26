@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -60,6 +61,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -498,9 +500,12 @@ public class DeviceApiController implements TbTransportService {
             } else if (title.equals(otaPackageResponseMsg.getTitle()) && version.equals(otaPackageResponseMsg.getVersion())) {
                 String otaPackageId = new UUID(otaPackageResponseMsg.getOtaPackageIdMSB(), otaPackageResponseMsg.getOtaPackageIdLSB()).toString();
                 ByteArrayResource resource = new ByteArrayResource(transportContext.getOtaPackageDataCache().get(otaPackageId, chunkSize, chunk));
+                String fileName = otaPackageResponseMsg.getFileName();
+                ContentDisposition.Builder contentDisposition = ContentDisposition.attachment();
+                boolean ascii = StandardCharsets.US_ASCII.newEncoder().canEncode(fileName);
                 ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackageResponseMsg.getFileName())
-                        .header("x-filename", otaPackageResponseMsg.getFileName())
+                        .header(HttpHeaders.CONTENT_DISPOSITION, (ascii ? contentDisposition.filename(fileName) : contentDisposition.filename(fileName, StandardCharsets.UTF_8)).build().toString())
+                        .header("x-filename", fileName)
                         .contentLength(resource.contentLength())
                         .contentType(parseMediaType(otaPackageResponseMsg.getContentType()))
                         .body(resource);

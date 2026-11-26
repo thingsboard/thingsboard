@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -79,11 +80,6 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
         })
       }
     );
-    this.backgroundSettingsFormGroup.get('type').valueChanges.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      setTimeout(() => {this.popover?.updatePosition();}, 0);
-    });
     this.backgroundSettingsFormGroup.get('overlay').get('enabled').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {

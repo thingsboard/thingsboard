@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -28,7 +29,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private static final String PROVIDER_ACCESS_TOKEN = "provider-access-token";
 
 
-    private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
+    private final RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 
     @Override
     public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client auth2Client) {
@@ -37,15 +38,16 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         return getOrCreateSecurityUserFromOAuth2User(oauth2User, auth2Client);
     }
 
-    private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2CustomMapperConfig custom) {
+    private OAuth2User getOAuth2User(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2CustomMapperConfig custom) {
+        RestTemplateBuilder builder = restTemplateBuilder;
         if (!StringUtils.isEmpty(custom.getUsername()) && !StringUtils.isEmpty(custom.getPassword())) {
-            restTemplateBuilder = restTemplateBuilder.basicAuthentication(custom.getUsername(), custom.getPassword());
+            builder = builder.basicAuthentication(custom.getUsername(), custom.getPassword());
         }
         if (custom.isSendToken() && !StringUtils.isEmpty(providerAccessToken)) {
-            restTemplateBuilder = restTemplateBuilder.defaultHeader(PROVIDER_ACCESS_TOKEN, providerAccessToken);
+            builder = builder.defaultHeader(PROVIDER_ACCESS_TOKEN, providerAccessToken);
         }
 
-        RestTemplate restTemplate = restTemplateBuilder.build();
+        RestTemplate restTemplate = builder.build();
         String request;
         try {
             request = JacksonUtil.getObjectMapperWithJavaTimeModule().writeValueAsString(token.getPrincipal());

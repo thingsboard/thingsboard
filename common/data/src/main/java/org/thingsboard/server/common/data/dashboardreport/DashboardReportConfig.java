@@ -21,13 +21,13 @@ public class DashboardReportConfig {
     boolean useDashboardTimewindow;
     @Schema(description = "Specific dashboard timewindow that will be used during dashboard report generation.")
     JsonNode timewindow;
-    @Schema(description = "If set, timewindow configured in the target dashboard will be used during dashboard report generation.", example = "report-%d{yyyy-MM-dd_HH:mm:ss}", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Pattern of the generated report file name. '%d{<date format>}' is replaced with the report generation time formatted in the report timezone. If not set, 'report-%d{yyyy-MM-dd_HH:mm:ss}' is used.", example = "report-%d{yyyy-MM-dd_HH:mm:ss}", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     String namePattern;
     @Schema(description = "Dashboard report file type, can be PDF | PNG | JPEG.", example = "pdf")
     String type;
     @Schema(description = "If set, credentials of user created this dashboard report configuration will be used to open dashboard UI during dashboard report generation.", example = "true")
     boolean useCurrentUserCredentials;
-    @Schema(description = "A string value representing the user id.", example = "784f394c-42b6-435a-983c-b7beff2784f9", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "A string value representing the user id.", example = "784f394c-42b6-435a-983c-b7beff2784f9", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     String userId;
 
 }

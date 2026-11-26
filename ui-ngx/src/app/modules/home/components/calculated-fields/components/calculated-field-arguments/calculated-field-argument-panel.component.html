@@ -1,15 +1,17 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-config-panel" [formGroup]="argumentFormGroup">
   <div class="tb-config-panel-title tb-form-panel-title">{{ 'calculated-fields.argument-settings' | translate }}</div>
   <div class="tb-config-panel-content tb-form-panel no-border no-padding">
     @if (hint) {
-      <div class="tb-form-hint tb-primary-fill hint-container">
-        {{ hint | translate }}
+      <div class="tb-form-hint tb-primary-fill">
+        <mat-icon>info_outline</mat-icon>
+        <span>{{ hint | translate }}</span>
       </div>
     }
     <div class="tb-form-panel no-border no-padding">

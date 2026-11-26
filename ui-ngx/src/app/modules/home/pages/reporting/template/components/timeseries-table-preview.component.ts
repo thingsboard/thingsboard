@@ -79,8 +79,8 @@ export class TimeseriesTablePreviewComponent extends AbstractReportTablePreviewC
     }
   }
 
-  protected styleFromColumnSettings(column: DataKey, header = false): ComponentStyle {
-    const style = super.styleFromColumnSettings(column, header);
+  protected styleFromColumnSettings(column: DataKey, header = false, firstColumn = false): ComponentStyle {
+    const style = super.styleFromColumnSettings(column, header, firstColumn);
     if (!this.isPlainFormat && !header) {
       if (['ts', 'createdTime'].includes(column.name)) {
         style.fontSize = style.fontSize || '9pt';

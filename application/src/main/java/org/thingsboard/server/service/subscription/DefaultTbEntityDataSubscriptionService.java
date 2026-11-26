@@ -163,6 +163,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     @Override
     public void handleCmd(WebSocketSessionRef session, EntityDataCmd cmd) {
+        if (!wsService.hasSession(session.getSessionId())) {
+            log.debug("[{}][{}] Ignoring entity data command for closed session", session.getSessionId(), cmd.getCmdId());
+            return;
+        }
         TbEntityDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
@@ -395,6 +399,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     @Override
     public void handleCmd(WebSocketSessionRef session, AlarmDataCmd cmd) {
+        if (!wsService.hasSession(session.getSessionId())) {
+            log.debug("[{}][{}] Ignoring alarm data command for closed session", session.getSessionId(), cmd.getCmdId());
+            return;
+        }
         TbAlarmDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx == null) {
             log.debug("[{}][{}] Creating new alarm subscription using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
@@ -407,6 +415,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         long end = System.currentTimeMillis();
         stats.getRegularQueryInvocationCnt().incrementAndGet();
         stats.getRegularQueryTimeSpent().addAndGet(end - start);
+        if (ctx.isStopped()) {
+            log.debug("[{}][{}] Alarm data context was stopped while fetching data, skipping subscriptions", session.getSessionId(), cmd.getCmdId());
+            return;
+        }
         List<EntityData> entities = ctx.getEntitiesData();
         ctx.cancelTasks();
         ctx.clearEntitySubscriptions();

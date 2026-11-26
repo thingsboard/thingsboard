@@ -21,6 +21,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,6 +62,21 @@ public class TbMailSenderTest {
 
         verify(tbMailSender, times(1)).updateOauth2PasswordIfExpired();
         verify(tbMailSender, times(1)).testConnectionSuper();
+    }
+
+    @Test
+    public void testServerIdentityCheckIsDisabled() {
+        var json = JacksonUtil.newObjectNode();
+        json.put("smtpProtocol", "smtps");
+        json.put("smtpHost", "10.0.0.1");
+        json.put("smtpPort", "465");
+        json.put("timeout", "10000");
+        json.put("username", "");
+        json.put("enableTls", true);
+
+        TbMailSender sender = new TbMailSender(null, TenantId.SYS_TENANT_ID, json);
+
+        assertEquals("false", sender.getJavaMailProperties().getProperty("mail.smtps.ssl.checkserveridentity"));
     }
 
     @Test

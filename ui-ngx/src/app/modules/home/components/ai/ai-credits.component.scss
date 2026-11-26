@@ -7,13 +7,13 @@
     --_donut-track: rgba(0, 0, 0, 0.12);
 
     &.WARNING {
-      --_donut-color: #FAA405;
-      --_donut-track: rgba(250, 164, 5, 0.2);
+      --_donut-color: var(--tb-warning);
+      --_donut-track: color-mix(in srgb, var(--tb-warning) 20%, transparent);
     }
 
     &.DISABLED {
-      --_donut-color: #D12730;
-      --_donut-track: rgba(209, 39, 48, 0.2);
+      --_donut-color: var(--tb-crit);
+      --_donut-track: color-mix(in srgb, var(--tb-crit) 20%, transparent);
     }
   }
 

@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, of, throwError } from 'rxjs';
-import { map, mergeMap, tap } from 'rxjs/operators';
+import { filter, map, mergeMap, shareReplay, tap } from 'rxjs/operators';
 import { AgentService } from '@core/http/agent.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
@@ -40,19 +41,26 @@ export class AgentAppWizardLoaderService {
 
   private templateCache = new Map<AgentApplicationType, AgentAppTemplate>();
   private templateByVersionCache = new Map<string, AgentAppTemplate>();
-  private templatesByTypeCache = new Map<AgentApplicationType, AgentAppTemplate[]>();
-  private profilesCache = new Map<AgentApplicationType, AgentAppProfile[]>();
+  private templatesByTypeCache = new Map<AgentApplicationType, Observable<AgentAppTemplate[]>>();
+  private profilesCache = new Map<AgentApplicationType, Observable<AgentAppProfile[]>>();
 
   constructor(private agentService: AgentService) {}
 
   // Warm the per-type template cache so the first type-card click in install
-  // mode doesn't flash a "Loading template…" state.
-  prewarmTemplates(types: AgentApplicationType[]): void {
+  // mode doesn't flash a "Loading template…" state. Background-only: a failed `latest`
+  // request is silent (the shared per-type list request may still toast), and the
+  // requests are cancelled when `destroyRef` is destroyed.
+  prewarmTemplates(types: AgentApplicationType[], destroyRef: DestroyRef): void {
     types.forEach(type => {
       if (this.templateCache.has(type)) {
         return;
       }
-      this.agentService.getLatestAgentAppTemplate(type, AgentAppConfigType.DOCKER_COMPOSE).subscribe({
+      this.loadTemplatesByType(type).pipe(
+        filter(templates => templates.length > 0),
+        mergeMap(() => this.agentService.getLatestAgentAppTemplate(type, AgentAppConfigType.DOCKER_COMPOSE,
+          { ignoreErrors: true, ignoreLoading: true })),
+        takeUntilDestroyed(destroyRef)
+      ).subscribe({
         next: tpl => this.templateCache.set(type, tpl),
         error: () => { /* swallow — loadTemplate retries on demand */ }
       });
@@ -81,14 +89,16 @@ export class AgentAppWizardLoaderService {
     );
   }
 
+  // Caches the request itself, so concurrent callers share one in-flight call;
+  // shareReplay drops a failed request, so the next caller retries, and cancels it
+  // once every caller has unsubscribed (e.g. the wizard was closed).
   loadTemplatesByType(type: AgentApplicationType): Observable<AgentAppTemplate[]> {
-    const cached = this.templatesByTypeCache.get(type);
-    if (cached) {
-      return of(cached);
+    let templates$ = this.templatesByTypeCache.get(type);
+    if (!templates$) {
+      templates$ = this.agentService.getAgentAppTemplatesByAppType(type).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+      this.templatesByTypeCache.set(type, templates$);
     }
-    return this.agentService.getAgentAppTemplatesByAppType(type).pipe(
-      tap(templates => this.templatesByTypeCache.set(type, templates))
-    );
+    return templates$;
   }
 
   materializeProfile(profile: VirtualAgentAppProfile): Observable<AgentAppProfile> {
@@ -96,17 +106,18 @@ export class AgentAppWizardLoaderService {
   }
 
   loadProfiles(type: AgentApplicationType): Observable<AgentAppProfile[]> {
-    const cached = this.profilesCache.get(type);
-    if (cached) {
-      return of(cached);
+    let profiles$ = this.profilesCache.get(type);
+    if (!profiles$) {
+      profiles$ = (this.agentService.getAgentAppProfilesByAppType(type) as Observable<AgentAppProfile[]>).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+      this.profilesCache.set(type, profiles$);
     }
-    return this.agentService.getAgentAppProfilesByAppType(type).pipe(
-      tap(profiles => this.profilesCache.set(type, profiles))
-    ) as Observable<AgentAppProfile[]>;
+    return profiles$;
   }
 
   cacheProfiles(type: AgentApplicationType, profiles: AgentAppProfile[]): void {
-    this.profilesCache.set(type, profiles);
+    this.profilesCache.set(type, of(profiles));
   }
 
   // Reads the linked profile via the info-by-id endpoint, which is gated by

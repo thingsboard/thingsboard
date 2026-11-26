@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -42,6 +44,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.exception.DataValidationException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -926,6 +929,160 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testUpdateResourceInfoKeepsStoredTenant() throws Exception {
+        TbResourceInfo savedResource = saveJsModule();
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResource.getId());
+        resourceInfo.setTenantId(null);
+        resourceInfo.setTitle("Updated title");
+        Mockito.reset(tbClusterService, auditLogService);
+        TbResourceInfo updatedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(updatedResource.getTenantId()).isEqualTo(savedTenant.getId());
+        assertThat(updatedResource.getTitle()).isEqualTo("Updated title");
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(updatedResource, updatedResource.getId(), updatedResource.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.UPDATED, ActionType.UPDATED);
+        resourceInfo = findResourceInfo(savedResource.getId());
+        assertThat(resourceInfo.getTenantId()).isEqualTo(savedTenant.getId());
+        assertThat(resourceInfo.getTitle()).isEqualTo("Updated title");
+
+        resourceInfo.setTenantId(TenantId.SYS_TENANT_ID);
+        doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(findResourceInfo(savedResource.getId()).getTenantId()).isEqualTo(savedTenant.getId());
+
+        loginDifferentTenant();
+        login(tenantAdmin.getEmail(), "testPassword1");
+        resourceInfo.setTenantId(savedDifferentTenant.getId());
+        doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(findResourceInfo(savedResource.getId()).getTenantId()).isEqualTo(savedTenant.getId());
+
+        deleteDifferentTenant();
+    }
+
+    @Test
+    public void testUpdateResourceInfoKeepsStoredKeyAndEtag() throws Exception {
+        TbResourceInfo savedResource = saveJsModule();
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResource.getId());
+        resourceInfo.setTitle("Updated title");
+        resourceInfo.setResourceKey("other-key");
+        resourceInfo.setEtag("0");
+        resourceInfo.setCreatedTime(1);
+        TbResourceInfo updatedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(updatedResource.getTitle()).isEqualTo("Updated title");
+        assertThat(updatedResource.getResourceKey()).isEqualTo(savedResource.getResourceKey());
+        assertThat(updatedResource.getEtag()).isEqualTo(savedResource.getEtag());
+        assertThat(updatedResource.getCreatedTime()).isEqualTo(savedResource.getCreatedTime());
+
+        resourceInfo = findResourceInfo(savedResource.getId());
+        assertThat(resourceInfo.getResourceKey()).isEqualTo(savedResource.getResourceKey());
+        assertThat(resourceInfo.getEtag()).isEqualTo(savedResource.getEtag());
+    }
+
+    @Test
+    public void testUpdateResourceInfoRefusesTypeChange() throws Exception {
+        TbResourceInfo savedResource = saveJsModule();
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResource.getId());
+        resourceInfo.setResourceType(ResourceType.GENERAL);
+        doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("can't be changed")));
+
+        resourceInfo = findResourceInfo(savedResource.getId());
+        resourceInfo.setResourceSubType(ResourceSubType.MODULE);
+        doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("can't be changed")));
+
+        resourceInfo = findResourceInfo(savedResource.getId());
+        assertThat(resourceInfo.getResourceType()).isEqualTo(ResourceType.JS_MODULE);
+        assertThat(resourceInfo.getResourceSubType()).isEqualTo(ResourceSubType.EXTENSION);
+
+        resourceInfo.setTitle("Updated title");
+        ObjectNode request = (ObjectNode) JacksonUtil.valueToTree(resourceInfo);
+        request.putNull("resourceType");
+        request.putNull("resourceSubType");
+        TbResourceInfo updatedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", request, TbResourceInfo.class);
+        assertThat(updatedResource.getTitle()).isEqualTo("Updated title");
+        resourceInfo = findResourceInfo(savedResource.getId());
+        assertThat(resourceInfo.getResourceType()).isEqualTo(ResourceType.JS_MODULE);
+        assertThat(resourceInfo.getResourceSubType()).isEqualTo(ResourceSubType.EXTENSION);
+    }
+
+    @Test
+    public void testSaveResourceWithIdKeepsStoredTypeKeyAndEtag() throws Exception {
+        TbResourceInfo savedResource = saveJsModule();
+
+        TbResource resource = new TbResource(findResourceInfo(savedResource.getId()));
+        resource.setResourceType(ResourceType.GENERAL);
+        doPost("/api/resource", resource)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("can't be changed")));
+
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setTitle("Updated title");
+        resource.setResourceKey("other-key");
+        resource.setEtag("0");
+        TbResourceInfo updatedResource = doPost("/api/resource", resource, TbResourceInfo.class);
+        assertThat(updatedResource.getTitle()).isEqualTo("Updated title");
+        assertThat(updatedResource.getResourceKey()).isEqualTo(savedResource.getResourceKey());
+        assertThat(updatedResource.getEtag()).isEqualTo(savedResource.getEtag());
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResource.getId());
+        assertThat(resourceInfo.getResourceType()).isEqualTo(ResourceType.JS_MODULE);
+        assertThat(resourceInfo.getResourceKey()).isEqualTo(savedResource.getResourceKey());
+        assertThat(resourceInfo.getEtag()).isEqualTo(savedResource.getEtag());
+    }
+
+    @Test
+    public void testSysAdminUpdateResourceInfoKeepsSystemTenant() throws Exception {
+        loginSysAdmin();
+        TbResourceInfo savedResource = saveJsModule();
+        assertThat(savedResource.getTenantId()).isEqualTo(TenantId.SYS_TENANT_ID);
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResource.getId());
+        resourceInfo.setTenantId(savedTenant.getId());
+        TbResourceInfo updatedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(updatedResource.getTenantId()).isEqualTo(TenantId.SYS_TENANT_ID);
+        assertThat(findResourceInfo(savedResource.getId()).getTenantId()).isEqualTo(TenantId.SYS_TENANT_ID);
+
+        doDelete("/api/resource/" + savedResource.getUuidId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testUpdateResourceInfoKeepsStoredCustomer() throws Exception {
+        Customer storedCustomer = saveCustomer("Stored resource customer");
+        Customer otherCustomer = saveCustomer("Other resource customer");
+
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setResourceSubType(ResourceSubType.EXTENSION);
+        resource.setTitle("Js resource");
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setEncodedData(TEST_DATA);
+        resource.setCustomerId(storedCustomer.getId());
+        TbResourceInfo savedResource = doPost("/api/resource", resource, TbResourceInfo.class);
+        assertThat(savedResource.getCustomerId()).isEqualTo(storedCustomer.getId());
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResource.getId());
+        resourceInfo.setCustomerId(otherCustomer.getId());
+        TbResourceInfo updatedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(updatedResource.getCustomerId()).isEqualTo(storedCustomer.getId());
+
+        resourceInfo.setCustomerId(null);
+        updatedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", resourceInfo, TbResourceInfo.class);
+        assertThat(updatedResource.getCustomerId()).isEqualTo(storedCustomer.getId());
+        assertThat(findResourceInfo(savedResource.getId()).getCustomerId()).isEqualTo(storedCustomer.getId());
+    }
+
+    private Customer saveCustomer(String title) throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle(title);
+        return doPost("/api/customer", customer, Customer.class);
+    }
+
+    @Test
     public void testGetLwm2mListObjectsPage() throws Exception {
         loginTenantAdmin();
 
@@ -1053,6 +1210,22 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         return new TbResourceInfo(save(resource));
     }
 
+    @Test
+    public void testUploadResourceWithEncodedQuotesInFileName() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setFileName("%22Baker Street%22, 221B.js");
+        resource.setData("export const value = 1;".getBytes(StandardCharsets.UTF_8));
+
+        TbResourceInfo savedResource = save(resource);
+
+        assertThat(savedResource.getFileName()).isEqualTo("\"Baker Street\", 221B.js");
+        assertThat(savedResource.getTitle()).isEqualTo("\"Baker Street\", 221B.js");
+        assertThat(savedResource.getResourceKey()).isEqualTo("\"Baker Street\", 221B.js");
+
+        doGet("/api/resource/js_module/tenant/{key}/info", savedResource.getResourceKey()).andExpect(status().isOk());
+    }
+
     private TbResourceInfo save(TbResource tbResource) throws Exception {
         byte[] data = tbResource.getData() != null ? tbResource.getData() : tbResource.getEncodedData() != null ? Base64.getDecoder().decode(tbResource.getEncodedData()) : null;
         List<MockPart> parts = new ArrayList<>();
@@ -1068,6 +1241,16 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         }
 
         return uploadResource(HttpMethod.POST, "/api/resource/upload", tbResource.getFileName(), tbResource.getResourceType().getMediaType(), data, parts);
+    }
+
+    private TbResourceInfo saveJsModule() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setResourceSubType(ResourceSubType.EXTENSION);
+        resource.setTitle("Js resource");
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setEncodedData(TEST_DATA);
+        return save(resource);
     }
 
     private TbResourceInfo findResourceInfo(TbResourceId id) throws Exception {

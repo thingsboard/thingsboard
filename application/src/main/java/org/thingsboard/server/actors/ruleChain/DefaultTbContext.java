@@ -38,6 +38,7 @@ import org.thingsboard.rule.engine.util.TenantIdLoader;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -527,7 +528,11 @@ public class DefaultTbContext implements TbContext, TbPeContext {
         if (attributes != null) {
             attributes.forEach(attributeKvEntry -> JacksonUtil.addKvEntry(entityNode, attributeKvEntry));
         }
-        return attributesActionMsg(originator, ruleNodeId, scope, ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
+        TbMsgMetaData tbMsgMetaData = getActionMetaData(ruleNodeId);
+        // The saved string values that read back as numbers stay strings for the nodes that parse the notification.
+        List<String> typeCastDisabledKeys = JsonConverter.numericStringKeys(attributes);
+        tbMsgMetaData.putTypeCastDisabledKeys(typeCastDisabledKeys);
+        return attributesActionMsg(originator, tbMsgMetaData, scope, ATTRIBUTES_UPDATED, JacksonUtil.toString(entityNode));
     }
 
     @Override
@@ -537,11 +542,10 @@ public class DefaultTbContext implements TbContext, TbPeContext {
         if (keys != null) {
             keys.forEach(attrsArrayNode::add);
         }
-        return attributesActionMsg(originator, ruleNodeId, scope, ATTRIBUTES_DELETED, JacksonUtil.toString(entityNode));
+        return attributesActionMsg(originator, getActionMetaData(ruleNodeId), scope, ATTRIBUTES_DELETED, JacksonUtil.toString(entityNode));
     }
 
-    private TbMsg attributesActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, TbMsgType actionMsgType, String msgData) {
-        TbMsgMetaData tbMsgMetaData = getActionMetaData(ruleNodeId);
+    private TbMsg attributesActionMsg(EntityId originator, TbMsgMetaData tbMsgMetaData, String scope, TbMsgType actionMsgType, String msgData) {
         tbMsgMetaData.putValue("scope", scope);
         HasRuleEngineProfile profile = getRuleEngineProfile(originator);
         return entityActionMsg(originator, tbMsgMetaData, msgData, actionMsgType, profile);

@@ -26,6 +26,7 @@ import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -38,7 +39,9 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -77,6 +80,7 @@ import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
@@ -101,12 +105,14 @@ import org.thingsboard.server.gen.edge.v1.SendSmsUplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeEntityTenantChecker;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.mail.EdgeMailRequest;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.notification.EdgeNotificationRequest;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.sms.EdgeSmsRequest;
 import org.thingsboard.server.service.sms.SmsExecutorService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
@@ -149,6 +155,15 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private EntityService entityService;
+
+    @Autowired
+    private EdgeEntityTenantChecker edgeEntityTenantChecker;
+
+    @Autowired
+    private OwnersCacheService ownersCacheService;
 
     @Autowired
     private TbEntityViewService entityViewService;
@@ -219,6 +234,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         RuleChainId ruleChainId = new RuleChainId(new UUID(ruleChainMetadataRequestMsg.getRuleChainIdMSB(), ruleChainMetadataRequestMsg.getRuleChainIdLSB()));
+        if (!isTenantEntity(tenantId, ruleChainId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN_METADATA, EdgeEventActionType.ADDED, ruleChainId, null);
     }
 
@@ -231,6 +249,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         final EdgeEventType entityType = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
         if (entityType == null) {
             log.warn("[{}] Type doesn't supported {}", tenantId, entityId.getEntityType());
+            return Futures.immediateFuture(null);
+        }
+        if (!isTenantEntity(tenantId, entityId)) {
             return Futures.immediateFuture(null);
         }
         String scope = attributesRequestMsg.getScope();
@@ -329,6 +350,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(
                 EntityType.valueOf(relationRequestMsg.getEntityType()),
                 new UUID(relationRequestMsg.getEntityIdMSB(), relationRequestMsg.getEntityIdLSB()));
+        if (!isTenantEntity(tenantId, entityId)) {
+            return Futures.immediateFuture(null);
+        }
 
         List<ListenableFuture<List<EntityRelation>>> futures = new ArrayList<>();
         futures.add(findRelationByQuery(tenantId, edge, entityId, EntitySearchDirection.FROM));
@@ -452,6 +476,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         DeviceId deviceId = new DeviceId(new UUID(deviceCredentialsRequestMsg.getDeviceIdMSB(), deviceCredentialsRequestMsg.getDeviceIdLSB()));
+        if (!isTenantEntity(tenantId, deviceId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE,
                 EdgeEventActionType.CREDENTIALS_UPDATED, deviceId, null);
     }
@@ -463,6 +490,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             return Futures.immediateFuture(null);
         }
         UserId userId = new UserId(new UUID(userCredentialsRequestMsg.getUserIdMSB(), userCredentialsRequestMsg.getUserIdLSB()));
+        if (!isTenantEntity(tenantId, userId)) {
+            return Futures.immediateFuture(null);
+        }
         return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.USER,
                 EdgeEventActionType.CREDENTIALS_UPDATED, userId, null);
     }
@@ -475,7 +505,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         if (widgetBundleTypesRequestMsg.getWidgetBundleIdMSB() != 0 && widgetBundleTypesRequestMsg.getWidgetBundleIdLSB() != 0) {
             WidgetsBundleId widgetsBundleId = new WidgetsBundleId(new UUID(widgetBundleTypesRequestMsg.getWidgetBundleIdMSB(), widgetBundleTypesRequestMsg.getWidgetBundleIdLSB()));
             WidgetsBundle widgetsBundleById = widgetsBundleService.findWidgetsBundleById(tenantId, widgetsBundleId);
-            if (widgetsBundleById != null) {
+            if (widgetsBundleById != null && (TenantId.SYS_TENANT_ID.equals(widgetsBundleById.getTenantId()) || tenantId.equals(widgetsBundleById.getTenantId()))) {
                 List<WidgetType> widgetTypesToPush =
                         widgetTypeService.findWidgetTypesByWidgetsBundleId(widgetsBundleById.getTenantId(), widgetsBundleId);
                 for (WidgetType widgetType : widgetTypesToPush) {
@@ -541,32 +571,70 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         log.trace("[{}] processEntityGroupEntitiesRequest [{}][{}]", tenantId, edge.getName(), entityGroupEntitiesRequestMsg);
         if (entityGroupEntitiesRequestMsg.getEntityGroupIdMSB() != 0 && entityGroupEntitiesRequestMsg.getEntityGroupIdLSB() != 0) {
             EntityGroupId entityGroupId = new EntityGroupId(new UUID(entityGroupEntitiesRequestMsg.getEntityGroupIdMSB(), entityGroupEntitiesRequestMsg.getEntityGroupIdLSB()));
-            ListenableFuture<List<EntityId>> entityIdsFuture;
-            try {
-                // TODO: refactor this to pagination
-                entityIdsFuture = entityGroupService.findAllEntityIdsAsync(edge.getTenantId(), entityGroupId, new PageLink(Integer.MAX_VALUE));
-            } catch (IncorrectParameterException e) {
-                log.warn("[{}] Entity group not found to process entityGroupEntitiesRequestMsg {}", tenantId, entityGroupEntitiesRequestMsg, e);
+            EntityGroup entityGroup = entityGroupService.findEntityGroupById(tenantId, entityGroupId);
+            if (entityGroup == null || !isTenantEntity(tenantId, entityGroup.getOwnerId())) {
                 return Futures.immediateFuture(null);
             }
-            return Futures.transformAsync(entityIdsFuture, entityIds -> {
-                if (entityIds != null && !entityIds.isEmpty()) {
-                    EntityType groupType = EntityType.valueOf(entityGroupEntitiesRequestMsg.getType());
-                    return switch (groupType) {
-                        case DEVICE -> syncDevices(edge, entityIds, entityGroupId);
-                        case ASSET -> syncAssets(edge, entityIds, entityGroupId);
-                        case ENTITY_VIEW -> syncEntityViews(edge, entityIds, entityGroupId);
-                        case DASHBOARD -> syncDashboards(edge, entityIds, entityGroupId);
-                        case USER -> syncUsers(edge, entityIds, entityGroupId);
-                        default -> Futures.immediateFuture(null);
-                    };
-                } else {
-                    log.trace("No entities found for the requested entity group {} [{}]", entityGroupId.getId(), entityGroupEntitiesRequestMsg.getType());
+            ListenableFuture<Boolean> assignedFuture =
+                    entityGroupService.checkEntityGroupAssignedToEdgeAsync(tenantId, edge.getId(), entityGroupId, entityGroup.getType());
+            return Futures.transformAsync(assignedFuture, assigned -> {
+                if (!Boolean.TRUE.equals(assigned) && !isEdgePublicUsersGroup(tenantId, edge, entityGroup)) {
+                    log.warn("[{}][{}] Entity group {} is not assigned to edge, skipping request", tenantId, edge.getId(), entityGroupId);
                     return Futures.immediateFuture(null);
                 }
+                return syncEntityGroupEntities(tenantId, edge, entityGroup);
             }, dbCallbackExecutorService);
         }
         return Futures.immediateFuture(null);
+    }
+
+    // Public Users groups are sent to the edge on sync without an edge assignment
+    private boolean isEdgePublicUsersGroup(TenantId tenantId, Edge edge, EntityGroup entityGroup) {
+        if (!EntityType.USER.equals(entityGroup.getType()) || !EntityGroup.GROUP_PUBLIC_USERS_NAME.equals(entityGroup.getName())
+                || !EntityType.CUSTOMER.equals(entityGroup.getOwnerId().getEntityType())) {
+            return false;
+        }
+        Customer publicCustomer = findCustomer(tenantId, new CustomerId(entityGroup.getOwnerId().getId()));
+        if (publicCustomer == null || !publicCustomer.isPublic()) {
+            return false;
+        }
+        // the edge's owner chain (customer, parent customers, tenant)
+        return ownersCacheService.getOwners(tenantId, edge.getId(), edge).contains(publicCustomer.getOwnerId());
+    }
+
+    private Customer findCustomer(TenantId tenantId, CustomerId customerId) {
+        return entityService.fetchEntity(tenantId, customerId)
+                .filter(Customer.class::isInstance)
+                .map(Customer.class::cast)
+                .filter(customer -> tenantId.equals(customer.getTenantId()))
+                .orElse(null);
+    }
+
+    private ListenableFuture<Void> syncEntityGroupEntities(TenantId tenantId, Edge edge, EntityGroup entityGroup) {
+        EntityGroupId entityGroupId = entityGroup.getId();
+        ListenableFuture<List<EntityId>> entityIdsFuture;
+        try {
+            // TODO: refactor this to pagination
+            entityIdsFuture = entityGroupService.findAllEntityIdsAsync(edge.getTenantId(), entityGroupId, new PageLink(Integer.MAX_VALUE));
+        } catch (IncorrectParameterException e) {
+            log.warn("[{}] Entity group {} not found to process entity group entities request", tenantId, entityGroupId, e);
+            return Futures.immediateFuture(null);
+        }
+        return Futures.transformAsync(entityIdsFuture, entityIds -> {
+            if (entityIds != null && !entityIds.isEmpty()) {
+                return switch (entityGroup.getType()) {
+                    case DEVICE -> syncDevices(edge, entityIds, entityGroupId);
+                    case ASSET -> syncAssets(edge, entityIds, entityGroupId);
+                    case ENTITY_VIEW -> syncEntityViews(edge, entityIds, entityGroupId);
+                    case DASHBOARD -> syncDashboards(edge, entityIds, entityGroupId);
+                    case USER -> syncUsers(edge, entityIds, entityGroupId);
+                    default -> Futures.immediateFuture(null);
+                };
+            } else {
+                log.trace("No entities found for the requested entity group {} [{}]", entityGroupId.getId(), entityGroup.getType());
+                return Futures.immediateFuture(null);
+            }
+        }, dbCallbackExecutorService);
     }
 
     @Override
@@ -912,6 +980,14 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     private static <T> T parseSendRequest(String request, Class<T> clazz) throws IOException {
         return request != null ? JacksonUtil.IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER.readValue(request, clazz) : null;
+    }
+
+    private boolean isTenantEntity(TenantId tenantId, EntityId entityId) {
+        boolean tenantEntity = edgeEntityTenantChecker.isTenantEntity(tenantId, entityId);
+        if (!tenantEntity) {
+            log.warn("[{}] Entity {} not found, skipping request", tenantId, entityId);
+        }
+        return tenantEntity;
     }
 
     private ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,

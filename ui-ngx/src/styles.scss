@@ -258,11 +258,8 @@ pre.tb-highlight {
   }
 }
 
-.tb-notice {
-  padding: 15px;
-  font-size: 16px;
-  background-color: #f7f7f7;
-  border: 1px solid #ccc;
+tb-entities-table.white-background {
+  --mat-sidenav-content-background-color: white;
 }
 
 .ace_editor {
@@ -693,10 +690,14 @@ pre.tb-highlight {
   }
 
   .mat-padding {
-    padding: 8px;
+    padding: $tb-content-spacing;
     @media #{$mat-gt-sm} {
-      padding: 16px;
+      padding: $tb-content-spacing-gt-sm;
     }
+  }
+
+  .tb-content-card {
+    @include tb-content-card;
   }
 
   .mat-content {

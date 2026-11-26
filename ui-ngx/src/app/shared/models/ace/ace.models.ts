@@ -14,40 +14,62 @@ let aceModule: any;
 let aceDiffModule: any;
 let cssLanguageProvider: LanguageProvider;
 
-function loadAceDependencies(): Observable<any> {
+const aceModuleLoaders: Record<string, () => Promise<unknown>> = {
+  'ace/mode/java': () => import('ace-builds/src-noconflict/mode-java'),
+  'ace/mode/css': () => import('ace-builds/src-noconflict/mode-css'),
+  'ace/mode/json': () => import('ace-builds/src-noconflict/mode-json'),
+  'ace/mode/javascript': () => import('ace-builds/src-noconflict/mode-javascript'),
+  'ace/mode/text': () => import('ace-builds/src-noconflict/mode-text'),
+  'ace/mode/markdown': () => import('ace-builds/src-noconflict/mode-markdown'),
+  'ace/mode/html': () => import('ace-builds/src-noconflict/mode-html'),
+  'ace/mode/xml': () => import('ace-builds/src-noconflict/mode-xml'),
+  'ace/mode/svg': () => import('ace-builds/src-noconflict/mode-svg'),
+  'ace/mode/protobuf': () => import('ace-builds/src-noconflict/mode-protobuf'),
+  'ace/mode/yaml': () => import('ace-builds/src-noconflict/mode-yaml'),
+  'ace/mode/tbel': () => import('./tbel/mode-tbel'),
+  'ace/snippets/java': () => import('ace-builds/src-noconflict/snippets/java'),
+  'ace/snippets/css': () => import('ace-builds/src-noconflict/snippets/css'),
+  'ace/snippets/json': () => import('ace-builds/src-noconflict/snippets/json'),
+  'ace/snippets/javascript': () => import('ace-builds/src-noconflict/snippets/javascript'),
+  'ace/snippets/text': () => import('ace-builds/src-noconflict/snippets/text'),
+  'ace/snippets/markdown': () => import('ace-builds/src-noconflict/snippets/markdown'),
+  'ace/snippets/html': () => import('ace-builds/src-noconflict/snippets/html'),
+  'ace/snippets/xml': () => import('ace-builds/src-noconflict/snippets/xml'),
+  'ace/snippets/svg': () => import('ace-builds/src-noconflict/snippets/svg'),
+  // Snippets of the protobuf mode, which bundles the C/C++ mode
+  'ace/snippets/c_cpp': () => import('ace-builds/src-noconflict/snippets/c_cpp'),
+  'ace/theme/github': () => import('ace-builds/src-noconflict/theme-github')
+};
+
+const loadedAceModules = new Map<string, Promise<unknown>>();
+
+function loadAceModule(ace: any, moduleName: string): Promise<unknown> {
+  let loaded = loadedAceModules.get(moduleName);
+  if (!loaded) {
+    loaded = aceModuleLoaders[moduleName]().then((module) => {
+      // Ace resolves a module that has a loader asynchronously on every use; dropping the loader once the module
+      // is defined lets Ace resolve it synchronously.
+      delete ace.config.dynamicModules[moduleName];
+      return module;
+    });
+    loaded.catch(() => loadedAceModules.delete(moduleName));
+    loadedAceModules.set(moduleName, loaded);
+  }
+  return loaded;
+}
+
+function loadAceDependencies(ace: any): Observable<any> {
   if (aceDependenciesLoaded) {
     return of(null);
   } else {
-    const aceObservables: Observable<any>[] = [];
-    aceObservables.push(from(import('ace-builds/src-noconflict/ext-language_tools')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/ext-searchbox')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-java')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-css')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-json')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-javascript')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-text')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-markdown')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-html')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-xml')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-svg')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-c_cpp')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-protobuf')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-yaml')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/java')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/css')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/json')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/javascript')));
-    aceObservables.push(from(import('./tbel/mode-tbel')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/text')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/markdown')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/html')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/xml')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/svg')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/c_cpp')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/protobuf')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/theme-textmate')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/theme-github')));
-    return forkJoin(aceObservables).pipe(
+    for (const moduleName of Object.keys(aceModuleLoaders)) {
+      ace.config.setModuleLoader(moduleName, () => loadAceModule(ace, moduleName));
+    }
+    // Extensions register editor options (autocompletion, search box), so they must be loaded before an editor is created
+    return forkJoin([
+      import('ace-builds/src-noconflict/ext-language_tools'),
+      import('ace-builds/src-noconflict/ext-searchbox')
+    ]).pipe(
       tap(() => {
         aceDependenciesLoaded = true;
       })
@@ -55,21 +77,28 @@ function loadAceDependencies(): Observable<any> {
   }
 }
 
-export function getAce(): Observable<any> {
-  if (aceModule) {
-    return of(aceModule);
-  } else {
-    return from(import('ace-builds/src-noconflict/ace')).pipe(
-      mergeMap((module) => {
-        return loadAceDependencies().pipe(
-         map(() => unwrapModule(module))
-        );
-      }),
-      tap((module) => {
-        aceModule = module;
-      })
-    );
+// Modes, snippets and themes load on first use, so the first `setMode` of a mode completes asynchronously.
+// Pass the modes a caller reads synchronously right after `setMode` (e.g. `session.$mode`) as `preloadModules`.
+export function getAce(...preloadModules: string[]): Observable<any> {
+  const ace$ = aceModule ? of(aceModule) : from(import('ace-builds/src-noconflict/ace')).pipe(
+    mergeMap((module) => {
+      const ace = unwrapModule(module);
+      return loadAceDependencies(ace).pipe(
+        map(() => ace)
+      );
+    }),
+    tap((module) => {
+      aceModule = module;
+    })
+  );
+  if (!preloadModules.length) {
+    return ace$;
   }
+  return ace$.pipe(
+    mergeMap((ace) => forkJoin(preloadModules.map(moduleName => loadAceModule(ace, moduleName))).pipe(
+      map(() => ace)
+    ))
+  );
 }
 
 export function getAceDiff(): Observable<any> {
@@ -140,16 +169,25 @@ export function updateEditorSize(editorElement: any, content: string, editor: Ac
       newWidth += 32;
     }
   }
-  if (!options.ignoreHeight) {
-    renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
-  }
-  if (options.setMinHeight) {
-    renderer.setStyle(editorElement, 'minHeight', newHeight.toString() + 'px');
-  }
+  const setHeight = (height: number) => {
+    if (!options.ignoreHeight) {
+      renderer.setStyle(editorElement, 'height', height.toString() + 'px');
+    }
+    if (options.setMinHeight) {
+      renderer.setStyle(editorElement, 'minHeight', height.toString() + 'px');
+    }
+  };
+  setHeight(newHeight);
   if (!options.ignoreWidth) {
     renderer.setStyle(editorElement, 'width', newWidth.toString() + 'px');
   }
-  editor.resize();
+  editor.resize(true);
+  // Ace's horizontal scrollbar overlaps the last row; grow the editor by its height so no vertical scrollbar appears
+  const scrollBarHeight: number = editor.renderer.scrollBarH.getHeight();
+  if (scrollBarHeight) {
+    setHeight(newHeight + scrollBarHeight);
+    editor.resize();
+  }
 }
 
 export class Range implements Ace.Range {

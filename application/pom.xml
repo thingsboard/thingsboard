@@ -27,9 +27,11 @@
         <pkg.type>java</pkg.type>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
+        <sbom.package.phase>${pkg.package.phase}</sbom.package.phase>
         <pkg.name>thingsboard</pkg.name>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
+        <pkg.requiresFonts>true</pkg.requiresFonts>
         <pkg.implementationTitle>ThingsBoard</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.server.ThingsboardServerApplication</pkg.mainClass>
     </properties>
@@ -220,11 +222,27 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-jackson2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-restclient</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-security-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-validation</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
@@ -271,16 +289,16 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>jakarta.mail</artifactId>
+            <groupId>jakarta.mail</groupId>
+            <artifactId>jakarta.mail-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.twilio.sdk</groupId>
@@ -378,38 +396,29 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.dbunit</groupId>
-            <artifactId>dbunit</artifactId>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-cassandra</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.datastax.cassandra</groupId>
+                    <artifactId>cassandra-driver-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.github.springtestdbunit</groupId>
-            <artifactId>spring-test-dbunit</artifactId>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>cassandra</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>jdbc</artifactId>
+            <artifactId>testcontainers-jdbc</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
             <artifactId>netty-mqtt</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.fusesource.jansi</groupId>
-            <artifactId>jansi</artifactId>
-            <version>1.8</version>
         </dependency>
         <dependency>
             <groupId>org.passay</groupId>
@@ -462,35 +471,41 @@
             <artifactId>rocksdbjni</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-azure-open-ai</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-google-genai</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-mistral-ai</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-anthropic</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-bedrock</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai-official</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>swagger-annotations</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.langchain4j</groupId>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-ollama</artifactId>
         </dependency>
         <dependency>
@@ -578,6 +593,10 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
             </plugin>
@@ -592,6 +611,83 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <!-- The gateway extension and its SBOM are committed together and must match. The package SBOM
+                         checks it too, but only with -Dsbom.skip=false, which would be at the release. -->
+                    <execution>
+                        <id>check-gateway-extension-sbom</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <evaluateBeanshell>
+                                    <condition><![CDATA[
+                                        new String(java.nio.file.Files.readAllBytes(new java.io.File(new java.net.URI("${project.baseUri}src/main/sbom/gateway-management-extension.cdx.json")).toPath()), "UTF-8")
+                                            .contains(org.apache.commons.codec.digest.DigestUtils.sha256Hex(java.nio.file.Files.readAllBytes(new java.io.File(new java.net.URI("${project.baseUri}src/main/data/resources/js_extensions/gateway-management-extension.js")).toPath())))
+                                    ]]></condition>
+                                    <message>src/main/sbom/gateway-management-extension.cdx.json does not describe src/main/data/resources/js_extensions/gateway-management-extension.js: it does not contain the SHA-256 of that file. Take both files from the same build in the gateway-management-extensions-dist repository.</message>
+                                </evaluateBeanshell>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>sbom-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>merge-ui-sbom</id>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                            <host>org.thingsboard:ui-ngx</host>
+                            <skip>${skip.ui.build}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>package-sbom</id>
+                        <configuration>
+                            <components combine.children="append">
+                                <component>
+                                    <sbom>${project.basedir}/src/main/sbom/gateway-management-extension.cdx.json</sbom>
+                                    <file>${project.build.directory}/data/resources/js_extensions/gateway-management-extension.js</file>
+                                </component>
+                                <component>
+                                    <type>data</type>
+                                    <name>lwm2m-registry</name>
+                                    <description>LwM2M object model XML files from the OMNA LwM2M Registry. Licenses vary per file, mostly BSD-3-Clause.</description>
+                                    <supplier>
+                                        <name>Open Mobile Alliance</name>
+                                        <urls>
+                                            <url>https://github.com/OpenMobileAlliance/lwm2m-registry</url>
+                                        </urls>
+                                    </supplier>
+                                    <file>${project.build.directory}/data/lwm2m-registry</file>
+                                </component>
+                                <component>
+                                    <type>cryptographic-asset</type>
+                                    <name>DigiCert Global Root G2</name>
+                                    <description>Root CA certificate for Azure IoT Hub connections.</description>
+                                    <supplier>
+                                        <name>DigiCert, Inc.</name>
+                                        <urls>
+                                            <url>https://www.digicert.com</url>
+                                        </urls>
+                                    </supplier>
+                                    <file>${project.build.directory}/data/certs/azure/DigiCertGlobalRootG2.crt.pem</file>
+                                </component>
+                            </components>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>

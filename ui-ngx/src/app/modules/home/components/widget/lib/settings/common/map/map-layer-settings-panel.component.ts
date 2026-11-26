@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -9,6 +10,8 @@ import {
   cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
+  esriLayerTranslationMap,
+  esriLayerTypes,
   googleMapLayerTranslationMap,
   googleMapLayerTypes,
   hereLayerTranslationMap,
@@ -19,8 +22,9 @@ import {
   mapProviderTranslationMap,
   openFreeMapStyleTranslationMap,
   openFreeMapStyleTypes,
+  mapLayerHasReferenceLayerApiKey,
   mapProviderHasApiKey,
-  mapProviderRequiresApiKey,
+  mapProviderApiKeyMissingWarningMap,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap, referenceLayerTypes, referenceLayerTypeTranslationMap,
   tencentLayerTranslationMap,
@@ -55,6 +59,10 @@ export class MapLayerSettingsPanelComponent implements OnInit {
   cartoLayerTypes = cartoLayerTypes;
 
   cartoLayerTranslationMap = cartoLayerTranslationMap;
+
+  esriLayerTypes = esriLayerTypes;
+
+  esriLayerTranslationMap = esriLayerTranslationMap;
 
   googleMapLayerTypes = googleMapLayerTypes;
 
@@ -97,8 +105,9 @@ export class MapLayerSettingsPanelComponent implements OnInit {
         tileUrl: [null, [Validators.required]],
         vectorTiles: [false, []],
         customAttribution: [null, []],
-        apiKey: [null, [Validators.required]],
-        referenceLayer: [null, []]
+        apiKey: [null, []],
+        referenceLayer: [null, []],
+        referenceLayerApiKey: [null, []]
       }
     );
     this.layerFormGroup.patchValue(
@@ -108,6 +117,11 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((newProvider: MapProvider) => {
       this.onProviderChanged(newProvider);
+    });
+    this.layerFormGroup.get('referenceLayer').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateValidators();
     });
     this.layerFormGroup.get('vectorTiles').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -131,6 +145,19 @@ export class MapLayerSettingsPanelComponent implements OnInit {
 
   hasApiKey(): boolean {
     return mapProviderHasApiKey(this.layerFormGroup.get('provider').value);
+  }
+
+  referenceLayerHasOwnApiKey(): boolean {
+    return mapLayerHasReferenceLayerApiKey(this.layerFormGroup.get('provider').value, this.layerFormGroup.get('referenceLayer').value);
+  }
+
+  apiKeyMissingWarning(): string {
+    return this.layerFormGroup.get('apiKey').value ? null :
+      mapProviderApiKeyMissingWarningMap.get(this.layerFormGroup.get('provider').value);
+  }
+
+  referenceLayerApiKeyMissing(): boolean {
+    return !this.layerFormGroup.get('referenceLayerApiKey').value;
   }
 
   applyLayerSettings() {
@@ -161,10 +188,14 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
     if (mapProviderHasApiKey(provider)) {
-      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});
+    }
+    if (mapLayerHasReferenceLayerApiKey(provider, this.layerFormGroup.get('referenceLayer').value)) {
+      this.layerFormGroup.get('referenceLayerApiKey').enable({emitEvent: false});
+    } else {
+      this.layerFormGroup.get('referenceLayerApiKey').disable({emitEvent: false});
     }
   }
 }

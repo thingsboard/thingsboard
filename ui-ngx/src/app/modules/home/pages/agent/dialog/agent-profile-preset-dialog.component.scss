@@ -181,51 +181,6 @@ tb-agent-profile-wizard {
   }
 }
 
-.tb-wizard-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 16px;
-  margin: 0 0 12px;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 4px;
-  color: rgba(0, 0, 0, 0.6);
-  font-size: 13px;
-  line-height: 1.5;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  .hint-icon {
-    flex-shrink: 0;
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-    color: $agent-text-hint;
-  }
-
-  > div {
-    min-width: 0;
-    flex: 1 1 auto;
-    overflow-wrap: anywhere;
-  }
-
-  .hint-title {
-    font-weight: 500;
-    color: $agent-text-primary;
-    margin-bottom: 2px;
-  }
-
-  &.warn {
-    background: $agent-warning-surface;
-
-    .hint-icon {
-      color: $agent-color-warning;
-    }
-  }
-}
-
 .tb-preset-dialog-footer {
   display: flex;
   align-items: center;

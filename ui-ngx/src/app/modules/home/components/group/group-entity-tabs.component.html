@@ -115,7 +115,8 @@
     [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
   </mat-tab>
 }
-@if (entity && entityType === entityTypes.USER && (resource.API_KEY | hasGenericPermission: operation.READ)) {
+@if (entity && entityType === entityTypes.USER && (resource.API_KEY | hasGenericPermission: operation.READ)
+  && (authUser.authority !== authorities.CUSTOMER_USER || entity.id?.id === authUser.userId)) {
   <mat-tab
     label="{{ 'api-key.api-keys' | translate }}" #apiKeysTab="matTab">
     <tb-api-keys-table [active]="apiKeysTab.isActive" [userId]="entity.id"></tb-api-keys-table>

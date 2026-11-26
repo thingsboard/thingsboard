@@ -21,15 +21,15 @@ import {
   TargetDeviceType,
   widgetType
 } from '@shared/models/widget.models';
-import { EventEmitter, Injector } from '@angular/core';
+import { EventEmitter, Injector, NgZone } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import { DateAgoPipe, nextAgoChangeDelay } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
-import { EMPTY, Observable, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, of, Subscription, timer } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
-import { map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, share, switchMap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
   AVG_MONTH,
@@ -845,6 +845,8 @@ export abstract class DateFormatProcessor {
                         protected settings: DateFormatSettings) {
   }
 
+  formattedUpdated?: Observable<void>;
+
   abstract update(ts: string | number | Date, interval?: Interval): string;
 
 }
@@ -874,27 +876,56 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
 
   private dateAgoPipe: DateAgoPipe;
   private translate: TranslateService;
+  private ngZone: NgZone;
+  private readonly ts$ = new BehaviorSubject<number>(null);
+
+  readonly formattedUpdated: Observable<void> = this.ts$.pipe(
+    distinctUntilChanged(),
+    switchMap(ts => this.agoTicks(ts)),
+    map(() => this.format(this.ts$.value)),
+    filter(text => text !== this.formatted),
+    map(text => {
+      this.formatted = text;
+    }),
+    share()
+  );
 
   constructor(protected $injector: Injector,
               protected settings: DateFormatSettings) {
     super($injector, settings);
     this.dateAgoPipe = $injector.get(DateAgoPipe);
     this.translate = $injector.get(TranslateService);
+    this.ngZone = $injector.get(NgZone);
   }
 
-  update(ts: string| number | Date): string {
-    if (ts) {
-      const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
-      if (this.settings.hideLastUpdatePrefix) {
-        this.formatted = agoText;
-      } else {
-        this.formatted = this.translate.instant('date.last-update-n-ago-text',
-          {agoText});
-      }
-    } else {
-      this.formatted = '&nbsp;';
-    }
+  update(ts: string | number | Date): string {
+    this.ts$.next(ts ? +new Date(ts) : null);
+    this.formatted = ts ? this.format(ts) : '&nbsp;';
     return this.formatted;
+  }
+
+  private format(ts: string | number | Date): string {
+    const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
+    return this.settings.hideLastUpdatePrefix
+      ? agoText
+      : this.translate.instant('date.last-update-n-ago-text', {agoText});
+  }
+
+  private agoTicks(ts: number): Observable<void> {
+    return new Observable<void>(subscriber => {
+      let tick: Subscription;
+      const schedule = () => {
+        const delay = nextAgoChangeDelay(ts);
+        if (delay !== null) {
+          tick = timer(delay).subscribe(() => {
+            subscriber.next();
+            schedule();
+          });
+        }
+      };
+      this.ngZone.runOutsideAngular(schedule);
+      return () => tick?.unsubscribe();
+    });
   }
 
 }

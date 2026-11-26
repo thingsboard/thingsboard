@@ -47,6 +47,8 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
 
   columnDeviceCredentials: AssignmentColumnType[] = [];
 
+  columnDeviceGateway: AssignmentColumnType[] = [];
+
   columnTypesTranslations = importEntityColumnTypeTranslations;
 
   readonly entityTypeDevice = EntityType.DEVICE;
@@ -76,8 +78,11 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
         this.columnTypes.push(
           { value: ImportEntityColumnType.sharedAttribute },
           { value: ImportEntityColumnType.serverAttribute },
-          { value: ImportEntityColumnType.timeseries },
-          { value: ImportEntityColumnType.isGateway }
+          { value: ImportEntityColumnType.timeseries }
+        );
+        this.columnDeviceGateway.push(
+          { value: ImportEntityColumnType.isGateway },
+          { value: ImportEntityColumnType.overwriteActivityTime }
         );
         this.columnDeviceCredentials.push(
           { value: ImportEntityColumnType.accessToken },
@@ -155,12 +160,9 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.description).disabled = isSelectDescription;
 
     if (this.entityType === EntityType.DEVICE) {
-      const isSelectGateway = this.columns.findIndex((column) => column.type === ImportEntityColumnType.isGateway) > -1;
-
-      const isGatewayColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.isGateway);
-      if (isGatewayColumnType) {
-        isGatewayColumnType.disabled = isSelectGateway;
-      }
+      this.columnDeviceGateway.forEach((columnType) => {
+        columnType.disabled = this.columns.findIndex(column => column.type === columnType.value) > -1;
+      });
 
       this.columnDeviceCredentials.forEach((columnCredential) => {
         columnCredential.disabled = this.columns.findIndex(column => column.type === columnCredential.value) > -1;

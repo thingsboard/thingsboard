@@ -19,6 +19,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Operation, Resource } from '@shared/models/security.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'tb-sms-provider',
@@ -42,30 +43,17 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
               private notificationService: NotificationService,
               private dialog: MatDialog,
               private userPermissionsService: UserPermissionsService,
+              private route: ActivatedRoute,
               public fb: FormBuilder,
               private destroyRef: DestroyRef) {
     super(store);
     this.buildSmsProviderForm();
     this.buildGeneralServerSettingsForm();
-    this.notificationService.getNotificationSettings().subscribe(
-      (settings) => {
-        this.notificationSettings = settings;
-        this.setNotificationSettings(this.notificationSettings);
-      }
-    );
-    this.adminService.getAdminSettings<SmsProviderConfiguration>('sms', false, {ignoreErrors: true}).subscribe({
-      next: adminSettings => {
-        this.adminSettings = adminSettings;
-        this.setSmsProviderSettings(this.adminSettings.jsonValue);
-      },
-      error: () => {
-        this.adminSettings = {
-          key: 'sms',
-          jsonValue: null
-        };
-        this.setSmsProviderSettings(this.adminSettings.jsonValue);
-      }
-    });
+    const data = this.route.snapshot.data.notificationsSettings;
+    this.notificationSettings = data.notificationSettings;
+    this.setNotificationSettings(this.notificationSettings);
+    this.adminSettings = data.smsProviderSettings;
+    this.setSmsProviderSettings(this.adminSettings.jsonValue);
   }
 
   private setSmsProviderSettings(smsProviderConfiguration: SmsProviderConfiguration) {
@@ -193,7 +181,9 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
     if(this.readonly) {
       this.notificationSettingsForm.disable({emitEvent: false});
     } else {
-      this.isLoading$.subscribe((isLoading) => {
+      this.isLoading$.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe((isLoading) => {
         if (isLoading) {
           this.notificationSettingsForm.disable({emitEvent: false});
         } else {

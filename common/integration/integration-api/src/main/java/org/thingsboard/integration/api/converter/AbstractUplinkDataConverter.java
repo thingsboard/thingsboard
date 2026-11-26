@@ -54,7 +54,7 @@ public abstract class AbstractUplinkDataConverter extends AbstractDataConverter 
     protected final Map<String, Map<String, String>> currentUpdateOnlyTelemetryPerEntity = new ConcurrentHashMap<>();
     protected final Map<String, Map<String, String>> currentUpdateOnlyAttributesPerEntity = new ConcurrentHashMap<>();
 
-    private ConverterUnwrapper converterUnwrapper;
+    protected ConverterUnwrapper converterUnwrapper;
 
     public AbstractUplinkDataConverter(JsInvokeService jsInvokeService, TbelInvokeService tbelInvokeService, LogSettingsComponent logSettings) {
         super(jsInvokeService, tbelInvokeService, logSettings);

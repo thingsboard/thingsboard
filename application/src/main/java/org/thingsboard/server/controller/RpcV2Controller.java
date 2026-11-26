@@ -160,6 +160,8 @@ public class RpcV2Controller extends AbstractRpcController {
     }
 
     @ApiOperation(value = "Get persistent RPC requests", notes = "Allows to query RPC calls for specific device using pagination." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = PageDataRpc.class)))
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persistent/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -244,4 +246,13 @@ public class RpcV2Controller extends AbstractRpcController {
             tbClusterService.pushMsgToRuleEngine(getTenantId(), rpc.getDeviceId(), msg, null);
         }
     }
+
+    /**
+     * Documents the {@code PageData<Rpc>} that {@link #getPersistedRpcByDevice} returns
+     * through a {@code DeferredResult<ResponseEntity>}. Used only by the OpenAPI spec.
+     */
+    @Schema(name = "PageDataRpc")
+    private static final class PageDataRpc extends PageData<Rpc> {
+    }
+
 }

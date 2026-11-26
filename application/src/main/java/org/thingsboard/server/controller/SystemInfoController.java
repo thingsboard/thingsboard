@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.PostConstruct;
@@ -21,6 +20,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.SystemParams;
+import org.thingsboard.server.common.data.SystemVersionInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.mobile.QrCodeSettingService;
 import org.thingsboard.server.dao.subscription.PlatformFeature;
 import org.thingsboard.server.dao.subscription.SubscriptionService;
@@ -52,7 +53,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Hidden
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
@@ -117,23 +119,26 @@ public class SystemInfoController extends BaseController {
 
     @PostConstruct
     public void init() {
-        JsonNode info = buildInfoObject();
-        log.info("System build info: {}", info);
+        log.info("System build info: {}", JacksonUtil.toString(buildInfoObject()));
     }
 
+    @ApiOperation(value = "Get platform version (getSystemVersionInfo)",
+            notes = "Returns the version and edition of the platform build." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/system/info", method = RequestMethod.GET)
     @ResponseBody
-    public JsonNode getSystemVersionInfo() {
+    public SystemVersionInfo getSystemVersionInfo() {
         return buildInfoObject();
     }
 
+    @Hidden
     @RequestMapping(value = "/noauth/system/development", method = RequestMethod.GET)
     @ResponseBody
     public Boolean isDevelopment() {
         return subscriptionService.isDevelopment(TenantId.SYS_TENANT_ID);
     }
 
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/system/params", method = RequestMethod.GET)
     @ResponseBody
@@ -230,17 +235,11 @@ public class SystemInfoController extends BaseController {
                         currentUser.getAdditionalInfo().get("defaultDashboardFullscreen").booleanValue());
     }
 
-    private JsonNode buildInfoObject() {
-        ObjectNode infoObject = JacksonUtil.newObjectNode();
+    private SystemVersionInfo buildInfoObject() {
         if (buildProperties != null) {
-            infoObject.put("version", buildProperties.getVersion());
-            infoObject.put("artifact", buildProperties.getArtifact());
-            infoObject.put("name", buildProperties.getName());
-        } else {
-            infoObject.put("version", "unknown");
+            return new SystemVersionInfo(buildProperties.getVersion(), buildProperties.getArtifact(), buildProperties.getName(), "PE");
         }
-        infoObject.put("type", "PE");
-        return infoObject;
+        return new SystemVersionInfo("unknown", null, null, "PE");
     }
 
 }

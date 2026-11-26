@@ -36,7 +36,7 @@
     letter-spacing: 0.04em;
 
     &.section-error {
-      color: #D12730;
+      color: var(--tb-crit);
     }
 
     &.section-warn {
@@ -69,7 +69,7 @@
     }
 
     &.error .severity-icon {
-      color: #D12730;
+      color: var(--tb-crit);
     }
 
     &.warn .severity-icon {

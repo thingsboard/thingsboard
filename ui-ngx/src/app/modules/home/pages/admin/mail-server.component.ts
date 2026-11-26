@@ -25,10 +25,11 @@ import { AuthUser } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { Operation, Resource } from '@shared/models/security.models';
-import { forkJoin, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { DomainSchema, domainSchemaTranslations, } from '@shared/models/oauth2.models';
 import { WINDOW } from '@core/services/window.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'tb-mail-server',
@@ -132,6 +133,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
               private adminService: AdminService,
               private translate: TranslateService,
               private userPermissionsService: UserPermissionsService,
+              private route: ActivatedRoute,
               public fb: FormBuilder,
               @Inject(WINDOW) private window: Window) {
     super(store);
@@ -141,40 +143,35 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     this.buildMailServerSettingsForm();
     this.domainFormConfiguration();
 
-    forkJoin({
-      loginProcessingUrl: this.adminService.getLoginProcessingUrl(),
-      mailConfigTemplate: this.adminService.getMailConfigTemplate(),
-      adminSettings: this.adminService.getAdminSettings<MailServerSettings>('mail')
-    }).subscribe((data) => {
-      this.loginProcessingUrl = data.loginProcessingUrl;
-      this.initTemplates(data.mailConfigTemplate);
-      this.adminSettings = data.adminSettings;
-      if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
-        this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
-      }
-      if (!this.adminSettings.jsonValue.providerId) {
-        this.adminSettings.jsonValue.providerId = 'CUSTOM';
-      }
-      this.mailSettings.reset(this.adminSettings.jsonValue, {emitEvent: false});
-      if (this.isTenantAdmin()) {
-        this.mailSettings.get('useSystemMailSettings').setValue(
-          isDefined(this.adminSettings.jsonValue.useSystemMailSettings) ?
-            this.adminSettings.jsonValue.useSystemMailSettings : true, {emitEvent: false}
-        );
-      }
-      this.updateValidators();
-      this.enableTls(this.adminSettings.jsonValue.enableTls);
-      this.helpLink = this.templates.get(this.adminSettings.jsonValue.providerId)?.helpLink || null;
-      this.enableProxyChanged();
-      if (this.adminSettings.jsonValue.enableOauth2) {
-        this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
-        this.enableProviderTenantIdChanged(this.adminSettings.jsonValue.providerId);
-        this.parseUrl(this.adminSettings.jsonValue.redirectUri);
-        this.mailSettings.get('redirectUri').patchValue(this.adminSettings.jsonValue.redirectUri, {emitEvent: false});
-      } else {
-        this.mailSettings.get('enableOauth2').patchValue(false, {emitEvent: false});
-      }
-    })
+    const data = this.route.snapshot.data.mailServerSettings;
+    this.loginProcessingUrl = data.loginProcessingUrl;
+    this.initTemplates(data.mailConfigTemplate);
+    this.adminSettings = data.adminSettings;
+    if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
+      this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
+    }
+    if (!this.adminSettings.jsonValue.providerId) {
+      this.adminSettings.jsonValue.providerId = 'CUSTOM';
+    }
+    this.mailSettings.reset(this.adminSettings.jsonValue, {emitEvent: false});
+    if (this.isTenantAdmin()) {
+      this.mailSettings.get('useSystemMailSettings').setValue(
+        isDefined(this.adminSettings.jsonValue.useSystemMailSettings) ?
+          this.adminSettings.jsonValue.useSystemMailSettings : true, {emitEvent: false}
+      );
+    }
+    this.updateValidators();
+    this.enableTls(this.adminSettings.jsonValue.enableTls);
+    this.helpLink = this.templates.get(this.adminSettings.jsonValue.providerId)?.helpLink || null;
+    this.enableProxyChanged();
+    if (this.adminSettings.jsonValue.enableOauth2) {
+      this.enableOauth2(!!this.adminSettings.jsonValue.enableOauth2);
+      this.enableProviderTenantIdChanged(this.adminSettings.jsonValue.providerId);
+      this.parseUrl(this.adminSettings.jsonValue.redirectUri);
+      this.mailSettings.get('redirectUri').patchValue(this.adminSettings.jsonValue.redirectUri, {emitEvent: false});
+    } else {
+      this.mailSettings.get('enableOauth2').patchValue(false, {emitEvent: false});
+    }
   }
 
   ngOnDestroy() {

@@ -64,6 +64,9 @@ public class SelfRegistrationController extends BaseController {
         if (selfRegistrationParams.getNotificationRecipient() != null) {
             checkNotificationTargetId(selfRegistrationParams.getNotificationRecipient(), Operation.READ);
         }
+        if (selfRegistrationParams.getDomainId() != null) {
+            checkDomainId(selfRegistrationParams.getDomainId(), Operation.READ);
+        }
         if (Authority.TENANT_ADMIN.equals(authority)) {
             savedSelfRegistrationParams = whiteLabelingService.saveTenantSelfRegistrationParams(getTenantId(), selfRegistrationParams);
             JsonNode privacyPolicyNode = whiteLabelingService.getTenantPrivacyPolicy(securityUser.getTenantId());

@@ -84,7 +84,7 @@ public class GroupPermission extends BaseData<GroupPermissionId> implements HasN
 
     private TenantId tenantId;
     @Schema(description = "JSON object with the User Group Id. Represents the user group that will have permissions to perform operations against the corresponding entity group.",
-            requiredMode = Schema.RequiredMode.REQUIRED)
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private EntityGroupId userGroupId;
     @Schema(description = "JSON object with the Role Id. Represents the set of permissions. " +
             "The role type (GENERIC or GROUP) determines whether 'entityGroupId' is required.",

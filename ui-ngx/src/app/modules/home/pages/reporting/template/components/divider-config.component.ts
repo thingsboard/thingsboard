@@ -6,6 +6,7 @@ import {
   AbstractReportComponentConfig
 } from '@home/pages/reporting/template/components/report-component-config.component';
 import {
+  BorderType,
   borderLengths,
   borderLengthTranslations,
   borderTypes,
@@ -29,6 +30,8 @@ export class DividerConfigComponent extends AbstractReportComponentConfig<Divide
 
   borderTypes = borderTypes;
   borderTypeTranslations = borderTypeTranslations;
+
+  readonly BorderType = BorderType;
 
   protected buildForm(reportComponentConfig: DividerReportComponentConfig): FormGroup {
     return this.fb.group({

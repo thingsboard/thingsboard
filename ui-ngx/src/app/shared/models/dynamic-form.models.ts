@@ -356,7 +356,7 @@ const toPropertyContainers = (properties: FormProperty[],
         label: property.name,
         type: FormPropertyContainerType.htmlSection,
         htmlClass: property.htmlClassList ? property.htmlClassList.join(' ') : '',
-        safeHtml: sanitizer.bypassSecurityTrustHtml(property.htmlContent),
+        safeHtml: sanitizer.bypassSecurityTrustHtml(customTranslate.transform(property.htmlContent)),
         visible: true
       };
       result.push(propertyHtml);

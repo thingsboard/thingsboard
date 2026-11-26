@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { FilterParamInfo, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { TranslateService } from '@ngx-translate/core';
 
 export const IOT_HUB_FILTER_GROUPING_THRESHOLD = 11;
 export const IOT_HUB_FILTER_POPULAR_LIMIT = 10;
@@ -123,3 +125,44 @@ export function resolveIotHubItemImageUrl(item: MpItemVersionView, api: IotHubAp
   }
   return null;
 }
+
+// ThingsBoard error codes whose message is written for the user: validation, permission, not found, limits
+const SHOWN_ERROR_CODES = new Set([20, 30, 31, 32, 33, 34, 35, 40, 41]);
+const MAX_SHOWN_ERROR_LENGTH = 200;
+
+/** The message as it is when it reads like one written for the user, null for an internal one (a stack trace, a URL, too long). */
+export const readableMessage = (message: unknown): string | null =>
+  typeof message === 'string' && message.trim() && message.length <= MAX_SHOWN_ERROR_LENGTH &&
+  !/exception|java\.|https?:\/\/|\bat [\w.$]+\(/i.test(message) ? message : null;
+
+/**
+ * What the user sees for a failed request: ThingsBoard's validation and limit messages as they are,
+ * anything else (a server error, the network, a bug) as a common message, with the details in the console.
+ */
+export const requestFailureMessage = (error: any, translate: TranslateService): string => {
+  const body = error?.error;
+  const message = SHOWN_ERROR_CODES.has(body?.errorCode) ? readableMessage(body.message) : null;
+  if (message) {
+    return message;
+  }
+  console.error('Device package request failed', error);
+  return translate.instant('iot-hub.device-install-unexpected-error');
+};
+
+/** A translated text with a link written as <a>…</a>, which the translation may put anywhere in it, split around the link. */
+export const splitTextWithLink = (text: string): { before: string; link: string; after: string } => {
+  const match = /^([\s\S]*)<a>([\s\S]*)<\/a>([\s\S]*)$/.exec(text);
+  return match ? { before: match[1], link: match[2], after: match[3] } : { before: text, link: '', after: '' };
+};
+
+/** Saves an entity as a JSON file named after it. */
+export const downloadEntityJson = (entity: any, name: string): void => {
+  const blob = new Blob([JSON.stringify(entity, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${name.replace(/[^\w\- ]+/g, '_')}.json`;
+  link.click();
+  // Revoked right away, the URL may be gone before the download starts
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+};

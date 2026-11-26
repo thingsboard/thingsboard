@@ -1,15 +1,17 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="flex w-96 flex-col gap-3 p-2">
   <div class="tb-form-panel-title" translate>debug-settings.label</div>
   @if (maxMessagesCount) {
     <div class="hint-container">
-      <div class="tb-form-hint tb-primary-fill tb-flex center">
-        {{ 'debug-settings.hint.main-limited' | translate: { entity: (entityLabel | translate | lowercase), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
+      <div class="tb-form-hint tb-primary-fill">
+        <mat-icon>info_outline</mat-icon>
+        <span>{{ 'debug-settings.hint.main-limited' | translate: { entity: (entityLabel | translate | lowercase), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}</span>
       </div>
     </div>
   }

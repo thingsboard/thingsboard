@@ -74,10 +74,10 @@
       </button>
     </div>
     @if (templatesState === 'loaded' && missingTypes.length) {
-      <div class="tb-wizard-hint warn">
-        <mat-icon class="hint-icon">warning_amber</mat-icon>
+      <div class="tb-form-hint tb-primary-fill tb-form-hint-warning mb-3 last:mb-0">
+        <mat-icon>warning</mat-icon>
         <div>
-          <div class="hint-body">{{ 'agent.preset-templates-load-failed' | translate: { types: missingTypesLabel } }}</div>
+          <div>{{ 'agent.preset-templates-load-failed' | translate: { types: missingTypesLabel } }}</div>
           <button mat-button color="primary" type="button" (click)="retryTemplates()">
             {{ 'action.retry' | translate }}
           </button>
@@ -85,11 +85,11 @@
       </div>
     }
     @if (selectedTile) {
-      <div class="tb-wizard-hint">
-        <mat-icon class="hint-icon">help_outline</mat-icon>
+      <div class="tb-form-hint tb-primary-fill mb-3 last:mb-0">
+        <mat-icon>info_outline</mat-icon>
         <div>
-          <div class="hint-title">{{ 'agent.preset-summary-title' | translate: { label: (selectedTile.labelKey | translate) } }}</div>
-          <div class="hint-body">{{ summaryBody }}</div>
+          <div class="font-medium">{{ 'agent.preset-summary-title' | translate: { label: (selectedTile.labelKey | translate) } }}</div>
+          <div>{{ summaryBody }}</div>
         </div>
       </div>
     }

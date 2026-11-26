@@ -48,6 +48,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.edge.EdgeMsgSummaryUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -256,7 +257,7 @@ public class EdgeUplinkMessageDispatcher {
                 }
             }
         } catch (Exception e) {
-            String failureMsg = String.format("Can't process uplink msg [%s] from edge", uplinkMsg);
+            String failureMsg = String.format("Can't process uplink msg [%s] from edge", EdgeMsgSummaryUtils.toSummary(uplinkMsg));
             log.trace("[{}][{}] Can't process uplink msg [{}]", edge.getTenantId(), edge.getId(), uplinkMsg, e);
             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(edge.getTenantId()).edgeId(edge.getId())
                     .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(e.getMessage()).build());

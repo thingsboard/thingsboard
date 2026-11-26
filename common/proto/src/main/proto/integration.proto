@@ -74,6 +74,8 @@ message DeviceUplinkDataProto {
   transport.PostTelemetryMsg postTelemetryMsg = 5;
   transport.PostAttributeMsg postAttributesMsg = 6;
   string deviceLabel = 7;
+  repeated string telemetryTypeCastDisabledKeys = 8;
+  repeated string attributesTypeCastDisabledKeys = 9;
 }
 
 message AssetUplinkDataProto {
@@ -84,6 +86,8 @@ message AssetUplinkDataProto {
   transport.PostTelemetryMsg postTelemetryMsg = 5;
   transport.PostAttributeMsg postAttributesMsg = 6;
   string assetLabel = 7;
+  repeated string telemetryTypeCastDisabledKeys = 8;
+  repeated string attributesTypeCastDisabledKeys = 9;
 }
 
 message EntityViewDataProto {
@@ -343,6 +347,8 @@ message IntegrationApiResponseMsg {
 /* High priority messages with low latency are handled by ThingsBoard Integration Executor Service separately */
 message ToIntegrationExecutorNotificationMsg {
   transport.ComponentLifecycleMsgProto componentLifecycle = 1;
+  repeated transport.QueueUpdateMsg queueUpdateMsgs = 2;
+  repeated transport.QueueDeleteMsg queueDeleteMsgs = 3;
 }
 
 message IntegrationValidationRequestProto {

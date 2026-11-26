@@ -49,7 +49,25 @@ export class IntegrationWizardDialogComponent extends
 
   @ViewChild('addIntegrationWizardStepper', {static: true}) addIntegrationWizardStepper: MatStepper;
   @ViewChild('uplinkDataConverter', {static: true}) uplinkDataConverterComponent: ConverterComponent;
-  @ViewChild('downlinkDataConverter') downlinkDataConverterComponent: ConverterComponent;
+
+  private _downlinkDataConverterComponent: ConverterComponent;
+
+  // The downlink step is re-created when the integration type changes, so its form is re-attached here
+  @ViewChild('downlinkDataConverter')
+  set downlinkDataConverterComponent(component: ConverterComponent) {
+    if (component === this._downlinkDataConverterComponent) {
+      return;
+    }
+    this._downlinkDataConverterComponent = component;
+    if (component) {
+      this.downlinkConverterForm.setControl('newDownlinkConverter', component.entityForm, {emitEvent: false});
+      this.downlinkConverterForm.get('newDownlinkConverter').disable({emitEvent: false});
+    }
+  }
+
+  get downlinkDataConverterComponent(): ConverterComponent {
+    return this._downlinkDataConverterComponent;
+  }
 
   selectedIndex = 0;
   converterType = ConverterType;
@@ -216,8 +234,6 @@ export class IntegrationWizardDialogComponent extends
   ngAfterViewInit() {
     setTimeout(() => {
       this.uplinkConverterForm.setControl('newUplinkConverter', this.uplinkDataConverterComponent.entityForm, {emitEvent: false});
-      this.downlinkConverterForm.setControl('newDownlinkConverter', this.downlinkDataConverterComponent.entityForm, {emitEvent: false});
-      this.downlinkConverterForm.get('newDownlinkConverter').disable({emitEvent: false});
     }, 0);
   }
 

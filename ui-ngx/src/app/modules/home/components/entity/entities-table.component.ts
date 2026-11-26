@@ -203,7 +203,11 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   goBack(): void {
-    this.router.navigate(this.entitiesTableConfig.backNavigationCommands, { relativeTo: this.route });
+    if (isDefinedAndNotNull(this.entitiesTableConfig.backNavigationUrl)) {
+      this.router.navigateByUrl(this.entitiesTableConfig.backNavigationUrl);
+    } else {
+      this.router.navigate(this.entitiesTableConfig.backNavigationCommands, { relativeTo: this.route });
+    }
   }
 
   private init(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
@@ -787,9 +791,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         res = column.cellTooltipFunction(entity, column.key);
         res = isDefined(res) ? res : null;
         this.cellTooltipCache[index] = res;
-      } else {
-        return res !== null ? res : undefined;
       }
+      return res !== null ? res : undefined;
     } else {
       return undefined;
     }

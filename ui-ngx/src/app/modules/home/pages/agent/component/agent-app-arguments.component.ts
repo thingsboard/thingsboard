@@ -26,7 +26,6 @@ import {
   AgentAppArgument,
   AgentAppArgumentFormat,
   agentAppArgumentFormatTranslationMap,
-  AgentAppArgumentSource,
   agentAppArgumentSourceTranslationMap,
   AgentAppArgumentValueType
 } from '@shared/models/agent.models';
@@ -51,7 +50,7 @@ import {
 export class AgentAppArgumentsComponent implements ControlValueAccessor, OnDestroy {
 
   @Input()
-  set disabled(value: boolean) {
+  set readonly(value: boolean) {
     this.inputDisabled = value;
   }
 

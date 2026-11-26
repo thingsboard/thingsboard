@@ -93,6 +93,10 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
   @Output()
   assetProfileUpdated = new EventEmitter<AssetProfileId>();
 
@@ -306,6 +310,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
     setTimeout(() => {
       this.assetProfileInput.nativeElement.blur();
       this.assetProfileInput.nativeElement.focus();
+      this.ignoreClosedPanel = false;
     }, 0);
   }
 

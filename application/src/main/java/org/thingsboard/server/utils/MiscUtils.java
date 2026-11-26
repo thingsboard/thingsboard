@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.utils;
 
 import com.google.common.hash.HashFunction;
@@ -43,13 +44,20 @@ public class MiscUtils {
                 getPort(request));
     }
 
-    public static String getScheme(HttpServletRequest request){
-        String scheme = request.getScheme();
+    public static String getScheme(HttpServletRequest request) {
         String forwardedProto = request.getHeader("x-forwarded-proto");
-        if (forwardedProto != null) {
-            scheme = forwardedProto;
+        if (isHttpScheme(forwardedProto)) {
+            return forwardedProto.toLowerCase();
         }
-        return scheme;
+        String scheme = request.getScheme();
+        if (forwardedProto == null && isHttpScheme(scheme)) {
+            return scheme.toLowerCase();
+        }
+        return request.isSecure() ? "https" : "http";
+    }
+
+    private static boolean isHttpScheme(String scheme) {
+        return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
     }
 
     public static String getDomainName(HttpServletRequest request){

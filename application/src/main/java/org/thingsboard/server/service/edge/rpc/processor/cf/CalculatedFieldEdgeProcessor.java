@@ -58,7 +58,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(tenantId, calculatedFieldId);
-                    if (calculatedField != null) {
+                    if (calculatedField != null && tenantId.equals(calculatedField.getTenantId())) {
                         edgeCtx.getCalculatedFieldService().deleteCalculatedField(tenantId, calculatedFieldId);
                     }
                     return Futures.immediateFuture(null);

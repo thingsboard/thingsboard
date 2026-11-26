@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-switch [ctx]='ctx'></tb-switch>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n}\n\nself.onResize = function() {\n}\n\nself.onDestroy = function() {\n}\n",
+    "controllerScript": "self.onInit = function() {\n}\n\nself.onResize = function() {\n}\n\nself.onDestroy = function() {\n}\n\nself.typeParameters = function() {\n    return {\n        displayRpcMessageToast: false\n    };\n}\n",
     "dataKeySettingsSchema": "{}\n",
     "settingsDirective": "tb-switch-control-widget-settings",
     "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":false,\"getValueMethod\":\"getValue\",\"setValueMethod\":\"setValue\",\"showOnOffLabels\":true,\"title\":\"Switch control\"},\"title\":\"Switch Control\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"showLegend\":false,\"actions\":{},\"decimals\":2}"

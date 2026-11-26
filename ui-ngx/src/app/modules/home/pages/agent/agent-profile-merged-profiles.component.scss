@@ -33,27 +33,6 @@
   }
 }
 
-.tb-merged-auto-install-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 12px;
-  margin: 10px 16px 0;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--tb-primary-500) 6%, transparent);
-  color: rgba(0, 0, 0, 0.72);
-  font-size: 12px;
-  line-height: 1.45;
-
-  mat-icon {
-    flex-shrink: 0;
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-    color: var(--tb-primary-500);
-  }
-}
-
 .tb-merged-table-wrapper {
   flex: 1;
   overflow: auto;

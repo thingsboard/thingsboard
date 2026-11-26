@@ -95,22 +95,28 @@ export class CustomMenuTableComponent implements OnInit {
     this.customMenuTableConfig.entitiesDeleteEnabled = !readonly && authUser.authority !== Authority.SYS_ADMIN;
     this.customMenuTableConfig.addEntity = () => this.addCustomMenu();
 
-    let mainColumnsWidth: string;
+    let nameColumnWidth: string;
+    let scopeColumnWidth: string;
+    let assigneeTypeColumnWidth: string;
     switch (authUser.authority) {
       case Authority.SYS_ADMIN:
-        mainColumnsWidth = '50%';
+        nameColumnWidth = '60%';
+        scopeColumnWidth = '20%';
         break;
       case Authority.TENANT_ADMIN:
-        mainColumnsWidth = '33%';
+        nameColumnWidth = '50%';
+        scopeColumnWidth = '15%';
+        assigneeTypeColumnWidth = '15%';
         break;
       case Authority.CUSTOMER_USER:
-        mainColumnsWidth = '50%';
+        nameColumnWidth = '60%';
+        assigneeTypeColumnWidth = '20%';
         break;
     }
 
     this.customMenuTableConfig.columns.push(
       new DateEntityTableColumn<CustomMenuInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<CustomMenuInfo>('name', 'custom-menu.name', mainColumnsWidth,
+      new EntityTableColumn<CustomMenuInfo>('name', 'custom-menu.name', nameColumnWidth,
           entity => entity.name, _entity => ({}), true, () => ({}), () => undefined, false,
         {
           name: this.translate.instant('custom-menu.edit-name'),
@@ -120,12 +126,12 @@ export class CustomMenuTableComponent implements OnInit {
         })
     );
     if (authUser.authority !== Authority.CUSTOMER_USER) {
-      this.customMenuTableConfig.columns.push(new EntityTableColumn<CustomMenuInfo>('scope', 'custom-menu.scope', mainColumnsWidth,
+      this.customMenuTableConfig.columns.push(new EntityTableColumn<CustomMenuInfo>('scope', 'custom-menu.scope', scopeColumnWidth,
         (menu) => this.translate.instant(cmScopeTranslations.get(menu.scope))));
     }
     if (authUser.authority !== Authority.SYS_ADMIN) {
       this.customMenuTableConfig.columns.push(new EntityTableColumn<CustomMenuInfo>('assigneeType',
-        'custom-menu.assignee-type', mainColumnsWidth,
+        'custom-menu.assignee-type', assigneeTypeColumnWidth,
         (menu) => this.translate.instant(cmAssigneeTypeTranslations(menu.assigneeType, menu.scope))));
     }
     if (authUser.authority !== Authority.SYS_ADMIN) {

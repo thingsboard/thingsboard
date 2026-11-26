@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.iot_hub;
 
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
@@ -19,7 +20,14 @@ public interface IotHubInstalledItemDao extends Dao<IotHubInstalledItem> {
 
     Optional<IotHubInstalledItem> findByTenantIdAndId(TenantId tenantId, IotHubInstalledItemId installedItemId);
 
+    // Locks the row until the end of the current transaction
+    Optional<IotHubInstalledItem> findByTenantIdAndIdForUpdate(TenantId tenantId, IotHubInstalledItemId installedItemId);
+
     PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink);
+
+    // publishedVersionIds: IoT Hub's published version id by item id, not empty; only the items installed in another version
+    PageData<IotHubInstalledItem> findByTenantIdWithUpdates(TenantId tenantId, List<String> itemTypes,
+                                                            Map<UUID, UUID> publishedVersionIds, PageLink pageLink);
 
     List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId);
 

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.http.config;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -32,7 +33,7 @@ public class TransportSecurityConfiguration {
     @Order(1)
     SecurityFilterChain httpTransportFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher(AntPathRequestMatcher.antMatcher(DEVICE_API_ENTRY_POINT))
+                .securityMatcher(PathPatternRequestMatcher.withDefaults().matcher(DEVICE_API_ENTRY_POINT))
                 .cors(cors -> {
                 })
                 .csrf(AbstractHttpConfigurer::disable)

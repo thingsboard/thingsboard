@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import 'hammerjs';
-
 import { Component } from '@angular/core';
 
 import { environment as env } from '@env/environment';
@@ -14,7 +12,7 @@ import { LocalStorageService } from '@core/local-storage/local-storage.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import { getCurrentAuthState, selectUserReady } from '@core/auth/auth.selectors';
-import { filter, skip, tap } from 'rxjs/operators';
+import { filter, skip, switchMap, take, takeWhile, tap } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { DashboardReportService } from '@core/http/dashboard-report.service';
 import { DevelopmentService } from '@core/http/development.service';
@@ -25,6 +23,9 @@ import { initCustomJQueryEvents } from '@shared/models/jquery-event.models';
 import { TranslateDefaultLoader } from '@core/translate/translate-default-loader';
 import { SystemSetupService } from '@core/http/system-setup.service';
 import { SystemSetupState } from '@shared/models/system-setup.models';
+import { NavigationEnd, NavigationError, Router } from '@angular/router';
+import { ToastNotificationService } from '@core/services/toast-notification.service';
+import { NotificationMessage } from '@core/notification/notification.models';
 
 @Component({
     selector: 'tb-root',
@@ -43,7 +44,9 @@ export class AppComponent {
               private authService: AuthService,
               private reportService: DashboardReportService,
               private developmentService: DevelopmentService,
-              private systemSetupService: SystemSetupService) {
+              private systemSetupService: SystemSetupService,
+              private router: Router,
+              private toastNotificationService: ToastNotificationService) {
 
     if (!env.production) {
       console.log(`ThingsBoard Version: ${env.tbVersion}`);
@@ -85,6 +88,29 @@ export class AppComponent {
     });
 
     this.routeAuthenticationChangesWhileSetupIsIncomplete();
+    this.gotoDefaultPlaceOnInitialNavigationError();
+  }
+
+  private gotoDefaultPlaceOnInitialNavigationError() {
+    const pendingNotifications: NotificationMessage[] = [];
+    this.toastNotificationService.getNotification().pipe(
+      takeWhile(() => !this.router.navigated)
+    ).subscribe((notification) => pendingNotifications.push(notification));
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationError && !this.router.navigated),
+      take(1),
+      switchMap(() => {
+        this.authService.gotoDefaultPlace(getCurrentAuthState(this.store).isAuthenticated);
+        return this.router.events.pipe(
+          filter((event) => event instanceof NavigationEnd),
+          take(1)
+        );
+      })
+    ).subscribe(() => {
+      setTimeout(() => {
+        pendingNotifications.forEach((notification) => this.toastNotificationService.dispatchNotification(notification));
+      });
+    });
   }
 
   /**

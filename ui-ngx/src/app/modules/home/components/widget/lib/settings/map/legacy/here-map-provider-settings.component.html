@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
@@ -20,7 +21,22 @@
       <legend class="group-title" translate>widgets.maps.credentials</legend>
       <mat-form-field>
         <mat-label translate>widgets.maps.here-api-key</mat-label>
-        <input required matInput formControlName="apiKey">
+        <input matInput formControlName="apiKey"
+               [aria-describedby]="providerSettingsFormGroup.get('credentials.apiKey').value ? null : 'tb-here-maps-api-key-warning'">
+        @if (!providerSettingsFormGroup.get('credentials.apiKey').value) {
+          <mat-icon matSuffix
+                    id="tb-here-maps-api-key-warning"
+                    class="tb-warning"
+                    tabindex="0"
+                    role="img"
+                    aria-hidden="false"
+                    [attr.aria-label]="'widgets.maps.layer.credentials.api-key-missing' | translate"
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-warning-tooltip"
+                    matTooltip="{{ 'widgets.maps.layer.credentials.api-key-missing' | translate }}">
+            warning
+          </mat-icon>
+        }
       </mat-form-field>
     </fieldset>
   </section>
