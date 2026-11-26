@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="layerFormGroup" class="tb-form-table-row tb-map-layer-row">
@@ -48,6 +49,18 @@
         @for (layerType of cartoLayerTypes; track layerType) {
           <mat-option [value]="layerType">
             {{ cartoLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.esri === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of esriLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ esriLayerTranslationMap.get(layerType) | translate }}
           </mat-option>
         }
       </mat-select>

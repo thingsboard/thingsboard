@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -57,6 +58,22 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
 
     @Override
     public TbResourceInfo save(TbResource resource, SecurityUser user) throws ThingsboardException {
+        if (resource.getId() != null) {
+            TbResourceInfo existing = checkNotNull(resourceService.findResourceInfoById(resource.getTenantId(), resource.getId()));
+            if ((resource.getResourceType() != null && resource.getResourceType() != existing.getResourceType()) ||
+                    (resource.getResourceSubType() != null && resource.getResourceSubType() != existing.getResourceSubType())) {
+                throw new DataValidationException("Resource type can't be changed");
+            }
+            resource.setTenantId(existing.getTenantId());
+            resource.setCustomerId(existing.getCustomerId());
+            resource.setResourceType(existing.getResourceType());
+            resource.setResourceSubType(existing.getResourceSubType());
+            resource.setResourceKey(existing.getResourceKey());
+            resource.setCreatedTime(existing.getCreatedTime());
+            if (resource.getData() == null) {
+                resource.setEtag(existing.getEtag());
+            }
+        }
         if (resource.getResourceType() == ResourceType.IMAGE) {
             throw new IllegalArgumentException("Image resource type is not supported");
         }

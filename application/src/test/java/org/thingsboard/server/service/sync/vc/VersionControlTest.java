@@ -2605,7 +2605,7 @@ public class VersionControlTest extends AbstractControllerTest {
         reportConfig.put("type", "pdf");
         reportConfig.put("timezone", "Europe/Kiev");
         reportConfig.put("useCurrentUserCredentials", true);
-        reportConfig.put("userId", "7a306270-4820-11f0-bc58-39b3596e763d");
+        reportConfig.put("userId", tenantAdmin1.getId().toString());
         reportConfig.put("dashboardId", dashboardId.toString());
         reportConfig.put("state", "");
 

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Datasource, FormattedData } from '@app/shared/models/widget.models';
 import tinycolor from 'tinycolor2';
 import { BaseIconOptions, Icon } from 'leaflet';
@@ -64,7 +65,7 @@ export interface GoogleMapProviderSettings {
 }
 
 export const defaultGoogleMapProviderSettings: GoogleMapProviderSettings = {
-  gmApiKey: 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q',
+  gmApiKey: null,
   gmDefaultMapType: GoogleMapType.roadmap
 };
 
@@ -128,7 +129,7 @@ export interface HereMapProviderSettings {
 export const defaultHereMapProviderSettings: HereMapProviderSettings = {
   mapProviderHere: HereMapProvider.hereNormalDay,
   credentials: {
-    apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
+    apiKey: null
   }
 };
 

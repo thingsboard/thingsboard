@@ -26,6 +26,7 @@
              pkg.package.phase (which is "none" here since these modules don't produce packaging). -->
         <pkg.deb.phase>package</pkg.deb.phase>
         <docker.repo>thingsboard</docker.repo>
+        <docker.version.tag>${project.version}</docker.version.tag>
         <docker.base.image>thingsboard/openjdk25:trixie-slim</docker.base.image>
         <dockerfile.skip>true</dockerfile.skip>
         <!-- Prefix shared by every image name; downstream builds override it as a whole (e.g. tb-paas). -->
@@ -166,7 +167,7 @@
             <properties>
                 <!-- With -Dsbom.skip=false, sbom-maven-plugin attaches an SBOM to each image once it is pushed: the tags are those pushed below -->
                 <sbom.image.phase>${docker.push-arm-amd-image.phase}</sbom.image.phase>
-                <sbom.image.tags>latest,${project.version}</sbom.image.tags>
+                <sbom.image.tags>latest,${docker.version.tag}</sbom.image.tags>
             </properties>
             <build>
                 <plugins>
@@ -208,7 +209,7 @@
                                         <argument>buildx</argument>
                                         <argument>build</argument>
                                         <argument>-t</argument>
-                                        <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                                        <argument>${docker.repo}/${docker.name}:${docker.version.tag}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
@@ -233,7 +234,7 @@
                 <docker.skip.latest.tag>false</docker.skip.latest.tag>
                 <!-- With -Dsbom.skip=false, sbom-maven-plugin attaches an SBOM to each image once it is pushed: the tags are those pushed below -->
                 <sbom.image.phase>${docker.push-arm-amd-image.phase}</sbom.image.phase>
-                <sbom.image.tags>${sbom.image.latestTag},${project.version},${docker.lts.tag}</sbom.image.tags>
+                <sbom.image.tags>${sbom.image.latestTag},${docker.version.tag},${docker.lts.tag}</sbom.image.tags>
             </properties>
             <build>
                 <plugins>
@@ -276,7 +277,7 @@
                                         <argument>buildx</argument>
                                         <argument>build</argument>
                                         <argument>-t</argument>
-                                        <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                                        <argument>${docker.repo}/${docker.name}:${docker.version.tag}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>

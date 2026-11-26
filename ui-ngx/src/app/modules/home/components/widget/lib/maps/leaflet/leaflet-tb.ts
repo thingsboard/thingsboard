@@ -1391,7 +1391,7 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
       const style = options.style;
       if (typeof style !== 'string' && style.glyphs) {
         const glyphs = style.glyphs;
-        const glyphsRegexString = glyphs.replace(/\//g, '\\/').replace(/\./g, '\\.').replace('{fontstack}', '(.*)').replace('{range}', '(.*)');
+        const glyphsRegexString = glyphs.replace(/[.*+?^$()|[\]\\/]/g, '\\$&').replace('{fontstack}', '(.*)').replace('{range}', '(.*)');
         const glyphsRegex = new RegExp(glyphsRegexString);
         options.transformRequest = (url, resourceType) => {
           if (resourceType === 'Glyphs' && glyphsRegex && glyphsRegex.test(url)) {

@@ -193,7 +193,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                 }
             }
             case ENTITY_GROUP -> {
-                EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, new EntityGroupId(entityId.getId()));
+                EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupInfoByTenantIdAndId(tenantId, new EntityGroupId(entityId.getId()));
                 if (entityGroup != null) {
                     metaData.putValue("entityGroupName", entityGroup.getName());
                     metaData.putValue("entityGroupType", entityGroup.getType().name());

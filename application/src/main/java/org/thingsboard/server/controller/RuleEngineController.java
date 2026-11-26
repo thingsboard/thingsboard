@@ -158,8 +158,7 @@ public class RuleEngineController extends BaseController {
             } else {
                 entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
             }
-            //Check that this is a valid JSON
-            JacksonUtil.toJsonNode(requestBody);
+            checkMsgReportUser(JacksonUtil.toJsonNode(requestBody));
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
             accessValidator.validate(currentUser, Operation.WRITE, entityId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
                 @Override

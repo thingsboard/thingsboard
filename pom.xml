@@ -128,7 +128,7 @@
         <protobuf.version>3.25.5</protobuf.version> <!-- Boot 4.1 manages protobuf 4.x; this pin keeps 3.x until the protobuf 4 upgrade -->
         <grpc.version>1.76.0</grpc.version>
         <groovy.version>4.0.32</groovy.version> <!-- rest-assured 5.5 requires Groovy 4 (Boot 4.1 manages Groovy 5) -->
-        <tbel.version>1.2.12</tbel.version>
+        <tbel.version>1.2.13</tbel.version>
         <lombok.version>1.18.48</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
@@ -2741,6 +2741,14 @@
             <id>thingsboard-public-repo</id>
             <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
         </repository>
+        <!-- Private; a build without its credentials skips it -->
+        <repository>
+            <id>thingsboard-repo</id>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-local</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>spring-snapshots</id>
             <name>Spring Snapshots</name>
@@ -2774,7 +2782,7 @@
 
     <pluginRepositories>
         <pluginRepository>
-            <id>thingsboard-repo</id>
+            <id>thingsboard-public-repo</id>
             <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
         </pluginRepository>
     </pluginRepositories>
